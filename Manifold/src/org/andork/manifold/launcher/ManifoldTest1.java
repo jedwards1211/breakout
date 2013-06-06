@@ -1,3 +1,4 @@
+package org.andork.manifold.launcher;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -23,6 +24,7 @@ import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
 import org.andork.j3d.DebugVector;
+import org.andork.j3d.Sandbox3D;
 import org.andork.j3d.math.TransformComputer3d;
 import org.andork.manifold.model.Arena;
 import org.andork.manifold.model.Player;
@@ -32,7 +34,7 @@ import org.andork.math3d.EdgeNormalComputer;
 
 import com.sun.j3d.utils.geometry.Sphere;
 
-public class Test1
+public class ManifoldTest1
 {
 	public static void main( String[ ] args )
 	{

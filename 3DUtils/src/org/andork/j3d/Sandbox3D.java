@@ -1,3 +1,4 @@
+package org.andork.j3d;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -18,7 +19,6 @@ import javax.swing.JFrame;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
 
-import org.andork.j3d.XyzAxes2;
 import org.andork.j3d.camera.Camera3D;
 
 import com.sun.j3d.exp.swing.JCanvas3D;
