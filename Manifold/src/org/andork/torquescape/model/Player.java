@@ -1,4 +1,4 @@
-package org.andork.manifold.model;
+package org.andork.torquescape.model;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;

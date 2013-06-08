@@ -1,4 +1,4 @@
-package org.andork.manifold.launcher;
+package org.andork.torquescape.launcher;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -26,15 +26,15 @@ import javax.vecmath.Vector3f;
 import org.andork.j3d.DebugVector;
 import org.andork.j3d.Sandbox3D;
 import org.andork.j3d.math.TransformComputer3d;
-import org.andork.manifold.model.Arena;
-import org.andork.manifold.model.Player;
-import org.andork.manifold.model.Triangle;
-import org.andork.manifold.model.TriangleBasis;
 import org.andork.math3d.EdgeNormalComputer;
+import org.andork.torquescape.model.Arena;
+import org.andork.torquescape.model.Player;
+import org.andork.torquescape.model.Triangle;
+import org.andork.torquescape.model.TriangleBasis;
 
 import com.sun.j3d.utils.geometry.Sphere;
 
-public class ManifoldTest1
+public class TorquescapeTest1
 {
 	public static void main( String[ ] args )
 	{

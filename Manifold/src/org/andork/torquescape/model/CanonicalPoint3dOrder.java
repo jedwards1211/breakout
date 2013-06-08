@@ -1,5 +1,5 @@
 
-package org.andork.manifold.model;
+package org.andork.torquescape.model;
 
 import java.util.Comparator;
 
