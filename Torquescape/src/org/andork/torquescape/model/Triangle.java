@@ -1,9 +1,9 @@
-
 package org.andork.torquescape.model;
 
 import java.util.Arrays;
 
 import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.vecmath.VecmathUtils;
@@ -46,6 +46,11 @@ public class Triangle
 	Triangle( boolean checkValidity , Point3d[ ] points , Vector3f[ ] normals )
 	{
 		this( checkValidity , points[ 0 ] , points[ 1 ] , points[ 2 ] , normals[ 0 ] , normals[ 1 ] , normals[ 2 ] );
+	}
+	
+	public Triangle( Point3f p0 , Point3f p1 , Point3f p2 , Vector3f n0 , Vector3f n1 , Vector3f n2 )
+	{
+		this( new Point3d( p0 ) , new Point3d( p1 ) , new Point3d( p2 ) , n0 , n1 , n2 );
 	}
 	
 	public static void checkValid( Point3d p0 , Point3d p1 , Point3d p2 )
@@ -147,30 +152,30 @@ public class Triangle
 	
 	Point3d getPoint( int index )
 	{
-		switch ( index )
+		switch( index )
 		{
-			case 0 :
+			case 0:
 				return p0;
-			case 1 :
+			case 1:
 				return p1;
-			case 2 :
+			case 2:
 				return p2;
-			default :
+			default:
 				throw new IllegalArgumentException( "index must be between 0 and 2 inclusive" );
 		}
 	}
 	
 	Vector3f getNormal( int index )
 	{
-		switch ( index )
+		switch( index )
 		{
-			case 0 :
+			case 0:
 				return n0;
-			case 1 :
+			case 1:
 				return n1;
-			case 2 :
+			case 2:
 				return n2;
-			default :
+			default:
 				throw new IllegalArgumentException( "index must be between 0 and 2 inclusive" );
 		}
 	}
@@ -201,15 +206,15 @@ public class Triangle
 	
 	public Edge getEdge( int index )
 	{
-		switch ( index )
+		switch( index )
 		{
-			case 0 :
+			case 0:
 				return new Edge( p0 , p1 );
-			case 1 :
+			case 1:
 				return new Edge( p1 , p2 );
-			case 2 :
+			case 2:
 				return new Edge( p2 , p0 );
-			default :
+			default:
 				throw new IllegalArgumentException( "index must be between 0 and 2 inclusive" );
 		}
 	}

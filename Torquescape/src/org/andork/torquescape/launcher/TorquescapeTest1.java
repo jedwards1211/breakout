@@ -80,7 +80,7 @@ public class TorquescapeTest1
 		
 		Appearance torusAppearance = new Appearance( );
 		torusAppearance.setMaterial( new Material( new Color3f( 0.3f , 0 , 0 ) , new Color3f( ) , new Color3f( 1 , 0 , 0 ) , new Color3f( 1 , 1 , 1 ) , 64f ) );
-		torusAppearance.setPolygonAttributes( new PolygonAttributes( PolygonAttributes.POLYGON_LINE , PolygonAttributes.CULL_BACK , 0f ) );
+		torusAppearance.setPolygonAttributes( new PolygonAttributes( PolygonAttributes.POLYGON_FILL , PolygonAttributes.CULL_BACK , 0f ) );
 		Shape3D torusShape = new Shape3D( torusGeom , torusAppearance );
 		BranchGroup bg = new BranchGroup( );
 		bg.addChild( torusShape );

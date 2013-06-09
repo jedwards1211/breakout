@@ -1,4 +1,3 @@
-
 package org.andork.math3d.curve;
 
 import javax.media.j3d.Transform3D;
@@ -6,10 +5,11 @@ import javax.vecmath.AxisAngle4f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
+import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 import org.andork.math3d.Spline3d;
 
-public class SplineCurve3f implements ICurve3f
+public class SplineCurve3f implements IAnalyzedCurve3f
 {
 	private Vector3f	m_startTangent	= new Vector3f( );
 	private Vector3f	m_endTangent	= new Vector3f( );
@@ -31,7 +31,7 @@ public class SplineCurve3f implements ICurve3f
 	{
 		init( depths , points , angle , smoothing , startDepth , endDepth , step );
 	}
-
+	
 	private void init( float[ ] depths , Point3f[ ] points , float angle , int smoothing , float startDepth , float endDepth , float step )
 	{
 		m_depths = depths;
@@ -221,17 +221,18 @@ public class SplineCurve3f implements ICurve3f
 	{
 		return m_lowerBound;
 	}
-
+	
 	public float getUpperBound( )
 	{
 		return m_upperBound;
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see com.petronworld.rigfocus.gui.tvd.scenegraph.utils.Sweep3f#getPoint(float, javax.vecmath.Point3f)
 	 */
+	@Override
 	public Point3f getPoint( float depth , Point3f result )
 	{
 		float fi = ( depth - m_lowerBound ) / m_step;
@@ -266,6 +267,7 @@ public class SplineCurve3f implements ICurve3f
 	 * 
 	 * @see com.petronworld.rigfocus.gui.tvd.scenegraph.utils.Sweep3f#getTangent(float, javax.vecmath.Vector3f)
 	 */
+	@Override
 	public Vector3f getTangent( float depth , Vector3f result )
 	{
 		if( depth <= m_lowerBound )
@@ -300,6 +302,7 @@ public class SplineCurve3f implements ICurve3f
 	 * 
 	 * @see com.petronworld.rigfocus.gui.tvd.scenegraph.utils.Sweep3f#getNormal(float, javax.vecmath.Vector3f)
 	 */
+	@Override
 	public Vector3f getNormalX( float depth , Vector3f result )
 	{
 		if( depth <= m_lowerBound )
@@ -333,6 +336,7 @@ public class SplineCurve3f implements ICurve3f
 	 * 
 	 * @see com.petronworld.rigfocus.gui.tvd.scenegraph.utils.Sweep3f#get90DegNormal(float, javax.vecmath.Vector3f)
 	 */
+	@Override
 	public Vector3f getNormalY( float depth , Vector3f result )
 	{
 		if( depth <= m_lowerBound )
@@ -359,5 +363,22 @@ public class SplineCurve3f implements ICurve3f
 			}
 		}
 		return result;
+	}
+	
+	@Override
+	public Transform3D eval( float param , J3DTempsPool pool, Transform3D out )
+	{
+		Point3f p = getPoint( param , pool.getPoint3f( ) );
+		Vector3f t = getTangent( param , pool.getVector3f( ) );
+		Vector3f nx = getNormalX( param , pool.getVector3f( ) );
+		Vector3f ny = getNormalY( param , pool.getVector3f( ) );
+		TransformComputer3f tc = pool.getTransformComputer3f( );
+		tc.shear( p , nx , ny , t , out );
+		pool.release( p );
+		pool.release( t );
+		pool.release( nx );
+		pool.release( ny );
+		pool.release( tc );
+		return out;
 	}
 }
