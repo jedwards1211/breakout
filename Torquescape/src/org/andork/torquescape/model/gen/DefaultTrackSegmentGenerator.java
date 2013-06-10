@@ -1,4 +1,4 @@
-package org.andork.torquescape.model;
+package org.andork.torquescape.model.gen;
 
 import java.util.List;
 
@@ -6,11 +6,14 @@ import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TriangleArray;
 import javax.vecmath.Point3f;
+import javax.vecmath.Tuple3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.J3DTempsPool;
-import org.andork.j3d.math.TransformComputer3f;
 import org.andork.math3d.curve.ICurve3f;
+import org.andork.torquescape.model.Triangle;
+import org.andork.torquescape.model.section.ICrossSectionCurve;
+import org.andork.torquescape.model.section.ICrossSectionFunction;
 import org.andork.vecmath.VecmathUtils;
 
 public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
@@ -24,7 +27,7 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 		
 		float param;
 		
-		for( param = start ; param <= end ; param = Math.min( end , param + step ) )
+		for( param = start ; param < end + step ; param += step )
 		{
 			if( param > end )
 			{
@@ -54,6 +57,7 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			nextSectionNextNormals[ c ] = VecmathUtils.allocVector3fArray( pointCount );
 			
 			geoms[ c ] = new TriangleArray( pointCount * ( crossSectionCount - 1 ) * 6 , GeometryArray.COORDINATES | GeometryArray.NORMALS );
+			outGeom.add( geoms[ c ] );
 		}
 		
 		Transform3D xform = new Transform3D( );
@@ -62,11 +66,15 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 		
 		getSectionVertices( sectionCurves , prevSectionPoints , prevSectionPrevNormals , prevSectionNextNormals , xform );
 		
-		for( param = start + step ; param <= end ; param = Math.min( end , param + step ) )
+		for( param = start + step ; param < end + step ; param += step )
 		{
+			if( param > end )
+			{
+				param = end;
+			}
 			sectionCurves = crossSection.eval( param , pool );
 			
-			trackAxis.eval( start , pool , xform );
+			trackAxis.eval( param , pool , xform );
 			
 			getSectionVertices( sectionCurves , nextSectionPoints , nextSectionPrevNormals , nextSectionNextNormals , xform );
 			
@@ -74,6 +82,10 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			{
 				GeometryArray geom = geoms[ c ];
 				int pointCount = nextSectionPoints[ c ].length;
+				
+				checkForBadValues( nextSectionPoints );
+				checkForBadValues( nextSectionPrevNormals );
+				checkForBadValues( nextSectionNextNormals );
 				
 				for( int p = 0 ; p < pointCount ; p++ )
 				{
@@ -88,19 +100,19 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 					geom.setNormal( coordIndices[ c ] , nextSectionNextNormals[ c ][ p ] );
 					coordIndices[ c ]++ ;
 					
-					outTriangles.add( new Triangle( prevSectionPoints[ c ][ p ] , prevSectionPoints[ c ][ nextP ] , nextSectionPoints[ c ][ p ] , prevSectionNextNormals[ c ][ p ] , prevSectionPrevNormals[ c ][ nextP ] , nextSectionNextNormals[ c ][ p ] ) );
+					outTriangles.add( new Triangle( prevSectionPoints[ c ][ p ] , nextSectionPoints[ c ][ p ] , prevSectionPoints[ c ][ nextP ] , prevSectionNextNormals[ c ][ p ] , nextSectionNextNormals[ c ][ p ] , prevSectionPrevNormals[ c ][ nextP ] ) );
 					
 					geom.setCoordinate( coordIndices[ c ] , nextSectionPoints[ c ][ p ] );
 					geom.setNormal( coordIndices[ c ] , nextSectionNextNormals[ c ][ p ] );
 					coordIndices[ c ]++ ;
-					geom.setCoordinate( coordIndices[ c ] , nextSectionPoints[ c ][ nextP ] );
-					geom.setNormal( coordIndices[ c ] , nextSectionPrevNormals[ c ][ nextP ] );
-					coordIndices[ c ]++ ;
 					geom.setCoordinate( coordIndices[ c ] , prevSectionPoints[ c ][ nextP ] );
 					geom.setNormal( coordIndices[ c ] , prevSectionPrevNormals[ c ][ nextP ] );
 					coordIndices[ c ]++ ;
+					geom.setCoordinate( coordIndices[ c ] , nextSectionPoints[ c ][ nextP ] );
+					geom.setNormal( coordIndices[ c ] , nextSectionPrevNormals[ c ][ nextP ] );
+					coordIndices[ c ]++ ;
 					
-					outTriangles.add( new Triangle( nextSectionPoints[ c ][ p ] , nextSectionPoints[ c ][ nextP ] , prevSectionPoints[ c ][ nextP ] , nextSectionNextNormals[ c ][ p ] , nextSectionPrevNormals[ c ][ nextP ] , prevSectionPrevNormals[ c ][ nextP ] ) );
+					outTriangles.add( new Triangle( nextSectionPoints[ c ][ p ] , prevSectionPoints[ c ][ nextP ] , nextSectionPoints[ c ][ nextP ] , nextSectionNextNormals[ c ][ p ] , prevSectionPrevNormals[ c ][ nextP ] , nextSectionPrevNormals[ c ][ nextP ] ) );
 				}
 			}
 			
@@ -115,6 +127,18 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			Vector3f[ ][ ] swapNextNormals = prevSectionNextNormals;
 			prevSectionNextNormals = nextSectionNextNormals;
 			nextSectionNextNormals = swapNextNormals;
+		}
+	}
+	
+	public void checkForBadValues( Tuple3f[ ][ ] t )
+	{
+		for( int i = 0 ; i < t.length ; i++ )
+		{
+			for( int j = 0 ; j < t[ i ].length ; j++ )
+			{
+				Tuple3f t3f = t[ i ][ j ];
+				VecmathUtils.checkReal( t3f );
+			}
 		}
 	}
 	
@@ -137,6 +161,9 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 				xform.transform( curvePoints[ p ] );
 				xform.transform( curvePrevNormals[ p ] );
 				xform.transform( curveNextNormals[ p ] );
+				
+				curvePrevNormals[ p ].normalize( );
+				curveNextNormals[ p ].normalize( );
 			}
 		}
 	}

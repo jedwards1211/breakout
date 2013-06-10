@@ -1,4 +1,4 @@
-package org.andork.torquescape.model;
+package org.andork.torquescape.model.gen;
 
 import java.util.List;
 
@@ -6,6 +6,8 @@ import javax.media.j3d.GeometryArray;
 
 import org.andork.j3d.math.J3DTempsPool;
 import org.andork.math3d.curve.ICurve3f;
+import org.andork.torquescape.model.Triangle;
+import org.andork.torquescape.model.section.ICrossSectionFunction;
 
 public interface ITrackSegmentGenerator
 {

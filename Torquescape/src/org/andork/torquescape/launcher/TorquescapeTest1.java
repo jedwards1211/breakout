@@ -1,9 +1,12 @@
 package org.andork.torquescape.launcher;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
@@ -25,12 +28,23 @@ import javax.vecmath.Vector3f;
 
 import org.andork.j3d.DebugVector;
 import org.andork.j3d.Sandbox3D;
+import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3d;
 import org.andork.math3d.EdgeNormalComputer;
+import org.andork.math3d.curve.CompoundCurve3f;
+import org.andork.math3d.curve.Ellipse3f;
+import org.andork.math3d.curve.ICurve3f;
 import org.andork.torquescape.model.Arena;
 import org.andork.torquescape.model.Player;
 import org.andork.torquescape.model.Triangle;
 import org.andork.torquescape.model.TriangleBasis;
+import org.andork.torquescape.model.curve.Bloater3f;
+import org.andork.torquescape.model.curve.SimpleHelicizer3f;
+import org.andork.torquescape.model.gen.DefaultTrackSegmentGenerator;
+import org.andork.torquescape.model.param.ConstantParamFunction;
+import org.andork.torquescape.model.param.CosParamFunction;
+import org.andork.torquescape.model.param.LinearParamFunction;
+import org.andork.torquescape.model.section.PolygonCrossSectionFunction;
 
 import com.sun.j3d.utils.geometry.Sphere;
 
@@ -42,10 +56,30 @@ public class TorquescapeTest1
 		View view = sandbox.universe.getViewer( ).getView( );
 		view.setBackClipDistance( view.getBackClipDistance( ) * 10 );
 		// IndexedGeometryArray torusGeom = createTorus( 5 , 180 , 0.5 , 72 );
-		IndexedGeometryArray torusGeom = createTorus( 50 , 720 , 2 , 3 );
+		// IndexedGeometryArray torusGeom = createTorus( 50 , 720 , 2 , 3 );
+		
+		ICurve3f curve = new Ellipse3f( new Point3f( ) , new Vector3f( 0 , 0 , 1 ) , new Vector3f( 50 , 0 , 0 ) , new Vector3f( 0 , 40 , 0 ) );
+		SimpleHelicizer3f helicizer = new SimpleHelicizer3f( new ConstantParamFunction( 3 ) , new LinearParamFunction( 0 , 1 , 0 , 6 ) );
+		Bloater3f bloater = new Bloater3f( new CosParamFunction( 0 , ( float ) Math.PI / 8 , 3 , 1 ) );
+		ICurve3f twister = new SimpleHelicizer3f( new ConstantParamFunction( 0 ) , new LinearParamFunction( 0 , 1 , 0 , 3 ) );
+		curve = new CompoundCurve3f( curve , twister , bloater );
+		PolygonCrossSectionFunction section = new PolygonCrossSectionFunction( 3 , 2 );
+		
+		DefaultTrackSegmentGenerator generator = new DefaultTrackSegmentGenerator( );
+		List<GeometryArray> outGeom = new ArrayList<GeometryArray>( );
+		List<Triangle> outTriangles = new ArrayList<Triangle>( );
+		generator.generate( curve , section , 0 , ( float ) Math.PI * 1.9f , ( float ) Math.PI / 120 , new J3DTempsPool( ) , outGeom , outTriangles );
 		
 		final Arena arena = new Arena( );
-		setupArena( torusGeom , arena );
+		
+		for( Triangle t : outTriangles )
+		{
+			arena.add( t );
+		}
+		//
+		GeometryArray torusGeom = outGeom.get( 0 );
+		
+		// setupArena( torusGeom , arena );
 		
 		Triangle triangle = arena.getTriangles( ).iterator( ).next( );
 		TriangleBasis basis = new TriangleBasis( );

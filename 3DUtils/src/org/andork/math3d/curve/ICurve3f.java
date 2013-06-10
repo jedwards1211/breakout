@@ -6,9 +6,5 @@ import org.andork.j3d.math.J3DTempsPool;
 
 public interface ICurve3f
 {
-	public float getLowerBound();
-	
-	public float getUpperBound();
-	
 	public Transform3D eval(float param, J3DTempsPool pool, Transform3D out);
 }

@@ -11,15 +11,15 @@ import javax.vecmath.Vector3f;
 
 public class J3DTempsPool
 {
-
-	private Deque<PoolTransformComputer3f>	tc3fs	= new ArrayDeque<PoolTransformComputer3f>( );
-	private Deque<PoolTransformComputer3d>	tc3ds	= new ArrayDeque<PoolTransformComputer3d>( );
-	private Deque<PoolPoint3f>	point3fs	= new ArrayDeque<PoolPoint3f>( );
-	private Deque<PoolVector3f>	vector3fs	= new ArrayDeque<PoolVector3f>( );
-	private Deque<PoolPoint3d>	point3ds	= new ArrayDeque<PoolPoint3d>( );
-	private Deque<PoolVector3d>	vector3ds	= new ArrayDeque<PoolVector3d>( );
-	private Deque<PoolTransform3D>	t3Ds	= new ArrayDeque<PoolTransform3D>( );
-
+	
+	private Deque<PoolTransformComputer3f>	tc3fs		= new ArrayDeque<PoolTransformComputer3f>( );
+	private Deque<PoolTransformComputer3d>	tc3ds		= new ArrayDeque<PoolTransformComputer3d>( );
+	private Deque<PoolPoint3f>				point3fs	= new ArrayDeque<PoolPoint3f>( );
+	private Deque<PoolVector3f>				vector3fs	= new ArrayDeque<PoolVector3f>( );
+	private Deque<PoolPoint3d>				point3ds	= new ArrayDeque<PoolPoint3d>( );
+	private Deque<PoolVector3d>				vector3ds	= new ArrayDeque<PoolVector3d>( );
+	private Deque<PoolTransform3D>			t3Ds		= new ArrayDeque<PoolTransform3D>( );
+	
 	public TransformComputer3f getTransformComputer3f( )
 	{
 		synchronized( tc3fs )
@@ -29,7 +29,7 @@ public class J3DTempsPool
 			return p;
 		}
 	}
-
+	
 	public void release( TransformComputer3f p )
 	{
 		if( p instanceof PoolTransformComputer3f )
@@ -40,7 +40,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	public TransformComputer3d getTransformComputer3d( )
 	{
 		synchronized( tc3ds )
@@ -50,7 +50,7 @@ public class J3DTempsPool
 			return p;
 		}
 	}
-
+	
 	public void release( TransformComputer3d p )
 	{
 		if( p instanceof PoolTransformComputer3d )
@@ -61,7 +61,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	public Point3f getPoint3f( )
 	{
 		synchronized( point3fs )
@@ -71,7 +71,7 @@ public class J3DTempsPool
 			return p;
 		}
 	}
-
+	
 	public void release( Point3f p )
 	{
 		if( p instanceof PoolPoint3f )
@@ -82,7 +82,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	public Vector3f getVector3f( )
 	{
 		synchronized( vector3fs )
@@ -92,7 +92,7 @@ public class J3DTempsPool
 			return p;
 		}
 	}
-
+	
 	public void release( Vector3f p )
 	{
 		if( p instanceof PoolVector3f )
@@ -103,7 +103,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	public Point3d getPoint3d( )
 	{
 		synchronized( point3ds )
@@ -113,7 +113,7 @@ public class J3DTempsPool
 			return p;
 		}
 	}
-
+	
 	public void release( Point3d p )
 	{
 		if( p instanceof PoolPoint3d )
@@ -124,7 +124,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	public Vector3d getVector3d( )
 	{
 		synchronized( vector3ds )
@@ -134,7 +134,7 @@ public class J3DTempsPool
 			return p;
 		}
 	}
-
+	
 	public void release( Vector3d p )
 	{
 		if( p instanceof PoolVector3d )
@@ -145,7 +145,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	public Transform3D getTransform3D( )
 	{
 		synchronized( t3Ds )
@@ -155,7 +155,7 @@ public class J3DTempsPool
 			return p;
 		}
 	}
-
+	
 	public void release( Transform3D p )
 	{
 		if( p instanceof PoolTransform3D )
@@ -166,7 +166,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	private class PoolTransformComputer3f extends TransformComputer3f
 	{
 		private boolean	inUse	= false;
@@ -180,7 +180,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	private class PoolTransformComputer3d extends TransformComputer3d
 	{
 		private boolean	inUse	= false;
@@ -194,7 +194,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	private class PoolPoint3f extends Point3f
 	{
 		private boolean	inUse	= false;
@@ -208,7 +208,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	private class PoolVector3f extends Vector3f
 	{
 		private boolean	inUse	= false;
@@ -222,7 +222,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	private class PoolPoint3d extends Point3d
 	{
 		private boolean	inUse	= false;
@@ -236,7 +236,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	private class PoolVector3d extends Vector3d
 	{
 		private boolean	inUse	= false;
@@ -250,7 +250,7 @@ public class J3DTempsPool
 			}
 		}
 	}
-
+	
 	private class PoolTransform3D extends Transform3D
 	{
 		private boolean	inUse	= false;

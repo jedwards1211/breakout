@@ -38,6 +38,26 @@ public class VecmathUtils
 		}
 	}
 
+	public static void checkReal( Tuple3f p )
+	{
+		if( Double.isNaN( p.x ) || Double.isNaN( p.y ) || Double.isNaN( p.z ) )
+		{
+			throw new IllegalArgumentException( "tuple has NaN values: " + p );
+		}
+		if( Double.isInfinite( p.x ) || Double.isInfinite( p.y ) || Double.isInfinite( p.z ) )
+		{
+			throw new IllegalArgumentException( "tuple has Infinite values: " + p );
+		}
+	}
+	
+	public static void checkNonzero( Tuple3f p )
+	{
+		if( p.x == 0 && p.y == 0 && p.z == 0 )
+		{
+			throw new IllegalArgumentException( "tuple is zero" );
+		}
+	}
+
 	public static final Vector3f	UNIT_XF		= new Vector3f( 1 , 0 , 0 );
 	public static final Vector3f	UNIT_YF		= new Vector3f( 0 , 1 , 0 );
 	public static final Vector3f	UNIT_ZF		= new Vector3f( 0 , 0 , 1 );
