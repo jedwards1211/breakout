@@ -3,7 +3,7 @@ package org.andork.torquescape.model.section;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-public interface ICrossSectionCurve
+public interface ISectionCurve
 {
 	public int getPointCount();
 	

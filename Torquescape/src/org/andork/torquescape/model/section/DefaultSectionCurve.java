@@ -5,13 +5,13 @@ import javax.vecmath.Vector3f;
 
 import org.andork.vecmath.VecmathUtils;
 
-public class DefaultCrossSectionCurve implements ICrossSectionCurve
+public class DefaultSectionCurve implements ISectionCurve
 {
 	private final Point3f[ ]	points;
 	private final Vector3f[ ]	prevNormals;
 	private final Vector3f[ ]	nextNormals;
 	
-	public DefaultCrossSectionCurve( int pointCount )
+	public DefaultSectionCurve( int pointCount )
 	{
 		points = VecmathUtils.allocPoint3fArray( pointCount );
 		prevNormals = VecmathUtils.allocVector3fArray( pointCount );

@@ -1,21 +1,20 @@
-package org.andork.torquescape.model.curve;
+package org.andork.torquescape.model.xform;
 
 import javax.media.j3d.Transform3D;
 
 import org.andork.j3d.math.J3DTempsPool;
-import org.andork.math3d.curve.ICurve3f;
 import org.andork.torquescape.model.param.IParamFunction;
 
-public class ReparametrizedCurve3f implements ICurve3f
+public class Reparametrizer implements IXformFunction
 {
-	public ReparametrizedCurve3f( ICurve3f wrapped , IParamFunction paramFunction )
+	public Reparametrizer( IXformFunction wrapped , IParamFunction paramFunction )
 	{
 		super( );
 		this.wrapped = wrapped;
 		this.paramFunction = paramFunction;
 	}
 
-	private ICurve3f	wrapped;
+	private IXformFunction	wrapped;
 	private IParamFunction	paramFunction;
 	
 	@Override

@@ -1,10 +1,17 @@
 package org.andork.math3d.curve;
 
-import javax.media.j3d.Transform3D;
-
-import org.andork.j3d.math.J3DTempsPool;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
 
 public interface ICurve3f
 {
-	public Transform3D eval(float param, J3DTempsPool pool, Transform3D out);
+	
+	public abstract Vector3f getNormalY( float depth , Vector3f result );
+
+	public abstract Vector3f getNormalX( float depth , Vector3f result );
+
+	public abstract Vector3f getTangent( float depth , Vector3f result );
+
+	public abstract Point3f getPoint( float depth , Point3f result );
+	
 }

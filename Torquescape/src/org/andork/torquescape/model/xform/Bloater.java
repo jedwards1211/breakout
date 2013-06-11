@@ -1,24 +1,23 @@
-package org.andork.torquescape.model.curve;
+package org.andork.torquescape.model.xform;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Vector3d;
 
 import org.andork.j3d.math.J3DTempsPool;
-import org.andork.math3d.curve.ICurve3f;
 import org.andork.torquescape.model.param.IParamFunction;
 
-public class Bloater3f implements ICurve3f
+public class Bloater implements IXformFunction
 {
 	private IParamFunction	xScaleFunction;
 	private IParamFunction	yScaleFunction;
 	private IParamFunction	zScaleFunction;
 	
-	public Bloater3f( IParamFunction scaleFunction )
+	public Bloater( IParamFunction scaleFunction )
 	{
 		this( scaleFunction , scaleFunction , scaleFunction );
 	}
 	
-	public Bloater3f( IParamFunction xScaleFunction , IParamFunction yScaleFunction , IParamFunction zScaleFunction )
+	public Bloater( IParamFunction xScaleFunction , IParamFunction yScaleFunction , IParamFunction zScaleFunction )
 	{
 		super( );
 		this.xScaleFunction = xScaleFunction;

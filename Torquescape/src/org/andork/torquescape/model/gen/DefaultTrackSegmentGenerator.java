@@ -10,18 +10,18 @@ import javax.vecmath.Tuple3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.J3DTempsPool;
-import org.andork.math3d.curve.ICurve3f;
 import org.andork.torquescape.model.Triangle;
-import org.andork.torquescape.model.section.ICrossSectionCurve;
-import org.andork.torquescape.model.section.ICrossSectionFunction;
+import org.andork.torquescape.model.section.ISectionCurve;
+import org.andork.torquescape.model.section.ISectionFunction;
+import org.andork.torquescape.model.xform.IXformFunction;
 import org.andork.vecmath.VecmathUtils;
 
 public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 {
 	@Override
-	public void generate( ICurve3f trackAxis , ICrossSectionFunction crossSection , float start , float end , float step , J3DTempsPool pool , List<GeometryArray> outGeom , List<Triangle> outTriangles )
+	public void generate( IXformFunction trackAxis , ISectionFunction crossSection , float start , float end , float step , J3DTempsPool pool , List<GeometryArray> outGeom , List<Triangle> outTriangles )
 	{
-		ICrossSectionCurve[ ] sectionCurves = crossSection.eval( start , pool );
+		ISectionCurve[ ] sectionCurves = crossSection.eval( start , pool );
 		
 		int crossSectionCount = 0;
 		
@@ -142,11 +142,11 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 		}
 	}
 	
-	private void getSectionVertices( ICrossSectionCurve[ ] curves , Point3f[ ][ ] points , Vector3f[ ][ ] prevNormals , Vector3f[ ][ ] nextNormals , Transform3D xform )
+	private void getSectionVertices( ISectionCurve[ ] curves , Point3f[ ][ ] points , Vector3f[ ][ ] prevNormals , Vector3f[ ][ ] nextNormals , Transform3D xform )
 	{
 		for( int c = 0 ; c < curves.length ; c++ )
 		{
-			ICrossSectionCurve curve = curves[ c ];
+			ISectionCurve curve = curves[ c ];
 			Point3f[ ] curvePoints = points[ c ];
 			Vector3f[ ] curvePrevNormals = prevNormals[ c ];
 			Vector3f[ ] curveNextNormals = nextNormals[ c ];

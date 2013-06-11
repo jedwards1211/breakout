@@ -1,14 +1,14 @@
-package org.andork.math3d.curve;
+package org.andork.torquescape.model.xform;
 
 import javax.media.j3d.Transform3D;
 
 import org.andork.j3d.math.J3DTempsPool;
 
-public class CompoundCurve3f implements ICurve3f
+public class CompoundXformFunction implements IXformFunction
 {
-	private ICurve3f[] curves;
+	private IXformFunction[] curves;
 	
-	public CompoundCurve3f(ICurve3f... curves) {
+	public CompoundXformFunction(IXformFunction... curves) {
 		this.curves = curves;
 	}
 	
@@ -19,7 +19,7 @@ public class CompoundCurve3f implements ICurve3f
 		
 		Transform3D x1 = pool.getTransform3D( );
 		
-		for (ICurve3f curve : curves) {
+		for (IXformFunction curve : curves) {
 			curve.eval( param , pool , x1);
 			out.mul( x1 );
 		}

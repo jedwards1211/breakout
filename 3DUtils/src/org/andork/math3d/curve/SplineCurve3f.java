@@ -9,7 +9,7 @@ import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 import org.andork.math3d.Spline3d;
 
-public class SplineCurve3f implements IAnalyzedCurve3f
+public class SplineCurve3f implements ICurve3f
 {
 	private Vector3f	m_startTangent	= new Vector3f( );
 	private Vector3f	m_endTangent	= new Vector3f( );
@@ -363,22 +363,5 @@ public class SplineCurve3f implements IAnalyzedCurve3f
 			}
 		}
 		return result;
-	}
-	
-	@Override
-	public Transform3D eval( float param , J3DTempsPool pool, Transform3D out )
-	{
-		Point3f p = getPoint( param , pool.getPoint3f( ) );
-		Vector3f t = getTangent( param , pool.getVector3f( ) );
-		Vector3f nx = getNormalX( param , pool.getVector3f( ) );
-		Vector3f ny = getNormalY( param , pool.getVector3f( ) );
-		TransformComputer3f tc = pool.getTransformComputer3f( );
-		tc.shear( p , nx , ny , t , out );
-		pool.release( p );
-		pool.release( t );
-		pool.release( nx );
-		pool.release( ny );
-		pool.release( tc );
-		return out;
 	}
 }

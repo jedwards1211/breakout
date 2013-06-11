@@ -30,7 +30,7 @@ public class Sweeper3f
 	 * 
 	 * @return whether the operation was successful or not.
 	 */
-	public void apply( IAnalyzedCurve3f sweep , float depth , float lateralOffset , float angle , Point3f result )
+	public void apply( ICurve3f sweep , float depth , float lateralOffset , float angle , Point3f result )
 	{
 		sweep.getPoint( depth , result );
 		sweep.getNormalX( depth , vf1 );
@@ -52,7 +52,7 @@ public class Sweeper3f
 	 * 
 	 * @return whether the operation was successful or not.
 	 */
-	public <D extends Collection<Point2f>, T extends Collection<Point3f>> void apply( IAnalyzedCurve3f sweep , D data , float lateralOffset , float angle , T result )
+	public <D extends Collection<Point2f>, T extends Collection<Point3f>> void apply( ICurve3f sweep , D data , float lateralOffset , float angle , T result )
 	{
 		if( data.size( ) != result.size( ) )
 		{
@@ -106,7 +106,7 @@ public class Sweeper3f
 	 *            an array of size 3*N to store the 3D coordinates into
 	 * @return whether the operation was successful or not.
 	 */
-	public void apply( IAnalyzedCurve3f sweep , float[ ] data , float lateralOffset , float angle , float[ ] coords )
+	public void apply( ICurve3f sweep , float[ ] data , float lateralOffset , float angle , float[ ] coords )
 	{
 		if( data.length * 3 / 2 != coords.length )
 		{
@@ -163,7 +163,7 @@ public class Sweeper3f
 	 *            an array of size 3*N to store the 3D normals into
 	 * @return whether the operation was successful or not.
 	 */
-	public void apply( IAnalyzedCurve3f sweep , float[ ] data , float lateralOffset , float angle , float[ ] coords , float[ ] normals )
+	public void apply( ICurve3f sweep , float[ ] data , float lateralOffset , float angle , float[ ] coords , float[ ] normals )
 	{
 		if( data.length * 3 / 2 != coords.length )
 		{
@@ -224,7 +224,7 @@ public class Sweeper3f
 	 * 
 	 * @return whether the operation was successful or not.
 	 */
-	public void apply( IAnalyzedCurve3f sweep , Point2f data[] , float lateralOffset , float angle , Point3f trans[] )
+	public void apply( ICurve3f sweep , Point2f data[] , float lateralOffset , float angle , Point3f trans[] )
 	{
 		if( data.length != trans.length )
 		{
@@ -237,7 +237,7 @@ public class Sweeper3f
 		}
 	}
 	
-	public Transform3D createOrientTransform( IAnalyzedCurve3f sweep , Point3f origin , Vector3f tangent , Vector3f normal , float depth , Transform3D result )
+	public Transform3D createOrientTransform( ICurve3f sweep , Point3f origin , Vector3f tangent , Vector3f normal , float depth , Transform3D result )
 	{
 		sweep.getPoint( depth , pf1 );
 		sweep.getTangent( depth , vf1 );
@@ -246,7 +246,7 @@ public class Sweeper3f
 		return result;
 	}
 	
-	public Transform3D createOrientTransform( IAnalyzedCurve3f sweep , Point3f origin , Vector3f tangent , Vector3f normal , float depth , float angle , Transform3D result )
+	public Transform3D createOrientTransform( ICurve3f sweep , Point3f origin , Vector3f tangent , Vector3f normal , float depth , float angle , Transform3D result )
 	{
 		sweep.getPoint( depth , pf1 );
 		sweep.getTangent( depth , vf1 );

@@ -1,18 +1,17 @@
-package org.andork.torquescape.model.curve;
+package org.andork.torquescape.model.xform;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.J3DTempsPool;
-import org.andork.math3d.curve.ICurve3f;
 import org.andork.torquescape.model.param.IParamFunction;
 
-public class SimpleHelicizer3f implements ICurve3f
+public class Helicizer implements IXformFunction
 {
 	IParamFunction	radiusFunction;
 	IParamFunction	angleFunction;
 	
-	public SimpleHelicizer3f( IParamFunction radiusFunction , IParamFunction angleFunction )
+	public Helicizer( IParamFunction radiusFunction , IParamFunction angleFunction )
 	{
 		super( );
 		this.radiusFunction = radiusFunction;

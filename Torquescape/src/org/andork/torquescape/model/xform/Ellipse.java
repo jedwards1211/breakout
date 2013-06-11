@@ -1,4 +1,4 @@
-package org.andork.math3d.curve;
+package org.andork.torquescape.model.xform;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Point3f;
@@ -8,14 +8,14 @@ import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 import org.andork.vecmath.VecmathUtils;
 
-public class Ellipse3f implements ICurve3f
+public class Ellipse implements IXformFunction
 {
 	private Point3f		origin	= new Point3f( );
 	private Vector3f	axis	= new Vector3f( );
 	private Vector3f	span1	= new Vector3f( );
 	private Vector3f	span2	= new Vector3f( );
 	
-	public Ellipse3f( Point3f origin , Vector3f axis , Vector3f span1 , Vector3f span2 )
+	public Ellipse( Point3f origin , Vector3f axis , Vector3f span1 , Vector3f span2 )
 	{
 		this.origin.set( origin );
 		this.axis.set( axis );
