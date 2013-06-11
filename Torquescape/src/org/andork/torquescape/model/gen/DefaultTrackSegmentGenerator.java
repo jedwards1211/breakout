@@ -1,27 +1,28 @@
 package org.andork.torquescape.model.gen;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
-import javax.media.j3d.GeometryArray;
 import javax.media.j3d.Transform3D;
-import javax.media.j3d.TriangleArray;
 import javax.vecmath.Point3f;
 import javax.vecmath.Tuple3f;
-import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.J3DTempsPool;
 import org.andork.torquescape.model.Triangle;
-import org.andork.torquescape.model.section.ISectionCurve;
+import org.andork.torquescape.model.render.FoldType;
+import org.andork.torquescape.model.render.TriangleRenderingInfo;
 import org.andork.torquescape.model.section.ISectionFunction;
+import org.andork.torquescape.model.section.SectionCurve;
 import org.andork.torquescape.model.xform.IXformFunction;
 import org.andork.vecmath.VecmathUtils;
 
 public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 {
 	@Override
-	public void generate( IXformFunction trackAxis , ISectionFunction crossSection , float start , float end , float step , J3DTempsPool pool , List<GeometryArray> outGeom , List<Triangle> outTriangles )
+	public void generate( IXformFunction trackAxis , ISectionFunction crossSection , float start , float end , float step , J3DTempsPool pool , List<List<Triangle>> out )
 	{
-		ISectionCurve[ ] sectionCurves = crossSection.eval( start , pool );
+		ArrayList<SectionCurve> sectionCurves = crossSection.eval( start , pool , new ArrayList<SectionCurve>( ) );
 		
 		int crossSectionCount = 0;
 		
@@ -36,35 +37,30 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			crossSectionCount++ ;
 		}
 		
-		GeometryArray[ ] geoms = new GeometryArray[ sectionCurves.length ];
-		int coordIndices[] = new int[ sectionCurves.length ];
+		List<Triangle>[ ] triGroups = ( List<Triangle>[ ] ) new List[ sectionCurves.size( ) ];
 		
-		Point3f[ ][ ] prevSectionPoints = new Point3f[ sectionCurves.length ][ ];
-		Vector3f[ ][ ] prevSectionPrevNormals = new Vector3f[ sectionCurves.length ][ ];
-		Vector3f[ ][ ] prevSectionNextNormals = new Vector3f[ sectionCurves.length ][ ];
-		Point3f[ ][ ] nextSectionPoints = new Point3f[ sectionCurves.length ][ ];
-		Vector3f[ ][ ] nextSectionPrevNormals = new Vector3f[ sectionCurves.length ][ ];
-		Vector3f[ ][ ] nextSectionNextNormals = new Vector3f[ sectionCurves.length ][ ];
+		Point3f[ ][ ] prevSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
+		boolean[ ][ ] prevSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
+		Point3f[ ][ ] nextSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
+		boolean[ ][ ] nextSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
 		
-		for( int c = 0 ; c < sectionCurves.length ; c++ )
+		for( int c = 0 ; c < sectionCurves.size( ) ; c++ )
 		{
-			int pointCount = sectionCurves[ c ].getPointCount( );
+			int pointCount = sectionCurves.get( c ).points.length;
 			prevSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
-			prevSectionPrevNormals[ c ] = VecmathUtils.allocVector3fArray( pointCount );
-			prevSectionNextNormals[ c ] = VecmathUtils.allocVector3fArray( pointCount );
+			prevSmoothFlags[ c ] = new boolean[ pointCount ];
 			nextSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
-			nextSectionPrevNormals[ c ] = VecmathUtils.allocVector3fArray( pointCount );
-			nextSectionNextNormals[ c ] = VecmathUtils.allocVector3fArray( pointCount );
+			nextSmoothFlags[ c ] = new boolean[ pointCount ];
 			
-			geoms[ c ] = new TriangleArray( pointCount * ( crossSectionCount - 1 ) * 6 , GeometryArray.COORDINATES | GeometryArray.NORMALS );
-			outGeom.add( geoms[ c ] );
+			triGroups[ c ] = new LinkedList<Triangle>( );
+			out.add( triGroups[ c ] );
 		}
 		
 		Transform3D xform = new Transform3D( );
 		
 		trackAxis.eval( start , pool , xform );
 		
-		getSectionVertices( sectionCurves , prevSectionPoints , prevSectionPrevNormals , prevSectionNextNormals , xform );
+		getSectionVertices( sectionCurves , prevSectionPoints , prevSmoothFlags , xform );
 		
 		for( param = start + step ; param < end + step ; param += step )
 		{
@@ -72,47 +68,34 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			{
 				param = end;
 			}
-			sectionCurves = crossSection.eval( param , pool );
+			crossSection.eval( param , pool , sectionCurves );
 			
 			trackAxis.eval( param , pool , xform );
 			
-			getSectionVertices( sectionCurves , nextSectionPoints , nextSectionPrevNormals , nextSectionNextNormals , xform );
+			getSectionVertices( sectionCurves , nextSectionPoints , nextSmoothFlags , xform );
 			
-			for( int c = 0 ; c < sectionCurves.length ; c++ )
+			for( int c = 0 ; c < sectionCurves.size( ) ; c++ )
 			{
-				GeometryArray geom = geoms[ c ];
+				List<Triangle> triGroup = triGroups[ c ];
+				
 				int pointCount = nextSectionPoints[ c ].length;
 				
 				checkForBadValues( nextSectionPoints );
-				checkForBadValues( nextSectionPrevNormals );
-				checkForBadValues( nextSectionNextNormals );
 				
 				for( int p = 0 ; p < pointCount ; p++ )
 				{
 					int nextP = ( p + 1 ) % pointCount;
-					geom.setCoordinate( coordIndices[ c ] , prevSectionPoints[ c ][ p ] );
-					geom.setNormal( coordIndices[ c ] , prevSectionNextNormals[ c ][ p ] );
-					coordIndices[ c ]++ ;
-					geom.setCoordinate( coordIndices[ c ] , prevSectionPoints[ c ][ nextP ] );
-					geom.setNormal( coordIndices[ c ] , prevSectionPrevNormals[ c ][ nextP ] );
-					coordIndices[ c ]++ ;
-					geom.setCoordinate( coordIndices[ c ] , nextSectionPoints[ c ][ p ] );
-					geom.setNormal( coordIndices[ c ] , nextSectionNextNormals[ c ][ p ] );
-					coordIndices[ c ]++ ;
+					TriangleRenderingInfo ri = new TriangleRenderingInfo( );
+					ri.folds[ 0 ] = prevSmoothFlags[ c ][ p ] ? FoldType.FOLDED : FoldType.NOT_FOLDED;
+					ri.folds[ 1 ] = nextSmoothFlags[ c ][ p ] ? FoldType.FOLDED : FoldType.NOT_FOLDED;
+					ri.folds[ 2 ] = ri.folds[ 3 ] = ri.folds[ 4 ] = ri.folds[ 5 ] = FoldType.ANGLE_DEPENDENT;
+					triGroup.add( new Triangle( prevSectionPoints[ c ][ p ] , nextSectionPoints[ c ][ p ] , prevSectionPoints[ c ][ nextP ] , ri ) );
 					
-					outTriangles.add( new Triangle( prevSectionPoints[ c ][ p ] , nextSectionPoints[ c ][ p ] , prevSectionPoints[ c ][ nextP ] , prevSectionNextNormals[ c ][ p ] , nextSectionNextNormals[ c ][ p ] , prevSectionPrevNormals[ c ][ nextP ] ) );
-					
-					geom.setCoordinate( coordIndices[ c ] , nextSectionPoints[ c ][ p ] );
-					geom.setNormal( coordIndices[ c ] , nextSectionNextNormals[ c ][ p ] );
-					coordIndices[ c ]++ ;
-					geom.setCoordinate( coordIndices[ c ] , prevSectionPoints[ c ][ nextP ] );
-					geom.setNormal( coordIndices[ c ] , prevSectionPrevNormals[ c ][ nextP ] );
-					coordIndices[ c ]++ ;
-					geom.setCoordinate( coordIndices[ c ] , nextSectionPoints[ c ][ nextP ] );
-					geom.setNormal( coordIndices[ c ] , nextSectionPrevNormals[ c ][ nextP ] );
-					coordIndices[ c ]++ ;
-					
-					outTriangles.add( new Triangle( nextSectionPoints[ c ][ p ] , prevSectionPoints[ c ][ nextP ] , nextSectionPoints[ c ][ nextP ] , nextSectionNextNormals[ c ][ p ] , prevSectionPrevNormals[ c ][ nextP ] , nextSectionPrevNormals[ c ][ nextP ] ) );
+					ri = new TriangleRenderingInfo( );
+					ri.folds[ 0 ] = ri.folds[ 1 ] = ri.folds[ 2 ] = ri.folds[ 3 ] = FoldType.ANGLE_DEPENDENT;
+					ri.folds[ 4 ] = nextSmoothFlags[ c ][ nextP ] ? FoldType.FOLDED : FoldType.NOT_FOLDED;
+					ri.folds[ 5 ] = prevSmoothFlags[ c ][ nextP ] ? FoldType.FOLDED : FoldType.NOT_FOLDED;
+					triGroup.add( new Triangle( prevSectionPoints[ c ][ nextP ] , nextSectionPoints[ c ][ p ] , nextSectionPoints[ c ][ nextP ] , ri ) );
 				}
 			}
 			
@@ -120,13 +103,9 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			prevSectionPoints = nextSectionPoints;
 			nextSectionPoints = swapPoints;
 			
-			Vector3f[ ][ ] swapPrevNormals = prevSectionPrevNormals;
-			prevSectionPrevNormals = nextSectionPrevNormals;
-			nextSectionPrevNormals = swapPrevNormals;
-			
-			Vector3f[ ][ ] swapNextNormals = prevSectionNextNormals;
-			prevSectionNextNormals = nextSectionNextNormals;
-			nextSectionNextNormals = swapNextNormals;
+			boolean[ ][ ] swapNextSmoothFlags = nextSmoothFlags;
+			prevSmoothFlags = nextSmoothFlags;
+			nextSmoothFlags = swapNextSmoothFlags;
 		}
 	}
 	
@@ -142,28 +121,20 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 		}
 	}
 	
-	private void getSectionVertices( ISectionCurve[ ] curves , Point3f[ ][ ] points , Vector3f[ ][ ] prevNormals , Vector3f[ ][ ] nextNormals , Transform3D xform )
+	private void getSectionVertices( List<SectionCurve> curves , Point3f[ ][ ] points , boolean[ ][ ] smoothFlags , Transform3D xform )
 	{
-		for( int c = 0 ; c < curves.length ; c++ )
+		for( int c = 0 ; c < curves.size( ) ; c++ )
 		{
-			ISectionCurve curve = curves[ c ];
+			SectionCurve curve = curves.get( c );
 			Point3f[ ] curvePoints = points[ c ];
-			Vector3f[ ] curvePrevNormals = prevNormals[ c ];
-			Vector3f[ ] curveNextNormals = nextNormals[ c ];
+			boolean[ ] curveSmoothFlags = smoothFlags[ c ];
 			
-			for( int p = 0 ; p < curve.getPointCount( ) ; p++ )
+			for( int p = 0 ; p < curve.points.length ; p++ )
 			{
-				curve.getPoint( p , curvePoints[ p ] );
-				curve.getPrevSegmentNormal( p , curvePrevNormals[ p ] );
-				curve.getNextSegmentNormal( p , curveNextNormals[ p ] );
-				;
+				curvePoints[ p ].set( curve.points[ p ] );
+				curveSmoothFlags[ p ] = curve.smoothFlags[ p ];
 				
 				xform.transform( curvePoints[ p ] );
-				xform.transform( curvePrevNormals[ p ] );
-				xform.transform( curveNextNormals[ p ] );
-				
-				curvePrevNormals[ p ].normalize( );
-				curveNextNormals[ p ].normalize( );
 			}
 		}
 	}

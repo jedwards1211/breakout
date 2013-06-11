@@ -6,17 +6,31 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
+import org.andork.torquescape.model.render.TriangleRenderingInfo;
 import org.andork.vecmath.VecmathUtils;
 
 public class Triangle
 {
-	final Point3d	p0;
-	final Point3d	p1;
-	final Point3d	p2;
+	final Point3d			p0;
+	final Point3d			p1;
+	final Point3d			p2;
 	
-	final Vector3f	n0;
-	final Vector3f	n1;
-	final Vector3f	n2;
+	final Vector3f			n0;
+	final Vector3f			n1;
+	final Vector3f			n2;
+	
+	TriangleRenderingInfo	ri;
+	
+	public Triangle( Point3f p0 , Point3f p1 , Point3f p2 , TriangleRenderingInfo ri )
+	{
+		this( new Point3d( p0 ) , new Point3d( p1 ) , new Point3d( p2 ) , ri );
+	}
+	
+	public Triangle( Point3d p0 , Point3d p1 , Point3d p2 , TriangleRenderingInfo ri )
+	{
+		this( true , p0 , p1 , p2 , null , null , null );
+		this.ri = ri;
+	}
 	
 	public Triangle( Point3d p0 , Point3d p1 , Point3d p2 , Vector3f n0 , Vector3f n1 , Vector3f n2 )
 	{
@@ -38,9 +52,22 @@ public class Triangle
 		this.p0 = new Point3d( p0 );
 		this.p1 = new Point3d( p1 );
 		this.p2 = new Point3d( p2 );
-		this.n0 = new Vector3f( n0 );
-		this.n1 = new Vector3f( n1 );
-		this.n2 = new Vector3f( n2 );
+		this.n0 = new Vector3f( );
+		this.n1 = new Vector3f( );
+		this.n2 = new Vector3f( );
+		
+		if( n0 != null )
+		{
+			this.n0.set( n0 );
+		}
+		if( n1 != null )
+		{
+			this.n1.set( n1 );
+		}
+		if( n2 != null )
+		{
+			this.n2.set( n2 );
+		}
 	}
 	
 	Triangle( boolean checkValidity , Point3d[ ] points , Vector3f[ ] normals )
@@ -246,4 +273,13 @@ public class Triangle
 		return result;
 	}
 	
+	public TriangleRenderingInfo getRenderingInfo( )
+	{
+		return ri;
+	}
+	
+	public void setRenderingInfo( TriangleRenderingInfo ri )
+	{
+		this.ri = ri;
+	}
 }

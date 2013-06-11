@@ -56,7 +56,7 @@ public class TorquescapeTest1
 		View view = sandbox.universe.getViewer( ).getView( );
 		view.setBackClipDistance( view.getBackClipDistance( ) * 10 );
 		// IndexedGeometryArray torusGeom = createTorus( 5 , 180 , 0.5 , 72 );
-		// IndexedGeometryArray torusGeom = createTorus( 50 , 720 , 2 , 3 );
+		IndexedGeometryArray torusGeom = createTorus( 50 , 720 , 2 , 3 );
 		
 		IXformFunction curve = new Ellipse( new Point3f( ) , new Vector3f( 0 , 0 , 1 ) , new Vector3f( 50 , 0 , 0 ) , new Vector3f( 0 , 40 , 0 ) );
 		Helicizer helicizer = new Helicizer( new ConstantParamFunction( 3 ) , new LinearParamFunction( 0 , 1 , 0 , 6 ) );
@@ -68,18 +68,18 @@ public class TorquescapeTest1
 		DefaultTrackSegmentGenerator generator = new DefaultTrackSegmentGenerator( );
 		List<GeometryArray> outGeom = new ArrayList<GeometryArray>( );
 		List<Triangle> outTriangles = new ArrayList<Triangle>( );
-		generator.generate( curve , section , 0 , ( float ) Math.PI * 1.9f , ( float ) Math.PI / 120 , new J3DTempsPool( ) , outGeom , outTriangles );
+		// generator.generate( curve , section , 0 , ( float ) Math.PI * 1.9f , ( float ) Math.PI / 120 , new J3DTempsPool( ) , outGeom , outTriangles );
 		
 		final Arena arena = new Arena( );
 		
-		for( Triangle t : outTriangles )
-		{
-			arena.add( t );
-		}
-		//
-		GeometryArray torusGeom = outGeom.get( 0 );
+		// for( Triangle t : outTriangles )
+		// {
+		// arena.add( t );
+		// }
+		// //
+		// GeometryArray torusGeom = outGeom.get( 0 );
 		
-		// setupArena( torusGeom , arena );
+		setupArena( torusGeom , arena );
 		
 		Triangle triangle = arena.getTriangles( ).iterator( ).next( );
 		TriangleBasis basis = new TriangleBasis( );

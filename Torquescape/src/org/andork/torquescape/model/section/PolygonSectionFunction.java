@@ -1,5 +1,7 @@
 package org.andork.torquescape.model.section;
 
+import java.util.ArrayList;
+
 import org.andork.j3d.math.J3DTempsPool;
 
 public class PolygonSectionFunction implements ISectionFunction
@@ -14,22 +16,36 @@ public class PolygonSectionFunction implements ISectionFunction
 	}
 	
 	@Override
-	public ISectionCurve[ ] eval( float param , J3DTempsPool pool )
+	public ArrayList<SectionCurve> eval( float param , J3DTempsPool pool , ArrayList<SectionCurve> result )
 	{
-		DefaultSectionCurve result = new DefaultSectionCurve( numSides );
+		while( result.size( ) > 1 )
+		{
+			result.remove( 1 );
+		}
+		
+		if( result.size( ) == 1 && result.get( 0 ).points.length != numSides )
+		{
+			result.remove( 0 );
+		}
+		
+		if( result.isEmpty( ) )
+		{
+			result.add( new SectionCurve( numSides ) );
+		}
+		
+		SectionCurve section = result.get( 0 );
+		section.outsideDirection.set( Math.signum( radius ), 0, 0 );
+		
 		for( int i = 0 ; i < numSides ; i++ )
 		{
 			float angle = ( float ) Math.PI * 2 * i / numSides;
 			float x = ( float ) Math.cos( angle ) * radius;
 			float y = ( float ) Math.sin( angle ) * radius;
-			result.getPoint( i ).set( x , y , 0 );
-			angle = ( float ) Math.PI * 2 * ( i + 0.5f ) / numSides;
-			x = ( float ) Math.cos( angle );
-			y = ( float ) Math.sin( angle );
-			result.getNextSegmentNormal( i ).set( x , y , 0 );
-			result.getPrevSegmentNormal( ( i + 1 ) % numSides ).set( x , y , 0 );
+			section.points[ i ].set( x , y , 0 );
+			section.smoothFlags[ i ] = false;
 		}
-		return new ISectionCurve[ ] { result };
+		
+		return result;
 	}
 	
 }
