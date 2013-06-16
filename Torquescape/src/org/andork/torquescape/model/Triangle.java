@@ -1,8 +1,5 @@
 package org.andork.torquescape.model;
 
-import java.util.Arrays;
-
-import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
@@ -12,68 +9,74 @@ import org.andork.vecmath.VecmathUtils;
 
 public class Triangle
 {
-	final Point3d			p0;
-	final Point3d			p1;
-	final Point3d			p2;
+	/**
+	 * Made public for speed of access.  DO NOT MODIFY ITS COORDINATES!
+	 */
+	public final Point3f			p0;
+	/**
+	 * Made public for speed of access.  DO NOT MODIFY ITS COORDINATES!
+	 */
+	public final Point3f			p1;
+	/**
+	 * Made public for speed of access.  DO NOT MODIFY ITS COORDINATES!
+	 */
+	public final Point3f			p2;
 	
-	Vector3f				n0;
-	Vector3f				n1;
-	Vector3f				n2;
+	public Vector3f					n0;
+	public Vector3f					n1;
+	public Vector3f					n2;
 	
-	TriangleRenderingInfo	ri;
+	public TriangleRenderingInfo	ri;
 	
-	public Triangle( Point3d p0 , Point3d p1 , Point3d p2 )
+	public Triangle( Point3f p0 , Point3f p1 , Point3f p2 )
 	{
-		this( p0 , p1 , p2 , null );
+		this( true , p0 , p1 , p2 );
 	}
 	
 	public Triangle( Point3f p0 , Point3f p1 , Point3f p2 , TriangleRenderingInfo ri )
 	{
-		this( new Point3d( p0 ) , new Point3d( p1 ) , new Point3d( p2 ) , ri );
+		this( true , p0 , p1 , p2 , ri );
 	}
 	
-	public Triangle( Point3d p0 , Point3d p1 , Point3d p2 , TriangleRenderingInfo ri )
-	{
-		this( true , p0 , p1 , p2 , null , null , null );
-		this.ri = ri;
-	}
-	
-	public Triangle( Point3d p0 , Point3d p1 , Point3d p2 , Vector3f n0 , Vector3f n1 , Vector3f n2 )
+	public Triangle( Point3f p0 , Point3f p1 , Point3f p2 , Vector3f n0 , Vector3f n1 , Vector3f n2 )
 	{
 		this( true , p0 , p1 , p2 , n0 , n1 , n2 );
 	}
 	
-	public Triangle( Point3d[ ] points , Vector3f[ ] normals )
-	{
-		this( true , points , normals );
-	}
-	
-	Triangle( boolean checkValidity , Point3d p0 , Point3d p1 , Point3d p2 , Vector3f n0 , Vector3f n1 , Vector3f n2 )
+	Triangle( boolean checkValidity , Point3f p0 , Point3f p1 , Point3f p2 )
 	{
 		if( checkValidity )
 		{
 			checkValid( p0 , p1 , p2 );
 		}
-		
-		this.p0 = new Point3d( p0 );
-		this.p1 = new Point3d( p1 );
-		this.p2 = new Point3d( p2 );
+		this.p0 = p0;
+		this.p1 = p1;
+		this.p2 = p2;
+	}
+	
+	Triangle( boolean checkValidity , Point3f p0 , Point3f p1 , Point3f p2 , TriangleRenderingInfo ri )
+	{
+		this( checkValidity , p0 , p1 , p2 );
+		this.ri = ri;
+	}
+	
+	Triangle( boolean checkValidity , Point3f p0 , Point3f p1 , Point3f p2 , Vector3f n0 , Vector3f n1 , Vector3f n2 , TriangleRenderingInfo ri )
+	{
+		this( checkValidity , p0 , p1 , p2 , ri );
 		this.n0 = n0;
 		this.n1 = n1;
 		this.n2 = n2;
 	}
 	
-	Triangle( boolean checkValidity , Point3d[ ] points , Vector3f[ ] normals )
+	Triangle( boolean checkValidity , Point3f p0 , Point3f p1 , Point3f p2 , Vector3f n0 , Vector3f n1 , Vector3f n2 )
 	{
-		this( checkValidity , points[ 0 ] , points[ 1 ] , points[ 2 ] , normals[ 0 ] , normals[ 1 ] , normals[ 2 ] );
+		this( checkValidity , p0 , p1 , p2 );
+		this.n0 = n0;
+		this.n1 = n1;
+		this.n2 = n2;
 	}
 	
-	public Triangle( Point3f p0 , Point3f p1 , Point3f p2 , Vector3f n0 , Vector3f n1 , Vector3f n2 )
-	{
-		this( new Point3d( p0 ) , new Point3d( p1 ) , new Point3d( p2 ) , n0 , n1 , n2 );
-	}
-	
-	public static void checkValid( Point3d p0 , Point3d p1 , Point3d p2 )
+	public static void checkValid( Point3f p0 , Point3f p1 , Point3f p2 )
 	{
 		VecmathUtils.checkReal( p0 );
 		VecmathUtils.checkReal( p1 );
@@ -84,17 +87,17 @@ public class Triangle
 			throw new IllegalArgumentException( "points must all be distinct" );
 		}
 		
-		double a1 = p1.x - p0.x;
-		double a2 = p1.y - p0.y;
-		double a3 = p1.z - p0.z;
+		float a1 = p1.x - p0.x;
+		float a2 = p1.y - p0.y;
+		float a3 = p1.z - p0.z;
 		
-		double b1 = p2.x - p0.x;
-		double b2 = p2.y - p0.y;
-		double b3 = p2.z - p0.z;
+		float b1 = p2.x - p0.x;
+		float b2 = p2.y - p0.y;
+		float b3 = p2.z - p0.z;
 		
-		double c1 = a2 * b3 - a3 * b2;
-		double c2 = a3 * b1 - a1 * b3;
-		double c3 = a1 * b2 - a2 * b1;
+		float c1 = a2 * b3 - a3 * b2;
+		float c2 = a3 * b1 - a1 * b3;
+		float c3 = a1 * b2 - a2 * b1;
 		
 		if( c1 == 0 && c2 == 0 && c3 == 0 )
 		{
@@ -104,9 +107,27 @@ public class Triangle
 	
 	public Triangle canonical( )
 	{
-		Point3d[ ] points = getPoints( );
-		Arrays.sort( points , CanonicalPoint3dOrder.INSTANCE );
-		return reorder( points[ 0 ] , points[ 1 ] );
+		int i0 = 0;
+		int i1 = 1;
+		int i2 = 2;
+		if( CanonicalPoint3fOrder.INSTANCE.compare( p0 , p1 ) > 0 )
+		{
+			i0 = 1;
+			i1 = 0;
+		}
+		if( CanonicalPoint3fOrder.INSTANCE.compare( getPoint( i1 ) , p2 ) > 0 )
+		{
+			int swap = i1;
+			i1 = i2;
+			i2 = swap;
+		}
+		if( CanonicalPoint3fOrder.INSTANCE.compare( getPoint( i0 ) , getPoint( i1 ) ) > 0 )
+		{
+			int swap = i0;
+			i0 = i1;
+			i1 = swap;
+		}
+		return new Triangle( false , getPoint( i0 ) , getPoint( i1 ) , getPoint( i2 ) , getNormal( i0 ) , getNormal( i1 ) , getNormal( i2 ) );
 	}
 	
 	public Triangle reverse( )
@@ -119,14 +140,14 @@ public class Triangle
 		return new Triangle( false , getPoint( amount % 3 ) , getPoint( ( amount + 1 ) % 3 ) , getPoint( ( amount + 2 ) % 3 ) , getNormal( amount % 3 ) , getNormal( ( amount + 1 ) % 3 ) , getNormal( ( amount + 2 ) % 3 ) );
 	}
 	
-	public Triangle reorder( Point3d newP0 , Point3d newP1 )
+	public Triangle reorder( Point3f newP0 , Point3f newP1 )
 	{
 		if( newP0.equals( newP1 ) )
 		{
 			throw new IllegalArgumentException( "newP0 and newP1 must be different" );
 		}
 		
-		Point3d newP2 = null;
+		Point3f newP2 = null;
 		Vector3f newN0 = null;
 		Vector3f newN1 = null;
 		Vector3f newN2 = null;
@@ -135,7 +156,7 @@ public class Triangle
 		
 		for( int i = 0 ; i < 3 ; i++ )
 		{
-			Point3d p = getPoint( i );
+			Point3f p = getPoint( i );
 			if( p.equals( newP0 ) )
 			{
 				newN0 = getNormal( i );
@@ -165,7 +186,7 @@ public class Triangle
 		return new Triangle( false , newP0 , newP1 , newP2 , newN0 , newN1 , newN2 );
 	}
 	
-	Point3d getPoint( int index )
+	public Point3f getPoint( int index )
 	{
 		switch( index )
 		{
@@ -180,7 +201,7 @@ public class Triangle
 		}
 	}
 	
-	public int indexOf( Point3d p )
+	public int indexOf( Point3f p )
 	{
 		if( p0.equals( p ) )
 		{
@@ -230,14 +251,7 @@ public class Triangle
 		}
 	}
 	
-	public void getPoints( Point3d[ ] result )
-	{
-		result[ 0 ].set( p0 );
-		result[ 1 ].set( p1 );
-		result[ 2 ].set( p2 );
-	}
-	
-	public Point3d getOtherPoint( Point3d point1 , Point3d point2 , Point3d result )
+	public Point3f getOtherPoint( Point3f point1 , Point3f point2 , Point3f result )
 	{
 		if( !p0.equals( point1 ) && !p0.equals( point2 ) )
 		{
@@ -250,23 +264,6 @@ public class Triangle
 		result.set( p2 );
 		
 		return result;
-	}
-	
-	public void getNormals( Vector3f[ ] result )
-	{
-		result[ 0 ].set( n0 );
-		result[ 1 ].set( n1 );
-		result[ 2 ].set( n2 );
-	}
-	
-	public Point3d[ ] getPoints( )
-	{
-		return new Point3d[ ] { new Point3d( p0 ) , new Point3d( p1 ) , new Point3d( p2 ) };
-	}
-	
-	public Vector3f[ ] getNormals( )
-	{
-		return new Vector3f[ ] { new Vector3f( n0 ) , new Vector3f( n1 ) , new Vector3f( n2 ) };
 	}
 	
 	public Edge getEdge( int index )
@@ -323,23 +320,23 @@ public class Triangle
 	
 	public void getDefaultNormal( Vector3f out )
 	{
-		 double bx = p1.x - p0.x;
-		 double by = p1.y - p0.y;
-		 double bz = p1.z - p0.z;
+		float bx = p1.x - p0.x;
+		float by = p1.y - p0.y;
+		float bz = p1.z - p0.z;
 		
-		 double cx = p2.x - p0.x;
-		 double cy = p2.y - p0.y;
-		 double cz = p2.z - p0.z;
+		float cx = p2.x - p0.x;
+		float cy = p2.y - p0.y;
+		float cz = p2.z - p0.z;
 		
-		 double ax = by * cz - bz * cy;
-		 double ay = bz * cx - bx * cz;
-		 double az = bx * cy - by * cx;
+		float ax = by * cz - bz * cy;
+		float ay = bz * cx - bx * cz;
+		float az = bx * cy - by * cx;
 		
-		 double scale = 1.0 / Math.sqrt( ax * ax + ay * ay + az * az );
+		float scale = ( float ) ( 1.0 / Math.sqrt( ax * ax + ay * ay + az * az ) );
 		
-		 out.x = ( float ) ( ax * scale );
-		 out.y = ( float ) ( ay * scale );
-		 out.z = ( float ) ( az * scale );
+		out.x = ( float ) ( ax * scale );
+		out.y = ( float ) ( ay * scale );
+		out.z = ( float ) ( az * scale );
 	}
 	
 	public static void calcFrontFaceDirection( Point3f p0 , Point3f p1 , Point3f p2 , J3DTempsPool pool , Vector3f out )

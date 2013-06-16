@@ -1,21 +1,21 @@
 
 package org.andork.torquescape.model;
 
-import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 
 public class Edge
 {
-	final Point3d	p0;
-	final Point3d	p1;
+	public final Point3f	p0;
+	public final Point3f	p1;
 
-	public Edge( Point3d p0 , Point3d p1 )
+	public Edge( Point3f p0 , Point3f p1 )
 	{
 		if( p0.equals( p1 ) )
 		{
 			throw new IllegalArgumentException( "p0 and p1 must be different" );
 		}
-		this.p0 = new Point3d( p0 );
-		this.p1 = new Point3d( p1 );
+		this.p0 = new Point3f( p0 );
+		this.p1 = new Point3f( p1 );
 	}
 	
 	public Edge( Edge other )
@@ -25,7 +25,7 @@ public class Edge
 	
 	public Edge canonical( )
 	{
-		if( CanonicalPoint3dOrder.INSTANCE.compare( p0 , p1 ) > 0 )
+		if( CanonicalPoint3fOrder.INSTANCE.compare( p0 , p1 ) > 0 )
 		{
 			return new Edge( p1 , p0 );
 		}
@@ -38,22 +38,6 @@ public class Edge
 	public Edge reverse( )
 	{
 		return new Edge( p1 , p0 );
-	}
-	
-	public void get( Point3d p0 , Point3d p1 )
-	{
-		p0.set( this.p0 );
-		p1.set( this.p1 );
-	}
-	
-	public void getP0( Point3d result )
-	{
-		result.set( p0 );
-	}
-	
-	public void getP1( Point3d result )
-	{
-		result.set( p1 );
 	}
 	
 	public boolean equals( Edge o )

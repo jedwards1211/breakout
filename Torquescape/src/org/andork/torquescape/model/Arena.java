@@ -9,34 +9,33 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.media.j3d.Transform3D;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.j3d.math.TransformComputer3d;
+import org.andork.j3d.math.TransformComputer3f;
 
 import com.google.common.collect.LinkedHashMultimap;
 
 public class Arena
 {
-	private final LinkedHashMultimap<Point3d, Triangle>	vertToTriMap	= LinkedHashMultimap.create( );
+	private final LinkedHashMultimap<Point3f, Triangle>	vertToTriMap	= LinkedHashMultimap.create( );
 	private final LinkedHashMultimap<Edge, Triangle>	edgeToTriMap	= LinkedHashMultimap.create( );
-	private final LinkedHashMultimap<Point3d, Point3d>	vertToVertMap	= LinkedHashMultimap.create( );
-	private final LinkedHashMultimap<Edge, Point3d>		edgeToVertMap	= LinkedHashMultimap.create( );
+	private final LinkedHashMultimap<Point3f, Point3f>	vertToVertMap	= LinkedHashMultimap.create( );
+	private final LinkedHashMultimap<Edge, Point3f>		edgeToVertMap	= LinkedHashMultimap.create( );
 	private final Map<Triangle, Triangle>				triangles		= new HashMap<Triangle, Triangle>( );
 	
 	private final List<Player>							players			= new ArrayList<Player>( );
 	
-	private final Point3d								p1				= new Point3d( );
-	private final Vector3d								v1				= new Vector3d( );
-	private final Vector3d								v2				= new Vector3d( );
-	private final Vector3d								v3				= new Vector3d( );
-	private final Vector3d								v4				= new Vector3d( );
-	private final Vector3d								v5				= new Vector3d( );
-	private final Vector3d								v6				= new Vector3d( );
+	private final Point3f								p1				= new Point3f( );
+	private final Vector3f								v1				= new Vector3f( );
+	private final Vector3f								v2				= new Vector3f( );
+	private final Vector3f								v3				= new Vector3f( );
+	private final Vector3f								v4				= new Vector3f( );
+	private final Vector3f								v5				= new Vector3f( );
+	private final Vector3f								v6				= new Vector3f( );
 	private final Vector3f								v3f1			= new Vector3f( );
 	
-	private final TransformComputer3d					tc				= new TransformComputer3d( );
+	private final TransformComputer3f					tc				= new TransformComputer3f( );
 	private final Transform3D							orient			= new Transform3D( );
 	
 	private final UVIntersector							intersector		= new UVIntersector( );
@@ -49,7 +48,7 @@ public class Arena
 		}
 	}
 	
-	public void updatePlayers( double timestep )
+	public void updatePlayers( float timestep )
 	{
 		for( Player player : players )
 		{
@@ -57,7 +56,7 @@ public class Arena
 		}
 	}
 	
-	private void updatePlayer( Player player , double timestep )
+	private void updatePlayer( Player player , float timestep )
 	{
 		double angleChange = player.angularVelocity * timestep;
 		if( angleChange != 0 )
@@ -66,12 +65,12 @@ public class Arena
 			player.basis.getXYZToEFGDirect( ).transform( v1 );
 			double ePrime = Math.cos( angleChange ) * v1.x - Math.sin( angleChange ) * v1.y;
 			double fPrime = Math.sin( angleChange ) * v1.x + Math.cos( angleChange ) * v1.y;
-			v1.set( ePrime , fPrime , 0 );
+			v1.set( ( float ) ePrime , ( float ) fPrime , 0 );
 			player.basis.getEFGToXYZDirect( ).transform( v1 );
 			v1.normalize( );
 			player.setBasisForward( v1 );
 		}
-		double remainingDist = Math.abs( player.velocity * timestep );
+		float remainingDist = Math.abs( player.velocity * timestep );
 		
 		while( remainingDist > 0 )
 		{
@@ -172,7 +171,7 @@ public class Arena
 		player.getBasisUp( v5 );
 		player.getBasisForward( v6 );
 		
-		if( v2.epsilonEquals( v5 , 0.1 ) )
+		if( v2.epsilonEquals( v5 , 0.1f ) )
 		{
 			tc.orient( v2 , v5 , orient );
 			player.setModelUp( v5 );
@@ -240,13 +239,13 @@ public class Arena
 		}
 	}
 	
-	private void rotate( Vector3d v , Vector3d axis , double rotationAmount )
+	private void rotate( Vector3f v , Vector3f axis , double rotationAmount )
 	{
-		tc.orient( axis , new Vector3d( 1 , 0 , 0 ) , orient );
+		tc.orient( axis , new Vector3f( 1 , 0 , 0 ) , orient );
 		orient.transform( v );
 		orient.rotX( rotationAmount );
 		orient.transform( v );
-		tc.orient( new Vector3d( 1 , 0 , 0 ) , axis , orient );
+		tc.orient( new Vector3f( 1 , 0 , 0 ) , axis , orient );
 		orient.transform( v );
 	}
 	
@@ -255,7 +254,7 @@ public class Arena
 		return Collections.unmodifiableCollection( triangles.values( ) );
 	}
 	
-	public Set<Point3d> getVertices( )
+	public Set<Point3f> getVertices( )
 	{
 		return Collections.unmodifiableSet( vertToTriMap.keySet( ) );
 	}
@@ -265,12 +264,12 @@ public class Arena
 		return Collections.unmodifiableSet( edgeToTriMap.keySet( ) );
 	}
 	
-	public Set<Point3d> getConnectedPoints( Point3d p )
+	public Set<Point3f> getConnectedPoints( Point3f p )
 	{
 		return Collections.unmodifiableSet( vertToVertMap.get( p ) );
 	}
 	
-	public Set<Point3d> getConnectedPoints( Point3d e0 , Point3d e1 )
+	public Set<Point3f> getConnectedPoints( Point3f e0 , Point3f e1 )
 	{
 		return Collections.unmodifiableSet( edgeToVertMap.get( new Edge( e0 , e1 ).canonical( ) ) );
 	}
@@ -284,10 +283,9 @@ public class Arena
 			{
 				edgeToTriMap.put( e.canonical( ) , canonical );
 			}
-			for( Point3d p : t.getPoints( ) )
-			{
-				vertToTriMap.put( p , canonical );
-			}
+			vertToTriMap.put( t.p0 , canonical );
+			vertToTriMap.put( t.p1 , canonical );
+			vertToTriMap.put( t.p2 , canonical );
 			
 			vertToVertMap.put( t.p0 , t.p1 );
 			vertToVertMap.put( t.p0 , t.p2 );
@@ -302,25 +300,24 @@ public class Arena
 		}
 	}
 	
-	public void remove( Triangle triangle )
+	public void remove( Triangle t )
 	{
-		Triangle canonical = triangle.canonical( );
+		Triangle canonical = t.canonical( );
 		
 		if( triangles.remove( canonical ) != null )
 		{
-			for( Edge e : triangle.getEdges( ) )
+			for( Edge e : t.getEdges( ) )
 			{
 				edgeToTriMap.remove( e.canonical( ) , canonical );
 			}
 			
-			for( Point3d p : triangle.getPoints( ) )
-			{
-				vertToTriMap.remove( p , canonical );
-			}
+			vertToTriMap.remove( t.p0 , canonical );
+			vertToTriMap.remove( t.p1 , canonical );
+			vertToTriMap.remove( t.p2 , canonical );
 		}
 	}
 	
-	public Triangle getTriangle( Point3d p0 , Point3d p1 , Point3d p2 )
+	public Triangle getTriangle( Point3f p0 , Point3f p1 , Point3f p2 )
 	{
 		return triangles.get( new Triangle( p0 , p1 , p2 ).canonical( ) );
 	}

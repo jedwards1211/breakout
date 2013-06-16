@@ -32,16 +32,16 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 		
 		Point3f[ ][ ] prevSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
 		boolean[ ][ ] prevSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
-		Point3f[ ][ ] nextSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
-		boolean[ ][ ] nextSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
+//		Point3f[ ][ ] nextSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
+//		boolean[ ][ ] nextSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
 		
 		for( int c = 0 ; c < sectionCurves.size( ) ; c++ )
 		{
 			int pointCount = sectionCurves.get( c ).points.length;
 			prevSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
 			prevSmoothFlags[ c ] = new boolean[ pointCount ];
-			nextSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
-			nextSmoothFlags[ c ] = new boolean[ pointCount ];
+//			nextSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
+//			nextSmoothFlags[ c ] = new boolean[ pointCount ];
 			
 			triGroups[ c ] = new LinkedList<Triangle>( );
 			out.add( triGroups[ c ] );
@@ -62,6 +62,15 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			crossSection.eval( param , pool , sectionCurves );
 			
 			trackAxis.eval( param , pool , xform );
+			
+			Point3f[ ][ ] nextSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
+			boolean[ ][ ] nextSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
+			for( int c = 0 ; c < sectionCurves.size( ) ; c++ )
+			{
+				int pointCount = sectionCurves.get( c ).points.length;
+				nextSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
+				nextSmoothFlags[ c ] = new boolean[ pointCount ];
+			}
 			
 			getSectionVertices( sectionCurves , nextSectionPoints , nextSmoothFlags , xform );
 			
@@ -96,13 +105,8 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 				}
 			}
 			
-			Point3f[ ][ ] swapPoints = prevSectionPoints;
 			prevSectionPoints = nextSectionPoints;
-			nextSectionPoints = swapPoints;
-			
-			boolean[ ][ ] swapNextSmoothFlags = nextSmoothFlags;
 			prevSmoothFlags = nextSmoothFlags;
-			nextSmoothFlags = swapNextSmoothFlags;
 		}
 	}
 	

@@ -1,12 +1,11 @@
 package org.andork.torquescape.model.render;
 
-import javax.vecmath.Point3d;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.J3DTempsPool;
 import org.andork.torquescape.model.Arena;
 import org.andork.torquescape.model.Triangle;
-import org.andork.vecmath.VecmathUtils;
 
 public class NormalGenerator
 {
@@ -24,14 +23,10 @@ public class NormalGenerator
 	
 	public void generateNormals( )
 	{
-		Point3d[ ] points = VecmathUtils.allocPoint3dArray( 3 );
-		
 		for( Triangle t : arena.getTriangles( ) )
 		{
 			setupDefaults( t );
 			TriangleRenderingInfo ri = t.getRenderingInfo( );
-			
-			t.getPoints( points );
 			
 			for( int i = 0 ; i < 3 ; i++ )
 			{
@@ -44,15 +39,20 @@ public class NormalGenerator
 				normal = new Vector3f( ri.defaultNormal );
 				t.setNormal( i , normal );
 				
-				addAdjacentNormals( t , points[ 0 ] , points[ 1 ] , points[ 2 ] , normal );
-				addAdjacentNormals( t , points[ 0 ] , points[ 2 ] , points[ 1 ] , normal );
+				addAdjacentNormals( t , t.p0 , t.p1 , t.p2 , normal );
+				addAdjacentNormals( t , t.p0 , t.p1 , t.p2 , normal );
 				
 				normal.normalize( );
 			}
 		}
+		
+		for( Triangle t : arena.getTriangles( ) )
+		{
+			t.ri = null;
+		}
 	}
 	
-	void addAdjacentNormals( Triangle t , Point3d p0 , Point3d p1 , Point3d p2 , Vector3f normal )
+	void addAdjacentNormals( Triangle t , Point3f p0 , Point3f p1 , Point3f p2 , Vector3f normal )
 	{
 		Triangle start = t;
 		
@@ -84,7 +84,7 @@ public class NormalGenerator
 				break;
 			}
 			
-			Point3d p3 = getOtherPoint( arena , p0 , p1 , p2 );
+			Point3f p3 = getOtherPoint( arena , p0 , p1 , p2 );
 			
 			if( p3 == null )
 			{
@@ -122,9 +122,9 @@ public class NormalGenerator
 		pool.release( v1 );
 	}
 	
-	Point3d getOtherPoint( Arena arena , Point3d p0 , Point3d p1 , Point3d p2 )
+	Point3f getOtherPoint( Arena arena , Point3f p0 , Point3f p1 , Point3f p2 )
 	{
-		for( Point3d p3 : arena.getConnectedPoints( p0 , p1 ) )
+		for( Point3f p3 : arena.getConnectedPoints( p0 , p1 ) )
 		{
 			if( !p3.equals( p2 ) )
 			{

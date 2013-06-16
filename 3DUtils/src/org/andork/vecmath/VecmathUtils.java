@@ -37,7 +37,7 @@ public class VecmathUtils
 			throw new IllegalArgumentException( "tuple is zero" );
 		}
 	}
-
+	
 	public static void checkReal( Tuple3f p )
 	{
 		if( Double.isNaN( p.x ) || Double.isNaN( p.y ) || Double.isNaN( p.z ) )
@@ -57,7 +57,7 @@ public class VecmathUtils
 			throw new IllegalArgumentException( "tuple is zero" );
 		}
 	}
-
+	
 	public static final Vector3f	UNIT_XF		= new Vector3f( 1 , 0 , 0 );
 	public static final Vector3f	UNIT_YF		= new Vector3f( 0 , 1 , 0 );
 	public static final Vector3f	UNIT_ZF		= new Vector3f( 0 , 0 , 1 );
@@ -69,13 +69,13 @@ public class VecmathUtils
 	public static final Vector3d	UNIT_YD		= new Vector3d( 0 , 1 , 0 );
 	public static final Vector3d	UNIT_ZD		= new Vector3d( 0 , 0 , 1 );
 	public static final Point3d		ZEROD		= new Point3d( 0 , 0 , 0 );
-
+	
 	public static boolean approxZero( final Tuple3f tuple , float tolerance )
 	{
 		return Math.abs( tuple.x ) < tolerance && Math.abs( tuple.y ) < tolerance && Math.abs( tuple.z ) < tolerance;
 	}
-
-	public static <T extends Tuple2f>float[ ] toFloatArray2( T[ ] tuples , float[ ] buffer )
+	
+	public static <T extends Tuple2f> float[ ] toFloatArray2( T[ ] tuples , float[ ] buffer )
 	{
 		if( buffer == null )
 		{
@@ -89,8 +89,8 @@ public class VecmathUtils
 		}
 		return buffer;
 	}
-
-	public static <T extends Tuple3f>float[ ] toFloatArray3( T[ ] tuples , float[ ] buffer )
+	
+	public static <T extends Tuple3f> float[ ] toFloatArray3( T[ ] tuples , float[ ] buffer )
 	{
 		if( buffer == null )
 		{
@@ -105,8 +105,8 @@ public class VecmathUtils
 		}
 		return buffer;
 	}
-
-	public static <T extends Tuple4f>float[ ] toFloatArray4( T[ ] tuples , float[ ] buffer )
+	
+	public static <T extends Tuple4f> float[ ] toFloatArray4( T[ ] tuples , float[ ] buffer )
 	{
 		if( buffer == null )
 		{
@@ -122,7 +122,7 @@ public class VecmathUtils
 		}
 		return buffer;
 	}
-
+	
 	public static ArrayList<Point3f> toPoint3fArrayList( float[ ] points )
 	{
 		if( ( points.length % 3 ) != 0 )
@@ -136,7 +136,7 @@ public class VecmathUtils
 		}
 		return result;
 	}
-
+	
 	public static ArrayList<Vector3f> toVector3fArrayList( float[ ] points )
 	{
 		if( ( points.length % 3 ) != 0 )
@@ -150,7 +150,7 @@ public class VecmathUtils
 		}
 		return result;
 	}
-
+	
 	public static Point2f[ ] allocPoint2fArray( int size )
 	{
 		final Point2f[ ] result = new Point2f[ size ];
@@ -160,7 +160,7 @@ public class VecmathUtils
 		}
 		return result;
 	}
-
+	
 	public static Vector2f[ ] allocVector2fArray( int size )
 	{
 		final Vector2f[ ] result = new Vector2f[ size ];
@@ -170,7 +170,7 @@ public class VecmathUtils
 		}
 		return result;
 	}
-
+	
 	public static Point3f[ ] allocPoint3fArray( int size )
 	{
 		final Point3f[ ] result = new Point3f[ size ];
@@ -180,7 +180,7 @@ public class VecmathUtils
 		}
 		return result;
 	}
-
+	
 	public static Point3d[ ] allocPoint3dArray( int size )
 	{
 		final Point3d[ ] result = new Point3d[ size ];
@@ -190,7 +190,7 @@ public class VecmathUtils
 		}
 		return result;
 	}
-
+	
 	public static Point2d[ ] allocPoint2dArray( int size )
 	{
 		final Point2d[ ] result = new Point2d[ size ];
@@ -200,7 +200,7 @@ public class VecmathUtils
 		}
 		return result;
 	}
-
+	
 	public static Vector3f[ ] allocVector3fArray( int size )
 	{
 		final Vector3f[ ] result = new Vector3f[ size ];
@@ -210,23 +210,23 @@ public class VecmathUtils
 		}
 		return result;
 	}
-
+	
 	public static Point4d toPoint4d( Point3d p , double w )
 	{
 		return new Point4d( p.x , p.y , p.z , w );
 	}
-
+	
 	public static Point3d toPoint3d( Point4d p )
 	{
 		return new Point3d( p.x , p.y , p.z );
 	}
-
+	
 	public static Point3f toPoint3f( Point4d p )
 	{
 		return new Point3f( ( float ) p.x , ( float ) p.y , ( float ) p.z );
 	}
-
-	public static <T extends Tuple2f>float[ ] toFloatArray2( Collection<T> tuples , float[ ] buffer )
+	
+	public static <T extends Tuple2f> float[ ] toFloatArray2( Collection<T> tuples , float[ ] buffer )
 	{
 		if( buffer == null )
 		{
@@ -240,8 +240,8 @@ public class VecmathUtils
 		}
 		return buffer;
 	}
-
-	public static <T extends Tuple3f>float[ ] toFloatArray3( Collection<T> tuples , float[ ] buffer )
+	
+	public static <T extends Tuple3f> float[ ] toFloatArray3( Collection<T> tuples , float[ ] buffer )
 	{
 		if( buffer == null )
 		{
@@ -256,8 +256,8 @@ public class VecmathUtils
 		}
 		return buffer;
 	}
-
-	public static <T extends Tuple4f>float[ ] toFloatArray4( Collection<T> tuples , float[ ] buffer )
+	
+	public static <T extends Tuple4f> float[ ] toFloatArray4( Collection<T> tuples , float[ ] buffer )
 	{
 		if( buffer == null )
 		{

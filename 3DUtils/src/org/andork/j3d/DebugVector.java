@@ -8,8 +8,8 @@ import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.TransparencyAttributes;
 import javax.vecmath.Color3f;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
 
 import org.andork.vecmath.VecmathUtils;
 
@@ -18,13 +18,13 @@ public class DebugVector extends BranchGroup
 	private final Shape3D			shape	= new Shape3D( );
 	
 	private static final Object		lock	= new Object( );
-	private static final Vector3d	v1		= new Vector3d( );
-	private static final Vector3d	v2		= new Vector3d( );
-	private static final Vector3d	v3		= new Vector3d( );
-	private static final Point3d	p1		= new Point3d( );
-	private static final Point3d	p2		= new Point3d( );
+	private static final Vector3f	v1		= new Vector3f( );
+	private static final Vector3f	v2		= new Vector3f( );
+	private static final Vector3f	v3		= new Vector3f( );
+	private static final Point3f	p1		= new Point3f( );
+	private static final Point3f	p2		= new Point3f( );
 	
-	public DebugVector( Point3d location , Vector3d extent , Color3f color )
+	public DebugVector( Point3f location , Vector3f extent , Color3f color )
 	{
 		ColoringAttributes ca = new ColoringAttributes( );
 		ca.setCapability( ColoringAttributes.ALLOW_COLOR_WRITE );
@@ -47,11 +47,12 @@ public class DebugVector extends BranchGroup
 		addChild( shape );
 	}
 	
-	public void setVisible( boolean visible ) {
+	public void setVisible( boolean visible )
+	{
 		shape.getAppearance( ).getRenderingAttributes( ).setVisible( visible );
 	}
 	
-	public void setVector( Point3d location , Vector3d extent )
+	public void setVector( Point3f location , Vector3f extent )
 	{
 		VecmathUtils.checkReal( location );
 		VecmathUtils.checkReal( extent );
@@ -71,10 +72,10 @@ public class DebugVector extends BranchGroup
 			newArray.setCoordinate( 1 , p1 );
 			newArray.setCoordinate( 3 , p1 );
 			newArray.setCoordinate( 5 , p1 );
-//			newArray.setCoordinate( 7 , p1 );
-//			newArray.setCoordinate( 9 , p1 );
+			// newArray.setCoordinate( 7 , p1 );
+			// newArray.setCoordinate( 9 , p1 );
 			
-			v3.scale( -0.25 , extent );
+			v3.scale( -0.25f , extent );
 			p1.add( v3 );
 			
 			if( v3.x == 0 && v3.y == 0 )
@@ -83,7 +84,7 @@ public class DebugVector extends BranchGroup
 			}
 			else
 			{
-				double xy = Math.sqrt( v3.x * v3.x + v3.y * v3.y );
+				float xy = ( float ) Math.sqrt( v3.x * v3.x + v3.y * v3.y );
 				v1.x = -v3.z * v3.x / xy;
 				v1.y = -v3.z * v3.y / xy;
 				v1.z = xy;

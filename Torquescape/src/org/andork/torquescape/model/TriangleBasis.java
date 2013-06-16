@@ -1,8 +1,6 @@
-
 package org.andork.torquescape.model;
 
-import javax.vecmath.Matrix4d;
-import javax.vecmath.Vector3d;
+import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
 /**
@@ -24,29 +22,29 @@ public class TriangleBasis
 {
 	Triangle		triangle;
 	
-	final Vector3d	uVector				= new Vector3d( );
-	final Vector3d	vVector				= new Vector3d( );
-	final Vector3d	nVector				= new Vector3d( );
+	final Vector3f	uVector				= new Vector3f( );
+	final Vector3f	vVector				= new Vector3f( );
+	final Vector3f	nVector				= new Vector3f( );
 	
-	final Vector3d	eVector				= new Vector3d( );
-	final Vector3d	fVector				= new Vector3d( );
-	final Vector3d	gVector				= new Vector3d( );
+	final Vector3f	eVector				= new Vector3f( );
+	final Vector3f	fVector				= new Vector3f( );
+	final Vector3f	gVector				= new Vector3f( );
 	
-	double			vDotU;
-	double			uDotU;
-	double			vDotV;
-	double			normUCrossV;
+	float			vDotU;
+	float			uDotU;
+	float			vDotV;
+	float			normUCrossV;
 	
-	final Matrix4d	xyzToUVN			= new Matrix4d( );
-	final Matrix4d	uvnToXYZ			= new Matrix4d( );
+	final Matrix4f	xyzToUVN			= new Matrix4f( );
+	final Matrix4f	uvnToXYZ			= new Matrix4f( );
 	boolean			xyzToUVNUpToDate	= false;
 	
-	final Matrix4d	xyzToEFG			= new Matrix4d( );
-	final Matrix4d	efgToXYZ			= new Matrix4d( );
+	final Matrix4f	xyzToEFG			= new Matrix4f( );
+	final Matrix4f	efgToXYZ			= new Matrix4f( );
 	boolean			xyzToEFGUpToDate	= false;
 	
-	final Matrix4d	uvnToEFG			= new Matrix4d( );
-	final Matrix4d	efgToUVN			= new Matrix4d( );
+	final Matrix4f	uvnToEFG			= new Matrix4f( );
+	final Matrix4f	efgToUVN			= new Matrix4f( );
 	boolean			uvnToEFGUpToDate	= false;
 	
 	public TriangleBasis( )
@@ -129,73 +127,73 @@ public class TriangleBasis
 		}
 	}
 	
-	public void getXYZToUVN( Matrix4d result )
+	public void getXYZToUVN( Matrix4f result )
 	{
 		updateXYZToUVNIfNecessary( );
 		result.set( xyzToUVN );
 	}
 	
-	public Matrix4d getXYZToUVNDirect( )
+	public Matrix4f getXYZToUVNDirect( )
 	{
 		updateXYZToUVNIfNecessary( );
 		return xyzToUVN;
 	}
 	
-	public void getUVNToXYZ( Matrix4d result )
+	public void getUVNToXYZ( Matrix4f result )
 	{
 		updateXYZToUVNIfNecessary( );
 		result.set( uvnToXYZ );
 	}
 	
-	public Matrix4d getUVNToXYZDirect( )
+	public Matrix4f getUVNToXYZDirect( )
 	{
 		updateXYZToUVNIfNecessary( );
 		return uvnToXYZ;
 	}
 	
-	public void getXYZToEFG( Matrix4d result )
+	public void getXYZToEFG( Matrix4f result )
 	{
 		updateXYZToEFGIfNecessary( );
 		result.set( xyzToEFG );
 	}
 	
-	public Matrix4d getXYZToEFGDirect( )
+	public Matrix4f getXYZToEFGDirect( )
 	{
 		updateXYZToEFGIfNecessary( );
 		return xyzToEFG;
 	}
 	
-	public void getEFGToXYZ( Matrix4d result )
+	public void getEFGToXYZ( Matrix4f result )
 	{
 		updateXYZToEFGIfNecessary( );
 		result.set( efgToXYZ );
 	}
 	
-	public Matrix4d getEFGToXYZDirect( )
+	public Matrix4f getEFGToXYZDirect( )
 	{
 		updateXYZToEFGIfNecessary( );
 		return efgToXYZ;
 	}
 	
-	public void getUVNToEFG( Matrix4d result )
+	public void getUVNToEFG( Matrix4f result )
 	{
 		updateUVNToEFGIfNecessary( );
 		result.set( uvnToEFG );
 	}
 	
-	public Matrix4d getUVNToEFGDirect( )
+	public Matrix4f getUVNToEFGDirect( )
 	{
 		updateUVNToEFGIfNecessary( );
 		return uvnToEFG;
 	}
 	
-	public void getEFGToUVN( Matrix4d result )
+	public void getEFGToUVN( Matrix4f result )
 	{
 		updateUVNToEFGIfNecessary( );
 		result.set( efgToUVN );
 	}
 	
-	public Matrix4d getEFGToUVNDirect( )
+	public Matrix4f getEFGToUVNDirect( )
 	{
 		updateUVNToEFGIfNecessary( );
 		return efgToUVN;

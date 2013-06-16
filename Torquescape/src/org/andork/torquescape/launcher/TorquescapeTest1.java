@@ -29,7 +29,7 @@ import javax.vecmath.Vector3f;
 import org.andork.j3d.DebugVector;
 import org.andork.j3d.Sandbox3D;
 import org.andork.j3d.math.J3DTempsPool;
-import org.andork.j3d.math.TransformComputer3d;
+import org.andork.j3d.math.TransformComputer3f;
 import org.andork.math3d.EdgeNormalComputer;
 import org.andork.torquescape.model.Arena;
 import org.andork.torquescape.model.Player;
@@ -105,12 +105,12 @@ public class TorquescapeTest1
 		Triangle triangle = arena.getTriangles( ).iterator( ).next( );
 		TriangleBasis basis = new TriangleBasis( );
 		basis.set( triangle );
-		final Point3d location = new Point3d( 0.25 , 0.25 , 0 );
-		final Vector3d forward = new Vector3d( -.25 , -.24 , 0 );
-		final Vector3d actualForward = new Vector3d( 0 , 0 , 1 );
-		final Vector3d targetUp = new Vector3d( 0 , 0 , 1 );
-		final Vector3d up = new Vector3d( 0 , 0 , 1 );
-		final Vector3d right = new Vector3d( );
+		final Point3f location = new Point3f( 0.25f , 0.25f , 0 );
+		final Vector3f forward = new Vector3f( -.25f , -.24f , 0 );
+		final Vector3f actualForward = new Vector3f( 0 , 0 , 1 );
+		final Vector3f targetUp = new Vector3f( 0 , 0 , 1 );
+		final Vector3f up = new Vector3f( 0 , 0 , 1 );
+		final Vector3f right = new Vector3f( );
 		
 		basis.getUVNToXYZDirect( ).transform( location );
 		basis.getUVNToXYZDirect( ).transform( forward );
@@ -144,9 +144,9 @@ public class TorquescapeTest1
 		x2.setTranslation( new Vector3d( 0 , height / 2 , 0 ) );
 		sphereInitXform.mul( x2 , sphereInitXform );
 		
-		final TransformComputer3d tc = new TransformComputer3d( );
+		final TransformComputer3f tc = new TransformComputer3f( );
 		final Transform3D orientation = new Transform3D( );
-		tc.orient( new Point3d( ) , new Vector3d( 0 , 0 , -1 ) , new Vector3d( 0 , 1 , 0 ) , location , forward , up , orientation );
+		tc.orient( new Point3f( ) , new Vector3f( 0 , 0 , -1 ) , new Vector3f( 0 , 1 , 0 ) , location , forward , up , orientation );
 		sphereXform.mul( orientation , sphereInitXform );
 		
 		final TransformGroup sphereTG = new TransformGroup( );
@@ -173,10 +173,10 @@ public class TorquescapeTest1
 		class ControlState
 		{
 			long	lastUpdate;
-			double	acceleration;
-			double	braking;
-			double	leftTurning;
-			double	rightTurning;
+			float	acceleration;
+			float	braking;
+			float	leftTurning;
+			float	rightTurning;
 			
 			boolean	upPressed;
 			boolean	downPressed;
@@ -283,11 +283,11 @@ public class TorquescapeTest1
 		final int cameraDelay = 7;
 		final int cameraSmoothing = 7;
 		
-		final DebugVector upVector = new DebugVector( new Point3d( ) , new Vector3d( 1 , 0 , 0 ) , new Color3f( 1 , 1 , 0 ) );
-		final DebugVector targetUpVector = new DebugVector( new Point3d( ) , new Vector3d( 1 , 0 , 0 ) , new Color3f( 1 , 1 , 1 ) );
-		final DebugVector rightVector = new DebugVector( new Point3d( ) , new Vector3d( 1 , 0 , 0 ) , new Color3f( 0 , 1 , 0 ) );
-		final DebugVector forwardVector = new DebugVector( new Point3d( ) , new Vector3d( 1 , 0 , 0 ) , new Color3f( 1 , 0 , 0 ) );
-		final DebugVector actualForwardVector = new DebugVector( new Point3d( ) , new Vector3d( 1 , 0 , 0 ) , new Color3f( 1 , 0 , 1 ) );
+		final DebugVector upVector = new DebugVector( new Point3f( ) , new Vector3f( 1 , 0 , 0 ) , new Color3f( 1 , 1 , 0 ) );
+		final DebugVector targetUpVector = new DebugVector( new Point3f( ) , new Vector3f( 1 , 0 , 0 ) , new Color3f( 1 , 1 , 1 ) );
+		final DebugVector rightVector = new DebugVector( new Point3f( ) , new Vector3f( 1 , 0 , 0 ) , new Color3f( 0 , 1 , 0 ) );
+		final DebugVector forwardVector = new DebugVector( new Point3f( ) , new Vector3f( 1 , 0 , 0 ) , new Color3f( 1 , 0 , 0 ) );
+		final DebugVector actualForwardVector = new DebugVector( new Point3f( ) , new Vector3f( 1 , 0 , 0 ) , new Color3f( 1 , 0 , 1 ) );
 		
 		// sandbox.sceneRoot.addChild( upVector );
 		// sandbox.sceneRoot.addChild( targetUpVector );
@@ -305,7 +305,7 @@ public class TorquescapeTest1
 			{
 				long currentTime = System.nanoTime( );
 				
-				double acceleration, braking, leftTurning, rightTurning;
+				float acceleration, braking, leftTurning, rightTurning;
 				
 				synchronized( controlState )
 				{
@@ -319,7 +319,7 @@ public class TorquescapeTest1
 				
 				if( lastTimeNS != 0 )
 				{
-					double timestep = ( currentTime - lastTimeNS ) / 1e9;
+					float timestep = ( float ) ( ( ( double ) currentTime - lastTimeNS ) / 1e9 );
 					
 					player1.updateVelocity( timestep , acceleration , braking , leftTurning , rightTurning );
 					
@@ -331,12 +331,12 @@ public class TorquescapeTest1
 					right.cross( forward , up );
 					right.normalize( );
 					
-					tc.orient( new Point3d( ) , new Vector3d( 0 , 1 , 0 ) , new Vector3d( 0 , 0 , -1 ) , location , up , forward , orientation );
+					tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 0 , 0 , -1 ) , location , up , forward , orientation );
 					sphereXform.mul( orientation , sphereInitXform );
 					
 					sphereTG.setTransform( sphereXform );
 					
-					tc.orient( new Point3d( ) , new Vector3d( 0 , 1 , 0 ) , new Vector3d( 0 , 0 , -1 ) , location , up , forward , orientation );
+					tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 0 , 0 , -1 ) , location , up , forward , orientation );
 					
 					Transform3D xform = null;
 					
@@ -360,11 +360,11 @@ public class TorquescapeTest1
 					for( int i = 0 ; i < avgCount ; i++ )
 					{
 						Transform3D next = transformQueue.get( i );
-						Point3d p1 = new Point3d( );
+						Point3f p1 = new Point3f( );
 						next.transform( p1 );
 						location.add( p1 );
 						
-						Vector3d v1 = new Vector3d( 0 , 1 , 0 );
+						Vector3f v1 = new Vector3f( 0 , 1 , 0 );
 						next.transform( v1 );
 						up.add( v1 );
 						
@@ -373,11 +373,11 @@ public class TorquescapeTest1
 						right.add( v1 );
 					}
 					
-					location.scale( 1.0 / avgCount );
-					up.scale( 1.0 / avgCount );
-					right.scale( 1.0 / avgCount );
+					location.scale( 1.0f / avgCount );
+					up.scale( 1.0f / avgCount );
+					right.scale( 1.0f / avgCount );
 					
-					tc.orient( new Point3d( ) , new Vector3d( 0 , 1 , 0 ) , new Vector3d( 1 , 0 , 0 ) , location , up , right , x2 );
+					tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 1 , 0 , 0 ) , location , up , right , x2 );
 					
 					cameraXform.mul( x2 , cameraInitXform );
 					sandbox.vp.getViewPlatformTransform( ).setTransform( cameraXform );
@@ -389,7 +389,7 @@ public class TorquescapeTest1
 					right.cross( forward , up );
 					actualForward.cross( up , right );
 					
-					double debugVecScale = 0.5;
+					float debugVecScale = 0.5f;
 					up.scale( debugVecScale );
 					forward.scale( debugVecScale );
 					targetUp.scale( debugVecScale );
@@ -409,10 +409,10 @@ public class TorquescapeTest1
 	
 	public static void setupArena( IndexedGeometryArray geom , Arena arena )
 	{
-		Point3d[ ] coords = new Point3d[ geom.getVertexCount( ) ];
+		Point3f[ ] coords = new Point3f[ geom.getVertexCount( ) ];
 		for( int i = 0 ; i < coords.length ; i++ )
 		{
-			coords[ i ] = new Point3d( );
+			coords[ i ] = new Point3f( );
 		}
 		geom.getCoordinates( 0 , coords );
 		

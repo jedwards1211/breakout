@@ -15,24 +15,23 @@ public class GeometryGenerator
 	{
 		TriangleArray result = new TriangleArray( triangles.size( ) * 3 , GeometryArray.COORDINATES | GeometryArray.NORMALS );
 		
-		Point3d[ ] points = VecmathUtils.allocPoint3dArray( 3 );
-		
 		int k = 0;
 		for( Triangle t : triangles )
 		{
-			t.getPoints( points );
-			for( int i = 0 ; i < 3 ; i++ )
+			result.setCoordinate( k++ , t.p0 );
+			result.setCoordinate( k++ , t.p1 );
+			result.setCoordinate( k++ , t.p2 );
+			
+			if( t.n0 == null || t.n1 == null || t.n2 == null )
 			{
-				result.setCoordinate( k , points[ i ] );
-				if( t.getNormal( i ) != null )
-				{
-					result.setNormal( k , t.getNormal( i ) );
-				}
-				else
-				{
-					System.out.println( "WHOOPS" );
-				}
-				k++ ;
+				System.out.println( "WHOOPS" );
+			}
+			else
+			{
+				k -= 3;
+				result.setNormal( k++ , t.n0 );
+				result.setNormal( k++ , t.n1 );
+				result.setNormal( k++ , t.n2 );
 			}
 		}
 		
