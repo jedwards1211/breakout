@@ -39,6 +39,8 @@ import org.andork.torquescape.model.gen.DefaultTrackSegmentGenerator;
 import org.andork.torquescape.model.param.ConstantParamFunction;
 import org.andork.torquescape.model.param.CosParamFunction;
 import org.andork.torquescape.model.param.LinearParamFunction;
+import org.andork.torquescape.model.render.GeometryGenerator;
+import org.andork.torquescape.model.render.NormalGenerator;
 import org.andork.torquescape.model.section.PolygonSectionFunction;
 import org.andork.torquescape.model.xform.Bloater;
 import org.andork.torquescape.model.xform.CompoundXformFunction;
@@ -54,32 +56,51 @@ public class TorquescapeTest1
 	{
 		final Sandbox3D sandbox = new Sandbox3D( );
 		View view = sandbox.universe.getViewer( ).getView( );
+		view.setFieldOfView( Math.PI * 0.45 );
 		view.setBackClipDistance( view.getBackClipDistance( ) * 10 );
 		// IndexedGeometryArray torusGeom = createTorus( 5 , 180 , 0.5 , 72 );
-		IndexedGeometryArray torusGeom = createTorus( 50 , 720 , 2 , 3 );
+		IndexedGeometryArray groupGeom = createTorus( 50 , 720 , 2 , 3 );
 		
 		IXformFunction curve = new Ellipse( new Point3f( ) , new Vector3f( 0 , 0 , 1 ) , new Vector3f( 50 , 0 , 0 ) , new Vector3f( 0 , 40 , 0 ) );
-		Helicizer helicizer = new Helicizer( new ConstantParamFunction( 3 ) , new LinearParamFunction( 0 , 1 , 0 , 6 ) );
-		Bloater bloater = new Bloater( new CosParamFunction( 0 , ( float ) Math.PI / 8 , 3 , 1 ) );
+		Helicizer helicizer = new Helicizer( new LinearParamFunction( 0 , ( float ) Math.PI * 2 , 5 , 20 ) , new LinearParamFunction( 0 , 1 , 3 , 0 ) );
+		Bloater bloater = new Bloater( new CosParamFunction( 0 , ( float ) Math.PI / 8 , .5f , 1 ) );
 		IXformFunction twister = new Helicizer( new ConstantParamFunction( 0 ) , new LinearParamFunction( 0 , 1 , 0 , 3 ) );
-		curve = new CompoundXformFunction( curve , twister , bloater );
-		PolygonSectionFunction section = new PolygonSectionFunction( 3 , 2 );
+		// curve = new CompoundXformFunction( curve , twister , bloater );
+		curve = new CompoundXformFunction( curve , helicizer , twister , bloater );
+		PolygonSectionFunction section = new PolygonSectionFunction( 6 , 5 );
 		
 		DefaultTrackSegmentGenerator generator = new DefaultTrackSegmentGenerator( );
-		List<GeometryArray> outGeom = new ArrayList<GeometryArray>( );
-		List<Triangle> outTriangles = new ArrayList<Triangle>( );
-		// generator.generate( curve , section , 0 , ( float ) Math.PI * 1.9f , ( float ) Math.PI / 120 , new J3DTempsPool( ) , outGeom , outTriangles );
+		List<List<Triangle>> outTriangles = new ArrayList<List<Triangle>>( );
+		
+		J3DTempsPool pool = new J3DTempsPool( );
+		
+		generator.generate( curve , section , 0 , ( float ) Math.PI * 16 , ( float ) Math.PI / 180 , pool , outTriangles );
 		
 		final Arena arena = new Arena( );
+		for( List<Triangle> group : outTriangles )
+		{
+			for( Triangle t : group )
+			{
+				arena.add( t );
+			}
+		}
 		
-		// for( Triangle t : outTriangles )
-		// {
-		// arena.add( t );
-		// }
-		// //
-		// GeometryArray torusGeom = outGeom.get( 0 );
+		new NormalGenerator( arena , pool , Math.PI / 2 ).generateNormals( );
 		
-		setupArena( torusGeom , arena );
+		for( List<Triangle> group : outTriangles )
+		{
+			GeometryArray geom = GeometryGenerator.createGeometry( group );
+			
+			Appearance groupApp = new Appearance( );
+			groupApp.setMaterial( new Material( new Color3f( 0.3f , 0 , 0 ) , new Color3f( ) , new Color3f( 1 , 0 , 0 ) , new Color3f( 1 , 1 , 1 ) , 64f ) );
+			groupApp.setPolygonAttributes( new PolygonAttributes( PolygonAttributes.POLYGON_FILL , PolygonAttributes.CULL_BACK , 0f ) );
+			Shape3D groupShape = new Shape3D( geom , groupApp );
+			BranchGroup bg = new BranchGroup( );
+			bg.addChild( groupShape );
+			sandbox.sceneRoot.addChild( bg );
+		}
+		
+		// setupArena( torusGeom , arena );
 		
 		Triangle triangle = arena.getTriangles( ).iterator( ).next( );
 		TriangleBasis basis = new TriangleBasis( );
@@ -112,14 +133,6 @@ public class TorquescapeTest1
 		// player1.setAngularVelocity( Math.PI / 2 );
 		arena.addPlayer( player1 );
 		
-		Appearance torusAppearance = new Appearance( );
-		torusAppearance.setMaterial( new Material( new Color3f( 0.3f , 0 , 0 ) , new Color3f( ) , new Color3f( 1 , 0 , 0 ) , new Color3f( 1 , 1 , 1 ) , 64f ) );
-		torusAppearance.setPolygonAttributes( new PolygonAttributes( PolygonAttributes.POLYGON_FILL , PolygonAttributes.CULL_BACK , 0f ) );
-		Shape3D torusShape = new Shape3D( torusGeom , torusAppearance );
-		BranchGroup bg = new BranchGroup( );
-		bg.addChild( torusShape );
-		sandbox.sceneRoot.addChild( bg );
-		
 		double height = 0.1;
 		Sphere sphere = new Sphere( ( float ) height / 2 );
 		
@@ -147,9 +160,9 @@ public class TorquescapeTest1
 		
 		final Transform3D cameraInitXform = new Transform3D( );
 		final Transform3D cameraXform = new Transform3D( );
-		cameraInitXform.setTranslation( new Vector3d( 0 , 1 , 10 ) );
+		cameraInitXform.setTranslation( new Vector3d( 0 , 0.5 , 2 ) );
 		x2.setIdentity( );
-		x2.rotX( -Math.PI / 18 );
+		x2.rotX( -Math.PI / 22 );
 		cameraInitXform.mul( x2 , cameraInitXform );
 		cameraXform.mul( orientation , cameraInitXform );
 		sandbox.vp.getViewPlatformTransform( ).setTransform( cameraXform );

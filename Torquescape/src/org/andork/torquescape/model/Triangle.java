@@ -6,6 +6,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
+import org.andork.j3d.math.J3DTempsPool;
 import org.andork.torquescape.model.render.TriangleRenderingInfo;
 import org.andork.vecmath.VecmathUtils;
 
@@ -15,11 +16,16 @@ public class Triangle
 	final Point3d			p1;
 	final Point3d			p2;
 	
-	final Vector3f			n0;
-	final Vector3f			n1;
-	final Vector3f			n2;
+	Vector3f				n0;
+	Vector3f				n1;
+	Vector3f				n2;
 	
 	TriangleRenderingInfo	ri;
+	
+	public Triangle( Point3d p0 , Point3d p1 , Point3d p2 )
+	{
+		this( p0 , p1 , p2 , null );
+	}
 	
 	public Triangle( Point3f p0 , Point3f p1 , Point3f p2 , TriangleRenderingInfo ri )
 	{
@@ -52,22 +58,9 @@ public class Triangle
 		this.p0 = new Point3d( p0 );
 		this.p1 = new Point3d( p1 );
 		this.p2 = new Point3d( p2 );
-		this.n0 = new Vector3f( );
-		this.n1 = new Vector3f( );
-		this.n2 = new Vector3f( );
-		
-		if( n0 != null )
-		{
-			this.n0.set( n0 );
-		}
-		if( n1 != null )
-		{
-			this.n1.set( n1 );
-		}
-		if( n2 != null )
-		{
-			this.n2.set( n2 );
-		}
+		this.n0 = n0;
+		this.n1 = n1;
+		this.n2 = n2;
 	}
 	
 	Triangle( boolean checkValidity , Point3d[ ] points , Vector3f[ ] normals )
@@ -124,11 +117,6 @@ public class Triangle
 	public Triangle rotate( int amount )
 	{
 		return new Triangle( false , getPoint( amount % 3 ) , getPoint( ( amount + 1 ) % 3 ) , getPoint( ( amount + 2 ) % 3 ) , getNormal( amount % 3 ) , getNormal( ( amount + 1 ) % 3 ) , getNormal( ( amount + 2 ) % 3 ) );
-	}
-	
-	public Triangle reverseRotate( int amount )
-	{
-		return new Triangle( false , getPoint( ( amount + 2 ) % 3 ) , getPoint( ( amount + 1 ) % 3 ) , getPoint( amount % 3 ) , getNormal( ( amount + 2 ) % 3 ) , getNormal( ( amount + 1 ) % 3 ) , getNormal( amount % 3 ) );
 	}
 	
 	public Triangle reorder( Point3d newP0 , Point3d newP1 )
@@ -192,7 +180,24 @@ public class Triangle
 		}
 	}
 	
-	Vector3f getNormal( int index )
+	public int indexOf( Point3d p )
+	{
+		if( p0.equals( p ) )
+		{
+			return 0;
+		}
+		if( p1.equals( p ) )
+		{
+			return 1;
+		}
+		if( p2.equals( p ) )
+		{
+			return 2;
+		}
+		return -1;
+	}
+	
+	public Vector3f getNormal( int index )
 	{
 		switch( index )
 		{
@@ -207,11 +212,44 @@ public class Triangle
 		}
 	}
 	
+	public void setNormal( int index , Vector3f normal )
+	{
+		switch( index )
+		{
+			case 0:
+				n0 = normal;
+				break;
+			case 1:
+				n1 = normal;
+				break;
+			case 2:
+				n2 = normal;
+				break;
+			default:
+				throw new IllegalArgumentException( "indes must be between 0 and 2 inclusive" );
+		}
+	}
+	
 	public void getPoints( Point3d[ ] result )
 	{
 		result[ 0 ].set( p0 );
 		result[ 1 ].set( p1 );
 		result[ 2 ].set( p2 );
+	}
+	
+	public Point3d getOtherPoint( Point3d point1 , Point3d point2 , Point3d result )
+	{
+		if( !p0.equals( point1 ) && !p0.equals( point2 ) )
+		{
+			result.set( p0 );
+		}
+		if( !p1.equals( point1 ) && !p1.equals( point2 ) )
+		{
+			result.set( p1 );
+		}
+		result.set( p2 );
+		
+		return result;
 	}
 	
 	public void getNormals( Vector3f[ ] result )
@@ -281,5 +319,37 @@ public class Triangle
 	public void setRenderingInfo( TriangleRenderingInfo ri )
 	{
 		this.ri = ri;
+	}
+	
+	public void getDefaultNormal( Vector3f out )
+	{
+		 double bx = p1.x - p0.x;
+		 double by = p1.y - p0.y;
+		 double bz = p1.z - p0.z;
+		
+		 double cx = p2.x - p0.x;
+		 double cy = p2.y - p0.y;
+		 double cz = p2.z - p0.z;
+		
+		 double ax = by * cz - bz * cy;
+		 double ay = bz * cx - bx * cz;
+		 double az = bx * cy - by * cx;
+		
+		 double scale = 1.0 / Math.sqrt( ax * ax + ay * ay + az * az );
+		
+		 out.x = ( float ) ( ax * scale );
+		 out.y = ( float ) ( ay * scale );
+		 out.z = ( float ) ( az * scale );
+	}
+	
+	public static void calcFrontFaceDirection( Point3f p0 , Point3f p1 , Point3f p2 , J3DTempsPool pool , Vector3f out )
+	{
+		Vector3f v1 = pool.getVector3f( );
+		
+		v1.set( p1.x - p0.x , p1.y - p0.y , p1.z - p0.z );
+		out.set( p2.x - p0.x , p2.y - p0.y , p2.z - p0.z );
+		out.cross( v1 , out );
+		
+		pool.release( v1 );
 	}
 }

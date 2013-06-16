@@ -24,6 +24,7 @@ public class TriangleRenderingInfo
 	 *        p0
 	 * </pre>
 	 */
-	public final FoldType[ ]	folds	= new FoldType[ 6 ];
-	final Vector3f[ ]			normals	= VecmathUtils.allocVector3fArray( 6 );
+	public final FoldType[ ]	folds			= new FoldType[ 6 ];
+	
+	Vector3f defaultNormal;
 }

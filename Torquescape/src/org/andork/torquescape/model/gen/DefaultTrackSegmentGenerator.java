@@ -1,12 +1,14 @@
 package org.andork.torquescape.model.gen;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Point3f;
 import javax.vecmath.Tuple3f;
+import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.J3DTempsPool;
 import org.andork.torquescape.model.Triangle;
@@ -24,18 +26,7 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 	{
 		ArrayList<SectionCurve> sectionCurves = crossSection.eval( start , pool , new ArrayList<SectionCurve>( ) );
 		
-		int crossSectionCount = 0;
-		
 		float param;
-		
-		for( param = start ; param < end + step ; param += step )
-		{
-			if( param > end )
-			{
-				param = end;
-			}
-			crossSectionCount++ ;
-		}
 		
 		List<Triangle>[ ] triGroups = ( List<Triangle>[ ] ) new List[ sectionCurves.size( ) ];
 		
@@ -86,16 +77,22 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 				{
 					int nextP = ( p + 1 ) % pointCount;
 					TriangleRenderingInfo ri = new TriangleRenderingInfo( );
-					ri.folds[ 0 ] = prevSmoothFlags[ c ][ p ] ? FoldType.FOLDED : FoldType.NOT_FOLDED;
-					ri.folds[ 1 ] = nextSmoothFlags[ c ][ p ] ? FoldType.FOLDED : FoldType.NOT_FOLDED;
-					ri.folds[ 2 ] = ri.folds[ 3 ] = ri.folds[ 4 ] = ri.folds[ 5 ] = FoldType.ANGLE_DEPENDENT;
-					triGroup.add( new Triangle( prevSectionPoints[ c ][ p ] , nextSectionPoints[ c ][ p ] , prevSectionPoints[ c ][ nextP ] , ri ) );
+					ri.folds[ 0 ] = ri.folds[ 1 ] = ri.folds[ 2 ] = ri.folds[ 3 ] = FoldType.ANGLE_DEPENDENT;
+					ri.folds[ 4 ] = nextSmoothFlags[ c ][ p ] ? FoldType.NOT_FOLDED : FoldType.FOLDED;
+					ri.folds[ 5 ] = prevSmoothFlags[ c ][ p ] ? FoldType.NOT_FOLDED : FoldType.FOLDED;
+					Point3f p0 = prevSectionPoints[ c ][ p ];
+					Point3f p1 = prevSectionPoints[ c ][ nextP ];
+					Point3f p2 = nextSectionPoints[ c ][ p ];
+					triGroup.add( new Triangle( p0 , p1 , p2 , ri ) );
 					
 					ri = new TriangleRenderingInfo( );
 					ri.folds[ 0 ] = ri.folds[ 1 ] = ri.folds[ 2 ] = ri.folds[ 3 ] = FoldType.ANGLE_DEPENDENT;
-					ri.folds[ 4 ] = nextSmoothFlags[ c ][ nextP ] ? FoldType.FOLDED : FoldType.NOT_FOLDED;
-					ri.folds[ 5 ] = prevSmoothFlags[ c ][ nextP ] ? FoldType.FOLDED : FoldType.NOT_FOLDED;
-					triGroup.add( new Triangle( prevSectionPoints[ c ][ nextP ] , nextSectionPoints[ c ][ p ] , nextSectionPoints[ c ][ nextP ] , ri ) );
+					ri.folds[ 4 ] = prevSmoothFlags[ c ][ nextP ] ? FoldType.NOT_FOLDED : FoldType.FOLDED;
+					ri.folds[ 5 ] = nextSmoothFlags[ c ][ nextP ] ? FoldType.NOT_FOLDED : FoldType.FOLDED;
+					p0 = nextSectionPoints[ c ][ nextP ];
+					p1 = nextSectionPoints[ c ][ p ];
+					p2 = prevSectionPoints[ c ][ nextP ];
+					triGroup.add( new Triangle( p0 , p1 , p2 , ri ) );
 				}
 			}
 			
