@@ -56,7 +56,7 @@ public class Arena
 		}
 	}
 	
-	private void updatePlayer( Player player , float timestep )
+	public void updatePlayer( Player player , float timestep )
 	{
 		double angleChange = player.angularVelocity * timestep;
 		if( angleChange != 0 )
@@ -100,7 +100,6 @@ public class Arena
 				v3f1.normalize( );
 				v2.set( v3f1 );
 				player.setBasisUp( v2 );
-				player.setCameraUp( v2 );
 				player.basis.getUVNToXYZDirect( ).transform( p1 );
 				player.setLocation( p1 );
 				remainingDist = 0;
@@ -161,8 +160,10 @@ public class Arena
 					
 					player.setLocation( p1 );
 					player.setBasisForward( v1 );
-					player.setCameraUp( v2 );
 					player.setBasisUp( v2 );
+				}
+				else {
+					player.velocity = 0;
 				}
 			}
 		}

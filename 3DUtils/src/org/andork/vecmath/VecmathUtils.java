@@ -8,6 +8,7 @@ import javax.vecmath.Point2f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Point4d;
+import javax.vecmath.Point4f;
 import javax.vecmath.Tuple2f;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Tuple3f;
@@ -177,6 +178,16 @@ public class VecmathUtils
 		for( int i = 0 ; i < size ; i++ )
 		{
 			result[ i ] = new Point3f( );
+		}
+		return result;
+	}
+	
+	public static Point4f[ ] allocPoint4fArray( int size )
+	{
+		final Point4f[ ] result = new Point4f[ size ];
+		for( int i = 0 ; i < size ; i++ )
+		{
+			result[ i ] = new Point4f( );
 		}
 		return result;
 	}

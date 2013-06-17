@@ -2,8 +2,6 @@ package org.andork.torquescape.launcher;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -31,6 +29,10 @@ import org.andork.j3d.Sandbox3D;
 import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 import org.andork.math3d.EdgeNormalComputer;
+import org.andork.math3d.curve.SegmentedCurve3f;
+import org.andork.torquescape.control.CameraController;
+import org.andork.torquescape.control.ControlState;
+import org.andork.torquescape.control.ControlStateKeyboardHandler;
 import org.andork.torquescape.model.Arena;
 import org.andork.torquescape.model.Player;
 import org.andork.torquescape.model.Triangle;
@@ -44,9 +46,11 @@ import org.andork.torquescape.model.render.NormalGenerator;
 import org.andork.torquescape.model.section.PolygonSectionFunction;
 import org.andork.torquescape.model.xform.Bloater;
 import org.andork.torquescape.model.xform.CompoundXformFunction;
+import org.andork.torquescape.model.xform.CurveXformFunction;
 import org.andork.torquescape.model.xform.Ellipse;
 import org.andork.torquescape.model.xform.Helicizer;
 import org.andork.torquescape.model.xform.IXformFunction;
+import org.andork.torquescape.model.xform.IXformFunctionSegmentizer;
 
 import com.sun.j3d.utils.geometry.Sphere;
 
@@ -56,25 +60,37 @@ public class TorquescapeTest1
 	{
 		final Sandbox3D sandbox = new Sandbox3D( );
 		View view = sandbox.universe.getViewer( ).getView( );
-		view.setFieldOfView( Math.PI * 0.45 );
+		view.setFieldOfView( Math.PI * 0.6 );
 		view.setBackClipDistance( view.getBackClipDistance( ) * 10 );
 		// IndexedGeometryArray torusGeom = createTorus( 5 , 180 , 0.5 , 72 );
 		IndexedGeometryArray groupGeom = createTorus( 50 , 720 , 2 , 3 );
 		
-		IXformFunction curve = new Ellipse( new Point3f( ) , new Vector3f( 0 , 0 , 1 ) , new Vector3f( 50 , 0 , 0 ) , new Vector3f( 0 , 40 , 0 ) );
+		IXformFunction xformFunction = new Ellipse( new Point3f( ) , new Vector3f( 0 , 0 , 1 ) , new Vector3f( 50 , 0 , 0 ) , new Vector3f( 0 , 40 , 0 ) );
 		Helicizer helicizer = new Helicizer( new LinearParamFunction( 0 , ( float ) Math.PI * 2 , 5 , 20 ) , new LinearParamFunction( 0 , 1 , 3 , 0 ) );
 		Bloater bloater = new Bloater( new CosParamFunction( 0 , ( float ) Math.PI / 8 , .5f , 1 ) );
 		IXformFunction twister = new Helicizer( new ConstantParamFunction( 0 ) , new LinearParamFunction( 0 , 1 , 0 , 3 ) );
 		// curve = new CompoundXformFunction( curve , twister , bloater );
-		curve = new CompoundXformFunction( curve , helicizer , twister , bloater );
-		PolygonSectionFunction section = new PolygonSectionFunction( 6 , 5 );
+		// xformFunction = new CompoundXformFunction( xformFunction , helicizer , twister , bloater );
+		xformFunction = new CompoundXformFunction( xformFunction , helicizer );
+		
+		List<Float> params = new ArrayList<Float>( );
+		for( float f = 0 ; f < Math.PI * 16 + 1 ; f += Math.PI / 180 )
+		{
+			params.add( f );
+		}
+		
+		J3DTempsPool pool = new J3DTempsPool( );
+		
+		SegmentedCurve3f segmentedCurve = IXformFunctionSegmentizer.createSegmentedCurve3f( xformFunction , pool , params );
+		xformFunction = new CurveXformFunction( segmentedCurve );
+		xformFunction = new CompoundXformFunction( xformFunction , twister , bloater );
+		
+		PolygonSectionFunction section = new PolygonSectionFunction( 3 , 5 );
 		
 		DefaultTrackSegmentGenerator generator = new DefaultTrackSegmentGenerator( );
 		List<List<Triangle>> outTriangles = new ArrayList<List<Triangle>>( );
 		
-		J3DTempsPool pool = new J3DTempsPool( );
-		
-		generator.generate( curve , section , 0 , ( float ) Math.PI * 16 , ( float ) Math.PI / 180 , pool , outTriangles );
+		generator.generate( xformFunction , section , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 , pool , outTriangles );
 		
 		final Arena arena = new Arena( );
 		for( List<Triangle> group : outTriangles )
@@ -127,7 +143,6 @@ public class TorquescapeTest1
 		player1.setBasisForward( forward );
 		player1.setModelForward( forward );
 		player1.setBasisUp( up );
-		player1.setCameraUp( up );
 		player1.setModelUp( up );
 		// player1.setVelocity( 5 );
 		// player1.setAngularVelocity( Math.PI / 2 );
@@ -170,114 +185,9 @@ public class TorquescapeTest1
 		sandbox.frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		sandbox.frame.setVisible( true );
 		
-		class ControlState
-		{
-			long	lastUpdate;
-			float	acceleration;
-			float	braking;
-			float	leftTurning;
-			float	rightTurning;
-			
-			boolean	upPressed;
-			boolean	downPressed;
-			boolean	leftPressed;
-			boolean	rightPressed;
-			
-			void update( long time )
-			{
-				long lastUpdate = this.lastUpdate;
-				double timestep = ( time - lastUpdate ) / 1e9;
-				this.lastUpdate = time;
-				
-				if( lastUpdate != 0 )
-				{
-					if( upPressed )
-					{
-						acceleration += timestep;
-					}
-					if( downPressed )
-					{
-						braking += timestep;
-					}
-					if( leftPressed )
-					{
-						leftTurning += timestep;
-					}
-					if( rightPressed )
-					{
-						rightTurning += timestep;
-					}
-				}
-			}
-			
-			void clear( )
-			{
-				acceleration = 0;
-				braking = 0;
-				leftTurning = 0;
-				rightTurning = 0;
-			}
-		}
-		
 		final ControlState controlState = new ControlState( );
 		
-		sandbox.canvas.addKeyListener( new KeyListener( )
-		{
-			@Override
-			public void keyPressed( KeyEvent e )
-			{
-				synchronized( controlState )
-				{
-					controlState.update( System.nanoTime( ) );
-					
-					switch( e.getKeyCode( ) )
-					{
-						case KeyEvent.VK_UP:
-							controlState.upPressed = true;
-							break;
-						case KeyEvent.VK_DOWN:
-							controlState.downPressed = true;
-							break;
-						case KeyEvent.VK_LEFT:
-							controlState.leftPressed = true;
-							break;
-						case KeyEvent.VK_RIGHT:
-							controlState.rightPressed = true;
-							break;
-					}
-				}
-			}
-			
-			@Override
-			public void keyReleased( KeyEvent e )
-			{
-				synchronized( controlState )
-				{
-					controlState.update( System.nanoTime( ) );
-					
-					switch( e.getKeyCode( ) )
-					{
-						case KeyEvent.VK_UP:
-							controlState.upPressed = false;
-							break;
-						case KeyEvent.VK_DOWN:
-							controlState.downPressed = false;
-							break;
-						case KeyEvent.VK_LEFT:
-							controlState.leftPressed = false;
-							break;
-						case KeyEvent.VK_RIGHT:
-							controlState.rightPressed = false;
-							break;
-					}
-				}
-			}
-			
-			@Override
-			public void keyTyped( KeyEvent e )
-			{
-			}
-		} );
+		sandbox.canvas.addKeyListener( new ControlStateKeyboardHandler( controlState ) );
 		
 		final LinkedList<Transform3D> transformQueue = new LinkedList<Transform3D>( );
 		final int cameraDelay = 7;
@@ -295,10 +205,11 @@ public class TorquescapeTest1
 		// sandbox.sceneRoot.addChild( forwardVector );
 		// sandbox.sceneRoot.addChild( actualForwardVector );
 		
+		final CameraController cameraController = new CameraController( arena , player1 , sandbox.vp , .25f , 10 );
+		
 		new javax.swing.Timer( 30 , new ActionListener( )
 		{
-			long		lastTimeNS	= 0;
-			double[ ]	matrix		= new double[ 16 ];
+			long	lastTimeNS	= 0;
 			
 			@Override
 			public void actionPerformed( ActionEvent e )
@@ -336,51 +247,52 @@ public class TorquescapeTest1
 					
 					sphereTG.setTransform( sphereXform );
 					
-					tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 0 , 0 , -1 ) , location , up , forward , orientation );
-					
-					Transform3D xform = null;
-					
-					if( transformQueue.size( ) < cameraDelay )
-					{
-						xform = new Transform3D( );
-					}
-					else
-					{
-						xform = transformQueue.poll( );
-					}
-					xform.set( orientation );
-					transformQueue.add( xform );
-					
-					location.set( 0 , 0 , 0 );
-					up.set( 0 , 0 , 0 );
-					right.set( 0 , 0 , 0 );
-					
-					int avgCount = Math.min( cameraSmoothing , transformQueue.size( ) );
-					
-					for( int i = 0 ; i < avgCount ; i++ )
-					{
-						Transform3D next = transformQueue.get( i );
-						Point3f p1 = new Point3f( );
-						next.transform( p1 );
-						location.add( p1 );
-						
-						Vector3f v1 = new Vector3f( 0 , 1 , 0 );
-						next.transform( v1 );
-						up.add( v1 );
-						
-						v1.set( 1 , 0 , 0 );
-						next.transform( v1 );
-						right.add( v1 );
-					}
-					
-					location.scale( 1.0f / avgCount );
-					up.scale( 1.0f / avgCount );
-					right.scale( 1.0f / avgCount );
-					
-					tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 1 , 0 , 0 ) , location , up , right , x2 );
-					
-					cameraXform.mul( x2 , cameraInitXform );
-					sandbox.vp.getViewPlatformTransform( ).setTransform( cameraXform );
+					// tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 0 , 0 , -1 ) , location , up , forward , orientation );
+					//
+					// Transform3D xform = null;
+					//
+					// if( transformQueue.size( ) < cameraDelay )
+					// {
+					// xform = new Transform3D( );
+					// }
+					// else
+					// {
+					// xform = transformQueue.poll( );
+					// }
+					// xform.set( orientation );
+					// transformQueue.add( xform );
+					//
+					// location.set( 0 , 0 , 0 );
+					// up.set( 0 , 0 , 0 );
+					// right.set( 0 , 0 , 0 );
+					//
+					// int avgCount = Math.min( cameraSmoothing , transformQueue.size( ) );
+					//
+					// for( int i = 0 ; i < avgCount ; i++ )
+					// {
+					// Transform3D next = transformQueue.get( i );
+					// Point3f p1 = new Point3f( );
+					// next.transform( p1 );
+					// location.add( p1 );
+					//
+					// Vector3f v1 = new Vector3f( 0 , 1 , 0 );
+					// next.transform( v1 );
+					// up.add( v1 );
+					//
+					// v1.set( 1 , 0 , 0 );
+					// next.transform( v1 );
+					// right.add( v1 );
+					// }
+					//
+					// location.scale( 1.0f / avgCount );
+					// up.scale( 1.0f / avgCount );
+					// right.scale( 1.0f / avgCount );
+					//
+					// tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 1 , 0 , 0 ) , location , up , right , x2 );
+					//
+					// cameraXform.mul( x2 , cameraInitXform );
+					// sandbox.vp.getViewPlatformTransform( ).setTransform( cameraXform );
+					cameraController.updateCamera( );
 					
 					player1.getLocation( location );
 					player1.getModelUp( up );

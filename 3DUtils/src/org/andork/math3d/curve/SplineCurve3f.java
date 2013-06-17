@@ -9,7 +9,7 @@ import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 import org.andork.math3d.Spline3d;
 
-public class SplineCurve3f implements ICurve3f
+public class SplineCurve3f implements ICurveWithNormals3f
 {
 	private Vector3f	m_startTangent	= new Vector3f( );
 	private Vector3f	m_endTangent	= new Vector3f( );

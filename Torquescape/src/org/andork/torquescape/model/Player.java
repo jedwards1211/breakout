@@ -5,29 +5,51 @@ import javax.vecmath.Vector3f;
 
 public class Player
 {
-	final TriangleBasis	basis						= new TriangleBasis( );
+	public final TriangleBasis	basis						= new TriangleBasis( );
 	
-	final Vector3f		temp						= new Vector3f( );
+	public final Vector3f		temp						= new Vector3f( );
 	
-	final Point3f		location					= new Point3f( );
-	final Vector3f		basisForward				= new Vector3f( );
-	final Vector3f		basisUp						= new Vector3f( );
-	final Vector3f		cameraUp					= new Vector3f( );
-	final Vector3f		modelForward				= new Vector3f( );
-	final Vector3f		modelUp						= new Vector3f( );
+	public final Point3f		location					= new Point3f( );
+	public final Vector3f		basisForward				= new Vector3f( );
+	public final Vector3f		basisUp						= new Vector3f( );
+	public final Vector3f		modelForward				= new Vector3f( );
+	public final Vector3f		modelUp						= new Vector3f( );
 	
-	float				velocity					= 0;
-	float				forwardAcceleration			= 5;
-	float				maxForwardVelocity			= 50;
-	float				brakeDeceleration			= 30;
-	float				reverseAcceleration			= 5;
-	float				maxReverseVelocity			= 5;
-	float				naturalDeceleration			= 15;
+	public float				velocity					= 0;
+	public float				forwardAcceleration			= 5;
+	public float				maxForwardVelocity			= 50;
+	public float				brakeDeceleration			= 30;
+	public float				reverseAcceleration			= 5;
+	public float				maxReverseVelocity			= 5;
+	public float				naturalDeceleration			= 15;
 	
-	float				angularVelocity				= 0;
-	float				maxAngularVelocity			= ( float ) Math.PI / 2;
-	float				angularAcceleration			= ( float ) Math.PI * 8;
-	float				naturalAngularDeceleration	= ( float ) Math.PI * 8;
+	public float				angularVelocity				= 0;
+	public float				maxAngularVelocity			= ( float ) Math.PI / 2;
+	public float				angularAcceleration			= ( float ) Math.PI * 8;
+	public float				naturalAngularDeceleration	= ( float ) Math.PI * 8;
+	
+	public void copy( Player other )
+	{
+		basis.set( other.basis.triangle );
+		location.set( other.location );
+		basisForward.set( other.basisForward );
+		basisUp.set( other.basisUp );
+		modelForward.set( other.modelForward );
+		modelUp.set( other.modelUp );
+		
+		velocity = other.velocity;
+		forwardAcceleration = other.forwardAcceleration;
+		maxForwardVelocity = other.maxForwardVelocity;
+		brakeDeceleration = other.brakeDeceleration;
+		reverseAcceleration = other.reverseAcceleration;
+		maxReverseVelocity = other.maxAngularVelocity;
+		naturalDeceleration = other.naturalDeceleration;
+		
+		angularVelocity = other.angularVelocity;
+		maxAngularVelocity = other.maxAngularVelocity;
+		angularAcceleration = other.angularAcceleration;
+		naturalAngularDeceleration = other.naturalAngularDeceleration;
+	}
 	
 	public void setBasis( Triangle triangle )
 	{
@@ -108,11 +130,6 @@ public class Player
 		up.set( this.modelUp );
 	}
 	
-	public void getCameraUp( Vector3f cameraUp )
-	{
-		cameraUp.set( this.cameraUp );
-	}
-	
 	public void getBasisUp( Vector3f targetUp )
 	{
 		targetUp.set( this.basisUp );
@@ -151,11 +168,6 @@ public class Player
 	public void setModelUp( Vector3f up )
 	{
 		this.modelUp.set( up );
-	}
-	
-	public void setCameraUp( Vector3f cameraUp )
-	{
-		this.cameraUp.set( cameraUp );
 	}
 	
 	public void setBasisUp( Vector3f targetUp )
