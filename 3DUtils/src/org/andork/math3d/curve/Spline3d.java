@@ -1,5 +1,5 @@
 
-package org.andork.math3d;
+package org.andork.math3d.curve;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;

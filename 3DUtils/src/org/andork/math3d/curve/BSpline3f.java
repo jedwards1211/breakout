@@ -1,19 +1,10 @@
 package org.andork.math3d.curve;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.vecmath.Point3f;
-import javax.vecmath.Point4f;
 
+import org.andork.math3d.curve.BSpline1f.Temporaries;
 import org.andork.vecmath.VecmathUtils;
 
 public class BSpline3f
@@ -21,7 +12,6 @@ public class BSpline3f
 	private int			degree;
 	private float[ ]	knots;
 	private Point3f[ ]	controlPoints;
-	private Point3f[ ]	deBoorPoints;
 	private BSpline3f	derivative;
 	
 	public BSpline3f( int degree , float[ ] knots , Point3f[ ] controlPoints )
@@ -33,11 +23,47 @@ public class BSpline3f
 		this.degree = degree;
 		this.knots = knots;
 		this.controlPoints = controlPoints;
-		
-		deBoorPoints = VecmathUtils.allocPoint3fArray( degree + 1 );
 	}
 	
-	public Point3f eval( float param , Point3f result )
+	public Point3f eval2( float param , Temporaries temp , boolean deBoorPrecomputed , Point3f result )
+	{
+		if( param == knots[ 0 ] )
+		{
+			result.set( controlPoints[ 0 ] );
+			return result;
+		}
+		else if( param == knots[ knots.length - 1 ] )
+		{
+			result.set( controlPoints[ controlPoints.length - 1 ] );
+			return result;
+		}
+		
+		if( !deBoorPrecomputed )
+		{
+			temp.deBoorTemps.setUp( degree , knots , param );
+		}
+		
+		int multiplicity = temp.deBoorTemps.multiplicity;
+		
+		for( int i = 0 ; i <= degree - multiplicity ; i++ )
+		{
+			temp.deBoorPoints[ i ].set( controlPoints[ temp.deBoorTemps.index - multiplicity - i ] );
+		}
+		
+		for( int r = 0 ; r < degree - multiplicity ; r++ )
+		{
+			for( int i = 0 ; i < degree - multiplicity - r ; i++ )
+			{
+				float a = temp.deBoorTemps.weights[ r ][ i ];
+				temp.deBoorPoints[ i ].interpolate( temp.deBoorPoints[ i + 1 ] , temp.deBoorPoints[ i ] , a );
+			}
+		}
+		
+		result.set( temp.deBoorPoints[ 0 ] );
+		return result;
+	}
+	
+	public Point3f eval( float param , Temporaries temp , Point3f result )
 	{
 		if( param < knots[ 0 ] || param > knots[ knots.length - 1 ] )
 		{
@@ -83,7 +109,7 @@ public class BSpline3f
 		for( int i = 0 ; i <= degree - multiplicity ; i++ )
 		{
 			Point3f controlPoint = controlPoints[ index - multiplicity - i ];
-			deBoorPoints[ i ].set( controlPoint );
+			temp.deBoorPoints[ i ].set( controlPoint );
 		}
 		
 		for( int r = 0 ; r < insertionCount ; r++ )
@@ -92,11 +118,11 @@ public class BSpline3f
 			{
 				int ii = index - multiplicity - i;
 				float a = ( param - knots[ ii ] ) / ( knots[ ii + degree - r ] - knots[ ii ] );
-				deBoorPoints[ i ].interpolate( deBoorPoints[ i + 1 ] , deBoorPoints[ i ] , a );
+				temp.deBoorPoints[ i ].interpolate( temp.deBoorPoints[ i + 1 ] , temp.deBoorPoints[ i ] , a );
 			}
 		}
 		
-		result.set( deBoorPoints[ 0 ] );
+		result.set( temp.deBoorPoints[ 0 ] );
 		return result;
 	}
 	
@@ -122,5 +148,17 @@ public class BSpline3f
 			derivative = new BSpline3f( degree - 1 , derivKnots , derivControlPoints );
 		}
 		return derivative;
+	}
+	
+	public static class Temporaries
+	{
+		public Temporaries( int degree , DeBoorTemps dbTemps )
+		{
+			deBoorTemps = dbTemps;
+			deBoorPoints = VecmathUtils.allocPoint3fArray( degree + 1 );
+		}
+		
+		private final DeBoorTemps	deBoorTemps;
+		private final Point3f[ ]	deBoorPoints;
 	}
 }

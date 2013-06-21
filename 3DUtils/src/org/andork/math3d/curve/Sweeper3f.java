@@ -33,8 +33,8 @@ public class Sweeper3f
 	public void apply( ICurveWithNormals3f sweep , float depth , float lateralOffset , float angle , Point3f result )
 	{
 		sweep.getPoint( depth , result );
-		sweep.getNormalX( depth , vf1 );
-		sweep.getNormalY( depth , vf2 );
+		sweep.getBinormal( depth , vf1 );
+		sweep.getNormal( depth , vf2 );
 		
 		if( angle != lastAngle )
 		{
@@ -71,8 +71,8 @@ public class Sweeper3f
 		
 		float depth = 0;
 		sweep.getPoint( depth , pf1 );
-		sweep.getNormalX( depth , vf1 );
-		sweep.getNormalY( depth , vf2 );
+		sweep.getBinormal( depth , vf1 );
+		sweep.getNormal( depth , vf2 );
 		
 		while( d.hasNext( ) && t.hasNext( ) )
 		{
@@ -83,8 +83,8 @@ public class Sweeper3f
 			{
 				depth = datum.x;
 				sweep.getPoint( depth , pf1 );
-				sweep.getNormalX( depth , vf1 );
-				sweep.getNormalY( depth , vf2 );
+				sweep.getBinormal( depth , vf1 );
+				sweep.getNormal( depth , vf2 );
 			}
 			
 			// trans.scaleAdd( datum.y , vf1 , pf1 );
@@ -122,8 +122,8 @@ public class Sweeper3f
 		
 		float depth = 0;
 		sweep.getPoint( depth , pf1 );
-		sweep.getNormalX( depth , vf1 );
-		sweep.getNormalY( depth , vf2 );
+		sweep.getBinormal( depth , vf1 );
+		sweep.getNormal( depth , vf2 );
 		
 		int d = 0;
 		int r = 0;
@@ -133,8 +133,8 @@ public class Sweeper3f
 			{
 				depth = data[ d ];
 				sweep.getPoint( depth , pf1 );
-				sweep.getNormalX( depth , vf1 );
-				sweep.getNormalY( depth , vf2 );
+				sweep.getBinormal( depth , vf1 );
+				sweep.getNormal( depth , vf2 );
 			}
 			
 			float offset = data[ d + 1 ] + lateralOffset;
@@ -186,8 +186,8 @@ public class Sweeper3f
 		
 		float depth = 0;
 		sweep.getPoint( depth , pf1 );
-		sweep.getNormalX( depth , vf1 );
-		sweep.getNormalY( depth , vf2 );
+		sweep.getBinormal( depth , vf1 );
+		sweep.getNormal( depth , vf2 );
 		
 		int d = 0;
 		int r = 0;
@@ -197,8 +197,8 @@ public class Sweeper3f
 			{
 				depth = data[ d ];
 				sweep.getPoint( depth , pf1 );
-				sweep.getNormalX( depth , vf1 );
-				sweep.getNormalY( depth , vf2 );
+				sweep.getBinormal( depth , vf1 );
+				sweep.getNormal( depth , vf2 );
 			}
 			
 			float offset = data[ d + 1 ] + lateralOffset;
@@ -241,7 +241,7 @@ public class Sweeper3f
 	{
 		sweep.getPoint( depth , pf1 );
 		sweep.getTangent( depth , vf1 );
-		sweep.getNormalX( depth , vf2 );
+		sweep.getBinormal( depth , vf2 );
 		tc.orient( origin , tangent , normal , pf1 , vf1 , vf2 , result );
 		return result;
 	}
@@ -250,8 +250,8 @@ public class Sweeper3f
 	{
 		sweep.getPoint( depth , pf1 );
 		sweep.getTangent( depth , vf1 );
-		sweep.getNormalX( depth , vf2 );
-		sweep.getNormalY( depth , vf3 );
+		sweep.getBinormal( depth , vf2 );
+		sweep.getNormal( depth , vf3 );
 		
 		// cache sin & cos calculations
 		if( angle != lastAngle )

@@ -7,7 +7,6 @@ import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
-import org.andork.math3d.Spline3d;
 
 public class SplineCurve3f implements ICurveWithNormals3f
 {
@@ -303,7 +302,7 @@ public class SplineCurve3f implements ICurveWithNormals3f
 	 * @see com.petronworld.rigfocus.gui.tvd.scenegraph.utils.Sweep3f#getNormal(float, javax.vecmath.Vector3f)
 	 */
 	@Override
-	public Vector3f getNormalX( float depth , Vector3f result )
+	public Vector3f getBinormal( float depth , Vector3f result )
 	{
 		if( depth <= m_lowerBound )
 		{
@@ -337,7 +336,7 @@ public class SplineCurve3f implements ICurveWithNormals3f
 	 * @see com.petronworld.rigfocus.gui.tvd.scenegraph.utils.Sweep3f#get90DegNormal(float, javax.vecmath.Vector3f)
 	 */
 	@Override
-	public Vector3f getNormalY( float depth , Vector3f result )
+	public Vector3f getNormal( float depth , Vector3f result )
 	{
 		if( depth <= m_lowerBound )
 		{

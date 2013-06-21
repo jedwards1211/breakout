@@ -21,7 +21,6 @@ public class BSpline1f
 	private int			degree;
 	private float[ ]	knots;
 	private float[ ]	controlPoints;
-	private float[ ]	deBoorPoints;
 	private BSpline1f	derivative;
 	
 	public BSpline1f( int degree , float[ ] knots , float[ ] controlPoints )
@@ -33,11 +32,43 @@ public class BSpline1f
 		this.degree = degree;
 		this.knots = knots;
 		this.controlPoints = controlPoints;
-		
-		deBoorPoints = new float[ degree + 1 ];
 	}
 	
-	public float eval( float param )
+	public float eval2( float param , Temporaries temp , boolean deBoorPrecomputed )
+	{
+		if( param == knots[ 0 ] )
+		{
+			return controlPoints[ 0 ];
+		}
+		else if( param == knots[ knots.length - 1 ] )
+		{
+			return controlPoints[ controlPoints.length - 1 ];
+		}
+		
+		if (!deBoorPrecomputed) {
+			temp.deBoorTemps.setUp( degree , knots , param );
+		}
+		
+		int multiplicity = temp.deBoorTemps.multiplicity;
+		
+		for( int i = 0 ; i <= degree - multiplicity ; i++ )
+		{
+			temp.deBoorPoints[ i ] = controlPoints[ temp.deBoorTemps.index - multiplicity - i ];
+		}
+		
+		for( int r = 0 ; r < degree - multiplicity ; r++ )
+		{
+			for( int i = 0 ; i < degree - multiplicity - r ; i++ )
+			{
+				float a = temp.deBoorTemps.weights[ r ][ i ];
+				temp.deBoorPoints[ i ] = ( 1 - a ) * temp.deBoorPoints[ i + 1 ] + a * temp.deBoorPoints[ i ];
+			}
+		}
+		
+		return temp.deBoorPoints[ 0 ];
+	}
+	
+	public float eval( float param , Temporaries temp )
 	{
 		if( param < knots[ 0 ] || param > knots[ knots.length - 1 ] )
 		{
@@ -80,7 +111,7 @@ public class BSpline1f
 		
 		for( int i = 0 ; i <= degree - multiplicity ; i++ )
 		{
-			deBoorPoints[ i ] = controlPoints[ index - multiplicity - i ];
+			temp.deBoorPoints[ i ] = controlPoints[ index - multiplicity - i ];
 		}
 		
 		for( int r = 0 ; r < insertionCount ; r++ )
@@ -89,11 +120,11 @@ public class BSpline1f
 			{
 				int ii = index - multiplicity - i;
 				float a = ( param - knots[ ii ] ) / ( knots[ ii + degree - r ] - knots[ ii ] );
-				deBoorPoints[ i ] = ( 1 - a ) * deBoorPoints[ i + 1 ] + a * deBoorPoints[ i ];
+				temp.deBoorPoints[ i ] = ( 1 - a ) * temp.deBoorPoints[ i + 1 ] + a * temp.deBoorPoints[ i ];
 			}
 		}
 		
-		return deBoorPoints[ 0 ];
+		return temp.deBoorPoints[ 0 ];
 	}
 	
 	public BSpline1f getDerivative( )
@@ -117,5 +148,17 @@ public class BSpline1f
 			derivative = new BSpline1f( degree - 1 , derivKnots , derivControlPoints );
 		}
 		return derivative;
+	}
+	
+	public static class Temporaries
+	{
+		public Temporaries( int degree , DeBoorTemps dbTemps )
+		{
+			deBoorTemps = dbTemps;
+			deBoorPoints = new float[ degree + 1 ];
+		}
+		
+		private final DeBoorTemps	deBoorTemps;
+		private final float[ ]		deBoorPoints;
 	}
 }

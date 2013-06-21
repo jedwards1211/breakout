@@ -74,7 +74,7 @@ public class SegmentedCurve3f implements ICurveWithNormals3f
 	}
 	
 	@Override
-	public Vector3f getNormalY( float param , Vector3f result )
+	public Vector3f getNormal( float param , Vector3f result )
 	{
 		get( param , yNormals , result );
 		result.normalize( );
@@ -82,7 +82,7 @@ public class SegmentedCurve3f implements ICurveWithNormals3f
 	}
 	
 	@Override
-	public Vector3f getNormalX( float param , Vector3f result )
+	public Vector3f getBinormal( float param , Vector3f result )
 	{
 		get( param , xNormals , result );
 		result.normalize( );
