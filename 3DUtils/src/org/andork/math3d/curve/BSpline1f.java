@@ -18,10 +18,10 @@ import org.andork.vecmath.VecmathUtils;
 
 public class BSpline1f
 {
-	private int			degree;
-	private float[ ]	knots;
-	private float[ ]	controlPoints;
-	private BSpline1f	derivative;
+	int			degree;
+	float[ ]	knots;
+	float[ ]	controlPoints;
+	BSpline1f	derivative;
 	
 	public BSpline1f( int degree , float[ ] knots , float[ ] controlPoints )
 	{
@@ -32,99 +32,6 @@ public class BSpline1f
 		this.degree = degree;
 		this.knots = knots;
 		this.controlPoints = controlPoints;
-	}
-	
-	public float eval2( float param , Temporaries temp , boolean deBoorPrecomputed )
-	{
-		if( param == knots[ 0 ] )
-		{
-			return controlPoints[ 0 ];
-		}
-		else if( param == knots[ knots.length - 1 ] )
-		{
-			return controlPoints[ controlPoints.length - 1 ];
-		}
-		
-		if (!deBoorPrecomputed) {
-			temp.deBoorTemps.setUp( degree , knots , param );
-		}
-		
-		int multiplicity = temp.deBoorTemps.multiplicity;
-		
-		for( int i = 0 ; i <= degree - multiplicity ; i++ )
-		{
-			temp.deBoorPoints[ i ] = controlPoints[ temp.deBoorTemps.index - multiplicity - i ];
-		}
-		
-		for( int r = 0 ; r < degree - multiplicity ; r++ )
-		{
-			for( int i = 0 ; i < degree - multiplicity - r ; i++ )
-			{
-				float a = temp.deBoorTemps.weights[ r ][ i ];
-				temp.deBoorPoints[ i ] = ( 1 - a ) * temp.deBoorPoints[ i + 1 ] + a * temp.deBoorPoints[ i ];
-			}
-		}
-		
-		return temp.deBoorPoints[ 0 ];
-	}
-	
-	public float eval( float param , Temporaries temp )
-	{
-		if( param < knots[ 0 ] || param > knots[ knots.length - 1 ] )
-		{
-			throw new IllegalArgumentException( "param (" + param + ") is out of range: [" + knots[ 0 ] + ", " + knots[ knots.length - 1 ] + "]" );
-		}
-		if( param == knots[ 0 ] )
-		{
-			return controlPoints[ 0 ];
-		}
-		else if( param == knots[ knots.length - 1 ] )
-		{
-			return controlPoints[ controlPoints.length - 1 ];
-		}
-		
-		int index = Arrays.binarySearch( knots , param );
-		
-		int multiplicity = 0;
-		
-		if( index < 0 )
-		{
-			index = -( index + 1 );
-		}
-		
-		while( index < knots.length - 1 && knots[ index + 1 ] == param )
-		{
-			index++ ;
-		}
-		
-		for( int i = index ; i >= 0 && param == knots[ i ] ; i-- )
-		{
-			multiplicity++ ;
-		}
-		
-		if( index > 0 && knots[ index ] != param )
-		{
-			index-- ;
-		}
-		
-		int insertionCount = degree - multiplicity;
-		
-		for( int i = 0 ; i <= degree - multiplicity ; i++ )
-		{
-			temp.deBoorPoints[ i ] = controlPoints[ index - multiplicity - i ];
-		}
-		
-		for( int r = 0 ; r < insertionCount ; r++ )
-		{
-			for( int i = 0 ; i < degree - multiplicity - r ; i++ )
-			{
-				int ii = index - multiplicity - i;
-				float a = ( param - knots[ ii ] ) / ( knots[ ii + degree - r ] - knots[ ii ] );
-				temp.deBoorPoints[ i ] = ( 1 - a ) * temp.deBoorPoints[ i + 1 ] + a * temp.deBoorPoints[ i ];
-			}
-		}
-		
-		return temp.deBoorPoints[ 0 ];
 	}
 	
 	public BSpline1f getDerivative( )
@@ -150,15 +57,41 @@ public class BSpline1f
 		return derivative;
 	}
 	
-	public static class Temporaries
+	public static class Evaluator
 	{
-		public Temporaries( int degree , DeBoorTemps dbTemps )
+		public Evaluator( int degree )
 		{
-			deBoorTemps = dbTemps;
 			deBoorPoints = new float[ degree + 1 ];
 		}
 		
-		private final DeBoorTemps	deBoorTemps;
-		private final float[ ]		deBoorPoints;
+		public float eval( BSpline1f s , DeBoorTemps t )
+		{
+			if( t.param == s.knots[ 0 ] )
+			{
+				return s.controlPoints[ 0 ];
+			}
+			else if( t.param == s.knots[ s.knots.length - 1 ] )
+			{
+				return s.controlPoints[ s.controlPoints.length - 1 ];
+			}
+			
+			for( int i = 0 ; i <= s.degree - t.multiplicity ; i++ )
+			{
+				deBoorPoints[ i ] = s.controlPoints[ t.index - t.multiplicity - i ];
+			}
+			
+			for( int r = 0 ; r < s.degree - t.multiplicity ; r++ )
+			{
+				for( int i = 0 ; i < s.degree - t.multiplicity - r ; i++ )
+				{
+					float a = t.weights[ r ][ i ];
+					deBoorPoints[ i ] = ( 1 - a ) * deBoorPoints[ i + 1 ] + a * deBoorPoints[ i ];
+				}
+			}
+			
+			return deBoorPoints[ 0 ];
+		}
+		
+		private final float[ ]	deBoorPoints;
 	}
 }

@@ -21,6 +21,7 @@ public class Nurbs3f
 {
 	public static void main( String[ ] args )
 	{
+		long start = System.nanoTime( );
 		float[ ] knots = { 0 , 0 , 0 , 0 , .5f , .55f , .95f , 1 , 1 , 1 , 1 };
 		float[ ] weights = { 1 , 1 , 1 , .1f , 1 , 1 , 1 };
 		final Point3f[ ] controlPoints = VecmathUtils.allocPoint3fArray( 7 );
@@ -44,18 +45,31 @@ public class Nurbs3f
 		final List<Float> derivsX = new ArrayList<Float>( );
 		final List<Float> derivsY = new ArrayList<Float>( );
 		
-		Temporaries temp = new Temporaries( curve.getDegree( ) , new DeBoorTemps( curve.getDegree( ) ) );
+		final List<Float> derivs2X = new ArrayList<Float>( );
+		final List<Float> derivs2Y = new ArrayList<Float>( );
 		
-		for( float f = 0 ; f <= 1 ; f += 0.01f )
+		Evaluator evaluator = new Evaluator( curve.getDegree( ) );
+		
+		evaluator.nurbs( curve );
+		
+		for( float f = 0 ; f <= 1 ; f += 0.0001f )
 		{
-			curve.eval2( f , temp , result );
+			evaluator.param( f ).eval( result ).evalDerivative( v );
 			xPoints.add( ( int ) result.x );
 			yPoints.add( ( int ) result.y );
 			
-			curve.evalDerivative2( f , temp , v );
 			derivsX.add( v.x );
 			derivsY.add( v.y );
+			
+			evaluator.eval2ndDerivative( v );
+			derivs2X.add( v.x );
+			derivs2Y.add( v.y );
+			
 		}
+		
+		long elapsed = System.nanoTime( ) - start;
+		
+		System.out.println("Calcs took " + (elapsed / 1e6) + " ms");
 		
 		final int[ ] xPointsArray = new int[ xPoints.size( ) ];
 		final int[ ] yPointsArray = new int[ yPoints.size( ) ];
@@ -84,6 +98,12 @@ public class Nurbs3f
 				{
 					g2.setColor( Color.blue );
 					g2.drawLine( xPoints.get( i ) , yPoints.get( i ) , ( int ) ( xPoints.get( i ) + derivsX.get( i ) / 10 ) , ( int ) ( yPoints.get( i ) + derivsY.get( i ) / 10 ) );
+				}
+				
+				for( int i = 10 ; i < xPoints.size( ) - 1 ; i += 10 )
+				{
+					g2.setColor( Color.red );
+					g2.drawLine( xPoints.get( i ) , yPoints.get( i ) , ( int ) ( xPoints.get( i ) + derivs2X.get( i ) / 10 ) , ( int ) ( yPoints.get( i ) + derivs2Y.get( i ) / 10 ) );
 				}
 				
 				for( Point3f p : controlPoints )
@@ -130,95 +150,6 @@ public class Nurbs3f
 		return degree;
 	}
 	
-	public Point3f eval2( float param , Temporaries temp , Point3f result )
-	{
-		if( param == knots[ 0 ] )
-		{
-			result.set( controlPoints[ 0 ] );
-			return result;
-		}
-		else if( param == knots[ knots.length - 1 ] )
-		{
-			result.set( controlPoints[ controlPoints.length - 1 ] );
-			return result;
-		}
-		
-		createWeightedPointSplineIfNecessary( );
-		
-		temp.deBoorTemps.setUp( degree , knots , param );
-		
-		weightedPointSpline.eval2( param , temp.temp3 , true , result );
-		result.scale( 1 / weightSpline.eval2( param , temp.temp1 , true ) );
-		return result;
-	}
-	
-	public Point3f eval( float param , Temporaries temp , Point3f result )
-	{
-		if( param < knots[ 0 ] || param > knots[ knots.length - 1 ] )
-		{
-			throw new IllegalArgumentException( "param (" + param + ") is out of range: [" + knots[ 0 ] + ", " + knots[ knots.length - 1 ] + "]" );
-		}
-		if( param == knots[ 0 ] )
-		{
-			result.set( controlPoints[ 0 ] );
-			return result;
-		}
-		else if( param == knots[ knots.length - 1 ] )
-		{
-			result.set( controlPoints[ controlPoints.length - 1 ] );
-			return result;
-		}
-		
-		int index = Arrays.binarySearch( knots , param );
-		
-		int multiplicity = 0;
-		
-		if( index < 0 )
-		{
-			index = -( index + 1 );
-		}
-		
-		while( index < knots.length - 1 && knots[ index + 1 ] == param )
-		{
-			index++ ;
-		}
-		
-		for( int i = index ; i >= 0 && param == knots[ i ] ; i-- )
-		{
-			multiplicity++ ;
-		}
-		
-		if( index > 0 && knots[ index ] != param )
-		{
-			index-- ;
-		}
-		
-		int insertionCount = degree - multiplicity;
-		
-		for( int i = 0 ; i <= degree - multiplicity ; i++ )
-		{
-			Point3f controlPoint = controlPoints[ index - multiplicity - i ];
-			float weight = weights[ index - multiplicity - i ];
-			temp.deBoorPoints[ i ].set( controlPoint.x * weight , controlPoint.y * weight , controlPoint.z * weight , weight );
-		}
-		
-		for( int r = 0 ; r < insertionCount ; r++ )
-		{
-			for( int i = 0 ; i < degree - multiplicity - r ; i++ )
-			{
-				int ii = index - multiplicity - i;
-				float a = ( param - knots[ ii ] ) / ( knots[ ii + degree - r ] - knots[ ii ] );
-				temp.deBoorPoints[ i ].interpolate( temp.deBoorPoints[ i + 1 ] , temp.deBoorPoints[ i ] , a );
-			}
-		}
-		
-		Point4f p = temp.deBoorPoints[ 0 ];
-		result.x = p.x / p.w;
-		result.y = p.y / p.w;
-		result.z = p.z / p.w;
-		return result;
-	}
-	
 	private void createWeightedPointSplineIfNecessary( )
 	{
 		if( weightedPointSpline == null )
@@ -234,71 +165,138 @@ public class Nurbs3f
 		}
 	}
 	
-	public Vector3f evalDerivative2( float param , Temporaries temp , Vector3f result )
+	public static class Evaluator
 	{
-		createWeightedPointSplineIfNecessary( );
-		weightedPointSpline.eval2( param , temp.temp3 , false , temp.A );
-		float w = weightSpline.eval2( param , temp.temp1 , true );
-		
-		weightedPointSpline.getDerivative( ).eval2( param , temp.temp3 , false , temp.Ap );
-		float wp = weightSpline.getDerivative( ).eval2( param , temp.temp1 , true );
-		
-		temp.C.scale( 1 / w , temp.A );
-		result.scaleAdd( -wp , temp.C , temp.Ap );
-		result.scale( 1 / w );
-		return result;
-	}
-	
-	public Vector3f evalDerivative( float param , Temporaries temp , Vector3f result )
-	{
-		createWeightedPointSplineIfNecessary( );
-		weightedPointSpline.getDerivative( ).eval( param , temp.temp3 , temp.Ap );
-		eval( param , temp , temp.C );
-		
-		result.scaleAdd( -weightSpline.getDerivative( ).eval( param , temp.temp1 ) , temp.C , temp.Ap );
-		result.scale( 1f / weightSpline.eval( param , temp.temp1 ) );
-		return result;
-	}
-	
-	public Vector3f evalSecondDerivative( float param , Temporaries temp , Vector3f result )
-	{
-		createWeightedPointSplineIfNecessary( );
-		weightedPointSpline.eval2( param , temp.temp3 , false , temp.A );
-		float w = weightSpline.eval2( param , temp.temp1 , true );
-		
-		weightedPointSpline.getDerivative( ).eval2( param , temp.temp3 , false , temp.Ap );
-		float wp = weightSpline.getDerivative( ).eval2( param , temp.temp1 , true );
-		
-		weightedPointSpline.getDerivative( ).getDerivative( ).eval2( param , temp.temp3 , false , temp.App );
-		float wpp = weightSpline.getDerivative( ).getDerivative( ).eval2( param , temp.temp1 , true );
-		
-		temp.C.scale( 1 / w , temp.A );
-		result.scaleAdd( -wp , temp.C , temp.Ap );
-		result.scale( -2 * wp / w );
-		result.scaleAdd( -wpp , temp.C , result );
-		result.add( temp.App );
-		result.scale( 1 / w );
-		return result;
-	}
-	
-	public static class Temporaries
-	{
-		public Temporaries( int degree , DeBoorTemps dbTemps )
+		public Evaluator( int maxDegree )
 		{
-			deBoorTemps = dbTemps;
-			deBoorPoints = VecmathUtils.allocPoint4fArray( degree + 1 );
-			temp1 = new BSpline1f.Temporaries( degree , dbTemps );
-			temp3 = new BSpline3f.Temporaries( degree , dbTemps );
+			dbTemps0 = new DeBoorTemps( maxDegree );
+			dbTemps1 = new DeBoorTemps( maxDegree - 1 );
+			dbTemps2 = new DeBoorTemps( maxDegree - 2 );
+			
+			eval1 = new BSpline1f.Evaluator( maxDegree );
+			eval3 = new BSpline3f.Evaluator( maxDegree );
 		}
 		
-		private final DeBoorTemps			deBoorTemps;
-		private final BSpline1f.Temporaries	temp1;
-		private final BSpline3f.Temporaries	temp3;
+		private final BSpline1f.Evaluator	eval1;
+		private final BSpline3f.Evaluator	eval3;
 		
-		private final Point4f[ ]			deBoorPoints;
-		private final Point3f				C	= new Point3f( );
-		private final Point3f				A	= new Point3f( );
-		private final Point3f				Ap	= new Point3f( );
-		private final Point3f				App	= new Point3f( );
+		private final DeBoorTemps			dbTemps0;
+		private final DeBoorTemps			dbTemps1;
+		private final DeBoorTemps			dbTemps2;
+		
+		private Nurbs3f						nurbs;
+		private float						param;
+		
+		private final Point3f				A		= new Point3f( );
+		private final Point3f				Ap		= new Point3f( );
+		private final Point3f				App		= new Point3f( );
+		
+		private float						w;
+		private float						wp;
+		private float						wpp;
+		
+		private final Point3f				C		= new Point3f( );
+		private final Point3f				Cp		= new Point3f( );
+		private final Point3f				Cpp		= new Point3f( );
+		
+		private boolean						valid0	= false;
+		private boolean						valid1	= false;
+		private boolean						valid2	= false;
+		
+		private void checkValid0( )
+		{
+			if( !valid0 )
+			{
+				dbTemps0.initOrIterate( nurbs.degree , nurbs.knots , param );
+				
+				nurbs.createWeightedPointSplineIfNecessary( );
+				
+				eval3.eval( nurbs.weightedPointSpline , dbTemps0 , A );
+				w = eval1.eval( nurbs.weightSpline , dbTemps0 );
+				
+				C.scale( 1 / w , A );
+				
+				valid0 = true;
+			}
+		}
+		
+		private void checkValid1( )
+		{
+			if( !valid1 )
+			{
+				checkValid0( );
+				
+				BSpline1f wpSpline = nurbs.weightSpline.getDerivative( );
+				dbTemps1.initOrIterate( wpSpline.degree , wpSpline.knots , param );
+				
+				eval3.eval( nurbs.weightedPointSpline.getDerivative( ) , dbTemps1 , Ap );
+				wp = eval1.eval( wpSpline , dbTemps1 );
+				
+				Cp.scaleAdd( -wp , C , Ap );
+				Cp.scale( 1 / w );
+				
+				valid1 = true;
+			}
+		}
+		
+		private void checkValid2( )
+		{
+			if( !valid2 )
+			{
+				checkValid1( );
+				
+				BSpline1f wppSpline = nurbs.weightSpline.getDerivative( ).getDerivative( );
+				dbTemps2.initOrIterate( wppSpline.degree , wppSpline.knots , param );
+				
+				eval3.eval( nurbs.weightedPointSpline.getDerivative( ).getDerivative( ) , dbTemps2 , App );
+				wpp = eval1.eval( wppSpline , dbTemps2 );
+				
+				Cpp.scale( -wpp , C );
+				Cpp.scaleAdd( -2 * wp , Cp , Cpp );
+				Cpp.add( App );
+				Cpp.scale( 1 / w );
+				
+				valid2 = true;
+			}
+		}
+		
+		public Evaluator nurbs( Nurbs3f nurbs )
+		{
+			this.nurbs = nurbs;
+			valid0 = false;
+			valid1 = false;
+			valid2 = false;
+			return this;
+		}
+		
+		public Evaluator param( float param )
+		{
+			this.param = param;
+			valid0 = false;
+			valid1 = false;
+			valid2 = false;
+			return this;
+		}
+		
+		public Evaluator eval( Point3f result )
+		{
+			checkValid0( );
+			result.set( C );
+			return this;
+		}
+		
+		public Evaluator evalDerivative( Vector3f result )
+		{
+			checkValid1( );
+			result.set( Cp );
+			return this;
+		}
+		
+		public Evaluator eval2ndDerivative( Vector3f result )
+		{
+			checkValid2( );
+			result.set( Cpp );
+			return this;
+		}
 	}
 }
