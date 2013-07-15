@@ -68,113 +68,15 @@ public class BSplineGf<T>
 		public float getWeight( T point );
 	}
 	
-	public static class Evaluator<T>
+	public static class Evaluator<T> extends BSplineEvaluatorFloat
 	{
 		public Evaluator( int degree , PointType<T> pointType )
 		{
-			this.degree = degree;
+			super( degree );
 			deBoorPoints = pointType.allocate( degree + 1 );
-			
-			index = -1;
 		}
 		
-		int			degree;
-		T[ ]		deBoorPoints;
-		
-		float[ ]	knots;
-		float		param;
-		int			index;
-		int			multiplicity;
-		
-		/**
-		 * A modified binary search that's easier to use for B-Splines.
-		 * 
-		 * @return the index {@code i} in {@code [fromIndex, toIndex)} such that {@code key} is in {@code [a[i], a[i+1])}. If no such {@code i} exists, returns
-		 *         {@code -1}.
-		 */
-		static int binarySearch( float[ ] a , int fromIndex , int toIndex , float key )
-		{
-			int low = fromIndex;
-			int high = toIndex - 1;
-			
-			while( low + 1 < high )
-			{
-				int mid = ( low + high ) >>> 1;
-				float midVal = a[ mid ];
-				
-				if( midVal <= key )
-				{
-					low = mid;
-				}
-				else
-				{
-					high = mid;
-				}
-			}
-			return key >= a[ low ] && key < a[ high ] ? low : -1;
-		}
-		
-		void updateState( float param , float[ ] knots )
-		{
-			if( this.knots != knots )
-			{
-				index = -1;
-			}
-			
-			this.knots = knots;
-			
-			float lastKnot = knots[ knots.length - 1 ];
-			
-			if( param < knots[ 0 ] || param > lastKnot )
-			{
-				throw new IllegalArgumentException( "param (" + param + ") is out of range: [" + knots[ 0 ] + ", " + lastKnot + ")" );
-			}
-			
-			if( param == lastKnot )
-			{
-				index = knots.length - 1;
-				multiplicity = 1;
-				while( index > 0 && knots[ index - 1 ] == lastKnot )
-				{
-					index-- ;
-					multiplicity++ ;
-				}
-			}
-			else if( index >= 0 && param > this.param )
-			{
-				index++ ;
-				multiplicity = 1;
-				
-				// NOTE: param < lastKnot, so index + 1 must be in bounds
-				
-				float nextKnot = knots[ index ];
-				while( knots[ index + 1 ] == nextKnot )
-				{
-					index++ ;
-					multiplicity++ ;
-				}
-				if( knots[ index + 1 ] < param )
-				{
-					index = -1;
-				}
-				else if( knots[ index ] != param )
-				{
-					multiplicity = 0;
-				}
-			}
-			
-			this.param = param;
-			
-			if( index < 0 )
-			{
-				index = binarySearch( knots , 0 , knots.length , param );
-				multiplicity = 0;
-				for( int i = index ; i >= 0 && knots[ i ] == param ; i-- )
-				{
-					multiplicity++ ;
-				}
-			}
-		}
+		T[ ]	deBoorPoints;
 		
 		public void eval( BSplineGf<T> s , float param , T result )
 		{
@@ -207,10 +109,6 @@ public class BSplineGf<T>
 		T						A;
 		T						Ap;
 		T						App;
-		T						C;
-		T						Cp;
-		T						Cpp;
-		
 		public NurbsEvaluator( int degree , RationalPointType<T> pointType )
 		{
 			evaluator = new Evaluator<>( degree , pointType );
@@ -218,9 +116,6 @@ public class BSplineGf<T>
 			A = pointType.allocate( 1 )[ 0 ];
 			Ap = pointType.allocate( 1 )[ 0 ];
 			App = pointType.allocate( 1 )[ 0 ];
-			C = pointType.allocate( 1 )[ 0 ];
-			Cp = pointType.allocate( 1 )[ 0 ];
-			Cpp = pointType.allocate( 1 )[ 0 ];
 		}
 		
 		public void eval( BSplineGf<T> s , float param , T result )
@@ -233,42 +128,28 @@ public class BSplineGf<T>
 		{
 			evaluator.eval( s , param , A );
 			float w = pointType.getWeight( A );
-			pointType.scale( C , 1f / w , A );
-			
-			if( result != null )
-			{
-				pointType.set( result , C );
-			}
+			pointType.scale( result , 1f / w , A );
 			
 			evaluator.eval( s.getDerivative( ) , param , Ap );
 			float wp = pointType.getWeight( Ap );
-			pointType.combine( derivResult , -wp / w , C , 1f / w , Ap );
+			pointType.combine( derivResult , -wp / w , result , 1f / w , Ap );
 		}
 		
 		public void eval2ndDerivative( BSplineGf<T> s , float param , T result , T derivResult , T deriv2Result )
 		{
 			evaluator.eval( s , param , A );
 			float w = pointType.getWeight( A );
-			pointType.scale( C , 1f / w , A );
+			pointType.scale( result , 1f / w , A );
 			
-			if( result != null )
-			{
-				pointType.set( result , C );
-			}
 			
 			evaluator.eval( s.getDerivative( ) , param , Ap );
 			float wp = pointType.getWeight( Ap );
-			pointType.combine( Cp , -wp / w , C , 1f / w , Ap );
-			
-			if( derivResult != null )
-			{
-				pointType.set( derivResult , Cp );
-			}
+			pointType.combine( derivResult , -wp / w , result , 1f / w , Ap );
 			
 			evaluator.eval( s.getDerivative( ).getDerivative( ) , param , App );
 			float wpp = pointType.getWeight( App );
 			
-			pointType.combine( deriv2Result , -2 * wp , Cp , -wpp , C );
+			pointType.combine( deriv2Result , -2 * wp , derivResult , -wpp , result );
 			pointType.add( deriv2Result , App , deriv2Result );
 			pointType.scale( deriv2Result , 1 / w , deriv2Result );
 		}

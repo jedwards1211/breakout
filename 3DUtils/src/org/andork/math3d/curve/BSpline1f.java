@@ -1,5 +1,8 @@
 package org.andork.math3d.curve;
 
+import javax.vecmath.Point2f;
+
+import org.andork.vecmath.VecmathUtils;
 
 public class BSpline1f
 {
@@ -19,6 +22,11 @@ public class BSpline1f
 		this.controlPoints = controlPoints;
 	}
 	
+	public int getDegree( )
+	{
+		return degree;
+	}
+	
 	public BSpline1f getDerivative( )
 	{
 		if( degree == 0 )
@@ -34,7 +42,7 @@ public class BSpline1f
 			for( int i = 0 ; i < derivControlPoints.length ; i++ )
 			{
 				float factor = degree / ( knots[ i + degree + 1 ] - knots[ i + 1 ] );
-				derivControlPoints[ i ] = factor * ( controlPoints[ i + 1 ] - controlPoints[ i ] );
+				derivControlPoints[ i ] = ( controlPoints[ i + 1 ] - controlPoints[ i ] ) * factor;
 			}
 			
 			derivative = new BSpline1f( degree - 1 , derivKnots , derivControlPoints );
@@ -42,43 +50,36 @@ public class BSpline1f
 		return derivative;
 	}
 	
-	public static class Evaluator
+	public static class Evaluator extends BSplineEvaluatorFloat
 	{
+		float[ ]	deBoorPoints;
+		
 		public Evaluator( int degree )
 		{
+			super( degree );
 			deBoorPoints = new float[ degree + 1 ];
 		}
 		
-		public float eval( BSpline1f s , DeBoorTemps t )
+		public float eval( BSpline1f s , float param )
 		{
-			if( t.param == s.knots[ 0 ] )
+			updateState( param , s.knots );
+			
+			for( int i = 0 ; i <= s.degree - multiplicity ; i++ )
 			{
-				return s.controlPoints[ 0 ];
-			}
-			else if( t.param == s.knots[ s.knots.length - 1 ] )
-			{
-				return s.controlPoints[ s.controlPoints.length - 1 ];
+				deBoorPoints[ i ] = s.controlPoints[ index - multiplicity - i ];
 			}
 			
-			int tOffs = t.degree - s.degree;
-			
-			for( int i = 0 ; i <= s.degree - t.multiplicity ; i++ )
+			for( int r = 0 ; r < s.degree - multiplicity ; r++ )
 			{
-				deBoorPoints[ i ] = s.controlPoints[ t.index - tOffs - t.multiplicity - i ];
-			}
-			
-			for( int r = 0 ; r < s.degree - t.multiplicity ; r++ )
-			{
-				for( int i = 0 ; i < s.degree - t.multiplicity - r ; i++ )
+				for( int i = 0 ; i < s.degree - multiplicity - r ; i++ )
 				{
-					float a = t.weights[ r + tOffs ][ i ];
-					deBoorPoints[ i ] = ( 1 - a ) * deBoorPoints[ i + 1 ] + a * deBoorPoints[ i ];
+					int ii = index - multiplicity - i;
+					float a = ( param - knots[ ii ] ) / ( knots[ ii + s.degree - r ] - knots[ ii ] );
+					deBoorPoints[ i ] = a * deBoorPoints[ i ] + ( 1 - a ) * deBoorPoints[ i + 1 ];
 				}
 			}
 			
 			return deBoorPoints[ 0 ];
 		}
-		
-		private final float[ ]	deBoorPoints;
 	}
 }
