@@ -44,11 +44,24 @@ public class DeBoorTemps
 		
 		if( param == knots[ 0 ] )
 		{
+			index = 0;
 			multiplicity = 1;
+			while( knots[ index + 1 ] == param )
+			{
+				index++ ;
+				multiplicity++ ;
+			}
 			return;
 		}
 		else if( param == knots[ knots.length - 1 ] )
 		{
+			index = knots.length - 1;
+			multiplicity = 1;
+			while( knots[ index - 1 ] == param )
+			{
+				index-- ;
+				multiplicity++ ;
+			}
 			return;
 		}
 		

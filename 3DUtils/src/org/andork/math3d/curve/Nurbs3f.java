@@ -21,7 +21,6 @@ public class Nurbs3f
 {
 	public static void main( String[ ] args )
 	{
-		long start = System.nanoTime( );
 		float[ ] knots = { 0 , 0 , 0 , 0 , .5f , .55f , .95f , 1 , 1 , 1 , 1 };
 		float[ ] weights = { 1 , 1 , 1 , .1f , 1 , 1 , 1 };
 		final Point3f[ ] controlPoints = VecmathUtils.allocPoint3fArray( 7 );
@@ -51,6 +50,8 @@ public class Nurbs3f
 		Evaluator evaluator = new Evaluator( curve.getDegree( ) );
 		
 		evaluator.nurbs( curve );
+		
+		long start = System.nanoTime( );
 		
 		for( float f = 0 ; f <= 1 ; f += 0.0001f )
 		{
@@ -170,8 +171,6 @@ public class Nurbs3f
 		public Evaluator( int maxDegree )
 		{
 			dbTemps0 = new DeBoorTemps( maxDegree );
-			dbTemps1 = new DeBoorTemps( maxDegree - 1 );
-			dbTemps2 = new DeBoorTemps( maxDegree - 2 );
 			
 			eval1 = new BSpline1f.Evaluator( maxDegree );
 			eval3 = new BSpline3f.Evaluator( maxDegree );
@@ -181,8 +180,6 @@ public class Nurbs3f
 		private final BSpline3f.Evaluator	eval3;
 		
 		private final DeBoorTemps			dbTemps0;
-		private final DeBoorTemps			dbTemps1;
-		private final DeBoorTemps			dbTemps2;
 		
 		private Nurbs3f						nurbs;
 		private float						param;
@@ -227,10 +224,9 @@ public class Nurbs3f
 				checkValid0( );
 				
 				BSpline1f wpSpline = nurbs.weightSpline.getDerivative( );
-				dbTemps1.initOrIterate( wpSpline.degree , wpSpline.knots , param );
 				
-				eval3.eval( nurbs.weightedPointSpline.getDerivative( ) , dbTemps1 , Ap );
-				wp = eval1.eval( wpSpline , dbTemps1 );
+				eval3.eval( nurbs.weightedPointSpline.getDerivative( ) , dbTemps0 , Ap );
+				wp = eval1.eval( wpSpline , dbTemps0 );
 				
 				Cp.scaleAdd( -wp , C , Ap );
 				Cp.scale( 1 / w );
@@ -246,10 +242,9 @@ public class Nurbs3f
 				checkValid1( );
 				
 				BSpline1f wppSpline = nurbs.weightSpline.getDerivative( ).getDerivative( );
-				dbTemps2.initOrIterate( wppSpline.degree , wppSpline.knots , param );
 				
-				eval3.eval( nurbs.weightedPointSpline.getDerivative( ).getDerivative( ) , dbTemps2 , App );
-				wpp = eval1.eval( wppSpline , dbTemps2 );
+				eval3.eval( nurbs.weightedPointSpline.getDerivative( ).getDerivative( ) , dbTemps0 , App );
+				wpp = eval1.eval( wppSpline , dbTemps0 );
 				
 				Cpp.scale( -wpp , C );
 				Cpp.scaleAdd( -2 * wp , Cp , Cpp );

@@ -1,20 +1,5 @@
 package org.andork.math3d.curve;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Polygon;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.vecmath.Point3f;
-import javax.vecmath.Point4f;
-
-import org.andork.vecmath.VecmathUtils;
 
 public class BSpline1f
 {
@@ -75,16 +60,18 @@ public class BSpline1f
 				return s.controlPoints[ s.controlPoints.length - 1 ];
 			}
 			
+			int tOffs = t.degree - s.degree;
+			
 			for( int i = 0 ; i <= s.degree - t.multiplicity ; i++ )
 			{
-				deBoorPoints[ i ] = s.controlPoints[ t.index - t.multiplicity - i ];
+				deBoorPoints[ i ] = s.controlPoints[ t.index - tOffs - t.multiplicity - i ];
 			}
 			
 			for( int r = 0 ; r < s.degree - t.multiplicity ; r++ )
 			{
 				for( int i = 0 ; i < s.degree - t.multiplicity - r ; i++ )
 				{
-					float a = t.weights[ r ][ i ];
+					float a = t.weights[ r + tOffs ][ i ];
 					deBoorPoints[ i ] = ( 1 - a ) * deBoorPoints[ i + 1 ] + a * deBoorPoints[ i ];
 				}
 			}

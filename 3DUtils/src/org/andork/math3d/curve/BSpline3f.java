@@ -1,7 +1,5 @@
 package org.andork.math3d.curve;
 
-import java.util.Arrays;
-
 import javax.vecmath.Point3f;
 
 import org.andork.vecmath.VecmathUtils;
@@ -68,16 +66,18 @@ public class BSpline3f
 				return result;
 			}
 			
+			int tOffs = t.degree - s.degree;
+			
 			for( int i = 0 ; i <= s.degree - t.multiplicity ; i++ )
 			{
-				deBoorPoints[ i ].set( s.controlPoints[ t.index - t.multiplicity - i ] );
+				deBoorPoints[ i ].set( s.controlPoints[ t.index - tOffs - t.multiplicity - i ] );
 			}
 			
 			for( int r = 0 ; r < s.degree - t.multiplicity ; r++ )
 			{
 				for( int i = 0 ; i < s.degree - t.multiplicity - r ; i++ )
 				{
-					float a = t.weights[ r ][ i ];
+					float a = t.weights[ r + tOffs ][ i ];
 					deBoorPoints[ i ].interpolate( deBoorPoints[ i + 1 ] , deBoorPoints[ i ] , a );
 				}
 			}
