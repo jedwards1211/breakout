@@ -28,7 +28,7 @@ public class CurveXformFunction implements IXformFunction
 		
 		curve.getPoint( param , p );
 		curve.getTangent( param , t );
-		curve.getNormalX( param , n );
+		curve.getBinormal( param , n );
 		
 		tc.orient( VecmathUtils.ZEROF , VecmathUtils.UNIT_ZF , VecmathUtils.UNIT_XF , p , t , n , out );
 		

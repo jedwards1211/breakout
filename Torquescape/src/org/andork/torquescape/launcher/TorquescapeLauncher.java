@@ -2,7 +2,6 @@ package org.andork.torquescape.launcher;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,7 +9,6 @@ import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.IndexedGeometryArray;
-import javax.media.j3d.IndexedTriangleArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.Shape3D;
@@ -19,7 +17,6 @@ import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
 import javax.swing.JFrame;
 import javax.vecmath.Color3f;
-import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
@@ -28,8 +25,6 @@ import org.andork.j3d.DebugVector;
 import org.andork.j3d.Sandbox3D;
 import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
-import org.andork.math3d.EdgeNormalComputer;
-import org.andork.math3d.curve.SegmentedCurve3f;
 import org.andork.torquescape.control.CameraController;
 import org.andork.torquescape.control.ControlState;
 import org.andork.torquescape.control.ControlStateKeyboardHandler;
@@ -37,66 +32,20 @@ import org.andork.torquescape.model.Arena;
 import org.andork.torquescape.model.Player;
 import org.andork.torquescape.model.Triangle;
 import org.andork.torquescape.model.TriangleBasis;
-import org.andork.torquescape.model.gen.DefaultTrackSegmentGenerator;
-import org.andork.torquescape.model.param.ConstantParamFunction;
-import org.andork.torquescape.model.param.CosParamFunction;
-import org.andork.torquescape.model.param.LinearParamFunction;
 import org.andork.torquescape.model.render.GeometryGenerator;
 import org.andork.torquescape.model.render.NormalGenerator;
-import org.andork.torquescape.model.section.PolygonSectionFunction;
-import org.andork.torquescape.model.xform.Bloater;
-import org.andork.torquescape.model.xform.CompoundXformFunction;
-import org.andork.torquescape.model.xform.CurveXformFunction;
-import org.andork.torquescape.model.xform.Ellipse;
-import org.andork.torquescape.model.xform.Helicizer;
-import org.andork.torquescape.model.xform.IXformFunction;
-import org.andork.torquescape.model.xform.IXformFunctionSegmentizer;
 
 import com.sun.j3d.utils.geometry.Sphere;
 
-public class TorquescapeTest1
+public class TorquescapeLauncher
 {
-	public static void main( String[ ] args )
-	{
-		IXformFunction xformFunction = new Ellipse( new Point3f( ) , new Vector3f( 0 , 0 , 1 ) , new Vector3f( 50 , 0 , 0 ) , new Vector3f( 0 , 40 , 0 ) );
-		Helicizer helicizer = new Helicizer( new LinearParamFunction( 0 , ( float ) Math.PI * 2 , 5 , 20 ) , new LinearParamFunction( 0 , 1 , 3 , 0 ) );
-		Bloater bloater = new Bloater( new CosParamFunction( 0 , ( float ) Math.PI / 8 , .5f , 1 ) );
-		IXformFunction twister = new Helicizer( new ConstantParamFunction( 0 ) , new LinearParamFunction( 0 , 1 , 0 , 3 ) );
-		// curve = new CompoundXformFunction( curve , twister , bloater );
-		// xformFunction = new CompoundXformFunction( xformFunction , helicizer , twister , bloater );
-		xformFunction = new CompoundXformFunction( xformFunction , helicizer );
-		
-		List<Float> params = new ArrayList<Float>( );
-		for( float f = 0 ; f < Math.PI * 16 + 1 ; f += Math.PI / 180 )
-		{
-			params.add( f );
-		}
-		
-		J3DTempsPool pool = new J3DTempsPool( );
-		
-		SegmentedCurve3f segmentedCurve = IXformFunctionSegmentizer.createSegmentedCurve3f( xformFunction , pool , params );
-		xformFunction = new CurveXformFunction( segmentedCurve );
-		xformFunction = new CompoundXformFunction( xformFunction , twister , bloater );
-		
-		PolygonSectionFunction section = new PolygonSectionFunction( 3 , 5 );
-		
-		DefaultTrackSegmentGenerator generator = new DefaultTrackSegmentGenerator( );
-		List<List<Triangle>> outTriangles = new ArrayList<List<Triangle>>( );
-		
-		generator.generate( xformFunction , section , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 , pool , outTriangles );
-		
-		start(outTriangles);
-	}
-	
+
 	public static void start(List<List<Triangle>> triangles) {
 		
 		final Sandbox3D sandbox = new Sandbox3D( );
 		View view = sandbox.universe.getViewer( ).getView( );
 		view.setFieldOfView( Math.PI * 0.6 );
 		view.setBackClipDistance( view.getBackClipDistance( ) * 10 );
-		// IndexedGeometryArray torusGeom = createTorus( 5 , 180 , 0.5 , 72 );
-		IndexedGeometryArray groupGeom = createTorus( 50 , 720 , 2 , 3 );
-		
 		
 		final Arena arena = new Arena( );
 		for( List<Triangle> group : triangles )
@@ -327,140 +276,4 @@ public class TorquescapeTest1
 		} ).start( );
 	}
 	
-	public static void setupArena( IndexedGeometryArray geom , Arena arena )
-	{
-		Point3f[ ] coords = new Point3f[ geom.getVertexCount( ) ];
-		for( int i = 0 ; i < coords.length ; i++ )
-		{
-			coords[ i ] = new Point3f( );
-		}
-		geom.getCoordinates( 0 , coords );
-		
-		Vector3f[ ] normals = new Vector3f[ geom.getVertexCount( ) ];
-		for( int i = 0 ; i < normals.length ; i++ )
-		{
-			normals[ i ] = new Vector3f( );
-		}
-		geom.getNormals( 0 , normals );
-		
-		for( int index = 0 ; index < geom.getIndexCount( ) ; index += 3 )
-		{
-			int ci0 = geom.getCoordinateIndex( index );
-			int ci1 = geom.getCoordinateIndex( index + 1 );
-			int ci2 = geom.getCoordinateIndex( index + 2 );
-			int ni0 = geom.getNormalIndex( index );
-			int ni1 = geom.getNormalIndex( index + 1 );
-			int ni2 = geom.getNormalIndex( index + 2 );
-			
-			Triangle triangle = new Triangle( coords[ ci0 ] , coords[ ci1 ] , coords[ ci2 ] , normals[ ni0 ] , normals[ ni1 ] , normals[ ni2 ] );
-			arena.add( triangle );
-		}
-	}
-	
-	public static IndexedGeometryArray createTorus( double majorRadius , int majorDivs , double minorRadius , int minorDivs )
-	{
-		int coordCount = majorDivs * minorDivs;
-		int indexCount = coordCount * 6;
-		int normalCount = coordCount * 2;
-		int vertexCount = normalCount;
-		int vertexFormat = GeometryArray.COORDINATES | GeometryArray.NORMALS;
-		IndexedTriangleArray triangleArray = new IndexedTriangleArray( vertexCount , vertexFormat , indexCount );
-		
-		double majorStep = Math.PI * 2 / majorDivs;
-		double minorStep = Math.PI * 2 / minorDivs;
-		
-		Point3d p = new Point3d( );
-		Vector3d v3d = new Vector3d( );
-		Vector3f v3f = new Vector3f( );
-		
-		int ci = 0;
-		
-		for( int major = 0 ; major < majorDivs ; major++ )
-		{
-			double majorAngle = major * majorStep;
-			double majorX = Math.cos( majorAngle ) * majorRadius;
-			double majorZ = Math.sin( majorAngle ) * majorRadius;
-			
-			double minorRadius2 = minorRadius * ( 1 + 0.7 * Math.sin( majorAngle * 3 ) );
-			
-			for( int minor = 0 ; minor < minorDivs ; minor++ )
-			{
-				double minorAngle = minor * minorStep + majorAngle * 4;
-				double minorXZ = Math.cos( minorAngle ) * minorRadius2;
-				double minorX = Math.cos( majorAngle ) * minorXZ;
-				double minorZ = Math.sin( majorAngle ) * minorXZ;
-				double minorY = Math.sin( minorAngle ) * minorRadius2 + Math.sin( majorAngle * 2 ) * majorRadius / 5;
-				
-				p.set( majorX + minorX , minorY , majorZ + minorZ );
-				v3d.set( Math.cos( majorAngle ) * Math.cos( minorAngle ) , Math.sin( minorAngle ) , Math.sin( majorAngle ) * Math.cos( minorAngle ) );
-				v3f.set( v3d );
-				
-				int vertexIndex = major * minorDivs + minor;
-				
-				triangleArray.setCoordinate( vertexIndex , p );
-				
-				int tl = vertexIndex;
-				int bl = major * minorDivs + ( minor + 1 ) % minorDivs;
-				int tr = ( tl + minorDivs ) % coordCount;
-				int br = ( bl + minorDivs ) % coordCount;
-				
-				triangleArray.setCoordinateIndex( ci++ , tl );
-				triangleArray.setCoordinateIndex( ci++ , bl );
-				triangleArray.setCoordinateIndex( ci++ , tr );
-				triangleArray.setCoordinateIndex( ci++ , tr );
-				triangleArray.setCoordinateIndex( ci++ , bl );
-				triangleArray.setCoordinateIndex( ci++ , br );
-			}
-		}
-		
-		EdgeNormalComputer enc = new EdgeNormalComputer( );
-		Point3f tcp = new Point3f( );
-		Point3f tlp = new Point3f( );
-		Point3f trp = new Point3f( );
-		Point3f bcp = new Point3f( );
-		Point3f blp = new Point3f( );
-		Point3f brp = new Point3f( );
-		
-		ci = 0;
-		
-		for( int major = 0 ; major < majorDivs ; major++ )
-		{
-			for( int minor = 0 ; minor < minorDivs ; minor++ )
-			{
-				int vertexIndex = major * minorDivs + minor;
-				int normalIndex = vertexIndex * 2;
-				
-				int tc = vertexIndex;
-				int bc = major * minorDivs + ( minor + 1 ) % minorDivs;
-				int tr = ( tc + minorDivs ) % coordCount;
-				int br = ( bc + minorDivs ) % coordCount;
-				int tl = ( tc + ( majorDivs - 1 ) * minorDivs ) % coordCount;
-				int bl = ( bc + ( majorDivs - 1 ) * minorDivs ) % coordCount;
-				
-				triangleArray.getCoordinate( tl , tlp );
-				triangleArray.getCoordinate( tc , tcp );
-				triangleArray.getCoordinate( tr , trp );
-				triangleArray.getCoordinate( bl , blp );
-				triangleArray.getCoordinate( bc , bcp );
-				triangleArray.getCoordinate( br , brp );
-				
-				triangleArray.setNormal( normalIndex , enc.edgeNormal( tcp , bcp , trp , tlp , v3f ) );
-				triangleArray.setNormal( normalIndex + 1 , enc.edgeNormal( bcp , tcp , blp , brp , v3f ) );
-				
-				int tcni = normalIndex;
-				int bcni = normalIndex + 1;
-				int trni = ( normalIndex + minorDivs * 2 ) % normalCount;
-				int brni = ( normalIndex + minorDivs * 2 + 1 ) % normalCount;
-				
-				triangleArray.setNormalIndex( ci++ , tcni );
-				triangleArray.setNormalIndex( ci++ , bcni );
-				triangleArray.setNormalIndex( ci++ , trni );
-				triangleArray.setNormalIndex( ci++ , trni );
-				triangleArray.setNormalIndex( ci++ , bcni );
-				triangleArray.setNormalIndex( ci++ , brni );
-			}
-		}
-		
-		return triangleArray;
-	}
 }

@@ -7,5 +7,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/3DUtils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Math"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JOGL"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
