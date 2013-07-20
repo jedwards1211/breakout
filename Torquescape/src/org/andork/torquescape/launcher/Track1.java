@@ -6,7 +6,6 @@ import java.util.List;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.math3d.curve.SegmentedCurve3f;
 import org.andork.torquescape.model.Triangle;
 import org.andork.torquescape.model.gen.DefaultTrackSegmentGenerator;
@@ -43,9 +42,7 @@ public class Track1 extends Track
 			params.add( f );
 		}
 		
-		J3DTempsPool pool = new J3DTempsPool( );
-		
-		SegmentedCurve3f segmentedCurve = IXformFunctionSegmentizer.createSegmentedCurve3f( xformFunction , pool , params );
+		SegmentedCurve3f segmentedCurve = IXformFunctionSegmentizer.createSegmentedCurve3f( xformFunction , params );
 		xformFunction = new CurveXformFunction( segmentedCurve );
 		xformFunction = new CompoundXformFunction( xformFunction , twister , bloater );
 		
@@ -62,9 +59,7 @@ public class Track1 extends Track
 		
 		Track track = new Track1( );
 		
-		J3DTempsPool pool = new J3DTempsPool( );
-		
-		generator.generate( track.xformFunction , track.sectionFunction , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 , pool , outTriangles );
+		generator.generate( track.xformFunction , track.sectionFunction , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 , outTriangles );
 		
 		TorquescapeLauncher.start(outTriangles);
 	}

@@ -3,21 +3,19 @@ package org.andork.torquescape.model.render;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.torquescape.model.Arena;
 import org.andork.torquescape.model.Triangle;
 
 public class NormalGenerator
 {
 	private Arena			arena;
-	private J3DTempsPool	pool;
+	private final Vector3f	v1	= new Vector3f( );
 	private double			minFoldAngle;
 	
-	public NormalGenerator( Arena arena , J3DTempsPool pool , double minFoldAngle )
+	public NormalGenerator( Arena arena , double minFoldAngle )
 	{
 		super( );
 		this.arena = arena;
-		this.pool = pool;
 		this.minFoldAngle = minFoldAngle;
 	}
 	
@@ -55,8 +53,6 @@ public class NormalGenerator
 	void addAdjacentNormals( Triangle t , Point3f p0 , Point3f p1 , Point3f p2 , Vector3f normal )
 	{
 		Triangle start = t;
-		
-		Vector3f v1 = pool.getVector3f( );
 		
 		TriangleRenderingInfo ri = t.getRenderingInfo( );
 		
@@ -118,8 +114,6 @@ public class NormalGenerator
 			p2 = p1;
 			p1 = p3;
 		}
-		
-		pool.release( v1 );
 	}
 	
 	Point3f getOtherPoint( Arena arena , Point3f p0 , Point3f p1 , Point3f p2 )

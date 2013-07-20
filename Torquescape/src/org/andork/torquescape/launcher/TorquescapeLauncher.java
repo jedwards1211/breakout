@@ -8,7 +8,6 @@ import java.util.List;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.GeometryArray;
-import javax.media.j3d.IndexedGeometryArray;
 import javax.media.j3d.Material;
 import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.Shape3D;
@@ -23,7 +22,6 @@ import javax.vecmath.Vector3f;
 
 import org.andork.j3d.DebugVector;
 import org.andork.j3d.Sandbox3D;
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 import org.andork.torquescape.control.CameraController;
 import org.andork.torquescape.control.ControlState;
@@ -56,9 +54,7 @@ public class TorquescapeLauncher
 			}
 		} 
 		
-		J3DTempsPool pool = new J3DTempsPool( );
-		
-		new NormalGenerator( arena , pool , Math.PI / 2 ).generateNormals( );
+		new NormalGenerator( arena , Math.PI / 2 ).generateNormals( );
 		
 		for( List<Triangle> group : triangles )
 		{

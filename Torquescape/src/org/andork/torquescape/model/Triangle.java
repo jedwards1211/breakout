@@ -3,7 +3,6 @@ package org.andork.torquescape.model;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.torquescape.model.render.TriangleRenderingInfo;
 import org.andork.vecmath.VecmathUtils;
 
@@ -337,16 +336,5 @@ public class Triangle
 		out.x = ( float ) ( ax * scale );
 		out.y = ( float ) ( ay * scale );
 		out.z = ( float ) ( az * scale );
-	}
-	
-	public static void calcFrontFaceDirection( Point3f p0 , Point3f p1 , Point3f p2 , J3DTempsPool pool , Vector3f out )
-	{
-		Vector3f v1 = pool.getVector3f( );
-		
-		v1.set( p1.x - p0.x , p1.y - p0.y , p1.z - p0.z );
-		out.set( p2.x - p0.x , p2.y - p0.y , p2.z - p0.z );
-		out.cross( v1 , out );
-		
-		pool.release( v1 );
 	}
 }

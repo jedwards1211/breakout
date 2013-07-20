@@ -4,7 +4,6 @@ import javax.media.j3d.Transform3D;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 import org.andork.vecmath.VecmathUtils;
 

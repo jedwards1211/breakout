@@ -1,16 +1,13 @@
 package org.andork.torquescape.model.gen;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Point3f;
 import javax.vecmath.Tuple3f;
-import javax.vecmath.Vector3f;
 
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.torquescape.model.Triangle;
 import org.andork.torquescape.model.render.FoldType;
 import org.andork.torquescape.model.render.TriangleRenderingInfo;
@@ -22,7 +19,7 @@ import org.andork.vecmath.VecmathUtils;
 public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 {
 	@Override
-	public void generate( IXformFunction trackAxis , ISectionFunction crossSection , float start , float end , float step , J3DTempsPool pool , List<List<Triangle>> out )
+	public void generate( IXformFunction trackAxis , ISectionFunction crossSection , float start , float end , float step , List<List<Triangle>> out )
 	{
 		ArrayList<SectionCurve> sectionCurves = crossSection.eval( start , new ArrayList<SectionCurve>( ) );
 		

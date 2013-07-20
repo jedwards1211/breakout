@@ -26,7 +26,6 @@ import javax.vecmath.Vector3f;
 
 import org.andork.j3d.DebugVector;
 import org.andork.j3d.Sandbox3D;
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 import org.andork.math3d.EdgeNormalComputer;
 import org.andork.math3d.curve.SegmentedCurve3f;
@@ -72,9 +71,7 @@ public class TorquescapeTest1
 			params.add( f );
 		}
 		
-		J3DTempsPool pool = new J3DTempsPool( );
-		
-		SegmentedCurve3f segmentedCurve = IXformFunctionSegmentizer.createSegmentedCurve3f( xformFunction , pool , params );
+		SegmentedCurve3f segmentedCurve = IXformFunctionSegmentizer.createSegmentedCurve3f( xformFunction , params );
 		xformFunction = new CurveXformFunction( segmentedCurve );
 		xformFunction = new CompoundXformFunction( xformFunction , twister , bloater );
 		
@@ -83,7 +80,7 @@ public class TorquescapeTest1
 		DefaultTrackSegmentGenerator generator = new DefaultTrackSegmentGenerator( );
 		List<List<Triangle>> outTriangles = new ArrayList<List<Triangle>>( );
 		
-		generator.generate( xformFunction , section , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 , pool , outTriangles );
+		generator.generate( xformFunction , section , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 , outTriangles );
 		
 		start(outTriangles);
 	}
@@ -107,9 +104,7 @@ public class TorquescapeTest1
 			}
 		} 
 		
-		J3DTempsPool pool = new J3DTempsPool( );
-		
-		new NormalGenerator( arena , pool , Math.PI / 2 ).generateNormals( );
+		new NormalGenerator( arena , Math.PI / 2 ).generateNormals( );
 		
 		for( List<Triangle> group : triangles )
 		{

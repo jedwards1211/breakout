@@ -9,12 +9,11 @@ import java.util.List;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.math3d.curve.SegmentedCurve3f;
 
 public class IXformFunctionSegmentizer
 {
-	public static void getSegments( IXformFunction function , J3DTempsPool pool , List<Float> inParams , List<Point3f> outPoints , List<Vector3f> outTangents , List<Vector3f> outXNormals , List<Vector3f> outYNormals )
+	public static void getSegments( IXformFunction function , List<Float> inParams , List<Point3f> outPoints , List<Vector3f> outTangents , List<Vector3f> outXNormals , List<Vector3f> outYNormals )
 	{
 		float[ ] xform = new float[ 16 ];
 		
@@ -64,14 +63,14 @@ public class IXformFunctionSegmentizer
 		}
 	}
 	
-	public static SegmentedCurve3f createSegmentedCurve3f( IXformFunction function , J3DTempsPool pool , List<Float> params )
+	public static SegmentedCurve3f createSegmentedCurve3f( IXformFunction function , List<Float> params )
 	{
 		List<Point3f> points = new ArrayList<Point3f>( );
 		List<Vector3f> tangents = new ArrayList<Vector3f>( );
 		List<Vector3f> xNormals = new ArrayList<Vector3f>( );
 		List<Vector3f> yNormals = new ArrayList<Vector3f>( );
 		
-		getSegments( function , pool , params , points , tangents , xNormals , yNormals );
+		getSegments( function , params , points , tangents , xNormals , yNormals );
 		
 		return new SegmentedCurve3f( params , points , tangents , xNormals , yNormals );
 	}

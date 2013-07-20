@@ -5,7 +5,6 @@ import javax.vecmath.AxisAngle4f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.j3d.math.TransformComputer3f;
 
 public class SplineCurve3f implements ICurveWithNormals3f
