@@ -1,9 +1,7 @@
 package org.andork.torquescape.model.xform;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.Vector3d;
+import static org.andork.vecmath.RawFloatVecmath.setIdentity;
 
-import org.andork.j3d.math.J3DTempsPool;
 import org.andork.torquescape.model.param.IParamFunction;
 
 public class Bloater implements IXformFunction
@@ -26,16 +24,12 @@ public class Bloater implements IXformFunction
 	}
 	
 	@Override
-	public Transform3D eval( float param , J3DTempsPool pool , Transform3D out )
+	public float[ ] eval( float param , float[ ] outXform )
 	{
-		Vector3d v = pool.getVector3d( );
-		v.set( xScaleFunction.eval( param ) , yScaleFunction.eval( param ) , zScaleFunction.eval( param ) );
-		
-		out.setIdentity( );
-		out.setScale( v );
-		
-		pool.release( v );
-		
-		return out;
+		setIdentity( outXform );
+		outXform[ 0 ] = xScaleFunction.eval( param );
+		outXform[ 5 ] = yScaleFunction.eval( param );
+		outXform[ 10 ] = zScaleFunction.eval( param );
+		return outXform;
 	}
 }

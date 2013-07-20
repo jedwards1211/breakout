@@ -24,7 +24,7 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 	@Override
 	public void generate( IXformFunction trackAxis , ISectionFunction crossSection , float start , float end , float step , J3DTempsPool pool , List<List<Triangle>> out )
 	{
-		ArrayList<SectionCurve> sectionCurves = crossSection.eval( start , pool , new ArrayList<SectionCurve>( ) );
+		ArrayList<SectionCurve> sectionCurves = crossSection.eval( start , new ArrayList<SectionCurve>( ) );
 		
 		float param;
 		
@@ -32,24 +32,26 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 		
 		Point3f[ ][ ] prevSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
 		boolean[ ][ ] prevSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
-//		Point3f[ ][ ] nextSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
-//		boolean[ ][ ] nextSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
+		// Point3f[ ][ ] nextSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
+		// boolean[ ][ ] nextSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
 		
 		for( int c = 0 ; c < sectionCurves.size( ) ; c++ )
 		{
-			int pointCount = sectionCurves.get( c ).points.length;
+			int pointCount = sectionCurves.get( c ).points.length / 3;
 			prevSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
 			prevSmoothFlags[ c ] = new boolean[ pointCount ];
-//			nextSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
-//			nextSmoothFlags[ c ] = new boolean[ pointCount ];
+			// nextSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
+			// nextSmoothFlags[ c ] = new boolean[ pointCount ];
 			
 			triGroups[ c ] = new LinkedList<Triangle>( );
 			out.add( triGroups[ c ] );
 		}
 		
+		float[ ] mat = new float[ 16 ];
 		Transform3D xform = new Transform3D( );
 		
-		trackAxis.eval( start , pool , xform );
+		trackAxis.eval( start , mat );
+		xform.set( mat );
 		
 		getSectionVertices( sectionCurves , prevSectionPoints , prevSmoothFlags , xform );
 		
@@ -59,15 +61,16 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			{
 				param = end;
 			}
-			crossSection.eval( param , pool , sectionCurves );
+			crossSection.eval( param , sectionCurves );
 			
-			trackAxis.eval( param , pool , xform );
+			trackAxis.eval( param , mat );
+			xform.set( mat );
 			
 			Point3f[ ][ ] nextSectionPoints = new Point3f[ sectionCurves.size( ) ][ ];
 			boolean[ ][ ] nextSmoothFlags = new boolean[ sectionCurves.size( ) ][ ];
 			for( int c = 0 ; c < sectionCurves.size( ) ; c++ )
 			{
-				int pointCount = sectionCurves.get( c ).points.length;
+				int pointCount = sectionCurves.get( c ).points.length / 3;
 				nextSectionPoints[ c ] = VecmathUtils.allocPoint3fArray( pointCount );
 				nextSmoothFlags[ c ] = new boolean[ pointCount ];
 			}
@@ -130,9 +133,10 @@ public class DefaultTrackSegmentGenerator implements ITrackSegmentGenerator
 			Point3f[ ] curvePoints = points[ c ];
 			boolean[ ] curveSmoothFlags = smoothFlags[ c ];
 			
-			for( int p = 0 ; p < curve.points.length ; p++ )
+			int k = 0;
+			for( int p = 0 ; p < curve.points.length / 3 ; p++ )
 			{
-				curvePoints[ p ].set( curve.points[ p ] );
+				curvePoints[ p ].set( curve.points[ k++ ] , curve.points[ k++ ] , curve.points[ k++ ] );
 				curveSmoothFlags[ p ] = curve.smoothFlags[ p ];
 				
 				xform.transform( curvePoints[ p ] );

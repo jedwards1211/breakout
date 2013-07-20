@@ -6,5 +6,5 @@ import org.andork.j3d.math.J3DTempsPool;
 
 public interface ISectionFunction
 {
-	public ArrayList<SectionCurve> eval( float param , J3DTempsPool pool , ArrayList<SectionCurve> out );
+	public ArrayList<SectionCurve> eval( float param , ArrayList<SectionCurve> out );
 }

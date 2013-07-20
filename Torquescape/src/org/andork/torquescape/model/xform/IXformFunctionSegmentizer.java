@@ -1,9 +1,11 @@
 package org.andork.torquescape.model.xform;
 
+import static org.andork.vecmath.RawFloatVecmath.mpmulAffine;
+import static org.andork.vecmath.RawFloatVecmath.mvmulAffine;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.media.j3d.Transform3D;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
@@ -14,30 +16,28 @@ public class IXformFunctionSegmentizer
 {
 	public static void getSegments( IXformFunction function , J3DTempsPool pool , List<Float> inParams , List<Point3f> outPoints , List<Vector3f> outTangents , List<Vector3f> outXNormals , List<Vector3f> outYNormals )
 	{
-		Transform3D xform = pool.getTransform3D( );
+		float[ ] xform = new float[ 16 ];
 		
 		for( float param : inParams )
 		{
-			function.eval( param , pool , xform );
+			function.eval( param , xform );
 			
-			Point3f point = new Point3f( );
-			xform.transform( point );
-			outPoints.add( point );
+			float[ ] point = new float[ 3 ];
+			mpmulAffine( xform , point );
+			outPoints.add( new Point3f( point ) );
 			
-			Vector3f tangent = new Vector3f( 0 , 0 , 1 );
-			xform.transform( tangent );
-			outTangents.add( tangent );
+			float[ ] tangent = { 0 , 0 , 1 };
+			mvmulAffine( xform , tangent );
+			outTangents.add( new Vector3f( tangent ) );
 			
-			Vector3f normalX = new Vector3f( 1 , 0 , 0 );
-			xform.transform( normalX );
-			outXNormals.add( normalX );
+			float[ ] normalX = { 1 , 0 , 0 };
+			mvmulAffine( xform , normalX );
+			outXNormals.add( new Vector3f( normalX ) );
 			
-			Vector3f normalY = new Vector3f( 0 , 1 , 0 );
-			xform.transform( normalY );
-			outYNormals.add( normalY );
+			float[ ] normalY = { 0 , 1 , 0 };
+			mvmulAffine( xform , normalY );
+			outYNormals.add( new Vector3f( normalY ) );
 		}
-		
-		pool.release( xform );
 		
 		for( int i = 0 ; i < inParams.size( ) ; i++ )
 		{

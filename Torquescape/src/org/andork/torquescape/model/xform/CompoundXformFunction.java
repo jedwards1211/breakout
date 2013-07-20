@@ -1,30 +1,30 @@
 package org.andork.torquescape.model.xform;
 
-import javax.media.j3d.Transform3D;
-
-import org.andork.j3d.math.J3DTempsPool;
+import static org.andork.vecmath.RawFloatVecmath.mmul;
+import static org.andork.vecmath.RawFloatVecmath.setIdentity;
 
 public class CompoundXformFunction implements IXformFunction
 {
-	private IXformFunction[] curves;
+	private IXformFunction[ ]	curves;
+	private float[ ]			tempMat	= new float[ 16 ];
 	
-	public CompoundXformFunction(IXformFunction... curves) {
+	public CompoundXformFunction( IXformFunction ... curves )
+	{
 		this.curves = curves;
 	}
 	
 	@Override
-	public Transform3D eval( float param , J3DTempsPool pool , Transform3D out )
+	public float[ ] eval( float param , float[ ] outXform )
 	{
-		out.setIdentity( );
+		setIdentity( outXform );
 		
-		Transform3D x1 = pool.getTransform3D( );
-		
-		for (IXformFunction curve : curves) {
-			curve.eval( param , pool , x1);
-			out.mul( x1 );
+		for( IXformFunction curve : curves )
+		{
+			curve.eval( param , tempMat );
+			mmul( outXform , tempMat , outXform );
 		}
 		
-		return out;
+		return outXform;
 	}
 	
 }

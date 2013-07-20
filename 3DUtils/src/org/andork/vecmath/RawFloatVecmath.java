@@ -68,20 +68,66 @@ public class RawFloatVecmath
 		}
 	}
 	
+	public static void mpmulAffine( float[ ] m , float[ ] p )
+	{
+		float x = m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ];
+		float y = m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ];
+		p[ 2 ] = m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ];
+		p[ 1 ] = y;
+		p[ 0 ] = x;
+	}
+	
+	public static void mpmulAffine( float[ ] m , float[ ] p , int vi )
+	{
+		float x = m[ 0 ] * p[ vi ] + m[ 1 ] * p[ vi + 1 ] + m[ 2 ] * p[ vi + 2 ] + m[ 3 ];
+		float y = m[ 4 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 6 ] * p[ vi + 2 ] + m[ 7 ];
+		p[ vi + 2 ] = m[ 8 ] * p[ vi ] + m[ 9 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 11 ];
+		p[ vi + 1 ] = y;
+		p[ vi ] = x;
+	}
+	
+	public static void mpmulAffine( float[ ] m , float[ ] p , float[ ] out )
+	{
+		if( p != out )
+		{
+			out[ 0 ] = m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ];
+			out[ 1 ] = m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ];
+			out[ 2 ] = m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ];
+		}
+		else
+		{
+			mpmulAffine( m , p );
+		}
+	}
+	
+	public static void mpmulAffine( float[ ] m , float[ ] p , int vi , float[ ] out , int outi )
+	{
+		if( p != out || vi != outi )
+		{
+			out[ outi ] = m[ 0 ] * p[ vi ] + m[ 1 ] * p[ vi + 1 ] + m[ 2 ] * p[ vi + 2 ] + m[ 3 ];
+			out[ outi + 1 ] = m[ 4 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 6 ] * p[ vi + 2 ] + m[ 7 ];
+			out[ outi + 2 ] = m[ 8 ] * p[ vi ] + m[ 9 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 11 ];
+		}
+		else
+		{
+			mpmulAffine( m , p , vi );
+		}
+	}
+	
 	public static void mvmulAffine( float[ ] m , float[ ] v )
 	{
-		float x = m[ 0 ] * v[ 0 ] + m[ 1 ] * v[ 1 ] + m[ 2 ] * v[ 2 ] + m[ 3 ];
-		float y = m[ 4 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 6 ] * v[ 2 ] + m[ 7 ];
-		v[ 2 ] = m[ 8 ] * v[ 0 ] + m[ 9 ] * v[ 1 ] + m[ 10 ] * v[ 2 ] + m[ 11 ];
+		float x = m[ 0 ] * v[ 0 ] + m[ 1 ] * v[ 1 ] + m[ 2 ] * v[ 2 ];
+		float y = m[ 4 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 6 ] * v[ 2 ];
+		v[ 2 ] = m[ 8 ] * v[ 0 ] + m[ 9 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
 		v[ 1 ] = y;
 		v[ 0 ] = x;
 	}
 	
 	public static void mvmulAffine( float[ ] m , float[ ] v , int vi )
 	{
-		float x = m[ 0 ] * v[ vi ] + m[ 1 ] * v[ vi + 1 ] + m[ 2 ] * v[ vi + 2 ] + m[ 3 ];
-		float y = m[ 4 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 6 ] * v[ vi + 2 ] + m[ 7 ];
-		v[ vi + 2 ] = m[ 8 ] * v[ vi ] + m[ 9 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ] + m[ 11 ];
+		float x = m[ 0 ] * v[ vi ] + m[ 1 ] * v[ vi + 1 ] + m[ 2 ] * v[ vi + 2 ];
+		float y = m[ 4 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 6 ] * v[ vi + 2 ];
+		v[ vi + 2 ] = m[ 8 ] * v[ vi ] + m[ 9 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
 		v[ vi + 1 ] = y;
 		v[ vi ] = x;
 	}
@@ -90,9 +136,9 @@ public class RawFloatVecmath
 	{
 		if( v != out )
 		{
-			out[ 0 ] = m[ 0 ] * v[ 0 ] + m[ 1 ] * v[ 1 ] + m[ 2 ] * v[ 2 ] + m[ 3 ];
-			out[ 1 ] = m[ 4 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 6 ] * v[ 2 ] + m[ 7 ];
-			out[ 2 ] = m[ 8 ] * v[ 0 ] + m[ 9 ] * v[ 1 ] + m[ 10 ] * v[ 2 ] + m[ 11 ];
+			out[ 0 ] = m[ 0 ] * v[ 0 ] + m[ 1 ] * v[ 1 ] + m[ 2 ] * v[ 2 ];
+			out[ 1 ] = m[ 4 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 6 ] * v[ 2 ];
+			out[ 2 ] = m[ 8 ] * v[ 0 ] + m[ 9 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
 		}
 		else
 		{
@@ -104,9 +150,9 @@ public class RawFloatVecmath
 	{
 		if( v != out || vi != outi )
 		{
-			out[ outi ] = m[ 0 ] * v[ vi ] + m[ 1 ] * v[ vi + 1 ] + m[ 2 ] * v[ vi + 2 ] + m[ 3 ];
-			out[ outi + 1 ] = m[ 4 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 6 ] * v[ vi + 2 ] + m[ 7 ];
-			out[ outi + 2 ] = m[ 8 ] * v[ vi ] + m[ 9 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ] + m[ 11 ];
+			out[ outi ] = m[ 0 ] * v[ vi ] + m[ 1 ] * v[ vi + 1 ] + m[ 2 ] * v[ vi + 2 ];
+			out[ outi + 1 ] = m[ 4 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 6 ] * v[ vi + 2 ];
+			out[ outi + 2 ] = m[ 8 ] * v[ vi ] + m[ 9 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
 		}
 		else
 		{

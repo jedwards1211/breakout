@@ -13,29 +13,30 @@ public class CurveXformFunction implements IXformFunction
 {
 	private ICurveWithNormals3f	curve;
 	
+	private Point3f				p		= new Point3f( );
+	private Vector3f			t		= new Vector3f( );
+	private Vector3f			n		= new Vector3f( );
+	
+	private TransformComputer3f	tc		= new TransformComputer3f( );
+	
+	private Transform3D			xform	= new Transform3D( );
+	
 	public CurveXformFunction( ICurveWithNormals3f curve )
 	{
 		this.curve = curve;
 	}
-
+	
 	@Override
-	public Transform3D eval( float param , J3DTempsPool pool , Transform3D out )
+	public float[ ] eval( float param , float[ ] out )
 	{
-		Point3f p = pool.getPoint3f( );
-		Vector3f t = pool.getVector3f( );
-		Vector3f n = pool.getVector3f( );
-		TransformComputer3f tc = pool.getTransformComputer3f( );
 		
 		curve.getPoint( param , p );
 		curve.getTangent( param , t );
 		curve.getBinormal( param , n );
 		
-		tc.orient( VecmathUtils.ZEROF , VecmathUtils.UNIT_ZF , VecmathUtils.UNIT_XF , p , t , n , out );
+		tc.orient( VecmathUtils.ZEROF , VecmathUtils.UNIT_ZF , VecmathUtils.UNIT_XF , p , t , n , xform );
 		
-		pool.release( p );
-		pool.release( t );
-		pool.release( n );
-		pool.release( tc );
+		xform.get( out );
 		
 		return out;
 	}
