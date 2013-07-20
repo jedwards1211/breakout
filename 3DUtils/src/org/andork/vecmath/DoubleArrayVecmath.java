@@ -1,6 +1,6 @@
 package org.andork.vecmath;
 
-public class RawDoubleVecmath
+public class DoubleArrayVecmath
 {
 	private static final double	DEPS	= 1.110223024E-16;
 	

@@ -1,6 +1,6 @@
 package org.andork.torquescape.model.xform;
 
-import static org.andork.vecmath.RawFloatVecmath.setIdentity;
+import static org.andork.vecmath.FloatArrayVecmath.setIdentity;
 
 import org.andork.torquescape.model.param.IParamFunction;
 

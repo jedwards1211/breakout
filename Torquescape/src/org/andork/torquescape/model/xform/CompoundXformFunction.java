@@ -1,7 +1,7 @@
 package org.andork.torquescape.model.xform;
 
-import static org.andork.vecmath.RawFloatVecmath.mmul;
-import static org.andork.vecmath.RawFloatVecmath.setIdentity;
+import static org.andork.vecmath.FloatArrayVecmath.mmul;
+import static org.andork.vecmath.FloatArrayVecmath.setIdentity;
 
 public class CompoundXformFunction implements IXformFunction
 {

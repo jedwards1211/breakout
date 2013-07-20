@@ -1,6 +1,6 @@
 package org.andork.vecmath;
 
-public class RawFloatVecmath
+public class FloatArrayVecmath
 {
 	private static final float	FEPS	= 1.110223024E-8f;
 	
