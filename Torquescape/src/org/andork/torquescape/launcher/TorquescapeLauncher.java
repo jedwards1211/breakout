@@ -200,51 +200,6 @@ public class TorquescapeLauncher
 					
 					sphereTG.setTransform( sphereXform );
 					
-					// tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 0 , 0 , -1 ) , location , up , forward , orientation );
-					//
-					// Transform3D xform = null;
-					//
-					// if( transformQueue.size( ) < cameraDelay )
-					// {
-					// xform = new Transform3D( );
-					// }
-					// else
-					// {
-					// xform = transformQueue.poll( );
-					// }
-					// xform.set( orientation );
-					// transformQueue.add( xform );
-					//
-					// location.set( 0 , 0 , 0 );
-					// up.set( 0 , 0 , 0 );
-					// right.set( 0 , 0 , 0 );
-					//
-					// int avgCount = Math.min( cameraSmoothing , transformQueue.size( ) );
-					//
-					// for( int i = 0 ; i < avgCount ; i++ )
-					// {
-					// Transform3D next = transformQueue.get( i );
-					// Point3f p1 = new Point3f( );
-					// next.transform( p1 );
-					// location.add( p1 );
-					//
-					// Vector3f v1 = new Vector3f( 0 , 1 , 0 );
-					// next.transform( v1 );
-					// up.add( v1 );
-					//
-					// v1.set( 1 , 0 , 0 );
-					// next.transform( v1 );
-					// right.add( v1 );
-					// }
-					//
-					// location.scale( 1.0f / avgCount );
-					// up.scale( 1.0f / avgCount );
-					// right.scale( 1.0f / avgCount );
-					//
-					// tc.orient( new Point3f( ) , new Vector3f( 0 , 1 , 0 ) , new Vector3f( 1 , 0 , 0 ) , location , up , right , x2 );
-					//
-					// cameraXform.mul( x2 , cameraInitXform );
-					// sandbox.vp.getViewPlatformTransform( ).setTransform( cameraXform );
 					cameraController.updateCamera( );
 					
 					player1.getLocation( location );
