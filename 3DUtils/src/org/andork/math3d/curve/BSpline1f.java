@@ -1,8 +1,5 @@
 package org.andork.math3d.curve;
 
-import javax.vecmath.Point2f;
-
-import org.andork.vecmath.VecmathUtils;
 
 public class BSpline1f
 {

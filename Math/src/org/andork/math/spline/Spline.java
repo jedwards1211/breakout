@@ -1,5 +1,5 @@
 
-package org.andork.math;
+package org.andork.math.spline;
 
 import java.util.Arrays;
 

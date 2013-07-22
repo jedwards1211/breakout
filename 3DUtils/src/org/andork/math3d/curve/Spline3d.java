@@ -6,7 +6,7 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 import javax.vecmath.Vector3f;
 
-import org.andork.math.Spline;
+import org.andork.math.spline.Spline;
 
 /**
  * A convenience class for representing a spline through 3D points (using one spline for each axis)
