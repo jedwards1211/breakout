@@ -1,4 +1,4 @@
-package org.andork.torquescape.launcher;
+package org.andork.torquescape.track;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,17 +50,5 @@ public class Track1 extends Track
 		
 		setXformFunction( xformFunction );
 		setSectionFunction( section );
-	}
-	
-	public static void main( String[ ] args )
-	{
-		DefaultTrackSegmentGenerator generator = new DefaultTrackSegmentGenerator( );
-		List<List<Triangle>> outTriangles = new ArrayList<List<Triangle>>( );
-		
-		Track track = new Track1( );
-		
-		generator.generate( track.xformFunction , track.sectionFunction , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 , outTriangles );
-		
-		TorquescapeLauncher.start(outTriangles);
 	}
 }

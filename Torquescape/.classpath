@@ -3,10 +3,10 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Java3D (32-bit)"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jre7"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Guava"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/3DUtils"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Math"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/Guava"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/3DUtils"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Core"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Math"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JOGL"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
