@@ -18,11 +18,23 @@ public class FlatFloatArrayPointType implements RationalPointType<Integer>
 		this.dimension = dimension;
 	}
 	
+	public void get( int index , float[ ] result , int resultIndex )
+	{
+		float[ ] iarray = getArray( index );
+		index = fixIndex( index );
+		
+		int end = index + dimension;
+		while( index < end )
+		{
+			result[ resultIndex++ ] = iarray[ index++ ];
+		}
+	}
+	
 	@Override
 	public Integer[ ] allocate( int size )
 	{
 		Integer[ ] result = new Integer[ size ];
-		int k = -temps.length * dimension - 1;
+		int k = -temps.length - 1;
 		for( int i = 0 ; i < size ; i++ )
 		{
 			result[ i ] = k;
@@ -34,7 +46,7 @@ public class FlatFloatArrayPointType implements RationalPointType<Integer>
 	
 	private float[ ] getArray( int index )
 	{
-		return index < 0 ? array : temps;
+		return index < 0 ? temps : array;
 	}
 	
 	private int fixIndex( int index )

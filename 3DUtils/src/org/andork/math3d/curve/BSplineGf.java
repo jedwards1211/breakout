@@ -82,6 +82,17 @@ public class BSplineGf<T>
 		{
 			updateState( param , s.knots );
 			
+			if( param == s.knots[ 0 ] )
+			{
+				s.pointType.set( result , s.controlPoints[ 0 ] );
+				return;
+			}
+			else if( param == s.knots[ s.knots.length - 1 ] )
+			{
+				s.pointType.set( result , s.controlPoints[ s.controlPoints.length - 1 ] );
+				return;
+			}
+			
 			for( int i = 0 ; i <= s.degree - multiplicity ; i++ )
 			{
 				s.pointType.set( deBoorPoints[ i ] , s.controlPoints[ index - multiplicity - i ] );
@@ -109,6 +120,7 @@ public class BSplineGf<T>
 		T						A;
 		T						Ap;
 		T						App;
+		
 		public NurbsEvaluator( int degree , RationalPointType<T> pointType )
 		{
 			evaluator = new Evaluator<>( degree , pointType );
@@ -140,7 +152,6 @@ public class BSplineGf<T>
 			evaluator.eval( s , param , A );
 			float w = pointType.getWeight( A );
 			pointType.scale( result , 1f / w , A );
-			
 			
 			evaluator.eval( s.getDerivative( ) , param , Ap );
 			float wp = pointType.getWeight( Ap );

@@ -44,24 +44,31 @@ public abstract class BSplineEvaluatorFloat
 		}
 		else if( index >= 0 && param > this.param )
 		{
-			index++ ;
-			multiplicity = 1;
-			
-			// NOTE: param < lastKnot, so index + 1 must be in bounds
-			
-			float nextKnot = knots[ index ];
-			while( knots[ index + 1 ] == nextKnot )
-			{
-				index++ ;
-				multiplicity++ ;
-			}
-			if( knots[ index + 1 ] < param )
-			{
-				index = -1;
-			}
-			else if( knots[ index ] != param )
+			if( param < knots[ index + 1 ] )
 			{
 				multiplicity = 0;
+			}
+			else
+			{
+				index++ ;
+				multiplicity = 1;
+				
+				// NOTE: param < lastKnot, so index + 1 must be in bounds
+				
+				float nextKnot = knots[ index ];
+				while( knots[ index + 1 ] == nextKnot )
+				{
+					index++ ;
+					multiplicity++ ;
+				}
+				if( knots[ index + 1 ] < param )
+				{
+					index = -1;
+				}
+				else if( knots[ index ] != param )
+				{
+					multiplicity = 0;
+				}
 			}
 		}
 		
