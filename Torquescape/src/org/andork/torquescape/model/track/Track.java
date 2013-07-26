@@ -1,4 +1,4 @@
-package org.andork.torquescape.track;
+package org.andork.torquescape.model.track;
 
 import org.andork.torquescape.model.section.ISectionFunction;
 import org.andork.torquescape.model.xform.IXformFunction;

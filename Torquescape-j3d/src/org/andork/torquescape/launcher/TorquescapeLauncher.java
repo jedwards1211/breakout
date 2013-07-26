@@ -3,7 +3,7 @@ package org.andork.torquescape.launcher;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.media.j3d.Appearance;
@@ -28,29 +28,67 @@ import org.andork.torquescape.control.CameraController;
 import org.andork.torquescape.control.ControlState;
 import org.andork.torquescape.control.ControlStateKeyboardHandler;
 import org.andork.torquescape.model.Arena;
+import org.andork.torquescape.model.Model2Converter;
 import org.andork.torquescape.model.Player;
 import org.andork.torquescape.model.Triangle;
 import org.andork.torquescape.model.TriangleBasis;
 import org.andork.torquescape.model.gen.DefaultTrackSegmentGenerator;
 import org.andork.torquescape.model.render.GeometryGenerator;
 import org.andork.torquescape.model.render.NormalGenerator;
-import org.andork.torquescape.track.Track;
+import org.andork.torquescape.model.track.Track;
+import org.andork.torquescape.model2.gen.DefaultTrackGenerator;
+import org.andork.util.ArrayUtils;
 
 import com.sun.j3d.utils.geometry.Sphere;
 
 public class TorquescapeLauncher
 {
-
-	public static void launch(Track track) {
+	
+	public static void launch( Track track )
+	{
 		DefaultTrackSegmentGenerator generator = new DefaultTrackSegmentGenerator( );
 		List<List<Triangle>> outTriangles = new ArrayList<List<Triangle>>( );
 		
 		generator.generate( track.getXformFunction( ) , track.getSectionFunction( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 , outTriangles );
 		
-		TorquescapeLauncher.launch(outTriangles);
+		TorquescapeLauncher.launch( outTriangles , true );
 	}
-
-	public static void launch(List<List<Triangle>> triangles) {
+	
+	public static void launch( org.andork.torquescape.model2.track.Track track )
+	{
+		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
+		generator.add( track.getXformFunction( ) , track.getSectionFunction( ) , track.getMeshingFunction( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
+		
+		float[ ] verts = generator.getVertices( );
+		int[ ] indices = generator.getIndices( );
+		
+		org.andork.torquescape.model2.normal.NormalGenerator.generateNormals( verts , 3 , 6 , indices , 0 , indices.length );
+		
+		int printCount = 1000;
+		float[ ] indexedVerts = new float[ printCount * 6 ];
+		int k = 0;
+		for( int i = 0 ; i < printCount ; i++ )
+		{
+			int v = indices[ i ];
+			indexedVerts[ k++ ] = verts[ v++ ];
+			indexedVerts[ k++ ] = verts[ v++ ];
+			indexedVerts[ k++ ] = verts[ v++ ];
+			indexedVerts[ k++ ] = verts[ v++ ];
+			indexedVerts[ k++ ] = verts[ v++ ];
+			indexedVerts[ k++ ] = verts[ v++ ];
+		}
+		
+		// System.out.println( ArrayUtils.prettyPrint( verts , 6 , 0 , 100 , "%9.3f" ) );
+		System.out.println( ArrayUtils.prettyPrint( indices , 6 , 0 , 100 , 0 , "%5d" ) );
+//		System.out.println( ArrayUtils.prettyPrint( indexedVerts , 6 , 0 , printCount , 3 , "%9.3f" ) );
+		
+		List<Triangle> triangles = Model2Converter.convert( verts , indices );
+		
+		launch( Collections.singletonList( triangles ) , false );
+	}
+	
+	public static void launch( List<List<Triangle>> triangles , boolean generateNormals )
+	{
 		
 		final Sandbox3D sandbox = new Sandbox3D( );
 		View view = sandbox.universe.getViewer( ).getView( );
@@ -64,9 +102,14 @@ public class TorquescapeLauncher
 			{
 				arena.add( t );
 			}
-		} 
+		}
 		
-		new NormalGenerator( arena , Math.PI / 2 ).generateNormals( );
+		System.out.println( "# Triangles: " + arena.getTriangles( ).size( ) );
+		
+		if( generateNormals )
+		{
+			new NormalGenerator( arena , Math.PI / 2 ).generateNormals( );
+		}
 		
 		for( List<Triangle> group : triangles )
 		{

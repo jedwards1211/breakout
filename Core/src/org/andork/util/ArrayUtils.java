@@ -2,7 +2,7 @@ package org.andork.util;
 
 public class ArrayUtils
 {
-
+	
 	/**
 	 * Changes the block size of an array, i.e. pads or truncates blocks of elements.
 	 */
@@ -17,7 +17,7 @@ public class ArrayUtils
 		final int srcPad = srcBlockSize - destBlockSize;
 		final int destPad = destBlockSize - srcBlockSize;
 		
-		int s = 0 , d = 0;
+		int s = 0, d = 0;
 		if( srcPad > 0 )
 		{
 			while( s < src.length )
@@ -43,7 +43,7 @@ public class ArrayUtils
 		
 		return dest;
 	}
-
+	
 	/**
 	 * Changes the block size of an array, i.e. pads or truncates blocks of elements.
 	 */
@@ -58,7 +58,7 @@ public class ArrayUtils
 		final int srcPad = srcBlockSize - destBlockSize;
 		final int destPad = destBlockSize - srcBlockSize;
 		
-		int s = 0 , d = 0;
+		int s = 0, d = 0;
 		if( srcPad > 0 )
 		{
 			while( s < src.length )
@@ -84,7 +84,7 @@ public class ArrayUtils
 		
 		return dest;
 	}
-
+	
 	/**
 	 * Changes the block size of an array, i.e. pads or truncates blocks of elements.
 	 */
@@ -99,7 +99,7 @@ public class ArrayUtils
 		final int srcPad = srcBlockSize - destBlockSize;
 		final int destPad = destBlockSize - srcBlockSize;
 		
-		int s = 0 , d = 0;
+		int s = 0, d = 0;
 		if( srcPad > 0 )
 		{
 			while( s < src.length )
@@ -125,7 +125,7 @@ public class ArrayUtils
 		
 		return dest;
 	}
-
+	
 	public static int max( int[ ] values )
 	{
 		int max = Integer.MIN_VALUE;
@@ -135,6 +135,102 @@ public class ArrayUtils
 		}
 		return max;
 		
+	}
+	
+	public static String prettyPrint( int[ ] a , int columns , int start , int end , int newlineInterval , String elemFormat )
+	{
+		StringBuffer sb = new StringBuffer( );
+		
+		int indexWidth = ( int ) Math.log10( a.length ) + 1;
+		String indexFormat = "%" + indexWidth + "d";
+		
+		int rows = 0;
+		
+		int i = start;
+		while( i < end )
+		{
+			sb.append( '[' ).append( String.format( indexFormat , i ) ).append( "] " );
+			for( int col = 0 ; col < columns - 1 && i < end ; col++ , i++ )
+			{
+				sb.append( String.format( elemFormat , a[ i ] ) ).append( "  " );
+			}
+			if( i < end )
+			{
+				sb.append( String.format( elemFormat , a[ i++ ] ) ).append( '\n' );
+			}
+			
+			if( ++rows == newlineInterval )
+			{
+				rows = 0;
+				sb.append( '\n' );
+			}
+		}
+		
+		return sb.toString( );
+	}
+	
+	public static String prettyPrint( float[ ] a , int columns , int start , int end , int newlineInterval , String elemFormat )
+	{
+		StringBuffer sb = new StringBuffer( );
+		
+		int indexWidth = ( int ) Math.log10( a.length ) + 1;
+		String indexFormat = "%" + indexWidth + "d";
+		
+		int rows = 0;
+		
+		int i = start;
+		while( i < end )
+		{
+			sb.append( '[' ).append( String.format( indexFormat , i ) ).append( "] " );
+			for( int col = 0 ; col < columns - 1 && i < end ; col++ , i++ )
+			{
+				sb.append( String.format( elemFormat , a[ i ] ) ).append( "  " );
+			}
+			if( i < end )
+			{
+				sb.append( String.format( elemFormat , a[ i++ ] ) ).append( '\n' );
+			}
+			
+			if( ++rows == newlineInterval )
+			{
+				rows = 0;
+				sb.append( '\n' );
+			}
+		}
+		
+		return sb.toString( );
+	}
+	
+	public static String prettyPrint( double[ ] a , int columns , int start , int end , int newlineInterval , String elemFormat )
+	{
+		StringBuffer sb = new StringBuffer( );
+		
+		int indexWidth = ( int ) Math.log10( a.length ) + 1;
+		String indexFormat = "%" + indexWidth + "d";
+		
+		int rows = 0;
+		
+		int i = start;
+		while( i < end )
+		{
+			sb.append( '[' ).append( String.format( indexFormat , i ) ).append( "] " );
+			for( int col = 0 ; col < columns - 1 && i < end ; col++ , i++ )
+			{
+				sb.append( String.format( elemFormat , a[ i ] ) ).append( "  " );
+			}
+			if( i < end )
+			{
+				sb.append( String.format( elemFormat , a[ i++ ] ) ).append( '\n' );
+			}
+			
+			if( ++rows == newlineInterval )
+			{
+				rows = 0;
+				sb.append( '\n' );
+			}
+		}
+		
+		return sb.toString( );
 	}
 	
 }
