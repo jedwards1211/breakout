@@ -317,32 +317,55 @@ public class FloatArrayVecmath
 		m[ 11 ] = 0;
 	}
 	
-	public static void setTranslation( float[ ] m , float[ ] v )
+	public static void setRow( float[ ] m , int rowIndex , float[ ] v )
 	{
-		m[ 3 ] = v[ 0 ];
-		m[ 7 ] = v[ 1 ];
-		m[ 11 ] = v[ 2 ];
+		rowIndex *= 4;
+		m[ rowIndex ] = v[ 0 ];
+		m[ rowIndex + 1 ] = v[ 1 ];
+		m[ rowIndex + 2 ] = v[ 2 ];
+		m[ rowIndex + 3 ] = v[ 3 ];
 	}
 	
-	public static void setTranslation( float[ ] m , float[ ] v , int vi )
+	public static void setRow( float[ ] m , int rowIndex , float[ ] v , int vi )
 	{
-		m[ 3 ] = v[ vi ];
-		m[ 7 ] = v[ vi + 1 ];
-		m[ 11 ] = v[ vi + 2 ];
+		rowIndex *= 4;
+		m[ rowIndex ] = v[ vi + 0 ];
+		m[ rowIndex + 1 ] = v[ vi + 1 ];
+		m[ rowIndex + 2 ] = v[ vi + 2 ];
+		m[ rowIndex + 3 ] = v[ vi + 3 ];
 	}
 	
-	public static void getTranslation( float[ ] m , float[ ] v )
+	public static void setRow( float[ ] m , int rowIndex , float a , float b , float c , float d )
 	{
-		v[ 0 ] = m[ 3 ];
-		v[ 1 ] = m[ 7 ];
-		v[ 2 ] = m[ 11 ];
+		rowIndex *= 4;
+		m[ rowIndex ] = a;
+		m[ rowIndex + 1 ] = b;
+		m[ rowIndex + 2 ] = c;
+		m[ rowIndex + 3 ] = d;
 	}
 	
-	public static void getTranslation( float[ ] m , float[ ] v , int vi )
+	public static void setColumn( float[ ] m , int colIndex , float[ ] v )
 	{
-		v[ vi + 0 ] = m[ 3 ];
-		v[ vi + 1 ] = m[ 7 ];
-		v[ vi + 2 ] = m[ 11 ];
+		m[ colIndex ] = v[ 0 ];
+		m[ colIndex + 4 ] = v[ 1 ];
+		m[ colIndex + 8 ] = v[ 2 ];
+		m[ colIndex + 12 ] = v[ 3 ];
+	}
+	
+	public static void setColumn( float[ ] m , int colIndex , float[ ] v , int vi )
+	{
+		m[ colIndex ] = v[ vi + 0 ];
+		m[ colIndex + 4 ] = v[ vi + 1 ];
+		m[ colIndex + 8 ] = v[ vi + 2 ];
+		m[ colIndex + 12 ] = v[ vi + 3 ];
+	}
+	
+	public static void setColumn( float[ ] m , int colIndex , float a , float b , float c , float d )
+	{
+		m[ colIndex ] = a;
+		m[ colIndex + 4 ] = b;
+		m[ colIndex + 8 ] = c;
+		m[ colIndex + 12 ] = d;
 	}
 	
 	public static void setScale( float[ ] m , float[ ] v )

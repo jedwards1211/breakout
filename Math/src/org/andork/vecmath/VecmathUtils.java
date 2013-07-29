@@ -3,6 +3,7 @@ package org.andork.vecmath;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import javax.vecmath.Matrix4f;
 import javax.vecmath.Point2d;
 import javax.vecmath.Point2f;
 import javax.vecmath.Point3d;
@@ -283,5 +284,25 @@ public class VecmathUtils
 			buffer[ d++ ] = tuple.w;
 		}
 		return buffer;
+	}
+	
+	public static void toArray( Matrix4f m , float[ ] out )
+	{
+		out[ 0 ] = m.m00;
+		out[ 1 ] = m.m01;
+		out[ 2 ] = m.m02;
+		out[ 3 ] = m.m03;
+		out[ 4 ] = m.m10;
+		out[ 5 ] = m.m11;
+		out[ 6 ] = m.m12;
+		out[ 7 ] = m.m13;
+		out[ 8 ] = m.m20;
+		out[ 9 ] = m.m21;
+		out[ 10 ] = m.m22;
+		out[ 11 ] = m.m23;
+		out[ 12 ] = m.m30;
+		out[ 13 ] = m.m31;
+		out[ 14 ] = m.m32;
+		out[ 15 ] = m.m33;
 	}
 }
