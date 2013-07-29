@@ -1,8 +1,8 @@
 package org.andork.torquescape.model2;
 
-import java.nio.IntBuffer;
+import java.nio.CharBuffer;
 
 public interface IIndexedSlice extends ISlice
 {
-	IntBuffer getIndexBuffer( );
+	CharBuffer getIndexBuffer( );
 }

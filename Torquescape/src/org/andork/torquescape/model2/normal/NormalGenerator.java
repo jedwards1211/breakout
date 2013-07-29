@@ -6,7 +6,7 @@ import java.util.Map;
 public class NormalGenerator
 {
 	public static void generateNormals( float[ ] verts , int normalOffset , int vertsStride ,
-			int[ ] indices , int indicesStart , int indicesEnd )
+			char[ ] indices , int indicesStart , int indicesEnd )
 	{
 		Map<Integer, TriangleListNode> connectedTris = new HashMap<Integer, TriangleListNode>( );
 		

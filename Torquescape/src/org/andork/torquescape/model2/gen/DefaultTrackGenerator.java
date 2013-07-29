@@ -2,16 +2,16 @@ package org.andork.torquescape.model2.gen;
 
 import org.andork.torquescape.model2.section.ISectionFunction;
 import org.andork.torquescape.model.xform.IXformFunction;
-import org.andork.torquescape.model2.list.IntList;
+import org.andork.torquescape.model2.list.CharList;
 import org.andork.torquescape.model2.list.PointList;
-import org.andork.torquescape.model2.meshing.IIntVisitor;
+import org.andork.torquescape.model2.meshing.IIndexVisitor;
 import org.andork.torquescape.model2.meshing.IMeshingFunction;
 import org.andork.torquescape.model2.section.IPointVisitor;
 
-public class DefaultTrackGenerator implements IPointVisitor , IIntVisitor
+public class DefaultTrackGenerator implements IPointVisitor , IIndexVisitor
 {
 	PointList			verts	= new PointList( );
-	IntList				indices	= new IntList( );
+	CharList			indices	= new CharList( );
 	
 	int					paramStartIndex;
 	private float[ ]	matrix	= new float[ 16 ];
@@ -36,15 +36,15 @@ public class DefaultTrackGenerator implements IPointVisitor , IIntVisitor
 		return verts.toArray( );
 	}
 	
-	public int[ ] getIndices( )
+	public char[ ] getIndices( )
 	{
 		return indices.toArray( );
 	}
 	
 	@Override
-	public void visit( int value )
+	public void visit( char index )
 	{
-		indices.add( paramStartIndex + value * 6 );
+		indices.add( ( char ) ( paramStartIndex + index * 6 ) );
 	}
 	
 	@Override

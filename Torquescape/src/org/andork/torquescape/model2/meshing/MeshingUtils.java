@@ -2,19 +2,22 @@ package org.andork.torquescape.model2.meshing;
 
 public class MeshingUtils
 {
-	public static int[ ] generateDefaultMeshing( int npoints )
+	public static char[ ] generateDefaultMeshing( char npoints )
 	{
-		int[ ] result = new int[ npoints * 6 ];
+		char[ ] result = new char[ npoints * 6 ];
 		
-		int k = 0;
-		for( int i = 0 ; i < npoints ; i++ )
+		char k = 0;
+		for( char i = 0 ; i < npoints ; i++ )
 		{
-			result[k++] = i;
-			result[k++] = (i + 1) % npoints;
-			result[k++] = i + npoints;
-			result[k++] = ((i + 1) % npoints) + npoints;
-			result[k++] = i + npoints;
-			result[k++] = (i + 1) % npoints;
+			char next = ( char ) ( ( i + 1 ) % npoints );
+			char beyond = ( char ) ( i + npoints );
+			char greatBeyond = ( char ) ( next + npoints );
+			result[ k++ ] = i;
+			result[ k++ ] = next;
+			result[ k++ ] = beyond;
+			result[ k++ ] = greatBeyond;
+			result[ k++ ] = beyond;
+			result[ k++ ] = next;
 		}
 		
 		return result;

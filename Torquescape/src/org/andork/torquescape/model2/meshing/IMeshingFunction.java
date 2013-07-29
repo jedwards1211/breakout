@@ -3,7 +3,7 @@ package org.andork.torquescape.model2.meshing;
 public interface IMeshingFunction
 {
 	/**
-	 * Passes the vertex indices for the mesh at a given parameter to an {@link IIntVisitor} in sequence. Index 0 corresponds to the first vertex from the
+	 * Passes the vertex indices for the mesh at a given parameter to an {@link IIndexVisitor} in sequence. Index 0 corresponds to the first vertex from the
 	 * section function at {@code param}, 1 corresponds to the second, and indices less than 0 / greater than last index in the section at {@code param}
 	 * correspond to the previous / next section, respectively.
 	 * 
@@ -12,5 +12,5 @@ public interface IMeshingFunction
 	 * @param indexVisitor
 	 *            the visitor to pass the vertex indices at {@code param} to.
 	 */
-	public void eval( float param , IIntVisitor indexVisitor );
+	public void eval( float param , IIndexVisitor indexVisitor );
 }

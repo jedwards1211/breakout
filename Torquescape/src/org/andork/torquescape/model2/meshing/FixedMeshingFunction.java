@@ -2,18 +2,18 @@ package org.andork.torquescape.model2.meshing;
 
 public class FixedMeshingFunction implements IMeshingFunction
 {
-	int[ ]	indices;
+	char[ ]	indices;
 	
-	public FixedMeshingFunction( int[ ] indices )
+	public FixedMeshingFunction( char[ ] indices )
 	{
 		super( );
 		this.indices = indices;
 	}
 
 	@Override
-	public void eval( float param , IIntVisitor indexVisitor )
+	public void eval( float param , IIndexVisitor indexVisitor )
 	{
-		for( int i : indices )
+		for( char i : indices )
 		{
 			indexVisitor.visit( i );
 		}

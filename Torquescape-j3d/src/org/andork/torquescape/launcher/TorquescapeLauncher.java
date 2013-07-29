@@ -60,27 +60,12 @@ public class TorquescapeLauncher
 		generator.add( track.getXformFunction( ) , track.getSectionFunction( ) , track.getMeshingFunction( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
 		
 		float[ ] verts = generator.getVertices( );
-		int[ ] indices = generator.getIndices( );
+		char[ ] indices = generator.getIndices( );
+		
+		System.out.println("verts.length: " + verts.length);
+		System.out.println("indices.length: " + indices.length);
 		
 		org.andork.torquescape.model2.normal.NormalGenerator.generateNormals( verts , 3 , 6 , indices , 0 , indices.length );
-		
-		int printCount = 1000;
-		float[ ] indexedVerts = new float[ printCount * 6 ];
-		int k = 0;
-		for( int i = 0 ; i < printCount ; i++ )
-		{
-			int v = indices[ i ];
-			indexedVerts[ k++ ] = verts[ v++ ];
-			indexedVerts[ k++ ] = verts[ v++ ];
-			indexedVerts[ k++ ] = verts[ v++ ];
-			indexedVerts[ k++ ] = verts[ v++ ];
-			indexedVerts[ k++ ] = verts[ v++ ];
-			indexedVerts[ k++ ] = verts[ v++ ];
-		}
-		
-		// System.out.println( ArrayUtils.prettyPrint( verts , 6 , 0 , 100 , "%9.3f" ) );
-		System.out.println( ArrayUtils.prettyPrint( indices , 6 , 0 , 100 , 0 , "%5d" ) );
-//		System.out.println( ArrayUtils.prettyPrint( indexedVerts , 6 , 0 , printCount , 3 , "%9.3f" ) );
 		
 		List<Triangle> triangles = Model2Converter.convert( verts , indices );
 		

@@ -137,6 +137,38 @@ public class ArrayUtils
 		
 	}
 	
+	public static String prettyPrintAsNumbers( char[ ] a , int columns , int start , int end , int newlineInterval , String elemFormat )
+	{
+		StringBuffer sb = new StringBuffer( );
+		
+		int indexWidth = ( int ) Math.log10( a.length ) + 1;
+		String indexFormat = "%" + indexWidth + "d";
+		
+		int rows = 0;
+		
+		int i = start;
+		while( i < end )
+		{
+			sb.append( '[' ).append( String.format( indexFormat , i ) ).append( "] " );
+			for( int col = 0 ; col < columns - 1 && i < end ; col++ , i++ )
+			{
+				sb.append( String.format( elemFormat , ( int ) a[ i ] ) ).append( "  " );
+			}
+			if( i < end )
+			{
+				sb.append( String.format( elemFormat , ( int ) a[ i++ ] ) ).append( '\n' );
+			}
+			
+			if( ++rows == newlineInterval )
+			{
+				rows = 0;
+				sb.append( '\n' );
+			}
+		}
+		
+		return sb.toString( );
+	}
+	
 	public static String prettyPrint( int[ ] a , int columns , int start , int end , int newlineInterval , String elemFormat )
 	{
 		StringBuffer sb = new StringBuffer( );

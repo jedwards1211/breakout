@@ -50,7 +50,7 @@ public class Track1 extends Track
 		
 		FixedSectionFunction section = new FixedSectionFunction( SectionUtils.generateSharpPolygon( 3 , 5 ) );
 		
-		int[ ] meshing = { 1 , 2 , 7 , 8 , 7 , 2 , 3 , 4 , 9 , 10 , 9 , 4 , 5 , 0 , 11 , 6 , 11 , 0 };
+		char[ ] meshing = { 1 , 2 , 7 , 8 , 7 , 2 , 3 , 4 , 9 , 10 , 9 , 4 , 5 , 0 , 11 , 6 , 11 , 0 };
 		
 		FixedMeshingFunction meshingFunction = new FixedMeshingFunction( meshing );
 		

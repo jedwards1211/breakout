@@ -2,28 +2,28 @@ package org.andork.torquescape.model2;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
+import java.nio.CharBuffer;
 
 public abstract class AbstractIndexedSlice implements IIndexedSlice
 {
-	public IntBuffer	indexBuffer;
+	public CharBuffer	indexBuffer;
 	
-	public void setIndexBuffer( IntBuffer buffer )
+	public void setIndexBuffer( CharBuffer buffer )
 	{
 		indexBuffer = buffer;
 	}
 	
-	public void setIndices( int[ ] indices )
+	public void setIndices( char[ ] indices )
 	{
-		ByteBuffer bb = ByteBuffer.allocateDirect( indices.length * 4 );
+		ByteBuffer bb = ByteBuffer.allocateDirect( indices.length * 2 );
 		bb.order( ByteOrder.nativeOrder( ) );
-		indexBuffer = bb.asIntBuffer( );
+		indexBuffer = bb.asCharBuffer( );
 		indexBuffer.put( indices );
 		indexBuffer.position( 0 );
 	}
 	
 	@Override
-	public IntBuffer getIndexBuffer( )
+	public CharBuffer getIndexBuffer( )
 	{
 		return indexBuffer;
 	}

@@ -8,16 +8,16 @@ import javax.vecmath.Vector3f;
 
 public class Model2Converter
 {
-	public static List<Triangle> convert( float[ ] verts , int[ ] indices )
+	public static List<Triangle> convert( float[ ] verts , char[ ] indices )
 	{
 		List<Triangle> result = new ArrayList<Triangle>( );
 		
 		int i = 0;
 		while( i < indices.length )
 		{
-			int i0 = indices[ i++ ];
-			int i1 = indices[ i++ ];
-			int i2 = indices[ i++ ];
+			char i0 = indices[ i++ ];
+			char i1 = indices[ i++ ];
+			char i2 = indices[ i++ ];
 			
 			Point3f p0 = new Point3f( verts[ i0++ ] , verts[ i0++ ] , verts[ i0++ ] );
 			Vector3f n0 = new Vector3f( verts[ i0++ ] , verts[ i0++ ] , verts[ i0++ ] );
