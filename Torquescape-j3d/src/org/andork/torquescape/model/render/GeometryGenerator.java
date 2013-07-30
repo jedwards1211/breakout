@@ -5,7 +5,7 @@ import java.util.List;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.TriangleArray;
 
-import org.andork.torquescape.model.Triangle;
+import org.andork.torquescape.model.old.Triangle;
 
 public class GeometryGenerator
 {

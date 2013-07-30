@@ -1,6 +1,6 @@
 package org.andork.torquescape.launcher;
 
-import org.andork.torquescape.model.track.Track1;
+import org.andork.torquescape.model.old.track.Track1;
 
 public class Track1Launcher
 {

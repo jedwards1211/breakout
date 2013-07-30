@@ -18,9 +18,9 @@ public class NormalGenerator
 		while( i < indicesEnd )
 		{
 			int triangleIndex = i;
-			int coord0 = indices[ i++ ];
-			int coord1 = indices[ i++ ];
-			int coord2 = indices[ i++ ];
+			int coord0 = indices[ i++ ] * 6;
+			int coord1 = indices[ i++ ] * 6;
+			int coord2 = indices[ i++ ] * 6;
 			
 			// remember that these points are connected to this triangle
 			

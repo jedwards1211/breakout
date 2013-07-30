@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Java3D (32-bit)"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Torquescape-core-old"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Torquescape-core"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

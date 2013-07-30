@@ -27,16 +27,16 @@ import org.andork.j3d.math.TransformComputer3f;
 import org.andork.torquescape.control.CameraController;
 import org.andork.torquescape.control.ControlState;
 import org.andork.torquescape.control.ControlStateKeyboardHandler;
-import org.andork.torquescape.model.Arena;
-import org.andork.torquescape.model.Model2Converter;
-import org.andork.torquescape.model.Player;
-import org.andork.torquescape.model.Triangle;
-import org.andork.torquescape.model.TriangleBasis;
-import org.andork.torquescape.model.gen.DefaultTrackSegmentGenerator;
+import org.andork.torquescape.model.gen.DefaultTrackGenerator;
+import org.andork.torquescape.model.old.Arena;
+import org.andork.torquescape.model.old.NewModelConverter;
+import org.andork.torquescape.model.old.Player;
+import org.andork.torquescape.model.old.Triangle;
+import org.andork.torquescape.model.old.TriangleBasis;
+import org.andork.torquescape.model.old.gen.DefaultTrackSegmentGenerator;
+import org.andork.torquescape.model.old.render.NormalGenerator;
+import org.andork.torquescape.model.old.track.Track;
 import org.andork.torquescape.model.render.GeometryGenerator;
-import org.andork.torquescape.model.render.NormalGenerator;
-import org.andork.torquescape.model.track.Track;
-import org.andork.torquescape.model2.gen.DefaultTrackGenerator;
 import org.andork.util.ArrayUtils;
 
 import com.sun.j3d.utils.geometry.Sphere;
@@ -54,7 +54,7 @@ public class TorquescapeLauncher
 		TorquescapeLauncher.launch( outTriangles , true );
 	}
 	
-	public static void launch( org.andork.torquescape.model2.track.Track track )
+	public static void launch( org.andork.torquescape.model.track.Track track )
 	{
 		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
 		generator.add( track.getXformFunction( ) , track.getSectionFunction( ) , track.getMeshingFunction( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
@@ -62,12 +62,12 @@ public class TorquescapeLauncher
 		float[ ] verts = generator.getVertices( );
 		char[ ] indices = generator.getIndices( );
 		
-		System.out.println("verts.length: " + verts.length);
-		System.out.println("indices.length: " + indices.length);
+		System.out.println( "verts.length: " + verts.length );
+		System.out.println( "indices.length: " + indices.length );
 		
-		org.andork.torquescape.model2.normal.NormalGenerator.generateNormals( verts , 3 , 6 , indices , 0 , indices.length );
+		org.andork.torquescape.model.normal.NormalGenerator.generateNormals( verts , 3 , 6 , indices , 0 , indices.length );
 		
-		List<Triangle> triangles = Model2Converter.convert( verts , indices );
+		List<Triangle> triangles = NewModelConverter.convert( verts , indices );
 		
 		launch( Collections.singletonList( triangles ) , false );
 	}

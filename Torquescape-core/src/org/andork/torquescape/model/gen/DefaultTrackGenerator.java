@@ -20,13 +20,13 @@ public class DefaultTrackGenerator implements IPointVisitor , IIndexVisitor
 	{
 		for( float param = startParam ; param < endParam ; param += step )
 		{
-			paramStartIndex = verts.size( ) * 3;
+			paramStartIndex = verts.size( ) / 2;
 			xform.eval( param , matrix );
 			section.eval( param , this );
 			mesh.eval( param , this );
 		}
 		
-		paramStartIndex = verts.size( ) * 3;
+		paramStartIndex = verts.size( ) / 2;
 		xform.eval( endParam , matrix );
 		section.eval( endParam , this );
 	}
@@ -44,7 +44,7 @@ public class DefaultTrackGenerator implements IPointVisitor , IIndexVisitor
 	@Override
 	public void visit( char index )
 	{
-		indices.add( ( char ) ( paramStartIndex + index * 6 ) );
+		indices.add( ( char ) ( paramStartIndex + index ) );
 	}
 	
 	@Override
