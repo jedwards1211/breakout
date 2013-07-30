@@ -6,6 +6,7 @@ import org.andork.torquescape.model.ISlice;
 
 public interface ISliceRenderer<S extends ISlice>
 {
-	public abstract void draw( GL3 gl3 , float[ ] mvMatrix , float[ ] pMatrix );
+	public abstract void init( GL3 gl3 );
 	
+	public abstract void draw( GL3 gl3 , float[ ] mvMatrix , float[ ] pMatrix );
 }

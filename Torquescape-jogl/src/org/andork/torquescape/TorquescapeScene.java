@@ -1,15 +1,12 @@
 package org.andork.torquescape;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
-import org.andork.torquescape.model.ISlice;
 import org.andork.torquescape.model.StandardSlice;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DefaultTrackGenerator;
@@ -20,23 +17,24 @@ import org.andork.vecmath.FloatArrayVecmath;
 
 public class TorquescapeScene implements GLEventListener
 {
-	public final List<Zone>											zones		= new ArrayList<Zone>( );
-	public final Map<Class<? extends ISlice>, ISliceRenderer<?>>	renderers	= new HashMap<Class<? extends ISlice>, ISliceRenderer<?>>( );
+	public final List<ZoneRenderer>	zones		= new ArrayList<ZoneRenderer>( );
 	
-	public float													mTilt;
-	public float													mPan;
+	public IndexedPackedCube		cube		= new IndexedPackedCube( );
 	
-	float[ ]														mVMatrix	= new float[ 16 ];
-	float[ ]														mProjMatrix	= new float[ 16 ];
-	float[ ]														mPanMatrix	= new float[ 16 ];
-	float[ ]														mTiltMatrix	= new float[ 16 ];
-	float[ ]														mMVMatrix	= new float[ 16 ];
-	float[ ]														mMVPMatrix	= new float[ 16 ];
+	public float					mTilt;
+	public float					mPan;
+	
+	float[ ]						mVMatrix	= new float[ 16 ];
+	float[ ]						mProjMatrix	= new float[ 16 ];
+	float[ ]						mPanMatrix	= new float[ 16 ];
+	float[ ]						mTiltMatrix	= new float[ 16 ];
+	float[ ]						mMVMatrix	= new float[ 16 ];
+	float[ ]						mMVPMatrix	= new float[ 16 ];
 	
 	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
 	{
 		// Redraw background color
-		gl.glClear( GL3.GL_COLOR_BUFFER_BIT );
+		gl.glClear( GL3.GL_COLOR_BUFFER_BIT | GL3.GL_DEPTH_BUFFER_BIT );
 		
 		gl.glEnable( GL3.GL_DEPTH_TEST );
 		gl.glEnable( GL3.GL_CULL_FACE );
@@ -59,26 +57,28 @@ public class TorquescapeScene implements GLEventListener
 		FloatArrayVecmath.mmul( mPanMatrix , mTiltMatrix , mMVMatrix );
 		
 		// Calculate the projection and view transformation
-		FloatArrayVecmath.mmul( mMVMatrix , mVMatrix , mMVMatrix );
+		FloatArrayVecmath.mmul( mVMatrix , mMVMatrix , mMVMatrix );
 		
 		FloatArrayVecmath.transpose( mMVMatrix , mMVMatrix );
 		
-		for( Zone zone : zones )
-		{
-			for( ISlice slice : zone.slices )
-			{
-				ISliceRenderer<ISlice> renderer = ( ISliceRenderer<ISlice> ) renderers.get( slice.getClass( ) );
-				if( renderer != null )
-				{
-					renderer.draw( gl , mvMatrix , pMatrix , zone , slice );
-				}
-			}
-		}
+		cube.draw( gl , mMVMatrix , mProjMatrix );
+		//
+		// for( ZoneRenderer zone : zones )
+		// {
+		// for( ISliceRenderer<?> sliceRenderer : zone.sliceRenderers )
+		// {
+		// sliceRenderer.draw( gl , mvMatrix , pMatrix );
+		// }
+		// }
 	}
 	
 	@Override
 	public void init( GLAutoDrawable drawable )
 	{
+		GL3 gl = ( GL3 ) drawable.getGL( );
+		
+		cube.init( gl );
+		
 		Track track = new Track1( );
 		
 		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
@@ -101,11 +101,10 @@ public class TorquescapeScene implements GLEventListener
 		set( slice1.diffuseColor , 1 , 0 , 0 , 1 );
 		zone1.slices.add( slice1 );
 		
-		StandardSliceRenderer stdSliceRenderer = new StandardSliceRenderer( );
-		stdSliceRenderer.init( ( GL3 ) drawable.getGL( ) );
+		ZoneRenderer rend1 = new ZoneRenderer( zone1 );
+		rend1.init( gl );
 		
-		renderers.put( StandardSlice.class , stdSliceRenderer );
-		zones.add( zone1 );
+		zones.add( rend1 );
 	}
 	
 	private void set( float[ ] array , float a , float b , float c , float d )
@@ -135,7 +134,7 @@ public class TorquescapeScene implements GLEventListener
 		
 		float ratio = ( float ) width / height;
 		
-		FloatArrayVecmath.perspective( mProjMatrix , 90 , ratio , 0.001f , 100 );
+		FloatArrayVecmath.perspective( mProjMatrix , ( float ) Math.PI / 3 , ratio , 0.001f , 100 );
 		FloatArrayVecmath.transpose( mProjMatrix , mProjMatrix );
 	}
 }

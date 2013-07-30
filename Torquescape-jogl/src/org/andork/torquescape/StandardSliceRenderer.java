@@ -1,5 +1,7 @@
 package org.andork.torquescape;
 
+import static org.andork.torquescape.GLUtils.checkGlError;
+
 import javax.media.opengl.GL3;
 
 import org.andork.torquescape.model.StandardSlice;
@@ -7,37 +9,43 @@ import org.andork.torquescape.model.Zone;
 
 public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 {
-	private final String	vertexShaderCode	=
-														// This matrix member variable provides a hook to manipulate
-														// the coordinates of the objects that use this vertex shader
-														"uniform mat4 uMVMatrix;" +
-																"uniform mat4 uPMatrix;" +
-																"attribute vec4 vPosition;" +
-																"attribute vec3 vNormal;" +
-																"varying vec3 v_fxnormal;" +
-																"void main() {" +
-																"  v_fxnormal = normalize((uMVMatrix * vec4(vNormal, 0)).xyz);" +
-																"  gl_Position = uPMatrix * uMVMatrix * vPosition;" +
-																"}";
+	public static final Factory	FACTORY				= new Factory( );
 	
-	private final String	fragmentShaderCode	=
-														"varying vec3 v_fxnormal;" +
-																"uniform vec4 vAmbientColor;" +
-																"uniform vec4 vDiffuseColor;" +
-																"void main() {" +
-																"  float intensity = dot(v_fxnormal, vec3(0.0, 0.0, 1.0));" +
-																"  gl_FragColor = mix(vAmbientColor, vDiffuseColor, intensity);" +
-																"}";
+	private final String		vertexShaderCode	=
+															// This matrix member variable provides a hook to manipulate
+															// the coordinates of the objects that use this vertex shader
+															"uniform mat4 uMVMatrix;" +
+																	"uniform mat4 uPMatrix;" +
+																	"attribute vec4 vPosition;" +
+																	"attribute vec3 vNormal;" +
+																	"varying vec3 v_fxnormal;" +
+																	"void main() {" +
+																	"  v_fxnormal = normalize((uMVMatrix * vec4(vNormal, 0)).xyz);" +
+																	"  gl_Position = uPMatrix * uMVMatrix * vPosition;" +
+																	"}";
 	
-	private ZoneRenderer	zoneRenderer;
-	private StandardSlice	slice;
+	private final String		fragmentShaderCode	=
+															"varying vec3 v_fxnormal;" +
+																	"uniform vec4 vAmbientColor;" +
+																	"uniform vec4 vDiffuseColor;" +
+																	"void main() {" +
+																	"  float intensity = dot(v_fxnormal, vec3(0.0, 0.0, 1.0));" +
+																	"  gl_FragColor = mix(vAmbientColor, vDiffuseColor, intensity);" +
+																	"}";
 	
-	private int				mProgram;
-	private int				vao;
+	private int					mProgram;
+	
+	private int					vao;
+	private int					indexEbo;
+	
+	private Zone				zone;
+	private ZoneRenderer		zoneRenderer;
+	private StandardSlice		slice;
 	
 	public StandardSliceRenderer( ZoneRenderer zoneRenderer , StandardSlice slice )
 	{
 		this.zoneRenderer = zoneRenderer;
+		this.zone = zoneRenderer.zone;
 		this.slice = slice;
 	}
 	
@@ -57,15 +65,53 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 		gl.glLinkProgram( mProgram ); // creates OpenGL ES program executables
 		checkGlError( gl , "glLinkProgram" );
 		
-//		int[ ] varrays = new int[ 1 ];
-//		
-//		gl.glGenVertexArrays( 1 , varrays , 0 );
-//		checkGlError( gl , "glGenVertexArrays" );
-//		
-//		vao = varrays[ 0 ];
-//		
-//		gl.glBindVertexArray( vao );
-//		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , zoneRenderer.vertVBO );
+		int[ ] vaos = new int[ 1 ];
+		int[ ] vbos = new int[ 1 ];
+		
+		gl.glGenVertexArrays( 1 , vaos , 0 );
+		checkGlError( gl , "glGenVertexArrays" );
+		
+		gl.glGenBuffers( 1 , vbos , 0 );
+		checkGlError( gl , "glGenBuffers" );
+		
+		vao = vaos[ 0 ];
+		indexEbo = vbos[ 0 ];
+		
+		gl.glBindVertexArray( vao );
+		
+		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , zoneRenderer.vertVbo );
+		
+		zone.vertBuffer.position( 0 );
+		
+		int vPositionLoc = gl.glGetAttribLocation( mProgram , "vPosition" );
+		checkGlError( gl , "glGetAttribLocation" );
+		gl.glEnableVertexAttribArray( vPositionLoc );
+		checkGlError( gl , "glEnableVertexAttribArray" );
+		gl.glVertexAttribPointer( vPositionLoc , 3 , GL3.GL_FLOAT , false , 24 , 0 );
+		checkGlError( gl , "glVertexAttribPointer" );
+		
+		zone.vertBuffer.position( 3 );
+		
+		int vNormalLoc = gl.glGetAttribLocation( mProgram , "vNormal" );
+		checkGlError( gl , "glGetAttribLocation" );
+		gl.glEnableVertexAttribArray( vNormalLoc );
+		checkGlError( gl , "glEnableVertexAttribArray" );
+		gl.glVertexAttribPointer( vNormalLoc , 3 , GL3.GL_FLOAT , false , 24 , 0 );
+		checkGlError( gl , "glVertexAttribPointer" );
+		
+		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
+		
+		slice.indexBuffer.position( 0 );
+		
+		gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , indexEbo );
+		checkGlError( gl , "glBindBuffer" );
+		gl.glBufferData( GL3.GL_ELEMENT_ARRAY_BUFFER , slice.indexBuffer.capacity( ) * 2 , slice.indexBuffer , GL3.GL_STATIC_DRAW );
+		checkGlError( gl , "glBufferData" );
+		gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , 0 );
+		checkGlError( gl , "glBindBuffer" );
+		
+		gl.glBindVertexArray( 0 );
+		checkGlError( gl , "glBindVertexArray" );
 	}
 	
 	/*
@@ -89,58 +135,41 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 		gl.glUniformMatrix4fv( pMatrixLoc , 1 , false , pMatrix , 0 );
 		checkGlError( gl , "glUniformMatrix4fv" );
 		
-		Zone zone = zoneRenderer.zone;
-		
-		zone.vertBuffer.position( 0 );
-		
-		int vPositionLoc = gl.glGetAttribLocation( mProgram , "vPosition" );
-		checkGlError( gl , "glGetAttribLocation" );
-		gl.glVertexAttribPointer( vPositionLoc , 3 , GL3.GL_FLOAT , false , 24 , zone.vertBuffer );
-		checkGlError( gl , "glVertexAttribPointer" );
-		
-		zone.vertBuffer.position( 3 );
-		
-		int vNormalLoc = gl.glGetAttribLocation( mProgram , "vNormal" );
-		checkGlError( gl , "glGetAttribLocation" );
-		gl.glVertexAttribPointer( vNormalLoc , 3 , GL3.GL_FLOAT , false , 24 , zone.vertBuffer );
-		checkGlError( gl , "glVertexAttribPointer" );
-		
 		int ambientLoc = gl.glGetUniformLocation( mProgram , "vAmbientColor" );
 		checkGlError( gl , "glGetUniformLocation" );
-		gl.glUniform4fv( ambientLoc , 4 , slice.ambientColor , 0 );
+		gl.glUniform4fv( ambientLoc , 1 , slice.ambientColor , 0 );
 		checkGlError( gl , "glUniform4fv" );
 		
 		int diffuseLoc = gl.glGetUniformLocation( mProgram , "vDiffuseColor" );
 		checkGlError( gl , "glGetUniformLocation" );
-		gl.glUniform4fv( diffuseLoc , 4 , slice.diffuseColor , 0 );
+		gl.glUniform4fv( diffuseLoc , 1 , slice.diffuseColor , 0 );
 		checkGlError( gl , "glUniform4fv" );
 		
-		slice.indexBuffer.position( 0 );
-		gl.glDrawElements( GL3.GL_TRIANGLES , slice.indexBuffer.length( ) / 3 , GL3.GL_UNSIGNED_SHORT , slice.indexBuffer );
+		gl.glBindVertexArray( vao );
+		checkGlError( gl , "glBindVertexArray" );
+		
+		gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , indexEbo );
+		checkGlError( gl , "glBindBuffer" );
+		
+		gl.glDrawElements( GL3.GL_TRIANGLES , slice.indexBuffer.length( ) / 3 , GL3.GL_UNSIGNED_SHORT , 0 );
 		checkGlError( gl , "glDrawElements" );
+		
+		gl.glBindVertexArray( 0 );
+		checkGlError( gl , "glBindVertexArray" );
+		
 	}
 	
-	/**
-	 * Utility method for debugging OpenGL calls. Provide the name of the call just after making it:
-	 * 
-	 * <pre>
-	 * mColorHandle = gl.glGetUniformLocation( mProgram , &quot;vColor&quot; );
-	 * MyGLRenderer.checkGlError( &quot;glGetUniformLocation&quot; );
-	 * </pre>
-	 * 
-	 * If the operation is not successful, the check throws an error.
-	 * 
-	 * @param gl
-	 *            TODO
-	 * @param glOperation
-	 *            - Name of the OpenGL call to check.
-	 */
-	public static void checkGlError( GL3 gl , String glOperation )
+	public static class Factory implements ISliceRendererFactory<StandardSlice>
 	{
-		int error;
-		while( ( error = gl.glGetError( ) ) != GL3.GL_NO_ERROR )
+		private Factory( )
 		{
-			throw new RuntimeException( glOperation + ": glError " + error );
+			
+		}
+		
+		@Override
+		public ISliceRenderer<StandardSlice> create( ZoneRenderer zoneRenderer , StandardSlice slice )
+		{
+			return new StandardSliceRenderer( zoneRenderer , slice );
 		}
 	}
 }

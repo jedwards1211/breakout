@@ -45,33 +45,32 @@ public class TorquescapeFrame extends JFrame
 		
 		MouseAdapter mouseAdapter = new MouseAdapter( )
 		{
-			MouseEvent lastEvent = null;
+			MouseEvent	lastEvent	= null;
 			
 			@Override
 			public void mousePressed( MouseEvent e )
 			{
 				lastEvent = e;
 			}
-
-
-
+			
 			@Override
 			public void mouseDragged( MouseEvent e )
 			{
 				int dx = e.getX( ) - lastEvent.getX( );
 				int dy = e.getY( ) - lastEvent.getY( );
+				lastEvent = e;
 				
-				scene.mPan -= dx * 180f / glCanvas.getWidth(); // = 180.0f / 320
-				scene.mTilt += dy * 180f / glCanvas.getHeight(); // = 180.0f / 320
+				scene.mPan -= dx * Math.PI / glCanvas.getWidth( ); // = 180.0f / 320
+				scene.mTilt -= dy * Math.PI / glCanvas.getHeight( ); // = 180.0f / 320
 			}
 		};
 		
 		glCanvas.addMouseListener( mouseAdapter );
 		glCanvas.addMouseMotionListener( mouseAdapter );
 		
-		AnimatorBase animator = new FPSAnimator(glCanvas, 60);
+		AnimatorBase animator = new FPSAnimator( glCanvas , 60 );
 		
 		getContentPane( ).add( glCanvas , BorderLayout.CENTER );
-		animator.start();
+		animator.start( );
 	}
 }
