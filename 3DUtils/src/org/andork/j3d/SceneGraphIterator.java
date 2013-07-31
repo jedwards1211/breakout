@@ -9,8 +9,6 @@ import javax.media.j3d.Node;
 
 import org.omg.CORBA.IntHolder;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 /**
  * Iterates through the scene graph. There are two types of SceneGraphIterators: bounded and unbounded. A bounded iterator will only iterate through the start
  * node an all of its descendants. An unbounded iterator will continue a depth-first iteration through the entire scene graph after it finishes with the start
@@ -145,7 +143,7 @@ public class SceneGraphIterator implements Iterator<Node>
 	@Override
 	public void remove( )
 	{
-		throw new NotImplementedException( );
+		throw new UnsupportedOperationException( );
 	}
 	
 	public static Iterable<Node> boundedIterable( final Node start )

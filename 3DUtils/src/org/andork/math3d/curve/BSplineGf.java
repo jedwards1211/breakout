@@ -123,7 +123,7 @@ public class BSplineGf<T>
 		
 		public NurbsEvaluator( int degree , RationalPointType<T> pointType )
 		{
-			evaluator = new Evaluator<>( degree , pointType );
+			evaluator = new Evaluator<T>( degree , pointType );
 			this.pointType = pointType;
 			A = pointType.allocate( 1 )[ 0 ];
 			Ap = pointType.allocate( 1 )[ 0 ];

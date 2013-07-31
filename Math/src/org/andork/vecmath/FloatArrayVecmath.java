@@ -1,7 +1,5 @@
 package org.andork.vecmath;
 
-import javax.vecmath.AxisAngle4f;
-import javax.vecmath.Vector3d;
 
 public class FloatArrayVecmath
 {
