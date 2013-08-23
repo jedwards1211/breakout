@@ -17,22 +17,26 @@ import org.andork.torquescape.model.track.Track;
 import org.andork.torquescape.model.track.Track1;
 import org.andork.util.ArrayUtils;
 import org.andork.vecmath.FloatArrayVecmath;
+import org.andork.vecmath.VecmathUtils;
 
 public class TorquescapeTestScene implements GLEventListener
 {
-	public final List<ZoneRenderer>	zones		= new ArrayList<ZoneRenderer>( );
+	public final List<ZoneRenderer>	zones				= new ArrayList<ZoneRenderer>( );
 	
-	public IndexedPackedCube		cube		= new IndexedPackedCube( );
+	public IndexedPackedCube		cube				= new IndexedPackedCube( );
 	
-	public float					mTilt;
-	public float					mPan;
+	public float					tilt;
+	public float					pan;
 	
-	float[ ]						mVMatrix	= new float[ 16 ];
-	float[ ]						mProjMatrix	= new float[ 16 ];
-	float[ ]						mPanMatrix	= new float[ 16 ];
-	float[ ]						mTiltMatrix	= new float[ 16 ];
-	float[ ]						mMVMatrix	= new float[ 16 ];
-	float[ ]						mMVPMatrix	= new float[ 16 ];
+	float[ ]						cameraMatrix		= new float[ 16 ];
+	
+	float[ ]						modelMatrix			= new float[ 16 ];
+	float[ ]						viewMatrix			= new float[ 16 ];
+	float[ ]						projMatrix			= new float[ 16 ];
+	float[ ]						panMatrix			= new float[ 16 ];
+	float[ ]						tiltMatrix			= new float[ 16 ];
+	float[ ]						modelViewMatrix		= new float[ 16 ];
+	float[ ]						modelViewProjMatrix	= new float[ 16 ];
 	
 	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
 	{
@@ -45,25 +49,28 @@ public class TorquescapeTestScene implements GLEventListener
 		gl.glCullFace( GL3.GL_BACK );
 		
 		// Set the camera position (View matrix)
-		FloatArrayVecmath.lookAt( mVMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
+		FloatArrayVecmath.lookAt( viewMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
 		
-		// Create a rotation for the triangle
-		// long time = SystemClock.uptimeMillis() % 4000L;
-		// float angle = 0.090f * ((int) time);
-		FloatArrayVecmath.setRotation( mPanMatrix , 0 , 1 , 0 , mPan );
+		// // Create a rotation for the triangle
+		// // long time = SystemClock.uptimeMillis() % 4000L;
+		// // float angle = 0.090f * ((int) time);
+		// FloatArrayVecmath.setRotation( panMatrix , 0 , 1 , 0 , pan );
+		//
+		// // Create a rotation for the triangle
+		// // long time = SystemClock.uptimeMillis() % 4000L;
+		// // float angle = 0.090f * ((int) time);
+		// FloatArrayVecmath.setRotation( tiltMatrix , 1 , 0 , 0 , tilt );
+		//
+		// // Calculate the projection and view transformation
+		// FloatArrayVecmath.mmul( tiltMatrix , panMatrix , modelViewMatrix );
+		//
+		// // Calculate the projection and view transformation
+		// FloatArrayVecmath.mmul( viewMatrix , modelViewMatrix , modelViewMatrix );
 		
-		// Create a rotation for the triangle
-		// long time = SystemClock.uptimeMillis() % 4000L;
-		// float angle = 0.090f * ((int) time);
-		FloatArrayVecmath.setRotation( mTiltMatrix , 1 , 0 , 0 , mTilt );
+		FloatArrayVecmath.invAffine( cameraMatrix , modelMatrix );
+		FloatArrayVecmath.mmul( viewMatrix , modelMatrix , modelViewMatrix );
 		
-		// Calculate the projection and view transformation
-		FloatArrayVecmath.mmul( mPanMatrix , mTiltMatrix , mMVMatrix );
-		
-		// Calculate the projection and view transformation
-		FloatArrayVecmath.mmul( mVMatrix , mMVMatrix , mMVMatrix );
-		
-		FloatArrayVecmath.transpose( mMVMatrix , mMVMatrix );
+		 FloatArrayVecmath.transpose( modelViewMatrix , modelViewMatrix );
 		
 		for( ZoneRenderer zone : zones )
 		{
@@ -77,6 +84,9 @@ public class TorquescapeTestScene implements GLEventListener
 	@Override
 	public void init( GLAutoDrawable drawable )
 	{
+		FloatArrayVecmath.setIdentity( cameraMatrix );
+		FloatArrayVecmath.setIdentity( modelMatrix );
+		
 		GL3 gl = ( GL3 ) drawable.getGL( );
 		
 		cube.init( gl );
@@ -128,7 +138,7 @@ public class TorquescapeTestScene implements GLEventListener
 	@Override
 	public void display( GLAutoDrawable drawable )
 	{
-		draw( ( GL3 ) drawable.getGL( ) , mMVMatrix , mProjMatrix );
+		draw( ( GL3 ) drawable.getGL( ) , modelViewMatrix , projMatrix );
 	}
 	
 	@Override
@@ -138,11 +148,11 @@ public class TorquescapeTestScene implements GLEventListener
 		
 		float ratio = ( float ) width / height;
 		
-		FloatArrayVecmath.perspective( mProjMatrix , ( float ) Math.PI / 2 , ratio , 0.01f , 100 );
-		mProjMatrix[ 8 ] = -mProjMatrix[ 8 ];
-		mProjMatrix[ 9 ] = -mProjMatrix[ 9 ];
-		mProjMatrix[ 10 ] = -mProjMatrix[ 10 ];
-		mProjMatrix[ 11 ] = -mProjMatrix[ 11 ];
-		FloatArrayVecmath.transpose( mProjMatrix , mProjMatrix );
+		FloatArrayVecmath.perspective( projMatrix , ( float ) Math.PI / 2 , ratio , 0.01f , 10000 );
+		projMatrix[ 8 ] = -projMatrix[ 8 ];
+		projMatrix[ 9 ] = -projMatrix[ 9 ];
+		projMatrix[ 10 ] = -projMatrix[ 10 ];
+		projMatrix[ 11 ] = -projMatrix[ 11 ];
+		FloatArrayVecmath.transpose( projMatrix , projMatrix );
 	}
 }
