@@ -1,6 +1,5 @@
 package org.andork.vecmath;
 
-
 public class FloatArrayVecmath
 {
 	private static final float	FEPS	= 1.110223024E-8f;
@@ -67,6 +66,11 @@ public class FloatArrayVecmath
 			out[ outi + 1 ] = y;
 			out[ outi + 0 ] = x;
 		}
+	}
+	
+	public static float[ ] newIdentityMatrix( )
+	{
+		return new float[ ] { 1 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 1 };
 	}
 	
 	public static void mpmulAffine( float[ ] m , float[ ] p )
@@ -145,6 +149,13 @@ public class FloatArrayVecmath
 		{
 			mvmulAffine( m , v );
 		}
+	}
+	
+	public static void mvmulAffine( float[ ] m , float x , float y , float z , float[ ] out )
+	{
+		out[ 0 ] = m[ 0 ] * x + m[ 1 ] * y + m[ 2 ] * z;
+		out[ 1 ] = m[ 4 ] * x + m[ 5 ] * y + m[ 6 ] * z;
+		out[ 2 ] = m[ 8 ] * x + m[ 9 ] * y + m[ 10 ] * z;
 	}
 	
 	public static void mvmulAffine( float[ ] m , float[ ] v , int vi , float[ ] out , int outi )
@@ -275,6 +286,53 @@ public class FloatArrayVecmath
 			out[ 10 ] = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
 			out[ 11 ] = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ];
 		}
+	}
+	
+	public static void mmulRotational( float[ ] ma , float[ ] mb , float[ ] out )
+	{
+		if( out == ma || out == mb )
+		{
+			float m00 = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
+			float m01 = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
+			float m02 = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
+			
+			float m10 = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
+			float m11 = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
+			float m12 = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
+			
+			float m20 = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
+			float m21 = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
+			float m22 = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
+			
+			out[ 0 ] = m00;
+			out[ 1 ] = m01;
+			out[ 2 ] = m02;
+			out[ 4 ] = m10;
+			out[ 5 ] = m11;
+			out[ 6 ] = m12;
+			out[ 8 ] = m20;
+			out[ 9 ] = m21;
+			out[ 10 ] = m22;
+		}
+		else
+		{
+			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
+			out[ 1 ] = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
+			out[ 2 ] = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
+			
+			out[ 4 ] = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
+			out[ 5 ] = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
+			out[ 6 ] = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
+			
+			out[ 8 ] = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
+			out[ 9 ] = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
+			out[ 10 ] = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
+		}
+	}
+	
+	public static void set( float[ ] array , float ... values )
+	{
+		System.arraycopy( values , 0 , array , 0 , values.length );
 	}
 	
 	public static void setIdentity( float[ ] m )
@@ -1057,5 +1115,10 @@ public class FloatArrayVecmath
 			mat[ 14 ] = 0;
 			mat[ 15 ] = 1;
 		}
+	}
+	
+	public static void setRotation( float[ ] mat , float[ ] axis , float angle )
+	{
+		setRotation( mat , axis[ 0 ] , axis[ 1 ] , axis[ 2 ] , angle );
 	}
 }

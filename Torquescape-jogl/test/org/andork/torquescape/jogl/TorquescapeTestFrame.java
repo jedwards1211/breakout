@@ -51,7 +51,7 @@ public class TorquescapeTestFrame extends JFrame
 			MouseEvent	lastEvent	= null;
 			
 			float[ ]	tempMatrix	= new float[ 16 ];
-			float[ ]	tempVec1	= new float[ 3 ];
+			float[ ]	tiltAxis	= new float[ 3 ];
 			
 			MouseEvent	pressEvent	= null;
 			
@@ -71,35 +71,15 @@ public class TorquescapeTestFrame extends JFrame
 				
 				if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 				{
-					scene.pan -= dx * Math.PI / glCanvas.getWidth( ); // = 180.0f / 320
-					scene.tilt -= dy * Math.PI / glCanvas.getHeight( ); // = 180.0f / 320
-					
 					float pan = ( float ) ( dx * Math.PI / glCanvas.getWidth( ) );
 					float tilt = ( float ) ( dy * Math.PI / glCanvas.getHeight( ) );
 					
 					FloatArrayVecmath.rotY( tempMatrix , pan );
+					FloatArrayVecmath.mmulRotational( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
 					
-					float x = scene.cameraMatrix[ 3 ];
-					float y = scene.cameraMatrix[ 7 ];
-					float z = scene.cameraMatrix[ 11 ];
-					
-					scene.cameraMatrix[ 3 ] = 0;
-					scene.cameraMatrix[ 7 ] = 0;
-					scene.cameraMatrix[ 11 ] = 0;
-					
-					FloatArrayVecmath.mmulAffine( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
-					
-					tempVec1[ 0 ] = 1;
-					tempVec1[ 1 ] = 0;
-					tempVec1[ 2 ] = 0;
-					
-					FloatArrayVecmath.mvmulAffine( scene.cameraMatrix , tempVec1 );
-					FloatArrayVecmath.setRotation( tempMatrix , tempVec1[ 0 ] , tempVec1[ 1 ] , tempVec1[ 2 ] , tilt );
-					FloatArrayVecmath.mmulAffine( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
-					
-					scene.cameraMatrix[ 3 ] = x;
-					scene.cameraMatrix[ 7 ] = y;
-					scene.cameraMatrix[ 11 ] = z;
+					FloatArrayVecmath.mvmulAffine( scene.cameraMatrix , 1 , 0 , 0 , tiltAxis );
+					FloatArrayVecmath.setRotation( tempMatrix , tiltAxis , tilt );
+					FloatArrayVecmath.mmulRotational( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
 				}
 				else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 				{

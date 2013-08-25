@@ -17,7 +17,6 @@ import org.andork.torquescape.model.track.Track;
 import org.andork.torquescape.model.track.Track1;
 import org.andork.util.ArrayUtils;
 import org.andork.vecmath.FloatArrayVecmath;
-import org.andork.vecmath.VecmathUtils;
 
 public class TorquescapeTestScene implements GLEventListener
 {
@@ -28,15 +27,15 @@ public class TorquescapeTestScene implements GLEventListener
 	public float					tilt;
 	public float					pan;
 	
-	float[ ]						cameraMatrix		= new float[ 16 ];
+	float[ ]						cameraMatrix		= FloatArrayVecmath.newIdentityMatrix( );
 	
-	float[ ]						modelMatrix			= new float[ 16 ];
-	float[ ]						viewMatrix			= new float[ 16 ];
-	float[ ]						projMatrix			= new float[ 16 ];
-	float[ ]						panMatrix			= new float[ 16 ];
-	float[ ]						tiltMatrix			= new float[ 16 ];
-	float[ ]						modelViewMatrix		= new float[ 16 ];
-	float[ ]						modelViewProjMatrix	= new float[ 16 ];
+	float[ ]						modelMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						viewMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						projMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						panMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						tiltMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						modelViewMatrix		= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						modelViewProjMatrix	= FloatArrayVecmath.newIdentityMatrix( );
 	
 	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
 	{
@@ -48,29 +47,10 @@ public class TorquescapeTestScene implements GLEventListener
 		gl.glEnable( GL3.GL_CULL_FACE );
 		gl.glCullFace( GL3.GL_BACK );
 		
-		// Set the camera position (View matrix)
-		FloatArrayVecmath.lookAt( viewMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
-		
-		// // Create a rotation for the triangle
-		// // long time = SystemClock.uptimeMillis() % 4000L;
-		// // float angle = 0.090f * ((int) time);
-		// FloatArrayVecmath.setRotation( panMatrix , 0 , 1 , 0 , pan );
-		//
-		// // Create a rotation for the triangle
-		// // long time = SystemClock.uptimeMillis() % 4000L;
-		// // float angle = 0.090f * ((int) time);
-		// FloatArrayVecmath.setRotation( tiltMatrix , 1 , 0 , 0 , tilt );
-		//
-		// // Calculate the projection and view transformation
-		// FloatArrayVecmath.mmul( tiltMatrix , panMatrix , modelViewMatrix );
-		//
-		// // Calculate the projection and view transformation
-		// FloatArrayVecmath.mmul( viewMatrix , modelViewMatrix , modelViewMatrix );
-		
 		FloatArrayVecmath.invAffine( cameraMatrix , modelMatrix );
 		FloatArrayVecmath.mmul( viewMatrix , modelMatrix , modelViewMatrix );
 		
-		 FloatArrayVecmath.transpose( modelViewMatrix , modelViewMatrix );
+		FloatArrayVecmath.transpose( modelViewMatrix , modelViewMatrix );
 		
 		for( ZoneRenderer zone : zones )
 		{
@@ -84,8 +64,8 @@ public class TorquescapeTestScene implements GLEventListener
 	@Override
 	public void init( GLAutoDrawable drawable )
 	{
-		FloatArrayVecmath.setIdentity( cameraMatrix );
-		FloatArrayVecmath.setIdentity( modelMatrix );
+		// Set the camera position (View matrix)
+		FloatArrayVecmath.lookAt( viewMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
 		
 		GL3 gl = ( GL3 ) drawable.getGL( );
 		
