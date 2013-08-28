@@ -9,18 +9,20 @@ import org.andork.torquescape.model.gen.DefaultTrackGenerator;
 import org.andork.torquescape.model.normal.NormalGenerator;
 import org.andork.torquescape.model.track.Track;
 import org.andork.torquescape.model.track.Track1;
+import org.andork.vecmath.FloatArrayVecmath;
 
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView.Renderer;
 import android.opengl.Matrix;
 
 public class TorquescapeRenderer implements Renderer {
-	float[] mVMatrix = new float[16];
-	float[] mProjMatrix = new float[16];
-	float[] mPanMatrix = new float[16];
-	float[] mTiltMatrix = new float[16];
-	float[] mMVMatrix = new float[16];
-	float[] mMVPMatrix = new float[16];
+	float[] cameraMatrix = FloatArrayVecmath.newIdentityMatrix();
+
+	float[] modelMatrix = FloatArrayVecmath.newIdentityMatrix();
+	float[] viewMatrix = FloatArrayVecmath.newIdentityMatrix();
+	float[] projMatrix = FloatArrayVecmath.newIdentityMatrix();
+	float[] modelViewMatrix = FloatArrayVecmath.newIdentityMatrix();
+	float[] modelViewProjMatrix = FloatArrayVecmath.newIdentityMatrix();
 
 	TorquescapeScene scene;
 
@@ -49,35 +51,13 @@ public class TorquescapeRenderer implements Renderer {
 		GLES20.glEnable(GLES20.GL_CULL_FACE);
 		GLES20.glCullFace(GLES20.GL_BACK);
 
-		// Set the camera position (View matrix)
-		Matrix.setLookAtM(mVMatrix, 0, 0, 0, 5, 0f, 0f, 1f, 0f, 1.0f, 0.0f);
+		FloatArrayVecmath.invAffine(cameraMatrix, modelMatrix);
+		FloatArrayVecmath.mmul(viewMatrix, modelMatrix, modelViewMatrix);
 
-		// Create a rotation for the triangle
-		// long time = SystemClock.uptimeMillis() % 4000L;
-		// float angle = 0.090f * ((int) time);
-		Matrix.setIdentityM(mPanMatrix, 0);
-		Matrix.setRotateM(mPanMatrix, 0, mPan, 0, 1.0f, 0f);
-
-		// Create a rotation for the triangle
-		// long time = SystemClock.uptimeMillis() % 4000L;
-		// float angle = 0.090f * ((int) time);
-		Matrix.setIdentityM(mTiltMatrix, 0);
-		Matrix.setRotateM(mTiltMatrix, 0, mTilt, 1, 0, 0f);
-
-		// Calculate the projection and view transformation
-		Matrix.multiplyMM(mMVMatrix, 0, mTiltMatrix, 0, mPanMatrix, 0);
-
-		// Calculate the projection and view transformation
-		Matrix.multiplyMM(mMVMatrix, 0, mVMatrix, 0, mMVMatrix, 0);
-
-		// Calculate the projection and view transformation
-		// Matrix.multiplyMM(mMVPMatrix, 0, mProjMatrix, 0, mMVPMatrix, 0);
-
-		// Combine the rotation matrix with the projection and camera view
-		// Matrix.multiplyMM(mMVPMatrix, 0, mRotationMatrix, 0, mMVPMatrix, 0);
+		FloatArrayVecmath.transpose(modelViewMatrix, modelViewMatrix);
 
 		if (scene != null) {
-			scene.draw(mMVMatrix, mProjMatrix);
+			scene.draw(modelViewMatrix, projMatrix);
 		}
 	}
 
@@ -88,12 +68,13 @@ public class TorquescapeRenderer implements Renderer {
 
 		// this projection matrix is applied to object coordinates
 		// in the onDrawFrame() method
-		Matrix.perspectiveM(mProjMatrix, 0, 90, ratio, 0.001f, 100);
-		// Matrix.frustumM(mProjMatrix, 0, -ratio, ratio, -1, 1, 0.001f, 100f);
+		Matrix.perspectiveM(projMatrix, 0, 90, ratio, 0.01f, 10000);
 	}
 
 	private TorquescapeScene initScene() {
-		System.out.println(System.getProperty("java.class.path"));
+		// Set the camera position (View matrix)
+		FloatArrayVecmath.lookAt( viewMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
+
 		Track track = new Track1();
 
 		DefaultTrackGenerator generator = new DefaultTrackGenerator();
