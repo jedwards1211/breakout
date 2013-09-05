@@ -2,20 +2,20 @@ package org.andork.torquescape.model.xform;
 
 import static org.andork.vecmath.FloatArrayVecmath.setIdentity;
 
-import org.andork.torquescape.model.param.IParamFunction;
+import org.andork.torquescape.model.param.IParamFn;
 
-public class Bloater implements IXformFunction
+public class Bloater implements IXformFn
 {
-	private IParamFunction	xScaleFunction;
-	private IParamFunction	yScaleFunction;
-	private IParamFunction	zScaleFunction;
+	private IParamFn	xScaleFunction;
+	private IParamFn	yScaleFunction;
+	private IParamFn	zScaleFunction;
 	
-	public Bloater( IParamFunction scaleFunction )
+	public Bloater( IParamFn scaleFunction )
 	{
 		this( scaleFunction , scaleFunction , scaleFunction );
 	}
 	
-	public Bloater( IParamFunction xScaleFunction , IParamFunction yScaleFunction , IParamFunction zScaleFunction )
+	public Bloater( IParamFn xScaleFunction , IParamFn yScaleFunction , IParamFn zScaleFunction )
 	{
 		super( );
 		this.xScaleFunction = xScaleFunction;

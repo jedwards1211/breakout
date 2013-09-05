@@ -1,18 +1,18 @@
 package org.andork.torquescape.model.xform;
 
-import org.andork.torquescape.model.param.IParamFunction;
+import org.andork.torquescape.model.param.IParamFn;
 
-public class Reparametrizer implements IXformFunction
+public class Reparametrizer implements IXformFn
 {
-	public Reparametrizer( IXformFunction wrapped , IParamFunction paramFunction )
+	public Reparametrizer( IXformFn wrapped , IParamFn paramFunction )
 	{
 		super( );
 		this.wrapped = wrapped;
 		this.paramFunction = paramFunction;
 	}
 	
-	private IXformFunction	wrapped;
-	private IParamFunction	paramFunction;
+	private IXformFn	wrapped;
+	private IParamFn	paramFunction;
 	
 	@Override
 	public float[ ] eval( float param , float[ ] out )

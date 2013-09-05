@@ -1,14 +1,27 @@
 package org.andork.torquescape.model.list;
 
-
 public class IntList
 {
 	private IntNode	node;
 	private int		size;
 	
+	public IntList( )
+	{
+		this( 10 );
+	}
+	
+	public IntList( int capacity )
+	{
+		node = new IntNode( capacity , null );
+	}
+	
 	public void add( int value )
 	{
-		node = new IntNode( value , node );
+		if( node.size == node.values.length )
+		{
+			node = new IntNode( size / 2 , node );
+		}
+		node.values[ node.size++ ] = value;
 		size++ ;
 	}
 	
@@ -19,7 +32,10 @@ public class IntList
 		int i = size - 1;
 		while( i >= 0 )
 		{
-			result[ i-- ] = node.value;
+			for( int k = node.size - 1 ; k >= 0 ; k-- )
+			{
+				result[ i-- ] = node.values[ k ];
+			}
 			node = node.next;
 		}
 		return result;
@@ -27,13 +43,13 @@ public class IntList
 	
 	private class IntNode
 	{
-		public int		value;
+		public int[ ]	values;
+		public int		size;
 		public IntNode	next;
 		
-		public IntNode( int value , IntNode next )
+		public IntNode( int capacity , IntNode next )
 		{
-			super( );
-			this.value = value;
+			this.values = new int[ capacity ];
 			this.next = next;
 		}
 	}

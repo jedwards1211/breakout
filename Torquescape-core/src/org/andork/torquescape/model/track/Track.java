@@ -1,42 +1,30 @@
 package org.andork.torquescape.model.track;
 
-import org.andork.torquescape.model.meshing.IMeshingFunction;
-import org.andork.torquescape.model.section.ISectionFunction;
-import org.andork.torquescape.model.xform.IXformFunction;
+import org.andork.torquescape.model.meshing.IMeshingFn;
+import org.andork.torquescape.model.section.ISectionFn;
 
 public class Track
 {
-	protected IXformFunction	xformFunction;
-	protected ISectionFunction	sectionFunction;
-	protected IMeshingFunction	meshingFunction;
+	protected ISectionFn		SectionFn;
+	protected IMeshingFn		meshingFn;
 	
-	public IXformFunction getXformFunction( )
+	public ISectionFn getSectionFn( )
 	{
-		return xformFunction;
+		return SectionFn;
 	}
 	
-	public void setXformFunction( IXformFunction xformFunction )
+	public void setSectionFn( ISectionFn SectionFn )
 	{
-		this.xformFunction = xformFunction;
+		this.SectionFn = SectionFn;
 	}
 	
-	public ISectionFunction getSectionFunction( )
+	public IMeshingFn getMeshingFn( )
 	{
-		return sectionFunction;
+		return meshingFn;
 	}
 	
-	public void setSectionFunction( ISectionFunction sectionFunction )
+	public void setMeshingFn( IMeshingFn meshingFn )
 	{
-		this.sectionFunction = sectionFunction;
-	}
-	
-	public IMeshingFunction getMeshingFunction( )
-	{
-		return meshingFunction;
-	}
-	
-	public void setMeshingFunction( IMeshingFunction meshingFunction )
-	{
-		this.meshingFunction = meshingFunction;
+		this.meshingFn = meshingFn;
 	}
 }

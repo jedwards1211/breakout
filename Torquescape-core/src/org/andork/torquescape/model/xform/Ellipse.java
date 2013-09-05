@@ -7,7 +7,7 @@ import javax.vecmath.Vector3f;
 import org.andork.math.curve.TransformComputer3f;
 import org.andork.vecmath.VecmathUtils;
 
-public class Ellipse implements IXformFunction
+public class Ellipse implements IXformFn
 {
 	private Point3f		origin	= new Point3f( );
 	private Vector3f	axis	= new Vector3f( );

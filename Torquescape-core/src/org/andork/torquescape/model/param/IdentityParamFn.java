@@ -1,6 +1,6 @@
 package org.andork.torquescape.model.param;
 
-public class IdentityParamFunction implements IParamFunction
+public class IdentityParamFn implements IParamFn
 {
 	@Override
 	public float eval( float param )

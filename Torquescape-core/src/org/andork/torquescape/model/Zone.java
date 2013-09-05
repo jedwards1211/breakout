@@ -5,27 +5,79 @@ import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Zone
 {
-	public FloatBuffer			vertBuffer;
-	public CharBuffer			indexBuffer;
+	ByteBuffer			vertByteBuffer;
+	FloatBuffer			vertFloatBuffer;
+	ByteBuffer			indexByteBuffer;
+	CharBuffer			indexCharBuffer;
+	int					bytesPerVertex;
 	
-	public final List<ISlice>	slices	= new ArrayList<ISlice>( );
+	final List<ISlice>	slices	= new ArrayList<ISlice>( );
 	
-	public void init( float[ ] verts , char[ ] indices )
+	public void init( int vertexCount , int bytesPerVertex , int indexCount )
 	{
-		ByteBuffer bb = ByteBuffer.allocateDirect( verts.length * 4 );
-		bb.order( ByteOrder.nativeOrder( ) );
-		vertBuffer = bb.asFloatBuffer( );
-		vertBuffer.put( verts );
-		vertBuffer.position( 0 );
+		this.bytesPerVertex = bytesPerVertex;
 		
-		bb = ByteBuffer.allocateDirect( indices.length * 2 );
+		ByteBuffer bb = ByteBuffer.allocateDirect( vertexCount * bytesPerVertex );
 		bb.order( ByteOrder.nativeOrder( ) );
-		indexBuffer = bb.asCharBuffer( );
-		indexBuffer.put( indices );
-		indexBuffer.position( 0 );
+		vertByteBuffer = bb;
+		vertFloatBuffer = vertByteBuffer.asFloatBuffer( );
+		
+		bb = ByteBuffer.allocateDirect( indexCount * 2 );
+		bb.order( ByteOrder.nativeOrder( ) );
+		indexByteBuffer = bb;
+		indexCharBuffer = bb.asCharBuffer( );
+	}
+	
+	public void init( float[ ] verts , int floatsPerVertex , char[ ] indices )
+	{
+		init( verts.length / floatsPerVertex , floatsPerVertex * 4 , indices.length );
+		
+		vertFloatBuffer.put( verts );
+		vertByteBuffer.position( 0 );
+		vertFloatBuffer.position( 0 );
+		
+		indexCharBuffer.put( indices );
+		indexByteBuffer.position( 0 );
+		indexCharBuffer.position( 0 );
+	}
+	
+	public ByteBuffer getVertByteBuffer( )
+	{
+		return vertByteBuffer;
+	}
+	
+	public FloatBuffer getVertFloatBuffer( )
+	{
+		return vertFloatBuffer;
+	}
+	
+	public ByteBuffer getIndexByteBuffer( )
+	{
+		return indexByteBuffer;
+	}
+	
+	public CharBuffer getIndexCharBuffer( )
+	{
+		return indexCharBuffer;
+	}
+	
+	public int getBytesPerVertex( )
+	{
+		return bytesPerVertex;
+	}
+	
+	public void addSlice( ISlice slice )
+	{
+		slices.add( slice );
+	}
+	
+	public List<ISlice> getSlices( )
+	{
+		return Collections.unmodifiableList( slices );
 	}
 }

@@ -1,5 +1,7 @@
 package org.andork.torquescape.jogl.render;
 
+import static org.andork.torquescape.jogl.GLUtils.checkGlError;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,8 +12,6 @@ import javax.media.opengl.GL3;
 import org.andork.torquescape.model.ISlice;
 import org.andork.torquescape.model.StandardSlice;
 import org.andork.torquescape.model.Zone;
-
-import static org.andork.torquescape.jogl.GLUtils.*;
 
 public class ZoneRenderer
 {
@@ -33,7 +33,7 @@ public class ZoneRenderer
 		super( );
 		this.zone = zone;
 		
-		for( ISlice slice : zone.slices )
+		for( ISlice slice : zone.getSlices( ) )
 		{
 			ISliceRendererFactory<ISlice> rendererFactory = ( org.andork.torquescape.jogl.render.ISliceRendererFactory<ISlice> ) sliceRendererFactories.get( slice.getClass( ) );
 			if( rendererFactory != null )
@@ -51,7 +51,7 @@ public class ZoneRenderer
 		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , vertVbo );
 		checkGlError( gl , "glBindBuffer" );
-		gl.glBufferData( GL3.GL_ARRAY_BUFFER , zone.vertBuffer.capacity( ) * 4 , zone.vertBuffer , GL3.GL_STATIC_DRAW );
+		gl.glBufferData( GL3.GL_ARRAY_BUFFER , zone.getVertByteBuffer( ).capacity( ) , zone.getVertByteBuffer( ) , GL3.GL_STATIC_DRAW );
 		checkGlError( gl , "glBufferData" );
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
 		

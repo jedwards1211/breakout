@@ -74,7 +74,7 @@ public class TorquescapeTestScene implements GLEventListener
 		Track track = new Track1( );
 		
 		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
-		generator.add( track.getXformFunction( ) , track.getSectionFunction( ) , track.getMeshingFunction( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
+		generator.add( track.getSectionFn( ) , track.getMeshingFn( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
 		
 		float[ ] verts = generator.getVertices( );
 		char[ ] indices = generator.getIndices( );
@@ -87,13 +87,13 @@ public class TorquescapeTestScene implements GLEventListener
 		NormalGenerator.generateNormals( verts , 3 , 6 , indices , 0 , indices.length );
 		
 		Zone zone1 = new Zone( );
-		zone1.init( verts , indices );
+		zone1.init( verts , verts.length / 3 , indices );
 		
 		StandardSlice slice1 = new StandardSlice( );
 		slice1.setIndices( indices );
 		set( slice1.ambientColor , 0.1f , 0 , 0 , 1 );
 		set( slice1.diffuseColor , 1 , 0 , 0 , 1 );
-		zone1.slices.add( slice1 );
+		zone1.addSlice( slice1 );
 		
 		ZoneRenderer rend1 = new ZoneRenderer( zone1 );
 		rend1.init( gl );

@@ -3,12 +3,12 @@ package org.andork.torquescape.model.xform;
 import static org.andork.vecmath.FloatArrayVecmath.mmul;
 import static org.andork.vecmath.FloatArrayVecmath.setIdentity;
 
-public class CompoundXformFunction implements IXformFunction
+public class CompoundXformFn implements IXformFn
 {
-	private IXformFunction[ ]	curves;
+	private IXformFn[ ]	curves;
 	private float[ ]			tempMat	= new float[ 16 ];
 	
-	public CompoundXformFunction( IXformFunction ... curves )
+	public CompoundXformFn( IXformFn ... curves )
 	{
 		this.curves = curves;
 	}
@@ -18,7 +18,7 @@ public class CompoundXformFunction implements IXformFunction
 	{
 		setIdentity( outXform );
 		
-		for( IXformFunction curve : curves )
+		for( IXformFn curve : curves )
 		{
 			curve.eval( param , tempMat );
 			mmul( outXform , tempMat , outXform );

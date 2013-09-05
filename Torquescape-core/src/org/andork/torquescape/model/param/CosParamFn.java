@@ -1,13 +1,13 @@
 package org.andork.torquescape.model.param;
 
-public class CosParamFunction implements IParamFunction
+public class CosParamFn implements IParamFn
 {
 	private float	hiParam;
 	private float	loParam;
 	private float	hiValue;
 	private float	loValue;
 	
-	public CosParamFunction( float hiParam , float loParam , float hiValue , float loValue )
+	public CosParamFn( float hiParam , float loParam , float hiValue , float loValue )
 	{
 		super( );
 		this.hiParam = hiParam;

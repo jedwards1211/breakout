@@ -1,59 +1,62 @@
 package org.andork.torquescape.model.gen;
 
 import org.andork.torquescape.model.list.CharList;
-import org.andork.torquescape.model.list.PointList;
-import org.andork.torquescape.model.meshing.IIndexVisitor;
-import org.andork.torquescape.model.meshing.IMeshingFunction;
-import org.andork.torquescape.model.section.IPointVisitor;
-import org.andork.torquescape.model.section.ISectionFunction;
-import org.andork.torquescape.model.xform.IXformFunction;
+import org.andork.torquescape.model.list.FloatList;
+import org.andork.torquescape.model.meshing.IMeshingFn;
+import org.andork.torquescape.model.section.ISectionFn;
 
-public class DefaultTrackGenerator implements IPointVisitor , IIndexVisitor
+public class DefaultTrackGenerator
 {
-	PointList			verts	= new PointList( );
-	CharList			indices	= new CharList( );
+	int					vertexCount	= 0;
+	FloatList			verts		= new FloatList( );
+	CharList			indices		= new CharList( );
 	
 	int					paramStartIndex;
-	private float[ ]	matrix	= new float[ 16 ];
+	private float[ ]	matrix		= new float[ 16 ];
 	
-	public void add( IXformFunction xform , ISectionFunction section , IMeshingFunction mesh , float startParam , float endParam , float step )
+	float[ ]			coord		= new float[ 3 ];
+	
+	public void add( ISectionFn section , IMeshingFn mesh , float startParam , float endParam , float step )
 	{
+		vertexCount = 0;
+		
 		for( float param = startParam ; param < endParam ; param += step )
 		{
-			paramStartIndex = verts.size( ) / 2;
-			xform.eval( param , matrix );
-			section.eval( param , this );
-			mesh.eval( param , this );
+			paramStartIndex = vertexCount;
+			eval( section , param );
+			eval( mesh , param );
 		}
 		
-		paramStartIndex = verts.size( ) / 2;
-		xform.eval( endParam , matrix );
-		section.eval( endParam , this );
+		paramStartIndex = vertexCount;
+		eval( section , endParam );
+	}
+	
+	private void eval( ISectionFn section , float param )
+	{
+		for( int i = 0 ; i < section.getVertexCount( param ) ; i++ )
+		{
+			section.eval( param , i , coord );
+			verts.add( coord[ 0 ] , coord[ 1 ] , coord[ 2 ] );
+			verts.add( 0 , 0 , 0 );
+		}
+		vertexCount += section.getVertexCount( param );
+	}
+	
+	private void eval( IMeshingFn mesh , float param )
+	{
+		for( int i = 0 ; i < mesh.getIndexCount( param ) ; i++ )
+		{
+			indices.add( ( char ) ( paramStartIndex + mesh.eval( param , i ) ) );
+		}
 	}
 	
 	public float[ ] getVertices( )
 	{
-		return verts.toArray( );
+		return verts.drain( );
 	}
 	
 	public char[ ] getIndices( )
 	{
-		return indices.toArray( );
-	}
-	
-	@Override
-	public void visit( char index )
-	{
-		indices.add( ( char ) ( paramStartIndex + index ) );
-	}
-	
-	@Override
-	public void visit( float x , float y , float z )
-	{
-		float x2 = matrix[ 0 ] * x + matrix[ 1 ] * y + matrix[ 2 ] * z + matrix[ 3 ];
-		float y2 = matrix[ 4 ] * x + matrix[ 5 ] * y + matrix[ 6 ] * z + matrix[ 7 ];
-		float z2 = matrix[ 8 ] * x + matrix[ 9 ] * y + matrix[ 10 ] * z + matrix[ 11 ];
-		verts.add( x2 , y2 , z2 );
-		verts.add( 0 , 0 , 0 );
+		return indices.drain( );
 	}
 }

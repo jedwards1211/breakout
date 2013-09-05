@@ -4,16 +4,16 @@ import static org.andork.vecmath.FloatArrayVecmath.mmul;
 import static org.andork.vecmath.FloatArrayVecmath.rotZ;
 import static org.andork.vecmath.FloatArrayVecmath.setIdentity;
 
-import org.andork.torquescape.model.param.IParamFunction;
+import org.andork.torquescape.model.param.IParamFn;
 
-public class Helicizer implements IXformFunction
+public class Helicizer implements IXformFn
 {
-	IParamFunction	radiusFunction;
-	IParamFunction	angleFunction;
+	IParamFn	radiusFunction;
+	IParamFn	angleFunction;
 	
 	float[ ]		x1	= new float[ 16 ];
 	
-	public Helicizer( IParamFunction radiusFunction , IParamFunction angleFunction )
+	public Helicizer( IParamFn radiusFunction , IParamFn angleFunction )
 	{
 		super( );
 		this.radiusFunction = radiusFunction;

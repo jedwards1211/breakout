@@ -25,6 +25,7 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 																	"  gl_Position = uPMatrix * uMVMatrix * vPosition;" +
 																	"}";
 	
+	
 	private final String		fragmentShaderCode	=
 															"varying vec3 v_fxnormal;" +
 																	"uniform vec4 vAmbientColor;" +

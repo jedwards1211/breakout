@@ -8,7 +8,7 @@ import org.andork.math.curve.ICurveWithNormals3f;
 import org.andork.math.curve.TransformComputer3f;
 import org.andork.vecmath.VecmathUtils;
 
-public class CurveXformFunction implements IXformFunction
+public class CurveXformFn implements IXformFn
 {
 	private ICurveWithNormals3f	curve;
 	
@@ -20,7 +20,7 @@ public class CurveXformFunction implements IXformFunction
 	
 	private Matrix4f			xform	= new Matrix4f( );
 	
-	public CurveXformFunction( ICurveWithNormals3f curve )
+	public CurveXformFn( ICurveWithNormals3f curve )
 	{
 		this.curve = curve;
 	}

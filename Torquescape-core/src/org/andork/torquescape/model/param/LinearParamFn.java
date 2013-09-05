@@ -1,14 +1,14 @@
 package org.andork.torquescape.model.param;
 
 
-public class LinearParamFunction implements IParamFunction
+public class LinearParamFn implements IParamFn
 {
 	private float	a1;
 	private float	a2;
 	private float	b1;
 	private float	b2;
 	
-	public LinearParamFunction( float a1 , float a2 , float b1 , float b2 )
+	public LinearParamFn( float a1 , float a2 , float b1 , float b2 )
 	{
 		super( );
 		this.a1 = a1;

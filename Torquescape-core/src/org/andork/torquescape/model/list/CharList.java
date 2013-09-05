@@ -1,24 +1,41 @@
 package org.andork.torquescape.model.list;
 
+
 public class CharList
 {
 	private CharNode	node;
 	private int			size;
 	
+	public CharList( )
+	{
+		this( 10 );
+	}
+	
+	public CharList( int capacity )
+	{
+		node = new CharNode( capacity , null );
+	}
+	
 	public void add( char value )
 	{
-		node = new CharNode( value , node );
+		if( node.size == node.values.length )
+		{
+			node = new CharNode( size / 2 , node );
+		}
+		node.values[ node.size++ ] = value;
 		size++ ;
 	}
 	
-	public char[ ] toArray( )
+	public char[ ] drain( )
 	{
 		char[ ] result = new char[ size ];
 		
-		int i = size - 1;
-		while( i >= 0 )
+		while( size > 0 )
 		{
-			result[ i-- ] = node.value;
+			while( node.size > 0 )
+			{
+				result[ --size ] = node.values[ --node.size ];
+			}
 			node = node.next;
 		}
 		return result;
@@ -26,13 +43,13 @@ public class CharList
 	
 	private class CharNode
 	{
-		public char		value;
+		public char[ ]		values;
+		public int			size;
 		public CharNode	next;
 		
-		public CharNode( char value , CharNode next )
+		public CharNode( int capacity , CharNode next )
 		{
-			super( );
-			this.value = value;
+			this.values = new char[ capacity ];
 			this.next = next;
 		}
 	}

@@ -11,9 +11,9 @@ import javax.vecmath.Vector3f;
 
 import org.andork.math.curve.SegmentedCurve3f;
 
-public class IXformFunctionSegmentizer
+public class IXformFnSegmentizer
 {
-	public static void getSegments( IXformFunction function , List<Float> inParams , List<Point3f> outPoints , List<Vector3f> outTangents , List<Vector3f> outXNormals , List<Vector3f> outYNormals )
+	public static void getSegments( IXformFn function , List<Float> inParams , List<Point3f> outPoints , List<Vector3f> outTangents , List<Vector3f> outXNormals , List<Vector3f> outYNormals )
 	{
 		float[ ] xform = new float[ 16 ];
 		
@@ -63,7 +63,7 @@ public class IXformFunctionSegmentizer
 		}
 	}
 	
-	public static SegmentedCurve3f createSegmentedCurve3f( IXformFunction function , List<Float> params )
+	public static SegmentedCurve3f createSegmentedCurve3f( IXformFn function , List<Float> params )
 	{
 		List<Point3f> points = new ArrayList<Point3f>( );
 		List<Vector3f> tangents = new ArrayList<Vector3f>( );

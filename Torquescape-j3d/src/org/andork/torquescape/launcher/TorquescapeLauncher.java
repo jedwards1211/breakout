@@ -37,7 +37,6 @@ import org.andork.torquescape.model.old.gen.DefaultTrackSegmentGenerator;
 import org.andork.torquescape.model.old.render.NormalGenerator;
 import org.andork.torquescape.model.old.track.Track;
 import org.andork.torquescape.model.render.GeometryGenerator;
-import org.andork.util.ArrayUtils;
 
 import com.sun.j3d.utils.geometry.Sphere;
 
@@ -57,7 +56,7 @@ public class TorquescapeLauncher
 	public static void launch( org.andork.torquescape.model.track.Track track )
 	{
 		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
-		generator.add( track.getXformFunction( ) , track.getSectionFunction( ) , track.getMeshingFunction( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
+		generator.add( track.getSectionFn( ) , track.getMeshingFn( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
 		
 		float[ ] verts = generator.getVertices( );
 		char[ ] indices = generator.getIndices( );

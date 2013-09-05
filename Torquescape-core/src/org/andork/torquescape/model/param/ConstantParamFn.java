@@ -1,11 +1,11 @@
 package org.andork.torquescape.model.param;
 
 
-public class ConstantParamFunction implements IParamFunction
+public class ConstantParamFn implements IParamFn
 {
 	private float constant;
 	
-	public ConstantParamFunction( float constant )
+	public ConstantParamFn( float constant )
 	{
 		super( );
 		this.constant = constant;

@@ -1,11 +1,11 @@
 package org.andork.torquescape.model.param;
 
 
-public class CompoundParamFunction implements IParamFunction
+public class CompoundParamFn implements IParamFn
 {
-	private IParamFunction[ ]	functions;
+	private IParamFn[ ]	functions;
 	
-	public CompoundParamFunction( IParamFunction ... functions )
+	public CompoundParamFn( IParamFn ... functions )
 	{
 		this.functions = functions;
 	}
