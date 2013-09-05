@@ -1,10 +1,10 @@
-package org.andork.torquescape.model.meshing;
+package org.andork.torquescape.model.index;
 
-public class FixedMeshingFn implements IMeshingFn
+public class FixedIndexFn implements IIndexFn
 {
 	char[ ]	indices;
 	
-	public FixedMeshingFn( char ... indices )
+	public FixedIndexFn( char ... indices )
 	{
 		this.indices = indices;
 	}

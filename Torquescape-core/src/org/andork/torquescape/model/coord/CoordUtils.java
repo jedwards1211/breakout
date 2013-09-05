@@ -1,6 +1,6 @@
-package org.andork.torquescape.model.section;
+package org.andork.torquescape.model.coord;
 
-public class SectionUtils
+public class CoordUtils
 {
 	/**
 	 * Generates a polygon with one point per corner, so that the generated normals will make the corners appear smooth.

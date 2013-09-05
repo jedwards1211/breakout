@@ -1,8 +1,8 @@
-package org.andork.torquescape.model.meshing;
+package org.andork.torquescape.model.index;
 
-public class MeshingUtils
+public class IndexUtils
 {
-	public static char[ ] generateDefaultMeshing( char npoints )
+	public static char[ ] generateDefaultIndices( char npoints )
 	{
 		char[ ] result = new char[ npoints * 6 ];
 		

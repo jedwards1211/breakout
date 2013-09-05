@@ -1,6 +1,6 @@
-package org.andork.torquescape.model.meshing;
+package org.andork.torquescape.model.index;
 
-public interface IMeshingFn
+public interface IIndexFn
 {
 	public int getIndexCount( float param );
 	

@@ -74,7 +74,7 @@ public class TorquescapeTestScene implements GLEventListener
 		Track track = new Track1( );
 		
 		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
-		generator.add( track.getSectionFn( ) , track.getMeshingFn( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
+		generator.add( track.getCoordFn( ) , track.getIndexFn( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
 		
 		float[ ] verts = generator.getVertices( );
 		char[ ] indices = generator.getIndices( );

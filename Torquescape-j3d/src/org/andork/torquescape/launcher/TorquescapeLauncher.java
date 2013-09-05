@@ -56,7 +56,7 @@ public class TorquescapeLauncher
 	public static void launch( org.andork.torquescape.model.track.Track track )
 	{
 		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
-		generator.add( track.getSectionFn( ) , track.getMeshingFn( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
+		generator.add( track.getCoordFn( ) , track.getIndexFn( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
 		
 		float[ ] verts = generator.getVertices( );
 		char[ ] indices = generator.getIndices( );
