@@ -1,6 +1,7 @@
 package org.andork.torquescape.jogl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.media.opengl.GL3;
@@ -9,13 +10,15 @@ import javax.media.opengl.GLEventListener;
 
 import org.andork.torquescape.jogl.render.ISliceRenderer;
 import org.andork.torquescape.jogl.render.ZoneRenderer;
-import org.andork.torquescape.model.StandardSlice;
+import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.Zone;
-import org.andork.torquescape.model.gen.DefaultTrackGenerator;
+import org.andork.torquescape.model.gen.DirectZoneGenerator;
 import org.andork.torquescape.model.normal.NormalGenerator;
 import org.andork.torquescape.model.track.Track;
 import org.andork.torquescape.model.track.Track1;
-import org.andork.util.ArrayUtils;
+import org.andork.torquescape.model.vertex.IVertexAttrFn;
+import org.andork.torquescape.model.vertex.IVertexVisitor;
+import org.andork.torquescape.model.vertex.StandardVertexFn;
 import org.andork.vecmath.FloatArrayVecmath;
 
 public class TorquescapeTestScene implements GLEventListener
@@ -73,29 +76,57 @@ public class TorquescapeTestScene implements GLEventListener
 		
 		Track track = new Track1( );
 		
-		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
-		generator.add( track.getCoordFn( ) , track.getIndexFn( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
+		IVertexAttrFn attrFn1 = new IVertexAttrFn( )
+		{
+			@Override
+			public int getBytesPerVertex( )
+			{
+				return 4;
+			}
+			
+			@Override
+			public void eval( float param , int index , int vertexCount , float x , float y , float z , IVertexVisitor visitor )
+			{
+				visitor.visit( param );
+			}
+		};
 		
-		float[ ] verts = generator.getVertices( );
-		char[ ] indices = generator.getIndices( );
+		StandardVertexFn vertexFn = new StandardVertexFn( track.getCoordFn( ) , attrFn1 );
 		
-		System.out.println( "verts.length: " + verts.length );
-		System.out.println( "indices.length: " + indices.length );
+		Zone zone = new Zone( );
 		
-		System.out.println( ArrayUtils.prettyPrintAsNumbers( indices , 6 , 0 , 1000 , 3 , "%5d" ) );
+		float step = ( float ) Math.PI / 180;
+		int paramCount = ( int ) ( Math.PI * 4 / step );
 		
-		NormalGenerator.generateNormals( verts , 3 , 6 , indices , 0 , indices.length );
+		int vertexCount = paramCount * vertexFn.getVertexCount( 0 );
 		
-		Zone zone1 = new Zone( );
-		zone1.init( verts , verts.length / 3 , indices );
+		int indexCount = track.getIndexFn( ).getIndexCount( 0 ) * paramCount;
 		
-		StandardSlice slice1 = new StandardSlice( );
-		slice1.setIndices( indices );
-		set( slice1.ambientColor , 0.1f , 0 , 0 , 1 );
-		set( slice1.diffuseColor , 1 , 0 , 0 , 1 );
-		zone1.addSlice( slice1 );
+		zone.init( vertexCount , vertexFn.getBytesPerVertex( ) , indexCount );
 		
-		ZoneRenderer rend1 = new ZoneRenderer( zone1 );
+		Float[ ] params = new Float[ paramCount ];
+		for( int i = 0 ; i < paramCount ; i++ )
+		{
+			params[ i ] = i * step;
+		}
+		
+		DirectZoneGenerator zoneGen = DirectZoneGenerator.newInstance( );
+		zoneGen.setZone( zone );
+		zoneGen.generate( vertexFn , track.getIndexFn( ) , Arrays.asList( params ) );
+		
+		NormalGenerator.generateNormals( zone.getVertFloatBuffer( ) , 3 , vertexFn.getBytesPerVertex( ) / 4 , zone.getIndexCharBuffer( ) , 0 , indexCount );
+		
+		ColorWaveSlice slice = new ColorWaveSlice( );
+		slice.wavelength = 2f;
+		slice.velocity = 5f;
+		slice.setIndexBuffer( zone.getIndexCharBuffer( ) );
+		set( slice.ambientColor , 0.1f , 0 , 0 , 1 );
+		set( slice.ambientColor , 4 , 0.05f , 0 , 0 , 1 );
+		set( slice.diffuseColor , 1 , 0 , 0 , 1 );
+		set( slice.diffuseColor , 4 , 0.5f , 0 , 0 , 1 );
+		zone.addSlice( slice );
+		
+		ZoneRenderer rend1 = new ZoneRenderer( zone );
 		rend1.init( gl );
 		
 		zones.add( rend1 );
@@ -107,6 +138,14 @@ public class TorquescapeTestScene implements GLEventListener
 		array[ 1 ] = b;
 		array[ 2 ] = c;
 		array[ 3 ] = d;
+	}
+	
+	private void set( float[ ] array , int index , float a , float b , float c , float d )
+	{
+		array[ index++ ] = a;
+		array[ index++ ] = b;
+		array[ index++ ] = c;
+		array[ index++ ] = d;
 	}
 	
 	@Override

@@ -1,4 +1,4 @@
-package org.andork.torquescape.jogl;
+package org.andork.jogl.util;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL3;
@@ -21,12 +21,21 @@ public class GLUtils
 	 * @param glOperation
 	 *            - Name of the OpenGL call to check.
 	 */
-	public static void checkGlError( GL3 gl , String glOperation )
+	public static void checkGLError( GL3 gl , String glOperation )
 	{
 		int error;
 		while( ( error = gl.glGetError( ) ) != GL3.GL_NO_ERROR )
 		{
 			throw new RuntimeException( glOperation + ": glError " + error );
+		}
+	}
+	
+	public static void checkGLError( GL gl )
+	{
+		int error;
+		while( ( error = gl.glGetError( ) ) != GL.GL_NO_ERROR )
+		{
+			throw new RuntimeException( "glError " + error );
 		}
 	}
 	

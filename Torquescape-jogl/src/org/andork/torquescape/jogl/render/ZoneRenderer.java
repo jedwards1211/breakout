@@ -9,6 +9,7 @@ import java.util.Map;
 
 import javax.media.opengl.GL3;
 
+import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.ISlice;
 import org.andork.torquescape.model.StandardSlice;
 import org.andork.torquescape.model.Zone;
@@ -20,6 +21,7 @@ public class ZoneRenderer
 	static
 	{
 		sliceRendererFactories.put( StandardSlice.class , StandardSliceRenderer.FACTORY );
+		sliceRendererFactories.put( ColorWaveSlice.class , ColorWaveSliceRenderer.FACTORY );
 	}
 	
 	public Zone																zone;
@@ -48,6 +50,8 @@ public class ZoneRenderer
 		int[ ] buffers = new int[ 1 ];
 		gl.glGenBuffers( 1 , buffers , 0 );
 		vertVbo = buffers[ 0 ];
+		
+		zone.getVertByteBuffer( ).position( 0 );
 		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , vertVbo );
 		checkGlError( gl , "glBindBuffer" );

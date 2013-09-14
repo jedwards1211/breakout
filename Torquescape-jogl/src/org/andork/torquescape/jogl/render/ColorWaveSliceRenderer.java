@@ -5,31 +5,48 @@ import static org.andork.torquescape.jogl.GLUtils.checkGlError;
 import javax.media.opengl.GL3;
 
 import org.andork.torquescape.jogl.GLUtils;
-import org.andork.torquescape.model.StandardSlice;
+import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.Zone;
 
-public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
+public class ColorWaveSliceRenderer implements ISliceRenderer<ColorWaveSlice>
 {
 	public static final Factory	FACTORY				= new Factory( );
 	
 	private final String		vertexShaderCode	=
 															// This matrix member variable provides a hook to manipulate
 															// the coordinates of the objects that use this vertex shader
-															"uniform mat4 uMVMatrix;" +
+															"precision highp float;" +
+																	"uniform mat4 uMVMatrix;" +
 																	"uniform mat4 uPMatrix;" +
+																	"uniform float time;" +
+																	"uniform float wavelength;" +
+																	"uniform float velocity;" +
+																	"uniform vec4 vAmbientColor1;" +
+																	"uniform vec4 vAmbientColor2;" +
+																	"uniform vec4 vDiffuseColor1;" +
+																	"uniform vec4 vDiffuseColor2;" +
 																	"attribute vec4 vPosition;" +
 																	"attribute vec3 vNormal;" +
+																	"attribute float vParam;" +
 																	"varying vec3 v_fxnormal;" +
+																	"varying vec4 vAmbientColor;" +
+																	"varying vec4 vDiffuseColor;" +
 																	"void main() {" +
+																	// "  float f = sin(vParam * 6.28318512 / wavelength + velocity * time) * 0.5 + 0.5;" +
+																	"  float f = sin(vParam * 6.28318512 / wavelength + velocity * time) * 0.5 + 0.5;" +
+																	"  float f2 = 1.0 - f * f;" +
+																	"  vAmbientColor = mix(vAmbientColor1, vAmbientColor2, f2);" +
+																	"  vDiffuseColor = mix(vDiffuseColor1, vDiffuseColor2, f2);" +
+																	// "  vAmbientColor = vAmbientColor1;" +
+																	// "  vDiffuseColor = vDiffuseColor1;" +
 																	"  v_fxnormal = normalize((uMVMatrix * vec4(vNormal, 0)).xyz);" +
 																	"  gl_Position = uPMatrix * uMVMatrix * vPosition;" +
 																	"}";
 	
-	
 	private final String		fragmentShaderCode	=
 															"varying vec3 v_fxnormal;" +
-																	"uniform vec4 vAmbientColor;" +
-																	"uniform vec4 vDiffuseColor;" +
+																	"varying vec4 vAmbientColor;" +
+																	"varying vec4 vDiffuseColor;" +
 																	"void main() {" +
 																	"  float intensity = dot(v_fxnormal, vec3(0.0, 0.0, 1.0));" +
 																	"  gl_FragColor = mix(vAmbientColor, vDiffuseColor, intensity);" +
@@ -42,9 +59,9 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 	
 	private Zone				zone;
 	private ZoneRenderer		zoneRenderer;
-	private StandardSlice		slice;
+	private ColorWaveSlice		slice;
 	
-	public StandardSliceRenderer( ZoneRenderer zoneRenderer , StandardSlice slice )
+	public ColorWaveSliceRenderer( ZoneRenderer zoneRenderer , ColorWaveSlice slice )
 	{
 		this.zoneRenderer = zoneRenderer;
 		this.zone = zoneRenderer.zone;
@@ -97,6 +114,13 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 		gl.glVertexAttribPointer( vNormalLoc , 3 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 12 );
 		checkGlError( gl , "glVertexAttribPointer" );
 		
+		int vParamLoc = gl.glGetAttribLocation( mProgram , "vParam" );
+		checkGlError( gl , "glGetAttribLocation" );
+		gl.glEnableVertexAttribArray( vParamLoc );
+		checkGlError( gl , "glEnableVertexAttribArray" );
+		gl.glVertexAttribPointer( vParamLoc , 1 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 24 );
+		checkGlError( gl , "glVertexAttribPointer" );
+		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
 		
 		slice.indexBuffer.position( 0 );
@@ -113,10 +137,12 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 		checkGlError( gl , "glBindBuffer" );
 	}
 	
+	long firstTime = 0;
+	
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.andork.torquescape.SliceRenderer#draw(float[], float[], org.andork.torquescape.model.Zone, org.andork.torquescape.model.StandardSlice)
+	 * @see org.andork.torquescape.SliceRenderer#draw(float[], float[], org.andork.torquescape.model.Zone, org.andork.torquescape.model.ColorWaveSlice)
 	 */
 	@Override
 	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
@@ -134,20 +160,51 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 		gl.glUniformMatrix4fv( pMatrixLoc , 1 , false , pMatrix , 0 );
 		checkGlError( gl , "glUniformMatrix4fv" );
 		
-		int ambientLoc = gl.glGetUniformLocation( mProgram , "vAmbientColor" );
+		int wavelengthLoc = gl.glGetUniformLocation( mProgram , "wavelength" );
 		checkGlError( gl , "glGetUniformLocation" );
-		gl.glUniform4fv( ambientLoc , 1 , slice.ambientColor , 0 );
+		gl.glUniform1f( wavelengthLoc , slice.wavelength );
+		checkGlError( gl , "glUniform1f" );
+		
+		int velocityLoc = gl.glGetUniformLocation( mProgram , "velocity" );
+		checkGlError( gl , "glGetUniformLocation" );
+		gl.glUniform1f( velocityLoc , slice.velocity );
+		checkGlError( gl , "glUniform1f" );
+		
+		if (firstTime == 0) {
+			firstTime = System.currentTimeMillis( );
+		}
+		
+		int timeLoc = gl.glGetUniformLocation( mProgram , "time" );
+		checkGlError( gl , "glGetUniformLocation" );
+		float time = ( float ) ( System.currentTimeMillis( ) - firstTime ) * 0.001f;
+		System.out.println("time * velocity: " + (time * slice.velocity));
+		gl.glUniform1f( timeLoc , time );
+		checkGlError( gl , "glUniform1f" );
+		
+		int ambientLoc1 = gl.glGetUniformLocation( mProgram , "vAmbientColor1" );
+		checkGlError( gl , "glGetUniformLocation" );
+		gl.glUniform4fv( ambientLoc1 , 1 , slice.ambientColor , 0 );
 		checkGlError( gl , "glUniform4fv" );
 		
-		int diffuseLoc = gl.glGetUniformLocation( mProgram , "vDiffuseColor" );
+		int ambientLoc2 = gl.glGetUniformLocation( mProgram , "vAmbientColor2" );
 		checkGlError( gl , "glGetUniformLocation" );
-		gl.glUniform4fv( diffuseLoc , 1 , slice.diffuseColor , 0 );
+		gl.glUniform4fv( ambientLoc2 , 1 , slice.ambientColor , 4 );
+		checkGlError( gl , "glUniform4fv" );
+		
+		int diffuseLoc1 = gl.glGetUniformLocation( mProgram , "vDiffuseColor1" );
+		checkGlError( gl , "glGetUniformLocation" );
+		gl.glUniform4fv( diffuseLoc1 , 1 , slice.diffuseColor , 0 );
+		checkGlError( gl , "glUniform4fv" );
+		
+		int diffuseLoc2 = gl.glGetUniformLocation( mProgram , "vDiffuseColor2" );
+		checkGlError( gl , "glGetUniformLocation" );
+		gl.glUniform4fv( diffuseLoc2 , 1 , slice.diffuseColor , 4 );
 		checkGlError( gl , "glUniform4fv" );
 		
 		gl.glBindVertexArray( vao );
 		checkGlError( gl , "glBindVertexArray" );
 		
-		gl.glDrawElements( GL3.GL_TRIANGLES , slice.indexBuffer.capacity( ), GL3.GL_UNSIGNED_SHORT , 0 );
+		gl.glDrawElements( GL3.GL_TRIANGLES , slice.indexBuffer.capacity( ) , GL3.GL_UNSIGNED_SHORT , 0 );
 		checkGlError( gl , "glDrawElements" );
 		
 		gl.glBindVertexArray( 0 );
@@ -155,7 +212,7 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 		
 	}
 	
-	public static class Factory implements ISliceRendererFactory<StandardSlice>
+	public static class Factory implements ISliceRendererFactory<ColorWaveSlice>
 	{
 		private Factory( )
 		{
@@ -163,9 +220,9 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 		}
 		
 		@Override
-		public ISliceRenderer<StandardSlice> create( ZoneRenderer zoneRenderer , StandardSlice slice )
+		public ISliceRenderer<ColorWaveSlice> create( ZoneRenderer zoneRenderer , ColorWaveSlice slice )
 		{
-			return new StandardSliceRenderer( zoneRenderer , slice );
+			return new ColorWaveSliceRenderer( zoneRenderer , slice );
 		}
 	}
 }
