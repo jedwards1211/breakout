@@ -1,6 +1,7 @@
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
@@ -13,20 +14,21 @@ public class CurvesTestScene implements GLEventListener
 {
 	SimplePolygon	cpPolygon;
 	
-	float[ ]		scaleMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]		transMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	final float[ ]	viewFrame			= { -1 , 1 , -1 , 1 };
+	
 	float[ ]		mvpMatrix			= FloatArrayVecmath.newIdentityMatrix( );
 	
-	CurveVisualizer	visualizer			= new CurveVisualizer( 6 , 2 );
+	float[ ]		modelMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]		viewMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]		projMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	
+	CurveVisualizer	visualizer			= new CurveVisualizer( 7 , 2 );
 	
 	int				width;
 	int				height;
 	
 	int				highlightedPoint	= 0;
-	
-	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
-	{
-	}
+	float[ ]		transformedPoint	= new float[ 3 ];
 	
 	@Override
 	public void init( GLAutoDrawable drawable )
@@ -62,8 +64,8 @@ public class CurvesTestScene implements GLEventListener
 		
 		for( int i = 0 ; i < visualizer.numPoints ; i++ )
 		{
-			visualizer.controlPoints[ i * 2 ] = Math.random( ) * 1.5 - .75;
-			visualizer.controlPoints[ i * 2 + 1 ] = 0.25 + Math.random( ) * 1.5 - .75;
+			visualizer.controlPoints[ i * 2 ] = Math.random( ) - 0.5;
+			visualizer.controlPoints[ i * 2 + 1 ] = Math.random( ) - 0.5;
 		}
 		
 		visualizer.recalculate( );
@@ -94,38 +96,28 @@ public class CurvesTestScene implements GLEventListener
 	{
 		GL3 gl = ( GL3 ) drawable.getGL( );
 		
-		FloatArrayVecmath.setIdentity( mvpMatrix );
+		FloatArrayVecmath.setIdentity( modelMatrix );
+		
+		recomputeMVP( );
 		
 		visualizer.draw( gl , mvpMatrix );
-		// mvpMatrix[ 0 ] = 0.1f
-		// mvpMatrix[ 5 ] = 0.1f;
-		// mvpMatrix[ 12 ] = 0;
-		// cpPolygon.draw( gl , mvpMatrix );
 		
-		// mvpMatrix[ 12 ] = 0.3f;
-		// cpPolygon.draw( gl , mvpMatrix );
 		for( int i = 0 ; i < visualizer.numPoints ; i++ )
 		{
-			FloatArrayVecmath.setIdentity( scaleMatrix );
-			FloatArrayVecmath.setIdentity( transMatrix );
-			FloatArrayVecmath.setIdentity( mvpMatrix );
-			scaleMatrix[ 0 ] = ( float ) 3 / width;
-			scaleMatrix[ 5 ] = ( float ) 3 / height;
-			transMatrix[ 3 ] = ( float ) visualizer.controlPoints[ i * 2 ];
-			transMatrix[ 7 ] = ( float ) visualizer.controlPoints[ i * 2 + 1 ];
-			
-			FloatArrayVecmath.mmulAffine( transMatrix , scaleMatrix , mvpMatrix );
-			FloatArrayVecmath.transpose( mvpMatrix , mvpMatrix );
+			float scale = ( i == highlightedPoint ? 4f : 1.5f ) / width * ( viewFrame[ 1 ] - viewFrame[ 0 ] );
+			modelMatrix[ 0 ] = modelMatrix[ 5 ] = scale;
+			modelMatrix[ 3 ] = ( float ) visualizer.controlPoints[ i * 2 ];
+			modelMatrix[ 7 ] = ( float ) visualizer.controlPoints[ i * 2 + 1 ];
+			recomputeMVP( );
 			
 			cpPolygon.draw( gl , mvpMatrix );
-			
-			if( i == highlightedPoint )
-			{
-				mvpMatrix[ 0 ] = ( float ) 5 / width;
-				mvpMatrix[ 5 ] = ( float ) 5 / height;
-				cpPolygon.draw( gl , mvpMatrix );
-			}
 		}
+	}
+	
+	private void recomputeMVP( )
+	{
+		FloatArrayVecmath.mmul( projMatrix , modelMatrix , mvpMatrix );
+		FloatArrayVecmath.transpose( mvpMatrix , mvpMatrix );
 	}
 	
 	@Override
@@ -133,5 +125,18 @@ public class CurvesTestScene implements GLEventListener
 	{
 		this.width = width;
 		this.height = height;
+		
+		float cx = ( viewFrame[ 0 ] + viewFrame[ 1 ] ) * 0.5f;
+		float cy = ( viewFrame[ 2 ] + viewFrame[ 3 ] ) * 0.5f;
+		
+		viewFrame[ 2 ] = cy + ( viewFrame[ 0 ] - cx ) * height / width;
+		viewFrame[ 3 ] = cy + ( viewFrame[ 1 ] - cx ) * height / width;
+		
+		recomputeOrtho( );
+	}
+	
+	public void recomputeOrtho( )
+	{
+		FloatArrayVecmath.ortho( projMatrix , viewFrame[ 0 ] , viewFrame[ 1 ] , viewFrame[ 2 ] , viewFrame[ 3 ] , -100 , 100 );
 	}
 }

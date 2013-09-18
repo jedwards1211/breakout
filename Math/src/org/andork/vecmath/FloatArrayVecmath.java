@@ -105,6 +105,13 @@ public class FloatArrayVecmath
 		}
 	}
 	
+	public static void mpmulAffine( float[ ] m , float x , float y , float z , float[ ] out )
+	{
+		out[ 0 ] = m[ 0 ] * x + m[ 1 ] * y + m[ 2 ] * z + m[ 3 ];
+		out[ 1 ] = m[ 4 ] * x + m[ 5 ] * y + m[ 6 ] * z + m[ 7 ];
+		out[ 2 ] = m[ 8 ] * x + m[ 9 ] * y + m[ 10 ] * z + m[ 11 ];
+	}
+	
 	public static void mpmulAffine( float[ ] m , float[ ] p , int vi , float[ ] out , int outi )
 	{
 		if( p != out || vi != outi )
@@ -1056,6 +1063,19 @@ public class FloatArrayVecmath
 		mat[ 14 ] = -1f;
 		mat[ 1 ] = mat[ 2 ] = mat[ 3 ] = mat[ 4 ] = mat[ 6 ] = mat[ 7 ] = mat[ 8 ] =
 				mat[ 9 ] = mat[ 12 ] = mat[ 13 ] = mat[ 15 ] = 0;
+	}
+	
+	public static void ortho( float[ ] mat , float left , float right , float bottom , float top , float zNear , float zFar )
+	{
+		mat[ 0 ] = 2 / ( right - left );
+		mat[ 3 ] = 1 - mat[ 0 ] * right;
+		mat[ 5 ] = 2 / ( top - bottom );
+		mat[ 7 ] = 1 - mat[ 5 ] * top;
+		mat[ 10 ] = 2 / ( zFar - zNear );
+		mat[ 11 ] = 1 - mat[ 10 ] * zFar;
+		
+		mat[ 15 ] = 1;
+		mat[ 1 ] = mat[ 2 ] = mat[ 4 ] = mat[ 6 ] = mat[ 8 ] = mat[ 9 ] = mat[ 13 ] = mat[ 14 ] = 0;
 	}
 	
 	static final float	EPSILON_ABSOLUTE	= 1.0e-5f;

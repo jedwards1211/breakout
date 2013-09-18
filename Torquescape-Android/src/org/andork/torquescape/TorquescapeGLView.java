@@ -1,6 +1,5 @@
 package org.andork.torquescape;
 
-import org.andork.util.ArrayUtils;
 import org.andork.vecmath.FloatArrayVecmath;
 
 import android.content.Context;

@@ -1,13 +1,13 @@
+import static org.andork.jogl.util.GLUtils.checkGLError;
+import static org.andork.jogl.util.GLUtils.loadShader;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 import javax.media.opengl.GL3;
 
 import org.andork.math.discrete.DiscreteMathUtils;
-import org.andork.util.ArrayUtils;
 import org.andork.vecmath.MatrixUtils;
-
-import static org.andork.jogl.util.GLUtils.*;
 
 public class CurveVisualizer
 {
@@ -121,12 +121,7 @@ public class CurveVisualizer
 			row_perms[ i ] = i;
 		}
 		
-		System.out.println( ArrayUtils.prettyPrint( solnMatrix , n , 0 , solnMatrix.length , 0 , "%9.2f" ) );
-		System.out.println( );
-		
 		MatrixUtils.gauss( solnMatrix , m , n , row_perms );
-		
-		System.out.println( ArrayUtils.prettyPrint( solnMatrix , n , 0 , solnMatrix.length , 0 , "%9.2f" ) );
 		
 		MatrixUtils.backsubstitute( solnMatrix , m , n , row_perms , coefficients );
 		
@@ -141,10 +136,9 @@ public class CurveVisualizer
 		vShaderCode =
 				"uniform mat4 u_mvpMatrix;" +
 						"attribute vec3 a_position;" +
-						"attribute vec2 a_texcoord;" +
 						"varying vec2 v_texcoord;" +
 						"void main() {" +
-						"  v_texcoord = a_texcoord;" +
+						"  v_texcoord = vec2(a_position);" +
 						"  gl_Position = u_mvpMatrix * vec4(a_position, 1.0);" +
 						"}";
 		fShaderCode =
@@ -167,6 +161,7 @@ public class CurveVisualizer
 						"    value += product;" +
 						"  }" +
 						"  float intensity = atan(value) * 0.6366;" +
+//						"  float red = exp(-value*value/0.1);" +
 						"  float red = 0.0;" +
 						"  if (intensity > 0.0) {" +
 						"    red = intensity;" +
@@ -175,7 +170,8 @@ public class CurveVisualizer
 						"  if (intensity < 0.0) {" +
 						"    blue = -intensity;" +
 						"  }" +
-						"  gl_FragColor = vec4(red, 0, blue, 1.0);" +
+//						"  gl_FragColor = vec4(red, 0, 0, 1.0);" +
+						"  gl_FragColor = vec4(red, 0.0, blue, 1.0);" +
 						// "  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);" +
 						"}";
 		
@@ -208,16 +204,16 @@ public class CurveVisualizer
 		ebo = temp[ 1 ];
 		
 		int vertexCount = 4;
-		int bytesPerVertex = 4 * 3 + 4 * 2;
+		int bytesPerVertex = 4 * 3;
 		int vertexBytes = vertexCount * bytesPerVertex;
 		
 		verts = ByteBuffer.allocate( vertexBytes );
 		verts.order( ByteOrder.nativeOrder( ) );
 		
-		verts.putFloat( -1 ).putFloat( -1 ).putFloat( 0 ).putFloat( -1 ).putFloat( -1 );
-		verts.putFloat( 1 ).putFloat( -1 ).putFloat( 0 ).putFloat( 1 ).putFloat( -1 );
-		verts.putFloat( 1 ).putFloat( 1 ).putFloat( 0 ).putFloat( 1 ).putFloat( 1 );
-		verts.putFloat( -1 ).putFloat( 1 ).putFloat( 0 ).putFloat( -1 ).putFloat( 1 );
+		verts.putFloat( -100 ).putFloat( -100 ).putFloat( 0 );
+		verts.putFloat( 100 ).putFloat( -100 ).putFloat( 0 );
+		verts.putFloat( 100 ).putFloat( 100 ).putFloat( 0 );
+		verts.putFloat( -100 ).putFloat( 100 ).putFloat( 0 );
 		verts.position( 0 );
 		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , vbo );
@@ -230,13 +226,6 @@ public class CurveVisualizer
 		gl.glEnableVertexAttribArray( positionLoc );
 		checkGLError( gl );
 		gl.glVertexAttribPointer( positionLoc , 3 , GL3.GL_FLOAT , false , bytesPerVertex , 0 );
-		checkGLError( gl );
-		
-		int texcoordLoc = gl.glGetAttribLocation( program , "a_texcoord" );
-		checkGLError( gl );
-		gl.glEnableVertexAttribArray( texcoordLoc );
-		checkGLError( gl );
-		gl.glVertexAttribPointer( texcoordLoc , 2 , GL3.GL_FLOAT , false , bytesPerVertex , 4 * 3 );
 		checkGLError( gl );
 		
 		int indexCount = 6;
