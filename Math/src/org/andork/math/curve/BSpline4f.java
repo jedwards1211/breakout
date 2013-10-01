@@ -1,17 +1,18 @@
-package org.andork.math3d.curve;
+package org.andork.math.curve;
 
 import javax.vecmath.Point3f;
+import javax.vecmath.Point4f;
 
 import org.andork.vecmath.VecmathUtils;
 
-public class BSpline3f
+public class BSpline4f
 {
 	int			degree;
 	float[ ]	knots;
-	Point3f[ ]	controlPoints;
-	BSpline3f	derivative;
+	Point4f[ ]	controlPoints;
+	BSpline4f	derivative;
 	
-	public BSpline3f( int degree , float[ ] knots , Point3f[ ] controlPoints )
+	public BSpline4f( int degree , float[ ] knots , Point4f[ ] controlPoints )
 	{
 		if( knots.length != controlPoints.length + degree + 1 )
 		{
@@ -27,7 +28,7 @@ public class BSpline3f
 		return degree;
 	}
 	
-	public BSpline3f getDerivative( )
+	public BSpline4f getDerivative( )
 	{
 		if( degree == 0 )
 		{
@@ -37,7 +38,7 @@ public class BSpline3f
 		{
 			float[ ] derivKnots = new float[ knots.length - 2 ];
 			System.arraycopy( knots , 1 , derivKnots , 0 , derivKnots.length );
-			Point3f[ ] derivControlPoints = VecmathUtils.allocPoint3fArray( controlPoints.length - 1 );
+			Point4f[ ] derivControlPoints = VecmathUtils.allocPoint4fArray( controlPoints.length - 1 );
 			
 			for( int i = 0 ; i < derivControlPoints.length ; i++ )
 			{
@@ -46,22 +47,22 @@ public class BSpline3f
 				derivControlPoints[ i ].scale( factor );
 			}
 			
-			derivative = new BSpline3f( degree - 1 , derivKnots , derivControlPoints );
+			derivative = new BSpline4f( degree - 1 , derivKnots , derivControlPoints );
 		}
 		return derivative;
 	}
 	
 	public static class Evaluator extends BSplineEvaluatorFloat
 	{
-		Point3f[ ]	deBoorPoints;
+		Point4f[ ]	deBoorPoints;
 		
 		public Evaluator( int degree )
 		{
 			super( degree );
-			deBoorPoints = VecmathUtils.allocPoint3fArray( degree + 1 );
+			deBoorPoints = VecmathUtils.allocPoint4fArray( degree + 1 );
 		}
 		
-		public void eval( BSpline3f s , float param , Point3f result )
+		public void eval( BSpline4f s , float param , Point4f result )
 		{
 			updateState( param , s.knots );
 			
@@ -87,48 +88,48 @@ public class BSpline3f
 	public static class NurbsEvaluator
 	{
 		Evaluator	evaluator;
-		Point3f		A;
-		Point3f		Ap;
-		Point3f		App;
+		Point4f		A;
+		Point4f		Ap;
+		Point4f		App;
 		
 		public NurbsEvaluator( int degree )
 		{
 			evaluator = new Evaluator( degree );
-			A = new Point3f( );
-			Ap = new Point3f( );
-			App = new Point3f( );
+			A = new Point4f( );
+			Ap = new Point4f( );
+			App = new Point4f( );
 		}
 		
-		public void eval( BSpline3f s , float param , Point3f result )
+		public void eval( BSpline4f s , float param , Point4f result )
 		{
 			evaluator.eval( s , param , result );
-			result.scale( 1 / result.z );
+			result.scale( 1 / result.w );
 		}
 		
-		public void evalDerivative( BSpline3f s , float param , Point3f result , Point3f derivResult )
+		public void evalDerivative( BSpline4f s , float param , Point4f result , Point4f derivResult )
 		{
 			evaluator.eval( s , param , A );
-			float rw = A.z;
+			float rw = A.w;
 			result.scale( rw , A );
 			
 			evaluator.eval( s.getDerivative( ) , param , Ap );
-			derivResult.scaleAdd( -Ap.z , result , Ap );
+			derivResult.scaleAdd( -Ap.w , result , Ap );
 			derivResult.scale( rw );
 		}
 		
-		public void eval2ndDerivative( BSpline3f s , float param , Point3f result , Point3f derivResult , Point3f deriv2Result )
+		public void eval2ndDerivative( BSpline4f s , float param , Point4f result , Point4f derivResult , Point4f deriv2Result )
 		{
 			evaluator.eval( s , param , A );
-			float rw = 1f / A.z;
+			float rw = 1f / A.w;
 			result.scale( rw , A );
 			
 			evaluator.eval( s.getDerivative( ) , param , Ap );
-			float wp = Ap.z;
+			float wp = Ap.w;
 			derivResult.scaleAdd( -wp , result , Ap );
 			derivResult.scale( rw );
 			
 			evaluator.eval( s.getDerivative( ).getDerivative( ) , param , App );
-			float wpp = App.z;
+			float wpp = App.w;
 			
 			deriv2Result.scale( -wpp , result );
 			deriv2Result.scaleAdd( -2 * wp , derivResult , deriv2Result );

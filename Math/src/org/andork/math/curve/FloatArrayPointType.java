@@ -1,6 +1,6 @@
-package org.andork.math3d.curve;
+package org.andork.math.curve;
 
-import org.andork.math3d.curve.BSplineGf.RationalPointType;
+import org.andork.math.curve.BSplineGf.RationalPointType;
 
 public class FloatArrayPointType implements RationalPointType<float[ ]>
 {

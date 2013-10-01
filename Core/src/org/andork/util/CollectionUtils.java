@@ -3,12 +3,14 @@ package org.andork.util;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class CollectionUtils
 {
+	private CollectionUtils() {
+		
+	}
 
 	/**
 	 * Adds a key-value pair to a map that can contain multiple values per key.
@@ -125,7 +127,7 @@ public class CollectionUtils
 		return buffer;
 	}
 
-	public static float[ ] toFloatArray( List<Float> values , float[ ] buffer )
+	public static float[ ] toFloatArray( Collection<Float> values , float[ ] buffer )
 	{
 		if( buffer == null )
 		{

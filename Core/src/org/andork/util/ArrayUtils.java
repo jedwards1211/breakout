@@ -2,6 +2,10 @@ package org.andork.util;
 
 public class ArrayUtils
 {
+	private ArrayUtils( )
+	{
+		
+	}
 	
 	/**
 	 * Changes the block size of an array, i.e. pads or truncates blocks of elements.

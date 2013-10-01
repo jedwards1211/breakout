@@ -9,6 +9,7 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.TransformComputer3f;
+import org.andork.math.curve.ICurveWithNormals3f;
 
 /**
  * A class for computing sweep transforms, e.g. transforming from (depth,offset) sweep geometry to 3d coordinates.

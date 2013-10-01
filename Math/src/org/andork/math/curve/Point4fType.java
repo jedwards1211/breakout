@@ -1,8 +1,8 @@
-package org.andork.math3d.curve;
+package org.andork.math.curve;
 
 import javax.vecmath.Point4f;
 
-import org.andork.math3d.curve.BSplineGf.RationalPointType;
+import org.andork.math.curve.BSplineGf.RationalPointType;
 import org.andork.vecmath.VecmathUtils;
 
 public class Point4fType implements RationalPointType<Point4f>

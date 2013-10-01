@@ -11,6 +11,7 @@ import javax.media.opengl.GL3;
 
 import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.ISlice;
+import org.andork.torquescape.model.RainbowSlice;
 import org.andork.torquescape.model.StandardSlice;
 import org.andork.torquescape.model.Zone;
 
@@ -22,6 +23,7 @@ public class ZoneRenderer
 	{
 		sliceRendererFactories.put( StandardSlice.class , StandardSliceRenderer.FACTORY );
 		sliceRendererFactories.put( ColorWaveSlice.class , ColorWaveSliceRenderer.FACTORY );
+		sliceRendererFactories.put( RainbowSlice.class , RainbowSliceRenderer.FACTORY );
 	}
 	
 	public Zone																zone;

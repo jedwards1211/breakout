@@ -1,6 +1,6 @@
-package org.andork.math3d.curve;
+package org.andork.math.curve;
 
-public class BSplineUtils
+public class BSplines
 {
 	/**
 	 * A modified binary search that's easier to use for B-Splines.
@@ -30,4 +30,21 @@ public class BSplineUtils
 		return key >= a[ low ] && key < a[ high ] ? low : -1;
 	}
 	
+	public static float[ ] createUniformKnots( int degree , int numControlPoints )
+	{
+		float[ ] knots = new float[ degree + numControlPoints + 1 ];
+		
+		for( int i = 0 ; i < degree - 1 ; i++ )
+		{
+			knots[ i ] = 0;
+			knots[ knots.length - i - 1 ] = 1;
+		}
+		
+		for( int i = 0 ; i < numControlPoints ; i++ )
+		{
+			knots[ i + degree - 1 ] = ( float ) i / ( numControlPoints - 1 );
+		}
+		
+		return knots;
+	}
 }

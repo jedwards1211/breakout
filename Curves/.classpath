@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/Core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/Math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/jogl-utils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/3DUtils"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

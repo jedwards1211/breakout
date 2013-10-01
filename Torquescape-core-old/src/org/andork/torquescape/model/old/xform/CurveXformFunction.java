@@ -5,7 +5,7 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.TransformComputer3f;
-import org.andork.math3d.curve.ICurveWithNormals3f;
+import org.andork.math.curve.ICurveWithNormals3f;
 import org.andork.vecmath.VecmathUtils;
 
 public class CurveXformFunction implements IXformFunction

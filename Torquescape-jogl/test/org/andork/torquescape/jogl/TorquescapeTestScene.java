@@ -11,6 +11,7 @@ import javax.media.opengl.GLEventListener;
 import org.andork.torquescape.jogl.render.ISliceRenderer;
 import org.andork.torquescape.jogl.render.ZoneRenderer;
 import org.andork.torquescape.model.ColorWaveSlice;
+import org.andork.torquescape.model.RainbowSlice;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DirectZoneGenerator;
 import org.andork.torquescape.model.normal.NormalGenerator;
@@ -74,7 +75,7 @@ public class TorquescapeTestScene implements GLEventListener
 		
 		cube.init( gl );
 		
-		Track track = new Track1( );
+		final Track track = new Track1( );
 		
 		IVertexAttrFn attrFn1 = new IVertexAttrFn( )
 		{
@@ -91,11 +92,60 @@ public class TorquescapeTestScene implements GLEventListener
 			}
 		};
 		
-		StandardVertexFn vertexFn = new StandardVertexFn( track.getCoordFn( ) , attrFn1 );
+		final float step = ( float ) Math.PI / 180;
+		
+		IVertexAttrFn attrFn2 = new IVertexAttrFn( )
+		{
+			float[ ]	prev	= new float[ 3 ];
+			float[ ]	next	= new float[ 3 ];
+			
+			@Override
+			public int getBytesPerVertex( )
+			{
+				return 24;
+			}
+			
+			@Override
+			public void eval( float param , int index , int vertexCount , float x , float y , float z , IVertexVisitor visitor )
+			{
+				track.getCoordFn( ).eval( param , index , prev );
+				track.getCoordFn( ).eval( param + step , index , next );
+				
+				next[ 0 ] -= prev[ 0 ];
+				next[ 1 ] -= prev[ 1 ];
+				next[ 2 ] -= prev[ 2 ];
+				
+				FloatArrayVecmath.normalize( next , 0 , 3 );
+				
+				visitor.visit( next[ 0 ] );
+				visitor.visit( next[ 1 ] );
+				visitor.visit( next[ 2 ] );
+				
+				if( ( index % 2 ) == 0 )
+				{
+					track.getCoordFn( ).eval( param , ( index + vertexCount - 1 ) % vertexCount , next );
+				}
+				else
+				{
+					track.getCoordFn( ).eval( param , ( index + 1 ) % vertexCount , next );
+				}
+				
+				next[ 0 ] -= prev[ 0 ];
+				next[ 1 ] -= prev[ 1 ];
+				next[ 2 ] -= prev[ 2 ];
+				
+				FloatArrayVecmath.normalize( next , 0 , 3 );
+				
+				visitor.visit( next[ 0 ] );
+				visitor.visit( next[ 1 ] );
+				visitor.visit( next[ 2 ] );
+			}
+		};
+		
+		StandardVertexFn vertexFn = new StandardVertexFn( track.getCoordFn( ) , attrFn1 , attrFn2 );
 		
 		Zone zone = new Zone( );
 		
-		float step = ( float ) Math.PI / 180;
 		int paramCount = ( int ) ( Math.PI * 4 / step );
 		
 		int vertexCount = paramCount * vertexFn.getVertexCount( 0 );
@@ -116,15 +166,19 @@ public class TorquescapeTestScene implements GLEventListener
 		
 		NormalGenerator.generateNormals( zone.getVertFloatBuffer( ) , 3 , vertexFn.getBytesPerVertex( ) / 4 , zone.getIndexCharBuffer( ) , 0 , indexCount );
 		
-		ColorWaveSlice slice = new ColorWaveSlice( );
-		slice.wavelength = 2f;
-		slice.velocity = 5f;
-		slice.setIndexBuffer( zone.getIndexCharBuffer( ) );
-		set( slice.ambientColor , 0.1f , 0 , 0 , 1 );
-		set( slice.ambientColor , 4 , 0.05f , 0 , 0 , 1 );
-		set( slice.diffuseColor , 1 , 0 , 0 , 1 );
-		set( slice.diffuseColor , 4 , 0.5f , 0 , 0 , 1 );
-		zone.addSlice( slice );
+		// ColorWaveSlice slice = new ColorWaveSlice( );
+		// slice.wavelength = 2f;
+		// slice.velocity = 5f;
+		// slice.setIndexBuffer( zone.getIndexCharBuffer( ) );
+		// set( slice.ambientColor , 0.1f , 0 , 0 , 1 );
+		// set( slice.ambientColor , 4 , 0.05f , 0 , 0 , 1 );
+		// set( slice.diffuseColor , 1 , 0 , 0 , 1 );
+		// set( slice.diffuseColor , 4 , 0.5f , 0 , 0 , 1 );
+		// zone.addSlice( slice );
+		
+		RainbowSlice rainbowSlice = new RainbowSlice( );
+		rainbowSlice.setIndexBuffer( zone.getIndexCharBuffer( ) );
+		zone.addSlice( rainbowSlice );
 		
 		ZoneRenderer rend1 = new ZoneRenderer( zone );
 		rend1.init( gl );

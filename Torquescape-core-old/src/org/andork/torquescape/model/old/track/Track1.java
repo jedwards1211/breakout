@@ -6,7 +6,7 @@ import java.util.List;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.math3d.curve.SegmentedCurve3f;
+import org.andork.math.curve.SegmentedCurve3f;
 import org.andork.torquescape.model.old.Triangle;
 import org.andork.torquescape.model.old.gen.DefaultTrackSegmentGenerator;
 import org.andork.torquescape.model.old.param.ConstantParamFunction;

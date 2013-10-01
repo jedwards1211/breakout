@@ -1,9 +1,12 @@
+package org.andork.curves;
+
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.Arrays;
 
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
@@ -42,7 +45,6 @@ public class CurvesTestFrame extends JFrame
 		GLCapabilities userCapsRequest = new GLCapabilities( glp );
 		glCanvas = new GLCanvas( userCapsRequest )
 		{
-			
 		};
 		
 		scene = new CurvesTestScene( );

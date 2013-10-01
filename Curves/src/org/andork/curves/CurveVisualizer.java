@@ -1,3 +1,4 @@
+package org.andork.curves;
 import static org.andork.jogl.util.GLUtils.checkGLError;
 import static org.andork.jogl.util.GLUtils.loadShader;
 
@@ -161,7 +162,19 @@ public class CurveVisualizer
 						"    value += product;" +
 						"  }" +
 						"  float intensity = atan(value) * 0.6366;" +
+//						"  float intensity = 1.0 - abs(atan(value)) * 0.6366;" +
+						
+//						"  if (intensity < 0.333) {" +
+//						"    gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 1.0), vec4(0.45, 0.0, 0.5, 1.0), intensity * 3.0);" +
+//						"  } else if (intensity < 0.666) {" +
+//						"    gl_FragColor = mix(vec4(0.45, 0.0, 0.5, 1.0), vec4(0.8, 0.2, 0.0, 1.0), (intensity - 0.333) * 3.0);" +
+//						"  } else {" +
+//						"    gl_FragColor = mix(vec4(0.8, 0.2, 0.0, 1.0), vec4(1.0, 0.9, 0.0, 1.0), (intensity - 0.666) * 3.0);" +
+//						"  }" +
+						
 //						"  float red = exp(-value*value/0.1);" +
+
+						"  intensity = abs(intensity);" +
 						"  float red = 0.0;" +
 						"  if (intensity > 0.0) {" +
 						"    red = intensity;" +
@@ -170,9 +183,7 @@ public class CurveVisualizer
 						"  if (intensity < 0.0) {" +
 						"    blue = -intensity;" +
 						"  }" +
-//						"  gl_FragColor = vec4(red, 0, 0, 1.0);" +
 						"  gl_FragColor = vec4(red, 0.0, blue, 1.0);" +
-						// "  gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);" +
 						"}";
 		
 		program = gl.glCreateProgram( );

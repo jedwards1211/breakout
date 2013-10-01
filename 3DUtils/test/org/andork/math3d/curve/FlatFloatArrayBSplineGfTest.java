@@ -2,7 +2,9 @@ package org.andork.math3d.curve;
 
 import java.util.Arrays;
 
-import org.andork.math3d.curve.BSplineGf.NurbsEvaluator;
+import org.andork.math.curve.BSplineGf;
+import org.andork.math.curve.FlatFloatArrayPointType;
+import org.andork.math.curve.BSplineGf.NurbsEvaluator;
 
 public class FlatFloatArrayBSplineGfTest
 {

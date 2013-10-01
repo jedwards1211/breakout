@@ -50,6 +50,42 @@ public class FloatArrayVecmath
 		}
 	}
 	
+	public static void cross( float[ ] a , float x , float y , float z , float[ ] out )
+	{
+		if( out != a )
+		{
+			out[ 0 ] = a[ 1 ] * z - a[ 2 ] * y;
+			out[ 1 ] = a[ 2 ] * x - a[ 0 ] * z;
+			out[ 2 ] = a[ 0 ] * y - a[ 1 ] * x;
+		}
+		else
+		{
+			float cx = a[ 1 ] * z - a[ 2 ] * y;
+			float cy = a[ 2 ] * x - a[ 0 ] * z;
+			out[ 2 ] = a[ 0 ] * y - a[ 1 ] * x;
+			out[ 1 ] = cy;
+			out[ 0 ] = cx;
+		}
+	}
+	
+	public static void cross( float x , float y , float z , float[ ] b , float[ ] out )
+	{
+		if( out != b )
+		{
+			out[ 0 ] = y * b[ 2 ] - z * b[ 1 ];
+			out[ 1 ] = z * b[ 0 ] - x * b[ 2 ];
+			out[ 2 ] = x * b[ 1 ] - y * b[ 0 ];
+		}
+		else
+		{
+			float cx = y * b[ 2 ] - z * b[ 1 ];
+			float cy = z * b[ 0 ] - x * b[ 2 ];
+			out[ 2 ] = x * b[ 1 ] - y * b[ 0 ];
+			out[ 1 ] = cy;
+			out[ 0 ] = cx;
+		}
+	}
+	
 	public static void cross( float[ ] a , int ai , float[ ] b , int bi , float[ ] out , int outi )
 	{
 		if( out != a && out != b )
@@ -383,7 +419,7 @@ public class FloatArrayVecmath
 		m[ 11 ] = 0;
 	}
 	
-	public static void setRow( float[ ] m , int rowIndex , float[ ] v )
+	public static void setRow4( float[ ] m , int rowIndex , float[ ] v )
 	{
 		rowIndex *= 4;
 		m[ rowIndex ] = v[ 0 ];
@@ -392,7 +428,7 @@ public class FloatArrayVecmath
 		m[ rowIndex + 3 ] = v[ 3 ];
 	}
 	
-	public static void setRow( float[ ] m , int rowIndex , float[ ] v , int vi )
+	public static void setRow4( float[ ] m , int rowIndex , float[ ] v , int vi )
 	{
 		rowIndex *= 4;
 		m[ rowIndex ] = v[ vi + 0 ];
@@ -401,7 +437,7 @@ public class FloatArrayVecmath
 		m[ rowIndex + 3 ] = v[ vi + 3 ];
 	}
 	
-	public static void setRow( float[ ] m , int rowIndex , float a , float b , float c , float d )
+	public static void setRow4( float[ ] m , int rowIndex , float a , float b , float c , float d )
 	{
 		rowIndex *= 4;
 		m[ rowIndex ] = a;
@@ -410,7 +446,14 @@ public class FloatArrayVecmath
 		m[ rowIndex + 3 ] = d;
 	}
 	
-	public static void setColumn( float[ ] m , int colIndex , float[ ] v )
+	public static void setColumn3( float[ ] m , int colIndex , float[ ] v )
+	{
+		m[ colIndex ] = v[ 0 ];
+		m[ colIndex + 4 ] = v[ 1 ];
+		m[ colIndex + 8 ] = v[ 2 ];
+	}
+	
+	public static void setColumn4( float[ ] m , int colIndex , float[ ] v )
 	{
 		m[ colIndex ] = v[ 0 ];
 		m[ colIndex + 4 ] = v[ 1 ];
@@ -418,7 +461,7 @@ public class FloatArrayVecmath
 		m[ colIndex + 12 ] = v[ 3 ];
 	}
 	
-	public static void setColumn( float[ ] m , int colIndex , float[ ] v , int vi )
+	public static void setColumn4( float[ ] m , int colIndex , float[ ] v , int vi )
 	{
 		m[ colIndex ] = v[ vi + 0 ];
 		m[ colIndex + 4 ] = v[ vi + 1 ];
@@ -426,7 +469,7 @@ public class FloatArrayVecmath
 		m[ colIndex + 12 ] = v[ vi + 3 ];
 	}
 	
-	public static void setColumn( float[ ] m , int colIndex , float a , float b , float c , float d )
+	public static void setColumn4( float[ ] m , int colIndex , float a , float b , float c , float d )
 	{
 		m[ colIndex ] = a;
 		m[ colIndex + 4 ] = b;
@@ -1140,5 +1183,75 @@ public class FloatArrayVecmath
 	public static void setRotation( float[ ] mat , float[ ] axis , float angle )
 	{
 		setRotation( mat , axis[ 0 ] , axis[ 1 ] , axis[ 2 ] , angle );
+	}
+	
+	public static void normalize( float[ ] v , int start , int count )
+	{
+		double length = 0;
+		for( int i = start ; i < start + count ; i++ )
+		{
+			length += v[ i ] * v[ i ];
+		}
+		
+		length = 1.0 / Math.sqrt( length );
+		
+		for( int i = start ; i < start + count ; i++ )
+		{
+			v[ i ] *= length;
+		}
+	}
+	
+	/**
+	 * Projects 3-dimensional vector {@code a} onto vector {@code b}, storing the result in {@code out}.
+	 */
+	public static void vvproj3( float[ ] a , float[ ] b , float[ ] out )
+	{
+		float aDotB = dot3( a , b );
+		float bDotB = dot3( b , b );
+		float x = b[ 0 ] * aDotB / bDotB;
+		float y = b[ 1 ] * aDotB / bDotB;
+		float z = b[ 2 ] * aDotB / bDotB;
+		out[ 0 ] = x;
+		out[ 1 ] = y;
+		out[ 2 ] = z;
+	}
+	
+	/**
+	 * Projects 3-dimensional vector {@code a} onto a plane with normal {@code n}, storing the result in {@code out}.
+	 */
+	public static void vpproj3( float[ ] a , float[ ] n , float[ ] out )
+	{
+		float aDotN = dot3( a , n );
+		float nDotN = dot3( n , n );
+		float x = a[ 0 ] - n[ 0 ] * aDotN / nDotN;
+		float y = a[ 1 ] - n[ 1 ] * aDotN / nDotN;
+		float z = a[ 2 ] - n[ 2 ] * aDotN / nDotN;
+		out[ 0 ] = x;
+		out[ 1 ] = y;
+		out[ 2 ] = z;
+	}
+	
+	public static void add3( float[ ] a , float[ ] b , float[ ] out )
+	{
+		out[ 0 ] = a[ 0 ] + b[ 0 ];
+		out[ 1 ] = a[ 1 ] + b[ 1 ];
+		out[ 2 ] = a[ 2 ] + b[ 2 ];
+	}
+	
+	public static void sub3( float[ ] a , float[ ] b , float[ ] out )
+	{
+		out[ 0 ] = a[ 0 ] - b[ 0 ];
+		out[ 1 ] = a[ 1 ] - b[ 1 ];
+		out[ 2 ] = a[ 2 ] - b[ 2 ];
+	}
+	
+	public static float length( float[ ] v , int start , int count )
+	{
+		float total = 0;
+		for( int i = start ; i < count ; i++ )
+		{
+			total += v[ i ] * v[ i ];
+		}
+		return ( float ) Math.sqrt( total );
 	}
 }

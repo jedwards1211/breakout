@@ -6,6 +6,7 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.j3d.math.TransformComputer3f;
+import org.andork.math.curve.ICurveWithNormals3f;
 
 public class SplineCurve3f implements ICurveWithNormals3f
 {

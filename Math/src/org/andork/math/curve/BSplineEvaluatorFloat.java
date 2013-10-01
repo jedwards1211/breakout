@@ -1,4 +1,4 @@
-package org.andork.math3d.curve;
+package org.andork.math.curve;
 
 public abstract class BSplineEvaluatorFloat
 {
@@ -76,7 +76,7 @@ public abstract class BSplineEvaluatorFloat
 		
 		if( index < 0 )
 		{
-			index = BSplineUtils.binarySearch( knots , 0 , knots.length , param );
+			index = BSplines.binarySearch( knots , 0 , knots.length , param );
 			multiplicity = 0;
 			for( int i = index ; i >= 0 && knots[ i ] == param ; i-- )
 			{

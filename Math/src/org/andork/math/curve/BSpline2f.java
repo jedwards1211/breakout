@@ -1,4 +1,4 @@
-package org.andork.math3d.curve;
+package org.andork.math.curve;
 
 import javax.vecmath.Point2f;
 
