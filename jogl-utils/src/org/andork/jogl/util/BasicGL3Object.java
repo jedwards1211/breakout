@@ -500,7 +500,7 @@ public class BasicGL3Object implements GL3Object
 			}
 			if( passPosToFragmentShader )
 			{
-				sb.append( "  v_pos = vec3(gl_Position);" );
+				sb.append( "  v_pos = vec3(a_pos);" );
 			}
 			sb.append( "}" );
 			
@@ -539,32 +539,82 @@ public class BasicGL3Object implements GL3Object
 	
 	public static class DepthFragmentShader
 	{
-		final float[ ]	color	= { 1f , 1f , 1f , 1f };
+		final float[ ]	farColor	= { 0.1f , 0.1f , 0.1f , 1f };
+		final float[ ]	nearColor	= { 1f , 1f , 1f , 1f };
+		final float[ ]	center		= { 0 , 0 , 0 };
+		float			radius		= 1;
 		
-		public DepthFragmentShader color( float r , float g , float b , float a )
+		public DepthFragmentShader nearColor( float r , float g , float b , float a )
 		{
-			color[ 0 ] = r;
-			color[ 1 ] = g;
-			color[ 2 ] = b;
-			color[ 3 ] = a;
+			nearColor[ 0 ] = r;
+			nearColor[ 1 ] = g;
+			nearColor[ 2 ] = b;
+			nearColor[ 3 ] = a;
+			return this;
+		}
+		
+		public DepthFragmentShader farColor( float r , float g , float b , float a )
+		{
+			farColor[ 0 ] = r;
+			farColor[ 1 ] = g;
+			farColor[ 2 ] = b;
+			farColor[ 3 ] = a;
+			return this;
+		}
+		
+		public DepthFragmentShader center( float x , float y , float z )
+		{
+			center[ 0 ] = x;
+			center[ 1 ] = y;
+			center[ 2 ] = z;
+			return this;
+		}
+		
+		public DepthFragmentShader radius( float radius )
+		{
+			if( radius < 0 )
+			{
+				throw new IllegalArgumentException( "radius must be >= 0" );
+			}
+			this.radius = radius;
 			return this;
 		}
 		
 		public String toString( )
 		{
 			StringBuffer sb = new StringBuffer( );
+			sb.append( "uniform mat4 m;" );
+			sb.append( "uniform mat4 v;" );
+			sb.append( "uniform mat4 p;" );
 			sb.append( "varying vec3 v_pos;" );
 			sb.append( "void main() {" );
-			sb.append( "  float intensity = 1.0 / (v_pos.z / 2.0 + 1.0);" );
-			sb.append( "  gl_FragColor = intensity * vec4(" );
-			sb.append( String.format( "%.4f" , color[ 0 ] ) );
-			for( int i = 1 ; i < 4 ; i++ )
-			{
-				sb.append( String.format( ", %.4f" , color[ i ] ) );
-			}
-			sb.append( ");" );
+			sb.append( "  float center_depth = (v * m * vec4(" );
+			sb.append( format( "%.4f" , center[ 0 ] , center[ 1 ] , center[ 2 ] , 1f ) ).append( ")).z;" );
+			sb.append( "  float radius = " ).append( format( "%.4f" , radius ) ).append( ";" );
+			sb.append( "  float frag_depth = (v * m * vec4(v_pos, 1.0)).z;" );
+			sb.append( "  float f;" );
+			sb.append( "  if (frag_depth > center_depth + radius) { f = 1.0; }" );
+			sb.append( "  else if (frag_depth < center_depth - radius) { f = 0.0; }" );
+			sb.append( "  else { f = (frag_depth - center_depth + radius) / (radius * 2.0); }" );
+			sb.append( "  gl_FragColor = mix(vec4(" ).append( format( "%.4f" , farColor ) ).append( "), " );
+			sb.append( "vec4(" ).append( format( "%.4f" , nearColor ) ).append( "), f);" );
 			sb.append( "}" );
 			return sb.toString( );
 		}
+	}
+	
+	private static String format( String valueFormat , float ... values )
+	{
+		StringBuffer sb = new StringBuffer( );
+		if( values.length > 0 )
+		{
+			sb.append( String.format( valueFormat , values[ 0 ] ) );
+		}
+		for( int i = 1 ; i < values.length ; i++ )
+		{
+			sb.append( ", " );
+			sb.append( String.format( valueFormat , values[ i ] ) );
+		}
+		return sb.toString( );
 	}
 }

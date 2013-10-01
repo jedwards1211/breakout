@@ -1,13 +1,21 @@
 package org.andork.jogl.util;
 
+import static org.andork.vecmath.FloatArrayVecmath.cross;
+import static org.andork.vecmath.FloatArrayVecmath.invAffine;
+import static org.andork.vecmath.FloatArrayVecmath.mmulAffine;
+import static org.andork.vecmath.FloatArrayVecmath.mvmulAffine;
+import static org.andork.vecmath.FloatArrayVecmath.normalize3;
+import static org.andork.vecmath.FloatArrayVecmath.rotY;
+import static org.andork.vecmath.FloatArrayVecmath.setColumn3;
+import static org.andork.vecmath.FloatArrayVecmath.setIdentity;
+import static org.andork.vecmath.FloatArrayVecmath.setRotation;
+
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 
 import javax.media.opengl.GLAutoDrawable;
 
-import org.andork.util.ArrayUtils;
 import org.andork.vecmath.FloatArrayVecmath;
 
 public class BasicOrbiter extends MouseAdapter
@@ -15,18 +23,11 @@ public class BasicOrbiter extends MouseAdapter
 	
 	final BasicGL3Scene	scene;
 	MouseEvent			lastEvent	= null;
-	final float[ ]		v			= new float[ 3 ];
 	final float[ ]		axis		= new float[ 3 ];
-	final float[ ]		right		= new float[ 3 ];
-	final float[ ]		up			= new float[ 3 ];
-	final float[ ]		backward	= new float[ 3 ];
-	final float[ ]		p			= new float[ 3 ];
 	final float[ ]		center		= new float[ 3 ];
 	MouseEvent			pressEvent	= null;
 	final float[ ]		m1			= FloatArrayVecmath.newIdentityMatrix( );
 	final float[ ]		m2			= FloatArrayVecmath.newIdentityMatrix( );
-	final float[ ]		cam			= FloatArrayVecmath.newIdentityMatrix( );
-	float				lastPan		= 0;
 	boolean				active		= true;
 	boolean				callDisplay	= true;
 	float				panFactor	= ( float ) Math.PI;
@@ -101,59 +102,33 @@ public class BasicOrbiter extends MouseAdapter
 			
 			Component glCanvas = e.getComponent( );
 			
-			FloatArrayVecmath.invAffine( scene.v , cam );
-			FloatArrayVecmath.mpmulAffine( cam , 0 , 0 , 0 , p );
-			FloatArrayVecmath.mvmulAffine( cam , 1 , 0 , 0 , right );
-			FloatArrayVecmath.mvmulAffine( cam , 0 , 1 , 0 , up );
-			FloatArrayVecmath.mvmulAffine( cam , 0 , 0 , 1 , backward );
+			invAffine( scene.v , m1 );
+			mvmulAffine( m1 , 0 , 0 , 1 , axis );
+			cross( 0 , 1 , 0 , axis , axis );
+			normalize3( axis );
 			
-			FloatArrayVecmath.sub3( p , center , v );
-			FloatArrayVecmath.add3( backward , v , backward );
+			setIdentity( m1 );
+			setIdentity( m2 );
 			
-			float xz = ( float ) Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 2 ] * v[ 2 ] );
+			m2[ 3 ] = -center[ 0 ];
+			m2[ 7 ] = -center[ 1 ];
+			m2[ 11 ] = -center[ 2 ];
 			
-			float tilt = ( float ) Math.atan2( v[ 1 ] , xz );
-			float pan = Math.abs( tilt ) == Math.PI / 2 ? lastPan : ( float ) Math.atan2( v[ 0 ] , v[ 2 ] );
-			
-			FloatArrayVecmath.cross( v , 0 , 1 , 0 , axis );
-			FloatArrayVecmath.normalize( axis , 0 , 3 );
-			
-			if( axis[ 0 ] == 0 && axis[ 1 ] == 0 && axis[ 2 ] == 0 )
-			{
-				axis[ 0 ] = ( float ) Math.cos( lastPan );
-				axis[ 2 ] = ( float ) Math.sin( lastPan );
-			}
-			lastPan = pan;
-			
-			float dpan = ( float ) ( -dx * panFactor / glCanvas.getWidth( ) );
+			float dpan = ( float ) ( dx * panFactor / glCanvas.getWidth( ) );
 			float dtilt = ( float ) ( dy * tiltFactor / glCanvas.getHeight( ) );
 			
-			FloatArrayVecmath.setIdentity( m1 );
-			FloatArrayVecmath.setRotation( m1 , axis , dtilt );
+			rotY( m1 , dpan );
 			
-			FloatArrayVecmath.mvmulAffine( m1 , backward );
-			FloatArrayVecmath.mvmulAffine( m1 , v );
+			mmulAffine( m1 , m2 , m2 );
 			
-			FloatArrayVecmath.rotY( m1 , dpan );
-			FloatArrayVecmath.mvmulAffine( m1 , v );
-			FloatArrayVecmath.mvmulAffine( m1 , backward );
+			setRotation( m1 , axis , dtilt );
+			mmulAffine( m1 , m2 , m2 );
 			
-			FloatArrayVecmath.sub3( backward , v , backward );
+			setIdentity( m1 );
+			setColumn3( m1 , 3 , center );
 			
-			FloatArrayVecmath.cross( 0 , 1 , 0 , backward , right );
-			FloatArrayVecmath.normalize( right , 0 , 3 );
-			FloatArrayVecmath.cross( backward , right , up );
-			
-			FloatArrayVecmath.add3( v , center , p );
-			
-			FloatArrayVecmath.setColumn3( cam , 0 , right );
-			FloatArrayVecmath.setColumn3( cam , 1 , up );
-			FloatArrayVecmath.setColumn3( cam , 2 , backward );
-			FloatArrayVecmath.setColumn3( cam , 3 , p );
-			
-			FloatArrayVecmath.invAffine( cam , scene.v );
-			
-			System.out.println( ArrayUtils.prettyPrint( cam , 4 , 0 , 16 , 4 , "%9.2f" ) );
+			mmulAffine( m1 , m2 , m2 );
+			mmulAffine( scene.v , m2 , scene.v );
 		}
 		
 		if( callDisplay )

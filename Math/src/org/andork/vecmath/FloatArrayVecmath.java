@@ -1187,18 +1187,26 @@ public class FloatArrayVecmath
 	
 	public static void normalize( float[ ] v , int start , int count )
 	{
-		double length = 0;
+		double factor = 0;
 		for( int i = start ; i < start + count ; i++ )
 		{
-			length += v[ i ] * v[ i ];
+			factor += v[ i ] * v[ i ];
 		}
 		
-		length = 1.0 / Math.sqrt( length );
+		factor = 1.0 / Math.sqrt( factor );
 		
 		for( int i = start ; i < start + count ; i++ )
 		{
-			v[ i ] *= length;
+			v[ i ] *= factor;
 		}
+	}
+	
+	public static void normalize3( float[ ] v )
+	{
+		double factor = 1.0 / Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 1 ] * v[ 1 ] + v[ 2 ] * v[ 2 ] );
+		v[ 0 ] *= factor;
+		v[ 1 ] *= factor;
+		v[ 2 ] *= factor;
 	}
 	
 	/**

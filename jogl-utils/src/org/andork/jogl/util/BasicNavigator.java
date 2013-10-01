@@ -146,6 +146,7 @@ public class BasicNavigator extends MouseAdapter
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
+			FloatArrayVecmath.invAffine( scene.v , cam );
 			cam[ 3 ] += cam[ 2 ] * dy * moveFactor;
 			cam[ 7 ] += cam[ 6 ] * dy * moveFactor;
 			cam[ 11 ] += cam[ 10 ] * dy * moveFactor;
@@ -153,6 +154,7 @@ public class BasicNavigator extends MouseAdapter
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
 		{
+			FloatArrayVecmath.invAffine( scene.v , cam );
 			cam[ 3 ] += cam[ 0 ] * -dx * moveFactor + cam[ 1 ] * dy * moveFactor;
 			cam[ 7 ] += cam[ 4 ] * -dx * moveFactor + cam[ 5 ] * dy * moveFactor;
 			cam[ 11 ] += cam[ 8 ] * -dx * moveFactor + cam[ 9 ] * dy * moveFactor;

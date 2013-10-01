@@ -7,7 +7,7 @@ import javax.media.opengl.GL3;
 import javax.vecmath.Point3f;
 
 import org.andork.jogl.util.BasicGL3Object.BasicVertexShader;
-import org.andork.jogl.util.BasicGL3Object.FlatFragmentShader;
+import org.andork.jogl.util.BasicGL3Object.DepthFragmentShader;
 import org.andork.math.curve.BSpline3f;
 import org.andork.math.curve.BSpline3f.Evaluator;
 import org.andork.math.curve.BSplines;
@@ -69,10 +69,12 @@ public class SplineTestFrame extends BasicGL3Frame
 		obj.addVertexBuffer( vertexBuffer );
 		obj.vertexCount( vertexBuffer.capacity( ) / 12 );
 		obj.drawMode( GL3.GL_LINE_STRIP );
-		obj.vertexShaderCode( new BasicVertexShader( ).posDim( 3 ).toString( ) );
+		obj.vertexShaderCode( new BasicVertexShader( ).posDim( 3 ).passPosToFragmentShader( true ).toString( ) );
 		obj.add( obj.new AttributeVec3fv( ).name( "a_pos" ) );
-		obj.fragmentShaderCode( new FlatFragmentShader( ).toString( ) );
+		obj.fragmentShaderCode( new DepthFragmentShader( ).radius( 9 ).toString( ) );
+		obj.add( new GL3DepthModifier( ) );
 		obj.transpose( true );
+		obj.debug( true );
 		
 		scene.add( obj );
 		
