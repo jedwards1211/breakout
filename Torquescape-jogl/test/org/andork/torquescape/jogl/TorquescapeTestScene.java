@@ -10,7 +10,6 @@ import javax.media.opengl.GLEventListener;
 
 import org.andork.torquescape.jogl.render.ISliceRenderer;
 import org.andork.torquescape.jogl.render.ZoneRenderer;
-import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.RainbowSlice;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DirectZoneGenerator;
@@ -26,8 +25,6 @@ public class TorquescapeTestScene implements GLEventListener
 {
 	public final List<ZoneRenderer>	zones				= new ArrayList<ZoneRenderer>( );
 	
-	public IndexedPackedCube		cube				= new IndexedPackedCube( );
-	
 	public float					tilt;
 	public float					pan;
 	
@@ -40,6 +37,7 @@ public class TorquescapeTestScene implements GLEventListener
 	float[ ]						tiltMatrix			= FloatArrayVecmath.newIdentityMatrix( );
 	float[ ]						modelViewMatrix		= FloatArrayVecmath.newIdentityMatrix( );
 	float[ ]						modelViewProjMatrix	= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						identityMatrix		= FloatArrayVecmath.newIdentityMatrix( );
 	
 	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
 	{
@@ -60,7 +58,7 @@ public class TorquescapeTestScene implements GLEventListener
 		{
 			for( ISliceRenderer<?> sliceRenderer : zone.sliceRenderers )
 			{
-				sliceRenderer.draw( gl , mvMatrix , pMatrix );
+				sliceRenderer.draw( gl , identityMatrix , mvMatrix , pMatrix );
 			}
 		}
 	}
@@ -72,8 +70,6 @@ public class TorquescapeTestScene implements GLEventListener
 		FloatArrayVecmath.lookAt( viewMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
 		
 		GL3 gl = ( GL3 ) drawable.getGL( );
-		
-		cube.init( gl );
 		
 		final Track track = new Track1( );
 		

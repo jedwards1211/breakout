@@ -16,8 +16,9 @@ public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 															// This matrix member variable provides a hook to manipulate
 															// the coordinates of the objects that use this vertex shader
 															"precision highp float;" +
-																	"uniform mat4 uMVMatrix;" +
-																	"uniform mat4 uPMatrix;" +
+																	"uniform mat4 m;" +
+																	"uniform mat4 v;" +
+																	"uniform mat4 p;" +
 																	"attribute vec3 aPosition;" +
 																	"attribute vec3 aNormal;" +
 																	"attribute vec3 aUvec;" +
@@ -26,10 +27,10 @@ public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 																	"varying vec3 vUvec;" +
 																	"varying vec3 vVvec;" +
 																	"void main() {" +
-																	"  vNormal = normalize((uMVMatrix * vec4(aNormal, 0)).xyz);" +
-																	"  vUvec = normalize((uMVMatrix * vec4(aUvec, 0)).xyz);" +
-																	"  vVvec = normalize((uMVMatrix * vec4(aVvec, 0)).xyz);" +
-																	"  gl_Position = uPMatrix * uMVMatrix * vec4(aPosition, 1.0);" +
+																	"  vNormal = normalize((v * m * vec4(aNormal, 0)).xyz);" +
+																	"  vUvec = normalize((v * m * vec4(aUvec, 0)).xyz);" +
+																	"  vVvec = normalize((v * m * vec4(aVvec, 0)).xyz);" +
+																	"  gl_Position = p * v * m * vec4(aPosition, 1.0);" +
 																	"}";
 	
 	private final String		fragmentShaderCode	=
@@ -38,7 +39,7 @@ public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 																	"varying vec3 vVvec;" +
 																	"void main() {" +
 																	"  float intensity = 0.1 + 0.9 * vNormal.z;" +
-																	"  float red = (0.5 + vUvec.z * 0.5) * intensity;" + 
+																	"  float red = (0.5 + vUvec.z * 0.5) * intensity;" +
 																	"  float blue = (0.5 + vVvec.z * 0.5) * intensity;" +
 																	"  gl_FragColor = vec4(0.0, red, blue, 1.0);" +
 																	"}";
@@ -143,19 +144,24 @@ public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 	 * @see org.andork.torquescape.SliceRenderer#draw(float[], float[], org.andork.torquescape.model.Zone, org.andork.torquescape.model.RainbowSlice)
 	 */
 	@Override
-	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
+	public void draw( GL3 gl , float[ ] m , float[ ] v , float[ ] p )
 	{
 		gl.glUseProgram( mProgram );
 		checkGlError( gl , "glUseProgram" );
 		
-		int mvMatrixLoc = gl.glGetUniformLocation( mProgram , "uMVMatrix" );
+		int m_loc = gl.glGetUniformLocation( mProgram , "m" );
 		checkGlError( gl , "glGetUniformLocation" );
-		gl.glUniformMatrix4fv( mvMatrixLoc , 1 , false , mvMatrix , 0 );
+		gl.glUniformMatrix4fv( m_loc , 1 , false , m , 0 );
 		checkGlError( gl , "glUniformMatrix4fv" );
 		
-		int pMatrixLoc = gl.glGetUniformLocation( mProgram , "uPMatrix" );
+		int v_loc = gl.glGetUniformLocation( mProgram , "v" );
 		checkGlError( gl , "glGetUniformLocation" );
-		gl.glUniformMatrix4fv( pMatrixLoc , 1 , false , pMatrix , 0 );
+		gl.glUniformMatrix4fv( v_loc , 1 , false , v , 0 );
+		checkGlError( gl , "glUniformMatrix4fv" );
+		
+		int p_loc = gl.glGetUniformLocation( mProgram , "p" );
+		checkGlError( gl , "glGetUniformLocation" );
+		gl.glUniformMatrix4fv( p_loc , 1 , false , p , 0 );
 		checkGlError( gl , "glUniformMatrix4fv" );
 		
 		if( firstTime == 0 )

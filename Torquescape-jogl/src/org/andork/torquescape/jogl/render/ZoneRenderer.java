@@ -9,13 +9,14 @@ import java.util.Map;
 
 import javax.media.opengl.GL3;
 
+import org.andork.jogl.basic.GL3Object;
 import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.ISlice;
 import org.andork.torquescape.model.RainbowSlice;
 import org.andork.torquescape.model.StandardSlice;
 import org.andork.torquescape.model.Zone;
 
-public class ZoneRenderer
+public class ZoneRenderer implements GL3Object
 {
 	private static Map<Class<? extends ISlice>, ISliceRendererFactory<?>>	sliceRendererFactories	= new HashMap<Class<? extends ISlice>, ISliceRendererFactory<?>>( );
 	
@@ -64,6 +65,15 @@ public class ZoneRenderer
 		for( ISliceRenderer<?> sliceRenderer : sliceRenderers )
 		{
 			sliceRenderer.init( gl );
+		}
+	}
+	
+	@Override
+	public void draw( GL3 gl , float[ ] m , float[ ] v , float[ ] p )
+	{
+		for( ISliceRenderer<?> sliceRenderer : sliceRenderers )
+		{
+			sliceRenderer.draw( gl , m , v , p );
 		}
 	}
 }

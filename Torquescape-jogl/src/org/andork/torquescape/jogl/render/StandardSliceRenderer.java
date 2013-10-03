@@ -15,16 +15,16 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 	private final String		vertexShaderCode	=
 															// This matrix member variable provides a hook to manipulate
 															// the coordinates of the objects that use this vertex shader
-															"uniform mat4 uMVMatrix;" +
-																	"uniform mat4 uPMatrix;" +
+															"uniform mat4 m;" +
+																	"uniform mat4 v;" +
+																	"uniform mat4 p;" +
 																	"attribute vec4 vPosition;" +
 																	"attribute vec3 vNormal;" +
 																	"varying vec3 v_fxnormal;" +
 																	"void main() {" +
-																	"  v_fxnormal = normalize((uMVMatrix * vec4(vNormal, 0)).xyz);" +
-																	"  gl_Position = uPMatrix * uMVMatrix * vPosition;" +
+																	"  v_fxnormal = normalize((v * m * vec4(vNormal, 0)).xyz);" +
+																	"  gl_Position = p * v * m * vPosition;" +
 																	"}";
-	
 	
 	private final String		fragmentShaderCode	=
 															"varying vec3 v_fxnormal;" +
@@ -119,19 +119,24 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 	 * @see org.andork.torquescape.SliceRenderer#draw(float[], float[], org.andork.torquescape.model.Zone, org.andork.torquescape.model.StandardSlice)
 	 */
 	@Override
-	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
+	public void draw( GL3 gl , float[ ] m , float[ ] v , float[ ] p )
 	{
 		gl.glUseProgram( mProgram );
 		checkGlError( gl , "glUseProgram" );
 		
-		int mvMatrixLoc = gl.glGetUniformLocation( mProgram , "uMVMatrix" );
+		int m_loc = gl.glGetUniformLocation( mProgram , "m" );
 		checkGlError( gl , "glGetUniformLocation" );
-		gl.glUniformMatrix4fv( mvMatrixLoc , 1 , false , mvMatrix , 0 );
+		gl.glUniformMatrix4fv( m_loc , 1 , false , m , 0 );
 		checkGlError( gl , "glUniformMatrix4fv" );
 		
-		int pMatrixLoc = gl.glGetUniformLocation( mProgram , "uPMatrix" );
+		int v_loc = gl.glGetUniformLocation( mProgram , "v" );
 		checkGlError( gl , "glGetUniformLocation" );
-		gl.glUniformMatrix4fv( pMatrixLoc , 1 , false , pMatrix , 0 );
+		gl.glUniformMatrix4fv( v_loc , 1 , false , v , 0 );
+		checkGlError( gl , "glUniformMatrix4fv" );
+		
+		int p_loc = gl.glGetUniformLocation( mProgram , "p" );
+		checkGlError( gl , "glGetUniformLocation" );
+		gl.glUniformMatrix4fv( p_loc , 1 , false , p , 0 );
 		checkGlError( gl , "glUniformMatrix4fv" );
 		
 		int ambientLoc = gl.glGetUniformLocation( mProgram , "vAmbientColor" );
@@ -147,7 +152,7 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 		gl.glBindVertexArray( vao );
 		checkGlError( gl , "glBindVertexArray" );
 		
-		gl.glDrawElements( GL3.GL_TRIANGLES , slice.indexBuffer.capacity( ), GL3.GL_UNSIGNED_SHORT , 0 );
+		gl.glDrawElements( GL3.GL_TRIANGLES , slice.indexBuffer.capacity( ) , GL3.GL_UNSIGNED_SHORT , 0 );
 		checkGlError( gl , "glDrawElements" );
 		
 		gl.glBindVertexArray( 0 );

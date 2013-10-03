@@ -1,6 +1,6 @@
-package org.andork.torquescape.jogl;
+package org.andork.jogl.util;
 
-import static org.andork.torquescape.jogl.GLUtils.checkGlError;
+import static org.andork.jogl.util.GLUtils.checkGLError;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -125,15 +125,15 @@ public class IndexedPackedCube
 		int fragmentShader = GLUtils.loadShader( gl , GL3.GL_FRAGMENT_SHADER , fragmentShaderCode );
 		
 		mProgram = gl.glCreateProgram( ); // create empty OpenGL ES Program
-		checkGlError( gl , "glCreateProgram" );
+		checkGLError( gl , "glCreateProgram" );
 		gl.glAttachShader( mProgram , vertexShader ); // add the vertex shader
-		checkGlError( gl , "glAttachShader" );
+		checkGLError( gl , "glAttachShader" );
 		// to program
 		gl.glAttachShader( mProgram , fragmentShader ); // add the fragment
-		checkGlError( gl , "glAttachShader" );
+		checkGLError( gl , "glAttachShader" );
 		// shader to program
 		gl.glLinkProgram( mProgram ); // creates OpenGL ES program executables
-		checkGlError( gl , "glLinkProgram" );
+		checkGLError( gl , "glLinkProgram" );
 		
 		// initialize vertex byte buffer for shape coordinates
 		ByteBuffer bb = ByteBuffer.allocateDirect(
@@ -168,97 +168,97 @@ public class IndexedPackedCube
 		ebo = ebos[ 0 ];
 		
 		gl.glBindVertexArray( vao );
-		checkGlError( gl , "glBindVertexArray" );
+		checkGLError( gl , "glBindVertexArray" );
 		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , vbo );
-		checkGlError( gl , "glBindBuffer" );
+		checkGLError( gl , "glBindBuffer" );
 		
 		gl.glBufferData( GL3.GL_ARRAY_BUFFER , vertexBuffer.capacity( ) * 4 , vertexBuffer , GL3.GL_STATIC_DRAW );
-		checkGlError( gl , "glBufferData" );
+		checkGLError( gl , "glBufferData" );
 		
 		// get handle to vertex shader's vPosition member
 		mPositionHandle = gl.glGetAttribLocation( mProgram , "vPosition" );
-		checkGlError( gl , "glGetAttribLocation" );
+		checkGLError( gl , "glGetAttribLocation" );
 		
 		// Enable a handle to the triangle vertices
 		gl.glEnableVertexAttribArray( mPositionHandle );
-		checkGlError( gl , "glEnableVertexAttribArray" );
+		checkGLError( gl , "glEnableVertexAttribArray" );
 		
 		vertexBuffer.position( 0 );
 		
 		// Prepare the triangle coordinate data
 		gl.glVertexAttribPointer( mPositionHandle , COORDS_PER_VERTEX , GL3.GL_FLOAT , false , VERTEX_STRIDE , 0 );
-		checkGlError( gl , "glVertexAttribPointer" );
+		checkGLError( gl , "glVertexAttribPointer" );
 		
 		// get handle to fragment shader's vColor member
 		mColorHandle = gl.glGetAttribLocation( mProgram , "vColor" );
-		checkGlError( gl , "glGetAttribLocation" );
+		checkGLError( gl , "glGetAttribLocation" );
 		
 		// Enable a handle to the triangle vertices
 		gl.glEnableVertexAttribArray( mColorHandle );
-		checkGlError( gl , "glEnableVertexAttribArray" );
+		checkGLError( gl , "glEnableVertexAttribArray" );
 		
 		vertexBuffer.position( COLOR_OFFSET );
 		
 		// Prepare the triangle coordinate data
 		gl.glVertexAttribPointer( mColorHandle , COLORS_PER_VERTEX , GL3.GL_FLOAT , false , VERTEX_STRIDE , COLOR_OFFSET * 4 );
-		checkGlError( gl , "glVertexAttribPointer" );
+		checkGLError( gl , "glVertexAttribPointer" );
 		
 		// get handle to fragment shader's vNormal member
 		mNormalHandle = gl.glGetAttribLocation( mProgram , "vNormal" );
-		checkGlError( gl , "glGetAttribLocation" );
+		checkGLError( gl , "glGetAttribLocation" );
 		
 		// Enable a handle to the triangle vertices
 		gl.glEnableVertexAttribArray( mNormalHandle );
-		checkGlError( gl , "glEnableVertexAttribArray" );
+		checkGLError( gl , "glEnableVertexAttribArray" );
 		
 		vertexBuffer.position( NORMAL_OFFSET );
 		
 		// Prepare the triangle coordinate data
 		gl.glVertexAttribPointer( mNormalHandle , NORMALS_PER_VERTEX , GL3.GL_FLOAT , false , VERTEX_STRIDE , NORMAL_OFFSET * 4 );
-		checkGlError( gl , "glVertexAttribPointer" );
+		checkGLError( gl , "glVertexAttribPointer" );
 		
 		gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , ebo );
-		checkGlError( gl , "glBindBuffer" );
+		checkGLError( gl , "glBindBuffer" );
 		
 		gl.glBufferData( GL3.GL_ELEMENT_ARRAY_BUFFER , indexBuffer.capacity( ) * 2 , indexBuffer , GL3.GL_STATIC_DRAW );
-		checkGlError( gl , "glBufferData" );
+		checkGLError( gl , "glBufferData" );
 		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
-		checkGlError( gl , "glBindBuffer" );
+		checkGLError( gl , "glBindBuffer" );
 		
 		gl.glBindVertexArray( 0 );
-		checkGlError( gl , "glBindVertexArray" );
+		checkGLError( gl , "glBindVertexArray" );
 		
 		gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , 0 );
-		checkGlError( gl , "glBindBuffer" );
+		checkGLError( gl , "glBindBuffer" );
 	}
 	
 	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
 	{
 		// Add program to OpenGL ES environment
 		gl.glUseProgram( mProgram );
-		checkGlError( gl , "glUseProgram" );
+		checkGLError( gl , "glUseProgram" );
 		
 		gl.glBindVertexArray( vao );
-		checkGlError( gl , "glBindVertexArray" );
+		checkGLError( gl , "glBindVertexArray" );
 		
 		mMVMatrixHandle = gl.glGetUniformLocation( mProgram , "uMVMatrix" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		
 		gl.glUniformMatrix4fv( mMVMatrixHandle , 1 , false , mvMatrix , 0 );
-		checkGlError( gl , "glUniformMatrix4fv" );
+		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		mPMatrixHandle = gl.glGetUniformLocation( mProgram , "uPMatrix" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		
 		gl.glUniformMatrix4fv( mPMatrixHandle , 1 , false , pMatrix , 0 );
-		checkGlError( gl , "glUniformMatrix4fv" );
+		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		gl.glDrawElements( GL3.GL_TRIANGLES , indices.length , GL3.GL_UNSIGNED_SHORT , 0 );
-		checkGlError( gl , "glDrawArrays" );
+		checkGLError( gl , "glDrawArrays" );
 		
 		gl.glBindVertexArray( 0 );
-		checkGlError( gl , "glBindVertexArray" );
+		checkGLError( gl , "glBindVertexArray" );
 	}
 }
