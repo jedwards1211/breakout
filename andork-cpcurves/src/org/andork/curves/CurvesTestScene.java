@@ -34,7 +34,7 @@ public class CurvesTestScene implements GLEventListener
 	float[ ]						viewMatrix			= FloatArrayVecmath.newIdentityMatrix( );
 	float[ ]						projMatrix			= FloatArrayVecmath.newIdentityMatrix( );
 	
-	CurveVisualizer					visualizer			= new CurveVisualizer( 15 , 2 );
+	CurveVisualizer					visualizer			= new CurveVisualizer( 7 , 2 );
 	
 	int								width;
 	int								height;
@@ -46,12 +46,6 @@ public class CurvesTestScene implements GLEventListener
 	Point2f							p2f					= new Point2f( );
 	
 	private long					lastAdvance			= 0;
-	
-	private JOGLOverlay				overlay				= new JOGLOverlay( );
-	
-	private List<GL3Object>			objects				= new ArrayList<GL3Object>( );
-	
-	private BasicGL3Object			obj2;
 	
 	@Override
 	public void init( GLAutoDrawable drawable )
@@ -98,80 +92,7 @@ public class CurvesTestScene implements GLEventListener
 		
 		visualizer.initGL( gl );
 		
-		// for( int i = 0 ; i < visualizer.numPoints ; i++ )
-		// {
-		// visualizer.controlPoints[ i * 2 ] = Math.random( ) - 0.5;
-		// visualizer.controlPoints[ i * 2 + 1 ] = Math.random( ) - 0.5;
-		// }
-		
 		visualizer.recalculate( );
-		
-		for( float x = 0 ; x <= 1 ; x += 0.1f )
-		{
-			for( float y = 1 ; y >= 0 ; y -= 0.1f )
-			{
-				System.out.format( "%9.2f  " , visualizer.eval( new double[ ] { x , y } ) );
-			}
-			System.out.println( );
-		}
-		
-		BasicGL3Object obj1 = new BasicGL3Object( );
-		obj1.vertexShaderCode( "uniform mat4 m;" +
-				"uniform mat4 v;" +
-				"uniform mat4 p;" +
-				"attribute vec3 a_pos;" +
-				"attribute float a_param;" +
-				"varying float v_param;" +
-				"void main() {" +
-				"  v_param = a_param;" +
-				"  mat4 mvp = p*v*m;" +
-				"  gl_Position = mvp * vec4(a_pos, 1.0);" +
-				"}" );
-		obj1.fragmentShaderCode( "varying float v_param;" +
-				"void main( ) {" +
-				"  gl_FragColor = vec4(1.0, 1.0, 1.0, v_param);" +
-				"}" );
-		obj1.add( obj1.new AttributeVec3fv( ).name( "a_pos" ) ).add( obj1.new Attribute1fv( ).name( "a_param" ) );
-		obj1.add( new GL3BlendModifier( ) );
-		obj1.addVertexBuffer( new BufferHelper( )
-				.put( 0f , 0f , 0f ).put( 0f )
-				.put( 1f , 2f , 0f ).put( 0.25f )
-				.put( 3f , -2f , 0f ).put( 0.5f )
-				.put( -1f , 5f , 0f ).put( 0.75f )
-				.put( 4f , 0f , 0f ).put( 1f ).toByteBuffer( ) );
-		
-		obj1.vertexCount( 5 );
-		obj1.drawMode( GL3.GL_LINE_STRIP );
-		obj1.transpose( true );
-		
-		objects.add( obj1 );
-		
-		obj2 = new BasicGL3Object( );
-		obj2.vertexShaderCode( "uniform mat4 m;" +
-				"uniform mat4 v;" +
-				"uniform mat4 p;" +
-				"attribute vec3 a_pos;" +
-				"void main() {" +
-				"  mat4 mvp = p*v*m;" +
-				"  gl_Position = mvp * vec4(a_pos, 1.0);" +
-				"}" );
-		obj2.fragmentShaderCode( "void main( ) {" +
-				"  gl_FragColor = vec4(1.0, 1.0, 1.0, 0.5);" +
-				"}" );
-		obj2.add( obj2.new AttributeVec3fv( ).name( "a_pos" ) );
-		obj2.add( new GL3BlendModifier( ) );
-		obj2.addVertexBuffer( 4 * visualizer.controlPoints.length / 2 * 3 );
-		
-		obj2.vertexCount( visualizer.controlPoints.length / 2 );
-		obj2.drawMode( GL3.GL_LINE_STRIP );
-		obj2.transpose( true );
-		
-		objects.add( obj2 );
-		
-		for( GL3Object object : objects )
-		{
-			object.init( gl );
-		}
 	}
 	
 	@Override
@@ -194,9 +115,6 @@ public class CurvesTestScene implements GLEventListener
 			lastAdvance = time;
 		}
 		
-		ByteBuffer buffer = obj2.vertexBuffer( 0 );
-		buffer.position( 0 );
-		
 		GL3 gl = ( GL3 ) drawable.getGL( );
 		
 		if( time - lastAdvance > 15 )
@@ -206,10 +124,9 @@ public class CurvesTestScene implements GLEventListener
 				pointWalks[ i ].advance( ( float ) ( time - lastAdvance ) / 100000f , p2f );
 				visualizer.controlPoints[ i * 2 ] = p2f.x;
 				visualizer.controlPoints[ i * 2 + 1 ] = p2f.y;
-				buffer.putFloat( p2f.x ).putFloat( p2f.y ).putFloat( 0 );
 			}
-//			obj2.rebufferVertices( gl );
 			visualizer.recalculate( );
+			visualizer.printCoefficients( );
 			
 			lastAdvance = time;
 		}
@@ -234,11 +151,6 @@ public class CurvesTestScene implements GLEventListener
 		FloatArrayVecmath.setIdentity( modelMatrix );
 		
 		recomputeMVP( );
-		
-		for( GL3Object object : objects )
-		{
-			object.draw( gl , modelMatrix , viewMatrix , projMatrix );
-		}
 	}
 	
 	private void recomputeMVP( )

@@ -249,14 +249,19 @@ public class ArrayUtils
 		int i = start;
 		while( i < end )
 		{
-			sb.append( '[' ).append( String.format( indexFormat , i ) ).append( "] " );
-			for( int col = 0 ; col < columns - 1 && i < end ; col++ , i++ )
+			if( i > start )
 			{
-				sb.append( String.format( elemFormat , a[ i ] ) ).append( "  " );
+				sb.append( '\n' );
 			}
-			if( i < end )
+			
+			sb.append( '[' ).append( String.format( indexFormat , i ) ).append( "] " );
+			for( int col = 0 ; col < columns && i < end ; col++ , i++ )
 			{
-				sb.append( String.format( elemFormat , a[ i++ ] ) ).append( '\n' );
+				if( col > 0 )
+				{
+					sb.append( "  " );
+				}
+				sb.append( String.format( elemFormat , a[ i ] ) );
 			}
 			
 			if( ++rows == newlineInterval )

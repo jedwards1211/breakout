@@ -1,4 +1,5 @@
 package org.andork.curves;
+
 import static org.andork.jogl.util.GLUtils.checkGLError;
 import static org.andork.jogl.util.GLUtils.loadShader;
 
@@ -8,6 +9,7 @@ import java.nio.ByteOrder;
 import javax.media.opengl.GL3;
 
 import org.andork.math.discrete.DiscreteMathUtils;
+import org.andork.util.ArrayUtils;
 import org.andork.vecmath.MatrixUtils;
 
 public class CurveVisualizer
@@ -157,23 +159,23 @@ public class CurveVisualizer
 						"    for (int j = 0; j < u_ypow[i]; j++) {" +
 						"      product *= v_texcoord.y;" +
 						"    }" +
-//						"    product *= pow(v_texcoord.x, float(u_xpow[i]));" +
-//						"    product *= pow(v_texcoord.y, float(u_ypow[i]));" +
+						// "    product *= pow(v_texcoord.x, float(u_xpow[i]));" +
+						// "    product *= pow(v_texcoord.y, float(u_ypow[i]));" +
 						"    value += product;" +
 						"  }" +
 						"  float intensity = atan(value) * 0.6366;" +
-//						"  float intensity = 1.0 - abs(atan(value)) * 0.6366;" +
+						// "  float intensity = 1.0 - abs(atan(value)) * 0.6366;" +
 						
-//						"  if (intensity < 0.333) {" +
-//						"    gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 1.0), vec4(0.45, 0.0, 0.5, 1.0), intensity * 3.0);" +
-//						"  } else if (intensity < 0.666) {" +
-//						"    gl_FragColor = mix(vec4(0.45, 0.0, 0.5, 1.0), vec4(0.8, 0.2, 0.0, 1.0), (intensity - 0.333) * 3.0);" +
-//						"  } else {" +
-//						"    gl_FragColor = mix(vec4(0.8, 0.2, 0.0, 1.0), vec4(1.0, 0.9, 0.0, 1.0), (intensity - 0.666) * 3.0);" +
-//						"  }" +
+						// "  if (intensity < 0.333) {" +
+						// "    gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 1.0), vec4(0.45, 0.0, 0.5, 1.0), intensity * 3.0);" +
+						// "  } else if (intensity < 0.666) {" +
+						// "    gl_FragColor = mix(vec4(0.45, 0.0, 0.5, 1.0), vec4(0.8, 0.2, 0.0, 1.0), (intensity - 0.333) * 3.0);" +
+						// "  } else {" +
+						// "    gl_FragColor = mix(vec4(0.8, 0.2, 0.0, 1.0), vec4(1.0, 0.9, 0.0, 1.0), (intensity - 0.666) * 3.0);" +
+						// "  }" +
 						
-//						"  float red = exp(-value*value/0.1);" +
-
+						// "  float red = exp(-value*value/0.1);" +
+						
 						"  intensity = abs(intensity);" +
 						"  float red = 0.0;" +
 						"  if (intensity > 0.0) {" +
@@ -296,5 +298,10 @@ public class CurveVisualizer
 		
 		gl.glBindVertexArray( 0 );
 		checkGLError( gl );
+	}
+	
+	public void printCoefficients( )
+	{
+		System.out.println( ArrayUtils.prettyPrint( coefficients , coefficients.length , 0 , coefficients.length , 0 , "%12.2f" ) );
 	}
 }
