@@ -3,7 +3,6 @@ package org.andork.jogl.util;
 import static org.andork.jogl.util.GLUtils.checkGLError;
 import static org.andork.jogl.util.GLUtils.vertexAttribPointer;
 
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -15,8 +14,6 @@ import javax.media.opengl.GL3;
 
 import org.andork.jogl.basic.BufferUtils;
 import org.andork.util.Reparam;
-
-import sun.awt.image.PixelConverter.Rgba;
 
 public class JOGLOverlay
 {

@@ -1,12 +1,13 @@
 package org.andork.torquescape.jogl.render;
 
-import static org.andork.torquescape.jogl.GLUtils.checkGlError;
+import static org.andork.jogl.util.GLUtils.checkGLError;
 
 import javax.media.opengl.GL3;
 
-import org.andork.torquescape.jogl.GLUtils;
+import org.andork.jogl.util.GLUtils;
 import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.Zone;
+
 
 public class ColorWaveSliceRenderer implements ISliceRenderer<ColorWaveSlice>
 {
@@ -75,24 +76,24 @@ public class ColorWaveSliceRenderer implements ISliceRenderer<ColorWaveSlice>
 		int fragmentShader = GLUtils.loadShader( gl , GL3.GL_FRAGMENT_SHADER , fragmentShaderCode );
 		
 		mProgram = gl.glCreateProgram( ); // create empty OpenGL ES Program
-		checkGlError( gl , "glCreateProgram" );
+		checkGLError( gl , "glCreateProgram" );
 		gl.glAttachShader( mProgram , vertexShader ); // add the vertex shader
-		checkGlError( gl , "glAttachShader" );
+		checkGLError( gl , "glAttachShader" );
 		// to program
 		gl.glAttachShader( mProgram , fragmentShader ); // add the fragment
-		checkGlError( gl , "glAttachShader" );
+		checkGLError( gl , "glAttachShader" );
 		// shader to program
 		gl.glLinkProgram( mProgram ); // creates OpenGL ES program executables
-		checkGlError( gl , "glLinkProgram" );
+		checkGLError( gl , "glLinkProgram" );
 		
 		int[ ] vaos = new int[ 1 ];
 		int[ ] vbos = new int[ 1 ];
 		
 		gl.glGenVertexArrays( 1 , vaos , 0 );
-		checkGlError( gl , "glGenVertexArrays" );
+		checkGLError( gl , "glGenVertexArrays" );
 		
 		gl.glGenBuffers( 1 , vbos , 0 );
-		checkGlError( gl , "glGenBuffers" );
+		checkGLError( gl , "glGenBuffers" );
 		
 		vao = vaos[ 0 ];
 		indexEbo = vbos[ 0 ];
@@ -102,40 +103,40 @@ public class ColorWaveSliceRenderer implements ISliceRenderer<ColorWaveSlice>
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , zoneRenderer.vertVbo );
 		
 		int vPositionLoc = gl.glGetAttribLocation( mProgram , "vPosition" );
-		checkGlError( gl , "glGetAttribLocation" );
+		checkGLError( gl , "glGetAttribLocation" );
 		gl.glEnableVertexAttribArray( vPositionLoc );
-		checkGlError( gl , "glEnableVertexAttribArray" );
+		checkGLError( gl , "glEnableVertexAttribArray" );
 		gl.glVertexAttribPointer( vPositionLoc , 3 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 0 );
-		checkGlError( gl , "glVertexAttribPointer" );
+		checkGLError( gl , "glVertexAttribPointer" );
 		
 		int vNormalLoc = gl.glGetAttribLocation( mProgram , "vNormal" );
-		checkGlError( gl , "glGetAttribLocation" );
+		checkGLError( gl , "glGetAttribLocation" );
 		gl.glEnableVertexAttribArray( vNormalLoc );
-		checkGlError( gl , "glEnableVertexAttribArray" );
+		checkGLError( gl , "glEnableVertexAttribArray" );
 		gl.glVertexAttribPointer( vNormalLoc , 3 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 12 );
-		checkGlError( gl , "glVertexAttribPointer" );
+		checkGLError( gl , "glVertexAttribPointer" );
 		
 		int vParamLoc = gl.glGetAttribLocation( mProgram , "vParam" );
-		checkGlError( gl , "glGetAttribLocation" );
+		checkGLError( gl , "glGetAttribLocation" );
 		gl.glEnableVertexAttribArray( vParamLoc );
-		checkGlError( gl , "glEnableVertexAttribArray" );
+		checkGLError( gl , "glEnableVertexAttribArray" );
 		gl.glVertexAttribPointer( vParamLoc , 1 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 24 );
-		checkGlError( gl , "glVertexAttribPointer" );
+		checkGLError( gl , "glVertexAttribPointer" );
 		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
 		
 		slice.indexBuffer.position( 0 );
 		
 		gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , indexEbo );
-		checkGlError( gl , "glBindBuffer" );
+		checkGLError( gl , "glBindBuffer" );
 		gl.glBufferData( GL3.GL_ELEMENT_ARRAY_BUFFER , slice.indexBuffer.capacity( ) * 2 , slice.indexBuffer , GL3.GL_STATIC_DRAW );
-		checkGlError( gl , "glBufferData" );
+		checkGLError( gl , "glBufferData" );
 		
 		gl.glBindVertexArray( 0 );
-		checkGlError( gl , "glBindVertexArray" );
+		checkGLError( gl , "glBindVertexArray" );
 		
 		gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , 0 );
-		checkGlError( gl , "glBindBuffer" );
+		checkGLError( gl , "glBindBuffer" );
 	}
 	
 	long firstTime = 0;
@@ -149,72 +150,72 @@ public class ColorWaveSliceRenderer implements ISliceRenderer<ColorWaveSlice>
 	public void draw( GL3 gl , float[ ] m , float[ ] v, float[ ] p )
 	{
 		gl.glUseProgram( mProgram );
-		checkGlError( gl , "glUseProgram" );
+		checkGLError( gl , "glUseProgram" );
 		
 		int m_loc = gl.glGetUniformLocation( mProgram , "m" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniformMatrix4fv( m_loc , 1 , false , m , 0 );
-		checkGlError( gl , "glUniformMatrix4fv" );
+		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		int v_loc = gl.glGetUniformLocation( mProgram , "v" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniformMatrix4fv( v_loc , 1 , false , v , 0 );
-		checkGlError( gl , "glUniformMatrix4fv" );
+		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		int p_loc = gl.glGetUniformLocation( mProgram , "p" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniformMatrix4fv( p_loc , 1 , false , p , 0 );
-		checkGlError( gl , "glUniformMatrix4fv" );
+		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		int wavelengthLoc = gl.glGetUniformLocation( mProgram , "wavelength" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniform1f( wavelengthLoc , slice.wavelength );
-		checkGlError( gl , "glUniform1f" );
+		checkGLError( gl , "glUniform1f" );
 		
 		int velocityLoc = gl.glGetUniformLocation( mProgram , "velocity" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniform1f( velocityLoc , slice.velocity );
-		checkGlError( gl , "glUniform1f" );
+		checkGLError( gl , "glUniform1f" );
 		
 		if (firstTime == 0) {
 			firstTime = System.currentTimeMillis( );
 		}
 		
 		int timeLoc = gl.glGetUniformLocation( mProgram , "time" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		float time = ( float ) ( System.currentTimeMillis( ) - firstTime ) * 0.001f;
 		System.out.println("time * velocity: " + (time * slice.velocity));
 		gl.glUniform1f( timeLoc , time );
-		checkGlError( gl , "glUniform1f" );
+		checkGLError( gl , "glUniform1f" );
 		
 		int ambientLoc1 = gl.glGetUniformLocation( mProgram , "vAmbientColor1" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniform4fv( ambientLoc1 , 1 , slice.ambientColor , 0 );
-		checkGlError( gl , "glUniform4fv" );
+		checkGLError( gl , "glUniform4fv" );
 		
 		int ambientLoc2 = gl.glGetUniformLocation( mProgram , "vAmbientColor2" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniform4fv( ambientLoc2 , 1 , slice.ambientColor , 4 );
-		checkGlError( gl , "glUniform4fv" );
+		checkGLError( gl , "glUniform4fv" );
 		
 		int diffuseLoc1 = gl.glGetUniformLocation( mProgram , "vDiffuseColor1" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniform4fv( diffuseLoc1 , 1 , slice.diffuseColor , 0 );
-		checkGlError( gl , "glUniform4fv" );
+		checkGLError( gl , "glUniform4fv" );
 		
 		int diffuseLoc2 = gl.glGetUniformLocation( mProgram , "vDiffuseColor2" );
-		checkGlError( gl , "glGetUniformLocation" );
+		checkGLError( gl , "glGetUniformLocation" );
 		gl.glUniform4fv( diffuseLoc2 , 1 , slice.diffuseColor , 4 );
-		checkGlError( gl , "glUniform4fv" );
+		checkGLError( gl , "glUniform4fv" );
 		
 		gl.glBindVertexArray( vao );
-		checkGlError( gl , "glBindVertexArray" );
+		checkGLError( gl , "glBindVertexArray" );
 		
 		gl.glDrawElements( GL3.GL_TRIANGLES , slice.indexBuffer.capacity( ) , GL3.GL_UNSIGNED_SHORT , 0 );
-		checkGlError( gl , "glDrawElements" );
+		checkGLError( gl , "glDrawElements" );
 		
 		gl.glBindVertexArray( 0 );
-		checkGlError( gl , "glBindVertexArray" );
+		checkGLError( gl , "glBindVertexArray" );
 		
 	}
 	

@@ -176,7 +176,7 @@ public class PackedCube
 		vertexBuffer.position( 0 );
 		
 		// Prepare the triangle coordinate data
-		gl.glVertexAttribPointer( mPositionHandle , COORDS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , 0 );
+		gl.glVertexAttribPointer( mPositionHandle , COORDS_PER_VERTEX , GL3.GL_FLOAT , false , VERTEX_STRIDE , 0 );
 		checkGLError( gl , "glVertexAttribPointer" );
 		
 		// get handle to fragment shader's vColor member
@@ -190,7 +190,7 @@ public class PackedCube
 		vertexBuffer.position( COLOR_OFFSET );
 		
 		// Prepare the triangle coordinate data
-		gl.glVertexAttribPointer( mColorHandle , COLORS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , COLOR_OFFSET * 4 );
+		gl.glVertexAttribPointer( mColorHandle , COLORS_PER_VERTEX , GL3.GL_FLOAT , false , VERTEX_STRIDE , COLOR_OFFSET * 4 );
 		checkGLError( gl , "glVertexAttribPointer" );
 		
 		// get handle to fragment shader's vNormal member
@@ -204,7 +204,7 @@ public class PackedCube
 		vertexBuffer.position( NORMAL_OFFSET );
 		
 		// Prepare the triangle coordinate data
-		gl.glVertexAttribPointer( mNormalHandle , NORMALS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , NORMAL_OFFSET * 4 );
+		gl.glVertexAttribPointer( mNormalHandle , NORMALS_PER_VERTEX , GL3.GL_FLOAT , false , VERTEX_STRIDE , NORMAL_OFFSET * 4 );
 		checkGLError( gl , "glVertexAttribPointer" );
 		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
@@ -222,51 +222,51 @@ public class PackedCube
 		
 		gl.glBindVertexArray( vao );
 		checkGLError( gl , "glBindVertexArray" );
-//		
-//		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , vbo );
-//		checkGLError( gl , "glBindBuffer" );
-//		
-//		// get handle to vertex shader's vPosition member
-//		mPositionHandle = gl.glGetAttribLocation( mProgram , "vPosition" );
-//		checkGLError( gl , "glGetAttribLocation" );
-//		
-//		// Enable a handle to the triangle vertices
-//		gl.glEnableVertexAttribArray( mPositionHandle );
-//		checkGLError( gl , "glEnableVertexAttribArray" );
-//		
-//		vertexBuffer.position( 0 );
-//		
-//		// Prepare the triangle coordinate data
-//		gl.glVertexAttribPointer( mPositionHandle , COORDS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , 0 );
-//		checkGLError( gl , "glVertexAttribPointer" );
-//		
-//		// get handle to fragment shader's vColor member
-//		mColorHandle = gl.glGetAttribLocation( mProgram , "vColor" );
-//		checkGLError( gl , "glGetAttribLocation" );
-//		
-//		// Enable a handle to the triangle vertices
-//		gl.glEnableVertexAttribArray( mColorHandle );
-//		checkGLError( gl , "glEnableVertexAttribArray" );
-//		
-//		vertexBuffer.position( 6 );
-//		
-//		// Prepare the triangle coordinate data
-//		gl.glVertexAttribPointer( mColorHandle , COLORS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , 0 );
-//		checkGLError( gl , "glVertexAttribPointer" );
-//		
-//		// get handle to fragment shader's vNormal member
-//		mNormalHandle = gl.glGetAttribLocation( mProgram , "vNormal" );
-//		checkGLError( gl , "glGetAttribLocation" );
-//		
-//		// Enable a handle to the triangle vertices
-//		gl.glEnableVertexAttribArray( mNormalHandle );
-//		checkGLError( gl , "glEnableVertexAttribArray" );
-//		
-//		vertexBuffer.position( NORMAL_OFFSET );
-//		
-//		// Prepare the triangle coordinate data
-//		gl.glVertexAttribPointer( mNormalHandle , NORMALS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , 0 );
-//		checkGLError( gl , "glVertexAttribPointer" );
+		//
+		// gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , vbo );
+		// checkGLError( gl , "glBindBuffer" );
+		//
+		// // get handle to vertex shader's vPosition member
+		// mPositionHandle = gl.glGetAttribLocation( mProgram , "vPosition" );
+		// checkGLError( gl , "glGetAttribLocation" );
+		//
+		// // Enable a handle to the triangle vertices
+		// gl.glEnableVertexAttribArray( mPositionHandle );
+		// checkGLError( gl , "glEnableVertexAttribArray" );
+		//
+		// vertexBuffer.position( 0 );
+		//
+		// // Prepare the triangle coordinate data
+		// gl.glVertexAttribPointer( mPositionHandle , COORDS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , 0 );
+		// checkGLError( gl , "glVertexAttribPointer" );
+		//
+		// // get handle to fragment shader's vColor member
+		// mColorHandle = gl.glGetAttribLocation( mProgram , "vColor" );
+		// checkGLError( gl , "glGetAttribLocation" );
+		//
+		// // Enable a handle to the triangle vertices
+		// gl.glEnableVertexAttribArray( mColorHandle );
+		// checkGLError( gl , "glEnableVertexAttribArray" );
+		//
+		// vertexBuffer.position( 6 );
+		//
+		// // Prepare the triangle coordinate data
+		// gl.glVertexAttribPointer( mColorHandle , COLORS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , 0 );
+		// checkGLError( gl , "glVertexAttribPointer" );
+		//
+		// // get handle to fragment shader's vNormal member
+		// mNormalHandle = gl.glGetAttribLocation( mProgram , "vNormal" );
+		// checkGLError( gl , "glGetAttribLocation" );
+		//
+		// // Enable a handle to the triangle vertices
+		// gl.glEnableVertexAttribArray( mNormalHandle );
+		// checkGLError( gl , "glEnableVertexAttribArray" );
+		//
+		// vertexBuffer.position( NORMAL_OFFSET );
+		//
+		// // Prepare the triangle coordinate data
+		// gl.glVertexAttribPointer( mNormalHandle , NORMALS_PER_VERTEX , gl.GL_FLOAT , false , VERTEX_STRIDE , 0 );
+		// checkGLError( gl , "glVertexAttribPointer" );
 		
 		mMVMatrixHandle = gl.glGetUniformLocation( mProgram , "uMVMatrix" );
 		checkGLError( gl , "glGetUniformLocation" );
@@ -281,21 +281,21 @@ public class PackedCube
 		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		// Draw
-		gl.glDrawArrays( gl.GL_TRIANGLES , 0 , VERTEX_COUNT );
+		gl.glDrawArrays( GL3.GL_TRIANGLES , 0 , VERTEX_COUNT );
 		checkGLError( gl , "glDrawArrays" );
 		
-//		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
-//		checkGLError( gl , "glBindBuffer" );
-//		
+		// gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
+		// checkGLError( gl , "glBindBuffer" );
+		//
 		gl.glBindVertexArray( 0 );
 		checkGLError( gl , "glBindVertexArray" );
 		
-//		// Disable vertex array
-//		gl.glDisableVertexAttribArray( mPositionHandle );
-//		checkGLError( gl , "glDisableVertexAttribArray" );
-//		gl.glDisableVertexAttribArray( mNormalHandle );
-//		checkGLError( gl , "glDisableVertexAttribArray" );
-//		gl.glDisableVertexAttribArray( mColorHandle );
-//		checkGLError( gl , "glDisableVertexAttribArray" );
+		// // Disable vertex array
+		// gl.glDisableVertexAttribArray( mPositionHandle );
+		// checkGLError( gl , "glDisableVertexAttribArray" );
+		// gl.glDisableVertexAttribArray( mNormalHandle );
+		// checkGLError( gl , "glDisableVertexAttribArray" );
+		// gl.glDisableVertexAttribArray( mColorHandle );
+		// checkGLError( gl , "glDisableVertexAttribArray" );
 	}
 }

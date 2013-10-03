@@ -7,7 +7,6 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 
-import org.andork.util.ArrayUtils;
 import org.andork.vecmath.FloatArrayVecmath;
 
 public class BasicNavigator extends MouseAdapter
@@ -133,8 +132,6 @@ public class BasicNavigator extends MouseAdapter
 			
 			float dpan = ( float ) ( dx * panFactor / glCanvas.getWidth( ) );
 			float dtilt = ( float ) ( dy * tiltFactor / glCanvas.getHeight( ) );
-			
-			float newTilt = ( float ) Math.max( -Math.PI / 2 , Math.min( Math.PI / 2 , tilt + dtilt ) );
 			
 			FloatArrayVecmath.rotY( temp , dpan );
 			FloatArrayVecmath.mmulRotational( temp , cam , cam );
