@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JOGL"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Math"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/jogl-utils"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/Java3DUtils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -4,9 +4,9 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Java3D (32-bit)"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/Guava"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Java3DUtils"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Core"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/Math"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/andork-j3d-utils"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/andork-core"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/andork-math"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JOGL"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
