@@ -1,4 +1,4 @@
-package org.andork.math3d;
+package org.andork.vecmath;
 
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;

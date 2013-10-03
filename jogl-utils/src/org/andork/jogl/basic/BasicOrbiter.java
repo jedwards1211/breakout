@@ -1,4 +1,4 @@
-package org.andork.jogl.util;
+package org.andork.jogl.basic;
 
 import static org.andork.vecmath.FloatArrayVecmath.cross;
 import static org.andork.vecmath.FloatArrayVecmath.invAffine;

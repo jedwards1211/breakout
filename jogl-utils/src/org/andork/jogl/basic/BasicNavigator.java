@@ -1,4 +1,4 @@
-package org.andork.jogl.util;
+package org.andork.jogl.basic;
 
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
@@ -118,9 +118,10 @@ public class BasicNavigator extends MouseAdapter
 		
 		Component glCanvas = e.getComponent( );
 		
+		FloatArrayVecmath.invAffine( scene.v , cam );
+		
 		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 		{
-			FloatArrayVecmath.invAffine( scene.v , cam );
 			FloatArrayVecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
 			
 			float xz = ( float ) Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 2 ] * v[ 2 ] );
@@ -146,7 +147,6 @@ public class BasicNavigator extends MouseAdapter
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
-			FloatArrayVecmath.invAffine( scene.v , cam );
 			cam[ 3 ] += cam[ 2 ] * dy * moveFactor;
 			cam[ 7 ] += cam[ 6 ] * dy * moveFactor;
 			cam[ 11 ] += cam[ 10 ] * dy * moveFactor;
@@ -154,7 +154,6 @@ public class BasicNavigator extends MouseAdapter
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
 		{
-			FloatArrayVecmath.invAffine( scene.v , cam );
 			cam[ 3 ] += cam[ 0 ] * -dx * moveFactor + cam[ 1 ] * dy * moveFactor;
 			cam[ 7 ] += cam[ 4 ] * -dx * moveFactor + cam[ 5 ] * dy * moveFactor;
 			cam[ 11 ] += cam[ 8 ] * -dx * moveFactor + cam[ 9 ] * dy * moveFactor;
@@ -170,10 +169,12 @@ public class BasicNavigator extends MouseAdapter
 	@Override
 	public void mouseWheelMoved( MouseWheelEvent e )
 	{
-		if( !active )
+		if( !active || e.isControlDown( ) )
 		{
 			return;
 		}
+		
+		FloatArrayVecmath.invAffine( scene.v , cam );
 		
 		float distance = e.getWheelRotation( ) * wheelFactor;
 		

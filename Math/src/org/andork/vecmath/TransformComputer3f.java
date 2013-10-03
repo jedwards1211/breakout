@@ -1,5 +1,4 @@
-
-package org.andork.math.curve;
+package org.andork.vecmath;
 
 import java.util.Arrays;
 
@@ -27,11 +26,11 @@ public class TransformComputer3f
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public Matrix4f				x1		= new Matrix4f( );
+	public Matrix4f					x1		= new Matrix4f( );
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public Matrix4f				x2		= new Matrix4f( );
+	public Matrix4f					x2		= new Matrix4f( );
 	
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.

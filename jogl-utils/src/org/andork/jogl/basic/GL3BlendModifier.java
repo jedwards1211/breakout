@@ -1,4 +1,4 @@
-package org.andork.jogl.util;
+package org.andork.jogl.basic;
 
 import javax.media.opengl.GL3;
 

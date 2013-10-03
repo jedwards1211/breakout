@@ -1,4 +1,4 @@
-package org.andork.jogl.util;
+package org.andork.jogl.basic;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

@@ -11,14 +11,15 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.vecmath.Point2f;
 
-import org.andork.curves.SmoothRandomWalk.RandomPoint2fGenerator;
-import org.andork.jogl.util.BufferHelper;
-import org.andork.jogl.util.BasicGL3Object;
-import org.andork.jogl.util.GL3BlendModifier;
-import org.andork.jogl.util.GL3Object;
+import org.andork.jogl.basic.BasicGL3Object;
+import org.andork.jogl.basic.BufferHelper;
+import org.andork.jogl.basic.GL3BlendModifier;
+import org.andork.jogl.basic.GL3Object;
 import org.andork.jogl.util.JOGLOverlay;
 import org.andork.jogl.util.SimplePolygon;
 import org.andork.math.curve.Point2fType;
+import org.andork.math.curve.SmoothRandomWalk;
+import org.andork.math.curve.SmoothRandomWalk.RandomPoint2fGenerator;
 import org.andork.vecmath.FloatArrayVecmath;
 
 public class CurvesTestScene implements GLEventListener

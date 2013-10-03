@@ -1,4 +1,4 @@
-package org.andork.jogl.util;
+package org.andork.jogl.basic.test;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
@@ -6,8 +6,13 @@ import java.util.Random;
 import javax.media.opengl.GL3;
 import javax.vecmath.Point3f;
 
-import org.andork.jogl.util.BasicGL3Object.BasicVertexShader;
-import org.andork.jogl.util.BasicGL3Object.DepthFragmentShader;
+import org.andork.jogl.basic.BasicGL3Frame;
+import org.andork.jogl.basic.BasicGL3Object;
+import org.andork.jogl.basic.BasicGL3Scene;
+import org.andork.jogl.basic.BufferHelper;
+import org.andork.jogl.basic.GL3DepthModifier;
+import org.andork.jogl.basic.BasicGL3Object.BasicVertexShader;
+import org.andork.jogl.basic.BasicGL3Object.DepthFragmentShader;
 import org.andork.math.curve.BSpline3f;
 import org.andork.math.curve.BSpline3f.Evaluator;
 import org.andork.math.curve.BSplines;

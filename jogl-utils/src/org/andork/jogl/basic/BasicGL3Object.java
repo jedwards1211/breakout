@@ -1,4 +1,4 @@
-package org.andork.jogl.util;
+package org.andork.jogl.basic;
 
 import static org.andork.jogl.util.GLUtils.checkGLError;
 
@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.media.opengl.GL3;
+
+import org.andork.jogl.util.GLUtils;
 
 public class BasicGL3Object implements GL3Object
 {
