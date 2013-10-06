@@ -5,8 +5,8 @@ import static org.andork.jogl.util.GLUtils.checkGLError;
 import javax.media.opengl.GL3;
 
 import org.andork.jogl.util.GLUtils;
-import org.andork.torquescape.model.RainbowSlice;
 import org.andork.torquescape.model.Zone;
+import org.andork.torquescape.model.slice.RainbowSlice;
 
 public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 {
@@ -53,11 +53,19 @@ public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 	private ZoneRenderer		zoneRenderer;
 	private RainbowSlice		slice;
 	
+	private boolean				transpose			= false;
+	
 	public RainbowSliceRenderer( ZoneRenderer zoneRenderer , RainbowSlice slice )
 	{
 		this.zoneRenderer = zoneRenderer;
 		this.zone = zoneRenderer.zone;
 		this.slice = slice;
+	}
+	
+	public RainbowSliceRenderer transpose( boolean transpose )
+	{
+		this.transpose = transpose;
+		return this;
 	}
 	
 	public void init( GL3 gl )
@@ -90,34 +98,44 @@ public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 		
 		gl.glBindVertexArray( vao );
 		
-		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , zoneRenderer.vertVbo );
+		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , zoneRenderer.vertVbos.get( slice.coordBufferKey ) );
+		int coordStride = slice.coordStride < 0 ? zone.bytesPerVertexMap.get( slice.coordBufferKey ) : slice.coordStride;
 		
 		int vPositionLoc = gl.glGetAttribLocation( mProgram , "aPosition" );
 		checkGLError( gl , "glGetAttribLocation" );
 		gl.glEnableVertexAttribArray( vPositionLoc );
 		checkGLError( gl , "glEnableVertexAttribArray" );
-		gl.glVertexAttribPointer( vPositionLoc , 3 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 0 );
+		gl.glVertexAttribPointer( vPositionLoc , 3 , GL3.GL_FLOAT , false , coordStride , slice.coordOffset );
 		checkGLError( gl , "glVertexAttribPointer" );
+		
+		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , zoneRenderer.vertVbos.get( slice.normalBufferKey ) );
+		int normalStride = slice.normalStride < 0 ? zone.bytesPerVertexMap.get( slice.normalBufferKey ) : slice.normalStride;
 		
 		int aNormalLoc = gl.glGetAttribLocation( mProgram , "aNormal" );
 		checkGLError( gl , "glGetAttribLocation" );
 		gl.glEnableVertexAttribArray( aNormalLoc );
 		checkGLError( gl , "glEnableVertexAttribArray" );
-		gl.glVertexAttribPointer( aNormalLoc , 3 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 12 );
+		gl.glVertexAttribPointer( aNormalLoc , 3 , GL3.GL_FLOAT , false , normalStride , slice.normalOffset );
 		checkGLError( gl , "glVertexAttribPointer" );
+		
+		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , zoneRenderer.vertVbos.get( slice.uBufferKey ) );
+		int uStride = slice.uStride < 0 ? zone.bytesPerVertexMap.get( slice.uBufferKey ) : slice.uStride;
 		
 		int aUvecLoc = gl.glGetAttribLocation( mProgram , "aUvec" );
 		checkGLError( gl , "glGetAttribLocation" );
 		gl.glEnableVertexAttribArray( aUvecLoc );
 		checkGLError( gl , "glEnableVertexAttribArray" );
-		gl.glVertexAttribPointer( aUvecLoc , 3 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 28 );
+		gl.glVertexAttribPointer( aUvecLoc , 3 , GL3.GL_FLOAT , false , uStride , slice.uOffset );
 		checkGLError( gl , "glVertexAttribPointer" );
+		
+		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , zoneRenderer.vertVbos.get( slice.vBufferKey ) );
+		int vStride = slice.vStride < 0 ? zone.bytesPerVertexMap.get( slice.vBufferKey ) : slice.vStride;
 		
 		int aVvecLoc = gl.glGetAttribLocation( mProgram , "aVvec" );
 		checkGLError( gl , "glGetAttribLocation" );
 		gl.glEnableVertexAttribArray( aVvecLoc );
 		checkGLError( gl , "glEnableVertexAttribArray" );
-		gl.glVertexAttribPointer( aVvecLoc , 3 , GL3.GL_FLOAT , false , zone.getBytesPerVertex( ) , 40 );
+		gl.glVertexAttribPointer( aVvecLoc , 3 , GL3.GL_FLOAT , false , vStride , slice.vOffset );
 		checkGLError( gl , "glVertexAttribPointer" );
 		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
@@ -151,17 +169,17 @@ public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 		
 		int m_loc = gl.glGetUniformLocation( mProgram , "m" );
 		checkGLError( gl , "glGetUniformLocation" );
-		gl.glUniformMatrix4fv( m_loc , 1 , false , m , 0 );
+		gl.glUniformMatrix4fv( m_loc , 1 , transpose , m , 0 );
 		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		int v_loc = gl.glGetUniformLocation( mProgram , "v" );
 		checkGLError( gl , "glGetUniformLocation" );
-		gl.glUniformMatrix4fv( v_loc , 1 , false , v , 0 );
+		gl.glUniformMatrix4fv( v_loc , 1 , transpose , v , 0 );
 		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		int p_loc = gl.glGetUniformLocation( mProgram , "p" );
 		checkGLError( gl , "glGetUniformLocation" );
-		gl.glUniformMatrix4fv( p_loc , 1 , false , p , 0 );
+		gl.glUniformMatrix4fv( p_loc , 1 , transpose , p , 0 );
 		checkGLError( gl , "glUniformMatrix4fv" );
 		
 		if( firstTime == 0 )
@@ -190,7 +208,7 @@ public class RainbowSliceRenderer implements ISliceRenderer<RainbowSlice>
 		@Override
 		public ISliceRenderer<RainbowSlice> create( ZoneRenderer zoneRenderer , RainbowSlice slice )
 		{
-			return new RainbowSliceRenderer( zoneRenderer , slice );
+			return new RainbowSliceRenderer( zoneRenderer , slice ).transpose( true );
 		}
 	}
 }

@@ -3,49 +3,48 @@ package org.andork.curves;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.vecmath.Point2f;
 
-import org.andork.jogl.basic.BasicGL3Object;
-import org.andork.jogl.basic.BufferHelper;
-import org.andork.jogl.basic.GL3BlendModifier;
-import org.andork.jogl.basic.GL3Object;
-import org.andork.jogl.util.JOGLOverlay;
 import org.andork.jogl.util.SimplePolygon;
+import org.andork.math.curve.FloatHolderType;
 import org.andork.math.curve.Point2fType;
 import org.andork.math.curve.SmoothRandomWalk;
+import org.andork.math.curve.SmoothRandomWalk.RandomFloatHolderGenerator;
 import org.andork.math.curve.SmoothRandomWalk.RandomPoint2fGenerator;
 import org.andork.vecmath.FloatArrayVecmath;
+import org.omg.CORBA.FloatHolder;
 
 public class CurvesTestScene implements GLEventListener
 {
-	SimplePolygon					cpPolygon;
+	SimplePolygon						cpPolygon;
 	
-	final float[ ]					viewFrame			= { -1 , 1 , -1 , 1 };
+	final float[ ]						viewFrame			= { -1 , 1 , -1 , 1 };
 	
-	float[ ]						mvpMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]							mvpMatrix			= FloatArrayVecmath.newIdentityMatrix( );
 	
-	float[ ]						modelMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						viewMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						projMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]							modelMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]							viewMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]							projMatrix			= FloatArrayVecmath.newIdentityMatrix( );
 	
-	CurveVisualizer					visualizer			= new CurveVisualizer( 7 , 2 );
+	CurveVisualizer						visualizer			= new CurveVisualizer( 7 , 2 );
 	
-	int								width;
-	int								height;
+	int									width;
+	int									height;
 	
-	int								highlightedPoint	= 0;
-	float[ ]						transformedPoint	= new float[ 3 ];
+	int									highlightedPoint	= 0;
+	float[ ]							transformedPoint	= new float[ 3 ];
 	
-	SmoothRandomWalk<Point2f>[ ]	pointWalks;
-	Point2f							p2f					= new Point2f( );
+	SmoothRandomWalk<Point2f>[ ]		pointWalks;
+	Point2f								p2f					= new Point2f( );
 	
-	private long					lastAdvance			= 0;
+	SmoothRandomWalk<FloatHolder>[ ]	coefWalks;
+	FloatHolder							fh					= new FloatHolder( );
+	
+	private long						lastAdvance			= 0;
 	
 	@Override
 	public void init( GLAutoDrawable drawable )
@@ -61,6 +60,18 @@ public class CurvesTestScene implements GLEventListener
 			pointWalks[ i ].advance( 0 , p2f );
 			visualizer.controlPoints[ i * 2 ] = p2f.x;
 			visualizer.controlPoints[ i * 2 + 1 ] = p2f.y;
+		}
+		
+		coefWalks = new SmoothRandomWalk[ visualizer.controlPoints.length / 2 ];
+		
+		FloatHolderType floatHolderType = new FloatHolderType( );
+		RandomFloatHolderGenerator floatHolderGenerator = new RandomFloatHolderGenerator( -1 , 1 );
+		
+		for( int i = 0 ; i < coefWalks.length ; i++ )
+		{
+			coefWalks[ i ] = new SmoothRandomWalk<FloatHolder>( 3 , 1 , floatHolderType , floatHolderGenerator );
+			coefWalks[ i ].advance( 0 , fh );
+			visualizer.setCoefficient( i , fh.value );
 		}
 		
 		GL3 gl = ( GL3 ) drawable.getGL( );
@@ -92,7 +103,7 @@ public class CurvesTestScene implements GLEventListener
 		
 		visualizer.initGL( gl );
 		
-		visualizer.recalculate( );
+		// visualizer.recalculate( );
 	}
 	
 	@Override
@@ -126,6 +137,12 @@ public class CurvesTestScene implements GLEventListener
 				visualizer.controlPoints[ i * 2 + 1 ] = p2f.y;
 			}
 			visualizer.recalculate( );
+			
+			// for( int i = 0 ; i < coefWalks.length ; i++ )
+			// {
+			// coefWalks[ i ].advance( ( float ) ( time - lastAdvance ) / 1000f , fh );
+			// visualizer.setCoefficient( i , fh.value );
+			// }
 			visualizer.printCoefficients( );
 			
 			lastAdvance = time;

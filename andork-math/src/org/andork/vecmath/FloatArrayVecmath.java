@@ -109,6 +109,31 @@ public class FloatArrayVecmath
 		return new float[ ] { 1 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 1 };
 	}
 	
+	public static void mpmul( float[ ] m , float[ ] p )
+	{
+		float rw = 1 / ( m[ 12 ] * p[ 0 ] + m[ 13 ] * p[ 1 ] + m[ 14 ] * p[ 2 ] + m[ 15 ] );
+		float x = rw * ( m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ] );
+		float y = rw * ( m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ] );
+		p[ 2 ] = rw * ( m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ] );
+		p[ 1 ] = y;
+		p[ 0 ] = x;
+	}
+	
+	public static void mpmul( float[ ] m , float[ ] p , float[ ] out )
+	{
+		if( p != out )
+		{
+			float rw = 1 / ( m[ 12 ] * p[ 0 ] + m[ 13 ] * p[ 1 ] + m[ 14 ] * p[ 2 ] + m[ 15 ] );
+			out[ 0 ] = rw * ( m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ] );
+			out[ 1 ] = rw * ( m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ] );
+			out[ 2 ] = rw * ( m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ] );
+		}
+		else
+		{
+			mpmul( m , p );
+		}
+	}
+	
 	public static void mpmulAffine( float[ ] m , float[ ] p )
 	{
 		float x = m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ];
@@ -721,6 +746,11 @@ public class FloatArrayVecmath
 		out[ 15 ] = 1f;
 	}
 	
+	public static void invertGeneral( float[ ] mat )
+	{
+		invertGeneral( mat , mat );
+	}
+	
 	/**
 	 * General invert routine. Inverts t1 and places the result in "this". Note that this routine handles both the "this" version and the non-"this" version.
 	 * 
@@ -1209,6 +1239,14 @@ public class FloatArrayVecmath
 		v[ 2 ] *= factor;
 	}
 	
+	public static void normalize3( float[ ] v , float[ ] out )
+	{
+		double factor = 1.0 / Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 1 ] * v[ 1 ] + v[ 2 ] * v[ 2 ] );
+		out[ 0 ] = ( float ) ( v[ 0 ] * factor );
+		out[ 1 ] = ( float ) ( v[ 1 ] * factor );
+		out[ 2 ] = ( float ) ( v[ 2 ] * factor );
+	}
+	
 	/**
 	 * Projects 3-dimensional vector {@code a} onto vector {@code b}, storing the result in {@code out}.
 	 */
@@ -1246,11 +1284,25 @@ public class FloatArrayVecmath
 		out[ 2 ] = a[ 2 ] + b[ 2 ];
 	}
 	
+	public static void add3( float[ ] a , int ai , float[ ] b , int bi , float[ ] out , int outi )
+	{
+		out[ outi + 0 ] = a[ ai + 0 ] + b[ bi + 0 ];
+		out[ outi + 1 ] = a[ ai + 1 ] + b[ bi + 1 ];
+		out[ outi + 2 ] = a[ ai + 2 ] + b[ bi + 2 ];
+	}
+	
 	public static void sub3( float[ ] a , float[ ] b , float[ ] out )
 	{
 		out[ 0 ] = a[ 0 ] - b[ 0 ];
 		out[ 1 ] = a[ 1 ] - b[ 1 ];
 		out[ 2 ] = a[ 2 ] - b[ 2 ];
+	}
+	
+	public static void sub3( float[ ] a , int ai , float[ ] b , int bi , float[ ] out , int outi )
+	{
+		out[ outi + 0 ] = a[ ai + 0 ] - b[ bi + 0 ];
+		out[ outi + 1 ] = a[ ai + 1 ] - b[ bi + 1 ];
+		out[ outi + 2 ] = a[ ai + 2 ] - b[ bi + 2 ];
 	}
 	
 	public static float length( float[ ] v , int start , int count )
@@ -1261,5 +1313,34 @@ public class FloatArrayVecmath
 			total += v[ i ] * v[ i ];
 		}
 		return ( float ) Math.sqrt( total );
+	}
+	
+	public static float length3( float[ ] v )
+	{
+		return ( float ) Math.sqrt( dot3( v , v ) );
+	}
+	
+	public static void negate3( float[ ] v )
+	{
+		v[ 0 ] = -v[ 0 ];
+		v[ 1 ] = -v[ 1 ];
+		v[ 2 ] = -v[ 2 ];
+	}
+	
+	public static boolean epsilonEquals( float[ ] a , float[ ] b , float epsilon )
+	{
+		for( int i = 0 ; i < a.length ; i++ )
+		{
+			float diff = a[ i ] - b[ i ];
+			if( Float.isNaN( diff ) )
+			{
+				return false;
+			}
+			if( Math.abs( diff ) > epsilon )
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 }

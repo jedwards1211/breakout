@@ -1,4 +1,6 @@
-package org.andork.torquescape.model;
+package org.andork.torquescape.model.slice;
+
+import org.andork.torquescape.model.AbstractIndexedSlice;
 
 public class ColorWaveSlice extends AbstractIndexedSlice
 {

@@ -2,6 +2,7 @@ package org.andork.torquescape.jogl.render;
 
 import static org.andork.jogl.util.GLUtils.checkGLError;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,12 +10,15 @@ import java.util.Map;
 import javax.media.opengl.GL3;
 
 import org.andork.jogl.basic.GL3Object;
-import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.ISlice;
-import org.andork.torquescape.model.RainbowSlice;
-import org.andork.torquescape.model.StandardSlice;
 import org.andork.torquescape.model.Zone;
+import org.andork.torquescape.model.slice.ColorWaveSlice;
+import org.andork.torquescape.model.slice.RainbowSlice;
+import org.andork.torquescape.model.slice.StandardSlice;
 import org.andork.util.CollectionUtils;
+
+import com.gs.collections.api.map.MutableMap;
+import com.gs.collections.impl.map.mutable.UnifiedMap;
 
 public class ZoneRenderer implements GL3Object
 {
@@ -33,6 +37,8 @@ public class ZoneRenderer implements GL3Object
 	
 	public int																				vertVbo;
 	
+	public MutableMap<String, Integer>														vertVbos				= UnifiedMap.newMap( );
+	
 	public ZoneRenderer( Zone zone )
 	{
 		super( );
@@ -50,16 +56,29 @@ public class ZoneRenderer implements GL3Object
 	
 	public void init( GL3 gl )
 	{
-		int[ ] buffers = new int[ 1 ];
-		gl.glGenBuffers( 1 , buffers , 0 );
-		vertVbo = buffers[ 0 ];
+		int[ ] buffers = new int[ zone.vertBuffers.size( ) ];
 		
-		zone.getVertByteBuffer( ).position( 0 );
+		gl.glGenBuffers( zone.vertBuffers.size( ) , buffers , 0 );
 		
-		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , vertVbo );
-		checkGLError( gl , "glBindBuffer" );
-		gl.glBufferData( GL3.GL_ARRAY_BUFFER , zone.getVertByteBuffer( ).capacity( ) , zone.getVertByteBuffer( ) , GL3.GL_STATIC_DRAW );
-		checkGLError( gl , "glBufferData" );
+		int k = 0;
+		for( String key : zone.vertBuffers.keySet( ) )
+		{
+			int vbo = buffers[ k++ ];
+			if( key.equals( Zone.PRIMARY_VERT_BUFFER_KEY ) )
+			{
+				vertVbo = vbo;
+			}
+			vertVbos.put( key , vbo );
+			
+			ByteBuffer buffer = zone.vertBuffers.get( key );
+			buffer.position( 0 );
+			
+			gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , vbo );
+			checkGLError( gl , "glBindBuffer" );
+			gl.glBufferData( GL3.GL_ARRAY_BUFFER , buffer.capacity( ) , buffer , GL3.GL_STATIC_DRAW );
+			checkGLError( gl , "glBufferData" );
+		}
+		
 		gl.glBindBuffer( GL3.GL_ARRAY_BUFFER , 0 );
 		
 		for( ISliceRenderer<?> sliceRenderer : sliceRenderers )

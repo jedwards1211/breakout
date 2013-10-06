@@ -134,6 +134,12 @@ public class CurveVisualizer
 		}
 	}
 	
+	public void setCoefficient( int index , double value )
+	{
+		coefficients[ index ] = value;
+		floatCoefficients[ index ] = ( float ) value;
+	}
+	
 	public void initGL( GL3 gl )
 	{
 		vShaderCode =

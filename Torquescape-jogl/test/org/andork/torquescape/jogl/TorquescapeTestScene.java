@@ -10,10 +10,10 @@ import javax.media.opengl.GLEventListener;
 
 import org.andork.torquescape.jogl.render.ISliceRenderer;
 import org.andork.torquescape.jogl.render.ZoneRenderer;
-import org.andork.torquescape.model.RainbowSlice;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DirectZoneGenerator;
 import org.andork.torquescape.model.normal.NormalGenerator;
+import org.andork.torquescape.model.slice.RainbowSlice;
 import org.andork.torquescape.model.track.Track;
 import org.andork.torquescape.model.track.Track1;
 import org.andork.torquescape.model.vertex.IVertexAttrFn;
@@ -160,7 +160,9 @@ public class TorquescapeTestScene implements GLEventListener
 		zoneGen.setZone( zone );
 		zoneGen.generate( vertexFn , track.getIndexFn( ) , Arrays.asList( params ) );
 		
-		NormalGenerator.generateNormals( zone.getVertFloatBuffer( ) , 3 , vertexFn.getBytesPerVertex( ) / 4 , zone.getIndexCharBuffer( ) , 0 , indexCount );
+		NormalGenerator.generateNormals( zone.getVertBuffer( ) , 12 , vertexFn.getBytesPerVertex( ) , zone.getIndexBuffer( ) , 0 , indexCount );
+		
+		zone.rebuildMaps( );
 		
 		// ColorWaveSlice slice = new ColorWaveSlice( );
 		// slice.wavelength = 2f;
@@ -173,7 +175,7 @@ public class TorquescapeTestScene implements GLEventListener
 		// zone.addSlice( slice );
 		
 		RainbowSlice rainbowSlice = new RainbowSlice( );
-		rainbowSlice.setIndexBuffer( zone.getIndexCharBuffer( ) );
+		rainbowSlice.setIndexBuffer( zone.getIndexBuffer( ) );
 		zone.addSlice( rainbowSlice );
 		
 		ZoneRenderer rend1 = new ZoneRenderer( zone );

@@ -5,8 +5,8 @@ import static org.andork.jogl.util.GLUtils.checkGLError;
 import javax.media.opengl.GL3;
 
 import org.andork.jogl.util.GLUtils;
-import org.andork.torquescape.model.ColorWaveSlice;
 import org.andork.torquescape.model.Zone;
+import org.andork.torquescape.model.slice.ColorWaveSlice;
 
 
 public class ColorWaveSliceRenderer implements ISliceRenderer<ColorWaveSlice>

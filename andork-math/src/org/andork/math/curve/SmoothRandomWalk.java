@@ -1,10 +1,11 @@
 package org.andork.math.curve;
+
 import java.util.Random;
 
 import javax.vecmath.Point2f;
 
 import org.andork.math.curve.BSplineGf.PointType;
-
+import org.omg.CORBA.FloatHolder;
 
 public class SmoothRandomWalk<T>
 {
@@ -91,6 +92,25 @@ public class SmoothRandomWalk<T>
 		{
 			point.x = ( float ) ( min + random.nextDouble( ) * ( max - min ) );
 			point.y = ( float ) ( min + random.nextDouble( ) * ( max - min ) );
+		}
+	}
+	
+	public static class RandomFloatHolderGenerator implements RandomPointGenerator<FloatHolder>
+	{
+		float	min , max;
+		Random	random	= new Random( );
+		
+		public RandomFloatHolderGenerator( float min , float max )
+		{
+			super( );
+			this.min = min;
+			this.max = max;
+		}
+		
+		@Override
+		public void generateRandomPoint( FloatHolder point )
+		{
+			point.value = ( float ) ( min + random.nextDouble( ) * ( max - min ) );
 		}
 	}
 }
