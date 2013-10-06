@@ -9,24 +9,28 @@ import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
-import org.andork.vecmath.FloatArrayVecmath;
+import static org.andork.vecmath.FloatArrayVecmath.*;
 
 public class BasicGL3Scene implements GLEventListener
 {
 	/**
 	 * The model matrix.
 	 */
-	public final float[ ]			m					= FloatArrayVecmath.newIdentityMatrix( );
+	public final float[ ]			m					= newIdentityMatrix( );
+	
+	private final float[ ]			m_inv				= newIdentityMatrix( );
+	
+	private final float[ ]			n					= new float[ 9 ];
 	
 	/**
 	 * The view matrix.
 	 */
-	public final float[ ]			v					= FloatArrayVecmath.newIdentityMatrix( );
+	public final float[ ]			v					= newIdentityMatrix( );
 	
 	/**
 	 * The projection matrix;
 	 */
-	public final float[ ]			p					= FloatArrayVecmath.newIdentityMatrix( );
+	public final float[ ]			p					= newIdentityMatrix( );
 	
 	private int						width , height;
 	
@@ -85,9 +89,12 @@ public class BasicGL3Scene implements GLEventListener
 			objectsThatNeedInit.poll( ).init( gl );
 		}
 		
+		invAffine( m , m_inv );
+		transposeTo3x3( m_inv , n );
+		
 		for( GL3Object object : objects )
 		{
-			object.draw( gl , m , v , p );
+			object.draw( gl , m , n , v , p );
 		}
 	}
 	
@@ -106,7 +113,7 @@ public class BasicGL3Scene implements GLEventListener
 	
 	private void recomputePerspective( )
 	{
-		FloatArrayVecmath.perspective( p , fov , ( float ) width / height , zNear , zFar );
+		perspective( p , fov , ( float ) width / height , zNear , zFar );
 		p[ 8 ] = -p[ 8 ];
 		p[ 9 ] = -p[ 9 ];
 		p[ 10 ] = -p[ 10 ];

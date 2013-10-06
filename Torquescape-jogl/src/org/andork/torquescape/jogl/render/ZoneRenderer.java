@@ -88,7 +88,7 @@ public class ZoneRenderer implements GL3Object
 	}
 	
 	@Override
-	public void draw( GL3 gl , float[ ] m , float[ ] v , float[ ] p )
+	public void draw( GL3 gl , float[ ] m , float[ ] n , float[ ] v, float[ ] p )
 	{
 		for( ISliceRenderer<?> sliceRenderer : sliceRenderers )
 		{

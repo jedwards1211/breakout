@@ -410,6 +410,48 @@ public class FloatArrayVecmath
 		}
 	}
 	
+	public static void mmul3x3( float[ ] ma , float[ ] mb , float[ ] out )
+	{
+		if( out == ma || out == mb )
+		{
+			float m00 = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 3 ] + ma[ 2 ] * mb[ 6 ];
+			float m01 = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 7 ];
+			float m02 = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 8 ];
+			
+			float m10 = ma[ 3 ] * mb[ 0 ] + ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 6 ];
+			float m11 = ma[ 3 ] * mb[ 1 ] + ma[ 4 ] * mb[ 4 ] + ma[ 5 ] * mb[ 7 ];
+			float m12 = ma[ 3 ] * mb[ 2 ] + ma[ 4 ] * mb[ 5 ] + ma[ 5 ] * mb[ 8 ];
+			
+			float m20 = ma[ 6 ] * mb[ 0 ] + ma[ 7 ] * mb[ 3 ] + ma[ 8 ] * mb[ 6 ];
+			float m21 = ma[ 6 ] * mb[ 1 ] + ma[ 7 ] * mb[ 4 ] + ma[ 8 ] * mb[ 7 ];
+			float m22 = ma[ 6 ] * mb[ 2 ] + ma[ 7 ] * mb[ 5 ] + ma[ 8 ] * mb[ 8 ];
+			
+			out[ 0 ] = m00;
+			out[ 1 ] = m01;
+			out[ 2 ] = m02;
+			out[ 3 ] = m10;
+			out[ 4 ] = m11;
+			out[ 5 ] = m12;
+			out[ 6 ] = m20;
+			out[ 7 ] = m21;
+			out[ 8 ] = m22;
+		}
+		else
+		{
+			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 3 ] + ma[ 2 ] * mb[ 6 ];
+			out[ 1 ] = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 7 ];
+			out[ 2 ] = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 8 ];
+			
+			out[ 3 ] = ma[ 3 ] * mb[ 0 ] + ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 6 ];
+			out[ 4 ] = ma[ 3 ] * mb[ 1 ] + ma[ 4 ] * mb[ 4 ] + ma[ 5 ] * mb[ 7 ];
+			out[ 5 ] = ma[ 3 ] * mb[ 2 ] + ma[ 4 ] * mb[ 5 ] + ma[ 5 ] * mb[ 8 ];
+			
+			out[ 6 ] = ma[ 6 ] * mb[ 0 ] + ma[ 7 ] * mb[ 3 ] + ma[ 8 ] * mb[ 6 ];
+			out[ 7 ] = ma[ 6 ] * mb[ 1 ] + ma[ 7 ] * mb[ 4 ] + ma[ 8 ] * mb[ 7 ];
+			out[ 8 ] = ma[ 6 ] * mb[ 2 ] + ma[ 7 ] * mb[ 5 ] + ma[ 8 ] * mb[ 8 ];
+		}
+	}
+	
 	public static void set( float[ ] array , float ... values )
 	{
 		System.arraycopy( values , 0 , array , 0 , values.length );
@@ -698,6 +740,27 @@ public class FloatArrayVecmath
 			m[ 11 ] = m[ 14 ];
 			m[ 14 ] = t;
 		}
+	}
+	
+	/**
+	 * Transposes the upper left 3x3 portion of {@code mat} to {@code out}.
+	 * 
+	 * @param mat
+	 *            a 16-element float array.
+	 * @param out
+	 *            a 9-element float array.
+	 */
+	public static void transposeTo3x3( float[ ] mat , float[ ] out )
+	{
+		out[ 0 ] = mat[ 0 ];
+		out[ 1 ] = mat[ 4 ];
+		out[ 2 ] = mat[ 8 ];
+		out[ 3 ] = mat[ 1 ];
+		out[ 4 ] = mat[ 5 ];
+		out[ 5 ] = mat[ 9 ];
+		out[ 6 ] = mat[ 2 ];
+		out[ 7 ] = mat[ 6 ];
+		out[ 8 ] = mat[ 10 ];
 	}
 	
 	public static void mcopy( float[ ] msrc , float[ ] mdest )

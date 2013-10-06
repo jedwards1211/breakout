@@ -134,11 +134,11 @@ public class BasicNavigator extends MouseAdapter
 			float dtilt = ( float ) ( dy * tiltFactor / glCanvas.getHeight( ) );
 			
 			FloatArrayVecmath.rotY( temp , dpan );
-			FloatArrayVecmath.mmulRotational( temp , cam , cam );
+			FloatArrayVecmath.mmul3x3( temp , cam , cam );
 			
 			FloatArrayVecmath.mvmulAffine( cam , 1 , 0 , 0 , v );
 			FloatArrayVecmath.setRotation( temp , v , dtilt );
-			FloatArrayVecmath.mmulRotational( temp , cam , cam );
+			FloatArrayVecmath.mmul3x3( temp , cam , cam );
 			
 			FloatArrayVecmath.invAffine( cam , scene.v );
 		}

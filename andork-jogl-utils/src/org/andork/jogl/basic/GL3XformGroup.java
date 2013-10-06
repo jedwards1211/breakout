@@ -1,6 +1,6 @@
 package org.andork.jogl.basic;
 
-import static org.andork.vecmath.FloatArrayVecmath.mmulAffine;
+import static org.andork.vecmath.FloatArrayVecmath.*;
 import static org.andork.vecmath.FloatArrayVecmath.newIdentityMatrix;
 
 import java.util.ArrayList;
@@ -11,7 +11,9 @@ import javax.media.opengl.GL3;
 public class GL3XformGroup implements GL3Object
 {
 	public float[ ]			xform	= newIdentityMatrix( );
+	private float[ ]		nxform	= new float[ 9 ];
 	private float[ ]		m		= newIdentityMatrix( );
+	private float[ ]		n		= new float[ 9 ];
 	
 	public List<GL3Object>	objects	= new ArrayList<GL3Object>( );
 	
@@ -24,15 +26,21 @@ public class GL3XformGroup implements GL3Object
 		}
 	}
 	
+	public void updateN( )
+	{
+		invAffine( xform , m );
+		transposeTo3x3( m , nxform );
+	}
+	
 	@Override
-	public void draw( GL3 gl , float[ ] m , float[ ] v , float[ ] p )
+	public void draw( GL3 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
 	{
 		mmulAffine( m , xform , this.m );
+		mmul3x3( n , nxform , this.n );
 		
 		for( GL3Object object : objects )
 		{
-			object.draw( gl , this.m , v , p );
+			object.draw( gl , this.m , this.n , v , p );
 		}
 	}
-	
 }

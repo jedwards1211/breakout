@@ -76,7 +76,12 @@ public class BasicGL3Object implements GL3Object
 		return this;
 	}
 	
-	public BasicGL3Object indexBuffer( ByteBuffer newBuffer )
+	public Buffer indexBuffer( )
+	{
+		return indexBuffer;
+	}
+	
+	public BasicGL3Object indexBuffer( Buffer newBuffer )
 	{
 		indexBuffer = newBuffer;
 		return this;
@@ -239,7 +244,7 @@ public class BasicGL3Object implements GL3Object
 		checkGLError( gl , debug );
 	}
 	
-	public void draw( GL3 gl , float[ ] m , float[ ] v , float[ ] p )
+	public void draw( GL3 gl , float[ ] m , float[ ] n , float[ ] v, float[ ] p )
 	{
 		for( GL3Modifier modifier : modifiers )
 		{
@@ -286,7 +291,7 @@ public class BasicGL3Object implements GL3Object
 		
 		if( indexBuffer != null )
 		{
-//			gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , ebo );
+			// gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , ebo );
 			gl.glDrawElements( drawMode , indexCount , indexType , 0 );
 		}
 		else
@@ -432,6 +437,28 @@ public class BasicGL3Object implements GL3Object
 		public void put( float x )
 		{
 			vertexBuffers[ bufferIndex ].putFloat( x );
+		}
+	}
+	
+	public class PlaceholderAttribute extends Attribute
+	{
+		int	numBytes;
+		
+		public PlaceholderAttribute( int numBytes )
+		{
+			super( );
+			this.numBytes = numBytes;
+		}
+
+		@Override
+		public int getNumBytes( )
+		{
+			return numBytes;
+		}
+		
+		@Override
+		public void put( GL3 gl , int stride , int offset )
+		{
 		}
 	}
 	

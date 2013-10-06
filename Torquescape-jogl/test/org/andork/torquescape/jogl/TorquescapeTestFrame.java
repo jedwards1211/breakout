@@ -75,11 +75,11 @@ public class TorquescapeTestFrame extends JFrame
 					float tilt = ( float ) ( dy * Math.PI / glCanvas.getHeight( ) );
 					
 					FloatArrayVecmath.rotY( tempMatrix , pan );
-					FloatArrayVecmath.mmulRotational( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
+					FloatArrayVecmath.mmul3x3( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
 					
 					FloatArrayVecmath.mvmulAffine( scene.cameraMatrix , 1 , 0 , 0 , tiltAxis );
 					FloatArrayVecmath.setRotation( tempMatrix , tiltAxis , tilt );
-					FloatArrayVecmath.mmulRotational( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
+					FloatArrayVecmath.mmul3x3( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
 				}
 				else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 				{

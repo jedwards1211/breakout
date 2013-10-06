@@ -14,6 +14,8 @@ import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.GL3DepthModifier;
 import org.andork.jogl.prim.Primitives;
 
+import org.andork.jogl.basic.test.NormalGenerator;
+
 public class EllipsoidTestFrame extends BasicGL3Frame
 {
 	
@@ -41,6 +43,7 @@ public class EllipsoidTestFrame extends BasicGL3Frame
 		{
 			System.out.println( Arrays.toString( point ) );
 			bh.put( point );
+			bh.put( 0f , 0f , 0f );
 		}
 		
 		BasicGL3Object obj = new BasicGL3Object( );
@@ -54,12 +57,16 @@ public class EllipsoidTestFrame extends BasicGL3Frame
 			bh.put( indices );
 		}
 		ByteBuffer indexBuffer = bh.toByteBuffer( );
+		
+		NormalGenerator.generateNormals3fi( vertexBuffer , 12 , 24 , indexBuffer , 0 , indexBuffer.capacity( ) / 4 );
+		
 		obj.indexBuffer( indexBuffer ).indexCount( indexBuffer.capacity( ) / 4 );
 		obj.indexType( GL3.GL_UNSIGNED_INT );
-		obj.drawMode( GL3.GL_LINES );
+		obj.drawMode( GL3.GL_TRIANGLES );
 		
 		obj.vertexShaderCode( new BasicVertexShader( ).toString( ) );
 		obj.add( obj.new AttributeVec3fv( ).name( "a_pos" ) );
+		obj.add( obj.new PlaceholderAttribute( 12 ) );
 		obj.fragmentShaderCode( new FlatFragmentShader( ).toString( ) );
 		obj.transpose( true );
 		obj.add( new GL3DepthModifier( ) );
