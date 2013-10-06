@@ -86,6 +86,18 @@ public class FloatArrayVecmath
 		}
 	}
 	
+	public static void cross(
+			float ax , float ay , float az ,
+			float bx , float by , float bz ,
+			float[ ] out )
+	{
+		float cx = ay * bz - az * by;
+		float cy = az * bx - ax * bz;
+		out[ 2 ] = ax * by - ay * bx;
+		out[ 1 ] = cy;
+		out[ 0 ] = cx;
+	}
+	
 	public static void cross( float[ ] a , int ai , float[ ] b , int bi , float[ ] out , int outi )
 	{
 		if( out != a && out != b )
@@ -469,6 +481,13 @@ public class FloatArrayVecmath
 		m[ rowIndex + 1 ] = b;
 		m[ rowIndex + 2 ] = c;
 		m[ rowIndex + 3 ] = d;
+	}
+	
+	public static void setColumn3( float[ ] m , int colIndex , float a , float b , float c )
+	{
+		m[ colIndex ] = a;
+		m[ colIndex + 4 ] = b;
+		m[ colIndex + 8 ] = c;
 	}
 	
 	public static void setColumn3( float[ ] m , int colIndex , float[ ] v )
@@ -1239,6 +1258,14 @@ public class FloatArrayVecmath
 		v[ 2 ] *= factor;
 	}
 	
+	public static void normalize3( float x , float y , float z , float[ ] out )
+	{
+		double factor = 1.0 / Math.sqrt( x * x + y * y + z * z );
+		out[ 0 ] = ( float ) ( x * factor );
+		out[ 1 ] = ( float ) ( y * factor );
+		out[ 2 ] = ( float ) ( z * factor );
+	}
+	
 	public static void normalize3( float[ ] v , float[ ] out )
 	{
 		double factor = 1.0 / Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 1 ] * v[ 1 ] + v[ 2 ] * v[ 2 ] );
@@ -1303,6 +1330,18 @@ public class FloatArrayVecmath
 		out[ outi + 0 ] = a[ ai + 0 ] - b[ bi + 0 ];
 		out[ outi + 1 ] = a[ ai + 1 ] - b[ bi + 1 ];
 		out[ outi + 2 ] = a[ ai + 2 ] - b[ bi + 2 ];
+	}
+	
+	public static void scale3( float[ ] a , float f )
+	{
+		scale3( a , f , a );
+	}
+	
+	public static void scale3( float[ ] a , float f , float[ ] out )
+	{
+		out[ 0 ] = a[ 0 ] * f;
+		out[ 1 ] = a[ 1 ] * f;
+		out[ 2 ] = a[ 2 ] * f;
 	}
 	
 	public static float length( float[ ] v , int start , int count )

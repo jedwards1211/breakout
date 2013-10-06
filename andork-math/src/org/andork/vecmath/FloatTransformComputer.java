@@ -420,4 +420,102 @@ public class FloatTransformComputer
 		cross( v6 , v4 , v5 );
 		return shear( oldOrigin , v1 , v2 , v3 , newOrigin , v4 , v5 , v6 , result );
 	}
+	
+	/**
+	 * Creates a transform that orients an object from one coordinate reference frame to another.<br>
+	 * <br>
+	 * 
+	 * For example, let's say you want to pin a poster on a wall. you've unrolled the poster on the ground facing up and the top edge of the poster is facing
+	 * north. The wall you want to put it on is facing east. The only problem is you have to use a mathematical transform to put it on the wall! What should the
+	 * transform do? If you transform the center of the poster, it should move from the ground to the wall. If you transform the direction the poster is facing
+	 * (up), it should turn east. If you transform the direction of the top edge of the poster, it should turn up. This method creates such a transform. In this
+	 * example:
+	 * <ul>
+	 * <li><code>oldOrigin</code> is the center of the poster on the ground</li>
+	 * <li><code>oldX</code> is the direction the poster is facing (up)</li>
+	 * <li><code>oldY</code> is the direction the top edge of the poster is facing (north)</li>
+	 * <li><code>newOrigin</code> is the point on the wall where you want the poster to be centered</li>
+	 * <li><code>newX</code> is the direction the wall is facing (east)</li>
+	 * <li><code>newY</code> is the direction you want the top edge of the poster to be facing when you put it on the wall (up)</li>
+	 * </ul>
+	 * 
+	 * In other words, if you create an orient transform and apply it to an object, the part of the object at <code>oldOrigin</code> will now be at
+	 * <code>newOrigin</code>, the part of the object facing in the <code>oldX</code> direction will now face in the <code>newX</code> direction, and the part
+	 * of the object facing in the <code>oldY</code> direction will now face in the <code>newY</code> direction.
+	 * 
+	 * @param oldOrigin
+	 *            the origin of the old reference frame.
+	 * @param oldX
+	 *            the x axis of the old reference frame (whatever direction you want; it doesn't have to be (1, 0, 0))
+	 * @param oldY
+	 *            the y axis of the old reference frame (if not perpendicular to <code>oldX</code>, it will be replaced with a vector perpendicular to
+	 *            <code>oldX</code> at the same angle around <code>oldX</code>).
+	 * @param newOrigin
+	 *            the origin of the new reference frame.
+	 * @param newX
+	 *            the x axis of the new reference frame.
+	 * @param newY
+	 *            the y axis of the new reference frame (if not perpendicular to <code>newX</code>, it will be replaced with a vector perpendicular to
+	 *            <code>newX</code> at the same angle around <code>newX</code>).
+	 * @param result
+	 *            the float[] to set such that (ignoring floating point inaccuracy):
+	 *            <ul>
+	 *            <li> <code>result.transform( oldOrigin )</code> will equal <code>newOrigin</code></li>
+	 *            <li> <code>result.transform( oldX )</code> will equal <code>newX</code></li>
+	 *            <li> <code>result.transform( oldY )</code> will equal <code>newY</code></li>
+	 *            </ul>
+	 * @return <code>result</code>
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if:
+	 *             <ul>
+	 *             <li> <code>oldX, oldY, newX,</code> or <code>newY</code> is zero,</li>
+	 *             <li> <code>oldX</code> and <code>oldY</code> are parallel, or</li>
+	 *             <li> <code>newX</code> and <code>newY</code> are parallel.</li>
+	 *             </ul>
+	 */
+	public float[ ] orient( float oldOriginX , float oldOriginY , float oldOriginZ ,
+			float oldXx , float oldXy , float oldXz ,
+			float oldYx , float oldYy , float oldYz ,
+			float[ ] newOrigin , float[ ] newX , float[ ] newY , float[ ] result )
+	{
+		if( oldXx == 0 && oldXy == 0 && oldXz == 0 )
+		{
+			throw new IllegalArgumentException( "oldX must be non-zero" );
+		}
+		if( oldYx == 0 && oldYy == 0 && oldYz == 0 )
+		{
+			throw new IllegalArgumentException( "oldY must be non-zero" );
+		}
+		if( newX[ 0 ] == 0 && newX[ 1 ] == 0 && newX[ 2 ] == 0 )
+		{
+			throw new IllegalArgumentException( "newX must be non-zero" );
+		}
+		if( newY[ 0 ] == 0 && newY[ 1 ] == 0 && newY[ 2 ] == 0 )
+		{
+			throw new IllegalArgumentException( "newY must be non-zero" );
+		}
+		
+		normalize3( oldXx , oldXy , oldXz , v1 );
+		cross( oldXx , oldXy , oldXz , oldYx , oldYy , oldYz , v3 );
+		if( v3[ 0 ] == 0 && v3[ 1 ] == 0 && v3[ 2 ] == 0 )
+		{
+			throw new IllegalArgumentException( "oldX and oldY must not be parallel" );
+		}
+		normalize3( v3 );
+		cross( v3 , v1 , v2 );
+		normalize3( newX , v4 );
+		cross( newX , newY , v6 );
+		
+		if( v6[ 0 ] == 0 && v6[ 1 ] == 0 && v6[ 2 ] == 0 )
+		{
+			throw new IllegalArgumentException( "newX and newY must not be parallel" );
+		}
+		
+		normalize3( v6 );
+		cross( v6 , v4 , v5 );
+		
+		set( p1 , oldOriginX , oldOriginY , oldOriginZ );
+		return shear( p1 , v1 , v2 , v3 , newOrigin , v4 , v5 , v6 , result );
+	}
 }

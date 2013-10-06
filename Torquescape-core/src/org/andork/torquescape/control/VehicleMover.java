@@ -12,7 +12,7 @@ import java.nio.CharBuffer;
 import org.andork.torquescape.model.Edge;
 import org.andork.vecmath.FloatTransformComputer;
 
-public class Mover
+public class VehicleMover
 {
 	float[ ]					v1			= new float[ 3 ];
 	float[ ]					v2			= new float[ 3 ];
