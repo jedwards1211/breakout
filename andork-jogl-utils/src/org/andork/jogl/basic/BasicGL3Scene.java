@@ -1,5 +1,9 @@
 package org.andork.jogl.basic;
 
+import static org.andork.vecmath.FloatArrayVecmath.invAffineToTranspose3x3;
+import static org.andork.vecmath.FloatArrayVecmath.newIdentityMatrix;
+import static org.andork.vecmath.FloatArrayVecmath.perspective;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,8 +12,6 @@ import java.util.Queue;
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
-
-import static org.andork.vecmath.FloatArrayVecmath.*;
 
 public class BasicGL3Scene implements GLEventListener
 {
@@ -89,8 +91,7 @@ public class BasicGL3Scene implements GLEventListener
 			objectsThatNeedInit.poll( ).init( gl );
 		}
 		
-		invAffine( m , m_inv );
-		transposeTo3x3( m_inv , n );
+		invAffineToTranspose3x3( m , n );
 		
 		for( GL3Object object : objects )
 		{

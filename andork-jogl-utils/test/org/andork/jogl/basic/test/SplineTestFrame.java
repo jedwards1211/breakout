@@ -75,7 +75,7 @@ public class SplineTestFrame extends BasicGL3Frame
 		obj.vertexCount( vertexBuffer.capacity( ) / 12 );
 		obj.drawMode( GL3.GL_LINE_STRIP );
 		obj.vertexShaderCode( new BasicVertexShader( ).posDim( 3 ).passPosToFragmentShader( true ).toString( ) );
-		obj.add( obj.new AttributeVec3fv( ).name( "a_pos" ) );
+		obj.add( obj.new Attribute3fv( ).name( "a_pos" ) );
 		obj.fragmentShaderCode( new DepthFragmentShader( ).radius( 9 ).toString( ) );
 		obj.add( new GL3DepthModifier( ) );
 		obj.transpose( true );

@@ -15,7 +15,7 @@ import org.andork.jogl.util.GLUtils;
 
 public class BasicGL3Object implements GL3Object
 {
-	ByteBuffer[ ]			vertexBuffers	= new ByteBuffer[ 0 ];
+	ByteBuffer[ ]			vertexBuffers		= new ByteBuffer[ 0 ];
 	int[ ]					offsets;
 	int[ ]					strides;
 	int[ ]					vbos;
@@ -33,21 +33,22 @@ public class BasicGL3Object implements GL3Object
 	String					vertexShaderCode;
 	String					fragmentShaderCode;
 	
-	String					modelMatrixName	= "m";
-	String					viewMatrixName	= "v";
-	String					projMatrixName	= "p";
+	String					modelMatrixName		= "m";
+	String					normalMatrixName	= null;
+	String					viewMatrixName		= "v";
+	String					projMatrixName		= "p";
 	
-	boolean					transpose		= false;
+	boolean					transpose			= false;
 	
-	final List<Uniform>		uniforms		= new ArrayList<Uniform>( );
-	final List<Attribute>	attributes		= new ArrayList<Attribute>( );
-	final List<GL3Modifier>	modifiers		= new ArrayList<GL3Modifier>( );
+	final List<Uniform>		uniforms			= new ArrayList<Uniform>( );
+	final List<Attribute>	attributes			= new ArrayList<Attribute>( );
+	final List<GL3Modifier>	modifiers			= new ArrayList<GL3Modifier>( );
 	
 	boolean					debug;
 	
 	int						drawMode;
 	
-	private boolean			initialized		= false;
+	private boolean			initialized			= false;
 	
 	public ByteBuffer addVertexBuffer( int capacity )
 	{
@@ -108,6 +109,12 @@ public class BasicGL3Object implements GL3Object
 	public BasicGL3Object fragmentShaderCode( String fragmentShaderCode )
 	{
 		this.fragmentShaderCode = fragmentShaderCode;
+		return this;
+	}
+	
+	public BasicGL3Object normalMatrixName( String normalMatrixName )
+	{
+		this.normalMatrixName = normalMatrixName;
 		return this;
 	}
 	
@@ -244,7 +251,7 @@ public class BasicGL3Object implements GL3Object
 		checkGLError( gl , debug );
 	}
 	
-	public void draw( GL3 gl , float[ ] m , float[ ] n , float[ ] v, float[ ] p )
+	public void draw( GL3 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
 	{
 		for( GL3Modifier modifier : modifiers )
 		{
@@ -286,6 +293,14 @@ public class BasicGL3Object implements GL3Object
 			checkGLError( gl , debug );
 			
 			gl.glUniformMatrix4fv( m_location , 1 , transpose , p , 0 );
+			checkGLError( gl , debug );
+		}
+		if( normalMatrixName != null )
+		{
+			int n_location = gl.glGetUniformLocation( program , normalMatrixName );
+			checkGLError( gl , debug );
+			
+			gl.glUniformMatrix3fv( n_location , 1 , transpose , n , 0 );
 			checkGLError( gl , debug );
 		}
 		
@@ -332,6 +347,211 @@ public class BasicGL3Object implements GL3Object
 		}
 		
 		public abstract void put( GL3 gl );
+	}
+	
+	public class Uniform1iv extends Uniform
+	{
+		int		count	= 1;
+		int[ ]	value;
+		int		value_offset;
+		
+		public Uniform1iv name( String name )
+		{
+			this.name = name;
+			return this;
+		}
+		
+		public Uniform1iv count( int count )
+		{
+			this.count = count;
+			return this;
+		}
+		
+		public Uniform1iv value( int ... value )
+		{
+			this.value = value;
+			return this;
+		}
+		
+		public Uniform1iv value_offset( int value_offset )
+		{
+			this.value_offset = value_offset;
+			return this;
+		}
+		
+		@Override
+		public void put( GL3 gl )
+		{
+			int location = gl.glGetUniformLocation( program , name );
+			checkGLError( gl );
+			
+			gl.glUniform1iv( location , count , value , value_offset );
+			checkGLError( gl );
+		}
+	}
+	
+	public class Uniform1fv extends Uniform
+	{
+		int			count	= 1;
+		float[ ]	value;
+		int			value_offset;
+		
+		public Uniform1fv name( String name )
+		{
+			this.name = name;
+			return this;
+		}
+		
+		public Uniform1fv count( int count )
+		{
+			this.count = count;
+			return this;
+		}
+		
+		public Uniform1fv value( float ... value )
+		{
+			this.value = value;
+			return this;
+		}
+		
+		public Uniform1fv value_offset( int value_offset )
+		{
+			this.value_offset = value_offset;
+			return this;
+		}
+		
+		@Override
+		public void put( GL3 gl )
+		{
+			int location = gl.glGetUniformLocation( program , name );
+			checkGLError( gl );
+			
+			gl.glUniform1fv( location , count , value , value_offset );
+			checkGLError( gl );
+		}
+	}
+	
+	public class Uniform2fv extends Uniform
+	{
+		int			count	= 1;
+		float[ ]	value;
+		int			value_offset;
+		
+		public Uniform2fv name( String name )
+		{
+			this.name = name;
+			return this;
+		}
+		
+		public Uniform2fv count( int count )
+		{
+			this.count = count;
+			return this;
+		}
+		
+		public Uniform2fv value( float ... value )
+		{
+			this.value = value;
+			return this;
+		}
+		
+		public Uniform2fv value_offset( int value_offset )
+		{
+			this.value_offset = value_offset;
+			return this;
+		}
+		
+		@Override
+		public void put( GL3 gl )
+		{
+			int location = gl.glGetUniformLocation( program , name );
+			checkGLError( gl );
+			
+			gl.glUniform2fv( location , count , value , value_offset );
+			checkGLError( gl );
+		}
+	}
+	
+	public class Uniform3fv extends Uniform
+	{
+		int			count	= 1;
+		float[ ]	value;
+		int			value_offset;
+		
+		public Uniform3fv name( String name )
+		{
+			this.name = name;
+			return this;
+		}
+		
+		public Uniform3fv count( int count )
+		{
+			this.count = count;
+			return this;
+		}
+		
+		public Uniform3fv value( float ... value )
+		{
+			this.value = value;
+			return this;
+		}
+		
+		public Uniform3fv value_offset( int value_offset )
+		{
+			this.value_offset = value_offset;
+			return this;
+		}
+		
+		@Override
+		public void put( GL3 gl )
+		{
+			int location = gl.glGetUniformLocation( program , name );
+			checkGLError( gl );
+			
+			gl.glUniform3fv( location , count , value , value_offset );
+			checkGLError( gl );
+		}
+	}
+	
+	public class Uniform4fv extends Uniform
+	{
+		int			count	= 1;
+		float[ ]	value;
+		int			value_offset;
+		
+		public Uniform4fv name( String name )
+		{
+			this.name = name;
+			return this;
+		}
+		
+		public Uniform4fv count( int count )
+		{
+			this.count = count;
+			return this;
+		}
+		
+		public Uniform4fv value( float ... value )
+		{
+			this.value = value;
+			return this;
+		}
+		
+		public Uniform4fv value_offset( int value_offset )
+		{
+			this.value_offset = value_offset;
+			return this;
+		}
+		
+		@Override
+		public void put( GL3 gl )
+		{
+			int location = gl.glGetUniformLocation( program , name );
+			checkGLError( gl );
+			
+			gl.glUniform4fv( location , count , value , value_offset );
+			checkGLError( gl );
+		}
 	}
 	
 	public class UniformMatrix4fv extends Uniform
@@ -440,29 +660,58 @@ public class BasicGL3Object implements GL3Object
 		}
 	}
 	
-	public class PlaceholderAttribute extends Attribute
+	public class Attribute2fv extends Attribute
 	{
-		int	numBytes;
+		boolean	normalized;
 		
-		public PlaceholderAttribute( int numBytes )
-		{
-			super( );
-			this.numBytes = numBytes;
-		}
-
-		@Override
 		public int getNumBytes( )
 		{
-			return numBytes;
+			return 8;
+		}
+		
+		public Attribute2fv name( String name )
+		{
+			this.name = name;
+			return this;
+		}
+		
+		public Attribute2fv bufferIndex( int bufferIndex )
+		{
+			this.bufferIndex = bufferIndex;
+			return this;
+		}
+		
+		public Attribute2fv normalized( boolean normalized )
+		{
+			this.normalized = normalized;
+			return this;
 		}
 		
 		@Override
 		public void put( GL3 gl , int stride , int offset )
 		{
+			int location = gl.glGetAttribLocation( program , name );
+			checkGLError( gl );
+			
+			gl.glEnableVertexAttribArray( location );
+			checkGLError( gl );
+			
+			gl.glVertexAttribPointer( location , 2 , GL3.GL_FLOAT , normalized , stride , offset );
+			checkGLError( gl );
+		}
+		
+		public void put( float x , float y )
+		{
+			vertexBuffers[ bufferIndex ].putFloat( x ).putFloat( y );
+		}
+		
+		public void put( float[ ] values , int offset )
+		{
+			vertexBuffers[ bufferIndex ].putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
 		}
 	}
 	
-	public class AttributeVec3fv extends Attribute
+	public class Attribute3fv extends Attribute
 	{
 		boolean	normalized;
 		
@@ -471,19 +720,19 @@ public class BasicGL3Object implements GL3Object
 			return 12;
 		}
 		
-		public AttributeVec3fv name( String name )
+		public Attribute3fv name( String name )
 		{
 			this.name = name;
 			return this;
 		}
 		
-		public AttributeVec3fv bufferIndex( int bufferIndex )
+		public Attribute3fv bufferIndex( int bufferIndex )
 		{
 			this.bufferIndex = bufferIndex;
 			return this;
 		}
 		
-		public AttributeVec3fv normalized( boolean normalized )
+		public Attribute3fv normalized( boolean normalized )
 		{
 			this.normalized = normalized;
 			return this;
@@ -510,6 +759,79 @@ public class BasicGL3Object implements GL3Object
 		public void put( float[ ] values , int offset )
 		{
 			vertexBuffers[ bufferIndex ].putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
+		}
+	}
+	
+	public class Attribute4fv extends Attribute
+	{
+		boolean	normalized;
+		
+		public int getNumBytes( )
+		{
+			return 16;
+		}
+		
+		public Attribute4fv name( String name )
+		{
+			this.name = name;
+			return this;
+		}
+		
+		public Attribute4fv bufferIndex( int bufferIndex )
+		{
+			this.bufferIndex = bufferIndex;
+			return this;
+		}
+		
+		public Attribute4fv normalized( boolean normalized )
+		{
+			this.normalized = normalized;
+			return this;
+		}
+		
+		@Override
+		public void put( GL3 gl , int stride , int offset )
+		{
+			int location = gl.glGetAttribLocation( program , name );
+			checkGLError( gl );
+			
+			gl.glEnableVertexAttribArray( location );
+			checkGLError( gl );
+			
+			gl.glVertexAttribPointer( location , 4 , GL3.GL_FLOAT , normalized , stride , offset );
+			checkGLError( gl );
+		}
+		
+		public void put( float x , float y , float z , float w )
+		{
+			vertexBuffers[ bufferIndex ].putFloat( x ).putFloat( y ).putFloat( z ).putFloat( w );
+		}
+		
+		public void put( float[ ] values , int offset )
+		{
+			vertexBuffers[ bufferIndex ].putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
+		}
+	}
+	
+	public class PlaceholderAttribute extends Attribute
+	{
+		int	numBytes;
+		
+		public PlaceholderAttribute( int numBytes )
+		{
+			super( );
+			this.numBytes = numBytes;
+		}
+		
+		@Override
+		public int getNumBytes( )
+		{
+			return numBytes;
+		}
+		
+		@Override
+		public void put( GL3 gl , int stride , int offset )
+		{
 		}
 	}
 	
@@ -561,6 +883,78 @@ public class BasicGL3Object implements GL3Object
 			}
 			sb.append( "}" );
 			
+			return sb.toString( );
+		}
+	}
+	
+	public static class PerVertexDiffuseVertexShader
+	{
+		int	nlights	= 1;
+		
+		public String toString( )
+		{
+			StringBuffer sb = new StringBuffer( );
+			sb.append( "uniform mat4 m, v, p;" );
+			sb.append( "uniform mat3 n;" );
+			sb.append( "attribute vec3 a_pos;" );
+			sb.append( "attribute vec3 a_norm;" );
+			sb.append( "uniform vec4 u_color;" );
+			
+			sb.append( "varying vec4 v_color;" );
+			
+			sb.append( "uniform int u_nlights;" );
+			sb.append( "uniform vec4 u_lightpos[" ).append( nlights ).append( "];" );
+			sb.append( "uniform vec4 u_lightcolor[" ).append( nlights ).append( "];" );
+			sb.append( "uniform float u_constantAttenuation[" ).append( nlights ).append( "];" );
+			sb.append( "uniform float u_linearAttenuation[" ).append( nlights ).append( "];" );
+			sb.append( "uniform float u_quadraticAttenuation[" ).append( nlights ).append( "];" );
+			
+			sb.append( "void main(void)" );
+			sb.append( "{" );
+			sb.append( "  mat4 mvp = p*v*m;" );
+			sb.append( "  vec3 normalDirection = normalize(n * a_norm);" );
+			sb.append( "  vec3 lightDirection;" );
+			sb.append( "  float attenuation;" );
+			sb.append( "  v_color = vec4(0.0, 0.0, 0.0, 1.0);" );
+			
+			sb.append( "  for (int i = 0; i < u_nlights; i++) {" );
+			sb.append( "    if (u_lightpos[i].w == 0.0)" );
+			sb.append( "    {" );
+			sb.append( "      attenuation = 1.0;" );
+			sb.append( "      lightDirection = normalize(vec3(u_lightpos[i]));" );
+			sb.append( "    }" );
+			sb.append( "    else" );
+			sb.append( "    {" );
+			sb.append( "      vec3 vertexToLightSource = vec3(u_lightpos[i] - m * vec4(a_pos, 1.0));" );
+			sb.append( "      float distance = length(vertexToLightSource);" );
+			sb.append( "      lightDirection = normalize(vertexToLightSource);" );
+			sb.append( "      attenuation = 1.0 / (u_constantAttenuation[i]" );
+			sb.append( "                         + u_linearAttenuation[i] * distance" );
+			sb.append( "                         + u_quadraticAttenuation[i] * distance * distance);" );
+			sb.append( "    }" );
+			
+			sb.append( "    vec3 diffuseReflection = attenuation" );
+			sb.append( "      * vec3(u_lightcolor[i]) * vec3(u_color)" );
+			sb.append( "      * max(0.0, dot(normalDirection, lightDirection));" );
+			sb.append( "    v_color += vec4(diffuseReflection, 0.0);" );
+			sb.append( "  }" );
+			
+			sb.append( "  gl_Position = mvp * vec4(a_pos, 1.0);" );
+			sb.append( "}" );
+			
+			return sb.toString( );
+		}
+	}
+	
+	public static class VaryingColorFragmentShader
+	{
+		public String toString( )
+		{
+			StringBuffer sb = new StringBuffer( );
+			sb.append( "varying vec4 v_color;" );
+			sb.append( "void main() {" );
+			sb.append( "  gl_FragColor = v_color;" );
+			sb.append( "}" );
 			return sb.toString( );
 		}
 	}

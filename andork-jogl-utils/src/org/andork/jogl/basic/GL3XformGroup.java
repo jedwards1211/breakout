@@ -1,6 +1,8 @@
 package org.andork.jogl.basic;
 
-import static org.andork.vecmath.FloatArrayVecmath.*;
+import static org.andork.vecmath.FloatArrayVecmath.invAffineToTranspose3x3;
+import static org.andork.vecmath.FloatArrayVecmath.mmul3x3;
+import static org.andork.vecmath.FloatArrayVecmath.mmulAffine;
 import static org.andork.vecmath.FloatArrayVecmath.newIdentityMatrix;
 
 import java.util.ArrayList;
@@ -28,8 +30,7 @@ public class GL3XformGroup implements GL3Object
 	
 	public void updateN( )
 	{
-		invAffine( xform , m );
-		transposeTo3x3( m , nxform );
+		invAffineToTranspose3x3( xform , nxform );
 	}
 	
 	@Override

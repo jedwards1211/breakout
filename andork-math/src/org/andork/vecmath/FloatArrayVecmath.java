@@ -828,6 +828,48 @@ public class FloatArrayVecmath
 		out[ 15 ] = 1f;
 	}
 	
+	public static void invAffineToTranspose3x3( float[ ] m , float[ ] out )
+	{
+		float determinant = detAffine( m );
+		
+		if( determinant == 0.0 )
+			throw new IllegalArgumentException( "Singular matrix" );
+		
+		float s = ( m[ 0 ] * m[ 0 ] + m[ 1 ] * m[ 1 ] +
+				m[ 2 ] * m[ 2 ] + m[ 3 ] * m[ 3 ] ) *
+				( m[ 4 ] * m[ 4 ] + m[ 5 ] * m[ 5 ] +
+						m[ 6 ] * m[ 6 ] + m[ 7 ] * m[ 7 ] ) *
+				( m[ 8 ] * m[ 8 ] + m[ 9 ] * m[ 9 ] +
+						m[ 10 ] * m[ 10 ] + m[ 11 ] * m[ 11 ] );
+		
+		if( ( determinant * determinant ) < ( FEPS * s ) )
+		{
+			invertGeneral( m , out );
+			return;
+		}
+		s = 1f / determinant;
+		float tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) * s;
+		float tmp1 = -( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) * s;
+		float tmp2 = ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] ) * s;
+		float tmp4 = -( m[ 4 ] * m[ 10 ] - m[ 8 ] * m[ 6 ] ) * s;
+		float tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 8 ] * m[ 2 ] ) * s;
+		float tmp6 = -( m[ 0 ] * m[ 6 ] - m[ 4 ] * m[ 2 ] ) * s;
+		float tmp8 = ( m[ 4 ] * m[ 9 ] - m[ 8 ] * m[ 5 ] ) * s;
+		float tmp9 = -( m[ 0 ] * m[ 9 ] - m[ 8 ] * m[ 1 ] ) * s;
+		float tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 4 ] * m[ 1 ] ) * s;
+		
+		out[0] = tmp0;
+		out[1] = tmp4;
+		out[2] = tmp8;
+		out[3] = tmp1;
+		out[4] = tmp5;
+		out[5] = tmp9;
+		out[6] = tmp2;
+		out[7] = tmp6;
+		out[8] = tmp10;
+	}
+	
+	
 	public static void invertGeneral( float[ ] mat )
 	{
 		invertGeneral( mat , mat );
