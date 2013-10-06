@@ -22,6 +22,7 @@ public class BasicGL3Object implements GL3Object
 	int						vertexCount;
 	
 	Buffer					indexBuffer;
+	int						indexCount;
 	int						indexType;
 	int						ebo;
 	
@@ -45,6 +46,8 @@ public class BasicGL3Object implements GL3Object
 	boolean					debug;
 	
 	int						drawMode;
+	
+	private boolean			initialized		= false;
 	
 	public ByteBuffer addVertexBuffer( int capacity )
 	{
@@ -70,6 +73,24 @@ public class BasicGL3Object implements GL3Object
 	public BasicGL3Object vertexBuffer( int index , ByteBuffer newBuffer )
 	{
 		vertexBuffers[ index ] = newBuffer;
+		return this;
+	}
+	
+	public BasicGL3Object indexBuffer( ByteBuffer newBuffer )
+	{
+		indexBuffer = newBuffer;
+		return this;
+	}
+	
+	public BasicGL3Object indexType( int indexType )
+	{
+		this.indexType = indexType;
+		return this;
+	}
+	
+	public BasicGL3Object indexCount( int indexCount )
+	{
+		this.indexCount = indexCount;
 		return this;
 	}
 	
@@ -147,6 +168,12 @@ public class BasicGL3Object implements GL3Object
 	
 	public void init( GL3 gl )
 	{
+		if( initialized )
+		{
+			return;
+		}
+		initialized = true;
+		
 		program = GLUtils.loadProgram( gl , vertexShaderCode , fragmentShaderCode , debug );
 		
 		int[ ] temp = new int[ 1 ];
@@ -259,7 +286,8 @@ public class BasicGL3Object implements GL3Object
 		
 		if( indexBuffer != null )
 		{
-			gl.glDrawElements( drawMode , indexBuffer.capacity( ) , indexType , indexBuffer );
+//			gl.glBindBuffer( GL3.GL_ELEMENT_ARRAY_BUFFER , ebo );
+			gl.glDrawElements( drawMode , indexCount , indexType , 0 );
 		}
 		else
 		{
