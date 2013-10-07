@@ -9,31 +9,31 @@ public class Vehicle
 	
 	public final TriangleBasis	basis						= new TriangleBasis( );
 	
-	public final float[ ]		temp						= new float[ 3 ];
+	public final double[ ]		temp						= new double[ 3 ];
 	
-	public final float[ ]		location					= new float[ 3 ];
-	public final float[ ]		basisForward				= new float[ 3 ];
-	public final float[ ]		basisUp						= new float[ 3 ];
-	public final float[ ]		modelForward				= new float[ 3 ];
-	public final float[ ]		modelUp						= new float[ 3 ];
+	public final double[ ]		location					= new double[ 3 ];
+	public final double[ ]		basisForward				= new double[ 3 ];
+	public final double[ ]		basisUp						= new double[ 3 ];
+	public final double[ ]		modelForward				= new double[ 3 ];
+	public final double[ ]		modelUp						= new double[ 3 ];
 	
-	public float				velocity					= 0;
-	public float				forwardAcceleration			= 5;
-	public float				maxForwardVelocity			= 50;
-	public float				brakeDeceleration			= 30;
-	public float				reverseAcceleration			= 5;
-	public float				maxReverseVelocity			= 5;
-	public float				naturalDeceleration			= 15;
+	public double				velocity					= 0;
+	public double				forwardAcceleration			= 5;
+	public double				maxForwardVelocity			= 50;
+	public double				brakeDeceleration			= 30;
+	public double				reverseAcceleration			= 5;
+	public double				maxReverseVelocity			= 5;
+	public double				naturalDeceleration			= 15;
 	
-	public float				angularVelocity				= 0;
-	public float				maxAngularVelocity			= ( float ) Math.PI / 2;
-	public float				angularAcceleration			= ( float ) Math.PI * 8;
-	public float				naturalAngularDeceleration	= ( float ) Math.PI * 8;
+	public double				angularVelocity				= 0;
+	public double				maxAngularVelocity			= ( double ) Math.PI / 2;
+	public double				angularAcceleration			= ( double ) Math.PI * 8;
+	public double				naturalAngularDeceleration	= ( double ) Math.PI * 8;
 	
-	public void updateVelocity( float timestep , float forwardTime , float reverseTime , float leftTime , float rightTime )
+	public void updateVelocity( double timestep , double forwardTime , double reverseTime , double leftTime , double rightTime )
 	{
 		velocity += forwardAcceleration * forwardTime;
-		float reverseAmount;
+		double reverseAmount;
 		
 		if( velocity > 0 )
 		{
@@ -59,7 +59,7 @@ public class Vehicle
 			velocity -= reverseAmount;
 		}
 		
-		float naturalDecelAmount = ( timestep - forwardTime - reverseTime ) * naturalDeceleration;
+		double naturalDecelAmount = ( timestep - forwardTime - reverseTime ) * naturalDeceleration;
 		if( naturalDecelAmount > Math.abs( velocity ) )
 		{
 			velocity = 0;
@@ -72,7 +72,7 @@ public class Vehicle
 		velocity = Math.max( -maxReverseVelocity , Math.min( maxForwardVelocity , velocity ) );
 		
 		angularVelocity += angularAcceleration * ( leftTime - rightTime );
-		float angularDecelAmount = naturalAngularDeceleration * ( timestep - leftTime - rightTime );
+		double angularDecelAmount = naturalAngularDeceleration * ( timestep - leftTime - rightTime );
 		if( angularDecelAmount > Math.abs( angularVelocity ) )
 		{
 			angularVelocity = 0;

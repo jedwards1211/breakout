@@ -1,31 +1,44 @@
 package org.andork.torquescape.control;
 
-import static org.andork.vecmath.FloatArrayVecmath.mpmul;
-import static org.andork.vecmath.FloatArrayVecmath.*;
-import static org.andork.vecmath.FloatArrayVecmath.negate3;
-import static org.andork.vecmath.FloatArrayVecmath.normalize3;
-import static org.andork.vecmath.FloatArrayVecmath.set;
+import static org.andork.vecmath.DoubleArrayVecmath.cross;
+import static org.andork.vecmath.DoubleArrayVecmath.epsilonEquals;
+import static org.andork.vecmath.DoubleArrayVecmath.length3;
+import static org.andork.vecmath.DoubleArrayVecmath.mpmul;
+import static org.andork.vecmath.DoubleArrayVecmath.mvmulAffine;
+import static org.andork.vecmath.DoubleArrayVecmath.negate3;
+import static org.andork.vecmath.DoubleArrayVecmath.*;
+import static org.andork.vecmath.DoubleArrayVecmath.mpmul;
+import static org.andork.vecmath.DoubleArrayVecmath.mvmulAffine;
+import static org.andork.vecmath.DoubleArrayVecmath.newIdentityMatrix;
+import static org.andork.vecmath.DoubleArrayVecmath.normalize3;
+import static org.andork.vecmath.DoubleArrayVecmath.set;
+import static org.andork.vecmath.DoubleArrayVecmath.setRotation;
+
+import static org.andork.vecmath.MixedArrayVecmath.*;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
 import org.andork.torquescape.model.Edge;
-import org.andork.vecmath.FloatTransformComputer;
+import org.andork.vecmath.DoubleTransformComputer;
+import org.andork.vecmath.FloatArrayVecmath;
 
 public class VehicleMover
 {
-	float[ ]					v1			= new float[ 3 ];
-	float[ ]					v2			= new float[ 3 ];
-	float[ ]					v3			= new float[ 3 ];
-	float[ ]					v4			= new float[ 3 ];
-	float[ ]					v5			= new float[ 3 ];
-	float[ ]					v6			= new float[ 3 ];
+	double[ ]					v1			= new double[ 3 ];
+	double[ ]					v2			= new double[ 3 ];
+	double[ ]					v3			= new double[ 3 ];
+	double[ ]					v4			= new double[ 3 ];
+	double[ ]					v5			= new double[ 3 ];
+	double[ ]					v6			= new double[ 3 ];
 	
-	float[ ]					p1			= new float[ 3 ];
+	float[ ]					pf1			= new float[ 3 ];
 	
-	FloatTransformComputer		tc			= new FloatTransformComputer( );
+	double[ ]					p1			= new double[ 3 ];
 	
-	float[ ]					orient		= newIdentityMatrix( );
+	DoubleTransformComputer		tc			= new DoubleTransformComputer( );
+	
+	double[ ]					orient		= newIdentityMatrix( );
 	
 	private final UVIntersector	intersector	= new UVIntersector( );
 	
@@ -46,7 +59,7 @@ public class VehicleMover
 		return -1;
 	}
 	
-	public void move( Vehicle vehicle , float timestep )
+	public void move( Vehicle vehicle , double timestep )
 	{
 		double angleChange = vehicle.angularVelocity * timestep;
 		if( angleChange != 0 )
@@ -54,16 +67,17 @@ public class VehicleMover
 			// turn the vehicle. note that this algorithm treats the vehicle as if it turns instantaneously
 			// before moving forward, rather than turning continuously as it moves forward. This is works ok
 			// if the timestep is small.
-			float[ ] bf = vehicle.basisForward;
+			set( v1 , vehicle.basisForward );
 			
 			// turning is accomplished by rotating the forward vector in the EFG coordinate system of the basis.
 			
-			mvmulAffine( vehicle.basis.getXYZToEFGDirect( ) , bf );
-			double ePrime = Math.cos( angleChange ) * bf[ 0 ] - Math.sin( angleChange ) * bf[ 1 ];
-			double fPrime = Math.sin( angleChange ) * bf[ 0 ] + Math.cos( angleChange ) * bf[ 1 ];
-			set( bf , ( float ) ePrime , ( float ) fPrime , 0 );
-			mvmulAffine( vehicle.basis.getEFGToXYZDirect( ) , bf );
-			normalize3( bf );
+			mvmulAffine( vehicle.basis.getXYZToEFGDirect( ) , v1 );
+			double ePrime = Math.cos( angleChange ) * v1[ 0 ] - Math.sin( angleChange ) * v1[ 1 ];
+			double fPrime = Math.sin( angleChange ) * v1[ 0 ] + Math.cos( angleChange ) * v1[ 1 ];
+			set( v1 , ( double ) ePrime , ( double ) fPrime , 0 );
+			mvmulAffine( vehicle.basis.getEFGToXYZDirect( ) , v1 );
+			normalize3( v1 );
+			set( vehicle.basisForward , v1 );
 		}
 		
 		// now move the vehicle forward. This process is as follows:
@@ -75,7 +89,7 @@ public class VehicleMover
 		// find the triangle on the other side of the edge, convert the vehicle's basis from the old triangle to the new triangle,
 		// and go back to step 2.
 		
-		float remainingDist = Math.abs( vehicle.velocity * timestep );
+		double remainingDist = Math.abs( vehicle.velocity * timestep );
 		
 		while( remainingDist > 0 )
 		{
@@ -122,11 +136,11 @@ public class VehicleMover
 				// curved. If the vehicle orientation and camera position were based upon the plane normal, they would
 				// jerk around suddenly when the vehicle crosses edges that appear smooth. By basing them upon the
 				// rendering normal, they make it appear as though the vehicle is moving along a smooth surface.
-				vehicle.basis.interpolateNormals( ( float ) p1[ 0 ] , ( float ) p1[ 1 ] , vehicle.basisUp );
-				normalize3( vehicle.basisUp );
+				vehicle.basis.interpolateNormals( p1[ 0 ] , p1[ 1 ] , vehicle.basisUp );
 				
 				// the new location is still in UVN! convert it back to XYZ
-				mpmul( vehicle.basis.getUVNToXYZDirect( ) , p1 , vehicle.location );
+				mpmul( vehicle.basis.getUVNToXYZDirect( ) , p1 );
+				set( vehicle.location , p1 );
 				remainingDist = 0;
 			}
 			else
@@ -137,8 +151,6 @@ public class VehicleMover
 				// find the edge that was crossed.
 				Edge edge = vehicle.basis.createEdge( intersector.edgeIndices[ 0 ] );
 				
-				System.out.println( "Crossed: " + edge );
-				
 				// find the triangle on the other side
 				// and determine how to order its points such that the first two match the crossed edge endpoints, in order
 				Integer nextTriangle = null;
@@ -146,21 +158,15 @@ public class VehicleMover
 				
 				for( Character other : vehicle.currentZone.edgeToTriMap.get( edge.canonical( ) ) )
 				{
-					System.out.println( "Triangle " + ( int ) other + ":" );
-					vehicle.currentZone.printTriangle( other );
-				}
-				
-				for( Character other : vehicle.currentZone.edgeToTriMap.get( edge.canonical( ) ) )
-				{
 					if( other != vehicle.indexInZone )
 					{
 						nextTriangle = ( int ) other;
 						
-						edge.getPoint( 0 , v1 );
-						nexti0 = indexOf( v1 , 0 , vehicle.currentZone.getVertBuffer( ) , vehicle.currentZone.getBytesPerVertex( ) ,
+						edge.getPoint( 0 , pf1 );
+						nexti0 = indexOf( pf1 , 0 , vehicle.currentZone.getVertBuffer( ) , vehicle.currentZone.getBytesPerVertex( ) ,
 								vehicle.currentZone.getIndexBuffer( ) , nextTriangle );
-						edge.getPoint( 1 , v1 );
-						nexti1 = indexOf( v1 , 0 , vehicle.currentZone.getVertBuffer( ) , vehicle.currentZone.getBytesPerVertex( ) ,
+						edge.getPoint( 1 , pf1 );
+						nexti1 = indexOf( pf1 , 0 , vehicle.currentZone.getVertBuffer( ) , vehicle.currentZone.getBytesPerVertex( ) ,
 								vehicle.currentZone.getIndexBuffer( ) , nextTriangle );
 						
 						nexti2 = nextTriangle;
@@ -180,12 +186,6 @@ public class VehicleMover
 					}
 				}
 				
-				// System.out.println( "Current triangle: " + vehicle.indexInZone );
-				// System.out.println( "Next triangle: " + nextTriangle );
-				// System.out.println( "nexti0: " + nexti0 );
-				// System.out.println( "nexti1: " + nexti1 );
-				// System.out.println( "nexti2: " + nexti2 );
-				
 				// of course, there may not be anything on the other side, and the vehicle has reached a dead end!
 				if( nextTriangle != null )
 				{
@@ -193,29 +193,20 @@ public class VehicleMover
 					set( v1 , vehicle.basisForward );
 					
 					// find the crossing point in XYZ
-					float advance = Math.signum( vehicle.velocity ) * intersector.t[ 0 ];
+					double advance = Math.signum( vehicle.velocity ) * intersector.t[ 0 ];
 					p1[ 0 ] += advance * v1[ 0 ];
 					p1[ 1 ] += advance * v1[ 1 ];
 					p1[ 2 ] += advance * v1[ 2 ];
-					
-					vehicle.basis.printInfo( );
 					
 					// compute the normal of the old triangle plane
 					mvmulAffine( vehicle.basis.getEFGToXYZDirect( ) , 0 , 0 , 1 , v2 );
 					
 					// change the vehicle's basis to the new triangle and point ordering
-					vehicle.basis.set( vehicle.currentZone.getVertBuffer( ) , nexti0 , nexti1 , nexti2 );
+					vehicle.basis.set( vehicle.currentZone.getVertBuffer( ) , nexti1 , nexti0 , nexti2 );
 					vehicle.indexInZone = nextTriangle;
-					
-					vehicle.basis.printInfo( );
 					
 					// compute the normal of the new triangle plane
 					mvmulAffine( vehicle.basis.getEFGToXYZDirect( ) , 0 , 0 , 1 , v3 );
-					
-//					if( dot3( v2 , v3 ) < 0 )
-//					{
-//						negate3( v3 );
-//					}
 					
 					// find the transformation that rotates the old normal directly to the new normal
 					tc.orientInPlace( v2 , v3 , orient );
@@ -224,12 +215,12 @@ public class VehicleMover
 					
 					// convert the vehicle location and direction to the new triangle UVN coordinates,
 					// with which we can find the rendering normal at the new location and remove any
-					// offset perpendicular to the new triangle plane due to floating point error.
+					// offset perpendicular to the new triangle plane due to doubleing point error.
 					mpmul( vehicle.basis.getXYZToUVNDirect( ) , p1 );
 					mvmulAffine( vehicle.basis.getXYZToUVNDirect( ) , v1 );
 					
 					// compute the rendering normal at the new location.
-					vehicle.basis.interpolateNormals( ( float ) p1[ 0 ] , ( float ) p1[ 1 ] , v2 );
+					vehicle.basis.interpolateNormals( p1[ 0 ] , p1[ 1 ] , v2 );
 					
 					// remove accidental offset from the edge
 					p1[ 1 ] = 0;
@@ -368,9 +359,9 @@ public class VehicleMover
 		}
 	}
 	
-	private void rotate( float[ ] v , float[ ] axis , double rotationAmount )
+	private void rotate( double[ ] v , double[ ] axis , double rotationAmount )
 	{
-		setRotation( orient , axis , ( float ) rotationAmount );
+		setRotation( orient , axis , ( double ) rotationAmount );
 		mvmulAffine( orient , v );
 	}
 }

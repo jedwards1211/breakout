@@ -36,8 +36,8 @@ public class BasicGL3Frame extends JFrame
 		setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
 		
 		Dimension screenSize = Toolkit.getDefaultToolkit( ).getScreenSize( );
-		setSize( new Dimension( screenSize.width * 3 / 4 , screenSize.height * 3 / 4 ) );
-		setLocationRelativeTo( null );
+		setSize( new Dimension( screenSize.width * 2 / 3 , screenSize.height * 2 / 3 ) );
+		setLocation( 50 , 50 );
 	}
 	
 	protected BasicGL3Scene createScene( )

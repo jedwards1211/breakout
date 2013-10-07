@@ -1,20 +1,23 @@
 package org.andork.torquescape.control;
 
-import static org.andork.vecmath.FloatArrayVecmath.cross;
-import static org.andork.vecmath.FloatArrayVecmath.dot3;
-import static org.andork.vecmath.FloatArrayVecmath.invAffine;
-import static org.andork.vecmath.FloatArrayVecmath.invertGeneral;
-import static org.andork.vecmath.FloatArrayVecmath.length3;
-import static org.andork.vecmath.FloatArrayVecmath.mmul;
-import static org.andork.vecmath.FloatArrayVecmath.newIdentityMatrix;
-import static org.andork.vecmath.FloatArrayVecmath.normalize3;
-import static org.andork.vecmath.FloatArrayVecmath.setColumn3;
-import static org.andork.vecmath.FloatArrayVecmath.sub3;
+import static org.andork.vecmath.DoubleArrayVecmath.cross;
+import static org.andork.vecmath.DoubleArrayVecmath.dot3;
+import static org.andork.vecmath.DoubleArrayVecmath.invAffine;
+import static org.andork.vecmath.DoubleArrayVecmath.invertGeneral;
+import static org.andork.vecmath.DoubleArrayVecmath.length3;
+import static org.andork.vecmath.DoubleArrayVecmath.mmul;
+import static org.andork.vecmath.DoubleArrayVecmath.newIdentityMatrix;
+import static org.andork.vecmath.DoubleArrayVecmath.normalize3;
+import static org.andork.vecmath.DoubleArrayVecmath.setColumn3;
+import static org.andork.vecmath.DoubleArrayVecmath.sub3;
+
+import static org.andork.vecmath.MixedArrayVecmath.*;
 
 import java.nio.ByteBuffer;
 
 import org.andork.torquescape.model.Edge;
-import org.andork.vecmath.FloatArrayVecmath;
+import org.andork.vecmath.DoubleArrayVecmath;
+import org.andork.vecmath.MixedArrayVecmath;
 
 /**
  * Provides methods for transforming between 3 coordinate systems in a triangle:
@@ -37,31 +40,32 @@ public class TriangleBasis
 	final int[ ]	indices				= new int[ 3 ];
 	
 	float[ ]		verts				= new float[ 9 ];
+	double[ ]		vertsDouble			= new double[ 9 ];
 	float[ ]		normals				= new float[ 9 ];
 	
-	final float[ ]	uVector				= new float[ 3 ];
-	final float[ ]	vVector				= new float[ 3 ];
-	final float[ ]	nVector				= new float[ 3 ];
+	final double[ ]	uVector				= new double[ 3 ];
+	final double[ ]	vVector				= new double[ 3 ];
+	final double[ ]	nVector				= new double[ 3 ];
 	
-	final float[ ]	eVector				= new float[ 3 ];
-	final float[ ]	fVector				= new float[ 3 ];
-	final float[ ]	gVector				= new float[ 3 ];
+	final double[ ]	eVector				= new double[ 3 ];
+	final double[ ]	fVector				= new double[ 3 ];
+	final double[ ]	gVector				= new double[ 3 ];
 	
-	float			vDotU;
-	float			uDotU;
-	float			vDotV;
-	float			normUCrossV;
+	double			vDotU;
+	double			uDotU;
+	double			vDotV;
+	double			normUCrossV;
 	
-	final float[ ]	xyzToUVN			= newIdentityMatrix( );
-	final float[ ]	uvnToXYZ			= newIdentityMatrix( );
+	final double[ ]	xyzToUVN			= newIdentityMatrix( );
+	final double[ ]	uvnToXYZ			= newIdentityMatrix( );
 	boolean			xyzToUVNUpToDate	= false;
 	
-	final float[ ]	xyzToEFG			= newIdentityMatrix( );
-	final float[ ]	efgToXYZ			= newIdentityMatrix( );
+	final double[ ]	xyzToEFG			= newIdentityMatrix( );
+	final double[ ]	efgToXYZ			= newIdentityMatrix( );
 	boolean			xyzToEFGUpToDate	= false;
 	
-	final float[ ]	uvnToEFG			= newIdentityMatrix( );
-	final float[ ]	efgToUVN			= newIdentityMatrix( );
+	final double[ ]	uvnToEFG			= newIdentityMatrix( );
+	final double[ ]	efgToUVN			= newIdentityMatrix( );
 	boolean			uvnToEFGUpToDate	= false;
 	
 	public TriangleBasis( )
@@ -99,8 +103,10 @@ public class TriangleBasis
 		normals[ 7 ] = vertBuffer.getFloat( );
 		normals[ 8 ] = vertBuffer.getFloat( );
 		
-		sub3( verts , 3 , verts , 0 , uVector , 0 );
-		sub3( verts , 6 , verts , 0 , vVector , 0 );
+		MixedArrayVecmath.set( vertsDouble , verts );
+		
+		sub3( vertsDouble , 3 , vertsDouble , 0 , uVector , 0 );
+		sub3( vertsDouble , 6 , vertsDouble , 0 , vVector , 0 );
 		cross( uVector , vVector , nVector );
 		
 		vDotU = dot3( vVector , uVector );
@@ -108,7 +114,7 @@ public class TriangleBasis
 		vDotV = dot3( vVector , vVector );
 		normUCrossV = length3( nVector );
 		
-		FloatArrayVecmath.set( eVector , uVector );
+		DoubleArrayVecmath.set( eVector , uVector );
 		cross( nVector , uVector , fVector );
 		normalize3( eVector );
 		normalize3( fVector );
@@ -126,7 +132,7 @@ public class TriangleBasis
 			setColumn3( uvnToXYZ , 0 , uVector );
 			setColumn3( uvnToXYZ , 1 , vVector );
 			setColumn3( uvnToXYZ , 2 , nVector );
-			setColumn3( uvnToXYZ , 3 , verts );
+			setColumn3( uvnToXYZ , 3 , vertsDouble );
 			
 			invertGeneral( uvnToXYZ , xyzToUVN );
 			
@@ -141,7 +147,7 @@ public class TriangleBasis
 			setColumn3( efgToXYZ , 0 , eVector );
 			setColumn3( efgToXYZ , 1 , fVector );
 			setColumn3( efgToXYZ , 2 , gVector );
-			setColumn3( efgToXYZ , 3 , verts );
+			setColumn3( efgToXYZ , 3 , vertsDouble );
 			
 			invAffine( efgToXYZ , xyzToEFG );
 			
@@ -163,81 +169,90 @@ public class TriangleBasis
 		}
 	}
 	
-	public void getXYZToUVN( float[ ] result )
+	public void getXYZToUVN( double[ ] result )
 	{
 		updateXYZToUVNIfNecessary( );
-		FloatArrayVecmath.set( result , xyzToUVN );
+		DoubleArrayVecmath.set( result , xyzToUVN );
 	}
 	
-	public float[ ] getXYZToUVNDirect( )
+	public double[ ] getXYZToUVNDirect( )
 	{
 		updateXYZToUVNIfNecessary( );
 		return xyzToUVN;
 	}
 	
-	public void getUVNToXYZ( float[ ] result )
+	public void getUVNToXYZ( double[ ] result )
 	{
 		updateXYZToUVNIfNecessary( );
-		FloatArrayVecmath.set( result , uvnToXYZ );
+		DoubleArrayVecmath.set( result , uvnToXYZ );
 	}
 	
-	public float[ ] getUVNToXYZDirect( )
+	public double[ ] getUVNToXYZDirect( )
 	{
 		updateXYZToUVNIfNecessary( );
 		return uvnToXYZ;
 	}
 	
-	public void getXYZToEFG( float[ ] result )
+	public void getXYZToEFG( double[ ] result )
 	{
 		updateXYZToEFGIfNecessary( );
-		FloatArrayVecmath.set( result , xyzToEFG );
+		DoubleArrayVecmath.set( result , xyzToEFG );
 	}
 	
-	public float[ ] getXYZToEFGDirect( )
+	public double[ ] getXYZToEFGDirect( )
 	{
 		updateXYZToEFGIfNecessary( );
 		return xyzToEFG;
 	}
 	
-	public void getEFGToXYZ( float[ ] result )
+	public void getEFGToXYZ( double[ ] result )
 	{
 		updateXYZToEFGIfNecessary( );
-		FloatArrayVecmath.set( result , efgToXYZ );
+		DoubleArrayVecmath.set( result , efgToXYZ );
 	}
 	
-	public float[ ] getEFGToXYZDirect( )
+	public double[ ] getEFGToXYZDirect( )
 	{
 		updateXYZToEFGIfNecessary( );
 		return efgToXYZ;
 	}
 	
-	public void getUVNToEFG( float[ ] result )
+	public void getUVNToEFG( double[ ] result )
 	{
 		updateUVNToEFGIfNecessary( );
-		FloatArrayVecmath.set( result , uvnToEFG );
+		DoubleArrayVecmath.set( result , uvnToEFG );
 	}
 	
-	public float[ ] getUVNToEFGDirect( )
+	public double[ ] getUVNToEFGDirect( )
 	{
 		updateUVNToEFGIfNecessary( );
 		return uvnToEFG;
 	}
 	
-	public void getEFGToUVN( float[ ] result )
+	public void getEFGToUVN( double[ ] result )
 	{
 		updateUVNToEFGIfNecessary( );
-		FloatArrayVecmath.set( result , efgToUVN );
+		DoubleArrayVecmath.set( result , efgToUVN );
 	}
 	
-	public float[ ] getEFGToUVNDirect( )
+	public double[ ] getEFGToUVNDirect( )
 	{
 		updateUVNToEFGIfNecessary( );
 		return efgToUVN;
 	}
 	
-	public void interpolateNormals( float u , float v , float[ ] result )
+	public void interpolateNormals( double u , double v , float[ ] result )
 	{
-		float f0 = 1 - u - v;
+		double f0 = 1 - u - v;
+		
+		result[ 0 ] = ( float ) ( f0 * normals[ 0 ] + u * normals[ 3 ] + v * normals[ 6 ] );
+		result[ 1 ] = ( float ) ( f0 * normals[ 1 ] + u * normals[ 4 ] + v * normals[ 7 ] );
+		result[ 2 ] = ( float ) ( f0 * normals[ 2 ] + u * normals[ 5 ] + v * normals[ 8 ] );
+	}
+	
+	public void interpolateNormals( double u , double v , double[ ] result )
+	{
+		double f0 = 1 - u - v;
 		
 		result[ 0 ] = f0 * normals[ 0 ] + u * normals[ 3 ] + v * normals[ 6 ];
 		result[ 1 ] = f0 * normals[ 1 ] + u * normals[ 4 ] + v * normals[ 7 ];
@@ -259,10 +274,11 @@ public class TriangleBasis
 		}
 	}
 	
-	public void printInfo() {
-		System.out.println("TriangleBasis:");
-		System.out.println("[" + indices[0] + "]: (" + verts[0] + ", " + verts[1] + ", " + verts[2] + ")");
-		System.out.println("[" + indices[1] + "]: (" + verts[3] + ", " + verts[4] + ", " + verts[5] + ")");
-		System.out.println("[" + indices[2] + "]: (" + verts[6] + ", " + verts[7] + ", " + verts[8] + ")");
+	public void printInfo( )
+	{
+		System.out.println( "TriangleBasis:" );
+		System.out.println( "[" + indices[ 0 ] + "]: (" + verts[ 0 ] + ", " + verts[ 1 ] + ", " + verts[ 2 ] + ")" );
+		System.out.println( "[" + indices[ 1 ] + "]: (" + verts[ 3 ] + ", " + verts[ 4 ] + ", " + verts[ 5 ] + ")" );
+		System.out.println( "[" + indices[ 2 ] + "]: (" + verts[ 6 ] + ", " + verts[ 7 ] + ", " + verts[ 8 ] + ")" );
 	}
 }

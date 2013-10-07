@@ -10,6 +10,8 @@ import static org.andork.vecmath.FloatArrayVecmath.scale3;
 import static org.andork.vecmath.FloatArrayVecmath.set;
 import static org.andork.vecmath.FloatArrayVecmath.setColumn3;
 
+import static org.andork.vecmath.MixedArrayVecmath.*;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -17,7 +19,7 @@ import org.andork.vecmath.FloatTransformComputer;
 
 public class CameraMover
 {
-	private Vehicle							Vehicle;
+	private Vehicle							vehicle;
 	private float							lookahead;
 	private int								lookaheadIntervals;
 	private final float[ ]					initXform		= newIdentityMatrix( );
@@ -36,7 +38,7 @@ public class CameraMover
 	
 	public CameraMover( Vehicle Vehicle , float lookahead , int lookaheadIntervals )
 	{
-		this.Vehicle = Vehicle;
+		this.vehicle = Vehicle;
 		this.lookahead = lookahead;
 		this.lookaheadIntervals = lookaheadIntervals;
 		
@@ -57,7 +59,10 @@ public class CameraMover
 		{
 			queueXform = transformQueue.poll( );
 		}
-		tc.orient( 0 , 0 , 0 , /**/0 , 1 , 0 , /**/0 , 0 , -1 , Vehicle.location , Vehicle.basisUp , Vehicle.basisForward , queueXform );
+		set( location , vehicle.location );
+		set( forward , vehicle.basisForward );
+		set( up , vehicle.basisUp );
+		tc.orient( 0 , 0 , 0 , /**/0 , 1 , 0 , /**/0 , 0 , -1 , location , up , forward , queueXform );
 		transformQueue.add( queueXform );
 		
 		set( location , 0 , 0 , 0 );

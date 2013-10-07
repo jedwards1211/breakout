@@ -1,13 +1,14 @@
 package org.andork.torquescape.jogl;
 
-import static org.andork.vecmath.FloatArrayVecmath.mpmulAffine;
-import static org.andork.vecmath.FloatArrayVecmath.mvmulAffine;
-import static org.andork.vecmath.FloatArrayVecmath.normalize3;
-import static org.andork.vecmath.FloatArrayVecmath.set;
+import static org.andork.vecmath.DoubleArrayVecmath.mpmulAffine;
+import static org.andork.vecmath.DoubleArrayVecmath.mvmulAffine;
+import static org.andork.vecmath.DoubleArrayVecmath.normalize3;
+import static org.andork.vecmath.DoubleArrayVecmath.set;
 
 import org.andork.torquescape.jogl.render.ZoneRenderer;
 import org.andork.torquescape.model.Zone;
 
+@SuppressWarnings( "serial" )
 public class TorquescapeTest2 extends TorquescapeFrame
 {
 	public static void main( String[ ] args )
@@ -32,7 +33,7 @@ public class TorquescapeTest2 extends TorquescapeFrame
 		scene.player.indexInZone = 0;
 		scene.player.basis.set( rainbowZone.getVertBuffer( ) , i0 , i1 , i2 );
 		
-		mpmulAffine( scene.player.basis.getUVNToXYZDirect( ) , 0.25f , 0.25f , 0 , scene.player.location );
+		mpmulAffine( scene.player.basis.getUVNToXYZDirect( ) , 0.25 , 0.25 , 0 , scene.player.location );
 		mvmulAffine( scene.player.basis.getEFGToXYZDirect( ) , 1 , 0 , 0 , scene.player.basisForward );
 		mvmulAffine( scene.player.basis.getEFGToXYZDirect( ) , 0 , 0 , 1 , scene.player.basisUp );
 		
