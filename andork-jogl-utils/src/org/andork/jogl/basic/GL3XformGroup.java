@@ -19,6 +19,10 @@ public class GL3XformGroup implements GL3Object
 	
 	public List<GL3Object>	objects	= new ArrayList<GL3Object>( );
 	
+	public GL3XformGroup() {
+		updateN( );
+	}
+	
 	@Override
 	public void init( GL3 gl )
 	{

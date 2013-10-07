@@ -29,14 +29,14 @@ public class VehicleMover
 	
 	private final UVIntersector	intersector	= new UVIntersector( );
 	
-	private int indexOf( float[ ] p , int pi , ByteBuffer vertBuffer , CharBuffer indexBuffer , int triangleIndex )
+	private int indexOf( float[ ] p , int pi , ByteBuffer vertBuffer , int bytesPerVertex , CharBuffer indexBuffer , int triangleIndex )
 	{
 		for( int i = 0 ; i < 3 ; i++ )
 		{
 			int index = indexBuffer.get( triangleIndex + i );
-			float x = vertBuffer.getFloat( index );
-			float y = vertBuffer.getFloat( index + 4 );
-			float z = vertBuffer.getFloat( index + 8 );
+			float x = vertBuffer.getFloat( index * bytesPerVertex );
+			float y = vertBuffer.getFloat( index * bytesPerVertex + 4 );
+			float z = vertBuffer.getFloat( index * bytesPerVertex + 8 );
 			
 			if( p[ pi ] == x && p[ pi + 1 ] == y && p[ pi + 2 ] == z )
 			{
@@ -137,10 +137,19 @@ public class VehicleMover
 				// find the edge that was crossed.
 				Edge edge = vehicle.basis.createEdge( intersector.edgeIndices[ 0 ] );
 				
+				System.out.println( "Crossed: " + edge );
+				
 				// find the triangle on the other side
 				// and determine how to order its points such that the first two match the crossed edge endpoints, in order
 				Integer nextTriangle = null;
 				Integer nexti0 = null, nexti1 = null, nexti2 = null;
+				
+				for( Character other : vehicle.currentZone.edgeToTriMap.get( edge.canonical( ) ) )
+				{
+					System.out.println( "Triangle " + ( int ) other + ":" );
+					vehicle.currentZone.printTriangle( other );
+				}
+				
 				for( Character other : vehicle.currentZone.edgeToTriMap.get( edge.canonical( ) ) )
 				{
 					if( other != vehicle.indexInZone )
@@ -148,17 +157,34 @@ public class VehicleMover
 						nextTriangle = ( int ) other;
 						
 						edge.getPoint( 0 , v1 );
-						nexti0 = indexOf( v1 , 0 , vehicle.currentZone.getVertBuffer( ) , vehicle.currentZone.getIndexBuffer( ) , other );
+						nexti0 = indexOf( v1 , 0 , vehicle.currentZone.getVertBuffer( ) , vehicle.currentZone.getBytesPerVertex( ) ,
+								vehicle.currentZone.getIndexBuffer( ) , nextTriangle );
 						edge.getPoint( 1 , v1 );
-						nexti1 = indexOf( v1 , 0 , vehicle.currentZone.getVertBuffer( ) , vehicle.currentZone.getIndexBuffer( ) , other );
+						nexti1 = indexOf( v1 , 0 , vehicle.currentZone.getVertBuffer( ) , vehicle.currentZone.getBytesPerVertex( ) ,
+								vehicle.currentZone.getIndexBuffer( ) , nextTriangle );
 						
 						nexti2 = nextTriangle;
-						while( nexti2 == nexti0 || nexti2 == nexti1 )
+						while( nexti2.intValue( ) == nexti0.intValue( ) || nexti2.intValue( ) == nexti1.intValue( ) )
 						{
 							nexti2++ ;
 						}
+						
+						int bytesPerVertex = vehicle.currentZone.getBytesPerVertex( );
+						
+						vehicle.currentZone.getIndexBuffer( ).position( 0 );
+						nexti0 = ( int ) vehicle.currentZone.getIndexBuffer( ).get( nexti0 ) * bytesPerVertex;
+						nexti1 = ( int ) vehicle.currentZone.getIndexBuffer( ).get( nexti1 ) * bytesPerVertex;
+						nexti2 = ( int ) vehicle.currentZone.getIndexBuffer( ).get( nexti2 ) * bytesPerVertex;
+						
+						break;
 					}
 				}
+				
+				// System.out.println( "Current triangle: " + vehicle.indexInZone );
+				// System.out.println( "Next triangle: " + nextTriangle );
+				// System.out.println( "nexti0: " + nexti0 );
+				// System.out.println( "nexti1: " + nexti1 );
+				// System.out.println( "nexti2: " + nexti2 );
 				
 				// of course, there may not be anything on the other side, and the vehicle has reached a dead end!
 				if( nextTriangle != null )
@@ -172,14 +198,24 @@ public class VehicleMover
 					p1[ 1 ] += advance * v1[ 1 ];
 					p1[ 2 ] += advance * v1[ 2 ];
 					
+					vehicle.basis.printInfo( );
+					
 					// compute the normal of the old triangle plane
 					mvmulAffine( vehicle.basis.getEFGToXYZDirect( ) , 0 , 0 , 1 , v2 );
 					
 					// change the vehicle's basis to the new triangle and point ordering
 					vehicle.basis.set( vehicle.currentZone.getVertBuffer( ) , nexti0 , nexti1 , nexti2 );
+					vehicle.indexInZone = nextTriangle;
+					
+					vehicle.basis.printInfo( );
 					
 					// compute the normal of the new triangle plane
 					mvmulAffine( vehicle.basis.getEFGToXYZDirect( ) , 0 , 0 , 1 , v3 );
+					
+//					if( dot3( v2 , v3 ) < 0 )
+//					{
+//						negate3( v3 );
+//					}
 					
 					// find the transformation that rotates the old normal directly to the new normal
 					tc.orientInPlace( v2 , v3 , orient );

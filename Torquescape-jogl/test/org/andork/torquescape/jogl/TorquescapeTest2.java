@@ -1,9 +1,14 @@
 package org.andork.torquescape.jogl;
 
-import org.andork.jogl.basic.BasicGL3Frame;
-import org.andork.jogl.basic.BasicGL3Scene;
+import static org.andork.vecmath.FloatArrayVecmath.mpmulAffine;
+import static org.andork.vecmath.FloatArrayVecmath.mvmulAffine;
+import static org.andork.vecmath.FloatArrayVecmath.normalize3;
+import static org.andork.vecmath.FloatArrayVecmath.set;
 
-public class TorquescapeTest2 extends BasicGL3Frame
+import org.andork.torquescape.jogl.render.ZoneRenderer;
+import org.andork.torquescape.model.Zone;
+
+public class TorquescapeTest2 extends TorquescapeFrame
 {
 	public static void main( String[ ] args )
 	{
@@ -12,9 +17,31 @@ public class TorquescapeTest2 extends BasicGL3Frame
 	}
 	
 	@Override
-	protected BasicGL3Scene createScene( )
+	protected TorquescapeScene createScene( )
 	{
-		TorquescapeScene scene = new TorquescapeScene( );
+		TorquescapeScene scene = super.createScene( );
+		ZoneRenderer rainbowZoneRenderer = RainbowSliceRendererTest.createTestRainbowZone( );
+		scene.add( rainbowZoneRenderer );
+		
+		Zone rainbowZone = rainbowZoneRenderer.zone;
+		int i0 = rainbowZone.getIndexBuffer( ).get( 0 ) * rainbowZone.getBytesPerVertex( );
+		int i1 = rainbowZone.getIndexBuffer( ).get( 1 ) * rainbowZone.getBytesPerVertex( );
+		int i2 = rainbowZone.getIndexBuffer( ).get( 2 ) * rainbowZone.getBytesPerVertex( );
+		
+		scene.player.currentZone = rainbowZone;
+		scene.player.indexInZone = 0;
+		scene.player.basis.set( rainbowZone.getVertBuffer( ) , i0 , i1 , i2 );
+		
+		mpmulAffine( scene.player.basis.getUVNToXYZDirect( ) , 0.25f , 0.25f , 0 , scene.player.location );
+		mvmulAffine( scene.player.basis.getEFGToXYZDirect( ) , 1 , 0 , 0 , scene.player.basisForward );
+		mvmulAffine( scene.player.basis.getEFGToXYZDirect( ) , 0 , 0 , 1 , scene.player.basisUp );
+		
+		normalize3( scene.player.basisForward );
+		normalize3( scene.player.modelForward );
+		
+		set( scene.player.modelForward , scene.player.basisForward );
+		set( scene.player.modelUp , scene.player.basisUp );
+		
 		return scene;
 	}
 }

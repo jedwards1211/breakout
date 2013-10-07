@@ -1,6 +1,7 @@
 package org.andork.torquescape.jogl;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
@@ -58,6 +59,48 @@ public class RainbowSliceRendererTest extends BasicGL3Frame
 	{
 		final Track track = new Track1( );
 		
+		Zone zone = createZoneForRainbowSlice( track , sequence( 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 360f ) );
+		
+		RainbowSlice rainbowSlice = new RainbowSlice( );
+		rainbowSlice.uOffset = 28;
+		rainbowSlice.vOffset = 40;
+		rainbowSlice.setIndexBuffer( zone.getIndexBuffer( ) );
+		zone.addSlice( rainbowSlice );
+		
+		ZoneRenderer rend1 = new ZoneRenderer( zone );
+		
+		scene.add( rend1 );
+	}
+	
+	public static ZoneRenderer createTestRainbowZone( )
+	{
+		final Track track = new Track1( );
+		
+		Zone zone = createZoneForRainbowSlice( track , sequence( 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 360f ) );
+		
+		RainbowSlice rainbowSlice = new RainbowSlice( );
+		rainbowSlice.uOffset = 28;
+		rainbowSlice.vOffset = 40;
+		rainbowSlice.setIndexBuffer( zone.getIndexBuffer( ) );
+		zone.addSlice( rainbowSlice );
+		
+		ZoneRenderer rend1 = new ZoneRenderer( zone );
+		
+		return rend1;
+	}
+	
+	public static List<Float> sequence( float start , float end , float step )
+	{
+		List<Float> result = new ArrayList<Float>( );
+		for( float f = start ; f < end ; f += step )
+		{
+			result.add( f );
+		}
+		return result;
+	}
+	
+	public static Zone createZoneForRainbowSlice( final Track track , List<Float> params )
+	{
 		IVertexAttrFn attrFn1 = new IVertexAttrFn( )
 		{
 			@Override
@@ -127,36 +170,19 @@ public class RainbowSliceRendererTest extends BasicGL3Frame
 		
 		Zone zone = new Zone( );
 		
-		int paramCount = ( int ) ( Math.PI * 4 / step );
+		int vertexCount = params.size( ) * vertexFn.getVertexCount( 0 );
 		
-		int vertexCount = paramCount * vertexFn.getVertexCount( 0 );
-		
-		int indexCount = track.getIndexFn( ).getIndexCount( 0 ) * paramCount;
+		int indexCount = track.getIndexFn( ).getIndexCount( 0 ) * params.size( );
 		
 		zone.init( vertexCount , vertexFn.getBytesPerVertex( ) , indexCount );
 		
-		Float[ ] params = new Float[ paramCount ];
-		for( int i = 0 ; i < paramCount ; i++ )
-		{
-			params[ i ] = i * step;
-		}
-		
 		DirectZoneGenerator zoneGen = DirectZoneGenerator.newInstance( );
 		zoneGen.setZone( zone );
-		zoneGen.generate( vertexFn , track.getIndexFn( ) , Arrays.asList( params ) );
+		zoneGen.generate( vertexFn , track.getIndexFn( ) , params );
 		
 		NormalGenerator.generateNormals( zone.getVertBuffer( ) , 12 , vertexFn.getBytesPerVertex( ) , zone.getIndexBuffer( ) , 0 , indexCount );
 		
 		zone.rebuildMaps( );
-		
-		RainbowSlice rainbowSlice = new RainbowSlice( );
-		rainbowSlice.uOffset = 28;
-		rainbowSlice.vOffset = 40;
-		rainbowSlice.setIndexBuffer( zone.getIndexBuffer( ) );
-		zone.addSlice( rainbowSlice );
-		
-		ZoneRenderer rend1 = new ZoneRenderer( zone );
-		
-		scene.add( rend1 );
+		return zone;
 	}
 }

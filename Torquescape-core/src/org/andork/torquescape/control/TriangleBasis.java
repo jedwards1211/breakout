@@ -71,9 +71,9 @@ public class TriangleBasis
 	public void set( ByteBuffer vertBuffer , int i0 , int i1 , int i2 )
 	{
 		this.vertBuffer = vertBuffer;
-		indices[0] = i0;
-		indices[1] = i1;
-		indices[2] = i2;
+		indices[ 0 ] = i0;
+		indices[ 1 ] = i1;
+		indices[ 2 ] = i2;
 		
 		vertBuffer.position( i0 );
 		verts[ 0 ] = vertBuffer.getFloat( );
@@ -257,5 +257,12 @@ public class TriangleBasis
 			default:
 				throw new IllegalArgumentException( "index must be >= 0 and <= 2" );
 		}
+	}
+	
+	public void printInfo() {
+		System.out.println("TriangleBasis:");
+		System.out.println("[" + indices[0] + "]: (" + verts[0] + ", " + verts[1] + ", " + verts[2] + ")");
+		System.out.println("[" + indices[1] + "]: (" + verts[3] + ", " + verts[4] + ", " + verts[5] + ")");
+		System.out.println("[" + indices[2] + "]: (" + verts[6] + ", " + verts[7] + ", " + verts[8] + ")");
 	}
 }

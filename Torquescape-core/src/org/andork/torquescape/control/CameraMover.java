@@ -21,7 +21,7 @@ public class CameraMover
 	private float							lookahead;
 	private int								lookaheadIntervals;
 	private final float[ ]					initXform		= newIdentityMatrix( );
-	private final float[ ]					xform			= newIdentityMatrix( );
+	public final float[ ]					xform			= newIdentityMatrix( );
 	private final FloatTransformComputer	tc				= new FloatTransformComputer( );
 	private float[ ]						location		= new float[ 3 ];
 	private float[ ]						forward			= new float[ 3 ];
@@ -87,7 +87,7 @@ public class CameraMover
 		scale3( up , 1.0f / avgCount );
 		scale3( right , 1.0f / avgCount );
 		
-		tc.orient( 0, 0, 0, /**/0, 1, 0, /**/1, 0, 0, location , up , right , this.xform );
+		tc.orient( 0 , 0 , 0 , /**/0 , 1 , 0 , /**/1 , 0 , 0 , location , up , right , this.xform );
 		mmulAffine( this.xform , initXform , this.xform );
 	}
 }
