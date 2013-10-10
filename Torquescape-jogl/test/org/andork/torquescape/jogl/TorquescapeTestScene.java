@@ -1,5 +1,13 @@
 package org.andork.torquescape.jogl;
 
+import static org.andork.vecmath.Vecmath.invAffine;
+import static org.andork.vecmath.Vecmath.lookAt;
+import static org.andork.vecmath.Vecmath.mmul;
+import static org.andork.vecmath.Vecmath.newMat4f;
+import static org.andork.vecmath.Vecmath.normalize;
+import static org.andork.vecmath.Vecmath.perspective;
+import static org.andork.vecmath.Vecmath.transpose;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -19,7 +27,6 @@ import org.andork.torquescape.model.track.Track1;
 import org.andork.torquescape.model.vertex.IVertexAttrFn;
 import org.andork.torquescape.model.vertex.IVertexVisitor;
 import org.andork.torquescape.model.vertex.StandardVertexFn;
-import org.andork.vecmath.FloatArrayVecmath;
 
 public class TorquescapeTestScene implements GLEventListener
 {
@@ -28,16 +35,16 @@ public class TorquescapeTestScene implements GLEventListener
 	public float					tilt;
 	public float					pan;
 	
-	float[ ]						cameraMatrix		= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						cameraMatrix		= newMat4f( );
 	
-	float[ ]						modelMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						viewMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						projMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						panMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						tiltMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						modelViewMatrix		= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						modelViewProjMatrix	= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]						identityMatrix		= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]						modelMatrix			= newMat4f( );
+	float[ ]						viewMatrix			= newMat4f( );
+	float[ ]						projMatrix			= newMat4f( );
+	float[ ]						panMatrix			= newMat4f( );
+	float[ ]						tiltMatrix			= newMat4f( );
+	float[ ]						modelViewMatrix		= newMat4f( );
+	float[ ]						modelViewProjMatrix	= newMat4f( );
+	float[ ]						identityMatrix		= newMat4f( );
 	
 	public void draw( GL3 gl , float[ ] mvMatrix , float[ ] pMatrix )
 	{
@@ -49,10 +56,10 @@ public class TorquescapeTestScene implements GLEventListener
 		gl.glEnable( GL3.GL_CULL_FACE );
 		gl.glCullFace( GL3.GL_BACK );
 		
-		FloatArrayVecmath.invAffine( cameraMatrix , modelMatrix );
-		FloatArrayVecmath.mmul( viewMatrix , modelMatrix , modelViewMatrix );
+		invAffine( cameraMatrix , modelMatrix );
+		mmul( viewMatrix , modelMatrix , modelViewMatrix );
 		
-		FloatArrayVecmath.transpose( modelViewMatrix , modelViewMatrix );
+		transpose( modelViewMatrix , modelViewMatrix );
 		
 		for( ZoneRenderer zone : zones )
 		{
@@ -67,7 +74,7 @@ public class TorquescapeTestScene implements GLEventListener
 	public void init( GLAutoDrawable drawable )
 	{
 		// Set the camera position (View matrix)
-		FloatArrayVecmath.lookAt( viewMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
+		lookAt( viewMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
 		
 		GL3 gl = ( GL3 ) drawable.getGL( );
 		
@@ -111,7 +118,7 @@ public class TorquescapeTestScene implements GLEventListener
 				next[ 1 ] -= prev[ 1 ];
 				next[ 2 ] -= prev[ 2 ];
 				
-				FloatArrayVecmath.normalize( next , 0 , 3 );
+				normalize( next , 0 , 3 );
 				
 				visitor.visit( next[ 0 ] );
 				visitor.visit( next[ 1 ] );
@@ -130,7 +137,7 @@ public class TorquescapeTestScene implements GLEventListener
 				next[ 1 ] -= prev[ 1 ];
 				next[ 2 ] -= prev[ 2 ];
 				
-				FloatArrayVecmath.normalize( next , 0 , 3 );
+				normalize( next , 0 , 3 );
 				
 				visitor.visit( next[ 0 ] );
 				visitor.visit( next[ 1 ] );
@@ -219,11 +226,11 @@ public class TorquescapeTestScene implements GLEventListener
 		
 		float ratio = ( float ) width / height;
 		
-		FloatArrayVecmath.perspective( projMatrix , ( float ) Math.PI / 2 , ratio , 0.01f , 10000 );
+		perspective( projMatrix , ( float ) Math.PI / 2 , ratio , 0.01f , 10000 );
 		projMatrix[ 8 ] = -projMatrix[ 8 ];
 		projMatrix[ 9 ] = -projMatrix[ 9 ];
 		projMatrix[ 10 ] = -projMatrix[ 10 ];
 		projMatrix[ 11 ] = -projMatrix[ 11 ];
-		FloatArrayVecmath.transpose( projMatrix , projMatrix );
+		transpose( projMatrix , projMatrix );
 	}
 }

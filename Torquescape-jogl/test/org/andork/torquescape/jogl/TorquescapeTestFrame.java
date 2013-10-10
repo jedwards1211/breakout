@@ -10,10 +10,10 @@ import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JFrame;
 
-import org.andork.vecmath.FloatArrayVecmath;
-
 import com.jogamp.opengl.util.AnimatorBase;
 import com.jogamp.opengl.util.FPSAnimator;
+
+import static org.andork.vecmath.Vecmath.*;
 
 public class TorquescapeTestFrame extends JFrame
 {
@@ -74,12 +74,12 @@ public class TorquescapeTestFrame extends JFrame
 					float pan = ( float ) ( dx * Math.PI / glCanvas.getWidth( ) );
 					float tilt = ( float ) ( dy * Math.PI / glCanvas.getHeight( ) );
 					
-					FloatArrayVecmath.rotY( tempMatrix , pan );
-					FloatArrayVecmath.mmulRotational( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
+					rotY( tempMatrix , pan );
+					mmulRotational( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
 					
-					FloatArrayVecmath.mvmulAffine( scene.cameraMatrix , 1 , 0 , 0 , tiltAxis );
-					FloatArrayVecmath.setRotation( tempMatrix , tiltAxis , tilt );
-					FloatArrayVecmath.mmulRotational( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
+					mvmulAffine( scene.cameraMatrix , 1 , 0 , 0 , tiltAxis );
+					setRotation( tempMatrix , tiltAxis , tilt );
+					mmulRotational( tempMatrix , scene.cameraMatrix , scene.cameraMatrix );
 				}
 				else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 				{

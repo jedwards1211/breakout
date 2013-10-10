@@ -305,4 +305,11 @@ public class VecmathUtils
 		out[ 14 ] = m.m32;
 		out[ 15 ] = m.m33;
 	}
+	
+	public static void set( float[ ] a , Tuple3f b )
+	{
+		a[ 0 ] = b.x;
+		a[ 1 ] = b.y;
+		a[ 2 ] = b.z;
+	}
 }

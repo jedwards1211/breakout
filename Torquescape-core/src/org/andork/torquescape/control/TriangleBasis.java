@@ -1,23 +1,20 @@
 package org.andork.torquescape.control;
 
-import static org.andork.vecmath.DoubleArrayVecmath.cross;
-import static org.andork.vecmath.DoubleArrayVecmath.dot3;
-import static org.andork.vecmath.DoubleArrayVecmath.invAffine;
-import static org.andork.vecmath.DoubleArrayVecmath.invertGeneral;
-import static org.andork.vecmath.DoubleArrayVecmath.length3;
-import static org.andork.vecmath.DoubleArrayVecmath.mmul;
-import static org.andork.vecmath.DoubleArrayVecmath.newIdentityMatrix;
-import static org.andork.vecmath.DoubleArrayVecmath.normalize3;
-import static org.andork.vecmath.DoubleArrayVecmath.setColumn3;
-import static org.andork.vecmath.DoubleArrayVecmath.sub3;
-
-import static org.andork.vecmath.MixedArrayVecmath.*;
+import static org.andork.vecmath.Vecmath.cross;
+import static org.andork.vecmath.Vecmath.dot3;
+import static org.andork.vecmath.Vecmath.invAffine;
+import static org.andork.vecmath.Vecmath.invertGeneral;
+import static org.andork.vecmath.Vecmath.length3;
+import static org.andork.vecmath.Vecmath.mmul;
+import static org.andork.vecmath.Vecmath.newMat4d;
+import static org.andork.vecmath.Vecmath.normalize3;
+import static org.andork.vecmath.Vecmath.setColumn3;
+import static org.andork.vecmath.Vecmath.sub3;
 
 import java.nio.ByteBuffer;
 
 import org.andork.torquescape.model.Edge;
-import org.andork.vecmath.DoubleArrayVecmath;
-import org.andork.vecmath.MixedArrayVecmath;
+import org.andork.vecmath.Vecmath;
 
 /**
  * Provides methods for transforming between 3 coordinate systems in a triangle:
@@ -56,16 +53,16 @@ public class TriangleBasis
 	double			vDotV;
 	double			normUCrossV;
 	
-	final double[ ]	xyzToUVN			= newIdentityMatrix( );
-	final double[ ]	uvnToXYZ			= newIdentityMatrix( );
+	final double[ ]	xyzToUVN			= newMat4d( );
+	final double[ ]	uvnToXYZ			= newMat4d( );
 	boolean			xyzToUVNUpToDate	= false;
 	
-	final double[ ]	xyzToEFG			= newIdentityMatrix( );
-	final double[ ]	efgToXYZ			= newIdentityMatrix( );
+	final double[ ]	xyzToEFG			= newMat4d( );
+	final double[ ]	efgToXYZ			= newMat4d( );
 	boolean			xyzToEFGUpToDate	= false;
 	
-	final double[ ]	uvnToEFG			= newIdentityMatrix( );
-	final double[ ]	efgToUVN			= newIdentityMatrix( );
+	final double[ ]	uvnToEFG			= newMat4d( );
+	final double[ ]	efgToUVN			= newMat4d( );
 	boolean			uvnToEFGUpToDate	= false;
 	
 	public TriangleBasis( )
@@ -103,7 +100,7 @@ public class TriangleBasis
 		normals[ 7 ] = vertBuffer.getFloat( );
 		normals[ 8 ] = vertBuffer.getFloat( );
 		
-		MixedArrayVecmath.set( vertsDouble , verts );
+		Vecmath.set( vertsDouble , verts );
 		
 		sub3( vertsDouble , 3 , vertsDouble , 0 , uVector , 0 );
 		sub3( vertsDouble , 6 , vertsDouble , 0 , vVector , 0 );
@@ -114,7 +111,7 @@ public class TriangleBasis
 		vDotV = dot3( vVector , vVector );
 		normUCrossV = length3( nVector );
 		
-		DoubleArrayVecmath.set( eVector , uVector );
+		Vecmath.set( eVector , uVector );
 		cross( nVector , uVector , fVector );
 		normalize3( eVector );
 		normalize3( fVector );
@@ -172,7 +169,7 @@ public class TriangleBasis
 	public void getXYZToUVN( double[ ] result )
 	{
 		updateXYZToUVNIfNecessary( );
-		DoubleArrayVecmath.set( result , xyzToUVN );
+		Vecmath.set( result , xyzToUVN );
 	}
 	
 	public double[ ] getXYZToUVNDirect( )
@@ -184,7 +181,7 @@ public class TriangleBasis
 	public void getUVNToXYZ( double[ ] result )
 	{
 		updateXYZToUVNIfNecessary( );
-		DoubleArrayVecmath.set( result , uvnToXYZ );
+		Vecmath.set( result , uvnToXYZ );
 	}
 	
 	public double[ ] getUVNToXYZDirect( )
@@ -196,7 +193,7 @@ public class TriangleBasis
 	public void getXYZToEFG( double[ ] result )
 	{
 		updateXYZToEFGIfNecessary( );
-		DoubleArrayVecmath.set( result , xyzToEFG );
+		Vecmath.set( result , xyzToEFG );
 	}
 	
 	public double[ ] getXYZToEFGDirect( )
@@ -208,7 +205,7 @@ public class TriangleBasis
 	public void getEFGToXYZ( double[ ] result )
 	{
 		updateXYZToEFGIfNecessary( );
-		DoubleArrayVecmath.set( result , efgToXYZ );
+		Vecmath.set( result , efgToXYZ );
 	}
 	
 	public double[ ] getEFGToXYZDirect( )
@@ -220,7 +217,7 @@ public class TriangleBasis
 	public void getUVNToEFG( double[ ] result )
 	{
 		updateUVNToEFGIfNecessary( );
-		DoubleArrayVecmath.set( result , uvnToEFG );
+		Vecmath.set( result , uvnToEFG );
 	}
 	
 	public double[ ] getUVNToEFGDirect( )
@@ -232,7 +229,7 @@ public class TriangleBasis
 	public void getEFGToUVN( double[ ] result )
 	{
 		updateUVNToEFGIfNecessary( );
-		DoubleArrayVecmath.set( result , efgToUVN );
+		Vecmath.set( result , efgToUVN );
 	}
 	
 	public double[ ] getEFGToUVNDirect( )

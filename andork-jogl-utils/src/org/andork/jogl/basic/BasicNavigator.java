@@ -7,7 +7,7 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 
-import org.andork.vecmath.FloatArrayVecmath;
+import org.andork.vecmath.Vecmath;
 
 public class BasicNavigator extends MouseAdapter
 {
@@ -17,8 +17,8 @@ public class BasicNavigator extends MouseAdapter
 	float[ ]			v			= new float[ 3 ];
 	MouseEvent			pressEvent	= null;
 	
-	final float[ ]		temp		= FloatArrayVecmath.newIdentityMatrix( );
-	final float[ ]		cam			= FloatArrayVecmath.newIdentityMatrix( );
+	final float[ ]		temp		= Vecmath.newMat4f( );
+	final float[ ]		cam			= Vecmath.newMat4f( );
 	
 	float				lastPan		= 0;
 	
@@ -117,11 +117,11 @@ public class BasicNavigator extends MouseAdapter
 		
 		Component glCanvas = e.getComponent( );
 		
-		FloatArrayVecmath.invAffine( scene.v , cam );
+		Vecmath.invAffine( scene.v , cam );
 		
 		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 		{
-			FloatArrayVecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
+			Vecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
 			
 			float xz = ( float ) Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 2 ] * v[ 2 ] );
 			
@@ -133,28 +133,28 @@ public class BasicNavigator extends MouseAdapter
 			float dpan = ( float ) ( dx * panFactor / glCanvas.getWidth( ) );
 			float dtilt = ( float ) ( dy * tiltFactor / glCanvas.getHeight( ) );
 			
-			FloatArrayVecmath.rotY( temp , dpan );
-			FloatArrayVecmath.mmulRotational( temp , cam , cam );
+			Vecmath.rotY( temp , dpan );
+			Vecmath.mmulRotational( temp , cam , cam );
 			
-			FloatArrayVecmath.mvmulAffine( cam , 1 , 0 , 0 , v );
-			FloatArrayVecmath.setRotation( temp , v , dtilt );
-			FloatArrayVecmath.mmulRotational( temp , cam , cam );
+			Vecmath.mvmulAffine( cam , 1 , 0 , 0 , v );
+			Vecmath.setRotation( temp , v , dtilt );
+			Vecmath.mmulRotational( temp , cam , cam );
 			
-			FloatArrayVecmath.invAffine( cam , scene.v );
+			Vecmath.invAffine( cam , scene.v );
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
 			cam[ 3 ] += cam[ 2 ] * dy * moveFactor;
 			cam[ 7 ] += cam[ 6 ] * dy * moveFactor;
 			cam[ 11 ] += cam[ 10 ] * dy * moveFactor;
-			FloatArrayVecmath.invAffine( cam , scene.v );
+			Vecmath.invAffine( cam , scene.v );
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
 		{
 			cam[ 3 ] += cam[ 0 ] * -dx * moveFactor + cam[ 1 ] * dy * moveFactor;
 			cam[ 7 ] += cam[ 4 ] * -dx * moveFactor + cam[ 5 ] * dy * moveFactor;
 			cam[ 11 ] += cam[ 8 ] * -dx * moveFactor + cam[ 9 ] * dy * moveFactor;
-			FloatArrayVecmath.invAffine( cam , scene.v );
+			Vecmath.invAffine( cam , scene.v );
 		}
 		
 		if( callDisplay )
@@ -171,7 +171,7 @@ public class BasicNavigator extends MouseAdapter
 			return;
 		}
 		
-		FloatArrayVecmath.invAffine( scene.v , cam );
+		Vecmath.invAffine( scene.v , cam );
 		
 		float distance = e.getWheelRotation( ) * wheelFactor;
 		
@@ -179,7 +179,7 @@ public class BasicNavigator extends MouseAdapter
 		cam[ 7 ] += cam[ 6 ] * distance;
 		cam[ 11 ] += cam[ 10 ] * distance;
 		
-		FloatArrayVecmath.invAffine( cam , scene.v );
+		Vecmath.invAffine( cam , scene.v );
 		
 		if( callDisplay )
 		{

@@ -1,11 +1,13 @@
-package org.andork.torquescape.jogl;
+package org.andork.torquescape.jogl.render;
 
-import static org.andork.vecmath.DoubleArrayVecmath.mpmulAffine;
-import static org.andork.vecmath.DoubleArrayVecmath.mvmulAffine;
-import static org.andork.vecmath.DoubleArrayVecmath.normalize3;
-import static org.andork.vecmath.DoubleArrayVecmath.set;
+import static org.andork.vecmath.Vecmath.mpmulAffine;
+import static org.andork.vecmath.Vecmath.mvmulAffine;
+import static org.andork.vecmath.Vecmath.normalize3;
+import static org.andork.vecmath.Vecmath.set;
 
-import org.andork.torquescape.jogl.render.ZoneRenderer;
+import org.andork.torquescape.jogl.RainbowSliceRendererTest;
+import org.andork.torquescape.jogl.TorquescapeScene;
+import org.andork.torquescape.jogl.main.TorquescapeFrame;
 import org.andork.torquescape.model.Zone;
 
 @SuppressWarnings( "serial" )

@@ -15,7 +15,7 @@ import org.andork.math.curve.Point2fType;
 import org.andork.math.curve.SmoothRandomWalk;
 import org.andork.math.curve.SmoothRandomWalk.RandomFloatHolderGenerator;
 import org.andork.math.curve.SmoothRandomWalk.RandomPoint2fGenerator;
-import org.andork.vecmath.FloatArrayVecmath;
+import org.andork.vecmath.Vecmath;
 import org.omg.CORBA.FloatHolder;
 
 public class CurvesTestScene implements GLEventListener
@@ -24,11 +24,11 @@ public class CurvesTestScene implements GLEventListener
 	
 	final float[ ]						viewFrame			= { -1 , 1 , -1 , 1 };
 	
-	float[ ]							mvpMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]							mvpMatrix			= Vecmath.newMat4f( );
 	
-	float[ ]							modelMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]							viewMatrix			= FloatArrayVecmath.newIdentityMatrix( );
-	float[ ]							projMatrix			= FloatArrayVecmath.newIdentityMatrix( );
+	float[ ]							modelMatrix			= Vecmath.newMat4f( );
+	float[ ]							viewMatrix			= Vecmath.newMat4f( );
+	float[ ]							projMatrix			= Vecmath.newMat4f( );
 	
 	CurveVisualizer						visualizer			= new CurveVisualizer( 7 , 2 );
 	
@@ -148,7 +148,7 @@ public class CurvesTestScene implements GLEventListener
 			lastAdvance = time;
 		}
 		
-		FloatArrayVecmath.setIdentity( modelMatrix );
+		Vecmath.setIdentity( modelMatrix );
 		
 		recomputeMVP( );
 		
@@ -165,15 +165,15 @@ public class CurvesTestScene implements GLEventListener
 			cpPolygon.draw( gl , mvpMatrix );
 		}
 		
-		FloatArrayVecmath.setIdentity( modelMatrix );
+		Vecmath.setIdentity( modelMatrix );
 		
 		recomputeMVP( );
 	}
 	
 	private void recomputeMVP( )
 	{
-		FloatArrayVecmath.mmul( projMatrix , modelMatrix , mvpMatrix );
-		FloatArrayVecmath.transpose( mvpMatrix , mvpMatrix );
+		Vecmath.mmul( projMatrix , modelMatrix , mvpMatrix );
+		Vecmath.transpose( mvpMatrix , mvpMatrix );
 	}
 	
 	@Override
@@ -193,6 +193,6 @@ public class CurvesTestScene implements GLEventListener
 	
 	public void recomputeOrtho( )
 	{
-		FloatArrayVecmath.ortho( projMatrix , viewFrame[ 0 ] , viewFrame[ 1 ] , viewFrame[ 2 ] , viewFrame[ 3 ] , -100 , 100 );
+		Vecmath.ortho( projMatrix , viewFrame[ 0 ] , viewFrame[ 1 ] , viewFrame[ 2 ] , viewFrame[ 3 ] , -100 , 100 );
 	}
 }

@@ -1,8 +1,8 @@
 package org.andork.torquescape.model.old.xform;
 
-import static org.andork.vecmath.FloatArrayVecmath.mmul;
-import static org.andork.vecmath.FloatArrayVecmath.rotZ;
-import static org.andork.vecmath.FloatArrayVecmath.setIdentity;
+import static org.andork.vecmath.Vecmath.mmul;
+import static org.andork.vecmath.Vecmath.rotZ;
+import static org.andork.vecmath.Vecmath.setIdentity;
 
 import org.andork.torquescape.model.old.param.IParamFunction;
 

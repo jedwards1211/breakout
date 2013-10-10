@@ -1,13 +1,13 @@
 package org.andork.vecmath;
 
-import static org.andork.vecmath.FloatArrayVecmath.cross;
-import static org.andork.vecmath.FloatArrayVecmath.invertGeneral;
-import static org.andork.vecmath.FloatArrayVecmath.mmul;
-import static org.andork.vecmath.FloatArrayVecmath.newIdentityMatrix;
-import static org.andork.vecmath.FloatArrayVecmath.normalize3;
-import static org.andork.vecmath.FloatArrayVecmath.set;
-import static org.andork.vecmath.FloatArrayVecmath.setColumn3;
-import static org.andork.vecmath.FloatArrayVecmath.setRow4;
+import static org.andork.vecmath.Vecmath.cross;
+import static org.andork.vecmath.Vecmath.invertGeneral;
+import static org.andork.vecmath.Vecmath.mmul;
+import static org.andork.vecmath.Vecmath.newMat4f;
+import static org.andork.vecmath.Vecmath.normalize3;
+import static org.andork.vecmath.Vecmath.set;
+import static org.andork.vecmath.Vecmath.setColumn3;
+import static org.andork.vecmath.Vecmath.setRow4;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Vector3d;
@@ -21,20 +21,20 @@ import javax.vecmath.Vector3d;
  * </ul>
  * TransformComputer3f is not synchronized!
  */
-public class FloatTransformComputer
+public class FloatOrientComputer
 {
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public float[ ]					m		= newIdentityMatrix( );
+	public float[ ]					m		= newMat4f( );
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public float[ ]					x1		= newIdentityMatrix( );
+	public float[ ]					x1		= newMat4f( );
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public float[ ]					x2		= newIdentityMatrix( );
+	public float[ ]					x2		= newMat4f( );
 	
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.

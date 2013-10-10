@@ -1,7 +1,8 @@
 package org.andork.torquescape.model.coord;
 
+import static org.andork.vecmath.Vecmath.mpmulAffine;
+
 import org.andork.torquescape.model.xform.IXformFn;
-import org.andork.vecmath.FloatArrayVecmath;
 
 public class XformedCoordFn implements ICoordFn
 {
@@ -27,6 +28,6 @@ public class XformedCoordFn implements ICoordFn
 	{
 		coordFn.eval( param , index , result );
 		xformFn.eval( param , xform );
-		FloatArrayVecmath.mpmulAffine( xform , result );
+		mpmulAffine( xform , result );
 	}
 }

@@ -1,8 +1,8 @@
 package org.andork.torquescape.jogl;
 
-import static org.andork.vecmath.DoubleArrayVecmath.cross;
-import static org.andork.vecmath.FloatArrayVecmath.invAffine;
-import static org.andork.vecmath.MixedArrayVecmath.setColumn3;
+import static org.andork.vecmath.Vecmath.cross;
+import static org.andork.vecmath.Vecmath.invAffine;
+import static org.andork.vecmath.Vecmath.setColumn3;
 
 import java.nio.ByteBuffer;
 import java.util.HashSet;

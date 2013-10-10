@@ -1,8 +1,8 @@
 package org.andork.jogl.basic;
 
-import static org.andork.vecmath.FloatArrayVecmath.invAffineToTranspose3x3;
-import static org.andork.vecmath.FloatArrayVecmath.newIdentityMatrix;
-import static org.andork.vecmath.FloatArrayVecmath.perspective;
+import static org.andork.vecmath.Vecmath.invAffineToTranspose3x3;
+import static org.andork.vecmath.Vecmath.newMat4f;
+import static org.andork.vecmath.Vecmath.perspective;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -18,21 +18,21 @@ public class BasicGL3Scene implements GLEventListener
 	/**
 	 * The model matrix.
 	 */
-	public final float[ ]			m					= newIdentityMatrix( );
+	public final float[ ]			m					= newMat4f( );
 	
-	private final float[ ]			m_inv				= newIdentityMatrix( );
+	private final float[ ]			m_inv				= newMat4f( );
 	
 	private final float[ ]			n					= new float[ 9 ];
 	
 	/**
 	 * The view matrix.
 	 */
-	public final float[ ]			v					= newIdentityMatrix( );
+	public final float[ ]			v					= newMat4f( );
 	
 	/**
 	 * The projection matrix;
 	 */
-	public final float[ ]			p					= newIdentityMatrix( );
+	public final float[ ]			p					= newMat4f( );
 	
 	private int						width , height;
 	

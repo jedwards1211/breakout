@@ -1,30 +1,28 @@
 package org.andork.torquescape.control;
 
-import static org.andork.vecmath.FloatArrayVecmath.add3;
-import static org.andork.vecmath.FloatArrayVecmath.mmulAffine;
-import static org.andork.vecmath.FloatArrayVecmath.mpmulAffine;
-import static org.andork.vecmath.FloatArrayVecmath.mvmulAffine;
-import static org.andork.vecmath.FloatArrayVecmath.newIdentityMatrix;
-import static org.andork.vecmath.FloatArrayVecmath.rotX;
-import static org.andork.vecmath.FloatArrayVecmath.scale3;
-import static org.andork.vecmath.FloatArrayVecmath.set;
-import static org.andork.vecmath.FloatArrayVecmath.setColumn3;
-
-import static org.andork.vecmath.MixedArrayVecmath.*;
+import static org.andork.vecmath.Vecmath.add3;
+import static org.andork.vecmath.Vecmath.mmulAffine;
+import static org.andork.vecmath.Vecmath.mpmulAffine;
+import static org.andork.vecmath.Vecmath.mvmulAffine;
+import static org.andork.vecmath.Vecmath.newMat4f;
+import static org.andork.vecmath.Vecmath.rotX;
+import static org.andork.vecmath.Vecmath.scale3;
+import static org.andork.vecmath.Vecmath.set;
+import static org.andork.vecmath.Vecmath.setColumn3;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import org.andork.vecmath.FloatTransformComputer;
+import org.andork.vecmath.FloatOrientComputer;
 
 public class CameraMover
 {
 	private Vehicle							vehicle;
 	private float							lookahead;
 	private int								lookaheadIntervals;
-	private final float[ ]					initXform		= newIdentityMatrix( );
-	public final float[ ]					xform			= newIdentityMatrix( );
-	private final FloatTransformComputer	tc				= new FloatTransformComputer( );
+	private final float[ ]					initXform		= newMat4f( );
+	public final float[ ]					xform			= newMat4f( );
+	private final FloatOrientComputer	tc				= new FloatOrientComputer( );
 	private float[ ]						location		= new float[ 3 ];
 	private float[ ]						forward			= new float[ 3 ];
 	private float[ ]						up				= new float[ 3 ];
@@ -53,7 +51,7 @@ public class CameraMover
 		
 		if( transformQueue.size( ) < cameraDelay )
 		{
-			queueXform = newIdentityMatrix( );
+			queueXform = newMat4f( );
 		}
 		else
 		{

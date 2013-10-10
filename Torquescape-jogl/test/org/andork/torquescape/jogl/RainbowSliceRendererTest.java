@@ -1,5 +1,7 @@
 package org.andork.torquescape.jogl;
 
+import static org.andork.vecmath.Vecmath.normalize;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,7 +20,6 @@ import org.andork.torquescape.model.track.Track1;
 import org.andork.torquescape.model.vertex.IVertexAttrFn;
 import org.andork.torquescape.model.vertex.IVertexVisitor;
 import org.andork.torquescape.model.vertex.StandardVertexFn;
-import org.andork.vecmath.FloatArrayVecmath;
 
 @SuppressWarnings( "serial" )
 public class RainbowSliceRendererTest extends BasicGL3Frame
@@ -139,7 +140,7 @@ public class RainbowSliceRendererTest extends BasicGL3Frame
 				next[ 1 ] -= prev[ 1 ];
 				next[ 2 ] -= prev[ 2 ];
 				
-				FloatArrayVecmath.normalize( next , 0 , 3 );
+				normalize( next , 0 , 3 );
 				
 				visitor.visit( next[ 0 ] );
 				visitor.visit( next[ 1 ] );
@@ -158,7 +159,7 @@ public class RainbowSliceRendererTest extends BasicGL3Frame
 				next[ 1 ] -= prev[ 1 ];
 				next[ 2 ] -= prev[ 2 ];
 				
-				FloatArrayVecmath.normalize( next , 0 , 3 );
+				normalize( next , 0 , 3 );
 				
 				visitor.visit( next[ 0 ] );
 				visitor.visit( next[ 1 ] );

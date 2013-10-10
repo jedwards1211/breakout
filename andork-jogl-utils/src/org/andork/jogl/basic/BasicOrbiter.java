@@ -1,14 +1,14 @@
 package org.andork.jogl.basic;
 
-import static org.andork.vecmath.FloatArrayVecmath.cross;
-import static org.andork.vecmath.FloatArrayVecmath.invAffine;
-import static org.andork.vecmath.FloatArrayVecmath.mmulAffine;
-import static org.andork.vecmath.FloatArrayVecmath.mvmulAffine;
-import static org.andork.vecmath.FloatArrayVecmath.normalize3;
-import static org.andork.vecmath.FloatArrayVecmath.rotY;
-import static org.andork.vecmath.FloatArrayVecmath.setColumn3;
-import static org.andork.vecmath.FloatArrayVecmath.setIdentity;
-import static org.andork.vecmath.FloatArrayVecmath.setRotation;
+import static org.andork.vecmath.Vecmath.cross;
+import static org.andork.vecmath.Vecmath.invAffine;
+import static org.andork.vecmath.Vecmath.mmulAffine;
+import static org.andork.vecmath.Vecmath.mvmulAffine;
+import static org.andork.vecmath.Vecmath.normalize3;
+import static org.andork.vecmath.Vecmath.rotY;
+import static org.andork.vecmath.Vecmath.setColumn3;
+import static org.andork.vecmath.Vecmath.setIdentity;
+import static org.andork.vecmath.Vecmath.setRotation;
 
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
@@ -16,7 +16,7 @@ import java.awt.event.MouseEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 
-import org.andork.vecmath.FloatArrayVecmath;
+import org.andork.vecmath.Vecmath;
 
 public class BasicOrbiter extends MouseAdapter
 {
@@ -26,8 +26,8 @@ public class BasicOrbiter extends MouseAdapter
 	final float[ ]		axis		= new float[ 3 ];
 	final float[ ]		center		= new float[ 3 ];
 	MouseEvent			pressEvent	= null;
-	final float[ ]		m1			= FloatArrayVecmath.newIdentityMatrix( );
-	final float[ ]		m2			= FloatArrayVecmath.newIdentityMatrix( );
+	final float[ ]		m1			= Vecmath.newMat4f( );
+	final float[ ]		m2			= Vecmath.newMat4f( );
 	boolean				active		= true;
 	boolean				callDisplay	= true;
 	float				panFactor	= ( float ) Math.PI;

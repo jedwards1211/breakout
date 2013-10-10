@@ -1,27 +1,21 @@
 package org.andork.torquescape.control;
 
-import static org.andork.vecmath.DoubleArrayVecmath.cross;
-import static org.andork.vecmath.DoubleArrayVecmath.epsilonEquals;
-import static org.andork.vecmath.DoubleArrayVecmath.length3;
-import static org.andork.vecmath.DoubleArrayVecmath.mpmul;
-import static org.andork.vecmath.DoubleArrayVecmath.mvmulAffine;
-import static org.andork.vecmath.DoubleArrayVecmath.negate3;
-import static org.andork.vecmath.DoubleArrayVecmath.*;
-import static org.andork.vecmath.DoubleArrayVecmath.mpmul;
-import static org.andork.vecmath.DoubleArrayVecmath.mvmulAffine;
-import static org.andork.vecmath.DoubleArrayVecmath.newIdentityMatrix;
-import static org.andork.vecmath.DoubleArrayVecmath.normalize3;
-import static org.andork.vecmath.DoubleArrayVecmath.set;
-import static org.andork.vecmath.DoubleArrayVecmath.setRotation;
-
-import static org.andork.vecmath.MixedArrayVecmath.*;
+import static org.andork.vecmath.Vecmath.cross;
+import static org.andork.vecmath.Vecmath.epsilonEquals;
+import static org.andork.vecmath.Vecmath.length3;
+import static org.andork.vecmath.Vecmath.mpmul;
+import static org.andork.vecmath.Vecmath.mvmulAffine;
+import static org.andork.vecmath.Vecmath.negate3;
+import static org.andork.vecmath.Vecmath.newMat4d;
+import static org.andork.vecmath.Vecmath.normalize3;
+import static org.andork.vecmath.Vecmath.set;
+import static org.andork.vecmath.Vecmath.setRotation;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 
 import org.andork.torquescape.model.Edge;
-import org.andork.vecmath.DoubleTransformComputer;
-import org.andork.vecmath.FloatArrayVecmath;
+import org.andork.vecmath.OrientComputer;
 
 public class VehicleMover
 {
@@ -36,9 +30,9 @@ public class VehicleMover
 	
 	double[ ]					p1			= new double[ 3 ];
 	
-	DoubleTransformComputer		tc			= new DoubleTransformComputer( );
+	OrientComputer		tc			= new OrientComputer( );
 	
-	double[ ]					orient		= newIdentityMatrix( );
+	double[ ]					orient		= newMat4d( );
 	
 	private final UVIntersector	intersector	= new UVIntersector( );
 	

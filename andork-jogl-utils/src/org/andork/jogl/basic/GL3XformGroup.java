@@ -1,9 +1,9 @@
 package org.andork.jogl.basic;
 
-import static org.andork.vecmath.FloatArrayVecmath.invAffineToTranspose3x3;
-import static org.andork.vecmath.FloatArrayVecmath.mmul3x3;
-import static org.andork.vecmath.FloatArrayVecmath.mmulAffine;
-import static org.andork.vecmath.FloatArrayVecmath.newIdentityMatrix;
+import static org.andork.vecmath.Vecmath.invAffineToTranspose3x3;
+import static org.andork.vecmath.Vecmath.mmul3x3;
+import static org.andork.vecmath.Vecmath.mmulAffine;
+import static org.andork.vecmath.Vecmath.newMat4f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,9 +12,9 @@ import javax.media.opengl.GL3;
 
 public class GL3XformGroup implements GL3Object
 {
-	public float[ ]			xform	= newIdentityMatrix( );
+	public float[ ]			xform	= newMat4f( );
 	private float[ ]		nxform	= new float[ 9 ];
-	private float[ ]		m		= newIdentityMatrix( );
+	private float[ ]		m		= newMat4f( );
 	private float[ ]		n		= new float[ 9 ];
 	
 	public List<GL3Object>	objects	= new ArrayList<GL3Object>( );
