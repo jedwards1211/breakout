@@ -33,7 +33,7 @@ public class ZoneRenderer
 		super();
 		this.zone = zone;
 
-		for (ISlice slice : zone.slices)
+		for (ISlice slice : zone.getSlices( ))
 		{
 			ISliceRendererFactory<ISlice> rendererFactory = (org.andork.torquescape.ISliceRendererFactory<ISlice>) sliceRendererFactories.get(slice.getClass());
 			if (rendererFactory != null)
@@ -51,7 +51,7 @@ public class ZoneRenderer
 
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertVbo);
 		checkGlError("glBindBuffer");
-		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, zone.vertBuffer.capacity() * 4, zone.vertBuffer, GLES20.GL_STATIC_DRAW);
+		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, zone.getVertBuffer( ).capacity() * 4, zone.getVertBuffer( ), GLES20.GL_STATIC_DRAW);
 		checkGlError("glBufferData");
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 

@@ -6,6 +6,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-utils"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-j3d-utils"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

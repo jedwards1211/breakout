@@ -1,14 +1,24 @@
 package org.andork.torquescape;
 
+import static org.andork.vecmath.Vecmath.normalize;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DefaultTrackGenerator;
+import org.andork.torquescape.model.gen.DirectZoneGenerator;
 import org.andork.torquescape.model.normal.NormalGenerator;
+import org.andork.torquescape.model.slice.RainbowSlice;
 import org.andork.torquescape.model.slice.StandardSlice;
 import org.andork.torquescape.model.track.Track;
 import org.andork.torquescape.model.track.Track1;
+import org.andork.torquescape.model.vertex.IVertexAttrFn;
+import org.andork.torquescape.model.vertex.IVertexVisitor;
+import org.andork.torquescape.model.vertex.StandardVertexFn;
 import org.andork.vecmath.Vecmath;
 
 import android.opengl.GLES20;
@@ -78,38 +88,127 @@ public class TorquescapeRenderer implements Renderer
 		Matrix.perspectiveM( projMatrix , 0 , 90 , ratio , 0.01f , 10000 );
 	}
 	
+	public static Zone createZoneForRainbowSlice( final Track track , List<Float> params )
+	{
+		IVertexAttrFn attrFn1 = new IVertexAttrFn( )
+		{
+			@Override
+			public int getBytesPerVertex( )
+			{
+				return 4;
+			}
+			
+			@Override
+			public void eval( float param , int index , int vertexCount , float x , float y , float z , IVertexVisitor visitor )
+			{
+				visitor.visit( param );
+			}
+		};
+		
+		final float step = ( float ) Math.PI / 180;
+		
+		IVertexAttrFn attrFn2 = new IVertexAttrFn( )
+		{
+			float[ ]	prev	= new float[ 3 ];
+			float[ ]	next	= new float[ 3 ];
+			
+			@Override
+			public int getBytesPerVertex( )
+			{
+				return 24;
+			}
+			
+			@Override
+			public void eval( float param , int index , int vertexCount , float x , float y , float z , IVertexVisitor visitor )
+			{
+				track.getCoordFn( ).eval( param , index , prev );
+				track.getCoordFn( ).eval( param + step , index , next );
+				
+				next[ 0 ] -= prev[ 0 ];
+				next[ 1 ] -= prev[ 1 ];
+				next[ 2 ] -= prev[ 2 ];
+				
+				normalize( next , 0 , 3 );
+				
+				visitor.visit( next[ 0 ] );
+				visitor.visit( next[ 1 ] );
+				visitor.visit( next[ 2 ] );
+				
+				if( ( index % 2 ) == 0 )
+				{
+					track.getCoordFn( ).eval( param , ( index + vertexCount - 1 ) % vertexCount , next );
+				}
+				else
+				{
+					track.getCoordFn( ).eval( param , ( index + 1 ) % vertexCount , next );
+				}
+				
+				next[ 0 ] -= prev[ 0 ];
+				next[ 1 ] -= prev[ 1 ];
+				next[ 2 ] -= prev[ 2 ];
+				
+				normalize( next , 0 , 3 );
+				
+				visitor.visit( next[ 0 ] );
+				visitor.visit( next[ 1 ] );
+				visitor.visit( next[ 2 ] );
+			}
+		};
+		
+		StandardVertexFn vertexFn = new StandardVertexFn( track.getCoordFn( ) , attrFn1 , attrFn2 );
+		
+		Zone zone = new Zone( );
+		
+		int vertexCount = params.size( ) * vertexFn.getVertexCount( 0 );
+		
+		int indexCount = track.getIndexFn( ).getIndexCount( 0 ) * params.size( );
+		
+		zone.init( vertexCount , vertexFn.getBytesPerVertex( ) , indexCount );
+		
+		DirectZoneGenerator zoneGen = DirectZoneGenerator.newInstance( );
+		zoneGen.setZone( zone );
+		zoneGen.generate( vertexFn , track.getIndexFn( ) , params );
+		
+		NormalGenerator.generateNormals( zone.getVertBuffer( ) , 12 , vertexFn.getBytesPerVertex( ) , zone.getIndexBuffer( ) , 0 , indexCount );
+		
+		zone.rebuildMaps( );
+		return zone;
+	}
+	
+	public static ZoneRenderer createTestRainbowZone( )
+	{
+		final Track track = new Track1( );
+		
+		Zone zone = createZoneForRainbowSlice( track , sequence( 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 360f ) );
+		
+		RainbowSlice rainbowSlice = new RainbowSlice( );
+		rainbowSlice.uOffset = 28;
+		rainbowSlice.vOffset = 40;
+		rainbowSlice.setIndexBuffer( zone.getIndexBuffer( ) );
+		zone.addSlice( rainbowSlice );
+		
+		ZoneRenderer rend1 = new ZoneRenderer( zone );
+		
+		return rend1;
+	}
+	
+	public static List<Float> sequence( float start , float end , float step )
+	{
+		List<Float> result = new ArrayList<Float>( );
+		for( float f = start ; f < end ; f += step )
+		{
+			result.add( f );
+		}
+		return result;
+	}
+	
 	private TorquescapeScene initScene( )
 	{
 		// Set the camera position (View matrix)
 		Vecmath.lookAt( viewMatrix , 0 , 0 , 5 , 0f , 0f , 1f , 0f , 1.0f , 0.0f );
 		
-		Track track = new Track1( );
-		
-		DefaultTrackGenerator generator = new DefaultTrackGenerator( );
-		generator.add( track.getXformFunction( ) , track.getSectionFunction( ) , track.getMeshingFunction( ) , 0 , ( float ) Math.PI * 4 , ( float ) Math.PI / 180 );
-		
-		float[ ] verts = generator.getVertices( );
-		char[ ] indices = generator.getIndices( );
-		
-		System.out.println( "verts.length: " + verts.length );
-		System.out.println( "indices.length: " + indices.length );
-		
-		NormalGenerator.generateNormals( verts , 3 , 6 , indices , 0 , indices.length );
-		
-		Zone zone1 = new Zone( );
-		zone1.init( verts , indices );
-		
-		StandardSlice slice1 = new StandardSlice( );
-		slice1.setIndices( indices );
-		set( slice1.ambientColor , 0.2f , 0 , 0 , 1 );
-		set( slice1.diffuseColor , 1 , 0 , 0 , 1 );
-		zone1.slices.add( slice1 );
-		
-		ZoneRenderer zoneRend1 = new ZoneRenderer( zone1 );
-		zoneRend1.init( );
-		
 		TorquescapeScene scene = new TorquescapeScene( );
-		scene.zoneRenderers.add( zoneRend1 );
+		scene.zoneRenderers.add( createTestRainbowZone( ) );
 		
 		return scene;
 	}

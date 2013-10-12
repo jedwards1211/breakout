@@ -11,11 +11,16 @@
     <!-- Create the build directory structure used by compile -->
     <mkdir dir="${build}"/>
   </target>
+	
+  <target name="compile-dependencies">
+  	<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />	
+  	<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />	
+  </target>
 
-  <target name="compile" depends="init"
+  <target name="compile" depends="init,compile-dependencies"
         description="compile the source " >
     <!-- Compile the java code from ${src} into ${build} -->
-  	<path id="jogl-classpath">
+  	<path id="master-classpath">
   		<fileset dir="C:/jogamp-all-platforms/jar">
   			<include name="gluegen-rt.jar" />
   			<include name="joal.jar" />
@@ -33,7 +38,7 @@
   	</path>
     <javac debug="on" destdir="${build}">
     	<src path="${src}" />
-    	<classpath refid="jogl-classpath" />
+    	<classpath refid="master-classpath" />
   	</javac>
   </target>
 
