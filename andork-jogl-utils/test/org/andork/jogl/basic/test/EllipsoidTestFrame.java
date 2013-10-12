@@ -12,7 +12,7 @@ import org.andork.jogl.basic.BasicGL3Scene;
 import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.GL3DepthModifier;
 import org.andork.jogl.basic.GL3XformGroup;
-import org.andork.jogl.prim.Primitives;
+import org.andork.math.prim.Primitives;
 
 import static org.andork.jogl.basic.BasicGL3Object.*;
 
