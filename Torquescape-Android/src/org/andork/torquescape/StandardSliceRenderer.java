@@ -1,7 +1,7 @@
 package org.andork.torquescape;
 
-import static org.andork.torquescape.GLUtils.checkGlError;
-import static org.andork.torquescape.GLUtils.checkProgramLinkStatus;
+import static org.andork.gles20.util.GLUtils.checkGLError;
+import static org.andork.gles20.util.GLUtils.loadProgram;
 
 import org.andork.torquescape.model.slice.StandardSlice;
 
@@ -49,37 +49,24 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 
 	public void init()
 	{
-		int vertexShader = GLUtils.loadShader(GLES20.GL_VERTEX_SHADER, vertexShaderCode);
-		int fragmentShader = GLUtils.loadShader(GLES20.GL_FRAGMENT_SHADER, fragmentShaderCode);
-
-		mProgram = GLES20.glCreateProgram(); // create empty OpenGL ES Program
-		checkGlError("glCreateProgram");
-		GLES20.glAttachShader(mProgram, vertexShader); // add the vertex shader
-		checkGlError("glAttachShader");
-		// to program
-		GLES20.glAttachShader(mProgram, fragmentShader); // add the fragment
-		checkGlError("glAttachShader");
-		// shader to program
-		GLES20.glLinkProgram(mProgram); // creates OpenGL ES program executables
-		checkGlError("glLinkProgram");
-		checkProgramLinkStatus(mProgram);
+		mProgram = loadProgram( vertexShaderCode , fragmentShaderCode , true );
 
 		int[] vbos = new int[1];
 
 		GLES20.glGenBuffers(1, vbos, 0);
-		checkGlError("glGenBuffers");
+		checkGLError("glGenBuffers");
 
 		indexEbo = vbos[0];
 
 		slice.indexBuffer.position(0);
 
 		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexEbo);
-		checkGlError("glBindBuffer");
+		checkGLError("glBindBuffer");
 		GLES20.glBufferData(GLES20.GL_ELEMENT_ARRAY_BUFFER, slice.indexBuffer.capacity() * 2, slice.indexBuffer, GLES20.GL_STATIC_DRAW);
-		checkGlError("glBufferData");
+		checkGLError("glBufferData");
 
 		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
-		checkGlError("glBindBuffer");
+		checkGLError("glBindBuffer");
 	}
 
 	/*
@@ -93,55 +80,55 @@ public class StandardSliceRenderer implements ISliceRenderer<StandardSlice>
 	public void draw(float[] mvMatrix, float[] pMatrix)
 	{
 		GLES20.glUseProgram(mProgram);
-		checkGlError("glUseProgram");
+		checkGLError("glUseProgram");
 
 		int mvMatrixLoc = GLES20.glGetUniformLocation(mProgram, "uMVMatrix");
-		checkGlError("glGetUniformLocation");
+		checkGLError("glGetUniformLocation");
 		GLES20.glUniformMatrix4fv(mvMatrixLoc, 1, false, mvMatrix, 0);
-		checkGlError("glUniformMatrix4fv");
+		checkGLError("glUniformMatrix4fv");
 
 		int pMatrixLoc = GLES20.glGetUniformLocation(mProgram, "uPMatrix");
-		checkGlError("glGetUniformLocation");
+		checkGLError("glGetUniformLocation");
 		GLES20.glUniformMatrix4fv(pMatrixLoc, 1, false, pMatrix, 0);
-		checkGlError("glUniformMatrix4fv");
+		checkGLError("glUniformMatrix4fv");
 
 		int ambientLoc = GLES20.glGetUniformLocation(mProgram, "vAmbientColor");
-		checkGlError("glGetUniformLocation");
+		checkGLError("glGetUniformLocation");
 		GLES20.glUniform4fv(ambientLoc, 1, slice.ambientColor, 0);
-		checkGlError("glUniform4fv");
+		checkGLError("glUniform4fv");
 
 		int diffuseLoc = GLES20.glGetUniformLocation(mProgram, "vDiffuseColor");
-		checkGlError("glGetUniformLocation");
+		checkGLError("glGetUniformLocation");
 		GLES20.glUniform4fv(diffuseLoc, 1, slice.diffuseColor, 0);
-		checkGlError("glUniform4fv");
+		checkGLError("glUniform4fv");
 
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, zoneRenderer.vertVbo);
-		checkGlError("glBindBuffer");
+		checkGLError("glBindBuffer");
 
 		int vPositionLoc = GLES20.glGetAttribLocation(mProgram, "vPosition");
-		checkGlError("glGetAttribLocation");
+		checkGLError("glGetAttribLocation");
 		GLES20.glEnableVertexAttribArray(vPositionLoc);
-		checkGlError("glEnableVertexAttribArray");
+		checkGLError("glEnableVertexAttribArray");
 		GLES20.glVertexAttribPointer(vPositionLoc, 3, GLES20.GL_FLOAT, false, 24, 0);
-		checkGlError("glVertexAttribPointer");
+		checkGLError("glVertexAttribPointer");
 
 		int vNormalLoc = GLES20.glGetAttribLocation(mProgram, "vNormal");
-		checkGlError("glGetAttribLocation");
+		checkGLError("glGetAttribLocation");
 		GLES20.glEnableVertexAttribArray(vNormalLoc);
-		checkGlError("glEnableVertexAttribArray");
+		checkGLError("glEnableVertexAttribArray");
 		GLES20.glVertexAttribPointer(vNormalLoc, 3, GLES20.GL_FLOAT, false, 24, 12);
-		checkGlError("glVertexAttribPointer");
+		checkGLError("glVertexAttribPointer");
 
 		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexEbo);
-		checkGlError("glBindBuffer");
+		checkGLError("glBindBuffer");
 
 		GLES20.glDrawElements(GLES20.GL_TRIANGLES, slice.indexBuffer.capacity(), GLES20.GL_UNSIGNED_SHORT, 0);
-		checkGlError("glDrawElements");
+		checkGLError("glDrawElements");
 
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-		checkGlError("glBindBuffer");
+		checkGLError("glBindBuffer");
 		GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
-		checkGlError("glBindBuffer");
+		checkGLError("glBindBuffer");
 
 	}
 

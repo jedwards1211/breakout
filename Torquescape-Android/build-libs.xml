@@ -35,6 +35,9 @@
 			<fileset dir="C:/Program Files/Java/guava-14.0.1">
 				<include name="guava-14.0.1.jar" />
 			</fileset>
+			<fileset dir="C:/Program Files/Java/Java3D/1.5.1/lib/ext">
+				<include name="vecmath.jar" />
+			</fileset>
 		</copy>
 	</target>
 </project>

@@ -1,0 +1,74 @@
+<project name="torquescape-jogl" default="dist" basedir=".">
+  <!-- set global properties for this build -->
+  <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+	
+  <target name="compile-dependencies">
+  	<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />	
+  	<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />	
+  	<ant antfile="../andork-jogl-utils/build.xml" inheritAll="false" target="dist" />	
+  	<ant antfile="../torquescape-core/build.xml" inheritAll="false" target="dist" />	
+  </target>
+
+  <target name="compile" depends="init,compile-dependencies"
+        description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+  	<path id="master-classpath">
+  		<fileset dir="../andork-core">
+  			<include name="dist/lib/andork-core.jar" />
+  		</fileset>
+  		
+  		<fileset dir="../andork-math">
+  			<include name="dist/lib/andork-math.jar" />
+  		</fileset>
+  		
+  		<fileset dir="../andork-jogl-utils">
+  			<include name="dist/lib/andork-jogl-utils.jar" />
+  		</fileset>
+  		
+  		<fileset dir="../torquescape-core">
+  			<include name="dist/lib/torquescape-core.jar" />
+  		</fileset>
+
+		<fileset dir="C:/Program Files/Java/guava-14.0.1">
+			<include name="guava-14.0.1.jar" />
+		</fileset>
+  		
+  		<fileset dir="C:/jogamp-all-platforms/jar">
+  			<include name="gluegen-rt.jar" />
+  			<include name="joal.jar" />
+  			<include name="jocl.jar" />
+  			<include name="jogl-all.jar" />
+  		</fileset>
+  	</path>
+    <javac debug="on" destdir="${build}">
+    	<src path="${src}" />
+    	<classpath refid="master-classpath" />
+  	</javac>
+  </target>
+
+  <target name="dist" depends="compile"
+        description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}/lib"/>
+
+    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+    <jar jarfile="${dist}/lib/${ant.project.name}.jar" basedir="${build}"/>
+  	<jar jarfile="${dist}/lib/${ant.project.name}-sources.jar" basedir="${src}"/>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+</project>

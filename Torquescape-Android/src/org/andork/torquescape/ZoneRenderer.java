@@ -1,6 +1,6 @@
 package org.andork.torquescape;
 
-import static org.andork.torquescape.GLUtils.checkGlError;
+import static org.andork.gles20.util.GLUtils.checkGLError;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,9 +50,9 @@ public class ZoneRenderer
 		vertVbo = buffers[0];
 
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertVbo);
-		checkGlError("glBindBuffer");
+		checkGLError("glBindBuffer");
 		GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, zone.getVertBuffer( ).capacity() * 4, zone.getVertBuffer( ), GLES20.GL_STATIC_DRAW);
-		checkGlError("glBufferData");
+		checkGLError("glBufferData");
 		GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
 		for (ISliceRenderer<?> sliceRenderer : sliceRenderers)
