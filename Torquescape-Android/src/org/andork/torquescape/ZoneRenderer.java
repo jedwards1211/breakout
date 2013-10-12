@@ -1,17 +1,17 @@
 package org.andork.torquescape;
 
+import static org.andork.torquescape.GLUtils.checkGlError;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.andork.torquescape.model.ISlice;
-import org.andork.torquescape.model.StandardSlice;
 import org.andork.torquescape.model.Zone;
+import org.andork.torquescape.model.slice.StandardSlice;
 
 import android.opengl.GLES20;
-
-import static org.andork.torquescape.GLUtils.*;
 
 public class ZoneRenderer
 {

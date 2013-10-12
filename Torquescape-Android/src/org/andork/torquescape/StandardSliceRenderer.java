@@ -1,8 +1,9 @@
 package org.andork.torquescape;
 
-import static org.andork.torquescape.GLUtils.*;
+import static org.andork.torquescape.GLUtils.checkGlError;
+import static org.andork.torquescape.GLUtils.checkProgramLinkStatus;
 
-import org.andork.torquescape.model.StandardSlice;
+import org.andork.torquescape.model.slice.StandardSlice;
 
 import android.opengl.GLES20;
 

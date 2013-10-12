@@ -1,0 +1,56 @@
+<project name="andork-jogl-utils" default="dist" basedir=".">
+  <!-- set global properties for this build -->
+  <property name="src" location="src"/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+  <property name="jogl-libs" location="C:/jogamp-all-platforms/jar"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compile" depends="init"
+        description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+  	<path id="jogl-classpath">
+  		<fileset dir="C:/jogamp-all-platforms/jar">
+  			<include name="gluegen-rt.jar" />
+  			<include name="joal.jar" />
+  			<include name="jocl.jar" />
+  			<include name="jogl-all.jar" />
+  		</fileset>
+  		
+  		<fileset dir="../andork-core">
+  			<include name="dist/lib/*.jar" />
+  		</fileset>
+  		
+  		<fileset dir="../andork-math">
+  			<include name="dist/lib/*.jar" />
+  		</fileset>
+  	</path>
+    <javac debug="on" destdir="${build}">
+    	<src path="${src}" />
+    	<classpath refid="jogl-classpath" />
+  	</javac>
+  </target>
+
+  <target name="dist" depends="compile"
+        description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}/lib"/>
+
+    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+    <jar jarfile="${dist}/lib/${ant.project.name}.jar" basedir="${build}"/>
+  	<jar jarfile="${dist}/lib/${ant.project.name}-sources.jar" basedir="${src}"/>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+</project>

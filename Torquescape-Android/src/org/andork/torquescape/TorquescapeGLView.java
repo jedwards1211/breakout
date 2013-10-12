@@ -1,6 +1,10 @@
 package org.andork.torquescape;
 
-import org.andork.vecmath.FloatArrayVecmath;
+import static org.andork.vecmath.Vecmath.mmulRotational;
+import static org.andork.vecmath.Vecmath.mvmulAffine;
+import static org.andork.vecmath.Vecmath.rotY;
+
+import org.andork.vecmath.Vecmath;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
@@ -52,12 +56,12 @@ public class TorquescapeGLView extends GLSurfaceView {
 				float pan = (float) (dx * Math.PI / getWidth());
 				float tilt = (float) (dy * Math.PI / getHeight());
 
-				FloatArrayVecmath.rotY(tempMatrix, pan);
-				FloatArrayVecmath.mmulRotational(tempMatrix, renderer.cameraMatrix, renderer.cameraMatrix);
+				rotY(tempMatrix, pan);
+				mmulRotational(tempMatrix, renderer.cameraMatrix, renderer.cameraMatrix);
 
-				FloatArrayVecmath.mvmulAffine(renderer.cameraMatrix, 1, 0, 0, tempAxis);
-				FloatArrayVecmath.setRotation(tempMatrix, tempAxis, tilt);
-				FloatArrayVecmath.mmulRotational(tempMatrix, renderer.cameraMatrix, renderer.cameraMatrix);
+				mvmulAffine(renderer.cameraMatrix, 1, 0, 0, tempAxis);
+				Vecmath.setRotation(tempMatrix, tempAxis, tilt);
+				mmulRotational(tempMatrix, renderer.cameraMatrix, renderer.cameraMatrix);
 			} else if (e.getPointerCount() == 2) {
 				if (mPreviousPointerCount == 2) {
 					float lastcx = (mPreviousX[0] + mPreviousX[1]) * 0.5f;

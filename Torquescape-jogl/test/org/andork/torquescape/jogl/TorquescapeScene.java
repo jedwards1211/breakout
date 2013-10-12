@@ -20,7 +20,7 @@ import org.andork.jogl.basic.GL3DepthModifier;
 import org.andork.jogl.basic.GL3Object;
 import org.andork.jogl.basic.GL3XformGroup;
 import org.andork.jogl.basic.test.NormalGenerator;
-import org.andork.jogl.prim.Primitives;
+import org.andork.math.prim.Primitives;
 import org.andork.torquescape.control.CameraMover;
 import org.andork.torquescape.control.ControlState;
 import org.andork.torquescape.control.Vehicle;
