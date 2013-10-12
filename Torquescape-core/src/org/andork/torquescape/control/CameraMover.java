@@ -7,8 +7,9 @@ import static org.andork.vecmath.Vecmath.mvmulAffine;
 import static org.andork.vecmath.Vecmath.newMat4f;
 import static org.andork.vecmath.Vecmath.rotX;
 import static org.andork.vecmath.Vecmath.scale3;
-import static org.andork.vecmath.Vecmath.set;
 import static org.andork.vecmath.Vecmath.setColumn3;
+import static org.andork.vecmath.Vecmath.setd;
+import static org.andork.vecmath.Vecmath.setf;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -57,15 +58,15 @@ public class CameraMover
 		{
 			queueXform = transformQueue.poll( );
 		}
-		set( location , vehicle.location );
-		set( forward , vehicle.basisForward );
-		set( up , vehicle.basisUp );
+		setd( location , vehicle.location );
+		setd( forward , vehicle.basisForward );
+		setd( up , vehicle.basisUp );
 		tc.orient( 0 , 0 , 0 , /**/0 , 1 , 0 , /**/0 , 0 , -1 , location , up , forward , queueXform );
 		transformQueue.add( queueXform );
 		
-		set( location , 0 , 0 , 0 );
-		set( up , 0 , 0 , 0 );
-		set( right , 0 , 0 , 0 );
+		setf( location , 0 , 0 , 0 );
+		setf( up , 0 , 0 , 0 );
+		setf( right , 0 , 0 , 0 );
 		
 		int avgCount = Math.min( cameraSmoothing , transformQueue.size( ) );
 		
@@ -73,15 +74,15 @@ public class CameraMover
 		for( int i = 0 ; i < avgCount ; i++ )
 		{
 			float[ ] next = xiter.next( );
-			set( p1 , 0 , 0 , 0 );
+			setf( p1 , 0 , 0 , 0 );
 			mpmulAffine( next , p1 );
 			add3( location , p1 , location );
 			
-			set( v1 , 0 , 1 , 0 );
+			setf( v1 , 0 , 1 , 0 );
 			mvmulAffine( next , v1 );
 			add3( up , v1 , up );
 			
-			set( v1 , 1 , 0 , 0 );
+			setf( v1 , 1 , 0 , 0 );
 			mvmulAffine( next , v1 );
 			add3( right , v1 , right );
 		}

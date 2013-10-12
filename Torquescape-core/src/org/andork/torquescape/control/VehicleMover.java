@@ -8,7 +8,7 @@ import static org.andork.vecmath.Vecmath.mvmulAffine;
 import static org.andork.vecmath.Vecmath.negate3;
 import static org.andork.vecmath.Vecmath.newMat4d;
 import static org.andork.vecmath.Vecmath.normalize3;
-import static org.andork.vecmath.Vecmath.set;
+import static org.andork.vecmath.Vecmath.setd;
 import static org.andork.vecmath.Vecmath.setRotation;
 
 import java.nio.ByteBuffer;
@@ -61,17 +61,17 @@ public class VehicleMover
 			// turn the vehicle. note that this algorithm treats the vehicle as if it turns instantaneously
 			// before moving forward, rather than turning continuously as it moves forward. This is works ok
 			// if the timestep is small.
-			set( v1 , vehicle.basisForward );
+			setd( v1 , vehicle.basisForward );
 			
 			// turning is accomplished by rotating the forward vector in the EFG coordinate system of the basis.
 			
 			mvmulAffine( vehicle.basis.getXYZToEFGDirect( ) , v1 );
 			double ePrime = Math.cos( angleChange ) * v1[ 0 ] - Math.sin( angleChange ) * v1[ 1 ];
 			double fPrime = Math.sin( angleChange ) * v1[ 0 ] + Math.cos( angleChange ) * v1[ 1 ];
-			set( v1 , ( double ) ePrime , ( double ) fPrime , 0 );
+			setd( v1 , ( double ) ePrime , ( double ) fPrime , 0 );
 			mvmulAffine( vehicle.basis.getEFGToXYZDirect( ) , v1 );
 			normalize3( v1 );
-			set( vehicle.basisForward , v1 );
+			setd( vehicle.basisForward , v1 );
 		}
 		
 		// now move the vehicle forward. This process is as follows:
@@ -87,8 +87,8 @@ public class VehicleMover
 		
 		while( remainingDist > 0 )
 		{
-			set( p1 , vehicle.location );
-			set( v1 , vehicle.basisForward );
+			setd( p1 , vehicle.location );
+			setd( v1 , vehicle.basisForward );
 			
 			if( vehicle.velocity < 0 )
 			{
@@ -134,7 +134,7 @@ public class VehicleMover
 				
 				// the new location is still in UVN! convert it back to XYZ
 				mpmul( vehicle.basis.getUVNToXYZDirect( ) , p1 );
-				set( vehicle.location , p1 );
+				setd( vehicle.location , p1 );
 				remainingDist = 0;
 			}
 			else
@@ -183,8 +183,8 @@ public class VehicleMover
 				// of course, there may not be anything on the other side, and the vehicle has reached a dead end!
 				if( nextTriangle != null )
 				{
-					set( p1 , vehicle.location );
-					set( v1 , vehicle.basisForward );
+					setd( p1 , vehicle.location );
+					setd( v1 , vehicle.basisForward );
 					
 					// find the crossing point in XYZ
 					double advance = Math.signum( vehicle.velocity ) * intersector.t[ 0 ];
@@ -229,9 +229,9 @@ public class VehicleMover
 					normalize3( v1 );
 					normalize3( v2 );
 					
-					set( vehicle.location , p1 );
-					set( vehicle.basisForward , v1 );
-					set( vehicle.basisUp , v2 );
+					setd( vehicle.location , p1 );
+					setd( vehicle.basisForward , v1 );
+					setd( vehicle.basisUp , v2 );
 				}
 				else
 				{
@@ -246,16 +246,16 @@ public class VehicleMover
 		// rotate it to the new "up" direction gradually, rather than instantaneously (it may not finish
 		// rotating up in this timestep).
 		
-		set( v2 , vehicle.modelUp );
-		set( v5 , vehicle.basisUp );
-		set( v6 , vehicle.basisForward );
+		setd( v2 , vehicle.modelUp );
+		setd( v5 , vehicle.basisUp );
+		setd( v6 , vehicle.basisForward );
 		
 		if( epsilonEquals( v2 , v5 , 0.1f ) )
 		{
 			// close enough; rotate the vehicle to the exact up direction
 			tc.orientInPlace( v2 , v5 , orient );
-			set( vehicle.modelUp , v5 );
-			set( vehicle.modelForward , v6 );
+			setd( vehicle.modelUp , v5 );
+			setd( vehicle.modelForward , v6 );
 		}
 		else
 		{
@@ -277,7 +277,7 @@ public class VehicleMover
 			// v5 = target up
 			// v6 = target forward
 			
-			set( v3 , vehicle.modelForward );
+			setd( v3 , vehicle.modelForward );
 			
 			// v1 = normal of current profile plane
 			
@@ -311,8 +311,8 @@ public class VehicleMover
 			double targetInPlaneRotation = Math.asin( length3( v4 ) );
 			
 			// restore vehicle's current up/forward to v2/v3
-			set( v2 , vehicle.modelUp );
-			set( v3 , vehicle.modelForward );
+			setd( v2 , vehicle.modelUp );
+			setd( v3 , vehicle.modelForward );
 			
 			// make ratio of the plane rotation/in-plane rotation rates match the ratio of the
 			// total amount of plane rotation/in plane rotation needed
@@ -330,8 +330,8 @@ public class VehicleMover
 				// the target is within range; fire!!
 				// set the vehicle up/forward to the exact target up/forward; we're done
 				tc.orientInPlace( v2 , v5 , orient );
-				set( vehicle.modelUp , v5 );
-				set( vehicle.modelForward , v6 );
+				setd( vehicle.modelUp , v5 );
+				setd( vehicle.modelForward , v6 );
 			}
 			else
 			{
@@ -347,8 +347,8 @@ public class VehicleMover
 					rotate( v2 , v1 , planeRotationAmount );
 					rotate( v3 , v1 , planeRotationAmount );
 				}
-				set( vehicle.modelUp , v2 );
-				set( vehicle.modelForward , v3 );
+				setd( vehicle.modelUp , v2 );
+				setd( vehicle.modelForward , v3 );
 			}
 		}
 	}

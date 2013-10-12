@@ -100,7 +100,7 @@ public class TriangleBasis
 		normals[ 7 ] = vertBuffer.getFloat( );
 		normals[ 8 ] = vertBuffer.getFloat( );
 		
-		Vecmath.set( vertsDouble , verts );
+		Vecmath.setf( vertsDouble , verts );
 		
 		sub3( vertsDouble , 3 , vertsDouble , 0 , uVector , 0 );
 		sub3( vertsDouble , 6 , vertsDouble , 0 , vVector , 0 );
@@ -111,7 +111,7 @@ public class TriangleBasis
 		vDotV = dot3( vVector , vVector );
 		normUCrossV = length3( nVector );
 		
-		Vecmath.set( eVector , uVector );
+		Vecmath.setd( eVector , uVector );
 		cross( nVector , uVector , fVector );
 		normalize3( eVector );
 		normalize3( fVector );
@@ -169,7 +169,7 @@ public class TriangleBasis
 	public void getXYZToUVN( double[ ] result )
 	{
 		updateXYZToUVNIfNecessary( );
-		Vecmath.set( result , xyzToUVN );
+		Vecmath.setd( result , xyzToUVN );
 	}
 	
 	public double[ ] getXYZToUVNDirect( )
@@ -181,7 +181,7 @@ public class TriangleBasis
 	public void getUVNToXYZ( double[ ] result )
 	{
 		updateXYZToUVNIfNecessary( );
-		Vecmath.set( result , uvnToXYZ );
+		Vecmath.setd( result , uvnToXYZ );
 	}
 	
 	public double[ ] getUVNToXYZDirect( )
@@ -193,7 +193,7 @@ public class TriangleBasis
 	public void getXYZToEFG( double[ ] result )
 	{
 		updateXYZToEFGIfNecessary( );
-		Vecmath.set( result , xyzToEFG );
+		Vecmath.setd( result , xyzToEFG );
 	}
 	
 	public double[ ] getXYZToEFGDirect( )
@@ -205,7 +205,7 @@ public class TriangleBasis
 	public void getEFGToXYZ( double[ ] result )
 	{
 		updateXYZToEFGIfNecessary( );
-		Vecmath.set( result , efgToXYZ );
+		Vecmath.setd( result , efgToXYZ );
 	}
 	
 	public double[ ] getEFGToXYZDirect( )
@@ -217,7 +217,7 @@ public class TriangleBasis
 	public void getUVNToEFG( double[ ] result )
 	{
 		updateUVNToEFGIfNecessary( );
-		Vecmath.set( result , uvnToEFG );
+		Vecmath.setd( result , uvnToEFG );
 	}
 	
 	public double[ ] getUVNToEFGDirect( )
@@ -229,7 +229,7 @@ public class TriangleBasis
 	public void getEFGToUVN( double[ ] result )
 	{
 		updateUVNToEFGIfNecessary( );
-		Vecmath.set( result , efgToUVN );
+		Vecmath.setd( result , efgToUVN );
 	}
 	
 	public double[ ] getEFGToUVNDirect( )

@@ -5,7 +5,8 @@ import static org.andork.vecmath.Vecmath.invertGeneral;
 import static org.andork.vecmath.Vecmath.mmul;
 import static org.andork.vecmath.Vecmath.newMat4f;
 import static org.andork.vecmath.Vecmath.normalize3;
-import static org.andork.vecmath.Vecmath.set;
+import static org.andork.vecmath.Vecmath.setf;
+import static org.andork.vecmath.Vecmath.setd;
 import static org.andork.vecmath.Vecmath.setColumn3;
 import static org.andork.vecmath.Vecmath.setRow4;
 
@@ -195,7 +196,7 @@ public class FloatOrientComputer
 	 */
 	public float[ ] orientInPlace( float oldAxisX , float oldAxisY , float oldAxisZ , float[ ] newAxis , float[ ] result )
 	{
-		set( v1 , oldAxisX , oldAxisY , oldAxisZ );
+		setf( v1 , oldAxisX , oldAxisY , oldAxisZ );
 		return orient( ZEROF , v1 , ZEROF , newAxis , result );
 	}
 	
@@ -223,7 +224,7 @@ public class FloatOrientComputer
 	 */
 	public float[ ] orientInPlace( float[ ] oldAxis , float newAxisX , float newAxisY , float newAxisZ , float[ ] result )
 	{
-		set( v4 , newAxisX , newAxisY , newAxisZ );
+		setf( v4 , newAxisX , newAxisY , newAxisZ );
 		return orient( ZEROF , oldAxis , ZEROF , v4 , result );
 	}
 	
@@ -287,7 +288,7 @@ public class FloatOrientComputer
 		normalize3( newX , v4 );
 		
 		cross( v1 , v4 , v2 );
-		set( v5 , v2 );
+		setf( v5 , v2 );
 		
 		if( v2[ 0 ] == 0 && v2[ 1 ] == 0 && v2[ 2 ] == 0 )
 		{
@@ -515,7 +516,7 @@ public class FloatOrientComputer
 		normalize3( v6 );
 		cross( v6 , v4 , v5 );
 		
-		set( p1 , oldOriginX , oldOriginY , oldOriginZ );
+		setf( p1 , oldOriginX , oldOriginY , oldOriginZ );
 		return shear( p1 , v1 , v2 , v3 , newOrigin , v4 , v5 , v6 , result );
 	}
 }

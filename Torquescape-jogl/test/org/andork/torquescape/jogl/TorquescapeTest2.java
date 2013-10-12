@@ -3,7 +3,7 @@ package org.andork.torquescape.jogl;
 import static org.andork.vecmath.Vecmath.mpmulAffine;
 import static org.andork.vecmath.Vecmath.mvmulAffine;
 import static org.andork.vecmath.Vecmath.normalize3;
-import static org.andork.vecmath.Vecmath.set;
+import static org.andork.vecmath.Vecmath.setd;
 
 import org.andork.torquescape.jogl.main.TorquescapeFrame;
 import org.andork.torquescape.jogl.main.TorquescapeScene;
@@ -42,8 +42,8 @@ public class TorquescapeTest2 extends TorquescapeFrame
 		normalize3( scene.player.basisForward );
 		normalize3( scene.player.modelForward );
 		
-		set( scene.player.modelForward , scene.player.basisForward );
-		set( scene.player.modelUp , scene.player.basisUp );
+		setd( scene.player.modelForward , scene.player.basisForward );
+		setd( scene.player.modelUp , scene.player.basisUp );
 		
 		return scene;
 	}

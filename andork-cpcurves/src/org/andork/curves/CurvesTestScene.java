@@ -56,7 +56,7 @@ public class CurvesTestScene implements GLEventListener
 		
 		for( int i = 0 ; i < pointWalks.length ; i++ )
 		{
-			pointWalks[ i ] = new SmoothRandomWalk<>( 3 , 1 , pointType , generator );
+			pointWalks[ i ] = new SmoothRandomWalk<Point2f>( 3 , 1 , pointType , generator );
 			pointWalks[ i ].advance( 0 , p2f );
 			visualizer.controlPoints[ i * 2 ] = p2f.x;
 			visualizer.controlPoints[ i * 2 + 1 ] = p2f.y;

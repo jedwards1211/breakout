@@ -453,7 +453,7 @@ public class Vecmath
 		}
 	}
 	
-	public static void set( double[ ] array , double ... values )
+	public static void setd( double[ ] array , double ... values )
 	{
 		System.arraycopy( values , 0 , array , 0 , values.length );
 	}
@@ -1938,7 +1938,7 @@ public class Vecmath
 		}
 	}
 	
-	public static void set( float[ ] array , float ... values )
+	public static void setf( float[ ] array , float ... values )
 	{
 		System.arraycopy( values , 0 , array , 0 , values.length );
 	}
@@ -2975,7 +2975,7 @@ public class Vecmath
 	// MIXED DOUBLE/FLOAT METHODS //////////////////////////////////////////////////////////// 
 	//////////////////////////////////////////////////////////////////////////////////////////
 
-	public static void set( double[ ] a , float ... b )
+	public static void setf( double[ ] a , float ... b )
 	{
 		for( int i = 0 ; i < b.length ; i++ )
 		{
@@ -2983,7 +2983,7 @@ public class Vecmath
 		}
 	}
 
-	public static void set( float[ ] a , double ... b )
+	public static void setd( float[ ] a , double ... b )
 	{
 		for( int i = 0 ; i < b.length ; i++ )
 		{
