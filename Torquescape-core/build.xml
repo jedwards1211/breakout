@@ -32,9 +32,8 @@
 				<include name="**/vecmath.jar" />
 			</fileset>
 
-			<fileset dir="C:/Program Files/Java/gs-collections-4.0.0">
-				<include name="gs-collections-4.0.0.jar" />
-				<include name="gs-collections-api-4.0.0.jar" />
+			<fileset dir="C:/Program Files/Java/guava-14.0.1">
+				<include name="guava-14.0.1.jar" />
 			</fileset>
 		</path>
 		<javac debug="on" destdir="${build}">

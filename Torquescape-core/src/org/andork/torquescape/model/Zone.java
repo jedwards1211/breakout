@@ -7,32 +7,32 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.vecmath.Point3f;
 
-import com.gs.collections.api.map.MutableMap;
-import com.gs.collections.api.multimap.list.MutableListMultimap;
-import com.gs.collections.impl.map.mutable.UnifiedMap;
-import com.gs.collections.impl.multimap.list.FastListMultimap;
+import org.andork.util.CollectionUtils;
+
+import com.google.common.collect.LinkedListMultimap;
 
 public class Zone
 {
-	public static String									PRIMARY_VERT_BUFFER_KEY	= "_";
+	public static String								PRIMARY_VERT_BUFFER_KEY	= "_";
 	
-	ByteBuffer												vertBuffer;
-	int														bytesPerVertex;
+	ByteBuffer											vertBuffer;
+	int													bytesPerVertex;
 	
-	CharBuffer												indexBuffer;
+	CharBuffer											indexBuffer;
 	
-	public final MutableMap<String, ByteBuffer>				vertBuffers				= UnifiedMap.newMap( );
-	public final MutableMap<String, Integer>				bytesPerVertexMap		= UnifiedMap.newMap( );
+	public final Map<String, ByteBuffer>				vertBuffers				= CollectionUtils.newHashMap( );
+	public final Map<String, Integer>					bytesPerVertexMap		= CollectionUtils.newHashMap( );
 	
-	final Set<Zone>											connectedZones			= new HashSet<Zone>( 0 );
-	final List<ISlice>										slices					= new ArrayList<ISlice>( 0 );
+	final Set<Zone>										connectedZones			= new HashSet<Zone>( 0 );
+	final List<ISlice>									slices					= new ArrayList<ISlice>( 0 );
 	
-	public final MutableListMultimap<Edge, Character>		edgeToTriMap			= FastListMultimap.newMultimap( );
-	public final MutableListMultimap<Point3f, Character>	pointToTriMap			= FastListMultimap.newMultimap( );
+	public final LinkedListMultimap<Edge, Character>	edgeToTriMap			= LinkedListMultimap.create( );
+	public final LinkedListMultimap<Point3f, Character>	pointToTriMap			= LinkedListMultimap.create( );
 	
 	public void init( int vertexCount , int bytesPerVertex , int indexCount )
 	{

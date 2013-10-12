@@ -17,9 +17,6 @@ import org.andork.torquescape.model.slice.RainbowSlice;
 import org.andork.torquescape.model.slice.StandardSlice;
 import org.andork.util.CollectionUtils;
 
-import com.gs.collections.api.map.MutableMap;
-import com.gs.collections.impl.map.mutable.UnifiedMap;
-
 public class ZoneRenderer implements GL3Object
 {
 	private static Map<Class<? extends ISlice>, ISliceRendererFactory<? extends ISlice>>	sliceRendererFactories	= CollectionUtils.newHashMap( );
@@ -37,7 +34,7 @@ public class ZoneRenderer implements GL3Object
 	
 	public int																				vertVbo;
 	
-	public MutableMap<String, Integer>														vertVbos				= UnifiedMap.newMap( );
+	public Map<String, Integer>																vertVbos				= CollectionUtils.newHashMap( );
 	
 	public ZoneRenderer( Zone zone )
 	{
@@ -88,7 +85,7 @@ public class ZoneRenderer implements GL3Object
 	}
 	
 	@Override
-	public void draw( GL3 gl , float[ ] m , float[ ] n , float[ ] v, float[ ] p )
+	public void draw( GL3 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
 	{
 		for( ISliceRenderer<?> sliceRenderer : sliceRenderers )
 		{
