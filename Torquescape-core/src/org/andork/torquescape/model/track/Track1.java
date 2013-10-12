@@ -7,14 +7,14 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.math.curve.SegmentedCurve3f;
-import org.andork.torquescape.model.meshing.FixedMeshingFn;
+import org.andork.torquescape.model.coord.FixedCoordFn;
+import org.andork.torquescape.model.coord.ICoordFn;
+import org.andork.torquescape.model.coord.CoordUtils;
+import org.andork.torquescape.model.coord.XformedCoordFn;
+import org.andork.torquescape.model.index.FixedIndexFn;
 import org.andork.torquescape.model.param.ConstantParamFn;
 import org.andork.torquescape.model.param.CosParamFn;
 import org.andork.torquescape.model.param.LinearParamFn;
-import org.andork.torquescape.model.section.FixedSectionFn;
-import org.andork.torquescape.model.section.ISectionFn;
-import org.andork.torquescape.model.section.SectionUtils;
-import org.andork.torquescape.model.section.XformedSectionFn;
 import org.andork.torquescape.model.xform.Bloater;
 import org.andork.torquescape.model.xform.CompoundXformFn;
 import org.andork.torquescape.model.xform.CurveXformFn;
@@ -50,14 +50,14 @@ public class Track1 extends Track
 		xformFunction = new CurveXformFn( segmentedCurve );
 		xformFunction = new CompoundXformFn( xformFunction , twister , bloater );
 		
-		ISectionFn section = new FixedSectionFn( SectionUtils.generateSharpPolygon( 3 , 5 ) );
-		section = new XformedSectionFn( section , xformFunction );
+		ICoordFn section = new FixedCoordFn( CoordUtils.generateSharpPolygon( 3 , 5 ) );
+		section = new XformedCoordFn( section , xformFunction );
 		
 		char[ ] meshing = { 1 , 2 , 7 , 8 , 7 , 2 , 3 , 4 , 9 , 10 , 9 , 4 , 5 , 0 , 11 , 6 , 11 , 0 };
 		
-		FixedMeshingFn meshingFn = new FixedMeshingFn( meshing );
+		FixedIndexFn meshingFn = new FixedIndexFn( meshing );
 		
-		setSectionFn( section );
-		setMeshingFn( meshingFn );
+		setCoordFn( section );
+		setIndexFn( meshingFn );
 	}
 }

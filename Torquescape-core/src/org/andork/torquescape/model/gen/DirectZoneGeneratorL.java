@@ -16,7 +16,8 @@ public class DirectZoneGeneratorL extends DirectZoneGenerator
 	@Override
 	public void visit( float f )
 	{
-		visit( Float.floatToRawIntBits( f ) );
+//		visit( Float.floatToRawIntBits( f ) );
+		buffer.putFloat( f );
 		
 	}
 	
@@ -36,10 +37,11 @@ public class DirectZoneGeneratorL extends DirectZoneGenerator
 	@Override
 	public void visit( int i )
 	{
-		buffer.put( ( byte ) i );
-		buffer.put( ( byte ) ( i >> 8 ) );
-		buffer.put( ( byte ) ( i >> 16 ) );
-		buffer.put( ( byte ) ( i >> 24 ) );
+//		buffer.put( ( byte ) i );
+//		buffer.put( ( byte ) ( i >> 8 ) );
+//		buffer.put( ( byte ) ( i >> 16 ) );
+//		buffer.put( ( byte ) ( i >> 24 ) );
+		buffer.putInt( i );
 	}
 	
 	@Override

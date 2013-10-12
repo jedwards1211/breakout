@@ -1,18 +1,18 @@
 package org.andork.torquescape.model.vertex;
 
-import org.andork.torquescape.model.section.ISectionFn;
+import org.andork.torquescape.model.coord.ICoordFn;
 
 public class StandardVertexFn implements IVertexFn
 {
-	ISectionFn			sectionFn;
+	ICoordFn			coordFn;
 	IVertexAttrFn[ ]	vertexAttrFns;
 	int					bytesPerVertex;
 	
 	float[ ]			coords	= new float[ 3 ];
 	
-	public StandardVertexFn( ISectionFn sectionFn , IVertexAttrFn ... vertexAttrFns )
+	public StandardVertexFn( ICoordFn coordFn , IVertexAttrFn ... vertexAttrFns )
 	{
-		this.sectionFn = sectionFn;
+		this.coordFn = coordFn;
 		this.vertexAttrFns = vertexAttrFns;
 		bytesPerVertex = 24;
 		for( IVertexAttrFn vertexAttrFn : vertexAttrFns )
@@ -30,15 +30,15 @@ public class StandardVertexFn implements IVertexFn
 	@Override
 	public int getVertexCount( float param )
 	{
-		return sectionFn.getVertexCount( param );
+		return coordFn.getCoordCount( param );
 	}
 	
 	@Override
 	public void eval( float param , int index , IVertexVisitor visitor )
 	{
-		int vertexCount = sectionFn.getVertexCount( param );
+		int vertexCount = coordFn.getCoordCount( param );
 		
-		sectionFn.eval( param , index , coords );
+		coordFn.eval( param , index , coords );
 		
 		visitor.visit( coords[ 0 ] );
 		visitor.visit( coords[ 1 ] );

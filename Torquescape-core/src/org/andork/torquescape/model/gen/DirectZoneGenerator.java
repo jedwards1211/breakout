@@ -4,12 +4,12 @@ import java.nio.ByteOrder;
 
 public abstract class DirectZoneGenerator extends ZoneGenerator
 {
-	public static ZoneGenerator newInstance( )
+	public static DirectZoneGenerator newInstance( )
 	{
 		return newInstance( ByteOrder.nativeOrder( ) );
 	}
 	
-	public static ZoneGenerator newInstance( ByteOrder order )
+	public static DirectZoneGenerator newInstance( ByteOrder order )
 	{
 		return order == ByteOrder.BIG_ENDIAN ? new DirectZoneGeneratorB( ) : new DirectZoneGeneratorL( );
 	}

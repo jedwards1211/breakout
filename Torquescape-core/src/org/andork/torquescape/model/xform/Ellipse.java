@@ -4,7 +4,7 @@ import javax.vecmath.Matrix4f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import org.andork.math.curve.TransformComputer3f;
+import org.andork.vecmath.TransformComputer3f;
 import org.andork.vecmath.VecmathUtils;
 
 public class Ellipse implements IXformFn

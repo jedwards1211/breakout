@@ -1,9 +1,9 @@
 package org.andork.torquescape.model.gen;
 
+import org.andork.torquescape.model.coord.ICoordFn;
+import org.andork.torquescape.model.index.IIndexFn;
 import org.andork.torquescape.model.list.CharList;
 import org.andork.torquescape.model.list.FloatList;
-import org.andork.torquescape.model.meshing.IMeshingFn;
-import org.andork.torquescape.model.section.ISectionFn;
 
 public class DefaultTrackGenerator
 {
@@ -16,7 +16,7 @@ public class DefaultTrackGenerator
 	
 	float[ ]			coord		= new float[ 3 ];
 	
-	public void add( ISectionFn section , IMeshingFn mesh , float startParam , float endParam , float step )
+	public void add( ICoordFn section , IIndexFn mesh , float startParam , float endParam , float step )
 	{
 		vertexCount = 0;
 		
@@ -31,18 +31,18 @@ public class DefaultTrackGenerator
 		eval( section , endParam );
 	}
 	
-	private void eval( ISectionFn section , float param )
+	private void eval( ICoordFn section , float param )
 	{
-		for( int i = 0 ; i < section.getVertexCount( param ) ; i++ )
+		for( int i = 0 ; i < section.getCoordCount( param ) ; i++ )
 		{
 			section.eval( param , i , coord );
 			verts.add( coord[ 0 ] , coord[ 1 ] , coord[ 2 ] );
 			verts.add( 0 , 0 , 0 );
 		}
-		vertexCount += section.getVertexCount( param );
+		vertexCount += section.getCoordCount( param );
 	}
 	
-	private void eval( IMeshingFn mesh , float param )
+	private void eval( IIndexFn mesh , float param )
 	{
 		for( int i = 0 ; i < mesh.getIndexCount( param ) ; i++ )
 		{

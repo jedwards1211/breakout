@@ -1,30 +1,30 @@
 package org.andork.torquescape.model.track;
 
-import org.andork.torquescape.model.meshing.IMeshingFn;
-import org.andork.torquescape.model.section.ISectionFn;
+import org.andork.torquescape.model.coord.ICoordFn;
+import org.andork.torquescape.model.index.IIndexFn;
 
 public class Track
 {
-	protected ISectionFn		SectionFn;
-	protected IMeshingFn		meshingFn;
+	protected ICoordFn		coordFn;
+	protected IIndexFn		indexFn;
 	
-	public ISectionFn getSectionFn( )
+	public ICoordFn getCoordFn( )
 	{
-		return SectionFn;
+		return coordFn;
 	}
 	
-	public void setSectionFn( ISectionFn SectionFn )
+	public void setCoordFn( ICoordFn coordFn )
 	{
-		this.SectionFn = SectionFn;
+		this.coordFn = coordFn;
 	}
 	
-	public IMeshingFn getMeshingFn( )
+	public IIndexFn getIndexFn( )
 	{
-		return meshingFn;
+		return indexFn;
 	}
 	
-	public void setMeshingFn( IMeshingFn meshingFn )
+	public void setIndexFn( IIndexFn indexFn )
 	{
-		this.meshingFn = meshingFn;
+		this.indexFn = indexFn;
 	}
 }

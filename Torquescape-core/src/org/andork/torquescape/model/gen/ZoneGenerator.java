@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 import org.andork.torquescape.model.Zone;
-import org.andork.torquescape.model.meshing.IMeshingFn;
+import org.andork.torquescape.model.index.IIndexFn;
 import org.andork.torquescape.model.vertex.IVertexFn;
 import org.andork.torquescape.model.vertex.IVertexVisitor;
 
@@ -26,10 +26,10 @@ public abstract class ZoneGenerator implements IVertexVisitor
 	public void setZone( Zone zone )
 	{
 		this.zone = zone;
-		this.buffer = zone.getIndexByteBuffer( );
+		this.buffer = zone.getVertBuffer( );
 	}
 	
-	public void generate( IVertexFn vertexFn , IMeshingFn meshingFn , Iterable<Float> params )
+	public void generate( IVertexFn vertexFn , IIndexFn meshingFn , Iterable<Float> params )
 	{
 		int indexOffset = 0;
 		
@@ -49,7 +49,7 @@ public abstract class ZoneGenerator implements IVertexVisitor
 				int indexCount = meshingFn.getIndexCount( param );
 				for( int index = 0 ; index < indexCount ; index++ )
 				{
-					zone.getIndexCharBuffer( ).put( ( char ) ( meshingFn.eval( param , index ) + indexOffset ) );
+					zone.getIndexBuffer( ).put( ( char ) ( meshingFn.eval( param , index ) + indexOffset ) );
 				}
 			}
 			
