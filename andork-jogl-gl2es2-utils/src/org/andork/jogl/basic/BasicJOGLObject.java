@@ -1024,6 +1024,67 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
+	public static class DebugUVNVertexShader
+	{
+		public String toString( )
+		{
+			StringBuffer sb = new StringBuffer( );
+			sb.append( "uniform mat4 m, v, p;" );
+			sb.append( "uniform mat3 n;" );
+			sb.append( "attribute vec3 a_pos;" );
+			sb.append( "attribute vec3 a_norm;" );
+			sb.append( "attribute vec3 a_u;" );
+			sb.append( "attribute vec3 a_v;" );
+			sb.append( "varying vec3 v_vmpos;" );
+			sb.append( "varying vec3 v_norm;" );
+			sb.append( "varying vec3 v_u;" );
+			sb.append( "varying vec3 v_v;" );
+			sb.append( "void main(void)" );
+			sb.append( "{" );
+			sb.append( "  v_vmpos = (v * m * vec4(a_pos, 1.0)).xyz;" );
+			sb.append( "  v_norm = (v * vec4(n * a_norm, 0.0)).xyz;" );
+			sb.append( "  v_u = (v * vec4(n * a_u, 0.0)).xyz;" );
+			sb.append( "  v_v = (v * vec4(n * a_v, 0.0)).xyz;" );
+			sb.append( "  gl_Position = p * v * m * vec4(a_pos, 1.0);" );
+			sb.append( "}" );
+			
+			return sb.toString( );
+		}
+	}
+
+	public static class DebugUVNFragmentShader
+	{
+		public String toString( )
+		{
+			StringBuffer sb = new StringBuffer( );
+			sb.append( "varying vec3 v_vmpos;" );
+			sb.append( "varying vec3 v_norm;" );
+			sb.append( "varying vec3 v_u;" );
+			sb.append( "varying vec3 v_v;" );
+			sb.append( "void main() {" );
+			sb.append( "  vec3 topos = normalize(v_vmpos);" );
+			sb.append( "  float norm = dot(v_norm, topos);" );
+			sb.append( "  float u = dot(v_u, topos);" );
+			sb.append( "  float v = dot(v_v, topos);" );
+			sb.append( "  vec4 color = vec4(norm, 0.0, 0.0, 1.0);" );
+			sb.append( "  if (u > 0.0) {" );
+			sb.append( "    color += vec4(0.0, u, 0.0, 0.0);" );
+			sb.append( "  }" );
+			sb.append( "  else {" );
+			sb.append( "    color += vec4(-u, 0.0, -u, 0.0);" );
+			sb.append( "  }" );
+			sb.append( "  if (v > 0.0) {" );
+			sb.append( "    color += vec4(0.0, 0.0, v, 0.0);" );
+			sb.append( "  }" );
+			sb.append( "  else {" );
+			sb.append( "    color += vec4(-v, -v, 0.0, 0.0);" );
+			sb.append( "  }" );
+			sb.append( "  gl_FragColor = color;" );
+			sb.append( "}" );
+			return sb.toString( );
+		}
+	}
+
 	private static String format( String valueFormat , float ... values )
 	{
 		StringBuffer sb = new StringBuffer( );

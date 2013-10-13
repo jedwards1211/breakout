@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import javax.media.opengl.DebugGL2;
+import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
@@ -45,6 +47,8 @@ public class BasicJOGLScene implements GLEventListener
 	
 	private final Queue<JOGLObject>	objectsThatNeedInit	= new LinkedList<JOGLObject>( );
 	
+	private DebugGL2				debugGL;
+	
 	public BasicJOGLScene add( JOGLObject object )
 	{
 		objects.add( object );
@@ -63,10 +67,19 @@ public class BasicJOGLScene implements GLEventListener
 		return this;
 	}
 	
+	public GL2ES2 getGL( GL2ES2 orig )
+	{
+		if( debugGL == null || debugGL.getDownstreamGL( ) != orig )
+		{
+			debugGL = new DebugGL2( ( GL2 ) orig );
+		}
+		return debugGL;
+	}
+	
 	@Override
 	public void init( GLAutoDrawable drawable )
 	{
-		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+		GL2ES2 gl = getGL( ( GL2ES2 ) drawable.getGL( ) );
 		
 		for( JOGLObject object : objects )
 		{
@@ -83,7 +96,7 @@ public class BasicJOGLScene implements GLEventListener
 	@Override
 	public void display( GLAutoDrawable drawable )
 	{
-		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+		GL2ES2 gl = getGL( ( GL2ES2 ) drawable.getGL( ) );
 		
 		gl.glClear( GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_DEPTH_BUFFER_BIT );
 		
@@ -106,7 +119,7 @@ public class BasicJOGLScene implements GLEventListener
 		this.width = width;
 		this.height = height;
 		
-		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+		GL2ES2 gl = getGL( ( GL2ES2 ) drawable.getGL( ) );
 		
 		gl.glViewport( 0 , 0 , width , height );
 		

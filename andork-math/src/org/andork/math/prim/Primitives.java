@@ -90,29 +90,29 @@ public class Primitives
 						if( latitude == 0 )
 						{
 							indices[ 0 ] = 0;
-							indices[ 2 ] = 1 + nextLong;
 							indices[ 1 ] = 1 + longitude;
+							indices[ 2 ] = 1 + nextLong;
 						}
 						else if( latitude == latDivs - 1 )
 						{
 							int lastIndex = 1 + ( latDivs - 1 ) * longDivs;
 							indices[ 0 ] = lastIndex;
-							indices[ 2 ] = ringStart + longitude;
 							indices[ 1 ] = ringStart + nextLong;
+							indices[ 2 ] = ringStart + longitude;
 						}
 						else
 						{
 							if( other )
 							{
 								indices[ 0 ] = nextRingStart + longitude;
-								indices[ 2 ] = ringStart + longitude;
 								indices[ 1 ] = nextRingStart + nextLong;
+								indices[ 2 ] = ringStart + longitude;
 							}
 							else
 							{
 								indices[ 0 ] = ringStart + nextLong;
-								indices[ 2 ] = nextRingStart + nextLong;
 								indices[ 1 ] = ringStart + longitude;
+								indices[ 2 ] = nextRingStart + nextLong;
 							}
 							other = !other;
 						}

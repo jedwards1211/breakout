@@ -1,5 +1,7 @@
 package org.andork.jogl.util;
 
+import java.util.Arrays;
+
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 
@@ -45,6 +47,19 @@ public class JOGLUtils
 		gl.glShaderSource( shader , 1 , new String[ ] { shaderCode } , new int[ ] { shaderCode.length( ) } , 0 );
 		gl.glCompileShader( shader );
 		
+		int[ ] params = new int[ 1 ];
+		gl.glGetShaderiv( shader , GL2ES2.GL_COMPILE_STATUS , params , 0 );
+		
+		if( params[ 0 ] == GL2ES2.GL_FALSE )
+		{
+			gl.glGetShaderiv( shader , GL2ES2.GL_INFO_LOG_LENGTH , params , 0 );
+			byte[ ] bytes = new byte[ params[ 0 ] ];
+			gl.glGetShaderInfoLog( shader , params[ 0 ] , params , 0 , bytes , 0 );
+			
+			bytes = Arrays.copyOf( bytes , params[ 0 ] );
+			throw new RuntimeException( new String( bytes ) );
+		}
+		
 		return shader;
 	}
 	
@@ -58,6 +73,19 @@ public class JOGLUtils
 		gl.glAttachShader( program , vertexShader );
 		gl.glAttachShader( program , fragmentShader );
 		gl.glLinkProgram( program );
+		
+		int[ ] params = new int[ 1 ];
+		gl.glGetProgramiv( program , GL2ES2.GL_LINK_STATUS , params , 0 );
+		
+		if( params[ 0 ] == GL2ES2.GL_FALSE )
+		{
+			gl.glGetProgramiv( program , GL2ES2.GL_INFO_LOG_LENGTH , params , 0 );
+			byte[ ] bytes = new byte[ params[ 0 ] ];
+			gl.glGetProgramInfoLog( program , params[ 0 ] , params , 0 , bytes , 0 );
+			
+			bytes = Arrays.copyOf( bytes , params[ 0 ] );
+			throw new RuntimeException( new String( bytes ) );
+		}
 		
 		return program;
 	}

@@ -1,6 +1,5 @@
 package org.andork.jogl.basic;
 
-import static org.andork.vecmath.Vecmath.cross;
 import static org.andork.vecmath.Vecmath.invAffine;
 import static org.andork.vecmath.Vecmath.mmulAffine;
 import static org.andork.vecmath.Vecmath.mvmulAffine;
@@ -22,8 +21,8 @@ public class BasicOrbiter extends MouseAdapter
 	final GLWindow			window;
 	final BasicJOGLScene	scene;
 	MouseEvent				lastEvent	= null;
+	final float[ ]			center		= { 0 , 0 , 0 };
 	final float[ ]			axis		= new float[ 3 ];
-	final float[ ]			center		= new float[ 3 ];
 	MouseEvent				pressEvent	= null;
 	final float[ ]			m1			= Vecmath.newMat4f( );
 	final float[ ]			m2			= Vecmath.newMat4f( );
@@ -103,8 +102,7 @@ public class BasicOrbiter extends MouseAdapter
 			lastEvent = e;
 			
 			invAffine( scene.v , m1 );
-			mvmulAffine( m1 , 0 , 0 , 1 , axis );
-			cross( 0 , 1 , 0 , axis , axis );
+			mvmulAffine( m1 , 1 , 0 , 0 , axis );
 			normalize3( axis );
 			
 			setIdentity( m1 );
@@ -118,7 +116,6 @@ public class BasicOrbiter extends MouseAdapter
 			float dtilt = ( float ) ( dy * tiltFactor / window.getHeight( ) );
 			
 			rotY( m1 , dpan );
-			
 			mmulAffine( m1 , m2 , m2 );
 			
 			setRotation( m1 , axis , dtilt );
@@ -131,7 +128,8 @@ public class BasicOrbiter extends MouseAdapter
 			mmulAffine( scene.v , m2 , scene.v );
 		}
 		
-		if (callDisplay) {
+		if( callDisplay )
+		{
 			this.window.display( );
 		}
 	}
