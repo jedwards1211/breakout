@@ -16,12 +16,37 @@
 		<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-plot/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />
-		<ant antfile="../andork-jogl-gl2es2-utils/build.xml" inheritAll="false"
-			target="dist" />
+		<ant antfile="../andork-jogl-gl2es2-utils/build.xml" inheritAll="false" target="dist" />
 	</target>
 
-	<target name="compile" depends="init,compile-dependencies"
-		description="compile the source ">
+	<target name="copy-dependencies">
+		<mkdir dir="${dist}/lib" />
+		<copy todir="${dist}/lib">
+			<fileset dir="C:/jogamp-all-platforms/jar">
+				<include name="gluegen-rt.jar" />
+				<include name="joal.jar" />
+				<include name="jocl.jar" />
+				<include name="jogl-all.jar" />
+			</fileset>
+			<fileset dir="../andork-core/dist/lib">
+				<include name="*.jar" />
+			</fileset>
+
+			<fileset dir="../andork-math/dist/lib">
+				<include name="*.jar" />
+			</fileset>
+
+			<fileset dir="../andork-plot/dist/lib">
+				<include name="*.jar" />
+			</fileset>
+
+			<fileset dir="../andork-jogl-gl2es2-utils/dist/lib">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="compile" depends="init,compile-dependencies,copy-dependencies" description="compile the source ">
 		<!-- Compile the java code from ${src} into ${build} -->
 		<path id="master-classpath">
 			<fileset dir="C:/jogamp-all-platforms/jar">
@@ -30,21 +55,9 @@
 				<include name="jocl.jar" />
 				<include name="jogl-all.jar" />
 			</fileset>
-
-			<fileset dir="../andork-core">
-				<include name="dist/lib/*.jar" />
-			</fileset>
-
-			<fileset dir="../andork-math">
-				<include name="dist/lib/*.jar" />
-			</fileset>
-
-			<fileset dir="../andork-plot">
-				<include name="dist/lib/*.jar" />
-			</fileset>
-
-			<fileset dir="../andork-jogl-gl2es2-utils">
-				<include name="dist/lib/*.jar" />
+			
+			<fileset dir="${dist}/lib">
+				<include name="*.jar" />
 			</fileset>
 		</path>
 		<javac debug="on" destdir="${build}">
@@ -59,7 +72,6 @@
 
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/${ant.project.name}.jar" basedir="${build}" />
-		<jar jarfile="${dist}/${ant.project.name}-sources.jar" basedir="${src}" />
 	</target>
 
 	<target name="clean" description="clean up">
