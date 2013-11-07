@@ -65,7 +65,7 @@ public class TorquescapeTestScene implements GLEventListener
 		{
 			for( ISliceRenderer<?> sliceRenderer : zone.sliceRenderers )
 			{
-				sliceRenderer.draw( gl , identityMatrix , mvMatrix , pMatrix );
+				sliceRenderer.draw( gl , identityMatrix , null , mvMatrix, pMatrix );
 			}
 		}
 	}

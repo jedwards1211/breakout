@@ -15,6 +15,8 @@ import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
+import org.andork.vecmath.Vecmath;
+
 public class BasicJOGLScene implements GLEventListener
 {
 	/**
@@ -48,6 +50,13 @@ public class BasicJOGLScene implements GLEventListener
 	private final Queue<JOGLObject>	objectsThatNeedInit	= new LinkedList<JOGLObject>( );
 	
 	private DebugGL2				debugGL;
+	
+	private boolean					orthoMode;
+	
+	public float[ ]					orthoFrame			= { -1 , 1 , -1 , 1 , -100 , 100 };
+	
+	final float[ ]					lastOrthoView		= newMat4f( );
+	final float[ ]					lastPerspectiveView	= newMat4f( );
 	
 	public BasicJOGLScene add( JOGLObject object )
 	{
@@ -120,19 +129,50 @@ public class BasicJOGLScene implements GLEventListener
 		this.height = height;
 		
 		GL2ES2 gl = getGL( ( GL2ES2 ) drawable.getGL( ) );
-		
 		gl.glViewport( 0 , 0 , width , height );
 		
-		recomputePerspective( );
+		recomputeProjection( );
 	}
 	
-	private void recomputePerspective( )
+	public void setOrthoMode( boolean ortho )
 	{
-		perspective( p , fov , ( float ) width / height , zNear , zFar );
+		if( this.orthoMode != ortho )
+		{
+			if( this.orthoMode )
+			{
+				Vecmath.setf( lastOrthoView , v );
+				Vecmath.setf( v , lastPerspectiveView );
+			}
+			else
+			{
+				Vecmath.setf( lastPerspectiveView , v );
+				Vecmath.setf( v , lastOrthoView );
+			}
+			
+			this.orthoMode = ortho;
+			recomputeProjection( );
+		}
+	}
+	
+	public void recomputeProjection( )
+	{
+		if( orthoMode )
+		{
+			Vecmath.ortho( p , orthoFrame[ 0 ] , orthoFrame[ 1 ] , orthoFrame[ 2 ] , orthoFrame[ 3 ] , orthoFrame[ 4 ] , orthoFrame[ 5 ] );
+		}
+		else
+		{
+			perspective( p , fov , ( float ) width / height , zNear , zFar );
+		}
 		p[ 8 ] = -p[ 8 ];
 		p[ 9 ] = -p[ 9 ];
 		p[ 10 ] = -p[ 10 ];
 		p[ 11 ] = -p[ 11 ];
+	}
+	
+	public void clear( )
+	{
+		objects.clear( );
 	}
 	
 }

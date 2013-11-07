@@ -34,15 +34,15 @@ public class BSplines
 	{
 		float[ ] knots = new float[ degree + numControlPoints + 1 ];
 		
-		for( int i = 0 ; i < degree - 1 ; i++ )
+		for( int i = 0 ; i < degree ; i++ )
 		{
 			knots[ i ] = 0;
 			knots[ knots.length - i - 1 ] = 1;
 		}
 		
-		for( int i = 0 ; i < numControlPoints ; i++ )
+		for( int i = degree ; i <= numControlPoints ; i++ )
 		{
-			knots[ i + degree - 1 ] = ( float ) i / ( numControlPoints - 1 );
+			knots[ i ] = ( float ) ( i - degree ) / ( numControlPoints - degree );
 		}
 		
 		return knots;

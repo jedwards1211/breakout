@@ -24,6 +24,7 @@ public class Zone
 	int													bytesPerVertex;
 	
 	CharBuffer											indexBuffer;
+	ByteBuffer											indexByteBuffer;
 	
 	public final Map<String, ByteBuffer>				vertBuffers				= CollectionUtils.newHashMap( );
 	public final Map<String, Integer>					bytesPerVertexMap		= CollectionUtils.newHashMap( );
@@ -45,9 +46,21 @@ public class Zone
 		vertBuffers.put( PRIMARY_VERT_BUFFER_KEY , vertBuffer );
 		bytesPerVertexMap.put( PRIMARY_VERT_BUFFER_KEY , bytesPerVertex );
 		
-		bb = ByteBuffer.allocateDirect( indexCount * 2 );
-		bb.order( ByteOrder.nativeOrder( ) );
-		indexBuffer = bb.asCharBuffer( );
+		indexByteBuffer = ByteBuffer.allocateDirect( indexCount * 2 );
+		indexByteBuffer.order( ByteOrder.nativeOrder( ) );
+		indexBuffer = indexByteBuffer.asCharBuffer( );
+	}
+	
+	public void init( ByteBuffer primaryVertBuffer , int bytesPerVertex , ByteBuffer indexBuffer )
+	{
+		this.vertBuffer = primaryVertBuffer;
+		this.bytesPerVertex = bytesPerVertex;
+		
+		vertBuffers.put( PRIMARY_VERT_BUFFER_KEY , vertBuffer );
+		bytesPerVertexMap.put( PRIMARY_VERT_BUFFER_KEY , bytesPerVertex );
+		
+		indexByteBuffer = indexBuffer;
+		this.indexBuffer = indexByteBuffer.asCharBuffer( );
 	}
 	
 	public void rebuildMaps( )
@@ -118,6 +131,11 @@ public class Zone
 	public CharBuffer getIndexBuffer( )
 	{
 		return indexBuffer;
+	}
+	
+	public ByteBuffer getIndexByteBuffer( )
+	{
+		return indexByteBuffer;
 	}
 	
 	public int getBytesPerVertex( )

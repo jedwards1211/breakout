@@ -6,20 +6,20 @@ import java.util.Random;
 import javax.media.opengl.GL2ES2;
 import javax.vecmath.Point3f;
 
-import org.andork.jogl.basic.BasicJOGLSetup;
 import org.andork.jogl.basic.BasicJOGLObject;
-import org.andork.jogl.basic.BasicJOGLScene;
-import org.andork.jogl.basic.BufferHelper;
-import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
 import org.andork.jogl.basic.BasicJOGLObject.DepthFragmentShader;
+import org.andork.jogl.basic.BasicJOGLScene;
+import org.andork.jogl.basic.BasicJOGLSetup;
+import org.andork.jogl.basic.BufferHelper;
+import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.math.curve.BSpline3f;
+import org.andork.math.curve.FastFloatBSplineEvaluator;
+import org.andork.math.curve.FloatArrayBSpline;
+import org.andork.math.curve.FloatBSplineEvaluator;
 import org.andork.math.curve.BSpline3f.Evaluator;
 import org.andork.math.curve.BSplines;
 import org.andork.util.IterableUtils;
-
-import com.jogamp.opengl.util.AnimatorBase;
-import com.jogamp.opengl.util.FPSAnimator;
 
 @SuppressWarnings( "serial" )
 public class SplineTestFrame extends BasicJOGLSetup
@@ -42,6 +42,12 @@ public class SplineTestFrame extends BasicJOGLSetup
 		float[ ] knots = BSplines.createUniformKnots( degree , numControlPoints );
 		Point3f[ ] controlPoints = new Point3f[ numControlPoints ];
 		
+		FloatArrayBSpline spline = new FloatArrayBSpline( );
+		spline.degree = degree;
+		spline.dimension = 3;
+		spline.points = new float[ numControlPoints * spline.dimension ];
+		spline.knots = knots;
+		
 		Random rand = new Random( );
 		
 		for( int i = 0 ; i < numControlPoints ; i++ )
@@ -51,18 +57,27 @@ public class SplineTestFrame extends BasicJOGLSetup
 			float z = ( rand.nextFloat( ) - 0.5f ) * 20;
 			
 			controlPoints[ i ] = new Point3f( x , y , z );
+			
+			spline.points[ i * 3 ] = x;
+			spline.points[ i * 3 + 1 ] = y;
+			spline.points[ i * 3 + 2 ] = z;
 		}
 		
-		BSpline3f spline = new BSpline3f( degree , knots , controlPoints );
-		Evaluator evaluator = new Evaluator( degree );
+		FastFloatBSplineEvaluator evaluator = new FastFloatBSplineEvaluator( ).bspline( spline );
 		
 		BasicJOGLObject obj = new BasicJOGLObject( );
 		
 		BufferHelper bh = new BufferHelper( );
 		
-		for( Point3f p : BSpline3f.iterable( spline , evaluator , IterableUtils.range( 0f , 1f , true , 0.0001f ) ) )
+		float[ ] out = new float[ spline.dimension ];
+		
+		for( float f = 0 ; f <= 1f ; f += 0.0001f )
 		{
-			bh.put( p.x , p.y , p.z );
+			evaluator.eval( f , out );
+			for( float coord : out )
+			{
+				bh.put( coord );
+			}
 		}
 		
 		ByteBuffer vertexBuffer = bh.toByteBuffer( );

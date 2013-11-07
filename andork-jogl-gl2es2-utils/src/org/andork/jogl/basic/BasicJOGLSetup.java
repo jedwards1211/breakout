@@ -3,6 +3,7 @@ package org.andork.jogl.basic;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 
+import javax.media.nativewindow.WindowClosingProtocol.WindowClosingMode;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
 
@@ -86,6 +87,7 @@ public class BasicJOGLSetup
 		Dimension screenSize = Toolkit.getDefaultToolkit( ).getScreenSize( );
 		glWindow.setSize( screenSize.width * 2 / 3 , screenSize.height * 2 / 3 );
 		glWindow.setPosition( 50 , 50 );
+		glWindow.setDefaultCloseOperation( WindowClosingMode.DISPOSE_ON_CLOSE );
 	}
 	
 	protected BasicJOGLScene createScene( )

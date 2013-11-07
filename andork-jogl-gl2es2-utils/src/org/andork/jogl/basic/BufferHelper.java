@@ -71,6 +71,15 @@ public class BufferHelper
 		return this;
 	}
 	
+	public BufferHelper putFloats( double ... values )
+	{
+		for( double d : values )
+		{
+			result.add( ( float ) d );
+		}
+		return this;
+	}
+	
 	public void writeTo( ByteBuffer buffer )
 	{
 		for( Object n : result )

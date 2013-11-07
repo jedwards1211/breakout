@@ -15,13 +15,13 @@ import org.andork.jogl.util.JOGLUtils;
 
 public class BasicJOGLObject implements JOGLObject
 {
-	ByteBuffer[ ]				vertexBuffers		= new ByteBuffer[ 0 ];
+	ByteBuffer[ ]				vertexBuffers			= new ByteBuffer[ 0 ];
 	int[ ]						offsets;
 	int[ ]						strides;
 	int[ ]						vbos;
 	int							vertexCount;
 	
-	Buffer						indexBuffer;
+	ByteBuffer					indexBuffer;
 	int							indexCount;
 	int							indexType;
 	int							ebo;
@@ -31,20 +31,22 @@ public class BasicJOGLObject implements JOGLObject
 	String						vertexShaderCode;
 	String						fragmentShaderCode;
 	
-	String						modelMatrixName		= "m";
-	String						normalMatrixName	= null;
-	String						viewMatrixName		= "v";
-	String						projMatrixName		= "p";
+	String						modelMatrixName			= "m";
+	String						normalMatrixName		= null;
+	String						viewMatrixName			= "v";
+	String						projMatrixName			= "p";
 	
-	boolean						transpose			= false;
+	boolean						transpose				= false;
 	
-	final List<Uniform>			uniforms			= new ArrayList<Uniform>( );
-	final List<Attribute>		attributes			= new ArrayList<Attribute>( );
-	final List<JOGLModifier>	modifiers			= new ArrayList<JOGLModifier>( );
+	final List<Uniform>			uniforms				= new ArrayList<Uniform>( );
+	final List<Attribute>		attributes				= new ArrayList<Attribute>( );
+	final List<JOGLModifier>	modifiers				= new ArrayList<JOGLModifier>( );
 	
 	int							drawMode;
 	
-	private boolean				initialized			= false;
+	private boolean				initialized				= false;
+	
+	boolean						ignoreMissingLocations	= false;
 	
 	public ByteBuffer addVertexBuffer( int capacity )
 	{
@@ -78,7 +80,7 @@ public class BasicJOGLObject implements JOGLObject
 		return indexBuffer;
 	}
 	
-	public BasicJOGLObject indexBuffer( Buffer newBuffer )
+	public BasicJOGLObject indexBuffer( ByteBuffer newBuffer )
 	{
 		indexBuffer = newBuffer;
 		return this;
@@ -141,6 +143,12 @@ public class BasicJOGLObject implements JOGLObject
 	public BasicJOGLObject transpose( boolean transpose )
 	{
 		this.transpose = transpose;
+		return this;
+	}
+	
+	public BasicJOGLObject ignoreMissingLocations( boolean ignoreMissingLocations )
+	{
+		this.ignoreMissingLocations = ignoreMissingLocations;
 		return this;
 	}
 	
@@ -355,6 +363,11 @@ public class BasicJOGLObject implements JOGLObject
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
 			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
+			
 			gl.glUniform1iv( location , count , value , value_offset );
 			checkGLError( gl );
 		}
@@ -395,6 +408,11 @@ public class BasicJOGLObject implements JOGLObject
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
+			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
 			
 			gl.glUniform1fv( location , count , value , value_offset );
 			checkGLError( gl );
@@ -437,6 +455,11 @@ public class BasicJOGLObject implements JOGLObject
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
 			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
+			
 			gl.glUniform2fv( location , count , value , value_offset );
 			checkGLError( gl );
 		}
@@ -478,6 +501,11 @@ public class BasicJOGLObject implements JOGLObject
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
 			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
+			
 			gl.glUniform3fv( location , count , value , value_offset );
 			checkGLError( gl );
 		}
@@ -518,6 +546,11 @@ public class BasicJOGLObject implements JOGLObject
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
+			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
 			
 			gl.glUniform4fv( location , count , value , value_offset );
 			checkGLError( gl );
@@ -566,6 +599,11 @@ public class BasicJOGLObject implements JOGLObject
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
+			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
 			
 			gl.glUniformMatrix4fv( location , count , transpose , value , value_offset );
 			checkGLError( gl );
@@ -617,6 +655,11 @@ public class BasicJOGLObject implements JOGLObject
 			int location = gl.glGetAttribLocation( program , name );
 			checkGLError( gl );
 			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
+			
 			gl.glEnableVertexAttribArray( location );
 			checkGLError( gl );
 			
@@ -662,6 +705,11 @@ public class BasicJOGLObject implements JOGLObject
 		{
 			int location = gl.glGetAttribLocation( program , name );
 			checkGLError( gl );
+			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
 			
 			gl.glEnableVertexAttribArray( location );
 			checkGLError( gl );
@@ -714,6 +762,11 @@ public class BasicJOGLObject implements JOGLObject
 			int location = gl.glGetAttribLocation( program , name );
 			checkGLError( gl );
 			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
+			
 			gl.glEnableVertexAttribArray( location );
 			checkGLError( gl );
 			
@@ -764,6 +817,11 @@ public class BasicJOGLObject implements JOGLObject
 		{
 			int location = gl.glGetAttribLocation( program , name );
 			checkGLError( gl );
+			
+			if( ignoreMissingLocations && location < 0 )
+			{
+				return;
+			}
 			
 			gl.glEnableVertexAttribArray( location );
 			checkGLError( gl );
@@ -1051,7 +1109,13 @@ public class BasicJOGLObject implements JOGLObject
 			return sb.toString( );
 		}
 	}
-
+	
+	/**
+	 * Shades according to normal, u, and v vectors on the object. Normals facing the camera are red, facing away are cyan. u facing the camera are green,
+	 * facing away are magenta. v facing the camera are blue, facing away are yellow.
+	 * 
+	 * @author Andy
+	 */
 	public static class DebugUVNFragmentShader
 	{
 		public String toString( )
@@ -1066,7 +1130,13 @@ public class BasicJOGLObject implements JOGLObject
 			sb.append( "  float norm = dot(v_norm, topos);" );
 			sb.append( "  float u = dot(v_u, topos);" );
 			sb.append( "  float v = dot(v_v, topos);" );
-			sb.append( "  vec4 color = vec4(norm, 0.0, 0.0, 1.0);" );
+			sb.append( "  vec4 color = vec4(0.0, 0.0, 0.0, 1.0);" );
+			sb.append( "  if (norm > 0.0) {" );
+			sb.append( "    color += vec4(norm, 0.0, 0.0, 0.0);" );
+			sb.append( "  }" );
+			sb.append( "  else {" );
+			sb.append( "    color += vec4(0.0, -norm, -norm, 0.0);" );
+			sb.append( "  }" );
 			sb.append( "  if (u > 0.0) {" );
 			sb.append( "    color += vec4(0.0, u, 0.0, 0.0);" );
 			sb.append( "  }" );
@@ -1084,7 +1154,7 @@ public class BasicJOGLObject implements JOGLObject
 			return sb.toString( );
 		}
 	}
-
+	
 	private static String format( String valueFormat , float ... values )
 	{
 		StringBuffer sb = new StringBuffer( );

@@ -8,5 +8,5 @@ public interface ISliceRenderer<S extends ISlice>
 {
 	public abstract void init( GL2ES2 gl3 );
 	
-	public abstract void draw( GL2ES2 gl3 , float[ ] m , float[ ] v, float[ ] p );
+	public abstract void draw( GL2ES2 gl3 , float[ ] m , float[ ] n, float[ ] v, float[ ] p );
 }

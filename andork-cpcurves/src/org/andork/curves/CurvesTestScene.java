@@ -10,6 +10,8 @@ import javax.media.opengl.GLEventListener;
 import javax.vecmath.Point2f;
 
 import org.andork.jogl.util.SimplePolygon;
+import org.andork.math.curve.FloatArraySmoothRandomWalk;
+import org.andork.math.curve.FloatArraySmoothRandomWalk.DefaultRandomPointGenerator;
 import org.andork.math.curve.FloatHolderType;
 import org.andork.math.curve.Point2fType;
 import org.andork.math.curve.SmoothRandomWalk;
@@ -38,8 +40,10 @@ public class CurvesTestScene implements GLEventListener
 	int									highlightedPoint	= 0;
 	float[ ]							transformedPoint	= new float[ 3 ];
 	
-	SmoothRandomWalk<Point2f>[ ]		pointWalks;
+	FloatArraySmoothRandomWalk[ ]		pointWalks;
 	Point2f								p2f					= new Point2f( );
+	
+	float[ ]							point				= new float[ 2 ];
 	
 	SmoothRandomWalk<FloatHolder>[ ]	coefWalks;
 	FloatHolder							fh					= new FloatHolder( );
@@ -49,17 +53,17 @@ public class CurvesTestScene implements GLEventListener
 	@Override
 	public void init( GLAutoDrawable drawable )
 	{
-		pointWalks = new SmoothRandomWalk[ visualizer.controlPoints.length / 2 ];
+		pointWalks = new FloatArraySmoothRandomWalk[ visualizer.controlPoints.length / 2 ];
 		
 		Point2fType pointType = new Point2fType( );
 		RandomPoint2fGenerator generator = new RandomPoint2fGenerator( -2 , 2 );
 		
 		for( int i = 0 ; i < pointWalks.length ; i++ )
 		{
-			pointWalks[ i ] = new SmoothRandomWalk<Point2f>( 3 , 1 , pointType , generator );
-			pointWalks[ i ].advance( 0 , p2f );
-			visualizer.controlPoints[ i * 2 ] = p2f.x;
-			visualizer.controlPoints[ i * 2 + 1 ] = p2f.y;
+			pointWalks[ i ] = new FloatArraySmoothRandomWalk( 3 , 2 , 1 , new DefaultRandomPointGenerator( -1 , 1 ) );
+			pointWalks[ i ].advance( 0 , point );
+			visualizer.controlPoints[ i * 2 ] = point[ 0 ];
+			visualizer.controlPoints[ i * 2 + 1 ] = point[ 1 ];
 		}
 		
 		coefWalks = new SmoothRandomWalk[ visualizer.controlPoints.length / 2 ];
@@ -132,9 +136,9 @@ public class CurvesTestScene implements GLEventListener
 		{
 			for( int i = 0 ; i < pointWalks.length ; i++ )
 			{
-				pointWalks[ i ].advance( ( float ) ( time - lastAdvance ) / 100000f , p2f );
-				visualizer.controlPoints[ i * 2 ] = p2f.x;
-				visualizer.controlPoints[ i * 2 + 1 ] = p2f.y;
+				pointWalks[ i ].advance( ( float ) ( time - lastAdvance ) / 100000f , point );
+				visualizer.controlPoints[ i * 2 ] = point[ 0 ];
+				visualizer.controlPoints[ i * 2 + 1 ] = point[ 1 ];
 			}
 			visualizer.recalculate( );
 			

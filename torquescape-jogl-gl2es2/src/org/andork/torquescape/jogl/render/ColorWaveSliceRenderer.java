@@ -136,7 +136,7 @@ public class ColorWaveSliceRenderer implements ISliceRenderer<ColorWaveSlice>
 	 * @see org.andork.torquescape.SliceRenderer#draw(float[], float[], org.andork.torquescape.model.Zone, org.andork.torquescape.model.ColorWaveSlice)
 	 */
 	@Override
-	public void draw( GL2ES2 gl , float[ ] m , float[ ] v, float[ ] p )
+	public void draw( GL2ES2 gl , float[ ] m , float[ ] n, float[ ] v, float[ ] p )
 	{
 		gl.glUseProgram( mProgram );
 		checkGLError( gl , "glUseProgram" );

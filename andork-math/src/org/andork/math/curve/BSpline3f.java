@@ -78,20 +78,36 @@ public class BSpline3f
 				return;
 			}
 			
-			for( int i = 0 ; i <= s.degree - multiplicity ; i++ )
+			int r = s.degree - multiplicity;
+			
+			for( int i = 0 ; i <= r ; i++ )
 			{
-				deBoorPoints[ i ].set( s.controlPoints[ Math.max( 0 , Math.min( s.controlPoints.length - 1 , index - multiplicity - i ) ) ] );
+				deBoorPoints[ i ].set( s.controlPoints[ index - degree + i ] );
 			}
 			
-			for( int r = 0 ; r < s.degree - multiplicity ; r++ )
+			for( int j = 1 ; j <= r ; j++ )
 			{
-				for( int i = 0 ; i < s.degree - multiplicity - r ; i++ )
+				for( int i = 0 ; i <= r - j ; i++ )
 				{
-					int ii = index - multiplicity - i;
-					float a = ( param - knots[ ii ] ) / ( knots[ ii + s.degree - r ] - knots[ ii ] );
-					deBoorPoints[ i ].interpolate( deBoorPoints[ i + 1 ] , deBoorPoints[ i ] , a );
+					float a = ( param - s.knots[ index - degree + j + i ] ) / ( s.knots[ i + index + 1 ] - s.knots[ index - degree + j + i ] );
+					deBoorPoints[ i ].interpolate( deBoorPoints[ i + 1 ] , a );
 				}
 			}
+			
+			// for( int i = 0 ; i <= s.degree - multiplicity ; i++ )
+			// {
+			// deBoorPoints[ i ].set( s.controlPoints[ Math.max( 0 , Math.min( s.controlPoints.length - 1 , index - multiplicity - i ) ) ] );
+			// }
+			//
+			// for( int r = 0 ; r < s.degree - multiplicity ; r++ )
+			// {
+			// for( int i = 0 ; i < s.degree - multiplicity - r ; i++ )
+			// {
+			// int ii = index - multiplicity - i;
+			// float a = ( param - knots[ ii ] ) / ( knots[ ii + s.degree - r ] - knots[ ii ] );
+			// deBoorPoints[ i ].interpolate( deBoorPoints[ i + 1 ] , deBoorPoints[ i ] , a );
+			// }
+			// }
 			
 			result.set( deBoorPoints[ 0 ] );
 		}

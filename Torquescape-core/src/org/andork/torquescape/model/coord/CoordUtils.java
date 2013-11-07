@@ -56,4 +56,16 @@ public class CoordUtils
 		
 		return result;
 	}
+	
+	public static float[ ] reverse3( float[ ] coords )
+	{
+		float[ ] result = new float[ coords.length ];
+		for( int i = 0 , j = coords.length - 3 ; i < coords.length && j >= 0 ; i += 3 , j -= 3 )
+		{
+			result[ i ] = coords[ j ];
+			result[ i + 1 ] = coords[ j + 1 ];
+			result[ i + 2 ] = coords[ j + 2 ];
+		}
+		return result;
+	}
 }

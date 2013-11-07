@@ -182,7 +182,7 @@ public class CurveVisualizer
 						
 						// "  float red = exp(-value*value/0.1);" +
 						
-						"  intensity = abs(intensity);" +
+//						"  intensity = abs(intensity);" +
 						"  float red = 0.0;" +
 						"  if (intensity > 0.0) {" +
 						"    red = intensity;" +

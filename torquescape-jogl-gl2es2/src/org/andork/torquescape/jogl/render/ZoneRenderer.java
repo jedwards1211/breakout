@@ -89,7 +89,7 @@ public class ZoneRenderer implements JOGLObject
 	{
 		for( ISliceRenderer<?> sliceRenderer : sliceRenderers )
 		{
-			sliceRenderer.draw( gl , m , v , p );
+			sliceRenderer.draw( gl , m , n , v, p );
 		}
 	}
 }

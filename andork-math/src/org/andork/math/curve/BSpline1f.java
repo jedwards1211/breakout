@@ -61,9 +61,18 @@ public class BSpline1f
 		{
 			updateState( param , s.knots );
 			
+			if( param == s.knots[ 0 ] )
+			{
+				return s.controlPoints[ 0 ];
+			}
+			else if( param == s.knots[ s.knots.length - 1 ] )
+			{
+				return s.controlPoints[ s.controlPoints.length - 1 ];
+			}
+			
 			for( int i = 0 ; i <= s.degree - multiplicity ; i++ )
 			{
-				deBoorPoints[ i ] = s.controlPoints[ index - multiplicity - i ];
+				deBoorPoints[ i ] = s.controlPoints[ Math.max( 0 , Math.min( s.controlPoints.length - 1 , index - multiplicity - i ) ) ];
 			}
 			
 			for( int r = 0 ; r < s.degree - multiplicity ; r++ )

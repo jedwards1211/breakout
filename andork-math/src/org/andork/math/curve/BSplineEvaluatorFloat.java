@@ -74,7 +74,7 @@ public abstract class BSplineEvaluatorFloat
 		
 		this.param = param;
 		
-		if( index < 0 )
+		if( index < 0 || param < knots[ index ] )
 		{
 			index = BSplines.binarySearch( knots , 0 , knots.length , param );
 			multiplicity = 0;

@@ -20,4 +20,28 @@ public class Reparam
 	{
 		return b1 + ( x - a1 ) * ( b2 - b1 ) / ( a2 - a1 );
 	}
+	
+	/**
+	 * Performs linear reparameterization.
+	 * 
+	 * @param x
+	 *            the values to reparameterize
+	 * @param a1
+	 *            the start of the first range
+	 * @param a2
+	 *            the end of the first range
+	 * @param b1
+	 *            the start of the second range
+	 * @param b2
+	 *            the end of the second range
+	 * @param out
+	 *            the array to place the result in
+	 */
+	public static void linear( float[ ] x , float a1 , float a2 , float b1 , float b2 , float[ ] out )
+	{
+		for( int i = 0 ; i < x.length ; i++ )
+		{
+			out[ i ] = linear( x[ i ] , a1 , a2 , b1 , b2 );
+		}
+	}
 }
