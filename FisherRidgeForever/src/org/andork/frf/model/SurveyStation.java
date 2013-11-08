@@ -1,4 +1,4 @@
-package org.andork.survey;
+package org.andork.frf.model;
 
 import java.util.HashSet;
 import java.util.Set;

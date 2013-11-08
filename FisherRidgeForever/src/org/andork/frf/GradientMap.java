@@ -1,4 +1,4 @@
-package org.andork.survey;
+package org.andork.frf;
 
 import java.awt.Color;
 import java.util.Map;

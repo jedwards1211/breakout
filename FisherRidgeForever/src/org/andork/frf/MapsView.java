@@ -1,4 +1,4 @@
-package org.andork.survey;
+package org.andork.frf;
 
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
@@ -12,6 +12,7 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import org.andork.frf.model.SurveyShot;
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
 import org.andork.jogl.basic.BasicJOGLObject.DepthFragmentShader;
@@ -32,7 +33,7 @@ import com.andork.plot.Plot;
 import com.andork.plot.PlotController;
 import com.andork.plot.PlotPanelLayout;
 
-public class Survey3DView extends BasicJOGLSetup
+public class MapsView extends BasicJOGLSetup
 {
 	final double[ ]		fromLoc		= new double[ 3 ];
 	final double[ ]		toLoc		= new double[ 3 ];
@@ -53,7 +54,7 @@ public class Survey3DView extends BasicJOGLSetup
 	
 	JComboBox			modeComboBox;
 	
-	public Survey3DView( )
+	public MapsView( )
 	{
 		super( );
 		

@@ -1,4 +1,4 @@
-package org.andork.survey;
+package org.andork.frf;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -14,6 +14,8 @@ import javax.swing.JTable;
 import javax.swing.TransferHandler;
 import javax.swing.table.DefaultTableModel;
 
+import org.andork.frf.model.SurveyShot;
+import org.andork.frf.model.SurveyStation;
 import org.andork.vecmath.Vecmath;
 
 public class SurveyTable extends JTable
