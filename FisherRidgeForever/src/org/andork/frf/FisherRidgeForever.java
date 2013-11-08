@@ -6,6 +6,7 @@ import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 
+@SuppressWarnings( "serial" )
 public class FisherRidgeForever extends JFrame
 {
 	MainPane	mainPane;

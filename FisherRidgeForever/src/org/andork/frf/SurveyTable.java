@@ -18,6 +18,7 @@ import org.andork.frf.model.SurveyShot;
 import org.andork.frf.model.SurveyStation;
 import org.andork.vecmath.Vecmath;
 
+@SuppressWarnings( "serial" )
 public class SurveyTable extends JTable
 {
 	public SurveyTable( )
