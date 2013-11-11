@@ -7,11 +7,11 @@ import java.awt.Toolkit;
 import javax.swing.JFrame;
 
 @SuppressWarnings( "serial" )
-public class FisherRidgeForever extends JFrame
+public class MainFrame extends JFrame
 {
 	MainPane	mainPane;
 	
-	public FisherRidgeForever( )
+	public MainFrame( )
 	{
 		super( "Fisher Ridge Forever" );
 		mainPane = new MainPane( );
@@ -24,6 +24,6 @@ public class FisherRidgeForever extends JFrame
 	
 	public static void main( String[ ] args )
 	{
-		new FisherRidgeForever( ).setVisible( true );
+		new MainFrame( ).setVisible( true );
 	}
 }

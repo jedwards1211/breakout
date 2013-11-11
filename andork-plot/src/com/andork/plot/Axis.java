@@ -39,6 +39,9 @@ public class Axis extends JComponent
 	private LabelPosition			labelPosition;
 	private int						majorTickSize			= 10;
 	private int						minorTickSize			= 5;
+	private Color					majorTickColor			= Color.GRAY;
+	private Color					minorTickColor			= Color.LIGHT_GRAY;
+	
 	private int						minMinorGridLineSpacing	= 30;
 	
 	private int						labelPadding			= 3;
@@ -109,6 +112,34 @@ public class Axis extends JComponent
 	public Set<Component> getPlots( )
 	{
 		return Collections.unmodifiableSet( plots );
+	}
+	
+	public Color getMajorTickColor( )
+	{
+		return majorTickColor;
+	}
+	
+	public void setMajorTickColor( Color majorTickColor )
+	{
+		if( majorTickColor == null )
+		{
+			throw new IllegalArgumentException( "majorTickColor must be non-null" );
+		}
+		this.majorTickColor = majorTickColor;
+	}
+	
+	public Color getMinorTickColor( )
+	{
+		return minorTickColor;
+	}
+	
+	public void setMinorTickColor( Color minorTickColor )
+	{
+		if( minorTickColor == null )
+		{
+			throw new IllegalArgumentException( "minorTickColor must be non-null" );
+		}
+		this.minorTickColor = minorTickColor;
 	}
 	
 	public int getMajorTickSize( )
@@ -273,13 +304,13 @@ public class Axis extends JComponent
 				alignment = PlotUtils.LEFT;
 			}
 			
-			g2.setColor( Color.LIGHT_GRAY );
+			g2.setColor( minorTickColor );
 			PlotUtils.drawHorizontalGridLines( g2 , minorBounds , topValue , bottomValue , minorSpacing );
 			
-			g2.setColor( Color.GRAY );
+			g2.setColor( majorTickColor );
 			PlotUtils.drawHorizontalGridLines( g2 , majorBounds , topValue , bottomValue , majorSpacing );
 			
-			g2.setColor( Color.BLACK );
+			g2.setColor( getForeground( ) );
 			
 			PlotUtils.drawHorizontalGridLineLabels( g2 , textBounds , alignment , topValue , bottomValue , majorSpacing , format );
 		}
@@ -308,10 +339,10 @@ public class Axis extends JComponent
 				textBounds.y = majorBounds.y + majorBounds.height + labelPadding;
 			}
 			
-			g2.setColor( Color.LIGHT_GRAY );
+			g2.setColor( minorTickColor );
 			PlotUtils.drawVerticalGridLines( g2 , minorBounds , leftDomain , rightDomain , minorSpacing );
 			
-			g2.setColor( Color.GRAY );
+			g2.setColor( majorTickColor );
 			PlotUtils.drawVerticalGridLines( g2 , majorBounds , leftDomain , rightDomain , majorSpacing );
 			
 			g2.setColor( Color.BLACK );

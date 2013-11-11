@@ -1016,6 +1016,31 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
+	public static class DistanceFragmentShader
+	{
+		public String toString( )
+		{
+			StringBuffer sb = new StringBuffer( );
+			sb.append( "uniform mat4 m;" );
+			sb.append( "uniform mat4 v;" );
+			sb.append( "uniform mat4 p;" );
+			sb.append( "uniform float nearDist;" );
+			sb.append( "uniform vec4 nearColor;" );
+			sb.append( "uniform float farDist;" );
+			sb.append( "uniform vec4 farColor;" );
+			sb.append( "varying vec3 v_pos;" );
+			sb.append( "void main() {" );
+			sb.append( "  float frag_depth = -(v * m * vec4(v_pos, 1.0)).z;" );
+			sb.append( "  float f;" );
+			sb.append( "  if (frag_depth > farDist) { f = 1.0; }" );
+			sb.append( "  else if (frag_depth < nearDist) { f = 0.0; }" );
+			sb.append( "  else { f = (frag_depth - nearDist) / (farDist - nearDist); }" );
+			sb.append( "  gl_FragColor = mix(nearColor, farColor, f); " );
+			sb.append( "}" );
+			return sb.toString( );
+		}
+	}
+	
 	public static class DepthFragmentShader
 	{
 		final float[ ]	farColor	= { 0.1f , 0.1f , 0.1f , 1f };

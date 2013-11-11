@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class GradientMap
+public class GradientMap implements IGradientMap
 {
 	public final TreeMap<Double, Color>	map	= new TreeMap<Double, Color>( );
 	
@@ -16,6 +16,36 @@ public class GradientMap
 				( int ) ( a.getAlpha( ) * ( 1 - f ) + b.getAlpha( ) * f ) );
 	}
 	
+	@Override
+	public int size( )
+	{
+		return map.size( );
+	}
+	
+	@Override
+	public Double firstKey( )
+	{
+		return map.firstKey( );
+	}
+	
+	@Override
+	public Double lastKey( )
+	{
+		return map.lastKey( );
+	}
+	
+	@Override
+	public Iterable<Map.Entry<Double, Color>> entries( )
+	{
+		return map.entrySet( );
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.andork.frf.IGradientMap#getColor(double)
+	 */
+	@Override
 	public Color getColor( double value )
 	{
 		Map.Entry<Double, Color> lo = map.floorEntry( value );

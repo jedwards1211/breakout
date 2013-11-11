@@ -1,4 +1,4 @@
-<project name="FisherRidgeForever" default="dist" basedir=".">
+<project name="FisherRidgeForever" default="dist-win-i586" basedir=".">
 	<!-- set global properties for this build -->
 	<property name="src" location="src" />
 	<property name="build" location="build" />
@@ -12,50 +12,70 @@
 		<mkdir dir="${build}" />
 	</target>
 
-	<target name="compile-dependencies">
+	<target name="compile-deps">
 		<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-plot/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-jogl-gl2es2-utils/build.xml" inheritAll="false" target="dist" />
 	</target>
 
-	<target name="copy-dependencies">
+	<target name="copy-deps-shared" depends="compile-deps">
 		<mkdir dir="${dist}/lib" />
 		<copy todir="${dist}/lib">
-			<fileset dir="C:/jogamp-all-platforms/jar">
+			<fileset dir="${jogl-libs}">
 				<include name="gluegen-rt.jar" />
-				<include name="joal.jar" />
-				<include name="jocl.jar" />
-				<include name="jogl-all.jar" />
 			</fileset>
+
+			<fileset dir="${jogl-libs}/atomic">
+				<include name="jogl-awt.jar" />
+				<include name="jogl-core.jar" />
+				<include name="jogl-gldesktop.jar" />
+				<include name="nativewindow-core.jar" />
+				<include name="nativewindow-awt.jar" />
+			</fileset>
+
 			<fileset dir="../andork-core/dist/lib">
-				<include name="*.jar" />
+				<include name="andork-core.jar" />
 			</fileset>
 
 			<fileset dir="../andork-math/dist/lib">
-				<include name="*.jar" />
+				<include name="andork-math.jar" />
 			</fileset>
 
 			<fileset dir="../andork-plot/dist/lib">
-				<include name="*.jar" />
+				<include name="andork-plot.jar" />
 			</fileset>
 
 			<fileset dir="../andork-jogl-gl2es2-utils/dist/lib">
-				<include name="*.jar" />
+				<include name="andork-jogl-gl2es2-utils.jar" />
 			</fileset>
 		</copy>
 	</target>
 
-	<target name="compile" depends="init,compile-dependencies,copy-dependencies" description="compile the source ">
+	<target name="copy-deps-win" depends="copy-deps-shared">
+		<copy todir="${dist}/lib">
+			<fileset dir="${jogl-libs}/atomic">
+				<include name="jogl-os-win.jar" />
+				<include name="nativewindow-os-win.jar" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="copy-deps-win-i586" depends="copy-deps-win">
+		<copy todir="${dist}/lib">
+			<fileset dir="${jogl-libs}">
+				<include name="gluegen-rt-natives-windows-i586.jar" />
+			</fileset>
+			<fileset dir="${jogl-libs}/atomic">
+				<include name="jogl-natives-windows-i586.jar" />
+				<include name="nativewindow-natives-windows-i586.jar" />
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="compile" depends="init,compile-deps,copy-deps-shared" description="compile the source ">
 		<!-- Compile the java code from ${src} into ${build} -->
 		<path id="master-classpath">
-			<fileset dir="C:/jogamp-all-platforms/jar">
-				<include name="gluegen-rt.jar" />
-				<include name="joal.jar" />
-				<include name="jocl.jar" />
-				<include name="jogl-all.jar" />
-			</fileset>
-			
 			<fileset dir="${dist}/lib">
 				<include name="*.jar" />
 			</fileset>
@@ -66,12 +86,13 @@
 		</javac>
 	</target>
 
-	<target name="dist" depends="compile" description="generate the distribution">
+	<target name="dist-win-i586" depends="compile,copy-deps-win-i586" description="generate the distribution">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist}" />
 
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
-		<jar jarfile="${dist}/${ant.project.name}.jar" basedir="${build}" />
+		<jar jarfile="${dist}/${ant.project.name}-win-i586.jar" basedir="${build}" manifest="MANIFEST-win-i586.MF" />
+			
 	</target>
 
 	<target name="clean" description="clean up">

@@ -1,6 +1,9 @@
 package org.andork.frf;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -11,11 +14,13 @@ import javax.swing.event.ChangeListener;
 @SuppressWarnings( "serial" )
 public class MainPane extends JPanel
 {
-	private SurveyTable	surveyTable;
-	private JScrollPane	surveyTableScrollPane;
-	private MapsView	mapsView;
+	private SurveyTable									surveyTable;
+	private JScrollPane									surveyTableScrollPane;
+	private ExecutorServiceBackgroundLoaded<MapsView>	mapsView;
+	private BackgroundLoadedPane<MapsView>				mapsViewHolder;
+	private ExecutorService								executor;
 	
-	private JTabbedPane	tabbedPane;
+	private JTabbedPane									tabbedPane;
 	
 	public MainPane( )
 	{
@@ -29,11 +34,31 @@ public class MainPane extends JPanel
 		surveyTable = new SurveyTable( );
 		surveyTableScrollPane = new JScrollPane( surveyTable );
 		
-		mapsView = new MapsView( );
+		executor = Executors.newSingleThreadExecutor( );
+		
+		mapsView = new ExecutorServiceBackgroundLoaded<MapsView>( executor )
+		{
+			@Override
+			protected MapsView load( ) throws Exception
+			{
+				return new MapsView( );
+			}
+		};
+		
+		mapsView.loadInBackgroundIfNecessary( );
+		
+		mapsViewHolder = new BackgroundLoadedPane<MapsView>( mapsView )
+		{
+			@Override
+			protected Component getContentComponent( MapsView content )
+			{
+				return content.getMainPanel( );
+			}
+		};
 		
 		tabbedPane = new JTabbedPane( );
 		tabbedPane.addTab( "Data" , surveyTableScrollPane );
-		tabbedPane.addTab( "Maps" , mapsView.getMainPanel( ) );
+		tabbedPane.addTab( "Maps" , mapsViewHolder );
 		
 		add( tabbedPane , BorderLayout.CENTER );
 		
@@ -44,7 +69,7 @@ public class MainPane extends JPanel
 			{
 				if( tabbedPane.getSelectedIndex( ) == 1 )
 				{
-					mapsView.updateModel( surveyTable.createShots( ) );
+					mapsView.get( ).updateModel( surveyTable.createShots( ) );
 				}
 			}
 		} );

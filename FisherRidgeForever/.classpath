@@ -6,5 +6,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-plot"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jogl-awt-win"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

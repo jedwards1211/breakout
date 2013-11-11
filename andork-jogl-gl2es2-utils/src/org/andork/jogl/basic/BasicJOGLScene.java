@@ -49,6 +49,7 @@ public class BasicJOGLScene implements GLEventListener
 	
 	private final Queue<JOGLObject>	objectsThatNeedInit	= new LinkedList<JOGLObject>( );
 	
+	private static boolean			USE_DEBUG_GL;
 	private DebugGL2				debugGL;
 	
 	private boolean					orthoMode;
@@ -57,6 +58,11 @@ public class BasicJOGLScene implements GLEventListener
 	
 	final float[ ]					lastOrthoView		= newMat4f( );
 	final float[ ]					lastPerspectiveView	= newMat4f( );
+	
+	static
+	{
+		USE_DEBUG_GL = System.getProperty( "useDebugGL" ) != null;
+	}
 	
 	public BasicJOGLScene add( JOGLObject object )
 	{
@@ -78,6 +84,10 @@ public class BasicJOGLScene implements GLEventListener
 	
 	public GL2ES2 getGL( GL2ES2 orig )
 	{
+		if( !USE_DEBUG_GL )
+		{
+			return orig;
+		}
 		if( debugGL == null || debugGL.getDownstreamGL( ) != orig )
 		{
 			debugGL = new DebugGL2( ( GL2 ) orig );

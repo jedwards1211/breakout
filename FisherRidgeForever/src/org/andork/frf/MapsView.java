@@ -1,6 +1,9 @@
 package org.andork.frf;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.nio.ByteBuffer;
@@ -15,7 +18,8 @@ import javax.swing.JPanel;
 import org.andork.frf.model.SurveyShot;
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
-import org.andork.jogl.basic.BasicJOGLObject.DepthFragmentShader;
+import org.andork.jogl.basic.BasicJOGLObject.DistanceFragmentShader;
+import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
 import org.andork.jogl.basic.BasicJOGLScene;
 import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.JOGLDepthModifier;
@@ -44,6 +48,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	Axis				xaxis;
 	Axis				yaxis;
+	Axis				distColorationAxis;
 	
 	Plot				plot;
 	JPanel				plotPanel;
@@ -53,6 +58,13 @@ public class MapsView extends BasicJOGLSetup
 	MouseAdapterChain	mouseAdapterChain;
 	
 	JComboBox			modeComboBox;
+	
+	BasicJOGLObject		fillObj;
+	Uniform1fv			fillNearDist;
+	Uniform1fv			fillFarDist;
+	BasicJOGLObject		lineObj;
+	Uniform1fv			lineNearDist;
+	Uniform1fv			lineFarDist;
 	
 	public MapsView( )
 	{
@@ -67,6 +79,27 @@ public class MapsView extends BasicJOGLSetup
 		
 		xaxis = new Axis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		yaxis = new Axis( Orientation.VERTICAL , LabelPosition.LEFT );
+		
+		final GradientMap gradientMap = new GradientMap( );
+		gradientMap.map.put( 0.0 , Color.RED );
+		gradientMap.map.put( 1.0 , new Color( 255 * 3 / 10 , 0 , 0 ) );
+		
+		distColorationAxis = new Axis( Orientation.VERTICAL , LabelPosition.RIGHT )
+		{
+			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.VERTICAL , gradientMap );
+			
+			@Override
+			protected void paintComponent( Graphics g )
+			{
+				bgPainter.paint( this , ( Graphics2D ) g );
+				super.paintComponent( g );
+			}
+		};
+		
+		distColorationAxis.setForeground( Color.WHITE );
+		distColorationAxis.setMajorTickColor( Color.WHITE );
+		distColorationAxis.setMinorTickColor( Color.WHITE );
+		distColorationAxis.addPlot( plot );
 		
 		yaxis.getAxisConversion( ).set( 50 , 0 , -50 , 400 );
 		
@@ -98,6 +131,32 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
+		new AxisController( distColorationAxis )
+		{
+			@Override
+			protected void setAxisRange( double start , double end )
+			{
+				super.setAxisRange( start , end );
+				if( fillNearDist != null )
+				{
+					fillNearDist.value( ( float ) distColorationAxis.getAxisConversion( ).invert( 0 ) );
+				}
+				if( fillFarDist != null )
+				{
+					fillFarDist.value( ( float ) distColorationAxis.getAxisConversion( ).invert( distColorationAxis.getHeight( ) ) );
+				}
+				if( lineNearDist != null )
+				{
+					lineNearDist.value( ( float ) distColorationAxis.getAxisConversion( ).invert( 0 ) );
+				}
+				if( lineFarDist != null )
+				{
+					lineFarDist.value( ( float ) distColorationAxis.getAxisConversion( ).invert( distColorationAxis.getHeight( ) ) );
+				}
+				canvas.repaint( );
+			}
+		};
+		
 		plotController = new PlotController( plot , xaxis , yaxis );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
@@ -107,6 +166,7 @@ public class MapsView extends BasicJOGLSetup
 		plotPanel.add( plot );
 		plotPanel.add( xaxis );
 		plotPanel.add( yaxis );
+		plotPanel.add( distColorationAxis );
 		
 		canvas.removeMouseListener( navigator );
 		canvas.removeMouseMotionListener( navigator );
@@ -286,8 +346,9 @@ public class MapsView extends BasicJOGLSetup
 			toLoc[ 0 ] = shot.to.position[ 0 ];
 			toLoc[ 1 ] = shot.to.position[ 1 ];
 			
-			if (Vecmath.distance3( shot.from.position , shot.to.position ) > 200) {
-				System.out.println(shot.from.name + ": " +Arrays.toString(shot.from.position) + " - " + shot.to.name + ": " + Arrays.toString(shot.to.position));
+			if( Vecmath.distance3( shot.from.position , shot.to.position ) > 200 )
+			{
+				System.out.println( shot.from.name + ": " + Arrays.toString( shot.from.position ) + " - " + shot.to.name + ": " + Arrays.toString( shot.to.position ) );
 			}
 			
 			leftAtFrom[ 0 ] = shot.from.position[ 2 ] - shot.to.position[ 2 ];
@@ -424,31 +485,39 @@ public class MapsView extends BasicJOGLSetup
 		
 		if( vertCount > 0 )
 		{
-			BasicJOGLObject fillObj = new BasicJOGLObject( );
+			fillObj = new BasicJOGLObject( );
 			fillObj.addVertexBuffer( vertBuffer ).vertexCount( vertCount );
 			fillObj.drawMode( GL2ES2.GL_TRIANGLES );
 			fillObj.indexBuffer( fillIndexHelper.toByteBuffer( ) ).indexCount( fillIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
 			fillObj.transpose( true );
 			fillObj.vertexShaderCode( new BasicVertexShader( ).passPosToFragmentShader( true ).toString( ) );
-			fillObj.fragmentShaderCode( new DepthFragmentShader( ).nearColor( 1 , 0 , 0 , 1 ).farColor( 0.3f , 0 , 0 , 1 ).center( c[ 0 ] , c[ 1 ] , c[ 2 ] ).radius( radius ).toString( ) );
+			fillObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
 			fillObj.add( new JOGLPolygonOffsetModifier( -5f , -5f ) );
 			fillObj.add( new JOGLDepthModifier( ) );
+			fillObj.add( fillObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 0 , 0 , 1 ) );
+			fillObj.add( fillObj.new Uniform4fv( ).name( "farColor" ).value( 0.3f , 0 , 0 , 1 ) );
+			fillObj.add( fillNearDist = fillObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
+			fillObj.add( fillFarDist = fillObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
 			
 			scene.initLater( fillObj );
 			scene.add( fillObj );
 			
-			BasicJOGLObject lineObj = new BasicJOGLObject( );
+			lineObj = new BasicJOGLObject( );
 			lineObj.addVertexBuffer( vertBuffer ).vertexCount( vertCount );
 			lineObj.drawMode( GL2ES2.GL_LINES );
 			lineObj.indexBuffer( lineIndexHelper.toByteBuffer( ) ).indexCount( lineIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
 			lineObj.transpose( true );
 			lineObj.vertexShaderCode( new BasicVertexShader( ).passPosToFragmentShader( true ).toString( ) );
-			lineObj.fragmentShaderCode( new DepthFragmentShader( ).nearColor( 1 , 1 , 1 , 1 ).farColor( 0.3f , 0.3f , 0.3f , 1 ).center( c[ 0 ] , c[ 1 ] , c[ 2 ] ).radius( radius ).toString( ) );
+			lineObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
 			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
 			lineObj.add( new JOGLLineWidthModifier( 2.0f ) );
 			lineObj.add( new JOGLDepthModifier( ) );
-			
+			lineObj.add( lineObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 1 , 1 , 1 ) );
+			lineObj.add( lineObj.new Uniform4fv( ).name( "farColor" ).value( 0.3f , 0.3f , 0.3f , 1 ) );
+			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
+			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
+
 			scene.initLater( lineObj );
 			scene.add( lineObj );
 		}
