@@ -6,6 +6,7 @@ import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -27,9 +28,6 @@ public abstract class BackgroundLoadedPane<C> extends JPanel
 		super( );
 		setLayout( new BorderLayout( ) );
 		
-		loadingContent = createLoadingContent( );
-		loadFailedContent = createLoadFailedContent( );
-		
 		this.backgroundLoaded = backgroundLoaded;
 		backgroundLoaded.addChangeListener( new ChangeHandler( ) );
 		
@@ -38,23 +36,28 @@ public abstract class BackgroundLoadedPane<C> extends JPanel
 	
 	protected Component createLoadingContent( )
 	{
+		return createLoadingContent( "Loading..." );
+	}
+	
+	protected Component createLoadingContent( String message )
+	{
 		JPanel loadingPane = new JPanel( );
-		JLabel loadingLabel = new JLabel( "Loading..." );
+		JLabel loadingLabel = new JLabel( message );
 		JProgressBar loadingBar = new JProgressBar( );
 		loadingBar.setIndeterminate( true );
 		
 		GridBagWizard g = GridBagWizard.create( loadingPane );
-		g.put( loadingLabel , loadingBar ).intoColumn( );
+		g.put( loadingLabel , loadingBar ).intoColumn( ).insets( 10 , 10 , 10 , 10 );
 		
 		return loadingPane;
 	}
 	
 	protected abstract Component getContentComponent( C content );
 	
-	protected Component createLoadFailedContent( )
+	protected Component createLoadFailedContent( Throwable t )
 	{
 		JPanel errorPane = new JPanel( );
-		JLabel errorLabel = new JLabel( "Failed to load." );
+		JLabel errorLabel = new JLabel( "<html><center>Failed to load: " + t.getLocalizedMessage( ) + "</html>" );
 		errorLabel.setIcon( UIManager.getIcon( "OptionPane.errorIcon" ) );
 		
 		GridBagWizard g = GridBagWizard.create( errorPane );
@@ -68,7 +71,14 @@ public abstract class BackgroundLoadedPane<C> extends JPanel
 		@Override
 		public void stateChanged( ChangeEvent e )
 		{
-			update( );
+			SwingUtilities.invokeLater( new Runnable( )
+			{
+				@Override
+				public void run( )
+				{
+					update( );
+				}
+			} );
 		}
 	}
 	
@@ -79,15 +89,26 @@ public abstract class BackgroundLoadedPane<C> extends JPanel
 		removeAll( );
 		if( state == State.LOAD_FAILED )
 		{
+			if( loadFailedContent == null )
+			{
+				loadFailedContent = createLoadFailedContent( backgroundLoaded.getLoadingError( ) );
+			}
 			add( loadFailedContent , BorderLayout.CENTER );
 		}
 		else if( state == State.LOADED )
 		{
-			loadedContent = getContentComponent( backgroundLoaded.get( ) );
+			if( loadedContent == null )
+			{
+				loadedContent = getContentComponent( backgroundLoaded.get( ) );
+			}
 			add( loadedContent , BorderLayout.CENTER );
 		}
 		else
 		{
+			if( loadingContent == null )
+			{
+				loadingContent = createLoadingContent( );
+			}
 			add( loadingContent , BorderLayout.CENTER );
 		}
 		revalidate( );

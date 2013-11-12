@@ -222,6 +222,8 @@ public class MapsView extends BasicJOGLSetup
 				}
 			}
 		} );
+		
+		throw new RuntimeException( "Test" );
 	}
 	
 	@Override
@@ -517,7 +519,7 @@ public class MapsView extends BasicJOGLSetup
 			lineObj.add( lineObj.new Uniform4fv( ).name( "farColor" ).value( 0.3f , 0.3f , 0.3f , 1 ) );
 			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
 			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
-
+			
 			scene.initLater( lineObj );
 			scene.add( lineObj );
 		}

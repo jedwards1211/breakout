@@ -54,6 +54,12 @@ public class MainPane extends JPanel
 			{
 				return content.getMainPanel( );
 			}
+			
+			@Override
+			protected Component createLoadingContent( )
+			{
+				return super.createLoadingContent( "Initializing 3D view..." );
+			}
 		};
 		
 		tabbedPane = new JTabbedPane( );

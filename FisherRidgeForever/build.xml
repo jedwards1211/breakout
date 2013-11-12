@@ -1,4 +1,4 @@
-<project name="FisherRidgeForever" default="dist-win-i586" basedir=".">
+<project name="FisherRidgeForever" default="dist-all" basedir=".">
 	<!-- set global properties for this build -->
 	<property name="src" location="src" />
 	<property name="build" location="build" />
@@ -92,7 +92,10 @@
 
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/${ant.project.name}-win-i586.jar" basedir="${build}" manifest="MANIFEST-win-i586.MF" />
-			
+	</target>
+		
+	<target name="dist-all">
+		<antcall target="dist-win-i586" />
 	</target>
 
 	<target name="clean" description="clean up">

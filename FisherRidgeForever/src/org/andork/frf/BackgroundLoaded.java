@@ -2,8 +2,6 @@ package org.andork.frf;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -40,7 +38,9 @@ public abstract class BackgroundLoaded<T>
 	{
 		synchronized( lock )
 		{
-			while( state != State.LOADED && state != State.LOAD_FAILED )
+			loadInBackgroundIfNecessary( );
+			
+			while( state == State.LOADING )
 			{
 				try
 				{
