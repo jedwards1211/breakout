@@ -27,7 +27,9 @@ public class BasicNavigator extends MouseAdapter
 	float					moveFactor	= 0.05f;
 	float					panFactor	= ( float ) Math.PI;
 	float					tiltFactor	= ( float ) Math.PI;
-	float					wheelFactor	= 0.5f;
+	float					wheelFactor	= 1f;
+	
+	float					sensitivity	= 1f;
 	
 	public BasicNavigator( BasicJOGLSetup setup )
 	{
@@ -119,6 +121,8 @@ public class BasicNavigator extends MouseAdapter
 		
 		Window window = ( Window ) e.getSource( );
 		
+		float scaledMoveFactor = moveFactor * sensitivity;
+		
 		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 		{
 			Vecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
@@ -130,8 +134,8 @@ public class BasicNavigator extends MouseAdapter
 			
 			lastPan = pan;
 			
-			float dpan = ( float ) ( dx * panFactor / window.getWidth( ) );
-			float dtilt = ( float ) ( dy * tiltFactor / window.getHeight( ) );
+			float dpan = ( float ) ( dx * panFactor * sensitivity / window.getWidth( ) );
+			float dtilt = ( float ) ( dy * tiltFactor * sensitivity / window.getHeight( ) );
 			
 			Vecmath.rotY( temp , dpan );
 			Vecmath.mmulRotational( temp , cam , cam );
@@ -144,16 +148,16 @@ public class BasicNavigator extends MouseAdapter
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
-			cam[ 3 ] += cam[ 2 ] * dy * moveFactor;
-			cam[ 7 ] += cam[ 6 ] * dy * moveFactor;
-			cam[ 11 ] += cam[ 10 ] * dy * moveFactor;
+			cam[ 3 ] += cam[ 2 ] * dy * scaledMoveFactor;
+			cam[ 7 ] += cam[ 6 ] * dy * scaledMoveFactor;
+			cam[ 11 ] += cam[ 10 ] * dy * scaledMoveFactor;
 			Vecmath.invAffine( cam , scene.v );
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
 		{
-			cam[ 3 ] += cam[ 0 ] * -dx * moveFactor + cam[ 1 ] * dy * moveFactor;
-			cam[ 7 ] += cam[ 4 ] * -dx * moveFactor + cam[ 5 ] * dy * moveFactor;
-			cam[ 11 ] += cam[ 8 ] * -dx * moveFactor + cam[ 9 ] * dy * moveFactor;
+			cam[ 3 ] += cam[ 0 ] * -dx * scaledMoveFactor + cam[ 1 ] * dy * scaledMoveFactor;
+			cam[ 7 ] += cam[ 4 ] * -dx * scaledMoveFactor + cam[ 5 ] * dy * scaledMoveFactor;
+			cam[ 11 ] += cam[ 8 ] * -dx * scaledMoveFactor + cam[ 9 ] * dy * scaledMoveFactor;
 			Vecmath.invAffine( cam , scene.v );
 		}
 		
@@ -173,7 +177,7 @@ public class BasicNavigator extends MouseAdapter
 		
 		Vecmath.invAffine( scene.v , cam );
 		
-		float distance = -e.getRotation( )[ 1 ] * wheelFactor;
+		float distance = -e.getRotation( )[ 1 ] * wheelFactor * sensitivity;
 		
 		cam[ 3 ] += cam[ 2 ] * distance;
 		cam[ 7 ] += cam[ 6 ] * distance;

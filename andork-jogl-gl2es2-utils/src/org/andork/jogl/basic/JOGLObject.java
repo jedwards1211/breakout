@@ -18,4 +18,6 @@ public interface JOGLObject
 	 *            the projection matrix
 	 */
 	public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p );
+	
+	public void destroy( GL2ES2 gl );
 }

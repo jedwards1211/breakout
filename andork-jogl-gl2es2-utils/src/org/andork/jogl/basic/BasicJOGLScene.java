@@ -5,6 +5,7 @@ import static org.andork.vecmath.Vecmath.newMat4f;
 import static org.andork.vecmath.Vecmath.perspective;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -22,42 +23,43 @@ public class BasicJOGLScene implements GLEventListener
 	/**
 	 * The model matrix.
 	 */
-	public final float[ ]			m					= newMat4f( );
+	public final float[ ]			m						= newMat4f( );
 	
 	/**
 	 * The normal matrix.
 	 */
-	private final float[ ]			n					= new float[ 9 ];
+	private final float[ ]			n						= new float[ 9 ];
 	
 	/**
 	 * The view matrix.
 	 */
-	public final float[ ]			v					= newMat4f( );
+	public final float[ ]			v						= newMat4f( );
 	
 	/**
 	 * The projection matrix;
 	 */
-	public final float[ ]			p					= newMat4f( );
+	public final float[ ]			p						= newMat4f( );
 	
 	private int						width , height;
 	
-	public float					fov					= ( float ) Math.PI / 2;
-	public float					zNear				= 1e-2f;
-	public float					zFar				= 1e7f;
+	public float					fov						= ( float ) Math.PI / 2;
+	public float					zNear					= 1e-2f;
+	public float					zFar					= 1e7f;
 	
-	private final List<JOGLObject>	objects				= new ArrayList<JOGLObject>( );
+	private final List<JOGLObject>	objects					= new ArrayList<JOGLObject>( );
 	
-	private final Queue<JOGLObject>	objectsThatNeedInit	= new LinkedList<JOGLObject>( );
+	private final Queue<JOGLObject>	objectsThatNeedInit		= new LinkedList<JOGLObject>( );
+	private final Queue<JOGLObject>	objectsThatNeedDestroy	= new LinkedList<JOGLObject>( );
 	
 	private static boolean			USE_DEBUG_GL;
 	private DebugGL2				debugGL;
 	
 	private boolean					orthoMode;
 	
-	public float[ ]					orthoFrame			= { -1 , 1 , -1 , 1 , -100 , 100 };
+	public float[ ]					orthoFrame				= { -1 , 1 , -1 , 1 , -100 , 100 };
 	
-	final float[ ]					lastOrthoView		= newMat4f( );
-	final float[ ]					lastPerspectiveView	= newMat4f( );
+	final float[ ]					lastOrthoView			= newMat4f( );
+	final float[ ]					lastPerspectiveView		= newMat4f( );
 	
 	static
 	{
@@ -79,6 +81,12 @@ public class BasicJOGLScene implements GLEventListener
 	public BasicJOGLScene initLater( JOGLObject object )
 	{
 		objectsThatNeedInit.add( object );
+		return this;
+	}
+	
+	public BasicJOGLScene destroyLater( JOGLObject object )
+	{
+		objectsThatNeedDestroy.add( object );
 		return this;
 	}
 	
@@ -122,6 +130,11 @@ public class BasicJOGLScene implements GLEventListener
 		while( !objectsThatNeedInit.isEmpty( ) )
 		{
 			objectsThatNeedInit.poll( ).init( gl );
+		}
+		
+		while( !objectsThatNeedDestroy.isEmpty( ) )
+		{
+			objectsThatNeedDestroy.poll( ).destroy( gl );
 		}
 		
 		invAffineToTranspose3x3( m , n );
@@ -178,6 +191,11 @@ public class BasicJOGLScene implements GLEventListener
 		p[ 9 ] = -p[ 9 ];
 		p[ 10 ] = -p[ 10 ];
 		p[ 11 ] = -p[ 11 ];
+	}
+	
+	public List<JOGLObject> getObjects( )
+	{
+		return Collections.unmodifiableList( objects );
 	}
 	
 	public void clear( )

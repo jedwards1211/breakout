@@ -24,7 +24,9 @@ import org.andork.jogl.basic.BasicJOGLScene;
 import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.basic.JOGLLineWidthModifier;
+import org.andork.jogl.basic.JOGLObject;
 import org.andork.jogl.basic.JOGLPolygonOffsetModifier;
+import org.andork.jogl.basic.SharedVertexBuffer;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.vecmath.Vecmath;
 
@@ -222,8 +224,6 @@ public class MapsView extends BasicJOGLSetup
 				}
 			}
 		} );
-		
-		throw new RuntimeException( "Test" );
 	}
 	
 	@Override
@@ -362,6 +362,7 @@ public class MapsView extends BasicJOGLSetup
 				Vecmath.normalize3( leftAtFrom );
 			}
 			
+			vertHelper.putFloats( shot.from.position );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
 				vertHelper.putFloats( shot.from.position[ i ] + leftAtFrom[ i ] * shot.left );
@@ -416,6 +417,7 @@ public class MapsView extends BasicJOGLSetup
 					System.err.println( shot.from.name );
 				}
 				
+				vertHelper.putFloats( shot.to.position );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
 					vertHelper.putFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.left );
@@ -434,18 +436,18 @@ public class MapsView extends BasicJOGLSetup
 				}
 				
 				fillIndexHelper.put( offset( vertCount ,
-						0 , 4 , 2 , 6 , 2 , 4 ,
-						2 , 6 , 1 , 5 , 1 , 6 ,
-						1 , 5 , 3 , 7 , 3 , 5 ,
-						3 , 7 , 0 , 4 , 0 , 7 ) );
+						1 , 6 , 3 , 8 , 3 , 6 ,
+						3 , 8 , 2 , 7 , 2 , 8 ,
+						2 , 7 , 4 , 9 , 4 , 7 ,
+						4 , 9 , 1 , 6 , 1 , 9 ) );
 				
 				lineIndexHelper.put( offset( vertCount ,
-						0 , 4 , 0 , 2 , 4 , 2 , 4 , 6 ,
-						2 , 6 , 2 , 1 , 6 , 1 , 6 , 5 ,
-						1 , 5 , 1 , 3 , 5 , 3 , 5 , 7 ,
-						3 , 7 , 3 , 0 , 7 , 0 , 7 , 4 ) );
+						1 , 6 , 1 , 3 , 6 , 3 , 6 , 8 ,
+						3 , 8 , 3 , 2 , 8 , 2 , 8 , 7 ,
+						2 , 7 , 2 , 4 , 7 , 4 , 7 , 9 ,
+						4 , 9 , 4 , 1 , 9 , 1 , 9 , 6 ) );
 				
-				vertCount += 8;
+				vertCount += 10;
 				fillIndexCount += 24;
 				lineIndexCount += 32;
 			}
@@ -454,15 +456,15 @@ public class MapsView extends BasicJOGLSetup
 				vertHelper.putFloats( shot.to.position );
 				
 				fillIndexHelper.put( offset( vertCount ,
-						0 , 4 , 2 , 2 , 4 , 1 , 1 , 4 , 3 , 3 , 4 , 0 ) );
+						1 , 5 , 3 , 3 , 5 , 2 , 2 , 5 , 4 , 4 , 5 , 1 ) );
 				
 				lineIndexHelper.put( offset( vertCount ,
-						0 , 4 , 0 , 2 ,
-						2 , 4 , 2 , 1 ,
-						1 , 4 , 1 , 3 ,
-						3 , 4 , 3 , 0 ) );
+						1 , 5 , 1 , 3 ,
+						3 , 5 , 3 , 2 ,
+						2 , 5 , 2 , 4 ,
+						4 , 5 , 4 , 1 ) );
 				
-				vertCount += 5;
+				vertCount += 6;
 				fillIndexCount += 12;
 				lineIndexCount += 16;
 			}
@@ -483,12 +485,18 @@ public class MapsView extends BasicJOGLSetup
 		float dz = bounds[ 5 ] - c[ 2 ];
 		float radius = ( float ) Math.sqrt( dx * dx + dy * dy + dz * dz );
 		
+		for( JOGLObject object : scene.getObjects( ) )
+		{
+			scene.destroyLater( object );
+		}
 		scene.clear( );
 		
 		if( vertCount > 0 )
 		{
+			SharedVertexBuffer sharedBuffer = new SharedVertexBuffer( ).buffer( vertBuffer );
+			
 			fillObj = new BasicJOGLObject( );
-			fillObj.addVertexBuffer( vertBuffer ).vertexCount( vertCount );
+			fillObj.addVertexBuffer( sharedBuffer ).vertexCount( vertCount );
 			fillObj.drawMode( GL2ES2.GL_TRIANGLES );
 			fillObj.indexBuffer( fillIndexHelper.toByteBuffer( ) ).indexCount( fillIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
 			fillObj.transpose( true );
@@ -506,7 +514,7 @@ public class MapsView extends BasicJOGLSetup
 			scene.add( fillObj );
 			
 			lineObj = new BasicJOGLObject( );
-			lineObj.addVertexBuffer( vertBuffer ).vertexCount( vertCount );
+			lineObj.addVertexBuffer( sharedBuffer ).vertexCount( vertCount );
 			lineObj.drawMode( GL2ES2.GL_LINES );
 			lineObj.indexBuffer( lineIndexHelper.toByteBuffer( ) ).indexCount( lineIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
 			lineObj.transpose( true );

@@ -19,7 +19,8 @@ public class JOGLXformGroup implements JOGLObject
 	
 	public List<JOGLObject>	objects	= new ArrayList<JOGLObject>( );
 	
-	public JOGLXformGroup() {
+	public JOGLXformGroup( )
+	{
 		updateN( );
 	}
 	
@@ -46,6 +47,15 @@ public class JOGLXformGroup implements JOGLObject
 		for( JOGLObject object : objects )
 		{
 			object.draw( gl , this.m , this.n , v , p );
+		}
+	}
+	
+	@Override
+	public void destroy( GL2ES2 gl )
+	{
+		for( JOGLObject object : objects )
+		{
+			object.destroy( gl );
 		}
 	}
 }

@@ -1,6 +1,6 @@
 <project name="FisherRidgeForever" default="dist-all" basedir=".">
 	<!-- set global properties for this build -->
-	<property name="src" location="src" />
+	<property name="src" location="src/main/java" />
 	<property name="build" location="build" />
 	<property name="dist" location="dist" />
 	<property name="jogl-libs" location="C:/jogamp-all-platforms/jar" />
@@ -92,6 +92,30 @@
 
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/${ant.project.name}-win-i586.jar" basedir="${build}" manifest="MANIFEST-win-i586.MF" />
+		
+		<zip destfile="${dist}/${ant.project.name}-win-i586.zip">
+			<fileset dir="${basedir}">
+				<include name="README.txt" />
+			</fileset>
+			<fileset dir="${dist}">
+				<include name="${ant.project.name}-win-i586.jar" />
+				<include name="lib/gluegen-rt.jar" />
+				<include name="lib/andork-core.jar" />
+				<include name="lib/andork-math.jar" />
+				<include name="lib/andork-plot.jar" />
+				<include name="lib/andork-jogl-gl2es2-utils.jar" />
+				<include name="lib/jogl-awt.jar" />
+				<include name="lib/jogl-core.jar" />
+				<include name="lib/jogl-gldesktop.jar" />
+				<include name="lib/nativewindow-core.jar" />
+				<include name="lib/nativewindow-awt.jar" />
+				<include name="lib/jogl-os-win.jar" />
+				<include name="lib/nativewindow-os-win.jar" />
+				<include name="lib/gluegen-rt-natives-windows-i586.jar" />
+				<include name="lib/jogl-natives-windows-i586.jar" />
+				<include name="lib/nativewindow-natives-windows-i586.jar" />
+			</fileset>
+		</zip>
 	</target>
 		
 	<target name="dist-all">

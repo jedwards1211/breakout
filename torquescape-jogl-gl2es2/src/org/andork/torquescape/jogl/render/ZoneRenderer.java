@@ -92,4 +92,10 @@ public class ZoneRenderer implements JOGLObject
 			sliceRenderer.draw( gl , m , n , v, p );
 		}
 	}
+
+	@Override
+	public void destroy( GL2ES2 gl )
+	{
+		
+	}
 }
