@@ -68,6 +68,11 @@ public class JOGLUtils
 		int vertexShader = loadShader( gl , GL2ES2.GL_VERTEX_SHADER , vertexShaderCode );
 		int fragmentShader = loadShader( gl , GL2ES2.GL_FRAGMENT_SHADER , fragmentShaderCode );
 		
+		return loadProgram( gl , vertexShader , fragmentShader );
+	}
+	
+	public static int loadProgram( GL2ES2 gl , int vertexShader , int fragmentShader )
+	{
 		int program = gl.glCreateProgram( );
 		
 		gl.glAttachShader( program , vertexShader );

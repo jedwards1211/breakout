@@ -9,16 +9,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.media.opengl.GL;
+import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
 
 import org.andork.jogl.util.JOGLUtils;
 
 public class BasicJOGLObject implements JOGLObject
 {
-	ByteBuffer[ ]				vertexBuffers			= new ByteBuffer[ 0 ];
+	SharedVertexBuffer[ ]		vertexBuffers			= new SharedVertexBuffer[ 0 ];
 	int[ ]						offsets;
 	int[ ]						strides;
-	int[ ]						vbos;
 	int							vertexCount;
 	
 	ByteBuffer					indexBuffer;
@@ -27,6 +28,8 @@ public class BasicJOGLObject implements JOGLObject
 	int							ebo;
 	
 	int							program;
+	int							vertexShader;
+	int							fragmentShader;
 	
 	String						vertexShaderCode;
 	String						fragmentShaderCode;
@@ -52,12 +55,16 @@ public class BasicJOGLObject implements JOGLObject
 	{
 		ByteBuffer newBuffer = ByteBuffer.allocateDirect( capacity );
 		newBuffer.order( ByteOrder.nativeOrder( ) );
-		vertexBuffers = Arrays.copyOf( vertexBuffers , vertexBuffers.length + 1 );
-		vertexBuffers[ vertexBuffers.length - 1 ] = newBuffer;
+		addVertexBuffer( newBuffer );
 		return newBuffer;
 	}
 	
 	public BasicJOGLObject addVertexBuffer( ByteBuffer newBuffer )
+	{
+		return addVertexBuffer( new SharedVertexBuffer( ).buffer( newBuffer ) );
+	}
+	
+	public BasicJOGLObject addVertexBuffer( SharedVertexBuffer newBuffer )
 	{
 		vertexBuffers = Arrays.copyOf( vertexBuffers , vertexBuffers.length + 1 );
 		vertexBuffers[ vertexBuffers.length - 1 ] = newBuffer;
@@ -66,12 +73,12 @@ public class BasicJOGLObject implements JOGLObject
 	
 	public ByteBuffer vertexBuffer( int index )
 	{
-		return vertexBuffers[ index ];
+		return vertexBuffers[ index ].buffer( );
 	}
 	
 	public BasicJOGLObject vertexBuffer( int index , ByteBuffer newBuffer )
 	{
-		vertexBuffers[ index ] = newBuffer;
+		vertexBuffers[ index ].buffer( newBuffer );
 		return this;
 	}
 	
@@ -184,13 +191,16 @@ public class BasicJOGLObject implements JOGLObject
 		}
 		initialized = true;
 		
-		program = JOGLUtils.loadProgram( gl , vertexShaderCode , fragmentShaderCode );
+		vertexShader = JOGLUtils.loadShader( gl , GL2ES2.GL_VERTEX_SHADER , vertexShaderCode );
+		fragmentShader = JOGLUtils.loadShader( gl , GL2ES2.GL_FRAGMENT_SHADER , fragmentShaderCode );
+		program = JOGLUtils.loadProgram( gl , vertexShader , fragmentShader );
 		
 		int[ ] temp = new int[ 1 ];
 		
-		vbos = new int[ vertexBuffers.length ];
-		
-		gl.glGenBuffers( vertexBuffers.length , vbos , 0 );
+		for( SharedVertexBuffer buffer : vertexBuffers )
+		{
+			buffer.init( gl );
+		}
 		
 		rebufferVertices( gl );
 		
@@ -209,7 +219,7 @@ public class BasicJOGLObject implements JOGLObject
 			int bi = attribute.getBufferIndex( );
 			int bytes = attribute.getNumBytes( );
 			
-			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vbos[ bi ] );
+			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].vbo( ) );
 			
 			attribute.put( gl , strides[ bi ] , offsets[ bi ] );
 			
@@ -277,7 +287,7 @@ public class BasicJOGLObject implements JOGLObject
 			int bi = attribute.getBufferIndex( );
 			int bytes = attribute.getNumBytes( );
 			
-			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vbos[ bi ] );
+			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].vbo( ) );
 			
 			attribute.put( gl , strides[ bi ] , offsets[ bi ] );
 			
@@ -303,15 +313,35 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
+	public void destroy( GL2ES2 gl )
+	{
+		if( initialized )
+		{
+			for( SharedVertexBuffer buffer : vertexBuffers )
+			{
+				buffer.destroy( gl );
+			}
+			
+			if( indexBuffer != null )
+			{
+				gl.glDeleteBuffers( 1 , new int[ ] { ebo } , 0 );
+			}
+			
+			gl.glDetachShader( program , vertexShader );
+			gl.glDetachShader( program , fragmentShader );
+			gl.glDeleteShader( vertexShader );
+			gl.glDeleteShader( fragmentShader );
+			gl.glDeleteProgram( program );
+			
+			initialized = false;
+		}
+	}
+	
 	public void rebufferVertices( GL2ES2 gl )
 	{
-		for( int i = 0 ; i < vertexBuffers.length ; i++ )
+		for( SharedVertexBuffer buffer : vertexBuffers )
 		{
-			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vbos[ i ] );
-			
-			vertexBuffers[ i ].position( 0 );
-			
-			gl.glBufferData( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ i ].capacity( ) , vertexBuffers[ i ] , GL2ES2.GL_STATIC_DRAW );
+			buffer.rebuffer( gl );
 		}
 	}
 	
@@ -669,7 +699,7 @@ public class BasicJOGLObject implements JOGLObject
 		
 		public void put( float x )
 		{
-			vertexBuffers[ bufferIndex ].putFloat( x );
+			vertexBuffers[ bufferIndex ].buffer( ).putFloat( x );
 		}
 	}
 	
@@ -720,12 +750,12 @@ public class BasicJOGLObject implements JOGLObject
 		
 		public void put( float x , float y )
 		{
-			vertexBuffers[ bufferIndex ].putFloat( x ).putFloat( y );
+			vertexBuffers[ bufferIndex ].buffer( ).putFloat( x ).putFloat( y );
 		}
 		
 		public void put( float[ ] values , int offset )
 		{
-			vertexBuffers[ bufferIndex ].putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
+			vertexBuffers[ bufferIndex ].buffer( ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
 		}
 	}
 	
@@ -776,12 +806,12 @@ public class BasicJOGLObject implements JOGLObject
 		
 		public void put( float x , float y , float z )
 		{
-			vertexBuffers[ bufferIndex ].putFloat( x ).putFloat( y ).putFloat( z );
+			vertexBuffers[ bufferIndex ].buffer( ).putFloat( x ).putFloat( y ).putFloat( z );
 		}
 		
 		public void put( float[ ] values , int offset )
 		{
-			vertexBuffers[ bufferIndex ].putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
+			vertexBuffers[ bufferIndex ].buffer( ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
 		}
 	}
 	
@@ -832,12 +862,12 @@ public class BasicJOGLObject implements JOGLObject
 		
 		public void put( float x , float y , float z , float w )
 		{
-			vertexBuffers[ bufferIndex ].putFloat( x ).putFloat( y ).putFloat( z ).putFloat( w );
+			vertexBuffers[ bufferIndex ].buffer( ).putFloat( x ).putFloat( y ).putFloat( z ).putFloat( w );
 		}
 		
 		public void put( float[ ] values , int offset )
 		{
-			vertexBuffers[ bufferIndex ].putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
+			vertexBuffers[ bufferIndex ].buffer( ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] ).putFloat( values[ offset++ ] );
 		}
 	}
 	
