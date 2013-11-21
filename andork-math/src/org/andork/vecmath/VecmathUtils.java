@@ -289,20 +289,20 @@ public class VecmathUtils
 	public static void toArray( Matrix4f m , float[ ] out )
 	{
 		out[ 0 ] = m.m00;
-		out[ 1 ] = m.m01;
-		out[ 2 ] = m.m02;
-		out[ 3 ] = m.m03;
-		out[ 4 ] = m.m10;
+		out[ 4 ] = m.m01;
+		out[ 8 ] = m.m02;
+		out[ 12 ] = m.m03;
+		out[ 1 ] = m.m10;
 		out[ 5 ] = m.m11;
-		out[ 6 ] = m.m12;
-		out[ 7 ] = m.m13;
-		out[ 8 ] = m.m20;
-		out[ 9 ] = m.m21;
+		out[ 9 ] = m.m12;
+		out[ 13 ] = m.m13;
+		out[ 2 ] = m.m20;
+		out[ 6 ] = m.m21;
 		out[ 10 ] = m.m22;
-		out[ 11 ] = m.m23;
-		out[ 12 ] = m.m30;
-		out[ 13 ] = m.m31;
-		out[ 14 ] = m.m32;
+		out[ 14 ] = m.m23;
+		out[ 3 ] = m.m30;
+		out[ 7 ] = m.m31;
+		out[ 11 ] = m.m32;
 		out[ 15 ] = m.m33;
 	}
 	

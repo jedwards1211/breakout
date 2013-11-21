@@ -148,16 +148,16 @@ public class BasicNavigator extends MouseAdapter
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
-			cam[ 3 ] += cam[ 2 ] * dy * scaledMoveFactor;
-			cam[ 7 ] += cam[ 6 ] * dy * scaledMoveFactor;
-			cam[ 11 ] += cam[ 10 ] * dy * scaledMoveFactor;
+			cam[ 12 ] += cam[ 8 ] * dy * scaledMoveFactor;
+			cam[ 13 ] += cam[ 9 ] * dy * scaledMoveFactor;
+			cam[ 14 ] += cam[ 10 ] * dy * scaledMoveFactor;
 			Vecmath.invAffine( cam , scene.v );
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
 		{
-			cam[ 3 ] += cam[ 0 ] * -dx * scaledMoveFactor + cam[ 1 ] * dy * scaledMoveFactor;
-			cam[ 7 ] += cam[ 4 ] * -dx * scaledMoveFactor + cam[ 5 ] * dy * scaledMoveFactor;
-			cam[ 11 ] += cam[ 8 ] * -dx * scaledMoveFactor + cam[ 9 ] * dy * scaledMoveFactor;
+			cam[ 12 ] += cam[ 0 ] * -dx * scaledMoveFactor + cam[ 4 ] * dy * scaledMoveFactor;
+			cam[ 13 ] += cam[ 1 ] * -dx * scaledMoveFactor + cam[ 5 ] * dy * scaledMoveFactor;
+			cam[ 14 ] += cam[ 2 ] * -dx * scaledMoveFactor + cam[ 6 ] * dy * scaledMoveFactor;
 			Vecmath.invAffine( cam , scene.v );
 		}
 		
@@ -179,9 +179,9 @@ public class BasicNavigator extends MouseAdapter
 		
 		float distance = -e.getRotation( )[ 1 ] * wheelFactor * sensitivity;
 		
-		cam[ 3 ] += cam[ 2 ] * distance;
-		cam[ 7 ] += cam[ 6 ] * distance;
-		cam[ 11 ] += cam[ 10 ] * distance;
+		cam[ 12 ] += cam[ 8 ] * distance;
+		cam[ 13 ] += cam[ 9 ] * distance;
+		cam[ 14 ] += cam[ 10 ] * distance;
 		
 		Vecmath.invAffine( cam , scene.v );
 		

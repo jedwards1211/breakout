@@ -91,7 +91,7 @@ public class FalseDepthTest5b extends TorquescapeSetup
 				0 , 0 , 0 , 0.1f ) );
 		obj.add( obj.new Uniform1fv( ).name( "u_u_period" ).value( 0.5f ) );
 		obj.add( obj.new Uniform1fv( ).name( "u_v_period" ).value( 2 * ( float ) Math.PI ) );
-		obj.transpose( true );
+		obj.transpose( false );
 		obj.ignoreMissingLocations( true );
 		obj.indexType( GL2ES2.GL_UNSIGNED_SHORT );
 		obj.vertexCount( zone.getVertBuffer( ).capacity( ) / zone.getBytesPerVertex( ) );

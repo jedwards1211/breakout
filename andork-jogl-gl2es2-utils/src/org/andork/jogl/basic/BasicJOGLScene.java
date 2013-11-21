@@ -43,7 +43,7 @@ public class BasicJOGLScene implements GLEventListener
 	private int						width , height;
 	
 	public float					fov						= ( float ) Math.PI / 2;
-	public float					zNear					= 1e-2f;
+	public float					zNear					= 1f;
 	public float					zFar					= 1e7f;
 	
 	private final List<JOGLObject>	objects					= new ArrayList<JOGLObject>( );
@@ -187,10 +187,10 @@ public class BasicJOGLScene implements GLEventListener
 		{
 			perspective( p , fov , ( float ) width / height , zNear , zFar );
 		}
-		p[ 8 ] = -p[ 8 ];
-		p[ 9 ] = -p[ 9 ];
-		p[ 10 ] = -p[ 10 ];
-		p[ 11 ] = -p[ 11 ];
+//		p[ 2 ] = -p[ 2 ];
+//		p[ 6 ] = -p[ 6 ];
+//		p[ 10 ] = -p[ 10 ];
+//		p[ 14 ] = -p[ 14 ];
 	}
 	
 	public List<JOGLObject> getObjects( )

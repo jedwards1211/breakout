@@ -113,9 +113,9 @@ public class BasicOrbiter extends MouseAdapter
 			setIdentity( m1 );
 			setIdentity( m2 );
 			
-			m2[ 3 ] = -center[ 0 ];
-			m2[ 7 ] = -center[ 1 ];
-			m2[ 11 ] = -center[ 2 ];
+			m2[ 12 ] = -center[ 0 ];
+			m2[ 13 ] = -center[ 1 ];
+			m2[ 14 ] = -center[ 2 ];
 			
 			float dpan = ( float ) ( dx * panFactor / canvas.getWidth( ) );
 			float dtilt = ( float ) ( dy * tiltFactor / canvas.getHeight( ) );

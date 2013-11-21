@@ -3,8 +3,10 @@ package org.andork.torquescape.jogl.main;
 import static org.andork.vecmath.Vecmath.cross;
 import static org.andork.vecmath.Vecmath.invAffine;
 import static org.andork.vecmath.Vecmath.setColumn3;
+import static org.andork.vecmath.Vecmath.setf;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +28,7 @@ import org.andork.torquescape.control.Vehicle;
 import org.andork.torquescape.control.VehicleMover;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.normal.NormalGenerator;
+import org.andork.vecmath.Vecmath;
 
 public class TorquescapeScene extends BasicJOGLScene
 {
@@ -98,7 +101,7 @@ public class TorquescapeScene extends BasicJOGLScene
 		obj.indexBuffer( indexBuffer ).indexCount( indexBuffer.capacity( ) / 4 );
 		obj.indexType( GL2ES2.GL_UNSIGNED_INT );
 		obj.drawMode( GL2ES2.GL_TRIANGLES );
-		obj.transpose( true );
+		obj.transpose( false );
 		obj.add( new JOGLDepthModifier( ) );
 		
 		obj.vertexShaderCode( new PerVertexDiffuseVertexShader( ).toString( ) );
@@ -116,6 +119,8 @@ public class TorquescapeScene extends BasicJOGLScene
 		
 		return obj;
 	}
+	
+	long lastPrintTime = 0;
 	
 	@Override
 	public void display( GLAutoDrawable drawable )
@@ -140,6 +145,28 @@ public class TorquescapeScene extends BasicJOGLScene
 			player.updateVelocity( timestep , forwardTime , reverseTime , leftTime , rightTime );
 			
 			vehicleMover.move( player , timestep );
+		}
+		
+		if (time - lastPrintTime > 1000000000) {
+			lastPrintTime = time;
+			float[] pvm = new float[16];
+			Vecmath.mmul( v , m , pvm );
+			Vecmath.mmul( p , pvm , pvm );
+			float[] f = new float[3];
+			
+			System.out.println();
+			setf(f, -10, 0, -10);
+			Vecmath.mpmul( pvm , f );
+			System.out.println(Arrays.toString( f ));
+			setf(f, -10, 0, 10);
+			Vecmath.mpmul( pvm , f );
+			System.out.println(Arrays.toString( f ));
+			setf(f, 10, 0, 10);
+			Vecmath.mpmul( pvm , f );
+			System.out.println(Arrays.toString( f ));
+			setf(f, 10, 0, -10);
+			Vecmath.mpmul( pvm , f );
+			System.out.println(Arrays.toString( f ));
 		}
 		
 		cameraMover.updateXform( );

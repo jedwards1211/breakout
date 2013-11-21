@@ -1,4 +1,0 @@
-Manifest-Version: 1.0
-Permissions: all-permissions
-Class-Path: lib/andork-core.jar lib/andork-jogl-gl2es2-utils.jar lib/andork-math.jar lib/andork-plot.jar lib/gluegen-rt.jar lib/jogl-core.jar lib/jogl-gldesktop.jar lib/jogl-awt.jar  lib/nativewindow-core.jar lib/nativewindow-awt.jar lib/jogl-os-win.jar lib/nativewindow-os-win.jar lib/gluegen-rt-natives-windows-i586.jar lib/jogl-natives-windows-i586.jar lib/nativewindow-natives-windows-i586.jar
-Main-Class: org.andork.frf.FisherRidgeForever

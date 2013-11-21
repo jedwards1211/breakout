@@ -2,11 +2,14 @@
 <classpath>
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/update/java"/>
+	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/swingx-1.6.4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-utils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-plot"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jogl-awt-win"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/commons-io-2.4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

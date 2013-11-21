@@ -88,7 +88,7 @@ public class SplineTestFrame extends BasicJOGLSetup
 		obj.add( obj.new Attribute3fv( ).name( "a_pos" ) );
 		obj.fragmentShaderCode( new DepthFragmentShader( ).radius( 9 ).toString( ) );
 		obj.add( new JOGLDepthModifier( ) );
-		obj.transpose( true );
+		obj.transpose( false );
 		
 		scene.add( obj );
 		

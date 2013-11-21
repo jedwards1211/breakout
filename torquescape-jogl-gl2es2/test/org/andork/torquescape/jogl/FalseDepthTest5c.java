@@ -14,7 +14,7 @@ import javax.media.opengl.GL2ES2;
 
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.JOGLBlendModifier;
-import org.andork.jogl.basic.JOGLPolygonModeModifier;
+import org.andork.jogl.basic.GankedJOGLPolygonModeModifier;
 import org.andork.jogl.basic.BasicJOGLObject.DebugUVNFragmentShader;
 import org.andork.jogl.basic.BasicJOGLObject.DebugUVNVertexShader;
 import org.andork.jogl.basic.BufferHelper;
@@ -98,7 +98,7 @@ public class FalseDepthTest5c extends TorquescapeSetup
 				0 , 0 , 1 , 0.1f ) );
 		obj.add( obj.new Uniform1fv( ).name( "u_u_period" ).value( 0.1f ) );
 		obj.add( obj.new Uniform1fv( ).name( "u_v_period" ).value( 4 * ( float ) Math.PI ) );
-		obj.transpose( true );
+		obj.transpose( false );
 		obj.ignoreMissingLocations( true );
 		obj.indexType( GL2ES2.GL_UNSIGNED_SHORT );
 		obj.vertexCount( zone.getVertBuffer( ).capacity( ) / zone.getBytesPerVertex( ) );

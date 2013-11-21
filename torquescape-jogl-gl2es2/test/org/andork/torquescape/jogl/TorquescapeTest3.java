@@ -59,7 +59,7 @@ public class TorquescapeTest3 extends TorquescapeSetup
 		obj.add( obj.new Uniform4fv( ).name( "u_layer_colors" ).count( 2 ).value( 1 , 0 , 0 , 1 , 0 , 0 , 1f , 1 ) );
 		obj.add( obj.new Uniform1fv( ).name( "u_u_period" ).value( 10 ) );
 		obj.add( obj.new Uniform1fv( ).name( "u_v_period" ).value( 2 ) );
-		obj.transpose( true );
+		obj.transpose( false );
 		obj.ignoreMissingLocations( true );
 		obj.indexType( GL2ES2.GL_UNSIGNED_SHORT );
 		obj.vertexCount( zone.getVertBuffer( ).capacity( ) / zone.getBytesPerVertex( ) );

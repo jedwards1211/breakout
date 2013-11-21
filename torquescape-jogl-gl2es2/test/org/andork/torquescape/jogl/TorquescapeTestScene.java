@@ -227,10 +227,10 @@ public class TorquescapeTestScene implements GLEventListener
 		float ratio = ( float ) width / height;
 		
 		perspective( projMatrix , ( float ) Math.PI / 2 , ratio , 0.01f , 10000 );
-		projMatrix[ 8 ] = -projMatrix[ 8 ];
-		projMatrix[ 9 ] = -projMatrix[ 9 ];
+		projMatrix[ 2 ] = -projMatrix[ 2 ];
+		projMatrix[ 6 ] = -projMatrix[ 6 ];
 		projMatrix[ 10 ] = -projMatrix[ 10 ];
-		projMatrix[ 11 ] = -projMatrix[ 11 ];
+		projMatrix[ 14 ] = -projMatrix[ 14 ];
 		transpose( projMatrix , projMatrix );
 	}
 }

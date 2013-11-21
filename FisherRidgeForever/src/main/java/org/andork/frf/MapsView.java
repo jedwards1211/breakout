@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JComboBox;
@@ -25,9 +26,17 @@ import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.basic.JOGLLineWidthModifier;
 import org.andork.jogl.basic.JOGLObject;
+import org.andork.jogl.basic.JOGLPolygonModeModifier;
 import org.andork.jogl.basic.JOGLPolygonOffsetModifier;
 import org.andork.jogl.basic.SharedVertexBuffer;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
+import org.andork.jogl.shader.DefaultNormalVertexShader;
+import org.andork.jogl.shader.DefaultPositionVertexShader;
+import org.andork.jogl.shader.GradientFragmentShader;
+import org.andork.jogl.shader.MainCodeBlock;
+import org.andork.jogl.shader.ShaderSegment;
+import org.andork.jogl.shader.SimpleLightingFragmentShader;
+import org.andork.jogl.shader.VariableDeclarations;
 import org.andork.vecmath.Vecmath;
 
 import com.andork.plot.Axis;
@@ -363,22 +372,27 @@ public class MapsView extends BasicJOGLSetup
 			}
 			
 			vertHelper.putFloats( shot.from.position );
+			vertHelper.putFloats( 0 , 0 , 0 );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
 				vertHelper.putFloats( shot.from.position[ i ] + leftAtFrom[ i ] * shot.left );
 			}
+			vertHelper.putFloats( leftAtFrom );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
 				vertHelper.putFloats( shot.from.position[ i ] - leftAtFrom[ i ] * shot.right );
 			}
+			vertHelper.putFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
 				vertHelper.putFloats( shot.from.position[ i ] + ( i == 1 ? shot.up : 0.0 ) );
 			}
+			vertHelper.putFloats( 0 , 1 , 0 );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
 				vertHelper.putFloats( shot.from.position[ i ] - ( i == 1 ? shot.down : 0.0 ) );
 			}
+			vertHelper.putFloats( 0 , -1 , 0 );
 			
 			SurveyShot nextNonVertical = nextNonVerticalShot( shot );
 			
@@ -418,60 +432,61 @@ public class MapsView extends BasicJOGLSetup
 				}
 				
 				vertHelper.putFloats( shot.to.position );
+				vertHelper.putFloats( 0 , 0 , 0 );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
 					vertHelper.putFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.left );
 				}
+				vertHelper.putFloats( leftAtTo );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
 					vertHelper.putFloats( shot.to.position[ i ] - leftAtTo[ i ] * bestShot.right );
 				}
+				vertHelper.putFloats( -leftAtTo[ 0 ] , -leftAtTo[ 1 ] , -leftAtTo[ 2 ] );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
 					vertHelper.putFloats( shot.to.position[ i ] + ( i == 1 ? bestShot.up : 0.0 ) );
 				}
+				vertHelper.putFloats( 0 , 1 , 0 );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
 					vertHelper.putFloats( shot.to.position[ i ] - ( i == 1 ? bestShot.down : 0.0 ) );
 				}
-				
-				fillIndexHelper.put( offset( vertCount ,
-						1 , 6 , 3 , 8 , 3 , 6 ,
-						3 , 8 , 2 , 7 , 2 , 8 ,
-						2 , 7 , 4 , 9 , 4 , 7 ,
-						4 , 9 , 1 , 6 , 1 , 9 ) );
-				
-				lineIndexHelper.put( offset( vertCount ,
-						1 , 6 , 1 , 3 , 6 , 3 , 6 , 8 ,
-						3 , 8 , 3 , 2 , 8 , 2 , 8 , 7 ,
-						2 , 7 , 2 , 4 , 7 , 4 , 7 , 9 ,
-						4 , 9 , 4 , 1 , 9 , 1 , 9 , 6 ) );
-				
-				vertCount += 10;
-				fillIndexCount += 24;
-				lineIndexCount += 32;
+				vertHelper.putFloats( 0 , -1 , 0 );
 			}
 			else
 			{
 				vertHelper.putFloats( shot.to.position );
-				
-				fillIndexHelper.put( offset( vertCount ,
-						1 , 5 , 3 , 3 , 5 , 2 , 2 , 5 , 4 , 4 , 5 , 1 ) );
-				
-				lineIndexHelper.put( offset( vertCount ,
-						1 , 5 , 1 , 3 ,
-						3 , 5 , 3 , 2 ,
-						2 , 5 , 2 , 4 ,
-						4 , 5 , 4 , 1 ) );
-				
-				vertCount += 6;
-				fillIndexCount += 12;
-				lineIndexCount += 16;
+				vertHelper.putFloats( 0 , 0 , 0 );
+				vertHelper.putFloats( shot.to.position );
+				vertHelper.putFloats( leftAtFrom );
+				vertHelper.putFloats( shot.to.position );
+				vertHelper.putFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
+				vertHelper.putFloats( shot.to.position );
+				vertHelper.putFloats( 0 , 1 , 0 );
+				vertHelper.putFloats( shot.to.position );
+				vertHelper.putFloats( 0 , -1 , 0 );
 			}
+			
+			fillIndexHelper.put( offset( vertCount ,
+					1 , 6 , 3 , 8 , 3 , 6 ,
+					3 , 8 , 2 , 7 , 2 , 8 ,
+					2 , 7 , 4 , 9 , 4 , 7 ,
+					4 , 9 , 1 , 6 , 1 , 9 ) );
+			
+			lineIndexHelper.put( offset( vertCount ,
+					1 , 6 , 1 , 3 , 6 , 3 , 6 , 8 ,
+					3 , 8 , 3 , 2 , 8 , 2 , 8 , 7 ,
+					2 , 7 , 2 , 4 , 7 , 4 , 7 , 9 ,
+					4 , 9 , 4 , 1 , 9 , 1 , 9 , 6 ) );
+			
+			vertCount += 10;
+			fillIndexCount += 24;
+			lineIndexCount += 32;
 		}
 		
 		ByteBuffer vertBuffer = vertHelper.toByteBuffer( );
-		float[ ] bounds = getBounds( vertBuffer , 0 , 12 , vertCount , 3 );
+		float[ ] bounds = getBounds( vertBuffer , 0 , 24 , vertCount , 3 );
 		
 		float[ ] c = new float[ 3 ];
 		c[ 0 ] = ( bounds[ 0 ] + bounds[ 3 ] ) * .5f;
@@ -499,16 +514,40 @@ public class MapsView extends BasicJOGLSetup
 			fillObj.addVertexBuffer( sharedBuffer ).vertexCount( vertCount );
 			fillObj.drawMode( GL2ES2.GL_TRIANGLES );
 			fillObj.indexBuffer( fillIndexHelper.toByteBuffer( ) ).indexCount( fillIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
-			fillObj.transpose( true );
-			fillObj.vertexShaderCode( new BasicVertexShader( ).passPosToFragmentShader( true ).toString( ) );
-			fillObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
+			fillObj.transpose( false );
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
-			fillObj.add( new JOGLPolygonOffsetModifier( -5f , -5f ) );
+			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
+//			fillObj.add( new JOGLPolygonOffsetModifier( -5f , -5f ) );
 			fillObj.add( new JOGLDepthModifier( ) );
+			fillObj.add( new JOGLPolygonModeModifier( GL.GL_BACK ) );
 			fillObj.add( fillObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 0 , 0 , 1 ) );
 			fillObj.add( fillObj.new Uniform4fv( ).name( "farColor" ).value( 0.3f , 0 , 0 , 1 ) );
 			fillObj.add( fillNearDist = fillObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
 			fillObj.add( fillFarDist = fillObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
+			fillObj.normalMatrixName( "n" );
+			// fillObj.vertexShaderCode( new BasicVertexShader( ).passPosToFragmentShader( true ).toString( ) );
+			// fillObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
+			DefaultPositionVertexShader fillObjVertShader = new DefaultPositionVertexShader( );
+			DefaultNormalVertexShader fillObjNormShader = new DefaultNormalVertexShader( );
+			GradientFragmentShader fillObjFragShader = new GradientFragmentShader( );
+			fillObjFragShader.in( "v_z" ).loValue( "nearDist" ).hiValue( "farDist" ).loColor( "nearColor" ).hiColor( "farColor" );
+			SimpleLightingFragmentShader lightingFragShader = new SimpleLightingFragmentShader( );
+			lightingFragShader.color( "gl_FragColor" ).ambientAmt( "0.3" );
+			
+			fillObj.vertexShaderCode( "precision highp float;" + ShaderSegment.combine(
+					fillObjVertShader.defaultVariableDecls( ) ,
+					fillObjNormShader.defaultVariableDecls( ) ,
+					fillObjVertShader ,
+					fillObjNormShader ,
+					new VariableDeclarations( "varying float v_z;" ) ,
+					new MainCodeBlock( "  v_z = -(v * m * vec4(a_pos, 1.0)).z;" )
+					) );
+			fillObj.fragmentShaderCode( ShaderSegment.combine(
+					new VariableDeclarations( "varying float v_z;" ) ,
+					fillObjFragShader.defaultVariableDecls( ) ,
+					new VariableDeclarations( "varying vec3 v_norm;" ) ,
+					fillObjFragShader ,
+					lightingFragShader ) );
 			
 			scene.initLater( fillObj );
 			scene.add( fillObj );
@@ -517,10 +556,11 @@ public class MapsView extends BasicJOGLSetup
 			lineObj.addVertexBuffer( sharedBuffer ).vertexCount( vertCount );
 			lineObj.drawMode( GL2ES2.GL_LINES );
 			lineObj.indexBuffer( lineIndexHelper.toByteBuffer( ) ).indexCount( lineIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
-			lineObj.transpose( true );
+			lineObj.transpose( false );
 			lineObj.vertexShaderCode( new BasicVertexShader( ).passPosToFragmentShader( true ).toString( ) );
 			lineObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
 			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
+			lineObj.add( lineObj.new PlaceholderAttribute( 12 ) );
 			lineObj.add( new JOGLLineWidthModifier( 2.0f ) );
 			lineObj.add( new JOGLDepthModifier( ) );
 			lineObj.add( lineObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 1 , 1 , 1 ) );
@@ -528,8 +568,8 @@ public class MapsView extends BasicJOGLSetup
 			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
 			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
 			
-			scene.initLater( lineObj );
-			scene.add( lineObj );
+//			scene.initLater( lineObj );
+//			scene.add( lineObj );
 		}
 		
 		canvas.repaint( );

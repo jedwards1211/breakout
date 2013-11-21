@@ -63,7 +63,7 @@ public class EllipsoidTestFrame extends BasicJOGLSetup
 		obj.indexBuffer( indexBuffer ).indexCount( indexBuffer.capacity( ) / 4 );
 		obj.indexType( GL2ES2.GL_UNSIGNED_INT );
 		obj.drawMode( GL2ES2.GL_TRIANGLES );
-		obj.transpose( true );
+		obj.transpose( false );
 		obj.add( new JOGLDepthModifier( ) );
 		
 		obj.vertexShaderCode( new PerVertexDiffuseVertexShader( ).toString( ) );

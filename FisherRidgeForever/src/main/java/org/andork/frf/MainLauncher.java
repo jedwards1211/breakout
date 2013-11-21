@@ -1,6 +1,11 @@
 package org.andork.frf;
 
+import java.io.File;
+import java.io.IOException;
+
 import javax.swing.JOptionPane;
+
+import org.apache.commons.io.FileUtils;
 
 public class MainLauncher
 {
@@ -14,6 +19,25 @@ public class MainLauncher
 		{
 			JOptionPane.showMessageDialog( null , "<html>FisherRidgeForever requires Java version 1.6+ to run.<br>Please download and install Java 1.6 or a later version.</html>" , "Fisher Ridge Forever" , JOptionPane.ERROR_MESSAGE );
 			System.exit( 1 );
+		}
+		
+		if( new File( "update" ).exists( ) )
+		{
+			new Thread( "update folder deleter" )
+			{
+				@Override
+				public void run( )
+				{
+					try
+					{
+						FileUtils.deleteDirectory( new File( "update" ) );
+					}
+					catch( IOException e )
+					{
+						e.printStackTrace( );
+					}
+				}
+			}.start( );
 		}
 		
 		MainFrame.main( args );

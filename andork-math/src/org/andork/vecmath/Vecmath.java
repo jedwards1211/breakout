@@ -1,5 +1,7 @@
 package org.andork.vecmath;
 
+import java.math.BigDecimal;
+
 public class Vecmath
 {
 	private static final double	EPSILON_ABSOLUTE	= 1.0e-5f;
@@ -124,10 +126,10 @@ public class Vecmath
 	
 	public static void mpmul( double[ ] m , double[ ] p )
 	{
-		double rw = 1 / ( m[ 12 ] * p[ 0 ] + m[ 13 ] * p[ 1 ] + m[ 14 ] * p[ 2 ] + m[ 15 ] );
-		double x = rw * ( m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ] );
-		double y = rw * ( m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ] );
-		p[ 2 ] = rw * ( m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ] );
+		double rw = 1 / ( m[ 3 ] * p[ 0 ] + m[ 7 ] * p[ 1 ] + m[ 11 ] * p[ 2 ] + m[ 15 ] );
+		double x = rw * ( m[ 0 ] * p[ 0 ] + m[ 4 ] * p[ 1 ] + m[ 8 ] * p[ 2 ] + m[ 12 ] );
+		double y = rw * ( m[ 1 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 9 ] * p[ 2 ] + m[ 13 ] );
+		p[ 2 ] = rw * ( m[ 2 ] * p[ 0 ] + m[ 6 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 14 ] );
 		p[ 1 ] = y;
 		p[ 0 ] = x;
 	}
@@ -136,10 +138,10 @@ public class Vecmath
 	{
 		if( p != out )
 		{
-			double rw = 1 / ( m[ 12 ] * p[ 0 ] + m[ 13 ] * p[ 1 ] + m[ 14 ] * p[ 2 ] + m[ 15 ] );
-			out[ 0 ] = rw * ( m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ] );
-			out[ 1 ] = rw * ( m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ] );
-			out[ 2 ] = rw * ( m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ] );
+			double rw = 1 / ( m[ 3 ] * p[ 0 ] + m[ 7 ] * p[ 1 ] + m[ 11 ] * p[ 2 ] + m[ 15 ] );
+			out[ 0 ] = rw * ( m[ 0 ] * p[ 0 ] + m[ 4 ] * p[ 1 ] + m[ 8 ] * p[ 2 ] + m[ 12 ] );
+			out[ 1 ] = rw * ( m[ 1 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 9 ] * p[ 2 ] + m[ 13 ] );
+			out[ 2 ] = rw * ( m[ 2 ] * p[ 0 ] + m[ 6 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 14 ] );
 		}
 		else
 		{
@@ -149,18 +151,18 @@ public class Vecmath
 	
 	public static void mpmulAffine( double[ ] m , double[ ] p )
 	{
-		double x = m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ];
-		double y = m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ];
-		p[ 2 ] = m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ];
+		double x = m[ 0 ] * p[ 0 ] + m[ 4 ] * p[ 1 ] + m[ 8 ] * p[ 2 ] + m[ 12 ];
+		double y = m[ 1 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 9 ] * p[ 2 ] + m[ 13 ];
+		p[ 2 ] = m[ 2 ] * p[ 0 ] + m[ 6 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 14 ];
 		p[ 1 ] = y;
 		p[ 0 ] = x;
 	}
 	
 	public static void mpmulAffine( double[ ] m , double[ ] p , int vi )
 	{
-		double x = m[ 0 ] * p[ vi ] + m[ 1 ] * p[ vi + 1 ] + m[ 2 ] * p[ vi + 2 ] + m[ 3 ];
-		double y = m[ 4 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 6 ] * p[ vi + 2 ] + m[ 7 ];
-		p[ vi + 2 ] = m[ 8 ] * p[ vi ] + m[ 9 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 11 ];
+		double x = m[ 0 ] * p[ vi ] + m[ 4 ] * p[ vi + 1 ] + m[ 8 ] * p[ vi + 2 ] + m[ 12 ];
+		double y = m[ 1 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 9 ] * p[ vi + 2 ] + m[ 13 ];
+		p[ vi + 2 ] = m[ 2 ] * p[ vi ] + m[ 6 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 14 ];
 		p[ vi + 1 ] = y;
 		p[ vi ] = x;
 	}
@@ -169,9 +171,9 @@ public class Vecmath
 	{
 		if( p != out )
 		{
-			out[ 0 ] = m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ];
-			out[ 1 ] = m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ];
-			out[ 2 ] = m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ];
+			out[ 0 ] = m[ 0 ] * p[ 0 ] + m[ 4 ] * p[ 1 ] + m[ 8 ] * p[ 2 ] + m[ 12 ];
+			out[ 1 ] = m[ 1 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 9 ] * p[ 2 ] + m[ 13 ];
+			out[ 2 ] = m[ 2 ] * p[ 0 ] + m[ 6 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 14 ];
 		}
 		else
 		{
@@ -181,18 +183,18 @@ public class Vecmath
 	
 	public static void mpmulAffine( double[ ] m , double x , double y , double z , double[ ] out )
 	{
-		out[ 0 ] = m[ 0 ] * x + m[ 1 ] * y + m[ 2 ] * z + m[ 3 ];
-		out[ 1 ] = m[ 4 ] * x + m[ 5 ] * y + m[ 6 ] * z + m[ 7 ];
-		out[ 2 ] = m[ 8 ] * x + m[ 9 ] * y + m[ 10 ] * z + m[ 11 ];
+		out[ 0 ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z + m[ 12 ];
+		out[ 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z + m[ 13 ];
+		out[ 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z + m[ 14 ];
 	}
 	
 	public static void mpmulAffine( double[ ] m , double[ ] p , int vi , double[ ] out , int outi )
 	{
 		if( p != out || vi != outi )
 		{
-			out[ outi ] = m[ 0 ] * p[ vi ] + m[ 1 ] * p[ vi + 1 ] + m[ 2 ] * p[ vi + 2 ] + m[ 3 ];
-			out[ outi + 1 ] = m[ 4 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 6 ] * p[ vi + 2 ] + m[ 7 ];
-			out[ outi + 2 ] = m[ 8 ] * p[ vi ] + m[ 9 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 11 ];
+			out[ outi ] = m[ 0 ] * p[ vi ] + m[ 4 ] * p[ vi + 1 ] + m[ 8 ] * p[ vi + 2 ] + m[ 12 ];
+			out[ outi + 1 ] = m[ 1 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 9 ] * p[ vi + 2 ] + m[ 13 ];
+			out[ outi + 2 ] = m[ 2 ] * p[ vi ] + m[ 6 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 14 ];
 		}
 		else
 		{
@@ -202,18 +204,18 @@ public class Vecmath
 	
 	public static void mvmulAffine( double[ ] m , double[ ] v )
 	{
-		double x = m[ 0 ] * v[ 0 ] + m[ 1 ] * v[ 1 ] + m[ 2 ] * v[ 2 ];
-		double y = m[ 4 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 6 ] * v[ 2 ];
-		v[ 2 ] = m[ 8 ] * v[ 0 ] + m[ 9 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
+		double x = m[ 0 ] * v[ 0 ] + m[ 4 ] * v[ 1 ] + m[ 8 ] * v[ 2 ];
+		double y = m[ 1 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 9 ] * v[ 2 ];
+		v[ 2 ] = m[ 2 ] * v[ 0 ] + m[ 6 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
 		v[ 1 ] = y;
 		v[ 0 ] = x;
 	}
 	
 	public static void mvmulAffine( double[ ] m , double[ ] v , int vi )
 	{
-		double x = m[ 0 ] * v[ vi ] + m[ 1 ] * v[ vi + 1 ] + m[ 2 ] * v[ vi + 2 ];
-		double y = m[ 4 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 6 ] * v[ vi + 2 ];
-		v[ vi + 2 ] = m[ 8 ] * v[ vi ] + m[ 9 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
+		double x = m[ 0 ] * v[ vi ] + m[ 4 ] * v[ vi + 1 ] + m[ 8 ] * v[ vi + 2 ];
+		double y = m[ 1 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 9 ] * v[ vi + 2 ];
+		v[ vi + 2 ] = m[ 2 ] * v[ vi ] + m[ 6 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
 		v[ vi + 1 ] = y;
 		v[ vi ] = x;
 	}
@@ -222,9 +224,9 @@ public class Vecmath
 	{
 		if( v != out )
 		{
-			out[ 0 ] = m[ 0 ] * v[ 0 ] + m[ 1 ] * v[ 1 ] + m[ 2 ] * v[ 2 ];
-			out[ 1 ] = m[ 4 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 6 ] * v[ 2 ];
-			out[ 2 ] = m[ 8 ] * v[ 0 ] + m[ 9 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
+			out[ 0 ] = m[ 0 ] * v[ 0 ] + m[ 4 ] * v[ 1 ] + m[ 8 ] * v[ 2 ];
+			out[ 1 ] = m[ 1 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 9 ] * v[ 2 ];
+			out[ 2 ] = m[ 2 ] * v[ 0 ] + m[ 6 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
 		}
 		else
 		{
@@ -234,18 +236,18 @@ public class Vecmath
 	
 	public static void mvmulAffine( double[ ] m , double x , double y , double z , double[ ] out )
 	{
-		out[ 0 ] = m[ 0 ] * x + m[ 1 ] * y + m[ 2 ] * z;
-		out[ 1 ] = m[ 4 ] * x + m[ 5 ] * y + m[ 6 ] * z;
-		out[ 2 ] = m[ 8 ] * x + m[ 9 ] * y + m[ 10 ] * z;
+		out[ 0 ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z;
+		out[ 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z;
+		out[ 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z;
 	}
 	
 	public static void mvmulAffine( double[ ] m , double[ ] v , int vi , double[ ] out , int outi )
 	{
 		if( v != out || vi != outi )
 		{
-			out[ outi ] = m[ 0 ] * v[ vi ] + m[ 1 ] * v[ vi + 1 ] + m[ 2 ] * v[ vi + 2 ];
-			out[ outi + 1 ] = m[ 4 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 6 ] * v[ vi + 2 ];
-			out[ outi + 2 ] = m[ 8 ] * v[ vi ] + m[ 9 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
+			out[ outi ] = m[ 0 ] * v[ vi ] + m[ 4 ] * v[ vi + 1 ] + m[ 8 ] * v[ vi + 2 ];
+			out[ outi + 1 ] = m[ 1 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 9 ] * v[ vi + 2 ];
+			out[ outi + 2 ] = m[ 2 ] * v[ vi ] + m[ 6 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
 		}
 		else
 		{
@@ -257,64 +259,64 @@ public class Vecmath
 	{
 		if( out == ma || out == mb )
 		{
-			double m00 = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ] + ma[ 3 ] * mb[ 12 ];
-			double m01 = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ] + ma[ 3 ] * mb[ 13 ];
-			double m02 = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ] + ma[ 3 ] * mb[ 14 ];
-			double m03 = ma[ 0 ] * mb[ 3 ] + ma[ 1 ] * mb[ 7 ] + ma[ 2 ] * mb[ 11 ] + ma[ 3 ] * mb[ 15 ];
+			double m00 = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ] + ma[ 12 ] * mb[ 3 ];
+			double m01 = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ] + ma[ 12 ] * mb[ 7 ];
+			double m02 = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ] + ma[ 12 ] * mb[ 11 ];
+			double m03 = ma[ 0 ] * mb[ 12 ] + ma[ 4 ] * mb[ 13 ] + ma[ 8 ] * mb[ 14 ] + ma[ 12 ] * mb[ 15 ];
 			
-			double m10 = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ] + ma[ 7 ] * mb[ 12 ];
-			double m11 = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ] + ma[ 7 ] * mb[ 13 ];
-			double m12 = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ] + ma[ 7 ] * mb[ 14 ];
-			double m13 = ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 7 ] + ma[ 6 ] * mb[ 11 ] + ma[ 7 ] * mb[ 15 ];
+			double m10 = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ] + ma[ 13 ] * mb[ 3 ];
+			double m11 = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ] + ma[ 13 ] * mb[ 7 ];
+			double m12 = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ] + ma[ 13 ] * mb[ 11 ];
+			double m13 = ma[ 1 ] * mb[ 12 ] + ma[ 5 ] * mb[ 13 ] + ma[ 9 ] * mb[ 14 ] + ma[ 13 ] * mb[ 15 ];
 			
-			double m20 = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ] + ma[ 11 ] * mb[ 12 ];
-			double m21 = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ] + ma[ 11 ] * mb[ 13 ];
-			double m22 = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ] + ma[ 11 ] * mb[ 14 ];
-			double m23 = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ] * mb[ 15 ];
+			double m20 = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ] + ma[ 14 ] * mb[ 3 ];
+			double m21 = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ] + ma[ 14 ] * mb[ 7 ];
+			double m22 = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ] + ma[ 14 ] * mb[ 11 ];
+			double m23 = ma[ 2 ] * mb[ 12 ] + ma[ 6 ] * mb[ 13 ] + ma[ 10 ] * mb[ 14 ] + ma[ 14 ] * mb[ 15 ];
 			
-			double m30 = ma[ 12 ] * mb[ 0 ] + ma[ 13 ] * mb[ 4 ] + ma[ 14 ] * mb[ 8 ] + ma[ 15 ] * mb[ 12 ];
-			double m31 = ma[ 12 ] * mb[ 1 ] + ma[ 13 ] * mb[ 5 ] + ma[ 14 ] * mb[ 9 ] + ma[ 15 ] * mb[ 13 ];
-			double m32 = ma[ 12 ] * mb[ 2 ] + ma[ 13 ] * mb[ 6 ] + ma[ 14 ] * mb[ 10 ] + ma[ 15 ] * mb[ 14 ];
-			double m33 = ma[ 12 ] * mb[ 3 ] + ma[ 13 ] * mb[ 7 ] + ma[ 14 ] * mb[ 11 ] + ma[ 15 ] * mb[ 15 ];
+			double m30 = ma[ 3 ] * mb[ 0 ] + ma[ 7 ] * mb[ 1 ] + ma[ 11 ] * mb[ 2 ] + ma[ 15 ] * mb[ 3 ];
+			double m31 = ma[ 3 ] * mb[ 4 ] + ma[ 7 ] * mb[ 5 ] + ma[ 11 ] * mb[ 6 ] + ma[ 15 ] * mb[ 7 ];
+			double m32 = ma[ 3 ] * mb[ 8 ] + ma[ 7 ] * mb[ 9 ] + ma[ 11 ] * mb[ 10 ] + ma[ 15 ] * mb[ 11 ];
+			double m33 = ma[ 3 ] * mb[ 12 ] + ma[ 7 ] * mb[ 13 ] + ma[ 11 ] * mb[ 14 ] + ma[ 15 ] * mb[ 15 ];
 			
 			out[ 0 ] = m00;
-			out[ 1 ] = m01;
-			out[ 2 ] = m02;
-			out[ 3 ] = m03;
-			out[ 4 ] = m10;
+			out[ 4 ] = m01;
+			out[ 8 ] = m02;
+			out[ 12 ] = m03;
+			out[ 1 ] = m10;
 			out[ 5 ] = m11;
-			out[ 6 ] = m12;
-			out[ 7 ] = m13;
-			out[ 8 ] = m20;
-			out[ 9 ] = m21;
+			out[ 9 ] = m12;
+			out[ 13 ] = m13;
+			out[ 2 ] = m20;
+			out[ 6 ] = m21;
 			out[ 10 ] = m22;
-			out[ 11 ] = m23;
-			out[ 12 ] = m30;
-			out[ 13 ] = m31;
-			out[ 14 ] = m32;
+			out[ 14 ] = m23;
+			out[ 3 ] = m30;
+			out[ 7 ] = m31;
+			out[ 11 ] = m32;
 			out[ 15 ] = m33;
 		}
 		else
 		{
-			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ] + ma[ 3 ] * mb[ 12 ];
-			out[ 1 ] = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ] + ma[ 3 ] * mb[ 13 ];
-			out[ 2 ] = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ] + ma[ 3 ] * mb[ 14 ];
-			out[ 3 ] = ma[ 0 ] * mb[ 3 ] + ma[ 1 ] * mb[ 7 ] + ma[ 2 ] * mb[ 11 ] + ma[ 3 ] * mb[ 15 ];
+			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ] + ma[ 12 ] * mb[ 3 ];
+			out[ 4 ] = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ] + ma[ 12 ] * mb[ 7 ];
+			out[ 8 ] = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ] + ma[ 12 ] * mb[ 11 ];
+			out[ 12 ] = ma[ 0 ] * mb[ 12 ] + ma[ 4 ] * mb[ 13 ] + ma[ 8 ] * mb[ 14 ] + ma[ 12 ] * mb[ 15 ];
 			
-			out[ 4 ] = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ] + ma[ 7 ] * mb[ 12 ];
-			out[ 5 ] = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ] + ma[ 7 ] * mb[ 13 ];
-			out[ 6 ] = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ] + ma[ 7 ] * mb[ 14 ];
-			out[ 7 ] = ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 7 ] + ma[ 6 ] * mb[ 11 ] + ma[ 7 ] * mb[ 15 ];
+			out[ 1 ] = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ] + ma[ 13 ] * mb[ 3 ];
+			out[ 5 ] = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ] + ma[ 13 ] * mb[ 7 ];
+			out[ 9 ] = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ] + ma[ 13 ] * mb[ 11 ];
+			out[ 13 ] = ma[ 1 ] * mb[ 12 ] + ma[ 5 ] * mb[ 13 ] + ma[ 9 ] * mb[ 14 ] + ma[ 13 ] * mb[ 15 ];
 			
-			out[ 8 ] = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ] + ma[ 11 ] * mb[ 12 ];
-			out[ 9 ] = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ] + ma[ 11 ] * mb[ 13 ];
-			out[ 10 ] = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ] + ma[ 11 ] * mb[ 14 ];
-			out[ 11 ] = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ] * mb[ 15 ];
+			out[ 2 ] = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ] + ma[ 14 ] * mb[ 3 ];
+			out[ 6 ] = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ] + ma[ 14 ] * mb[ 7 ];
+			out[ 10 ] = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ] + ma[ 14 ] * mb[ 11 ];
+			out[ 14 ] = ma[ 2 ] * mb[ 12 ] + ma[ 6 ] * mb[ 13 ] + ma[ 10 ] * mb[ 14 ] + ma[ 14 ] * mb[ 15 ];
 			
-			out[ 12 ] = ma[ 12 ] * mb[ 0 ] + ma[ 13 ] * mb[ 4 ] + ma[ 14 ] * mb[ 8 ] + ma[ 15 ] * mb[ 12 ];
-			out[ 13 ] = ma[ 12 ] * mb[ 1 ] + ma[ 13 ] * mb[ 5 ] + ma[ 14 ] * mb[ 9 ] + ma[ 15 ] * mb[ 13 ];
-			out[ 14 ] = ma[ 12 ] * mb[ 2 ] + ma[ 13 ] * mb[ 6 ] + ma[ 14 ] * mb[ 10 ] + ma[ 15 ] * mb[ 14 ];
-			out[ 15 ] = ma[ 12 ] * mb[ 3 ] + ma[ 13 ] * mb[ 7 ] + ma[ 14 ] * mb[ 11 ] + ma[ 15 ] * mb[ 15 ];
+			out[ 3 ] = ma[ 3 ] * mb[ 0 ] + ma[ 7 ] * mb[ 1 ] + ma[ 11 ] * mb[ 2 ] + ma[ 15 ] * mb[ 3 ];
+			out[ 7 ] = ma[ 3 ] * mb[ 4 ] + ma[ 7 ] * mb[ 5 ] + ma[ 11 ] * mb[ 6 ] + ma[ 15 ] * mb[ 7 ];
+			out[ 11 ] = ma[ 3 ] * mb[ 8 ] + ma[ 7 ] * mb[ 9 ] + ma[ 11 ] * mb[ 10 ] + ma[ 15 ] * mb[ 11 ];
+			out[ 15 ] = ma[ 3 ] * mb[ 12 ] + ma[ 7 ] * mb[ 13 ] + ma[ 11 ] * mb[ 14 ] + ma[ 15 ] * mb[ 15 ];
 		}
 	}
 	
@@ -322,50 +324,50 @@ public class Vecmath
 	{
 		if( out == ma || out == mb )
 		{
-			double m00 = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
-			double m01 = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
-			double m02 = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
-			double m03 = ma[ 0 ] * mb[ 3 ] + ma[ 1 ] * mb[ 7 ] + ma[ 2 ] * mb[ 11 ] + ma[ 3 ];
+			double m00 = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ];
+			double m01 = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ];
+			double m02 = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ];
+			double m03 = ma[ 0 ] * mb[ 12 ] + ma[ 4 ] * mb[ 13 ] + ma[ 8 ] * mb[ 14 ] + ma[ 12 ];
 			
-			double m10 = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
-			double m11 = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
-			double m12 = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
-			double m13 = ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 7 ] + ma[ 6 ] * mb[ 11 ] + ma[ 7 ];
+			double m10 = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ];
+			double m11 = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ];
+			double m12 = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ];
+			double m13 = ma[ 1 ] * mb[ 12 ] + ma[ 5 ] * mb[ 13 ] + ma[ 9 ] * mb[ 14 ] + ma[ 13 ];
 			
-			double m20 = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
-			double m21 = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
-			double m22 = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
-			double m23 = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ];
+			double m20 = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ];
+			double m21 = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ];
+			double m22 = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ];
+			double m23 = ma[ 2 ] * mb[ 12 ] + ma[ 6 ] * mb[ 13 ] + ma[ 10 ] * mb[ 14 ] + ma[ 14 ];
 			
 			out[ 0 ] = m00;
-			out[ 1 ] = m01;
-			out[ 2 ] = m02;
-			out[ 3 ] = m03;
-			out[ 4 ] = m10;
+			out[ 4 ] = m01;
+			out[ 8 ] = m02;
+			out[ 12 ] = m03;
+			out[ 1 ] = m10;
 			out[ 5 ] = m11;
-			out[ 6 ] = m12;
-			out[ 7 ] = m13;
-			out[ 8 ] = m20;
-			out[ 9 ] = m21;
+			out[ 9 ] = m12;
+			out[ 13 ] = m13;
+			out[ 2 ] = m20;
+			out[ 6 ] = m21;
 			out[ 10 ] = m22;
-			out[ 11 ] = m23;
+			out[ 14 ] = m23;
 		}
 		else
 		{
-			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
-			out[ 1 ] = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
-			out[ 2 ] = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
-			out[ 3 ] = ma[ 0 ] * mb[ 3 ] + ma[ 1 ] * mb[ 7 ] + ma[ 2 ] * mb[ 11 ] + ma[ 3 ];
+			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ];
+			out[ 4 ] = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ];
+			out[ 8 ] = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ];
+			out[ 12 ] = ma[ 0 ] * mb[ 12 ] + ma[ 4 ] * mb[ 13 ] + ma[ 8 ] * mb[ 14 ] + ma[ 12 ];
 			
-			out[ 4 ] = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
-			out[ 5 ] = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
-			out[ 6 ] = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
-			out[ 7 ] = ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 7 ] + ma[ 6 ] * mb[ 11 ] + ma[ 7 ];
+			out[ 1 ] = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ];
+			out[ 5 ] = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ];
+			out[ 9 ] = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ];
+			out[ 13 ] = ma[ 1 ] * mb[ 12 ] + ma[ 5 ] * mb[ 13 ] + ma[ 9 ] * mb[ 14 ] + ma[ 13 ];
 			
-			out[ 8 ] = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
-			out[ 9 ] = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
-			out[ 10 ] = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
-			out[ 11 ] = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ];
+			out[ 2 ] = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ];
+			out[ 6 ] = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ];
+			out[ 10 ] = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ];
+			out[ 14 ] = ma[ 2 ] * mb[ 12 ] + ma[ 6 ] * mb[ 13 ] + ma[ 10 ] * mb[ 14 ] + ma[ 14 ];
 		}
 	}
 	
@@ -373,41 +375,41 @@ public class Vecmath
 	{
 		if( out == ma || out == mb )
 		{
-			double m00 = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
-			double m01 = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
-			double m02 = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
+			double m00 = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ];
+			double m01 = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ];
+			double m02 = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ];
 			
-			double m10 = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
-			double m11 = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
-			double m12 = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
+			double m10 = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ];
+			double m11 = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ];
+			double m12 = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ];
 			
-			double m20 = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
-			double m21 = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
-			double m22 = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
+			double m20 = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ];
+			double m21 = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ];
+			double m22 = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ];
 			
 			out[ 0 ] = m00;
-			out[ 1 ] = m01;
-			out[ 2 ] = m02;
-			out[ 4 ] = m10;
+			out[ 4 ] = m01;
+			out[ 8 ] = m02;
+			out[ 1 ] = m10;
 			out[ 5 ] = m11;
-			out[ 6 ] = m12;
-			out[ 8 ] = m20;
-			out[ 9 ] = m21;
+			out[ 9 ] = m12;
+			out[ 2 ] = m20;
+			out[ 6 ] = m21;
 			out[ 10 ] = m22;
 		}
 		else
 		{
-			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
-			out[ 1 ] = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
-			out[ 2 ] = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
+			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ];
+			out[ 4 ] = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ];
+			out[ 8 ] = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ];
 			
-			out[ 4 ] = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
-			out[ 5 ] = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
-			out[ 6 ] = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
+			out[ 1 ] = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ];
+			out[ 5 ] = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ];
+			out[ 9 ] = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ];
 			
-			out[ 8 ] = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
-			out[ 9 ] = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
-			out[ 10 ] = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
+			out[ 2 ] = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ];
+			out[ 6 ] = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ];
+			out[ 10 ] = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ];
 		}
 	}
 	
@@ -461,107 +463,109 @@ public class Vecmath
 	public static void setIdentity( double[ ] m )
 	{
 		m[ 0 ] = 1;
-		m[ 1 ] = 0;
-		m[ 2 ] = 0;
-		m[ 3 ] = 0;
-		
 		m[ 4 ] = 0;
-		m[ 5 ] = 1;
-		m[ 6 ] = 0;
-		m[ 7 ] = 0;
-		
 		m[ 8 ] = 0;
-		m[ 9 ] = 0;
-		m[ 10 ] = 1;
-		m[ 11 ] = 0;
-		
 		m[ 12 ] = 0;
+		
+		m[ 1 ] = 0;
+		m[ 5 ] = 1;
+		m[ 9 ] = 0;
 		m[ 13 ] = 0;
+		
+		m[ 2 ] = 0;
+		m[ 6 ] = 0;
+		m[ 10 ] = 1;
 		m[ 14 ] = 0;
+		
+		m[ 3 ] = 0;
+		m[ 7 ] = 0;
+		m[ 11 ] = 0;
 		m[ 15 ] = 1;
 	}
 	
 	public static void setIdentityAffine( double[ ] m )
 	{
 		m[ 0 ] = 1;
-		m[ 1 ] = 0;
-		m[ 2 ] = 0;
-		m[ 3 ] = 0;
-		
 		m[ 4 ] = 0;
-		m[ 5 ] = 1;
-		m[ 6 ] = 0;
-		m[ 7 ] = 0;
-		
 		m[ 8 ] = 0;
+		m[ 12 ] = 0;
+		
+		m[ 1 ] = 0;
+		m[ 5 ] = 1;
 		m[ 9 ] = 0;
+		m[ 13 ] = 0;
+		
+		m[ 2 ] = 0;
+		m[ 6 ] = 0;
 		m[ 10 ] = 1;
-		m[ 11 ] = 0;
+		m[ 14 ] = 0;
 	}
 	
 	public static void setRow4( double[ ] m , int rowIndex , double[ ] v )
 	{
-		rowIndex *= 4;
 		m[ rowIndex ] = v[ 0 ];
-		m[ rowIndex + 1 ] = v[ 1 ];
-		m[ rowIndex + 2 ] = v[ 2 ];
-		m[ rowIndex + 3 ] = v[ 3 ];
+		m[ rowIndex + 4 ] = v[ 1 ];
+		m[ rowIndex + 8 ] = v[ 2 ];
+		m[ rowIndex + 12 ] = v[ 3 ];
 	}
 	
 	public static void setRow4( double[ ] m , int rowIndex , double[ ] v , int vi )
 	{
-		rowIndex *= 4;
 		m[ rowIndex ] = v[ vi + 0 ];
-		m[ rowIndex + 1 ] = v[ vi + 1 ];
-		m[ rowIndex + 2 ] = v[ vi + 2 ];
-		m[ rowIndex + 3 ] = v[ vi + 3 ];
+		m[ rowIndex + 4 ] = v[ vi + 1 ];
+		m[ rowIndex + 8 ] = v[ vi + 2 ];
+		m[ rowIndex + 12 ] = v[ vi + 3 ];
 	}
 	
 	public static void setRow4( double[ ] m , int rowIndex , double a , double b , double c , double d )
 	{
-		rowIndex *= 4;
 		m[ rowIndex ] = a;
-		m[ rowIndex + 1 ] = b;
-		m[ rowIndex + 2 ] = c;
-		m[ rowIndex + 3 ] = d;
+		m[ rowIndex + 4 ] = b;
+		m[ rowIndex + 8 ] = c;
+		m[ rowIndex + 12 ] = d;
 	}
 	
 	public static void setColumn3( double[ ] m , int colIndex , double a , double b , double c )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = a;
-		m[ colIndex + 4 ] = b;
-		m[ colIndex + 8 ] = c;
+		m[ colIndex + 1 ] = b;
+		m[ colIndex + 2 ] = c;
 	}
 	
 	public static void setColumn3( double[ ] m , int colIndex , double[ ] v )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = v[ 0 ];
-		m[ colIndex + 4 ] = v[ 1 ];
-		m[ colIndex + 8 ] = v[ 2 ];
+		m[ colIndex + 1 ] = v[ 1 ];
+		m[ colIndex + 2 ] = v[ 2 ];
 	}
 	
 	public static void setColumn4( double[ ] m , int colIndex , double[ ] v )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = v[ 0 ];
-		m[ colIndex + 4 ] = v[ 1 ];
-		m[ colIndex + 8 ] = v[ 2 ];
-		m[ colIndex + 12 ] = v[ 3 ];
+		m[ colIndex + 1 ] = v[ 1 ];
+		m[ colIndex + 2 ] = v[ 2 ];
+		m[ colIndex + 3 ] = v[ 3 ];
 	}
 	
 	public static void setColumn4( double[ ] m , int colIndex , double[ ] v , int vi )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = v[ vi + 0 ];
-		m[ colIndex + 4 ] = v[ vi + 1 ];
-		m[ colIndex + 8 ] = v[ vi + 2 ];
-		m[ colIndex + 12 ] = v[ vi + 3 ];
+		m[ colIndex + 1 ] = v[ vi + 1 ];
+		m[ colIndex + 2 ] = v[ vi + 2 ];
+		m[ colIndex + 3 ] = v[ vi + 3 ];
 	}
 	
 	public static void setColumn4( double[ ] m , int colIndex , double a , double b , double c , double d )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = a;
-		m[ colIndex + 4 ] = b;
-		m[ colIndex + 8 ] = c;
-		m[ colIndex + 12 ] = d;
+		m[ colIndex + 1 ] = b;
+		m[ colIndex + 2 ] = c;
+		m[ colIndex + 3 ] = d;
 	}
 	
 	public static void setScale( double[ ] m , double[ ] v )
@@ -605,23 +609,23 @@ public class Vecmath
 		double cosAngle = ( double ) Math.cos( angle );
 		
 		mat[ 0 ] = 1f;
-		mat[ 1 ] = 0f;
-		mat[ 2 ] = 0f;
-		mat[ 3 ] = 0f;
-		
 		mat[ 4 ] = 0f;
-		mat[ 5 ] = cosAngle;
-		mat[ 6 ] = -sinAngle;
-		mat[ 7 ] = 0f;
-		
 		mat[ 8 ] = 0f;
-		mat[ 9 ] = sinAngle;
-		mat[ 10 ] = cosAngle;
-		mat[ 11 ] = 0f;
-		
 		mat[ 12 ] = 0f;
+		
+		mat[ 1 ] = 0f;
+		mat[ 5 ] = cosAngle;
+		mat[ 9 ] = -sinAngle;
 		mat[ 13 ] = 0f;
+		
+		mat[ 2 ] = 0f;
+		mat[ 6 ] = sinAngle;
+		mat[ 10 ] = cosAngle;
 		mat[ 14 ] = 0f;
+		
+		mat[ 3 ] = 0f;
+		mat[ 7 ] = 0f;
+		mat[ 11 ] = 0f;
 		mat[ 15 ] = 1f;
 	}
 	
@@ -638,23 +642,23 @@ public class Vecmath
 		double cosAngle = ( double ) Math.cos( angle );
 		
 		mat[ 0 ] = cosAngle;
-		mat[ 1 ] = 0f;
-		mat[ 2 ] = sinAngle;
-		mat[ 3 ] = 0f;
-		
 		mat[ 4 ] = 0f;
-		mat[ 5 ] = 1f;
-		mat[ 6 ] = 0f;
-		mat[ 7 ] = 0f;
-		
-		mat[ 8 ] = -sinAngle;
-		mat[ 9 ] = 0f;
-		mat[ 10 ] = cosAngle;
-		mat[ 11 ] = 0f;
-		
+		mat[ 8 ] = sinAngle;
 		mat[ 12 ] = 0f;
+		
+		mat[ 1 ] = 0f;
+		mat[ 5 ] = 1f;
+		mat[ 9 ] = 0f;
 		mat[ 13 ] = 0f;
+		
+		mat[ 2 ] = -sinAngle;
+		mat[ 6 ] = 0f;
+		mat[ 10 ] = cosAngle;
 		mat[ 14 ] = 0f;
+		
+		mat[ 3 ] = 0f;
+		mat[ 7 ] = 0f;
+		mat[ 11 ] = 0f;
 		mat[ 15 ] = 1f;
 	}
 	
@@ -671,23 +675,23 @@ public class Vecmath
 		double cosAngle = ( double ) Math.cos( angle );
 		
 		mat[ 0 ] = cosAngle;
-		mat[ 1 ] = -sinAngle;
-		mat[ 2 ] = 0f;
-		mat[ 3 ] = 0f;
-		
-		mat[ 4 ] = sinAngle;
-		mat[ 5 ] = cosAngle;
-		mat[ 6 ] = 0f;
-		mat[ 7 ] = 0f;
-		
+		mat[ 4 ] = -sinAngle;
 		mat[ 8 ] = 0f;
-		mat[ 9 ] = 0f;
-		mat[ 10 ] = 1f;
-		mat[ 11 ] = 0f;
-		
 		mat[ 12 ] = 0f;
+		
+		mat[ 1 ] = sinAngle;
+		mat[ 5 ] = cosAngle;
+		mat[ 9 ] = 0f;
 		mat[ 13 ] = 0f;
+		
+		mat[ 2 ] = 0f;
+		mat[ 6 ] = 0f;
+		mat[ 10 ] = 1f;
 		mat[ 14 ] = 0f;
+		
+		mat[ 3 ] = 0f;
+		mat[ 7 ] = 0f;
+		mat[ 11 ] = 0f;
 		mat[ 15 ] = 1f;
 	}
 	
@@ -769,16 +773,11 @@ public class Vecmath
 		System.arraycopy( msrc , 0 , mdest , 0 , 16 );
 	}
 	
-	public static void mcopyAffine( double[ ] msrc , double[ ] mdest )
-	{
-		System.arraycopy( msrc , 0 , mdest , 0 , 12 );
-	}
-	
 	public static double detAffine( double[ ] m )
 	{
-		return m[ 0 ] * ( m[ 5 ] * m[ 10 ] - m[ 6 ] * m[ 9 ] ) -
-				m[ 1 ] * ( m[ 4 ] * m[ 10 ] - m[ 6 ] * m[ 8 ] ) +
-				m[ 2 ] * ( m[ 4 ] * m[ 9 ] - m[ 5 ] * m[ 8 ] );
+		return m[ 0 ] * ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) -
+				m[ 4 ] * ( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) +
+				m[ 8 ] * ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] );
 	}
 	
 	public static void invAffine( double[ ] m , double[ ] out )
@@ -788,12 +787,12 @@ public class Vecmath
 		if( determinant == 0.0 )
 			throw new IllegalArgumentException( "Singular matrix" );
 		
-		double s = ( m[ 0 ] * m[ 0 ] + m[ 1 ] * m[ 1 ] +
-				m[ 2 ] * m[ 2 ] + m[ 3 ] * m[ 3 ] ) *
-				( m[ 4 ] * m[ 4 ] + m[ 5 ] * m[ 5 ] +
-						m[ 6 ] * m[ 6 ] + m[ 7 ] * m[ 7 ] ) *
-				( m[ 8 ] * m[ 8 ] + m[ 9 ] * m[ 9 ] +
-						m[ 10 ] * m[ 10 ] + m[ 11 ] * m[ 11 ] );
+		double s = ( m[ 0 ] * m[ 0 ] + m[ 4 ] * m[ 4 ] +
+				m[ 8 ] * m[ 8 ] + m[ 12 ] * m[ 12 ] ) *
+				( m[ 1 ] * m[ 1 ] + m[ 5 ] * m[ 5 ] +
+						m[ 9 ] * m[ 9 ] + m[ 13 ] * m[ 13 ] ) *
+				( m[ 2 ] * m[ 2 ] + m[ 6 ] * m[ 6 ] +
+						m[ 10 ] * m[ 10 ] + m[ 14 ] * m[ 14 ] );
 		
 		if( ( determinant * determinant ) < ( FEPS * s ) )
 		{
@@ -801,31 +800,31 @@ public class Vecmath
 			return;
 		}
 		s = 1f / determinant;
-		double tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) * s;
-		double tmp1 = -( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) * s;
-		double tmp2 = ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] ) * s;
-		double tmp4 = -( m[ 4 ] * m[ 10 ] - m[ 8 ] * m[ 6 ] ) * s;
-		double tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 8 ] * m[ 2 ] ) * s;
-		double tmp6 = -( m[ 0 ] * m[ 6 ] - m[ 4 ] * m[ 2 ] ) * s;
-		double tmp8 = ( m[ 4 ] * m[ 9 ] - m[ 8 ] * m[ 5 ] ) * s;
-		double tmp9 = -( m[ 0 ] * m[ 9 ] - m[ 8 ] * m[ 1 ] ) * s;
-		double tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 4 ] * m[ 1 ] ) * s;
-		double tmp3 = -( m[ 3 ] * tmp0 + m[ 7 ] * tmp1 + m[ 11 ] * tmp2 );
-		double tmp7 = -( m[ 3 ] * tmp4 + m[ 7 ] * tmp5 + m[ 11 ] * tmp6 );
-		out[ 11 ] = -( m[ 3 ] * tmp8 + m[ 7 ] * tmp9 + m[ 11 ] * tmp10 );
+		double tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 6 ] * m[ 9 ] ) * s;
+		double tmp1 = -( m[ 4 ] * m[ 10 ] - m[ 6 ] * m[ 8 ] ) * s;
+		double tmp2 = ( m[ 4 ] * m[ 9 ] - m[ 5 ] * m[ 8 ] ) * s;
+		double tmp4 = -( m[ 1 ] * m[ 10 ] - m[ 2 ] * m[ 9 ] ) * s;
+		double tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 2 ] * m[ 8 ] ) * s;
+		double tmp6 = -( m[ 0 ] * m[ 9 ] - m[ 1 ] * m[ 8 ] ) * s;
+		double tmp8 = ( m[ 1 ] * m[ 6 ] - m[ 2 ] * m[ 5 ] ) * s;
+		double tmp9 = -( m[ 0 ] * m[ 6 ] - m[ 2 ] * m[ 4 ] ) * s;
+		double tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 1 ] * m[ 4 ] ) * s;
+		double tmp3 = -( m[ 12 ] * tmp0 + m[ 13 ] * tmp1 + m[ 14 ] * tmp2 );
+		double tmp7 = -( m[ 12 ] * tmp4 + m[ 13 ] * tmp5 + m[ 14 ] * tmp6 );
+		out[ 14 ] = -( m[ 12 ] * tmp8 + m[ 13 ] * tmp9 + m[ 14 ] * tmp10 );
 		
 		out[ 0 ] = tmp0;
-		out[ 1 ] = tmp1;
-		out[ 2 ] = tmp2;
-		out[ 3 ] = tmp3;
-		out[ 4 ] = tmp4;
+		out[ 4 ] = tmp1;
+		out[ 8 ] = tmp2;
+		out[ 12 ] = tmp3;
+		out[ 1 ] = tmp4;
 		out[ 5 ] = tmp5;
-		out[ 6 ] = tmp6;
-		out[ 7 ] = tmp7;
-		out[ 8 ] = tmp8;
-		out[ 9 ] = tmp9;
+		out[ 9 ] = tmp6;
+		out[ 13 ] = tmp7;
+		out[ 2 ] = tmp8;
+		out[ 6 ] = tmp9;
 		out[ 10 ] = tmp10;
-		out[ 12 ] = out[ 13 ] = out[ 14 ] = 0f;
+		out[ 3 ] = out[ 7 ] = out[ 11 ] = 0f;
 		out[ 15 ] = 1f;
 	}
 	
@@ -836,12 +835,12 @@ public class Vecmath
 		if( determinant == 0.0 )
 			throw new IllegalArgumentException( "Singular matrix" );
 		
-		double s = ( m[ 0 ] * m[ 0 ] + m[ 1 ] * m[ 1 ] +
-				m[ 2 ] * m[ 2 ] + m[ 3 ] * m[ 3 ] ) *
-				( m[ 4 ] * m[ 4 ] + m[ 5 ] * m[ 5 ] +
-						m[ 6 ] * m[ 6 ] + m[ 7 ] * m[ 7 ] ) *
-				( m[ 8 ] * m[ 8 ] + m[ 9 ] * m[ 9 ] +
-						m[ 10 ] * m[ 10 ] + m[ 11 ] * m[ 11 ] );
+		double s = ( m[ 0 ] * m[ 0 ] + m[ 4 ] * m[ 4 ] +
+				m[ 8 ] * m[ 8 ] + m[ 12 ] * m[ 12 ] ) *
+				( m[ 1 ] * m[ 1 ] + m[ 5 ] * m[ 5 ] +
+						m[ 9 ] * m[ 9 ] + m[ 13 ] * m[ 13 ] ) *
+				( m[ 2 ] * m[ 2 ] + m[ 6 ] * m[ 6 ] +
+						m[ 10 ] * m[ 10 ] + m[ 14 ] * m[ 14 ] );
 		
 		if( ( determinant * determinant ) < ( FEPS * s ) )
 		{
@@ -849,24 +848,24 @@ public class Vecmath
 			return;
 		}
 		s = 1f / determinant;
-		double tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) * s;
-		double tmp1 = -( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) * s;
-		double tmp2 = ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] ) * s;
-		double tmp4 = -( m[ 4 ] * m[ 10 ] - m[ 8 ] * m[ 6 ] ) * s;
-		double tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 8 ] * m[ 2 ] ) * s;
-		double tmp6 = -( m[ 0 ] * m[ 6 ] - m[ 4 ] * m[ 2 ] ) * s;
-		double tmp8 = ( m[ 4 ] * m[ 9 ] - m[ 8 ] * m[ 5 ] ) * s;
-		double tmp9 = -( m[ 0 ] * m[ 9 ] - m[ 8 ] * m[ 1 ] ) * s;
-		double tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 4 ] * m[ 1 ] ) * s;
+		double tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 6 ] * m[ 9 ] ) * s;
+		double tmp1 = -( m[ 4 ] * m[ 10 ] - m[ 6 ] * m[ 8 ] ) * s;
+		double tmp2 = ( m[ 4 ] * m[ 9 ] - m[ 5 ] * m[ 8 ] ) * s;
+		double tmp4 = -( m[ 1 ] * m[ 10 ] - m[ 2 ] * m[ 9 ] ) * s;
+		double tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 2 ] * m[ 8 ] ) * s;
+		double tmp6 = -( m[ 0 ] * m[ 9 ] - m[ 1 ] * m[ 8 ] ) * s;
+		double tmp8 = ( m[ 1 ] * m[ 6 ] - m[ 2 ] * m[ 5 ] ) * s;
+		double tmp9 = -( m[ 0 ] * m[ 6 ] - m[ 2 ] * m[ 4 ] ) * s;
+		double tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 1 ] * m[ 4 ] ) * s;
 		
 		out[ 0 ] = tmp0;
-		out[ 1 ] = tmp4;
-		out[ 2 ] = tmp8;
-		out[ 3 ] = tmp1;
+		out[ 3 ] = tmp4;
+		out[ 6 ] = tmp8;
+		out[ 1 ] = tmp1;
 		out[ 4 ] = tmp5;
-		out[ 5 ] = tmp9;
-		out[ 6 ] = tmp2;
-		out[ 7 ] = tmp6;
+		out[ 7 ] = tmp9;
+		out[ 2 ] = tmp2;
+		out[ 5 ] = tmp6;
 		out[ 8 ] = tmp10;
 	}
 	
@@ -944,24 +943,17 @@ public class Vecmath
 		
 		// Determine implicit scaling information by looping over rows
 		{
-			int i, j;
-			int ptr, rs;
 			double big, temp;
 			
-			ptr = 0;
-			rs = 0;
-			
 			// For each row ...
-			i = 4;
-			while( i-- != 0 )
+			for( int i = 0 ; i < 4 ; i++ )
 			{
 				big = 0f;
 				
 				// For each column, find the largest element in the row
-				j = 4;
-				while( j-- != 0 )
+				for( int j = 0 ; j < 4 ; j++ )
 				{
-					temp = matrix0[ ptr++ ];
+					temp = matrix0[ j * 4 + i ];
 					temp = Math.abs( temp );
 					if( temp > big )
 					{
@@ -974,15 +966,12 @@ public class Vecmath
 				{
 					return false;
 				}
-				row_scale[ rs++ ] = 1f / big;
+				row_scale[ i ] = 1f / big;
 			}
 		}
 		
 		{
 			int j;
-			int mtx;
-			
-			mtx = 0;
 			
 			// For all columns, execute Crout's method
 			for( j = 0 ; j < 4 ; j++ )
@@ -994,16 +983,16 @@ public class Vecmath
 				// Determine elements of upper diagonal matrix U
 				for( i = 0 ; i < j ; i++ )
 				{
-					target = mtx + ( 4 * i ) + j;
+					target = ( 4 * j ) + i;
 					sum = matrix0[ target ];
 					k = i;
-					p1 = mtx + ( 4 * i );
-					p2 = mtx + j;
+					p1 = i;
+					p2 = 4 * j;
 					while( k-- != 0 )
 					{
 						sum -= matrix0[ p1 ] * matrix0[ p2 ];
-						p1++ ;
-						p2 += 4;
+						p1 += 4;
+						p2++ ;
 					}
 					matrix0[ target ] = sum;
 				}
@@ -1014,16 +1003,16 @@ public class Vecmath
 				imax = -1;
 				for( i = j ; i < 4 ; i++ )
 				{
-					target = mtx + ( 4 * i ) + j;
+					target = ( 4 * j ) + i;
 					sum = matrix0[ target ];
 					k = j;
-					p1 = mtx + ( 4 * i );
-					p2 = mtx + j;
+					p1 = i;
+					p2 = 4 * j;
 					while( k-- != 0 )
 					{
 						sum -= matrix0[ p1 ] * matrix0[ p2 ];
-						p1++ ;
-						p2 += 4;
+						p1 += 4;
+						p2++ ;
 					}
 					matrix0[ target ] = sum;
 					
@@ -1045,13 +1034,15 @@ public class Vecmath
 				{
 					// Yes: exchange rows
 					k = 4;
-					p1 = mtx + ( 4 * imax );
-					p2 = mtx + ( 4 * j );
+					p1 = imax;
+					p2 = j;
 					while( k-- != 0 )
 					{
 						temp = matrix0[ p1 ];
-						matrix0[ p1++ ] = matrix0[ p2 ];
-						matrix0[ p2++ ] = temp;
+						matrix0[ p1 ] = matrix0[ p2 ];
+						matrix0[ p2 ] = temp;
+						p1 += 4;
+						p2 += 4;
 					}
 					
 					// Record change in scale factor
@@ -1062,7 +1053,7 @@ public class Vecmath
 				row_perm[ j ] = imax;
 				
 				// Is the matrix singular
-				if( matrix0[ ( mtx + ( 4 * j ) + j ) ] == 0f )
+				if( matrix0[ ( 4 * j ) + j ] == 0.0 )
 				{
 					return false;
 				}
@@ -1070,13 +1061,13 @@ public class Vecmath
 				// Divide elements of lower diagonal matrix L by pivot
 				if( j != ( 4 - 1 ) )
 				{
-					temp = 1f / ( matrix0[ ( mtx + ( 4 * j ) + j ) ] );
-					target = mtx + ( 4 * ( j + 1 ) ) + j;
+					temp = 1f / ( matrix0[ ( 4 * j ) + j ] );
+					target = 4 * j + j + 1;
 					i = 3 - j;
 					while( i-- != 0 )
 					{
 						matrix0[ target ] *= temp;
-						target += 4;
+						target++ ;
 					}
 				}
 			}
@@ -1122,43 +1113,43 @@ public class Vecmath
 				double sum;
 				
 				ip = row_perm[ rp + i ];
-				sum = matrix2[ cv + 4 * ip ];
-				matrix2[ cv + 4 * ip ] = matrix2[ cv + 4 * i ];
+				sum = matrix2[ ip + 4 * cv ];
+				matrix2[ ip + 4 * cv ] = matrix2[ i + 4 * cv ];
 				if( ii >= 0 )
 				{
 					// rv = &(matrix1[i][0]);
-					rv = i * 4;
+					rv = i;
 					for( j = ii ; j <= i - 1 ; j++ )
 					{
-						sum -= matrix1[ rv + j ] * matrix2[ cv + 4 * j ];
+						sum -= matrix1[ rv + j * 4 ] * matrix2[ j + 4 * cv ];
 					}
 				}
 				else if( sum != 0f )
 				{
 					ii = i;
 				}
-				matrix2[ cv + 4 * i ] = sum;
+				matrix2[ i + 4 * cv ] = sum;
 			}
 			
 			// Backsubstitution
 			// rv = &(matrix1[3][0]);
-			rv = 3 * 4;
-			matrix2[ cv + 4 * 3 ] /= matrix1[ rv + 3 ];
+			rv = 3;
+			matrix2[ 3 + 4 * cv ] /= matrix1[ rv + 3 * 4 ];
 			
-			rv -= 4;
-			matrix2[ cv + 4 * 2 ] = ( matrix2[ cv + 4 * 2 ] -
-					matrix1[ rv + 3 ] * matrix2[ cv + 4 * 3 ] ) / matrix1[ rv + 2 ];
+			rv-- ;
+			matrix2[ 2 + 4 * cv ] = ( matrix2[ 2 + 4 * cv ] -
+					matrix1[ rv + 3 * 4 ] * matrix2[ 3 + 4 * cv ] ) / matrix1[ rv + 2 * 4 ];
 			
-			rv -= 4;
-			matrix2[ cv + 4 * 1 ] = ( matrix2[ cv + 4 * 1 ] -
-					matrix1[ rv + 2 ] * matrix2[ cv + 4 * 2 ] -
-					matrix1[ rv + 3 ] * matrix2[ cv + 4 * 3 ] ) / matrix1[ rv + 1 ];
+			rv-- ;
+			matrix2[ 1 + 4 * cv ] = ( matrix2[ 1 + 4 * cv ] -
+					matrix1[ rv + 2 * 4 ] * matrix2[ 2 + 4 * cv ] -
+					matrix1[ rv + 3 * 4 ] * matrix2[ 3 + 4 * cv ] ) / matrix1[ rv + 1 * 4 ];
 			
-			rv -= 4;
-			matrix2[ cv + 4 * 0 ] = ( matrix2[ cv + 4 * 0 ] -
-					matrix1[ rv + 1 ] * matrix2[ cv + 4 * 1 ] -
-					matrix1[ rv + 2 ] * matrix2[ cv + 4 * 2 ] -
-					matrix1[ rv + 3 ] * matrix2[ cv + 4 * 3 ] ) / matrix1[ rv + 0 ];
+			rv-- ;
+			matrix2[ 0 + 4 * cv ] = ( matrix2[ 0 + 4 * cv ] -
+					matrix1[ rv + 1 * 4 ] * matrix2[ 1 + 4 * cv ] -
+					matrix1[ rv + 2 * 4 ] * matrix2[ 2 + 4 * cv ] -
+					matrix1[ rv + 3 * 4 ] * matrix2[ 3 + 4 * cv ] ) / matrix1[ rv + 0 * 4 ];
 		}
 	}
 	
@@ -1210,22 +1201,22 @@ public class Vecmath
 		
 		// transpose because we calculated the inverse of what we want
 		mat[ 0 ] = sidex;
-		mat[ 1 ] = sidey;
-		mat[ 2 ] = sidez;
+		mat[ 4 ] = sidey;
+		mat[ 8 ] = sidez;
 		
-		mat[ 4 ] = upx;
+		mat[ 1 ] = upx;
 		mat[ 5 ] = upy;
-		mat[ 6 ] = upz;
+		mat[ 9 ] = upz;
 		
-		mat[ 8 ] = forwardx;
-		mat[ 9 ] = forwardy;
+		mat[ 2 ] = forwardx;
+		mat[ 6 ] = forwardy;
 		mat[ 10 ] = forwardz;
 		
-		mat[ 3 ] = -eyex * mat[ 0 ] + -eyey * mat[ 1 ] + -eyez * mat[ 2 ];
-		mat[ 7 ] = -eyex * mat[ 4 ] + -eyey * mat[ 5 ] + -eyez * mat[ 6 ];
-		mat[ 11 ] = -eyex * mat[ 8 ] + -eyey * mat[ 9 ] + -eyez * mat[ 10 ];
+		mat[ 12 ] = -eyex * mat[ 0 ] + -eyey * mat[ 4 ] + -eyez * mat[ 8 ];
+		mat[ 13 ] = -eyex * mat[ 1 ] + -eyey * mat[ 5 ] + -eyez * mat[ 9 ];
+		mat[ 14 ] = -eyex * mat[ 2 ] + -eyey * mat[ 6 ] + -eyez * mat[ 10 ];
 		
-		mat[ 12 ] = mat[ 13 ] = mat[ 14 ] = 0;
+		mat[ 3 ] = mat[ 7 ] = mat[ 11 ] = 0;
 		mat[ 15 ] = 1;
 	}
 	
@@ -1256,23 +1247,23 @@ public class Vecmath
 		mat[ 0 ] = cotangent;
 		mat[ 5 ] = cotangent * aspect;
 		mat[ 10 ] = ( zFar + zNear ) / deltaZ;
-		mat[ 11 ] = 2f * zNear * zFar / deltaZ;
-		mat[ 14 ] = -1f;
-		mat[ 1 ] = mat[ 2 ] = mat[ 3 ] = mat[ 4 ] = mat[ 6 ] = mat[ 7 ] = mat[ 8 ] =
-				mat[ 9 ] = mat[ 12 ] = mat[ 13 ] = mat[ 15 ] = 0;
+		mat[ 14 ] = 2f * zNear * zFar / deltaZ;
+		mat[ 11 ] = -1f;
+		mat[ 4 ] = mat[ 8 ] = mat[ 12 ] = mat[ 1 ] = mat[ 9 ] = mat[ 13 ] = mat[ 2 ] =
+				mat[ 6 ] = mat[ 3 ] = mat[ 7 ] = mat[ 15 ] = 0;
 	}
 	
 	public static void ortho( double[ ] mat , double left , double right , double bottom , double top , double zNear , double zFar )
 	{
 		mat[ 0 ] = 2 / ( right - left );
-		mat[ 3 ] = 1 - mat[ 0 ] * right;
+		mat[ 12 ] = 1 - mat[ 0 ] * right;
 		mat[ 5 ] = 2 / ( top - bottom );
-		mat[ 7 ] = 1 - mat[ 5 ] * top;
+		mat[ 13 ] = 1 - mat[ 5 ] * top;
 		mat[ 10 ] = 2 / ( zFar - zNear );
-		mat[ 11 ] = 1 - mat[ 10 ] * zFar;
+		mat[ 14 ] = 1 - mat[ 10 ] * zFar;
 		
 		mat[ 15 ] = 1;
-		mat[ 1 ] = mat[ 2 ] = mat[ 4 ] = mat[ 6 ] = mat[ 8 ] = mat[ 9 ] = mat[ 13 ] = mat[ 14 ] = 0;
+		mat[ 4 ] = mat[ 8 ] = mat[ 1 ] = mat[ 9 ] = mat[ 2 ] = mat[ 6 ] = mat[ 7 ] = mat[ 11 ] = 0;
 	}
 	
 	private static boolean almostZero( double a )
@@ -1311,23 +1302,23 @@ public class Vecmath
 			double yz = ay * az;
 			
 			mat[ 0 ] = t * ax * ax + cosTheta;
-			mat[ 1 ] = t * xy - sinTheta * az;
-			mat[ 2 ] = t * xz + sinTheta * ay;
-			mat[ 3 ] = 0;
-			
-			mat[ 4 ] = t * xy + sinTheta * az;
-			mat[ 5 ] = t * ay * ay + cosTheta;
-			mat[ 6 ] = t * yz - sinTheta * ax;
-			mat[ 7 ] = 0;
-			
-			mat[ 8 ] = t * xz - sinTheta * ay;
-			mat[ 9 ] = t * yz + sinTheta * ax;
-			mat[ 10 ] = t * az * az + cosTheta;
-			mat[ 11 ] = 0;
-			
+			mat[ 4 ] = t * xy - sinTheta * az;
+			mat[ 8 ] = t * xz + sinTheta * ay;
 			mat[ 12 ] = 0;
+			
+			mat[ 1 ] = t * xy + sinTheta * az;
+			mat[ 5 ] = t * ay * ay + cosTheta;
+			mat[ 9 ] = t * yz - sinTheta * ax;
 			mat[ 13 ] = 0;
+			
+			mat[ 2 ] = t * xz - sinTheta * ay;
+			mat[ 6 ] = t * yz + sinTheta * ax;
+			mat[ 10 ] = t * az * az + cosTheta;
 			mat[ 14 ] = 0;
+			
+			mat[ 3 ] = 0;
+			mat[ 7 ] = 0;
+			mat[ 11 ] = 0;
 			mat[ 15 ] = 1;
 		}
 	}
@@ -1486,9 +1477,32 @@ public class Vecmath
 		return true;
 	}
 	
-	//////////////////////////////////////////////////////////////////////////////////////////
+	public static String matToString( double[ ] m , String elemFormat )
+	{
+		StringBuilder sb = new StringBuilder( );
+		for( int row = 0 ; row < 4 ; row++ )
+		{
+			for( int col = 0 ; col < 4 ; col++ )
+			{
+				if( col > 0 )
+				{
+					sb.append( ' ' );
+				}
+				sb.append( String.format( elemFormat , m[ row + col * 4 ] ) );
+			}
+			sb.append( '\n' );
+		}
+		return sb.toString( );
+	}
+	
+	public static String matToString( double[ ] m )
+	{
+		return matToString( m , "%12.4f" );
+	}
+	
+	// ////////////////////////////////////////////////////////////////////////////////////////
 	// FLOAT METHODS /////////////////////////////////////////////////////////////////////////
-	//////////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////////
 	
 	public static float distance3( float[ ] a , float[ ] b )
 	{
@@ -1609,10 +1623,10 @@ public class Vecmath
 	
 	public static void mpmul( float[ ] m , float[ ] p )
 	{
-		float rw = 1 / ( m[ 12 ] * p[ 0 ] + m[ 13 ] * p[ 1 ] + m[ 14 ] * p[ 2 ] + m[ 15 ] );
-		float x = rw * ( m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ] );
-		float y = rw * ( m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ] );
-		p[ 2 ] = rw * ( m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ] );
+		float rw = 1 / ( m[ 3 ] * p[ 0 ] + m[ 7 ] * p[ 1 ] + m[ 11 ] * p[ 2 ] + m[ 15 ] );
+		float x = rw * ( m[ 0 ] * p[ 0 ] + m[ 4 ] * p[ 1 ] + m[ 8 ] * p[ 2 ] + m[ 12 ] );
+		float y = rw * ( m[ 1 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 9 ] * p[ 2 ] + m[ 13 ] );
+		p[ 2 ] = rw * ( m[ 2 ] * p[ 0 ] + m[ 6 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 14 ] );
 		p[ 1 ] = y;
 		p[ 0 ] = x;
 	}
@@ -1621,10 +1635,10 @@ public class Vecmath
 	{
 		if( p != out )
 		{
-			float rw = 1 / ( m[ 12 ] * p[ 0 ] + m[ 13 ] * p[ 1 ] + m[ 14 ] * p[ 2 ] + m[ 15 ] );
-			out[ 0 ] = rw * ( m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ] );
-			out[ 1 ] = rw * ( m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ] );
-			out[ 2 ] = rw * ( m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ] );
+			float rw = 1 / ( m[ 3 ] * p[ 0 ] + m[ 7 ] * p[ 1 ] + m[ 11 ] * p[ 2 ] + m[ 15 ] );
+			out[ 0 ] = rw * ( m[ 0 ] * p[ 0 ] + m[ 4 ] * p[ 1 ] + m[ 8 ] * p[ 2 ] + m[ 12 ] );
+			out[ 1 ] = rw * ( m[ 1 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 9 ] * p[ 2 ] + m[ 13 ] );
+			out[ 2 ] = rw * ( m[ 2 ] * p[ 0 ] + m[ 6 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 14 ] );
 		}
 		else
 		{
@@ -1634,18 +1648,18 @@ public class Vecmath
 	
 	public static void mpmulAffine( float[ ] m , float[ ] p )
 	{
-		float x = m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ];
-		float y = m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ];
-		p[ 2 ] = m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ];
+		float x = m[ 0 ] * p[ 0 ] + m[ 4 ] * p[ 1 ] + m[ 8 ] * p[ 2 ] + m[ 12 ];
+		float y = m[ 1 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 9 ] * p[ 2 ] + m[ 13 ];
+		p[ 2 ] = m[ 2 ] * p[ 0 ] + m[ 6 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 14 ];
 		p[ 1 ] = y;
 		p[ 0 ] = x;
 	}
 	
 	public static void mpmulAffine( float[ ] m , float[ ] p , int vi )
 	{
-		float x = m[ 0 ] * p[ vi ] + m[ 1 ] * p[ vi + 1 ] + m[ 2 ] * p[ vi + 2 ] + m[ 3 ];
-		float y = m[ 4 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 6 ] * p[ vi + 2 ] + m[ 7 ];
-		p[ vi + 2 ] = m[ 8 ] * p[ vi ] + m[ 9 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 11 ];
+		float x = m[ 0 ] * p[ vi ] + m[ 4 ] * p[ vi + 1 ] + m[ 8 ] * p[ vi + 2 ] + m[ 12 ];
+		float y = m[ 1 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 9 ] * p[ vi + 2 ] + m[ 13 ];
+		p[ vi + 2 ] = m[ 2 ] * p[ vi ] + m[ 6 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 14 ];
 		p[ vi + 1 ] = y;
 		p[ vi ] = x;
 	}
@@ -1654,9 +1668,9 @@ public class Vecmath
 	{
 		if( p != out )
 		{
-			out[ 0 ] = m[ 0 ] * p[ 0 ] + m[ 1 ] * p[ 1 ] + m[ 2 ] * p[ 2 ] + m[ 3 ];
-			out[ 1 ] = m[ 4 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 6 ] * p[ 2 ] + m[ 7 ];
-			out[ 2 ] = m[ 8 ] * p[ 0 ] + m[ 9 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 11 ];
+			out[ 0 ] = m[ 0 ] * p[ 0 ] + m[ 4 ] * p[ 1 ] + m[ 8 ] * p[ 2 ] + m[ 12 ];
+			out[ 1 ] = m[ 1 ] * p[ 0 ] + m[ 5 ] * p[ 1 ] + m[ 9 ] * p[ 2 ] + m[ 13 ];
+			out[ 2 ] = m[ 2 ] * p[ 0 ] + m[ 6 ] * p[ 1 ] + m[ 10 ] * p[ 2 ] + m[ 14 ];
 		}
 		else
 		{
@@ -1666,18 +1680,18 @@ public class Vecmath
 	
 	public static void mpmulAffine( float[ ] m , float x , float y , float z , float[ ] out )
 	{
-		out[ 0 ] = m[ 0 ] * x + m[ 1 ] * y + m[ 2 ] * z + m[ 3 ];
-		out[ 1 ] = m[ 4 ] * x + m[ 5 ] * y + m[ 6 ] * z + m[ 7 ];
-		out[ 2 ] = m[ 8 ] * x + m[ 9 ] * y + m[ 10 ] * z + m[ 11 ];
+		out[ 0 ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z + m[ 12 ];
+		out[ 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z + m[ 13 ];
+		out[ 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z + m[ 14 ];
 	}
 	
 	public static void mpmulAffine( float[ ] m , float[ ] p , int vi , float[ ] out , int outi )
 	{
 		if( p != out || vi != outi )
 		{
-			out[ outi ] = m[ 0 ] * p[ vi ] + m[ 1 ] * p[ vi + 1 ] + m[ 2 ] * p[ vi + 2 ] + m[ 3 ];
-			out[ outi + 1 ] = m[ 4 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 6 ] * p[ vi + 2 ] + m[ 7 ];
-			out[ outi + 2 ] = m[ 8 ] * p[ vi ] + m[ 9 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 11 ];
+			out[ outi ] = m[ 0 ] * p[ vi ] + m[ 4 ] * p[ vi + 1 ] + m[ 8 ] * p[ vi + 2 ] + m[ 12 ];
+			out[ outi + 1 ] = m[ 1 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 9 ] * p[ vi + 2 ] + m[ 13 ];
+			out[ outi + 2 ] = m[ 2 ] * p[ vi ] + m[ 6 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 14 ];
 		}
 		else
 		{
@@ -1687,18 +1701,18 @@ public class Vecmath
 	
 	public static void mvmulAffine( float[ ] m , float[ ] v )
 	{
-		float x = m[ 0 ] * v[ 0 ] + m[ 1 ] * v[ 1 ] + m[ 2 ] * v[ 2 ];
-		float y = m[ 4 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 6 ] * v[ 2 ];
-		v[ 2 ] = m[ 8 ] * v[ 0 ] + m[ 9 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
+		float x = m[ 0 ] * v[ 0 ] + m[ 4 ] * v[ 1 ] + m[ 8 ] * v[ 2 ];
+		float y = m[ 1 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 9 ] * v[ 2 ];
+		v[ 2 ] = m[ 2 ] * v[ 0 ] + m[ 6 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
 		v[ 1 ] = y;
 		v[ 0 ] = x;
 	}
 	
 	public static void mvmulAffine( float[ ] m , float[ ] v , int vi )
 	{
-		float x = m[ 0 ] * v[ vi ] + m[ 1 ] * v[ vi + 1 ] + m[ 2 ] * v[ vi + 2 ];
-		float y = m[ 4 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 6 ] * v[ vi + 2 ];
-		v[ vi + 2 ] = m[ 8 ] * v[ vi ] + m[ 9 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
+		float x = m[ 0 ] * v[ vi ] + m[ 4 ] * v[ vi + 1 ] + m[ 8 ] * v[ vi + 2 ];
+		float y = m[ 1 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 9 ] * v[ vi + 2 ];
+		v[ vi + 2 ] = m[ 2 ] * v[ vi ] + m[ 6 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
 		v[ vi + 1 ] = y;
 		v[ vi ] = x;
 	}
@@ -1707,9 +1721,9 @@ public class Vecmath
 	{
 		if( v != out )
 		{
-			out[ 0 ] = m[ 0 ] * v[ 0 ] + m[ 1 ] * v[ 1 ] + m[ 2 ] * v[ 2 ];
-			out[ 1 ] = m[ 4 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 6 ] * v[ 2 ];
-			out[ 2 ] = m[ 8 ] * v[ 0 ] + m[ 9 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
+			out[ 0 ] = m[ 0 ] * v[ 0 ] + m[ 4 ] * v[ 1 ] + m[ 8 ] * v[ 2 ];
+			out[ 1 ] = m[ 1 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 9 ] * v[ 2 ];
+			out[ 2 ] = m[ 2 ] * v[ 0 ] + m[ 6 ] * v[ 1 ] + m[ 10 ] * v[ 2 ];
 		}
 		else
 		{
@@ -1719,18 +1733,18 @@ public class Vecmath
 	
 	public static void mvmulAffine( float[ ] m , float x , float y , float z , float[ ] out )
 	{
-		out[ 0 ] = m[ 0 ] * x + m[ 1 ] * y + m[ 2 ] * z;
-		out[ 1 ] = m[ 4 ] * x + m[ 5 ] * y + m[ 6 ] * z;
-		out[ 2 ] = m[ 8 ] * x + m[ 9 ] * y + m[ 10 ] * z;
+		out[ 0 ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z;
+		out[ 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z;
+		out[ 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z;
 	}
 	
 	public static void mvmulAffine( float[ ] m , float[ ] v , int vi , float[ ] out , int outi )
 	{
 		if( v != out || vi != outi )
 		{
-			out[ outi ] = m[ 0 ] * v[ vi ] + m[ 1 ] * v[ vi + 1 ] + m[ 2 ] * v[ vi + 2 ];
-			out[ outi + 1 ] = m[ 4 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 6 ] * v[ vi + 2 ];
-			out[ outi + 2 ] = m[ 8 ] * v[ vi ] + m[ 9 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
+			out[ outi ] = m[ 0 ] * v[ vi ] + m[ 4 ] * v[ vi + 1 ] + m[ 8 ] * v[ vi + 2 ];
+			out[ outi + 1 ] = m[ 1 ] * v[ vi ] + m[ 5 ] * v[ vi + 1 ] + m[ 9 ] * v[ vi + 2 ];
+			out[ outi + 2 ] = m[ 2 ] * v[ vi ] + m[ 6 ] * v[ vi + 1 ] + m[ 10 ] * v[ vi + 2 ];
 		}
 		else
 		{
@@ -1742,64 +1756,64 @@ public class Vecmath
 	{
 		if( out == ma || out == mb )
 		{
-			float m00 = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ] + ma[ 3 ] * mb[ 12 ];
-			float m01 = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ] + ma[ 3 ] * mb[ 13 ];
-			float m02 = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ] + ma[ 3 ] * mb[ 14 ];
-			float m03 = ma[ 0 ] * mb[ 3 ] + ma[ 1 ] * mb[ 7 ] + ma[ 2 ] * mb[ 11 ] + ma[ 3 ] * mb[ 15 ];
+			float m00 = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ] + ma[ 12 ] * mb[ 3 ];
+			float m01 = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ] + ma[ 12 ] * mb[ 7 ];
+			float m02 = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ] + ma[ 12 ] * mb[ 11 ];
+			float m03 = ma[ 0 ] * mb[ 12 ] + ma[ 4 ] * mb[ 13 ] + ma[ 8 ] * mb[ 14 ] + ma[ 12 ] * mb[ 15 ];
 			
-			float m10 = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ] + ma[ 7 ] * mb[ 12 ];
-			float m11 = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ] + ma[ 7 ] * mb[ 13 ];
-			float m12 = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ] + ma[ 7 ] * mb[ 14 ];
-			float m13 = ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 7 ] + ma[ 6 ] * mb[ 11 ] + ma[ 7 ] * mb[ 15 ];
+			float m10 = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ] + ma[ 13 ] * mb[ 3 ];
+			float m11 = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ] + ma[ 13 ] * mb[ 7 ];
+			float m12 = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ] + ma[ 13 ] * mb[ 11 ];
+			float m13 = ma[ 1 ] * mb[ 12 ] + ma[ 5 ] * mb[ 13 ] + ma[ 9 ] * mb[ 14 ] + ma[ 13 ] * mb[ 15 ];
 			
-			float m20 = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ] + ma[ 11 ] * mb[ 12 ];
-			float m21 = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ] + ma[ 11 ] * mb[ 13 ];
-			float m22 = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ] + ma[ 11 ] * mb[ 14 ];
-			float m23 = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ] * mb[ 15 ];
+			float m20 = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ] + ma[ 14 ] * mb[ 3 ];
+			float m21 = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ] + ma[ 14 ] * mb[ 7 ];
+			float m22 = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ] + ma[ 14 ] * mb[ 11 ];
+			float m23 = ma[ 2 ] * mb[ 12 ] + ma[ 6 ] * mb[ 13 ] + ma[ 10 ] * mb[ 14 ] + ma[ 14 ] * mb[ 15 ];
 			
-			float m30 = ma[ 12 ] * mb[ 0 ] + ma[ 13 ] * mb[ 4 ] + ma[ 14 ] * mb[ 8 ] + ma[ 15 ] * mb[ 12 ];
-			float m31 = ma[ 12 ] * mb[ 1 ] + ma[ 13 ] * mb[ 5 ] + ma[ 14 ] * mb[ 9 ] + ma[ 15 ] * mb[ 13 ];
-			float m32 = ma[ 12 ] * mb[ 2 ] + ma[ 13 ] * mb[ 6 ] + ma[ 14 ] * mb[ 10 ] + ma[ 15 ] * mb[ 14 ];
-			float m33 = ma[ 12 ] * mb[ 3 ] + ma[ 13 ] * mb[ 7 ] + ma[ 14 ] * mb[ 11 ] + ma[ 15 ] * mb[ 15 ];
+			float m30 = ma[ 3 ] * mb[ 0 ] + ma[ 7 ] * mb[ 1 ] + ma[ 11 ] * mb[ 2 ] + ma[ 15 ] * mb[ 3 ];
+			float m31 = ma[ 3 ] * mb[ 4 ] + ma[ 7 ] * mb[ 5 ] + ma[ 11 ] * mb[ 6 ] + ma[ 15 ] * mb[ 7 ];
+			float m32 = ma[ 3 ] * mb[ 8 ] + ma[ 7 ] * mb[ 9 ] + ma[ 11 ] * mb[ 10 ] + ma[ 15 ] * mb[ 11 ];
+			float m33 = ma[ 3 ] * mb[ 12 ] + ma[ 7 ] * mb[ 13 ] + ma[ 11 ] * mb[ 14 ] + ma[ 15 ] * mb[ 15 ];
 			
 			out[ 0 ] = m00;
-			out[ 1 ] = m01;
-			out[ 2 ] = m02;
-			out[ 3 ] = m03;
-			out[ 4 ] = m10;
+			out[ 4 ] = m01;
+			out[ 8 ] = m02;
+			out[ 12 ] = m03;
+			out[ 1 ] = m10;
 			out[ 5 ] = m11;
-			out[ 6 ] = m12;
-			out[ 7 ] = m13;
-			out[ 8 ] = m20;
-			out[ 9 ] = m21;
+			out[ 9 ] = m12;
+			out[ 13 ] = m13;
+			out[ 2 ] = m20;
+			out[ 6 ] = m21;
 			out[ 10 ] = m22;
-			out[ 11 ] = m23;
-			out[ 12 ] = m30;
-			out[ 13 ] = m31;
-			out[ 14 ] = m32;
+			out[ 14 ] = m23;
+			out[ 3 ] = m30;
+			out[ 7 ] = m31;
+			out[ 11 ] = m32;
 			out[ 15 ] = m33;
 		}
 		else
 		{
-			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ] + ma[ 3 ] * mb[ 12 ];
-			out[ 1 ] = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ] + ma[ 3 ] * mb[ 13 ];
-			out[ 2 ] = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ] + ma[ 3 ] * mb[ 14 ];
-			out[ 3 ] = ma[ 0 ] * mb[ 3 ] + ma[ 1 ] * mb[ 7 ] + ma[ 2 ] * mb[ 11 ] + ma[ 3 ] * mb[ 15 ];
+			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ] + ma[ 12 ] * mb[ 3 ];
+			out[ 4 ] = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ] + ma[ 12 ] * mb[ 7 ];
+			out[ 8 ] = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ] + ma[ 12 ] * mb[ 11 ];
+			out[ 12 ] = ma[ 0 ] * mb[ 12 ] + ma[ 4 ] * mb[ 13 ] + ma[ 8 ] * mb[ 14 ] + ma[ 12 ] * mb[ 15 ];
 			
-			out[ 4 ] = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ] + ma[ 7 ] * mb[ 12 ];
-			out[ 5 ] = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ] + ma[ 7 ] * mb[ 13 ];
-			out[ 6 ] = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ] + ma[ 7 ] * mb[ 14 ];
-			out[ 7 ] = ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 7 ] + ma[ 6 ] * mb[ 11 ] + ma[ 7 ] * mb[ 15 ];
+			out[ 1 ] = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ] + ma[ 13 ] * mb[ 3 ];
+			out[ 5 ] = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ] + ma[ 13 ] * mb[ 7 ];
+			out[ 9 ] = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ] + ma[ 13 ] * mb[ 11 ];
+			out[ 13 ] = ma[ 1 ] * mb[ 12 ] + ma[ 5 ] * mb[ 13 ] + ma[ 9 ] * mb[ 14 ] + ma[ 13 ] * mb[ 15 ];
 			
-			out[ 8 ] = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ] + ma[ 11 ] * mb[ 12 ];
-			out[ 9 ] = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ] + ma[ 11 ] * mb[ 13 ];
-			out[ 10 ] = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ] + ma[ 11 ] * mb[ 14 ];
-			out[ 11 ] = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ] * mb[ 15 ];
+			out[ 2 ] = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ] + ma[ 14 ] * mb[ 3 ];
+			out[ 6 ] = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ] + ma[ 14 ] * mb[ 7 ];
+			out[ 10 ] = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ] + ma[ 14 ] * mb[ 11 ];
+			out[ 14 ] = ma[ 2 ] * mb[ 12 ] + ma[ 6 ] * mb[ 13 ] + ma[ 10 ] * mb[ 14 ] + ma[ 14 ] * mb[ 15 ];
 			
-			out[ 12 ] = ma[ 12 ] * mb[ 0 ] + ma[ 13 ] * mb[ 4 ] + ma[ 14 ] * mb[ 8 ] + ma[ 15 ] * mb[ 12 ];
-			out[ 13 ] = ma[ 12 ] * mb[ 1 ] + ma[ 13 ] * mb[ 5 ] + ma[ 14 ] * mb[ 9 ] + ma[ 15 ] * mb[ 13 ];
-			out[ 14 ] = ma[ 12 ] * mb[ 2 ] + ma[ 13 ] * mb[ 6 ] + ma[ 14 ] * mb[ 10 ] + ma[ 15 ] * mb[ 14 ];
-			out[ 15 ] = ma[ 12 ] * mb[ 3 ] + ma[ 13 ] * mb[ 7 ] + ma[ 14 ] * mb[ 11 ] + ma[ 15 ] * mb[ 15 ];
+			out[ 3 ] = ma[ 3 ] * mb[ 0 ] + ma[ 7 ] * mb[ 1 ] + ma[ 11 ] * mb[ 2 ] + ma[ 15 ] * mb[ 3 ];
+			out[ 7 ] = ma[ 3 ] * mb[ 4 ] + ma[ 7 ] * mb[ 5 ] + ma[ 11 ] * mb[ 6 ] + ma[ 15 ] * mb[ 7 ];
+			out[ 11 ] = ma[ 3 ] * mb[ 8 ] + ma[ 7 ] * mb[ 9 ] + ma[ 11 ] * mb[ 10 ] + ma[ 15 ] * mb[ 11 ];
+			out[ 15 ] = ma[ 3 ] * mb[ 12 ] + ma[ 7 ] * mb[ 13 ] + ma[ 11 ] * mb[ 14 ] + ma[ 15 ] * mb[ 15 ];
 		}
 	}
 	
@@ -1807,50 +1821,50 @@ public class Vecmath
 	{
 		if( out == ma || out == mb )
 		{
-			float m00 = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
-			float m01 = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
-			float m02 = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
-			float m03 = ma[ 0 ] * mb[ 3 ] + ma[ 1 ] * mb[ 7 ] + ma[ 2 ] * mb[ 11 ] + ma[ 3 ];
+			float m00 = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ];
+			float m01 = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ];
+			float m02 = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ];
+			float m03 = ma[ 0 ] * mb[ 12 ] + ma[ 4 ] * mb[ 13 ] + ma[ 8 ] * mb[ 14 ] + ma[ 12 ];
 			
-			float m10 = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
-			float m11 = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
-			float m12 = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
-			float m13 = ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 7 ] + ma[ 6 ] * mb[ 11 ] + ma[ 7 ];
+			float m10 = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ];
+			float m11 = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ];
+			float m12 = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ];
+			float m13 = ma[ 1 ] * mb[ 12 ] + ma[ 5 ] * mb[ 13 ] + ma[ 9 ] * mb[ 14 ] + ma[ 13 ];
 			
-			float m20 = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
-			float m21 = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
-			float m22 = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
-			float m23 = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ];
+			float m20 = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ];
+			float m21 = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ];
+			float m22 = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ];
+			float m23 = ma[ 2 ] * mb[ 12 ] + ma[ 6 ] * mb[ 13 ] + ma[ 10 ] * mb[ 14 ] + ma[ 14 ];
 			
 			out[ 0 ] = m00;
-			out[ 1 ] = m01;
-			out[ 2 ] = m02;
-			out[ 3 ] = m03;
-			out[ 4 ] = m10;
+			out[ 4 ] = m01;
+			out[ 8 ] = m02;
+			out[ 12 ] = m03;
+			out[ 1 ] = m10;
 			out[ 5 ] = m11;
-			out[ 6 ] = m12;
-			out[ 7 ] = m13;
-			out[ 8 ] = m20;
-			out[ 9 ] = m21;
+			out[ 9 ] = m12;
+			out[ 13 ] = m13;
+			out[ 2 ] = m20;
+			out[ 6 ] = m21;
 			out[ 10 ] = m22;
-			out[ 11 ] = m23;
+			out[ 14 ] = m23;
 		}
 		else
 		{
-			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
-			out[ 1 ] = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
-			out[ 2 ] = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
-			out[ 3 ] = ma[ 0 ] * mb[ 3 ] + ma[ 1 ] * mb[ 7 ] + ma[ 2 ] * mb[ 11 ] + ma[ 3 ];
+			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ];
+			out[ 4 ] = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ];
+			out[ 8 ] = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ];
+			out[ 12 ] = ma[ 0 ] * mb[ 12 ] + ma[ 4 ] * mb[ 13 ] + ma[ 8 ] * mb[ 14 ] + ma[ 12 ];
 			
-			out[ 4 ] = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
-			out[ 5 ] = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
-			out[ 6 ] = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
-			out[ 7 ] = ma[ 4 ] * mb[ 3 ] + ma[ 5 ] * mb[ 7 ] + ma[ 6 ] * mb[ 11 ] + ma[ 7 ];
+			out[ 1 ] = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ];
+			out[ 5 ] = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ];
+			out[ 9 ] = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ];
+			out[ 13 ] = ma[ 1 ] * mb[ 12 ] + ma[ 5 ] * mb[ 13 ] + ma[ 9 ] * mb[ 14 ] + ma[ 13 ];
 			
-			out[ 8 ] = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
-			out[ 9 ] = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
-			out[ 10 ] = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
-			out[ 11 ] = ma[ 8 ] * mb[ 3 ] + ma[ 9 ] * mb[ 7 ] + ma[ 10 ] * mb[ 11 ] + ma[ 11 ];
+			out[ 2 ] = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ];
+			out[ 6 ] = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ];
+			out[ 10 ] = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ];
+			out[ 14 ] = ma[ 2 ] * mb[ 12 ] + ma[ 6 ] * mb[ 13 ] + ma[ 10 ] * mb[ 14 ] + ma[ 14 ];
 		}
 	}
 	
@@ -1858,41 +1872,41 @@ public class Vecmath
 	{
 		if( out == ma || out == mb )
 		{
-			float m00 = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
-			float m01 = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
-			float m02 = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
+			float m00 = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ];
+			float m01 = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ];
+			float m02 = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ];
 			
-			float m10 = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
-			float m11 = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
-			float m12 = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
+			float m10 = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ];
+			float m11 = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ];
+			float m12 = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ];
 			
-			float m20 = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
-			float m21 = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
-			float m22 = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
+			float m20 = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ];
+			float m21 = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ];
+			float m22 = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ];
 			
 			out[ 0 ] = m00;
-			out[ 1 ] = m01;
-			out[ 2 ] = m02;
-			out[ 4 ] = m10;
+			out[ 4 ] = m01;
+			out[ 8 ] = m02;
+			out[ 1 ] = m10;
 			out[ 5 ] = m11;
-			out[ 6 ] = m12;
-			out[ 8 ] = m20;
-			out[ 9 ] = m21;
+			out[ 9 ] = m12;
+			out[ 2 ] = m20;
+			out[ 6 ] = m21;
 			out[ 10 ] = m22;
 		}
 		else
 		{
-			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 1 ] * mb[ 4 ] + ma[ 2 ] * mb[ 8 ];
-			out[ 1 ] = ma[ 0 ] * mb[ 1 ] + ma[ 1 ] * mb[ 5 ] + ma[ 2 ] * mb[ 9 ];
-			out[ 2 ] = ma[ 0 ] * mb[ 2 ] + ma[ 1 ] * mb[ 6 ] + ma[ 2 ] * mb[ 10 ];
+			out[ 0 ] = ma[ 0 ] * mb[ 0 ] + ma[ 4 ] * mb[ 1 ] + ma[ 8 ] * mb[ 2 ];
+			out[ 4 ] = ma[ 0 ] * mb[ 4 ] + ma[ 4 ] * mb[ 5 ] + ma[ 8 ] * mb[ 6 ];
+			out[ 8 ] = ma[ 0 ] * mb[ 8 ] + ma[ 4 ] * mb[ 9 ] + ma[ 8 ] * mb[ 10 ];
 			
-			out[ 4 ] = ma[ 4 ] * mb[ 0 ] + ma[ 5 ] * mb[ 4 ] + ma[ 6 ] * mb[ 8 ];
-			out[ 5 ] = ma[ 4 ] * mb[ 1 ] + ma[ 5 ] * mb[ 5 ] + ma[ 6 ] * mb[ 9 ];
-			out[ 6 ] = ma[ 4 ] * mb[ 2 ] + ma[ 5 ] * mb[ 6 ] + ma[ 6 ] * mb[ 10 ];
+			out[ 1 ] = ma[ 1 ] * mb[ 0 ] + ma[ 5 ] * mb[ 1 ] + ma[ 9 ] * mb[ 2 ];
+			out[ 5 ] = ma[ 1 ] * mb[ 4 ] + ma[ 5 ] * mb[ 5 ] + ma[ 9 ] * mb[ 6 ];
+			out[ 9 ] = ma[ 1 ] * mb[ 8 ] + ma[ 5 ] * mb[ 9 ] + ma[ 9 ] * mb[ 10 ];
 			
-			out[ 8 ] = ma[ 8 ] * mb[ 0 ] + ma[ 9 ] * mb[ 4 ] + ma[ 10 ] * mb[ 8 ];
-			out[ 9 ] = ma[ 8 ] * mb[ 1 ] + ma[ 9 ] * mb[ 5 ] + ma[ 10 ] * mb[ 9 ];
-			out[ 10 ] = ma[ 8 ] * mb[ 2 ] + ma[ 9 ] * mb[ 6 ] + ma[ 10 ] * mb[ 10 ];
+			out[ 2 ] = ma[ 2 ] * mb[ 0 ] + ma[ 6 ] * mb[ 1 ] + ma[ 10 ] * mb[ 2 ];
+			out[ 6 ] = ma[ 2 ] * mb[ 4 ] + ma[ 6 ] * mb[ 5 ] + ma[ 10 ] * mb[ 6 ];
+			out[ 10 ] = ma[ 2 ] * mb[ 8 ] + ma[ 6 ] * mb[ 9 ] + ma[ 10 ] * mb[ 10 ];
 		}
 	}
 	
@@ -1946,107 +1960,109 @@ public class Vecmath
 	public static void setIdentity( float[ ] m )
 	{
 		m[ 0 ] = 1;
-		m[ 1 ] = 0;
-		m[ 2 ] = 0;
-		m[ 3 ] = 0;
-		
 		m[ 4 ] = 0;
-		m[ 5 ] = 1;
-		m[ 6 ] = 0;
-		m[ 7 ] = 0;
-		
 		m[ 8 ] = 0;
-		m[ 9 ] = 0;
-		m[ 10 ] = 1;
-		m[ 11 ] = 0;
-		
 		m[ 12 ] = 0;
+		
+		m[ 1 ] = 0;
+		m[ 5 ] = 1;
+		m[ 9 ] = 0;
 		m[ 13 ] = 0;
+		
+		m[ 2 ] = 0;
+		m[ 6 ] = 0;
+		m[ 10 ] = 1;
 		m[ 14 ] = 0;
+		
+		m[ 3 ] = 0;
+		m[ 7 ] = 0;
+		m[ 11 ] = 0;
 		m[ 15 ] = 1;
 	}
 	
 	public static void setIdentityAffine( float[ ] m )
 	{
 		m[ 0 ] = 1;
-		m[ 1 ] = 0;
-		m[ 2 ] = 0;
-		m[ 3 ] = 0;
-		
 		m[ 4 ] = 0;
-		m[ 5 ] = 1;
-		m[ 6 ] = 0;
-		m[ 7 ] = 0;
-		
 		m[ 8 ] = 0;
+		m[ 12 ] = 0;
+		
+		m[ 1 ] = 0;
+		m[ 5 ] = 1;
 		m[ 9 ] = 0;
+		m[ 13 ] = 0;
+		
+		m[ 2 ] = 0;
+		m[ 6 ] = 0;
 		m[ 10 ] = 1;
-		m[ 11 ] = 0;
+		m[ 14 ] = 0;
 	}
 	
 	public static void setRow4( float[ ] m , int rowIndex , float[ ] v )
 	{
-		rowIndex *= 4;
 		m[ rowIndex ] = v[ 0 ];
-		m[ rowIndex + 1 ] = v[ 1 ];
-		m[ rowIndex + 2 ] = v[ 2 ];
-		m[ rowIndex + 3 ] = v[ 3 ];
+		m[ rowIndex + 4 ] = v[ 1 ];
+		m[ rowIndex + 8 ] = v[ 2 ];
+		m[ rowIndex + 12 ] = v[ 3 ];
 	}
 	
 	public static void setRow4( float[ ] m , int rowIndex , float[ ] v , int vi )
 	{
-		rowIndex *= 4;
 		m[ rowIndex ] = v[ vi + 0 ];
-		m[ rowIndex + 1 ] = v[ vi + 1 ];
-		m[ rowIndex + 2 ] = v[ vi + 2 ];
-		m[ rowIndex + 3 ] = v[ vi + 3 ];
+		m[ rowIndex + 4 ] = v[ vi + 1 ];
+		m[ rowIndex + 8 ] = v[ vi + 2 ];
+		m[ rowIndex + 12 ] = v[ vi + 3 ];
 	}
 	
 	public static void setRow4( float[ ] m , int rowIndex , float a , float b , float c , float d )
 	{
-		rowIndex *= 4;
 		m[ rowIndex ] = a;
-		m[ rowIndex + 1 ] = b;
-		m[ rowIndex + 2 ] = c;
-		m[ rowIndex + 3 ] = d;
+		m[ rowIndex + 4 ] = b;
+		m[ rowIndex + 8 ] = c;
+		m[ rowIndex + 12 ] = d;
 	}
 	
 	public static void setColumn3( float[ ] m , int colIndex , float a , float b , float c )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = a;
-		m[ colIndex + 4 ] = b;
-		m[ colIndex + 8 ] = c;
+		m[ colIndex + 1 ] = b;
+		m[ colIndex + 2 ] = c;
 	}
 	
 	public static void setColumn3( float[ ] m , int colIndex , float[ ] v )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = v[ 0 ];
-		m[ colIndex + 4 ] = v[ 1 ];
-		m[ colIndex + 8 ] = v[ 2 ];
+		m[ colIndex + 1 ] = v[ 1 ];
+		m[ colIndex + 2 ] = v[ 2 ];
 	}
 	
 	public static void setColumn4( float[ ] m , int colIndex , float[ ] v )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = v[ 0 ];
-		m[ colIndex + 4 ] = v[ 1 ];
-		m[ colIndex + 8 ] = v[ 2 ];
-		m[ colIndex + 12 ] = v[ 3 ];
+		m[ colIndex + 1 ] = v[ 1 ];
+		m[ colIndex + 2 ] = v[ 2 ];
+		m[ colIndex + 3 ] = v[ 3 ];
 	}
 	
 	public static void setColumn4( float[ ] m , int colIndex , float[ ] v , int vi )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = v[ vi + 0 ];
-		m[ colIndex + 4 ] = v[ vi + 1 ];
-		m[ colIndex + 8 ] = v[ vi + 2 ];
-		m[ colIndex + 12 ] = v[ vi + 3 ];
+		m[ colIndex + 1 ] = v[ vi + 1 ];
+		m[ colIndex + 2 ] = v[ vi + 2 ];
+		m[ colIndex + 3 ] = v[ vi + 3 ];
 	}
 	
 	public static void setColumn4( float[ ] m , int colIndex , float a , float b , float c , float d )
 	{
+		colIndex *= 4;
 		m[ colIndex ] = a;
-		m[ colIndex + 4 ] = b;
-		m[ colIndex + 8 ] = c;
-		m[ colIndex + 12 ] = d;
+		m[ colIndex + 1 ] = b;
+		m[ colIndex + 2 ] = c;
+		m[ colIndex + 3 ] = d;
 	}
 	
 	public static void setScale( float[ ] m , float[ ] v )
@@ -2090,23 +2106,23 @@ public class Vecmath
 		float cosAngle = ( float ) Math.cos( angle );
 		
 		mat[ 0 ] = 1f;
-		mat[ 1 ] = 0f;
-		mat[ 2 ] = 0f;
-		mat[ 3 ] = 0f;
-		
 		mat[ 4 ] = 0f;
-		mat[ 5 ] = cosAngle;
-		mat[ 6 ] = -sinAngle;
-		mat[ 7 ] = 0f;
-		
 		mat[ 8 ] = 0f;
-		mat[ 9 ] = sinAngle;
-		mat[ 10 ] = cosAngle;
-		mat[ 11 ] = 0f;
-		
 		mat[ 12 ] = 0f;
+		
+		mat[ 1 ] = 0f;
+		mat[ 5 ] = cosAngle;
+		mat[ 9 ] = -sinAngle;
 		mat[ 13 ] = 0f;
+		
+		mat[ 2 ] = 0f;
+		mat[ 6 ] = sinAngle;
+		mat[ 10 ] = cosAngle;
 		mat[ 14 ] = 0f;
+		
+		mat[ 3 ] = 0f;
+		mat[ 7 ] = 0f;
+		mat[ 11 ] = 0f;
 		mat[ 15 ] = 1f;
 	}
 	
@@ -2123,23 +2139,23 @@ public class Vecmath
 		float cosAngle = ( float ) Math.cos( angle );
 		
 		mat[ 0 ] = cosAngle;
-		mat[ 1 ] = 0f;
-		mat[ 2 ] = sinAngle;
-		mat[ 3 ] = 0f;
-		
 		mat[ 4 ] = 0f;
-		mat[ 5 ] = 1f;
-		mat[ 6 ] = 0f;
-		mat[ 7 ] = 0f;
-		
-		mat[ 8 ] = -sinAngle;
-		mat[ 9 ] = 0f;
-		mat[ 10 ] = cosAngle;
-		mat[ 11 ] = 0f;
-		
+		mat[ 8 ] = sinAngle;
 		mat[ 12 ] = 0f;
+		
+		mat[ 1 ] = 0f;
+		mat[ 5 ] = 1f;
+		mat[ 9 ] = 0f;
 		mat[ 13 ] = 0f;
+		
+		mat[ 2 ] = -sinAngle;
+		mat[ 6 ] = 0f;
+		mat[ 10 ] = cosAngle;
 		mat[ 14 ] = 0f;
+		
+		mat[ 3 ] = 0f;
+		mat[ 7 ] = 0f;
+		mat[ 11 ] = 0f;
 		mat[ 15 ] = 1f;
 	}
 	
@@ -2156,23 +2172,23 @@ public class Vecmath
 		float cosAngle = ( float ) Math.cos( angle );
 		
 		mat[ 0 ] = cosAngle;
-		mat[ 1 ] = -sinAngle;
-		mat[ 2 ] = 0f;
-		mat[ 3 ] = 0f;
-		
-		mat[ 4 ] = sinAngle;
-		mat[ 5 ] = cosAngle;
-		mat[ 6 ] = 0f;
-		mat[ 7 ] = 0f;
-		
+		mat[ 4 ] = -sinAngle;
 		mat[ 8 ] = 0f;
-		mat[ 9 ] = 0f;
-		mat[ 10 ] = 1f;
-		mat[ 11 ] = 0f;
-		
 		mat[ 12 ] = 0f;
+		
+		mat[ 1 ] = sinAngle;
+		mat[ 5 ] = cosAngle;
+		mat[ 9 ] = 0f;
 		mat[ 13 ] = 0f;
+		
+		mat[ 2 ] = 0f;
+		mat[ 6 ] = 0f;
+		mat[ 10 ] = 1f;
 		mat[ 14 ] = 0f;
+		
+		mat[ 3 ] = 0f;
+		mat[ 7 ] = 0f;
+		mat[ 11 ] = 0f;
 		mat[ 15 ] = 1f;
 	}
 	
@@ -2181,50 +2197,50 @@ public class Vecmath
 		if( out != m )
 		{
 			out[ 0 ] = m[ 0 ];
-			out[ 1 ] = m[ 4 ];
-			out[ 2 ] = m[ 8 ];
-			out[ 3 ] = m[ 12 ];
+			out[ 1 ] = m[ 1 ];
+			out[ 2 ] = m[ 2 ];
+			out[ 3 ] = m[ 3 ];
 			
-			out[ 4 ] = m[ 1 ];
+			out[ 4 ] = m[ 4 ];
 			out[ 5 ] = m[ 5 ];
-			out[ 6 ] = m[ 9 ];
-			out[ 7 ] = m[ 13 ];
+			out[ 6 ] = m[ 6 ];
+			out[ 7 ] = m[ 7 ];
 			
-			out[ 8 ] = m[ 2 ];
-			out[ 9 ] = m[ 6 ];
+			out[ 8 ] = m[ 8 ];
+			out[ 9 ] = m[ 9 ];
 			out[ 10 ] = m[ 10 ];
-			out[ 11 ] = m[ 14 ];
+			out[ 11 ] = m[ 11 ];
 			
-			out[ 12 ] = m[ 3 ];
-			out[ 13 ] = m[ 7 ];
-			out[ 14 ] = m[ 11 ];
+			out[ 12 ] = m[ 12 ];
+			out[ 13 ] = m[ 13 ];
+			out[ 14 ] = m[ 14 ];
 			out[ 15 ] = m[ 15 ];
 		}
 		else
 		{
-			float t = m[ 1 ];
-			m[ 1 ] = m[ 4 ];
-			m[ 4 ] = t;
+			float t = m[ 4 ];
+			m[ 4 ] = m[ 1 ];
+			m[ 1 ] = t;
 			
-			t = m[ 2 ];
-			m[ 2 ] = m[ 8 ];
-			m[ 8 ] = t;
+			t = m[ 8 ];
+			m[ 8 ] = m[ 2 ];
+			m[ 2 ] = t;
 			
-			t = m[ 3 ];
-			m[ 3 ] = m[ 12 ];
-			m[ 12 ] = t;
+			t = m[ 12 ];
+			m[ 12 ] = m[ 3 ];
+			m[ 3 ] = t;
 			
-			t = m[ 6 ];
-			m[ 6 ] = m[ 9 ];
-			m[ 9 ] = t;
+			t = m[ 9 ];
+			m[ 9 ] = m[ 6 ];
+			m[ 6 ] = t;
 			
-			t = m[ 7 ];
-			m[ 7 ] = m[ 13 ];
-			m[ 13 ] = t;
+			t = m[ 13 ];
+			m[ 13 ] = m[ 7 ];
+			m[ 7 ] = t;
 			
-			t = m[ 11 ];
-			m[ 11 ] = m[ 14 ];
-			m[ 14 ] = t;
+			t = m[ 14 ];
+			m[ 14 ] = m[ 11 ];
+			m[ 11 ] = t;
 		}
 	}
 	
@@ -2239,13 +2255,13 @@ public class Vecmath
 	public static void transposeTo3x3( float[ ] mat , float[ ] out )
 	{
 		out[ 0 ] = mat[ 0 ];
-		out[ 1 ] = mat[ 4 ];
-		out[ 2 ] = mat[ 8 ];
-		out[ 3 ] = mat[ 1 ];
+		out[ 1 ] = mat[ 1 ];
+		out[ 2 ] = mat[ 2 ];
+		out[ 3 ] = mat[ 4 ];
 		out[ 4 ] = mat[ 5 ];
-		out[ 5 ] = mat[ 9 ];
-		out[ 6 ] = mat[ 2 ];
-		out[ 7 ] = mat[ 6 ];
+		out[ 5 ] = mat[ 6 ];
+		out[ 6 ] = mat[ 8 ];
+		out[ 7 ] = mat[ 9 ];
 		out[ 8 ] = mat[ 10 ];
 	}
 	
@@ -2261,9 +2277,9 @@ public class Vecmath
 	
 	public static float detAffine( float[ ] m )
 	{
-		return m[ 0 ] * ( m[ 5 ] * m[ 10 ] - m[ 6 ] * m[ 9 ] ) -
-				m[ 1 ] * ( m[ 4 ] * m[ 10 ] - m[ 6 ] * m[ 8 ] ) +
-				m[ 2 ] * ( m[ 4 ] * m[ 9 ] - m[ 5 ] * m[ 8 ] );
+		return m[ 0 ] * ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) -
+				m[ 4 ] * ( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) +
+				m[ 8 ] * ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] );
 	}
 	
 	public static void invAffine( float[ ] m , float[ ] out )
@@ -2273,12 +2289,12 @@ public class Vecmath
 		if( determinant == 0.0 )
 			throw new IllegalArgumentException( "Singular matrix" );
 		
-		float s = ( m[ 0 ] * m[ 0 ] + m[ 1 ] * m[ 1 ] +
-				m[ 2 ] * m[ 2 ] + m[ 3 ] * m[ 3 ] ) *
-				( m[ 4 ] * m[ 4 ] + m[ 5 ] * m[ 5 ] +
-						m[ 6 ] * m[ 6 ] + m[ 7 ] * m[ 7 ] ) *
-				( m[ 8 ] * m[ 8 ] + m[ 9 ] * m[ 9 ] +
-						m[ 10 ] * m[ 10 ] + m[ 11 ] * m[ 11 ] );
+		float s = ( m[ 0 ] * m[ 0 ] + m[ 4 ] * m[ 4 ] +
+				m[ 8 ] * m[ 8 ] + m[ 12 ] * m[ 12 ] ) *
+				( m[ 1 ] * m[ 1 ] + m[ 5 ] * m[ 5 ] +
+						m[ 9 ] * m[ 9 ] + m[ 13 ] * m[ 13 ] ) *
+				( m[ 2 ] * m[ 2 ] + m[ 6 ] * m[ 6 ] +
+						m[ 10 ] * m[ 10 ] + m[ 14 ] * m[ 14 ] );
 		
 		if( ( determinant * determinant ) < ( FEPS * s ) )
 		{
@@ -2286,31 +2302,31 @@ public class Vecmath
 			return;
 		}
 		s = 1f / determinant;
-		float tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) * s;
-		float tmp1 = -( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) * s;
-		float tmp2 = ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] ) * s;
-		float tmp4 = -( m[ 4 ] * m[ 10 ] - m[ 8 ] * m[ 6 ] ) * s;
-		float tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 8 ] * m[ 2 ] ) * s;
-		float tmp6 = -( m[ 0 ] * m[ 6 ] - m[ 4 ] * m[ 2 ] ) * s;
-		float tmp8 = ( m[ 4 ] * m[ 9 ] - m[ 8 ] * m[ 5 ] ) * s;
-		float tmp9 = -( m[ 0 ] * m[ 9 ] - m[ 8 ] * m[ 1 ] ) * s;
-		float tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 4 ] * m[ 1 ] ) * s;
-		float tmp3 = -( m[ 3 ] * tmp0 + m[ 7 ] * tmp1 + m[ 11 ] * tmp2 );
-		float tmp7 = -( m[ 3 ] * tmp4 + m[ 7 ] * tmp5 + m[ 11 ] * tmp6 );
-		out[ 11 ] = -( m[ 3 ] * tmp8 + m[ 7 ] * tmp9 + m[ 11 ] * tmp10 );
+		float tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 6 ] * m[ 9 ] ) * s;
+		float tmp1 = -( m[ 4 ] * m[ 10 ] - m[ 6 ] * m[ 8 ] ) * s;
+		float tmp2 = ( m[ 4 ] * m[ 9 ] - m[ 5 ] * m[ 8 ] ) * s;
+		float tmp4 = -( m[ 1 ] * m[ 10 ] - m[ 2 ] * m[ 9 ] ) * s;
+		float tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 2 ] * m[ 8 ] ) * s;
+		float tmp6 = -( m[ 0 ] * m[ 9 ] - m[ 1 ] * m[ 8 ] ) * s;
+		float tmp8 = ( m[ 1 ] * m[ 6 ] - m[ 2 ] * m[ 5 ] ) * s;
+		float tmp9 = -( m[ 0 ] * m[ 6 ] - m[ 2 ] * m[ 4 ] ) * s;
+		float tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 1 ] * m[ 4 ] ) * s;
+		float tmp3 = -( m[ 12 ] * tmp0 + m[ 13 ] * tmp1 + m[ 14 ] * tmp2 );
+		float tmp7 = -( m[ 12 ] * tmp4 + m[ 13 ] * tmp5 + m[ 14 ] * tmp6 );
+		out[ 14 ] = -( m[ 12 ] * tmp8 + m[ 13 ] * tmp9 + m[ 14 ] * tmp10 );
 		
 		out[ 0 ] = tmp0;
-		out[ 1 ] = tmp1;
-		out[ 2 ] = tmp2;
-		out[ 3 ] = tmp3;
-		out[ 4 ] = tmp4;
+		out[ 4 ] = tmp1;
+		out[ 8 ] = tmp2;
+		out[ 12 ] = tmp3;
+		out[ 1 ] = tmp4;
 		out[ 5 ] = tmp5;
-		out[ 6 ] = tmp6;
-		out[ 7 ] = tmp7;
-		out[ 8 ] = tmp8;
-		out[ 9 ] = tmp9;
+		out[ 9 ] = tmp6;
+		out[ 13 ] = tmp7;
+		out[ 2 ] = tmp8;
+		out[ 6 ] = tmp9;
 		out[ 10 ] = tmp10;
-		out[ 12 ] = out[ 13 ] = out[ 14 ] = 0f;
+		out[ 3 ] = out[ 7 ] = out[ 11 ] = 0f;
 		out[ 15 ] = 1f;
 	}
 	
@@ -2321,12 +2337,12 @@ public class Vecmath
 		if( determinant == 0.0 )
 			throw new IllegalArgumentException( "Singular matrix" );
 		
-		float s = ( m[ 0 ] * m[ 0 ] + m[ 1 ] * m[ 1 ] +
-				m[ 2 ] * m[ 2 ] + m[ 3 ] * m[ 3 ] ) *
-				( m[ 4 ] * m[ 4 ] + m[ 5 ] * m[ 5 ] +
-						m[ 6 ] * m[ 6 ] + m[ 7 ] * m[ 7 ] ) *
-				( m[ 8 ] * m[ 8 ] + m[ 9 ] * m[ 9 ] +
-						m[ 10 ] * m[ 10 ] + m[ 11 ] * m[ 11 ] );
+		float s = ( m[ 0 ] * m[ 0 ] + m[ 4 ] * m[ 4 ] +
+				m[ 8 ] * m[ 8 ] + m[ 12 ] * m[ 12 ] ) *
+				( m[ 1 ] * m[ 1 ] + m[ 5 ] * m[ 5 ] +
+						m[ 9 ] * m[ 9 ] + m[ 13 ] * m[ 13 ] ) *
+				( m[ 2 ] * m[ 2 ] + m[ 6 ] * m[ 6 ] +
+						m[ 10 ] * m[ 10 ] + m[ 14 ] * m[ 14 ] );
 		
 		if( ( determinant * determinant ) < ( FEPS * s ) )
 		{
@@ -2334,24 +2350,24 @@ public class Vecmath
 			return;
 		}
 		s = 1f / determinant;
-		float tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) * s;
-		float tmp1 = -( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) * s;
-		float tmp2 = ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] ) * s;
-		float tmp4 = -( m[ 4 ] * m[ 10 ] - m[ 8 ] * m[ 6 ] ) * s;
-		float tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 8 ] * m[ 2 ] ) * s;
-		float tmp6 = -( m[ 0 ] * m[ 6 ] - m[ 4 ] * m[ 2 ] ) * s;
-		float tmp8 = ( m[ 4 ] * m[ 9 ] - m[ 8 ] * m[ 5 ] ) * s;
-		float tmp9 = -( m[ 0 ] * m[ 9 ] - m[ 8 ] * m[ 1 ] ) * s;
-		float tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 4 ] * m[ 1 ] ) * s;
+		float tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 6 ] * m[ 9 ] ) * s;
+		float tmp1 = -( m[ 4 ] * m[ 10 ] - m[ 6 ] * m[ 8 ] ) * s;
+		float tmp2 = ( m[ 4 ] * m[ 9 ] - m[ 5 ] * m[ 8 ] ) * s;
+		float tmp4 = -( m[ 1 ] * m[ 10 ] - m[ 2 ] * m[ 9 ] ) * s;
+		float tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 2 ] * m[ 8 ] ) * s;
+		float tmp6 = -( m[ 0 ] * m[ 9 ] - m[ 1 ] * m[ 8 ] ) * s;
+		float tmp8 = ( m[ 1 ] * m[ 6 ] - m[ 2 ] * m[ 5 ] ) * s;
+		float tmp9 = -( m[ 0 ] * m[ 6 ] - m[ 2 ] * m[ 4 ] ) * s;
+		float tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 1 ] * m[ 4 ] ) * s;
 		
 		out[ 0 ] = tmp0;
-		out[ 1 ] = tmp4;
-		out[ 2 ] = tmp8;
-		out[ 3 ] = tmp1;
+		out[ 3 ] = tmp4;
+		out[ 6 ] = tmp8;
+		out[ 1 ] = tmp1;
 		out[ 4 ] = tmp5;
-		out[ 5 ] = tmp9;
-		out[ 6 ] = tmp2;
-		out[ 7 ] = tmp6;
+		out[ 7 ] = tmp9;
+		out[ 2 ] = tmp2;
+		out[ 5 ] = tmp6;
 		out[ 8 ] = tmp10;
 	}
 	
@@ -2429,24 +2445,17 @@ public class Vecmath
 		
 		// Determine implicit scaling information by looping over rows
 		{
-			int i, j;
-			int ptr, rs;
 			float big, temp;
 			
-			ptr = 0;
-			rs = 0;
-			
 			// For each row ...
-			i = 4;
-			while( i-- != 0 )
+			for( int i = 0 ; i < 4 ; i++ )
 			{
 				big = 0f;
 				
 				// For each column, find the largest element in the row
-				j = 4;
-				while( j-- != 0 )
+				for( int j = 0 ; j < 4 ; j++ )
 				{
-					temp = matrix0[ ptr++ ];
+					temp = matrix0[ j * 4 + i ];
 					temp = Math.abs( temp );
 					if( temp > big )
 					{
@@ -2459,15 +2468,12 @@ public class Vecmath
 				{
 					return false;
 				}
-				row_scale[ rs++ ] = 1f / big;
+				row_scale[ i ] = 1f / big;
 			}
 		}
 		
 		{
 			int j;
-			int mtx;
-			
-			mtx = 0;
 			
 			// For all columns, execute Crout's method
 			for( j = 0 ; j < 4 ; j++ )
@@ -2479,16 +2485,16 @@ public class Vecmath
 				// Determine elements of upper diagonal matrix U
 				for( i = 0 ; i < j ; i++ )
 				{
-					target = mtx + ( 4 * i ) + j;
+					target = ( 4 * j ) + i;
 					sum = matrix0[ target ];
 					k = i;
-					p1 = mtx + ( 4 * i );
-					p2 = mtx + j;
+					p1 = i;
+					p2 = 4 * j;
 					while( k-- != 0 )
 					{
 						sum -= matrix0[ p1 ] * matrix0[ p2 ];
-						p1++ ;
-						p2 += 4;
+						p1 += 4;
+						p2++ ;
 					}
 					matrix0[ target ] = sum;
 				}
@@ -2499,16 +2505,16 @@ public class Vecmath
 				imax = -1;
 				for( i = j ; i < 4 ; i++ )
 				{
-					target = mtx + ( 4 * i ) + j;
+					target = ( 4 * j ) + i;
 					sum = matrix0[ target ];
 					k = j;
-					p1 = mtx + ( 4 * i );
-					p2 = mtx + j;
+					p1 = i;
+					p2 = 4 * j;
 					while( k-- != 0 )
 					{
 						sum -= matrix0[ p1 ] * matrix0[ p2 ];
-						p1++ ;
-						p2 += 4;
+						p1 += 4;
+						p2++ ;
 					}
 					matrix0[ target ] = sum;
 					
@@ -2530,13 +2536,15 @@ public class Vecmath
 				{
 					// Yes: exchange rows
 					k = 4;
-					p1 = mtx + ( 4 * imax );
-					p2 = mtx + ( 4 * j );
+					p1 = imax;
+					p2 = j;
 					while( k-- != 0 )
 					{
 						temp = matrix0[ p1 ];
-						matrix0[ p1++ ] = matrix0[ p2 ];
-						matrix0[ p2++ ] = temp;
+						matrix0[ p1 ] = matrix0[ p2 ];
+						matrix0[ p2 ] = temp;
+						p1 += 4;
+						p2 += 4;
 					}
 					
 					// Record change in scale factor
@@ -2547,7 +2555,7 @@ public class Vecmath
 				row_perm[ j ] = imax;
 				
 				// Is the matrix singular
-				if( matrix0[ ( mtx + ( 4 * j ) + j ) ] == 0f )
+				if( matrix0[ ( 4 * j ) + j ] == 0.0 )
 				{
 					return false;
 				}
@@ -2555,13 +2563,13 @@ public class Vecmath
 				// Divide elements of lower diagonal matrix L by pivot
 				if( j != ( 4 - 1 ) )
 				{
-					temp = 1f / ( matrix0[ ( mtx + ( 4 * j ) + j ) ] );
-					target = mtx + ( 4 * ( j + 1 ) ) + j;
+					temp = 1f / ( matrix0[ ( 4 * j ) + j ] );
+					target = 4 * j + j + 1;
 					i = 3 - j;
 					while( i-- != 0 )
 					{
 						matrix0[ target ] *= temp;
-						target += 4;
+						target++ ;
 					}
 				}
 			}
@@ -2607,43 +2615,43 @@ public class Vecmath
 				float sum;
 				
 				ip = row_perm[ rp + i ];
-				sum = matrix2[ cv + 4 * ip ];
-				matrix2[ cv + 4 * ip ] = matrix2[ cv + 4 * i ];
+				sum = matrix2[ ip + 4 * cv ];
+				matrix2[ ip + 4 * cv ] = matrix2[ i + 4 * cv ];
 				if( ii >= 0 )
 				{
 					// rv = &(matrix1[i][0]);
-					rv = i * 4;
+					rv = i;
 					for( j = ii ; j <= i - 1 ; j++ )
 					{
-						sum -= matrix1[ rv + j ] * matrix2[ cv + 4 * j ];
+						sum -= matrix1[ rv + j * 4 ] * matrix2[ j + 4 * cv ];
 					}
 				}
 				else if( sum != 0f )
 				{
 					ii = i;
 				}
-				matrix2[ cv + 4 * i ] = sum;
+				matrix2[ i + 4 * cv ] = sum;
 			}
 			
 			// Backsubstitution
 			// rv = &(matrix1[3][0]);
-			rv = 3 * 4;
-			matrix2[ cv + 4 * 3 ] /= matrix1[ rv + 3 ];
+			rv = 3;
+			matrix2[ 3 + 4 * cv ] /= matrix1[ rv + 3 * 4 ];
 			
-			rv -= 4;
-			matrix2[ cv + 4 * 2 ] = ( matrix2[ cv + 4 * 2 ] -
-					matrix1[ rv + 3 ] * matrix2[ cv + 4 * 3 ] ) / matrix1[ rv + 2 ];
+			rv-- ;
+			matrix2[ 2 + 4 * cv ] = ( matrix2[ 2 + 4 * cv ] -
+					matrix1[ rv + 3 * 4 ] * matrix2[ 3 + 4 * cv ] ) / matrix1[ rv + 2 * 4 ];
 			
-			rv -= 4;
-			matrix2[ cv + 4 * 1 ] = ( matrix2[ cv + 4 * 1 ] -
-					matrix1[ rv + 2 ] * matrix2[ cv + 4 * 2 ] -
-					matrix1[ rv + 3 ] * matrix2[ cv + 4 * 3 ] ) / matrix1[ rv + 1 ];
+			rv-- ;
+			matrix2[ 1 + 4 * cv ] = ( matrix2[ 1 + 4 * cv ] -
+					matrix1[ rv + 2 * 4 ] * matrix2[ 2 + 4 * cv ] -
+					matrix1[ rv + 3 * 4 ] * matrix2[ 3 + 4 * cv ] ) / matrix1[ rv + 1 * 4 ];
 			
-			rv -= 4;
-			matrix2[ cv + 4 * 0 ] = ( matrix2[ cv + 4 * 0 ] -
-					matrix1[ rv + 1 ] * matrix2[ cv + 4 * 1 ] -
-					matrix1[ rv + 2 ] * matrix2[ cv + 4 * 2 ] -
-					matrix1[ rv + 3 ] * matrix2[ cv + 4 * 3 ] ) / matrix1[ rv + 0 ];
+			rv-- ;
+			matrix2[ 0 + 4 * cv ] = ( matrix2[ 0 + 4 * cv ] -
+					matrix1[ rv + 1 * 4 ] * matrix2[ 1 + 4 * cv ] -
+					matrix1[ rv + 2 * 4 ] * matrix2[ 2 + 4 * cv ] -
+					matrix1[ rv + 3 * 4 ] * matrix2[ 3 + 4 * cv ] ) / matrix1[ rv + 0 * 4 ];
 		}
 	}
 	
@@ -2695,22 +2703,22 @@ public class Vecmath
 		
 		// transpose because we calculated the inverse of what we want
 		mat[ 0 ] = sidex;
-		mat[ 1 ] = sidey;
-		mat[ 2 ] = sidez;
+		mat[ 4 ] = sidey;
+		mat[ 8 ] = sidez;
 		
-		mat[ 4 ] = upx;
+		mat[ 1 ] = upx;
 		mat[ 5 ] = upy;
-		mat[ 6 ] = upz;
+		mat[ 9 ] = upz;
 		
-		mat[ 8 ] = forwardx;
-		mat[ 9 ] = forwardy;
+		mat[ 2 ] = forwardx;
+		mat[ 6 ] = forwardy;
 		mat[ 10 ] = forwardz;
 		
-		mat[ 3 ] = -eyex * mat[ 0 ] + -eyey * mat[ 1 ] + -eyez * mat[ 2 ];
-		mat[ 7 ] = -eyex * mat[ 4 ] + -eyey * mat[ 5 ] + -eyez * mat[ 6 ];
-		mat[ 11 ] = -eyex * mat[ 8 ] + -eyey * mat[ 9 ] + -eyez * mat[ 10 ];
+		mat[ 12 ] = -eyex * mat[ 0 ] + -eyey * mat[ 4 ] + -eyez * mat[ 8 ];
+		mat[ 13 ] = -eyex * mat[ 1 ] + -eyey * mat[ 5 ] + -eyez * mat[ 9 ];
+		mat[ 14 ] = -eyex * mat[ 2 ] + -eyey * mat[ 6 ] + -eyez * mat[ 10 ];
 		
-		mat[ 12 ] = mat[ 13 ] = mat[ 14 ] = 0;
+		mat[ 3 ] = mat[ 7 ] = mat[ 11 ] = 0;
 		mat[ 15 ] = 1;
 	}
 	
@@ -2740,24 +2748,24 @@ public class Vecmath
 		
 		mat[ 0 ] = cotangent;
 		mat[ 5 ] = cotangent * aspect;
-		mat[ 10 ] = ( zFar + zNear ) / deltaZ;
-		mat[ 11 ] = 2f * zNear * zFar / deltaZ;
-		mat[ 14 ] = -1f;
-		mat[ 1 ] = mat[ 2 ] = mat[ 3 ] = mat[ 4 ] = mat[ 6 ] = mat[ 7 ] = mat[ 8 ] =
-				mat[ 9 ] = mat[ 12 ] = mat[ 13 ] = mat[ 15 ] = 0;
+		mat[ 10 ] = -( zFar + zNear ) / deltaZ;
+		mat[ 14 ] = -2f * zNear * zFar / deltaZ;
+		mat[ 11 ] = -1f;
+		mat[ 4 ] = mat[ 8 ] = mat[ 12 ] = mat[ 1 ] = mat[ 9 ] = mat[ 13 ] = mat[ 2 ] =
+				mat[ 6 ] = mat[ 3 ] = mat[ 7 ] = mat[ 15 ] = 0;
 	}
 	
 	public static void ortho( float[ ] mat , float left , float right , float bottom , float top , float zNear , float zFar )
 	{
 		mat[ 0 ] = 2 / ( right - left );
-		mat[ 3 ] = 1 - mat[ 0 ] * right;
+		mat[ 12 ] = 1 - mat[ 0 ] * right;
 		mat[ 5 ] = 2 / ( top - bottom );
-		mat[ 7 ] = 1 - mat[ 5 ] * top;
+		mat[ 13 ] = 1 - mat[ 5 ] * top;
 		mat[ 10 ] = 2 / ( zFar - zNear );
-		mat[ 11 ] = 1 - mat[ 10 ] * zFar;
+		mat[ 14 ] = 1 - mat[ 10 ] * zFar;
 		
 		mat[ 15 ] = 1;
-		mat[ 1 ] = mat[ 2 ] = mat[ 4 ] = mat[ 6 ] = mat[ 8 ] = mat[ 9 ] = mat[ 13 ] = mat[ 14 ] = 0;
+		mat[ 4 ] = mat[ 8 ] = mat[ 1 ] = mat[ 9 ] = mat[ 2 ] = mat[ 6 ] = mat[ 7 ] = mat[ 11 ] = 0;
 	}
 	
 	private static boolean almostZero( float a )
@@ -2796,23 +2804,23 @@ public class Vecmath
 			float yz = ay * az;
 			
 			mat[ 0 ] = t * ax * ax + cosTheta;
-			mat[ 1 ] = t * xy - sinTheta * az;
-			mat[ 2 ] = t * xz + sinTheta * ay;
-			mat[ 3 ] = 0;
-			
-			mat[ 4 ] = t * xy + sinTheta * az;
-			mat[ 5 ] = t * ay * ay + cosTheta;
-			mat[ 6 ] = t * yz - sinTheta * ax;
-			mat[ 7 ] = 0;
-			
-			mat[ 8 ] = t * xz - sinTheta * ay;
-			mat[ 9 ] = t * yz + sinTheta * ax;
-			mat[ 10 ] = t * az * az + cosTheta;
-			mat[ 11 ] = 0;
-			
+			mat[ 4 ] = t * xy - sinTheta * az;
+			mat[ 8 ] = t * xz + sinTheta * ay;
 			mat[ 12 ] = 0;
+			
+			mat[ 1 ] = t * xy + sinTheta * az;
+			mat[ 5 ] = t * ay * ay + cosTheta;
+			mat[ 9 ] = t * yz - sinTheta * ax;
 			mat[ 13 ] = 0;
+			
+			mat[ 2 ] = t * xz - sinTheta * ay;
+			mat[ 6 ] = t * yz + sinTheta * ax;
+			mat[ 10 ] = t * az * az + cosTheta;
 			mat[ 14 ] = 0;
+			
+			mat[ 3 ] = 0;
+			mat[ 7 ] = 0;
+			mat[ 11 ] = 0;
 			mat[ 15 ] = 1;
 		}
 	}
@@ -2971,10 +2979,10 @@ public class Vecmath
 		return true;
 	}
 	
-	//////////////////////////////////////////////////////////////////////////////////////////
-	// MIXED DOUBLE/FLOAT METHODS //////////////////////////////////////////////////////////// 
-	//////////////////////////////////////////////////////////////////////////////////////////
-
+	// ////////////////////////////////////////////////////////////////////////////////////////
+	// MIXED DOUBLE/FLOAT METHODS ////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////////
+	
 	public static void setf( double[ ] a , float ... b )
 	{
 		for( int i = 0 ; i < b.length ; i++ )
@@ -2982,7 +2990,7 @@ public class Vecmath
 			a[ i ] = b[ i ];
 		}
 	}
-
+	
 	public static void setd( float[ ] a , double ... b )
 	{
 		for( int i = 0 ; i < b.length ; i++ )
@@ -2990,69 +2998,95 @@ public class Vecmath
 			a[ i ] = ( float ) b[ i ];
 		}
 	}
-
+	
 	public static void setRow4( float[ ] m , int rowIndex , double[ ] v )
 	{
-		rowIndex *= 4;
-		m[ rowIndex ] = (float)(float)v[ 0 ];
-		m[ rowIndex + 1 ] = (float)v[ 1 ];
-		m[ rowIndex + 2 ] = (float)v[ 2 ];
-		m[ rowIndex + 3 ] = (float)v[ 3 ];
+		m[ rowIndex ] = ( float ) ( float ) v[ 0 ];
+		m[ rowIndex + 4 ] = ( float ) v[ 1 ];
+		m[ rowIndex + 8 ] = ( float ) v[ 2 ];
+		m[ rowIndex + 12 ] = ( float ) v[ 3 ];
 	}
-
+	
 	public static void setRow4( float[ ] m , int rowIndex , double[ ] v , int vi )
 	{
-		rowIndex *= 4;
-		m[ rowIndex ] = (float)v[ vi + 0 ];
-		m[ rowIndex + 1 ] = (float)v[ vi + 1 ];
-		m[ rowIndex + 2 ] = (float)v[ vi + 2 ];
-		m[ rowIndex + 3 ] = (float)v[ vi + 3 ];
+		m[ rowIndex ] = ( float ) v[ vi + 0 ];
+		m[ rowIndex + 4 ] = ( float ) v[ vi + 1 ];
+		m[ rowIndex + 8 ] = ( float ) v[ vi + 2 ];
+		m[ rowIndex + 12 ] = ( float ) v[ vi + 3 ];
 	}
-
+	
 	public static void setRow4( float[ ] m , int rowIndex , double a , double b , double c , double d )
 	{
-		rowIndex *= 4;
-		m[ rowIndex ] = (float) a;
-		m[ rowIndex + 1 ] = (float) b;
-		m[ rowIndex + 2 ] = (float) c;
-		m[ rowIndex + 3 ] = (float) d;
+		m[ rowIndex ] = ( float ) a;
+		m[ rowIndex + 4 ] = ( float ) b;
+		m[ rowIndex + 8 ] = ( float ) c;
+		m[ rowIndex + 12 ] = ( float ) d;
 	}
-
+	
 	public static void setColumn3( float[ ] m , int colIndex , double a , double b , double c )
 	{
-		m[ colIndex ] = (float) a;
-		m[ colIndex + 4 ] = (float) b;
-		m[ colIndex + 8 ] = (float) c;
+		colIndex *= 4;
+		m[ colIndex ] = ( float ) a;
+		m[ colIndex + 1 ] = ( float ) b;
+		m[ colIndex + 2 ] = ( float ) c;
 	}
-
+	
 	public static void setColumn3( float[ ] m , int colIndex , double[ ] v )
 	{
-		m[ colIndex ] = (float)v[ 0 ];
-		m[ colIndex + 4 ] = (float)v[ 1 ];
-		m[ colIndex + 8 ] = (float)v[ 2 ];
+		colIndex *= 4;
+		m[ colIndex ] = ( float ) v[ 0 ];
+		m[ colIndex + 1 ] = ( float ) v[ 1 ];
+		m[ colIndex + 2 ] = ( float ) v[ 2 ];
 	}
-
+	
 	public static void setColumn4( float[ ] m , int colIndex , double[ ] v )
 	{
-		m[ colIndex ] = (float)v[ 0 ];
-		m[ colIndex + 4 ] = (float)v[ 1 ];
-		m[ colIndex + 8 ] = (float)v[ 2 ];
-		m[ colIndex + 12 ] = (float)v[ 3 ];
+		colIndex *= 4;
+		m[ colIndex ] = ( float ) v[ 0 ];
+		m[ colIndex + 1 ] = ( float ) v[ 1 ];
+		m[ colIndex + 2 ] = ( float ) v[ 2 ];
+		m[ colIndex + 3 ] = ( float ) v[ 3 ];
 	}
-
+	
 	public static void setColumn4( float[ ] m , int colIndex , double[ ] v , int vi )
 	{
-		m[ colIndex ] = (float)v[ vi + 0 ];
-		m[ colIndex + 4 ] = (float)v[ vi + 1 ];
-		m[ colIndex + 8 ] = (float)v[ vi + 2 ];
-		m[ colIndex + 12 ] = ( float ) v[ vi + 3 ];
+		colIndex *= 4;
+		m[ colIndex ] = ( float ) v[ vi + 0 ];
+		m[ colIndex + 1 ] = ( float ) v[ vi + 1 ];
+		m[ colIndex + 2 ] = ( float ) v[ vi + 2 ];
+		m[ colIndex + 3 ] = ( float ) v[ vi + 3 ];
 	}
-
+	
 	public static void setColumn4( float[ ] m , int colIndex , double a , double b , double c , double d )
 	{
-		m[ colIndex ] = (float) a;
-		m[ colIndex + 4 ] = (float) b;
-		m[ colIndex + 8 ] = (float) c;
-		m[ colIndex + 12 ] = (float) d;
+		colIndex *= 4;
+		m[ colIndex ] = ( float ) a;
+		m[ colIndex + 1 ] = ( float ) b;
+		m[ colIndex + 2 ] = ( float ) c;
+		m[ colIndex + 3 ] = ( float ) d;
 	}
+	
+	public static String matToString( float[ ] m , String elemFormat )
+	{
+		StringBuilder sb = new StringBuilder( );
+		for( int row = 0 ; row < 4 ; row++ )
+		{
+			for( int col = 0 ; col < 4 ; col++ )
+			{
+				if( col > 0 )
+				{
+					sb.append( ' ' );
+				}
+				sb.append( String.format( elemFormat , m[ row + col * 4 ] ) );
+			}
+			sb.append( '\n' );
+		}
+		return sb.toString( );
+	}
+	
+	public static String matToString( float[ ] m )
+	{
+		return matToString( m , "%12.4f" );
+	}
+	
 }

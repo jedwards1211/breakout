@@ -60,6 +60,7 @@ public class SharedVertexBuffer
 		{
 			init( gl );
 		}
+		buffer.position( 0 );
 		gl.glBindBuffer( GL.GL_ARRAY_BUFFER , vbo );
 		gl.glBufferData( GL.GL_ARRAY_BUFFER , buffer.capacity( ) , buffer , usage );
 		gl.glBindBuffer( GL.GL_ARRAY_BUFFER , 0 );

@@ -24,7 +24,7 @@ public class Helicizer implements IXformFn
 	public float[ ] eval( float param , float[ ] out )
 	{
 		setIdentity( x1 );
-		x1[ 3 ] = radiusFunction.eval( param );
+		x1[ 12 ] = radiusFunction.eval( param );
 		
 		setIdentity( out );
 		rotZ( out , angleFunction.eval( param ) );

@@ -6,6 +6,8 @@ import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 
+import org.andork.ui.DoSwing;
+
 @SuppressWarnings( "serial" )
 public class MainFrame extends JFrame
 {
@@ -24,6 +26,13 @@ public class MainFrame extends JFrame
 	
 	public static void main( String[ ] args )
 	{
-		new MainFrame( ).setVisible( true );
+		new DoSwing( )
+		{
+			@Override
+			public void run( )
+			{
+				new MainFrame( ).setVisible( true );
+			}
+		};
 	}
 }

@@ -13,18 +13,16 @@ import java.util.List;
 import javax.media.opengl.GL2ES2;
 
 import org.andork.jogl.basic.BasicJOGLObject;
-import org.andork.jogl.basic.JOGLBlendModifier;
-import org.andork.jogl.basic.JOGLPolygonModeModifier;
-import org.andork.jogl.basic.BasicJOGLObject.DebugUVNFragmentShader;
-import org.andork.jogl.basic.BasicJOGLObject.DebugUVNVertexShader;
+import org.andork.jogl.basic.BasicJOGLObject.FlatFragmentShader;
 import org.andork.jogl.basic.BufferHelper;
+import org.andork.jogl.basic.GankedJOGLPolygonModeModifier;
+import org.andork.jogl.basic.JOGLBlendModifier;
 import org.andork.torquescape.jogl.main.TorquescapeScene;
 import org.andork.torquescape.jogl.main.TorquescapeSetup;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DirectZoneGenerator;
 import org.andork.torquescape.model.normal.NormalGenerator;
 import org.andork.torquescape.model.track.Track;
-import org.andork.torquescape.model.track.Track1;
 import org.andork.torquescape.model.vertex.IVertexAttrFn;
 import org.andork.torquescape.model.vertex.IVertexVisitor;
 import org.andork.torquescape.model.vertex.StandardVertexFn;
@@ -88,14 +86,14 @@ public class FalseDepthTest extends TorquescapeSetup
 				0 , 0 , 1f , 1 ) );
 		obj.add( obj.new Uniform1fv( ).name( "u_u_period" ).value( 1f ) );
 		obj.add( obj.new Uniform1fv( ).name( "u_v_period" ).value( 1f ) );
-		obj.transpose( true );
+		obj.transpose( false );
 		obj.ignoreMissingLocations( true );
 		obj.indexType( GL2ES2.GL_UNSIGNED_SHORT );
 		obj.vertexCount( zone.getVertBuffer( ).capacity( ) / zone.getBytesPerVertex( ) );
 		obj.indexCount( zone.getIndexBuffer( ).capacity( ) );
 		obj.drawMode( GL2ES2.GL_TRIANGLES );
 		obj.add( new JOGLBlendModifier( ) );
-		obj.add( new JOGLPolygonModeModifier( ) );
+		obj.add( new GankedJOGLPolygonModeModifier( ) );
 		scene.add( obj );
 		
 		int i0 = zone.getIndexBuffer( ).get( 0 ) * zone.getBytesPerVertex( );
