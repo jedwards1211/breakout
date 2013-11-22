@@ -31,10 +31,7 @@ public class DrawerLayoutTest1
 		
 		LayeredBorder.addBorder( new GradientFillBorder( Side.TOP , Color.LIGHT_GRAY , Side.BOTTOM , Color.GRAY ) , drawer );
 		
-		final DrawerLayoutDelegate delegate = new DrawerLayoutDelegate( );
-		// delegate.dockingCorner = Corner.TOP_LEFT;
-		delegate.dockingSide = Side.LEFT;
-		delegate.parent = content;
+		final DrawerLayoutDelegate delegate = new DrawerLayoutDelegate( drawer , Side.LEFT );
 		
 		JButton toggleButton = new JButton( "T" );
 		toggleButton.setMargin( new Insets( 5 , 10 , 5 , 10 ) );
