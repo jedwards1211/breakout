@@ -45,11 +45,14 @@ public class DrawerLayoutTest1
 			}
 		} );
 		
-		content.add( drawer , delegate );
-		content.add( toggleButton , new TabLayoutDelegate( drawer ,
+		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( drawer ,
 				Corner.fromSides( delegate.dockingSide.opposite( ) , delegate.dockingSide.inverse( ).axis( ).lowerSide( ) ) ,
 				// delegate.dockingCorner.adjacent( delegate.dockingSide.opposite( ) ) ,
-				delegate.dockingSide.opposite( ) ) );
+				delegate.dockingSide.opposite( ) );
+		tabDelegate.setInsets( new Insets( 10 , -10 , -10 , 10 ) );
+		
+		content.add( drawer , delegate );
+		content.add( toggleButton , tabDelegate );
 		
 		frame.getContentPane( ).add( content , BorderLayout.CENTER );
 		frame.pack( );

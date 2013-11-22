@@ -2,6 +2,7 @@ package org.andork.layout;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Insets;
 import java.awt.Rectangle;
 
 import org.andork.layout.DelegatingLayoutManager.LayoutDelegate;
@@ -19,6 +20,12 @@ public class TabLayoutDelegate implements LayoutDelegate
 	Component	content;
 	Corner		corner;
 	Side		side;
+	Insets		insets;
+	
+	public void setInsets( Insets insets )
+	{
+		this.insets = insets;
+	}
 	
 	@Override
 	public Rectangle desiredBounds( Container parent , Component target , LayoutSize layoutSize )
@@ -44,6 +51,14 @@ public class TabLayoutDelegate implements LayoutDelegate
 			side.opposite( ).setLocation( bounds , side.location( content ) );
 			Axis invAxis = side.axis( ).opposite( );
 			invAxis.setLower( bounds , invAxis.center( content ) - invAxis.size( target ) / 2 );
+		}
+		
+		if( insets != null )
+		{
+			bounds.x += insets.left;
+			bounds.width = bounds.width - insets.left - insets.right;
+			bounds.y += insets.top;
+			bounds.height = bounds.height - insets.top - insets.bottom;
 		}
 		
 		return bounds;

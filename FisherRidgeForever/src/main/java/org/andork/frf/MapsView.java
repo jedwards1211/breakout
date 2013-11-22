@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.nio.ByteBuffer;
@@ -13,8 +16,12 @@ import java.util.List;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 import org.andork.frf.model.SurveyShot;
 import org.andork.jogl.basic.BasicJOGLObject;
@@ -27,7 +34,6 @@ import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.basic.JOGLLineWidthModifier;
 import org.andork.jogl.basic.JOGLObject;
 import org.andork.jogl.basic.JOGLPolygonModeModifier;
-import org.andork.jogl.basic.JOGLPolygonOffsetModifier;
 import org.andork.jogl.basic.SharedVertexBuffer;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.jogl.shader.DefaultNormalVertexShader;
@@ -37,14 +43,23 @@ import org.andork.jogl.shader.MainCodeBlock;
 import org.andork.jogl.shader.ShaderSegment;
 import org.andork.jogl.shader.SimpleLightingFragmentShader;
 import org.andork.jogl.shader.VariableDeclarations;
+import org.andork.layout.Corner;
+import org.andork.layout.DelegatingLayoutManager;
+import org.andork.layout.DrawerLayoutDelegate;
+import org.andork.layout.Side;
+import org.andork.layout.TabLayoutDelegate;
+import org.andork.ui.GradientFillBorder;
+import org.andork.ui.GridBagWizard;
+import org.andork.ui.GridBagWizard.DefaultAutoInsets;
+import org.andork.ui.PaintablePanel;
 import org.andork.vecmath.Vecmath;
 
+import com.andork.plot.MouseAdapterChain;
+import com.andork.plot.Plot;
 import com.andork.plot.PlotAxis;
 import com.andork.plot.PlotAxis.LabelPosition;
 import com.andork.plot.PlotAxis.Orientation;
 import com.andork.plot.PlotAxisController;
-import com.andork.plot.MouseAdapterChain;
-import com.andork.plot.Plot;
 import com.andork.plot.PlotController;
 import com.andork.plot.PlotPanelLayout;
 
@@ -57,13 +72,17 @@ public class MapsView extends BasicJOGLSetup
 	final double[ ]		leftAtTo2	= new double[ 3 ];
 	final double[ ]		leftAtFrom	= new double[ 3 ];
 	
-	PlotAxis				xaxis;
-	PlotAxis				yaxis;
-	PlotAxis				distColorationAxis;
+	PlotAxis			xaxis;
+	PlotAxis			yaxis;
+	PlotAxis			distColorationAxis;
+	
+	PaintablePanel		settingsPanel;
+	JButton				settingsButton;
 	
 	Plot				plot;
 	JPanel				plotPanel;
 	JPanel				mainPanel;
+	JLayeredPane		layeredPane;
 	
 	PlotController		plotController;
 	MouseAdapterChain	mouseAdapterChain;
@@ -197,9 +216,34 @@ public class MapsView extends BasicJOGLSetup
 		modeComboBox.addItem( "East-Facing Profile" );
 		modeComboBox.addItem( "West-Facing Profile" );
 		
+		settingsPanel = new PaintablePanel( );
+		settingsPanel.setBorder( new EmptyBorder( 3 , 3 , 3 , 3 ) );
+		settingsPanel.addUnderpaintBorder( new GradientFillBorder( Side.TOP , settingsPanel.getBackground( ) , Side.BOTTOM , Color.LIGHT_GRAY ) );
+		GridBagWizard w = GridBagWizard.create( settingsPanel );
+		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
+		JLabel modeLabel = new JLabel( "View:" );
+		w.put( modeLabel ).xy( 0 , 0 ).weightx( 1.0 ).west( );
+		w.put( modeComboBox ).below( modeLabel ).weighty( 1.0 ).north( );
+		
+		settingsButton = new JButton( "=" );
+		settingsButton.setMargin( new Insets( 5 , 10 , 5 , 10 ) );
+		
+		layeredPane = new JLayeredPane( );
+		layeredPane.setLayout( new DelegatingLayoutManager( ) );
+		layeredPane.setLayer( settingsPanel , JLayeredPane.DEFAULT_LAYER + 1 );
+		layeredPane.setLayer( settingsButton , JLayeredPane.DEFAULT_LAYER + 2 );
+		final DrawerLayoutDelegate drawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT );
+		drawerDelegate.close( );
+		layeredPane.add( settingsPanel , drawerDelegate );
+		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( settingsPanel , Corner.BOTTOM_LEFT , Side.LEFT );
+		int sbWidth = settingsButton.getPreferredSize( ).width;
+		tabDelegate.setInsets( new Insets( -10 , sbWidth / 2 , 10 , -sbWidth / 2 ) );
+		layeredPane.add( settingsButton , tabDelegate );
+		layeredPane.add( plotPanel );
+		
 		mainPanel = new JPanel( new BorderLayout( ) );
-		mainPanel.add( modeComboBox , BorderLayout.NORTH );
-		mainPanel.add( plotPanel , BorderLayout.CENTER );
+		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
+		mainPanel.add( layeredPane , BorderLayout.CENTER );
 		
 		modeComboBox.addItemListener( new ItemListener( )
 		{
@@ -231,6 +275,15 @@ public class MapsView extends BasicJOGLSetup
 						westFacingProfileMode( );
 						break;
 				}
+			}
+		} );
+		
+		settingsButton.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				drawerDelegate.toggle( );
 			}
 		} );
 	}
@@ -517,7 +570,7 @@ public class MapsView extends BasicJOGLSetup
 			fillObj.transpose( false );
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
-//			fillObj.add( new JOGLPolygonOffsetModifier( -5f , -5f ) );
+			// fillObj.add( new JOGLPolygonOffsetModifier( -5f , -5f ) );
 			fillObj.add( new JOGLDepthModifier( ) );
 			fillObj.add( new JOGLPolygonModeModifier( GL.GL_BACK ) );
 			fillObj.add( fillObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 0 , 0 , 1 ) );
@@ -568,8 +621,8 @@ public class MapsView extends BasicJOGLSetup
 			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
 			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
 			
-//			scene.initLater( lineObj );
-//			scene.add( lineObj );
+			// scene.initLater( lineObj );
+			// scene.add( lineObj );
 		}
 		
 		canvas.repaint( );

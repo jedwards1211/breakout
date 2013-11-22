@@ -1,6 +1,6 @@
 package org.andork.ui;
 
-import java.awt.Graphics2D;
+import java.awt.Graphics;
 
 import javax.swing.JPanel;
 import javax.swing.border.Border;
@@ -8,7 +8,7 @@ import javax.swing.border.Border;
 @SuppressWarnings( "serial" )
 public class PaintablePanel extends JPanel
 {
-	private LayeredBorder	underpaintBorder;
+	private LayeredBorder	underpaintBorder	= new LayeredBorder( );
 	
 	public void addUnderpaintBorder( Border b )
 	{
@@ -20,8 +20,9 @@ public class PaintablePanel extends JPanel
 		underpaintBorder.borders.remove( b );
 	}
 	
-	protected void paintComponent( Graphics2D g )
+	protected void paintComponent( Graphics g )
 	{
+		super.paintComponent( g );
 		if( underpaintBorder != null )
 		{
 			underpaintBorder.paintBorder( this , g , 0 , 0 , getWidth( ) , getHeight( ) );
