@@ -7,11 +7,11 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
-import com.andork.plot.Axis.Orientation;
+import com.andork.plot.PlotAxis.Orientation;
 
-public class AxisController
+public class PlotAxisController
 {
-	public AxisController( Axis view )
+	public PlotAxisController( PlotAxis view )
 	{
 		this.view = view;
 		view.setCursor( Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR ) );
@@ -20,7 +20,7 @@ public class AxisController
 		view.addMouseWheelListener( mouseHandler );
 	}
 	
-	private final Axis			view;
+	private final PlotAxis			view;
 	private final MouseHandler	mouseHandler	= new MouseHandler( );
 	
 	private double				dragZoomSpeed	= 1.01;
@@ -129,7 +129,7 @@ public class AxisController
 		this.wheelZoomSpeed = wheelZoomSpeed;
 	}
 	
-	public Axis getView( )
+	public PlotAxis getView( )
 	{
 		return view;
 	}

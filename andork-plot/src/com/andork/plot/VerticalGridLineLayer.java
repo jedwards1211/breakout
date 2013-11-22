@@ -6,7 +6,7 @@ import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 
-import com.andork.plot.Axis.Orientation;
+import com.andork.plot.PlotAxis.Orientation;
 
 public class VerticalGridLineLayer implements IPlotLayer
 {
@@ -18,7 +18,7 @@ public class VerticalGridLineLayer implements IPlotLayer
 		
 	}
 	
-	public VerticalGridLineLayer( Axis axis )
+	public VerticalGridLineLayer( PlotAxis axis )
 	{
 		if( axis.getOrientation( ) != Orientation.HORIZONTAL )
 		{

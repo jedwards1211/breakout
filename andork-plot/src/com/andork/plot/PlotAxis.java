@@ -19,7 +19,7 @@ import java.util.Set;
 import javax.swing.JComponent;
 
 @SuppressWarnings( "serial" )
-public class Axis extends JComponent
+public class PlotAxis extends JComponent
 {
 	public static enum Orientation
 	{
@@ -53,7 +53,7 @@ public class Axis extends JComponent
 	
 	private NumberFormat			format;
 	
-	public Axis( Orientation orientation , LabelPosition labelPosition )
+	public PlotAxis( Orientation orientation , LabelPosition labelPosition )
 	{
 		this.orientation = orientation;
 		setLabelPosition( labelPosition );

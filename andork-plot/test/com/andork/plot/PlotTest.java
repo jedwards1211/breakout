@@ -6,8 +6,8 @@ import javax.swing.JFrame;
 
 import org.wonderly.awt.Packer;
 
-import com.andork.plot.Axis.LabelPosition;
-import com.andork.plot.Axis.Orientation;
+import com.andork.plot.PlotAxis.LabelPosition;
+import com.andork.plot.PlotAxis.Orientation;
 
 public class PlotTest
 {
@@ -15,8 +15,8 @@ public class PlotTest
 	{
 		Plot plot = new Plot( );
 		
-		Axis haxis = new Axis( Orientation.HORIZONTAL , LabelPosition.TOP );
-		Axis vaxis = new Axis( Orientation.VERTICAL , LabelPosition.LEFT );
+		PlotAxis haxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		PlotAxis vaxis = new PlotAxis( Orientation.VERTICAL , LabelPosition.LEFT );
 		
 		haxis.addPlot( plot );
 		vaxis.addPlot( plot );
@@ -24,8 +24,8 @@ public class PlotTest
 		plot.addLayer( new HorizontalGridLineLayer( vaxis ) );
 		plot.addLayer( new VerticalGridLineLayer( haxis ) );
 		
-		AxisController haxisController = new AxisController( haxis );
-		AxisController vaxisController = new AxisController( vaxis );
+		PlotAxisController haxisController = new PlotAxisController( haxis );
+		PlotAxisController vaxisController = new PlotAxisController( vaxis );
 		
 		PlotController plotController = new PlotController( plot , haxis , vaxis );
 		MouseAdapterChain chain = new MouseAdapterChain( );

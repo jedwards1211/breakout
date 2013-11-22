@@ -39,10 +39,10 @@ import org.andork.jogl.shader.SimpleLightingFragmentShader;
 import org.andork.jogl.shader.VariableDeclarations;
 import org.andork.vecmath.Vecmath;
 
-import com.andork.plot.Axis;
-import com.andork.plot.Axis.LabelPosition;
-import com.andork.plot.Axis.Orientation;
-import com.andork.plot.AxisController;
+import com.andork.plot.PlotAxis;
+import com.andork.plot.PlotAxis.LabelPosition;
+import com.andork.plot.PlotAxis.Orientation;
+import com.andork.plot.PlotAxisController;
 import com.andork.plot.MouseAdapterChain;
 import com.andork.plot.Plot;
 import com.andork.plot.PlotController;
@@ -57,9 +57,9 @@ public class MapsView extends BasicJOGLSetup
 	final double[ ]		leftAtTo2	= new double[ 3 ];
 	final double[ ]		leftAtFrom	= new double[ 3 ];
 	
-	Axis				xaxis;
-	Axis				yaxis;
-	Axis				distColorationAxis;
+	PlotAxis				xaxis;
+	PlotAxis				yaxis;
+	PlotAxis				distColorationAxis;
 	
 	Plot				plot;
 	JPanel				plotPanel;
@@ -88,14 +88,14 @@ public class MapsView extends BasicJOGLSetup
 		plot.setLayout( new BorderLayout( ) );
 		plot.add( canvas , BorderLayout.CENTER );
 		
-		xaxis = new Axis( Orientation.HORIZONTAL , LabelPosition.TOP );
-		yaxis = new Axis( Orientation.VERTICAL , LabelPosition.LEFT );
+		xaxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		yaxis = new PlotAxis( Orientation.VERTICAL , LabelPosition.LEFT );
 		
 		final GradientMap gradientMap = new GradientMap( );
 		gradientMap.map.put( 0.0 , Color.RED );
 		gradientMap.map.put( 1.0 , new Color( 255 * 3 / 10 , 0 , 0 ) );
 		
-		distColorationAxis = new Axis( Orientation.VERTICAL , LabelPosition.RIGHT )
+		distColorationAxis = new PlotAxis( Orientation.VERTICAL , LabelPosition.RIGHT )
 		{
 			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.VERTICAL , gradientMap );
 			
@@ -117,7 +117,7 @@ public class MapsView extends BasicJOGLSetup
 		xaxis.addPlot( plot );
 		yaxis.addPlot( plot );
 		
-		new AxisController( xaxis )
+		new PlotAxisController( xaxis )
 		{
 			@Override
 			protected void setAxisRange( double start , double end )
@@ -129,7 +129,7 @@ public class MapsView extends BasicJOGLSetup
 				canvas.repaint( );
 			}
 		};
-		new AxisController( yaxis )
+		new PlotAxisController( yaxis )
 		{
 			@Override
 			protected void setAxisRange( double start , double end )
@@ -142,7 +142,7 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
-		new AxisController( distColorationAxis )
+		new PlotAxisController( distColorationAxis )
 		{
 			@Override
 			protected void setAxisRange( double start , double end )

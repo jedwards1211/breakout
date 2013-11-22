@@ -6,7 +6,7 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 
-import com.andork.plot.Axis.Orientation;
+import com.andork.plot.PlotAxis.Orientation;
 
 public class PlotPanelLayout implements LayoutManager
 {
@@ -59,9 +59,9 @@ public class PlotPanelLayout implements LayoutManager
 				plotSize.width = Math.max( plotSize.width , size.width );
 				plotSize.height = Math.max( plotSize.height , size.height );
 			}
-			else if( comp instanceof Axis )
+			else if( comp instanceof PlotAxis )
 			{
-				Axis axis = ( Axis ) comp;
+				PlotAxis axis = ( PlotAxis ) comp;
 				Dimension size = getSize( comp , sizeType );
 				if( axis.getOrientation( ) == Orientation.HORIZONTAL )
 				{
@@ -111,9 +111,9 @@ public class PlotPanelLayout implements LayoutManager
 			{
 				continue;
 			}
-			if( comp instanceof Axis )
+			if( comp instanceof PlotAxis )
 			{
-				Axis axis = ( Axis ) comp;
+				PlotAxis axis = ( PlotAxis ) comp;
 				switch( axis.getLabelPosition( ) )
 				{
 					case TOP:
@@ -145,9 +145,9 @@ public class PlotPanelLayout implements LayoutManager
 			{
 				comp.setBounds( plotLeft , plotTop , plotWidth , plotHeight );
 			}
-			else if( comp instanceof Axis )
+			else if( comp instanceof PlotAxis )
 			{
-				Axis axis = ( Axis ) comp;
+				PlotAxis axis = ( PlotAxis ) comp;
 				Dimension size;
 				switch( axis.getLabelPosition( ) )
 				{

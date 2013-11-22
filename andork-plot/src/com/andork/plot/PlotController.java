@@ -8,15 +8,15 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.swing.SwingUtilities;
 
-import com.andork.plot.Axis.Orientation;
+import com.andork.plot.PlotAxis.Orientation;
 
 public class PlotController extends MouseAdapter
 {
 	private Component	view;
-	private Axis		haxis;
-	private Axis		vaxis;
+	private PlotAxis		haxis;
+	private PlotAxis		vaxis;
 	
-	public PlotController( Component view , Axis haxis , Axis vaxis )
+	public PlotController( Component view , PlotAxis haxis , PlotAxis vaxis )
 	{
 		super( );
 		this.view = view;
@@ -24,7 +24,7 @@ public class PlotController extends MouseAdapter
 		this.vaxis = vaxis;
 	}
 	
-	private MouseEvent convertForAxis( MouseEvent e , Axis axis )
+	private MouseEvent convertForAxis( MouseEvent e , PlotAxis axis )
 	{
 		Point p = SwingUtilities.convertPoint( e.getComponent( ) , e.getPoint( ) , axis );
 		if( axis.getOrientation( ) == Orientation.HORIZONTAL )
@@ -51,7 +51,7 @@ public class PlotController extends MouseAdapter
 		}
 	}
 	
-	private void retarget( MouseEvent e , Axis axis )
+	private void retarget( MouseEvent e , PlotAxis axis )
 	{
 		axis.dispatchEvent( convertForAxis( e , axis ) );
 	}
