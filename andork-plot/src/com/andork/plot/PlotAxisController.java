@@ -15,16 +15,20 @@ public class PlotAxisController
 	{
 		this.view = view;
 		view.setCursor( Cursor.getPredefinedCursor( Cursor.MOVE_CURSOR ) );
-		view.addMouseListener( mouseHandler );
-		view.addMouseMotionListener( mouseHandler );
-		view.addMouseWheelListener( mouseHandler );
+		view.addMouseListener( mouseLooper );
+		view.addMouseMotionListener( mouseLooper );
+		view.addMouseWheelListener( mouseLooper );
+		mouseLooper.addMouseAdapter( mouseHandler );
 	}
 	
-	private final PlotAxis			view;
+	private final PlotAxis		view;
 	private final MouseHandler	mouseHandler	= new MouseHandler( );
+	private final MouseLooper	mouseLooper		= new MouseLooper( );
 	
 	private double				dragZoomSpeed	= 1.01;
 	private double				wheelZoomSpeed	= 1.01;
+	
+	private boolean				enableZoom		= true;
 	
 	private class MouseHandler extends MouseAdapter implements MouseWheelListener
 	{
@@ -73,7 +77,7 @@ public class PlotAxisController
 			
 			double mouseDomain = axisConversion.invert( view.getOrientation( ) == Orientation.HORIZONTAL ? e.getX( ) : e.getY( ) );
 			
-			double zoom = Math.pow( dragZoomSpeed , view.getOrientation( ) == Orientation.HORIZONTAL ? dy : dx );
+			double zoom = enableZoom ? Math.pow( dragZoomSpeed , view.getOrientation( ) == Orientation.HORIZONTAL ? dy : dx ) : 1.0;
 			double newStart = oldMouseDomain + ( oldStart - mouseDomain ) * zoom;
 			double newEnd = oldMouseDomain + ( oldEnd - mouseDomain ) * zoom;
 			setAxisRange( newStart , newEnd );
@@ -91,7 +95,7 @@ public class PlotAxisController
 		
 		double mousePosition = axisConversion.invert( view.getOrientation( ) == Orientation.HORIZONTAL ? e.getX( ) : e.getY( ) );
 		
-		double zoom = Math.pow( wheelZoomSpeed , e.getUnitsToScroll( ) );
+		double zoom = enableZoom ? Math.pow( wheelZoomSpeed , e.getUnitsToScroll( ) ) : 1.0;
 		
 		double newStart = mousePosition + ( oldStart - mousePosition ) * zoom;
 		double newEnd = mousePosition + ( oldEnd - mousePosition ) * zoom;
@@ -132,5 +136,20 @@ public class PlotAxisController
 	public PlotAxis getView( )
 	{
 		return view;
+	}
+	
+	public boolean isEnableZoom( )
+	{
+		return enableZoom;
+	}
+	
+	public void setEnableZoom( boolean enableZoom )
+	{
+		this.enableZoom = enableZoom;
+	}
+	
+	public MouseAdapter getMouseHandler( )
+	{
+		return mouseHandler;
 	}
 }

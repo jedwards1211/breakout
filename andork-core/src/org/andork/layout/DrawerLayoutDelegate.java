@@ -13,6 +13,22 @@ import org.andork.layout.DelegatingLayoutManager.LayoutDelegate;
 
 public class DrawerLayoutDelegate implements LayoutDelegate
 {
+	boolean			open = true;
+	boolean			maximized;
+	boolean			animating;
+	
+	Corner			dockingCorner;
+	Side			dockingSide;
+	float			animFactor	= .2f;
+	int				animSpeed	= 10;
+	
+	private long	lastAnimTime;
+	private Timer	animTimer;
+	
+	Component		comp;
+	
+	boolean			fill		= false;
+	
 	public DrawerLayoutDelegate( Component comp , Side dockingSide )
 	{
 		this( comp , null , dockingSide , true );
@@ -31,119 +47,71 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 	private DrawerLayoutDelegate( Component comp , Corner dockingCorner , Side dockingSide , boolean fill )
 	{
 		super( );
+		if( dockingCorner != null && dockingSide != dockingCorner.xSide( ) && dockingSide != dockingCorner.ySide( ) )
+		{
+			throw new IllegalArgumentException( "dockingCorner must be on the same side as dockingSide" );
+		}
 		this.comp = comp;
 		this.dockingCorner = dockingCorner;
 		this.dockingSide = dockingSide;
 		this.fill = fill;
 	}
 	
-	public static enum State
-	{
-		CLOSED , CLOSING , OPENING , OPEN
-	}
-	
-	Component		comp;
-	
-	Side			dockingSide;
-	
-	Corner			dockingCorner;
-	
-	boolean			fill		= false;
-	
-	float			openAmount	= 1;
-	State			state		= State.OPEN;
-	float			animFactor	= .2f;
-	int				animSpeed	= 10;
-	
-	private long	lastAnimTime;
-	private Timer	animTimer;
-	
-	private void animate( long time )
-	{
-		while( time > 0 )
-		{
-			if( state == State.CLOSING && openAmount > 0f )
-			{
-				openAmount = Math.max( 0f , openAmount - ( openAmount + .1f ) * animFactor );
-				if( openAmount == 0f )
-				{
-					state = State.CLOSED;
-					break;
-				}
-			}
-			else if( state == State.OPENING && openAmount < 1f )
-			{
-				openAmount = Math.min( 1f , openAmount + ( 1.1f - openAmount ) * animFactor );
-				if( openAmount == 1f )
-				{
-					state = State.OPEN;
-					break;
-				}
-			}
-			
-			time -= animSpeed;
-		}
-	}
-	
 	public void close( )
 	{
-		if( state == State.OPENING || state == State.OPEN )
+		if( open )
 		{
-			state = State.CLOSING;
-			startAnimating( );
+			toggleOpen( );
 		}
 	}
 	
 	public void open( )
 	{
-		if( state == State.CLOSED || state == State.CLOSING )
+		if( !open )
 		{
-			state = State.OPENING;
-			startAnimating( );
+			toggleOpen( );
 		}
 	}
 	
-	public void toggle( )
+	public void toggleOpen( )
 	{
-		if( state == State.OPEN || state == State.OPENING )
+		open = !open;
+		animating = true;
+		if( comp.getParent( ) != null )
 		{
-			close( );
-		}
-		else
-		{
-			open( );
+			comp.getParent( ).invalidate( );
+			comp.getParent( ).validate( );
 		}
 	}
 	
-	private void startAnimating( )
+	public void restore( )
 	{
-		lastAnimTime = System.currentTimeMillis( );
-		if( animTimer == null )
+		if( maximized )
 		{
-			animTimer = new Timer( animSpeed , new ActionListener( )
-			{
-				@Override
-				public void actionPerformed( ActionEvent e )
-				{
-					long time = System.currentTimeMillis( );
-					animate( time - lastAnimTime );
-					if( state == State.OPEN || state == State.CLOSED )
-					{
-						animTimer.stop( );
-					}
-					lastAnimTime = time;
-					if( comp.getParent( ) != null )
-					{
-						comp.getParent( ).invalidate( );
-						comp.getParent( ).validate( );
-					}
-				}
-			} );
+			toggleMaximized( );
 		}
-		animTimer.start( );
 	}
 	
-	private Rectangle getBounds( Container parent , Component target , LayoutSize layoutSize , boolean open )
+	public void maximize( )
+	{
+		if( !maximized )
+		{
+			toggleMaximized( );
+		}
+	}
+	
+	public void toggleMaximized( )
+	{
+		maximized = !maximized;
+		animating = true;
+		if( comp.getParent( ) != null )
+		{
+			comp.getParent( ).invalidate( );
+			comp.getParent( ).validate( );
+		}
+	}
+	
+	private Rectangle getBounds( Container parent , Component target , LayoutSize layoutSize , boolean open , boolean maximized )
 	{
 		Rectangle bounds = new Rectangle( );
 		bounds.setSize( layoutSize.get( target ) );
@@ -151,17 +119,19 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		if( dockingCorner != null )
 		{
 			Insets insets = parent.getInsets( );
-			bounds.width = Math.min( bounds.width , parent.getWidth( ) - insets.left - insets.right );
-			bounds.height = Math.min( bounds.height , parent.getHeight( ) - insets.top - insets.bottom );
 			Side otherSide = dockingCorner.xSide( ) == dockingSide ? dockingCorner.ySide( ) : dockingCorner.xSide( );
-			
-			if( fill )
-			{
-				Axis otherAxis = otherSide.axis( );
-				otherAxis.setSize( bounds , otherAxis.insetSize( parent ) );
-			}
-			
 			otherSide.setLocation( bounds , otherSide.insetLocalLocation( parent ) );
+			
+			if( maximized )
+			{
+				bounds.width = parent.getWidth( ) - insets.left - insets.right;
+				bounds.height = parent.getHeight( ) - insets.top - insets.bottom;
+			}
+			else
+			{
+				bounds.width = Math.min( bounds.width , parent.getWidth( ) - insets.left - insets.right );
+				bounds.height = Math.min( bounds.height , parent.getHeight( ) - insets.top - insets.bottom );
+			}
 			
 			if( open )
 			{
@@ -177,16 +147,24 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			Side invSide = dockingSide.inverse( );
 			Axis axis = dockingSide.axis( );
 			Axis invAxis = invSide.axis( );
-			axis.setSize( bounds , Math.min( axis.size( bounds ) , axis.insetSize( parent ) ) );
 			
-			if( fill )
+			if( fill || maximized )
 			{
 				invAxis.setSize( bounds , invAxis.insetSize( parent ) );
-				invAxis.setLower( bounds , invAxis.lower( parent ) + invAxis.lowerInset( parent ) );
+				invAxis.setLower( bounds , invAxis.lowerInset( parent ) );
 			}
 			else
 			{
-				invAxis.setLower( bounds , invAxis.center( parent ) - invAxis.size( bounds ) / 2 );
+				invAxis.setLower( bounds , invAxis.insetLocalCenter( parent ) - invAxis.size( bounds ) / 2 );
+			}
+			
+			if( maximized )
+			{
+				axis.setSize( bounds , axis.insetSize( parent ) );
+			}
+			else
+			{
+				axis.setSize( bounds , Math.min( axis.size( bounds ) , axis.insetSize( parent ) ) );
 			}
 			
 			if( open )
@@ -205,19 +183,63 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 	@Override
 	public Rectangle desiredBounds( Container parent , Component target , LayoutSize layoutSize )
 	{
-		return getBounds( parent , target , layoutSize , true );
+		return getBounds( parent , target , layoutSize , true , maximized );
 	}
 	
 	@Override
-	public void layoutComponent( Container parent , Component target )
+	public void layoutComponent( final Container parent , final Component target )
 	{
-		Rectangle closedBounds = getBounds( parent , target , LayoutSize.PREFERRED , false );
-		Rectangle openBounds = getBounds( parent , target , LayoutSize.PREFERRED , true );
+		Rectangle targetBounds = getBounds( parent , target , LayoutSize.PREFERRED , open , maximized );
+		Rectangle bounds = target.getBounds( );
 		
-		Rectangle bounds = new Rectangle( closedBounds );
-		bounds.x = ( int ) ( openAmount * openBounds.x + ( 1 - openAmount ) * closedBounds.x );
-		bounds.y = ( int ) ( openAmount * openBounds.y + ( 1 - openAmount ) * closedBounds.y );
-		
-		target.setBounds( bounds );
+		if( animating )
+		{
+			if( targetBounds.equals( bounds ) )
+			{
+				animating = false;
+				if( animTimer != null )
+				{
+					animTimer.stop( );
+					animTimer = null;
+				}
+			}
+			else
+			{
+				long time = System.currentTimeMillis( );
+				long elapsed = time - lastAnimTime;
+				lastAnimTime = time;
+				if( animTimer == null )
+				{
+					elapsed = animSpeed;
+				}
+				
+				RectangleUtils.animate( bounds , targetBounds , elapsed , animFactor , 10 ,
+						animSpeed , bounds );
+				
+				target.setBounds( bounds );
+				target.invalidate( );
+				target.validate( );
+				
+				if( animTimer == null )
+				{
+					animTimer = new Timer( animSpeed , new ActionListener( )
+					{
+						@Override
+						public void actionPerformed( ActionEvent e )
+						{
+							parent.invalidate( );
+							parent.validate( );
+						}
+					} );
+					animTimer.start( );
+				}
+			}
+		}
+		else
+		{
+			target.setBounds( targetBounds );
+			target.invalidate( );
+			target.validate( );
+		}
 	}
 }

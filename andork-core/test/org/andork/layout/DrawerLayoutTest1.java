@@ -13,6 +13,7 @@ import javax.swing.JPanel;
 
 import org.andork.ui.GradientFillBorder;
 import org.andork.ui.LayeredBorder;
+import org.andork.ui.PaintablePanel;
 
 public class DrawerLayoutTest1
 {
@@ -25,23 +26,35 @@ public class DrawerLayoutTest1
 		content.setPreferredSize( new Dimension( 640 , 480 ) );
 		content.setLayout( new DelegatingLayoutManager( ) );
 		
-		JPanel drawer = new JPanel( );
-		drawer.setBackground( Color.BLUE );
+		PaintablePanel drawer = new PaintablePanel( );
+		drawer.setLayout( new DelegatingLayoutManager( ) );
 		drawer.setPreferredSize( new Dimension( 200 , 100 ) );
 		
-		LayeredBorder.addBorder( new GradientFillBorder( Side.TOP , Color.LIGHT_GRAY , Side.BOTTOM , Color.GRAY ) , drawer );
+		drawer.addUnderpaintBorder( new GradientFillBorder( Side.TOP , Color.LIGHT_GRAY , Side.BOTTOM , Color.GRAY ) );
 		
 		final DrawerLayoutDelegate delegate = new DrawerLayoutDelegate( drawer , Side.LEFT );
 		
 		JButton toggleButton = new JButton( "T" );
 		toggleButton.setMargin( new Insets( 5 , 10 , 5 , 10 ) );
 		
+		JButton maxButton = new JButton( "M" );
+		maxButton.setMargin( new Insets( 5 , 10 , 5 , 10 ) );
+		
 		toggleButton.addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				delegate.toggle( );
+				delegate.toggleOpen( );
+			}
+		} );
+		
+		maxButton.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				delegate.toggleMaximized( );
 			}
 		} );
 		
@@ -53,6 +66,8 @@ public class DrawerLayoutTest1
 		
 		content.add( drawer , delegate );
 		content.add( toggleButton , tabDelegate );
+		
+		drawer.add( maxButton , new DrawerLayoutDelegate( maxButton , Corner.BOTTOM_RIGHT , Side.RIGHT ) );
 		
 		frame.getContentPane( ).add( content , BorderLayout.CENTER );
 		frame.pack( );

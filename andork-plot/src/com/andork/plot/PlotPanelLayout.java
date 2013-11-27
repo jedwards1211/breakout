@@ -4,12 +4,22 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.LayoutManager;
+import java.awt.LayoutManager2;
+import java.awt.Rectangle;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.swing.SwingUtilities;
+
+import org.andork.layout.Corner;
+import org.andork.layout.RectangleUtils;
 
 import com.andork.plot.PlotAxis.Orientation;
 
-public class PlotPanelLayout implements LayoutManager
+public class PlotPanelLayout implements LayoutManager2
 {
+	private final Map<Component, Object>	constraints	= new HashMap<Component, Object>( );
+	
 	@Override
 	public void addLayoutComponent( String name , Component comp )
 	{
@@ -19,7 +29,7 @@ public class PlotPanelLayout implements LayoutManager
 	@Override
 	public void removeLayoutComponent( Component comp )
 	{
-		
+		constraints.remove( comp );
 	}
 	
 	private static enum SizeType
@@ -132,6 +142,9 @@ public class PlotPanelLayout implements LayoutManager
 			}
 		}
 		
+		Rectangle insetBounds = RectangleUtils.insetCopy( SwingUtilities.getLocalBounds( parent ) , insets );
+		Rectangle plotBounds = RectangleUtils.insetCopy( insetBounds , plotInsets );
+		
 		Insets axisInsets = ( Insets ) insets.clone( );
 		
 		int plotLeft = insets.left + plotInsets.left;
@@ -141,11 +154,7 @@ public class PlotPanelLayout implements LayoutManager
 		
 		for( Component comp : parent.getComponents( ) )
 		{
-			if( comp instanceof Plot )
-			{
-				comp.setBounds( plotLeft , plotTop , plotWidth , plotHeight );
-			}
-			else if( comp instanceof PlotAxis )
+			if( comp instanceof PlotAxis )
 			{
 				PlotAxis axis = ( PlotAxis ) comp;
 				Dimension size;
@@ -173,6 +182,52 @@ public class PlotPanelLayout implements LayoutManager
 						break;
 				}
 			}
+			else
+			{
+				Object constraints = this.constraints.get( comp );
+				if( constraints != null && constraints instanceof Corner )
+				{
+					Corner corner = ( Corner ) constraints;
+					Rectangle bounds = new Rectangle( );
+					corner.setLocation( bounds , corner.location( insetBounds ) );
+					corner.opposite( ).stretch( bounds , corner.location( plotBounds ) );
+					comp.setBounds( bounds );
+				}
+				else
+				{
+					comp.setBounds( plotLeft , plotTop , plotWidth , plotHeight );
+				}
+			}
 		}
+	}
+	
+	@Override
+	public void addLayoutComponent( Component comp , Object constraints )
+	{
+		this.constraints.put( comp , constraints );
+	}
+	
+	@Override
+	public Dimension maximumLayoutSize( Container target )
+	{
+		return new Dimension( Integer.MAX_VALUE , Integer.MAX_VALUE );
+	}
+	
+	@Override
+	public float getLayoutAlignmentX( Container target )
+	{
+		return 0;
+	}
+	
+	@Override
+	public float getLayoutAlignmentY( Container target )
+	{
+		return 0;
+	}
+	
+	@Override
+	public void invalidateLayout( Container target )
+	{
+		
 	}
 }

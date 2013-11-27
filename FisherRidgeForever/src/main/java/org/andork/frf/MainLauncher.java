@@ -4,13 +4,32 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JOptionPane;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
+import org.andork.ui.DoSwing;
 import org.apache.commons.io.FileUtils;
 
 public class MainLauncher
 {
 	public static void main( String[ ] args )
 	{
+		new DoSwing( )
+		{
+			@Override
+			public void run( )
+			{
+				try
+				{
+					UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName( ) );
+				}
+				catch( Exception e )
+				{
+					e.printStackTrace();
+				}
+			}
+		};
+
 		String[ ] versionPieces = System.getProperty( "java.version" ).split( "\\." );
 		int v0 = Integer.valueOf( versionPieces[ 0 ] );
 		int v1 = Integer.valueOf( versionPieces[ 1 ] );

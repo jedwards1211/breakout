@@ -21,7 +21,9 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.andork.frf.model.SurveyShot;
 import org.andork.jogl.basic.BasicJOGLObject;
@@ -48,13 +50,19 @@ import org.andork.layout.DelegatingLayoutManager;
 import org.andork.layout.DrawerLayoutDelegate;
 import org.andork.layout.Side;
 import org.andork.layout.TabLayoutDelegate;
+import org.andork.ui.ColorUtils;
 import org.andork.ui.GradientFillBorder;
 import org.andork.ui.GridBagWizard;
+import org.andork.ui.LayeredBorder;
 import org.andork.ui.GridBagWizard.DefaultAutoInsets;
+import org.andork.ui.InnerGradientBorder;
+import org.andork.ui.OverrideInsetsBorder;
 import org.andork.ui.PaintablePanel;
 import org.andork.vecmath.Vecmath;
 
+import com.andork.plot.AxisLinkButton;
 import com.andork.plot.MouseAdapterChain;
+import com.andork.plot.MouseLooper;
 import com.andork.plot.Plot;
 import com.andork.plot.PlotAxis;
 import com.andork.plot.PlotAxis.LabelPosition;
@@ -74,10 +82,12 @@ public class MapsView extends BasicJOGLSetup
 	
 	PlotAxis			xaxis;
 	PlotAxis			yaxis;
+	AxisLinkButton		axisLinkButton;
 	PlotAxis			distColorationAxis;
 	
 	PaintablePanel		settingsPanel;
 	JButton				settingsButton;
+	JSlider				mouseSensitivitySlider;
 	
 	Plot				plot;
 	JPanel				plotPanel;
@@ -85,6 +95,7 @@ public class MapsView extends BasicJOGLSetup
 	JLayeredPane		layeredPane;
 	
 	PlotController		plotController;
+	MouseLooper			mouseLooper;
 	MouseAdapterChain	mouseAdapterChain;
 	
 	JComboBox			modeComboBox;
@@ -108,7 +119,14 @@ public class MapsView extends BasicJOGLSetup
 		plot.add( canvas , BorderLayout.CENTER );
 		
 		xaxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		xaxis.setBorder( new InnerGradientBorder( new Insets( 0 , 0 , 4 , 0 ) , Color.GRAY ) );
+		LayeredBorder.addBorder( new InnerGradientBorder( new Insets( 0 , 20 , 0 , 20 ) , new Color( 240 , 240 , 240 ) ) , xaxis );
+		OverrideInsetsBorder.override( xaxis , new Insets( 0 , 0 , 0 , 0 ) );
+		
 		yaxis = new PlotAxis( Orientation.VERTICAL , LabelPosition.LEFT );
+		yaxis.setBorder( new InnerGradientBorder( new Insets( 0 , 0 , 0 , 4 ) , Color.GRAY ) );
+		LayeredBorder.addBorder( new InnerGradientBorder( new Insets( 20 , 0 , 20 , 0 ) , new Color( 240 , 240 , 240 ) ) , yaxis );
+		OverrideInsetsBorder.override( yaxis , new Insets( 0 , 0 , 0 , 0 ) );
 		
 		final GradientMap gradientMap = new GradientMap( );
 		gradientMap.map.put( 0.0 , Color.RED );
@@ -130,13 +148,15 @@ public class MapsView extends BasicJOGLSetup
 		distColorationAxis.setMajorTickColor( Color.WHITE );
 		distColorationAxis.setMinorTickColor( Color.WHITE );
 		distColorationAxis.addPlot( plot );
+		distColorationAxis.setBorder( new InnerGradientBorder( new Insets( 0 , 4 , 0 , 0 ) , Color.BLACK ) );
+		OverrideInsetsBorder.override( distColorationAxis , new Insets( 0 , 0 , 0 , 0 ) );
 		
 		yaxis.getAxisConversion( ).set( 50 , 0 , -50 , 400 );
 		
 		xaxis.addPlot( plot );
 		yaxis.addPlot( plot );
 		
-		new PlotAxisController( xaxis )
+		PlotAxisController xAxisController = new PlotAxisController( xaxis )
 		{
 			@Override
 			protected void setAxisRange( double start , double end )
@@ -148,7 +168,7 @@ public class MapsView extends BasicJOGLSetup
 				canvas.repaint( );
 			}
 		};
-		new PlotAxisController( yaxis )
+		PlotAxisController yAxisController = new PlotAxisController( yaxis )
 		{
 			@Override
 			protected void setAxisRange( double start , double end )
@@ -160,6 +180,9 @@ public class MapsView extends BasicJOGLSetup
 				canvas.repaint( );
 			}
 		};
+		
+		axisLinkButton = new AxisLinkButton( xAxisController , yAxisController );
+		axisLinkButton.setSelected( true );
 		
 		new PlotAxisController( distColorationAxis )
 		{
@@ -187,7 +210,12 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
-		plotController = new PlotController( plot , xaxis , yaxis );
+		plotController = new PlotController( plot , xAxisController , yAxisController );
+		
+		mouseLooper = new MouseLooper( );
+		canvas.addMouseListener( mouseLooper );
+		canvas.addMouseMotionListener( mouseLooper );
+		canvas.addMouseWheelListener( mouseLooper );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
@@ -197,6 +225,7 @@ public class MapsView extends BasicJOGLSetup
 		plotPanel.add( xaxis );
 		plotPanel.add( yaxis );
 		plotPanel.add( distColorationAxis );
+		plotPanel.add( axisLinkButton , Corner.TOP_LEFT );
 		
 		canvas.removeMouseListener( navigator );
 		canvas.removeMouseMotionListener( navigator );
@@ -217,16 +246,39 @@ public class MapsView extends BasicJOGLSetup
 		modeComboBox.addItem( "West-Facing Profile" );
 		
 		settingsPanel = new PaintablePanel( );
-		settingsPanel.setBorder( new EmptyBorder( 3 , 3 , 3 , 3 ) );
-		settingsPanel.addUnderpaintBorder( new GradientFillBorder( Side.TOP , settingsPanel.getBackground( ) , Side.BOTTOM , Color.LIGHT_GRAY ) );
+		settingsPanel.addUnderpaintBorder( new GradientFillBorder(
+				Side.TOP , ColorUtils.darkerColor( settingsPanel.getBackground( ) , 0.05 ) ,
+				Side.BOTTOM , ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
+		settingsPanel.setBorder( new OverrideInsetsBorder(
+				new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
+				new Insets( 3 , 8 , 3 , 3 ) ) );
 		GridBagWizard w = GridBagWizard.create( settingsPanel );
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
 		JLabel modeLabel = new JLabel( "View:" );
 		w.put( modeLabel ).xy( 0 , 0 ).weightx( 1.0 ).west( );
-		w.put( modeComboBox ).below( modeLabel ).weighty( 1.0 ).north( );
+		w.put( modeComboBox ).below( modeLabel ).fillx( ).north( );
 		
 		settingsButton = new JButton( "=" );
+		settingsButton.setOpaque( false );
 		settingsButton.setMargin( new Insets( 5 , 10 , 5 , 10 ) );
+		
+		mouseSensitivitySlider = new JSlider( );
+		mouseSensitivitySlider.setValue( 20 );
+		mouseSensitivitySlider.setOpaque( false );
+		mouseSensitivitySlider.addChangeListener( new ChangeListener( )
+		{
+			@Override
+			public void stateChanged( ChangeEvent e )
+			{
+				float sensitivity = mouseSensitivitySlider.getValue( ) / 20f;
+				navigator.setSensitivity( sensitivity );
+				orbiter.setSensitivity( sensitivity );
+			}
+		} );
+		
+		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
+		w.put( sensLabel ).below( modeComboBox ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).weighty( 1.0 ).north( );
 		
 		layeredPane = new JLayeredPane( );
 		layeredPane.setLayout( new DelegatingLayoutManager( ) );
@@ -283,7 +335,7 @@ public class MapsView extends BasicJOGLSetup
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				drawerDelegate.toggle( );
+				drawerDelegate.toggleOpen( );
 			}
 		} );
 	}
@@ -352,11 +404,11 @@ public class MapsView extends BasicJOGLSetup
 		xaxis.setVisible( true );
 		yaxis.setVisible( true );
 		
-		mouseAdapterChain.uninstall( canvas );
+		mouseLooper.removeMouseAdapter( mouseAdapterChain );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
-		mouseAdapterChain.install( canvas );
+		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( true );
 	}
@@ -366,12 +418,12 @@ public class MapsView extends BasicJOGLSetup
 		xaxis.setVisible( false );
 		yaxis.setVisible( false );
 		
-		mouseAdapterChain.uninstall( canvas );
+		mouseLooper.removeMouseAdapter( mouseAdapterChain );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( navigator );
 		mouseAdapterChain.addMouseAdapter( orbiter );
-		mouseAdapterChain.install( canvas );
+		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( false );
 	}

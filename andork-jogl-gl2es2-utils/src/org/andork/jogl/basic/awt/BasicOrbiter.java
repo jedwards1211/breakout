@@ -30,6 +30,7 @@ public class BasicOrbiter extends MouseAdapter
 	boolean					callDisplay	= true;
 	float					panFactor	= ( float ) Math.PI;
 	float					tiltFactor	= ( float ) Math.PI;
+	float					sensitivity	= 1f;
 	
 	public BasicOrbiter( BasicJOGLSetup setup )
 	{
@@ -73,6 +74,16 @@ public class BasicOrbiter extends MouseAdapter
 		return tiltFactor;
 	}
 	
+	public float getSensitivity( )
+	{
+		return sensitivity;
+	}
+
+	public void setSensitivity( float sensitivity )
+	{
+		this.sensitivity = sensitivity;
+	}
+
 	public void setTiltFactor( float tiltFactor )
 	{
 		this.tiltFactor = tiltFactor;
@@ -117,8 +128,8 @@ public class BasicOrbiter extends MouseAdapter
 			m2[ 13 ] = -center[ 1 ];
 			m2[ 14 ] = -center[ 2 ];
 			
-			float dpan = ( float ) ( dx * panFactor / canvas.getWidth( ) );
-			float dtilt = ( float ) ( dy * tiltFactor / canvas.getHeight( ) );
+			float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
+			float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
 			
 			rotY( m1 , dpan );
 			mmulAffine( m1 , m2 , m2 );

@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 
 import javax.swing.SwingConstants;
 
@@ -102,6 +103,18 @@ public enum Axis
 		{
 			p.x = value;
 		}
+		
+		@Override
+		public double get( Point2D p )
+		{
+			return p.getX( );
+		}
+		
+		@Override
+		public void set( Point2D p , double value )
+		{
+			p.setLocation( value , p.getY( ) );
+		}
 	} ,
 	Y
 	{
@@ -194,6 +207,18 @@ public enum Axis
 		{
 			p.y = value;
 		}
+		
+		@Override
+		public double get( Point2D p )
+		{
+			return p.getY( );
+		}
+		
+		@Override
+		public void set( Point2D p , double value )
+		{
+			p.setLocation( p.getX( ) , value );
+		}
 	};
 	
 	public static Axis fromSwingConstant( int swingConstant )
@@ -226,6 +251,10 @@ public enum Axis
 	public abstract int get( Point p );
 	
 	public abstract void set( Point p , int value );
+	
+	public abstract double get( Point2D p );
+	
+	public abstract void set( Point2D p , double value );
 	
 	public abstract void setLower( Rectangle bounds , int lower );
 	
@@ -260,6 +289,11 @@ public enum Axis
 	public int center( Component comp )
 	{
 		return center( comp.getBounds( ) );
+	}
+	
+	public int insetLocalCenter( Container parent )
+	{
+		return ( lowerSide( ).insetLocalLocation( parent ) + upperSide( ).insetLocalLocation( parent ) ) / 2;
 	}
 	
 	public boolean contains( Rectangle bounds , int value )

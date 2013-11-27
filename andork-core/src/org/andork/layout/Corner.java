@@ -280,6 +280,12 @@ public enum Corner
 		ySide( ).setLocation( bounds , location.y );
 	}
 	
+	public void stretch( Rectangle bounds , Point location )
+	{
+		xSide( ).stretch( bounds , location.x );
+		ySide( ).stretch( bounds , location.y );
+	}
+	
 	public void grow( Rectangle bounds , int xAmount , int yAmount )
 	{
 		xSide( ).grow( bounds , xAmount );

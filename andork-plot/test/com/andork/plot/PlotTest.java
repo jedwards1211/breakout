@@ -27,7 +27,7 @@ public class PlotTest
 		PlotAxisController haxisController = new PlotAxisController( haxis );
 		PlotAxisController vaxisController = new PlotAxisController( vaxis );
 		
-		PlotController plotController = new PlotController( plot , haxis , vaxis );
+		PlotController plotController = new PlotController( plot , haxisController , vaxisController );
 		MouseAdapterChain chain = new MouseAdapterChain( );
 		chain.addMouseAdapter( plotController );
 		chain.install( plot );

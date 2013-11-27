@@ -365,4 +365,47 @@ public class PlotAxis extends JComponent
 	{
 		return orientation == Orientation.HORIZONTAL ? getWidth( ) : getHeight( );
 	}
+	
+	public static void equalizeScale( PlotAxis ... axes )
+	{
+		double scale = Double.MAX_VALUE;
+		for( PlotAxis axis : axes )
+		{
+			scale = Math.min( scale , Math.abs( axis.getAxisConversion( ).getScale( ) ) );
+		}
+		
+		for( PlotAxis axis : axes )
+		{
+			LinearAxisConversion conv = axis.getAxisConversion( );
+			if( axis.getViewSpan( ) == 0 )
+			{
+				conv.setScale( scale * Math.signum( conv.getScale( ) ) );
+			}
+			else
+			{
+				double start = conv.invert( 0 );
+				double end = conv.invert( axis.getViewSpan( ) );
+				double mid = ( start + end ) * 0.5;
+				double newSpan = axis.getViewSpan( ) / scale;
+				
+				if( start < end )
+				{
+					conv.set( mid - newSpan / 2 , 0 , mid + newSpan / 2 , axis.getViewSpan( ) );
+				}
+				else
+				{
+					conv.set( mid + newSpan / 2 , 0 , mid - newSpan / 2 , axis.getViewSpan( ) );
+				}
+			}
+		}
+		
+		for( PlotAxis axis : axes )
+		{
+			axis.repaint( );
+			for( Component plot : axis.plots )
+			{
+				plot.repaint( );
+			}
+		}
+	}
 }

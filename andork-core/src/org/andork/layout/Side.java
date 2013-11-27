@@ -64,6 +64,13 @@ public enum Side
 		}
 		
 		@Override
+		public void stretch( Rectangle bounds , int location )
+		{
+			bounds.height += bounds.y - location;
+			bounds.y = location;
+		}
+		
+		@Override
 		public int get( Insets insets )
 		{
 			return insets.top;
@@ -137,6 +144,12 @@ public enum Side
 		public void setLocation( Rectangle bounds , int location )
 		{
 			bounds.y = location - bounds.height;
+		}
+		
+		@Override
+		public void stretch( Rectangle bounds , int location )
+		{
+			bounds.height = location - bounds.y;
 		}
 		
 		@Override
@@ -215,6 +228,13 @@ public enum Side
 		}
 		
 		@Override
+		public void stretch( Rectangle bounds , int location )
+		{
+			bounds.width += bounds.x - location;
+			bounds.x = location;
+		}
+		
+		@Override
 		public int get( Insets insets )
 		{
 			return insets.left;
@@ -287,6 +307,12 @@ public enum Side
 		public void setLocation( Rectangle bounds , int location )
 		{
 			bounds.x = location - bounds.width;
+		}
+		
+		@Override
+		public void stretch( Rectangle bounds , int location )
+		{
+			bounds.width = location - bounds.x;
 		}
 		
 		@Override
@@ -405,6 +431,8 @@ public enum Side
 	public abstract int location( Rectangle bounds );
 	
 	public abstract void setLocation( Rectangle bounds , int location );
+	
+	public abstract void stretch( Rectangle bounds , int location );
 	
 	public Point center( Rectangle bounds )
 	{

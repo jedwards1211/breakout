@@ -8,15 +8,17 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.swing.SwingUtilities;
 
+import org.andork.ui.MouseEventFaker;
+
 import com.andork.plot.PlotAxis.Orientation;
 
 public class PlotController extends MouseAdapter
 {
-	private Component	view;
-	private PlotAxis		haxis;
-	private PlotAxis		vaxis;
+	private Component			view;
+	private PlotAxisController	haxis;
+	private PlotAxisController	vaxis;
 	
-	public PlotController( Component view , PlotAxis haxis , PlotAxis vaxis )
+	public PlotController( Component view , PlotAxisController haxis , PlotAxisController vaxis )
 	{
 		super( );
 		this.view = view;
@@ -51,9 +53,12 @@ public class PlotController extends MouseAdapter
 		}
 	}
 	
-	private void retarget( MouseEvent e , PlotAxis axis )
+	private void retarget( MouseEvent e , PlotAxisController axis )
 	{
-		axis.dispatchEvent( convertForAxis( e , axis ) );
+		boolean enableZoom = axis.isEnableZoom( );
+		axis.setEnableZoom( true );
+		MouseEventFaker.dispatch( convertForAxis( e , axis.getView( ) ) , axis.getMouseHandler( ) );
+		axis.setEnableZoom( enableZoom );
 	}
 	
 	private void retarget( MouseEvent e )

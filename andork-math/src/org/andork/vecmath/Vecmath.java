@@ -1259,8 +1259,8 @@ public class Vecmath
 		mat[ 12 ] = 1 - mat[ 0 ] * right;
 		mat[ 5 ] = 2 / ( top - bottom );
 		mat[ 13 ] = 1 - mat[ 5 ] * top;
-		mat[ 10 ] = 2 / ( zFar - zNear );
-		mat[ 14 ] = 1 - mat[ 10 ] * zFar;
+		mat[ 10 ] = -2 / ( zFar - zNear );
+		mat[ 14 ] = mat[ 10 ] * zFar - 1;
 		
 		mat[ 15 ] = 1;
 		mat[ 4 ] = mat[ 8 ] = mat[ 1 ] = mat[ 9 ] = mat[ 2 ] = mat[ 6 ] = mat[ 7 ] = mat[ 11 ] = 0;
@@ -2761,8 +2761,8 @@ public class Vecmath
 		mat[ 12 ] = 1 - mat[ 0 ] * right;
 		mat[ 5 ] = 2 / ( top - bottom );
 		mat[ 13 ] = 1 - mat[ 5 ] * top;
-		mat[ 10 ] = 2 / ( zFar - zNear );
-		mat[ 14 ] = 1 - mat[ 10 ] * zFar;
+		mat[ 10 ] = -2 / ( zFar - zNear );
+		mat[ 14 ] = -1 - mat[ 10 ] * zFar;
 		
 		mat[ 15 ] = 1;
 		mat[ 4 ] = mat[ 8 ] = mat[ 1 ] = mat[ 9 ] = mat[ 2 ] = mat[ 6 ] = mat[ 7 ] = mat[ 11 ] = 0;
