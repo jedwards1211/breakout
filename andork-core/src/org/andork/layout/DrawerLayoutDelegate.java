@@ -13,7 +13,7 @@ import org.andork.layout.DelegatingLayoutManager.LayoutDelegate;
 
 public class DrawerLayoutDelegate implements LayoutDelegate
 {
-	boolean			open = true;
+	boolean			open		= true;
 	boolean			maximized;
 	boolean			animating;
 	
@@ -65,6 +65,14 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		}
 	}
 	
+	public void close( boolean animate )
+	{
+		if( open )
+		{
+			toggleOpen( animate );
+		}
+	}
+	
 	public void open( )
 	{
 		if( !open )
@@ -73,10 +81,23 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		}
 	}
 	
+	public void open( boolean animate )
+	{
+		if( !open )
+		{
+			toggleOpen( animate );
+		}
+	}
+	
 	public void toggleOpen( )
 	{
+		toggleOpen( true );
+	}
+	
+	public void toggleOpen( boolean animate )
+	{
 		open = !open;
-		animating = true;
+		animating = animate;
 		if( comp.getParent( ) != null )
 		{
 			comp.getParent( ).invalidate( );

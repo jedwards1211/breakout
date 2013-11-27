@@ -384,9 +384,9 @@ public class MapsView extends BasicJOGLSetup
 		layeredPane.setLayer( settingsButton , JLayeredPane.DEFAULT_LAYER + 2 );
 		layeredPane.setLayer( surveyTableDrawer , JLayeredPane.DEFAULT_LAYER + 3 );
 		layeredPane.setLayer( openSurveyTableDrawerButton , JLayeredPane.DEFAULT_LAYER + 4 );
-		final DrawerLayoutDelegate drawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT );
-		drawerDelegate.close( );
-		layeredPane.add( settingsPanel , drawerDelegate );
+		final DrawerLayoutDelegate settingsDrawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT );
+		settingsDrawerDelegate.close( false );
+		layeredPane.add( settingsPanel , settingsDrawerDelegate );
 		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( settingsPanel , Corner.TOP_LEFT , Side.LEFT );
 		tabDelegate.setInsets( new Insets( 10 , 5 , -10 , -5 ) );
 		layeredPane.add( settingsButton , tabDelegate );
@@ -438,7 +438,7 @@ public class MapsView extends BasicJOGLSetup
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				drawerDelegate.toggleOpen( );
+				settingsDrawerDelegate.toggleOpen( );
 			}
 		} );
 	}
