@@ -36,6 +36,10 @@ public class DelegatingLayoutManager implements LayoutManager2
 			{
 				bounds.add( layoutDelegate.desiredBounds( parent , comp , size ) );
 			}
+			else
+			{
+				bounds.add( new Rectangle( size.get( comp ) ) );
+			}
 		}
 		
 		bounds.width += bounds.x;

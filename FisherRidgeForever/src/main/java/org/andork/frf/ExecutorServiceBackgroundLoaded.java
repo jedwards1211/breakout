@@ -32,6 +32,7 @@ public abstract class ExecutorServiceBackgroundLoaded<T> extends BackgroundLoade
 				}
 				catch( Exception ex )
 				{
+					ex.printStackTrace( );
 					setError( ex );
 				}
 			}

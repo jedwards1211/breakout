@@ -9,9 +9,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
+import java.util.concurrent.ExecutorService;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
@@ -21,11 +26,18 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.JTabbedPane;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.andork.frf.model.SurveyShot;
+import org.andork.frf.update.UpdateProperties;
+import org.andork.frf.update.UpdateStatus;
+import org.andork.frf.update.UpdateStatusPanel;
+import org.andork.frf.update.UpdateStatusPanelController;
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
 import org.andork.jogl.basic.BasicJOGLObject.DistanceFragmentShader;
@@ -51,8 +63,10 @@ import org.andork.layout.DrawerLayoutDelegate;
 import org.andork.layout.Side;
 import org.andork.layout.TabLayoutDelegate;
 import org.andork.ui.ColorUtils;
+import org.andork.ui.DoSwing;
 import org.andork.ui.GradientFillBorder;
 import org.andork.ui.GridBagWizard;
+import org.andork.ui.I18n;
 import org.andork.ui.LayeredBorder;
 import org.andork.ui.GridBagWizard.DefaultAutoInsets;
 import org.andork.ui.InnerGradientBorder;
@@ -73,43 +87,86 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
-	final double[ ]		fromLoc		= new double[ 3 ];
-	final double[ ]		toLoc		= new double[ 3 ];
-	final double[ ]		toToLoc		= new double[ 3 ];
-	final double[ ]		leftAtTo	= new double[ 3 ];
-	final double[ ]		leftAtTo2	= new double[ 3 ];
-	final double[ ]		leftAtFrom	= new double[ 3 ];
+	final double[ ]				fromLoc		= new double[ 3 ];
+	final double[ ]				toLoc		= new double[ 3 ];
+	final double[ ]				toToLoc		= new double[ 3 ];
+	final double[ ]				leftAtTo	= new double[ 3 ];
+	final double[ ]				leftAtTo2	= new double[ 3 ];
+	final double[ ]				leftAtFrom	= new double[ 3 ];
 	
-	PlotAxis			xaxis;
-	PlotAxis			yaxis;
-	AxisLinkButton		axisLinkButton;
-	PlotAxis			distColorationAxis;
+	PlotAxis					xaxis;
+	PlotAxis					yaxis;
+	AxisLinkButton				axisLinkButton;
+	PlotAxis					distColorationAxis;
 	
-	PaintablePanel		settingsPanel;
-	JButton				settingsButton;
-	JSlider				mouseSensitivitySlider;
+	PaintablePanel				settingsPanel;
+	JButton						settingsButton;
+	JSlider						mouseSensitivitySlider;
 	
-	Plot				plot;
-	JPanel				plotPanel;
-	JPanel				mainPanel;
-	JLayeredPane		layeredPane;
+	Plot						plot;
+	JPanel						plotPanel;
+	JPanel						mainPanel;
+	JLayeredPane				layeredPane;
 	
-	PlotController		plotController;
-	MouseLooper			mouseLooper;
-	MouseAdapterChain	mouseAdapterChain;
+	PlotController				plotController;
+	MouseLooper					mouseLooper;
+	MouseAdapterChain			mouseAdapterChain;
 	
-	JComboBox			modeComboBox;
+	JComboBox					modeComboBox;
 	
-	BasicJOGLObject		fillObj;
-	Uniform1fv			fillNearDist;
-	Uniform1fv			fillFarDist;
-	BasicJOGLObject		lineObj;
-	Uniform1fv			lineNearDist;
-	Uniform1fv			lineFarDist;
+	BasicJOGLObject				fillObj;
+	Uniform1fv					fillNearDist;
+	Uniform1fv					fillFarDist;
+	BasicJOGLObject				lineObj;
+	Uniform1fv					lineNearDist;
+	Uniform1fv					lineFarDist;
+	
+	JLayeredPane				surveyTableDrawer;
+	
+	SurveyTable					surveyTable;
+	JScrollPane					surveyTableScrollPane;
+	
+	JPanel						statusBar;
+	UpdateStatusPanel			updateStatusPanel;
+	UpdateStatusPanelController	updateStatusPanelController;
+	
+	JButton						updateViewButton;
 	
 	public MapsView( )
 	{
 		super( );
+		
+		surveyTable = new SurveyTable( );
+		surveyTableScrollPane = new JScrollPane( surveyTable );
+		
+		surveyTableDrawer = new JLayeredPane( );
+		surveyTableDrawer.setLayout( new DelegatingLayoutManager( ) );
+		
+		JButton maximizeSurveyTableButton = new JButton( "Max" );
+		surveyTableDrawer.setLayer( maximizeSurveyTableButton , JLayeredPane.DEFAULT_LAYER + 1 );
+		
+		surveyTableDrawer.add( surveyTableScrollPane );
+		surveyTableDrawer.add( maximizeSurveyTableButton , new DrawerLayoutDelegate( maximizeSurveyTableButton , Corner.TOP_RIGHT , Side.TOP ) );
+		
+		final DrawerLayoutDelegate surveyTableDrawerDelegate = new DrawerLayoutDelegate( surveyTableDrawer , Side.BOTTOM , true );
+		
+		JButton openSurveyTableDrawerButton = new JButton( "\u2261" );
+		openSurveyTableDrawerButton.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				surveyTableDrawerDelegate.toggleOpen( );
+			}
+		} );
+		maximizeSurveyTableButton.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				surveyTableDrawerDelegate.toggleMaximized( );
+			}
+		} );
 		
 		scene.orthoFrame[ 4 ] = -10000f;
 		scene.orthoFrame[ 5 ] = 10000f;
@@ -148,8 +205,6 @@ public class MapsView extends BasicJOGLSetup
 		distColorationAxis.setMajorTickColor( Color.WHITE );
 		distColorationAxis.setMinorTickColor( Color.WHITE );
 		distColorationAxis.addPlot( plot );
-		distColorationAxis.setBorder( new InnerGradientBorder( new Insets( 0 , 4 , 0 , 0 ) , Color.BLACK ) );
-		OverrideInsetsBorder.override( distColorationAxis , new Insets( 0 , 0 , 0 , 0 ) );
 		
 		yaxis.getAxisConversion( ).set( 50 , 0 , -50 , 400 );
 		
@@ -237,6 +292,17 @@ public class MapsView extends BasicJOGLSetup
 		
 		perspectiveMode( );
 		
+		updateViewButton = new JButton( "Update View" );
+		
+		updateViewButton.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				updateModel( surveyTable.createShots( ) );
+			}
+		} );
+		
 		modeComboBox = new JComboBox( );
 		modeComboBox.addItem( "Perspective" );
 		modeComboBox.addItem( "Plan" );
@@ -244,23 +310,6 @@ public class MapsView extends BasicJOGLSetup
 		modeComboBox.addItem( "South-Facing Profile" );
 		modeComboBox.addItem( "East-Facing Profile" );
 		modeComboBox.addItem( "West-Facing Profile" );
-		
-		settingsPanel = new PaintablePanel( );
-		settingsPanel.addUnderpaintBorder( new GradientFillBorder(
-				Side.TOP , ColorUtils.darkerColor( settingsPanel.getBackground( ) , 0.05 ) ,
-				Side.BOTTOM , ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
-		settingsPanel.setBorder( new OverrideInsetsBorder(
-				new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
-				new Insets( 3 , 8 , 3 , 3 ) ) );
-		GridBagWizard w = GridBagWizard.create( settingsPanel );
-		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
-		JLabel modeLabel = new JLabel( "View:" );
-		w.put( modeLabel ).xy( 0 , 0 ).weightx( 1.0 ).west( );
-		w.put( modeComboBox ).below( modeLabel ).fillx( ).north( );
-		
-		settingsButton = new JButton( "=" );
-		settingsButton.setOpaque( false );
-		settingsButton.setMargin( new Insets( 5 , 10 , 5 , 10 ) );
 		
 		mouseSensitivitySlider = new JSlider( );
 		mouseSensitivitySlider.setValue( 20 );
@@ -276,22 +325,76 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
+		new DoSwing( )
+		{
+			@Override
+			public void run( )
+			{
+				URL updateUrl = null;
+				File updateDir = null;
+				File lastUpdateFile = null;
+				try
+				{
+					Properties props = UpdateProperties.getUpdateProperties( );
+					updateUrl = new URL( props.getProperty( UpdateProperties.SOURCE ) );
+					updateDir = new File( props.getProperty( UpdateProperties.UPDATE_DIR ) );
+					lastUpdateFile = new File( props.getProperty( UpdateProperties.LAST_UPDATE_FILE ) );
+				}
+				catch( MalformedURLException e1 )
+				{
+					e1.printStackTrace( );
+				}
+				
+				updateStatusPanel = new UpdateStatusPanel( new I18n( ) );
+				updateStatusPanel.setOpaque( false );
+				updateStatusPanel.setBorder( new EmptyBorder( 3 , 3 , 3 , 3 ) );
+				updateStatusPanel.setStatus( UpdateStatus.UNCHECKED );
+				updateStatusPanelController = new UpdateStatusPanelController( updateStatusPanel ,
+						lastUpdateFile , updateUrl , new File( updateDir , "update.zip" ) );
+				updateStatusPanelController.downloadUpdateIfAvailable( );
+			}
+		};
+		
+		settingsPanel = new PaintablePanel( );
+		settingsPanel.addUnderpaintBorder( new GradientFillBorder(
+				Side.TOP , ColorUtils.darkerColor( settingsPanel.getBackground( ) , 0.05 ) ,
+				Side.BOTTOM , ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
+		settingsPanel.setBorder( new OverrideInsetsBorder(
+				new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
+				new Insets( 3 , 8 , 3 , 3 ) ) );
+		GridBagWizard w = GridBagWizard.create( settingsPanel );
+		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
+		JLabel modeLabel = new JLabel( "View:" );
+		w.put( updateViewButton ).xy( 0 , 0 ).fillx( 1.0 );
+		w.put( modeLabel ).below( updateViewButton ).weightx( 1.0 ).west( );
+		w.put( modeComboBox ).below( modeLabel ).fillx( ).north( );
 		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
 		w.put( sensLabel ).below( modeComboBox ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).weighty( 1.0 ).north( );
+		
+		w.put( updateStatusPanel ).belowAll( ).fillx( ).south( );
+		
+		settingsButton = new JButton( "\u2261" );
+		settingsButton.setOpaque( false );
+		settingsButton.setMargin( new Insets( 10 , 5 , 10 , 5 ) );
 		
 		layeredPane = new JLayeredPane( );
 		layeredPane.setLayout( new DelegatingLayoutManager( ) );
 		layeredPane.setLayer( settingsPanel , JLayeredPane.DEFAULT_LAYER + 1 );
 		layeredPane.setLayer( settingsButton , JLayeredPane.DEFAULT_LAYER + 2 );
+		layeredPane.setLayer( surveyTableDrawer , JLayeredPane.DEFAULT_LAYER + 3 );
+		layeredPane.setLayer( openSurveyTableDrawerButton , JLayeredPane.DEFAULT_LAYER + 4 );
 		final DrawerLayoutDelegate drawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT );
 		drawerDelegate.close( );
 		layeredPane.add( settingsPanel , drawerDelegate );
-		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( settingsPanel , Corner.BOTTOM_LEFT , Side.LEFT );
-		int sbWidth = settingsButton.getPreferredSize( ).width;
-		tabDelegate.setInsets( new Insets( -10 , sbWidth / 2 , 10 , -sbWidth / 2 ) );
+		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( settingsPanel , Corner.TOP_LEFT , Side.LEFT );
+		tabDelegate.setInsets( new Insets( 10 , 5 , -10 , -5 ) );
 		layeredPane.add( settingsButton , tabDelegate );
 		layeredPane.add( plotPanel );
+		layeredPane.add( surveyTableDrawer , surveyTableDrawerDelegate );
+		TabLayoutDelegate openSurveyDrawerButtonDelegate = new TabLayoutDelegate( surveyTableDrawer , Corner.TOP_LEFT , Side.TOP );
+		openSurveyDrawerButtonDelegate.setInsets( new Insets( 5 , 10 , -5 , -10 ) );
+		layeredPane.add( openSurveyTableDrawerButton , openSurveyDrawerButtonDelegate );
 		
 		mainPanel = new JPanel( new BorderLayout( ) );
 		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
