@@ -6,7 +6,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
 import org.andork.jogl.basic.BasicJOGLScene;
-import org.andork.vecmath.Vecmath;
+import org.andork.math3d.Vecmath;
 
 
 public class BasicNavigator extends MouseAdapter

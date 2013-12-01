@@ -13,7 +13,7 @@ import javax.swing.JFrame;
 import com.jogamp.opengl.util.AnimatorBase;
 import com.jogamp.opengl.util.FPSAnimator;
 
-import static org.andork.vecmath.Vecmath.*;
+import static org.andork.math3d.Vecmath.*;
 
 public class TorquescapeTestFrame extends JFrame
 {

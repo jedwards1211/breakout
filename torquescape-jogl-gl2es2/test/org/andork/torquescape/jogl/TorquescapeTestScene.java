@@ -1,12 +1,12 @@
 package org.andork.torquescape.jogl;
 
-import static org.andork.vecmath.Vecmath.invAffine;
-import static org.andork.vecmath.Vecmath.lookAt;
-import static org.andork.vecmath.Vecmath.mmul;
-import static org.andork.vecmath.Vecmath.newMat4f;
-import static org.andork.vecmath.Vecmath.normalize;
-import static org.andork.vecmath.Vecmath.perspective;
-import static org.andork.vecmath.Vecmath.transpose;
+import static org.andork.math3d.Vecmath.invAffine;
+import static org.andork.math3d.Vecmath.lookAt;
+import static org.andork.math3d.Vecmath.mmul;
+import static org.andork.math3d.Vecmath.newMat4f;
+import static org.andork.math3d.Vecmath.normalize;
+import static org.andork.math3d.Vecmath.perspective;
+import static org.andork.math3d.Vecmath.transpose;
 
 import java.util.ArrayList;
 import java.util.Arrays;

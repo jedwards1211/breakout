@@ -16,7 +16,7 @@ import javax.swing.table.DefaultTableModel;
 
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.model.SurveyStation;
-import org.andork.vecmath.Vecmath;
+import org.andork.math3d.Vecmath;
 
 @SuppressWarnings( "serial" )
 public class SurveyTable extends JTable

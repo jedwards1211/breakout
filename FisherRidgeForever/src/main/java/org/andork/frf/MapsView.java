@@ -1,11 +1,11 @@
 package org.andork.frf;
 
+import static org.andork.math3d.Vecmath.newMat4f;
+import static org.andork.math3d.Vecmath.setf;
 import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
 import static org.andork.spatial.Rectmath.rayIntersects;
 import static org.andork.spatial.Rectmath.voidRectf;
-import static org.andork.vecmath.Vecmath.newMat4f;
-import static org.andork.vecmath.Vecmath.setf;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -82,14 +82,14 @@ import org.andork.jogl.shader.MainCodeBlock;
 import org.andork.jogl.shader.ShaderSegment;
 import org.andork.jogl.shader.SimpleLightingFragmentShader;
 import org.andork.jogl.shader.VariableDeclarations;
+import org.andork.math3d.LinePlaneIntersection3f;
+import org.andork.math3d.Vecmath;
 import org.andork.spatial.DefaultRfLeaf;
 import org.andork.spatial.RTrees;
 import org.andork.spatial.RfBranch;
 import org.andork.spatial.RfLeaf;
 import org.andork.spatial.RfNode;
 import org.andork.spatial.StrPack;
-import org.andork.vecmath.LinePlaneIntersection3f;
-import org.andork.vecmath.Vecmath;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.MouseAdapterChain;

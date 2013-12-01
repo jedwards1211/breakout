@@ -1,9 +1,9 @@
 package org.andork.torquescape.jogl.main;
 
-import static org.andork.vecmath.Vecmath.cross;
-import static org.andork.vecmath.Vecmath.invAffine;
-import static org.andork.vecmath.Vecmath.setColumn3;
-import static org.andork.vecmath.Vecmath.setf;
+import static org.andork.math3d.Vecmath.cross;
+import static org.andork.math3d.Vecmath.invAffine;
+import static org.andork.math3d.Vecmath.setColumn3;
+import static org.andork.math3d.Vecmath.setf;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -21,14 +21,14 @@ import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.basic.JOGLObject;
 import org.andork.jogl.basic.JOGLXformGroup;
-import org.andork.math.prim.Primitives;
+import org.andork.math3d.Primitives;
+import org.andork.math3d.Vecmath;
 import org.andork.torquescape.control.CameraMover;
 import org.andork.torquescape.control.ControlState;
 import org.andork.torquescape.control.Vehicle;
 import org.andork.torquescape.control.VehicleMover;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.normal.NormalGenerator;
-import org.andork.vecmath.Vecmath;
 
 public class TorquescapeScene extends BasicJOGLScene
 {

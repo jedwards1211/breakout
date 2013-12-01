@@ -4,7 +4,8 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.math.curve.ICurveWithNormals3f;
-import org.andork.vecmath.FloatOrientComputer;
+import org.andork.math3d.FloatOrientComputer;
+
 import static org.andork.vecmath.VecmathUtils.*;
 
 public class CurveXformFn implements IXformFn

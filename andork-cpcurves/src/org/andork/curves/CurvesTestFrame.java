@@ -41,11 +41,9 @@ public class CurvesTestFrame extends JFrame
 	
 	private void init( )
 	{
-		GLProfile glp = GLProfile.get( GLProfile.GL3 );
+		GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
 		GLCapabilities userCapsRequest = new GLCapabilities( glp );
-		glCanvas = new GLCanvas( userCapsRequest )
-		{
-		};
+		glCanvas = new GLCanvas( userCapsRequest );
 		
 		scene = new CurvesTestScene( );
 		

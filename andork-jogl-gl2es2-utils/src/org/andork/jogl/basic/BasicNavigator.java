@@ -1,6 +1,6 @@
 package org.andork.jogl.basic;
 
-import org.andork.vecmath.Vecmath;
+import org.andork.math3d.Vecmath;
 
 import com.jogamp.newt.Window;
 import com.jogamp.newt.event.MouseAdapter;

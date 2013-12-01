@@ -57,15 +57,10 @@ public class SimplePolygon
 		
 		gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vbo );
 		checkGLError( gl , "glBindBuffer" );
+		coords.position( 0 );
 		gl.glBufferData( GL2ES2.GL_ARRAY_BUFFER , coords.capacity( ) , coords , GL2ES2.GL_STATIC_DRAW );
 		checkGLError( gl , "glBufferData" );
-		
-		int coordIndex = gl.glGetAttribLocation( program , "coord" );
-		checkGLError( gl , "glGetAttribLocation" );
-		gl.glEnableVertexAttribArray( coordIndex );
-		checkGLError( gl , "glEnableVertexAttribArray" );
-		gl.glVertexAttribPointer( coordIndex , 3 , coordsType , false , coordsStride , 0 );
-		checkGLError( gl , "glVertexAttribPointer" );
+		gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , 0 );
 	}
 	
 	public void draw( GL2ES2 gl , float[ ] mvpMatrix )
@@ -83,7 +78,19 @@ public class SimplePolygon
 		gl.glUniform4fv( colorLocation , 1 , color , 0 );
 		checkGLError( gl , "glUniform4fv" );
 		
+		gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vbo );
+		checkGLError( gl , "glBindBuffer" );
+		
+		int coordIndex = gl.glGetAttribLocation( program , "coord" );
+		checkGLError( gl , "glGetAttribLocation" );
+		gl.glEnableVertexAttribArray( coordIndex );
+		checkGLError( gl , "glEnableVertexAttribArray" );
+		gl.glVertexAttribPointer( coordIndex , 3 , coordsType , false , coordsStride , 0 );
+		checkGLError( gl , "glVertexAttribPointer" );
+		
 		gl.glDrawArrays( GL2ES2.GL_LINE_STRIP , 0 , vertexCount );
 		checkGLError( gl , "glDrawArrays" );
+		
+		gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , 0 );
 	}
 }

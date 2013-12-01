@@ -1,9 +1,9 @@
 package org.andork.jogl.basic;
 
-import static org.andork.vecmath.Vecmath.invAffineToTranspose3x3;
-import static org.andork.vecmath.Vecmath.mmul3x3;
-import static org.andork.vecmath.Vecmath.mmulAffine;
-import static org.andork.vecmath.Vecmath.newMat4f;
+import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
+import static org.andork.math3d.Vecmath.mmul3x3;
+import static org.andork.math3d.Vecmath.mmulAffine;
+import static org.andork.math3d.Vecmath.newMat4f;
 
 import java.util.ArrayList;
 import java.util.List;

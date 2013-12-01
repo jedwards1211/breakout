@@ -1,6 +1,6 @@
 package org.andork.torquescape.jogl;
 
-import static org.andork.vecmath.Vecmath.normalize;
+import static org.andork.math3d.Vecmath.normalize;
 
 import java.util.ArrayList;
 import java.util.List;

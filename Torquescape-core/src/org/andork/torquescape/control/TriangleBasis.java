@@ -1,20 +1,20 @@
 package org.andork.torquescape.control;
 
-import static org.andork.vecmath.Vecmath.cross;
-import static org.andork.vecmath.Vecmath.dot3;
-import static org.andork.vecmath.Vecmath.invAffine;
-import static org.andork.vecmath.Vecmath.invertGeneral;
-import static org.andork.vecmath.Vecmath.length3;
-import static org.andork.vecmath.Vecmath.mmul;
-import static org.andork.vecmath.Vecmath.newMat4d;
-import static org.andork.vecmath.Vecmath.normalize3;
-import static org.andork.vecmath.Vecmath.setColumn3;
-import static org.andork.vecmath.Vecmath.sub3;
+import static org.andork.math3d.Vecmath.cross;
+import static org.andork.math3d.Vecmath.dot3;
+import static org.andork.math3d.Vecmath.invAffine;
+import static org.andork.math3d.Vecmath.invertGeneral;
+import static org.andork.math3d.Vecmath.length3;
+import static org.andork.math3d.Vecmath.mmul;
+import static org.andork.math3d.Vecmath.newMat4d;
+import static org.andork.math3d.Vecmath.normalize3;
+import static org.andork.math3d.Vecmath.setColumn3;
+import static org.andork.math3d.Vecmath.sub3;
 
 import java.nio.ByteBuffer;
 
+import org.andork.math3d.Vecmath;
 import org.andork.torquescape.model.Edge;
-import org.andork.vecmath.Vecmath;
 
 /**
  * Provides methods for transforming between 3 coordinate systems in a triangle:

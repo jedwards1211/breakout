@@ -1,7 +1,7 @@
 package org.andork.curves;
 
-import static org.andork.jogl.util.GLUtils.checkGLError;
-import static org.andork.jogl.util.GLUtils.loadShader;
+import static org.andork.jogl.util.JOGLUtils.checkGLError;
+import static org.andork.jogl.util.JOGLUtils.loadShader;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -9,8 +9,8 @@ import java.nio.ByteOrder;
 import javax.media.opengl.GL3;
 
 import org.andork.math.discrete.DiscreteMathUtils;
+import org.andork.math3d.MatrixUtils;
 import org.andork.util.ArrayUtils;
-import org.andork.vecmath.MatrixUtils;
 
 public class CurveVisualizer
 {

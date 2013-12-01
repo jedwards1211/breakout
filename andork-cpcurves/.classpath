@@ -6,8 +6,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/vecmath"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-utils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-bspline"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math3d"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-utils"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

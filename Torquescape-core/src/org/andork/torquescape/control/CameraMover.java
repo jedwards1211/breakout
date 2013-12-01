@@ -1,20 +1,20 @@
 package org.andork.torquescape.control;
 
-import static org.andork.vecmath.Vecmath.add3;
-import static org.andork.vecmath.Vecmath.mmulAffine;
-import static org.andork.vecmath.Vecmath.mpmulAffine;
-import static org.andork.vecmath.Vecmath.mvmulAffine;
-import static org.andork.vecmath.Vecmath.newMat4f;
-import static org.andork.vecmath.Vecmath.rotX;
-import static org.andork.vecmath.Vecmath.scale3;
-import static org.andork.vecmath.Vecmath.setColumn3;
-import static org.andork.vecmath.Vecmath.setd;
-import static org.andork.vecmath.Vecmath.setf;
+import static org.andork.math3d.Vecmath.add3;
+import static org.andork.math3d.Vecmath.mmulAffine;
+import static org.andork.math3d.Vecmath.mpmulAffine;
+import static org.andork.math3d.Vecmath.mvmulAffine;
+import static org.andork.math3d.Vecmath.newMat4f;
+import static org.andork.math3d.Vecmath.rotX;
+import static org.andork.math3d.Vecmath.scale3;
+import static org.andork.math3d.Vecmath.setColumn3;
+import static org.andork.math3d.Vecmath.setd;
+import static org.andork.math3d.Vecmath.setf;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import org.andork.vecmath.FloatOrientComputer;
+import org.andork.math3d.FloatOrientComputer;
 
 public class CameraMover
 {

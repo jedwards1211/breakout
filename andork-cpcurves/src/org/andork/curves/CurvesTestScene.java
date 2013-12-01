@@ -12,51 +12,42 @@ import javax.vecmath.Point2f;
 import org.andork.bspline.FloatArraySmoothRandomWalk;
 import org.andork.bspline.FloatArraySmoothRandomWalk.DefaultRandomPointGenerator;
 import org.andork.jogl.util.SimplePolygon;
-import org.andork.math.curve.FloatHolderType;
-import org.andork.math.curve.Point2fType;
-import org.andork.math.curve.SmoothRandomWalk;
-import org.andork.math.curve.SmoothRandomWalk.RandomFloatHolderGenerator;
-import org.andork.math.curve.SmoothRandomWalk.RandomPoint2fGenerator;
-import org.andork.vecmath.Vecmath;
-import org.omg.CORBA.FloatHolder;
+import org.andork.math3d.Vecmath;
 
 public class CurvesTestScene implements GLEventListener
 {
-	SimplePolygon						cpPolygon;
+	SimplePolygon					cpPolygon;
 	
-	final float[ ]						viewFrame			= { -1 , 1 , -1 , 1 };
+	final float[ ]					viewFrame			= { -1 , 1 , -1 , 1 };
 	
-	float[ ]							mvpMatrix			= Vecmath.newMat4f( );
+	float[ ]						mvpMatrix			= Vecmath.newMat4f( );
 	
-	float[ ]							modelMatrix			= Vecmath.newMat4f( );
-	float[ ]							viewMatrix			= Vecmath.newMat4f( );
-	float[ ]							projMatrix			= Vecmath.newMat4f( );
+	float[ ]						modelMatrix			= Vecmath.newMat4f( );
+	float[ ]						viewMatrix			= Vecmath.newMat4f( );
+	float[ ]						projMatrix			= Vecmath.newMat4f( );
 	
-	CurveVisualizer						visualizer			= new CurveVisualizer( 7 , 2 );
+	CurveVisualizer					visualizer			= new CurveVisualizer( 7 , 2 );
 	
-	int									width;
-	int									height;
+	int								width;
+	int								height;
 	
-	int									highlightedPoint	= 0;
-	float[ ]							transformedPoint	= new float[ 3 ];
+	int								highlightedPoint	= 0;
+	float[ ]						transformedPoint	= new float[ 3 ];
 	
-	FloatArraySmoothRandomWalk[ ]		pointWalks;
-	Point2f								p2f					= new Point2f( );
+	FloatArraySmoothRandomWalk[ ]	pointWalks;
+	Point2f							p2f					= new Point2f( );
 	
-	float[ ]							point				= new float[ 2 ];
+	float[ ]						point				= new float[ 2 ];
 	
-	SmoothRandomWalk<FloatHolder>[ ]	coefWalks;
-	FloatHolder							fh					= new FloatHolder( );
+	FloatArraySmoothRandomWalk[ ]	coefWalks;
+	float[ ]						coef				= new float[ 1 ];
 	
-	private long						lastAdvance			= 0;
+	private long					lastAdvance			= 0;
 	
 	@Override
 	public void init( GLAutoDrawable drawable )
 	{
 		pointWalks = new FloatArraySmoothRandomWalk[ visualizer.controlPoints.length / 2 ];
-		
-		Point2fType pointType = new Point2fType( );
-		RandomPoint2fGenerator generator = new RandomPoint2fGenerator( -2 , 2 );
 		
 		for( int i = 0 ; i < pointWalks.length ; i++ )
 		{
@@ -66,16 +57,13 @@ public class CurvesTestScene implements GLEventListener
 			visualizer.controlPoints[ i * 2 + 1 ] = point[ 1 ];
 		}
 		
-		coefWalks = new SmoothRandomWalk[ visualizer.controlPoints.length / 2 ];
-		
-		FloatHolderType floatHolderType = new FloatHolderType( );
-		RandomFloatHolderGenerator floatHolderGenerator = new RandomFloatHolderGenerator( -1 , 1 );
+		coefWalks = new FloatArraySmoothRandomWalk[ visualizer.controlPoints.length / 2 ];
 		
 		for( int i = 0 ; i < coefWalks.length ; i++ )
 		{
-			coefWalks[ i ] = new SmoothRandomWalk<FloatHolder>( 3 , 1 , floatHolderType , floatHolderGenerator );
-			coefWalks[ i ].advance( 0 , fh );
-			visualizer.setCoefficient( i , fh.value );
+			coefWalks[ i ] = new FloatArraySmoothRandomWalk( 3 , 1 , 1 , new DefaultRandomPointGenerator( -1 , 1 ) );
+			coefWalks[ i ].advance( 0 , coef );
+			visualizer.setCoefficient( i , coef[ 0 ] );
 		}
 		
 		GL3 gl = ( GL3 ) drawable.getGL( );
@@ -144,8 +132,8 @@ public class CurvesTestScene implements GLEventListener
 			
 			// for( int i = 0 ; i < coefWalks.length ; i++ )
 			// {
-			// coefWalks[ i ].advance( ( float ) ( time - lastAdvance ) / 1000f , fh );
-			// visualizer.setCoefficient( i , fh.value );
+			// coefWalks[ i ].advance( ( float ) ( time - lastAdvance ) / 1000f , coef );
+			// visualizer.setCoefficient( i , coef[0] );
 			// }
 			visualizer.printCoefficients( );
 			
@@ -158,16 +146,16 @@ public class CurvesTestScene implements GLEventListener
 		
 		visualizer.draw( gl , mvpMatrix );
 		
-		for( int i = 0 ; i < visualizer.numPoints ; i++ )
-		{
-			float scale = ( i == highlightedPoint ? 4f : 1.5f ) / width * ( viewFrame[ 1 ] - viewFrame[ 0 ] );
-			modelMatrix[ 0 ] = modelMatrix[ 5 ] = scale;
-			modelMatrix[ 3 ] = ( float ) visualizer.controlPoints[ i * 2 ];
-			modelMatrix[ 7 ] = ( float ) visualizer.controlPoints[ i * 2 + 1 ];
-			recomputeMVP( );
-			
-			cpPolygon.draw( gl , mvpMatrix );
-		}
+//		for( int i = 0 ; i < visualizer.numPoints ; i++ )
+//		{
+//			float scale = ( i == highlightedPoint ? 4f : 1.5f ) / width * ( viewFrame[ 1 ] - viewFrame[ 0 ] );
+//			modelMatrix[ 0 ] = modelMatrix[ 5 ] = scale;
+//			modelMatrix[ 3 ] = ( float ) visualizer.controlPoints[ i * 2 ];
+//			modelMatrix[ 7 ] = ( float ) visualizer.controlPoints[ i * 2 + 1 ];
+//			recomputeMVP( );
+//			
+//			cpPolygon.draw( gl , mvpMatrix );
+//		}
 		
 		Vecmath.setIdentity( modelMatrix );
 		

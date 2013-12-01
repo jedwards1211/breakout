@@ -1,9 +1,9 @@
 package org.andork.torquescape.jogl;
 
-import static org.andork.vecmath.Vecmath.mpmulAffine;
-import static org.andork.vecmath.Vecmath.mvmulAffine;
-import static org.andork.vecmath.Vecmath.normalize3;
-import static org.andork.vecmath.Vecmath.setd;
+import static org.andork.math3d.Vecmath.mpmulAffine;
+import static org.andork.math3d.Vecmath.mvmulAffine;
+import static org.andork.math3d.Vecmath.normalize3;
+import static org.andork.math3d.Vecmath.setd;
 
 import org.andork.torquescape.jogl.main.TorquescapeScene;
 import org.andork.torquescape.jogl.main.TorquescapeSetup;

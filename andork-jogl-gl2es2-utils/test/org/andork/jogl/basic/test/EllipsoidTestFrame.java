@@ -14,7 +14,7 @@ import org.andork.jogl.basic.BasicJOGLSetup;
 import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.util.NormalGenerator;
-import org.andork.math.prim.Primitives;
+import org.andork.math3d.Primitives;
 
 public class EllipsoidTestFrame extends BasicJOGLSetup
 {

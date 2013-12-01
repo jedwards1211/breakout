@@ -7,9 +7,9 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import org.andork.math.curve.SegmentedCurve3f;
+import org.andork.torquescape.model.coord.CoordUtils;
 import org.andork.torquescape.model.coord.FixedCoordFn;
 import org.andork.torquescape.model.coord.ICoordFn;
-import org.andork.torquescape.model.coord.CoordUtils;
 import org.andork.torquescape.model.coord.XformedCoordFn;
 import org.andork.torquescape.model.index.FixedIndexFn;
 import org.andork.torquescape.model.param.ConstantParamFn;

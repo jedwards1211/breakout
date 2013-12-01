@@ -1,6 +1,6 @@
 package org.andork.torquescape.model.coord;
 
-import static org.andork.vecmath.Vecmath.mpmulAffine;
+import static org.andork.math3d.Vecmath.mpmulAffine;
 
 import org.andork.torquescape.model.xform.IXformFn;
 

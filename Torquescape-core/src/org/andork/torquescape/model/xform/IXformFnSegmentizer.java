@@ -1,7 +1,7 @@
 package org.andork.torquescape.model.xform;
 
-import static org.andork.vecmath.Vecmath.mpmulAffine;
-import static org.andork.vecmath.Vecmath.mvmulAffine;
+import static org.andork.math3d.Vecmath.mpmulAffine;
+import static org.andork.math3d.Vecmath.mvmulAffine;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,8 @@
 package org.andork.jogl.basic;
 
-import static org.andork.vecmath.Vecmath.invAffineToTranspose3x3;
-import static org.andork.vecmath.Vecmath.newMat4f;
-import static org.andork.vecmath.Vecmath.perspective;
+import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
+import static org.andork.math3d.Vecmath.newMat4f;
+import static org.andork.math3d.Vecmath.perspective;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,8 +16,8 @@ import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
-import org.andork.pick.PickXform;
-import org.andork.vecmath.Vecmath;
+import org.andork.math3d.PickXform;
+import org.andork.math3d.Vecmath;
 
 public class BasicJOGLScene implements GLEventListener
 {

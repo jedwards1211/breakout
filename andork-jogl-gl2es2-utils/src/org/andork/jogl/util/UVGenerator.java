@@ -2,7 +2,7 @@ package org.andork.jogl.util;
 
 import java.nio.ByteBuffer;
 
-import static org.andork.vecmath.Vecmath.*;
+import static org.andork.math3d.Vecmath.*;
 
 public class UVGenerator
 {

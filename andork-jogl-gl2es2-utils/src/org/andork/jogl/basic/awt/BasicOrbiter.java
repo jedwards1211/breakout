@@ -1,20 +1,20 @@
 package org.andork.jogl.basic.awt;
 
-import static org.andork.vecmath.Vecmath.invAffine;
-import static org.andork.vecmath.Vecmath.mmulAffine;
-import static org.andork.vecmath.Vecmath.mvmulAffine;
-import static org.andork.vecmath.Vecmath.normalize3;
-import static org.andork.vecmath.Vecmath.rotY;
-import static org.andork.vecmath.Vecmath.setColumn3;
-import static org.andork.vecmath.Vecmath.setIdentity;
-import static org.andork.vecmath.Vecmath.setRotation;
+import static org.andork.math3d.Vecmath.invAffine;
+import static org.andork.math3d.Vecmath.mmulAffine;
+import static org.andork.math3d.Vecmath.mvmulAffine;
+import static org.andork.math3d.Vecmath.normalize3;
+import static org.andork.math3d.Vecmath.rotY;
+import static org.andork.math3d.Vecmath.setColumn3;
+import static org.andork.math3d.Vecmath.setIdentity;
+import static org.andork.math3d.Vecmath.setRotation;
 
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import org.andork.jogl.basic.BasicJOGLScene;
-import org.andork.vecmath.Vecmath;
+import org.andork.math3d.Vecmath;
 
 public class BasicOrbiter extends MouseAdapter
 {

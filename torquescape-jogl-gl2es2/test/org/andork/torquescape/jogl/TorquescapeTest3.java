@@ -1,10 +1,10 @@
 package org.andork.torquescape.jogl;
 
-import static org.andork.vecmath.Vecmath.mpmulAffine;
-import static org.andork.vecmath.Vecmath.mvmulAffine;
-import static org.andork.vecmath.Vecmath.normalize;
-import static org.andork.vecmath.Vecmath.normalize3;
-import static org.andork.vecmath.Vecmath.setd;
+import static org.andork.math3d.Vecmath.mpmulAffine;
+import static org.andork.math3d.Vecmath.mvmulAffine;
+import static org.andork.math3d.Vecmath.normalize;
+import static org.andork.math3d.Vecmath.normalize3;
+import static org.andork.math3d.Vecmath.setd;
 
 import java.util.ArrayList;
 import java.util.List;
