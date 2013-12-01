@@ -11,9 +11,6 @@ import java.awt.geom.Rectangle2D;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.vecmath.Point3f;
-
-import org.andork.vecmath.Vecmath;
 
 public class FastFloatBSplineEvaluatorTest extends JPanel
 {

@@ -7,5 +7,6 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/andork-core"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/andork-math"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.USER_LIBRARY/vecmath"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-math3d"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

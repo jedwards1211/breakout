@@ -1,6 +1,11 @@
 package org.andork.vecmath;
 
-import static org.andork.vecmath.Vecmath.*;
+import static org.andork.vecmath.Vecmath.cross;
+import static org.andork.vecmath.Vecmath.distance3;
+import static org.andork.vecmath.Vecmath.dot3;
+import static org.andork.vecmath.Vecmath.scaleAdd3;
+import static org.andork.vecmath.Vecmath.setd;
+import static org.andork.vecmath.Vecmath.sub3;
 
 /**
  * This is the utility class for finding the intersection of a line with a plane.

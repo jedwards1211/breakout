@@ -1,6 +1,5 @@
 package org.andork.vecmath;
 
-import java.math.BigDecimal;
 
 public class Vecmath
 {

@@ -3,14 +3,11 @@ package org.andork.vecmath;
 import static org.andork.vecmath.Vecmath.cross;
 import static org.andork.vecmath.Vecmath.invertGeneral;
 import static org.andork.vecmath.Vecmath.mmul;
-import static org.andork.vecmath.Vecmath.newMat4d;
+import static org.andork.vecmath.Vecmath.newMat4f;
 import static org.andork.vecmath.Vecmath.normalize3;
-import static org.andork.vecmath.Vecmath.setd;
 import static org.andork.vecmath.Vecmath.setColumn3;
 import static org.andork.vecmath.Vecmath.setRow4;
-
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import static org.andork.vecmath.Vecmath.setf;
 
 /**
  * Provides temporary variables and methods for computing various transforms:
@@ -21,64 +18,64 @@ import javax.vecmath.Vector3d;
  * </ul>
  * TransformComputer3f is not synchronized!
  */
-public class OrientComputer
+public class FloatOrientComputer
 {
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				m		= newMat4d( );
+	public float[ ]					m		= newMat4f( );
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				x1		= newMat4d( );
+	public float[ ]					x1		= newMat4f( );
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				x2		= newMat4d( );
+	public float[ ]					x2		= newMat4f( );
 	
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				p1		= new double[ 3 ];
+	public float[ ]					p1		= new float[ 3 ];
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				p2		= new double[ 3 ];
+	public float[ ]					p2		= new float[ 3 ];
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				v1		= new double[ 3 ];
+	public float[ ]					v1		= new float[ 3 ];
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				v2		= new double[ 3 ];
+	public float[ ]					v2		= new float[ 3 ];
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				v3		= new double[ 3 ];
+	public float[ ]					v3		= new float[ 3 ];
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				v4		= new double[ 3 ];
+	public float[ ]					v4		= new float[ 3 ];
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				v5		= new double[ 3 ];
+	public float[ ]					v5		= new float[ 3 ];
 	/**
 	 * This is used as a temporary in instance methods, but it is public so that you can use it instead of wasting memory by allocating more temporaries.
 	 */
-	public double[ ]				v6		= new double[ 3 ];
+	public float[ ]					v6		= new float[ 3 ];
 	
-	private static final double[ ]	ZERO	= new double[ 3 ];
+	private static final float[ ]	ZEROF	= new float[ 3 ];
 	
 	/**
 	 * Computes a shear from the public instance variables.
 	 * 
 	 * @return shear( p1 , v1 , v2 , v3 , p2 , v4 , v5 , v6 , result ).
 	 * 
-	 * @see #shear(Point3d, Vector3d, Vector3d, Vector3d, Point3d, Vector3d, Vector3d, Vector3d, double[])
+	 * @see #shear(float[], float[], float[], float[], float[], float[], float[], float[], float[])
 	 */
-	public double[ ] shear( double[ ] result )
+	public float[ ] shear( float[ ] result )
 	{
 		return shear( p1 , v1 , v2 , v3 , p2 , v4 , v5 , v6 , result );
 	}
@@ -96,21 +93,21 @@ public class OrientComputer
 	 * @param newZ
 	 *            the new z axis.
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing-point inaccuracy):
+	 *            the float[] to set such that (ignoring floating-point inaccuracy):
 	 *            <ul>
-	 *            <li> <code>result.transform( new Point3d( 0, 0, 0 ) )</code> equals <code>newOrigin</code>,</li>
-	 *            <li> <code>result.transform( new Vector3d( 1, 0, 0 ) )</code> equals <code>newX</code>,</li>
-	 *            <li> <code>result.transform( new Vector3d( 0, 1, 0 ) )</code> equals <code>newY</code>, and</li>
-	 *            <li> <code>result.transform( new Vector3d( 0, 0, 1 ) )</code> equals <code>newZ</code>.</li>
+	 *            <li> <code>result.transform( new float[]{ 0, 0, 0 } )</code> equals <code>newOrigin</code>,</li>
+	 *            <li> <code>result.transform( new float[]{ 1, 0, 0 } )</code> equals <code>newX</code>,</li>
+	 *            <li> <code>result.transform( new float[]{ 0, 1, 0 } )</code> equals <code>newY</code>, and</li>
+	 *            <li> <code>result.transform( new float[]{ 0, 0, 1 } )</code> equals <code>newZ</code>.</li>
 	 *            </ul>
 	 * @return <code>result</code>
 	 * 
 	 * @throws IllegalArgumentException
 	 *             if <code>newX</code>, <code>newY</code>, or <code>newZ</code> is zero
 	 */
-	public double[ ] shear( double[ ] newOrigin , double[ ] newX , double[ ] newY , double[ ] newZ , double[ ] result )
+	public float[ ] shear( float[ ] newOrigin , float[ ] newX , float[ ] newY , float[ ] newZ , float[ ] result )
 	{
-		if( newX.equals( ZERO ) || newY.equals( ZERO ) || newZ.equals( ZERO ) )
+		if( newX.equals( ZEROF ) || newY.equals( ZEROF ) || newZ.equals( ZEROF ) )
 		{
 			throw new IllegalArgumentException( "newX, newY, and newZ must be nonzero" );
 		}
@@ -144,7 +141,7 @@ public class OrientComputer
 	 * @param newZ
 	 *            the new z axis.
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing-point inaccuracy):
+	 *            the float[] to set such that (ignoring floating-point inaccuracy):
 	 *            <ul>
 	 *            <li> <code>result.transform( oldOrigin )</code> equals <code>newOrigin</code>,</li>
 	 *            <li> <code>result.transform( oldX )</code> equals <code>newX</code>,</li>
@@ -156,9 +153,9 @@ public class OrientComputer
 	 * @throws IllegalArgumentException
 	 *             if <code>newX</code>, <code>newY</code>, or <code>newZ</code> is zero
 	 */
-	public double[ ] shear( double[ ] oldOrigin , double[ ] oldX , double[ ] oldY , double[ ] oldZ , double[ ] newOrigin , double[ ] newX , double[ ] newY , double[ ] newZ , double[ ] result )
+	public float[ ] shear( float[ ] oldOrigin , float[ ] oldX , float[ ] oldY , float[ ] oldZ , float[ ] newOrigin , float[ ] newX , float[ ] newY , float[ ] newZ , float[ ] result )
 	{
-		if( oldX.equals( ZERO ) || oldY.equals( ZERO ) || oldZ.equals( ZERO ) || newX.equals( ZERO ) || newY.equals( ZERO ) || newZ.equals( ZERO ) )
+		if( oldX.equals( ZEROF ) || oldY.equals( ZEROF ) || oldZ.equals( ZEROF ) || newX.equals( ZEROF ) || newY.equals( ZEROF ) || newZ.equals( ZEROF ) )
 		{
 			throw new IllegalArgumentException( "oldX, oldY, oldZ, newX, newY, and newZ must be nonzero" );
 		}
@@ -180,7 +177,7 @@ public class OrientComputer
 	 * @param newX
 	 *            the x axis of the new reference frame.
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing point inaccuracy):
+	 *            the float[] to set such that (ignoring floating point inaccuracy):
 	 *            <ul>
 	 *            <li> <code>result.transform( oldX )</code> will equal <code>newX</code></li>
 	 *            <li> <code>result.transform( n )</code> will equal <code>n</code></li> for any vector <code>n</code> perpendicular to <code>oldX</code> and
@@ -191,12 +188,12 @@ public class OrientComputer
 	 * @throws IllegalArgumentException
 	 *             if <code>oldX</code> or <code>newX</code> is zero.
 	 * 
-	 * @see #orient(double[], double[], double[], double[], double[], double[], double[])
+	 * @see #orient(float[], float[], float[], float[], float[], float[], float[])
 	 */
-	public double[ ] orientInPlace( double oldAxisX , double oldAxisY , double oldAxisZ , double[ ] newAxis , double[ ] result )
+	public float[ ] orientInPlace( float oldAxisX , float oldAxisY , float oldAxisZ , float[ ] newAxis , float[ ] result )
 	{
-		setd( v1 , oldAxisX , oldAxisY , oldAxisZ );
-		return orient( ZERO , v1 , ZERO , newAxis , result );
+		setf( v1 , oldAxisX , oldAxisY , oldAxisZ );
+		return orient( ZEROF , v1 , ZEROF , newAxis , result );
 	}
 	
 	/**
@@ -208,7 +205,7 @@ public class OrientComputer
 	 * @param newX
 	 *            the x axis of the new reference frame.
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing point inaccuracy):
+	 *            the float[] to set such that (ignoring floating point inaccuracy):
 	 *            <ul>
 	 *            <li> <code>result.transform( oldX )</code> will equal <code>newX</code></li>
 	 *            <li> <code>result.transform( n )</code> will equal <code>n</code></li> for any vector <code>n</code> perpendicular to <code>oldX</code> and
@@ -219,12 +216,12 @@ public class OrientComputer
 	 * @throws IllegalArgumentException
 	 *             if <code>oldX</code> or <code>newX</code> is zero.
 	 * 
-	 * @see #orient(double[], double[], double[], double[], double[], double[], double[])
+	 * @see #orient(float[], float[], float[], float[], float[], float[], float[])
 	 */
-	public double[ ] orientInPlace( double[ ] oldAxis , double newAxisX , double newAxisY , double newAxisZ , double[ ] result )
+	public float[ ] orientInPlace( float[ ] oldAxis , float newAxisX , float newAxisY , float newAxisZ , float[ ] result )
 	{
-		setd( v4 , newAxisX , newAxisY , newAxisZ );
-		return orient( ZERO , oldAxis , ZERO , v4 , result );
+		setf( v4 , newAxisX , newAxisY , newAxisZ );
+		return orient( ZEROF , oldAxis , ZEROF , v4 , result );
 	}
 	
 	/**
@@ -236,7 +233,7 @@ public class OrientComputer
 	 * @param newX
 	 *            the x axis of the new reference frame.
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing point inaccuracy):
+	 *            the float[] to set such that (ignoring floating point inaccuracy):
 	 *            <ul>
 	 *            <li> <code>result.transform( oldX )</code> will equal <code>newX</code></li>
 	 *            <li> <code>result.transform( n )</code> will equal <code>n</code></li> for any vector <code>n</code> perpendicular to <code>oldX</code> and
@@ -247,11 +244,11 @@ public class OrientComputer
 	 * @throws IllegalArgumentException
 	 *             if <code>oldX</code> or <code>newX</code> is zero.
 	 * 
-	 * @see #orient(double[], double[], double[], double[], double[], double[], double[])
+	 * @see #orient(float[], float[], float[], float[], float[], float[], float[])
 	 */
-	public double[ ] orientInPlace( double[ ] oldX , double[ ] newX , double[ ] result )
+	public float[ ] orientInPlace( float[ ] oldX , float[ ] newX , float[ ] result )
 	{
-		return orient( ZERO , oldX , ZERO , newX , result );
+		return orient( ZEROF , oldX , ZEROF , newX , result );
 	}
 	
 	/**
@@ -267,7 +264,7 @@ public class OrientComputer
 	 * @param newX
 	 *            the x axis of the new reference frame.
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing point inaccuracy):
+	 *            the float[] to set such that (ignoring floating point inaccuracy):
 	 *            <ul>
 	 *            <li> <code>result.transform( oldOrigin )</code> will equal <code>newOrigin</code></li>
 	 *            <li> <code>result.transform( oldX )</code> will equal <code>newX</code></li>
@@ -279,15 +276,15 @@ public class OrientComputer
 	 * @throws IllegalArgumentException
 	 *             if <code>oldX</code> or <code>newX</code> is zero.
 	 * 
-	 * @see #orient(double[], double[], double[], double[], double[], double[], double[])
+	 * @see #orient(float[], float[], float[], float[], float[], float[], float[])
 	 */
-	public double[ ] orient( double[ ] oldOrigin , double[ ] oldX , double[ ] newOrigin , double[ ] newX , double[ ] result )
+	public float[ ] orient( float[ ] oldOrigin , float[ ] oldX , float[ ] newOrigin , float[ ] newX , float[ ] result )
 	{
 		normalize3( oldX , v1 );
 		normalize3( newX , v4 );
 		
 		cross( v1 , v4 , v2 );
-		setd( v5 , v2 );
+		setf( v5 , v2 );
 		
 		if( v2[ 0 ] == 0 && v2[ 1 ] == 0 && v2[ 2 ] == 0 )
 		{
@@ -308,7 +305,7 @@ public class OrientComputer
 	/**
 	 * Creates a transform that orients and object from one coordinate reference frame to another without translation.
 	 * 
-	 * @see #orient(double[], double[], double[], double[], double[], double[], double[])
+	 * @see #orient(float[], float[], float[], float[], float[], float[], float[])
 	 * @param oldX
 	 *            the x axis of the old reference frame (whatever direction you want; it doesn't have to be (1, 0, 0))
 	 * @param oldY
@@ -320,7 +317,7 @@ public class OrientComputer
 	 *            the y axis of the new reference frame (if not perpendicular to <code>newX</code>, it will be replaced with a vector perpendicular to
 	 *            <code>newX</code> at the same angle around <code>newX</code>).
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing point inaccuracy):
+	 *            the float[] to set such that (ignoring floating point inaccuracy):
 	 *            <ul>
 	 *            <li> <code>result.transform( oldX )</code> will equal <code>newX</code></li>
 	 *            <li> <code>result.transform( oldY )</code> will equal <code>newY</code></li>
@@ -335,9 +332,9 @@ public class OrientComputer
 	 *             <li> <code>newX</code> and <code>newY</code> are parallel.</li>
 	 *             </ul>
 	 */
-	public double[ ] orientInPlace( double[ ] oldX , double[ ] oldY , double[ ] newX , double[ ] newY , double[ ] result )
+	public float[ ] orientInPlace( float[ ] oldX , float[ ] oldY , float[ ] newX , float[ ] newY , float[ ] result )
 	{
-		return orient( ZERO , oldX , oldY , ZERO , newX , newY , result );
+		return orient( ZEROF , oldX , oldY , ZEROF , newX , newY , result );
 	}
 	
 	/**
@@ -377,7 +374,7 @@ public class OrientComputer
 	 *            the y axis of the new reference frame (if not perpendicular to <code>newX</code>, it will be replaced with a vector perpendicular to
 	 *            <code>newX</code> at the same angle around <code>newX</code>).
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing point inaccuracy):
+	 *            the float[] to set such that (ignoring floating point inaccuracy):
 	 *            <ul>
 	 *            <li> <code>result.transform( oldOrigin )</code> will equal <code>newOrigin</code></li>
 	 *            <li> <code>result.transform( oldX )</code> will equal <code>newX</code></li>
@@ -393,9 +390,9 @@ public class OrientComputer
 	 *             <li> <code>newX</code> and <code>newY</code> are parallel.</li>
 	 *             </ul>
 	 */
-	public double[ ] orient( double[ ] oldOrigin , double[ ] oldX , double[ ] oldY , double[ ] newOrigin , double[ ] newX , double[ ] newY , double[ ] result )
+	public float[ ] orient( float[ ] oldOrigin , float[ ] oldX , float[ ] oldY , float[ ] newOrigin , float[ ] newX , float[ ] newY , float[ ] result )
 	{
-		if( oldX.equals( ZERO ) || oldY.equals( ZERO ) || newX.equals( ZERO ) || newY.equals( ZERO ) )
+		if( oldX.equals( ZEROF ) || oldY.equals( ZEROF ) || newX.equals( ZEROF ) || newY.equals( ZEROF ) )
 		{
 			throw new IllegalArgumentException( "oldX, oldY, newX, and newY must be nonzero" );
 		}
@@ -458,7 +455,7 @@ public class OrientComputer
 	 *            the y axis of the new reference frame (if not perpendicular to <code>newX</code>, it will be replaced with a vector perpendicular to
 	 *            <code>newX</code> at the same angle around <code>newX</code>).
 	 * @param result
-	 *            the double[] to set such that (ignoring doubleing point inaccuracy):
+	 *            the float[] to set such that (ignoring floating point inaccuracy):
 	 *            <ul>
 	 *            <li> <code>result.transform( oldOrigin )</code> will equal <code>newOrigin</code></li>
 	 *            <li> <code>result.transform( oldX )</code> will equal <code>newX</code></li>
@@ -474,10 +471,10 @@ public class OrientComputer
 	 *             <li> <code>newX</code> and <code>newY</code> are parallel.</li>
 	 *             </ul>
 	 */
-	public double[ ] orient( double oldOriginX , double oldOriginY , double oldOriginZ ,
-			double oldXx , double oldXy , double oldXz ,
-			double oldYx , double oldYy , double oldYz ,
-			double[ ] newOrigin , double[ ] newX , double[ ] newY , double[ ] result )
+	public float[ ] orient( float oldOriginX , float oldOriginY , float oldOriginZ ,
+			float oldXx , float oldXy , float oldXz ,
+			float oldYx , float oldYy , float oldYz ,
+			float[ ] newOrigin , float[ ] newX , float[ ] newY , float[ ] result )
 	{
 		if( oldXx == 0 && oldXy == 0 && oldXz == 0 )
 		{
@@ -515,7 +512,7 @@ public class OrientComputer
 		normalize3( v6 );
 		cross( v6 , v4 , v5 );
 		
-		setd( p1 , oldOriginX , oldOriginY , oldOriginZ );
+		setf( p1 , oldOriginX , oldOriginY , oldOriginZ );
 		return shear( p1 , v1 , v2 , v3 , newOrigin , v4 , v5 , v6 , result );
 	}
 }

@@ -2,8 +2,6 @@ package org.andork.vecmath;
 
 import java.util.Arrays;
 
-import javax.vecmath.SingularMatrixException;
-
 /**
  * a.k.a. Andy's Magical Matrix Manipulator
  * 
