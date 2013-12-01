@@ -1,5 +1,12 @@
 package org.andork.frf;
 
+import static org.andork.spatial.Rectmath.nmax;
+import static org.andork.spatial.Rectmath.nmin;
+import static org.andork.spatial.Rectmath.rayIntersects;
+import static org.andork.spatial.Rectmath.voidRectf;
+import static org.andork.vecmath.Vecmath.newMat4f;
+import static org.andork.vecmath.Vecmath.setf;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -9,14 +16,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
 
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
@@ -28,19 +37,35 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.JTabbedPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.andork.awt.ColorUtils;
+import org.andork.awt.DoSwing;
+import org.andork.awt.GradientFillBorder;
+import org.andork.awt.GridBagWizard;
+import org.andork.awt.I18n;
+import org.andork.awt.InnerGradientBorder;
+import org.andork.awt.LayeredBorder;
+import org.andork.awt.OverrideInsetsBorder;
+import org.andork.awt.PaintablePanel;
+import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.awt.layout.Corner;
+import org.andork.awt.layout.DelegatingLayoutManager;
+import org.andork.awt.layout.DrawerLayoutDelegate;
+import org.andork.awt.layout.Side;
+import org.andork.awt.layout.TabLayoutDelegate;
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.update.UpdateProperties;
 import org.andork.frf.update.UpdateStatus;
 import org.andork.frf.update.UpdateStatusPanel;
 import org.andork.frf.update.UpdateStatusPanelController;
+import org.andork.generic.Visitor;
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
 import org.andork.jogl.basic.BasicJOGLObject.DistanceFragmentShader;
+import org.andork.jogl.basic.BasicJOGLObject.FlatFragmentShader;
 import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
 import org.andork.jogl.basic.BasicJOGLScene;
 import org.andork.jogl.basic.BufferHelper;
@@ -57,21 +82,13 @@ import org.andork.jogl.shader.MainCodeBlock;
 import org.andork.jogl.shader.ShaderSegment;
 import org.andork.jogl.shader.SimpleLightingFragmentShader;
 import org.andork.jogl.shader.VariableDeclarations;
-import org.andork.layout.Corner;
-import org.andork.layout.DelegatingLayoutManager;
-import org.andork.layout.DrawerLayoutDelegate;
-import org.andork.layout.Side;
-import org.andork.layout.TabLayoutDelegate;
-import org.andork.ui.ColorUtils;
-import org.andork.ui.DoSwing;
-import org.andork.ui.GradientFillBorder;
-import org.andork.ui.GridBagWizard;
-import org.andork.ui.I18n;
-import org.andork.ui.LayeredBorder;
-import org.andork.ui.GridBagWizard.DefaultAutoInsets;
-import org.andork.ui.InnerGradientBorder;
-import org.andork.ui.OverrideInsetsBorder;
-import org.andork.ui.PaintablePanel;
+import org.andork.spatial.DefaultRfLeaf;
+import org.andork.spatial.RTrees;
+import org.andork.spatial.RfBranch;
+import org.andork.spatial.RfLeaf;
+import org.andork.spatial.RfNode;
+import org.andork.spatial.StrPack;
+import org.andork.vecmath.LinePlaneIntersection3f;
 import org.andork.vecmath.Vecmath;
 
 import com.andork.plot.AxisLinkButton;
@@ -87,50 +104,63 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
-	final double[ ]				fromLoc		= new double[ 3 ];
-	final double[ ]				toLoc		= new double[ 3 ];
-	final double[ ]				toToLoc		= new double[ 3 ];
-	final double[ ]				leftAtTo	= new double[ 3 ];
-	final double[ ]				leftAtTo2	= new double[ 3 ];
-	final double[ ]				leftAtFrom	= new double[ 3 ];
+	final double[ ]					fromLoc			= new double[ 3 ];
+	final double[ ]					toLoc			= new double[ 3 ];
+	final double[ ]					toToLoc			= new double[ 3 ];
+	final double[ ]					leftAtTo		= new double[ 3 ];
+	final double[ ]					leftAtTo2		= new double[ 3 ];
+	final double[ ]					leftAtFrom		= new double[ 3 ];
 	
-	PlotAxis					xaxis;
-	PlotAxis					yaxis;
-	AxisLinkButton				axisLinkButton;
-	PlotAxis					distColorationAxis;
+	PlotAxis						xaxis;
+	PlotAxis						yaxis;
+	AxisLinkButton					axisLinkButton;
+	PlotAxis						distColorationAxis;
 	
-	PaintablePanel				settingsPanel;
-	JButton						settingsButton;
-	JSlider						mouseSensitivitySlider;
+	PaintablePanel					settingsPanel;
+	JButton							settingsButton;
+	JSlider							mouseSensitivitySlider;
 	
-	Plot						plot;
-	JPanel						plotPanel;
-	JPanel						mainPanel;
-	JLayeredPane				layeredPane;
+	Plot							plot;
+	JPanel							plotPanel;
+	JPanel							mainPanel;
+	JLayeredPane					layeredPane;
 	
-	PlotController				plotController;
-	MouseLooper					mouseLooper;
-	MouseAdapterChain			mouseAdapterChain;
+	PlotController					plotController;
+	MouseLooper						mouseLooper;
+	MouseAdapterChain				mouseAdapterChain;
 	
-	JComboBox					modeComboBox;
+	JComboBox						modeComboBox;
 	
-	BasicJOGLObject				fillObj;
-	Uniform1fv					fillNearDist;
-	Uniform1fv					fillFarDist;
-	BasicJOGLObject				lineObj;
-	Uniform1fv					lineNearDist;
-	Uniform1fv					lineFarDist;
+	BasicJOGLObject					fillObj;
+	Uniform1fv						fillNearDist;
+	Uniform1fv						fillFarDist;
+	BasicJOGLObject					lineObj;
+	Uniform1fv						lineNearDist;
+	Uniform1fv						lineFarDist;
 	
-	JLayeredPane				surveyTableDrawer;
+	JLayeredPane					surveyTableDrawer;
 	
-	SurveyTable					surveyTable;
-	JScrollPane					surveyTableScrollPane;
+	SurveyTable						surveyTable;
+	JScrollPane						surveyTableScrollPane;
 	
-	JPanel						statusBar;
-	UpdateStatusPanel			updateStatusPanel;
-	UpdateStatusPanelController	updateStatusPanelController;
+	JPanel							statusBar;
+	UpdateStatusPanel				updateStatusPanel;
+	UpdateStatusPanelController		updateStatusPanelController;
 	
-	JButton						updateViewButton;
+	JButton							updateViewButton;
+	
+	List<SurveyShot>				surveyShots;
+	RfNode<Integer>					rtree;
+	
+	float[ ]						v				= newMat4f( );
+	
+	int								debugMbrCount	= 0;
+	List<BasicJOGLObject>			debugMbrs		= new ArrayList<BasicJOGLObject>( );
+	
+	final LinePlaneIntersection3f	lpx				= new LinePlaneIntersection3f( );
+	final float[ ]					p0				= new float[ 3 ];
+	final float[ ]					p1				= new float[ 3 ];
+	final float[ ]					p2				= new float[ 3 ];
 	
 	public MapsView( )
 	{
@@ -456,50 +486,60 @@ public class MapsView extends BasicJOGLSetup
 	{
 		orthoMode( );
 		
-		Vecmath.setRow4( scene.v , 0 , 1 , 0 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 1 , 0 , 0 , -1 , 0 );
-		Vecmath.setRow4( scene.v , 2 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 3 , 0 , 0 , 0 , 1 );
+		scene.getViewXform( v );
+		Vecmath.setRow4( v , 0 , 1 , 0 , 0 , 0 );
+		Vecmath.setRow4( v , 1 , 0 , 0 , -1 , 0 );
+		Vecmath.setRow4( v , 2 , 0 , 1 , 0 , 0 );
+		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
+		scene.setViewXform( v );
 	}
 	
 	public void northFacingProfileMode( )
 	{
 		orthoMode( );
 		
-		Vecmath.setRow4( scene.v , 0 , 1 , 0 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 1 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 2 , 0 , 0 , 1 , 0 );
-		Vecmath.setRow4( scene.v , 3 , 0 , 0 , 0 , 1 );
+		scene.getViewXform( v );
+		Vecmath.setRow4( v , 0 , 1 , 0 , 0 , 0 );
+		Vecmath.setRow4( v , 1 , 0 , 1 , 0 , 0 );
+		Vecmath.setRow4( v , 2 , 0 , 0 , 1 , 0 );
+		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
+		scene.setViewXform( v );
 	}
 	
 	public void southFacingProfileMode( )
 	{
 		orthoMode( );
 		
-		Vecmath.setRow4( scene.v , 0 , -1 , 0 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 1 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 2 , 0 , 0 , -1 , 0 );
-		Vecmath.setRow4( scene.v , 3 , 0 , 0 , 0 , 1 );
+		scene.getViewXform( v );
+		Vecmath.setRow4( v , 0 , -1 , 0 , 0 , 0 );
+		Vecmath.setRow4( v , 1 , 0 , 1 , 0 , 0 );
+		Vecmath.setRow4( v , 2 , 0 , 0 , -1 , 0 );
+		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
+		scene.setViewXform( v );
 	}
 	
 	public void eastFacingProfileMode( )
 	{
 		orthoMode( );
 		
-		Vecmath.setRow4( scene.v , 0 , 0 , 0 , 1 , 0 );
-		Vecmath.setRow4( scene.v , 1 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 2 , -1 , 0 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 3 , 0 , 0 , 0 , 1 );
+		scene.getViewXform( v );
+		Vecmath.setRow4( v , 0 , 0 , 0 , 1 , 0 );
+		Vecmath.setRow4( v , 1 , 0 , 1 , 0 , 0 );
+		Vecmath.setRow4( v , 2 , -1 , 0 , 0 , 0 );
+		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
+		scene.setViewXform( v );
 	}
 	
 	public void westFacingProfileMode( )
 	{
 		orthoMode( );
 		
-		Vecmath.setRow4( scene.v , 0 , 0 , 0 , -1 , 0 );
-		Vecmath.setRow4( scene.v , 1 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 2 , 1 , 0 , 0 , 0 );
-		Vecmath.setRow4( scene.v , 3 , 0 , 0 , 0 , 1 );
+		scene.getViewXform( v );
+		Vecmath.setRow4( v , 0 , 0 , 0 , -1 , 0 );
+		Vecmath.setRow4( v , 1 , 0 , 1 , 0 , 0 );
+		Vecmath.setRow4( v , 2 , 1 , 0 , 0 , 0 );
+		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
+		scene.setViewXform( v );
 	}
 	
 	private void orthoMode( )
@@ -527,8 +567,177 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain.addMouseAdapter( navigator );
 		mouseAdapterChain.addMouseAdapter( orbiter );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
+		mouseAdapterChain.addMouseAdapter( new MouseAdapter( )
+		{
+			@Override
+			public void mouseMoved( MouseEvent e )
+			{
+				float[ ] origin = new float[ 3 ];
+				float[ ] direction = new float[ 3 ];
+				scene.pickXform( ).getOrigin( origin );
+				scene.pickXform( ).xform( e.getX( ) , e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , direction , 0 );
+				
+				System.out.println( Arrays.toString( origin ) + ", " + Arrays.toString( direction ) );
+				
+				for( BasicJOGLObject obj : debugMbrs )
+				{
+					scene.destroyLater( obj );
+					scene.remove( obj );
+				}
+				
+				debugMbrs = new ArrayList<BasicJOGLObject>( );
+				
+				if( rtree != null )
+				{
+					List<PickResult<Integer>> pickResults = new ArrayList<PickResult<Integer>>( );
+					
+					pickNodes( rtree , origin , direction , debugMbrs , pickResults );
+					
+					for( BasicJOGLObject obj : debugMbrs )
+					{
+						scene.add( obj );
+						scene.initLater( obj );
+					}
+					
+					canvas.display( );
+				}
+			}
+		} );
 		
 		scene.setOrthoMode( false );
+	}
+	
+	private static class PickResult<T>
+	{
+		final float[ ]	location	= new float[ 3 ];
+		float			distance;
+		T				picked;
+	}
+	
+	private boolean pickNodes( RfNode<Integer> node , float[ ] rayOrigin , float[ ] rayDirection , List<BasicJOGLObject> renderedMbrs , List<PickResult<Integer>> pickResults )
+	{
+		boolean render = false;
+		
+		if( rayIntersects( rayOrigin , rayDirection , node.mbr( ) ) )
+		{
+			PickResult<Integer> result = null;
+			
+			if( node instanceof RfBranch )
+			{
+				for( RfNode<Integer> child : ( ( RfBranch ) node ).children( ) )
+				{
+					render |= pickNodes( child , rayOrigin , rayDirection , renderedMbrs , pickResults );
+				}
+			}
+			else if( node instanceof RfLeaf )
+			{
+				int shotIndex = ( ( RfLeaf<Integer> ) node ).object( );
+				ByteBuffer indexBuffer = fillObj.indexBuffer( );
+				ByteBuffer vertBuffer = fillObj.vertexBuffer( 0 );
+				indexBuffer.position( shotIndex * 24 * 4 );
+				for( int i = 0 ; i < 8 ; i++ )
+				{
+					int i0 = indexBuffer.getInt( );
+					int i1 = indexBuffer.getInt( );
+					int i2 = indexBuffer.getInt( );
+					
+					vertBuffer.position( i0 * 24 );
+					p0[ 0 ] = vertBuffer.getFloat( );
+					p0[ 1 ] = vertBuffer.getFloat( );
+					p0[ 2 ] = vertBuffer.getFloat( );
+					
+					vertBuffer.position( i1 * 24 );
+					p1[ 0 ] = vertBuffer.getFloat( );
+					p1[ 1 ] = vertBuffer.getFloat( );
+					p1[ 2 ] = vertBuffer.getFloat( );
+					
+					vertBuffer.position( i2 * 24 );
+					p2[ 0 ] = vertBuffer.getFloat( );
+					p2[ 1 ] = vertBuffer.getFloat( );
+					p2[ 2 ] = vertBuffer.getFloat( );
+					
+					try
+					{
+						lpx.lineFromRay( rayOrigin , rayDirection );
+						lpx.planeFromPoints( p0 , p1 , p2 );
+						lpx.findIntersection( );
+						if( lpx.isPointIntersection( ) && lpx.isOnRay( ) && lpx.isInTriangle( ) )
+						{
+							if( result == null || lpx.t < result.distance )
+							{
+								result = new PickResult<Integer>( );
+								result.picked = shotIndex;
+								result.distance = lpx.t;
+								setf( result.location , lpx.result );
+							}
+						}
+					}
+					catch( Exception ex )
+					{
+						
+					}
+				}
+				
+				if( result != null )
+				{
+					render = true;
+					
+					pickResults.add( result );
+				}
+				
+				vertBuffer.position( 0 );
+				indexBuffer.position( 0 );
+			}
+		}
+		
+		if( render )
+		{
+			renderedMbrs.add( renderMbr( node.mbr( ) ) );
+		}
+		
+		return render;
+	}
+	
+	private static BasicJOGLObject renderMbr( float[ ] mbr )
+	{
+		BufferHelper vh = new BufferHelper( );
+		BufferHelper ih = new BufferHelper( );
+		
+		vh.putAsFloats( mbr[ 0 ] , mbr[ 1 ] , mbr[ 2 ] );
+		vh.putAsFloats( mbr[ 0 ] , mbr[ 1 ] , mbr[ 5 ] );
+		vh.putAsFloats( mbr[ 0 ] , mbr[ 4 ] , mbr[ 2 ] );
+		vh.putAsFloats( mbr[ 0 ] , mbr[ 4 ] , mbr[ 5 ] );
+		vh.putAsFloats( mbr[ 3 ] , mbr[ 1 ] , mbr[ 2 ] );
+		vh.putAsFloats( mbr[ 3 ] , mbr[ 1 ] , mbr[ 5 ] );
+		vh.putAsFloats( mbr[ 3 ] , mbr[ 4 ] , mbr[ 2 ] );
+		vh.putAsFloats( mbr[ 3 ] , mbr[ 4 ] , mbr[ 5 ] );
+		
+		ih.putInts( 0 , 1 );
+		ih.putInts( 1 , 3 );
+		ih.putInts( 2 , 0 );
+		ih.putInts( 3 , 2 );
+		ih.putInts( 4 , 5 );
+		ih.putInts( 5 , 7 );
+		ih.putInts( 6 , 4 );
+		ih.putInts( 7 , 6 );
+		ih.putInts( 0 , 4 );
+		ih.putInts( 1 , 5 );
+		ih.putInts( 2 , 6 );
+		ih.putInts( 3 , 7 );
+		
+		BasicJOGLObject obj = new BasicJOGLObject( );
+		ByteBuffer vb = vh.toByteBuffer( );
+		
+		obj.addVertexBuffer( vb ).vertexCount( 8 );
+		obj.indexBuffer( ih.toByteBuffer( ) );
+		obj.drawMode( GL.GL_LINES );
+		obj.indexType( GL.GL_UNSIGNED_INT );
+		obj.indexCount( ih.count( ) );
+		obj.add( obj.new Attribute3fv( ).name( "a_pos" ) );
+		obj.vertexShaderCode( new BasicVertexShader( ).toString( ) );
+		obj.fragmentShaderCode( new FlatFragmentShader( ).color( 0 , 1 , 0 , 1 ).toString( ) );
+		
+		return obj;
 	}
 	
 	@Override
@@ -553,9 +762,15 @@ public class MapsView extends BasicJOGLSetup
 		BufferHelper fillIndexHelper = new BufferHelper( );
 		BufferHelper lineIndexHelper = new BufferHelper( );
 		
+		List<RfNode<Integer>> leaves = new ArrayList<RfNode<Integer>>( );
+		
 		int vertCount = 0;
 		int fillIndexCount = 0;
 		int lineIndexCount = 0;
+		
+		surveyShots = shots;
+		
+		int shotIndex = 0;
 		
 		for( SurveyShot shot : shots )
 		{
@@ -579,28 +794,28 @@ public class MapsView extends BasicJOGLSetup
 				Vecmath.normalize3( leftAtFrom );
 			}
 			
-			vertHelper.putFloats( shot.from.position );
-			vertHelper.putFloats( 0 , 0 , 0 );
+			vertHelper.putAsFloats( shot.from.position );
+			vertHelper.putAsFloats( 0 , 0 , 0 );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
-				vertHelper.putFloats( shot.from.position[ i ] + leftAtFrom[ i ] * shot.left );
+				vertHelper.putAsFloats( shot.from.position[ i ] + leftAtFrom[ i ] * shot.left );
 			}
-			vertHelper.putFloats( leftAtFrom );
+			vertHelper.putAsFloats( leftAtFrom );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
-				vertHelper.putFloats( shot.from.position[ i ] - leftAtFrom[ i ] * shot.right );
+				vertHelper.putAsFloats( shot.from.position[ i ] - leftAtFrom[ i ] * shot.right );
 			}
-			vertHelper.putFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
+			vertHelper.putAsFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
-				vertHelper.putFloats( shot.from.position[ i ] + ( i == 1 ? shot.up : 0.0 ) );
+				vertHelper.putAsFloats( shot.from.position[ i ] + ( i == 1 ? shot.up : 0.0 ) );
 			}
-			vertHelper.putFloats( 0 , 1 , 0 );
+			vertHelper.putAsFloats( 0 , 1 , 0 );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
-				vertHelper.putFloats( shot.from.position[ i ] - ( i == 1 ? shot.down : 0.0 ) );
+				vertHelper.putAsFloats( shot.from.position[ i ] - ( i == 1 ? shot.down : 0.0 ) );
 			}
-			vertHelper.putFloats( 0 , -1 , 0 );
+			vertHelper.putAsFloats( 0 , -1 , 0 );
 			
 			SurveyShot nextNonVertical = nextNonVerticalShot( shot );
 			
@@ -639,41 +854,41 @@ public class MapsView extends BasicJOGLSetup
 					System.err.println( shot.from.name );
 				}
 				
-				vertHelper.putFloats( shot.to.position );
-				vertHelper.putFloats( 0 , 0 , 0 );
+				vertHelper.putAsFloats( shot.to.position );
+				vertHelper.putAsFloats( 0 , 0 , 0 );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
-					vertHelper.putFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.left );
+					vertHelper.putAsFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.left );
 				}
-				vertHelper.putFloats( leftAtTo );
+				vertHelper.putAsFloats( leftAtTo );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
-					vertHelper.putFloats( shot.to.position[ i ] - leftAtTo[ i ] * bestShot.right );
+					vertHelper.putAsFloats( shot.to.position[ i ] - leftAtTo[ i ] * bestShot.right );
 				}
-				vertHelper.putFloats( -leftAtTo[ 0 ] , -leftAtTo[ 1 ] , -leftAtTo[ 2 ] );
+				vertHelper.putAsFloats( -leftAtTo[ 0 ] , -leftAtTo[ 1 ] , -leftAtTo[ 2 ] );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
-					vertHelper.putFloats( shot.to.position[ i ] + ( i == 1 ? bestShot.up : 0.0 ) );
+					vertHelper.putAsFloats( shot.to.position[ i ] + ( i == 1 ? bestShot.up : 0.0 ) );
 				}
-				vertHelper.putFloats( 0 , 1 , 0 );
+				vertHelper.putAsFloats( 0 , 1 , 0 );
 				for( int i = 0 ; i < 3 ; i++ )
 				{
-					vertHelper.putFloats( shot.to.position[ i ] - ( i == 1 ? bestShot.down : 0.0 ) );
+					vertHelper.putAsFloats( shot.to.position[ i ] - ( i == 1 ? bestShot.down : 0.0 ) );
 				}
-				vertHelper.putFloats( 0 , -1 , 0 );
+				vertHelper.putAsFloats( 0 , -1 , 0 );
 			}
 			else
 			{
-				vertHelper.putFloats( shot.to.position );
-				vertHelper.putFloats( 0 , 0 , 0 );
-				vertHelper.putFloats( shot.to.position );
-				vertHelper.putFloats( leftAtFrom );
-				vertHelper.putFloats( shot.to.position );
-				vertHelper.putFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
-				vertHelper.putFloats( shot.to.position );
-				vertHelper.putFloats( 0 , 1 , 0 );
-				vertHelper.putFloats( shot.to.position );
-				vertHelper.putFloats( 0 , -1 , 0 );
+				vertHelper.putAsFloats( shot.to.position );
+				vertHelper.putAsFloats( 0 , 0 , 0 );
+				vertHelper.putAsFloats( shot.to.position );
+				vertHelper.putAsFloats( leftAtFrom );
+				vertHelper.putAsFloats( shot.to.position );
+				vertHelper.putAsFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
+				vertHelper.putAsFloats( shot.to.position );
+				vertHelper.putAsFloats( 0 , 1 , 0 );
+				vertHelper.putAsFloats( shot.to.position );
+				vertHelper.putAsFloats( 0 , -1 , 0 );
 			}
 			
 			fillIndexHelper.put( offset( vertCount ,
@@ -691,7 +906,30 @@ public class MapsView extends BasicJOGLSetup
 			vertCount += 10;
 			fillIndexCount += 24;
 			lineIndexCount += 32;
+			
+			float[ ] mbr = voidRectf( 3 );
+			
+			for( int i = 1 ; i <= 10 ; i++ )
+			{
+				int offset = -i * 6 + 1;
+				float x = ( Float ) vertHelper.getBackward( offset );
+				float y = ( Float ) vertHelper.getBackward( offset + 1 );
+				float z = ( Float ) vertHelper.getBackward( offset + 2 );
+				
+				mbr[ 0 ] = nmin( mbr[ 0 ] , x );
+				mbr[ 1 ] = nmin( mbr[ 1 ] , y );
+				mbr[ 2 ] = nmin( mbr[ 2 ] , z );
+				mbr[ 3 ] = nmax( mbr[ 3 ] , x );
+				mbr[ 4 ] = nmax( mbr[ 4 ] , y );
+				mbr[ 5 ] = nmax( mbr[ 5 ] , z );
+			}
+			
+			leaves.add( new DefaultRfLeaf<Integer>( shotIndex++ , mbr ) );
 		}
+		
+		RfNode<Integer>[ ] leafArray = leaves.toArray( new RfNode[ leaves.size( ) ] );
+		
+		rtree = StrPack.pack( 10 , leafArray );
 		
 		ByteBuffer vertBuffer = vertHelper.toByteBuffer( );
 		float[ ] bounds = getBounds( vertBuffer , 0 , 24 , vertCount , 3 );

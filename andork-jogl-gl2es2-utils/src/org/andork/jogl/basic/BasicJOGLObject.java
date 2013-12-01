@@ -82,7 +82,7 @@ public class BasicJOGLObject implements JOGLObject
 		return this;
 	}
 	
-	public Buffer indexBuffer( )
+	public ByteBuffer indexBuffer( )
 	{
 		return indexBuffer;
 	}

@@ -11,8 +11,8 @@ import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
-import org.andork.layout.Corner;
-import org.andork.layout.RectangleUtils;
+import org.andork.awt.layout.Corner;
+import org.andork.awt.layout.RectangleUtils;
 
 import com.andork.plot.PlotAxis.Orientation;
 

@@ -21,10 +21,10 @@ import java.util.zip.ZipFile;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 
-import org.andork.ui.DoSwing;
-import org.andork.ui.GenericProgressDialog;
-import org.andork.ui.I18n;
-import org.andork.ui.I18n.Localizer;
+import org.andork.awt.DoSwing;
+import org.andork.awt.GenericProgressDialog;
+import org.andork.awt.I18n;
+import org.andork.awt.I18n.Localizer;
 import org.apache.commons.io.FileUtils;
 
 public class UpdateCheckLauncher

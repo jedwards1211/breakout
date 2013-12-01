@@ -8,6 +8,21 @@ public class BufferHelper
 {
 	private final ArrayList<Object>	result	= new ArrayList<Object>( );
 	
+	public Object get( int offset )
+	{
+		return result.get( offset );
+	}
+	
+	public Object getBackward( int offset )
+	{
+		return result.get( result.size( ) - 1 + offset );
+	}
+	
+	public int count( )
+	{
+		return result.size( );
+	}
+	
 	public BufferHelper put( byte ... values )
 	{
 		for( byte f : values )
@@ -71,11 +86,20 @@ public class BufferHelper
 		return this;
 	}
 	
-	public BufferHelper putFloats( double ... values )
+	public BufferHelper putAsFloats( double ... values )
 	{
 		for( double d : values )
 		{
 			result.add( ( float ) d );
+		}
+		return this;
+	}
+	
+	public BufferHelper putInts( int ... values )
+	{
+		for( int i : values )
+		{
+			result.add( i );
 		}
 		return this;
 	}

@@ -6,7 +6,7 @@ import java.awt.Toolkit;
 
 import javax.swing.JFrame;
 
-import org.andork.ui.DoSwing;
+import org.andork.awt.DoSwing;
 
 @SuppressWarnings( "serial" )
 public class MainFrame extends JFrame

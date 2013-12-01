@@ -129,7 +129,8 @@ public class BasicNavigator extends MouseAdapter
 		int dy = e.getY( ) - lastEvent.getY( );
 		lastEvent = e;
 		
-		Vecmath.invAffine( scene.v , cam );
+		scene.getViewXform( cam );
+		Vecmath.invAffine( cam );
 		
 		Component canvas = ( Component ) e.getSource( );
 		
@@ -155,21 +156,24 @@ public class BasicNavigator extends MouseAdapter
 			Vecmath.setRotation( temp , v , dtilt );
 			Vecmath.mmulRotational( temp , cam , cam );
 			
-			Vecmath.invAffine( cam , scene.v );
+			Vecmath.invAffine( cam );
+			scene.setViewXform( cam );
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
 			cam[ 12 ] += cam[ 8 ] * dy * scaledMoveFactor;
 			cam[ 13 ] += cam[ 9 ] * dy * scaledMoveFactor;
 			cam[ 14 ] += cam[ 10 ] * dy * scaledMoveFactor;
-			Vecmath.invAffine( cam , scene.v );
+			Vecmath.invAffine( cam );
+			scene.setViewXform( cam );
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
 		{
 			cam[ 12 ] += cam[ 0 ] * -dx * scaledMoveFactor + cam[ 4 ] * dy * scaledMoveFactor;
 			cam[ 13 ] += cam[ 1 ] * -dx * scaledMoveFactor + cam[ 5 ] * dy * scaledMoveFactor;
 			cam[ 14 ] += cam[ 2 ] * -dx * scaledMoveFactor + cam[ 6 ] * dy * scaledMoveFactor;
-			Vecmath.invAffine( cam , scene.v );
+			Vecmath.invAffine( cam );
+			scene.setViewXform( cam );
 		}
 		
 		if( callDisplay )
@@ -186,7 +190,8 @@ public class BasicNavigator extends MouseAdapter
 			return;
 		}
 		
-		Vecmath.invAffine( scene.v , cam );
+		scene.getViewXform( cam );
+		Vecmath.invAffine( cam );
 		
 		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
 		
@@ -194,7 +199,8 @@ public class BasicNavigator extends MouseAdapter
 		cam[ 13 ] += cam[ 9 ] * distance;
 		cam[ 14 ] += cam[ 10 ] * distance;
 		
-		Vecmath.invAffine( cam , scene.v );
+		Vecmath.invAffine( cam );
+		scene.setViewXform( cam );
 		
 		if( callDisplay )
 		{

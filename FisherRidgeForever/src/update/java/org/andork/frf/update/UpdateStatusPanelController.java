@@ -21,10 +21,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.AbstractAction;
 
+import org.andork.awt.DoSwing;
 import org.andork.frf.update.UpdateStatus.CheckFailed;
 import org.andork.frf.update.UpdateStatus.DownloadFailed;
 import org.andork.frf.update.UpdateStatus.Downloading;
-import org.andork.ui.DoSwing;
 import org.andork.util.Downloader;
 import org.andork.util.Downloader.State;
 

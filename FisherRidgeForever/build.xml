@@ -20,8 +20,11 @@
 
 	<target name="compile-deps">
 		<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-awt/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-plot/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-math3d/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-spatial/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-jogl-gl2es2-utils/build.xml" inheritAll="false" target="dist" />
 	</target>
 
@@ -44,12 +47,24 @@
 				<include name="andork-core.jar" />
 			</fileset>
 
+			<fileset dir="../andork-awt/dist/lib">
+				<include name="andork-awt.jar" />
+			</fileset>
+
 			<fileset dir="../andork-math/dist/lib">
 				<include name="andork-math.jar" />
 			</fileset>
 
+			<fileset dir="../andork-math3d/dist/lib">
+				<include name="andork-math3d.jar" />
+			</fileset>
+
 			<fileset dir="../andork-plot/dist/lib">
 				<include name="andork-plot.jar" />
+			</fileset>
+
+			<fileset dir="../andork-spatial/dist/lib">
+				<include name="andork-spatial.jar" />
 			</fileset>
 
 			<fileset dir="../andork-jogl-gl2es2-utils/dist/lib">
@@ -158,8 +173,11 @@
 				<include name="lib/commons-io-2.4.jar" />
 				<include name="lib/gluegen-rt.jar" />
 				<include name="lib/andork-core.jar" />
+				<include name="lib/andork-awt.jar" />
 				<include name="lib/andork-math.jar" />
+				<include name="lib/andork-math3d.jar" />
 				<include name="lib/andork-plot.jar" />
+				<include name="lib/andork-spatial.jar" />
 				<include name="lib/andork-jogl-gl2es2-utils.jar" />
 				<include name="lib/jogl-awt.jar" />
 				<include name="lib/jogl-core.jar" />

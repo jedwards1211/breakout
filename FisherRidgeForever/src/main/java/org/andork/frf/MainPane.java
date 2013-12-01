@@ -17,12 +17,12 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.andork.awt.GridBagWizard;
+import org.andork.awt.I18n;
 import org.andork.frf.update.UpdateProperties;
 import org.andork.frf.update.UpdateStatus;
 import org.andork.frf.update.UpdateStatusPanel;
 import org.andork.frf.update.UpdateStatusPanelController;
-import org.andork.ui.GridBagWizard;
-import org.andork.ui.I18n;
 
 @SuppressWarnings( "serial" )
 public class MainPane extends JPanel

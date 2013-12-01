@@ -11,8 +11,8 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.andork.awt.GridBagWizard;
 import org.andork.frf.BackgroundLoaded.State;
-import org.andork.ui.GridBagWizard;
 
 @SuppressWarnings( "serial" )
 public abstract class BackgroundLoadedPane<C> extends JPanel

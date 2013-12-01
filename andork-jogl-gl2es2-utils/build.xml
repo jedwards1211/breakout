@@ -15,6 +15,7 @@
   <target name="compile-dependencies">
   	<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />	
   	<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />	
+  	<ant antfile="../andork-math3d/build.xml" inheritAll="false" target="dist" />	
   </target>
 
   <target name="compile" depends="init,compile-dependencies"
@@ -33,6 +34,10 @@
   		</fileset>
   		
   		<fileset dir="../andork-math">
+  			<include name="dist/lib/*.jar" />
+  		</fileset>
+
+  		<fileset dir="../andork-math3d">
   			<include name="dist/lib/*.jar" />
   		</fileset>
   	</path>

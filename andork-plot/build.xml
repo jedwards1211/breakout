@@ -11,12 +11,37 @@
 		<mkdir dir="${build}" />
 	</target>
 
-	<target name="compile" depends="init" description="compile the source ">
-		<!-- Compile the java code from ${src} into ${build} -->
-		<javac debug="on" srcdir="${src}" destdir="${build}" />
+	<target name="compile-dependencies">
+		<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-awt/build.xml" inheritAll="false" target="dist" />
 	</target>
 
-	<target name="dist" depends="compile" description="generate the distribution">
+	<target name="compile" depends="init, compile-dependencies"
+		description="compile the source ">
+		<!-- Compile the java code from ${src} into ${build} -->
+		<path id="master-classpath">
+			<fileset dir="../andork-core">
+				<include name="dist/lib/*.jar" />
+			</fileset>
+			<fileset dir="../andork-awt">
+				<include name="dist/lib/*.jar" />
+			</fileset>
+		</path>
+		<javac debug="on" destdir="${build}">
+			<src path="${src}" />
+			<classpath refid="master-classpath" />
+		</javac>
+	</target>
+
+	<target name="copy-resources">
+		<copy todir="${build}">
+			<fileset dir="${src}">
+				<exclude name="**/*.java" />
+			</fileset>
+		</copy>
+	</target>
+
+		<target name="dist" depends="compile,copy-resources" description="generate the distribution">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist}/lib" />
 

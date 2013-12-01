@@ -24,6 +24,7 @@ public class BasicOrbiter extends MouseAdapter
 	final float[ ]			center		= { 0 , 0 , 0 };
 	final float[ ]			axis		= new float[ 3 ];
 	MouseEvent				pressEvent	= null;
+	final float[ ]			v			= Vecmath.newMat4f( );
 	final float[ ]			m1			= Vecmath.newMat4f( );
 	final float[ ]			m2			= Vecmath.newMat4f( );
 	boolean					active		= true;
@@ -78,12 +79,12 @@ public class BasicOrbiter extends MouseAdapter
 	{
 		return sensitivity;
 	}
-
+	
 	public void setSensitivity( float sensitivity )
 	{
 		this.sensitivity = sensitivity;
 	}
-
+	
 	public void setTiltFactor( float tiltFactor )
 	{
 		this.tiltFactor = tiltFactor;
@@ -117,7 +118,8 @@ public class BasicOrbiter extends MouseAdapter
 			int dy = e.getY( ) - lastEvent.getY( );
 			lastEvent = e;
 			
-			invAffine( scene.v , m1 );
+			scene.getViewXform( v );
+			invAffine( v , m1 );
 			mvmulAffine( m1 , 1 , 0 , 0 , axis );
 			normalize3( axis );
 			
@@ -141,7 +143,8 @@ public class BasicOrbiter extends MouseAdapter
 			setColumn3( m1 , 3 , center );
 			
 			mmulAffine( m1 , m2 , m2 );
-			mmulAffine( scene.v , m2 , scene.v );
+			mmulAffine( v , m2 , v );
+			scene.setViewXform( v );
 		}
 		
 		if( callDisplay )

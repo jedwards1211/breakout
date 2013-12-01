@@ -20,15 +20,15 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import org.andork.awt.GridBagWizard;
+import org.andork.awt.I18n;
+import org.andork.awt.IconScaler;
+import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.awt.I18n.Localizer;
 import org.andork.frf.update.UpdateStatus.CheckFailed;
 import org.andork.frf.update.UpdateStatus.DownloadFailed;
 import org.andork.frf.update.UpdateStatus.Downloading;
 import org.andork.frf.update.UpdateStatus.UpdateFailed;
-import org.andork.ui.GridBagWizard;
-import org.andork.ui.IconScaler;
-import org.andork.ui.GridBagWizard.DefaultAutoInsets;
-import org.andork.ui.I18n;
-import org.andork.ui.I18n.Localizer;
 import org.jdesktop.swingx.JXHyperlink;
 
 @SuppressWarnings( "serial" )

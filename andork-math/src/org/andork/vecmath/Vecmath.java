@@ -241,6 +241,13 @@ public class Vecmath
 		out[ 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z;
 	}
 	
+	public static void mvmulAffine( double[ ] m , double x , double y , double z , double[ ] out , int outi )
+	{
+		out[ outi ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z;
+		out[ outi + 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z;
+		out[ outi + 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z;
+	}
+	
 	public static void mvmulAffine( double[ ] m , double[ ] v , int vi , double[ ] out , int outi )
 	{
 		if( v != out || vi != outi )
@@ -533,6 +540,14 @@ public class Vecmath
 		m[ colIndex + 2 ] = c;
 	}
 	
+	public static void getColumn3( double[ ] m , int colIndex , double[ ] v )
+	{
+		colIndex *= 4;
+		v[ 0 ] = m[ colIndex ];
+		v[ 1 ] = m[ colIndex + 1 ];
+		v[ 2 ] = m[ colIndex + 2 ];
+	}
+	
 	public static void setColumn3( double[ ] m , int colIndex , double[ ] v )
 	{
 		colIndex *= 4;
@@ -778,6 +793,11 @@ public class Vecmath
 		return m[ 0 ] * ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) -
 				m[ 4 ] * ( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) +
 				m[ 8 ] * ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] );
+	}
+	
+	public static void invAffine( double[ ] m )
+	{
+		invAffine( m , m );
 	}
 	
 	public static void invAffine( double[ ] m , double[ ] out )
@@ -1253,6 +1273,16 @@ public class Vecmath
 				mat[ 6 ] = mat[ 3 ] = mat[ 7 ] = mat[ 15 ] = 0;
 	}
 	
+	public static void calcClippingPlanes( double[ ] mat , double[ ] btlrnf )
+	{
+		btlrnf[ 4 ] = -mat[ 14 ] / ( 1 - mat[ 10 ] );
+		btlrnf[ 5 ] = mat[ 14 ] * btlrnf[ 4 ] / ( mat[ 14 ] + 2 * btlrnf[ 4 ] );
+		btlrnf[ 0 ] = btlrnf[ 4 ] * ( mat[ 9 ] - 1 ) / mat[ 5 ];
+		btlrnf[ 1 ] = 2 * btlrnf[ 4 ] * mat[ 9 ] / mat[ 5 ] - btlrnf[ 1 ];
+		btlrnf[ 2 ] = btlrnf[ 4 ] * ( mat[ 8 ] - 1 ) / mat[ 0 ];
+		btlrnf[ 3 ] = 2 * btlrnf[ 4 ] * ( mat[ 8 ] - mat[ 0 ] ) / btlrnf[ 2 ];
+	}
+	
 	public static void ortho( double[ ] mat , double left , double right , double bottom , double top , double zNear , double zFar )
 	{
 		mat[ 0 ] = 2 / ( right - left );
@@ -1436,6 +1466,13 @@ public class Vecmath
 		out[ 0 ] = a[ 0 ] * f;
 		out[ 1 ] = a[ 1 ] * f;
 		out[ 2 ] = a[ 2 ] * f;
+	}
+	
+	public static void scaleAdd3( double a , double[ ] b , double[ ] c , double[ ] out )
+	{
+		out[ 0 ] = a * b[ 0 ] + c[ 0 ];
+		out[ 1 ] = a * b[ 1 ] + c[ 1 ];
+		out[ 2 ] = a * b[ 2 ] + c[ 2 ];
 	}
 	
 	public static double length( double[ ] v , int start , int count )
@@ -1738,6 +1775,13 @@ public class Vecmath
 		out[ 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z;
 	}
 	
+	public static void mvmulAffine( float[ ] m , float x , float y , float z , float[ ] out , int outi )
+	{
+		out[ outi ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z;
+		out[ outi + 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z;
+		out[ outi + 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z;
+	}
+	
 	public static void mvmulAffine( float[ ] m , float[ ] v , int vi , float[ ] out , int outi )
 	{
 		if( v != out || vi != outi )
@@ -2038,6 +2082,14 @@ public class Vecmath
 		m[ colIndex + 2 ] = v[ 2 ];
 	}
 	
+	public static void getColumn3( float[ ] m , int colIndex , float[ ] v )
+	{
+		colIndex *= 4;
+		v[ 0 ] = m[ colIndex ];
+		v[ 1 ] = m[ colIndex + 1 ];
+		v[ 2 ] = m[ colIndex + 2 ];
+	}
+	
 	public static void setColumn4( float[ ] m , int colIndex , float[ ] v )
 	{
 		colIndex *= 4;
@@ -2280,6 +2332,11 @@ public class Vecmath
 		return m[ 0 ] * ( m[ 5 ] * m[ 10 ] - m[ 9 ] * m[ 6 ] ) -
 				m[ 4 ] * ( m[ 1 ] * m[ 10 ] - m[ 9 ] * m[ 2 ] ) +
 				m[ 8 ] * ( m[ 1 ] * m[ 6 ] - m[ 5 ] * m[ 2 ] );
+	}
+	
+	public static void invAffine( float[ ] m )
+	{
+		invAffine( m , m );
 	}
 	
 	public static void invAffine( float[ ] m , float[ ] out )
@@ -2755,6 +2812,16 @@ public class Vecmath
 				mat[ 6 ] = mat[ 3 ] = mat[ 7 ] = mat[ 15 ] = 0;
 	}
 	
+	public static void calcClippingPlanes( float[ ] mat , float[ ] btlrnf )
+	{
+		btlrnf[ 4 ] = -mat[ 14 ] / ( 1 - mat[ 10 ] );
+		btlrnf[ 5 ] = mat[ 14 ] * btlrnf[ 4 ] / ( mat[ 14 ] + 2 * btlrnf[ 4 ] );
+		btlrnf[ 0 ] = btlrnf[ 4 ] * ( mat[ 9 ] - 1 ) / mat[ 5 ];
+		btlrnf[ 1 ] = 2 * btlrnf[ 4 ] / mat[ 5 ] + btlrnf[ 0 ];
+		btlrnf[ 2 ] = btlrnf[ 4 ] * ( mat[ 8 ] - 1 ) / mat[ 0 ];
+		btlrnf[ 3 ] = 2 * btlrnf[ 4 ] / mat[ 0 ] + btlrnf[ 2 ];
+	}
+	
 	public static void ortho( float[ ] mat , float left , float right , float bottom , float top , float zNear , float zFar )
 	{
 		mat[ 0 ] = 2 / ( right - left );
@@ -2938,6 +3005,13 @@ public class Vecmath
 		out[ 0 ] = a[ 0 ] * f;
 		out[ 1 ] = a[ 1 ] * f;
 		out[ 2 ] = a[ 2 ] * f;
+	}
+	
+	public static void scaleAdd3( float a , float[ ] b , float[ ] c , float[ ] out )
+	{
+		out[ 0 ] = a * b[ 0 ] + c[ 0 ];
+		out[ 1 ] = a * b[ 1 ] + c[ 1 ];
+		out[ 2 ] = a * b[ 2 ] + c[ 2 ];
 	}
 	
 	public static float length( float[ ] v , int start , int count )

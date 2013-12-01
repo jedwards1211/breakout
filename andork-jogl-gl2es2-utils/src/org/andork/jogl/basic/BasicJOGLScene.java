@@ -16,6 +16,7 @@ import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
+import org.andork.pick.PickXform;
 import org.andork.vecmath.Vecmath;
 
 public class BasicJOGLScene implements GLEventListener
@@ -33,7 +34,7 @@ public class BasicJOGLScene implements GLEventListener
 	/**
 	 * The view matrix.
 	 */
-	public final float[ ]			v						= newMat4f( );
+	protected final float[ ]		v						= newMat4f( );
 	
 	/**
 	 * The projection matrix;
@@ -60,6 +61,8 @@ public class BasicJOGLScene implements GLEventListener
 	
 	final float[ ]					lastOrthoView			= newMat4f( );
 	final float[ ]					lastPerspectiveView		= newMat4f( );
+	
+	private PickXform				pickXform				= new PickXform( );
 	
 	static
 	{
@@ -139,6 +142,8 @@ public class BasicJOGLScene implements GLEventListener
 		
 		invAffineToTranspose3x3( m , n );
 		
+		pickXform.calculate( p , v );
+		
 		for( JOGLObject object : objects )
 		{
 			object.draw( gl , m , n , v , p );
@@ -187,10 +192,10 @@ public class BasicJOGLScene implements GLEventListener
 		{
 			perspective( p , fov , ( float ) width / height , zNear , zFar );
 		}
-//		p[ 2 ] = -p[ 2 ];
-//		p[ 6 ] = -p[ 6 ];
-//		p[ 10 ] = -p[ 10 ];
-//		p[ 14 ] = -p[ 14 ];
+		// p[ 2 ] = -p[ 2 ];
+		// p[ 6 ] = -p[ 6 ];
+		// p[ 10 ] = -p[ 10 ];
+		// p[ 14 ] = -p[ 14 ];
 	}
 	
 	public List<JOGLObject> getObjects( )
@@ -203,4 +208,18 @@ public class BasicJOGLScene implements GLEventListener
 		objects.clear( );
 	}
 	
+	public void getViewXform( float[ ] out )
+	{
+		System.arraycopy( v , 0 , out , 0 , 16 );
+	}
+	
+	public void setViewXform( float[ ] v )
+	{
+		System.arraycopy( v , 0 , this.v , 0 , 16 );
+	}
+	
+	public PickXform pickXform( )
+	{
+		return pickXform;
+	}
 }
