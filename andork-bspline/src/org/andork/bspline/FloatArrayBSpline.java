@@ -1,4 +1,4 @@
-package org.andork.math.curve;
+package org.andork.bspline;
 
 public class FloatArrayBSpline
 {

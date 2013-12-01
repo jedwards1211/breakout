@@ -1,4 +1,4 @@
-package org.andork.math.curve;
+package org.andork.bspline;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -12,6 +12,9 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import org.andork.bspline.FastFloatBSplineEvaluator;
+
+@SuppressWarnings( "serial" )
 public class FastFloatBSplineEvaluatorTest extends JPanel
 {
 	FastFloatBSplineEvaluator	evaluator;

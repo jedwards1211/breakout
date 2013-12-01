@@ -9,9 +9,9 @@ import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.vecmath.Point2f;
 
+import org.andork.bspline.FloatArraySmoothRandomWalk;
+import org.andork.bspline.FloatArraySmoothRandomWalk.DefaultRandomPointGenerator;
 import org.andork.jogl.util.SimplePolygon;
-import org.andork.math.curve.FloatArraySmoothRandomWalk;
-import org.andork.math.curve.FloatArraySmoothRandomWalk.DefaultRandomPointGenerator;
 import org.andork.math.curve.FloatHolderType;
 import org.andork.math.curve.Point2fType;
 import org.andork.math.curve.SmoothRandomWalk;

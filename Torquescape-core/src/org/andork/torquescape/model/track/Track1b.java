@@ -6,8 +6,8 @@ import java.util.List;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
+import org.andork.bspline.FloatArrayBSpline;
 import org.andork.math.curve.BSplines;
-import org.andork.math.curve.FloatArrayBSpline;
 import org.andork.math.curve.SegmentedCurve3f;
 import org.andork.torquescape.model.coord.FixedCoordFn;
 import org.andork.torquescape.model.coord.ICoordFn;

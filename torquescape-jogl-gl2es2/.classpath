@@ -5,9 +5,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0_15"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/JOGL"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/torquescape-core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-utils"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-math3d"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

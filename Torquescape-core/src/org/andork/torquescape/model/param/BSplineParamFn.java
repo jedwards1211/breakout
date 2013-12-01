@@ -1,7 +1,7 @@
 package org.andork.torquescape.model.param;
 
-import org.andork.math.curve.FastFloatBSplineEvaluator;
-import org.andork.math.curve.FloatArrayBSpline;
+import org.andork.bspline.FastFloatBSplineEvaluator;
+import org.andork.bspline.FloatArrayBSpline;
 
 public class BSplineParamFn implements IParamFn
 {

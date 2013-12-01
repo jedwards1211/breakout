@@ -7,5 +7,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-utils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-bspline"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-math3d"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
