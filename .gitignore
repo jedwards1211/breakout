@@ -1,5 +1,2 @@
-/Torquescape-jogl/bin
-andork-jogl-utils/build
-andork-jogl-utils/dist
-andork-jogl-utils/build
-andork-jogl-utils/dist
+.csync_journal.db 
+.csync_journal.db.ctmp
