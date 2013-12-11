@@ -4,10 +4,9 @@ import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
 import static org.andork.spatial.Rectmath.union;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Comparator;
-import java.util.List;
 
 public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 {
@@ -128,10 +127,10 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 			throw new IllegalArgumentException( "newLeaf is already in a tree" );
 		}
 		
-		insert( newLeaf , maxLevel , true );
+		insert( newLeaf , maxLevel , new BitSet( ) );
 	}
 	
-	void insert( Node<T> toInsert , int targetLevel , boolean allowReinsert )
+	void insert( Node<T> toInsert , int targetLevel , BitSet reinsertedLevels )
 	{
 		Branch<T> target = chooseSubtree( toInsert , root , 0 , targetLevel );
 		
@@ -143,7 +142,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		}
 		else
 		{
-			overflowTreatment( toInsert , target , targetLevel , allowReinsert );
+			overflowTreatment( toInsert , target , targetLevel , reinsertedLevels );
 		}
 	}
 	
@@ -156,25 +155,34 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		}
 	}
 	
-	void overflowTreatment( Node<T> toInsert , Branch<T> overflowed , int targetLevel , boolean allowReinsert )
+	void overflowTreatment( Node<T> toInsert , Branch<T> overflowed , int targetLevel , BitSet reinsertedLevels )
 	{
 		toInsert.parent = overflowed;
 		overflowed.numChildren++ ;
 		overflowed.children = Arrays.copyOf( overflowed.children , M + 1 );
 		overflowed.children[ M ] = toInsert;
 		
-		if( allowReinsert )
+		while( overflowed != null && overflowed.numChildren > M )
 		{
-			doReinsert( overflowed , targetLevel );
-		}
-		else
-		{
-			doSplit( overflowed );
+			if( targetLevel > 0 && !reinsertedLevels.get( targetLevel ) )
+			{
+				doReinsert( overflowed , targetLevel , reinsertedLevels );
+				break;
+			}
+			else
+			{
+				Branch<T> nextParent = overflowed.parent;
+				doSplit( overflowed , reinsertedLevels );
+				overflowed = nextParent;
+				targetLevel-- ;
+			}
 		}
 	}
 	
-	void doReinsert( Branch<T> overflowed , int targetLevel )
+	void doReinsert( Branch<T> overflowed , int targetLevel , BitSet reinsertedLevels )
 	{
+		reinsertedLevels.set( targetLevel );
+		
 		Arrays.sort( overflowed.children , new CenterDistanceComparator( overflowed.mbr ) );
 		
 		Node<T>[ ] pendingReinsertion = new Node[ p ];
@@ -188,44 +196,48 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		for( Node<T> node : pendingReinsertion )
 		{
 			node.parent = null;
-			insert( node , targetLevel , false );
+			insert( node , targetLevel , reinsertedLevels );
 		}
 	}
 	
-	void doSplit( Branch<T> overflowed )
+	void doSplit( Branch<T> overflowed , BitSet reinsertedLevels )
 	{
-		while( overflowed != null && overflowed.numChildren > M )
+		Branch<T> parent = overflowed.parent;
+		removeFromParent( overflowed );
+		
+		Branch<T>[ ] split = split( overflowed );
+		
+		if( overflowed == root )
 		{
-			Branch<T> parent = overflowed.parent;
-			removeFromParent( overflowed );
+			maxLevel++ ;
+			root = new Branch<T>( dimension , M );
+			root.children[ 0 ] = split[ 0 ];
+			root.children[ 1 ] = split[ 1 ];
+			split[ 0 ].parent = root;
+			split[ 1 ].parent = root;
+			root.numChildren = split.length;
+			root.recalcMbr( );
 			
-			Branch<T>[ ] split = split( overflowed );
-			
-			if( parent == null )
+			for( int i = reinsertedLevels.length( ) ; i > 0 ; i-- )
 			{
-				maxLevel++ ;
-				root = new Branch<T>( dimension , M );
-				root.children[ 0 ] = split[ 0 ];
-				root.children[ 1 ] = split[ 1 ];
-				split[ 0 ].parent = root;
-				split[ 1 ].parent = root;
-				root.numChildren = split.length;
-				root.recalcMbr( );
-			}
-			else
-			{
-				if( parent.numChildren == M - 1 )
+				if( reinsertedLevels.get( i - 1 ) )
 				{
-					parent.children = Arrays.copyOf( parent.children , M + 1 );
+					reinsertedLevels.set( i );
 				}
-				parent.children[ parent.numChildren++ ] = split[ 0 ];
-				parent.children[ parent.numChildren++ ] = split[ 1 ];
-				split[ 0 ].parent = parent;
-				split[ 1 ].parent = parent;
-				parent.recalcMbr( );
 			}
-			
-			overflowed = parent;
+			reinsertedLevels.clear( 0 );
+		}
+		else
+		{
+			if( parent.numChildren == M - 1 )
+			{
+				parent.children = Arrays.copyOf( parent.children , M + 1 );
+			}
+			parent.children[ parent.numChildren++ ] = split[ 0 ];
+			parent.children[ parent.numChildren++ ] = split[ 1 ];
+			split[ 0 ].parent = parent;
+			split[ 1 ].parent = parent;
+			parent.recalcMbr( );
 		}
 	}
 	
