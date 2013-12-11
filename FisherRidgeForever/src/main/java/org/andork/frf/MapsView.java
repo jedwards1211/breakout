@@ -45,12 +45,12 @@ import org.andork.awt.ColorUtils;
 import org.andork.awt.DoSwing;
 import org.andork.awt.GradientFillBorder;
 import org.andork.awt.GridBagWizard;
+import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.awt.I18n;
 import org.andork.awt.InnerGradientBorder;
 import org.andork.awt.LayeredBorder;
 import org.andork.awt.OverrideInsetsBorder;
 import org.andork.awt.PaintablePanel;
-import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.DrawerLayoutDelegate;
@@ -61,7 +61,6 @@ import org.andork.frf.update.UpdateProperties;
 import org.andork.frf.update.UpdateStatus;
 import org.andork.frf.update.UpdateStatusPanel;
 import org.andork.frf.update.UpdateStatusPanelController;
-import org.andork.generic.Visitor;
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
 import org.andork.jogl.basic.BasicJOGLObject.DistanceFragmentShader;
@@ -85,7 +84,6 @@ import org.andork.jogl.shader.VariableDeclarations;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.DefaultRfLeaf;
-import org.andork.spatial.RTrees;
 import org.andork.spatial.RfBranch;
 import org.andork.spatial.RfLeaf;
 import org.andork.spatial.RfNode;
@@ -692,13 +690,24 @@ public class MapsView extends BasicJOGLSetup
 		
 		if( render )
 		{
-			renderedMbrs.add( renderMbr( node.mbr( ) ) );
+			renderedMbrs.add( renderMbr( node.mbr( ) , 1 , 1 , 0 ) );
+			if( node instanceof RfBranch )
+			{
+				RfNode<Integer>[ ] children = ( ( RfBranch<Integer> ) node ).children( );
+				if( children.length > 0 && children[ 0 ] instanceof RfLeaf )
+				{
+					for( RfNode<Integer> child : children )
+					{
+						renderedMbrs.add( renderMbr( child.mbr( ) , 0 , 0 , 1 ) );
+					}
+				}
+			}
 		}
 		
 		return render;
 	}
 	
-	private static BasicJOGLObject renderMbr( float[ ] mbr )
+	private static BasicJOGLObject renderMbr( float[ ] mbr , float r , float g , float b )
 	{
 		BufferHelper vh = new BufferHelper( );
 		BufferHelper ih = new BufferHelper( );
@@ -735,7 +744,7 @@ public class MapsView extends BasicJOGLSetup
 		obj.indexCount( ih.count( ) );
 		obj.add( obj.new Attribute3fv( ).name( "a_pos" ) );
 		obj.vertexShaderCode( new BasicVertexShader( ).toString( ) );
-		obj.fragmentShaderCode( new FlatFragmentShader( ).color( 0 , 1 , 0 , 1 ).toString( ) );
+		obj.fragmentShaderCode( new FlatFragmentShader( ).color( r , g , b , 1 ).toString( ) );
 		
 		return obj;
 	}

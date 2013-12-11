@@ -345,7 +345,7 @@ public class FalseDepthTest5b extends TorquescapeSetup
 			sb.append( "    float virt_v_value = v_v_value + dot(v_v, virtpos) / dot(v_v, v_v);" );
 			sb.append( "    float cu = cos(virt_u_value * u_u_period);" );
 			sb.append( "    float cv = cos(virt_v_value * u_v_period);" );
-			sb.append( "    float intensity = max(pow(abs(cu), 2.0), pow(abs(cv), 2.0)) * u_layer_colors[i].w;" );
+			sb.append( "    float intensity = max(pow(abs(cu), 5.0), pow(abs(cv), 5.0)) * u_layer_colors[i].w;" );
 			sb.append( "    gl_FragColor = intensity * u_layer_colors[i] + (1 - intensity) * gl_FragColor;" );
 			sb.append( "  }" );
 			sb.append( "}" );

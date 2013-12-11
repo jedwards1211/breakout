@@ -1,4 +1,5 @@
 package org.andork.spatial;
+
 public class DefaultRfBranch<T> extends DefaultRfNode<T> implements RfBranch<T>
 {
 	public RfNode<T>[ ]	children;

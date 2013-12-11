@@ -128,7 +128,7 @@ public class Rectmath
 		return x * y * z;
 	}
 	
-	public static double volume( double[ ] r )
+	public static double volume3( double[ ] r )
 	{
 		double x = r[ 3 ] - r[ 0 ];
 		double y = r[ 4 ] - r[ 1 ];
@@ -136,9 +136,20 @@ public class Rectmath
 		return x * y * z;
 	}
 	
+	public static double volume( double[ ] r )
+	{
+		int dim = r.length / 2;
+		double result = 1.0;
+		for( int i = 0 ; i < dim ; i++ )
+		{
+			result *= r[ i + dim ] - r[ i ];
+		}
+		return result;
+	}
+	
 	public static double enlargement3( double[ ] r , double[ ] radded )
 	{
-		double volume = volume( r );
+		double volume = volume3( r );
 		
 		double xmin = nmin( r[ 0 ] , radded[ 0 ] );
 		double ymin = nmin( r[ 1 ] , radded[ 1 ] );
@@ -152,6 +163,21 @@ public class Rectmath
 		double z = zmax - zmin;
 		
 		return x * y * z - volume;
+	}
+	
+	public static double enlargement( double[ ] r , double[ ] radded )
+	{
+		int dim = r.length / 2;
+		double volume = 1.0;
+		double result = 1.0;
+		
+		for( int i = 0 ; i < dim ; i++ )
+		{
+			result *= nmax( r[ i + dim ] , radded[ i + dim ] ) - nmin( r[ i ] , radded[ i ] );
+			volume *= r[ i + dim ] - r[ i ];
+		}
+		
+		return Double.isNaN( volume ) ? result : result - volume;
 	}
 	
 	public static boolean contains3( double[ ] r , double[ ] p )
@@ -334,7 +360,7 @@ public class Rectmath
 		return x * y * z;
 	}
 	
-	public static float volume( float[ ] r )
+	public static float volume3( float[ ] r )
 	{
 		float x = r[ 3 ] - r[ 0 ];
 		float y = r[ 4 ] - r[ 1 ];
@@ -342,9 +368,20 @@ public class Rectmath
 		return x * y * z;
 	}
 	
+	public static float volume( float[ ] r )
+	{
+		int dim = r.length / 2;
+		float result = 1f;
+		for( int i = 0 ; i < dim ; i++ )
+		{
+			result *= r[ i + dim ] - r[ i ];
+		}
+		return result;
+	}
+	
 	public static float enlargement3( float[ ] r , float[ ] radded )
 	{
-		float volume = volume( r );
+		float volume = volume3( r );
 		
 		float xmin = nmin( r[ 0 ] , radded[ 0 ] );
 		float ymin = nmin( r[ 1 ] , radded[ 1 ] );
@@ -358,6 +395,21 @@ public class Rectmath
 		float z = zmax - zmin;
 		
 		return x * y * z - volume;
+	}
+	
+	public static float enlargement( float[ ] r , float[ ] radded )
+	{
+		int dim = r.length / 2;
+		float volume = 1f;
+		float result = 1f;
+		
+		for( int i = 0 ; i < dim ; i++ )
+		{
+			result *= nmax( r[ i + dim ] , radded[ i + dim ] ) - nmin( r[ i ] , radded[ i ] );
+			volume *= r[ i + dim ] - r[ i ];
+		}
+		
+		return Float.isNaN( volume ) ? result : result - volume;
 	}
 	
 	public static boolean contains3( float[ ] r , float[ ] p )
@@ -417,5 +469,4 @@ public class Rectmath
 		
 		return true;
 	}
-	
 }

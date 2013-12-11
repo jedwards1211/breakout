@@ -7,6 +7,8 @@ import static org.andork.spatial.Rectmath.voidRectf;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import junit.framework.ComparisonCompactor;
+
 public class StrPack
 {
 	private StrPack( )
@@ -81,9 +83,15 @@ public class StrPack
 	{
 		int dimension = nodes[ 0 ].mbr( ).length / 2;
 		
+		int[ ] axes = new int[ dimension ];
+		for( int i = 0 ; i < dimension ; i++ )
+		{
+			axes[ i ] = i;
+		}
+		
 		while( nodes.length > 1 )
 		{
-			str( nodes , 0 , nodes.length , dimension , 0 , n );
+			str2( nodes , 0 , nodes.length , axes , dimension , 0 , n );
 			int nBranches = ceilDiv( nodes.length , n );
 			
 			DefaultRfBranch<T>[ ] branches = ( DefaultRfBranch<T>[ ] ) new DefaultRfBranch[ nBranches ];
@@ -126,7 +134,57 @@ public class StrPack
 		if( axis < dim - 1 )
 		{
 			float k = dim - axis;
-			int slabSize = n * ( int ) Math.ceil( Math.pow( ceilDiv( nodes.length , n ) , ( k - 1 ) / k ) );
+			int slabSize = n * ( int ) Math.ceil( Math.pow( ceilDiv( to - from , n ) , ( k - 1 ) / k ) );
+			
+			for( int i = from ; i + slabSize <= to ; i += slabSize )
+			{
+				str( nodes , i , i + slabSize , dim , axis + 1 , n );
+			}
+		}
+	}
+	
+	private static void str2( RfNode<?>[ ] nodes , int from , int to , final int[ ] axes , final int dim , final int axis , int n )
+	{
+		float[ ] mbr = voidRectf( dim );
+		for( int i = from ; i < to ; i++ )
+		{
+			union( mbr , nodes[ i ].mbr( ) , mbr );
+		}
+		
+		int maxAxis = -1;
+		float maxSpan = Float.NaN;
+		
+		for( int i = axis ; i < dim ; i++ )
+		{
+			float span = mbr[ axes[ i ] + dim ] - mbr[ axes[ i ] ];
+			if( Float.isNaN( maxSpan ) || span > maxSpan )
+			{
+				maxAxis = i;
+				maxSpan = span;
+			}
+		}
+		
+		int temp = axes[ axis ];
+		axes[ axis ] = axes[ maxAxis ];
+		axes[ maxAxis ] = temp;
+		
+		final int adjAxis = axes[ axis ];
+		
+		Arrays.sort( nodes , from , to , new Comparator<RfNode<?>>( )
+		{
+			@Override
+			public int compare( RfNode<?> o1 , RfNode<?> o2 )
+			{
+				float[ ] r1 = o1.mbr( );
+				float[ ] r2 = o2.mbr( );
+				return Double.compare( r1[ adjAxis + dim ] + r1[ adjAxis ] , r2[ adjAxis + dim ] + r2[ adjAxis ] );
+			}
+		} );
+		
+		if( axis < dim - 1 )
+		{
+			float k = dim - axis;
+			int slabSize = n * ( int ) Math.ceil( Math.pow( ceilDiv( to - from , n ) , ( k - 1 ) / k ) );
 			
 			for( int i = from ; i + slabSize <= to ; i += slabSize )
 			{
