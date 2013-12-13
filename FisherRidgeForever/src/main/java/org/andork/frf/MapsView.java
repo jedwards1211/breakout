@@ -72,7 +72,7 @@ import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.basic.JOGLLineWidthModifier;
 import org.andork.jogl.basic.JOGLObject;
 import org.andork.jogl.basic.JOGLPolygonModeModifier;
-import org.andork.jogl.basic.SharedVertexBuffer;
+import org.andork.jogl.basic.SharedBuffer;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.jogl.shader.DefaultNormalVertexShader;
 import org.andork.jogl.shader.DefaultPositionVertexShader;
@@ -83,11 +83,13 @@ import org.andork.jogl.shader.SimpleLightingFragmentShader;
 import org.andork.jogl.shader.VariableDeclarations;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
-import org.andork.spatial.DefaultRfLeaf;
+import org.andork.spatial.RBranch;
+import org.andork.spatial.RLeaf;
+import org.andork.spatial.RNode;
 import org.andork.spatial.RfBranch;
 import org.andork.spatial.RfLeaf;
 import org.andork.spatial.RfNode;
-import org.andork.spatial.StrPack;
+import org.andork.spatial.RfStarTree;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.MouseAdapterChain;
@@ -148,7 +150,7 @@ public class MapsView extends BasicJOGLSetup
 	JButton							updateViewButton;
 	
 	List<SurveyShot>				surveyShots;
-	RfNode<Integer>					rtree;
+	RfStarTree<Integer>				rtree;
 	
 	float[ ]						v				= newMat4f( );
 	
@@ -589,7 +591,7 @@ public class MapsView extends BasicJOGLSetup
 				{
 					List<PickResult<Integer>> pickResults = new ArrayList<PickResult<Integer>>( );
 					
-					pickNodes( rtree , origin , direction , debugMbrs , pickResults );
+					pickNodes( rtree.getRoot( ) , origin , direction , debugMbrs , pickResults );
 					
 					for( BasicJOGLObject obj : debugMbrs )
 					{
@@ -612,7 +614,7 @@ public class MapsView extends BasicJOGLSetup
 		T				picked;
 	}
 	
-	private boolean pickNodes( RfNode<Integer> node , float[ ] rayOrigin , float[ ] rayDirection , List<BasicJOGLObject> renderedMbrs , List<PickResult<Integer>> pickResults )
+	private boolean pickNodes( RNode<float[ ], Integer> node , float[ ] rayOrigin , float[ ] rayDirection , List<BasicJOGLObject> renderedMbrs , List<PickResult<Integer>> pickResults )
 	{
 		boolean render = false;
 		
@@ -620,16 +622,17 @@ public class MapsView extends BasicJOGLSetup
 		{
 			PickResult<Integer> result = null;
 			
-			if( node instanceof RfBranch )
+			if( node instanceof RBranch )
 			{
-				for( RfNode<Integer> child : ( ( RfBranch ) node ).children( ) )
+				RBranch<float[ ], Integer> branch = ( RBranch<float[ ], Integer> ) node;
+				for( int i = 0 ; i < branch.numChildren( ) ; i++ )
 				{
-					render |= pickNodes( child , rayOrigin , rayDirection , renderedMbrs , pickResults );
+					render |= pickNodes( branch.childAt( i ) , rayOrigin , rayDirection , renderedMbrs , pickResults );
 				}
 			}
-			else if( node instanceof RfLeaf )
+			else if( node instanceof RLeaf )
 			{
-				int shotIndex = ( ( RfLeaf<Integer> ) node ).object( );
+				int shotIndex = ( ( RLeaf<float[ ], Integer> ) node ).object( );
 				ByteBuffer indexBuffer = fillObj.indexBuffer( );
 				ByteBuffer vertBuffer = fillObj.vertexBuffer( 0 );
 				indexBuffer.position( shotIndex * 24 * 4 );
@@ -771,8 +774,6 @@ public class MapsView extends BasicJOGLSetup
 		BufferHelper fillIndexHelper = new BufferHelper( );
 		BufferHelper lineIndexHelper = new BufferHelper( );
 		
-		List<RfNode<Integer>> leaves = new ArrayList<RfNode<Integer>>( );
-		
 		int vertCount = 0;
 		int fillIndexCount = 0;
 		int lineIndexCount = 0;
@@ -780,6 +781,8 @@ public class MapsView extends BasicJOGLSetup
 		surveyShots = shots;
 		
 		int shotIndex = 0;
+		
+		rtree = new RfStarTree<Integer>( 3 , 10 , 3 , 3 );
 		
 		for( SurveyShot shot : shots )
 		{
@@ -933,12 +936,9 @@ public class MapsView extends BasicJOGLSetup
 				mbr[ 5 ] = nmax( mbr[ 5 ] , z );
 			}
 			
-			leaves.add( new DefaultRfLeaf<Integer>( shotIndex++ , mbr ) );
+			RfStarTree.Leaf<Integer> leaf = rtree.createLeaf( mbr , shotIndex++ );
+			rtree.insert( leaf );
 		}
-		
-		RfNode<Integer>[ ] leafArray = leaves.toArray( new RfNode[ leaves.size( ) ] );
-		
-		rtree = StrPack.pack( 10 , leafArray );
 		
 		ByteBuffer vertBuffer = vertHelper.toByteBuffer( );
 		float[ ] bounds = getBounds( vertBuffer , 0 , 24 , vertCount , 3 );
@@ -963,7 +963,7 @@ public class MapsView extends BasicJOGLSetup
 		
 		if( vertCount > 0 )
 		{
-			SharedVertexBuffer sharedBuffer = new SharedVertexBuffer( ).buffer( vertBuffer );
+			SharedBuffer sharedBuffer = new SharedBuffer( ).buffer( vertBuffer );
 			
 			fillObj = new BasicJOGLObject( );
 			fillObj.addVertexBuffer( sharedBuffer ).vertexCount( vertCount );
@@ -1016,15 +1016,15 @@ public class MapsView extends BasicJOGLSetup
 			lineObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
 			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
 			lineObj.add( lineObj.new PlaceholderAttribute( 12 ) );
-			lineObj.add( new JOGLLineWidthModifier( 2.0f ) );
+//			lineObj.add( new JOGLLineWidthModifier( 2.0f ) );
 			lineObj.add( new JOGLDepthModifier( ) );
 			lineObj.add( lineObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 1 , 1 , 1 ) );
 			lineObj.add( lineObj.new Uniform4fv( ).name( "farColor" ).value( 0.3f , 0.3f , 0.3f , 1 ) );
 			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
 			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
 			
-			// scene.initLater( lineObj );
-			// scene.add( lineObj );
+			scene.initLater( lineObj );
+			scene.add( lineObj );
 		}
 		
 		canvas.repaint( );

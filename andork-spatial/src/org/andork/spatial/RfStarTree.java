@@ -41,17 +41,23 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 			chooseSplitAxisComparators[ axis ] = new LowerUpperComparator( axis , dimension );
 		}
 		
-		root = new Branch<T>( dimension , M );
+		root = new Branch<T>( dimension , 1 , M );
 	}
 	
 	@Override
-	public RLeaf<float[ ], T> createLeaf( float[ ] mbr , T object )
+	public Leaf<T> createLeaf( float[ ] mbr , T object )
 	{
 		if( mbr.length != dimension * 2 )
 		{
 			throw new IllegalArgumentException( "mbr.length must equal " + dimension * 2 );
 		}
 		return new Leaf<T>( mbr , object );
+	}
+	
+	@Override
+	public RBranch<float[ ], T> getRoot( )
+	{
+		return root;
 	}
 	
 	static abstract class Node<T> implements RNode<float[ ], T>
@@ -70,16 +76,23 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		{
 			return mbr;
 		}
+		
+		public abstract int level( );
 	}
 	
 	static class Branch<T> extends Node<T> implements RBranch<float[ ], T>
 	{
+		/**
+		 * The level of this branch in the tree. 0 for the level above leaves, 1 for the level above that, etc.
+		 */
+		final int	level;
 		int			numChildren;
 		Node<T>[ ]	children;
 		
-		public Branch( int dimension , int numChildren )
+		public Branch( int dimension , int level , int numChildren )
 		{
 			super( Rectmath.voidRectf( dimension ) );
+			this.level = level;
 			this.children = new Node[ numChildren ];
 		}
 		
@@ -101,9 +114,15 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 				union( mbr , children[ i ].mbr , mbr );
 			}
 		}
+		
+		@Override
+		public int level( )
+		{
+			return level;
+		}
 	}
 	
-	static class Leaf<T> extends Node<T> implements RLeaf<float[ ], T>
+	public static class Leaf<T> extends Node<T> implements RLeaf<float[ ], T>
 	{
 		final T	object;
 		
@@ -118,21 +137,31 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		{
 			return object;
 		}
+		
+		@Override
+		public int level( )
+		{
+			return 0;
+		}
 	}
 	
 	public void insert( Leaf<T> newLeaf )
 	{
+		if( newLeaf.mbr.length != dimension * 2 )
+		{
+			throw new IllegalArgumentException( "newLeaf does not match the dimension of this tree" );
+		}
 		if( newLeaf.parent != null )
 		{
 			throw new IllegalArgumentException( "newLeaf is already in a tree" );
 		}
 		
-		insert( newLeaf , maxLevel , new BitSet( ) );
+		insert( newLeaf , new BitSet( ) );
 	}
 	
-	void insert( Node<T> toInsert , int targetLevel , BitSet reinsertedLevels )
+	void insert( Node<T> toInsert , BitSet reinsertedLevels )
 	{
-		Branch<T> target = chooseSubtree( toInsert , root , 0 , targetLevel );
+		Branch<T> target = chooseSubtree( toInsert , root );
 		
 		if( target.numChildren < M )
 		{
@@ -142,7 +171,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		}
 		else
 		{
-			overflowTreatment( toInsert , target , targetLevel , reinsertedLevels );
+			overflowTreatment( toInsert , target , reinsertedLevels );
 		}
 	}
 	
@@ -155,93 +184,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		}
 	}
 	
-	void overflowTreatment( Node<T> toInsert , Branch<T> overflowed , int targetLevel , BitSet reinsertedLevels )
-	{
-		toInsert.parent = overflowed;
-		overflowed.numChildren++ ;
-		overflowed.children = Arrays.copyOf( overflowed.children , M + 1 );
-		overflowed.children[ M ] = toInsert;
-		
-		while( overflowed != null && overflowed.numChildren > M )
-		{
-			if( targetLevel > 0 && !reinsertedLevels.get( targetLevel ) )
-			{
-				doReinsert( overflowed , targetLevel , reinsertedLevels );
-				break;
-			}
-			else
-			{
-				Branch<T> nextParent = overflowed.parent;
-				doSplit( overflowed , reinsertedLevels );
-				overflowed = nextParent;
-				targetLevel-- ;
-			}
-		}
-	}
-	
-	void doReinsert( Branch<T> overflowed , int targetLevel , BitSet reinsertedLevels )
-	{
-		reinsertedLevels.set( targetLevel );
-		
-		Arrays.sort( overflowed.children , new CenterDistanceComparator( overflowed.mbr ) );
-		
-		Node<T>[ ] pendingReinsertion = new Node[ p ];
-		
-		System.arraycopy( overflowed.children , 0 , pendingReinsertion , 0 , p );
-		System.arraycopy( overflowed.children , p , overflowed.children , 0 , M + 1 - p );
-		overflowed.children = Arrays.copyOf( overflowed.children , M );
-		overflowed.numChildren = M + 1 - p;
-		recalcMbrs( overflowed );
-		
-		for( Node<T> node : pendingReinsertion )
-		{
-			node.parent = null;
-			insert( node , targetLevel , reinsertedLevels );
-		}
-	}
-	
-	void doSplit( Branch<T> overflowed , BitSet reinsertedLevels )
-	{
-		Branch<T> parent = overflowed.parent;
-		removeFromParent( overflowed );
-		
-		Branch<T>[ ] split = split( overflowed );
-		
-		if( overflowed == root )
-		{
-			maxLevel++ ;
-			root = new Branch<T>( dimension , M );
-			root.children[ 0 ] = split[ 0 ];
-			root.children[ 1 ] = split[ 1 ];
-			split[ 0 ].parent = root;
-			split[ 1 ].parent = root;
-			root.numChildren = split.length;
-			root.recalcMbr( );
-			
-			for( int i = reinsertedLevels.length( ) ; i > 0 ; i-- )
-			{
-				if( reinsertedLevels.get( i - 1 ) )
-				{
-					reinsertedLevels.set( i );
-				}
-			}
-			reinsertedLevels.clear( 0 );
-		}
-		else
-		{
-			if( parent.numChildren == M - 1 )
-			{
-				parent.children = Arrays.copyOf( parent.children , M + 1 );
-			}
-			parent.children[ parent.numChildren++ ] = split[ 0 ];
-			parent.children[ parent.numChildren++ ] = split[ 1 ];
-			split[ 0 ].parent = parent;
-			split[ 1 ].parent = parent;
-			parent.recalcMbr( );
-		}
-	}
-	
-	void removeFromParent( Node<T> node )
+	static <T> void removeFromParent( Node<T> node )
 	{
 		if( node.parent != null )
 		{
@@ -271,18 +214,91 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		}
 	}
 	
-	Branch<T> chooseSubtree( Node<T> toInsert , Branch<T> node , int level , int targetLevel )
+	static <T> void addChild( Branch<T> parent , Node<T> node )
 	{
-		while( level < targetLevel )
+		if( parent.numChildren > 0 && parent.children[ 0 ] instanceof Leaf != node instanceof Leaf )
 		{
-			if( node.children[ 0 ] instanceof Leaf )
+			throw new IllegalArgumentException( "Cannot mix leaf and non-leaf nodes in the same branch" );
+		}
+		if( parent.numChildren == parent.children.length )
+		{
+			parent.children = Arrays.copyOf( parent.children , parent.numChildren + 1 );
+		}
+		node.parent = parent;
+		parent.children[ parent.numChildren++ ] = node;
+	}
+	
+	void overflowTreatment( Node<T> toInsert , Branch<T> overflowed , BitSet reinsertedLevels )
+	{
+		addChild( overflowed , toInsert );
+		
+		while( overflowed != null && overflowed.numChildren > M )
+		{
+			if( !reinsertedLevels.get( toInsert.level( ) ) )
 			{
+				doReinsert( overflowed , reinsertedLevels );
 				break;
 			}
-			
+			else
+			{
+				Branch<T> nextParent = overflowed.parent;
+				doSplit( overflowed , reinsertedLevels );
+				overflowed = nextParent;
+			}
+		}
+	}
+	
+	void doReinsert( Branch<T> overflowed , BitSet reinsertedLevels )
+	{
+		reinsertedLevels.set( overflowed.level - 1 );
+		
+		Arrays.sort( overflowed.children , new CenterDistanceComparator( overflowed.mbr ) );
+		
+		Node<T>[ ] pendingReinsertion = new Node[ p ];
+		
+		System.arraycopy( overflowed.children , 0 , pendingReinsertion , 0 , p );
+		System.arraycopy( overflowed.children , M + 1 - p , overflowed.children , 0 , p );
+		overflowed.children = Arrays.copyOf( overflowed.children , M );
+		overflowed.numChildren = M + 1 - p;
+		recalcMbrs( overflowed );
+		
+		for( Node<T> node : pendingReinsertion )
+		{
+			node.parent = null;
+			insert( node , reinsertedLevels );
+		}
+	}
+	
+	void doSplit( Branch<T> overflowed , BitSet reinsertedLevels )
+	{
+		Branch<T> parent = overflowed.parent;
+		removeFromParent( overflowed );
+		
+		Branch<T>[ ] split = split( overflowed );
+		
+		if( overflowed == root )
+		{
+			maxLevel++ ;
+			root = new Branch<T>( dimension , split[ 0 ].level + 1 , M );
+			addChild( root , split[ 0 ] );
+			addChild( root , split[ 1 ] );
+			root.recalcMbr( );
+		}
+		else
+		{
+			addChild( parent , split[ 0 ] );
+			addChild( parent , split[ 1 ] );
+			parent.recalcMbr( );
+		}
+	}
+	
+	Branch<T> chooseSubtree( Node<T> toInsert , Branch<T> node )
+	{
+		while( node.level > toInsert.level( ) + 1 )
+		{
 			int bestIndex = 0;
 			
-			if( ( ( Branch<T> ) node.children[ 0 ] ).children[ 0 ] instanceof Leaf )
+			if( node.level == 2 )
 			{
 				Arrays.sort( node.children , 0 , node.numChildren , new EnlargementComparator( toInsert.mbr ) );
 				
@@ -350,9 +366,12 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 				}
 			}
 			
-			node = ( Branch<T> ) node.children[ bestIndex ];
+			if( node.children[ bestIndex ] instanceof Leaf )
+			{
+				System.out.println( "TEST" );
+			}
 			
-			level++ ;
+			node = ( Branch<T> ) node.children[ bestIndex ];
 		}
 		
 		return node;
@@ -439,8 +458,8 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		int index = chooseSplitIndex( overflowed , axis );
 		
 		Branch<T>[ ] result = new Branch[ 2 ];
-		result[ 0 ] = new Branch<T>( dimension , M );
-		result[ 1 ] = new Branch<T>( dimension , M );
+		result[ 0 ] = new Branch<T>( dimension , overflowed.level , M );
+		result[ 1 ] = new Branch<T>( dimension , overflowed.level , M );
 		
 		result[ 0 ].numChildren = index;
 		result[ 1 ].numChildren = M + 1 - index;
@@ -469,7 +488,12 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		float area = 1f;
 		for( int axis = 0 ; axis < dimension ; axis++ )
 		{
-			area *= mbr[ axis + dimension ] - mbr[ axis ];
+			float span = mbr[ axis + dimension ] - mbr[ axis ];
+			if( span == 0 )
+			{
+				span = Math.ulp( mbr[ axis ] );
+			}
+			area *= span;
 		}
 		return Float.isNaN( area ) ? 0f : area;
 	}
@@ -489,7 +513,17 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		float overlap = 1f;
 		for( int axis = 0 ; axis < dimension ; axis++ )
 		{
-			float span = nmin( r1[ axis + dimension ] , r2[ axis + dimension ] ) - nmax( r1[ axis ] , r2[ axis ] );
+			float hi1 = r1[ axis + dimension ];
+			float hi2 = r2[ axis + dimension ];
+			if( hi1 == r1[ axis ] )
+			{
+				hi1 += Math.ulp( hi1 );
+			}
+			if( hi2 == r2[ axis ] )
+			{
+				hi2 += Math.ulp( hi2 );
+			}
+			float span = nmin( hi1 , hi2 ) - nmax( r1[ axis ] , r2[ axis ] );
 			if( span <= 0 )
 			{
 				return 0;

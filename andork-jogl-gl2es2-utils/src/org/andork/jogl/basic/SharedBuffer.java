@@ -5,19 +5,32 @@ import java.nio.ByteBuffer;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 
-public class SharedVertexBuffer
+public class SharedBuffer
 {
 	ByteBuffer	buffer;
 	
-	int			vbo;
+	int			target		= GL.GL_ARRAY_BUFFER;
+	
+	int			id;
 	
 	int			usage		= GL.GL_STATIC_DRAW;
 	
 	boolean		initialized	= false;
 	
-	public int vbo( )
+	public int id( )
 	{
-		return vbo;
+		return id;
+	}
+	
+	public int target( )
+	{
+		return target;
+	}
+	
+	public SharedBuffer target( int target )
+	{
+		this.target = target;
+		return this;
 	}
 	
 	public ByteBuffer buffer( )
@@ -25,7 +38,7 @@ public class SharedVertexBuffer
 		return buffer;
 	}
 	
-	public SharedVertexBuffer buffer( ByteBuffer buffer )
+	public SharedBuffer buffer( ByteBuffer buffer )
 	{
 		this.buffer = buffer;
 		return this;
@@ -36,7 +49,7 @@ public class SharedVertexBuffer
 		return usage;
 	}
 	
-	public SharedVertexBuffer usage( int usage )
+	public SharedBuffer usage( int usage )
 	{
 		this.usage = usage;
 		return this;
@@ -48,7 +61,7 @@ public class SharedVertexBuffer
 		{
 			int[ ] vbos = new int[ 1 ];
 			gl.glGenBuffers( 1 , vbos , 0 );
-			vbo = vbos[ 0 ];
+			id = vbos[ 0 ];
 			initialized = true;
 			rebuffer( gl );
 		}
@@ -61,16 +74,16 @@ public class SharedVertexBuffer
 			init( gl );
 		}
 		buffer.position( 0 );
-		gl.glBindBuffer( GL.GL_ARRAY_BUFFER , vbo );
-		gl.glBufferData( GL.GL_ARRAY_BUFFER , buffer.capacity( ) , buffer , usage );
-		gl.glBindBuffer( GL.GL_ARRAY_BUFFER , 0 );
+		gl.glBindBuffer( target , id );
+		gl.glBufferData( target , buffer.capacity( ) , buffer , usage );
+		gl.glBindBuffer( target , 0 );
 	}
 	
 	public void destroy( GL2ES2 gl )
 	{
 		if( initialized )
 		{
-			gl.glDeleteBuffers( 1 , new int[ ] { vbo } , 0 );
+			gl.glDeleteBuffers( 1 , new int[ ] { id } , 0 );
 			initialized = false;
 		}
 	}

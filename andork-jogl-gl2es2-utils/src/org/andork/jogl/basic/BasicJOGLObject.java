@@ -17,7 +17,7 @@ import org.andork.jogl.util.JOGLUtils;
 
 public class BasicJOGLObject implements JOGLObject
 {
-	SharedVertexBuffer[ ]		vertexBuffers			= new SharedVertexBuffer[ 0 ];
+	SharedBuffer[ ]		vertexBuffers			= new SharedBuffer[ 0 ];
 	int[ ]						offsets;
 	int[ ]						strides;
 	int							vertexCount;
@@ -61,10 +61,10 @@ public class BasicJOGLObject implements JOGLObject
 	
 	public BasicJOGLObject addVertexBuffer( ByteBuffer newBuffer )
 	{
-		return addVertexBuffer( new SharedVertexBuffer( ).buffer( newBuffer ) );
+		return addVertexBuffer( new SharedBuffer( ).buffer( newBuffer ) );
 	}
 	
-	public BasicJOGLObject addVertexBuffer( SharedVertexBuffer newBuffer )
+	public BasicJOGLObject addVertexBuffer( SharedBuffer newBuffer )
 	{
 		vertexBuffers = Arrays.copyOf( vertexBuffers , vertexBuffers.length + 1 );
 		vertexBuffers[ vertexBuffers.length - 1 ] = newBuffer;
@@ -197,7 +197,7 @@ public class BasicJOGLObject implements JOGLObject
 		
 		int[ ] temp = new int[ 1 ];
 		
-		for( SharedVertexBuffer buffer : vertexBuffers )
+		for( SharedBuffer buffer : vertexBuffers )
 		{
 			buffer.init( gl );
 		}
@@ -219,7 +219,7 @@ public class BasicJOGLObject implements JOGLObject
 			int bi = attribute.getBufferIndex( );
 			int bytes = attribute.getNumBytes( );
 			
-			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].vbo( ) );
+			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].id( ) );
 			
 			attribute.put( gl , strides[ bi ] , offsets[ bi ] );
 			
@@ -287,7 +287,7 @@ public class BasicJOGLObject implements JOGLObject
 			int bi = attribute.getBufferIndex( );
 			int bytes = attribute.getNumBytes( );
 			
-			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].vbo( ) );
+			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].id( ) );
 			
 			attribute.put( gl , strides[ bi ] , offsets[ bi ] );
 			
@@ -317,7 +317,7 @@ public class BasicJOGLObject implements JOGLObject
 	{
 		if( initialized )
 		{
-			for( SharedVertexBuffer buffer : vertexBuffers )
+			for( SharedBuffer buffer : vertexBuffers )
 			{
 				buffer.destroy( gl );
 			}
@@ -339,7 +339,7 @@ public class BasicJOGLObject implements JOGLObject
 	
 	public void rebufferVertices( GL2ES2 gl )
 	{
-		for( SharedVertexBuffer buffer : vertexBuffers )
+		for( SharedBuffer buffer : vertexBuffers )
 		{
 			buffer.rebuffer( gl );
 		}

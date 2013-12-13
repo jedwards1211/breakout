@@ -51,16 +51,17 @@ public class RfStarTreeTest
 				List<Node<String>> queue2 = new LinkedList<Node<String>>( );
 				queue.add( node );
 				
-				int alpha = 30;
+				int alpha = 31;
 				
 				while( !queue.isEmpty( ) )
 				{
 					g.setColor( new Color( 255 , 0 , 0 , alpha ) );
-					alpha = Math.min( 255 , alpha + 40 );
+//					alpha = Math.min( 255 , alpha + 40 );
 					
 					for( Node<String> next : queue )
 					{
 						rect.setFrame( next.mbr[ 0 ] , next.mbr[ 1 ] , next.mbr[ dimension ] - next.mbr[ 0 ] , next.mbr[ dimension + 1 ] - next.mbr[ 1 ] );
+						g.fill( rect );
 						g.draw( rect );
 						
 						if( next instanceof Branch )

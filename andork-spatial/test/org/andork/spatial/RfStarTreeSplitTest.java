@@ -68,7 +68,7 @@ public class RfStarTreeSplitTest
 				
 				if( nodes.size( ) == M + 1 )
 				{
-					Branch<String> branch = new Branch<String>( dimension , M + 1 );
+					Branch<String> branch = new Branch<String>( dimension , 0, M + 1 );
 					int k = 0;
 					for( Node<String> node : nodes )
 					{
