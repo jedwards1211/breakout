@@ -33,6 +33,11 @@ public class SharedBuffer
 		return this;
 	}
 	
+	public SharedBuffer elementArray( )
+	{
+		return target( GL.GL_ELEMENT_ARRAY_BUFFER );
+	}
+	
 	public ByteBuffer buffer( )
 	{
 		return buffer;

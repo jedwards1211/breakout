@@ -17,15 +17,14 @@ import org.andork.jogl.util.JOGLUtils;
 
 public class BasicJOGLObject implements JOGLObject
 {
-	SharedBuffer[ ]		vertexBuffers			= new SharedBuffer[ 0 ];
+	SharedBuffer[ ]				vertexBuffers			= new SharedBuffer[ 0 ];
 	int[ ]						offsets;
 	int[ ]						strides;
 	int							vertexCount;
 	
-	ByteBuffer					indexBuffer;
+	SharedBuffer				indexBuffer;
 	int							indexCount;
 	int							indexType;
-	int							ebo;
 	
 	int							program;
 	int							vertexShader;
@@ -82,15 +81,20 @@ public class BasicJOGLObject implements JOGLObject
 		return this;
 	}
 	
-	public ByteBuffer indexBuffer( )
+	public SharedBuffer indexBuffer( )
 	{
 		return indexBuffer;
 	}
 	
-	public BasicJOGLObject indexBuffer( ByteBuffer newBuffer )
+	public BasicJOGLObject indexBuffer( SharedBuffer newBuffer )
 	{
 		indexBuffer = newBuffer;
 		return this;
+	}
+	
+	public BasicJOGLObject indexBuffer( ByteBuffer newBuffer )
+	{
+		return indexBuffer( new SharedBuffer( ).target( GL.GL_ELEMENT_ARRAY_BUFFER ).buffer( newBuffer ) );
 	}
 	
 	public BasicJOGLObject indexType( int indexType )
@@ -228,15 +232,7 @@ public class BasicJOGLObject implements JOGLObject
 		
 		if( indexBuffer != null )
 		{
-			gl.glGenBuffers( 1 , temp , 0 );
-			
-			ebo = temp[ 0 ];
-			
-			gl.glBindBuffer( GL2ES2.GL_ELEMENT_ARRAY_BUFFER , ebo );
-			
-			indexBuffer.position( 0 );
-			
-			gl.glBufferData( GL2ES2.GL_ELEMENT_ARRAY_BUFFER , indexBuffer.capacity( ) , indexBuffer , GL2ES2.GL_STATIC_DRAW );
+			indexBuffer.init( gl );
 		}
 		
 		gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , 0 );
@@ -296,7 +292,7 @@ public class BasicJOGLObject implements JOGLObject
 		
 		if( indexBuffer != null )
 		{
-			gl.glBindBuffer( GL2ES2.GL_ELEMENT_ARRAY_BUFFER , ebo );
+			gl.glBindBuffer( GL2ES2.GL_ELEMENT_ARRAY_BUFFER , indexBuffer.id( ) );
 			gl.glDrawElements( drawMode , indexCount , indexType , 0 );
 			gl.glBindBuffer( GL2ES2.GL_ELEMENT_ARRAY_BUFFER , 0 );
 		}
@@ -324,7 +320,7 @@ public class BasicJOGLObject implements JOGLObject
 			
 			if( indexBuffer != null )
 			{
-				gl.glDeleteBuffers( 1 , new int[ ] { ebo } , 0 );
+				indexBuffer.destroy( gl );
 			}
 			
 			gl.glDetachShader( program , vertexShader );
@@ -935,6 +931,7 @@ public class BasicJOGLObject implements JOGLObject
 					sb.append( "  gl_Position = mvp * a_pos;" );
 					break;
 			}
+			sb.append("  gl_Position.z += 0.05;");
 			if( passPosToFragmentShader )
 			{
 				sb.append( "  v_pos = vec3(a_pos);" );
