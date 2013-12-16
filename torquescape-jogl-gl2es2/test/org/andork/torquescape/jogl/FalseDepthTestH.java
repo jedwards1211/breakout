@@ -1,15 +1,12 @@
 package org.andork.torquescape.jogl;
 
-import static org.andork.math3d.Vecmath.mpmulAffine;
-import static org.andork.math3d.Vecmath.mvmulAffine;
 import static org.andork.math3d.Vecmath.normalize;
-import static org.andork.math3d.Vecmath.normalize3;
-import static org.andork.math3d.Vecmath.setd;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 
 import org.andork.jogl.basic.BasicJOGLObject;
@@ -17,7 +14,7 @@ import org.andork.jogl.basic.BasicJOGLScene;
 import org.andork.jogl.basic.BasicJOGLSetup;
 import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.JOGLBlendModifier;
-import org.andork.jogl.basic.GankedJOGLPolygonModeModifier;
+import org.andork.jogl.basic.JOGLPolygonModeModifier;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DirectZoneGenerator;
 import org.andork.torquescape.model.normal.NormalGenerator;
@@ -26,7 +23,6 @@ import org.andork.torquescape.model.vertex.IVertexAttrFn;
 import org.andork.torquescape.model.vertex.IVertexVisitor;
 import org.andork.torquescape.model.vertex.StandardVertexFn;
 
-@SuppressWarnings( "serial" )
 public class FalseDepthTestH extends BasicJOGLSetup
 {
 	public static void main( String[ ] args )
@@ -92,7 +88,7 @@ public class FalseDepthTestH extends BasicJOGLSetup
 		obj.indexCount( zone.getIndexBuffer( ).capacity( ) );
 		obj.drawMode( GL2ES2.GL_TRIANGLES );
 		obj.add( new JOGLBlendModifier( ) );
-		obj.add( new GankedJOGLPolygonModeModifier( ) );
+		obj.add( new JOGLPolygonModeModifier( GL.GL_NONE ) );
 		scene.add( obj );
 		
 		return scene;

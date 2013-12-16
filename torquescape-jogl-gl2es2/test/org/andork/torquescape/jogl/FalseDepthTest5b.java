@@ -22,7 +22,6 @@ import org.andork.torquescape.model.vertex.IVertexAttrFn;
 import org.andork.torquescape.model.vertex.IVertexVisitor;
 import org.andork.torquescape.model.vertex.StandardVertexFn;
 
-@SuppressWarnings( "serial" )
 public class FalseDepthTest5b extends TorquescapeSetup
 {
 	public static void main( String[ ] args )
