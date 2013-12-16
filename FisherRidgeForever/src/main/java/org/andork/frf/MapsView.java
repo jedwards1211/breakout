@@ -72,7 +72,7 @@ import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.basic.JOGLLineWidthModifier;
 import org.andork.jogl.basic.JOGLObject;
 import org.andork.jogl.basic.JOGLPolygonModeModifier;
-import org.andork.jogl.basic.SharedVertexBuffer;
+import org.andork.jogl.basic.SharedBuffer;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.jogl.shader.DefaultNormalVertexShader;
 import org.andork.jogl.shader.DefaultPositionVertexShader;
@@ -633,7 +633,7 @@ public class MapsView extends BasicJOGLSetup
 			else if( node instanceof RLeaf )
 			{
 				int shotIndex = ( ( RLeaf<float[ ], Integer> ) node ).object( );
-				ByteBuffer indexBuffer = fillObj.indexBuffer( );
+				ByteBuffer indexBuffer = fillObj.indexBuffer( ).buffer( );
 				ByteBuffer vertBuffer = fillObj.vertexBuffer( 0 );
 				indexBuffer.position( shotIndex * 24 * 4 );
 				for( int i = 0 ; i < 8 ; i++ )
@@ -936,7 +936,7 @@ public class MapsView extends BasicJOGLSetup
 				mbr[ 5 ] = nmax( mbr[ 5 ] , z );
 			}
 			
-			RfStarTree.Leaf<Integer> leaf =  rtree.createLeaf( mbr , shotIndex++ );
+			RfStarTree.Leaf<Integer> leaf = rtree.createLeaf( mbr , shotIndex++ );
 			rtree.insert( leaf );
 		}
 		
@@ -963,20 +963,21 @@ public class MapsView extends BasicJOGLSetup
 		
 		if( vertCount > 0 )
 		{
-			SharedVertexBuffer sharedBuffer = new SharedVertexBuffer( ).buffer( vertBuffer );
+			SharedBuffer sVertBuffer = new SharedBuffer( ).buffer( vertBuffer );
+			SharedBuffer sIndexBuffer = new SharedBuffer( ).elementArray( ).buffer( fillIndexHelper.toByteBuffer( ) );
 			
 			fillObj = new BasicJOGLObject( );
-			fillObj.addVertexBuffer( sharedBuffer ).vertexCount( vertCount );
+			fillObj.addVertexBuffer( sVertBuffer ).vertexCount( vertCount );
 			fillObj.drawMode( GL2ES2.GL_TRIANGLES );
-			fillObj.indexBuffer( fillIndexHelper.toByteBuffer( ) ).indexCount( fillIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
+			fillObj.indexBuffer( sIndexBuffer ).indexCount( fillIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
 			fillObj.transpose( false );
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
-			// fillObj.add( new JOGLPolygonOffsetModifier( -5f , -5f ) );
 			fillObj.add( new JOGLDepthModifier( ) );
 			fillObj.add( new JOGLPolygonModeModifier( GL.GL_BACK ) );
+			// fillObj.add( new JOGLDepthRangeModifier( 0.0f , 0.9f ) );
 			fillObj.add( fillObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 0 , 0 , 1 ) );
-			fillObj.add( fillObj.new Uniform4fv( ).name( "farColor" ).value( 0.3f , 0 , 0 , 1 ) );
+			fillObj.add( fillObj.new Uniform4fv( ).name( "farColor" ).value( 0 , 0 , 1 , 1 ) );
 			fillObj.add( fillNearDist = fillObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
 			fillObj.add( fillFarDist = fillObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
 			fillObj.normalMatrixName( "n" );
@@ -1008,7 +1009,7 @@ public class MapsView extends BasicJOGLSetup
 			scene.add( fillObj );
 			
 			lineObj = new BasicJOGLObject( );
-			lineObj.addVertexBuffer( sharedBuffer ).vertexCount( vertCount );
+			lineObj.addVertexBuffer( sVertBuffer ).vertexCount( vertCount );
 			lineObj.drawMode( GL2ES2.GL_LINES );
 			lineObj.indexBuffer( lineIndexHelper.toByteBuffer( ) ).indexCount( lineIndexCount ).indexType( GL2ES2.GL_UNSIGNED_INT );
 			lineObj.transpose( false );
@@ -1016,15 +1017,16 @@ public class MapsView extends BasicJOGLSetup
 			lineObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
 			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
 			lineObj.add( lineObj.new PlaceholderAttribute( 12 ) );
-			lineObj.add( new JOGLLineWidthModifier( 2.0f ) );
+			// fillObj.add( new JOGLDepthRangeModifier( 0.1f , 1f ) );
+			lineObj.add( new JOGLLineWidthModifier( 1.5f ) );
 			lineObj.add( new JOGLDepthModifier( ) );
-			lineObj.add( lineObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 1 , 1 , 1 ) );
-			lineObj.add( lineObj.new Uniform4fv( ).name( "farColor" ).value( 0.3f , 0.3f , 0.3f , 1 ) );
+			lineObj.add( lineObj.new Uniform4fv( ).name( "nearColor" ).value( 0.7f , 0f , 0f , 1f ) );
+			lineObj.add( lineObj.new Uniform4fv( ).name( "farColor" ).value( 0.0f , 0f , 0.7f , 1 ) );
 			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
 			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
 			
-			// scene.initLater( lineObj );
-			// scene.add( lineObj );
+			scene.initLater( lineObj );
+			scene.add( lineObj );
 		}
 		
 		canvas.repaint( );
