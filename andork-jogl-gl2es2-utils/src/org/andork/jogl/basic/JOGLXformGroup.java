@@ -5,32 +5,19 @@ import static org.andork.math3d.Vecmath.mmul3x3;
 import static org.andork.math3d.Vecmath.mmulAffine;
 import static org.andork.math3d.Vecmath.newMat4f;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.media.opengl.GL2ES2;
 
-public class JOGLXformGroup implements JOGLObject
+public class JOGLXformGroup extends JOGLGroup implements JOGLObject
 {
 	public float[ ]			xform	= newMat4f( );
 	private float[ ]		nxform	= new float[ 9 ];
 	private float[ ]		m		= newMat4f( );
 	private float[ ]		n		= new float[ 9 ];
 	
-	public List<JOGLObject>	objects	= new ArrayList<JOGLObject>( );
-	
 	public JOGLXformGroup( )
 	{
 		updateN( );
-	}
-	
-	@Override
-	public void init( GL2ES2 gl )
-	{
-		for( JOGLObject object : objects )
-		{
-			object.init( gl );
-		}
 	}
 	
 	public void updateN( )
@@ -44,18 +31,6 @@ public class JOGLXformGroup implements JOGLObject
 		mmulAffine( m , xform , this.m );
 		mmul3x3( n , nxform , this.n );
 		
-		for( JOGLObject object : objects )
-		{
-			object.draw( gl , this.m , this.n , v , p );
-		}
-	}
-	
-	@Override
-	public void destroy( GL2ES2 gl )
-	{
-		for( JOGLObject object : objects )
-		{
-			object.destroy( gl );
-		}
+		super.draw( gl , this.m , this.n , v , p );
 	}
 }
