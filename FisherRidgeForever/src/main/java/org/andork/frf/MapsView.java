@@ -683,6 +683,10 @@ public class MapsView extends BasicJOGLSetup
 				{
 					render = true;
 					
+					SurveyShot shot = surveyShots.get( result.picked );
+					
+					System.out.println( shot.from.name + " - " + shot.to.name );
+					
 					pickResults.add( result );
 				}
 				
@@ -974,7 +978,7 @@ public class MapsView extends BasicJOGLSetup
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
 			fillObj.add( new JOGLDepthModifier( ) );
-			fillObj.add( new JOGLPolygonModeModifier( GL.GL_BACK ) );
+//			fillObj.add( new JOGLPolygonModeModifier( GL.GL_BACK ) );
 			// fillObj.add( new JOGLDepthRangeModifier( 0.0f , 0.9f ) );
 			fillObj.add( fillObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 0 , 0 , 1 ) );
 			fillObj.add( fillObj.new Uniform4fv( ).name( "farColor" ).value( 0 , 0 , 1 , 1 ) );
