@@ -42,23 +42,7 @@ import org.andork.spatial.RfStarTree.Node;
 
 public class Survey3dModel
 {
-	RfStarTree<Shot>			tree;
-	
-	Set<Segment>				segments;
-	
-	JOGLGroup					group;
-	
-	private static final int	GEOM_BPV			= 24;
-	private static final int	GEOM_VPS			= 8;
-	private static final int	GEOM_BPS			= GEOM_BPV * GEOM_VPS;
-	private static final int	STATION_ATTR_BPV	= 8;
-	private static final int	STATION_ATTR_VPS	= 2;
-	private static final int	STATION_ATTR_BPS	= STATION_ATTR_BPV * STATION_ATTR_VPS;
-	private static final int	BPI					= 4;
-	private static final int	FILL_IPS			= 24;
-	private static final int	LINE_IPS			= 32;
-	
-	static class Segment
+	public static class Segment
 	{
 		final ArrayList<Shot>	shots	= new ArrayList<Shot>( );
 		
@@ -171,7 +155,7 @@ public class Survey3dModel
 		}
 	}
 	
-	static class Shot
+	public static class Shot
 	{
 		int		index;
 		
@@ -184,6 +168,22 @@ public class Survey3dModel
 			this.index = index;
 		}
 	}
+	
+	RfStarTree<Shot>			tree;
+	
+	Set<Segment>				segments;
+	
+	JOGLGroup					group;
+	
+	private static final int	GEOM_BPV			= 24;
+	private static final int	GEOM_VPS			= 8;
+	private static final int	GEOM_BPS			= GEOM_BPV * GEOM_VPS;
+	private static final int	STATION_ATTR_BPV	= 8;
+	private static final int	STATION_ATTR_VPS	= 2;
+	private static final int	STATION_ATTR_BPS	= STATION_ATTR_BPV * STATION_ATTR_VPS;
+	private static final int	BPI					= 4;
+	private static final int	FILL_IPS			= 24;
+	private static final int	LINE_IPS			= 32;
 	
 	private Survey3dModel( RfStarTree<Shot> tree , Set<Segment> segments )
 	{
@@ -201,6 +201,11 @@ public class Survey3dModel
 	public JOGLGroup getRootGroup( )
 	{
 		return group;
+	}
+	
+	public RfStarTree<Shot> getTree( )
+	{
+		return tree;
 	}
 	
 	public static Survey3dModel create( List<SurveyShot> shots , int M , int m , int p , int segmentLevel )
