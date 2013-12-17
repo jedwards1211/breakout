@@ -55,12 +55,12 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 	}
 	
 	@Override
-	public RBranch<float[ ], T> getRoot( )
+	public Branch<T> getRoot( )
 	{
 		return root;
 	}
 	
-	static abstract class Node<T> implements RNode<float[ ], T>
+	public static abstract class Node<T> implements RNode<float[ ], T>
 	{
 		Branch<T>		parent;
 		final float[ ]	mbr;
@@ -80,7 +80,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		public abstract int level( );
 	}
 	
-	static class Branch<T> extends Node<T> implements RBranch<float[ ], T>
+	public static class Branch<T> extends Node<T> implements RBranch<float[ ], T>
 	{
 		/**
 		 * The level of this branch in the tree. 0 for the level above leaves, 1 for the level above that, etc.
@@ -101,7 +101,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 			return numChildren;
 		}
 		
-		public RNode<float[ ], T> childAt( int index )
+		public Node<T> childAt( int index )
 		{
 			return children[ index ];
 		}
