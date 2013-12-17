@@ -1,4 +1,4 @@
-package org.andork.frf;
+package org.andork.frf.model;
 
 import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
@@ -15,7 +15,6 @@ import java.util.Set;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 
-import org.andork.frf.model.SurveyShot;
 import org.andork.generic.Ref;
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
@@ -77,9 +76,10 @@ public class Survey3dModel
 			{
 				copyBytes( geomBufferRef.value , geomBuffer.buffer( ) , shot.index , GEOM_BPS );
 				copyBytes( stationAttrBufferRef.value , stationAttrBuffer.buffer( ) , shot.index , STATION_ATTR_BPS );
-				copyBytes( fillIndexBufferRef.value , fillIndexBuffer.buffer( ) , shot.index , BPI * FILL_IPS );
-				copyBytes( lineIndexBufferRef.value , lineIndexBuffer.buffer( ) , shot.index , BPI * LINE_IPS );
 			}
+			
+			createFillIndices( fillIndexBuffer.buffer( ) , shots.size( ) );
+			createLineIndices( lineIndexBuffer.buffer( ) , shots.size( ) );
 			
 			geomBuffer.buffer( ).position( 0 );
 			stationAttrBuffer.buffer( ).position( 0 );
@@ -208,6 +208,24 @@ public class Survey3dModel
 		return tree;
 	}
 	
+	public void setNearDist( float nearDist )
+	{
+		for( Segment segment : segments )
+		{
+			segment.fillNearDist.value( nearDist );
+			segment.lineNearDist.value( nearDist );
+		}
+	}
+	
+	public void setFarDist( float farDist )
+	{
+		for( Segment segment : segments )
+		{
+			segment.fillFarDist.value( farDist );
+			segment.lineFarDist.value( farDist );
+		}
+	}
+	
 	public static Survey3dModel create( List<SurveyShot> shots , int M , int m , int p , int segmentLevel )
 	{
 		Ref<ByteBuffer> geomBufferRef = new Ref<ByteBuffer>( );
@@ -232,9 +250,40 @@ public class Survey3dModel
 	
 	private static void copyBytes( ByteBuffer src , ByteBuffer dest , int shotIndex , int bytesPerShot )
 	{
+		src.clear( );
 		src.position( shotIndex * bytesPerShot );
 		src.limit( src.position( ) + bytesPerShot );
 		dest.put( src );
+	}
+	
+	private static void createFillIndices( ByteBuffer dest , int shotCount )
+	{
+		for( int i = 0 ; i < shotCount ; i++ )
+		{
+			for( int index : offset( i * GEOM_VPS ,
+					0 , 4 , 2 , 6 , 2 , 4 ,
+					2 , 6 , 1 , 5 , 1 , 6 ,
+					1 , 5 , 3 , 7 , 3 , 5 ,
+					3 , 7 , 0 , 4 , 0 , 7 ) )
+			{
+				dest.putInt( index );
+			}
+		}
+	}
+	
+	private static void createLineIndices( ByteBuffer dest , int shotCount )
+	{
+		for( int i = 0 ; i < shotCount ; i++ )
+		{
+			for( int index : offset( i * GEOM_VPS ,
+					0 , 4 , 0 , 2 , 4 , 2 , 4 , 6 ,
+					2 , 6 , 2 , 1 , 6 , 1 , 6 , 5 ,
+					1 , 5 , 1 , 3 , 5 , 3 , 5 , 7 ,
+					3 , 7 , 3 , 0 , 7 , 0 , 7 , 4 ) )
+			{
+				dest.putInt( index );
+			}
+		}
 	}
 	
 	private static ByteBuffer createBuffer( int capacity )
@@ -300,13 +349,17 @@ public class Survey3dModel
 	{
 		RfStarTree<Shot> tree = new RfStarTree<Shot>( 3 , M , m , p );
 		
-		for( int s = 0 ; s < geomBufferRef.value.capacity( ) ; s += GEOM_VPS )
+		int numShots = geomBufferRef.value.capacity( ) / GEOM_BPS;
+		
+		for( int s = 0 ; s < numShots ; s++ )
 		{
 			float[ ] mbr = voidRectf( 3 );
 			
+			int shotStart = s * GEOM_BPS;
+			
 			for( int v = 0 ; v < GEOM_VPS ; v++ )
 			{
-				geomBufferRef.value.position( s + v * GEOM_BPV );
+				geomBufferRef.value.position( shotStart + v * GEOM_BPV );
 				float x = geomBufferRef.value.getFloat( );
 				float y = geomBufferRef.value.getFloat( );
 				float z = geomBufferRef.value.getFloat( );
