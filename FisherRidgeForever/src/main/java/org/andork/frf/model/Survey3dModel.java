@@ -100,8 +100,6 @@ public class Survey3dModel
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
 			fillObj.add( new JOGLDepthModifier( ) );
-			fillObj.add( new JOGLPolygonModeModifier( GL.GL_BACK ) );
-			// fillObj.add( new JOGLDepthRangeModifier( 0.0f , 0.9f ) );
 			fillObj.add( fillObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 0 , 0 , 1 ) );
 			fillObj.add( fillObj.new Uniform4fv( ).name( "farColor" ).value( 0 , 0 , 1 , 1 ) );
 			fillObj.add( fillNearDist = fillObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
