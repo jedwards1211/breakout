@@ -469,4 +469,12 @@ public class Rectmath
 		
 		return true;
 	}
+	
+	public static void center( float[ ] r , float[ ] out )
+	{
+		for( int i = 0 ; i < out.length ; i++ )
+		{
+			out[ i ] = ( r[ i ] + r[ i + out.length ] ) * 0.5f;
+		}
+	}
 }

@@ -24,45 +24,46 @@ public class BasicJOGLScene implements GLEventListener
 	/**
 	 * The model matrix.
 	 */
-	public final float[ ]			m						= newMat4f( );
+	public final float[ ]				m						= newMat4f( );
 	
 	/**
 	 * The normal matrix.
 	 */
-	private final float[ ]			n						= new float[ 9 ];
+	private final float[ ]				n						= new float[ 9 ];
 	
 	/**
 	 * The view matrix.
 	 */
-	protected final float[ ]		v						= newMat4f( );
+	protected final float[ ]			v						= newMat4f( );
 	
 	/**
 	 * The projection matrix;
 	 */
-	public final float[ ]			p						= newMat4f( );
+	public final float[ ]				p						= newMat4f( );
 	
-	private int						width , height;
+	private int							width , height;
 	
-	public float					fov						= ( float ) Math.PI / 2;
-	public float					zNear					= 1f;
-	public float					zFar					= 1e7f;
+	public float						fov						= ( float ) Math.PI / 2;
+	public float						zNear					= 1f;
+	public float						zFar					= 1e7f;
 	
-	private final List<JOGLObject>	objects					= new ArrayList<JOGLObject>( );
+	private final List<JOGLObject>		objects					= new ArrayList<JOGLObject>( );
 	
-	private final Queue<JOGLObject>	objectsThatNeedInit		= new LinkedList<JOGLObject>( );
-	private final Queue<JOGLObject>	objectsThatNeedDestroy	= new LinkedList<JOGLObject>( );
+	private final Queue<JOGLObject>		objectsThatNeedInit		= new LinkedList<JOGLObject>( );
+	private final Queue<JOGLObject>		objectsThatNeedDestroy	= new LinkedList<JOGLObject>( );
+	private final Queue<JOGLRunnable>	doLaters				= new LinkedList<JOGLRunnable>( );
 	
-	private static boolean			USE_DEBUG_GL;
-	private DebugGL2				debugGL;
+	private static boolean				USE_DEBUG_GL;
+	private DebugGL2					debugGL;
 	
-	private boolean					orthoMode;
+	private boolean						orthoMode;
 	
-	public float[ ]					orthoFrame				= { -1 , 1 , -1 , 1 , -100 , 100 };
+	public float[ ]						orthoFrame				= { -1 , 1 , -1 , 1 , -100 , 100 };
 	
-	final float[ ]					lastOrthoView			= newMat4f( );
-	final float[ ]					lastPerspectiveView		= newMat4f( );
+	final float[ ]						lastOrthoView			= newMat4f( );
+	final float[ ]						lastPerspectiveView		= newMat4f( );
 	
-	private PickXform				pickXform				= new PickXform( );
+	private PickXform					pickXform				= new PickXform( );
 	
 	static
 	{
@@ -90,6 +91,12 @@ public class BasicJOGLScene implements GLEventListener
 	public BasicJOGLScene destroyLater( JOGLObject object )
 	{
 		objectsThatNeedDestroy.add( object );
+		return this;
+	}
+	
+	public BasicJOGLScene doLater( JOGLRunnable runnable )
+	{
+		doLaters.add( runnable );
 		return this;
 	}
 	
@@ -138,6 +145,11 @@ public class BasicJOGLScene implements GLEventListener
 		while( !objectsThatNeedDestroy.isEmpty( ) )
 		{
 			objectsThatNeedDestroy.poll( ).destroy( gl );
+		}
+		
+		while( !doLaters.isEmpty( ) )
+		{
+			doLaters.poll( ).run( gl );
 		}
 		
 		invAffineToTranspose3x3( m , n );
