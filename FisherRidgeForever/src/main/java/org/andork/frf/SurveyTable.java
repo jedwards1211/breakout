@@ -137,6 +137,7 @@ public class SurveyTable extends JTable
 				}
 				
 				SurveyShot shot = new SurveyShot( );
+				shot.index = shots.size( );
 				shot.from = from;
 				shot.to = to;
 				shot.dist = dist;

@@ -2,7 +2,6 @@ package org.andork.jogl.basic;
 
 import static org.andork.jogl.util.JOGLUtils.checkGLError;
 
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -10,8 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.media.opengl.GL;
-import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
+import javax.media.opengl.GL3;
 
 import org.andork.jogl.util.JOGLUtils;
 
@@ -640,6 +639,7 @@ public class BasicJOGLObject implements JOGLObject
 	{
 		protected String	name;
 		protected int		bufferIndex;
+		protected int		divisor;
 		
 		public String getName( )
 		{
@@ -649,6 +649,11 @@ public class BasicJOGLObject implements JOGLObject
 		public int getBufferIndex( )
 		{
 			return bufferIndex;
+		}
+		
+		public int getDivisor( )
+		{
+			return divisor;
 		}
 		
 		public abstract int getNumBytes( );
@@ -726,6 +731,12 @@ public class BasicJOGLObject implements JOGLObject
 			return this;
 		}
 		
+		public Attribute2fv divisor( int divisor )
+		{
+			this.divisor = divisor;
+			return this;
+		}
+		
 		@Override
 		public void put( GL2ES2 gl , int stride , int offset )
 		{
@@ -742,6 +753,11 @@ public class BasicJOGLObject implements JOGLObject
 			
 			gl.glVertexAttribPointer( location , 2 , GL2ES2.GL_FLOAT , normalized , stride , offset );
 			checkGLError( gl );
+			
+			if( divisor > 0 )
+			{
+				( ( GL3 ) gl ).glVertexAttribDivisor( location , divisor );
+			}
 		}
 		
 		public void put( float x , float y )
@@ -776,6 +792,12 @@ public class BasicJOGLObject implements JOGLObject
 			return this;
 		}
 		
+		public Attribute3fv divisor( int divisor )
+		{
+			this.divisor = divisor;
+			return this;
+		}
+		
 		public Attribute3fv normalized( boolean normalized )
 		{
 			this.normalized = normalized;
@@ -798,6 +820,11 @@ public class BasicJOGLObject implements JOGLObject
 			
 			gl.glVertexAttribPointer( location , 3 , GL2ES2.GL_FLOAT , normalized , stride , offset );
 			checkGLError( gl );
+			
+			if( divisor > 0 )
+			{
+				( ( GL3 ) gl ).glVertexAttribDivisor( location , divisor );
+			}
 		}
 		
 		public void put( float x , float y , float z )
@@ -931,7 +958,7 @@ public class BasicJOGLObject implements JOGLObject
 					sb.append( "  gl_Position = mvp * a_pos;" );
 					break;
 			}
-			sb.append("  gl_Position.z += 0.05;");
+			sb.append( "  gl_Position.z += 0.05;" );
 			if( passPosToFragmentShader )
 			{
 				sb.append( "  v_pos = vec3(a_pos);" );

@@ -37,7 +37,7 @@ public class BasicJOGLSetup
 	
 	public static GLWindow createDefaultGLWindow( )
 	{
-		final GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
+		final GLProfile glp = GLProfile.get( GLProfile.GL3 );
 		final GLCapabilities caps = new GLCapabilities( glp );
 		Display dpy = NewtFactory.createDisplay( null );
 		Screen screen = NewtFactory.createScreen( dpy , 0 );

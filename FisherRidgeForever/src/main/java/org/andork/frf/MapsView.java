@@ -1,6 +1,7 @@
 package org.andork.frf;
 
 import static org.andork.math3d.Vecmath.newMat4f;
+import static org.andork.spatial.Rectmath.rayIntersects;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -19,6 +20,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -51,6 +53,9 @@ import org.andork.awt.layout.DrawerLayoutDelegate;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.TabLayoutDelegate;
 import org.andork.frf.model.Survey3dModel;
+import org.andork.frf.model.Survey3dModel.SelectionEditor;
+import org.andork.frf.model.Survey3dModel.Shot;
+import org.andork.frf.model.Survey3dModel.ShotPickContext;
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.update.UpdateProperties;
 import org.andork.frf.update.UpdateStatus;
@@ -64,7 +69,11 @@ import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
+import org.andork.spatial.RBranch;
+import org.andork.spatial.RLeaf;
+import org.andork.spatial.RNode;
 import org.andork.spatial.Rectmath;
+import org.andork.spatial.RfBranch;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.MouseAdapterChain;
@@ -123,6 +132,8 @@ public class MapsView extends BasicJOGLSetup
 	
 	int								debugMbrCount	= 0;
 	List<BasicJOGLObject>			debugMbrs		= new ArrayList<BasicJOGLObject>( );
+	
+	ShotPickContext					spc				= new ShotPickContext( );
 	
 	final LinePlaneIntersection3f	lpx				= new LinePlaneIntersection3f( );
 	final float[ ]					p0				= new float[ 3 ];
@@ -543,6 +554,30 @@ public class MapsView extends BasicJOGLSetup
 				
 				debugMbrs = new ArrayList<BasicJOGLObject>( );
 				
+				if( model != null )
+				{
+					List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
+					model.pickNodes( origin , direction , spc , pickResults );
+					
+					SelectionEditor editor = model.editSelection( );
+					
+					for( Shot shot : model.getHoveredShots( ) )
+					{
+						editor.unhover( shot );
+					}
+					
+					Collections.sort( pickResults );
+					
+					if( !pickResults.isEmpty( ) )
+					{
+						editor.hover( pickResults.get( 0 ).picked , 0.5f , 1000f );
+					}
+					
+					editor.commit( );
+					
+					canvas.display( );
+				}
+				
 				// if( rtree != null )
 				// {
 				// List<PickResult<Integer>> pickResults = new ArrayList<PickResult<Integer>>( );
@@ -563,109 +598,46 @@ public class MapsView extends BasicJOGLSetup
 		scene.setOrthoMode( false );
 	}
 	
-	private static class PickResult<T>
+	private boolean pickNodes( RNode<float[ ], Shot> node , float[ ] rayOrigin , float[ ] rayDirection , List<BasicJOGLObject> renderedMbrs ,
+			List<PickResult<Shot>> pickResults )
 	{
-		final float[ ]	location	= new float[ 3 ];
-		float			distance;
-		T				picked;
+		boolean render = false;
+		
+		if( rayIntersects( rayOrigin , rayDirection , node.mbr( ) ) )
+		{
+			if( node instanceof RBranch )
+			{
+				RBranch<float[ ], Shot> branch = ( RBranch<float[ ], Shot> ) node;
+				for( int i = 0 ; i < branch.numChildren( ) ; i++ )
+				{
+					render |= pickNodes( branch.childAt( i ) , rayOrigin , rayDirection , renderedMbrs , pickResults );
+				}
+			}
+			else if( node instanceof RLeaf )
+			{
+				Shot shot = ( ( RLeaf<float[ ], Shot> ) node ).object( );
+				shot.pick( rayOrigin , rayDirection , spc , pickResults );
+			}
+		}
+		
+		if( render )
+		{
+			renderedMbrs.add( renderMbr( node.mbr( ) , 1 , 1 , 0 ) );
+			if( node instanceof RfBranch )
+			{
+				RBranch<float[ ], Shot> branch = ( RBranch<float[ ], Shot> ) node;
+				if( branch.numChildren( ) > 0 && branch.childAt( 0 ) instanceof RLeaf )
+				{
+					for( int i = 0 ; i < branch.numChildren( ) ; i++ )
+					{
+						renderedMbrs.add( renderMbr( branch.childAt( i ).mbr( ) , 0 , 0 , 1 ) );
+					}
+				}
+			}
+		}
+		
+		return render;
 	}
-	
-	// private boolean pickNodes( RNode<float[ ], Integer> node , float[ ] rayOrigin , float[ ] rayDirection , List<BasicJOGLObject> renderedMbrs ,
-	// List<PickResult<Integer>> pickResults )
-	// {
-	// boolean render = false;
-	//
-	// if( rayIntersects( rayOrigin , rayDirection , node.mbr( ) ) )
-	// {
-	// PickResult<Integer> result = null;
-	//
-	// if( node instanceof RBranch )
-	// {
-	// RBranch<float[ ], Integer> branch = ( RBranch<float[ ], Integer> ) node;
-	// for( int i = 0 ; i < branch.numChildren( ) ; i++ )
-	// {
-	// render |= pickNodes( branch.childAt( i ) , rayOrigin , rayDirection , renderedMbrs , pickResults );
-	// }
-	// }
-	// else if( node instanceof RLeaf )
-	// {
-	// int shotIndex = ( ( RLeaf<float[ ], Integer> ) node ).object( );
-	// ByteBuffer indexBuffer = fillObj.indexBuffer( ).buffer( );
-	// ByteBuffer vertBuffer = fillObj.vertexBuffer( 0 );
-	// indexBuffer.position( shotIndex * 24 * 4 );
-	// for( int i = 0 ; i < 8 ; i++ )
-	// {
-	// int i0 = indexBuffer.getInt( );
-	// int i1 = indexBuffer.getInt( );
-	// int i2 = indexBuffer.getInt( );
-	//
-	// vertBuffer.position( i0 * 24 );
-	// p0[ 0 ] = vertBuffer.getFloat( );
-	// p0[ 1 ] = vertBuffer.getFloat( );
-	// p0[ 2 ] = vertBuffer.getFloat( );
-	//
-	// vertBuffer.position( i1 * 24 );
-	// p1[ 0 ] = vertBuffer.getFloat( );
-	// p1[ 1 ] = vertBuffer.getFloat( );
-	// p1[ 2 ] = vertBuffer.getFloat( );
-	//
-	// vertBuffer.position( i2 * 24 );
-	// p2[ 0 ] = vertBuffer.getFloat( );
-	// p2[ 1 ] = vertBuffer.getFloat( );
-	// p2[ 2 ] = vertBuffer.getFloat( );
-	//
-	// try
-	// {
-	// lpx.lineFromRay( rayOrigin , rayDirection );
-	// lpx.planeFromPoints( p0 , p1 , p2 );
-	// lpx.findIntersection( );
-	// if( lpx.isPointIntersection( ) && lpx.isOnRay( ) && lpx.isInTriangle( ) )
-	// {
-	// if( result == null || lpx.t < result.distance )
-	// {
-	// result = new PickResult<Integer>( );
-	// result.picked = shotIndex;
-	// result.distance = lpx.t;
-	// setf( result.location , lpx.result );
-	// }
-	// }
-	// }
-	// catch( Exception ex )
-	// {
-	//
-	// }
-	// }
-	//
-	// if( result != null )
-	// {
-	// render = true;
-	//
-	// pickResults.add( result );
-	// }
-	//
-	// vertBuffer.position( 0 );
-	// indexBuffer.position( 0 );
-	// }
-	// }
-	//
-	// if( render )
-	// {
-	// renderedMbrs.add( renderMbr( node.mbr( ) , 1 , 1 , 0 ) );
-	// if( node instanceof RfBranch )
-	// {
-	// RfNode<Integer>[ ] children = ( ( RfBranch<Integer> ) node ).children( );
-	// if( children.length > 0 && children[ 0 ] instanceof RfLeaf )
-	// {
-	// for( RfNode<Integer> child : children )
-	// {
-	// renderedMbrs.add( renderMbr( child.mbr( ) , 0 , 0 , 1 ) );
-	// }
-	// }
-	// }
-	// }
-	//
-	// return render;
-	// }
 	
 	private static BasicJOGLObject renderMbr( float[ ] mbr , float r , float g , float b )
 	{

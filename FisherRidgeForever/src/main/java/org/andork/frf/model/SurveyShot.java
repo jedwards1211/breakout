@@ -2,6 +2,7 @@ package org.andork.frf.model;
 
 public class SurveyShot
 {
+	public int				index;
 	public SurveyStation	from;
 	public SurveyStation	to;
 	public double			dist;
