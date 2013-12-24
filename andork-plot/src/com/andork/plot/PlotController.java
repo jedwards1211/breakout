@@ -56,7 +56,10 @@ public class PlotController extends MouseAdapter
 	private void retarget( MouseEvent e , PlotAxisController axis )
 	{
 		boolean enableZoom = axis.isEnableZoom( );
-		axis.setEnableZoom( true );
+		if( e instanceof MouseWheelEvent )
+		{
+			axis.setEnableZoom( true );
+		}
 		MouseEventFaker.dispatch( convertForAxis( e , axis.getView( ) ) , axis.getMouseHandler( ) );
 		axis.setEnableZoom( enableZoom );
 	}

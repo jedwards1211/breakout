@@ -56,6 +56,7 @@ import org.andork.frf.model.Survey3dModel;
 import org.andork.frf.model.Survey3dModel.SelectionEditor;
 import org.andork.frf.model.Survey3dModel.Shot;
 import org.andork.frf.model.Survey3dModel.ShotPickContext;
+import org.andork.frf.model.Survey3dModel.ShotPickResult;
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.update.UpdateProperties;
 import org.andork.frf.update.UpdateStatus;
@@ -76,6 +77,7 @@ import org.andork.spatial.Rectmath;
 import org.andork.spatial.RfBranch;
 
 import com.andork.plot.AxisLinkButton;
+import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseAdapterChain;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.Plot;
@@ -113,6 +115,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	PlotController					plotController;
 	MouseLooper						mouseLooper;
+	MousePickHandler				pickHandler;
 	MouseAdapterChain				mouseAdapterChain;
 	
 	JComboBox						modeComboBox;
@@ -322,7 +325,11 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
+		new PlotAxisController( highlightDistAxis );
+		
 		plotController = new PlotController( plot , xAxisController , yAxisController );
+		
+		pickHandler = new MousePickHandler( );
 		
 		mouseLooper = new MouseLooper( );
 		canvas.addMouseListener( mouseLooper );
@@ -331,6 +338,7 @@ public class MapsView extends BasicJOGLSetup
 		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
+		mouseAdapterChain.addMouseAdapter( pickHandler );
 		
 		plotPanel = new JPanel( new PlotPanelLayout( ) );
 		plotPanel.add( plot );
@@ -586,6 +594,7 @@ public class MapsView extends BasicJOGLSetup
 		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
+		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( true );
@@ -601,52 +610,8 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( navigator );
 		mouseAdapterChain.addMouseAdapter( orbiter );
+		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
-		mouseAdapterChain.addMouseAdapter( new MouseAdapter( )
-		{
-			@Override
-			public void mouseMoved( MouseEvent e )
-			{
-				float[ ] origin = new float[ 3 ];
-				float[ ] direction = new float[ 3 ];
-				scene.pickXform( ).getOrigin( origin );
-				scene.pickXform( ).xform( e.getX( ) , e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , direction , 0 );
-				
-				System.out.println( Arrays.toString( origin ) + ", " + Arrays.toString( direction ) );
-				
-				for( BasicJOGLObject obj : debugMbrs )
-				{
-					scene.destroyLater( obj );
-					scene.remove( obj );
-				}
-				
-				debugMbrs = new ArrayList<BasicJOGLObject>( );
-				
-				if( model != null )
-				{
-					List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
-					model.pickShots( origin , direction , spc , pickResults );
-					
-					SelectionEditor editor = model.editSelection( );
-					
-					for( Shot shot : model.getHoveredShots( ) )
-					{
-						editor.unhover( shot );
-					}
-					
-					Collections.sort( pickResults );
-					
-					if( !pickResults.isEmpty( ) )
-					{
-						editor.hover( pickResults.get( 0 ).picked , 0.5f , 1000f );
-					}
-					
-					editor.commit( );
-					
-					canvas.display( );
-				}
-			}
-		} );
 		
 		scene.setOrthoMode( false );
 	}
@@ -687,4 +652,52 @@ public class MapsView extends BasicJOGLSetup
 		canvas.repaint( );
 	}
 	
+	private class MousePickHandler extends MouseAdapter
+	{
+		@Override
+		public void mouseMoved( MouseEvent e )
+		{
+			float[ ] origin = new float[ 3 ];
+			float[ ] direction = new float[ 3 ];
+			scene.pickXform( ).xform( e.getX( ) , e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
+			
+			System.out.println( Arrays.toString( origin ) + ", " + Arrays.toString( direction ) );
+			
+			for( BasicJOGLObject obj : debugMbrs )
+			{
+				scene.destroyLater( obj );
+				scene.remove( obj );
+			}
+			
+			debugMbrs = new ArrayList<BasicJOGLObject>( );
+			
+			if( model != null )
+			{
+				List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
+				model.pickShots( origin , direction , spc , pickResults );
+				
+				SelectionEditor editor = model.editSelection( );
+				
+				for( Shot shot : model.getHoveredShots( ) )
+				{
+					editor.unhover( shot );
+				}
+				
+				Collections.sort( pickResults );
+				
+				if( !pickResults.isEmpty( ) )
+				{
+					LinearAxisConversion viewConversion = highlightDistAxis.getAxisConversion( );
+					LinearAxisConversion conversion = new LinearAxisConversion( );
+					conversion.set( viewConversion.invert( 0 ) , 1 , viewConversion.invert( highlightDistAxis.getViewSpan( ) ) , 0 );
+					ShotPickResult result = ( ShotPickResult ) pickResults.get( 0 );
+					editor.hover( result.picked , result.locationAlongShot , conversion );
+				}
+				
+				editor.commit( );
+				
+				canvas.display( );
+			}
+		}
+	}
 }

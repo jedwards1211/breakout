@@ -50,6 +50,8 @@ import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
 
+import com.andork.plot.LinearAxisConversion;
+
 public class Survey3dModel
 {
 	public static class Segment
@@ -240,7 +242,7 @@ public class Survey3dModel
 		
 		public void pick( float[ ] rayOrigin , float[ ] rayDirection , ShotPickContext c , List<PickResult<Shot>> pickResults )
 		{
-			PickResult<Shot> result = null;
+			ShotPickResult result = null;
 			
 			ByteBuffer indexBuffer = segment.fillIndexBuffer.buffer( );
 			ByteBuffer vertBuffer = segment.geomBuffer.buffer( );
@@ -275,9 +277,10 @@ public class Survey3dModel
 					{
 						if( result == null || c.lpx.t < result.distance )
 						{
-							result = new PickResult<Shot>( );
+							result = new ShotPickResult( );
 							result.picked = this;
 							result.distance = c.lpx.t;
+							result.locationAlongShot = i % 2 == 0 ? c.lpx.u : 1 - c.lpx.u;
 							setf( result.location , c.lpx.result );
 						}
 					}
@@ -298,19 +301,24 @@ public class Survey3dModel
 		}
 	}
 	
-	List<SurveyShot>		originalShots;
-	List<Shot>				shots;
+	public static class ShotPickResult extends PickResult<Shot>
+	{
+		public float	locationAlongShot;
+	}
 	
-	RfStarTree<Shot>		tree;
+	List<SurveyShot>						originalShots;
+	List<Shot>								shots;
 	
-	Set<Segment>			segments;
+	RfStarTree<Shot>						tree;
 	
-	final Set<Shot>			selectedShots		= new HashSet<Shot>( );
-	final Set<Shot>			hoveredShots		= new HashSet<Shot>( );
-	final Map<Shot, Float>	hoverLocations		= new HashMap<Shot, Float>( );
-	final Map<Shot, Float>	highlightExtents	= new HashMap<Shot, Float>( );
+	Set<Segment>							segments;
 	
-	JOGLGroup				group;
+	final Set<Shot>							selectedShots		= new HashSet<Shot>( );
+	final Set<Shot>							hoveredShots		= new HashSet<Shot>( );
+	final Map<Shot, Float>					hoverLocations		= new HashMap<Shot, Float>( );
+	final Map<Shot, LinearAxisConversion>	highlightExtents	= new HashMap<Shot, LinearAxisConversion>( );
+	
+	JOGLGroup								group;
 	
 	public static final class ShotPickContext
 	{
@@ -435,14 +443,14 @@ public class Survey3dModel
 			
 		}
 		
-		final Set<Shot>			selected			= new HashSet<Shot>( );
-		final Set<Shot>			deselected			= new HashSet<Shot>( );
-		final Set<Shot>			hovered				= new HashSet<Shot>( );
-		final Map<Shot, Float>	hoverLocations		= new HashMap<Shot, Float>( );
-		final Map<Shot, Float>	highlightExtents	= new HashMap<Shot, Float>( );
-		final Set<Shot>			unhovered			= new HashSet<Shot>( );
+		final Set<Shot>							selected			= new HashSet<Shot>( );
+		final Set<Shot>							deselected			= new HashSet<Shot>( );
+		final Set<Shot>							hovered				= new HashSet<Shot>( );
+		final Map<Shot, Float>					hoverLocations		= new HashMap<Shot, Float>( );
+		final Map<Shot, LinearAxisConversion>	highlightExtents	= new HashMap<Shot, LinearAxisConversion>( );
+		final Set<Shot>							unhovered			= new HashSet<Shot>( );
 		
-		boolean					committed			= false;
+		boolean									committed			= false;
 		
 		public SelectionEditor select( Shot shot )
 		{
@@ -458,7 +466,7 @@ public class Survey3dModel
 			return this;
 		}
 		
-		public SelectionEditor hover( Shot shot , float location , float highlightExtent )
+		public SelectionEditor hover( Shot shot , float location , LinearAxisConversion highlightExtent )
 		{
 			hovered.add( shot );
 			unhovered.remove( shot );
@@ -478,7 +486,7 @@ public class Survey3dModel
 		
 		public void commit( )
 		{
-			Map<Shot, Float> prevHighlightExtents = new HashMap<Shot, Float>( Survey3dModel.this.highlightExtents );
+			Map<Shot, LinearAxisConversion> prevHighlightExtents = new HashMap<Shot, LinearAxisConversion>( Survey3dModel.this.highlightExtents );
 			
 			if( committed )
 			{
@@ -538,7 +546,6 @@ public class Survey3dModel
 		}
 		
 		Survey3dModel model = new Survey3dModel( originalShots , shots , tree , segments );
-		model.editSelection( ).hover( shots.get( 0 ) , 0.25f , 1000f ).commit( );
 		
 		return model;
 	}
@@ -844,7 +851,7 @@ public class Survey3dModel
 		return in;
 	}
 	
-	private void updateHighlights( Collection<Shot> affectedShots , Map<Shot, Float> prevHighlightExtents )
+	private void updateHighlights( Collection<Shot> affectedShots , Map<Shot, LinearAxisConversion> prevHighlightExtents )
 	{
 		// find the segments that are affected by the affected shots
 		// (not just the segments containing those shots but segments containing
@@ -886,16 +893,26 @@ public class Survey3dModel
 		FORWARD , BACKWARD;
 	}
 	
-	private void findAffectedSegments( Shot shot , Set<Segment> affectedSegments , Map<Shot, Float> prevHighlightExtents )
+	private void findAffectedSegments( Shot shot , Set<Segment> affectedSegments , Map<Shot, LinearAxisConversion> prevHighlightExtents )
 	{
 		Set<Shot> visitedShots = new HashSet<Shot>( );
-		Float newRemainingDistance = highlightExtents.get( shot );
-		if( newRemainingDistance == null )
+		LinearAxisConversion newConversion = highlightExtents.get( shot );
+		Float newRemainingDistance;
+		if( newConversion != null )
+		{
+			newRemainingDistance = ( float ) newConversion.invert( 0.0 );
+		}
+		else
 		{
 			newRemainingDistance = 0f;
 		}
-		Float prevRemainingDistance = prevHighlightExtents.get( shot );
-		if( prevRemainingDistance == null )
+		LinearAxisConversion prevConversion = prevHighlightExtents.get( shot );
+		Float prevRemainingDistance;
+		if( prevConversion != null )
+		{
+			prevRemainingDistance = ( float ) prevConversion.invert( 0.0 );
+		}
+		else
 		{
 			prevRemainingDistance = 0f;
 		}
@@ -1008,12 +1025,7 @@ public class Survey3dModel
 		SurveyShot origShot = originalShots.get( shot.index );
 		ByteBuffer buffer = shot.segment.stationAttrBuffer.buffer( );
 		
-		Float highlightExtent = highlightExtents.get( shot );
-		if( highlightExtent == null )
-		{
-			highlightExtent = ( float ) origShot.dist;
-		}
-		float remainingDistance = highlightExtent;
+		LinearAxisConversion highlightConversion = highlightExtents.get( shot );
 		
 		Float hoverLocation = hoverLocations.get( shot );
 		if( hoverLocation == null )
@@ -1024,70 +1036,53 @@ public class Survey3dModel
 		float distToFrom = ( float ) ( origShot.dist * hoverLocation );
 		float distToTo = ( float ) ( origShot.dist * ( 1f - hoverLocation ) );
 		
-		applyHoverHighlights( origShot.from , Direction.BACKWARD , remainingDistance - distToFrom , highlightExtent );
-		applyHoverHighlights( origShot.to , Direction.FORWARD , remainingDistance - distToTo , highlightExtent );
+		applyHoverHighlights( origShot.from , Direction.BACKWARD , distToFrom , highlightConversion );
+		applyHoverHighlights( origShot.to , Direction.FORWARD , distToTo , highlightConversion );
 		
-		float fromHighlightA = 1f - distToFrom / highlightExtent;
-		float fromHighlightB = 1f + distToFrom / highlightExtent;
-		float toHighlightA = 1f + distToTo / highlightExtent;
-		float toHighlightB = 1f - distToTo / highlightExtent;
+		float fromHighlightA = ( float ) highlightConversion.convert( distToTo - origShot.dist );
+		float fromHighlightB = ( float ) highlightConversion.convert( distToFrom );
+		float toHighlightA = ( float ) highlightConversion.convert( distToTo );
+		float toHighlightB = ( float ) highlightConversion.convert( distToFrom - origShot.dist );
 		
-		float currentFromHighlightA = getFromHighlightA( buffer , shot.indexInSegment );
-		float currentFromHighlightB = getFromHighlightB( buffer , shot.indexInSegment );
-		float currentToHighlightA = getToHighlightA( buffer , shot.indexInSegment );
-		float currentToHighlightB = getToHighlightB( buffer , shot.indexInSegment );
-		
-		if( fromHighlightA < currentFromHighlightA )
-		{
-			setFromHighlightA( buffer , shot.indexInSegment , fromHighlightA );
-		}
-		if( fromHighlightB < currentFromHighlightB )
-		{
-			setFromHighlightB( buffer , shot.indexInSegment , fromHighlightB );
-		}
-		if( toHighlightA < currentToHighlightA )
-		{
-			setToHighlightA( buffer , shot.indexInSegment , toHighlightA );
-		}
-		if( toHighlightB < currentToHighlightB )
-		{
-			setToHighlightB( buffer , shot.indexInSegment , toHighlightB );
-		}
+		setFromHighlightA( buffer , shot.indexInSegment , fromHighlightA );
+		setFromHighlightB( buffer , shot.indexInSegment , fromHighlightB );
+		setToHighlightA( buffer , shot.indexInSegment , toHighlightA );
+		setToHighlightB( buffer , shot.indexInSegment , toHighlightB );
 	}
 	
-	private void applyHoverHighlights( SurveyStation station , Direction direction , float remainingDistance , float highlightExtent )
+	private void applyHoverHighlights( SurveyStation station , Direction direction , float distance , LinearAxisConversion highlightConversion )
 	{
 		for( SurveyShot next : station.frontsights )
 		{
-			applyHoverHighlights( shots.get( next.index ) , Direction.FORWARD , remainingDistance , highlightExtent );
+			applyHoverHighlights( shots.get( next.index ) , Direction.FORWARD , distance , highlightConversion );
 		}
 		for( SurveyShot next : station.backsights )
 		{
-			applyHoverHighlights( shots.get( next.index ) , Direction.BACKWARD , remainingDistance , highlightExtent );
+			applyHoverHighlights( shots.get( next.index ) , Direction.BACKWARD , distance , highlightConversion );
 		}
 	}
 	
-	private void applyHoverHighlights( Shot shot , Direction direction , float remainingDistance , float highlightExtent )
+	private void applyHoverHighlights( Shot shot , Direction direction , float distance , LinearAxisConversion highlightConversion )
 	{
-		if( remainingDistance > 0 )
+		if( distance < highlightConversion.invert( 0 ) )
 		{
 			ByteBuffer buffer = shot.segment.stationAttrBuffer.buffer( );
 			
 			SurveyShot origShot = originalShots.get( shot.index );
-			float nextRemainingDistance = ( float ) ( remainingDistance - origShot.dist );
+			float nextDistance = ( float ) ( distance + origShot.dist );
 			
 			float fromHighlight;
 			float toHighlight;
 			
 			if( direction == Direction.FORWARD )
 			{
-				fromHighlight = remainingDistance / highlightExtent;
-				toHighlight = nextRemainingDistance / highlightExtent;
+				fromHighlight = ( float ) highlightConversion.convert( distance );
+				toHighlight = ( float ) highlightConversion.convert( nextDistance );
 			}
 			else
 			{
-				fromHighlight = nextRemainingDistance / highlightExtent;
-				toHighlight = remainingDistance / highlightExtent;
+				fromHighlight = ( float ) highlightConversion.convert( nextDistance );
+				toHighlight = ( float ) highlightConversion.convert( distance );
 			}
 			
 			float currentFromHighlight = Math.min( getFromHighlightA( buffer , shot.indexInSegment ) , getFromHighlightB( buffer , shot.indexInSegment ) );
@@ -1111,7 +1106,7 @@ public class Survey3dModel
 			if( keepGoing )
 			{
 				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
-				applyHoverHighlights( nextStation , direction , nextRemainingDistance , highlightExtent );
+				applyHoverHighlights( nextStation , direction , nextDistance , highlightConversion );
 			}
 		}
 	}

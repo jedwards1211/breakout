@@ -51,7 +51,7 @@ public class PlotAxisController
 		@Override
 		public void mouseReleased( MouseEvent e )
 		{
-			if( e.getButton( ) == pressEvent.getButton( ) )
+			if( pressEvent != null && e.getButton( ) == pressEvent.getButton( ) )
 			{
 				lastEvent = null;
 				pressEvent = null;
