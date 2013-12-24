@@ -100,6 +100,7 @@ public class MapsView extends BasicJOGLSetup
 	AxisLinkButton					axisLinkButton;
 	PlotAxis						distColorationAxis;
 	PlotAxis						paramColorationAxis;
+	PlotAxis						highlightDistAxis;
 	
 	PaintablePanel					settingsPanel;
 	JButton							settingsButton;
@@ -195,8 +196,9 @@ public class MapsView extends BasicJOGLSetup
 		OverrideInsetsBorder.override( yaxis , new Insets( 0 , 0 , 0 , 0 ) );
 		
 		final GradientMap distGradientMap = new GradientMap( );
-		distGradientMap.map.put( 0.0 , Color.WHITE );
-		distGradientMap.map.put( 1.0 , new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 ) );
+		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
+		distGradientMap.map.put( 0.0 , ColorUtils.alphaColor( darkColor , 0 ) );
+		distGradientMap.map.put( 1.0 , darkColor );
 		
 		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP )
 		{
@@ -235,6 +237,27 @@ public class MapsView extends BasicJOGLSetup
 		paramColorationAxis.setMajorTickColor( Color.WHITE );
 		paramColorationAxis.setMinorTickColor( Color.WHITE );
 		paramColorationAxis.addPlot( plot );
+		
+		final GradientMap highlightGradientMap = new GradientMap( );
+		highlightGradientMap.map.put( 0.0 , Color.YELLOW );
+		highlightGradientMap.map.put( 1.0 , ColorUtils.alphaColor( Color.YELLOW , 0 ) );
+		
+		highlightDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP )
+		{
+			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.HORIZONTAL , highlightGradientMap );
+			
+			@Override
+			protected void paintComponent( Graphics g )
+			{
+				bgPainter.paint( this , ( Graphics2D ) g );
+				super.paintComponent( g );
+			}
+		};
+		
+		highlightDistAxis.setForeground( Color.BLACK );
+		highlightDistAxis.setMajorTickColor( Color.BLACK );
+		highlightDistAxis.setMinorTickColor( Color.BLACK );
+		highlightDistAxis.addPlot( plot );
 		
 		yaxis.getAxisConversion( ).set( 50 , 0 , -50 , 400 );
 		
@@ -410,8 +433,11 @@ public class MapsView extends BasicJOGLSetup
 		JLabel paramLabel = new JLabel( "Depth coloration:" );
 		w.put( paramLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( paramColorationAxis ).belowLast( ).fillx( );
+		JLabel highlightLabel = new JLabel( "Highlight range:" );
+		w.put( highlightLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( highlightDistAxis ).belowLast( ).fillx( );
 		
-		w.put( updateStatusPanel ).belowAll( ).fillx( ).weighty(1.0).south( );
+		w.put( updateStatusPanel ).belowAll( ).fillx( ).weighty( 1.0 ).south( );
 		
 		settingsButton = new JButton( "\u2261" );
 		settingsButton.setOpaque( false );

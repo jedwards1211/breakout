@@ -32,23 +32,29 @@ public class PlotAxisController
 	
 	private class MouseHandler extends MouseAdapter implements MouseWheelListener
 	{
+		MouseEvent	pressEvent	= null;
 		MouseEvent	lastEvent	= null;
 		
 		@Override
 		public void mousePressed( MouseEvent e )
 		{
-			if( e.getButton( ) == MouseEvent.BUTTON1 )
+			if( pressEvent != null )
 			{
-				lastEvent = e;
+				return;
+			}
+			if( e.getButton( ) == MouseEvent.BUTTON1 || e.getButton( ) == MouseEvent.BUTTON3 )
+			{
+				pressEvent = lastEvent = e;
 			}
 		}
 		
 		@Override
 		public void mouseReleased( MouseEvent e )
 		{
-			if( e.getButton( ) == MouseEvent.BUTTON1 )
+			if( e.getButton( ) == pressEvent.getButton( ) )
 			{
 				lastEvent = null;
+				pressEvent = null;
 			}
 		}
 		
@@ -66,21 +72,49 @@ public class PlotAxisController
 				return;
 			}
 			
+			boolean horiz = view.getOrientation( ) == Orientation.HORIZONTAL;
+			
 			LinearAxisConversion axisConversion = view.getAxisConversion( );
 			
 			int dx = e.getX( ) - lastEvent.getX( );
 			int dy = e.getY( ) - lastEvent.getY( );
 			
-			double oldMouseDomain = axisConversion.invert( view.getOrientation( ) == Orientation.HORIZONTAL ? lastEvent.getX( ) : lastEvent.getY( ) );
+			double oldMouseDomain = axisConversion.invert( horiz ? lastEvent.getX( ) : lastEvent.getY( ) );
 			double oldStart = axisConversion.invert( 0 );
 			double oldEnd = axisConversion.invert( view.getViewSpan( ) );
 			
-			double mouseDomain = axisConversion.invert( view.getOrientation( ) == Orientation.HORIZONTAL ? e.getX( ) : e.getY( ) );
+			double newMouseDomain = axisConversion.invert( horiz ? e.getX( ) : e.getY( ) );
+			double newStart = oldStart;
+			double newEnd = oldEnd;
 			
-			double zoom = enableZoom ? Math.pow( dragZoomSpeed , view.getOrientation( ) == Orientation.HORIZONTAL ? dy : dx ) : 1.0;
-			double newStart = oldMouseDomain + ( oldStart - mouseDomain ) * zoom;
-			double newEnd = oldMouseDomain + ( oldEnd - mouseDomain ) * zoom;
-			setAxisRange( newStart , newEnd );
+			if( pressEvent.getButton( ) == MouseEvent.BUTTON1 || !enableZoom )
+			{
+				double zoom = enableZoom ? Math.pow( dragZoomSpeed , horiz ? dy : dx ) : 1.0;
+				newStart = oldMouseDomain + ( oldStart - newMouseDomain ) * zoom;
+				newEnd = oldMouseDomain + ( oldEnd - newMouseDomain ) * zoom;
+			}
+			else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
+			{
+				if( horiz ? pressEvent.getX( ) > view.getWidth( ) / 2 : pressEvent.getY( ) > view.getHeight( ) / 2 )
+				{
+					if( newMouseDomain != oldStart )
+					{
+						newEnd = newStart + ( newEnd - newStart ) * ( oldMouseDomain - oldStart ) / ( newMouseDomain - oldStart );
+					}
+				}
+				else
+				{
+					if( newMouseDomain != oldEnd )
+					{
+						newStart = newEnd + ( newStart - newEnd ) * ( oldMouseDomain - oldEnd ) / ( newMouseDomain - oldEnd );
+					}
+				}
+			}
+			
+			if( newStart != newEnd )
+			{
+				setAxisRange( newStart , newEnd );
+			}
 			
 			lastEvent = e;
 		}
