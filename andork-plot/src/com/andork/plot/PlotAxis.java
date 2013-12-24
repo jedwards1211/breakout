@@ -345,13 +345,13 @@ public class PlotAxis extends JComponent
 			g2.setColor( majorTickColor );
 			PlotUtils.drawVerticalGridLines( g2 , majorBounds , leftDomain , rightDomain , majorSpacing );
 			
-			g2.setColor( Color.BLACK );
-			
 			NumberFormat format = DecimalFormat.getInstance( );
 			int fractionDigits = GridMath.niceCeilingFractionDigits( majorSpacing );
 			format.setMinimumFractionDigits( fractionDigits );
 			format.setMaximumFractionDigits( fractionDigits );
 			format.setGroupingUsed( false );
+			
+			g2.setColor( getForeground( ) );
 			
 			PlotUtils.drawVerticalGridLineLabels( g2 , textBounds , leftDomain , rightDomain , majorSpacing , format );
 		}

@@ -31,19 +31,20 @@ import org.andork.jogl.basic.JOGLGroup;
 import org.andork.jogl.basic.JOGLLineWidthModifier;
 import org.andork.jogl.basic.JOGLObject;
 import org.andork.jogl.basic.SharedBuffer;
-import org.andork.jogl.shader.DefaultNormalVertexShader;
-import org.andork.jogl.shader.DefaultPositionVertexShader;
-import org.andork.jogl.shader.GradientFragmentShader;
-import org.andork.jogl.shader.MainCodeBlock;
-import org.andork.jogl.shader.ShaderSegment;
-import org.andork.jogl.shader.SimpleLightingFragmentShader;
-import org.andork.jogl.shader.VariableDeclarations;
+import org.andork.jogl.shadelet.AxisParamShadelet;
+import org.andork.jogl.shadelet.CombinedShadelet;
+import org.andork.jogl.shadelet.DepthOffsetShadelet;
+import org.andork.jogl.shadelet.DistParamShadelet;
+import org.andork.jogl.shadelet.GradientShadelet;
+import org.andork.jogl.shadelet.NormalVertexShadelet;
+import org.andork.jogl.shadelet.PositionVertexShadelet;
+import org.andork.jogl.shadelet.Shadelet;
+import org.andork.jogl.shadelet.SimpleLightingShadelet;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.RBranch;
 import org.andork.spatial.RLeaf;
 import org.andork.spatial.RNode;
-import org.andork.spatial.RfBranch;
 import org.andork.spatial.RfStarTree;
 import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
@@ -67,6 +68,12 @@ public class Survey3dModel
 		
 		Uniform1fv				lineNearDist;
 		Uniform1fv				lineFarDist;
+		
+		Uniform1fv				fillLoParam;
+		Uniform1fv				fillHiParam;
+		
+		Uniform1fv				lineLoParam;
+		Uniform1fv				lineHiParam;
 		
 		boolean					stationAttrsNeedRebuffering;
 		
@@ -109,71 +116,83 @@ public class Survey3dModel
 			fillObj.indexBuffer( fillIndexBuffer ).indexCount( fillIndexBuffer.buffer( ).capacity( ) / BPI );
 			fillObj.indexType( GL2ES2.GL_UNSIGNED_INT );
 			fillObj.transpose( false );
-			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
-			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
-			fillObj.add( fillObj.new Attribute2fv( ).name( "a_highlight" ).bufferIndex( 1 ) );
 			fillObj.add( new JOGLDepthModifier( ) );
-			fillObj.add( fillObj.new Uniform4fv( ).name( "nearColor" ).value( 1 , 0 , 0 , 1 ) );
-			fillObj.add( fillObj.new Uniform4fv( ).name( "farColor" ).value( 0 , 0 , 1 , 1 ) );
-			fillObj.add( fillNearDist = fillObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
-			fillObj.add( fillFarDist = fillObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
 			fillObj.normalMatrixName( "n" );
-			DefaultPositionVertexShader fillObjVertShader = new DefaultPositionVertexShader( );
-			DefaultNormalVertexShader fillObjNormShader = new DefaultNormalVertexShader( );
-			GradientFragmentShader fillObjFragShader = new GradientFragmentShader( );
-			fillObjFragShader.in( "v_z" ).loValue( "nearDist" ).hiValue( "farDist" ).loColor( "nearColor" ).hiColor( "farColor" );
-			SimpleLightingFragmentShader lightingFragShader = new SimpleLightingFragmentShader( );
-			lightingFragShader.color( "gl_FragColor" ).ambientAmt( "0.3" );
 			
-			VariableDeclarations zDecl = new VariableDeclarations( "varying float v_z;" );
-			VariableDeclarations highlightDecl = new VariableDeclarations( "varying vec2 v_highlight;" );
+			PositionVertexShadelet posShadelet = new PositionVertexShadelet( );
+			NormalVertexShadelet normShadelet = new NormalVertexShadelet( );
+			AxisParamShadelet axisShadelet = new AxisParamShadelet( );
+			GradientShadelet axisGradShadelet = new GradientShadelet( );
+			DistParamShadelet distShadelet = new DistParamShadelet( );
+			GradientShadelet distGradShadelet = new GradientShadelet( );
+			HighlightShadelet highlightShadelet = new HighlightShadelet( );
+			SimpleLightingShadelet lightShadelet = new SimpleLightingShadelet( );
 			
-			ShaderSegment highlightCode = new ShaderSegment( )
-			{
-				@Override
-				public String getMainCode( )
-				{
-					return "  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 0.0, 1.0), min(v_highlight.x, v_highlight.y));";
-				}
-			};
+			axisGradShadelet.param( axisShadelet.out( ) );
 			
-			fillObj.vertexShaderCode( "precision highp float;" + ShaderSegment.combine(
-					fillObjVertShader.defaultVariableDecls( ) ,
-					fillObjNormShader.defaultVariableDecls( ) ,
-					fillObjVertShader ,
-					fillObjNormShader ,
-					zDecl ,
-					new VariableDeclarations( "attribute vec2 a_highlight;" ) ,
-					highlightDecl ,
-					new MainCodeBlock( "  v_z = -(v * m * vec4(a_pos, 1.0)).z;" ) ,
-					new MainCodeBlock( "  v_highlight = a_highlight;" )
-					) );
-			fillObj.fragmentShaderCode( ShaderSegment.combine(
-					zDecl ,
-					highlightDecl ,
-					fillObjFragShader.defaultVariableDecls( ) ,
-					new VariableDeclarations( "varying vec3 v_norm;" ) ,
-					fillObjFragShader ,
-					highlightCode ,
-					lightingFragShader
-					) );
+			distGradShadelet.loColor( "gl_FragColor" ).hiColor( "$loColor * 0.3" )
+					.param( distShadelet.out( ) ).loColorDeclaration( null ).hiColorDeclaration( null )
+					.loValue( "nearDist" ).hiValue( "farDist" );
+			
+			highlightShadelet.color( "vec4(1.0, 1.0, 0.0, 1.0)" );
+			highlightShadelet.colorDeclaration( null );
+			
+			lightShadelet.color( "gl_FragColor" ).colorDeclaration( null ).ambientAmt( "0.3" );
+			
+			CombinedShadelet combShadelet = new CombinedShadelet( posShadelet , normShadelet ,
+					axisShadelet , axisGradShadelet , distShadelet , distGradShadelet , highlightShadelet , lightShadelet );
+			
+			fillObj.vertexShaderCode( combShadelet.createVertexShaderCode( ) );
+			fillObj.fragmentShaderCode( combShadelet.createFragmentShaderCode( ) );
+			
+			fillObj.add( fillObj.new Attribute3fv( ).name( posShadelet.pos( ) ) );
+			fillObj.add( fillObj.new Attribute3fv( ).name( normShadelet.norm( ) ) );
+			fillObj.add( fillObj.new Attribute2fv( ).name( highlightShadelet.vertParam( ) ).bufferIndex( 1 ) );
+			fillObj.add( fillObj.new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
+			fillObj.add( fillObj.new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
+			fillObj.add( fillObj.new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
+			fillObj.add( fillObj.new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
+			fillObj.add( fillLoParam = fillObj.new Uniform1fv( ).name( axisGradShadelet.loValue( ) ).value( 0 ) );
+			fillObj.add( fillHiParam = fillObj.new Uniform1fv( ).name( axisGradShadelet.hiValue( ) ).value( 1000 ) );
+			fillObj.add( fillNearDist = fillObj.new Uniform1fv( ).name( distGradShadelet.loValue( ) ).value( 0 ) );
+			fillObj.add( fillFarDist = fillObj.new Uniform1fv( ).name( distGradShadelet.hiValue( ) ).value( 10000 ) );
+			
+			System.out.println( Shadelet.prettyPrint( combShadelet.createVertexShaderCode( ) ) );
+			System.out.println( Shadelet.prettyPrint( combShadelet.createFragmentShaderCode( ) ) );
 			
 			BasicJOGLObject lineObj = new BasicJOGLObject( );
 			lineObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
+			lineObj.addVertexBuffer( stationAttrBuffer ).vertexCount( stationAttrBuffer.buffer( ).capacity( ) / STATION_ATTR_BPV );
 			lineObj.drawMode( GL2ES2.GL_LINES );
 			lineObj.indexBuffer( lineIndexBuffer ).indexCount( lineIndexBuffer.buffer( ).capacity( ) / BPI );
 			lineObj.indexType( GL2ES2.GL_UNSIGNED_INT );
 			lineObj.transpose( false );
 			lineObj.vertexShaderCode( new BasicVertexShader( ).passPosToFragmentShader( true ).toString( ) );
 			lineObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
-			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
-			lineObj.add( lineObj.new PlaceholderAttribute( 12 ) );
-			lineObj.add( new JOGLLineWidthModifier( 1.5f ) );
+			lineObj.add( new JOGLLineWidthModifier( 1f ) );
 			lineObj.add( new JOGLDepthModifier( ) );
-			lineObj.add( lineObj.new Uniform4fv( ).name( "nearColor" ).value( 0.7f , 0f , 0f , 1f ) );
-			lineObj.add( lineObj.new Uniform4fv( ).name( "farColor" ).value( 0.0f , 0f , 0.7f , 1 ) );
-			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
-			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( "farDist" ).value( 1000 ) );
+			lineObj.normalMatrixName( "n" );
+			
+			DepthOffsetShadelet depthOffsShadelet = new DepthOffsetShadelet( ).offset( 0.1f );
+			
+			combShadelet = new CombinedShadelet( posShadelet , depthOffsShadelet , normShadelet ,
+					axisShadelet , axisGradShadelet , distShadelet , distGradShadelet , highlightShadelet , lightShadelet );
+			
+			lineObj.vertexShaderCode( combShadelet.createVertexShaderCode( ) );
+			lineObj.fragmentShaderCode( combShadelet.createFragmentShaderCode( ) );
+			
+			lineObj.add( lineObj.new Attribute3fv( ).name( posShadelet.pos( ) ) );
+			// lineObj.add( lineObj.new PlaceholderAttribute( 12 ) );
+			lineObj.add( lineObj.new Attribute3fv( ).name( normShadelet.norm( ) ) );
+			lineObj.add( lineObj.new Attribute2fv( ).name( highlightShadelet.vertParam( ) ).bufferIndex( 1 ) );
+			lineObj.add( lineObj.new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
+			lineObj.add( lineObj.new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
+			lineObj.add( lineObj.new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
+			lineObj.add( lineObj.new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
+			lineObj.add( lineLoParam = lineObj.new Uniform1fv( ).name( axisGradShadelet.loValue( ) ).value( 0 ) );
+			lineObj.add( lineHiParam = lineObj.new Uniform1fv( ).name( axisGradShadelet.hiValue( ) ).value( 1000 ) );
+			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( distGradShadelet.loValue( ) ).value( 0 ) );
+			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( distGradShadelet.hiValue( ) ).value( 10000 ) );
 			
 			group = new JOGLGroup( this );
 			group.objects.add( new Rebufferer( ) );
@@ -354,13 +373,31 @@ public class Survey3dModel
 		}
 	}
 	
-	public void pickNodes( float[ ] rayOrigin , float[ ] rayDirection ,
-			ShotPickContext spc , List<PickResult<Shot>> pickResults )
+	public void setLoParam( float loParam )
 	{
-		pickNodes( tree.getRoot( ) , rayOrigin , rayDirection , spc , pickResults );
+		for( Segment segment : segments )
+		{
+			segment.fillLoParam.value( loParam );
+			segment.lineLoParam.value( loParam );
+		}
 	}
 	
-	private void pickNodes( RNode<float[ ], Shot> node , float[ ] rayOrigin , float[ ] rayDirection ,
+	public void setHiParam( float hiParam )
+	{
+		for( Segment segment : segments )
+		{
+			segment.fillHiParam.value( hiParam );
+			segment.lineHiParam.value( hiParam );
+		}
+	}
+	
+	public void pickShots( float[ ] rayOrigin , float[ ] rayDirection ,
+			ShotPickContext spc , List<PickResult<Shot>> pickResults )
+	{
+		pickShots( tree.getRoot( ) , rayOrigin , rayDirection , spc , pickResults );
+	}
+	
+	private void pickShots( RNode<float[ ], Shot> node , float[ ] rayOrigin , float[ ] rayDirection ,
 			ShotPickContext spc , List<PickResult<Shot>> pickResults )
 	{
 		if( rayIntersects( rayOrigin , rayDirection , node.mbr( ) ) )
@@ -370,7 +407,7 @@ public class Survey3dModel
 				RBranch<float[ ], Shot> branch = ( RBranch<float[ ], Shot> ) node;
 				for( int i = 0 ; i < branch.numChildren( ) ; i++ )
 				{
-					pickNodes( branch.childAt( i ) , rayOrigin , rayDirection , spc , pickResults );
+					pickShots( branch.childAt( i ) , rayOrigin , rayDirection , spc , pickResults );
 				}
 			}
 			else if( node instanceof RLeaf )
@@ -906,7 +943,7 @@ public class Survey3dModel
 		buffer.position( 0 );
 		for( int i = 0 ; i < buffer.capacity( ) ; i += 4 )
 		{
-			buffer.putFloat( i , 0f );
+			buffer.putFloat( i , -Float.MAX_VALUE );
 		}
 	}
 	

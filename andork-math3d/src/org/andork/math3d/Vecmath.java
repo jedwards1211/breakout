@@ -1,6 +1,5 @@
 package org.andork.math3d;
 
-
 public class Vecmath
 {
 	private static final double	EPSILON_ABSOLUTE	= 1.0e-5f;

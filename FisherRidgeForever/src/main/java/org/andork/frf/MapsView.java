@@ -99,6 +99,7 @@ public class MapsView extends BasicJOGLSetup
 	PlotAxis						yaxis;
 	AxisLinkButton					axisLinkButton;
 	PlotAxis						distColorationAxis;
+	PlotAxis						paramColorationAxis;
 	
 	PaintablePanel					settingsPanel;
 	JButton							settingsButton;
@@ -193,13 +194,13 @@ public class MapsView extends BasicJOGLSetup
 		LayeredBorder.addBorder( new InnerGradientBorder( new Insets( 20 , 0 , 20 , 0 ) , new Color( 240 , 240 , 240 ) ) , yaxis );
 		OverrideInsetsBorder.override( yaxis , new Insets( 0 , 0 , 0 , 0 ) );
 		
-		final GradientMap gradientMap = new GradientMap( );
-		gradientMap.map.put( 0.0 , Color.RED );
-		gradientMap.map.put( 1.0 , new Color( 255 * 3 / 10 , 0 , 0 ) );
+		final GradientMap distGradientMap = new GradientMap( );
+		distGradientMap.map.put( 0.0 , Color.WHITE );
+		distGradientMap.map.put( 1.0 , new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 ) );
 		
-		distColorationAxis = new PlotAxis( Orientation.VERTICAL , LabelPosition.RIGHT )
+		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP )
 		{
-			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.VERTICAL , gradientMap );
+			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.HORIZONTAL , distGradientMap );
 			
 			@Override
 			protected void paintComponent( Graphics g )
@@ -213,6 +214,27 @@ public class MapsView extends BasicJOGLSetup
 		distColorationAxis.setMajorTickColor( Color.WHITE );
 		distColorationAxis.setMinorTickColor( Color.WHITE );
 		distColorationAxis.addPlot( plot );
+		
+		final GradientMap paramGradientMap = new GradientMap( );
+		paramGradientMap.map.put( 0.0 , Color.RED );
+		paramGradientMap.map.put( 1.0 , Color.BLUE );
+		
+		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP )
+		{
+			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.HORIZONTAL , paramGradientMap );
+			
+			@Override
+			protected void paintComponent( Graphics g )
+			{
+				bgPainter.paint( this , ( Graphics2D ) g );
+				super.paintComponent( g );
+			}
+		};
+		
+		paramColorationAxis.setForeground( Color.WHITE );
+		paramColorationAxis.setMajorTickColor( Color.WHITE );
+		paramColorationAxis.setMinorTickColor( Color.WHITE );
+		paramColorationAxis.addPlot( plot );
 		
 		yaxis.getAxisConversion( ).set( 50 , 0 , -50 , 400 );
 		
@@ -262,6 +284,21 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
+		new PlotAxisController( paramColorationAxis )
+		{
+			@Override
+			protected void setAxisRange( double start , double end )
+			{
+				super.setAxisRange( start , end );
+				if( model != null )
+				{
+					model.setLoParam( ( float ) paramColorationAxis.getAxisConversion( ).invert( 0 ) );
+					model.setHiParam( ( float ) paramColorationAxis.getAxisConversion( ).invert( paramColorationAxis.getHeight( ) ) );
+				}
+				canvas.repaint( );
+			}
+		};
+		
 		plotController = new PlotController( plot , xAxisController , yAxisController );
 		
 		mouseLooper = new MouseLooper( );
@@ -276,7 +313,6 @@ public class MapsView extends BasicJOGLSetup
 		plotPanel.add( plot );
 		plotPanel.add( xaxis );
 		plotPanel.add( yaxis );
-		plotPanel.add( distColorationAxis );
 		plotPanel.add( axisLinkButton , Corner.TOP_LEFT );
 		
 		canvas.removeMouseListener( navigator );
@@ -367,9 +403,15 @@ public class MapsView extends BasicJOGLSetup
 		w.put( modeComboBox ).below( modeLabel ).fillx( ).north( );
 		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
 		w.put( sensLabel ).below( modeComboBox ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).weighty( 1.0 ).north( );
+		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).north( );
+		JLabel distLabel = new JLabel( "Distance coloration:" );
+		w.put( distLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( distColorationAxis ).belowLast( ).fillx( );
+		JLabel paramLabel = new JLabel( "Depth coloration:" );
+		w.put( paramLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( paramColorationAxis ).belowLast( ).fillx( );
 		
-		w.put( updateStatusPanel ).belowAll( ).fillx( ).south( );
+		w.put( updateStatusPanel ).belowAll( ).fillx( ).weighty(1.0).south( );
 		
 		settingsButton = new JButton( "\u2261" );
 		settingsButton.setOpaque( false );
@@ -557,7 +599,7 @@ public class MapsView extends BasicJOGLSetup
 				if( model != null )
 				{
 					List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
-					model.pickNodes( origin , direction , spc , pickResults );
+					model.pickShots( origin , direction , spc , pickResults );
 					
 					SelectionEditor editor = model.editSelection( );
 					
@@ -577,108 +619,10 @@ public class MapsView extends BasicJOGLSetup
 					
 					canvas.display( );
 				}
-				
-				// if( rtree != null )
-				// {
-				// List<PickResult<Integer>> pickResults = new ArrayList<PickResult<Integer>>( );
-				//
-				// pickNodes( rtree.getRoot( ) , origin , direction , debugMbrs , pickResults );
-				//
-				// for( BasicJOGLObject obj : debugMbrs )
-				// {
-				// scene.add( obj );
-				// scene.initLater( obj );
-				// }
-				//
-				// canvas.display( );
-				// }
 			}
 		} );
 		
 		scene.setOrthoMode( false );
-	}
-	
-	private boolean pickNodes( RNode<float[ ], Shot> node , float[ ] rayOrigin , float[ ] rayDirection , List<BasicJOGLObject> renderedMbrs ,
-			List<PickResult<Shot>> pickResults )
-	{
-		boolean render = false;
-		
-		if( rayIntersects( rayOrigin , rayDirection , node.mbr( ) ) )
-		{
-			if( node instanceof RBranch )
-			{
-				RBranch<float[ ], Shot> branch = ( RBranch<float[ ], Shot> ) node;
-				for( int i = 0 ; i < branch.numChildren( ) ; i++ )
-				{
-					render |= pickNodes( branch.childAt( i ) , rayOrigin , rayDirection , renderedMbrs , pickResults );
-				}
-			}
-			else if( node instanceof RLeaf )
-			{
-				Shot shot = ( ( RLeaf<float[ ], Shot> ) node ).object( );
-				shot.pick( rayOrigin , rayDirection , spc , pickResults );
-			}
-		}
-		
-		if( render )
-		{
-			renderedMbrs.add( renderMbr( node.mbr( ) , 1 , 1 , 0 ) );
-			if( node instanceof RfBranch )
-			{
-				RBranch<float[ ], Shot> branch = ( RBranch<float[ ], Shot> ) node;
-				if( branch.numChildren( ) > 0 && branch.childAt( 0 ) instanceof RLeaf )
-				{
-					for( int i = 0 ; i < branch.numChildren( ) ; i++ )
-					{
-						renderedMbrs.add( renderMbr( branch.childAt( i ).mbr( ) , 0 , 0 , 1 ) );
-					}
-				}
-			}
-		}
-		
-		return render;
-	}
-	
-	private static BasicJOGLObject renderMbr( float[ ] mbr , float r , float g , float b )
-	{
-		BufferHelper vh = new BufferHelper( );
-		BufferHelper ih = new BufferHelper( );
-		
-		vh.putAsFloats( mbr[ 0 ] , mbr[ 1 ] , mbr[ 2 ] );
-		vh.putAsFloats( mbr[ 0 ] , mbr[ 1 ] , mbr[ 5 ] );
-		vh.putAsFloats( mbr[ 0 ] , mbr[ 4 ] , mbr[ 2 ] );
-		vh.putAsFloats( mbr[ 0 ] , mbr[ 4 ] , mbr[ 5 ] );
-		vh.putAsFloats( mbr[ 3 ] , mbr[ 1 ] , mbr[ 2 ] );
-		vh.putAsFloats( mbr[ 3 ] , mbr[ 1 ] , mbr[ 5 ] );
-		vh.putAsFloats( mbr[ 3 ] , mbr[ 4 ] , mbr[ 2 ] );
-		vh.putAsFloats( mbr[ 3 ] , mbr[ 4 ] , mbr[ 5 ] );
-		
-		ih.putInts( 0 , 1 );
-		ih.putInts( 1 , 3 );
-		ih.putInts( 2 , 0 );
-		ih.putInts( 3 , 2 );
-		ih.putInts( 4 , 5 );
-		ih.putInts( 5 , 7 );
-		ih.putInts( 6 , 4 );
-		ih.putInts( 7 , 6 );
-		ih.putInts( 0 , 4 );
-		ih.putInts( 1 , 5 );
-		ih.putInts( 2 , 6 );
-		ih.putInts( 3 , 7 );
-		
-		BasicJOGLObject obj = new BasicJOGLObject( );
-		ByteBuffer vb = vh.toByteBuffer( );
-		
-		obj.addVertexBuffer( vb ).vertexCount( 8 );
-		obj.indexBuffer( ih.toByteBuffer( ) );
-		obj.drawMode( GL.GL_LINES );
-		obj.indexType( GL.GL_UNSIGNED_INT );
-		obj.indexCount( ih.count( ) );
-		obj.add( obj.new Attribute3fv( ).name( "a_pos" ) );
-		obj.vertexShaderCode( new BasicVertexShader( ).toString( ) );
-		obj.fragmentShaderCode( new FlatFragmentShader( ).color( r , g , b , 1 ).toString( ) );
-		
-		return obj;
 	}
 	
 	@Override
