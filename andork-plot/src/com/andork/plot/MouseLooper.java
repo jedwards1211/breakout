@@ -25,8 +25,8 @@ public class MouseLooper extends MouseAdapter
 	Point				lastDragPoint;
 	int					xOffset;
 	int					yOffset;
-	Point				fakeLocation			= new Point( );
-	Point				fakeLocationOnScreen	= new Point( );
+	Point				fakeLocation			= null;
+	Point				fakeLocationOnScreen	= null;
 	
 	List<MouseAdapter>	adapters				= new ArrayList<MouseAdapter>( );
 	
@@ -186,7 +186,8 @@ public class MouseLooper extends MouseAdapter
 				
 				robot.mouseMove( newLoc.x + newX , newLoc.y + newY );
 			}
-			else {
+			else
+			{
 				lastDragPoint = e.getPoint( );
 			}
 			

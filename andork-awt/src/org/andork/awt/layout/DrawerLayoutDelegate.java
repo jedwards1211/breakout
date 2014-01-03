@@ -4,9 +4,11 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import org.andork.awt.layout.DelegatingLayoutManager.LayoutDelegate;
@@ -207,9 +209,16 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		return getBounds( parent , target , layoutSize , true , maximized );
 	}
 	
+	boolean	bypass	= false;
+	
 	@Override
 	public void layoutComponent( final Container parent , final Component target )
 	{
+		if( bypass )
+		{
+			return;
+		}
+		
 		Rectangle targetBounds = getBounds( parent , target , LayoutSize.PREFERRED , open , maximized );
 		Rectangle bounds = target.getBounds( );
 		
@@ -238,8 +247,16 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 						animSpeed , bounds );
 				
 				target.setBounds( bounds );
-				target.invalidate( );
-				target.validate( );
+				
+				bypass = true;
+				try
+				{
+					onLayoutAnimated( parent , target );
+				}
+				finally
+				{
+					bypass = false;
+				}
 				
 				if( animTimer == null )
 				{
@@ -259,8 +276,12 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		else
 		{
 			target.setBounds( targetBounds );
-			target.invalidate( );
-			target.validate( );
 		}
+	}
+	
+	protected void onLayoutAnimated( Container parent , Component target )
+	{
+		parent.invalidate( );
+		parent.validate( );
 	}
 }

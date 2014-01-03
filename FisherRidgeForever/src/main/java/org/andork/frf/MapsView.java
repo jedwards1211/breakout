@@ -1,13 +1,15 @@
 package org.andork.frf;
 
 import static org.andork.math3d.Vecmath.newMat4f;
-import static org.andork.spatial.Rectmath.rayIntersects;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -17,14 +19,12 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -33,6 +33,7 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -63,18 +64,11 @@ import org.andork.frf.update.UpdateStatus;
 import org.andork.frf.update.UpdateStatusPanel;
 import org.andork.frf.update.UpdateStatusPanelController;
 import org.andork.jogl.basic.BasicJOGLObject;
-import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
-import org.andork.jogl.basic.BasicJOGLObject.FlatFragmentShader;
 import org.andork.jogl.basic.BasicJOGLScene;
-import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
-import org.andork.spatial.RBranch;
-import org.andork.spatial.RLeaf;
-import org.andork.spatial.RNode;
 import org.andork.spatial.Rectmath;
-import org.andork.spatial.RfBranch;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.LinearAxisConversion;
@@ -161,7 +155,18 @@ public class MapsView extends BasicJOGLSetup
 		surveyTableDrawer.add( surveyTableScrollPane );
 		surveyTableDrawer.add( maximizeSurveyTableButton , new DrawerLayoutDelegate( maximizeSurveyTableButton , Corner.TOP_RIGHT , Side.TOP ) );
 		
-		final DrawerLayoutDelegate surveyTableDrawerDelegate = new DrawerLayoutDelegate( surveyTableDrawer , Side.BOTTOM , true );
+		final DrawerLayoutDelegate surveyTableDrawerDelegate = new DrawerLayoutDelegate( surveyTableDrawer , Side.BOTTOM , true )
+		{
+			protected void onLayoutAnimated( Container parent , Component target )
+			{
+				Window w = SwingUtilities.getWindowAncestor( target );
+				if( w != null )
+				{
+					w.invalidate( );
+					w.validate( );
+				}
+			}
+		};
 		
 		JButton openSurveyTableDrawerButton = new JButton( "\u2261" );
 		openSurveyTableDrawerButton.addActionListener( new ActionListener( )
@@ -215,6 +220,7 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
+		distColorationAxis.getAxisConversion( ).set( 0 , 0 , 10000 , 200 );
 		distColorationAxis.setForeground( Color.WHITE );
 		distColorationAxis.setMajorTickColor( Color.WHITE );
 		distColorationAxis.setMinorTickColor( Color.WHITE );
@@ -457,7 +463,18 @@ public class MapsView extends BasicJOGLSetup
 		layeredPane.setLayer( settingsButton , JLayeredPane.DEFAULT_LAYER + 2 );
 		layeredPane.setLayer( surveyTableDrawer , JLayeredPane.DEFAULT_LAYER + 3 );
 		layeredPane.setLayer( openSurveyTableDrawerButton , JLayeredPane.DEFAULT_LAYER + 4 );
-		final DrawerLayoutDelegate settingsDrawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT );
+		final DrawerLayoutDelegate settingsDrawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT )
+		{
+			protected void onLayoutAnimated( Container parent , Component target )
+			{
+				Window w = SwingUtilities.getWindowAncestor( target );
+				if( w != null )
+				{
+					w.invalidate( );
+					w.validate( );
+				}
+			}
+		};
 		settingsDrawerDelegate.close( false );
 		layeredPane.add( settingsPanel , settingsDrawerDelegate );
 		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( settingsPanel , Corner.TOP_LEFT , Side.LEFT );
@@ -641,6 +658,11 @@ public class MapsView extends BasicJOGLSetup
 		}
 		
 		model = Survey3dModel.create( shots , 10 , 3 , 3 , 3 );
+		
+		model.setNearDist( ( float ) distColorationAxis.getAxisConversion( ).invert( 0 ) );
+		model.setFarDist( ( float ) distColorationAxis.getAxisConversion( ).invert( distColorationAxis.getHeight( ) ) );
+		model.setLoParam( ( float ) paramColorationAxis.getAxisConversion( ).invert( 0 ) );
+		model.setHiParam( ( float ) paramColorationAxis.getAxisConversion( ).invert( paramColorationAxis.getHeight( ) ) );
 		
 		scene.add( model.getRootGroup( ) );
 		scene.initLater( model.getRootGroup( ) );

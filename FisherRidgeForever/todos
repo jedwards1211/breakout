@@ -1,0 +1,64 @@
+TODO
+
+Survey format changes
+
+Background thread		
+
+Survey Shot Selection
+	(depends: 3D rendering)
+	Ctrl - individual
+	Shift - auto pathfinding
+		(depends: A* search)
+		user-selectable pathfinding algorithm
+	link with survey table
+		selection index column
+		path grouping
+			(depends: conversion to tree table)
+			
+Survey Shot search
+	(depends: 3D rendering)
+	regex
+	attribute-based
+		(depends: survey shot attributes)
+			
+Viz improvements
+	labels
+
+	camera animation
+		perspective <-> ortho animation
+
+	passage shape fixes
+
+	distance/# shots/"difficulty" algorithms for mouseover highligths and parameter viz
+
+	selectable parameter
+		distance from an entrance
+		distance from a selected shot
+		depth
+			customizable axis
+			from surface
+		passage height, width, area, etc.
+		from numeric/date/countable attribute
+		
+	auto ranges
+		based upon selection
+		
+	selectable gradient
+		customizable gradient
+	
+	category attribute colorization
+	
+	topo??
+	
+Survey shot attributes
+	key-value pair handling
+	examples:
+		date
+		survey effort id
+		surveyors
+		time from entrance
+		region names
+		depth from surface?
+		time to traverse
+		lead markers/comments
+		
