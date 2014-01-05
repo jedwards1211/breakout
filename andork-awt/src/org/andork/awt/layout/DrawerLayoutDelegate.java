@@ -284,4 +284,16 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		parent.invalidate( );
 		parent.validate( );
 	}
+	
+	public void setOpen( boolean open )
+	{
+		if( open )
+		{
+			open( );
+		}
+		else
+		{
+			close( );
+		}
+	}
 }

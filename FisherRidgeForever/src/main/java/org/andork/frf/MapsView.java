@@ -33,7 +33,7 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.ListModel;
+import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
@@ -104,7 +104,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	PaintablePanel					settingsPanel;
 	DrawerLayoutDelegate			settingsDrawerDelegate;
-	JButton							settingsButton;
+	JToggleButton					pinSettingsPanelButton;
 	JSlider							mouseSensitivitySlider;
 	
 	Plot							plot;
@@ -148,6 +148,7 @@ public class MapsView extends BasicJOGLSetup
 	final float[ ]					p0				= new float[ 3 ];
 	final float[ ]					p1				= new float[ 3 ];
 	final float[ ]					p2				= new float[ 3 ];
+	private JToggleButton			pinSurveyTableButton;
 	
 	public MapsView( )
 	{
@@ -178,13 +179,13 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
-		JButton openSurveyTableDrawerButton = new JButton( "\u2261" );
-		openSurveyTableDrawerButton.addActionListener( new ActionListener( )
+		pinSurveyTableButton = new JToggleButton( "\u2261" );
+		pinSurveyTableButton.addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				surveyTableDrawerDelegate.toggleOpen( );
+				surveyTableDrawerDelegate.setOpen( pinSurveyTableButton.isSelected( ) );
 			}
 		} );
 		maximizeSurveyTableButton.addActionListener( new ActionListener( )
@@ -465,16 +466,16 @@ public class MapsView extends BasicJOGLSetup
 		
 		w.put( updateStatusPanel ).belowAll( ).fillx( ).weighty( 1.0 ).south( );
 		
-		settingsButton = new JButton( "\u2261" );
-		settingsButton.setOpaque( false );
-		settingsButton.setMargin( new Insets( 10 , 5 , 10 , 5 ) );
+		pinSettingsPanelButton = new JToggleButton( "\u2261" );
+		pinSettingsPanelButton.setOpaque( false );
+		pinSettingsPanelButton.setMargin( new Insets( 10 , 5 , 10 , 5 ) );
 		
 		layeredPane = new JLayeredPane( );
 		layeredPane.setLayout( new DelegatingLayoutManager( ) );
 		layeredPane.setLayer( settingsPanel , JLayeredPane.DEFAULT_LAYER + 1 );
-		layeredPane.setLayer( settingsButton , JLayeredPane.DEFAULT_LAYER + 2 );
+		layeredPane.setLayer( pinSettingsPanelButton , JLayeredPane.DEFAULT_LAYER + 2 );
 		layeredPane.setLayer( surveyTableDrawer , JLayeredPane.DEFAULT_LAYER + 3 );
-		layeredPane.setLayer( openSurveyTableDrawerButton , JLayeredPane.DEFAULT_LAYER + 4 );
+		layeredPane.setLayer( pinSurveyTableButton , JLayeredPane.DEFAULT_LAYER + 4 );
 		settingsDrawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT )
 		{
 			protected void onLayoutAnimated( Container parent , Component target )
@@ -491,12 +492,12 @@ public class MapsView extends BasicJOGLSetup
 		layeredPane.add( settingsPanel , settingsDrawerDelegate );
 		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( settingsPanel , Corner.TOP_LEFT , Side.LEFT );
 		tabDelegate.setInsets( new Insets( 10 , 5 , -10 , -5 ) );
-		layeredPane.add( settingsButton , tabDelegate );
+		layeredPane.add( pinSettingsPanelButton , tabDelegate );
 		layeredPane.add( plotPanel );
 		layeredPane.add( surveyTableDrawer , surveyTableDrawerDelegate );
 		TabLayoutDelegate openSurveyDrawerButtonDelegate = new TabLayoutDelegate( surveyTableDrawer , Corner.TOP_LEFT , Side.TOP );
 		openSurveyDrawerButtonDelegate.setInsets( new Insets( 5 , 10 , -5 , -10 ) );
-		layeredPane.add( openSurveyTableDrawerButton , openSurveyDrawerButtonDelegate );
+		layeredPane.add( pinSurveyTableButton , openSurveyDrawerButtonDelegate );
 		
 		mainPanel = new JPanel( new BorderLayout( ) );
 		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
@@ -535,12 +536,12 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		settingsButton.addActionListener( new ActionListener( )
+		pinSettingsPanelButton.addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				settingsDrawerDelegate.toggleOpen( );
+				settingsDrawerDelegate.setOpen( pinSettingsPanelButton.isSelected( ) );
 			}
 		} );
 		
@@ -798,7 +799,7 @@ public class MapsView extends BasicJOGLSetup
 			{
 				surveyTableDrawerDelegate.open( );
 			}
-			else
+			else if( !pinSurveyTableButton.isSelected( ) )
 			{
 				surveyTableDrawerDelegate.close( );
 			}
@@ -808,7 +809,7 @@ public class MapsView extends BasicJOGLSetup
 			{
 				settingsDrawerDelegate.open( );
 			}
-			else
+			else if( !pinSettingsPanelButton.isSelected( ) )
 			{
 				settingsDrawerDelegate.close( );
 			}
