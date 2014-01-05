@@ -15,6 +15,9 @@ import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLObject.PerVertexDiffuseVertexShader;
+import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
+import org.andork.jogl.basic.BasicJOGLObject.Uniform1iv;
+import org.andork.jogl.basic.BasicJOGLObject.Uniform4fv;
 import org.andork.jogl.basic.BasicJOGLObject.VaryingColorFragmentShader;
 import org.andork.jogl.basic.BasicJOGLScene;
 import org.andork.jogl.basic.BufferHelper;
@@ -108,13 +111,13 @@ public class TorquescapeScene extends BasicJOGLScene
 		obj.normalMatrixName( "n" );
 		obj.add( obj.new Attribute3fv( ).name( "a_pos" ) );
 		obj.add( obj.new Attribute3fv( ).name( "a_norm" ) );
-		obj.add( obj.new Uniform4fv( ).value( 1 , 0 , 0 , 1 ).name( "u_color" ) );
-		obj.add( obj.new Uniform1iv( ).value( 1 ).name( "u_nlights" ) );
-		obj.add( obj.new Uniform4fv( ).value( 1 , -1 , 1 , 0 ).name( "u_lightpos" ) );
-		obj.add( obj.new Uniform4fv( ).value( 1 , 0 , 1 , 1 ).name( "u_lightcolor" ) );
-		obj.add( obj.new Uniform1fv( ).value( 1 ).name( "u_constantAttenuation;" ) );
-		obj.add( obj.new Uniform1fv( ).value( 0 ).name( "u_linearAttenuation;" ) );
-		obj.add( obj.new Uniform1fv( ).value( 0 ).name( "u_quadraticAttenuation;" ) );
+		obj.add( new Uniform4fv( ).value( 1 , 0 , 0 , 1 ).name( "u_color" ) );
+		obj.add( new Uniform1iv( ).value( 1 ).name( "u_nlights" ) );
+		obj.add( new Uniform4fv( ).value( 1 , -1 , 1 , 0 ).name( "u_lightpos" ) );
+		obj.add( new Uniform4fv( ).value( 1 , 0 , 1 , 1 ).name( "u_lightcolor" ) );
+		obj.add( new Uniform1fv( ).value( 1 ).name( "u_constantAttenuation;" ) );
+		obj.add( new Uniform1fv( ).value( 0 ).name( "u_linearAttenuation;" ) );
+		obj.add( new Uniform1fv( ).value( 0 ).name( "u_quadraticAttenuation;" ) );
 		obj.fragmentShaderCode( new VaryingColorFragmentShader( ).toString( ) );
 		
 		return obj;

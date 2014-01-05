@@ -249,7 +249,7 @@ public class BasicJOGLObject implements JOGLObject
 		
 		for( Uniform uniform : uniforms )
 		{
-			uniform.put( gl );
+			uniform.put( gl , program , ignoreMissingLocations );
 		}
 		
 		if( modelMatrixName != null )
@@ -340,7 +340,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
-	public abstract class Uniform
+	public static abstract class Uniform
 	{
 		protected String	name;
 		
@@ -349,10 +349,10 @@ public class BasicJOGLObject implements JOGLObject
 			return name;
 		}
 		
-		public abstract void put( GL2ES2 gl );
+		public abstract void put( GL2ES2 gl , int program , boolean ignoreMissingLocations );
 	}
 	
-	public class Uniform1iv extends Uniform
+	public static class Uniform1iv extends Uniform
 	{
 		int		count	= 1;
 		int[ ]	value;
@@ -383,7 +383,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 		
 		@Override
-		public void put( GL2ES2 gl )
+		public void put( GL2ES2 gl , int program , boolean ignoreMissingLocations )
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
@@ -398,7 +398,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
-	public class Uniform1fv extends Uniform
+	public static class Uniform1fv extends Uniform
 	{
 		int			count	= 1;
 		float[ ]	value;
@@ -429,7 +429,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 		
 		@Override
-		public void put( GL2ES2 gl )
+		public void put( GL2ES2 gl , int program , boolean ignoreMissingLocations )
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
@@ -444,7 +444,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
-	public class Uniform2fv extends Uniform
+	public static class Uniform2fv extends Uniform
 	{
 		int			count	= 1;
 		float[ ]	value;
@@ -475,7 +475,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 		
 		@Override
-		public void put( GL2ES2 gl )
+		public void put( GL2ES2 gl , int program , boolean ignoreMissingLocations )
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
@@ -490,7 +490,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
-	public class Uniform3fv extends Uniform
+	public static class Uniform3fv extends Uniform
 	{
 		int			count	= 1;
 		float[ ]	value;
@@ -521,7 +521,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 		
 		@Override
-		public void put( GL2ES2 gl )
+		public void put( GL2ES2 gl , int program , boolean ignoreMissingLocations )
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
@@ -536,7 +536,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
-	public class Uniform4fv extends Uniform
+	public static class Uniform4fv extends Uniform
 	{
 		int			count	= 1;
 		float[ ]	value;
@@ -567,7 +567,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 		
 		@Override
-		public void put( GL2ES2 gl )
+		public void put( GL2ES2 gl , int program , boolean ignoreMissingLocations )
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );
@@ -582,7 +582,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 	}
 	
-	public class UniformMatrix4fv extends Uniform
+	public static class UniformMatrix4fv extends Uniform
 	{
 		int			count;
 		boolean		transpose;
@@ -620,7 +620,7 @@ public class BasicJOGLObject implements JOGLObject
 		}
 		
 		@Override
-		public void put( GL2ES2 gl )
+		public void put( GL2ES2 gl , int program , boolean ignoreMissingLocations )
 		{
 			int location = gl.glGetUniformLocation( program , name );
 			checkGLError( gl );

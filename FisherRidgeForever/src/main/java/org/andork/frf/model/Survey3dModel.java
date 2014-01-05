@@ -25,6 +25,8 @@ import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
 import org.andork.jogl.basic.BasicJOGLObject.DistanceFragmentShader;
 import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
+import org.andork.jogl.basic.BasicJOGLObject.Uniform3fv;
+import org.andork.jogl.basic.BasicJOGLObject.Uniform4fv;
 import org.andork.jogl.basic.BufferHelper;
 import org.andork.jogl.basic.JOGLDepthModifier;
 import org.andork.jogl.basic.JOGLGroup;
@@ -36,6 +38,7 @@ import org.andork.jogl.shadelet.CombinedShadelet;
 import org.andork.jogl.shadelet.DepthOffsetShadelet;
 import org.andork.jogl.shadelet.DistParamShadelet;
 import org.andork.jogl.shadelet.GradientShadelet;
+import org.andork.jogl.shadelet.IndexedHighlightShadelet;
 import org.andork.jogl.shadelet.NormalVertexShadelet;
 import org.andork.jogl.shadelet.PositionVertexShadelet;
 import org.andork.jogl.shadelet.Shadelet;
@@ -54,6 +57,7 @@ import com.andork.plot.LinearAxisConversion;
 
 public class Survey3dModel
 {
+	
 	public static class Segment
 	{
 		final ArrayList<Shot>	shots	= new ArrayList<Shot>( );
@@ -78,6 +82,10 @@ public class Survey3dModel
 		Uniform1fv				lineHiParam;
 		
 		boolean					stationAttrsNeedRebuffering;
+		
+		private BasicJOGLObject	fillObj;
+		
+		private BasicJOGLObject	lineObj;
 		
 		void addShot( Shot shot )
 		{
@@ -109,7 +117,7 @@ public class Survey3dModel
 		
 		void renderData( )
 		{
-			BasicJOGLObject fillObj = new BasicJOGLObject( );
+			fillObj = new BasicJOGLObject( );
 			
 			fillObj = new BasicJOGLObject( );
 			fillObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
@@ -127,8 +135,9 @@ public class Survey3dModel
 			GradientShadelet axisGradShadelet = new GradientShadelet( );
 			DistParamShadelet distShadelet = new DistParamShadelet( );
 			GradientShadelet distGradShadelet = new GradientShadelet( );
-			HighlightShadelet highlightShadelet = new HighlightShadelet( );
+			GlowShadelet glowShadelet = new GlowShadelet( );
 			SimpleLightingShadelet lightShadelet = new SimpleLightingShadelet( );
+			IndexedHighlightShadelet highlightShadelet = new IndexedHighlightShadelet( );
 			
 			axisGradShadelet.param( axisShadelet.out( ) );
 			
@@ -136,33 +145,36 @@ public class Survey3dModel
 					.param( distShadelet.out( ) ).loColorDeclaration( null ).hiColorDeclaration( null )
 					.loValue( "nearDist" ).hiValue( "farDist" );
 			
-			highlightShadelet.color( "vec4(1.0, 1.0, 0.0, 1.0)" );
-			highlightShadelet.colorDeclaration( null );
+			glowShadelet.color( "vec4(1.0, 1.0, 0.0, 1.0)" );
+			glowShadelet.colorDeclaration( null );
 			
 			lightShadelet.color( "gl_FragColor" ).colorDeclaration( null ).ambientAmt( "0.3" );
 			
+			highlightShadelet.colorCount( 3 );
+			
 			CombinedShadelet combShadelet = new CombinedShadelet( posShadelet , normShadelet ,
-					axisShadelet , axisGradShadelet , distShadelet , distGradShadelet , highlightShadelet , lightShadelet );
+					axisShadelet , axisGradShadelet , distShadelet , distGradShadelet , glowShadelet , lightShadelet , highlightShadelet );
 			
 			fillObj.vertexShaderCode( combShadelet.createVertexShaderCode( ) );
 			fillObj.fragmentShaderCode( combShadelet.createFragmentShaderCode( ) );
 			
 			fillObj.add( fillObj.new Attribute3fv( ).name( posShadelet.pos( ) ) );
 			fillObj.add( fillObj.new Attribute3fv( ).name( normShadelet.norm( ) ) );
-			fillObj.add( fillObj.new Attribute2fv( ).name( highlightShadelet.vertParam( ) ).bufferIndex( 1 ) );
-			fillObj.add( fillObj.new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
-			fillObj.add( fillObj.new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
-			fillObj.add( fillObj.new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
-			fillObj.add( fillObj.new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
-			fillObj.add( fillLoParam = fillObj.new Uniform1fv( ).name( axisGradShadelet.loValue( ) ).value( 0 ) );
-			fillObj.add( fillHiParam = fillObj.new Uniform1fv( ).name( axisGradShadelet.hiValue( ) ).value( 1000 ) );
-			fillObj.add( fillNearDist = fillObj.new Uniform1fv( ).name( distGradShadelet.loValue( ) ).value( 0 ) );
-			fillObj.add( fillFarDist = fillObj.new Uniform1fv( ).name( distGradShadelet.hiValue( ) ).value( 10000 ) );
+			fillObj.add( fillObj.new Attribute2fv( ).name( glowShadelet.vertParam( ) ).bufferIndex( 1 ) );
+			fillObj.add( fillObj.new Attribute1fv( ).name( highlightShadelet.vertIndexParam( ) ).bufferIndex( 1 ) );
+			fillObj.add( new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
+			fillObj.add( new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
+			fillObj.add( new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
+			fillObj.add( new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
+			fillObj.add( fillLoParam = new Uniform1fv( ).name( axisGradShadelet.loValue( ) ).value( 0 ) );
+			fillObj.add( fillHiParam = new Uniform1fv( ).name( axisGradShadelet.hiValue( ) ).value( 1000 ) );
+			fillObj.add( fillNearDist = new Uniform1fv( ).name( distGradShadelet.loValue( ) ).value( 0 ) );
+			fillObj.add( fillFarDist = new Uniform1fv( ).name( distGradShadelet.hiValue( ) ).value( 10000 ) );
 			
 			System.out.println( Shadelet.prettyPrint( combShadelet.createVertexShaderCode( ) ) );
 			System.out.println( Shadelet.prettyPrint( combShadelet.createFragmentShaderCode( ) ) );
 			
-			BasicJOGLObject lineObj = new BasicJOGLObject( );
+			lineObj = new BasicJOGLObject( );
 			lineObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
 			lineObj.addVertexBuffer( stationAttrBuffer ).vertexCount( stationAttrBuffer.buffer( ).capacity( ) / STATION_ATTR_BPV );
 			lineObj.drawMode( GL2ES2.GL_LINES );
@@ -178,23 +190,23 @@ public class Survey3dModel
 			DepthOffsetShadelet depthOffsShadelet = new DepthOffsetShadelet( ).offset( 0.1f );
 			
 			combShadelet = new CombinedShadelet( posShadelet , depthOffsShadelet , normShadelet ,
-					axisShadelet , axisGradShadelet , distShadelet , distGradShadelet , highlightShadelet , lightShadelet );
+					axisShadelet , axisGradShadelet , distShadelet , distGradShadelet , glowShadelet , lightShadelet , highlightShadelet );
 			
 			lineObj.vertexShaderCode( combShadelet.createVertexShaderCode( ) );
 			lineObj.fragmentShaderCode( combShadelet.createFragmentShaderCode( ) );
 			
 			lineObj.add( lineObj.new Attribute3fv( ).name( posShadelet.pos( ) ) );
-			// lineObj.add( lineObj.new PlaceholderAttribute( 12 ) );
 			lineObj.add( lineObj.new Attribute3fv( ).name( normShadelet.norm( ) ) );
-			lineObj.add( lineObj.new Attribute2fv( ).name( highlightShadelet.vertParam( ) ).bufferIndex( 1 ) );
-			lineObj.add( lineObj.new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
-			lineObj.add( lineObj.new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
-			lineObj.add( lineObj.new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
-			lineObj.add( lineObj.new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
-			lineObj.add( lineLoParam = lineObj.new Uniform1fv( ).name( axisGradShadelet.loValue( ) ).value( 0 ) );
-			lineObj.add( lineHiParam = lineObj.new Uniform1fv( ).name( axisGradShadelet.hiValue( ) ).value( 1000 ) );
-			lineObj.add( lineNearDist = lineObj.new Uniform1fv( ).name( distGradShadelet.loValue( ) ).value( 0 ) );
-			lineObj.add( lineFarDist = lineObj.new Uniform1fv( ).name( distGradShadelet.hiValue( ) ).value( 10000 ) );
+			lineObj.add( lineObj.new Attribute2fv( ).name( glowShadelet.vertParam( ) ).bufferIndex( 1 ) );
+			lineObj.add( lineObj.new Attribute1fv( ).name( highlightShadelet.vertIndexParam( ) ).bufferIndex( 1 ) );
+			lineObj.add( new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
+			lineObj.add( new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
+			lineObj.add( new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
+			lineObj.add( new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
+			lineObj.add( lineLoParam = new Uniform1fv( ).name( axisGradShadelet.loValue( ) ).value( 0 ) );
+			lineObj.add( lineHiParam = new Uniform1fv( ).name( axisGradShadelet.hiValue( ) ).value( 1000 ) );
+			lineObj.add( lineNearDist = new Uniform1fv( ).name( distGradShadelet.loValue( ) ).value( 0 ) );
+			lineObj.add( lineFarDist = new Uniform1fv( ).name( distGradShadelet.hiValue( ) ).value( 10000 ) );
 			
 			group = new JOGLGroup( this );
 			group.objects.add( new Rebufferer( ) );
@@ -238,6 +250,11 @@ public class Survey3dModel
 		{
 			super( );
 			this.index = index;
+		}
+		
+		public int getIndex( )
+		{
+			return index;
 		}
 		
 		public void pick( float[ ] rayOrigin , float[ ] rayDirection , ShotPickContext c , List<PickResult<Shot>> pickResults )
@@ -306,6 +323,8 @@ public class Survey3dModel
 		public float	locationAlongShot;
 	}
 	
+	Uniform4fv								highlightColors;
+	
 	List<SurveyShot>						originalShots;
 	List<Shot>								shots;
 	
@@ -331,7 +350,7 @@ public class Survey3dModel
 	private static final int	GEOM_BPV			= 24;
 	private static final int	GEOM_VPS			= 8;
 	private static final int	GEOM_BPS			= GEOM_BPV * GEOM_VPS;
-	private static final int	STATION_ATTR_BPV	= 8;
+	private static final int	STATION_ATTR_BPV	= 12;
 	private static final int	STATION_ATTR_VPS	= GEOM_VPS;
 	private static final int	STATION_ATTR_BPS	= STATION_ATTR_BPV * STATION_ATTR_VPS;
 	private static final int	BPI					= 4;
@@ -346,11 +365,22 @@ public class Survey3dModel
 		this.tree = tree;
 		this.segments = segments;
 		
+		highlightColors = new Uniform4fv( ).name( "highlightColors" );
+		highlightColors.value(
+				0f , 0f , 0f , 0f ,
+				0f , 1f , 1f , 0.5f ,
+				1f , 1f , 0f , 0.5f
+				);
+		highlightColors.count( 3 );
+		
 		group = new JOGLGroup( this );
 		for( Segment segment : segments )
 		{
 			group.objects.add( segment.group );
+			segment.fillObj.add( highlightColors );
+			segment.lineObj.add( highlightColors );
 		}
+		
 	}
 	
 	public JOGLGroup getRootGroup( )
@@ -426,9 +456,19 @@ public class Survey3dModel
 		}
 	}
 	
+	public List<Shot> getShots( )
+	{
+		return Collections.unmodifiableList( shots );
+	}
+	
 	public Set<Shot> getHoveredShots( )
 	{
 		return Collections.unmodifiableSet( hoveredShots );
+	}
+	
+	public Set<Shot> getSelectedShots( )
+	{
+		return Collections.unmodifiableSet( selectedShots );
 	}
 	
 	public SelectionEditor editSelection( )
@@ -958,9 +998,11 @@ public class Survey3dModel
 	{
 		ByteBuffer buffer = segment.stationAttrBuffer.buffer( );
 		buffer.position( 0 );
-		for( int i = 0 ; i < buffer.capacity( ) ; i += 4 )
+		for( int i = 0 ; i < buffer.capacity( ) ; i += STATION_ATTR_BPV )
 		{
 			buffer.putFloat( i , -Float.MAX_VALUE );
+			buffer.putFloat( i + 4 , -Float.MAX_VALUE );
+			buffer.putFloat( i + 8 , 0f );
 		}
 	}
 	
@@ -1114,9 +1156,9 @@ public class Survey3dModel
 	private void applySelectionHighlights( Shot shot )
 	{
 		ByteBuffer buffer = shot.segment.stationAttrBuffer.buffer( );
-		setFromHighlightA( buffer , shot.indexInSegment , 2f );
-		setFromHighlightB( buffer , shot.indexInSegment , 2f );
-		setToHighlightA( buffer , shot.indexInSegment , 2f );
-		setToHighlightB( buffer , shot.indexInSegment , 2f );
+		for( int i = 0 ; i < STATION_ATTR_VPS ; i++ )
+		{
+			buffer.putFloat( shot.indexInSegment * STATION_ATTR_BPS + 8 + i * STATION_ATTR_BPV , 2f );
+		}
 	}
 }

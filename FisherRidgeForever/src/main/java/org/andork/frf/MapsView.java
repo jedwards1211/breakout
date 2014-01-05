@@ -9,6 +9,7 @@ import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,7 +21,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -33,10 +33,14 @@ import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.ListModel;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import org.andork.awt.ColorUtils;
 import org.andork.awt.DoSwing;
@@ -99,6 +103,7 @@ public class MapsView extends BasicJOGLSetup
 	PlotAxis						highlightDistAxis;
 	
 	PaintablePanel					settingsPanel;
+	DrawerLayoutDelegate			settingsDrawerDelegate;
 	JButton							settingsButton;
 	JSlider							mouseSensitivitySlider;
 	
@@ -112,9 +117,14 @@ public class MapsView extends BasicJOGLSetup
 	MousePickHandler				pickHandler;
 	MouseAdapterChain				mouseAdapterChain;
 	
+	AutoshowHandler					autoshowHandler;
+	
+	TableSelectionHandler			selectionHandler;
+	
 	JComboBox						modeComboBox;
 	
 	JLayeredPane					surveyTableDrawer;
+	DrawerLayoutDelegate			surveyTableDrawerDelegate;
 	
 	SurveyTable						surveyTable;
 	JScrollPane						surveyTableScrollPane;
@@ -155,7 +165,7 @@ public class MapsView extends BasicJOGLSetup
 		surveyTableDrawer.add( surveyTableScrollPane );
 		surveyTableDrawer.add( maximizeSurveyTableButton , new DrawerLayoutDelegate( maximizeSurveyTableButton , Corner.TOP_RIGHT , Side.TOP ) );
 		
-		final DrawerLayoutDelegate surveyTableDrawerDelegate = new DrawerLayoutDelegate( surveyTableDrawer , Side.BOTTOM , true )
+		surveyTableDrawerDelegate = new DrawerLayoutDelegate( surveyTableDrawer , Side.BOTTOM , true )
 		{
 			protected void onLayoutAnimated( Container parent , Component target )
 			{
@@ -342,6 +352,8 @@ public class MapsView extends BasicJOGLSetup
 		canvas.addMouseMotionListener( mouseLooper );
 		canvas.addMouseWheelListener( mouseLooper );
 		
+		autoshowHandler = new AutoshowHandler( );
+		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
@@ -463,7 +475,7 @@ public class MapsView extends BasicJOGLSetup
 		layeredPane.setLayer( settingsButton , JLayeredPane.DEFAULT_LAYER + 2 );
 		layeredPane.setLayer( surveyTableDrawer , JLayeredPane.DEFAULT_LAYER + 3 );
 		layeredPane.setLayer( openSurveyTableDrawerButton , JLayeredPane.DEFAULT_LAYER + 4 );
-		final DrawerLayoutDelegate settingsDrawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT )
+		settingsDrawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT )
 		{
 			protected void onLayoutAnimated( Container parent , Component target )
 			{
@@ -531,6 +543,9 @@ public class MapsView extends BasicJOGLSetup
 				settingsDrawerDelegate.toggleOpen( );
 			}
 		} );
+		
+		selectionHandler = new TableSelectionHandler( );
+		surveyTable.getSelectionModel( ).addListSelectionListener( selectionHandler );
 	}
 	
 	@Override
@@ -612,6 +627,7 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
+		mouseAdapterChain.addMouseAdapter( autoshowHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( true );
@@ -628,6 +644,7 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain.addMouseAdapter( navigator );
 		mouseAdapterChain.addMouseAdapter( orbiter );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
+		mouseAdapterChain.addMouseAdapter( autoshowHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( false );
@@ -676,28 +693,34 @@ public class MapsView extends BasicJOGLSetup
 	
 	private class MousePickHandler extends MouseAdapter
 	{
-		@Override
-		public void mouseMoved( MouseEvent e )
+		private ShotPickResult pick( MouseEvent e )
 		{
 			float[ ] origin = new float[ 3 ];
 			float[ ] direction = new float[ 3 ];
 			scene.pickXform( ).xform( e.getX( ) , e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
-			
-			System.out.println( Arrays.toString( origin ) + ", " + Arrays.toString( direction ) );
-			
-			for( BasicJOGLObject obj : debugMbrs )
-			{
-				scene.destroyLater( obj );
-				scene.remove( obj );
-			}
-			
-			debugMbrs = new ArrayList<BasicJOGLObject>( );
 			
 			if( model != null )
 			{
 				List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
 				model.pickShots( origin , direction , spc , pickResults );
 				
+				if( !pickResults.isEmpty( ) )
+				{
+					Collections.sort( pickResults );
+					return ( ShotPickResult ) pickResults.get( 0 );
+				}
+			}
+			
+			return null;
+		}
+		
+		@Override
+		public void mouseMoved( MouseEvent e )
+		{
+			ShotPickResult picked = pick( e );
+			
+			if( model != null )
+			{
 				SelectionEditor editor = model.editSelection( );
 				
 				for( Shot shot : model.getHoveredShots( ) )
@@ -705,21 +728,124 @@ public class MapsView extends BasicJOGLSetup
 					editor.unhover( shot );
 				}
 				
-				Collections.sort( pickResults );
-				
-				if( !pickResults.isEmpty( ) )
+				if( picked != null )
 				{
 					LinearAxisConversion viewConversion = highlightDistAxis.getAxisConversion( );
 					LinearAxisConversion conversion = new LinearAxisConversion( );
 					conversion.set( viewConversion.invert( 0 ) , 1 , viewConversion.invert( highlightDistAxis.getViewSpan( ) ) , 0 );
-					ShotPickResult result = ( ShotPickResult ) pickResults.get( 0 );
-					editor.hover( result.picked , result.locationAlongShot , conversion );
+					editor.hover( picked.picked , picked.locationAlongShot , conversion );
 				}
 				
 				editor.commit( );
 				
 				canvas.display( );
 			}
+		}
+		
+		@Override
+		public void mousePressed( MouseEvent e )
+		{
+			if( e.getButton( ) != MouseEvent.BUTTON1 )
+			{
+				return;
+			}
+			
+			ShotPickResult picked = pick( e );
+			
+			if( picked == null )
+			{
+				return;
+			}
+			
+			ListSelectionModel selModel = surveyTable.getSelectionModel( );
+			
+			if( model != null )
+			{
+				int index = picked.picked.getIndex( );
+				
+				if( ( e.getModifiersEx( ) & MouseEvent.CTRL_DOWN_MASK ) != 0 )
+				{
+					if( selModel.isSelectedIndex( index ) )
+					{
+						selModel.removeSelectionInterval( index , index );
+					}
+					else
+					{
+						selModel.addSelectionInterval( index , index );
+					}
+				}
+				else
+				{
+					selModel.setSelectionInterval( index , index );
+				}
+				
+				surveyTable.scrollRectToVisible( surveyTable.getCellRect( index , 0 , true ) );
+				
+				canvas.display( );
+			}
+		}
+	}
+	
+	private class AutoshowHandler extends MouseAdapter
+	{
+		final float	SPACE	= 30;
+		
+		@Override
+		public void mouseMoved( MouseEvent e )
+		{
+			Point p = SwingUtilities.convertPoint( e.getComponent( ) , e.getPoint( ) , surveyTableDrawer );
+			if( p.y + SPACE >= 0 )
+			{
+				surveyTableDrawerDelegate.open( );
+			}
+			else
+			{
+				surveyTableDrawerDelegate.close( );
+			}
+			
+			p = SwingUtilities.convertPoint( e.getComponent( ) , e.getPoint( ) , settingsPanel );
+			if( p.x + SPACE >= 0 )
+			{
+				settingsDrawerDelegate.open( );
+			}
+			else
+			{
+				settingsDrawerDelegate.close( );
+			}
+			
+		}
+	}
+	
+	private class TableSelectionHandler implements ListSelectionListener
+	{
+		@Override
+		public void valueChanged( ListSelectionEvent e )
+		{
+			if( model == null )
+			{
+				return;
+			}
+			
+			List<Survey3dModel.Shot> shots = model.getShots( );
+			
+			SelectionEditor editor = model.editSelection( );
+			
+			ListSelectionModel selModel = ( ListSelectionModel ) e.getSource( );
+			
+			for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) ; i++ )
+			{
+				if( selModel.isSelectedIndex( i ) )
+				{
+					editor.select( shots.get( i ) );
+				}
+				else
+				{
+					editor.deselect( shots.get( i ) );
+				}
+			}
+			
+			editor.commit( );
+			canvas.display( );
 		}
 	}
 }

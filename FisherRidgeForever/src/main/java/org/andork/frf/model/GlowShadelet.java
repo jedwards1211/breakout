@@ -2,12 +2,12 @@ package org.andork.frf.model;
 
 import org.andork.jogl.shadelet.Shadelet;
 
-public class HighlightShadelet extends Shadelet
+public class GlowShadelet extends Shadelet
 {
-	public HighlightShadelet( )
+	public GlowShadelet( )
 	{
-		setProperty( "vertParam" , "a_highlight" );
-		setProperty( "fragParam" , "v_highlight" );
+		setProperty( "vertParam" , "a_glow" );
+		setProperty( "fragParam" , "v_glow" );
 		setProperty( "color" , "color" );
 		setProperty( "out" , "gl_FragColor" );
 		setProperty( "vertParamDeclaration" , "attribute vec2 $vertParam;" );
@@ -20,49 +20,49 @@ public class HighlightShadelet extends Shadelet
 		return replaceProperties( "$vertParam" );
 	}
 	
-	public HighlightShadelet vertParam( Object vertParam )
+	public GlowShadelet vertParam( Object vertParam )
 	{
 		setProperty( "vertParam" , vertParam );
 		return this;
 	}
 	
-	public HighlightShadelet fragParam( Object fragParam )
+	public GlowShadelet fragParam( Object fragParam )
 	{
 		setProperty( "fragParam" , fragParam );
 		return this;
 	}
 	
-	public HighlightShadelet color( Object color )
+	public GlowShadelet color( Object color )
 	{
 		setProperty( "color" , color );
 		return this;
 	}
 	
-	public HighlightShadelet out( Object out )
+	public GlowShadelet out( Object out )
 	{
 		setProperty( "out" , out );
 		return this;
 	}
 	
-	public HighlightShadelet vertParamDeclaration( Object vertParamDeclaration )
+	public GlowShadelet vertParamDeclaration( Object vertParamDeclaration )
 	{
 		setProperty( "vertParamDeclaration" , vertParamDeclaration );
 		return this;
 	}
 	
-	public HighlightShadelet fragParamDeclaration( Object fragParamDeclaration )
+	public GlowShadelet fragParamDeclaration( Object fragParamDeclaration )
 	{
 		setProperty( "fragParamDeclaration" , fragParamDeclaration );
 		return this;
 	}
 	
-	public HighlightShadelet colorDeclaration( Object colorDeclaration )
+	public GlowShadelet colorDeclaration( Object colorDeclaration )
 	{
 		setProperty( "colorDeclaration" , colorDeclaration );
 		return this;
 	}
 	
-	public HighlightShadelet outDeclaration( Object outDeclaration )
+	public GlowShadelet outDeclaration( Object outDeclaration )
 	{
 		setProperty( "outDeclaration" , outDeclaration );
 		return this;

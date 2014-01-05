@@ -9,14 +9,12 @@ public class GradientShadelet extends Shadelet
 		setProperty( "loColor" , "loColor" );
 		setProperty( "hiColor" , "hiColor" );
 		setProperty( "param" , "param" );
-		setProperty( "temp" , "temp" );
 		setProperty( "out" , "gl_FragColor" );
 		setProperty( "loValueDeclaration" , "/* fragment */ uniform float $loValue;" );
 		setProperty( "hiValueDeclaration" , "/* fragment */ uniform float $hiValue;" );
 		setProperty( "loColorDeclaration" , "/* fragment */ uniform vec4 $loColor;" );
 		setProperty( "hiColorDeclaration" , "/* fragment */ uniform vec4 $hiColor;" );
 		setProperty( "paramDeclaration" , "varying float $param;" );
-		setProperty( "tempDeclaration" , "/* fragment */ float $temp;" );
 	}
 	
 	public String loValue( )
@@ -69,12 +67,6 @@ public class GradientShadelet extends Shadelet
 		return this;
 	}
 	
-	public GradientShadelet temp( String temp )
-	{
-		setProperty( "temp" , temp );
-		return this;
-	}
-	
 	public GradientShadelet out( String out )
 	{
 		setProperty( "out" , out );
@@ -111,12 +103,6 @@ public class GradientShadelet extends Shadelet
 		return this;
 	}
 	
-	public GradientShadelet tempDeclaration( String tempDeclaration )
-	{
-		setProperty( "tempDeclaration" , tempDeclaration );
-		return this;
-	}
-	
 	public GradientShadelet outDeclaration( String outDeclaration )
 	{
 		setProperty( "outDeclaration" , outDeclaration );
@@ -125,9 +111,6 @@ public class GradientShadelet extends Shadelet
 	
 	public String getFragmentShaderMainCode( )
 	{
-		return "  if ($param > $hiValue) { $temp = 1.0; }" +
-				"  else if ($param < $loValue) { $temp = 0.0; }" +
-				"  else { $temp = ($param - $loValue) / ($hiValue - $loValue); }" +
-				"  $out = mix($loColor, $hiColor, $temp);";
+		return "  $out = mix($loColor, $hiColor, clamp(($param - $loValue) / ($hiValue - $loValue), 0.0, 1.0));";
 	}
 }

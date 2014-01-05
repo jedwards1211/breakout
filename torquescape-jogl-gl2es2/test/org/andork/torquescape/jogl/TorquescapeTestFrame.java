@@ -1,5 +1,10 @@
 package org.andork.torquescape.jogl;
 
+import static org.andork.math3d.Vecmath.mmulRotational;
+import static org.andork.math3d.Vecmath.mvmulAffine;
+import static org.andork.math3d.Vecmath.rotY;
+import static org.andork.math3d.Vecmath.setRotation;
+
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -12,8 +17,6 @@ import javax.swing.JFrame;
 
 import com.jogamp.opengl.util.AnimatorBase;
 import com.jogamp.opengl.util.FPSAnimator;
-
-import static org.andork.math3d.Vecmath.*;
 
 public class TorquescapeTestFrame extends JFrame
 {

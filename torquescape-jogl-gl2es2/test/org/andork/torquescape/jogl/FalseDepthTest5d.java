@@ -11,6 +11,8 @@ import java.util.List;
 import javax.media.opengl.GL2ES2;
 
 import org.andork.jogl.basic.BasicJOGLObject;
+import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
+import org.andork.jogl.basic.BasicJOGLObject.Uniform4fv;
 import org.andork.torquescape.jogl.main.TorquescapeScene;
 import org.andork.torquescape.jogl.main.TorquescapeSetup;
 import org.andork.torquescape.model.Zone;
@@ -68,13 +70,13 @@ public class FalseDepthTest5d extends TorquescapeSetup
 		obj.add( obj.new Attribute1fv( ).name( "a_v_value" ) );
 		obj.add( obj.new Attribute3fv( ).name( "a_u" ) );
 		obj.add( obj.new Attribute3fv( ).name( "a_v" ) );
-		// obj.add( obj.new Uniform1fv( ).name( "u_layer_depths" ).count( 3 ).value( 0 , 3 , 5 ) );
-		// obj.add( obj.new Uniform4fv( ).name( "u_layer_colors" ).count( 3 ).value( 1 , 0 , 0 , 1 , 0.7f , 0 , 0.3f , 1 , 0.3f , 0 , 0.7f , 1 ) );
-		// obj.add( obj.new Uniform1fv( ).name( "u_layer_depths" ).count( 2 ).value( 0 , 1f ) );
-		// obj.add( obj.new Uniform4fv( ).name( "u_layer_colors" ).count( 2 ).value( 1 , 0 , 0 , 1 , 0 , 0 , 1f , 1 ) );
-		obj.add( obj.new Uniform1fv( ).name( "u_layer_depths" ).count( numLayers ).value( sequence( 0f , 0.5f , numLayers ) ) );
-		obj.add( obj.new Uniform4fv( ).name( "u_basecolor" ).value( 0 , 0 , 0 , 1 ) );
-		obj.add( obj.new Uniform4fv( ).name( "u_layer_colors" ).count( numLayers ).value(
+		// obj.add( new Uniform1fv( ).name( "u_layer_depths" ).count( 3 ).value( 0 , 3 , 5 ) );
+		// obj.add( new Uniform4fv( ).name( "u_layer_colors" ).count( 3 ).value( 1 , 0 , 0 , 1 , 0.7f , 0 , 0.3f , 1 , 0.3f , 0 , 0.7f , 1 ) );
+		// obj.add( new Uniform1fv( ).name( "u_layer_depths" ).count( 2 ).value( 0 , 1f ) );
+		// obj.add( new Uniform4fv( ).name( "u_layer_colors" ).count( 2 ).value( 1 , 0 , 0 , 1 , 0 , 0 , 1f , 1 ) );
+		obj.add( new Uniform1fv( ).name( "u_layer_depths" ).count( numLayers ).value( sequence( 0f , 0.5f , numLayers ) ) );
+		obj.add( new Uniform4fv( ).name( "u_basecolor" ).value( 0 , 0 , 0 , 1 ) );
+		obj.add( new Uniform4fv( ).name( "u_layer_colors" ).count( numLayers ).value(
 				// 1 , 0 , 0 , 1 ,
 				// 0 , 1 , 0 , 1 ,
 				// 0 , 0 , 1 , 1 ) );
@@ -88,8 +90,8 @@ public class FalseDepthTest5d extends TorquescapeSetup
 				0 , 0 , 1 , 0.3f ,
 				0 , 0 , 1 , 0.2f ,
 				0 , 0 , 1 , 0.1f ) );
-		obj.add( obj.new Uniform1fv( ).name( "u_u_period" ).value( 0.1f ) );
-		obj.add( obj.new Uniform1fv( ).name( "u_v_period" ).value( 4 * ( float ) Math.PI ) );
+		obj.add( new Uniform1fv( ).name( "u_u_period" ).value( 0.1f ) );
+		obj.add( new Uniform1fv( ).name( "u_v_period" ).value( 4 * ( float ) Math.PI ) );
 		obj.transpose( false );
 		obj.ignoreMissingLocations( true );
 		obj.indexType( GL2ES2.GL_UNSIGNED_SHORT );
