@@ -3161,4 +3161,14 @@ public class Vecmath
 		return matToString( m , "%12.4f" );
 	}
 	
+	public static float[ ] toFloats( double[ ] doubles )
+	{
+		float[ ] result = new float[ doubles.length ];
+		for( int i = 0 ; i < doubles.length ; i++ )
+		{
+			result[ i ] = ( float ) doubles[ i ];
+		}
+		return result;
+	}
+	
 }

@@ -1,6 +1,8 @@
 package org.andork.frf;
 
+import static org.andork.math3d.Vecmath.add3;
 import static org.andork.math3d.Vecmath.newMat4f;
+import static org.andork.math3d.Vecmath.scale3;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -24,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JButton;
@@ -31,7 +35,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
@@ -44,14 +47,20 @@ import javax.swing.event.ListSelectionListener;
 
 import org.andork.awt.ColorUtils;
 import org.andork.awt.DoSwing;
+import org.andork.awt.FilteringTableController;
+import org.andork.awt.FilteringTableModel.Filter;
+import org.andork.awt.FilteringTableModel.HighlightingFilter;
+import org.andork.awt.FilteringTableModel.PatternFilter;
 import org.andork.awt.GradientFillBorder;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.awt.HighlightingTableScroller;
 import org.andork.awt.I18n;
 import org.andork.awt.InnerGradientBorder;
 import org.andork.awt.LayeredBorder;
 import org.andork.awt.OverrideInsetsBorder;
 import org.andork.awt.PaintablePanel;
+import org.andork.awt.TextComponentWithHintAndClear;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.DrawerLayoutDelegate;
@@ -123,11 +132,15 @@ public class MapsView extends BasicJOGLSetup
 	
 	JComboBox						modeComboBox;
 	
-	JLayeredPane					surveyTableDrawer;
+	JPanel							surveyTableDrawer;
 	DrawerLayoutDelegate			surveyTableDrawerDelegate;
 	
+	TextComponentWithHintAndClear	filterField;
+	
 	SurveyTable						surveyTable;
-	JScrollPane						surveyTableScrollPane;
+	HighlightingTableScroller		surveyTableScrollPane;
+	
+	FilteringTableController		surveyTableFilteringController;
 	
 	JPanel							statusBar;
 	UpdateStatusPanel				updateStatusPanel;
@@ -154,17 +167,39 @@ public class MapsView extends BasicJOGLSetup
 	{
 		super( );
 		
-		surveyTable = new SurveyTable( );
-		surveyTableScrollPane = new JScrollPane( surveyTable );
+		filterField = new TextComponentWithHintAndClear( "Enter filter pattern" );
 		
-		surveyTableDrawer = new JLayeredPane( );
-		surveyTableDrawer.setLayout( new DelegatingLayoutManager( ) );
+		new DoSwing( )
+		{
+			@Override
+			public void run( )
+			{
+				surveyTable = new SurveyTable( );
+			}
+		};
+		surveyTableScrollPane = new HighlightingTableScroller( surveyTable );
+		
+		surveyTableFilteringController = new FilteringTableController( filterField.textComponent , surveyTable )
+		{
+			@Override
+			protected Filter createFilter( Pattern p )
+			{
+				PatternFilter patternFilter = new PatternFilter( p );
+				surveyTable.setHighlightColors( Collections.<Filter,Color>singletonMap( patternFilter , Color.YELLOW ) );
+				return new HighlightingFilter( null , patternFilter );
+			}
+		};
+		
+		surveyTableDrawer = new JPanel( );
+		
+		GridBagWizard gbw = GridBagWizard.create( surveyTableDrawer );
 		
 		JButton maximizeSurveyTableButton = new JButton( "Max" );
-		surveyTableDrawer.setLayer( maximizeSurveyTableButton , JLayeredPane.DEFAULT_LAYER + 1 );
 		
-		surveyTableDrawer.add( surveyTableScrollPane );
-		surveyTableDrawer.add( maximizeSurveyTableButton , new DrawerLayoutDelegate( maximizeSurveyTableButton , Corner.TOP_RIGHT , Side.TOP ) );
+		gbw.defaults( ).autoinsets( new DefaultAutoInsets( 2 , 2 ) );
+		gbw.put( filterField ).xy( 0 , 0 ).fillx( 1.0 );
+		gbw.put( maximizeSurveyTableButton ).rightOf( filterField ).east( );
+		gbw.put( surveyTableScrollPane ).below( filterField , maximizeSurveyTableButton ).fillboth( 0.0 , 1.0 );
 		
 		surveyTableDrawerDelegate = new DrawerLayoutDelegate( surveyTableDrawer , Side.BOTTOM , true )
 		{
@@ -692,6 +727,25 @@ public class MapsView extends BasicJOGLSetup
 		canvas.repaint( );
 	}
 	
+	private void updateCenterOfOrbit( )
+	{
+		List<SurveyShot> origShots = model.getOriginalShots( );
+		
+		Set<Survey3dModel.Shot> newSelectedShots = model.getSelectedShots( );
+		
+		double[ ] center = new double[ 3 ];
+		for( Survey3dModel.Shot shot : newSelectedShots )
+		{
+			SurveyShot origShot = origShots.get( shot.getIndex( ) );
+			add3( center , origShot.from.position , center );
+			add3( center , origShot.to.position , center );
+		}
+		
+		scale3( center , 0.5 / newSelectedShots.size( ) );
+		
+		orbiter.setCenter( Vecmath.toFloats( center ) );
+	}
+
 	private class MousePickHandler extends MouseAdapter
 	{
 		private ShotPickResult pick( MouseEvent e )
@@ -833,19 +887,32 @@ public class MapsView extends BasicJOGLSetup
 			
 			ListSelectionModel selModel = ( ListSelectionModel ) e.getSource( );
 			
-			for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) ; i++ )
+			if( e.getFirstIndex( ) < 0 )
 			{
-				if( selModel.isSelectedIndex( i ) )
+				for( Survey3dModel.Shot shot : shots )
 				{
-					editor.select( shots.get( i ) );
-				}
-				else
-				{
-					editor.deselect( shots.get( i ) );
+					editor.deselect( shot );
 				}
 			}
-			
+			else
+			{
+				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) ; i++ )
+				{
+					if( selModel.isSelectedIndex( i ) )
+					{
+						editor.select( shots.get( i ) );
+					}
+					else
+					{
+						editor.deselect( shots.get( i ) );
+					}
+				}
+			}
+
 			editor.commit( );
+			
+			updateCenterOfOrbit( );
+			
 			canvas.display( );
 		}
 	}

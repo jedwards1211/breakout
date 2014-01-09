@@ -15,17 +15,19 @@ import java.util.Map;
 
 import javax.swing.JTable;
 import javax.swing.TransferHandler;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
 
+import org.andork.awt.FilteringTableModel;
+import org.andork.awt.HighlightingTable;
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.model.SurveyStation;
 
 @SuppressWarnings( "serial" )
-public class SurveyTable extends JTable
+public class SurveyTable extends HighlightingTable
 {
 	public SurveyTable( )
 	{
-		super( new SurveyTableModel( ) );
+		super( new FilteringTableModel( new SurveyTableModel( ) ) );
 		
 		setTransferHandler( new TransferHandler( )
 		{
@@ -60,6 +62,8 @@ public class SurveyTable extends JTable
 					return false;
 				}
 				
+				TableModel backingModel = ( ( FilteringTableModel ) getModel( ) ).getBackingModel( );
+				
 				JTable.DropLocation dropLocation = ( JTable.DropLocation ) support.getDropLocation( );
 				
 				int row = dropLocation.getRow( );
@@ -68,7 +72,7 @@ public class SurveyTable extends JTable
 					int column = dropLocation.getColumn( );
 					for( String cell : line.split( "\\t" ) )
 					{
-						setValueAt( cell , row , column );
+						backingModel.setValueAt( cell , row , column );
 						column++ ;
 					}
 					

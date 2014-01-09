@@ -33,10 +33,13 @@ public class FilteringTableController
 	
 	protected void onRegexChanged( )
 	{
-		Pattern p;
+		Pattern p = null;
 		try
 		{
-			p = Pattern.compile( regexField.getText( ) );
+			if( regexField.getText( ) != null && !"".equals( regexField.getText( ) ) )
+			{
+				p = Pattern.compile( regexField.getText( ) );
+			}
 			regexField.setForeground( Color.BLACK );
 		}
 		catch( Exception ex )
@@ -48,11 +51,11 @@ public class FilteringTableController
 		if( table.getModel( ) instanceof FilteringTableModel )
 		{
 			FilteringTableModel model = ( FilteringTableModel ) table.getModel( );
-			model.setFilter( createFilter( p ) );
+			model.setFilter( p == null ? null : createFilter( p ) );
 		}
 	}
 	
-	private Filter createFilter( Pattern p )
+	protected Filter createFilter( Pattern p )
 	{
 		return new PatternFilter( p );
 	}

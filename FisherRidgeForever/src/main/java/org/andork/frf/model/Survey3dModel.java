@@ -456,6 +456,11 @@ public class Survey3dModel
 		}
 	}
 	
+	public List<SurveyShot> getOriginalShots( )
+	{
+		return Collections.unmodifiableList( originalShots );
+	}
+	
 	public List<Shot> getShots( )
 	{
 		return Collections.unmodifiableList( shots );
