@@ -48,6 +48,7 @@ import javax.swing.event.ListSelectionListener;
 import org.andork.awt.ColorUtils;
 import org.andork.awt.DoSwing;
 import org.andork.awt.FilteringTableController;
+import org.andork.awt.FilteringTableModel.AndFilter;
 import org.andork.awt.FilteringTableModel.Filter;
 import org.andork.awt.FilteringTableModel.HighlightingFilter;
 import org.andork.awt.FilteringTableModel.PatternFilter;
@@ -184,9 +185,10 @@ public class MapsView extends BasicJOGLSetup
 			@Override
 			protected Filter createFilter( Pattern p )
 			{
-				PatternFilter patternFilter = new PatternFilter( p );
-				surveyTable.setHighlightColors( Collections.<Filter,Color>singletonMap( patternFilter , Color.YELLOW ) );
-				return new HighlightingFilter( null , patternFilter );
+//				PatternFilter patternFilter = new PatternFilter( p );
+				AndFilter combFilter = new AndFilter( new PatternFilter( p , 0 ) , new PatternFilter( p , 1 ) );
+				surveyTable.setHighlightColors( Collections.<Filter,Color>singletonMap( combFilter , Color.YELLOW ) );
+				return new HighlightingFilter( null , combFilter );
 			}
 		};
 		
@@ -745,7 +747,7 @@ public class MapsView extends BasicJOGLSetup
 		
 		orbiter.setCenter( Vecmath.toFloats( center ) );
 	}
-
+	
 	private class MousePickHandler extends MouseAdapter
 	{
 		private ShotPickResult pick( MouseEvent e )
@@ -908,7 +910,7 @@ public class MapsView extends BasicJOGLSetup
 					}
 				}
 			}
-
+			
 			editor.commit( );
 			
 			updateCenterOfOrbit( );

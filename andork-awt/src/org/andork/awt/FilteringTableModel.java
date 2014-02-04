@@ -232,7 +232,7 @@ public class FilteringTableModel extends AbstractTableModel
 		 * @param filters
 		 *            the filters to use.
 		 */
-		public AndFilter( Filter[ ] filters )
+		public AndFilter( Filter... filters )
 		{
 			this.filters = filters;
 		}
