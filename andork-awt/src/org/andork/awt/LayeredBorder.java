@@ -3,38 +3,54 @@ package org.andork.awt;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.border.Border;
 
 public class LayeredBorder implements Border
 {
-	public final List<Border>	borders	= new ArrayList<Border>( );
+	protected Border	top , bottom;
+	
+	protected LayeredBorder( Border top , Border bottom )
+	{
+		super( );
+		this.top = top;
+		this.bottom = bottom;
+	}
+	
+	protected Border remove( Border oldb )
+	{
+		if( oldb == top )
+			return bottom;
+		if( oldb == bottom )
+			return top;
+		Border top2 = remove( top , oldb );
+		Border bottom2 = remove( bottom , oldb );
+		if( top2 == top && bottom2 == bottom )
+		{
+			return this;	// it's not here
+		}
+		return add( top2 , bottom2 );
+	}
 	
 	@Override
 	public void paintBorder( Component c , Graphics g , int x , int y , int width , int height )
 	{
-		for( Border border : borders )
-		{
-			border.paintBorder( c , g , x , y , width , height );
-		}
+		bottom.paintBorder( c , g , x , y , width , height );
+		top.paintBorder( c , g , x , y , width , height );
 	}
 	
 	@Override
 	public Insets getBorderInsets( Component c )
 	{
-		Insets i = new Insets( 0 , 0 , 0 , 0 );
-		for( Border border : borders )
-		{
-			Insets bi = border.getBorderInsets( c );
-			i.left = Math.max( i.left , bi.left );
-			i.right = Math.max( i.right , bi.right );
-			i.top = Math.max( i.top , bi.top );
-			i.bottom = Math.max( i.bottom , bi.bottom );
-		}
-		return i;
+		Insets ti = top.getBorderInsets( c );
+		Insets bi = bottom.getBorderInsets( c );
+		
+		return new Insets(
+				Math.max( ti.top , bi.top ) ,
+				Math.max( ti.left , bi.left ) ,
+				Math.max( ti.bottom , bi.bottom ) ,
+				Math.max( ti.right , bi.right ) );
 	}
 	
 	@Override
@@ -43,42 +59,47 @@ public class LayeredBorder implements Border
 		return false;
 	}
 	
-	public static void addBorder( Border b , JComponent c )
+	public static Border add( Border top , Border bottom )
 	{
-		Border current = c.getBorder( );
-		if( current == null )
+		if( top == null )
 		{
-			c.setBorder( b );
+			return bottom;
 		}
-		else if( current instanceof LayeredBorder )
+		if( bottom == null )
 		{
-			LayeredBorder lb = ( LayeredBorder ) current;
-			lb.borders.add( b );
+			return top;
+		}
+		return new LayeredBorder( top , bottom );
+	}
+	
+	public static void addOnTop( Border b , JComponent c )
+	{
+		c.setBorder( add( b , c.getBorder( ) ) );
+	}
+	
+	public static void addOnBottom( Border b , JComponent c )
+	{
+		c.setBorder( add( c.getBorder( ) , b ) );
+	}
+	
+	public static void remove( Border b , JComponent c )
+	{
+		c.setBorder( remove( c.getBorder( ) , b ) );
+	}
+	
+	public static Border remove( Border b , Border oldb )
+	{
+		if( b == oldb || b == null )
+		{
+			return null;
+		}
+		else if( b instanceof LayeredBorder )
+		{
+			return ( ( LayeredBorder ) b ).remove( oldb );
 		}
 		else
 		{
-			LayeredBorder lb = new LayeredBorder( );
-			lb.borders.add( current );
-			lb.borders.add( b );
-			c.setBorder( lb );
-		}
-	}
-	
-	public static void removeBorder( Border b , JComponent c )
-	{
-		Border current = c.getBorder( );
-		if( current == b )
-		{
-			c.setBorder( null );
-		}
-		else if( current instanceof LayeredBorder )
-		{
-			LayeredBorder lb = ( LayeredBorder ) current;
-			lb.borders.remove( b );
-			if( lb.borders.isEmpty( ) )
-			{
-				c.setBorder( null );
-			}
+			return b;		// it's not here
 		}
 	}
 }

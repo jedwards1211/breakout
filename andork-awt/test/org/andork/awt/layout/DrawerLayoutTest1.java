@@ -14,11 +14,6 @@ import javax.swing.JPanel;
 import org.andork.awt.GradientFillBorder;
 import org.andork.awt.LayeredBorder;
 import org.andork.awt.PaintablePanel;
-import org.andork.awt.layout.Corner;
-import org.andork.awt.layout.DelegatingLayoutManager;
-import org.andork.awt.layout.DrawerLayoutDelegate;
-import org.andork.awt.layout.Side;
-import org.andork.awt.layout.TabLayoutDelegate;
 
 public class DrawerLayoutTest1
 {
@@ -26,7 +21,7 @@ public class DrawerLayoutTest1
 	{
 		JFrame frame = new JFrame( );
 		JPanel content = new JPanel( );
-		LayeredBorder.addBorder( new GradientFillBorder( Corner.TOP_LEFT , content.getBackground( ) , Side.BOTTOM , Color.LIGHT_GRAY ) , content );
+		LayeredBorder.addOnTop( GradientFillBorder.from( Corner.TOP_LEFT ).to( Side.BOTTOM ).colors( content.getBackground( ) , Color.LIGHT_GRAY ) , content );
 		// content.setBorder( new EmptyBorder( 10 , 10 , 10 , 10 ) );
 		content.setPreferredSize( new Dimension( 640 , 480 ) );
 		content.setLayout( new DelegatingLayoutManager( ) );
@@ -35,7 +30,7 @@ public class DrawerLayoutTest1
 		drawer.setLayout( new DelegatingLayoutManager( ) );
 		drawer.setPreferredSize( new Dimension( 200 , 100 ) );
 		
-		drawer.addUnderpaintBorder( new GradientFillBorder( Side.TOP , Color.LIGHT_GRAY , Side.BOTTOM , Color.GRAY ) );
+		drawer.setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors( Color.LIGHT_GRAY , Color.GRAY ) );
 		
 		final DrawerLayoutDelegate delegate = new DrawerLayoutDelegate( drawer , Side.LEFT );
 		

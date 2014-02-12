@@ -11,6 +11,7 @@ import java.awt.Container;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
+import java.awt.MultipleGradientPaint;
 import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -59,6 +60,7 @@ import org.andork.awt.HighlightingTableScroller;
 import org.andork.awt.I18n;
 import org.andork.awt.InnerGradientBorder;
 import org.andork.awt.LayeredBorder;
+import org.andork.awt.MultipleGradientFillBorder;
 import org.andork.awt.OverrideInsetsBorder;
 import org.andork.awt.PaintablePanel;
 import org.andork.awt.TextComponentWithHintAndClear;
@@ -109,8 +111,11 @@ public class MapsView extends BasicJOGLSetup
 	PlotAxis						yaxis;
 	AxisLinkButton					axisLinkButton;
 	PlotAxis						distColorationAxis;
+	PaintablePanel					distColorationAxisPanel;
 	PlotAxis						paramColorationAxis;
+	PaintablePanel					paramColorationAxisPanel;
 	PlotAxis						highlightDistAxis;
+	PaintablePanel					highlightDistAxisPanel;
 	
 	PaintablePanel					settingsPanel;
 	DrawerLayoutDelegate			settingsDrawerDelegate;
@@ -185,7 +190,7 @@ public class MapsView extends BasicJOGLSetup
 			@Override
 			protected Filter createFilter( Pattern p )
 			{
-//				PatternFilter patternFilter = new PatternFilter( p );
+				// PatternFilter patternFilter = new PatternFilter( p );
 				AndFilter combFilter = new AndFilter( new PatternFilter( p , 0 ) , new PatternFilter( p , 1 ) );
 				surveyTable.setHighlightColors( Collections.<Filter,Color>singletonMap( combFilter , Color.YELLOW ) );
 				return new HighlightingFilter( null , combFilter );
@@ -243,30 +248,21 @@ public class MapsView extends BasicJOGLSetup
 		
 		xaxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		xaxis.setBorder( new InnerGradientBorder( new Insets( 0 , 0 , 4 , 0 ) , Color.GRAY ) );
-		LayeredBorder.addBorder( new InnerGradientBorder( new Insets( 0 , 20 , 0 , 20 ) , new Color( 240 , 240 , 240 ) ) , xaxis );
+		LayeredBorder.addOnTop( new InnerGradientBorder( new Insets( 0 , 20 , 0 , 20 ) , new Color( 240 , 240 , 240 ) ) , xaxis );
 		OverrideInsetsBorder.override( xaxis , new Insets( 0 , 0 , 0 , 0 ) );
 		
 		yaxis = new PlotAxis( Orientation.VERTICAL , LabelPosition.LEFT );
 		yaxis.setBorder( new InnerGradientBorder( new Insets( 0 , 0 , 0 , 4 ) , Color.GRAY ) );
-		LayeredBorder.addBorder( new InnerGradientBorder( new Insets( 20 , 0 , 20 , 0 ) , new Color( 240 , 240 , 240 ) ) , yaxis );
+		LayeredBorder.addOnTop( new InnerGradientBorder( new Insets( 20 , 0 , 20 , 0 ) , new Color( 240 , 240 , 240 ) ) , yaxis );
 		OverrideInsetsBorder.override( yaxis , new Insets( 0 , 0 , 0 , 0 ) );
 		
-		final GradientMap distGradientMap = new GradientMap( );
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
-		distGradientMap.map.put( 0.0 , ColorUtils.alphaColor( darkColor , 0 ) );
-		distGradientMap.map.put( 1.0 , darkColor );
 		
-		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP )
-		{
-			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.HORIZONTAL , distGradientMap );
-			
-			@Override
-			protected void paintComponent( Graphics g )
-			{
-				bgPainter.paint( this , ( Graphics2D ) g );
-				super.paintComponent( g );
-			}
-		};
+		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		distColorationAxisPanel = PaintablePanel.wrap( distColorationAxis );
+		distColorationAxisPanel.setUnderpaintBorder(
+				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
+						new float[ ] { 0f , 1f } , new Color[ ] { ColorUtils.alphaColor( darkColor , 0 ) , darkColor } ) );
 		
 		distColorationAxis.getAxisConversion( ).set( 0 , 0 , 10000 , 200 );
 		distColorationAxis.setForeground( Color.WHITE );
@@ -274,42 +270,22 @@ public class MapsView extends BasicJOGLSetup
 		distColorationAxis.setMinorTickColor( Color.WHITE );
 		distColorationAxis.addPlot( plot );
 		
-		final GradientMap paramGradientMap = new GradientMap( );
-		paramGradientMap.map.put( 0.0 , Color.RED );
-		paramGradientMap.map.put( 1.0 , Color.BLUE );
-		
-		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP )
-		{
-			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.HORIZONTAL , paramGradientMap );
-			
-			@Override
-			protected void paintComponent( Graphics g )
-			{
-				bgPainter.paint( this , ( Graphics2D ) g );
-				super.paintComponent( g );
-			}
-		};
+		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		paramColorationAxisPanel = PaintablePanel.wrap( paramColorationAxis );
+		paramColorationAxisPanel.setUnderpaintBorder(
+				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
+						new float[ ] { 0f , 1f } , new Color[ ] { Color.RED , Color.BLUE } ) );
 		
 		paramColorationAxis.setForeground( Color.WHITE );
 		paramColorationAxis.setMajorTickColor( Color.WHITE );
 		paramColorationAxis.setMinorTickColor( Color.WHITE );
 		paramColorationAxis.addPlot( plot );
 		
-		final GradientMap highlightGradientMap = new GradientMap( );
-		highlightGradientMap.map.put( 0.0 , Color.YELLOW );
-		highlightGradientMap.map.put( 1.0 , ColorUtils.alphaColor( Color.YELLOW , 0 ) );
-		
-		highlightDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP )
-		{
-			GradientBackgroundPainter	bgPainter	= new GradientBackgroundPainter( GradientBackgroundPainter.Orientation.HORIZONTAL , highlightGradientMap );
-			
-			@Override
-			protected void paintComponent( Graphics g )
-			{
-				bgPainter.paint( this , ( Graphics2D ) g );
-				super.paintComponent( g );
-			}
-		};
+		highlightDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		highlightDistAxisPanel = PaintablePanel.wrap( highlightDistAxis );
+		highlightDistAxisPanel.setUnderpaintBorder(
+				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
+						new float[ ] { 0f , 1f } , new Color[ ] { Color.YELLOW , ColorUtils.alphaColor( Color.YELLOW , 0 ) } ) );
 		
 		highlightDistAxis.setForeground( Color.BLACK );
 		highlightDistAxis.setMajorTickColor( Color.BLACK );
@@ -476,9 +452,9 @@ public class MapsView extends BasicJOGLSetup
 		};
 		
 		settingsPanel = new PaintablePanel( );
-		settingsPanel.addUnderpaintBorder( new GradientFillBorder(
-				Side.TOP , ColorUtils.darkerColor( settingsPanel.getBackground( ) , 0.05 ) ,
-				Side.BOTTOM , ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
+		settingsPanel.setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors(
+				ColorUtils.darkerColor( settingsPanel.getBackground( ) , 0.05 ) ,
+				ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
 		settingsPanel.setBorder( new OverrideInsetsBorder(
 				new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
 				new Insets( 3 , 8 , 3 , 3 ) ) );
@@ -493,13 +469,13 @@ public class MapsView extends BasicJOGLSetup
 		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).north( );
 		JLabel distLabel = new JLabel( "Distance coloration:" );
 		w.put( distLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( distColorationAxis ).belowLast( ).fillx( );
+		w.put( distColorationAxisPanel ).belowLast( ).fillx( );
 		JLabel paramLabel = new JLabel( "Depth coloration:" );
 		w.put( paramLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( paramColorationAxis ).belowLast( ).fillx( );
+		w.put( paramColorationAxisPanel ).belowLast( ).fillx( );
 		JLabel highlightLabel = new JLabel( "Highlight range:" );
 		w.put( highlightLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( highlightDistAxis ).belowLast( ).fillx( );
+		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
 		
 		w.put( updateStatusPanel ).belowAll( ).fillx( ).weighty( 1.0 ).south( );
 		

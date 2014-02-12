@@ -38,6 +38,11 @@ public class OverrideInsetsBorder implements Border
 	
 	public static void override( JComponent comp , Insets insets )
 	{
-		comp.setBorder( new OverrideInsetsBorder( comp.getBorder( ) , insets ) );
+		Border b = comp.getBorder( );
+		while( b instanceof OverrideInsetsBorder )
+		{
+			b = ( ( OverrideInsetsBorder ) b ).wrapped;
+		}
+		comp.setBorder( new OverrideInsetsBorder( b , insets ) );
 	}
 }

@@ -2,45 +2,23 @@ package org.andork.awt;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.GradientPaint;
 import java.awt.Graphics;
+import java.awt.LinearGradientPaint;
 import java.awt.Paint;
 import java.awt.Point;
+import java.awt.RadialGradientPaint;
 import java.awt.Rectangle;
+import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.Side;
 
-public abstract class GradientFillBorder extends FillBorder
+public class MultipleGradientFillBorder
 {
-	protected GradientFillBorder( )
-	{
-		
-	}
-	
 	protected static Point2D Point2D( Point p )
 	{
 		return new Point2D.Double( p.x , p.y );
-	}
-	
-	protected abstract Point2D getPoint1( Component c , Graphics g , int x , int y , int width , int height );
-	
-	protected abstract Color getColor1( Component c , Graphics g );
-	
-	protected abstract Point2D getPoint2( Component c , Graphics g , int x , int y , int width , int height );
-	
-	protected abstract Color getColor2( Component c , Graphics g );
-	
-	@Override
-	protected Paint getPaint( Component c , Graphics g , int x , int y , int width , int height )
-	{
-		return new GradientPaint(
-				getPoint1( c , g , x , y , width , height ) ,
-				getColor1( c , g ) ,
-				getPoint2( c , g , x , y , width , height ) ,
-				getColor2( c , g ) );
 	}
 	
 	public static From from( final Side side1 )
@@ -184,33 +162,28 @@ public abstract class GradientFillBorder extends FillBorder
 		
 		protected abstract Point2D getPoint2( Component c , Graphics g , int x , int y , int width , int height );
 		
-		public GradientFillBorder colors( final Color color1 , final Color color2 )
+		public FillBorder linear( final float[ ] fractions , final Color[ ] colors )
 		{
-			return new GradientFillBorder( )
+			return new FillBorder( )
 			{
-				
 				@Override
-				protected java.awt.geom.Point2D getPoint1( Component c , Graphics g , int x , int y , int width , int height )
+				protected Paint getPaint( Component c , Graphics g , int x , int y , int width , int height )
 				{
-					return from.getPoint1( c , g , x , y , width , height );
+					return new LinearGradientPaint( from.getPoint1( c , g , x , y , width , height ) ,
+							getPoint2( c , g , x , y , width , height ) , fractions , colors );
 				}
-				
+			};
+		}
+		
+		public FillBorder linear( final float[ ] fractions , final Color[ ] colors , final CycleMethod cycleMethod )
+		{
+			return new FillBorder( )
+			{
 				@Override
-				protected Color getColor1( Component c , Graphics g )
+				protected Paint getPaint( Component c , Graphics g , int x , int y , int width , int height )
 				{
-					return color1;
-				}
-				
-				@Override
-				protected java.awt.geom.Point2D getPoint2( Component c , Graphics g , int x , int y , int width , int height )
-				{
-					return To.this.getPoint2( c , g , x , y , width , height );
-				}
-				
-				@Override
-				protected Color getColor2( Component c , Graphics g )
-				{
-					return color2;
+					return new LinearGradientPaint( from.getPoint1( c , g , x , y , width , height ) ,
+							getPoint2( c , g , x , y , width , height ) , fractions , colors , cycleMethod );
 				}
 			};
 		}
