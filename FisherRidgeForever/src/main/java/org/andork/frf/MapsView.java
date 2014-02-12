@@ -8,10 +8,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.MultipleGradientPaint;
 import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -45,6 +44,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.plaf.basic.BasicButtonUI;
 
 import org.andork.awt.ColorUtils;
 import org.andork.awt.DoSwing;
@@ -67,6 +67,7 @@ import org.andork.awt.TextComponentWithHintAndClear;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.DrawerLayoutDelegate;
+import org.andork.awt.layout.ResizeKnobHandler;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.TabLayoutDelegate;
 import org.andork.frf.model.Survey3dModel;
@@ -140,7 +141,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	JPanel							surveyTableDrawer;
 	DrawerLayoutDelegate			surveyTableDrawerDelegate;
-	
+	JButton							surveyTableResizeHandle;
 	TextComponentWithHintAndClear	filterField;
 	
 	SurveyTable						surveyTable;
@@ -199,12 +200,36 @@ public class MapsView extends BasicJOGLSetup
 		
 		surveyTableDrawer = new JPanel( );
 		
+		surveyTableResizeHandle = new JButton( "" );
+		surveyTableResizeHandle.setUI( new BasicButtonUI( ) );
+		surveyTableResizeHandle.setMargin( new Insets( 0 , 0 , 0 , 0 ) );
+		surveyTableResizeHandle.setPreferredSize( new Dimension( 200 , 3 ) );
+		surveyTableResizeHandle.setCursor( Cursor.getPredefinedCursor( Cursor.N_RESIZE_CURSOR ) );
+		
+		ResizeKnobHandler surveyTableResizeHandler = new ResizeKnobHandler( surveyTableDrawer , Side.TOP )
+		{
+			protected void onResize( Component target )
+			{
+				super.onResize( target );
+				Window w = SwingUtilities.getWindowAncestor( target );
+				if( w != null )
+				{
+					w.invalidate( );
+					w.validate( );
+					w.repaint( );
+				}
+			}
+		};
+		surveyTableResizeHandle.addMouseListener( surveyTableResizeHandler );
+		surveyTableResizeHandle.addMouseMotionListener( surveyTableResizeHandler );
+		
 		GridBagWizard gbw = GridBagWizard.create( surveyTableDrawer );
 		
 		JButton maximizeSurveyTableButton = new JButton( "Max" );
 		
 		gbw.defaults( ).autoinsets( new DefaultAutoInsets( 2 , 2 ) );
-		gbw.put( filterField ).xy( 0 , 0 ).fillx( 1.0 );
+		gbw.put( surveyTableResizeHandle ).xy( 0 , 0 ).fillx( 1.0 );
+		gbw.put( filterField ).below( surveyTableResizeHandle ).fillx( 1.0 );
 		gbw.put( maximizeSurveyTableButton ).rightOf( filterField ).east( );
 		gbw.put( surveyTableScrollPane ).below( filterField , maximizeSurveyTableButton ).fillboth( 0.0 , 1.0 );
 		
@@ -489,6 +514,7 @@ public class MapsView extends BasicJOGLSetup
 		layeredPane.setLayer( pinSettingsPanelButton , JLayeredPane.DEFAULT_LAYER + 2 );
 		layeredPane.setLayer( surveyTableDrawer , JLayeredPane.DEFAULT_LAYER + 3 );
 		layeredPane.setLayer( pinSurveyTableButton , JLayeredPane.DEFAULT_LAYER + 4 );
+		
 		settingsDrawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT )
 		{
 			protected void onLayoutAnimated( Container parent , Component target )
