@@ -11,7 +11,6 @@ import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.Point;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -66,6 +65,7 @@ import org.andork.awt.PaintablePanel;
 import org.andork.awt.TextComponentWithHintAndClear;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
+import org.andork.awt.layout.DrawerAutoshowController;
 import org.andork.awt.layout.DrawerLayoutDelegate;
 import org.andork.awt.layout.ResizeKnobHandler;
 import org.andork.awt.layout.Side;
@@ -133,7 +133,7 @@ public class MapsView extends BasicJOGLSetup
 	MousePickHandler				pickHandler;
 	MouseAdapterChain				mouseAdapterChain;
 	
-	AutoshowHandler					autoshowHandler;
+	DrawerAutoshowController		autoshowController;
 	
 	TableSelectionHandler			selectionHandler;
 	
@@ -252,7 +252,7 @@ public class MapsView extends BasicJOGLSetup
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				surveyTableDrawerDelegate.setOpen( pinSurveyTableButton.isSelected( ) );
+				surveyTableDrawerDelegate.setPinned( pinSurveyTableButton.isSelected( ) );
 			}
 		} );
 		maximizeSurveyTableButton.addActionListener( new ActionListener( )
@@ -391,11 +391,12 @@ public class MapsView extends BasicJOGLSetup
 		canvas.addMouseMotionListener( mouseLooper );
 		canvas.addMouseWheelListener( mouseLooper );
 		
-		autoshowHandler = new AutoshowHandler( );
+		autoshowController = new DrawerAutoshowController( );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
+		mouseAdapterChain.addMouseAdapter( autoshowController );
 		
 		plotPanel = new JPanel( new PlotPanelLayout( ) );
 		plotPanel.add( plot );
@@ -580,7 +581,7 @@ public class MapsView extends BasicJOGLSetup
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				settingsDrawerDelegate.setOpen( pinSettingsPanelButton.isSelected( ) );
+				settingsDrawerDelegate.setPinned( pinSettingsPanelButton.isSelected( ) );
 			}
 		} );
 		
@@ -667,7 +668,7 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
-		mouseAdapterChain.addMouseAdapter( autoshowHandler );
+		mouseAdapterChain.addMouseAdapter( autoshowController );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( true );
@@ -684,7 +685,7 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain.addMouseAdapter( navigator );
 		mouseAdapterChain.addMouseAdapter( orbiter );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
-		mouseAdapterChain.addMouseAdapter( autoshowHandler );
+		mouseAdapterChain.addMouseAdapter( autoshowController );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( false );
@@ -842,36 +843,6 @@ public class MapsView extends BasicJOGLSetup
 				
 				canvas.display( );
 			}
-		}
-	}
-	
-	private class AutoshowHandler extends MouseAdapter
-	{
-		final float	SPACE	= 30;
-		
-		@Override
-		public void mouseMoved( MouseEvent e )
-		{
-			Point p = SwingUtilities.convertPoint( e.getComponent( ) , e.getPoint( ) , surveyTableDrawer );
-			if( p.y + SPACE >= 0 )
-			{
-				surveyTableDrawerDelegate.open( );
-			}
-			else if( !pinSurveyTableButton.isSelected( ) )
-			{
-				surveyTableDrawerDelegate.close( );
-			}
-			
-			p = SwingUtilities.convertPoint( e.getComponent( ) , e.getPoint( ) , settingsPanel );
-			if( p.x + SPACE >= 0 )
-			{
-				settingsDrawerDelegate.open( );
-			}
-			else if( !pinSettingsPanelButton.isSelected( ) )
-			{
-				settingsDrawerDelegate.close( );
-			}
-			
 		}
 	}
 	

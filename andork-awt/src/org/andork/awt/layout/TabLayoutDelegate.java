@@ -5,6 +5,8 @@ import java.awt.Container;
 import java.awt.Insets;
 import java.awt.Rectangle;
 
+import javax.swing.SwingUtilities;
+
 import org.andork.awt.layout.DelegatingLayoutManager.LayoutDelegate;
 
 public class TabLayoutDelegate implements LayoutDelegate
@@ -31,34 +33,37 @@ public class TabLayoutDelegate implements LayoutDelegate
 	public Rectangle desiredBounds( Container parent , Component target , LayoutSize layoutSize )
 	{
 		Rectangle bounds = new Rectangle( layoutSize.get( target ) );
+		Rectangle desiredContentBounds = content.getBounds( );
+		Container contentParent = content.getParent( );
+		if( contentParent != null )
+		{
+			desiredContentBounds = SwingUtilities.convertRectangle( contentParent , desiredContentBounds , parent );
+		}
 		
 		if( corner != null )
 		{
 			if( side != null )
 			{
-				side.opposite( ).setLocation( bounds , side.location( content ) );
+				side.opposite( ).setLocation( bounds , side.location( desiredContentBounds ) );
 				Side otherSide = side == corner.xSide( ) ? corner.ySide( ) : corner.xSide( );
-				otherSide.setLocation( bounds , otherSide.location( content ) );
+				otherSide.setLocation( bounds , otherSide.location( desiredContentBounds ) );
 			}
 			else
 			{
-				corner.xSide( ).opposite( ).setLocation( bounds , corner.xSide( ).location( content ) );
-				corner.ySide( ).opposite( ).setLocation( bounds , corner.ySide( ).location( content ) );
+				corner.xSide( ).opposite( ).setLocation( bounds , corner.xSide( ).location( desiredContentBounds ) );
+				corner.ySide( ).opposite( ).setLocation( bounds , corner.ySide( ).location( desiredContentBounds ) );
 			}
 		}
 		else
 		{
-			side.opposite( ).setLocation( bounds , side.location( content ) );
+			side.opposite( ).setLocation( bounds , side.location( desiredContentBounds ) );
 			Axis invAxis = side.axis( ).opposite( );
-			invAxis.setLower( bounds , invAxis.center( content ) - invAxis.size( target ) / 2 );
+			invAxis.setLower( bounds , invAxis.center( desiredContentBounds ) - invAxis.size( target ) / 2 );
 		}
 		
 		if( insets != null )
 		{
-			bounds.x += insets.left;
-			bounds.width = bounds.width - insets.left - insets.right;
-			bounds.y += insets.top;
-			bounds.height = bounds.height - insets.top - insets.bottom;
+			RectangleUtils.inset( bounds , insets , bounds );
 		}
 		
 		return bounds;

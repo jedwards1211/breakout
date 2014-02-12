@@ -26,6 +26,29 @@ public class DelegatingLayoutManager implements LayoutManager2
 		layoutDelegates.remove( comp );
 	}
 	
+	public LayoutDelegate getDelegate( Component comp )
+	{
+		return layoutDelegates.get( comp );
+	}
+	
+	public Rectangle getDesiredBounds( Component comp , LayoutSize size )
+	{
+		Container parent = comp.getParent( );
+		
+		if( parent == null || parent.getLayout( ) != this )
+		{
+			throw new IllegalArgumentException( "comp does not belong to this layout" );
+		}
+		
+		LayoutDelegate delegate = layoutDelegates.get( comp );
+		if( delegate != null )
+		{
+			return delegate.desiredBounds( parent , comp , size );
+		}
+		
+		return LayoutUtils.calculateInnerArea( parent , LayoutSize.ACTUAL );
+	}
+	
 	private Dimension layoutSize( Container parent , LayoutSize size )
 	{
 		Rectangle bounds = new Rectangle( );
@@ -42,10 +65,7 @@ public class DelegatingLayoutManager implements LayoutManager2
 			}
 		}
 		
-		bounds.width += bounds.x;
-		bounds.x = 0;
-		bounds.y += bounds.height;
-		bounds.y = 0;
+		bounds = bounds.union( new Rectangle( 0 , 0 , 0 , 0 ) );
 		
 		return bounds.getSize( );
 	}
@@ -65,15 +85,7 @@ public class DelegatingLayoutManager implements LayoutManager2
 	@Override
 	public void layoutContainer( Container parent )
 	{
-		Rectangle defaultBounds = new Rectangle( parent.getSize( ) );
-		Insets insets = parent.getInsets( );
-		if( insets != null )
-		{
-			defaultBounds.x += insets.left;
-			defaultBounds.width = defaultBounds.width - insets.left - insets.right;
-			defaultBounds.y += insets.top;
-			defaultBounds.height = defaultBounds.height - insets.top - insets.bottom;
-		}
+		Rectangle defaultBounds = LayoutUtils.calculateInnerArea( parent , LayoutSize.ACTUAL );
 		
 		for( Component comp : parent.getComponents( ) )
 		{

@@ -30,7 +30,7 @@ public abstract class ExecutorServiceBackgroundLoaded<T> extends BackgroundLoade
 				{
 					setValue( load( ) );
 				}
-				catch( Exception ex )
+				catch( Throwable ex )
 				{
 					ex.printStackTrace( );
 					setError( ex );
