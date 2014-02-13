@@ -25,8 +25,8 @@ import org.andork.awt.DoSwing;
 import org.andork.frf.update.UpdateStatus.CheckFailed;
 import org.andork.frf.update.UpdateStatus.DownloadFailed;
 import org.andork.frf.update.UpdateStatus.Downloading;
-import org.andork.util.Downloader;
-import org.andork.util.Downloader.State;
+import org.andork.io.Downloader;
+import org.andork.io.Downloader.State;
 
 public class UpdateStatusPanelController
 {

@@ -1,4 +1,4 @@
-package org.andork.util;
+package org.andork.io;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.andork.util.Downloader;
+import org.andork.io.Downloader;
 
 public class DownloaderTest {
 	public static void main(String[] args) throws MalformedURLException, IOException {
