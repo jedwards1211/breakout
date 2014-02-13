@@ -258,6 +258,11 @@ public enum Axis
 	
 	public abstract void setLower( Rectangle bounds , int lower );
 	
+	public void setUpper( Rectangle bounds , int upper )
+	{
+		setSize( bounds , upper - lower( bounds ) );
+	}
+	
 	public int size( Rectangle bounds )
 	{
 		return size( bounds.getSize( ) );
