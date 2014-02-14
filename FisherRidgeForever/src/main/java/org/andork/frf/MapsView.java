@@ -170,6 +170,8 @@ public class MapsView extends BasicJOGLSetup
 	final float[ ]					p2				= new float[ 3 ];
 	private JToggleButton			pinSurveyTableButton;
 	
+	private JButton					debugButton		= new JButton( );
+	
 	public MapsView( )
 	{
 		super( );
@@ -477,6 +479,16 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
+		debugButton = new JButton( "Debug" );
+		debugButton.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				System.out.println( "Debug" );
+			}
+		} );
+		
 		settingsPanel = new PaintablePanel( );
 		settingsPanel.setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors(
 				ColorUtils.darkerColor( settingsPanel.getBackground( ) , 0.05 ) ,
@@ -503,7 +515,9 @@ public class MapsView extends BasicJOGLSetup
 		w.put( highlightLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
 		
-		w.put( updateStatusPanel ).belowAll( ).fillx( ).weighty( 1.0 ).south( );
+		w.put( debugButton ).belowLast( ).southwest( ).weighty( 1.0 );
+		
+		w.put( updateStatusPanel ).belowAll( ).fillx( ).weighty( 0.0 ).south( );
 		
 		pinSettingsPanelButton = new JToggleButton( "\u2261" );
 		pinSettingsPanelButton.setOpaque( false );
