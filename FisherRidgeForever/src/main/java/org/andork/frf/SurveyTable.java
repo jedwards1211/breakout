@@ -25,6 +25,15 @@ import org.andork.frf.model.SurveyStation;
 @SuppressWarnings( "serial" )
 public class SurveyTable extends HighlightingTable
 {
+	public void createDefaultColumnsFromModel( )
+	{
+		super.createDefaultColumnsFromModel( );
+		if( getColumnCount( ) > SHOT_COLUMN )
+		{
+			getColumnModel( ).removeColumn( getColumnModel( ).getColumn( SHOT_COLUMN ) );
+		}
+	}
+	
 	public SurveyTable( )
 	{
 		super( new FilteringTableModel( new SurveyTableModel( ) ) );
@@ -128,13 +137,16 @@ public class SurveyTable extends HighlightingTable
 	public static final int	RIGHT_COLUMN	= 8;
 	public static final int	UP_COLUMN		= 9;
 	public static final int	DOWN_COLUMN		= 10;
+	public static final int	SHOT_COLUMN		= 11;
 	
 	public List<SurveyShot> createShots( )
 	{
 		Map<String, SurveyStation> stations = new LinkedHashMap<String, SurveyStation>( );
 		List<SurveyShot> shots = new ArrayList<SurveyShot>( );
 		
-		for( int row = 0 ; row < getRowCount( ) ; row++ )
+		TableModel model = ( ( FilteringTableModel ) getModel( ) ).getBackingModel( );
+		
+		for( int row = 0 ; row < model.getRowCount( ) ; row++ )
 		{
 			try
 			{
@@ -198,6 +210,7 @@ public class SurveyTable extends HighlightingTable
 				from.frontsights.add( shot );
 				to.backsights.add( shot );
 				
+				model.setValueAt( shot , row , SHOT_COLUMN );
 				shots.add( shot );
 			}
 			catch( Exception ex )
@@ -310,5 +323,26 @@ public class SurveyTable extends HighlightingTable
 		{
 			return null;
 		}
+	}
+	
+	public int getShotIndex( int row )
+	{
+		SurveyShot shot = ( SurveyShot ) getModel( ).getValueAt( row , SHOT_COLUMN );
+		return shot == null ? -1 : shot.index;
+	}
+	
+	public int rowOfShot( int shotIndex )
+	{
+		int row = Math.min( shotIndex , getRowCount( ) );
+		
+		while( row < getRowCount( ) )
+		{
+			if( getShotIndex( row ) == shotIndex )
+			{
+				return row;
+			}
+			row++ ;
+		}
+		return -1;
 	}
 }

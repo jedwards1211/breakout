@@ -58,6 +58,39 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		this.fill = fill;
 	}
 	
+	public DrawerLayoutDelegate dockingSide( Side dockingSide )
+	{
+		this.dockingSide = dockingSide;
+		return this;
+	}
+	
+	public Side dockingSide( )
+	{
+		return dockingSide;
+	}
+	
+	public DrawerLayoutDelegate dockingCorner( Corner dockingCorner )
+	{
+		this.dockingCorner = dockingCorner;
+		return this;
+	}
+	
+	public Corner dockingCorner( )
+	{
+		return dockingCorner;
+	}
+	
+	public DrawerLayoutDelegate fill( boolean fill )
+	{
+		this.fill = fill;
+		return this;
+	}
+	
+	public boolean fill( )
+	{
+		return fill;
+	}
+	
 	public Component getDrawer( )
 	{
 		return drawer;

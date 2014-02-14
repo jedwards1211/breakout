@@ -62,7 +62,7 @@ public class DrawerLayoutTest1
 				Corner.fromSides( delegate.dockingSide.opposite( ) , delegate.dockingSide.inverse( ).axis( ).lowerSide( ) ) ,
 				// delegate.dockingCorner.adjacent( delegate.dockingSide.opposite( ) ) ,
 				delegate.dockingSide.opposite( ) );
-		tabDelegate.setInsets( new Insets( 10 , -10 , -10 , 10 ) );
+		tabDelegate.insets( new Insets( 10 , -10 , -10 , 10 ) );
 		
 		content.add( drawer , delegate );
 		content.add( toggleButton , tabDelegate );

@@ -531,12 +531,12 @@ public class MapsView extends BasicJOGLSetup
 		settingsDrawerDelegate.close( false );
 		layeredPane.add( settingsPanel , settingsDrawerDelegate );
 		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( settingsPanel , Corner.TOP_LEFT , Side.LEFT );
-		tabDelegate.setInsets( new Insets( 10 , 5 , -10 , -5 ) );
+		tabDelegate.insets( new Insets( 10 , 5 , -10 , -5 ) );
 		layeredPane.add( pinSettingsPanelButton , tabDelegate );
 		layeredPane.add( plotPanel );
 		layeredPane.add( surveyTableDrawer , surveyTableDrawerDelegate );
 		TabLayoutDelegate openSurveyDrawerButtonDelegate = new TabLayoutDelegate( surveyTableDrawer , Corner.TOP_LEFT , Side.TOP );
-		openSurveyDrawerButtonDelegate.setInsets( new Insets( 5 , 10 , -5 , -10 ) );
+		openSurveyDrawerButtonDelegate.insets( new Insets( 5 , 10 , -5 , -10 ) );
 		layeredPane.add( pinSurveyTableButton , openSurveyDrawerButtonDelegate );
 		
 		mainPanel = new JPanel( new BorderLayout( ) );
@@ -823,23 +823,28 @@ public class MapsView extends BasicJOGLSetup
 			{
 				int index = picked.picked.getIndex( );
 				
-				if( ( e.getModifiersEx( ) & MouseEvent.CTRL_DOWN_MASK ) != 0 )
+				int row = surveyTable.rowOfShot( index );
+				
+				if( row >= 0 )
 				{
-					if( selModel.isSelectedIndex( index ) )
+					if( ( e.getModifiersEx( ) & MouseEvent.CTRL_DOWN_MASK ) != 0 )
 					{
-						selModel.removeSelectionInterval( index , index );
+						if( selModel.isSelectedIndex( row ) )
+						{
+							selModel.removeSelectionInterval( row , row );
+						}
+						else
+						{
+							selModel.addSelectionInterval( row , row );
+						}
 					}
 					else
 					{
-						selModel.addSelectionInterval( index , index );
+						selModel.setSelectionInterval( row , row );
 					}
+					
+					surveyTable.scrollRectToVisible( surveyTable.getCellRect( row , 0 , true ) );
 				}
-				else
-				{
-					selModel.setSelectionInterval( index , index );
-				}
-				
-				surveyTable.scrollRectToVisible( surveyTable.getCellRect( index , 0 , true ) );
 				
 				canvas.display( );
 			}
@@ -873,13 +878,18 @@ public class MapsView extends BasicJOGLSetup
 			{
 				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) ; i++ )
 				{
+					SurveyShot shot = ( SurveyShot ) surveyTable.getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
+					if( shot == null )
+					{
+						continue;
+					}
 					if( selModel.isSelectedIndex( i ) )
 					{
-						editor.select( shots.get( i ) );
+						editor.select( shots.get( shot.index ) );
 					}
 					else
 					{
-						editor.deselect( shots.get( i ) );
+						editor.deselect( shots.get( shot.index ) );
 					}
 				}
 			}

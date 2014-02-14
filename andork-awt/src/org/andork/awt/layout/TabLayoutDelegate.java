@@ -24,9 +24,22 @@ public class TabLayoutDelegate implements LayoutDelegate
 	Side		side;
 	Insets		insets;
 	
-	public void setInsets( Insets insets )
+	public TabLayoutDelegate insets( Insets insets )
 	{
 		this.insets = insets;
+		return this;
+	}
+	
+	public TabLayoutDelegate corner( Corner corner )
+	{
+		this.corner = corner;
+		return this;
+	}
+	
+	public TabLayoutDelegate side( Side side )
+	{
+		this.side = side;
+		return this;
 	}
 	
 	@Override

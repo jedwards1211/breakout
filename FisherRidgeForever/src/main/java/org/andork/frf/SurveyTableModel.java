@@ -8,7 +8,7 @@ public class SurveyTableModel extends DefaultTableModel
 {
 	public SurveyTableModel( )
 	{
-		super( new Object[ ] { "From" , "To" , "Distance" , "FS Azm" , "FS Inc" , "BS Azm" , "BS Inc" , "L" , "R" , "U" , "D" } , 1 );
+		super( new Object[ ] { "From" , "To" , "Distance" , "FS Azm" , "FS Inc" , "BS Azm" , "BS Inc" , "L" , "R" , "U" , "D" , "Shot" } , 1 );
 	}
 	
 	@Override
