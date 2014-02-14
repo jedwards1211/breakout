@@ -38,19 +38,19 @@ import org.andork.awt.layout.Axis;
 @SuppressWarnings( "serial" )
 public class JumpBar extends JComponent
 {
-	JScrollBar			scrollBar;
+	JScrollBar					scrollBar;
 	
-	ListModel			model;
+	ListModel					model;
 	
-	JumpSupport			jumpSupport;
+	JumpSupport					jumpSupport;
 	
-	int					markSize		= 5;
+	int							markSize			= 5;
 	
-	MouseHandler		mouseHandler	= new MouseHandler( );
+	MouseHandler				mouseHandler		= new MouseHandler( );
 	
-	ChangeHandler		changeHandler	= new ChangeHandler( );
+	ChangeHandler				changeHandler		= new ChangeHandler( );
 	
-	Map<Object, Color>	colorMap		= null;
+	Map<Object, Color>			colorMap			= null;
 	
 	public JumpBar( JScrollBar scrollBar )
 	{
@@ -179,13 +179,13 @@ public class JumpBar extends JComponent
 		{
 			return null;
 		}
-		if( colorMap != null )
-		{
-			o = colorMap.get( o );
-		}
 		if( o instanceof Color )
 		{
 			return ( Color ) o;
+		}
+		if( colorMap != null )
+		{
+			return colorMap.get( o );
 		}
 		return null;
 	}

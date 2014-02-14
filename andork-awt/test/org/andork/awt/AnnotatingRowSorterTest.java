@@ -44,7 +44,7 @@ public class AnnotatingRowSorterTest
 		final JScrollAndJumpPane tableScrollPane = new JScrollAndJumpPane( table );
 		tableScrollPane.setBorder( null );
 		
-		final ListModelFromAnnotatingJTable jumpBarModel = new ListModelFromAnnotatingJTable( table );
+		final JumpBarModelFromAnnotatingJTable jumpBarModel = new JumpBarModelFromAnnotatingJTable( table );
 		
 		tableScrollPane.getJumpBar( ).setModel( jumpBarModel );
 		

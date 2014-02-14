@@ -5,6 +5,8 @@ import javax.swing.RowSorter;
 import javax.swing.event.EventListenerList;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
 import javax.swing.event.TableModelEvent;
@@ -17,7 +19,7 @@ import javax.swing.table.TableModel;
  * 
  * @author andy.edwards
  */
-public class ListModelFromAnnotatingJTable implements ListModel
+public class JumpBarModelFromAnnotatingJTable implements ListModel
 {
 	protected AnnotatingJTable	table;
 	protected TableModel		tableModel;
@@ -28,11 +30,12 @@ public class ListModelFromAnnotatingJTable implements ListModel
 	
 	protected ChangeHandler		changeHandler	= new ChangeHandler( );
 	
-	public ListModelFromAnnotatingJTable( AnnotatingJTable table )
+	public JumpBarModelFromAnnotatingJTable( AnnotatingJTable table )
 	{
 		this.table = table;
 		this.tableModel = table.getModel( );
 		tableModel.addTableModelListener( changeHandler );
+		table.getSelectionModel( ).addListSelectionListener( changeHandler );
 		rowSorter = table.getRowSorter( );
 		if( rowSorter != null )
 		{
@@ -44,6 +47,8 @@ public class ListModelFromAnnotatingJTable implements ListModel
 	{
 		tableModel.removeTableModelListener( changeHandler );
 		tableModel = null;
+		table.getSelectionModel( ).removeListSelectionListener( changeHandler );
+		table = null;
 		if( rowSorter != null )
 		{
 			rowSorter.removeRowSorterListener( changeHandler );
@@ -60,6 +65,10 @@ public class ListModelFromAnnotatingJTable implements ListModel
 	@Override
 	public Object getElementAt( int index )
 	{
+		if( table.isRowSelected( index ) )
+		{
+			return table.getSelectionBackground( );
+		}
 		return table.getAnnotation( index );
 	}
 	
@@ -132,7 +141,7 @@ public class ListModelFromAnnotatingJTable implements ListModel
 		}
 	}
 	
-	protected class ChangeHandler implements TableModelListener , RowSorterListener
+	protected class ChangeHandler implements TableModelListener , RowSorterListener , ListSelectionListener
 	{
 		@Override
 		public void tableChanged( TableModelEvent e )
@@ -159,6 +168,12 @@ public class ListModelFromAnnotatingJTable implements ListModel
 		public void sorterChanged( RowSorterEvent e )
 		{
 			fireContentsChanged( 0 , table.getRowCount( ) );
+		}
+		
+		@Override
+		public void valueChanged( ListSelectionEvent e )
+		{
+			fireContentsChanged( e.getFirstIndex( ) , e.getLastIndex( ) );
 		}
 	}
 }
