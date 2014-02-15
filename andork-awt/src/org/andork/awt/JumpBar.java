@@ -325,7 +325,7 @@ public class JumpBar extends JComponent
 					int endIndex = ( end - axis.lower( track ) ) * model.getSize( ) / axis.size( track );
 					endIndex = Math.min( endIndex , model.getSize( ) - 1 );
 					
-					for( int i = 0 ; i <= Math.max( endIndex - midIndex , midIndex - startIndex ) ; i = i < 0 ? -i + 1 : -i - 1 )
+					for( int i = 0 ; i <= Math.max( endIndex - midIndex , midIndex - startIndex ) ; i = i < 0 ? -i : -i - 1 )
 					{
 						int index = midIndex + i;
 						if( index >= 0 && index < model.getSize( ) )

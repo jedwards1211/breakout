@@ -6,61 +6,41 @@
  */
 package org.andork.awt;
 
+import static org.andork.awt.DoSwing.doSwing;
+
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
+import javax.swing.DefaultRowSorter;
 import javax.swing.RowFilter;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 
 /**
- * An implementation of <code>RowSorter</code> that provides sorting and filtering around a grid-based data model. Beyond creating and installing a
- * <code>RowSorter</code>, you very rarely need to interact with one directly. Refer to {@link javax.swing.table.TableRowSorter AnnotatingTableRowSorter} for a concrete
- * implementation of <code>RowSorter</code> for <code>JTable</code>.
- * <p>
- * Sorting is done based on the current <code>SortKey</code>s, in order. If two objects are equal (the <code>Comparator</code> for the column returns 0) the
- * next <code>SortKey</code> is used. If no <code>SortKey</code>s remain or the order is <code>UNSORTED</code>, then the order of the rows in the model is used.
- * <p>
- * Sorting of each column is done by way of a <code>Comparator</code> that you can specify using the <code>setComparator</code> method. If a
- * <code>Comparator</code> has not been specified, the <code>Comparator</code> returned by <code>Collator.getInstance()</code> is used on the results of calling
- * <code>toString</code> on the underlying objects. The <code>Comparator</code> is never passed <code>null</code>. A <code>null</code> value is treated as
- * occuring before a non-<code>null</code> value, and two <code>null</code> values are considered equal.
- * <p>
- * If you specify a <code>Comparator</code> that casts its argument to a type other than that provided by the model, a <code>ClassCastException</code> will be
- * thrown when the data is sorted.
- * <p>
- * In addition to sorting, <code>DefaultRowSorter</code> provides the ability to filter rows. Filtering is done by way of a <code>RowFilter</code> that is
- * specified using the <code>setRowFilter</code> method. If no filter has been specified all rows are included.
- * <p>
- * By default, rows are in unsorted order (the same as the model) and every column is sortable. The default <code>Comparator</code>s are documented in the
- * subclasses (for example, {@link javax.swing.table.TableRowSorter AnnotatingTableRowSorter}).
- * <p>
- * If the underlying model structure changes (the <code>modelStructureChanged</code> method is invoked) the following are reset to their default values:
- * <code>Comparator</code>s by column, current sort order, and whether each column is sortable. To find the default <code>Comparator</code>s, see the concrete
- * implementation (for example, {@link javax.swing.table.TableRowSorter AnnotatingTableRowSorter}). The default sort order is unsorted (the same as the model), and
- * columns are sortable by default.
- * <p>
- * If the underlying model structure changes (the <code>modelStructureChanged</code> method is invoked) the following are reset to their default values:
- * <code>Comparator</code>s by column, current sort order and whether a column is sortable.
- * <p>
- * <code>DefaultRowSorter</code> is an abstract class. Concrete subclasses must provide access to the underlying data by invoking {@code setModelWrapper}. The
- * {@code setModelWrapper} method <b>must</b> be invoked soon after the constructor is called, ideally from within the subclass's constructor. Undefined
- * behavior will result if you use a {@code DefaultRowSorter} without specifying a {@code ModelWrapper}.
- * <p>
- * <code>DefaultRowSorter</code> has two formal type parameters. The first type parameter corresponds to the class of the model, for example
- * <code>DefaultTableModel</code>. The second type parameter corresponds to the class of the identifier passed to the <code>RowFilter</code>. Refer to
- * <code>AnnotatingTableRowSorter</code> and <code>RowFilter</code> for more details on the type parameters.
+ * A {@link RowSorter} adapted from {@link DefaultRowSorter} with the following features added:
+ * <ul>
+ * <li>Sorting is done on a background thread; as such it hangs the UI much less than {@link DefaultRowSorter} on large tables
+ * <li>If any changes occur while sorting, the background sort will restart efficiently
+ * <li>Rows can be annotated by a {@link RowAnnotator} (this can be used, for example, to highlight rows matching a filter)
+ * </ul>
  * 
  * @param <M>
  *            the type of the model
  * @param <I>
  *            the type of the identifier passed to the <code>RowFilter</code>
+ * @param <A>
+ *            the row annotation type
  * @version %I% %G%
- * @see javax.swing.table.TableRowSorter
+ * @see #getAnnotation(int)
+ * @see #sortLater()
+ * @see #sortAndWait()
+ * @see #isSortingInBackground()
+ * @see AnnotatingTableRowSorter
  * @see javax.swing.table.DefaultTableModel
  * @see java.text.Collator
  * @since 1.6
@@ -71,6 +51,8 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * Whether or not we resort on TableModelEvent.UPDATEs.
 	 */
 	private boolean											sortsOnUpdates;
+	
+	private M												model;
 	
 	/**
 	 * View (JTable) -> model.
@@ -115,7 +97,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	/**
 	 * Value passed to the filter. The same instance is passed to the filter for different rows.
 	 */
-	private FilterEntry										filterEntry;
+	private FilterEntry<M, I>								filterEntry;
 	
 	/**
 	 * The sort keys.
@@ -143,17 +125,33 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	private ModelWrapper<M, I>								modelWrapper;
 	
 	/**
+	 * Copies the model for the background sorter.
+	 */
+	private ModelCopier<M>									modelCopier;
+	
+	/**
 	 * Size of the model. This is used to enforce error checking within the table changed notification methods (such as rowsInserted).
 	 */
 	private int												modelRowCount;
 	
+	private boolean											isSorting;
+	
+	private boolean											sortRequested;
+	
+	private boolean											sortExistingDataRequested;
+	
+	private ExecutorService									sortExecutor;
+	
+	private BackgroundSortTask<M, I, A>						sortTask;
+	
 	/**
 	 * Creates an empty <code>DefaultRowSorter</code>.
 	 */
-	public AnnotatingRowSorter( )
+	public AnnotatingRowSorter( ExecutorService sortExecutor )
 	{
 		sortKeys = Collections.emptyList( );
 		maxSortKeys = 3;
+		this.sortExecutor = sortExecutor;
 	}
 	
 	/**
@@ -173,6 +171,10 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		}
 		ModelWrapper<M, I> last = this.modelWrapper;
 		this.modelWrapper = modelWrapper;
+		if( filterEntry != null )
+		{
+			filterEntry.modelWrapper = modelWrapper;
+		}
 		if( last != null )
 		{
 			modelStructureChanged( );
@@ -195,6 +197,22 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		return modelWrapper;
 	}
 	
+	protected final void setModelCopier( ModelCopier<M> modelCopier )
+	{
+		if( modelCopier == null )
+		{
+			throw new IllegalArgumentException( "modelCopier must be non-null" );
+		}
+		this.modelCopier = modelCopier;
+	}
+	
+	protected final ModelCopier<M> getModelCopier( )
+	{
+		return this.modelCopier;
+	}
+	
+	protected abstract ModelWrapper<M, I> createModelWrapper( M model );
+	
 	/**
 	 * Returns the underlying model.
 	 * 
@@ -203,6 +221,19 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	public final M getModel( )
 	{
 		return getModelWrapper( ).getModel( );
+	}
+	
+	/**
+	 * Sets the <code>TableModel</code> to use as the underlying model for this <code>AnnotatingTableRowSorter</code>. A value of <code>null</code> can be used
+	 * to set an empty model.
+	 * 
+	 * @param model
+	 *            the underlying model to use, or <code>null</code>
+	 */
+	public void setModel( M model )
+	{
+		this.model = model;
+		setModelWrapper( createModelWrapper( model ) );
 	}
 	
 	/**
@@ -284,11 +315,11 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 			{
 				// Currently unsorted, use sort so that internal fields
 				// are correctly set.
-				sort( );
+				sortLater( );
 			}
 			else
 			{
-				sortExistingData( );
+				sortExistingDataLater( );
 			}
 		}
 	}
@@ -379,7 +410,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	public void setRowAnnotator( RowAnnotator<? super M, ? super I, ? extends A> annotator )
 	{
 		this.annotator = annotator;
-		sort( );
+		sortLater( );
 	}
 	
 	/**
@@ -408,7 +439,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	public void setRowFilter( RowFilter<? super M, ? super I> filter )
 	{
 		this.filter = filter;
-		sort( );
+		sortLater( );
 	}
 	
 	/**
@@ -456,8 +487,15 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 			}
 			else if( sortIndex == 0 )
 			{
-				// It's the primary sorting key, toggle it
-				keys.set( 0 , toggle( keys.get( 0 ) ) );
+				SortOrder newOrder = toggle( keys.get( 0 ).getSortOrder( ) );
+				if( newOrder == null )
+				{
+					keys.clear( );
+				}
+				else
+				{
+					keys.set( 0 , new SortKey( column , newOrder ) );
+				}
 			}
 			else
 			{
@@ -481,6 +519,19 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 			return new SortKey( key.getColumn( ) , SortOrder.DESCENDING );
 		}
 		return new SortKey( key.getColumn( ) , SortOrder.ASCENDING );
+	}
+	
+	private SortOrder toggle( SortOrder order )
+	{
+		if( order == null )
+		{
+			return SortOrder.ASCENDING;
+		}
+		if( order == SortOrder.ASCENDING )
+		{
+			return SortOrder.DESCENDING;
+		}
+		return null;
 	}
 	
 	/**
@@ -547,107 +598,95 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		// return( keySize == 0 || keys.get( 0 ).getSortOrder( ) == SortOrder.UNSORTED );
 	}
 	
-	/**
-	 * Sorts the existing filtered data. This should only be used if the filter hasn't changed.
-	 */
-	private void sortExistingData( )
+	private void sortExistingDataLater( )
 	{
-		int[ ] lastViewToModel = getViewToModelAsInts( viewToModel );
+		CheckEDT.checkEDT( );
 		
-		updateUseToString( );
-		cacheSortKeys( getSortKeys( ) );
+		sortExistingDataRequested = true;
+		if( sortTask == null )
+		{
+			sortTask = new BackgroundSortTask<M, I, A>( this );
+			sortExecutor.submit( sortTask );
+		}
+//		else
+//		{
+//			sortTask.viewToModel = viewToModel;
+//			sortTask.modelToView = modelToView;
+//		}
 		
-		if( isUnsorted( ) )
-		{
-			if( getRowFilter( ) == null )
-			{
-				viewToModel = null;
-				modelToView = null;
-			}
-			else
-			{
-				int included = 0;
-				for( int i = 0 ; i < modelToView.length ; i++ )
-				{
-					if( modelToView[ i ] != -1 )
-					{
-						viewToModel[ included ].modelIndex = i;
-						viewToModel[ included ].annotation = annotate( i );
-						modelToView[ i ] = included++ ;
-					}
-				}
-			}
-		}
-		else
-		{
-			// sort the data
-			Arrays.sort( viewToModel );
-			
-			// Update the modelToView array
-			setModelToViewFromViewToModel( false );
-		}
-		fireRowSorterChanged( lastViewToModel );
+		int[ ] lastRowIndexToModel = getViewToModelAsInts( viewToModel );
+		
+		sorted = false;
+		viewToModel = null;
+		modelToView = null;
+		fireRowSorterChanged( lastRowIndexToModel );
 	}
 	
-	/**
-	 * Sorts and filters the rows in the view based on the sort keys of the columns currently being sorted and the filter, if any, associated with this sorter.
-	 * An empty <code>sortKeys</code> list indicates that the view should unsorted, the same as the model.
-	 * 
-	 * @see #setRowFilter
-	 * @see #setSortKeys
-	 */
-	public void sort( )
+	private void sortExistingDataAndWait( )
 	{
-		sorted = true;
-		int[ ] lastViewToModel = getViewToModelAsInts( viewToModel );
-		updateUseToString( );
-		if( isUnsorted( ) )
+		CheckEDT.checkEDT( );
+		
+		sortExistingDataRequested = true;
+		new BackgroundSortTask<M, I, A>( this ).run( );
+		
+		// Careful! If the model changes and this method is run
+		// while a background sort is running, it could cause the
+		// background sort to install an obsolete ordering when it
+		// finishes! So just force it to start over so it will install
+		// the most up-to-date ordering.
+		if( isSortingInBackground( ) )
 		{
-			// Unsorted
-			cachedSortKeys = new SortKey[ 0 ];
-			if( getRowFilter( ) == null )
-			{
-				// No filter & unsorted
-				if( viewToModel != null )
-				{
-					// sorted -> unsorted
-					viewToModel = null;
-					modelToView = null;
-				}
-				else
-				{
-					// unsorted -> unsorted
-					// No need to do anything.
-					return;
-				}
-			}
-			else
-			{
-				// There is filter, reset mappings
-				initializeFilteredMapping( );
-			}
+			sortRequested = true;
 		}
-		else
+	}
+	
+	public void sortLater( )
+	{
+		CheckEDT.checkEDT( );
+		
+		sortRequested = true;
+		if( sortTask == null )
 		{
-			cacheSortKeys( getSortKeys( ) );
-			
-			if( getRowFilter( ) != null )
-			{
-				initializeFilteredMapping( );
-			}
-			else
-			{
-				createModelToView( getModelWrapper( ).getRowCount( ) );
-				createViewToModel( getModelWrapper( ).getRowCount( ) );
-			}
-			
-			// sort them
-			Arrays.sort( viewToModel );
-			
-			// Update the modelToView array
-			setModelToViewFromViewToModel( false );
+			sortTask = new BackgroundSortTask<M, I, A>( this );
+			sortExecutor.submit( sortTask );
 		}
-		fireRowSorterChanged( lastViewToModel );
+//		else
+//		{
+//			sortTask.viewToModel = viewToModel;
+//			sortTask.modelToView = modelToView;
+//		}
+		
+		int[ ] lastRowIndexToModel = getViewToModelAsInts( viewToModel );
+		
+		sorted = false;
+		viewToModel = null;
+		modelToView = null;
+		fireRowSorterChanged( lastRowIndexToModel );
+	}
+	
+	public void sortAndWait( )
+	{
+		CheckEDT.checkEDT( );
+		
+		sortRequested = true;
+		new BackgroundSortTask<M, I, A>( this ).run( );
+		
+		// Careful! If the model changes and this method is run
+		// while a background sort is running, it could cause the
+		// background sort to install an obsolete ordering when it
+		// finishes! So just force it to start over so it will install
+		// the most up-to-date ordering.
+		if( isSortingInBackground( ) )
+		{
+			sortRequested = true;
+		}
+	}
+	
+	public boolean isSortingInBackground( )
+	{
+		CheckEDT.checkEDT( );
+		
+		return sortTask != null;
 	}
 	
 	/**
@@ -696,7 +735,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		{
 			if( modelToView[ i ] != -1 )
 			{
-				viewToModel[ j++ ].modelIndex = i;
+				viewToModel[ j ].modelIndex = i;
 				viewToModel[ j++ ].annotation = annotate( i );
 			}
 		}
@@ -762,8 +801,8 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	
 	/**
 	 * Returns whether or not to convert the value to a string before doing comparisons when sorting. If true <code>ModelWrapper.getStringValueAt</code> will be
-	 * used, otherwise <code>ModelWrapper.getValueAt</code> will be used. It is up to subclasses, such as <code>AnnotatingTableRowSorter</code>, to honor this value in
-	 * their <code>ModelWrapper</code> implementation.
+	 * used, otherwise <code>ModelWrapper.getValueAt</code> will be used. It is up to subclasses, such as <code>AnnotatingTableRowSorter</code>, to honor this
+	 * value in their <code>ModelWrapper</code> implementation.
 	 * 
 	 * @param column
 	 *            the index of the column to test, in terms of the underlying model
@@ -867,7 +906,8 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	{
 		if( filterEntry == null )
 		{
-			filterEntry = new FilterEntry( );
+			filterEntry = new FilterEntry<M, I>( );
+			filterEntry.modelWrapper = modelWrapper;
 		}
 		filterEntry.modelIndex = modelIndex;
 		return filterEntry;
@@ -904,7 +944,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		{
 			// Keys are already empty, to force a resort we have to
 			// call sort
-			sort( );
+			sortLater( );
 		}
 		else
 		{
@@ -927,7 +967,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	public void allRowsChanged( )
 	{
 		modelRowCount = getModelWrapper( ).getRowCount( );
-		sort( );
+		sortLater( );
 	}
 	
 	/**
@@ -1159,7 +1199,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		if( !sorted || ( lastRow - firstRow ) > viewToModel.length / 10 )
 		{
 			// We either weren't sorted, or to much changed, sort it all
-			sort( );
+			sortLater( );
 			return false;
 		}
 		return true;
@@ -1490,40 +1530,54 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		public abstract I getIdentifier( int row );
 	}
 	
+	protected static abstract class ModelCopier<M>
+	{
+		protected ModelCopier( )
+		{
+			
+		}
+		
+		public abstract M createEmptyCopy( M model );
+		
+		public abstract void copyRow( M src , int row , M dest );
+	}
+	
 	/**
 	 * RowFilter.Entry implementation that delegates to the ModelWrapper. getFilterEntry(int) creates the single instance of this that is passed to the Filter.
 	 * Only call getFilterEntry(int) to get the instance.
 	 */
-	private class FilterEntry extends RowFilter.Entry<M, I>
+	private static class FilterEntry<M, I> extends RowFilter.Entry<M, I>
 	{
+		ModelWrapper<M, I>	modelWrapper;
+		
 		/**
 		 * The index into the model, set in getFilterEntry
 		 */
-		int	modelIndex;
+		int					modelIndex;
 		
 		public M getModel( )
 		{
-			return getModelWrapper( ).getModel( );
+			return modelWrapper.getModel( );
 		}
 		
 		public int getValueCount( )
 		{
-			return getModelWrapper( ).getColumnCount( );
+			return modelWrapper.getColumnCount( );
 		}
 		
 		public Object getValue( int index )
 		{
-			return getModelWrapper( ).getValueAt( modelIndex , index );
+			return modelWrapper.getValueAt( modelIndex , index );
 		}
 		
 		public String getStringValue( int index )
 		{
-			return getModelWrapper( ).getStringValueAt( modelIndex , index );
+			return modelWrapper.getStringValueAt( modelIndex , index );
 		}
 		
 		public I getIdentifier( )
 		{
-			return getModelWrapper( ).getIdentifier( modelIndex );
+			return modelWrapper.getIdentifier( modelIndex );
 		}
 	}
 	
@@ -1534,18 +1588,710 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	private static class Row<A> implements Comparable<Row<A>>
 	{
 		private AnnotatingRowSorter<?, ?, A>	sorter;
-		int									modelIndex;
-		A									annotation;
+		int										modelIndex;
+		A										annotation;
 		
 		public Row( AnnotatingRowSorter<?, ?, A> sorter , int index , A annotation )
 		{
 			this.sorter = sorter;
 			modelIndex = index;
+			this.annotation = annotation;
 		}
 		
 		public int compareTo( Row<A> o )
 		{
 			return sorter.compare( modelIndex , o.modelIndex );
+		}
+	}
+	
+	private static class BackgroundSortTask<M, I, A> implements Runnable
+	{
+		private final AnnotatingRowSorter<M, I, A>				sorter;
+		
+		private ModelCopier<M>									modelCopier;
+		
+		private M												modelCopy;
+		
+		/**
+		 * View (JTable) -> model.
+		 */
+		private Row<A>[ ]										viewToModel;
+		
+		/**
+		 * model -> view (JTable)
+		 */
+		private int[ ]											modelToView;
+		
+		/**
+		 * Comparators specified by column.
+		 */
+		private Comparator[ ]									comparators;
+		
+		/**
+		 * Cached SortKeys for the current sort.
+		 */
+		private SortKey[ ]										cachedSortKeys;
+		
+		/**
+		 * Cached comparators for the current sort
+		 */
+		private Comparator[ ]									sortComparators;
+		
+		/**
+		 * Developer supplied Annotator.
+		 */
+		private RowAnnotator<? super M, ? super I, ? extends A>	annotator;
+		
+		/**
+		 * Developer supplied Filter.
+		 */
+		private RowFilter<? super M, ? super I>					filter;
+		
+		/**
+		 * Value passed to the filter. The same instance is passed to the filter for different rows.
+		 */
+		private FilterEntry<M, I>								filterEntry;
+		
+		/**
+		 * The sort keys.
+		 */
+		private List<SortKey>									sortKeys;
+		
+		/**
+		 * Whether or not to use getStringValueAt. This is indexed by column.
+		 */
+		private boolean[ ]										useToString;
+		
+		/**
+		 * Indicates the contents are sorted. This is used if getSortsOnUpdates is false and an update event is received.
+		 */
+		private boolean											sorted;
+		
+		/**
+		 * Provides access to the data we're sorting/filtering.
+		 */
+		private ModelWrapper<M, I>								modelWrapper;
+		
+		private Comparator<Row<A>>								rowComparator	= new Comparator<AnnotatingRowSorter.Row<A>>( )
+																				{
+																					@Override
+																					public int compare( Row<A> o1 , Row<A> o2 )
+																					{
+																						return BackgroundSortTask.this.compare( o1.modelIndex , o2.modelIndex );
+																					}
+																				};
+		
+		public BackgroundSortTask( AnnotatingRowSorter<M, I, A> sorter )
+		{
+			this.sorter = sorter;
+			this.viewToModel = sorter.viewToModel;
+			this.modelToView = sorter.modelToView;
+		}
+		
+		private ModelWrapper<M, I> getModelWrapper( )
+		{
+			return modelWrapper;
+		}
+		
+		/**
+		 * Sorts the existing filtered data. This should only be used if the filter hasn't changed.
+		 */
+		private void sortExistingData( )
+		{
+			updateUseToString( );
+			cacheSortKeys( getSortKeys( ) );
+			
+			if( isUnsorted( ) )
+			{
+				if( getRowFilter( ) == null )
+				{
+					viewToModel = null;
+					modelToView = null;
+				}
+				else
+				{
+					int included = 0;
+					for( int i = 0 ; i < modelToView.length ; i++ )
+					{
+						if( modelToView[ i ] != -1 )
+						{
+							viewToModel[ included ].modelIndex = i;
+							viewToModel[ included ].annotation = annotate( i );
+							modelToView[ i ] = included++ ;
+						}
+					}
+				}
+			}
+			else
+			{
+				// sort the data
+				Arrays.sort( viewToModel , rowComparator );
+				
+				// Update the modelToView array
+				setModelToViewFromViewToModel( false );
+			}
+		}
+		
+		/**
+		 * Sorts and filters the rows in the view based on the sort keys of the columns currently being sorted and the filter, if any, associated with this
+		 * sorter. An empty <code>sortKeys</code> list indicates that the view should unsorted, the same as the model.
+		 * 
+		 * @see #setRowFilter
+		 * @see #setSortKeys
+		 */
+		public void sort( )
+		{
+			sorted = true;
+			updateUseToString( );
+			if( isUnsorted( ) )
+			{
+				// Unsorted
+				cachedSortKeys = new SortKey[ 0 ];
+				if( getRowFilter( ) == null )
+				{
+					// No filter & unsorted
+					if( viewToModel != null )
+					{
+						// sorted -> unsorted
+						viewToModel = null;
+						modelToView = null;
+					}
+					else
+					{
+						// unsorted -> unsorted
+						// No need to do anything.
+						return;
+					}
+				}
+				else
+				{
+					// There is filter, reset mappings
+					initializeFilteredMapping( );
+				}
+			}
+			else
+			{
+				cacheSortKeys( getSortKeys( ) );
+				
+				if( getRowFilter( ) != null )
+				{
+					initializeFilteredMapping( );
+				}
+				else
+				{
+					createModelToView( getModelWrapper( ).getRowCount( ) );
+					createViewToModel( getModelWrapper( ).getRowCount( ) );
+				}
+				
+				// sort them
+				Arrays.sort( viewToModel , rowComparator );
+				
+				// Update the modelToView array
+				setModelToViewFromViewToModel( false );
+			}
+		}
+		
+		/**
+		 * Updates the useToString mapping before a sort.
+		 */
+		private void updateUseToString( )
+		{
+			int i = getModelWrapper( ).getColumnCount( );
+			if( useToString == null || useToString.length != i )
+			{
+				useToString = new boolean[ i ];
+			}
+			for( --i ; i >= 0 ; i-- )
+			{
+				useToString[ i ] = useToString( i );
+			}
+		}
+		
+		private boolean isUnsorted( )
+		{
+			// This is changed to always be false so that annotations will be stored even when the rows are unsorted
+			return false;
+			
+			// List<? extends SortKey> keys = getSortKeys( );
+			// int keySize = keys.size( );
+			// return( keySize == 0 || keys.get( 0 ).getSortOrder( ) == SortOrder.UNSORTED );
+		}
+		
+		/**
+		 * Returns the filter that determines which rows, if any, should be hidden from view.
+		 * 
+		 * @return the filter
+		 */
+		public RowFilter<? super M, ? super I> getRowFilter( )
+		{
+			return filter;
+		}
+		
+		/**
+		 * Returns true if the specified row should be included.
+		 */
+		private boolean include( int row )
+		{
+			RowFilter<? super M, ? super I> filter = getRowFilter( );
+			if( filter != null )
+			{
+				return filter.include( getFilterEntry( row ) );
+			}
+			// null filter, always include the row.
+			return true;
+		}
+		
+		/**
+		 * Resets the viewToModel and modelToView mappings based on the current Filter.
+		 */
+		private void initializeFilteredMapping( )
+		{
+			int rowCount = getModelWrapper( ).getRowCount( );
+			int i, j;
+			int excludedCount = 0;
+			
+			// Update model -> view
+			createModelToView( rowCount );
+			for( i = 0 ; i < rowCount ; i++ )
+			{
+				if( include( i ) )
+				{
+					modelToView[ i ] = i - excludedCount;
+				}
+				else
+				{
+					modelToView[ i ] = -1;
+					excludedCount++ ;
+				}
+			}
+			
+			// Update view -> model
+			createViewToModel( rowCount - excludedCount );
+			for( i = 0 , j = 0 ; i < rowCount ; i++ )
+			{
+				if( modelToView[ i ] != -1 )
+				{
+					viewToModel[ j ].modelIndex = i;
+					viewToModel[ j++ ].annotation = annotate( i );
+				}
+			}
+		}
+		
+		/**
+		 * Makes sure the modelToView array is of size rowCount.
+		 */
+		private void createModelToView( int rowCount )
+		{
+			if( modelToView == null || modelToView.length != rowCount )
+			{
+				modelToView = new int[ rowCount ];
+			}
+		}
+		
+		/**
+		 * Resets the viewToModel array to be of size rowCount.
+		 */
+		private void createViewToModel( int rowCount )
+		{
+			int recreateFrom = 0;
+			if( viewToModel != null )
+			{
+				recreateFrom = Math.min( rowCount , viewToModel.length );
+				if( viewToModel.length != rowCount )
+				{
+					Row[ ] oldViewToModel = viewToModel;
+					viewToModel = new Row[ rowCount ];
+					System.arraycopy( oldViewToModel , 0 , viewToModel ,
+							0 , recreateFrom );
+				}
+			}
+			else
+			{
+				viewToModel = new Row[ rowCount ];
+			}
+			int i;
+			for( i = 0 ; i < recreateFrom ; i++ )
+			{
+				viewToModel[ i ].modelIndex = i;
+				viewToModel[ i ].annotation = annotate( i );
+			}
+			for( i = recreateFrom ; i < rowCount ; i++ )
+			{
+				viewToModel[ i ] = new Row( sorter , i , annotate( i ) );
+			}
+		}
+		
+		private List<SortKey> getSortKeys( )
+		{
+			return sortKeys;
+		}
+		
+		/**
+		 * Caches the sort keys before a sort.
+		 */
+		private void cacheSortKeys( List<? extends SortKey> keys )
+		{
+			int keySize = keys.size( );
+			sortComparators = new Comparator[ keySize ];
+			for( int i = 0 ; i < keySize ; i++ )
+			{
+				sortComparators[ i ] = getComparator0( keys.get( i ).getColumn( ) );
+			}
+			cachedSortKeys = keys.toArray( new SortKey[ keySize ] );
+		}
+		
+		/**
+		 * Returns whether or not to convert the value to a string before doing comparisons when sorting. If true <code>ModelWrapper.getStringValueAt</code>
+		 * will be used, otherwise <code>ModelWrapper.getValueAt</code> will be used. It is up to subclasses, such as <code>AnnotatingTableRowSorter</code>, to
+		 * honor this value in their <code>ModelWrapper</code> implementation.
+		 * 
+		 * @param column
+		 *            the index of the column to test, in terms of the underlying model
+		 * @throws IndexOutOfBoundsException
+		 *             if <code>column</code> is not valid
+		 */
+		protected boolean useToString( int column )
+		{
+			return( getComparator( column ) == null );
+		}
+		
+		/**
+		 * Refreshes the modelToView mapping from that of viewToModel. If <code>unsetFirst</code> is true, all indices in modelToView are first set to -1.
+		 */
+		private void setModelToViewFromViewToModel( boolean unsetFirst )
+		{
+			int i;
+			if( unsetFirst )
+			{
+				for( i = modelToView.length - 1 ; i >= 0 ; i-- )
+				{
+					modelToView[ i ] = -1;
+				}
+			}
+			for( i = viewToModel.length - 1 ; i >= 0 ; i-- )
+			{
+				modelToView[ viewToModel[ i ].modelIndex ] = i;
+			}
+		}
+		
+		private void checkColumn( int column )
+		{
+			if( column < 0 || column >= getModelWrapper( ).getColumnCount( ) )
+			{
+				throw new IndexOutOfBoundsException(
+						"column beyond range of TableModel" );
+			}
+		}
+		
+		/**
+		 * Returns the <code>Comparator</code> for the specified column. This will return <code>null</code> if a <code>Comparator</code> has not been specified
+		 * for the column.
+		 * 
+		 * @param column
+		 *            the column to fetch the <code>Comparator</code> for, in terms of the underlying model
+		 * @return the <code>Comparator</code> for the specified column
+		 * @throws IndexOutOfBoundsException
+		 *             if column is outside the range of the underlying model
+		 */
+		public Comparator<?> getComparator( int column )
+		{
+			checkColumn( column );
+			if( comparators != null )
+			{
+				return comparators[ column ];
+			}
+			return null;
+		}
+		
+		// Returns the Comparator to use during sorting. Where as
+		// getComparator() may return null, this will never return null.
+		private Comparator getComparator0( int column )
+		{
+			Comparator comparator = getComparator( column );
+			if( comparator != null )
+			{
+				return comparator;
+			}
+			// This should be ok as useToString(column) should have returned
+			// true in this case.
+			return Collator.getInstance( );
+		}
+		
+		@SuppressWarnings( "unchecked" )
+		private int compare( int model1 , int model2 )
+		{
+			int column;
+			SortOrder sortOrder;
+			Object v1, v2;
+			int result;
+			
+			for( int counter = 0 ; counter < cachedSortKeys.length ; counter++ )
+			{
+				column = cachedSortKeys[ counter ].getColumn( );
+				sortOrder = cachedSortKeys[ counter ].getSortOrder( );
+				if( sortOrder == SortOrder.UNSORTED )
+				{
+					result = model1 - model2;
+				}
+				else
+				{
+					// v1 != null && v2 != null
+					if( useToString[ column ] )
+					{
+						v1 = getModelWrapper( ).getStringValueAt( model1 , column );
+						v2 = getModelWrapper( ).getStringValueAt( model2 , column );
+					}
+					else
+					{
+						v1 = getModelWrapper( ).getValueAt( model1 , column );
+						v2 = getModelWrapper( ).getValueAt( model2 , column );
+					}
+					// Treat nulls as < then non-null
+					if( v1 == null )
+					{
+						if( v2 == null )
+						{
+							result = 0;
+						}
+						else
+						{
+							result = -1;
+						}
+					}
+					else if( v2 == null )
+					{
+						result = 1;
+					}
+					else
+					{
+						result = sortComparators[ counter ].compare( v1 , v2 );
+					}
+					if( sortOrder == SortOrder.DESCENDING )
+					{
+						result *= -1;
+					}
+				}
+				if( result != 0 )
+				{
+					return result;
+				}
+			}
+			// If we get here, they're equal. Fallback to model order.
+			return model1 - model2;
+		}
+		
+		private RowFilter.Entry<M, I> getFilterEntry( int modelIndex )
+		{
+			if( filterEntry == null )
+			{
+				filterEntry = new FilterEntry<M, I>( );
+				filterEntry.modelWrapper = modelWrapper;
+			}
+			filterEntry.modelIndex = modelIndex;
+			return filterEntry;
+		}
+		
+		/**
+		 * Returns true if the specified row should be included.
+		 */
+		private A annotate( int row )
+		{
+			if( annotator != null )
+			{
+				return annotator.annotate( getFilterEntry( row ) );
+			}
+			return null;
+		}
+		
+		private int[ ] getViewToModelAsInts( Row[ ] viewToModel )
+		{
+			if( viewToModel != null )
+			{
+				int[ ] viewToModelI = new int[ viewToModel.length ];
+				for( int i = viewToModel.length - 1 ; i >= 0 ; i-- )
+				{
+					viewToModelI[ i ] = viewToModel[ i ].modelIndex;
+				}
+				return viewToModelI;
+			}
+			return new int[ 0 ];
+		}
+		
+		@Override
+		public void run( )
+		{
+			try
+			{
+				// NOTE: To guarantee thread safety, all FilteringTableModel
+				// instance variables should only be accessed on the Swing
+				// thread!
+				
+				boolean sortRequested;
+				boolean sortExistingDataRequested;
+				
+				do
+				{
+					// copy the filter, column names and classes and clear the
+					// backingModelChanged flag (the instance variable, not the
+					// local variable) on the EDT.
+					
+					PreSort preSort = new PreSort( );
+					doSwing( preSort );
+					
+					sortRequested = preSort.sortRequested;
+					sortExistingDataRequested = preSort.sortExistingDataRequested;
+					
+					// Copy the rows from backingModel in chunks on the EDT, so we
+					// don't tie it up. If the backing model is changed during this
+					// process, start over again.
+					
+					RowCopier rowCopier = new RowCopier( );
+					while( !rowCopier.complete && !rowCopier.sortRequested && !rowCopier.sortExistingDataRequested )
+					{
+						doSwing( rowCopier );
+					}
+					if( rowCopier.sortRequested || rowCopier.sortExistingDataRequested )
+					{
+						continue;
+					}
+					
+					// Now we have a coherent copy of the backing model, and we can
+					// sort it.
+					
+					int[ ] lastRowIndexToModel = getViewToModelAsInts( viewToModel );
+					
+					if( sortRequested )
+					{
+						sort( );
+					}
+					else if( sortExistingDataRequested )
+					{
+						sortExistingData( );
+					}
+					
+					// Install the filtered data on the EDT, and check if the
+					// backing
+					// model has been changed again.
+					
+					PostSort postSort = new PostSort( lastRowIndexToModel );
+					doSwing( postSort );
+					
+					sortRequested = postSort.sortRequested;
+					sortExistingDataRequested = postSort.sortExistingDataRequested;
+					
+					// if the backing model changed after all the data was copied,
+					// start over again.
+					
+				} while( sortRequested || sortExistingDataRequested );
+			}
+			catch( Exception ex )
+			{
+				ex.printStackTrace( );
+			}
+			finally
+			{
+				new DoSwing( )
+				{
+					@Override
+					public void run( )
+					{
+						sorter.sortTask = null;
+					}
+				};
+			}
+		}
+		
+		private class PreSort implements Runnable
+		{
+			boolean	sortRequested;
+			boolean	sortExistingDataRequested;
+			
+			@Override
+			public void run( )
+			{
+				modelCopier = sorter.modelCopier;
+				
+				sortRequested = sorter.sortRequested;
+				sortExistingDataRequested = sorter.sortExistingDataRequested;
+				
+				modelCopy = modelCopier.createEmptyCopy( sorter.getModel( ) );
+				comparators = sorter.comparators == null ? null : Arrays.copyOf( sorter.comparators , sorter.comparators.length );
+				cachedSortKeys = sorter.cachedSortKeys == null ? null : Arrays.copyOf( sorter.cachedSortKeys , sorter.cachedSortKeys.length );
+				annotator = sorter.annotator;
+				filter = sorter.filter;
+				sortKeys = sorter.sortKeys;
+				sorted = sorter.sorted;
+				useToString = sorter.useToString == null ? null : Arrays.copyOf( sorter.useToString , sorter.useToString.length );
+				
+				modelWrapper = sorter.createModelWrapper( modelCopy );
+				
+				sorter.sortRequested = false;
+				sorter.sortExistingDataRequested = false;
+			}
+		}
+		
+		private class RowCopier implements Runnable
+		{
+			int		nextRow;
+			int		stepSize	= 100;
+			boolean	sortRequested;
+			boolean	sortExistingDataRequested;
+			boolean	complete;
+			
+			@Override
+			public void run( )
+			{
+				sortRequested = sorter.sortRequested;
+				sortExistingDataRequested = sorter.sortExistingDataRequested;
+				
+				if( sortRequested || sortExistingDataRequested )
+				{
+					return;
+				}
+				
+				for( int i = 0 ; i < stepSize && nextRow < sorter.getModelRowCount( ) ; i++ , nextRow++ )
+				{
+					modelCopier.copyRow( sorter.getModel( ) , nextRow , modelCopy );
+				}
+				
+				complete = nextRow == sorter.getModelRowCount( );
+			}
+		}
+		
+		private class PostSort implements Runnable
+		{
+			boolean	sortRequested;
+			boolean	sortExistingDataRequested;
+			
+			int[ ]	lastRowIndexToModel;
+			
+			public PostSort( int[ ] lastRowIndexToModel )
+			{
+				super( );
+				this.lastRowIndexToModel = lastRowIndexToModel;
+			}
+			
+			@Override
+			public void run( )
+			{
+				sortRequested = sorter.sortRequested;
+				sortExistingDataRequested = sorter.sortExistingDataRequested;
+				
+				if( sortRequested || sortExistingDataRequested )
+				{
+					return;
+				}
+				
+				sorter.viewToModel = viewToModel;
+				sorter.modelToView = modelToView;
+				sorter.cachedSortKeys = cachedSortKeys;
+				sorter.useToString = useToString;
+				sorter.sorted = sorted;
+				
+				sorter.sortTask = null;
+				
+				sorter.fireRowSorterChanged( lastRowIndexToModel );
+			}
 		}
 	}
 }

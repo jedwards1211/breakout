@@ -2,23 +2,52 @@ package org.andork.awt;
 
 import java.awt.Color;
 import java.util.Collections;
-import java.util.regex.Pattern;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
+import javax.swing.UIManager;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
+import org.andork.awt.AnnotatingTableRowSorter.DefaultTableModelCopier;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 
 public class AnnotatingRowSorterTest
 {
 	public static void main( String[ ] args )
 	{
-		DefaultTableModel model = new DefaultTableModel( 10 , 10 );
+		new DoSwing( )
+		{
+			@Override
+			public void run( )
+			{
+				try
+				{
+					UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName( ) );
+				}
+				catch( Exception ex )
+				{
+					ex.printStackTrace( );
+				}
+			}
+		};
+		
+		DefaultTableModel model = new DefaultTableModel( 100000 , 10 );
+		
+		for( int row = 0 ; row < model.getRowCount( ) ; row++ )
+		{
+			for( int column = 0 ; column < model.getColumnCount( ) ; column++ )
+			{
+				model.setValueAt( String.valueOf( row + ", " + column ) , row , column );
+			}
+		}
 		
 		final ColorMapAnnotatingTableCellRenderer renderer = new ColorMapAnnotatingTableCellRenderer( );
 		
@@ -31,15 +60,18 @@ public class AnnotatingRowSorterTest
 			}
 		};
 		
-		final AnnotatingTableRowSorter<DefaultTableModel, RowFilter<DefaultTableModel, Integer>> rowSorter =
-				new AnnotatingTableRowSorter<DefaultTableModel, RowFilter<DefaultTableModel, Integer>>( model );
+		ExecutorService sortExecutor = Executors.newSingleThreadExecutor( );
 		
+		final AnnotatingTableRowSorter<DefaultTableModel, RowFilter<DefaultTableModel, Integer>> rowSorter =
+				new AnnotatingTableRowSorter<DefaultTableModel, RowFilter<DefaultTableModel, Integer>>( model , sortExecutor );
+		rowSorter.setModelCopier( new DefaultTableModelCopier( ) );
 		rowSorter.setSortsOnUpdates( true );
 		
 		table.setRowSorter( rowSorter );
-		rowSorter.sort( );
+		// rowSorter.sortLater( );
 		
-		final JTextField regexField = new JTextField( );
+		final JTextField filterField = new JTextField( );
+		final JTextField highlightField = new JTextField( );
 		
 		final JScrollAndJumpPane tableScrollPane = new JScrollAndJumpPane( table );
 		tableScrollPane.setBorder( null );
@@ -47,43 +79,75 @@ public class AnnotatingRowSorterTest
 		final JumpBarModelFromAnnotatingJTable jumpBarModel = new JumpBarModelFromAnnotatingJTable( table );
 		
 		tableScrollPane.getJumpBar( ).setModel( jumpBarModel );
+		tableScrollPane.getJumpBar( ).setJumpSupport( new JTableJumpSupport( table ) );
 		
-		regexField.getDocument( ).addDocumentListener( new EasyDocumentListener( )
+		AnnotatingRowSorterCursorController cursorController = new AnnotatingRowSorterCursorController( tableScrollPane );
+		rowSorter.addRowSorterListener( cursorController );
+		
+		DocumentListener docListener = new EasyDocumentListener( )
 		{
 			@Override
 			public void documentChanged( DocumentEvent e )
 			{
-				try
+				JTextField field = e.getDocument( ) == highlightField.getDocument( ) ? highlightField : filterField;
+				
+				if( field.getText( ) != null && field.getText( ).length( ) > 0 )
 				{
-					if( regexField.getText( ) != null && regexField.getText( ).length( ) > 0 )
+					RowFilter<DefaultTableModel, Integer> filter = null;
+					try
 					{
-						RowFilter<DefaultTableModel, Integer> filter = RowFilter.regexFilter( regexField.getText( ) , 0 );
+						filter = RowFilter.regexFilter( field.getText( ) , 0 );
+						field.setForeground( Color.BLACK );
+					}
+					catch( Exception ex )
+					{
+						field.setForeground( Color.RED );
+					}
+					if( field == highlightField )
+					{
 						rowSorter.setRowAnnotator( RowAnnotator.filterAnnotator( filter ) );
 						renderer.setAnnotationColors( Collections.singletonMap( filter , Color.YELLOW ) );
 						tableScrollPane.getJumpBar( ).setColorMap( Collections.singletonMap( filter , Color.YELLOW ) );
 					}
-					else
+					else if( field == filterField )
+					{
+						rowSorter.setRowFilter( filter );
+					}
+				}
+				else
+				{
+					field.setForeground( Color.BLACK );
+					
+					if( field == highlightField )
 					{
 						rowSorter.setRowAnnotator( null );
 						renderer.setAnnotationColors( Collections.<Object,Color>emptyMap( ) );
 						tableScrollPane.getJumpBar( ).setColorMap( null );
 					}
-					regexField.setForeground( Color.BLACK );
-					
+					else if( field == filterField )
+					{
+						rowSorter.setRowFilter( null );
+					}
 				}
-				catch( Exception ex )
-				{
-					regexField.setForeground( Color.RED );
-				}
+				
 			}
-		} );
+		};
+		
+		highlightField.getDocument( ).addDocumentListener( docListener );
+		filterField.getDocument( ).addDocumentListener( docListener );
 		
 		JPanel panel = new JPanel( );
+		panel.setBorder( new EmptyBorder( 2 , 2 , 2 , 2 ) );
 		GridBagWizard gbw = GridBagWizard.create( panel );
 		
 		gbw.defaults( ).autoinsets( new DefaultAutoInsets( 2 , 2 ) );
-		gbw.put( regexField ).xy( 0 , 0 ).fillx( 1.0 );
-		gbw.put( tableScrollPane ).below( regexField ).fillboth( 1.0 , 1.0 );
+		JLabel highlightLabel = new JLabel( "Highlight: " );
+		gbw.put( highlightLabel ).xy( 0 , 0 ).west( );
+		gbw.put( highlightField ).rightOf( highlightLabel ).fillx( 1.0 );
+		JLabel filterLabel = new JLabel( "Filter: " );
+		gbw.put( filterLabel ).below( highlightLabel ).west( );
+		gbw.put( filterField ).rightOf( filterLabel ).fillx( 1.0 );
+		gbw.put( tableScrollPane ).below( filterLabel , filterField ).fillboth( 1.0 , 1.0 );
 		
 		QuickTestFrame.frame( panel ).setVisible( true );
 	}
