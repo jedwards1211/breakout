@@ -11,9 +11,9 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import org.andork.awt.GradientFillBorder;
-import org.andork.awt.LayeredBorder;
-import org.andork.awt.PaintablePanel;
+import org.andork.swing.PaintablePanel;
+import org.andork.swing.border.GradientFillBorder;
+import org.andork.swing.border.LayeredBorder;
 
 public class DrawerLayoutTest1
 {

@@ -8,7 +8,7 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.swing.SwingUtilities;
 
-import org.andork.awt.MouseEventFaker;
+import org.andork.swing.event.MouseEventFaker;
 
 import com.andork.plot.PlotAxis.Orientation;
 

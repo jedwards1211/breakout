@@ -7,7 +7,7 @@ import java.net.URL;
 import javax.swing.SwingUtilities;
 
 import org.andork.awt.I18n;
-import org.andork.awt.QuickTestFrame;
+import org.andork.swing.QuickTestFrame;
 
 public class UpdateStatusPanelTest
 {
