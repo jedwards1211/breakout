@@ -12,7 +12,7 @@ import java.util.Set;
 
 import javax.vecmath.Point3f;
 
-import org.andork.util.CollectionUtils;
+import org.andork.collect.CollectionUtils;
 
 import com.google.common.collect.LinkedListMultimap;
 

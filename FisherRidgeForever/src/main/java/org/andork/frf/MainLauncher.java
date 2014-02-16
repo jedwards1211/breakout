@@ -7,7 +7,7 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import org.andork.awt.DoSwing;
+import org.andork.swing.DoSwing;
 import org.apache.commons.io.FileUtils;
 
 public class MainLauncher

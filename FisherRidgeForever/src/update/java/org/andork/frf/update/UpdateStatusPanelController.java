@@ -21,12 +21,12 @@ import java.util.concurrent.TimeUnit;
 
 import javax.swing.AbstractAction;
 
-import org.andork.awt.DoSwing;
 import org.andork.frf.update.UpdateStatus.CheckFailed;
 import org.andork.frf.update.UpdateStatus.DownloadFailed;
 import org.andork.frf.update.UpdateStatus.Downloading;
 import org.andork.io.Downloader;
 import org.andork.io.Downloader.State;
+import org.andork.swing.DoSwing;
 
 public class UpdateStatusPanelController
 {

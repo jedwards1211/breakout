@@ -16,20 +16,21 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 
-import org.andork.awt.DoSwing;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.swing.AnnotatingRowSorterCursorController;
+import org.andork.swing.DoSwing;
 import org.andork.swing.QuickTestFrame;
+import org.andork.swing.RowAnnotator;
 import org.andork.swing.TextComponentWithHintAndClear;
-import org.andork.swing.annotate.AnnotatingJTable;
-import org.andork.swing.annotate.AnnotatingRowSorterCursorController;
-import org.andork.swing.annotate.AnnotatingTableRowSorter;
-import org.andork.swing.annotate.ColorMapAnnotatingTableCellRenderer;
-import org.andork.swing.annotate.RowAnnotator;
-import org.andork.swing.annotate.AnnotatingTableRowSorter.DefaultTableModelCopier;
 import org.andork.swing.event.EasyDocumentListener;
 import org.andork.swing.jump.JScrollAndJumpPane;
 import org.andork.swing.jump.JTableJumpSupport;
+import org.andork.swing.table.AnnotatingJTable;
+import org.andork.swing.table.AnnotatingJTableJumpBarModel;
+import org.andork.swing.table.AnnotatingTableRowSorter;
+import org.andork.swing.table.ColorMapAnnotatingTableCellRenderer;
+import org.andork.swing.table.AnnotatingTableRowSorter.DefaultTableModelCopier;
 
 public class AnnotatingRowSorterTest
 {

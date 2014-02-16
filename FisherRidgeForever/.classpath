@@ -13,6 +13,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/commons-io-2.4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-spatial"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math3d"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-awt"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

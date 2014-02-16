@@ -19,8 +19,8 @@ import javax.swing.table.TableModel;
 
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.model.SurveyStation;
-import org.andork.swing.annotate.old.FilteringTableModel;
-import org.andork.swing.annotate.old.HighlightingTable;
+import org.andork.swing.table.old.FilteringTableModel;
+import org.andork.swing.table.old.HighlightingTable;
 
 @SuppressWarnings( "serial" )
 public class SurveyTable extends HighlightingTable

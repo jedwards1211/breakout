@@ -10,7 +10,7 @@ import java.util.Map;
 
 import javax.swing.border.EmptyBorder;
 
-import org.andork.util.Java16PlusMethods;
+import org.andork.util.Java7;
 
 /**
  * The absurdly powerful, better alternative to {@link GridBagHelper}.
@@ -572,7 +572,7 @@ public class GridBagWizard {
 				Insets nextinsets = insets(constrainer);
 				if (insets == null) {
 					insets = nextinsets;
-				} else if (!Java16PlusMethods.equals(insets, nextinsets)) {
+				} else if (!Java7.Objects.equals(insets, nextinsets)) {
 					throw new IllegalArgumentException("insets is ambiguous; Group members have various insets values");
 				}
 			}
@@ -602,7 +602,7 @@ public class GridBagWizard {
 				AutoInsets nextautoinsets = autoinsets(constrainer);
 				if (autoinsets == null) {
 					autoinsets = nextautoinsets;
-				} else if (!Java16PlusMethods.equals(autoinsets, nextautoinsets)) {
+				} else if (!Java7.Objects.equals(autoinsets, nextautoinsets)) {
 					throw new IllegalArgumentException("autoinsets is ambiguous; Group members have various autoinsets values");
 				}
 			}

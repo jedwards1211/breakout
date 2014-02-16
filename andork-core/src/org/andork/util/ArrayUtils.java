@@ -1,5 +1,9 @@
 package org.andork.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+
 public class ArrayUtils
 {
 	private ArrayUtils( )
@@ -294,5 +298,162 @@ public class ArrayUtils
 		}
 		
 		return sb.toString( );
+	}
+	
+	/**
+	 * Finds the index of an equivalent {@link Object} in an arbitrary-order {@code Object} array.
+	 * 
+	 * @param values
+	 *            an array of {@code Object}s with arbitrary order.
+	 * @param a
+	 *            the equivalent {@code Object} to search for. May be {@code null}.
+	 * @return the lowest index of any element in {@code values} such that {@code Java7.equals(a, values[i])}, or {@code -1} otherwise.
+	 */
+	public static int indexOf( Object[ ] values , Object a )
+	{
+		for( int i = 0 ; i < values.length ; i++ )
+		{
+			if( Java7.Objects.equals( a , values[ i ] ) )
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	public static boolean contains( Object[ ] values , Object target )
+	{
+		return indexOf( values , target ) >= 0;
+	}
+	
+	/**
+	 * Finds the first index of {@link Object} in an arbitrary-order {@code Object} array.
+	 * 
+	 * @param values
+	 *            an array of {@code Object}s with arbitrary order.
+	 * @param a
+	 *            the {@code Object} to search for. May be {@code null}.
+	 * @return the lowest index of {@code a} in {@code values}, or {@code -1} if it is not present.
+	 */
+	public static int strictIndexOf( Object[ ] values , Object a )
+	{
+		for( int i = 0 ; i < values.length ; i++ )
+		{
+			if( a == values[ i ] )
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	/**
+	 * Finds the index of a double in an arbitrary-order double array.
+	 * 
+	 * @param values
+	 *            an array of doubles with arbitrary order.
+	 * @param a
+	 *            the value to search for. This method always returns {@code -1} if {@code NaN} is given.
+	 * @return the lowest index of any non-{@code NaN} element in {@code values} that {@code == a}, or {@code -1} otherwise.
+	 */
+	public static int indexOf( double[ ] values , double a )
+	{
+		for( int i = 0 ; i < values.length ; i++ )
+		{
+			if( values[ i ] == a )
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	/**
+	 * Swaps two elements in an array.
+	 * 
+	 * @param a
+	 *            the array to swap elements of.
+	 * @param i0
+	 *            the index of the first element.
+	 * @param i1
+	 *            the index of the second element.
+	 */
+	public static void swap( double[ ] a , int i0 , int i1 )
+	{
+		double temp = a[ i0 ];
+		a[ i0 ] = a[ i1 ];
+		a[ i1 ] = a[ i0 ];
+	}
+	
+	/**
+	 * Finds the index of a int in an arbitrary-order int array.
+	 * 
+	 * @param values
+	 *            an array of ints with arbitrary order.
+	 * @param a
+	 *            the value to search for.
+	 * @return the lowest index of any element in {@code values} that {@code == a}, or {@code -1} otherwise.
+	 */
+	public static int indexOf( int[ ] values , int a )
+	{
+		for( int i = 0 ; i < values.length ; i++ )
+		{
+			if( values[ i ] == a )
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+	
+	public static ArrayList<Double> toArrayList( double[ ] values )
+	{
+		ArrayList<Double> result = new ArrayList<Double>( );
+		for( double value : values )
+		{
+			result.add( value );
+		}
+		return result;
+	}
+	
+	public static <T> T[ ] copyOf( T[ ] original )
+	{
+		return Arrays.copyOf( original , original.length );
+	}
+	
+	public static double[ ] toDoubleArray( Collection<Double> doubles )
+	{
+		double[ ] result = new double[ doubles.size( ) ];
+		int k = 0;
+		for( Double d : doubles )
+		{
+			result[ k++ ] = d;
+		}
+		return result;
+	}
+	
+	public static double[ ] toSortedDoubleArray( Collection<Double> doubles )
+	{
+		double[ ] result = toDoubleArray( doubles );
+		Arrays.sort( result );
+		return result;
+	}
+	
+	public static int[ ] toIntArray( Collection<Integer> ints )
+	{
+		int[ ] result = new int[ ints.size( ) ];
+		int k = 0;
+		for( int d : ints )
+		{
+			result[ k++ ] = d;
+		}
+		return result;
+	}
+	
+	public static int[ ] toSortedIntArray( Collection<Integer> ints )
+	{
+		int[ ] result = toIntArray( ints );
+		Arrays.sort( result );
+		return result;
 	}
 }

@@ -9,13 +9,13 @@ import java.util.Map;
 
 import javax.media.opengl.GL2ES2;
 
+import org.andork.collect.CollectionUtils;
 import org.andork.jogl.basic.JOGLObject;
 import org.andork.torquescape.model.ISlice;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.slice.ColorWaveSlice;
 import org.andork.torquescape.model.slice.RainbowSlice;
 import org.andork.torquescape.model.slice.StandardSlice;
-import org.andork.util.CollectionUtils;
 
 public class ZoneRenderer implements JOGLObject
 {
