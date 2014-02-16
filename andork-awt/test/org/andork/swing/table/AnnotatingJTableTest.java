@@ -62,7 +62,8 @@ public class AnnotatingJTableTest
 		ExecutorService sortExecutor = Executors.newSingleThreadExecutor( );
 		SortRunner sortRunner = new ExecutorServiceSortRunner( sortExecutor );
 		
-		final DefaultAnnotatingJTableSetup<DefaultTableModel, Object> setup = new DefaultAnnotatingJTableSetup<DefaultTableModel, Object>( model , sortRunner );
+		final DefaultAnnotatingJTableSetup<DefaultTableModel, Object> setup =
+				new DefaultAnnotatingJTableSetup<DefaultTableModel, Object>( new AnnotatingJTable( model ) , sortRunner );
 		
 		setup.sorter.setModelCopier( new DefaultTableModelCopier( ) );
 		setup.sorter.setSortsOnUpdates( true );

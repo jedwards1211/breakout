@@ -32,8 +32,8 @@ public class TextComponentWithHintAndClear extends JPanel
 	{
 		this.textComponent = textComponent;
 		
-		clearButton = new JButton( "Clear" );
-		clearButton.setOpaque( false );
+		clearButton = new JButton( );
+		ModernStyleClearButton.createClearButton( clearButton );
 		
 		hintLabel = new JLabel( hint );
 		hintLabel.setForeground( Color.LIGHT_GRAY );
@@ -56,7 +56,7 @@ public class TextComponentWithHintAndClear extends JPanel
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				TextComponentWithHintAndClear.this.textComponent.setText( null );
+				TextComponentWithHintAndClear.this.textComponent.setText( "" );
 			}
 		} );
 		

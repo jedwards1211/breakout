@@ -7,7 +7,6 @@ import java.util.Map;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 
@@ -25,9 +24,9 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 	public final AnnotatingTableRowSorter<M, A>			sorter;
 	public final AnnotatingRowSorterCursorController	cursorController;
 	
-	public DefaultAnnotatingJTableSetup( M model , SortRunner sortRunner )
+	public DefaultAnnotatingJTableSetup( AnnotatingJTable table , SortRunner sortRunner )
 	{
-		table = new AnnotatingJTable( model );
+		this.table = table;
 		sorter = new AnnotatingTableRowSorter<M, A>( table , sortRunner );
 		table.setRowSorter( sorter );
 		
@@ -37,6 +36,11 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 		
 		cursorController = new AnnotatingRowSorterCursorController( scrollPane );
 		sorter.addRowSorterListener( cursorController );
+	}
+	
+	protected AnnotatingJTable createTable( M model )
+	{
+		return new AnnotatingJTable( model );
 	}
 	
 	public void setAnnotationColors( Map<?, Color> colors )

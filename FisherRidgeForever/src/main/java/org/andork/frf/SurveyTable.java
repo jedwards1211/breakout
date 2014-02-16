@@ -19,11 +19,12 @@ import javax.swing.table.TableModel;
 
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.model.SurveyStation;
+import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.old.FilteringTableModel;
 import org.andork.swing.table.old.HighlightingTable;
 
 @SuppressWarnings( "serial" )
-public class SurveyTable extends HighlightingTable
+public class SurveyTable extends AnnotatingJTable
 {
 	public void createDefaultColumnsFromModel( )
 	{
@@ -36,7 +37,7 @@ public class SurveyTable extends HighlightingTable
 	
 	public SurveyTable( )
 	{
-		super( new FilteringTableModel( new SurveyTableModel( ) ) );
+		super( new SurveyTableModel( ) );
 		
 		setTransferHandler( new TransferHandler( )
 		{
@@ -71,7 +72,7 @@ public class SurveyTable extends HighlightingTable
 					return false;
 				}
 				
-				TableModel backingModel = ( ( FilteringTableModel ) getModel( ) ).getBackingModel( );
+				TableModel model = getModel( );
 				
 				JTable.DropLocation dropLocation = ( JTable.DropLocation ) support.getDropLocation( );
 				
@@ -81,7 +82,7 @@ public class SurveyTable extends HighlightingTable
 					int column = dropLocation.getColumn( );
 					for( String cell : line.split( "\\t" ) )
 					{
-						backingModel.setValueAt( cell , row , column );
+						model.setValueAt( cell , row , column );
 						column++ ;
 					}
 					
@@ -139,12 +140,17 @@ public class SurveyTable extends HighlightingTable
 	public static final int	DOWN_COLUMN		= 10;
 	public static final int	SHOT_COLUMN		= 11;
 	
+	public SurveyTableModel getModel( )
+	{
+		return ( SurveyTableModel ) super.getModel( );
+	}
+	
 	public List<SurveyShot> createShots( )
 	{
 		Map<String, SurveyStation> stations = new LinkedHashMap<String, SurveyStation>( );
 		List<SurveyShot> shots = new ArrayList<SurveyShot>( );
 		
-		TableModel model = ( ( FilteringTableModel ) getModel( ) ).getBackingModel( );
+		TableModel model = getModel( );
 		
 		for( int row = 0 ; row < model.getRowCount( ) ; row++ )
 		{
@@ -323,26 +329,5 @@ public class SurveyTable extends HighlightingTable
 		{
 			return null;
 		}
-	}
-	
-	public int getShotIndex( int row )
-	{
-		SurveyShot shot = ( SurveyShot ) getModel( ).getValueAt( row , SHOT_COLUMN );
-		return shot == null ? -1 : shot.index;
-	}
-	
-	public int rowOfShot( int shotIndex )
-	{
-		int row = Math.min( shotIndex , getRowCount( ) );
-		
-		while( row < getRowCount( ) )
-		{
-			if( getShotIndex( row ) == shotIndex )
-			{
-				return row;
-			}
-			row++ ;
-		}
-		return -1;
 	}
 }

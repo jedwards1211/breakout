@@ -130,6 +130,11 @@ public class MouseLooper extends MouseAdapter
 	@Override
 	public void mouseDragged( MouseEvent e )
 	{
+		if( pressEvent == null )
+		{
+			return;
+		}
+		
 		if( robot != null )
 		{
 			Component c = e.getComponent( );

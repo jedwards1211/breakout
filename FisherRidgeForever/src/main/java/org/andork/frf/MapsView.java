@@ -26,7 +26,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
-import java.util.regex.Pattern;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JButton;
@@ -37,6 +38,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
@@ -56,6 +58,7 @@ import org.andork.awt.layout.DrawerLayoutDelegate;
 import org.andork.awt.layout.ResizeKnobHandler;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.TabLayoutDelegate;
+import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.frf.model.Survey3dModel;
 import org.andork.frf.model.Survey3dModel.SelectionEditor;
 import org.andork.frf.model.Survey3dModel.Shot;
@@ -72,6 +75,8 @@ import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.Rectmath;
+import org.andork.swing.AnnotatingRowSorter.ExecutorServiceSortRunner;
+import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.DoSwing;
 import org.andork.swing.PaintablePanel;
 import org.andork.swing.TextComponentWithHintAndClear;
@@ -80,12 +85,7 @@ import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.LayeredBorder;
 import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
-import org.andork.swing.table.old.FilteringTableController;
-import org.andork.swing.table.old.HighlightingTableScroller;
-import org.andork.swing.table.old.FilteringTableModel.AndFilter;
-import org.andork.swing.table.old.FilteringTableModel.Filter;
-import org.andork.swing.table.old.FilteringTableModel.HighlightingFilter;
-import org.andork.swing.table.old.FilteringTableModel.PatternFilter;
+import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.LinearAxisConversion;
@@ -101,104 +101,109 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
-	final double[ ]					fromLoc			= new double[ 3 ];
-	final double[ ]					toLoc			= new double[ 3 ];
-	final double[ ]					toToLoc			= new double[ 3 ];
-	final double[ ]					leftAtTo		= new double[ 3 ];
-	final double[ ]					leftAtTo2		= new double[ 3 ];
-	final double[ ]					leftAtFrom		= new double[ 3 ];
+	final double[ ]																					fromLoc			= new double[ 3 ];
+	final double[ ]																					toLoc			= new double[ 3 ];
+	final double[ ]																					toToLoc			= new double[ 3 ];
+	final double[ ]																					leftAtTo		= new double[ 3 ];
+	final double[ ]																					leftAtTo2		= new double[ 3 ];
+	final double[ ]																					leftAtFrom		= new double[ 3 ];
 	
-	PlotAxis						xaxis;
-	PlotAxis						yaxis;
-	AxisLinkButton					axisLinkButton;
-	PlotAxis						distColorationAxis;
-	PaintablePanel					distColorationAxisPanel;
-	PlotAxis						paramColorationAxis;
-	PaintablePanel					paramColorationAxisPanel;
-	PlotAxis						highlightDistAxis;
-	PaintablePanel					highlightDistAxisPanel;
+	PlotAxis																						xaxis;
+	PlotAxis																						yaxis;
+	AxisLinkButton																					axisLinkButton;
+	PlotAxis																						distColorationAxis;
+	PaintablePanel																					distColorationAxisPanel;
+	PlotAxis																						paramColorationAxis;
+	PaintablePanel																					paramColorationAxisPanel;
+	PlotAxis																						highlightDistAxis;
+	PaintablePanel																					highlightDistAxisPanel;
 	
-	PaintablePanel					settingsPanel;
-	DrawerLayoutDelegate			settingsDrawerDelegate;
-	JToggleButton					pinSettingsPanelButton;
-	JSlider							mouseSensitivitySlider;
+	PaintablePanel																					settingsPanel;
+	DrawerLayoutDelegate																			settingsDrawerDelegate;
+	JToggleButton																					pinSettingsPanelButton;
+	JSlider																							mouseSensitivitySlider;
 	
-	Plot							plot;
-	JPanel							plotPanel;
-	JPanel							mainPanel;
-	JLayeredPane					layeredPane;
+	Plot																							plot;
+	JPanel																							plotPanel;
+	JPanel																							mainPanel;
+	JLayeredPane																					layeredPane;
 	
-	PlotController					plotController;
-	MouseLooper						mouseLooper;
-	MousePickHandler				pickHandler;
-	MouseAdapterChain				mouseAdapterChain;
+	PlotController																					plotController;
+	MouseLooper																						mouseLooper;
+	MousePickHandler																				pickHandler;
+	MouseAdapterChain																				mouseAdapterChain;
 	
-	DrawerAutoshowController		autoshowController;
+	DrawerAutoshowController																		autoshowController;
 	
-	TableSelectionHandler			selectionHandler;
+	TableSelectionHandler																			selectionHandler;
 	
-	JComboBox						modeComboBox;
+	JComboBox																						modeComboBox;
 	
-	JPanel							surveyTableDrawer;
-	DrawerLayoutDelegate			surveyTableDrawerDelegate;
-	JButton							surveyTableResizeHandle;
-	TextComponentWithHintAndClear	filterField;
+	JPanel																							surveyTableDrawer;
+	DrawerLayoutDelegate																			surveyTableDrawerDelegate;
+	JButton																							surveyTableResizeHandle;
 	
-	SurveyTable						surveyTable;
-	HighlightingTableScroller		surveyTableScrollPane;
+	TextComponentWithHintAndClear																	highlightField;
+	TextComponentWithHintAndClear																	filterField;
 	
-	FilteringTableController		surveyTableFilteringController;
+	SurveyTable																						surveyTable;
+	DefaultAnnotatingJTableSetup<SurveyTableModel, ? super RowFilter<SurveyTableModel, Integer>>	surveyTableSetup;
+	ExecutorService																					surveyTableSortExecutor;
 	
-	JPanel							statusBar;
-	UpdateStatusPanel				updateStatusPanel;
-	UpdateStatusPanelController		updateStatusPanelController;
+	JPanel																							statusBar;
+	UpdateStatusPanel																				updateStatusPanel;
+	UpdateStatusPanelController																		updateStatusPanelController;
 	
-	JButton							updateViewButton;
+	JButton																							updateViewButton;
 	
-	Survey3dModel					model;
+	Survey3dModel																					model;
 	
-	float[ ]						v				= newMat4f( );
+	float[ ]																						v				= newMat4f( );
 	
-	int								debugMbrCount	= 0;
-	List<BasicJOGLObject>			debugMbrs		= new ArrayList<BasicJOGLObject>( );
+	int																								debugMbrCount	= 0;
+	List<BasicJOGLObject>																			debugMbrs		= new ArrayList<BasicJOGLObject>( );
 	
-	ShotPickContext					spc				= new ShotPickContext( );
+	ShotPickContext																					spc				= new ShotPickContext( );
 	
-	final LinePlaneIntersection3f	lpx				= new LinePlaneIntersection3f( );
-	final float[ ]					p0				= new float[ 3 ];
-	final float[ ]					p1				= new float[ 3 ];
-	final float[ ]					p2				= new float[ 3 ];
-	private JToggleButton			pinSurveyTableButton;
+	final LinePlaneIntersection3f																	lpx				= new LinePlaneIntersection3f( );
+	final float[ ]																					p0				= new float[ 3 ];
+	final float[ ]																					p1				= new float[ 3 ];
+	final float[ ]																					p2				= new float[ 3 ];
+	private JToggleButton																			pinSurveyTableButton;
 	
-	private JButton					debugButton		= new JButton( );
+	private JButton																					debugButton		= new JButton( );
 	
 	public MapsView( )
 	{
 		super( );
 		
-		filterField = new TextComponentWithHintAndClear( "Enter filter pattern" );
+		JLabel highlightLabel = new JLabel( "Highlight: " );
+		JLabel filterLabel = new JLabel( "Filter: " );
+		
+		highlightField = new TextComponentWithHintAndClear( "Enter regular expression" );
+		filterField = new TextComponentWithHintAndClear( "Enter regular expression" );
 		
 		new DoSwing( )
 		{
 			@Override
 			public void run( )
 			{
+				surveyTableSortExecutor = Executors.newSingleThreadExecutor( );
+				SortRunner sortRunner = new ExecutorServiceSortRunner( surveyTableSortExecutor );
 				surveyTable = new SurveyTable( );
+				surveyTableSetup = new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>(
+						surveyTable , sortRunner );
+				surveyTableSetup.sorter.setModelCopier( new SurveyTableModelCopier( ) );
 			}
 		};
-		surveyTableScrollPane = new HighlightingTableScroller( surveyTable );
 		
-		surveyTableFilteringController = new FilteringTableController( filterField.textComponent , surveyTable )
-		{
-			@Override
-			protected Filter createFilter( Pattern p )
-			{
-				// PatternFilter patternFilter = new PatternFilter( p );
-				AndFilter combFilter = new AndFilter( new PatternFilter( p , 0 ) , new PatternFilter( p , 1 ) );
-				surveyTable.setHighlightColors( Collections.<Filter,Color>singletonMap( combFilter , Color.YELLOW ) );
-				return new HighlightingFilter( null , combFilter );
-			}
-		};
+		highlightField.textComponent.getDocument( ).addDocumentListener(
+				DefaultAnnotatingJTableSetup.createHighlightFieldListener(
+						surveyTableSetup , highlightField.textComponent , Color.YELLOW ) );
+		
+		filterField.textComponent.getDocument( ).addDocumentListener(
+				DefaultAnnotatingJTableSetup.createFilterFieldListener(
+						surveyTableSetup , filterField.textComponent ) );
 		
 		surveyTableDrawer = new JPanel( );
 		
@@ -230,10 +235,13 @@ public class MapsView extends BasicJOGLSetup
 		JButton maximizeSurveyTableButton = new JButton( "Max" );
 		
 		gbw.defaults( ).autoinsets( new DefaultAutoInsets( 2 , 2 ) );
-		gbw.put( surveyTableResizeHandle ).xy( 0 , 0 ).fillx( 1.0 );
-		gbw.put( filterField ).below( surveyTableResizeHandle ).fillx( 1.0 );
-		gbw.put( maximizeSurveyTableButton ).rightOf( filterField ).east( );
-		gbw.put( surveyTableScrollPane ).below( filterField , maximizeSurveyTableButton ).fillboth( 0.0 , 1.0 );
+		gbw.put( surveyTableResizeHandle ).xy( 0 , 0 ).fillx( 1.0 ).remWidth( );
+		gbw.put( filterLabel ).xy( 0 , 1 ).west( ).insets( 2 , 2 , 0 , 0 );
+		gbw.put( filterField ).rightOf( filterLabel ).fillboth( 1.0 , 0.0 );
+		gbw.put( highlightLabel ).rightOf( filterField ).west( ).insets( 2 , 10 , 0 , 0 );
+		gbw.put( highlightField ).rightOf( highlightLabel ).fillboth( 1.0 , 0.0 );
+		gbw.put( maximizeSurveyTableButton ).rightOf( highlightField ).east( );
+		gbw.put( surveyTableSetup.scrollPane ).below( filterLabel , maximizeSurveyTableButton ).fillboth( 0.0 , 1.0 );
 		
 		surveyTableDrawerDelegate = new DrawerLayoutDelegate( surveyTableDrawer , Side.BOTTOM , true )
 		{
@@ -511,8 +519,8 @@ public class MapsView extends BasicJOGLSetup
 		JLabel paramLabel = new JLabel( "Depth coloration:" );
 		w.put( paramLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( paramColorationAxisPanel ).belowLast( ).fillx( );
-		JLabel highlightLabel = new JLabel( "Highlight range:" );
-		w.put( highlightLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
+		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
+		w.put( highlightRangeLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
 		
 		w.put( debugButton ).belowLast( ).southwest( ).weighty( 1.0 );
@@ -600,7 +608,7 @@ public class MapsView extends BasicJOGLSetup
 		} );
 		
 		selectionHandler = new TableSelectionHandler( );
-		surveyTable.getSelectionModel( ).addListSelectionListener( selectionHandler );
+		surveyTable.getModelSelectionModel( ).addListSelectionListener( selectionHandler );
 	}
 	
 	@Override
@@ -831,13 +839,13 @@ public class MapsView extends BasicJOGLSetup
 				return;
 			}
 			
-			ListSelectionModel selModel = surveyTable.getSelectionModel( );
+			ListSelectionModel selModel = surveyTable.getModelSelectionModel( );
 			
 			if( model != null )
 			{
 				int index = picked.picked.getIndex( );
 				
-				int row = surveyTable.rowOfShot( index );
+				int row = surveyTable.getModel( ).rowOfShot( index );
 				
 				if( row >= 0 )
 				{
@@ -870,7 +878,7 @@ public class MapsView extends BasicJOGLSetup
 		@Override
 		public void valueChanged( ListSelectionEvent e )
 		{
-			if( model == null )
+			if( e.getValueIsAdjusting( ) || model == null )
 			{
 				return;
 			}

@@ -1,8 +1,13 @@
 package org.andork.frf;
 
+import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.table.DefaultTableModel;
+
+import org.andork.collect.CollectionUtils;
+import org.andork.frf.model.SurveyShot;
+import org.andork.swing.table.AnnotatingTableRowSorter.AbstractDefaultTableModelCopier;
 
 public class SurveyTableModel extends DefaultTableModel
 {
@@ -11,9 +16,12 @@ public class SurveyTableModel extends DefaultTableModel
 		super( new Object[ ] { "From" , "To" , "Distance" , "FS Azm" , "FS Inc" , "BS Azm" , "BS Inc" , "L" , "R" , "U" , "D" , "Shot" } , 1 );
 	}
 	
+	private Map<Integer, Integer>	shotIndexToRowMap	= CollectionUtils.newHashMap( );
+	
 	@Override
 	public void setValueAt( Object aValue , int row , int column )
 	{
+		Object prevValue = getValueAt( row , column );
 		if( aValue != null )
 		{
 			ensureNumRows( row + 2 );
@@ -22,6 +30,19 @@ public class SurveyTableModel extends DefaultTableModel
 		if( aValue == null || "".equals( aValue ) )
 		{
 			trimEmptyRows( );
+		}
+		
+		if( column == SurveyTable.SHOT_COLUMN )
+		{
+			SurveyShot shot = ( SurveyShot ) aValue;
+			if( prevValue != null )
+			{
+				shotIndexToRowMap.remove( ( ( SurveyShot ) prevValue ).index );
+			}
+			if( shot != null )
+			{
+				shotIndexToRowMap.put( shot.index , row );
+			}
 		}
 	}
 	
@@ -51,6 +72,21 @@ public class SurveyTableModel extends DefaultTableModel
 				row.add( null );
 			}
 			addRow( row );
+		}
+	}
+	
+	public int rowOfShot( int shotIndex )
+	{
+		Integer row = shotIndexToRowMap.get( shotIndex );
+		return row == null ? -1 : row;
+	}
+	
+	public static class SurveyTableModelCopier extends AbstractDefaultTableModelCopier<SurveyTableModel>
+	{
+		@Override
+		public SurveyTableModel createEmptyCopy( SurveyTableModel model )
+		{
+			return new SurveyTableModel( );
 		}
 	}
 }

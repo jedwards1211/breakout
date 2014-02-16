@@ -293,9 +293,9 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 		}
 	}
 	
-	public static class DefaultTableModelCopier extends ModelCopier<DefaultTableModel>
+	public static abstract class AbstractDefaultTableModelCopier<M extends DefaultTableModel> extends ModelCopier<M>
 	{
-		private static Class<?>[ ] getColumnClasses( TableModel model )
+		protected static Class<?>[ ] getColumnClasses( TableModel model )
 		{
 			Class<?>[ ] result = new Class[ model.getColumnCount( ) ];
 			for( int i = 0 ; i < model.getColumnCount( ) ; i++ )
@@ -305,7 +305,7 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 			return result;
 		}
 		
-		private static Object[ ] getColumnIdentifiers( TableModel model )
+		protected static Object[ ] getColumnIdentifiers( TableModel model )
 		{
 			Object[ ] result = new Object[ model.getColumnCount( ) ];
 			for( int i = 0 ; i < model.getColumnCount( ) ; i++ )
@@ -316,22 +316,25 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 		}
 		
 		@Override
-		public DefaultTableModel createEmptyCopy( DefaultTableModel model )
-		{
-			return new DefaultTableModelCopy( getColumnClasses( model ) , getColumnIdentifiers( model ) , model.getRowCount( ) );
-		}
-		
-		@Override
-		public void copyRow( DefaultTableModel src , int row , DefaultTableModel dest )
+		public void copyRow( M src , int row , M dest )
 		{
 			for( int column = 0 ; column < Math.min( src.getColumnCount( ) , dest.getColumnCount( ) ) ; column++ )
 			{
 				dest.setValueAt( src.getValueAt( row , column ) , row , column );
 			}
 		}
-		
 	}
 	
+	public static class DefaultTableModelCopier extends AbstractDefaultTableModelCopier<DefaultTableModel>
+	{
+		@Override
+		public DefaultTableModel createEmptyCopy( DefaultTableModel model )
+		{
+			return new DefaultTableModelCopy( getColumnClasses( model ) , getColumnIdentifiers( model ) , model.getRowCount( ) );
+		}
+	}
+	
+	@SuppressWarnings( "serial" )
 	private static class DefaultTableModelCopy extends DefaultTableModel
 	{
 		Class<?>[ ]	columnClasses;

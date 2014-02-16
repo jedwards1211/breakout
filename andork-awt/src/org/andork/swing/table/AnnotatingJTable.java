@@ -96,12 +96,14 @@ public class AnnotatingJTable extends BetterJTable
 			comp = ( ( AnnotatingTableCellRenderer ) renderer ).getTableCellRendererComponent(
 					this , value , getAnnotation( row ) , isSelected , hasFocus , row , column );
 		}
+		// this isn't nice but it's the only way I can figure out to reset the component background
+		// and still have the renderer update it afterward
+		comp = super.prepareRenderer( renderer , row , column );
+		comp.setBackground( getBackground( ) );
 		comp = super.prepareRenderer( renderer , row , column );
 		
 		if( !annotationColors.isEmpty( ) && !isSelected )
 		{
-			comp.setBackground( getBackground( ) );
-			
 			Object annotation = getAnnotation( row );
 			if( annotation != null )
 			{
