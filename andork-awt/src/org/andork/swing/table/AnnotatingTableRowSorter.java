@@ -27,7 +27,6 @@ package org.andork.swing.table;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.concurrent.ExecutorService;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -128,9 +127,9 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	/**
 	 * Creates a <code>AnnotatingTableRowSorter</code> with an empty model.
 	 */
-	public AnnotatingTableRowSorter( JTable table , ExecutorService sortExecutor )
+	public AnnotatingTableRowSorter( JTable table , SortRunner sortRunner )
 	{
-		this( table , ( M ) table.getModel( ) , sortExecutor );
+		this( table , ( M ) table.getModel( ) , sortRunner );
 	}
 	
 	/**
@@ -139,9 +138,9 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	 * @param model
 	 *            the underlying <code>TableModel</code> to use, <code>null</code> is treated as an empty model
 	 */
-	public AnnotatingTableRowSorter( JTable table , M model , ExecutorService sortExecutor )
+	public AnnotatingTableRowSorter( JTable table , M model , SortRunner sortRunner )
 	{
-		super( table , sortExecutor );
+		super( table , sortRunner );
 		setModel( model );
 	}
 	

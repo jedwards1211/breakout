@@ -144,18 +144,18 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	
 	private boolean											sortExistingDataRequested;
 	
-	private ExecutorService									sortExecutor;
+	private SortRunner										sortRunner;
 	
 	private BackgroundSortTask<M, I, A>						sortTask;
 	
 	/**
 	 * Creates an empty <code>DefaultRowSorter</code>.
 	 */
-	public AnnotatingRowSorter( JTable table , ExecutorService sortExecutor )
+	public AnnotatingRowSorter( JTable table , SortRunner sortRunner )
 	{
 		sortKeys = Collections.emptyList( );
 		maxSortKeys = 3;
-		this.sortExecutor = sortExecutor;
+		this.sortRunner = sortRunner;
 		
 		// selectionMaintainer.setTable( table );
 	}
@@ -416,7 +416,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	public void setRowAnnotator( RowAnnotator<? super M, ? super I, ? extends A> annotator )
 	{
 		this.annotator = annotator;
-		sortLater( );
+		sortExistingDataLater( );
 	}
 	
 	/**
@@ -612,7 +612,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		if( sortTask == null )
 		{
 			sortTask = new BackgroundSortTask<M, I, A>( this );
-			sortExecutor.submit( sortTask );
+			sortRunner.submit( sortTask );
 		}
 		// else
 		// {
@@ -654,7 +654,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		if( sortTask == null )
 		{
 			sortTask = new BackgroundSortTask<M, I, A>( this );
-			sortExecutor.submit( sortTask );
+			sortRunner.submit( sortTask );
 		}
 		// else
 		// {
@@ -1610,6 +1610,28 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		}
 	}
 	
+	public static interface SortRunner
+	{
+		public void submit( Runnable r );
+	}
+	
+	public static class ExecutorServiceSortRunner implements SortRunner
+	{
+		ExecutorService	executorService;
+		
+		public ExecutorServiceSortRunner( ExecutorService executorService )
+		{
+			super( );
+			this.executorService = executorService;
+		}
+		
+		@Override
+		public void submit( Runnable r )
+		{
+			executorService.submit( r );
+		}
+	}
+	
 	private static class BackgroundSortTask<M, I, A> implements Runnable
 	{
 		private final AnnotatingRowSorter<M, I, A>				sorter;
@@ -1730,6 +1752,11 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 			}
 			else
 			{
+				for( int i = 0 ; i < viewToModel.length ; i++ )
+				{
+					viewToModel[ i ].annotation = annotate( viewToModel[ i ].modelIndex );
+				}
+				
 				// sort the data
 				Arrays.sort( viewToModel , rowComparator );
 				
@@ -2166,7 +2193,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 					
 					int[ ] lastRowIndexToModel = getViewToModelAsInts( viewToModel );
 					
-					if( sortRequested )
+					if( sortRequested || viewToModel == null )
 					{
 						sort( );
 					}

@@ -5,25 +5,20 @@ import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.DefaultListSelectionModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.RowSorterEvent;
-import javax.swing.event.RowSorterListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.swing.AnnotatingRowSorter.ExecutorServiceSortRunner;
+import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.AnnotatingRowSorterCursorController;
 import org.andork.swing.DoSwing;
 import org.andork.swing.QuickTestFrame;
@@ -32,10 +27,6 @@ import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.event.EasyDocumentListener;
 import org.andork.swing.jump.JScrollAndJumpPane;
 import org.andork.swing.jump.JTableJumpSupport;
-import org.andork.swing.table.AnnotatingJTable;
-import org.andork.swing.table.AnnotatingJTableJumpBarModel;
-import org.andork.swing.table.AnnotatingTableRowSorter;
-import org.andork.swing.table.ColorMapAnnotatingTableCellRenderer;
 import org.andork.swing.table.AnnotatingTableRowSorter.DefaultTableModelCopier;
 
 public class AnnotatingJTableTest
@@ -68,91 +59,21 @@ public class AnnotatingJTableTest
 			}
 		}
 		
-		final ColorMapAnnotatingTableCellRenderer renderer = new ColorMapAnnotatingTableCellRenderer( );
-		
-		final AnnotatingJTable table = new AnnotatingJTable( model )
-		{
-			@Override
-			public TableCellRenderer getCellRenderer( int row , int column )
-			{
-				return renderer;
-			}
-		};
-		
 		ExecutorService sortExecutor = Executors.newSingleThreadExecutor( );
+		SortRunner sortRunner = new ExecutorServiceSortRunner( sortExecutor );
 		
-		final AnnotatingTableRowSorter<DefaultTableModel, RowFilter<DefaultTableModel, Integer>> rowSorter =
-				new AnnotatingTableRowSorter<DefaultTableModel, RowFilter<DefaultTableModel, Integer>>( table , sortExecutor );
-		rowSorter.setModelCopier( new DefaultTableModelCopier( ) );
-		rowSorter.setSortsOnUpdates( true );
+		final DefaultAnnotatingJTableSetup<DefaultTableModel, Object> setup = new DefaultAnnotatingJTableSetup<DefaultTableModel, Object>( model , sortRunner );
 		
-		table.setRowSorter( rowSorter );
+		setup.sorter.setModelCopier( new DefaultTableModelCopier( ) );
+		setup.sorter.setSortsOnUpdates( true );
 		
 		final JTextField filterField = new JTextField( );
 		final JTextField highlightField = new JTextField( );
 		
-		final JScrollAndJumpPane tableScrollPane = new JScrollAndJumpPane( table );
-		tableScrollPane.setBorder( null );
-		
-		final AnnotatingJTableJumpBarModel jumpBarModel = new AnnotatingJTableJumpBarModel( table );
-		
-		tableScrollPane.getJumpBar( ).setModel( jumpBarModel );
-		tableScrollPane.getJumpBar( ).setJumpSupport( new JTableJumpSupport( table ) );
-		
-		AnnotatingRowSorterCursorController cursorController = new AnnotatingRowSorterCursorController( tableScrollPane );
-		rowSorter.addRowSorterListener( cursorController );
-		
-		DocumentListener docListener = new EasyDocumentListener( )
-		{
-			@Override
-			public void documentChanged( DocumentEvent e )
-			{
-				JTextField field = e.getDocument( ) == highlightField.getDocument( ) ? highlightField : filterField;
-				
-				if( field.getText( ) != null && field.getText( ).length( ) > 0 )
-				{
-					RowFilter<DefaultTableModel, Integer> filter = null;
-					try
-					{
-						filter = RowFilter.regexFilter( field.getText( ) , 0 );
-						field.setForeground( Color.BLACK );
-					}
-					catch( Exception ex )
-					{
-						field.setForeground( Color.RED );
-					}
-					if( field == highlightField )
-					{
-						rowSorter.setRowAnnotator( RowAnnotator.filterAnnotator( filter ) );
-						renderer.setAnnotationColors( Collections.singletonMap( filter , Color.YELLOW ) );
-						tableScrollPane.getJumpBar( ).setColorMap( Collections.singletonMap( filter , Color.YELLOW ) );
-					}
-					else if( field == filterField )
-					{
-						rowSorter.setRowFilter( filter );
-					}
-				}
-				else
-				{
-					field.setForeground( Color.BLACK );
-					
-					if( field == highlightField )
-					{
-						rowSorter.setRowAnnotator( null );
-						renderer.setAnnotationColors( Collections.<Object,Color>emptyMap( ) );
-						tableScrollPane.getJumpBar( ).setColorMap( null );
-					}
-					else if( field == filterField )
-					{
-						rowSorter.setRowFilter( null );
-					}
-				}
-				
-			}
-		};
-		
-		highlightField.getDocument( ).addDocumentListener( docListener );
-		filterField.getDocument( ).addDocumentListener( docListener );
+		highlightField.getDocument( ).addDocumentListener(
+				DefaultAnnotatingJTableSetup.createHighlightFieldListener( setup , highlightField , Color.YELLOW ) );
+		filterField.getDocument( ).addDocumentListener(
+				DefaultAnnotatingJTableSetup.createFilterFieldListener( setup , filterField ) );
 		
 		TextComponentWithHintAndClear highlightFieldWrapper = new TextComponentWithHintAndClear( highlightField , "Enter Regular Expression" );
 		TextComponentWithHintAndClear filterFieldWrapper = new TextComponentWithHintAndClear( filterField , "Enter Regular Expression" );
@@ -168,7 +89,7 @@ public class AnnotatingJTableTest
 		JLabel filterLabel = new JLabel( "Filter: " );
 		gbw.put( filterLabel ).below( highlightLabel ).west( );
 		gbw.put( filterFieldWrapper ).rightOf( filterLabel ).fillx( 1.0 );
-		gbw.put( tableScrollPane ).below( filterLabel , filterFieldWrapper ).fillboth( 1.0 , 1.0 );
+		gbw.put( setup.scrollPane ).below( filterLabel , filterFieldWrapper ).fillboth( 1.0 , 1.0 );
 		
 		QuickTestFrame.frame( panel ).setVisible( true );
 	}

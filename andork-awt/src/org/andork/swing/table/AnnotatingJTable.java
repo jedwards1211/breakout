@@ -1,16 +1,12 @@
 package org.andork.swing.table;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
-import javax.swing.DefaultListSelectionModel;
-import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.RowSorter;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.RowSorterEvent;
-import javax.swing.event.RowSorterEvent.Type;
-import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
@@ -28,6 +24,8 @@ import org.andork.swing.AnnotatingRowSorter;
 @SuppressWarnings( "serial" )
 public class AnnotatingJTable extends BetterJTable
 {
+	protected final Map<Object, Color>	annotationColors	= new HashMap<Object, Color>( );
+	
 	public AnnotatingJTable( )
 	{
 		super( );
@@ -73,31 +71,55 @@ public class AnnotatingJTable extends BetterJTable
 	@Override
 	public Component prepareRenderer( TableCellRenderer renderer , int row , int column )
 	{
-		if( renderer instanceof AnnotatingTableCellRenderer )
+		Component comp = null;
+		
+		Object value = getValueAt( row , column );
+		
+		boolean isSelected = false;
+		boolean hasFocus = false;
+		
+		// Only indicate the selection and focused cell if not printing
+		if( !isPaintingForPrint( ) )
 		{
-			Object value = getValueAt( row , column );
+			isSelected = isCellSelected( row , column );
 			
-			boolean isSelected = false;
-			boolean hasFocus = false;
+			boolean rowIsLead =
+					( selectionModel.getLeadSelectionIndex( ) == row );
+			boolean colIsLead =
+					( columnModel.getSelectionModel( ).getLeadSelectionIndex( ) == column );
 			
-			// Only indicate the selection and focused cell if not printing
-			if( !isPaintingForPrint( ) )
-			{
-				isSelected = isCellSelected( row , column );
-				
-				boolean rowIsLead =
-						( selectionModel.getLeadSelectionIndex( ) == row );
-				boolean colIsLead =
-						( columnModel.getSelectionModel( ).getLeadSelectionIndex( ) == column );
-				
-				hasFocus = ( rowIsLead && colIsLead ) && isFocusOwner( );
-			}
-			
-			return ( ( AnnotatingTableCellRenderer ) renderer ).getTableCellRendererComponent(
-					this , value , getAnnotation( row ) , isSelected , hasFocus , row , column );
+			hasFocus = ( rowIsLead && colIsLead ) && isFocusOwner( );
 		}
 		
-		return super.prepareRenderer( renderer , row , column );
+		if( renderer instanceof AnnotatingTableCellRenderer )
+		{
+			comp = ( ( AnnotatingTableCellRenderer ) renderer ).getTableCellRendererComponent(
+					this , value , getAnnotation( row ) , isSelected , hasFocus , row , column );
+		}
+		comp = super.prepareRenderer( renderer , row , column );
+		
+		if( !annotationColors.isEmpty( ) && !isSelected )
+		{
+			comp.setBackground( getBackground( ) );
+			
+			Object annotation = getAnnotation( row );
+			if( annotation != null )
+			{
+				Color color = annotationColors.get( annotation );
+				if( color != null )
+				{
+					comp.setBackground( color );
+				}
+			}
+		}
+		
+		return comp;
+	}
+	
+	public void setAnnotationColors( Map<?, Color> annotationColors )
+	{
+		this.annotationColors.clear( );
+		this.annotationColors.putAll( annotationColors );
 	}
 	
 	public Object getAnnotation( int row )
