@@ -2,14 +2,12 @@ package org.andork.swing.table;
 
 import java.awt.Color;
 import java.util.Collections;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-import javax.swing.DefaultListSelectionModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
@@ -20,7 +18,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.RowSorterEvent;
 import javax.swing.event.RowSorterListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableRowSorter;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
@@ -30,15 +28,8 @@ import org.andork.swing.QuickTestFrame;
 import org.andork.swing.RowAnnotator;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.event.EasyDocumentListener;
-import org.andork.swing.jump.JScrollAndJumpPane;
-import org.andork.swing.jump.JTableJumpSupport;
-import org.andork.swing.table.AnnotatingJTable;
-import org.andork.swing.table.AnnotatingJTableJumpBarModel;
-import org.andork.swing.table.AnnotatingTableRowSorter;
-import org.andork.swing.table.ColorMapAnnotatingTableCellRenderer;
-import org.andork.swing.table.AnnotatingTableRowSorter.DefaultTableModelCopier;
 
-public class AnnotatingJTableTest
+public class JTableSortTest
 {
 	public static void main( String[ ] args )
 	{
@@ -68,36 +59,36 @@ public class AnnotatingJTableTest
 			}
 		}
 		
-		final ColorMapAnnotatingTableCellRenderer renderer = new ColorMapAnnotatingTableCellRenderer( );
+		final JTable table = new JTable( model );
 		
-		final AnnotatingJTable table = new AnnotatingJTable( model )
+		table.getSelectionModel( ).addListSelectionListener( new ListSelectionListener( )
 		{
 			@Override
-			public TableCellRenderer getCellRenderer( int row , int column )
+			public void valueChanged( ListSelectionEvent e )
 			{
-				return renderer;
+				System.out.println( e );
 			}
-		};
+		} );
 		
-		ExecutorService sortExecutor = Executors.newSingleThreadExecutor( );
-		
-		final AnnotatingTableRowSorter<DefaultTableModel, RowFilter<DefaultTableModel, Integer>> rowSorter =
-				new AnnotatingTableRowSorter<DefaultTableModel, RowFilter<DefaultTableModel, Integer>>( table , sortExecutor );
-		rowSorter.setModelCopier( new DefaultTableModelCopier( ) );
+		final TableRowSorter<DefaultTableModel> rowSorter = new TableRowSorter<DefaultTableModel>( model );
 		rowSorter.setSortsOnUpdates( true );
 		
 		table.setRowSorter( rowSorter );
+		// rowSorter.sortLater( );
+		
+		rowSorter.addRowSorterListener( new RowSorterListener( )
+		{
+			@Override
+			public void sorterChanged( RowSorterEvent e )
+			{
+				System.out.println( e + " " + e.getType( ) );
+			}
+		} );
 		
 		final JTextField filterField = new JTextField( );
 		final JTextField highlightField = new JTextField( );
 		
-		final JScrollAndJumpPane tableScrollPane = new JScrollAndJumpPane( table );
-		tableScrollPane.setBorder( null );
-		
-		final AnnotatingJTableJumpBarModel jumpBarModel = new AnnotatingJTableJumpBarModel( table );
-		
-		tableScrollPane.getJumpBar( ).setModel( jumpBarModel );
-		tableScrollPane.getJumpBar( ).setJumpSupport( new JTableJumpSupport( table ) );
+		final JScrollPane tableScrollPane = new JScrollPane( table );
 		
 		AnnotatingRowSorterCursorController cursorController = new AnnotatingRowSorterCursorController( tableScrollPane );
 		rowSorter.addRowSorterListener( cursorController );
@@ -121,13 +112,7 @@ public class AnnotatingJTableTest
 					{
 						field.setForeground( Color.RED );
 					}
-					if( field == highlightField )
-					{
-						rowSorter.setRowAnnotator( RowAnnotator.filterAnnotator( filter ) );
-						renderer.setAnnotationColors( Collections.singletonMap( filter , Color.YELLOW ) );
-						tableScrollPane.getJumpBar( ).setColorMap( Collections.singletonMap( filter , Color.YELLOW ) );
-					}
-					else if( field == filterField )
+					if( field == filterField )
 					{
 						rowSorter.setRowFilter( filter );
 					}
@@ -136,13 +121,7 @@ public class AnnotatingJTableTest
 				{
 					field.setForeground( Color.BLACK );
 					
-					if( field == highlightField )
-					{
-						rowSorter.setRowAnnotator( null );
-						renderer.setAnnotationColors( Collections.<Object,Color>emptyMap( ) );
-						tableScrollPane.getJumpBar( ).setColorMap( null );
-					}
-					else if( field == filterField )
+					if( field == filterField )
 					{
 						rowSorter.setRowFilter( null );
 					}
@@ -154,7 +133,7 @@ public class AnnotatingJTableTest
 		highlightField.getDocument( ).addDocumentListener( docListener );
 		filterField.getDocument( ).addDocumentListener( docListener );
 		
-		TextComponentWithHintAndClear highlightFieldWrapper = new TextComponentWithHintAndClear( highlightField , "Enter Regular Expression" );
+		// TextComponentWithHintAndClear highlightFieldWrapper = new TextComponentWithHintAndClear( highlightField , "Enter Regular Expression" );
 		TextComponentWithHintAndClear filterFieldWrapper = new TextComponentWithHintAndClear( filterField , "Enter Regular Expression" );
 		
 		JPanel panel = new JPanel( );
@@ -162,11 +141,11 @@ public class AnnotatingJTableTest
 		GridBagWizard gbw = GridBagWizard.create( panel );
 		
 		gbw.defaults( ).autoinsets( new DefaultAutoInsets( 2 , 2 ) );
-		JLabel highlightLabel = new JLabel( "Highlight: " );
-		gbw.put( highlightLabel ).xy( 0 , 0 ).west( );
-		gbw.put( highlightFieldWrapper ).rightOf( highlightLabel ).fillx( 1.0 );
+		// JLabel highlightLabel = new JLabel( "Highlight: " );
+		// gbw.put( highlightLabel ).xy( 0 , 0 ).west( );
+		// gbw.put( highlightFieldWrapper ).rightOf( highlightLabel ).fillx( 1.0 );
 		JLabel filterLabel = new JLabel( "Filter: " );
-		gbw.put( filterLabel ).below( highlightLabel ).west( );
+		gbw.put( filterLabel ).xy( 0 , 0 ).west( );
 		gbw.put( filterFieldWrapper ).rightOf( filterLabel ).fillx( 1.0 );
 		gbw.put( tableScrollPane ).below( filterLabel , filterFieldWrapper ).fillboth( 1.0 , 1.0 );
 		

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 import javax.swing.DefaultRowSorter;
+import javax.swing.JTable;
 import javax.swing.RowFilter;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
@@ -150,11 +151,13 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	/**
 	 * Creates an empty <code>DefaultRowSorter</code>.
 	 */
-	public AnnotatingRowSorter( ExecutorService sortExecutor )
+	public AnnotatingRowSorter( JTable table , ExecutorService sortExecutor )
 	{
 		sortKeys = Collections.emptyList( );
 		maxSortKeys = 3;
 		this.sortExecutor = sortExecutor;
+		
+		// selectionMaintainer.setTable( table );
 	}
 	
 	/**

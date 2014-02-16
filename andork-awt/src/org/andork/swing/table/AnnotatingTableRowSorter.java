@@ -29,12 +29,12 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.ExecutorService;
 
+import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableStringConverter;
 
 import org.andork.swing.AnnotatingRowSorter;
-import org.andork.swing.AnnotatingRowSorter.ModelCopier;
 
 /**
  * An implementation of <code>RowSorter</code> that provides sorting and filtering using a <code>TableModel</code>. The following example shows adding sorting
@@ -128,9 +128,9 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	/**
 	 * Creates a <code>AnnotatingTableRowSorter</code> with an empty model.
 	 */
-	public AnnotatingTableRowSorter( ExecutorService sortExecutor )
+	public AnnotatingTableRowSorter( JTable table , ExecutorService sortExecutor )
 	{
-		this( null , sortExecutor );
+		this( table , ( M ) table.getModel( ) , sortExecutor );
 	}
 	
 	/**
@@ -139,9 +139,9 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	 * @param model
 	 *            the underlying <code>TableModel</code> to use, <code>null</code> is treated as an empty model
 	 */
-	public AnnotatingTableRowSorter( M model , ExecutorService sortExecutor )
+	public AnnotatingTableRowSorter( JTable table , M model , ExecutorService sortExecutor )
 	{
-		super( sortExecutor );
+		super( table , sortExecutor );
 		setModel( model );
 	}
 	
