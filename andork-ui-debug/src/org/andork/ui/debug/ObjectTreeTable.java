@@ -70,6 +70,7 @@ import org.andork.spec.SpecObject.Format;
 import org.andork.swing.RendererButtonModel;
 import org.andork.swing.selector.DefaultSelector;
 import org.andork.swing.table.CellEditorBoundsOverridingTableUI;
+import org.andork.swing.table.CheckboxTableCellRenderer;
 import org.andork.swing.table.TableCellRendererButtonModelContext;
 import org.andork.swing.table.TableCellRendererRetargeter;
 import org.andork.swing.table.TableCellRendererWithButtons;
@@ -150,7 +151,7 @@ public class ObjectTreeTable extends JXTreeTable {
 		// setTreeCellRenderer(nodeCellRenderer);
 
 		defaultValueCellRenderer = new ValueCellRenderer();
-		booleanValueCellRenderer = new ValueCellRenderer(new CheckboxBooleanRenderer(new JCheckBox()));
+		booleanValueCellRenderer = new ValueCellRenderer(new CheckboxTableCellRenderer(new JCheckBox()));
 		setUI(new CellEditorBoundsOverridingTableUI());
 	}
 

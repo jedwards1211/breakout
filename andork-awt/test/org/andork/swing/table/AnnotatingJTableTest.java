@@ -1,4 +1,4 @@
-package org.andork.swing.annotate;
+package org.andork.swing.table;
 
 import java.awt.Color;
 import java.util.Collections;
@@ -32,7 +32,7 @@ import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.ColorMapAnnotatingTableCellRenderer;
 import org.andork.swing.table.AnnotatingTableRowSorter.DefaultTableModelCopier;
 
-public class AnnotatingRowSorterTest
+public class AnnotatingJTableTest
 {
 	public static void main( String[ ] args )
 	{
