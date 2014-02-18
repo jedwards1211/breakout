@@ -2,6 +2,7 @@ package org.andork.frf;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Toolkit;
 
 import javax.swing.JFrame;
@@ -31,7 +32,9 @@ public class MainFrame extends JFrame
 			@Override
 			public void run( )
 			{
-				new MainFrame( ).setVisible( true );
+				MainFrame frame = new MainFrame( );
+				frame.setVisible( true );
+				frame.setExtendedState( JFrame.MAXIMIZED_BOTH );
 			}
 		};
 	}

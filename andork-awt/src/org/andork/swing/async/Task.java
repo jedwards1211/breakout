@@ -71,7 +71,7 @@ public abstract class Task
 	
 	public boolean isCancelable( )
 	{
-		return true;
+		return false;
 	}
 	
 	public final boolean isCanceled( )
