@@ -220,7 +220,7 @@ public class BetterJTable extends JTable
 				
 				ListSelectionModel selectionModel = ( ListSelectionModel ) e.getSource( );
 				
-				for( int modelIndex = Math.max( 0 , e.getFirstIndex( ) ) ; modelIndex <= Math.min( getRowCount( ) - 1 , e.getLastIndex( ) ) ; modelIndex++ )
+				for( int modelIndex = Math.max( 0 , e.getFirstIndex( ) ) ; modelIndex <= Math.min( getModel( ).getRowCount( ) - 1 , e.getLastIndex( ) ) ; modelIndex++ )
 				{
 					int viewIndex = convertRowIndexToView( modelIndex );
 					

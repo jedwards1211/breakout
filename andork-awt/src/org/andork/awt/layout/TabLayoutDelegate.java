@@ -4,6 +4,8 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.SwingUtilities;
 
@@ -86,5 +88,11 @@ public class TabLayoutDelegate implements LayoutDelegate
 	public void layoutComponent( Container parent , Component target )
 	{
 		target.setBounds( desiredBounds( parent , target , LayoutSize.PREFERRED ) );
+	}
+	
+	@Override
+	public List<Component> getDependencies( )
+	{
+		return content == null ? Collections.<Component>emptyList( ) : Collections.singletonList( content );
 	}
 }

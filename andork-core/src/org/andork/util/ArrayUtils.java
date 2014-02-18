@@ -278,6 +278,20 @@ public class ArrayUtils
 		return sb.toString( );
 	}
 	
+	public static String cat( Object[ ] o , String delimiter )
+	{
+		StringBuffer sb = new StringBuffer( );
+		if( o.length > 0 )
+		{
+			sb.append( o[ 0 ] );
+		}
+		for( int i = 1 ; i < o.length ; i++ )
+		{
+			sb.append( delimiter ).append( o[ i ] );
+		}
+		return sb.toString( );
+	}
+	
 	public static String prettyPrint( double[ ][ ] a , String elemFormat )
 	{
 		StringBuffer sb = new StringBuffer( );

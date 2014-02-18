@@ -3,13 +3,13 @@ package org.andork.awt.layout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Insets;
 import java.awt.LayoutManager2;
 import java.awt.Rectangle;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-
-import javax.swing.SwingUtilities;
+import java.util.Set;
 
 public class DelegatingLayoutManager implements LayoutManager2
 {
@@ -85,20 +85,38 @@ public class DelegatingLayoutManager implements LayoutManager2
 	@Override
 	public void layoutContainer( Container parent )
 	{
-		Rectangle defaultBounds = LayoutUtils.calculateInnerArea( parent , LayoutSize.ACTUAL );
+		Set<Component> laidOut = new HashSet<Component>( );
 		
 		for( Component comp : parent.getComponents( ) )
 		{
-			LayoutDelegate layoutDelegate = layoutDelegates.get( comp );
-			if( layoutDelegate != null )
-			{
-				layoutDelegate.layoutComponent( parent , comp );
-			}
-			else
-			{
-				comp.setBounds( defaultBounds );
-			}
+			layoutComponent( parent , comp , laidOut );
 		}
+	}
+	
+	private void layoutComponent( Container parent , Component comp , Set<Component> laidOut )
+	{
+		if( !laidOut.add( comp ) )
+		{
+			return;
+		}
+		LayoutDelegate layoutDelegate = layoutDelegates.get( comp );
+		if( layoutDelegate != null )
+		{
+			for( Component dep : layoutDelegate.getDependencies( ) )
+			{
+				if( layoutDelegates.containsKey( dep ) )
+				{
+					layoutComponent( parent , dep , laidOut );
+				}
+			}
+			layoutDelegate.layoutComponent( parent , comp );
+		}
+		else
+		{
+			Rectangle defaultBounds = LayoutUtils.calculateInnerArea( parent , LayoutSize.ACTUAL );
+			comp.setBounds( defaultBounds );
+		}
+		
 	}
 	
 	public static interface LayoutDelegate
@@ -106,6 +124,8 @@ public class DelegatingLayoutManager implements LayoutManager2
 		public Rectangle desiredBounds( Container parent , Component target , LayoutSize layoutSize );
 		
 		public void layoutComponent( Container parent , Component target );
+		
+		public List<Component> getDependencies( );
 	}
 	
 	@Override
@@ -135,6 +155,11 @@ public class DelegatingLayoutManager implements LayoutManager2
 	@Override
 	public void invalidateLayout( Container target )
 	{
-		
+	}
+	
+	public void onLayoutChanged( Container target )
+	{
+		target.invalidate( );
+		target.validate( );
 	}
 }

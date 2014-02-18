@@ -6,6 +6,8 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.Timer;
 
@@ -128,7 +130,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 	
 	public void toggleOpen( boolean animate )
 	{
-		if( !pinned )
+		if( !open || !pinned )
 		{
 			open = !open;
 			animating = animate;
@@ -371,7 +373,20 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 	
 	protected void onLayoutAnimated( Container parent , Component target )
 	{
-		parent.invalidate( );
-		parent.validate( );
+		if( parent != null && parent.getLayout( ) instanceof DelegatingLayoutManager )
+		{
+			( ( DelegatingLayoutManager ) parent.getLayout( ) ).onLayoutChanged( parent );
+		}
+		else
+		{
+			parent.invalidate( );
+			parent.validate( );
+		}
+	}
+	
+	@Override
+	public List<Component> getDependencies( )
+	{
+		return Collections.emptyList( );
 	}
 }

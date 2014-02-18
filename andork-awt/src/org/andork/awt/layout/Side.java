@@ -1,7 +1,9 @@
 package org.andork.awt.layout;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Point;
@@ -94,6 +96,17 @@ public enum Side
 			return GridBagConstraints.NORTH;
 		}
 		
+		@Override
+		public String borderLayoutAnchor( )
+		{
+			return BorderLayout.NORTH;
+		}
+		
+		@Override
+		public Cursor resizeCursor( )
+		{
+			return Cursor.getPredefinedCursor( Cursor.N_RESIZE_CURSOR );
+		}
 	} ,
 	BOTTOM
 	{
@@ -174,6 +187,18 @@ public enum Side
 		public int gbcAnchor( )
 		{
 			return GridBagConstraints.SOUTH;
+		}
+		
+		@Override
+		public String borderLayoutAnchor( )
+		{
+			return BorderLayout.SOUTH;
+		}
+		
+		@Override
+		public Cursor resizeCursor( )
+		{
+			return Cursor.getPredefinedCursor( Cursor.S_RESIZE_CURSOR );
 		}
 	} ,
 	LEFT
@@ -257,6 +282,18 @@ public enum Side
 		{
 			return GridBagConstraints.WEST;
 		}
+		
+		@Override
+		public String borderLayoutAnchor( )
+		{
+			return BorderLayout.WEST;
+		}
+		
+		@Override
+		public Cursor resizeCursor( )
+		{
+			return Cursor.getPredefinedCursor( Cursor.W_RESIZE_CURSOR );
+		}
 	} ,
 	RIGHT
 	{
@@ -338,6 +375,18 @@ public enum Side
 		{
 			return GridBagConstraints.EAST;
 		}
+		
+		@Override
+		public String borderLayoutAnchor( )
+		{
+			return BorderLayout.EAST;
+		}
+		
+		@Override
+		public Cursor resizeCursor( )
+		{
+			return Cursor.getPredefinedCursor( Cursor.E_RESIZE_CURSOR );
+		}
 	};
 	
 	public static Side fromSwingConstant( int swingConstant )
@@ -358,6 +407,10 @@ public enum Side
 	}
 	
 	public abstract int swingConstant( );
+	
+	public abstract String borderLayoutAnchor( );
+	
+	public abstract Cursor resizeCursor( );
 	
 	public static Side fromGbcAnchor( int gbcAnchor )
 	{

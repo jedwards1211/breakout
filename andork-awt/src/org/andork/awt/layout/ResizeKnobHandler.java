@@ -72,8 +72,15 @@ public class ResizeKnobHandler extends MouseAdapter
 	{
 		if( target.getParent( ) != null )
 		{
-			target.getParent( ).invalidate( );
-			target.getParent( ).validate( );
+			if( target.getParent( ).getLayout( ) instanceof DelegatingLayoutManager )
+			{
+				( ( DelegatingLayoutManager ) target.getParent( ).getLayout( ) ).onLayoutChanged( target.getParent( ) );
+			}
+			else
+			{
+				target.getParent( ).invalidate( );
+				target.getParent( ).validate( );
+			}
 		}
 	}
 }
