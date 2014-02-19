@@ -1,0 +1,33 @@
+package org.andork.snakeyaml;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.andork.snakeyaml.YamlSpec.Format;
+
+public class YamlArrayList<E> extends YamlList<E>
+{
+	private YamlArrayList( Format<? super E> format )
+	{
+		super( format );
+	}
+	
+	public static <E> YamlArrayList<E> newInstance( Format<? super E> format )
+	{
+		return new YamlArrayList<E>( format );
+	}
+	
+	@Override
+	protected Collection<E> createCollection( )
+	{
+		return new ArrayList<E>( );
+	}
+	
+	public static <E> YamlArrayList<E> fromYaml( List<?> array , Format<? super E> format ) throws Exception
+	{
+		YamlArrayList<E> list = newInstance( format );
+		fromYaml( array , list );
+		return list;
+	}
+}
