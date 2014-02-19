@@ -33,5 +33,5 @@ public interface BasicPropertyChangeListener extends EventListener {
 	 *            the index of the property if applicable (if not, should be
 	 *            {@code <0}).
 	 */
-	public void propertyChange(Object source, Enum<?> property, Object oldValue, Object newValue, int index);
+	public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index);
 }

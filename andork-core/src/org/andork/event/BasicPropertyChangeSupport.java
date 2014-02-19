@@ -167,10 +167,10 @@ public class BasicPropertyChangeSupport implements Serializable
 		// Add all the PropertyChangeListenerProxys
 		if( children != null )
 		{
-			Iterator<Enum<?>> iterator = children.keySet( ).iterator( );
+			Iterator<Object> iterator = children.keySet( ).iterator( );
 			while( iterator.hasNext( ) )
 			{
-				Enum<?> key = iterator.next( );
+				Object key = iterator.next( );
 				BasicPropertyChangeSupport child = ( BasicPropertyChangeSupport ) children.get( key );
 				BasicPropertyChangeListener[ ] childListeners = child.getPropertyChangeListeners( );
 				for( int index = childListeners.length - 1 ; index >= 0 ; index-- )
@@ -193,7 +193,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 *            The BasicPropertyChangeListener to be added
 	 */
 	
-	public synchronized void addPropertyChangeListener( Enum<?> propertyName , BasicPropertyChangeListener listener )
+	public synchronized void addPropertyChangeListener( Object propertyName , BasicPropertyChangeListener listener )
 	{
 		if( listener == null || propertyName == null )
 		{
@@ -201,7 +201,7 @@ public class BasicPropertyChangeSupport implements Serializable
 		}
 		if( children == null )
 		{
-			children = new java.util.Hashtable<Enum<?>, BasicPropertyChangeSupport>( );
+			children = new java.util.Hashtable<Object, BasicPropertyChangeSupport>( );
 		}
 		BasicPropertyChangeSupport child = ( BasicPropertyChangeSupport ) children.get( propertyName );
 		if( child == null )
@@ -223,7 +223,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 *            The BasicPropertyChangeListener to be removed
 	 */
 	
-	public synchronized void removePropertyChangeListener( Enum<?> propertyName , BasicPropertyChangeListener listener )
+	public synchronized void removePropertyChangeListener( Object propertyName , BasicPropertyChangeListener listener )
 	{
 		if( listener == null || propertyName == null )
 		{
@@ -249,7 +249,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 * @return all of the <code>PropertyChangeListeners</code> associated with the named property. If no such listeners have been added, or if
 	 *         <code>propertyName</code> is null, an empty array is returned.
 	 */
-	public synchronized BasicPropertyChangeListener[ ] getPropertyChangeListeners( Enum<?> propertyName )
+	public synchronized BasicPropertyChangeListener[ ] getPropertyChangeListeners( Object propertyName )
 	{
 		ArrayList returnList = new ArrayList( );
 		
@@ -276,7 +276,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 * @param newValue
 	 *            The new value of the property.
 	 */
-	public void firePropertyChange( Object source , Enum<?> propertyName , int oldValue , int newValue )
+	public void firePropertyChange( Object source , Object propertyName , int oldValue , int newValue )
 	{
 		if( oldValue == newValue )
 		{
@@ -297,7 +297,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 * @param newValue
 	 *            The new value of the property.
 	 */
-	public void firePropertyChange( Object source , Enum<?> propertyName , boolean oldValue , boolean newValue )
+	public void firePropertyChange( Object source , Object propertyName , boolean oldValue , boolean newValue )
 	{
 		firePropertyChange( source , propertyName , Boolean.valueOf( oldValue ) , Boolean.valueOf( newValue ) );
 	}
@@ -308,7 +308,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 * @param evt
 	 *            The PropertyChangeEvent object.
 	 */
-	public void firePropertyChange( Object source , Enum<?> propertyName , Object oldValue , Object newValue )
+	public void firePropertyChange( Object source , Object propertyName , Object oldValue , Object newValue )
 	{
 		if( oldValue != null && newValue != null && oldValue.equals( newValue ) )
 		{
@@ -323,7 +323,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 * @param evt
 	 *            The PropertyChangeEvent object.
 	 */
-	public void firePropertyChange( Object source , Enum<?> propertyName , Object oldValue , Object newValue , int index )
+	public void firePropertyChange( Object source , Object propertyName , Object oldValue , Object newValue , int index )
 	{
 		if( oldValue != null && newValue != null && oldValue.equals( newValue ) )
 		{
@@ -364,7 +364,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 *            The new value of the property.
 	 * @since 1.5
 	 */
-	public void fireIndexedPropertyChange( Object source , Enum<?> propertyName , int index , Object oldValue , Object newValue )
+	public void fireIndexedPropertyChange( Object source , Object propertyName , int index , Object oldValue , Object newValue )
 	{
 		firePropertyChange( source , propertyName , oldValue , newValue , index );
 	}
@@ -386,7 +386,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 *            The new value of the property.
 	 * @since 1.5
 	 */
-	public void fireIndexedPropertyChange( Object source , Enum<?> propertyName , int index , int oldValue , int newValue )
+	public void fireIndexedPropertyChange( Object source , Object propertyName , int index , int oldValue , int newValue )
 	{
 		if( oldValue == newValue )
 		{
@@ -412,7 +412,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 *            The new value of the property.
 	 * @since 1.5
 	 */
-	public void fireIndexedPropertyChange( Object source , Enum<?> propertyName , int index , boolean oldValue , boolean newValue )
+	public void fireIndexedPropertyChange( Object source , Object propertyName , int index , boolean oldValue , boolean newValue )
 	{
 		if( oldValue == newValue )
 		{
@@ -429,7 +429,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 *            the property name.
 	 * @return true if there are one or more listeners for the given property
 	 */
-	public synchronized boolean hasListeners( Enum<?> propertyName )
+	public synchronized boolean hasListeners( Object propertyName )
 	{
 		if( listeners != null )
 		{
@@ -487,7 +487,7 @@ public class BasicPropertyChangeSupport implements Serializable
 	 * @serial
 	 * @since 1.2
 	 */
-	private Hashtable<Enum<?>, BasicPropertyChangeSupport>	children;
+	private Hashtable<Object, BasicPropertyChangeSupport>	children;
 	
 	/**
 	 * Internal version number
@@ -560,7 +560,7 @@ public class BasicPropertyChangeSupport implements Serializable
 		 *            The BasicPropertyChangeListener to be added
 		 */
 		
-		public synchronized void addPropertyChangeListener( Enum<?> propertyName , BasicPropertyChangeListener listener )
+		public synchronized void addPropertyChangeListener( Object propertyName , BasicPropertyChangeListener listener )
 		{
 			BasicPropertyChangeSupport.this.addPropertyChangeListener( propertyName , listener );
 		}
@@ -576,7 +576,7 @@ public class BasicPropertyChangeSupport implements Serializable
 		 *            The BasicPropertyChangeListener to be removed
 		 */
 		
-		public synchronized void removePropertyChangeListener( Enum<?> propertyName , BasicPropertyChangeListener listener )
+		public synchronized void removePropertyChangeListener( Object propertyName , BasicPropertyChangeListener listener )
 		{
 			BasicPropertyChangeSupport.this.removePropertyChangeListener( propertyName , listener );
 		}
@@ -589,7 +589,7 @@ public class BasicPropertyChangeSupport implements Serializable
 		 * @return all of the <code>PropertyChangeListeners</code> associated with the named property. If no such listeners have been added, or if
 		 *         <code>propertyName</code> is null, an empty array is returned.
 		 */
-		public synchronized BasicPropertyChangeListener[ ] getPropertyChangeListeners( Enum<?> propertyName )
+		public synchronized BasicPropertyChangeListener[ ] getPropertyChangeListeners( Object propertyName )
 		{
 			return BasicPropertyChangeSupport.this.getPropertyChangeListeners( propertyName );
 		}
@@ -602,7 +602,7 @@ public class BasicPropertyChangeSupport implements Serializable
 		 *            the property name.
 		 * @return true if there are one or more listeners for the given property
 		 */
-		public synchronized boolean hasListeners( Enum<?> propertyName )
+		public synchronized boolean hasListeners( Object propertyName )
 		{
 			return BasicPropertyChangeSupport.this.hasListeners( propertyName );
 		}

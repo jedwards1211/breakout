@@ -3,11 +3,11 @@ package org.andork.swing.async;
 import javax.swing.SwingUtilities;
 
 import org.andork.event.BasicPropertyChangeSupport;
-import org.andork.swing.async.Task.Property;
-import org.andork.swing.async.Task.State;
+import org.andork.event.HierarchicalBasicPropertyChangeSupport;
+import org.andork.model.Model;
 import org.andork.util.ArrayUtils;
 
-public abstract class Task
+public abstract class Task implements Model
 {
 	public static enum Property
 	{
@@ -44,7 +44,7 @@ public abstract class Task
 		setStatus( status );
 	}
 	
-	public BasicPropertyChangeSupport.External changeSupport( )
+	public HierarchicalBasicPropertyChangeSupport.External changeSupport( )
 	{
 		return propertyChangeSupport.external( );
 	}

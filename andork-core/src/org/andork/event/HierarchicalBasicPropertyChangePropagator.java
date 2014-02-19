@@ -11,7 +11,7 @@ public class HierarchicalBasicPropertyChangePropagator implements HierarchicalBa
 	}
 
 	@Override
-	public void propertyChange(Object source, Enum<?> property, Object oldValue, Object newValue, int index) {
+	public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
 		if (index < 0) {
 			parentChangeSupport.firePropertyChange(new SourcePath(parent, source), property, oldValue, newValue);
 		} else {

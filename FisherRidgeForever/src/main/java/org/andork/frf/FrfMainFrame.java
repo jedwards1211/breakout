@@ -10,15 +10,15 @@ import javax.swing.JFrame;
 import org.andork.swing.DoSwing;
 
 @SuppressWarnings( "serial" )
-public class MainFrame extends JFrame
+public class FrfMainFrame extends JFrame
 {
-	MainPane	mainPane;
+	FrfMainPane	frfMainPane;
 	
-	public MainFrame( )
+	public FrfMainFrame( )
 	{
 		super( "Fisher Ridge Forever" );
-		mainPane = new MainPane( );
-		getContentPane( ).add( mainPane , BorderLayout.CENTER );
+		frfMainPane = new FrfMainPane( );
+		getContentPane( ).add( frfMainPane , BorderLayout.CENTER );
 		Dimension screenSize = Toolkit.getDefaultToolkit( ).getScreenSize( );
 		setSize( screenSize.width * 2 / 3 , screenSize.height * 2 / 3 );
 		setDefaultCloseOperation( EXIT_ON_CLOSE );
@@ -32,7 +32,7 @@ public class MainFrame extends JFrame
 			@Override
 			public void run( )
 			{
-				MainFrame frame = new MainFrame( );
+				FrfMainFrame frame = new FrfMainFrame( );
 				frame.setVisible( true );
 				frame.setExtendedState( JFrame.MAXIMIZED_BOTH );
 			}

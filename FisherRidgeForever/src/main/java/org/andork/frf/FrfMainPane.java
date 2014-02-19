@@ -25,13 +25,13 @@ import org.andork.frf.update.UpdateStatusPanel;
 import org.andork.frf.update.UpdateStatusPanelController;
 
 @SuppressWarnings( "serial" )
-public class MainPane extends JPanel
+public class FrfMainPane extends JPanel
 {
 	private ExecutorServiceBackgroundLoaded<MapsView>	mapsView;
 	private BackgroundLoadedPane<MapsView>				mapsViewHolder;
 	private ExecutorService								executor;
 	
-	public MainPane( )
+	public FrfMainPane( )
 	{
 		init( );
 	}

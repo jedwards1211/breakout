@@ -10,7 +10,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 import org.andork.swing.DoSwing;
 import org.apache.commons.io.FileUtils;
 
-public class MainLauncher
+public class FrfMainLauncher
 {
 	public static void main( String[ ] args )
 	{
@@ -59,6 +59,6 @@ public class MainLauncher
 			}.start( );
 		}
 		
-		MainFrame.main( args );
+		FrfMainFrame.main( args );
 	}
 }
