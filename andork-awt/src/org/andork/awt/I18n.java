@@ -1,21 +1,27 @@
 package org.andork.awt;
 
+import static org.andork.awt.CheckEDT.checkEDT;
+
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.AbstractButton;
 import javax.swing.JLabel;
 
-import static org.andork.awt.CheckEDT.checkEDT;
-
 public class I18n
 {
+	private static final Logger				logger		= Logger.getLogger( I18n.class.getName( ) );
+	
 	private Locale							locale;
 	
 	private final Map<String, Localizer>	localizers	= new HashMap<String, Localizer>( );
@@ -71,6 +77,8 @@ public class I18n
 		
 		private final WeakHashMap<Object, I18nUpdater<?>>	updaters	= new WeakHashMap<Object, I18nUpdater<?>>( );
 		
+		private final Set<String>							missingKeys	= new HashSet<String>( );
+		
 		private Localizer( String name )
 		{
 			super( );
@@ -110,6 +118,10 @@ public class I18n
 			}
 			catch( Exception ex )
 			{
+				if( missingKeys.add( key ) )
+				{
+					logger.log( Level.WARNING , "Missing I18n key: \"" + key + '"' , ex );
+				}
 				return key;
 			}
 		}
@@ -122,6 +134,10 @@ public class I18n
 			}
 			catch( Exception ex )
 			{
+				if( missingKeys.add( key ) )
+				{
+					logger.log( Level.WARNING , "Missing I18n key: \"" + key + '"' , ex );
+				}
 				return key;
 			}
 		}

@@ -140,6 +140,8 @@ public class PlotAxisController
 	protected void setAxisRange( double start , double end )
 	{
 		view.getAxisConversion( ).set( start , 0 , end , view.getViewSpan( ) );
+		// fire an event
+		view.setAxisConversion( view.getAxisConversion( ) );
 		view.repaint( );
 		for( Component plot : view.getPlots( ) )
 		{

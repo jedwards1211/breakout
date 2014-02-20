@@ -14,11 +14,14 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.JTable;
+import javax.swing.RowFilter;
 import javax.swing.TransferHandler;
 import javax.swing.table.TableModel;
 
+import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.model.SurveyStation;
+import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.old.FilteringTableModel;
 import org.andork.swing.table.old.HighlightingTable;
@@ -38,93 +41,6 @@ public class SurveyTable extends AnnotatingJTable
 	public SurveyTable( )
 	{
 		super( new SurveyTableModel( ) );
-		
-		setTransferHandler( new TransferHandler( )
-		{
-			@Override
-			public boolean canImport( TransferSupport support )
-			{
-				return support.isDataFlavorSupported( DataFlavor.stringFlavor ) || support.isDataFlavorSupported( DataFlavor.javaFileListFlavor );
-			}
-			
-			@Override
-			public boolean importData( TransferSupport support )
-			{
-				String text = null;
-				try
-				{
-					if( support.isDataFlavorSupported( DataFlavor.stringFlavor ) )
-					{
-						text = ( String ) support.getTransferable( ).getTransferData( DataFlavor.stringFlavor );
-					}
-					else if( support.isDataFlavorSupported( DataFlavor.javaFileListFlavor ) )
-					{
-						text = getTextFromFileList( support );
-					}
-					else
-					{
-						return false;
-					}
-				}
-				catch( Exception ex )
-				{
-					ex.printStackTrace( );
-					return false;
-				}
-				
-				TableModel model = getModel( );
-				
-				JTable.DropLocation dropLocation = ( JTable.DropLocation ) support.getDropLocation( );
-				
-				int row = dropLocation.getRow( );
-				for( String line : text.split( "\r|\n|\r\n|\n\r" ) )
-				{
-					int column = dropLocation.getColumn( );
-					for( String cell : line.split( "\\t" ) )
-					{
-						model.setValueAt( cell , row , column );
-						column++ ;
-					}
-					
-					row++ ;
-				}
-				
-				return true;
-			}
-			
-			private String getTextFromFileList( TransferSupport support ) throws IOException , UnsupportedFlavorException
-			{
-				List<File> files = null;
-				files = ( List<File> ) support.getTransferable( ).getTransferData( DataFlavor.javaFileListFlavor );
-				
-				if( files.isEmpty( ) )
-				{
-					return null;
-				}
-				
-				StringBuilder sb = new StringBuilder( );
-				
-				BufferedReader reader = new BufferedReader( new FileReader( files.get( 0 ) ) );
-				
-				try
-				{
-					String line;
-					while( ( line = reader.readLine( ) ) != null )
-					{
-						sb.append( line ).append( '\n' );
-					}
-				}
-				finally
-				{
-					if( reader != null )
-					{
-						reader.close( );
-					}
-				}
-				
-				return sb.toString( );
-			}
-		} );
 	}
 	
 	public static final int	FROM_COLUMN		= 0;

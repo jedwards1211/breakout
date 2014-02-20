@@ -1,0 +1,220 @@
+package org.andork.frf;
+
+import static org.andork.awt.event.UIBindings.bind;
+
+import java.awt.Color;
+import java.awt.Insets;
+import java.util.Arrays;
+
+import javax.swing.JButton;
+import javax.swing.JLabel;
+import javax.swing.JSlider;
+
+import org.andork.awt.ColorUtils;
+import org.andork.awt.GridBagWizard;
+import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.awt.layout.Corner;
+import org.andork.awt.layout.Drawer;
+import org.andork.awt.layout.Side;
+import org.andork.event.Binder;
+import org.andork.frf.model.FloatRange;
+import org.andork.frf.model.FloatRangeFormat;
+import org.andork.plot.PlotAxisFloatRangeBinding;
+import org.andork.snakeyaml.YamlObject;
+import org.andork.snakeyaml.YamlSpec;
+import org.andork.swing.PaintablePanel;
+import org.andork.swing.border.GradientFillBorder;
+import org.andork.swing.border.InnerGradientBorder;
+import org.andork.swing.border.MultipleGradientFillBorder;
+import org.andork.swing.border.OverrideInsetsBorder;
+import org.andork.swing.selector.DefaultSelector;
+
+import com.andork.plot.PlotAxis;
+import com.andork.plot.PlotAxis.LabelPosition;
+import com.andork.plot.PlotAxis.Orientation;
+import com.andork.plot.PlotAxisController;
+
+public class SettingsDrawer extends Drawer
+{
+	
+	JButton						updateViewButton;
+	DefaultSelector<CameraView>	modeSelector;
+	JSlider						mouseSensitivitySlider;
+	PlotAxis					distColorationAxis;
+	PaintablePanel				distColorationAxisPanel;
+	PlotAxis					paramColorationAxis;
+	PaintablePanel				paramColorationAxisPanel;
+	PlotAxis					highlightDistAxis;
+	PaintablePanel				highlightDistAxisPanel;
+	JButton						debugButton	= new JButton( );
+	
+	Binder<YamlObject<Model>>	binder;
+	
+	public SettingsDrawer( Binder<YamlObject<Model>> binder )
+	{
+		this.binder = binder;
+		
+		delegate( ).dockingSide( Side.RIGHT );
+		mainResizeHandle( );
+		pinButton( );
+		pinButtonDelegate( ).corner( Corner.TOP_LEFT ).side( Side.LEFT );
+		
+		setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors(
+				ColorUtils.darkerColor( getBackground( ) , 0.05 ) ,
+				ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
+		setBorder( new OverrideInsetsBorder(
+				new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
+				new Insets( 3 , 8 , 3 , 3 ) ) );
+		
+		createComponents( );
+		createLayout( );
+		createListeners( );
+		createBindings( );
+		
+		binder.modelToView( );
+	}
+	
+	private void createComponents( )
+	{
+		updateViewButton = new JButton( "Update View" );
+		
+		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
+		
+		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		distColorationAxisPanel = PaintablePanel.wrap( distColorationAxis );
+		distColorationAxisPanel.setUnderpaintBorder(
+				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
+						new float[ ] { 0f , 1f } , new Color[ ] { ColorUtils.alphaColor( darkColor , 0 ) , darkColor } ) );
+		
+		distColorationAxis.getAxisConversion( ).set( 0 , 0 , 10000 , 200 );
+		distColorationAxis.setForeground( Color.WHITE );
+		distColorationAxis.setMajorTickColor( Color.WHITE );
+		distColorationAxis.setMinorTickColor( Color.WHITE );
+		
+		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		paramColorationAxisPanel = PaintablePanel.wrap( paramColorationAxis );
+		paramColorationAxisPanel.setUnderpaintBorder(
+				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
+						new float[ ] { 0f , 1f } , new Color[ ] { Color.RED , Color.BLUE } ) );
+		
+		paramColorationAxis.setForeground( Color.WHITE );
+		paramColorationAxis.setMajorTickColor( Color.WHITE );
+		paramColorationAxis.setMinorTickColor( Color.WHITE );
+		
+		highlightDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		highlightDistAxisPanel = PaintablePanel.wrap( highlightDistAxis );
+		highlightDistAxisPanel.setUnderpaintBorder(
+				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
+						new float[ ] { 0f , 1f } , new Color[ ] { Color.YELLOW , ColorUtils.alphaColor( Color.YELLOW , 0 ) } ) );
+		
+		highlightDistAxis.setForeground( Color.BLACK );
+		highlightDistAxis.setMajorTickColor( Color.BLACK );
+		highlightDistAxis.setMinorTickColor( Color.BLACK );
+		
+		modeSelector = new DefaultSelector<CameraView>( );
+		modeSelector.setAvailableValues( Arrays.asList( CameraView.values( ) ) );
+		
+		mouseSensitivitySlider = new JSlider( );
+		mouseSensitivitySlider.setValue( 20 );
+		mouseSensitivitySlider.setOpaque( false );
+	}
+	
+	private void createLayout( )
+	{
+		GridBagWizard w = GridBagWizard.create( this );
+		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
+		JLabel modeLabel = new JLabel( "View:" );
+		w.put( updateViewButton ).xy( 0 , 0 ).fillx( 1.0 );
+		w.put( modeLabel ).below( updateViewButton ).weightx( 1.0 ).west( );
+		w.put( modeSelector.getComboBox( ) ).below( modeLabel ).fillx( ).north( );
+		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
+		w.put( sensLabel ).below( modeSelector.getComboBox( ) ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).north( );
+		JLabel distLabel = new JLabel( "Distance coloration:" );
+		w.put( distLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( distColorationAxisPanel ).belowLast( ).fillx( );
+		JLabel paramLabel = new JLabel( "Depth coloration:" );
+		w.put( paramLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( paramColorationAxisPanel ).belowLast( ).fillx( );
+		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
+		w.put( highlightRangeLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
+		
+		w.put( debugButton ).belowLast( ).southwest( ).weighty( 1.0 );
+	}
+	
+	private void createListeners( )
+	{
+		new PlotAxisController( distColorationAxis );
+		new PlotAxisController( paramColorationAxis );
+		new PlotAxisController( highlightDistAxis );
+	}
+	
+	private void createBindings( )
+	{
+		bind( binder , modeSelector , Model.cameraView );
+		bind( binder , mouseSensitivitySlider , Model.mouseSensitivity );
+		binder.bind( new PlotAxisFloatRangeBinding( Model.distRange , distColorationAxis ) );
+		binder.bind( new PlotAxisFloatRangeBinding( Model.paramRange , paramColorationAxis ) );
+		binder.bind( new PlotAxisFloatRangeBinding( Model.highlightRange , highlightDistAxis ) );
+	}
+	
+	public JButton updateViewButton( )
+	{
+		return updateViewButton;
+	}
+	
+	public void setModel( YamlObject<Model> model )
+	{
+		binder.setModel( model );
+		binder.modelToView( );
+	}
+	
+	public YamlObject<Model> getModel( )
+	{
+		return binder.getModel( );
+	}
+	
+	public static enum CameraView
+	{
+		PERSPECTIVE( "Perspective" ) ,
+		PLAN( "Plan" ) ,
+		NORTH_FACING_PROFILE( "North-Facing Profile" ) ,
+		SOUTH_FACING_PROFILE( "South-Facing Profile" ) ,
+		EAST_FACING_PROFILE( "East-Facing Profile" ) ,
+		WEST_FACING_PROFILE( "West-Facing Profile" );
+		
+		private String	displayText;
+		
+		CameraView( String displayText )
+		{
+			this.displayText = displayText;
+		}
+		
+		public String toString( )
+		{
+			return displayText;
+		}
+	}
+	
+	public static class Model extends YamlSpec<Model>
+	{
+		public static final Attribute<CameraView>	cameraView			= enumAttribute( "cameraView" , CameraView.class );
+		public static final Attribute<Integer>		mouseSensitivity	= integerAttribute( "mouseSensitivity" );
+		public static final Attribute<FloatRange>	distRange			= new Attribute<FloatRange>( "distRange" , FloatRangeFormat.instance );
+		public static final Attribute<FloatRange>	paramRange			= new Attribute<FloatRange>( "paramRange" , FloatRangeFormat.instance );
+		public static final Attribute<FloatRange>	highlightRange		= new Attribute<FloatRange>( "highlightRange" , FloatRangeFormat.instance );
+		
+		private Model( )
+		{
+			super( cameraView , mouseSensitivity , distRange , paramRange , highlightRange );
+		}
+		
+		public static final Model	instance	= new Model( );
+	}
+	
+	public PlotAxis highlightDistAxis( )
+	{
+		return highlightDistAxis;
+	}
+}

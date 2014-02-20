@@ -4,10 +4,10 @@ import javax.swing.SwingUtilities;
 
 import org.andork.event.BasicPropertyChangeSupport;
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
-import org.andork.model.Model;
+import org.andork.model.HasChangeSupport;
 import org.andork.util.ArrayUtils;
 
-public abstract class Task implements Model
+public abstract class Task implements HasChangeSupport
 {
 	public static enum Property
 	{

@@ -18,7 +18,6 @@ import org.andork.swing.PaintablePanel;
 @SuppressWarnings( "serial" )
 public class Drawer extends PaintablePanel
 {
-	Component				content;
 	DrawerLayoutDelegate	delegate;
 	JToggleButton			pinButton;
 	TabLayoutDelegate		pinButtonDelegate;
@@ -28,6 +27,7 @@ public class Drawer extends PaintablePanel
 	
 	public Drawer( )
 	{
+		setOpaque( true );
 		setLayout( new BorderLayout( ) );
 		delegate = new DrawerLayoutDelegate( this , Side.TOP );
 	}
@@ -35,8 +35,6 @@ public class Drawer extends PaintablePanel
 	public Drawer( Component content )
 	{
 		this( );
-		
-		this.content = content;
 		add( content , BorderLayout.CENTER );
 	}
 	
@@ -56,9 +54,9 @@ public class Drawer extends PaintablePanel
 		if( pinButton == null )
 		{
 			pinButton = new JToggleButton( );
-			pinButton.setMargin( new Insets( 0 , 0 , 0 , 0 ) );
-			pinButton.setIcon( new ImageIcon( getClass( ).getResource( "unpinned.png" ) ) );
-			pinButton.setSelectedIcon( new ImageIcon( getClass( ).getResource( "pinned.png" ) ) );
+			pinButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
+			pinButton.setIcon( new ImageIcon( Drawer.class.getResource( "unpinned.png" ) ) );
+			pinButton.setSelectedIcon( new ImageIcon( Drawer.class.getResource( "pinned.png" ) ) );
 			pinButton.addActionListener( new ActionListener( )
 			{
 				@Override
@@ -88,9 +86,9 @@ public class Drawer extends PaintablePanel
 		if( maxButton == null )
 		{
 			maxButton = new JToggleButton( );
-			maxButton.setMargin( new Insets( 0 , 0 , 0 , 0 ) );
-			maxButton.setIcon( new ImageIcon( getClass( ).getResource( "maximize.png" ) ) );
-			maxButton.setSelectedIcon( new ImageIcon( getClass( ).getResource( "restore.png" ) ) );
+			maxButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
+			maxButton.setIcon( new ImageIcon( Drawer.class.getResource( "maximize.png" ) ) );
+			maxButton.setSelectedIcon( new ImageIcon( Drawer.class.getResource( "restore.png" ) ) );
 			maxButton.addActionListener( new ActionListener( )
 			{
 				@Override

@@ -6,95 +6,70 @@ import static org.andork.math3d.Vecmath.scale3;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Container;
-import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.media.opengl.awt.GLCanvas;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSlider;
-import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.TableColumn;
 
-import org.andork.awt.ColorUtils;
 import org.andork.awt.GridBagWizard;
-import org.andork.awt.GridBagWizard.DefaultAutoInsets;
-import org.andork.awt.I18n;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
-import org.andork.awt.layout.DrawerLayoutDelegate;
-import org.andork.awt.layout.ResizeKnobHandler;
 import org.andork.awt.layout.Side;
-import org.andork.awt.layout.TabLayoutDelegate;
-import org.andork.event.HierarchicalBasicPropertyChangeAdapter;
+import org.andork.event.Binder;
+import org.andork.event.Binder.BindingAdapter;
+import org.andork.frf.SettingsDrawer.CameraView;
 import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
+import org.andork.frf.model.FloatRange;
 import org.andork.frf.model.Survey3dModel;
 import org.andork.frf.model.Survey3dModel.SelectionEditor;
 import org.andork.frf.model.Survey3dModel.Shot;
 import org.andork.frf.model.Survey3dModel.ShotPickContext;
 import org.andork.frf.model.Survey3dModel.ShotPickResult;
 import org.andork.frf.model.SurveyShot;
-import org.andork.frf.update.UpdateProperties;
-import org.andork.frf.update.UpdateStatus;
-import org.andork.frf.update.UpdateStatusPanel;
-import org.andork.frf.update.UpdateStatusPanelController;
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLScene;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
+import org.andork.snakeyaml.YamlObject;
+import org.andork.snakeyaml.YamlSpec;
 import org.andork.spatial.Rectmath;
-import org.andork.swing.AnnotatingRowSorter.ExecutorServiceSortRunner;
+import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.DoSwing;
 import org.andork.swing.DoSwingR2;
-import org.andork.swing.PaintablePanel;
-import org.andork.swing.SpinnerButtonUI;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Task;
-import org.andork.swing.async.TaskList;
 import org.andork.swing.async.TaskService;
-import org.andork.swing.border.GradientFillBorder;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.LayeredBorder;
-import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
+import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 
 import com.andork.plot.AxisLinkButton;
@@ -111,82 +86,50 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
-	final double[ ]																					fromLoc			= new double[ 3 ];
-	final double[ ]																					toLoc			= new double[ 3 ];
-	final double[ ]																					toToLoc			= new double[ 3 ];
-	final double[ ]																					leftAtTo		= new double[ 3 ];
-	final double[ ]																					leftAtTo2		= new double[ 3 ];
-	final double[ ]																					leftAtFrom		= new double[ 3 ];
+	TaskService						taskService;
+	final double[ ]					fromLoc			= new double[ 3 ];
+	final double[ ]					toLoc			= new double[ 3 ];
+	final double[ ]					toToLoc			= new double[ 3 ];
+	final double[ ]					leftAtTo		= new double[ 3 ];
+	final double[ ]					leftAtTo2		= new double[ 3 ];
+	final double[ ]					leftAtFrom		= new double[ 3 ];
 	
-	PlotAxis																						xaxis;
-	PlotAxis																						yaxis;
-	AxisLinkButton																					axisLinkButton;
-	PlotAxis																						distColorationAxis;
-	PaintablePanel																					distColorationAxisPanel;
-	PlotAxis																						paramColorationAxis;
-	PaintablePanel																					paramColorationAxisPanel;
-	PlotAxis																						highlightDistAxis;
-	PaintablePanel																					highlightDistAxisPanel;
+	PlotAxis						xaxis;
+	PlotAxis						yaxis;
+	AxisLinkButton					axisLinkButton;
+	Plot							plot;
+	JPanel							plotPanel;
+	JPanel							mainPanel;
+	JLayeredPane					layeredPane;
 	
-	PaintablePanel																					settingsPanel;
-	DrawerLayoutDelegate																			settingsDrawerDelegate;
-	JToggleButton																					pinSettingsPanelButton;
-	JSlider																							mouseSensitivitySlider;
+	PlotController					plotController;
+	MouseLooper						mouseLooper;
+	MousePickHandler				pickHandler;
+	MouseAdapterChain				mouseAdapterChain;
 	
-	Plot																							plot;
-	JPanel																							plotPanel;
-	JPanel																							mainPanel;
-	JLayeredPane																					layeredPane;
+	DrawerAutoshowController		autoshowController;
 	
-	PlotController																					plotController;
-	MouseLooper																						mouseLooper;
-	MousePickHandler																				pickHandler;
-	MouseAdapterChain																				mouseAdapterChain;
+	TableSelectionHandler			selectionHandler;
 	
-	DrawerAutoshowController																		autoshowController;
+	SurveyDrawer					surveyDrawer;
+	TaskListDrawer					taskListDrawer;
+	SettingsDrawer					settingsDrawer;
 	
-	TableSelectionHandler																			selectionHandler;
+	Survey3dModel					model3d;
 	
-	JComboBox																						modeComboBox;
+	float[ ]						v				= newMat4f( );
 	
-	JPanel																							surveyTableDrawer;
-	DrawerLayoutDelegate																			surveyTableDrawerDelegate;
-	JButton																							surveyTableResizeHandle;
+	int								debugMbrCount	= 0;
+	List<BasicJOGLObject>			debugMbrs		= new ArrayList<BasicJOGLObject>( );
 	
-	TextComponentWithHintAndClear																	highlightField;
-	TextComponentWithHintAndClear																	filterField;
+	ShotPickContext					spc				= new ShotPickContext( );
 	
-	SurveyTable																						surveyTable;
-	DefaultAnnotatingJTableSetup<SurveyTableModel, ? super RowFilter<SurveyTableModel, Integer>>	surveyTableSetup;
+	final LinePlaneIntersection3f	lpx				= new LinePlaneIntersection3f( );
+	final float[ ]					p0				= new float[ 3 ];
+	final float[ ]					p1				= new float[ 3 ];
+	final float[ ]					p2				= new float[ 3 ];
 	
-	JPanel																							statusBar;
-	UpdateStatusPanel																				updateStatusPanel;
-	UpdateStatusPanelController																		updateStatusPanelController;
-	
-	JButton																							updateViewButton;
-	
-	Survey3dModel																					model;
-	
-	float[ ]																						v				= newMat4f( );
-	
-	int																								debugMbrCount	= 0;
-	List<BasicJOGLObject>																			debugMbrs		= new ArrayList<BasicJOGLObject>( );
-	
-	ShotPickContext																					spc				= new ShotPickContext( );
-	
-	final LinePlaneIntersection3f																	lpx				= new LinePlaneIntersection3f( );
-	final float[ ]																					p0				= new float[ 3 ];
-	final float[ ]																					p1				= new float[ 3 ];
-	final float[ ]																					p2				= new float[ 3 ];
-	private JToggleButton																			pinSurveyTableButton;
-	
-	private JButton																					debugButton		= new JButton( );
-	
-	TaskService																						taskService;
-	
-	Drawer																							taskListDrawer;
-	TaskList																						taskList;
-	JScrollPane																						taskListScrollPane;
+	final Binder<YamlObject<Model>>	binder			= new Binder<YamlObject<Model>>( );
 	
 	public MapsView( )
 	{
@@ -195,102 +138,32 @@ public class MapsView extends BasicJOGLSetup
 		JLabel highlightLabel = new JLabel( "Highlight: " );
 		JLabel filterLabel = new JLabel( "Filter: " );
 		
-		highlightField = new TextComponentWithHintAndClear( "Enter regular expression" );
-		filterField = new TextComponentWithHintAndClear( "Enter regular expression" );
+		final SortRunner sortRunner = new SortRunner( )
+		{
+			@Override
+			public void submit( final Runnable r )
+			{
+				Task task = new Task( "Sorting survey table..." )
+				{
+					@Override
+					protected void execute( )
+					{
+						r.run( );
+					}
+				};
+				
+				taskService.submit( task );
+			}
+		};
 		
 		new DoSwing( )
 		{
 			@Override
 			public void run( )
 			{
-				surveyTable = new SurveyTable( );
-				surveyTableSetup = new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>(
-						surveyTable , new SortRunner( )
-						{
-							@Override
-							public void submit( final Runnable r )
-							{
-								Task task = new Task( "Sorting survey table..." )
-								{
-									@Override
-									protected void execute( )
-									{
-										r.run( );
-									}
-								};
-								
-								taskService.submit( task );
-							}
-						} );
-				surveyTableSetup.sorter.setModelCopier( new SurveyTableModelCopier( ) );
+				surveyDrawer = new SurveyDrawer( sortRunner );
 			}
 		};
-		
-		highlightField.textComponent.getDocument( ).addDocumentListener(
-				DefaultAnnotatingJTableSetup.createHighlightFieldListener(
-						surveyTableSetup , highlightField.textComponent , Color.YELLOW ) );
-		
-		filterField.textComponent.getDocument( ).addDocumentListener(
-				DefaultAnnotatingJTableSetup.createFilterFieldListener(
-						surveyTableSetup , filterField.textComponent ) );
-		
-		surveyTableDrawer = new JPanel( );
-		
-		surveyTableResizeHandle = new JButton( "" );
-		surveyTableResizeHandle.setUI( new BasicButtonUI( ) );
-		surveyTableResizeHandle.setMargin( new Insets( 0 , 0 , 0 , 0 ) );
-		surveyTableResizeHandle.setPreferredSize( new Dimension( 200 , 3 ) );
-		surveyTableResizeHandle.setCursor( Cursor.getPredefinedCursor( Cursor.N_RESIZE_CURSOR ) );
-		
-		ResizeKnobHandler surveyTableResizeHandler = new ResizeKnobHandler( surveyTableDrawer , Side.TOP )
-		{
-			protected void onResize( Component target )
-			{
-				super.onResize( target );
-				Window w = SwingUtilities.getWindowAncestor( target );
-				if( w != null )
-				{
-					w.invalidate( );
-					w.validate( );
-					w.repaint( );
-				}
-			}
-		};
-		surveyTableResizeHandle.addMouseListener( surveyTableResizeHandler );
-		surveyTableResizeHandle.addMouseMotionListener( surveyTableResizeHandler );
-		
-		GridBagWizard gbw = GridBagWizard.create( surveyTableDrawer );
-		
-		JButton maximizeSurveyTableButton = new JButton( "Max" );
-		
-		gbw.defaults( ).autoinsets( new DefaultAutoInsets( 2 , 2 ) );
-		gbw.put( surveyTableResizeHandle ).xy( 0 , 0 ).fillx( 1.0 ).remWidth( );
-		gbw.put( filterLabel ).xy( 0 , 1 ).west( ).insets( 2 , 2 , 0 , 0 );
-		gbw.put( filterField ).rightOf( filterLabel ).fillboth( 1.0 , 0.0 );
-		gbw.put( highlightLabel ).rightOf( filterField ).west( ).insets( 2 , 10 , 0 , 0 );
-		gbw.put( highlightField ).rightOf( highlightLabel ).fillboth( 1.0 , 0.0 );
-		gbw.put( maximizeSurveyTableButton ).rightOf( highlightField ).east( );
-		gbw.put( surveyTableSetup.scrollPane ).below( filterLabel , maximizeSurveyTableButton ).fillboth( 0.0 , 1.0 );
-		
-		surveyTableDrawerDelegate = new DrawerLayoutDelegate( surveyTableDrawer , Side.BOTTOM , true );
-		
-		pinSurveyTableButton = new JToggleButton( "\u2261" );
-		pinSurveyTableButton.addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				surveyTableDrawerDelegate.setPinned( pinSurveyTableButton.isSelected( ) );
-			}
-		} );
-		maximizeSurveyTableButton.addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				surveyTableDrawerDelegate.toggleMaximized( );
-			}
-		} );
 		
 		scene.orthoFrame[ 4 ] = -10000f;
 		scene.orthoFrame[ 5 ] = 10000f;
@@ -310,40 +183,6 @@ public class MapsView extends BasicJOGLSetup
 		OverrideInsetsBorder.override( yaxis , new Insets( 0 , 0 , 0 , 0 ) );
 		
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
-		
-		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
-		distColorationAxisPanel = PaintablePanel.wrap( distColorationAxis );
-		distColorationAxisPanel.setUnderpaintBorder(
-				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
-						new float[ ] { 0f , 1f } , new Color[ ] { ColorUtils.alphaColor( darkColor , 0 ) , darkColor } ) );
-		
-		distColorationAxis.getAxisConversion( ).set( 0 , 0 , 10000 , 200 );
-		distColorationAxis.setForeground( Color.WHITE );
-		distColorationAxis.setMajorTickColor( Color.WHITE );
-		distColorationAxis.setMinorTickColor( Color.WHITE );
-		distColorationAxis.addPlot( plot );
-		
-		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
-		paramColorationAxisPanel = PaintablePanel.wrap( paramColorationAxis );
-		paramColorationAxisPanel.setUnderpaintBorder(
-				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
-						new float[ ] { 0f , 1f } , new Color[ ] { Color.RED , Color.BLUE } ) );
-		
-		paramColorationAxis.setForeground( Color.WHITE );
-		paramColorationAxis.setMajorTickColor( Color.WHITE );
-		paramColorationAxis.setMinorTickColor( Color.WHITE );
-		paramColorationAxis.addPlot( plot );
-		
-		highlightDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
-		highlightDistAxisPanel = PaintablePanel.wrap( highlightDistAxis );
-		highlightDistAxisPanel.setUnderpaintBorder(
-				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
-						new float[ ] { 0f , 1f } , new Color[ ] { Color.YELLOW , ColorUtils.alphaColor( Color.YELLOW , 0 ) } ) );
-		
-		highlightDistAxis.setForeground( Color.BLACK );
-		highlightDistAxis.setMajorTickColor( Color.BLACK );
-		highlightDistAxis.setMinorTickColor( Color.BLACK );
-		highlightDistAxis.addPlot( plot );
 		
 		yaxis.getAxisConversion( ).set( 50 , 0 , -50 , 400 );
 		
@@ -378,38 +217,6 @@ public class MapsView extends BasicJOGLSetup
 		axisLinkButton = new AxisLinkButton( xAxisController , yAxisController );
 		axisLinkButton.setSelected( true );
 		
-		new PlotAxisController( distColorationAxis )
-		{
-			@Override
-			protected void setAxisRange( double start , double end )
-			{
-				super.setAxisRange( start , end );
-				if( model != null )
-				{
-					model.setNearDist( ( float ) distColorationAxis.getAxisConversion( ).invert( 0 ) );
-					model.setFarDist( ( float ) distColorationAxis.getAxisConversion( ).invert( distColorationAxis.getHeight( ) ) );
-				}
-				canvas.repaint( );
-			}
-		};
-		
-		new PlotAxisController( paramColorationAxis )
-		{
-			@Override
-			protected void setAxisRange( double start , double end )
-			{
-				super.setAxisRange( start , end );
-				if( model != null )
-				{
-					model.setLoParam( ( float ) paramColorationAxis.getAxisConversion( ).invert( 0 ) );
-					model.setHiParam( ( float ) paramColorationAxis.getAxisConversion( ).invert( paramColorationAxis.getHeight( ) ) );
-				}
-				canvas.repaint( );
-			}
-		};
-		
-		new PlotAxisController( highlightDistAxis );
-		
 		plotController = new PlotController( plot , xAxisController , yAxisController );
 		
 		pickHandler = new MousePickHandler( );
@@ -442,9 +249,30 @@ public class MapsView extends BasicJOGLSetup
 		
 		perspectiveMode( );
 		
-		updateViewButton = new JButton( "Update View" );
+		layeredPane = new JLayeredPane( );
+		layeredPane.setLayout( new DelegatingLayoutManager( )
+		{
+			public void onLayoutChanged( Container target )
+			{
+				Window w = SwingUtilities.getWindowAncestor( target );
+				if( w != null )
+				{
+					w.invalidate( );
+					w.validate( );
+				}
+				target.invalidate( );
+				target.validate( );
+			}
+		} );
 		
-		updateViewButton.addActionListener( new ActionListener( )
+		taskService = new SingleThreadedTaskService( );
+		taskListDrawer = new TaskListDrawer( taskService );
+		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
+		
+		settingsDrawer = new SettingsDrawer( binder.subBinder( Model.settingsDrawerModel ) );
+		settingsDrawer.addTo( layeredPane , 1 );
+		
+		settingsDrawer.updateViewButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
@@ -459,7 +287,7 @@ public class MapsView extends BasicJOGLSetup
 							@Override
 							protected List<SurveyShot> doRun( )
 							{
-								return surveyTable.createShots( );
+								return surveyDrawer.table( ).createShots( );
 							}
 						}.result( );
 						
@@ -479,10 +307,10 @@ public class MapsView extends BasicJOGLSetup
 					@Override
 					public void run( )
 					{
-						if( model != null )
+						if( model3d != null )
 						{
-							scene.remove( model.getRootGroup( ) );
-							scene.destroyLater( model.getRootGroup( ) );
+							scene.remove( model3d.getRootGroup( ) );
+							scene.destroyLater( model3d.getRootGroup( ) );
 						}
 					}
 				};
@@ -491,10 +319,7 @@ public class MapsView extends BasicJOGLSetup
 				
 				final Survey3dModel model = Survey3dModel.create( shots , 10 , 3 , 3 , 3 );
 				
-				model.setNearDist( ( float ) distColorationAxis.getAxisConversion( ).invert( 0 ) );
-				model.setFarDist( ( float ) distColorationAxis.getAxisConversion( ).invert( distColorationAxis.getHeight( ) ) );
-				model.setLoParam( ( float ) paramColorationAxis.getAxisConversion( ).invert( 0 ) );
-				model.setHiParam( ( float ) paramColorationAxis.getAxisConversion( ).invert( paramColorationAxis.getHeight( ) ) );
+				binder.modelToView( );
 				
 				task.setStatus( "Updating view: installing new model..." );
 				
@@ -503,7 +328,7 @@ public class MapsView extends BasicJOGLSetup
 					@Override
 					public void run( )
 					{
-						MapsView.this.model = model;
+						MapsView.this.model3d = model;
 						scene.add( model.getRootGroup( ) );
 						scene.initLater( model.getRootGroup( ) );
 						
@@ -517,206 +342,163 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		modeComboBox = new JComboBox( );
-		modeComboBox.addItem( "Perspective" );
-		modeComboBox.addItem( "Plan" );
-		modeComboBox.addItem( "North-Facing Profile" );
-		modeComboBox.addItem( "South-Facing Profile" );
-		modeComboBox.addItem( "East-Facing Profile" );
-		modeComboBox.addItem( "West-Facing Profile" );
-		
-		mouseSensitivitySlider = new JSlider( );
-		mouseSensitivitySlider.setValue( 20 );
-		mouseSensitivitySlider.setOpaque( false );
-		mouseSensitivitySlider.addChangeListener( new ChangeListener( )
-		{
-			@Override
-			public void stateChanged( ChangeEvent e )
-			{
-				float sensitivity = mouseSensitivitySlider.getValue( ) / 20f;
-				navigator.setSensitivity( sensitivity );
-				orbiter.setSensitivity( sensitivity );
-			}
-		} );
-		
-		new DoSwing( )
-		{
-			@Override
-			public void run( )
-			{
-				URL updateUrl = null;
-				File updateDir = null;
-				File lastUpdateFile = null;
-				try
-				{
-					Properties props = UpdateProperties.getUpdateProperties( );
-					updateUrl = new URL( props.getProperty( UpdateProperties.SOURCE ) );
-					updateDir = new File( props.getProperty( UpdateProperties.UPDATE_DIR ) );
-					lastUpdateFile = new File( props.getProperty( UpdateProperties.LAST_UPDATE_FILE ) );
-				}
-				catch( MalformedURLException e1 )
-				{
-					e1.printStackTrace( );
-				}
-				
-				updateStatusPanel = new UpdateStatusPanel( new I18n( ) );
-				updateStatusPanel.setOpaque( false );
-				updateStatusPanel.setBorder( new EmptyBorder( 3 , 3 , 3 , 3 ) );
-				updateStatusPanel.setStatus( UpdateStatus.UNCHECKED );
-				updateStatusPanelController = new UpdateStatusPanelController( updateStatusPanel ,
-						lastUpdateFile , updateUrl , new File( updateDir , "update.zip" ) );
-				updateStatusPanelController.downloadUpdateIfAvailable( );
-			}
-		};
-		
-		debugButton = new JButton( "Debug" );
-		debugButton.addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				System.out.println( "Debug" );
-			}
-		} );
-		
-		settingsPanel = new PaintablePanel( );
-		settingsPanel.setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors(
-				ColorUtils.darkerColor( settingsPanel.getBackground( ) , 0.05 ) ,
-				ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
-		settingsPanel.setBorder( new OverrideInsetsBorder(
-				new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
-				new Insets( 3 , 8 , 3 , 3 ) ) );
-		GridBagWizard w = GridBagWizard.create( settingsPanel );
-		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
-		JLabel modeLabel = new JLabel( "View:" );
-		w.put( updateViewButton ).xy( 0 , 0 ).fillx( 1.0 );
-		w.put( modeLabel ).below( updateViewButton ).weightx( 1.0 ).west( );
-		w.put( modeComboBox ).below( modeLabel ).fillx( ).north( );
-		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
-		w.put( sensLabel ).below( modeComboBox ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).north( );
-		JLabel distLabel = new JLabel( "Distance coloration:" );
-		w.put( distLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( distColorationAxisPanel ).belowLast( ).fillx( );
-		JLabel paramLabel = new JLabel( "Depth coloration:" );
-		w.put( paramLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( paramColorationAxisPanel ).belowLast( ).fillx( );
-		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
-		w.put( highlightRangeLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
-		
-		w.put( debugButton ).belowLast( ).southwest( ).weighty( 1.0 );
-		
-		w.put( updateStatusPanel ).belowAll( ).fillx( ).weighty( 0.0 ).south( );
-		
-		pinSettingsPanelButton = new JToggleButton( "\u2261" );
-		pinSettingsPanelButton.setOpaque( false );
-		pinSettingsPanelButton.setMargin( new Insets( 10 , 5 , 10 , 5 ) );
-		
-		layeredPane = new JLayeredPane( );
-		layeredPane.setLayout( new DelegatingLayoutManager( )
-		{
-			public void onLayoutChanged( Container target )
-			{
-				Window w = SwingUtilities.getWindowAncestor( target );
-				if( w != null )
-				{
-					w.invalidate( );
-					w.validate( );
-				}
-				target.invalidate( );
-				target.validate( );
-			}
-		} );
-		layeredPane.setLayer( settingsPanel , JLayeredPane.DEFAULT_LAYER + 1 );
-		layeredPane.setLayer( pinSettingsPanelButton , JLayeredPane.DEFAULT_LAYER + 2 );
-		layeredPane.setLayer( surveyTableDrawer , JLayeredPane.DEFAULT_LAYER + 3 );
-		layeredPane.setLayer( pinSurveyTableButton , JLayeredPane.DEFAULT_LAYER + 4 );
-		
-		taskService = new SingleThreadedTaskService( );
-		taskList = new TaskList( taskService );
-		taskListScrollPane = new JScrollPane( taskList );
-		taskListScrollPane.setPreferredSize( new Dimension( 400 , 100 ) );
-		
-		taskListDrawer = new Drawer( taskListScrollPane );
-		taskListDrawer.delegate( ).dockingSide( Side.TOP );
-		taskListDrawer.mainResizeHandle( );
-		taskListDrawer.pinButton( ).setUI( new SpinnerButtonUI( ) );
-		taskListDrawer.pinButton( ).setBackground( Color.BLACK );
-		taskListDrawer.pinButtonDelegate( ).corner( null );
-		taskListDrawer.pinButtonDelegate( ).side( Side.BOTTOM );
-		
-		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
-		
-		taskService.changeSupport( ).addPropertyChangeListener( new HierarchicalBasicPropertyChangeAdapter( )
-		{
-			@Override
-			public void childrenChanged( Object source , ChangeType changeType , Object child )
-			{
-				( ( SpinnerButtonUI ) taskListDrawer.pinButton( ).getUI( ) ).setSpinning( taskService.hasTasks( ) );
-			}
-		} );
-		
-		settingsDrawerDelegate = new DrawerLayoutDelegate( settingsPanel , Side.RIGHT );
-		settingsDrawerDelegate.close( false );
-		layeredPane.add( settingsPanel , settingsDrawerDelegate );
-		TabLayoutDelegate tabDelegate = new TabLayoutDelegate( settingsPanel , Corner.TOP_LEFT , Side.LEFT );
-		tabDelegate.insets( new Insets( 10 , 5 , -10 , -5 ) );
-		layeredPane.add( pinSettingsPanelButton , tabDelegate );
 		layeredPane.add( plotPanel );
-		layeredPane.add( surveyTableDrawer , surveyTableDrawerDelegate );
-		TabLayoutDelegate openSurveyDrawerButtonDelegate = new TabLayoutDelegate( surveyTableDrawer , Corner.TOP_LEFT , Side.TOP );
-		openSurveyDrawerButtonDelegate.insets( new Insets( 5 , 10 , -5 , -10 ) );
-		layeredPane.add( pinSurveyTableButton , openSurveyDrawerButtonDelegate );
+		surveyDrawer.addTo( layeredPane , 3 );
 		
 		mainPanel = new JPanel( new BorderLayout( ) );
 		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
 		mainPanel.add( layeredPane , BorderLayout.CENTER );
 		
-		modeComboBox.addItemListener( new ItemListener( )
-		{
-			@Override
-			public void itemStateChanged( ItemEvent e )
-			{
-				if( e.getStateChange( ) == ItemEvent.DESELECTED )
-				{
-					return;
-				}
-				switch( modeComboBox.getSelectedIndex( ) )
-				{
-					case 0:
-						perspectiveMode( );
-						break;
-					case 1:
-						planMode( );
-						break;
-					case 2:
-						northFacingProfileMode( );
-						break;
-					case 3:
-						southFacingProfileMode( );
-						break;
-					case 4:
-						eastFacingProfileMode( );
-						break;
-					case 5:
-						westFacingProfileMode( );
-						break;
-				}
-			}
-		} );
-		
-		pinSettingsPanelButton.addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				settingsDrawerDelegate.setPinned( pinSettingsPanelButton.isSelected( ) );
-			}
-		} );
-		
 		selectionHandler = new TableSelectionHandler( );
-		surveyTable.getModelSelectionModel( ).addListSelectionListener( selectionHandler );
+		surveyDrawer.table( ).getModelSelectionModel( ).addListSelectionListener( selectionHandler );
+		
+		final AnnotatingJTable quickTable = new DoSwingR2<AnnotatingJTable>( )
+		{
+			@Override
+			public AnnotatingJTable doRun( )
+			{
+				DefaultTableColumnModel quickTableColumnModel = new DefaultTableColumnModel( );
+				TableColumn fromColumn = new TableColumn( SurveyTable.FROM_COLUMN );
+				fromColumn.setIdentifier( "From" );
+				TableColumn toColumn = new TableColumn( SurveyTable.TO_COLUMN );
+				toColumn.setIdentifier( "To" );
+				quickTableColumnModel.addColumn( fromColumn );
+				quickTableColumnModel.addColumn( toColumn );
+				
+				AnnotatingJTable result = new AnnotatingJTable( surveyDrawer.table( ).getModel( ) , quickTableColumnModel );
+				result.setModelSelectionModel( surveyDrawer.table( ).getModelSelectionModel( ) );
+				
+				return result;
+			}
+		}.result( );
+		
+		DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> quickTableSetup =
+				new DoSwingR2<DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>>( )
+				{
+					@Override
+					protected DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> doRun( )
+					{
+						
+						DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> quickTableSetup =
+								new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>( quickTable , sortRunner );
+						quickTableSetup.sorter.setModelCopier( new SurveyTableModelCopier( ) );
+						return quickTableSetup;
+					}
+				}.result( );
+		
+		JLabel quickTableFilterLabel = new JLabel( "Filter: " );
+		TextComponentWithHintAndClear quickTableFilterField = new TextComponentWithHintAndClear( "Enter Filter Regexp" );
+		quickTableFilterField.textComponent.getDocument( ).addDocumentListener(
+				DefaultAnnotatingJTableSetup.createFilterFieldListener( quickTableSetup , quickTableFilterField.textComponent ) );
+		
+		JLabel quickTableHighlightLabel = new JLabel( "Highlight: " );
+		TextComponentWithHintAndClear quickTableHighlightField = new TextComponentWithHintAndClear( "Enter Highlight Regexp" );
+		quickTableHighlightField.textComponent.getDocument( ).addDocumentListener(
+				DefaultAnnotatingJTableSetup.createHighlightFieldListener( quickTableSetup , quickTableHighlightField.textComponent , Color.YELLOW ) );
+		
+		JPanel quickTablePanel = new JPanel( );
+		GridBagWizard gbw = GridBagWizard.create( quickTablePanel );
+		gbw.put( quickTableFilterLabel ).xy( 0 , 0 ).west( ).insets( 2 , 2 , 0 , 0 );
+		gbw.put( quickTableFilterField ).rightOf( quickTableFilterLabel ).fillx( 1.0 ).insets( 2 , 2 , 0 , 2 );
+		gbw.put( quickTableHighlightLabel ).below( quickTableFilterLabel ).west( ).insets( 2 , 2 , 2 , 0 );
+		gbw.put( quickTableHighlightField ).rightOf( quickTableHighlightLabel ).fillx( 1.0 ).insets( 2 , 2 , 2 , 2 );
+		
+		gbw.put( quickTableSetup.scrollPane ).below( quickTableHighlightLabel , quickTableHighlightField ).fillboth( 1.0 , 1.0 );
+		
+		Drawer quickTableDrawer = new Drawer( quickTablePanel );
+		quickTableDrawer.delegate( ).dockingSide( Side.LEFT );
+		quickTableDrawer.mainResizeHandle( );
+		quickTableDrawer.pinButton( );
+		quickTableDrawer.pinButtonDelegate( ).corner( Corner.TOP_RIGHT ).side( Side.RIGHT ).insets( new Insets( 10 , -10 , -10 , 10 ) );
+		quickTableDrawer.addTo( layeredPane , 20 );
+		
+		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
+		
+		surveyDrawer.table( ).addPropertyChangeListener( "model" , new PropertyChangeListener( )
+		{
+			@Override
+			public void propertyChange( PropertyChangeEvent evt )
+			{
+				AnnotatingRowSorter<SurveyTableModel, Integer, RowFilter<SurveyTableModel, Integer>> sorter =
+						( AnnotatingRowSorter<SurveyTableModel, Integer, RowFilter<SurveyTableModel, Integer>> ) quickTable.getRowSorter( );
+				
+				SurveyTableModel newModel = ( SurveyTableModel ) evt.getNewValue( );
+				
+				quickTable.setRowSorter( null );
+				quickTable.setModel( newModel );
+				sorter.setModel( newModel );
+				quickTable.setRowSorter( sorter );
+			}
+		} );
+		
+		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.cameraView )
+		{
+			public void modelToView( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null )
+				{
+					setCameraView( ( CameraView ) model.get( SettingsDrawer.Model.cameraView ) );
+				}
+			}
+		} );
+		
+		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.mouseSensitivity )
+		{
+			@Override
+			public void modelToView( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null )
+				{
+					orbiter.setSensitivity( ( Integer ) model.get( SettingsDrawer.Model.mouseSensitivity ) / 10f );
+				}
+			}
+		} );
+		
+		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.distRange )
+		{
+			@Override
+			public void modelToView( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null && model3d != null )
+				{
+					FloatRange range = ( FloatRange ) model.get( SettingsDrawer.Model.distRange );
+					model3d.setNearDist( range.lo );
+					model3d.setFarDist( range.hi );
+					canvas.display( );
+				}
+			}
+		} );
+		
+		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.paramRange )
+		{
+			@Override
+			public void modelToView( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null && model3d != null )
+				{
+					FloatRange range = ( FloatRange ) model.get( SettingsDrawer.Model.paramRange );
+					model3d.setLoParam( range.lo );
+					model3d.setHiParam( range.hi );
+					canvas.display( );
+				}
+			}
+		} );
+		
+		YamlObject<Model> model = Model.instance.newObject( );
+		YamlObject<SettingsDrawer.Model> settingsDrawerModel = SettingsDrawer.Model.instance.newObject( );
+		settingsDrawerModel.set( SettingsDrawer.Model.cameraView , CameraView.PERSPECTIVE );
+		settingsDrawerModel.set( SettingsDrawer.Model.mouseSensitivity , 1 );
+		settingsDrawerModel.set( SettingsDrawer.Model.distRange , new FloatRange( 0 , 100000 ) );
+		settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new FloatRange( 0 , 2000 ) );
+		settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new FloatRange( 0 , 200 ) );
+		model.set( Model.settingsDrawerModel , settingsDrawerModel );
+		
+		binder.setModel( model );
+		binder.modelToView( );
 	}
 	
 	@Override
@@ -726,6 +508,37 @@ public class MapsView extends BasicJOGLSetup
 		
 		navigator.setMoveFactor( 5f );
 		navigator.setWheelFactor( 5f );
+	}
+	
+	CameraView	currentView;
+	
+	public void setCameraView( CameraView view )
+	{
+		if( view != currentView )
+		{
+			currentView = view;
+			switch( view )
+			{
+				case PERSPECTIVE:
+					perspectiveMode( );
+					break;
+				case PLAN:
+					planMode( );
+					break;
+				case NORTH_FACING_PROFILE:
+					northFacingProfileMode( );
+					break;
+				case SOUTH_FACING_PROFILE:
+					southFacingProfileMode( );
+					break;
+				case EAST_FACING_PROFILE:
+					eastFacingProfileMode( );
+					break;
+				case WEST_FACING_PROFILE:
+					westFacingProfileMode( );
+					break;
+			}
+		}
 	}
 	
 	public void planMode( )
@@ -839,9 +652,9 @@ public class MapsView extends BasicJOGLSetup
 	
 	private void updateCenterOfOrbit( )
 	{
-		List<SurveyShot> origShots = model.getOriginalShots( );
+		List<SurveyShot> origShots = model3d.getOriginalShots( );
 		
-		Set<Survey3dModel.Shot> newSelectedShots = model.getSelectedShots( );
+		Set<Survey3dModel.Shot> newSelectedShots = model3d.getSelectedShots( );
 		
 		double[ ] center = new double[ 3 ];
 		for( Survey3dModel.Shot shot : newSelectedShots )
@@ -864,10 +677,10 @@ public class MapsView extends BasicJOGLSetup
 			float[ ] direction = new float[ 3 ];
 			scene.pickXform( ).xform( e.getX( ) , e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
 			
-			if( model != null )
+			if( model3d != null )
 			{
 				List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
-				model.pickShots( origin , direction , spc , pickResults );
+				model3d.pickShots( origin , direction , spc , pickResults );
 				
 				if( !pickResults.isEmpty( ) )
 				{
@@ -884,20 +697,23 @@ public class MapsView extends BasicJOGLSetup
 		{
 			ShotPickResult picked = pick( e );
 			
-			if( model != null )
+			if( model3d != null )
 			{
-				SelectionEditor editor = model.editSelection( );
+				SelectionEditor editor = model3d.editSelection( );
 				
-				for( Shot shot : model.getHoveredShots( ) )
+				for( Shot shot : model3d.getHoveredShots( ) )
 				{
 					editor.unhover( shot );
 				}
 				
 				if( picked != null )
 				{
-					LinearAxisConversion viewConversion = highlightDistAxis.getAxisConversion( );
+					FloatRange range = settingsDrawer.getModel( ).get( SettingsDrawer.Model.highlightRange );
 					LinearAxisConversion conversion = new LinearAxisConversion( );
-					conversion.set( viewConversion.invert( 0 ) , 1 , viewConversion.invert( highlightDistAxis.getViewSpan( ) ) , 0 );
+					if( range != null )
+					{
+						conversion.set( range.lo , 1 , range.hi , 0 );
+					}
 					editor.hover( picked.picked , picked.locationAlongShot , conversion );
 				}
 				
@@ -922,13 +738,13 @@ public class MapsView extends BasicJOGLSetup
 				return;
 			}
 			
-			ListSelectionModel selModel = surveyTable.getModelSelectionModel( );
+			ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
 			
-			if( model != null )
+			if( model3d != null )
 			{
 				int index = picked.picked.getIndex( );
 				
-				int modelRow = surveyTable.getModel( ).rowOfShot( index );
+				int modelRow = surveyDrawer.table( ).getModel( ).rowOfShot( index );
 				
 				if( modelRow >= 0 )
 				{
@@ -948,14 +764,14 @@ public class MapsView extends BasicJOGLSetup
 						selModel.setSelectionInterval( modelRow , modelRow );
 					}
 					
-					int viewRow = surveyTable.convertRowIndexToView( modelRow );
+					int viewRow = surveyDrawer.table( ).convertRowIndexToView( modelRow );
 					
 					if( viewRow >= 0 )
 					{
-						Rectangle visibleRect = surveyTable.getVisibleRect( );
-						Rectangle cellRect = surveyTable.getCellRect( viewRow , 0 , true );
+						Rectangle visibleRect = surveyDrawer.table( ).getVisibleRect( );
+						Rectangle cellRect = surveyDrawer.table( ).getCellRect( viewRow , 0 , true );
 						visibleRect.y = cellRect.y + cellRect.height / 2 - visibleRect.height / 2;
-						surveyTable.scrollRectToVisible( visibleRect );
+						surveyDrawer.table( ).scrollRectToVisible( visibleRect );
 					}
 				}
 				
@@ -969,14 +785,14 @@ public class MapsView extends BasicJOGLSetup
 		@Override
 		public void valueChanged( ListSelectionEvent e )
 		{
-			if( e.getValueIsAdjusting( ) || model == null )
+			if( e.getValueIsAdjusting( ) || model3d == null )
 			{
 				return;
 			}
 			
-			List<Survey3dModel.Shot> shots = model.getShots( );
+			List<Survey3dModel.Shot> shots = model3d.getShots( );
 			
-			SelectionEditor editor = model.editSelection( );
+			SelectionEditor editor = model3d.editSelection( );
 			
 			ListSelectionModel selModel = ( ListSelectionModel ) e.getSource( );
 			
@@ -991,7 +807,7 @@ public class MapsView extends BasicJOGLSetup
 			{
 				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) ; i++ )
 				{
-					SurveyShot shot = ( SurveyShot ) surveyTable.getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
+					SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
 					if( shot == null )
 					{
 						continue;
@@ -1013,5 +829,17 @@ public class MapsView extends BasicJOGLSetup
 			
 			canvas.display( );
 		}
+	}
+	
+	public static final class Model extends YamlSpec<Model>
+	{
+		public static final Attribute<YamlObject<SettingsDrawer.Model>>	settingsDrawerModel	= yamlObjectAttribute( "settingsDrawerModel" , SettingsDrawer.Model.instance );
+		
+		private Model( )
+		{
+			super( settingsDrawerModel );
+		}
+		
+		public static final Model	instance	= new Model( );
 	}
 }

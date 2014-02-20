@@ -18,8 +18,13 @@ import java.util.Set;
 
 import javax.swing.JComponent;
 
+import org.andork.event.BasicPropertyChangeSupport.External;
+import org.andork.event.HierarchicalBasicPropertyChangeSupport;
+import org.andork.model.HasChangeSupport;
+import org.andork.model.Model;
+
 @SuppressWarnings( "serial" )
-public class PlotAxis extends JComponent
+public class PlotAxis extends JComponent implements Model
 {
 	public static enum Orientation
 	{
@@ -31,27 +36,34 @@ public class PlotAxis extends JComponent
 		TOP , BOTTOM , LEFT , RIGHT;
 	}
 	
-	private LinearAxisConversion	axisConversion			= new LinearAxisConversion( );
+	public static enum Property
+	{
+		AXIS_CONVERSION;
+	}
 	
-	private final Set<Component>	plots					= new HashSet<Component>( );
+	private LinearAxisConversion								axisConversion			= new LinearAxisConversion( );
 	
-	private final Orientation		orientation;
-	private LabelPosition			labelPosition;
-	private int						majorTickSize			= 10;
-	private int						minorTickSize			= 5;
-	private Color					majorTickColor			= Color.GRAY;
-	private Color					minorTickColor			= Color.LIGHT_GRAY;
+	private static final HierarchicalBasicPropertyChangeSupport	changeSupport			= new HierarchicalBasicPropertyChangeSupport( );
 	
-	private int						minMinorGridLineSpacing	= 30;
+	private final Set<Component>								plots					= new HashSet<Component>( );
 	
-	private int						labelPadding			= 3;
+	private final Orientation									orientation;
+	private LabelPosition										labelPosition;
+	private int													majorTickSize			= 10;
+	private int													minorTickSize			= 5;
+	private Color												majorTickColor			= Color.GRAY;
+	private Color												minorTickColor			= Color.LIGHT_GRAY;
 	
-	private Double					minValueForCalcSizes;
-	private Double					maxValueForCalcSizes;
-	private Dimension				calcMinSize;
-	private Dimension				calcPrefSize;
+	private int													minMinorGridLineSpacing	= 30;
 	
-	private NumberFormat			format;
+	private int													labelPadding			= 3;
+	
+	private Double												minValueForCalcSizes;
+	private Double												maxValueForCalcSizes;
+	private Dimension											calcMinSize;
+	private Dimension											calcPrefSize;
+	
+	private NumberFormat										format;
 	
 	public PlotAxis( Orientation orientation , LabelPosition labelPosition )
 	{
@@ -74,6 +86,7 @@ public class PlotAxis extends JComponent
 			throw new IllegalArgumentException( "axisConversion must be non-null" );
 		}
 		this.axisConversion = axisConversion;
+		changeSupport.firePropertyChange( this , Property.AXIS_CONVERSION , null , axisConversion );
 	}
 	
 	public LabelPosition getLabelPosition( )
@@ -407,5 +420,31 @@ public class PlotAxis extends JComponent
 				plot.repaint( );
 			}
 		}
+	}
+	
+	@Override
+	public External changeSupport( )
+	{
+		return changeSupport.external( );
+	}
+	
+	@Override
+	public Object get( Object key )
+	{
+		if( key == Property.AXIS_CONVERSION )
+		{
+			return getAxisConversion( );
+		}
+		throw new IllegalArgumentException( "Invalid key: " + key );
+	}
+	
+	@Override
+	public void set( Object key , Object newValue )
+	{
+		if( key == Property.AXIS_CONVERSION )
+		{
+			setAxisConversion( ( LinearAxisConversion ) newValue );
+		}
+		throw new IllegalArgumentException( "Invalid key: " + key );
 	}
 }

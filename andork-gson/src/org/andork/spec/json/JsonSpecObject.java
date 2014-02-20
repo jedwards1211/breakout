@@ -3,7 +3,7 @@ package org.andork.spec.json;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.andork.model.Model;
+import org.andork.model.HasChangeSupport;
 import org.andork.spec.json.JsonSpec.Attribute;
 import org.andork.spec.json.JsonSpec.Format;
 import org.andork.util.Java7;
@@ -20,7 +20,7 @@ import com.google.gson.JsonObject;
  * @author james.a.edwards
  */
 @SuppressWarnings( "serial" )
-public final class JsonSpecObject<S extends JsonSpec<S>> extends JsonSpecElement implements Model
+public final class JsonSpecObject<S extends JsonSpec<S>> extends JsonSpecElement implements HasChangeSupport
 {
 	private final S							spec;
 	private final Map<Attribute<?>, Object>	attributes	= new HashMap<Attribute<?>, Object>( );

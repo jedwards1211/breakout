@@ -1,8 +1,8 @@
 package org.andork.model;
 
-import org.andork.event.HierarchicalBasicPropertyChangeSupport;
-
-public interface Model
+public interface Model extends HasChangeSupport
 {
-	public HierarchicalBasicPropertyChangeSupport.External changeSupport( );
+	public Object get( Object key );
+	
+	public void set( Object key , Object newValue );
 }

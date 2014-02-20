@@ -1,8 +1,10 @@
 package org.andork.snakeyaml;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.andork.model.HasChangeSupport;
 import org.andork.model.Model;
 import org.andork.snakeyaml.YamlSpec.Attribute;
 import org.andork.snakeyaml.YamlSpec.Format;
@@ -113,5 +115,17 @@ public final class YamlObject<S extends YamlSpec<S>> extends YamlElement impleme
 	public String toString( )
 	{
 		return toYaml( ).toString( );
+	}
+	
+	@Override
+	public Object get( Object key )
+	{
+		return get( ( Attribute ) key );
+	}
+	
+	@Override
+	public void set( Object key , Object newValue )
+	{
+		set( ( Attribute ) key , newValue );
 	}
 }

@@ -32,6 +32,11 @@ public class TabLayoutDelegate implements LayoutDelegate
 		return this;
 	}
 	
+	public TabLayoutDelegate insets( int top , int left , int bottom , int right )
+	{
+		return insets( new Insets( top , left , bottom , right ) );
+	}
+	
 	public TabLayoutDelegate corner( Corner corner )
 	{
 		this.corner = corner;
