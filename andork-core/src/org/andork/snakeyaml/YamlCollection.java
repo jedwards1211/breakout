@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.andork.snakeyaml.YamlSpec.Format;
+import org.andork.func.Bimapper;
 
 public abstract class YamlCollection<E> extends YamlElement
 {
-	protected final Format<? super E>	format;
+	protected final Bimapper<? super E, Object>	format;
 	protected final Collection<E>		collection;
 	
-	protected YamlCollection( Format<? super E> format )
+	protected YamlCollection( Bimapper<? super E, Object> format )
 	{
 		this.format = format;
 		this.collection = createCollection( );
@@ -65,7 +65,7 @@ public abstract class YamlCollection<E> extends YamlElement
 		List<Object> array = new ArrayList<Object>( );
 		for( E element : collection )
 		{
-			array.add( format.format( element ) );
+			array.add( format.map( element ) );
 		}
 		return array;
 	}
@@ -74,7 +74,7 @@ public abstract class YamlCollection<E> extends YamlElement
 	{
 		for( Object elem : array )
 		{
-			collection.add( collection.format.parse( elem ) );
+			collection.add( collection.format.unmap( elem ) );
 		}
 	}
 }

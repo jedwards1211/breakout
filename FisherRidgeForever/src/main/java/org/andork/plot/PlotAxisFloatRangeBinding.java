@@ -11,6 +11,7 @@ import com.andork.plot.PlotAxis;
 public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBasicPropertyChangeListener
 {
 	PlotAxis	axis;
+	boolean		modelToViewFailed	= false;
 	
 	public PlotAxisFloatRangeBinding( Object property , PlotAxis axis )
 	{
@@ -22,15 +23,21 @@ public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBa
 	public void modelToView( )
 	{
 		Model model = getModel( );
+		if( axis.getViewSpan( ) == 0 )
+		{
+			modelToViewFailed = true;
+			return;
+		}
+		modelToViewFailed = false;
 		if( model == null )
 		{
 			return;
 		}
 		FloatRange range = ( FloatRange ) model.get( property );
-		if( range != null && axis.getViewSpan( ) != 0 )
+		if( range != null )
 		{
 			LinearAxisConversion axisConversion = axis.getAxisConversion( );
-			axisConversion.set( range.lo , 0 , range.hi , axis.getViewSpan( ) );
+			axisConversion.set( range.getLo( ) , 0 , range.getHi( ) , axis.getViewSpan( ) );
 		}
 	}
 	
@@ -41,6 +48,10 @@ public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBa
 		if( model == null || axis.getViewSpan( ) == 0 )
 		{
 			return;
+		}
+		if( modelToViewFailed )
+		{
+			modelToView( );
 		}
 		LinearAxisConversion axisConversion = axis.getAxisConversion( );
 		FloatRange range = new FloatRange( ( float ) axisConversion.invert( 0 ) , ( float ) axisConversion.invert( axis.getViewSpan( ) ) );

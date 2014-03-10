@@ -3,16 +3,20 @@ package org.andork.frf;
 import java.awt.BorderLayout;
 import java.awt.Component;
 
+import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.html.HTMLEditorKit;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.frf.BackgroundLoaded.State;
+import org.andork.util.StringUtils;
 
 @SuppressWarnings( "serial" )
 public abstract class BackgroundLoadedPane<C> extends JPanel
@@ -57,11 +61,18 @@ public abstract class BackgroundLoadedPane<C> extends JPanel
 	protected Component createLoadFailedContent( Throwable t )
 	{
 		JPanel errorPane = new JPanel( );
-		JLabel errorLabel = new JLabel( "<html><center>Failed to load: " + t.getLocalizedMessage( ) + "</html>" );
-		errorLabel.setIcon( UIManager.getIcon( "OptionPane.errorIcon" ) );
+		JLabel iconLabel = new JLabel( UIManager.getIcon( "OptionPane.errorIcon" ) );
+		JLabel headerLabel = new JLabel( "<html><h1>Failed to load</h1><html>" );
+		JEditorPane errorEditor = new JEditorPane( );
+		errorEditor.setBackground( null );
+		errorEditor.setEditable( false );
+		errorEditor.setEditorKit( new HTMLEditorKit( ) );
+		errorEditor.setText( "<html>" + StringUtils.formatThrowableForHTML( t ) + "</html>" );
 		
 		GridBagWizard g = GridBagWizard.create( errorPane );
-		g.put( errorLabel ).xy( 0 , 0 );
+		g.put( iconLabel ).xy( 0 , 0 ).east( ).insets( 5 , 5 , 5 , 5 );
+		g.put( headerLabel ).rightOf( iconLabel ).west( );
+		g.put( errorEditor ).below( headerLabel ).northwest( );
 		
 		return errorPane;
 	}

@@ -55,7 +55,7 @@ public abstract class Batcher<T> {
 	 * @param batch
 	 *            the batch that the implementation is done handling
 	 */
-	protected final void doneHandling(List<T> batch) {
+	public final void doneHandling(List<T> batch) {
 		LinkedList<T> queueToHandle = null;
 		synchronized (lock) {
 			if (!busy) {

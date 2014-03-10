@@ -3,13 +3,13 @@ package org.andork.snakeyaml;
 import java.util.Collections;
 import java.util.List;
 
-import org.andork.snakeyaml.YamlSpec.Format;
+import org.andork.func.Bimapper;
 import org.andork.util.Java7;
 
 public abstract class YamlList<E> extends YamlCollection<E>
 {
 	
-	protected YamlList( Format<? super E> format )
+	protected YamlList( Bimapper<? super E, Object> format )
 	{
 		super( format );
 	}

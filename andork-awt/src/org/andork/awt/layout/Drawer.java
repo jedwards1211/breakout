@@ -4,8 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -57,10 +57,10 @@ public class Drawer extends PaintablePanel
 			pinButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
 			pinButton.setIcon( new ImageIcon( Drawer.class.getResource( "unpinned.png" ) ) );
 			pinButton.setSelectedIcon( new ImageIcon( Drawer.class.getResource( "pinned.png" ) ) );
-			pinButton.addActionListener( new ActionListener( )
+			pinButton.addItemListener( new ItemListener( )
 			{
 				@Override
-				public void actionPerformed( ActionEvent e )
+				public void itemStateChanged( ItemEvent e )
 				{
 					delegate.setPinned( pinButton.isSelected( ) );
 				}
@@ -89,10 +89,10 @@ public class Drawer extends PaintablePanel
 			maxButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
 			maxButton.setIcon( new ImageIcon( Drawer.class.getResource( "maximize.png" ) ) );
 			maxButton.setSelectedIcon( new ImageIcon( Drawer.class.getResource( "restore.png" ) ) );
-			maxButton.addActionListener( new ActionListener( )
+			maxButton.addItemListener( new ItemListener( )
 			{
 				@Override
-				public void actionPerformed( ActionEvent e )
+				public void itemStateChanged( ItemEvent e )
 				{
 					delegate.setMaximized( maxButton.isSelected( ) );
 				}

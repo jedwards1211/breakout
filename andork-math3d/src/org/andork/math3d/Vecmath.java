@@ -1720,6 +1720,13 @@ public class Vecmath
 		out[ 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z + m[ 14 ];
 	}
 	
+	public static void mpmulAffine( float[ ] m , float x , float y , float z , float[ ] out , int outi )
+	{
+		out[ outi ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z + m[ 12 ];
+		out[ outi + 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z + m[ 13 ];
+		out[ outi + 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z + m[ 14 ];
+	}
+	
 	public static void mpmulAffine( float[ ] m , float[ ] p , int vi , float[ ] out , int outi )
 	{
 		if( p != out || vi != outi )
@@ -2086,6 +2093,14 @@ public class Vecmath
 		v[ 0 ] = m[ colIndex ];
 		v[ 1 ] = m[ colIndex + 1 ];
 		v[ 2 ] = m[ colIndex + 2 ];
+	}
+	
+	public static void getColumn3( float[ ] m , int colIndex , float[ ] v , int vi )
+	{
+		colIndex *= 4;
+		v[ vi ] = m[ colIndex ];
+		v[ vi + 1 ] = m[ colIndex + 1 ];
+		v[ vi + 2 ] = m[ colIndex + 2 ];
 	}
 	
 	public static void setColumn4( float[ ] m , int colIndex , float[ ] v )
@@ -2933,6 +2948,14 @@ public class Vecmath
 		out[ 0 ] = ( float ) ( v[ 0 ] * factor );
 		out[ 1 ] = ( float ) ( v[ 1 ] * factor );
 		out[ 2 ] = ( float ) ( v[ 2 ] * factor );
+	}
+	
+	public static void normalize3( float[ ] v , int vi , float[ ] out , int outi )
+	{
+		double factor = 1.0 / Math.sqrt( v[ vi ] * v[ vi ] + v[ vi + 1 ] * v[ vi + 1 ] + v[ vi + 2 ] * v[ vi + 2 ] );
+		out[ outi ] = ( float ) ( v[ vi ] * factor );
+		out[ outi + 1 ] = ( float ) ( v[ vi + 1 ] * factor );
+		out[ outi + 2 ] = ( float ) ( v[ vi + 2 ] * factor );
 	}
 	
 	/**

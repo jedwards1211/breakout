@@ -2,6 +2,7 @@ package org.andork.snakeyaml;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Collections;
@@ -9,6 +10,8 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.andork.func.Bimapper;
 
 /**
  * Base class for {@link YamlObject} format specifications. To create a specification for a new type, simply create a subclass that calls one of the
@@ -46,7 +49,7 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 			Attribute attrib = getAttribute( entry.getKey( ).toString( ) );
 			if( attrib != null )
 			{
-				result.set( attrib , attrib.getFormat( ).parse( entry.getValue( ) ) );
+				result.set( attrib , attrib.getBimapper( ).unmap( entry.getValue( ) ) );
 			}
 		}
 		
@@ -59,21 +62,6 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	}
 	
 	/**
-	 * Converts an attribute value to and from {@link String} for JSON.
-	 * 
-	 * @author james.a.edwards
-	 * 
-	 * @param <T>
-	 *            the type of the attribute value.
-	 */
-	public static interface Format<T>
-	{
-		public Object format( T t );
-		
-		public T parse( Object s ) throws Exception;
-	}
-	
-	/**
 	 * Defines an attribute that can be parsed by {@link YamlObject#parseXml(String)}.
 	 * 
 	 * @author james.a.edwards
@@ -83,8 +71,8 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	 */
 	public static class Attribute<T>
 	{
-		private final String	name;
-		private final Format<T>	format;
+		private final String				name;
+		private final Bimapper<T, Object>	format;
 		
 		/**
 		 * Creates an attribute with the given name and format.
@@ -94,7 +82,7 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		 * @param format
 		 *            the format for converting from the attribute value to and from a {@code String} for XML.
 		 */
-		public Attribute( String name , Format<T> format )
+		public Attribute( String name , Bimapper<T, Object> format )
 		{
 			super( );
 			this.name = name;
@@ -116,224 +104,245 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		 * 
 		 * @return the format.
 		 */
-		public Format<T> getFormat( )
+		public Bimapper<T, Object> getBimapper( )
 		{
 			return format;
 		}
 	}
 	
-	public static class StringFormat implements Format<String>
+	public static class StringBimapper implements Bimapper<String, Object>
 	{
-		public Object format( String t )
+		public Object map( String t )
 		{
-			return t == null ? null : t;
+			return t;
 		}
 		
-		public String parse( Object s )
+		public String unmap( Object s )
 		{
 			return s == null ? null : s.toString( );
 		}
 	}
 	
-	public static class EnumFormat<E extends Enum<E>> implements Format<E>
+	public static class EnumBimapper<E extends Enum<E>> implements Bimapper<E, Object>
 	{
 		Class<E>	cls;
 		
-		private EnumFormat( Class<E> cls )
+		private EnumBimapper( Class<E> cls )
 		{
 			this.cls = cls;
 		}
 		
-		public static <E extends Enum<E>> EnumFormat<E> newInstance( Class<E> cls )
+		public static <E extends Enum<E>> EnumBimapper<E> newInstance( Class<E> cls )
 		{
-			return new EnumFormat<E>( cls );
+			return new EnumBimapper<E>( cls );
 		}
 		
 		@Override
-		public Object format( E t )
+		public Object map( E t )
 		{
 			return t == null ? null : t.name( );
 		}
 		
 		@Override
-		public E parse( Object s ) throws Exception
+		public E unmap( Object s )
 		{
 			return s == null || s == null ? null : Enum.valueOf( cls , s.toString( ) );
 		}
 	}
 	
-	public static class BooleanFormat implements Format<Boolean>
+	public static class BooleanBimapper implements Bimapper<Boolean, Object>
 	{
-		public Object format( Boolean t )
+		public Object map( Boolean t )
 		{
 			return t;
 		}
 		
-		public Boolean parse( Object s )
+		public Boolean unmap( Object s )
 		{
 			return s == null ? null : Boolean.valueOf( s.toString( ) );
 		}
 	}
 	
-	public static class IntegerFormat implements Format<Integer>
+	public static class IntegerBimapper implements Bimapper<Integer, Object>
 	{
-		public Object format( Integer t )
+		public Object map( Integer t )
 		{
 			return t;
 		}
 		
-		public Integer parse( Object s )
+		public Integer unmap( Object s )
 		{
 			return s == null ? null : Integer.valueOf( s.toString( ) );
 		}
 	}
 	
-	public static class LongFormat implements Format<Long>
+	public static class LongBimapper implements Bimapper<Long, Object>
 	{
-		public Object format( Long t )
+		public Object map( Long t )
 		{
 			return t;
 		}
 		
-		public Long parse( Object s )
+		public Long unmap( Object s )
 		{
 			return s == null ? null : Long.valueOf( s.toString( ) );
 		}
 	}
 	
-	public static class FloatFormat implements Format<Float>
+	public static class FloatBimapper implements Bimapper<Float, Object>
 	{
-		public Object format( Float t )
+		public Object map( Float t )
 		{
 			return t;
 		}
 		
-		public Float parse( Object s )
+		public Float unmap( Object s )
 		{
 			return s == null ? null : Float.valueOf( s.toString( ) );
 		}
 	}
 	
-	public static class DoubleFormat implements Format<Double>
+	public static class DoubleBimapper implements Bimapper<Double, Object>
 	{
-		public Object format( Double t )
+		public Object map( Double t )
 		{
 			return t;
 		}
 		
-		public Double parse( Object s )
+		public Double unmap( Object s )
 		{
 			return s == null ? null : Double.valueOf( s.toString( ) );
 		}
 	}
 	
-	public static class BigIntegerFormat implements Format<BigInteger>
+	public static class BigIntegerBimapper implements Bimapper<BigInteger, Object>
 	{
-		public Object format( BigInteger t )
+		public Object map( BigInteger t )
 		{
 			return t;
 		}
 		
-		public BigInteger parse( Object s )
+		public BigInteger unmap( Object s )
 		{
 			return s == null ? null : new BigInteger( s.toString( ) );
 		}
 	}
 	
-	public static class BigDecimalFormat implements Format<BigDecimal>
+	public static class BigDecimalBimapper implements Bimapper<BigDecimal, Object>
 	{
-		public Object format( BigDecimal t )
+		public Object map( BigDecimal t )
 		{
 			return t;
 		}
 		
-		public BigDecimal parse( Object s )
+		public BigDecimal unmap( Object s )
 		{
 			return s == null ? null : new BigDecimal( s.toString( ) );
 		}
 	}
 	
-	public static class DateFormat implements Format<Date>
+	public static class DateBimapper implements Bimapper<Date, Object>
 	{
 		java.text.DateFormat	format;
 		
-		public DateFormat( java.text.DateFormat format )
+		public DateBimapper( java.text.DateFormat format )
 		{
 			this.format = format;
 		}
 		
-		public DateFormat( String simpleDateFormatPattern )
+		public DateBimapper( String simpleDateFormatPattern )
 		{
 			this( new SimpleDateFormat( simpleDateFormatPattern ) );
 		}
 		
 		@Override
-		public synchronized Object format( Date t )
+		public synchronized Object map( Date t )
 		{
 			return t == null ? null : format.format( t );
 		}
 		
 		@Override
-		public synchronized Date parse( Object s ) throws Exception
+		public synchronized Date unmap( Object s )
 		{
-			return s == null ? null : format.parse( s.toString( ) );
+			try
+			{
+				return s == null ? null : format.parse( s.toString( ) );
+			}
+			catch( ParseException e )
+			{
+				throw new RuntimeException( e );
+			}
 		}
 		
 	}
 	
-	public static class SpecObjectFormat<S extends YamlSpec<S>> implements Format<YamlObject<S>>
+	public static class SpecObjectBimapper<S extends YamlSpec<S>> implements Bimapper<YamlObject<S>, Object>
 	{
 		S	spec;
 		
-		private SpecObjectFormat( S spec )
+		private SpecObjectBimapper( S spec )
 		{
 			super( );
 			this.spec = spec;
 		}
 		
-		public static <S extends YamlSpec<S>> SpecObjectFormat<S> newInstance( S spec )
+		public static <S extends YamlSpec<S>> SpecObjectBimapper<S> newInstance( S spec )
 		{
-			return new SpecObjectFormat<S>( spec );
+			return new SpecObjectBimapper<S>( spec );
 		}
 		
 		@Override
-		public Object format( YamlObject<S> t )
+		public Object map( YamlObject<S> t )
 		{
 			return t == null ? null : t.toYaml( );
 		}
 		
 		@Override
-		public YamlObject<S> parse( Object s ) throws Exception
+		public YamlObject<S> unmap( Object s )
 		{
-			return s == null ? null : spec.fromYaml( ( Map<?, ?> ) s );
+			try
+			{
+				return s == null ? null : spec.fromYaml( ( Map<?, ?> ) s );
+			}
+			catch( Exception e )
+			{
+				throw new RuntimeException( e );
+			}
 		}
 	}
 	
-	public static class SpecArrayListFormat<E> implements Format<YamlArrayList<E>>
+	public static class SpecArrayListBimapper<E> implements Bimapper<YamlArrayList<E>, Object>
 	{
-		Format<? super E>	format;
+		Bimapper<? super E, Object>	format;
 		
-		private SpecArrayListFormat( Format<? super E> format )
+		private SpecArrayListBimapper( Bimapper<? super E, Object> format )
 		{
 			super( );
 			this.format = format;
 		}
 		
-		public static <E> SpecArrayListFormat<E> newInstance( Format<? super E> format )
+		public static <E> SpecArrayListBimapper<E> newInstance( Bimapper<? super E, Object> format )
 		{
-			return new SpecArrayListFormat<E>( format );
+			return new SpecArrayListBimapper<E>( format );
 		}
 		
 		@Override
-		public Object format( YamlArrayList<E> t )
+		public Object map( YamlArrayList<E> t )
 		{
 			return t == null ? null : t.toYaml( );
 		}
 		
 		@Override
-		public YamlArrayList<E> parse( Object s ) throws Exception
+		public YamlArrayList<E> unmap( Object s )
 		{
-			return s == null || s == null ? null : YamlArrayList.fromYaml( ( List<?> ) s , format );
+			try
+			{
+				return s == null || s == null ? null : YamlArrayList.fromYaml( ( List<?> ) s , format );
+			}
+			catch( Exception e )
+			{
+				throw new RuntimeException( e );
+			}
 		}
 	}
 	
@@ -361,56 +370,56 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	
 	public static Attribute<String> stringAttribute( String name )
 	{
-		return new Attribute<String>( name , new StringFormat( ) );
+		return new Attribute<String>( name , new StringBimapper( ) );
 	}
 	
 	public static <E extends Enum<E>> Attribute<E> enumAttribute( String name , Class<E> cls )
 	{
-		return new Attribute<E>( name , EnumFormat.newInstance( cls ) );
+		return new Attribute<E>( name , EnumBimapper.newInstance( cls ) );
 	}
 	
 	public static Attribute<Boolean> booleanAttribute( String name )
 	{
-		return new Attribute<Boolean>( name , new BooleanFormat( ) );
+		return new Attribute<Boolean>( name , new BooleanBimapper( ) );
 	}
 	
 	public static Attribute<Integer> integerAttribute( String name )
 	{
-		return new Attribute<Integer>( name , new IntegerFormat( ) );
+		return new Attribute<Integer>( name , new IntegerBimapper( ) );
 	}
 	
 	public static Attribute<Long> longAttribute( String name )
 	{
-		return new Attribute<Long>( name , new LongFormat( ) );
+		return new Attribute<Long>( name , new LongBimapper( ) );
 	}
 	
 	public static Attribute<Float> floatAttribute( String name )
 	{
-		return new Attribute<Float>( name , new FloatFormat( ) );
+		return new Attribute<Float>( name , new FloatBimapper( ) );
 	}
 	
 	public static Attribute<Double> doubleAttribute( String name )
 	{
-		return new Attribute<Double>( name , new DoubleFormat( ) );
+		return new Attribute<Double>( name , new DoubleBimapper( ) );
 	}
 	
 	public static Attribute<BigInteger> bigIntegerAttribute( String name )
 	{
-		return new Attribute<BigInteger>( name , new BigIntegerFormat( ) );
+		return new Attribute<BigInteger>( name , new BigIntegerBimapper( ) );
 	}
 	
 	public static Attribute<BigDecimal> bigDecimalAttribute( String name )
 	{
-		return new Attribute<BigDecimal>( name , new BigDecimalFormat( ) );
+		return new Attribute<BigDecimal>( name , new BigDecimalBimapper( ) );
 	}
 	
 	public static <S extends YamlSpec<S>> Attribute<YamlObject<S>> yamlObjectAttribute( String name , S spec )
 	{
-		return new Attribute<YamlObject<S>>( name , SpecObjectFormat.newInstance( spec ) );
+		return new Attribute<YamlObject<S>>( name , SpecObjectBimapper.newInstance( spec ) );
 	}
 	
-	public static <E> Attribute<YamlArrayList<E>> yamlArrayListAttribute( String name , Format<? super E> format )
+	public static <E> Attribute<YamlArrayList<E>> yamlArrayListAttribute( String name , Bimapper<? super E, Object> format )
 	{
-		return new Attribute<YamlArrayList<E>>( name , SpecArrayListFormat.newInstance( format ) );
+		return new Attribute<YamlArrayList<E>>( name , SpecArrayListBimapper.newInstance( format ) );
 	}
 }

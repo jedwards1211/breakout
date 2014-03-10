@@ -1,13 +1,11 @@
 package org.andork.snakeyaml;
 
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.andork.model.HasChangeSupport;
+import org.andork.func.Bimapper;
 import org.andork.model.Model;
 import org.andork.snakeyaml.YamlSpec.Attribute;
-import org.andork.snakeyaml.YamlSpec.Format;
 import org.andork.util.Java7;
 
 /**
@@ -107,7 +105,7 @@ public final class YamlObject<S extends YamlSpec<S>> extends YamlElement impleme
 		Map<String, Object> result = new LinkedHashMap<String, Object>( );
 		for( Map.Entry<Attribute<?>, Object> entry : attributes.entrySet( ) )
 		{
-			result.put( entry.getKey( ).getName( ) , ( ( Format ) entry.getKey( ).getFormat( ) ).format( entry.getValue( ) ) );
+			result.put( entry.getKey( ).getName( ) , ( ( Bimapper ) entry.getKey( ).getBimapper( ) ).map( entry.getValue( ) ) );
 		}
 		return result;
 	}

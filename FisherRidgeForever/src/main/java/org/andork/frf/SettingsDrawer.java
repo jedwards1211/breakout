@@ -18,7 +18,7 @@ import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
 import org.andork.event.Binder;
 import org.andork.frf.model.FloatRange;
-import org.andork.frf.model.FloatRangeFormat;
+import org.andork.frf.model.FloatRangeStringBimapper;
 import org.andork.plot.PlotAxisFloatRangeBinding;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlSpec;
@@ -38,7 +38,7 @@ public class SettingsDrawer extends Drawer
 {
 	
 	JButton						updateViewButton;
-	DefaultSelector<CameraView>	modeSelector;
+	ViewButtonsPanel			viewButtonsPanel;
 	JSlider						mouseSensitivitySlider;
 	PlotAxis					distColorationAxis;
 	PaintablePanel				distColorationAxisPanel;
@@ -46,7 +46,7 @@ public class SettingsDrawer extends Drawer
 	PaintablePanel				paramColorationAxisPanel;
 	PlotAxis					highlightDistAxis;
 	PaintablePanel				highlightDistAxisPanel;
-	JButton						debugButton	= new JButton( );
+	JButton						debugButton;
 	
 	Binder<YamlObject<Model>>	binder;
 	
@@ -55,7 +55,6 @@ public class SettingsDrawer extends Drawer
 		this.binder = binder;
 		
 		delegate( ).dockingSide( Side.RIGHT );
-		mainResizeHandle( );
 		pinButton( );
 		pinButtonDelegate( ).corner( Corner.TOP_LEFT ).side( Side.LEFT );
 		
@@ -77,6 +76,8 @@ public class SettingsDrawer extends Drawer
 	private void createComponents( )
 	{
 		updateViewButton = new JButton( "Update View" );
+		
+		viewButtonsPanel = new ViewButtonsPanel( );
 		
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
 		
@@ -111,24 +112,21 @@ public class SettingsDrawer extends Drawer
 		highlightDistAxis.setMajorTickColor( Color.BLACK );
 		highlightDistAxis.setMinorTickColor( Color.BLACK );
 		
-		modeSelector = new DefaultSelector<CameraView>( );
-		modeSelector.setAvailableValues( Arrays.asList( CameraView.values( ) ) );
-		
 		mouseSensitivitySlider = new JSlider( );
 		mouseSensitivitySlider.setValue( 20 );
 		mouseSensitivitySlider.setOpaque( false );
+		
+		debugButton = new JButton( "Debug" );
 	}
 	
 	private void createLayout( )
 	{
 		GridBagWizard w = GridBagWizard.create( this );
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
-		JLabel modeLabel = new JLabel( "View:" );
-		w.put( updateViewButton ).xy( 0 , 0 ).fillx( 1.0 );
-		w.put( modeLabel ).below( updateViewButton ).weightx( 1.0 ).west( );
-		w.put( modeSelector.getComboBox( ) ).below( modeLabel ).fillx( ).north( );
+		w.put( viewButtonsPanel ).xy( 0 , 0 );
+		w.put( updateViewButton ).below( viewButtonsPanel ).fillx( 1.0 ).insets( 43 , 3 , 3 , 3 );
 		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
-		w.put( sensLabel ).below( modeSelector.getComboBox( ) ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( sensLabel ).below( updateViewButton ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).north( );
 		JLabel distLabel = new JLabel( "Distance coloration:" );
 		w.put( distLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
@@ -152,7 +150,12 @@ public class SettingsDrawer extends Drawer
 	
 	private void createBindings( )
 	{
-		bind( binder , modeSelector , Model.cameraView );
+		bind( binder , viewButtonsPanel.getPlanButton( ) , Model.cameraView , CameraView.PLAN );
+		bind( binder , viewButtonsPanel.getPerspectiveButton( ) , Model.cameraView , CameraView.PERSPECTIVE );
+		bind( binder , viewButtonsPanel.getNorthButton( ) , Model.cameraView , CameraView.NORTH_FACING_PROFILE );
+		bind( binder , viewButtonsPanel.getSouthButton( ) , Model.cameraView , CameraView.SOUTH_FACING_PROFILE );
+		bind( binder , viewButtonsPanel.getEastButton( ) , Model.cameraView , CameraView.EAST_FACING_PROFILE );
+		bind( binder , viewButtonsPanel.getWestButton( ) , Model.cameraView , CameraView.WEST_FACING_PROFILE );
 		bind( binder , mouseSensitivitySlider , Model.mouseSensitivity );
 		binder.bind( new PlotAxisFloatRangeBinding( Model.distRange , distColorationAxis ) );
 		binder.bind( new PlotAxisFloatRangeBinding( Model.paramRange , paramColorationAxis ) );
@@ -201,9 +204,9 @@ public class SettingsDrawer extends Drawer
 	{
 		public static final Attribute<CameraView>	cameraView			= enumAttribute( "cameraView" , CameraView.class );
 		public static final Attribute<Integer>		mouseSensitivity	= integerAttribute( "mouseSensitivity" );
-		public static final Attribute<FloatRange>	distRange			= new Attribute<FloatRange>( "distRange" , FloatRangeFormat.instance );
-		public static final Attribute<FloatRange>	paramRange			= new Attribute<FloatRange>( "paramRange" , FloatRangeFormat.instance );
-		public static final Attribute<FloatRange>	highlightRange		= new Attribute<FloatRange>( "highlightRange" , FloatRangeFormat.instance );
+		public static final Attribute<FloatRange>	distRange			= new Attribute<FloatRange>( "distRange" , new FloatRangeStringBimapper( ) );
+		public static final Attribute<FloatRange>	paramRange			= new Attribute<FloatRange>( "paramRange" , new FloatRangeStringBimapper( ) );
+		public static final Attribute<FloatRange>	highlightRange		= new Attribute<FloatRange>( "highlightRange" , new FloatRangeStringBimapper( ) );
 		
 		private Model( )
 		{

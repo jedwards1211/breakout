@@ -376,7 +376,12 @@ public class PlotAxis extends JComponent implements Model
 	
 	public int getViewSpan( )
 	{
-		return orientation == Orientation.HORIZONTAL ? getWidth( ) : getHeight( );
+		int result = orientation == Orientation.HORIZONTAL ? getWidth( ) : getHeight( );
+		if( result != 0 )
+		{
+			return result;
+		}
+		return orientation == Orientation.HORIZONTAL ? getPreferredSize( ).width : getPreferredSize( ).height;
 	}
 	
 	public static void equalizeScale( PlotAxis ... axes )

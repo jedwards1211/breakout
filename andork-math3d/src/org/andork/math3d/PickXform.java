@@ -48,4 +48,22 @@ public class PickXform
 			mvmulAffine( vi , 0 , 0 , 1 , rayOut );
 		}
 	}
+	
+	public void xform( float x , float y , float canvasWidth , float canvasHeight , float[ ] origin , int origini , float[ ] rayOut , int rayOuti )
+	{
+		if( perspective )
+		{
+			getColumn3( vi , 3 , origin , origini );
+			x = btlrnf[ 2 ] + x / canvasWidth * ( btlrnf[ 3 ] - btlrnf[ 2 ] );
+			y = btlrnf[ 1 ] + y / canvasHeight * ( btlrnf[ 0 ] - btlrnf[ 1 ] );
+			mvmulAffine( vi , x , y , -btlrnf[ 4 ] , rayOut , rayOuti );
+		}
+		else
+		{
+			x = Reparam.linear( x , 0 , canvasWidth , -1 , 1 );
+			y = Reparam.linear( y , 0 , canvasHeight , 1 , -1 );
+			mpmulAffine( vi , x , y , 0 , origin , origini );
+			mvmulAffine( vi , 0 , 0 , 1 , rayOut , rayOuti );
+		}
+	}
 }

@@ -1,7 +1,7 @@
 package org.andork.frf;
 
 import java.awt.Color;
-import java.awt.Insets;
+import java.awt.Dimension;
 
 import javax.swing.JLabel;
 import javax.swing.RowFilter;
@@ -27,6 +27,8 @@ public class SurveyDrawer extends Drawer
 	
 	public SurveyDrawer( SortRunner sortRunner )
 	{
+		setPreferredSize( new Dimension(800, 250) );
+
 		highlightLabel = new JLabel( "Highlight: " );
 		filterLabel = new JLabel( "Filter: " );
 		

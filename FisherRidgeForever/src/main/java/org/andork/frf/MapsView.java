@@ -7,6 +7,7 @@ import static org.andork.math3d.Vecmath.scale3;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
@@ -16,6 +17,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,6 +36,7 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 
 import org.andork.awt.GridBagWizard;
+import org.andork.awt.event.UIBindings;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
@@ -56,6 +59,7 @@ import org.andork.jogl.basic.awt.BasicJOGLSetup;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.snakeyaml.YamlObject;
+import org.andork.snakeyaml.YamlObjectStringBimapper;
 import org.andork.snakeyaml.YamlSpec;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
@@ -66,6 +70,7 @@ import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Task;
 import org.andork.swing.async.TaskService;
+import org.andork.swing.async.TaskServiceFilePersister;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.LayeredBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
@@ -86,50 +91,51 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
-	TaskService						taskService;
-	final double[ ]					fromLoc			= new double[ 3 ];
-	final double[ ]					toLoc			= new double[ 3 ];
-	final double[ ]					toToLoc			= new double[ 3 ];
-	final double[ ]					leftAtTo		= new double[ 3 ];
-	final double[ ]					leftAtTo2		= new double[ 3 ];
-	final double[ ]					leftAtFrom		= new double[ 3 ];
+	TaskService											taskService;
+	final double[ ]										fromLoc			= new double[ 3 ];
+	final double[ ]										toLoc			= new double[ 3 ];
+	final double[ ]										toToLoc			= new double[ 3 ];
+	final double[ ]										leftAtTo		= new double[ 3 ];
+	final double[ ]										leftAtTo2		= new double[ 3 ];
+	final double[ ]										leftAtFrom		= new double[ 3 ];
 	
-	PlotAxis						xaxis;
-	PlotAxis						yaxis;
-	AxisLinkButton					axisLinkButton;
-	Plot							plot;
-	JPanel							plotPanel;
-	JPanel							mainPanel;
-	JLayeredPane					layeredPane;
+	PlotAxis											xaxis;
+	PlotAxis											yaxis;
+	AxisLinkButton										axisLinkButton;
+	Plot												plot;
+	JPanel												plotPanel;
+	JPanel												mainPanel;
+	JLayeredPane										layeredPane;
 	
-	PlotController					plotController;
-	MouseLooper						mouseLooper;
-	MousePickHandler				pickHandler;
-	MouseAdapterChain				mouseAdapterChain;
+	PlotController										plotController;
+	MouseLooper											mouseLooper;
+	MousePickHandler									pickHandler;
+	MouseAdapterChain									mouseAdapterChain;
 	
-	DrawerAutoshowController		autoshowController;
+	DrawerAutoshowController							autoshowController;
 	
-	TableSelectionHandler			selectionHandler;
+	TableSelectionHandler								selectionHandler;
 	
-	SurveyDrawer					surveyDrawer;
-	TaskListDrawer					taskListDrawer;
-	SettingsDrawer					settingsDrawer;
+	SurveyDrawer										surveyDrawer;
+	TaskListDrawer										taskListDrawer;
+	SettingsDrawer										settingsDrawer;
 	
-	Survey3dModel					model3d;
+	Survey3dModel										model3d;
 	
-	float[ ]						v				= newMat4f( );
+	float[ ]											v				= newMat4f( );
 	
-	int								debugMbrCount	= 0;
-	List<BasicJOGLObject>			debugMbrs		= new ArrayList<BasicJOGLObject>( );
+	int													debugMbrCount	= 0;
+	List<BasicJOGLObject>								debugMbrs		= new ArrayList<BasicJOGLObject>( );
 	
-	ShotPickContext					spc				= new ShotPickContext( );
+	ShotPickContext										spc				= new ShotPickContext( );
 	
-	final LinePlaneIntersection3f	lpx				= new LinePlaneIntersection3f( );
-	final float[ ]					p0				= new float[ 3 ];
-	final float[ ]					p1				= new float[ 3 ];
-	final float[ ]					p2				= new float[ 3 ];
+	final LinePlaneIntersection3f						lpx				= new LinePlaneIntersection3f( );
+	final float[ ]										p0				= new float[ 3 ];
+	final float[ ]										p1				= new float[ 3 ];
+	final float[ ]										p2				= new float[ 3 ];
 	
-	final Binder<YamlObject<Model>>	binder			= new Binder<YamlObject<Model>>( );
+	final Binder<YamlObject<Model>>						binder			= new Binder<YamlObject<Model>>( );
+	final TaskServiceFilePersister<YamlObject<Model>>	persister;
 	
 	public MapsView( )
 	{
@@ -397,11 +403,12 @@ public class MapsView extends BasicJOGLSetup
 				DefaultAnnotatingJTableSetup.createHighlightFieldListener( quickTableSetup , quickTableHighlightField.textComponent , Color.YELLOW ) );
 		
 		JPanel quickTablePanel = new JPanel( );
+		quickTablePanel.setPreferredSize( new Dimension( 150 , 500 ) );
 		GridBagWizard gbw = GridBagWizard.create( quickTablePanel );
 		gbw.put( quickTableFilterLabel ).xy( 0 , 0 ).west( ).insets( 2 , 2 , 0 , 0 );
-		gbw.put( quickTableFilterField ).rightOf( quickTableFilterLabel ).fillx( 1.0 ).insets( 2 , 2 , 0 , 2 );
+		gbw.put( quickTableFilterField ).rightOf( quickTableFilterLabel ).fillx( 1.0 ).insets( 2 , 2 , 0 , 0 );
 		gbw.put( quickTableHighlightLabel ).below( quickTableFilterLabel ).west( ).insets( 2 , 2 , 2 , 0 );
-		gbw.put( quickTableHighlightField ).rightOf( quickTableHighlightLabel ).fillx( 1.0 ).insets( 2 , 2 , 2 , 2 );
+		gbw.put( quickTableHighlightField ).rightOf( quickTableHighlightLabel ).fillx( 1.0 ).insets( 2 , 2 , 2 , 0 );
 		
 		gbw.put( quickTableSetup.scrollPane ).below( quickTableHighlightLabel , quickTableHighlightField ).fillboth( 1.0 , 1.0 );
 		
@@ -409,7 +416,7 @@ public class MapsView extends BasicJOGLSetup
 		quickTableDrawer.delegate( ).dockingSide( Side.LEFT );
 		quickTableDrawer.mainResizeHandle( );
 		quickTableDrawer.pinButton( );
-		quickTableDrawer.pinButtonDelegate( ).corner( Corner.TOP_RIGHT ).side( Side.RIGHT ).insets( new Insets( 10 , -10 , -10 , 10 ) );
+		quickTableDrawer.pinButtonDelegate( ).corner( Corner.TOP_RIGHT ).side( Side.RIGHT );
 		quickTableDrawer.addTo( layeredPane , 20 );
 		
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
@@ -431,6 +438,12 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
+		UIBindings.bind( binder , surveyDrawer.pinButton( ) , Model.surveyDrawerPinned );
+		UIBindings.bind( binder , surveyDrawer.maxButton( ) , Model.surveyDrawerMaximized );
+		UIBindings.bind( binder , settingsDrawer.pinButton( ) , Model.settingsDrawerPinned );
+		UIBindings.bind( binder , taskListDrawer.pinButton( ) , Model.taskListDrawerPinned );
+		UIBindings.bind( binder , quickTableDrawer.pinButton( ) , Model.miniSurveyDrawerPinned );
+		
 		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.cameraView )
 		{
 			public void modelToView( )
@@ -451,7 +464,9 @@ public class MapsView extends BasicJOGLSetup
 				org.andork.model.Model model = getModel( );
 				if( model != null )
 				{
-					orbiter.setSensitivity( ( Integer ) model.get( SettingsDrawer.Model.mouseSensitivity ) / 10f );
+					float sensitivity = ( Integer ) model.get( SettingsDrawer.Model.mouseSensitivity ) / 20f;
+					orbiter.setSensitivity( sensitivity );
+					navigator.setSensitivity( sensitivity );
 				}
 			}
 		} );
@@ -465,8 +480,8 @@ public class MapsView extends BasicJOGLSetup
 				if( model != null && model3d != null )
 				{
 					FloatRange range = ( FloatRange ) model.get( SettingsDrawer.Model.distRange );
-					model3d.setNearDist( range.lo );
-					model3d.setFarDist( range.hi );
+					model3d.setNearDist( range.getLo( ) );
+					model3d.setFarDist( range.getHi( ) );
 					canvas.display( );
 				}
 			}
@@ -481,21 +496,38 @@ public class MapsView extends BasicJOGLSetup
 				if( model != null && model3d != null )
 				{
 					FloatRange range = ( FloatRange ) model.get( SettingsDrawer.Model.paramRange );
-					model3d.setLoParam( range.lo );
-					model3d.setHiParam( range.hi );
+					model3d.setLoParam( range.getLo( ) );
+					model3d.setHiParam( range.getHi( ) );
 					canvas.display( );
 				}
 			}
 		} );
 		
-		YamlObject<Model> model = Model.instance.newObject( );
-		YamlObject<SettingsDrawer.Model> settingsDrawerModel = SettingsDrawer.Model.instance.newObject( );
-		settingsDrawerModel.set( SettingsDrawer.Model.cameraView , CameraView.PERSPECTIVE );
-		settingsDrawerModel.set( SettingsDrawer.Model.mouseSensitivity , 1 );
-		settingsDrawerModel.set( SettingsDrawer.Model.distRange , new FloatRange( 0 , 100000 ) );
-		settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new FloatRange( 0 , 2000 ) );
-		settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new FloatRange( 0 , 200 ) );
-		model.set( Model.settingsDrawerModel , settingsDrawerModel );
+		persister = new TaskServiceFilePersister<YamlObject<Model>>( taskService , "Saving settings..." ,
+				YamlObjectStringBimapper.newInstance( Model.instance ) , new File( "settings.frf.yaml" ) );
+		YamlObject<Model> model = null;
+		
+		try
+		{
+			model = persister.load( );
+		}
+		catch( Exception ex )
+		{
+		}
+		
+		if( model == null )
+		{
+			model = Model.instance.newObject( );
+			YamlObject<SettingsDrawer.Model> settingsDrawerModel = SettingsDrawer.Model.instance.newObject( );
+			settingsDrawerModel.set( SettingsDrawer.Model.cameraView , CameraView.PERSPECTIVE );
+			settingsDrawerModel.set( SettingsDrawer.Model.mouseSensitivity , 20 );
+			settingsDrawerModel.set( SettingsDrawer.Model.distRange , new FloatRange( 0 , 100000 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new FloatRange( 0 , 2000 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new FloatRange( 0 , 200 ) );
+			model.set( Model.settingsDrawerModel , settingsDrawerModel );
+		}
+		
+		model.changeSupport( ).addPropertyChangeListener( persister );
 		
 		binder.setModel( model );
 		binder.modelToView( );
@@ -712,7 +744,7 @@ public class MapsView extends BasicJOGLSetup
 					LinearAxisConversion conversion = new LinearAxisConversion( );
 					if( range != null )
 					{
-						conversion.set( range.lo , 1 , range.hi , 0 );
+						conversion.set( range.getLo( ) , 1 , range.getHi( ) , 0 );
 					}
 					editor.hover( picked.picked , picked.locationAlongShot , conversion );
 				}
@@ -833,11 +865,16 @@ public class MapsView extends BasicJOGLSetup
 	
 	public static final class Model extends YamlSpec<Model>
 	{
-		public static final Attribute<YamlObject<SettingsDrawer.Model>>	settingsDrawerModel	= yamlObjectAttribute( "settingsDrawerModel" , SettingsDrawer.Model.instance );
+		public static final Attribute<YamlObject<SettingsDrawer.Model>>	settingsDrawerModel		= yamlObjectAttribute( "settingsDrawerModel" , SettingsDrawer.Model.instance );
+		public static final Attribute<Boolean>							settingsDrawerPinned	= booleanAttribute( "settingsDrawerPinned" );
+		public static final Attribute<Boolean>							surveyDrawerPinned		= booleanAttribute( "surveyDrawerPinned" );
+		public static final Attribute<Boolean>							surveyDrawerMaximized	= booleanAttribute( "surveyDrawerMaximized" );
+		public static final Attribute<Boolean>							miniSurveyDrawerPinned	= booleanAttribute( "miniSurveyDrawerPinned" );
+		public static final Attribute<Boolean>							taskListDrawerPinned	= booleanAttribute( "taskListDrawerPinned" );
 		
 		private Model( )
 		{
-			super( settingsDrawerModel );
+			super( settingsDrawerModel , settingsDrawerPinned , surveyDrawerPinned , surveyDrawerMaximized , miniSurveyDrawerPinned , taskListDrawerPinned );
 		}
 		
 		public static final Model	instance	= new Model( );

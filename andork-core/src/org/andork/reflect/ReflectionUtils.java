@@ -760,6 +760,20 @@ public class ReflectionUtils
 		{
 			return format( this );
 		}
+		
+		public boolean equals( Object o )
+		{
+			if( o instanceof GenericArrayType )
+			{
+				return genericComponentType == ( ( GenericArrayType ) o ).getGenericComponentType( );
+			}
+			return false;
+		}
+		
+		public int hashCode( )
+		{
+			return genericComponentType.hashCode( );
+		}
 	}
 	
 	public static final class ParameterizedTypeImpl implements ParameterizedType

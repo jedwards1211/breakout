@@ -6,10 +6,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+import org.andork.func.Bimapper;
+
 public class ExecutorServiceFilePersister<M> extends AbstractFilePersister<M> {
 	ExecutorService	executor;
 
-	public ExecutorServiceFilePersister(final File file, final Format<M> format) {
+	public ExecutorServiceFilePersister(final File file, final Bimapper<M, String> format) {
 		this(Executors.newSingleThreadExecutor(new ThreadFactory() {
 			@Override
 			public Thread newThread(Runnable r) {
@@ -20,7 +22,7 @@ public class ExecutorServiceFilePersister<M> extends AbstractFilePersister<M> {
 		}), format, file);
 	}
 
-	public ExecutorServiceFilePersister(ExecutorService executor, Format<M> format, File file) {
+	public ExecutorServiceFilePersister(ExecutorService executor, Bimapper<M, String> format, File file) {
 		super(file, format);
 		this.executor = executor;
 	}

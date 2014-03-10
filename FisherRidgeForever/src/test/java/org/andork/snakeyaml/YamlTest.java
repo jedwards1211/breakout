@@ -1,5 +1,7 @@
 package org.andork.snakeyaml;
 
+import static org.andork.awt.event.UIBindings.bind;
+
 import java.awt.GridLayout;
 import java.io.File;
 
@@ -9,10 +11,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.andork.event.Binder;
+import org.andork.func.CompoundBimapper;
 import org.andork.swing.QuickTestFrame;
 import org.andork.util.ExecutorServiceFilePersister;
-
-import static org.andork.awt.event.UIBindings.*;
 
 public class YamlTest
 {
@@ -40,7 +41,7 @@ public class YamlTest
 		panel.add( b2Field );
 		
 		ExecutorServiceFilePersister<YamlObject<Settings>> persister = new ExecutorServiceFilePersister<YamlObject<Settings>>(
-				new File( "Settings.yaml" ) , YamlObjectFormat.newInstance( Settings.instance ) );
+				new File( "Settings.yaml" ) , YamlObjectStringBimapper.newInstance( Settings.instance ) );
 		
 		YamlObject<Settings> settings;
 		try
@@ -49,6 +50,7 @@ public class YamlTest
 		}
 		catch( Exception ex )
 		{
+			ex.printStackTrace( );
 			settings = Settings.instance.newObject( );
 		}
 		binder.setModel( settings );
