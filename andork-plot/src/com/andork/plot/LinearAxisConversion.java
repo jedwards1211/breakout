@@ -1,4 +1,3 @@
-
 package com.andork.plot;
 
 import java.io.Serializable;
@@ -6,12 +5,27 @@ import java.io.Serializable;
 /**
  * An axis conversion function that is a line with nonzero scale.
  */
-public class LinearAxisConversion implements IAxisConversion, Serializable
+public class LinearAxisConversion implements IAxisConversion , Serializable
 {
 	private static final long	serialVersionUID	= -3040515059560175691L;
 	
-	private double	offset	= 0;
-	private double	scale	= 1;
+	private double				offset				= 0;
+	private double				scale				= 1;
+	
+	public LinearAxisConversion( )
+	{
+		
+	}
+	
+	public LinearAxisConversion( double x1 , double cx1 , double x2 , double cx2 )
+	{
+		set( x1 , cx1 , x2 , cx2 );
+	}
+	
+	public LinearAxisConversion( LinearAxisConversion other )
+	{
+		set( other );
+	}
 	
 	public void set( LinearAxisConversion other )
 	{
@@ -20,11 +34,11 @@ public class LinearAxisConversion implements IAxisConversion, Serializable
 	}
 	
 	/**
-	 * Sets this conversion so that {@code convert( x1 ) == cx1} and {@code convert( x2 ) == cx2}.
-	 * The parameters must not be NaN or Infinite, {@code x1} must not equal {@code x2} and {@code cx1}
-	 * must not equal {@code cx2}.
-	 * @throws IllegalArgumentException if the parameters are invalid or if it is impossible to calculate
-	 * the conversion because of a double overflow.
+	 * Sets this conversion so that {@code convert( x1 ) == cx1} and {@code convert( x2 ) == cx2}. The parameters must not be NaN or Infinite, {@code x1} must
+	 * not equal {@code x2} and {@code cx1} must not equal {@code cx2}.
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if the parameters are invalid or if it is impossible to calculate the conversion because of a double overflow.
 	 */
 	public void set( double x1 , double cx1 , double x2 , double cx2 )
 	{
@@ -70,7 +84,7 @@ public class LinearAxisConversion implements IAxisConversion, Serializable
 		offset = newOffset;
 		scale = newScale;
 	}
-
+	
 	public double getOffset( )
 	{
 		return offset;

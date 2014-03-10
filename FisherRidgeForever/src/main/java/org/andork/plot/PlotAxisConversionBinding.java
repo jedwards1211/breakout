@@ -2,18 +2,17 @@ package org.andork.plot;
 
 import org.andork.event.Binder.Binding;
 import org.andork.event.HierarchicalBasicPropertyChangeListener;
-import org.andork.frf.model.FloatRange;
 import org.andork.model.Model;
 
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.PlotAxis;
 
-public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBasicPropertyChangeListener
+public class PlotAxisConversionBinding extends Binding implements HierarchicalBasicPropertyChangeListener
 {
 	PlotAxis	axis;
 	boolean		modelToViewFailed	= false;
 	
-	public PlotAxisFloatRangeBinding( Object property , PlotAxis axis )
+	public PlotAxisConversionBinding( Object property , PlotAxis axis )
 	{
 		super( property );
 		this.axis = axis;
@@ -23,21 +22,14 @@ public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBa
 	public void modelToView( )
 	{
 		Model model = getModel( );
-		if( axis.getViewSpan( ) == 0 )
-		{
-			modelToViewFailed = true;
-			return;
-		}
-		modelToViewFailed = false;
 		if( model == null )
 		{
 			return;
 		}
-		FloatRange range = ( FloatRange ) model.get( property );
-		if( range != null )
+		LinearAxisConversion conversion = ( LinearAxisConversion ) model.get( property );
+		if( conversion != null )
 		{
-			LinearAxisConversion axisConversion = axis.getAxisConversion( );
-			axisConversion.set( range.getLo( ) , 0 , range.getHi( ) , axis.getViewSpan( ) );
+			axis.setAxisConversion( new LinearAxisConversion( conversion ) );
 		}
 	}
 	
@@ -49,13 +41,7 @@ public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBa
 		{
 			return;
 		}
-		if( modelToViewFailed )
-		{
-			modelToView( );
-		}
-		LinearAxisConversion axisConversion = axis.getAxisConversion( );
-		FloatRange range = new FloatRange( ( float ) axisConversion.invert( 0 ) , ( float ) axisConversion.invert( axis.getViewSpan( ) ) );
-		model.set( property , range );
+		model.set( property , new LinearAxisConversion( axis.getAxisConversion( ) ) );
 	}
 	
 	@Override

@@ -349,7 +349,7 @@ public class MapsView extends BasicJOGLSetup
 		} );
 		
 		layeredPane.add( plotPanel );
-		surveyDrawer.addTo( layeredPane , 3 );
+		surveyDrawer.addTo( layeredPane , 5 );
 		
 		mainPanel = new JPanel( new BorderLayout( ) );
 		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
@@ -417,7 +417,7 @@ public class MapsView extends BasicJOGLSetup
 		quickTableDrawer.mainResizeHandle( );
 		quickTableDrawer.pinButton( );
 		quickTableDrawer.pinButtonDelegate( ).corner( Corner.TOP_RIGHT ).side( Side.RIGHT );
-		quickTableDrawer.addTo( layeredPane , 20 );
+		quickTableDrawer.addTo( layeredPane , 3 );
 		
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
 		
@@ -521,9 +521,9 @@ public class MapsView extends BasicJOGLSetup
 			YamlObject<SettingsDrawer.Model> settingsDrawerModel = SettingsDrawer.Model.instance.newObject( );
 			settingsDrawerModel.set( SettingsDrawer.Model.cameraView , CameraView.PERSPECTIVE );
 			settingsDrawerModel.set( SettingsDrawer.Model.mouseSensitivity , 20 );
-			settingsDrawerModel.set( SettingsDrawer.Model.distRange , new FloatRange( 0 , 100000 ) );
-			settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new FloatRange( 0 , 2000 ) );
-			settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new FloatRange( 0 , 200 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
 			model.set( Model.settingsDrawerModel , settingsDrawerModel );
 		}
 		
@@ -740,12 +740,7 @@ public class MapsView extends BasicJOGLSetup
 				
 				if( picked != null )
 				{
-					FloatRange range = settingsDrawer.getModel( ).get( SettingsDrawer.Model.highlightRange );
-					LinearAxisConversion conversion = new LinearAxisConversion( );
-					if( range != null )
-					{
-						conversion.set( range.getLo( ) , 1 , range.getHi( ) , 0 );
-					}
+					LinearAxisConversion conversion = settingsDrawer.getModel( ).get( SettingsDrawer.Model.highlightRange );
 					editor.hover( picked.picked , picked.locationAlongShot , conversion );
 				}
 				

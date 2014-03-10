@@ -4,7 +4,6 @@ import static org.andork.awt.event.UIBindings.bind;
 
 import java.awt.Color;
 import java.awt.Insets;
-import java.util.Arrays;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -17,9 +16,8 @@ import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
 import org.andork.event.Binder;
-import org.andork.frf.model.FloatRange;
-import org.andork.frf.model.FloatRangeStringBimapper;
-import org.andork.plot.PlotAxisFloatRangeBinding;
+import org.andork.frf.model.LinearAxisConversionYamlBimapper;
+import org.andork.plot.PlotAxisConversionBinding;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlSpec;
 import org.andork.swing.PaintablePanel;
@@ -27,8 +25,8 @@ import org.andork.swing.border.GradientFillBorder;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
-import org.andork.swing.selector.DefaultSelector;
 
+import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.PlotAxis;
 import com.andork.plot.PlotAxis.LabelPosition;
 import com.andork.plot.PlotAxis.Orientation;
@@ -157,9 +155,9 @@ public class SettingsDrawer extends Drawer
 		bind( binder , viewButtonsPanel.getEastButton( ) , Model.cameraView , CameraView.EAST_FACING_PROFILE );
 		bind( binder , viewButtonsPanel.getWestButton( ) , Model.cameraView , CameraView.WEST_FACING_PROFILE );
 		bind( binder , mouseSensitivitySlider , Model.mouseSensitivity );
-		binder.bind( new PlotAxisFloatRangeBinding( Model.distRange , distColorationAxis ) );
-		binder.bind( new PlotAxisFloatRangeBinding( Model.paramRange , paramColorationAxis ) );
-		binder.bind( new PlotAxisFloatRangeBinding( Model.highlightRange , highlightDistAxis ) );
+		binder.bind( new PlotAxisConversionBinding( Model.distRange , distColorationAxis ) );
+		binder.bind( new PlotAxisConversionBinding( Model.paramRange , paramColorationAxis ) );
+		binder.bind( new PlotAxisConversionBinding( Model.highlightRange , highlightDistAxis ) );
 	}
 	
 	public JButton updateViewButton( )
@@ -202,11 +200,11 @@ public class SettingsDrawer extends Drawer
 	
 	public static class Model extends YamlSpec<Model>
 	{
-		public static final Attribute<CameraView>	cameraView			= enumAttribute( "cameraView" , CameraView.class );
-		public static final Attribute<Integer>		mouseSensitivity	= integerAttribute( "mouseSensitivity" );
-		public static final Attribute<FloatRange>	distRange			= new Attribute<FloatRange>( "distRange" , new FloatRangeStringBimapper( ) );
-		public static final Attribute<FloatRange>	paramRange			= new Attribute<FloatRange>( "paramRange" , new FloatRangeStringBimapper( ) );
-		public static final Attribute<FloatRange>	highlightRange		= new Attribute<FloatRange>( "highlightRange" , new FloatRangeStringBimapper( ) );
+		public static final Attribute<CameraView>			cameraView			= enumAttribute( "cameraView" , CameraView.class );
+		public static final Attribute<Integer>				mouseSensitivity	= integerAttribute( "mouseSensitivity" );
+		public static final Attribute<LinearAxisConversion>	distRange			= new Attribute<LinearAxisConversion>( "distRange" , new LinearAxisConversionYamlBimapper( ) );
+		public static final Attribute<LinearAxisConversion>	paramRange			= new Attribute<LinearAxisConversion>( "paramRange" , new LinearAxisConversionYamlBimapper( ) );
+		public static final Attribute<LinearAxisConversion>	highlightRange		= new Attribute<LinearAxisConversion>( "highlightRange" , new LinearAxisConversionYamlBimapper( ) );
 		
 		private Model( )
 		{
