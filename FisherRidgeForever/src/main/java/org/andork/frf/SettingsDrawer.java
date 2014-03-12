@@ -32,6 +32,7 @@ import com.andork.plot.PlotAxis.LabelPosition;
 import com.andork.plot.PlotAxis.Orientation;
 import com.andork.plot.PlotAxisController;
 
+@SuppressWarnings( "serial" )
 public class SettingsDrawer extends Drawer
 {
 	
@@ -44,6 +45,7 @@ public class SettingsDrawer extends Drawer
 	PaintablePanel				paramColorationAxisPanel;
 	PlotAxis					highlightDistAxis;
 	PaintablePanel				highlightDistAxisPanel;
+	JButton						fitViewButton;
 	JButton						debugButton;
 	
 	Binder<YamlObject<Model>>	binder;
@@ -114,6 +116,8 @@ public class SettingsDrawer extends Drawer
 		mouseSensitivitySlider.setValue( 20 );
 		mouseSensitivitySlider.setOpaque( false );
 		
+		fitViewButton = new JButton( "Fit View" );
+		
 		debugButton = new JButton( "Debug" );
 	}
 	
@@ -122,7 +126,8 @@ public class SettingsDrawer extends Drawer
 		GridBagWizard w = GridBagWizard.create( this );
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
 		w.put( viewButtonsPanel ).xy( 0 , 0 );
-		w.put( updateViewButton ).below( viewButtonsPanel ).fillx( 1.0 ).insets( 43 , 3 , 3 , 3 );
+		w.put( fitViewButton ).belowLast( ).fillx( 1.0 );
+		w.put( updateViewButton ).belowLast( ).fillx( 1.0 ).insets( 43 , 3 , 3 , 3 );
 		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
 		w.put( sensLabel ).below( updateViewButton ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).north( );
@@ -174,6 +179,26 @@ public class SettingsDrawer extends Drawer
 	public YamlObject<Model> getModel( )
 	{
 		return binder.getModel( );
+	}
+	
+	public JButton getFitViewButton( )
+	{
+		return fitViewButton;
+	}
+
+	public PlotAxis getDistColorationAxis( )
+	{
+		return distColorationAxis;
+	}
+	
+	public PlotAxis getParamColorationAxis( )
+	{
+		return paramColorationAxis;
+	}
+	
+	public PlotAxis getHighlightDistAxis( )
+	{
+		return highlightDistAxis;
 	}
 	
 	public static enum CameraView

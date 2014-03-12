@@ -110,6 +110,21 @@ public class BasicOrbiter extends MouseAdapter
 			return;
 		}
 		
+		for( float f : center )
+		{
+			if( Float.isNaN( f ) || Float.isInfinite( f ) )
+			{
+				return;
+			}
+		}
+		for( float f : axis )
+		{
+			if( Float.isNaN( f ) || Float.isInfinite( f ) )
+			{
+				return;
+			}
+		}
+		
 		Component canvas = ( Component ) e.getSource( );
 		
 		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 && pressEvent.isControlDown( ) )

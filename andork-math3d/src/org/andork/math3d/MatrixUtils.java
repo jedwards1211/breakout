@@ -2,6 +2,8 @@ package org.andork.math3d;
 
 import java.util.Arrays;
 
+import org.andork.util.ArrayUtils;
+
 /**
  * a.k.a. Andy's Magical Matrix Manipulator
  * 
@@ -12,6 +14,19 @@ import java.util.Arrays;
  */
 public class MatrixUtils
 {
+	public static void main( String[ ] args )
+	{
+		double[ ][ ] A = {
+				{ -4 , 0 , -1 , -8 } ,
+				{ 4 , 0 , -1 , -6 } ,
+				{ -4 , 0 , 0 , 0 }
+		};
+		
+		gauss( A , new int[ 3 ] );
+		
+		System.out.println( ArrayUtils.prettyPrint( A , "%9.2f" ) );
+	}
+	
 	/**
 	 * Returns the determinant of a 4x4 matrix.
 	 */
@@ -692,6 +707,144 @@ public class MatrixUtils
 		}
 	}
 	
+	/**
+	 * Performs gaussian elimination on the m by n matrix A. Instead of exchanging rows, row_perms is used to mark the positions of the rows in the reduced
+	 * matrix. Row <code>i</code> of the reduced matrix is row <code>row_perms[ i ]</code> of A.
+	 */
+	public static void gauss( double[ ][ ] A , int[ ] row_perms )
+	{
+		int i = 0;
+		int j = 0;
+		
+		int m = A.length;
+		int n = A.length == 0 ? 0 : A[ 0 ].length;
+		
+		if( row_perms.length != m )
+		{
+			throw new IllegalArgumentException( "row_perms.length must equal A.length" );
+		}
+		
+		for( int k = 0 ; k < row_perms.length ; k++ )
+		{
+			row_perms[ k ] = k;
+		}
+		
+		while( i < m && j < n )
+		{
+			int maxi = i;
+			double maxpivot = A[ row_perms[ i ] ][ j ];
+			
+			// find the largest pivot in column j
+			for( int k = i + 1 ; k < m ; k++ )
+			{
+				double newpivot = A[ row_perms[ k ] ][ j ];
+				if( Math.abs( newpivot ) > Math.abs( maxpivot ) )
+				{
+					maxpivot = newpivot;
+					maxi = k;
+				}
+			}
+			if( maxpivot != 0 )
+			{
+				// swap the row with the largest pivot with row i
+				if( i != maxi )
+				{
+					int temp = row_perms[ i ];
+					row_perms[ i ] = row_perms[ maxi ];
+					row_perms[ maxi ] = temp;
+				}
+				
+				// divide row i by the pivot value
+				for( int k = j ; k < n ; k++ )
+				{
+					A[ row_perms[ i ] ][ k ] /= maxpivot;
+				}
+				
+				// subtract row i from the rows below
+				for( int u = i + 1 ; u < m ; u++ )
+				{
+					double multiplier = A[ row_perms[ u ] ][ j ];
+					
+					for( int k = j ; k < n ; k++ )
+					{
+						A[ row_perms[ u ] ][ k ] -= multiplier * A[ row_perms[ i ] ][ k ];
+					}
+				}
+				i++ ;
+			}
+			j++ ;
+		}
+	}
+	
+	/**
+	 * Performs gaussian elimination on the m by n matrix A. Instead of exchanging rows, row_perms is used to mark the positions of the rows in the reduced
+	 * matrix. Row <code>i</code> of the reduced matrix is row <code>row_perms[ i ]</code> of A.
+	 */
+	public static void gauss( float[ ][ ] A , int[ ] row_perms )
+	{
+		int i = 0;
+		int j = 0;
+		
+		int m = A.length;
+		int n = A.length == 0 ? 0 : A[ 0 ].length;
+		
+		if( row_perms.length != m )
+		{
+			throw new IllegalArgumentException( "row_perms.length must equal A.length" );
+		}
+		
+		for( int k = 0 ; k < row_perms.length ; k++ )
+		{
+			row_perms[ k ] = k;
+		}
+		
+		while( i < m && j < n )
+		{
+			int maxi = i;
+			float maxpivot = A[ row_perms[ i ] ][ j ];
+			
+			// find the largest pivot in column j
+			for( int k = i + 1 ; k < m ; k++ )
+			{
+				float newpivot = A[ row_perms[ k ] ][ j ];
+				if( Math.abs( newpivot ) > Math.abs( maxpivot ) )
+				{
+					maxpivot = newpivot;
+					maxi = k;
+				}
+			}
+			if( maxpivot != 0 )
+			{
+				// swap the row with the largest pivot with row i
+				if( i != maxi )
+				{
+					int temp = row_perms[ i ];
+					row_perms[ i ] = row_perms[ maxi ];
+					row_perms[ maxi ] = temp;
+				}
+				
+				// divide row i by the pivot value
+				for( int k = j ; k < n ; k++ )
+				{
+					A[ row_perms[ i ] ][ k ] /= maxpivot;
+				}
+				
+				// subtract row i from the rows below
+				for( int u = i + 1 ; u < m ; u++ )
+				{
+					float multiplier = A[ row_perms[ u ] ][ j ];
+					
+					for( int k = j ; k < n ; k++ )
+					{
+						A[ row_perms[ u ] ][ k ] -= multiplier * A[ row_perms[ i ] ][ k ];
+					}
+				}
+				i++ ;
+			}
+			j++ ;
+		}
+	}
+
 	public static void backsubstitute( double[ ] A , int m , int n , int[ ] row_perms , double[ ] coefficients )
 	{
 		if( m + 1 != n )
@@ -1125,32 +1278,32 @@ public class MatrixUtils
 		return sb.toString( );
 	}
 	
-	public static void main( String[ ] args )
-	{
-		// double[ ] A = new double[ ] { 2 , 1 , -1 , 8 , -3 , -1 , 2 , -11 , -2 , 1 , 2 , -3 };
-		// double[ ] A = new double[ ] { 2 , 1 , -1 , 8 , -3 , -1 , 2 , -11 , 0 , 0 , 0 , 0 };
-		// double[ ] A = new double[ ] { 0 , 2 , 0 , 0 , 1 , 2 , 0 , -2 , 0 , 0 , 0 , 0 , 0 , 2 , 1 };
-		double[ ] A = new double[ ] { 0 , 2 , 0 , 0 , 1 , 2 , 0 , -2 , 0 , 0 , 0 , 0 , 0 , 0 , 0 };
-		int m = 3;
-		int n = 5;
-		int nvars = 4;
-		
-		int[ ] row_perms = new int[ m ];
-		
-		gauss( A , m , n , row_perms );
-		
-		double[ ] eqs = new double[ n * nvars ];
-		boolean[ ] free = new boolean[ nvars ];
-		
-		generalSolution( A , m , n , row_perms , true , eqs , free );
-		
-		System.out.println( "Reduced form of A:" );
-		System.out.println( toString( A , m , n , row_perms ) );
-		
-		System.out.println( "General solution:" );
-		System.out.println( toString( eqs , nvars , n , null ) );
-		
-		System.out.println( "Free vars:" );
-		System.out.println( Arrays.toString( free ) );
-	}
+	// public static void main( String[ ] args )
+	// {
+	// // double[ ] A = new double[ ] { 2 , 1 , -1 , 8 , -3 , -1 , 2 , -11 , -2 , 1 , 2 , -3 };
+	// // double[ ] A = new double[ ] { 2 , 1 , -1 , 8 , -3 , -1 , 2 , -11 , 0 , 0 , 0 , 0 };
+	// // double[ ] A = new double[ ] { 0 , 2 , 0 , 0 , 1 , 2 , 0 , -2 , 0 , 0 , 0 , 0 , 0 , 2 , 1 };
+	// double[ ] A = new double[ ] { 0 , 2 , 0 , 0 , 1 , 2 , 0 , -2 , 0 , 0 , 0 , 0 , 0 , 0 , 0 };
+	// int m = 3;
+	// int n = 5;
+	// int nvars = 4;
+	//
+	// int[ ] row_perms = new int[ m ];
+	//
+	// gauss( A , m , n , row_perms );
+	//
+	// double[ ] eqs = new double[ n * nvars ];
+	// boolean[ ] free = new boolean[ nvars ];
+	//
+	// generalSolution( A , m , n , row_perms , true , eqs , free );
+	//
+	// System.out.println( "Reduced form of A:" );
+	// System.out.println( toString( A , m , n , row_perms ) );
+	//
+	// System.out.println( "General solution:" );
+	// System.out.println( toString( eqs , nvars , n , null ) );
+	//
+	// System.out.println( "Free vars:" );
+	// System.out.println( Arrays.toString( free ) );
+	// }
 }

@@ -65,4 +65,25 @@ public class BasicJOGLSetup
 	protected void initKeyboardInput( )
 	{
 	}
+	
+	public GLCanvas getCanvas( )
+	{
+		return canvas;
+	}
+	
+	public BasicJOGLScene getScene( )
+	{
+		return scene;
+	}
+	
+	public BasicNavigator getNavigator( )
+	{
+		return navigator;
+	}
+	
+	public BasicOrbiter getOrbiter( )
+	{
+		return orbiter;
+	}
+	
 }

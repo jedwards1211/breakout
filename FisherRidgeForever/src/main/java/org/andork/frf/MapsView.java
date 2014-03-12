@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -46,7 +47,6 @@ import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
 import org.andork.frf.SettingsDrawer.CameraView;
 import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
-import org.andork.frf.model.FloatRange;
 import org.andork.frf.model.Survey3dModel;
 import org.andork.frf.model.Survey3dModel.SelectionEditor;
 import org.andork.frf.model.Survey3dModel.Shot;
@@ -56,6 +56,7 @@ import org.andork.frf.model.SurveyShot;
 import org.andork.jogl.basic.BasicJOGLObject;
 import org.andork.jogl.basic.BasicJOGLScene;
 import org.andork.jogl.basic.awt.BasicJOGLSetup;
+import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.snakeyaml.YamlObject;
@@ -91,6 +92,8 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
+	DefaultNavigator									navigator;
+	
 	TaskService											taskService;
 	final double[ ]										fromLoc			= new double[ 3 ];
 	final double[ ]										toLoc			= new double[ 3 ];
@@ -245,9 +248,9 @@ public class MapsView extends BasicJOGLSetup
 		plotPanel.add( yaxis );
 		plotPanel.add( axisLinkButton , Corner.TOP_LEFT );
 		
-		canvas.removeMouseListener( navigator );
-		canvas.removeMouseMotionListener( navigator );
-		canvas.removeMouseWheelListener( navigator );
+		canvas.removeMouseListener( super.navigator );
+		canvas.removeMouseMotionListener( super.navigator );
+		canvas.removeMouseWheelListener( super.navigator );
 		
 		canvas.removeMouseListener( orbiter );
 		canvas.removeMouseMotionListener( orbiter );
@@ -325,8 +328,6 @@ public class MapsView extends BasicJOGLSetup
 				
 				final Survey3dModel model = Survey3dModel.create( shots , 10 , 3 , 3 , 3 );
 				
-				binder.modelToView( );
-				
 				task.setStatus( "Updating view: installing new model..." );
 				
 				new DoSwing( )
@@ -337,6 +338,8 @@ public class MapsView extends BasicJOGLSetup
 						MapsView.this.model3d = model;
 						scene.add( model.getRootGroup( ) );
 						scene.initLater( model.getRootGroup( ) );
+						
+						binder.modelToView( );
 						
 						float[ ] center = new float[ 3 ];
 						Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
@@ -479,9 +482,11 @@ public class MapsView extends BasicJOGLSetup
 				org.andork.model.Model model = getModel( );
 				if( model != null && model3d != null )
 				{
-					FloatRange range = ( FloatRange ) model.get( SettingsDrawer.Model.distRange );
-					model3d.setNearDist( range.getLo( ) );
-					model3d.setFarDist( range.getHi( ) );
+					LinearAxisConversion range = ( LinearAxisConversion ) model.get( SettingsDrawer.Model.distRange );
+					float nearDist = ( float ) range.invert( 0.0 );
+					float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
+					model3d.setNearDist( nearDist );
+					model3d.setFarDist( farDist );
 					canvas.display( );
 				}
 			}
@@ -495,9 +500,11 @@ public class MapsView extends BasicJOGLSetup
 				org.andork.model.Model model = getModel( );
 				if( model != null && model3d != null )
 				{
-					FloatRange range = ( FloatRange ) model.get( SettingsDrawer.Model.paramRange );
-					model3d.setLoParam( range.getLo( ) );
-					model3d.setHiParam( range.getHi( ) );
+					LinearAxisConversion range = ( LinearAxisConversion ) model.get( SettingsDrawer.Model.paramRange );
+					float loParam = ( float ) range.invert( 0.0 );
+					float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
+					model3d.setLoParam( loParam );
+					model3d.setHiParam( hiParam );
 					canvas.display( );
 				}
 			}
@@ -531,12 +538,65 @@ public class MapsView extends BasicJOGLSetup
 		
 		binder.setModel( model );
 		binder.modelToView( );
+		
+		settingsDrawer.getFitViewButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				if( settingsDrawer.getModel( ).get( SettingsDrawer.Model.cameraView ) != CameraView.PERSPECTIVE )
+				{
+					return;
+				}
+				
+				List<SurveyShot> origShots = model3d.getOriginalShots( );
+				Collection<Shot> shots = model3d.getSelectedShots( );
+				if( shots.isEmpty( ) )
+				{
+					shots = model3d.getShots( );
+				}
+				
+				FittingFrustum frustum = new FittingFrustum( );
+				
+				frustum.init( scene.pickXform( ) );
+				
+				float[ ] coord = new float[ 3 ];
+				
+				for( Shot shot : shots )
+				{
+					SurveyShot orig = origShots.get( shot.getIndex( ) );
+					frustum.addPoint(
+							( float ) orig.from.position[ 0 ] ,
+							( float ) orig.from.position[ 1 ] ,
+							( float ) orig.from.position[ 2 ]
+							);
+					frustum.addPoint(
+							( float ) orig.to.position[ 0 ] ,
+							( float ) orig.to.position[ 1 ] ,
+							( float ) orig.to.position[ 2 ]
+							);
+				}
+				
+				frustum.calculateOrigin( coord );
+				
+				float[ ] v = new float[ 16 ];
+				scene.getViewXform( v );
+				Vecmath.invAffine( v );
+				v[ 12 ] = coord[ 0 ];
+				v[ 13 ] = coord[ 1 ];
+				v[ 14 ] = coord[ 2 ];
+				Vecmath.invAffine( v );
+				scene.setViewXform( v );
+			}
+		} );
 	}
 	
 	@Override
 	protected void init( )
 	{
 		super.init( );
+		
+		navigator = new DefaultNavigator( this );
 		
 		navigator.setMoveFactor( 5f );
 		navigator.setWheelFactor( 5f );
@@ -696,9 +756,11 @@ public class MapsView extends BasicJOGLSetup
 			add3( center , origShot.to.position , center );
 		}
 		
-		scale3( center , 0.5 / newSelectedShots.size( ) );
-		
-		orbiter.setCenter( Vecmath.toFloats( center ) );
+		if( !newSelectedShots.isEmpty( ) )
+		{
+			scale3( center , 0.5 / newSelectedShots.size( ) );
+			orbiter.setCenter( Vecmath.toFloats( center ) );
+		}
 	}
 	
 	private class MousePickHandler extends MouseAdapter
@@ -741,7 +803,8 @@ public class MapsView extends BasicJOGLSetup
 				if( picked != null )
 				{
 					LinearAxisConversion conversion = settingsDrawer.getModel( ).get( SettingsDrawer.Model.highlightRange );
-					editor.hover( picked.picked , picked.locationAlongShot , conversion );
+					LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getHighlightDistAxis( ).getViewSpan( ) ) , 0.0 );
+					editor.hover( picked.picked , picked.locationAlongShot , conversion2 );
 				}
 				
 				editor.commit( );

@@ -2,11 +2,12 @@ settingsDrawerModel:
   cameraView: PERSPECTIVE
   mouseSensitivity: 20
   distRange:
-    scale: 0.009970684483228803
+    scale: 0.0014535268939745284
     offset: 0.0
   paramRange:
-    scale: 0.4
-    offset: 0.0
+    scale: 0.561633319033962
+    offset: 32.10936243937158
   highlightRange:
-    scale: 0.2
-    offset: 0.0
+    scale: 0.1804206185394791
+    offset: 17.24871606134684
+surveyDrawerPinned: false

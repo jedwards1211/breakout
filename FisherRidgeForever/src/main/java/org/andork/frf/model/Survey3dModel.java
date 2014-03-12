@@ -257,6 +257,19 @@ public class Survey3dModel
 			return index;
 		}
 		
+		public void getCoordinate( int i , float[ ] result )
+		{
+			ByteBuffer indexBuffer = segment.fillIndexBuffer.buffer( );
+			ByteBuffer vertBuffer = segment.geomBuffer.buffer( );
+			indexBuffer.position( indexInSegment * FILL_IPS * BPI + i * BPI );
+			vertBuffer.position( indexBuffer.getInt( ) * GEOM_BPV );
+			result[ 0 ] = vertBuffer.getFloat( );
+			result[ 1 ] = vertBuffer.getFloat( );
+			result[ 2 ] = vertBuffer.getFloat( );
+			vertBuffer.position( 0 );
+			indexBuffer.position( 0 );
+		}
+		
 		public void pick( float[ ] rayOrigin , float[ ] rayDirection , ShotPickContext c , List<PickResult<Shot>> pickResults )
 		{
 			ShotPickResult result = null;
