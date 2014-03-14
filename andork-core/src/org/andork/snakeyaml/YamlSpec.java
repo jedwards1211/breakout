@@ -71,8 +71,8 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	 */
 	public static class Attribute<T>
 	{
-		private final String				name;
-		private final Bimapper<T, Object>	format;
+		private final String								name;
+		private final Bimapper<? super T, ? extends Object>	format;
 		
 		/**
 		 * Creates an attribute with the given name and format.
@@ -82,7 +82,7 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		 * @param format
 		 *            the format for converting from the attribute value to and from a {@code String} for XML.
 		 */
-		public Attribute( String name , Bimapper<T, Object> format )
+		public Attribute( String name , Bimapper<? super T, ? extends Object> format )
 		{
 			super( );
 			this.name = name;
@@ -104,7 +104,7 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		 * 
 		 * @return the format.
 		 */
-		public Bimapper<T, Object> getBimapper( )
+		public Bimapper<? super T, ? extends Object> getBimapper( )
 		{
 			return format;
 		}
@@ -337,7 +337,7 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		{
 			try
 			{
-				return s == null || s == null ? null : YamlArrayList.fromYaml( ( List<?> ) s , format );
+				return s == null || s == null ? null : YamlArrayList.<E>fromYaml( ( List<?> ) s , format );
 			}
 			catch( Exception e )
 			{
@@ -420,6 +420,6 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	
 	public static <E> Attribute<YamlArrayList<E>> yamlArrayListAttribute( String name , Bimapper<? super E, Object> format )
 	{
-		return new Attribute<YamlArrayList<E>>( name , SpecArrayListBimapper.newInstance( format ) );
+		return new Attribute<YamlArrayList<E>>( name , SpecArrayListBimapper.<E>newInstance( format ) );
 	}
 }
