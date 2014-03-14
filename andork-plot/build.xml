@@ -13,7 +13,7 @@
 
 	<target name="compile-dependencies">
 		<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />
-		<ant antfile="../andork-awt/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-ui/build.xml" inheritAll="false" target="dist" />
 	</target>
 
 	<target name="compile" depends="init, compile-dependencies"
@@ -23,7 +23,7 @@
 			<fileset dir="../andork-core">
 				<include name="dist/lib/*.jar" />
 			</fileset>
-			<fileset dir="../andork-awt">
+			<fileset dir="../andork-ui">
 				<include name="dist/lib/*.jar" />
 			</fileset>
 		</path>

@@ -9,6 +9,7 @@
 	<property name="jogl-libs" location="C:/jogamp-all-platforms/jar" />
 	<property name="swingx-lib" location="C:/Program Files/Java/swingx-1.6.4" />
 	<property name="commons-io-lib" location="C:/Program Files/Java/commons-io-2.4" />
+	<property name="snakeyaml-lib" location="C:/Program Files/Java/snakeyaml-1.11" />
 
 	<target name="init">
 		<!-- Create the time stamp -->
@@ -20,7 +21,7 @@
 
 	<target name="compile-deps">
 		<ant antfile="../andork-core/build.xml" inheritAll="false" target="dist" />
-		<ant antfile="../andork-awt/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-ui/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-plot/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-math3d/build.xml" inheritAll="false" target="dist" />
@@ -47,8 +48,8 @@
 				<include name="andork-core.jar" />
 			</fileset>
 
-			<fileset dir="../andork-awt/dist/lib">
-				<include name="andork-awt.jar" />
+			<fileset dir="../andork-ui/dist/lib">
+				<include name="andork-ui.jar" />
 			</fileset>
 
 			<fileset dir="../andork-math/dist/lib">
@@ -77,6 +78,10 @@
 
 			<fileset dir="${commons-io-lib}">
 				<include name="commons-io-2.4.jar" />
+			</fileset>
+
+			<fileset dir="${snakeyaml-lib}">
+				<include name="snakeyaml-1.11.jar" />
 			</fileset>
 		</copy>
 	</target>
@@ -171,9 +176,10 @@
 				<include name="${ant.project.name}-main-win-i586.jar" />
 				<include name="lib/swingx-all-1.6.4.jar" />
 				<include name="lib/commons-io-2.4.jar" />
+				<include name="lib/snakeyaml-1.11.jar" />
 				<include name="lib/gluegen-rt.jar" />
 				<include name="lib/andork-core.jar" />
-				<include name="lib/andork-awt.jar" />
+				<include name="lib/andork-ui.jar" />
 				<include name="lib/andork-math.jar" />
 				<include name="lib/andork-math3d.jar" />
 				<include name="lib/andork-plot.jar" />
