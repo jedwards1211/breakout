@@ -4,6 +4,8 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+import org.andork.util.AnimationUtils;
+
 public class RectangleUtils
 {
 	public static int rectilinearDistance( Rectangle r , Point p )

@@ -1,4 +1,4 @@
-package org.andork.awt.layout;
+package org.andork.util;
 
 public class AnimationUtils {
 

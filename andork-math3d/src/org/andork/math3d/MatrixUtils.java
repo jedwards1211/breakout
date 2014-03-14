@@ -844,7 +844,79 @@ public class MatrixUtils
 			j++ ;
 		}
 	}
-
+	
+	/**
+	 * Performs partial gaussian elimination on the m by n matrix A. Instead of exchanging rows, row_perms is used to mark the positions of the rows in the
+	 * reduced matrix. Row <code>i</code> of the reduced matrix is row <code>row_perms[ i ]</code> of A.
+	 * 
+	 * @param maxNumToReduce
+	 *            only the topmost {@code maxNumToReduce} rows will be fully reduced
+	 */
+	public static void partialGauss( float[ ][ ] A , int maxNumToReduce , int[ ] row_perms )
+	{
+		int i = 0;
+		int j = 0;
+		
+		int m = A.length;
+		int n = A.length == 0 ? 0 : A[ 0 ].length;
+		
+		if( row_perms.length != m )
+		{
+			throw new IllegalArgumentException( "row_perms.length must equal A.length" );
+		}
+		
+		for( int k = 0 ; k < row_perms.length ; k++ )
+		{
+			row_perms[ k ] = k;
+		}
+		
+		while( i < maxNumToReduce && i < m && j < n )
+		{
+			int maxi = i;
+			float maxpivot = A[ row_perms[ i ] ][ j ];
+			
+			// find the largest pivot in column j
+			for( int k = i + 1 ; k < maxNumToReduce ; k++ )
+			{
+				float newpivot = A[ row_perms[ k ] ][ j ];
+				if( Math.abs( newpivot ) > Math.abs( maxpivot ) )
+				{
+					maxpivot = newpivot;
+					maxi = k;
+				}
+			}
+			if( maxpivot != 0 )
+			{
+				// swap the row with the largest pivot with row i
+				if( i != maxi )
+				{
+					int temp = row_perms[ i ];
+					row_perms[ i ] = row_perms[ maxi ];
+					row_perms[ maxi ] = temp;
+				}
+				
+				// divide row i by the pivot value
+				for( int k = j ; k < n ; k++ )
+				{
+					A[ row_perms[ i ] ][ k ] /= maxpivot;
+				}
+				
+				// subtract row i from the rows below
+				for( int u = i + 1 ; u < m ; u++ )
+				{
+					float multiplier = A[ row_perms[ u ] ][ j ];
+					
+					for( int k = j ; k < n ; k++ )
+					{
+						A[ row_perms[ u ] ][ k ] -= multiplier * A[ row_perms[ i ] ][ k ];
+					}
+				}
+				i++ ;
+			}
+			j++ ;
+		}
+	}
+	
 	public static void backsubstitute( double[ ] A , int m , int n , int[ ] row_perms , double[ ] coefficients )
 	{
 		if( m + 1 != n )

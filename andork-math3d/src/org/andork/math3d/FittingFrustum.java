@@ -1,6 +1,9 @@
 package org.andork.math3d;
 
-import static org.andork.math3d.Vecmath.*;
+import static org.andork.math3d.Vecmath.cross;
+import static org.andork.math3d.Vecmath.dot3;
+import static org.andork.math3d.Vecmath.normalize3;
+import static org.andork.math3d.Vecmath.setf;
 
 import java.util.Arrays;
 
@@ -61,14 +64,14 @@ public class FittingFrustum
 		furtherInit( );
 	}
 	
-	public void init( PickXform xform )
+	public void init( PickXform xform , float viewRatio )
 	{
-		xform.xform( 1f , 1f , 2f , 2f , horizontal , 0 , direction , 0 );
+		xform.xform( .5f , .5f , 1f , 1f , horizontal , 0 , direction , 0 );
 		
-		xform.xform( 0f , 1f , 2f , 2f , horizontal , 0 , left , 0 );
-		xform.xform( 2f , 1f , 2f , 2f , horizontal , 0 , right , 0 );
-		xform.xform( 1f , 0f , 2f , 2f , horizontal , 0 , top , 0 );
-		xform.xform( 1f , 2f , 2f , 2f , horizontal , 0 , bottom , 0 );
+		xform.xform( ( 1f - viewRatio ) * .5f , .5f , 1f , 1f , horizontal , 0 , left , 0 );
+		xform.xform( ( 1f + viewRatio ) * .5f , .5f , 1f , 1f , horizontal , 0 , right , 0 );
+		xform.xform( .5f , ( 1f - viewRatio ) * .5f , 1f , 1f , horizontal , 0 , top , 0 );
+		xform.xform( .5f , ( 1f + viewRatio ) * .5f , 1f , 1f , horizontal , 0 , bottom , 0 );
 		
 		furtherInit( );
 	}
@@ -135,21 +138,21 @@ public class FittingFrustum
 	
 	public void calculateOrigin( float[ ] out )
 	{
-		reduce( matrix1 , 2 , null );
-		checkZeros( horizontal );
+		reduce2( matrix1 , 2 , row_perms );
+		// checkZeros( horizontal );
 		horizontal2[ 3 ] = -horizontal[ 3 ];
 		
-		reduce( matrix2 , 2 , null );
-		checkZeros( vertical );
+		reduce2( matrix2 , 2 , row_perms );
+		// checkZeros( vertical );
 		vertical2[ 3 ] = -vertical[ 3 ];
 		
-		reduce( matrix3 , 3 , row_perms );
+		reduce2( matrix3 , 3 , row_perms );
 		for( int i = 0 ; i < 3 ; i++ )
 		{
 			p0[ i ] = matrix3[ row_perms[ i ] ][ 3 ];
 		}
 		
-		reduce( matrix4 , 3 , row_perms );
+		reduce2( matrix4 , 3 , row_perms );
 		for( int i = 0 ; i < 3 ; i++ )
 		{
 			p1[ i ] = matrix4[ row_perms[ i ] ][ 3 ];
@@ -206,4 +209,82 @@ public class FittingFrustum
 			}
 		}
 	}
+	
+	/**
+	 * Performs partial gaussian elimination on the m by n matrix A. Instead of exchanging rows, row_perms is used to mark the positions of the rows in the
+	 * reduced matrix. Row <code>i</code> of the reduced matrix is row <code>row_perms[ i ]</code> of A.
+	 * 
+	 * @param maxNumToReduce
+	 *            only the topmost {@code maxNumToReduce} rows will be fully reduced
+	 */
+	static void reduce2( float[ ][ ] A , int maxNumToReduce , int[ ] row_perms )
+	{
+		int i = 0;
+		int j = 0;
+		
+		int m = A.length;
+		int n = A.length == 0 ? 0 : A[ 0 ].length;
+		
+		if( row_perms.length != m )
+		{
+			throw new IllegalArgumentException( "row_perms.length must equal A.length" );
+		}
+		
+		for( int k = 0 ; k < row_perms.length ; k++ )
+		{
+			row_perms[ k ] = k;
+		}
+		
+		while( i < maxNumToReduce && i < m && j < n )
+		{
+			int maxi = i;
+			float maxpivot = A[ row_perms[ i ] ][ j ];
+			
+			// find the largest pivot in column j
+			for( int k = i + 1 ; k < maxNumToReduce ; k++ )
+			{
+				float newpivot = A[ row_perms[ k ] ][ j ];
+				if( Math.abs( newpivot ) > Math.abs( maxpivot ) )
+				{
+					maxpivot = newpivot;
+					maxi = k;
+				}
+			}
+			if( maxpivot != 0 )
+			{
+				// swap the row with the largest pivot with row i
+				if( i != maxi )
+				{
+					int temp = row_perms[ i ];
+					row_perms[ i ] = row_perms[ maxi ];
+					row_perms[ maxi ] = temp;
+				}
+				
+				// divide row i by the pivot value
+				for( int k = j ; k < n ; k++ )
+				{
+					A[ row_perms[ i ] ][ k ] /= maxpivot;
+				}
+				
+				// subtract row i from the rows below
+				for( int u = 0 ; u < m ; u++ )
+				{
+					if( u == i )
+					{
+						continue;
+					}
+					
+					float multiplier = A[ row_perms[ u ] ][ j ];
+					
+					for( int k = j ; k < n ; k++ )
+					{
+						A[ row_perms[ u ] ][ k ] -= multiplier * A[ row_perms[ i ] ][ k ];
+					}
+				}
+				i++ ;
+			}
+			j++ ;
+		}
+	}
+	
 }

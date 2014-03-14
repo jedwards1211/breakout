@@ -5,6 +5,7 @@ import java.awt.Dimension;
 
 import javax.swing.JLabel;
 import javax.swing.RowFilter;
+import javax.swing.text.JTextComponent;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
@@ -27,8 +28,8 @@ public class SurveyDrawer extends Drawer
 	
 	public SurveyDrawer( SortRunner sortRunner )
 	{
-		setPreferredSize( new Dimension(800, 250) );
-
+		setPreferredSize( new Dimension( 800 , 250 ) );
+		
 		highlightLabel = new JLabel( "Highlight: " );
 		filterLabel = new JLabel( "Filter: " );
 		
@@ -37,7 +38,14 @@ public class SurveyDrawer extends Drawer
 		
 		surveyTable = new SurveyTable( );
 		surveyTableSetup = new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>(
-				surveyTable , sortRunner );
+				surveyTable , sortRunner )
+		{
+			@Override
+			protected RowFilter<SurveyTableModel, Integer> createFilter( JTextComponent highlightField )
+			{
+				return new SurveyDesignationFilter( highlightField.getText( ) );
+			}
+		};
 		surveyTableSetup.sorter.setModelCopier( new SurveyTableModelCopier( ) );
 		
 		highlightField.textComponent.getDocument( ).addDocumentListener(

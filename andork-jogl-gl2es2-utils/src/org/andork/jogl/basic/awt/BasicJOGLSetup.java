@@ -8,11 +8,13 @@ import org.andork.jogl.basic.BasicJOGLScene;
 
 public class BasicJOGLSetup
 {
-	protected GLCanvas			canvas;
-	protected BasicJOGLScene	scene;
+	protected GLCanvas							canvas;
+	protected BasicJOGLScene					scene;
 	
-	protected BasicNavigator	navigator;
-	protected BasicOrbiter		orbiter;
+	protected BasicNavigator					navigator;
+	protected BasicOrbiter						orbiter;
+	
+	protected BasicCameraAnimationController	cameraAnimationController;
 	
 	public BasicJOGLSetup( )
 	{
@@ -37,6 +39,8 @@ public class BasicJOGLSetup
 	{
 		scene = createScene( );
 		canvas.addGLEventListener( scene );
+		
+		cameraAnimationController = new BasicCameraAnimationController( this );
 		
 		initMouseInput( );
 		initKeyboardInput( );
@@ -86,4 +90,8 @@ public class BasicJOGLSetup
 		return orbiter;
 	}
 	
+	public BasicCameraAnimationController getCameraAnimationController( )
+	{
+		return cameraAnimationController;
+	}
 }

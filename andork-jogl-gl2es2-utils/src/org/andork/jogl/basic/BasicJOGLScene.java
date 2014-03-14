@@ -36,6 +36,8 @@ public class BasicJOGLScene implements GLEventListener
 	 */
 	protected final float[ ]			v						= newMat4f( );
 	
+	private long						lastVchange				= 0;
+	
 	/**
 	 * The projection matrix;
 	 */
@@ -227,7 +229,13 @@ public class BasicJOGLScene implements GLEventListener
 	
 	public void setViewXform( float[ ] v )
 	{
+		lastVchange = System.currentTimeMillis( );
 		System.arraycopy( v , 0 , this.v , 0 , 16 );
+	}
+	
+	public long getLastViewXformChange( )
+	{
+		return lastVchange;
 	}
 	
 	public PickXform pickXform( )

@@ -35,6 +35,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
+import javax.swing.text.JTextComponent;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.event.UIBindings;
@@ -387,9 +388,16 @@ public class MapsView extends BasicJOGLSetup
 					@Override
 					protected DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> doRun( )
 					{
-						
 						DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> quickTableSetup =
-								new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>( quickTable , sortRunner );
+								new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>( quickTable , sortRunner )
+								{
+									@Override
+									protected RowFilter<SurveyTableModel, Integer> createFilter( JTextComponent highlightField )
+									{
+										return new SurveyDesignationFilter( highlightField.getText( ) );
+									}
+									
+								};
 						quickTableSetup.sorter.setModelCopier( new SurveyTableModelCopier( ) );
 						return quickTableSetup;
 					}
@@ -558,7 +566,7 @@ public class MapsView extends BasicJOGLSetup
 				
 				FittingFrustum frustum = new FittingFrustum( );
 				
-				frustum.init( scene.pickXform( ) );
+				frustum.init( scene.pickXform( ) , .8f );
 				
 				float[ ] coord = new float[ 3 ];
 				
@@ -586,7 +594,9 @@ public class MapsView extends BasicJOGLSetup
 				v[ 13 ] = coord[ 1 ];
 				v[ 14 ] = coord[ 2 ];
 				Vecmath.invAffine( v );
-				scene.setViewXform( v );
+				// scene.setViewXform( v );
+				
+				cameraAnimationController.setTarget( v );
 			}
 		} );
 	}

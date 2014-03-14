@@ -43,6 +43,13 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 		return new AnnotatingJTable( model );
 	}
 	
+	protected RowFilter<M, Integer> createFilter( final JTextComponent textComp )
+	{
+		RowFilter<M, Integer> filter;
+		filter = RowFilter.regexFilter( textComp.getText( ) , 0 );
+		return filter;
+	}
+	
 	public void setAnnotationColors( Map<?, Color> colors )
 	{
 		table.setAnnotationColors( colors );
@@ -63,7 +70,7 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 					RowFilter<M, Integer> filter = null;
 					try
 					{
-						filter = RowFilter.regexFilter( highlightField.getText( ) , 0 );
+						filter = setup.createFilter( highlightField );
 						highlightField.setForeground( Color.BLACK );
 					}
 					catch( Exception ex )
@@ -98,7 +105,7 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 					RowFilter<M, Integer> filter = null;
 					try
 					{
-						filter = RowFilter.regexFilter( filterField.getText( ) , 0 );
+						filter = setup.createFilter( filterField );
 						filterField.setForeground( Color.BLACK );
 					}
 					catch( Exception ex )
