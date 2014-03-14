@@ -46,7 +46,7 @@ public class SurveyDrawer extends Drawer
 				return new SurveyDesignationFilter( highlightField.getText( ) );
 			}
 		};
-		surveyTableSetup.sorter.setModelCopier( new SurveyTableModelCopier( ) );
+		surveyTableSetup.table.getAnnotatingRowSorter( ).setModelCopier( new SurveyTableModelCopier( ) );
 		
 		highlightField.textComponent.getDocument( ).addDocumentListener(
 				DefaultAnnotatingJTableSetup.createHighlightFieldListener(
@@ -76,5 +76,15 @@ public class SurveyDrawer extends Drawer
 	public SurveyTable table( )
 	{
 		return surveyTable;
+	}
+	
+	public TextComponentWithHintAndClear highlightField( )
+	{
+		return highlightField;
+	}
+	
+	public TextComponentWithHintAndClear filterField( )
+	{
+		return filterField;
 	}
 }

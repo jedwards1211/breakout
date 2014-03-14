@@ -10,6 +10,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 
+import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.AnnotatingRowSorterCursorController;
 import org.andork.swing.RowAnnotator;
@@ -20,14 +21,13 @@ import org.andork.swing.jump.JTableJumpSupport;
 public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 {
 	public final JScrollAndJumpPane						scrollPane;
-	public final AnnotatingJTable						table;
-	public final AnnotatingTableRowSorter<M, A>			sorter;
+	public final AnnotatingJTable<M, A>					table;
 	public final AnnotatingRowSorterCursorController	cursorController;
 	
-	public DefaultAnnotatingJTableSetup( AnnotatingJTable table , SortRunner sortRunner )
+	public DefaultAnnotatingJTableSetup( AnnotatingJTable<M, A> table , SortRunner sortRunner )
 	{
 		this.table = table;
-		sorter = new AnnotatingTableRowSorter<M, A>( table , sortRunner );
+		AnnotatingTableRowSorter<M, A> sorter = new AnnotatingTableRowSorter<M, A>( table , sortRunner );
 		table.setRowSorter( sorter );
 		
 		scrollPane = new JScrollAndJumpPane( table );
@@ -38,9 +38,9 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 		sorter.addRowSorterListener( cursorController );
 	}
 	
-	protected AnnotatingJTable createTable( M model )
+	protected AnnotatingJTable<M, A> createTable( M model )
 	{
-		return new AnnotatingJTable( model );
+		return new AnnotatingJTable<M, A>( model );
 	}
 	
 	protected RowFilter<M, Integer> createFilter( final JTextComponent textComp )
@@ -65,6 +65,13 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 			@Override
 			public void documentChanged( DocumentEvent e )
 			{
+				if( setup.table.getAnnotatingRowSorter( ) == null )
+				{
+					{
+						return;
+					}
+				}
+				
 				if( highlightField.getText( ) != null && highlightField.getText( ).length( ) > 0 )
 				{
 					RowFilter<M, Integer> filter = null;
@@ -77,14 +84,14 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 					{
 						highlightField.setForeground( Color.RED );
 					}
-					setup.sorter.setRowAnnotator( RowAnnotator.filterAnnotator( filter ) );
+					setup.table.getAnnotatingRowSorter( ).setRowAnnotator( RowAnnotator.filterAnnotator( filter ) );
 					setup.setAnnotationColors( Collections.singletonMap( filter , highlightColor ) );
 				}
 				else
 				{
 					highlightField.setForeground( Color.BLACK );
 					
-					setup.sorter.setRowAnnotator( null );
+					setup.table.getAnnotatingRowSorter( ).setRowAnnotator( null );
 					setup.setAnnotationColors( Collections.<Object,Color>emptyMap( ) );
 				}
 				
@@ -100,6 +107,10 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 			@Override
 			public void documentChanged( DocumentEvent e )
 			{
+				if( setup.table.getAnnotatingRowSorter( ) == null )
+				{
+					return;
+				}
 				if( filterField.getText( ) != null && filterField.getText( ).length( ) > 0 )
 				{
 					RowFilter<M, Integer> filter = null;
@@ -112,13 +123,13 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 					{
 						filterField.setForeground( Color.RED );
 					}
-					setup.sorter.setRowFilter( filter );
+					setup.table.getAnnotatingRowSorter( ).setRowFilter( filter );
 				}
 				else
 				{
 					filterField.setForeground( Color.BLACK );
 					
-					setup.sorter.setRowFilter( null );
+					setup.table.getAnnotatingRowSorter( ).setRowFilter( null );
 				}
 			}
 		};

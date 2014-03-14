@@ -27,7 +27,7 @@ import org.andork.swing.table.old.FilteringTableModel;
 import org.andork.swing.table.old.HighlightingTable;
 
 @SuppressWarnings( "serial" )
-public class SurveyTable extends AnnotatingJTable
+public class SurveyTable extends AnnotatingJTable<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>
 {
 	public void createDefaultColumnsFromModel( )
 	{

@@ -1,5 +1,5 @@
 settingsDrawerModel:
-  cameraView: PLAN
+  cameraView: PERSPECTIVE
   mouseSensitivity: 20
   distRange:
     scale: 0.0014535268939745284

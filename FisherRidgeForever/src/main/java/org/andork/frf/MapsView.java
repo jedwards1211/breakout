@@ -28,6 +28,7 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
@@ -398,7 +399,7 @@ public class MapsView extends BasicJOGLSetup
 									}
 									
 								};
-						quickTableSetup.sorter.setModelCopier( new SurveyTableModelCopier( ) );
+						quickTableSetup.table.getAnnotatingRowSorter( ).setModelCopier( new SurveyTableModelCopier( ) );
 						return quickTableSetup;
 					}
 				}.result( );
@@ -552,53 +553,74 @@ public class MapsView extends BasicJOGLSetup
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				if( settingsDrawer.getModel( ).get( SettingsDrawer.Model.cameraView ) != CameraView.PERSPECTIVE )
-				{
-					return;
-				}
-				
-				List<SurveyShot> origShots = model3d.getOriginalShots( );
-				Collection<Shot> shots = model3d.getSelectedShots( );
-				if( shots.isEmpty( ) )
-				{
-					shots = model3d.getShots( );
-				}
-				
-				FittingFrustum frustum = new FittingFrustum( );
-				
-				frustum.init( scene.pickXform( ) , .8f );
-				
-				float[ ] coord = new float[ 3 ];
-				
-				for( Shot shot : shots )
-				{
-					SurveyShot orig = origShots.get( shot.getIndex( ) );
-					frustum.addPoint(
-							( float ) orig.from.position[ 0 ] ,
-							( float ) orig.from.position[ 1 ] ,
-							( float ) orig.from.position[ 2 ]
-							);
-					frustum.addPoint(
-							( float ) orig.to.position[ 0 ] ,
-							( float ) orig.to.position[ 1 ] ,
-							( float ) orig.to.position[ 2 ]
-							);
-				}
-				
-				frustum.calculateOrigin( coord );
-				
-				float[ ] v = new float[ 16 ];
-				scene.getViewXform( v );
-				Vecmath.invAffine( v );
-				v[ 12 ] = coord[ 0 ];
-				v[ 13 ] = coord[ 1 ];
-				v[ 14 ] = coord[ 2 ];
-				Vecmath.invAffine( v );
-				// scene.setViewXform( v );
-				
-				cameraAnimationController.setTarget( v );
+				fitViewToSelected( );
 			}
 		} );
+		
+		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
+		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
+	}
+	
+	protected void fitViewToSelected( )
+	{
+		if( settingsDrawer.getModel( ).get( SettingsDrawer.Model.cameraView ) != CameraView.PERSPECTIVE )
+		{
+			return;
+		}
+		
+		ListSelectionModel selectionModel = surveyDrawer.table( ).getModelSelectionModel( );
+		
+		if( selectionModel.getMinSelectionIndex( ) < 0 )
+		{
+			return;
+		}
+		
+		List<SurveyShot> origShots = model3d.getOriginalShots( );
+		
+		FittingFrustum frustum = new FittingFrustum( );
+		
+		frustum.init( scene.pickXform( ) , .8f );
+		
+		for( int i = selectionModel.getMinSelectionIndex( ) ; i <= selectionModel.getMaxSelectionIndex( ) ; i++ )
+		{
+			if( !selectionModel.isSelectedIndex( i ) )
+			{
+				continue;
+			}
+			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
+			
+			if( shot == null )
+			{
+				continue;
+			}
+			
+			frustum.addPoint(
+					( float ) shot.from.position[ 0 ] ,
+					( float ) shot.from.position[ 1 ] ,
+					( float ) shot.from.position[ 2 ]
+					);
+			frustum.addPoint(
+					( float ) shot.to.position[ 0 ] ,
+					( float ) shot.to.position[ 1 ] ,
+					( float ) shot.to.position[ 2 ]
+					);
+			
+		}
+		
+		float[ ] coord = new float[ 3 ];
+		
+		frustum.calculateOrigin( coord );
+		
+		float[ ] v = new float[ 16 ];
+		scene.getViewXform( v );
+		Vecmath.invAffine( v );
+		v[ 12 ] = coord[ 0 ];
+		v[ 13 ] = coord[ 1 ];
+		v[ 14 ] = coord[ 2 ];
+		Vecmath.invAffine( v );
+		// scene.setViewXform( v );
+		
+		cameraAnimationController.setTarget( v );
 	}
 	
 	@Override
@@ -947,4 +969,37 @@ public class MapsView extends BasicJOGLSetup
 		
 		public static final Model	instance	= new Model( );
 	}
+	
+	class FitToFilteredHandler implements ActionListener
+	{
+		AnnotatingJTable<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>	table;
+		long																		lastAction	= 0;
+		
+		public FitToFilteredHandler( AnnotatingJTable<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> table )
+		{
+			super( );
+			this.table = table;
+		}
+		
+		@Override
+		public void actionPerformed( ActionEvent e )
+		{
+			final long time = System.currentTimeMillis( );
+			lastAction = time;
+			
+			table.getAnnotatingRowSorter( ).invokeWhenDoneSorting( new Runnable( )
+			{
+				@Override
+				public void run( )
+				{
+					if( time >= lastAction )
+					{
+						table.getModelSelectionModel( ).clearSelection( );
+						table.selectAll( );
+						fitViewToSelected( );
+					}
+				}
+			} );
+		}
+	};
 }

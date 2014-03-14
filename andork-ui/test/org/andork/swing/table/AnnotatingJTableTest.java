@@ -65,8 +65,8 @@ public class AnnotatingJTableTest
 		final DefaultAnnotatingJTableSetup<DefaultTableModel, Object> setup =
 				new DefaultAnnotatingJTableSetup<DefaultTableModel, Object>( new AnnotatingJTable( model ) , sortRunner );
 		
-		setup.sorter.setModelCopier( new DefaultTableModelCopier( ) );
-		setup.sorter.setSortsOnUpdates( true );
+		setup.table.getAnnotatingRowSorter( ).setModelCopier( new DefaultTableModelCopier( ) );
+		setup.table.getAnnotatingRowSorter( ).setSortsOnUpdates( true );
 		
 		final JTextField filterField = new JTextField( );
 		final JTextField highlightField = new JTextField( );

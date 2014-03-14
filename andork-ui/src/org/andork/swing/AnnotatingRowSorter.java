@@ -13,7 +13,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 
 import javax.swing.DefaultRowSorter;
@@ -147,6 +149,8 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	private SortRunner										sortRunner;
 	
 	private BackgroundSortTask<M, I, A>						sortTask;
+	
+	private final Queue<Runnable>							invokeWhenDoneSortingQueue	= new LinkedList<Runnable>( );
 	
 	/**
 	 * Creates an empty <code>DefaultRowSorter</code>.
@@ -456,6 +460,23 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	public RowFilter<? super M, ? super I> getRowFilter( )
 	{
 		return filter;
+	}
+	
+	/**
+	 * If not currently sorting, runs {@code r}. Otherwise, schedules {@code r} to be run next time sorting finishes.
+	 */
+	public void invokeWhenDoneSorting( Runnable r )
+	{
+		CheckEDT.checkEDT( );
+		
+		if( isSortingInBackground( ) )
+		{
+			invokeWhenDoneSortingQueue.add( r );
+		}
+		else
+		{
+			r.run( );
+		}
 	}
 	
 	/**
@@ -2324,6 +2345,18 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 				sorter.sortTask = null;
 				
 				sorter.fireRowSorterChanged( lastRowIndexToModel );
+				
+				while( !sorter.invokeWhenDoneSortingQueue.isEmpty( ) )
+				{
+					try
+					{
+						sorter.invokeWhenDoneSortingQueue.poll( ).run( );
+					}
+					catch( Exception ex )
+					{
+						ex.printStackTrace( );
+					}
+				}
 			}
 		}
 	}
