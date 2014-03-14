@@ -4,8 +4,6 @@ import java.awt.Dimension;
 
 import javax.swing.JFrame;
 
-import org.wonderly.awt.Packer;
-
 import com.andork.plot.PlotAxis.LabelPosition;
 import com.andork.plot.PlotAxis.Orientation;
 
