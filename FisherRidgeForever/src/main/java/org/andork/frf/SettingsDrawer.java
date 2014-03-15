@@ -4,6 +4,7 @@ import static org.andork.awt.event.UIBindings.bind;
 
 import java.awt.Color;
 import java.awt.Insets;
+import java.util.Arrays;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -25,6 +26,7 @@ import org.andork.swing.border.GradientFillBorder;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
+import org.andork.swing.selector.DefaultSelector;
 
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.PlotAxis;
@@ -47,6 +49,8 @@ public class SettingsDrawer extends Drawer
 	PaintablePanel				highlightDistAxisPanel;
 	JButton						fitViewButton;
 	JButton						debugButton;
+	
+	DefaultSelector<FilterType>	filterTypeSelector;
 	
 	Binder<YamlObject<Model>>	binder;
 	
@@ -118,6 +122,9 @@ public class SettingsDrawer extends Drawer
 		
 		fitViewButton = new JButton( "Fit View" );
 		
+		filterTypeSelector = new DefaultSelector<FilterType>( );
+		filterTypeSelector.setAvailableValues( Arrays.asList( FilterType.values( ) ) );
+		
 		debugButton = new JButton( "Debug" );
 	}
 	
@@ -140,6 +147,9 @@ public class SettingsDrawer extends Drawer
 		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
 		w.put( highlightRangeLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
+		JLabel filterTypeLabel = new JLabel( "Filter type:" );
+		w.put( filterTypeLabel ).belowLast( ).west( ).insets( 43 , 3 , 3 , 3 );
+		w.put( filterTypeSelector.getComboBox( ) ).belowLast( ).fillx( );
 		
 		w.put( debugButton ).belowLast( ).southwest( ).weighty( 1.0 );
 	}
@@ -163,6 +173,7 @@ public class SettingsDrawer extends Drawer
 		binder.bind( new PlotAxisConversionBinding( Model.distRange , distColorationAxis ) );
 		binder.bind( new PlotAxisConversionBinding( Model.paramRange , paramColorationAxis ) );
 		binder.bind( new PlotAxisConversionBinding( Model.highlightRange , highlightDistAxis ) );
+		bind( binder , filterTypeSelector , Model.filterType );
 	}
 	
 	public JButton updateViewButton( )
@@ -185,7 +196,7 @@ public class SettingsDrawer extends Drawer
 	{
 		return fitViewButton;
 	}
-
+	
 	public PlotAxis getDistColorationAxis( )
 	{
 		return distColorationAxis;
@@ -223,6 +234,24 @@ public class SettingsDrawer extends Drawer
 		}
 	}
 	
+	public static enum FilterType
+	{
+		ALPHA_DESIGNATION( "Alphabetic Designation" ) ,
+		REGEXP( "Regular Expression" );
+		
+		private String	displayText;
+		
+		private FilterType( String displayText )
+		{
+			this.displayText = displayText;
+		}
+		
+		public String toString( )
+		{
+			return displayText;
+		}
+	}
+	
 	public static class Model extends YamlSpec<Model>
 	{
 		public static final Attribute<CameraView>			cameraView			= enumAttribute( "cameraView" , CameraView.class );
@@ -230,10 +259,11 @@ public class SettingsDrawer extends Drawer
 		public static final Attribute<LinearAxisConversion>	distRange			= new Attribute<LinearAxisConversion>( "distRange" , new LinearAxisConversionYamlBimapper( ) );
 		public static final Attribute<LinearAxisConversion>	paramRange			= new Attribute<LinearAxisConversion>( "paramRange" , new LinearAxisConversionYamlBimapper( ) );
 		public static final Attribute<LinearAxisConversion>	highlightRange		= new Attribute<LinearAxisConversion>( "highlightRange" , new LinearAxisConversionYamlBimapper( ) );
+		public static final Attribute<FilterType>			filterType			= enumAttribute( "filterType" , FilterType.class );
 		
 		private Model( )
 		{
-			super( cameraView , mouseSensitivity , distRange , paramRange , highlightRange );
+			super( cameraView , mouseSensitivity , distRange , paramRange , highlightRange , filterType );
 		}
 		
 		public static final Model	instance	= new Model( );
