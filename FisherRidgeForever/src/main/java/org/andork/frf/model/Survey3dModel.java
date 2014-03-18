@@ -6,6 +6,7 @@ import static org.andork.spatial.Rectmath.nmin;
 import static org.andork.spatial.Rectmath.rayIntersects;
 import static org.andork.spatial.Rectmath.voidRectf;
 
+import java.awt.Rectangle;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -20,19 +21,20 @@ import java.util.Set;
 
 import javax.media.opengl.GL2ES2;
 
+import org.andork.awt.layout.RectangleUtils;
 import org.andork.frf.PickResult;
-import org.andork.jogl.basic.BasicJOGLObject;
-import org.andork.jogl.basic.BasicJOGLObject.BasicVertexShader;
-import org.andork.jogl.basic.BasicJOGLObject.DistanceFragmentShader;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform3fv;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform4fv;
-import org.andork.jogl.basic.BufferHelper;
-import org.andork.jogl.basic.JOGLDepthModifier;
-import org.andork.jogl.basic.JOGLGroup;
-import org.andork.jogl.basic.JOGLLineWidthModifier;
-import org.andork.jogl.basic.JOGLObject;
-import org.andork.jogl.basic.SharedBuffer;
+import org.andork.jogl.BasicJOGLObject;
+import org.andork.jogl.BufferHelper;
+import org.andork.jogl.JOGLDepthModifier;
+import org.andork.jogl.JOGLGroup;
+import org.andork.jogl.JOGLLineWidthModifier;
+import org.andork.jogl.JOGLObject;
+import org.andork.jogl.SharedBuffer;
+import org.andork.jogl.BasicJOGLObject.BasicVertexShader;
+import org.andork.jogl.BasicJOGLObject.DistanceFragmentShader;
+import org.andork.jogl.BasicJOGLObject.Uniform1fv;
+import org.andork.jogl.BasicJOGLObject.Uniform3fv;
+import org.andork.jogl.BasicJOGLObject.Uniform4fv;
 import org.andork.jogl.shadelet.AxisParamShadelet;
 import org.andork.jogl.shadelet.CombinedShadelet;
 import org.andork.jogl.shadelet.DepthOffsetShadelet;
@@ -487,6 +489,14 @@ public class Survey3dModel
 	public Set<Shot> getSelectedShots( )
 	{
 		return Collections.unmodifiableSet( selectedShots );
+	}
+	
+	public void getCenter( float[ ] center )
+	{
+		float[ ] mbr = tree.getRoot( ).mbr( );
+		center[ 0 ] = ( mbr[ 0 ] + mbr[ 3 ] ) * 0.5f;
+		center[ 1 ] = ( mbr[ 1 ] + mbr[ 4 ] ) * 0.5f;
+		center[ 2 ] = ( mbr[ 2 ] + mbr[ 5 ] ) * 0.5f;
 	}
 	
 	public SelectionEditor editSelection( )

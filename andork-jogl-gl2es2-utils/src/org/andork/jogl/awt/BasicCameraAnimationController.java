@@ -1,4 +1,4 @@
-package org.andork.jogl.basic.awt;
+package org.andork.jogl.awt;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -6,7 +6,8 @@ import java.awt.event.ActionListener;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.Timer;
 
-import org.andork.jogl.basic.BasicJOGLScene;
+import org.andork.jogl.BasicJOGLScene;
+
 import static org.andork.math3d.Vecmath.*;
 import static org.andork.util.AnimationUtils.*;
 

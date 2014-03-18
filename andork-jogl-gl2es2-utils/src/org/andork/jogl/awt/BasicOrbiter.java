@@ -1,4 +1,4 @@
-package org.andork.jogl.basic.awt;
+package org.andork.jogl.awt;
 
 import static org.andork.math3d.Vecmath.invAffine;
 import static org.andork.math3d.Vecmath.mmulAffine;
@@ -13,7 +13,7 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import org.andork.jogl.basic.BasicJOGLScene;
+import org.andork.jogl.BasicJOGLScene;
 import org.andork.math3d.Vecmath;
 
 public class BasicOrbiter extends MouseAdapter
@@ -93,6 +93,11 @@ public class BasicOrbiter extends MouseAdapter
 	public void setCenter( float[ ] center )
 	{
 		Vecmath.setf( this.center , center );
+	}
+	
+	public void getCenter( float[ ] out )
+	{
+		Vecmath.setf( out , center );
 	}
 	
 	@Override

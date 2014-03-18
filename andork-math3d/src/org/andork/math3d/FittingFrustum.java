@@ -6,6 +6,9 @@ import static org.andork.math3d.Vecmath.normalize3;
 import static org.andork.math3d.Vecmath.setf;
 
 import java.util.Arrays;
+import java.util.Comparator;
+
+import org.andork.util.ArrayUtils;
 
 public class FittingFrustum
 {
@@ -50,6 +53,7 @@ public class FittingFrustum
 	final float[ ]		p1			= new float[ 3 ];
 	
 	final int[ ]		row_perms	= new int[ 3 ];
+	final int[ ]		pivot_cols	= new int[ 3 ];
 	
 	final float			EPS			= 1e-4f;
 	
@@ -85,6 +89,9 @@ public class FittingFrustum
 		
 		cross( right , left , vertical );
 		cross( bottom , top , horizontal );
+		normalize3( horizontal );
+		normalize3( vertical );
+		
 		cross( vertical , left , left );
 		cross( right , vertical , right );
 		cross( horizontal , top , top );
@@ -138,76 +145,27 @@ public class FittingFrustum
 	
 	public void calculateOrigin( float[ ] out )
 	{
-		reduce2( matrix1 , 2 , row_perms );
+		reduce( matrix1 , 2 , row_perms , pivot_cols );
 		// checkZeros( horizontal );
 		horizontal2[ 3 ] = -horizontal[ 3 ];
 		
-		reduce2( matrix2 , 2 , row_perms );
+		reduce( matrix2 , 2 , row_perms , pivot_cols );
 		// checkZeros( vertical );
 		vertical2[ 3 ] = -vertical[ 3 ];
 		
-		reduce2( matrix3 , 3 , row_perms );
+		reduce( matrix3 , 3 , row_perms , pivot_cols );
 		for( int i = 0 ; i < 3 ; i++ )
 		{
-			p0[ i ] = matrix3[ row_perms[ i ] ][ 3 ];
+			p0[ pivot_cols[ i ] ] = matrix3[ row_perms[ i ] ][ 3 ];
 		}
 		
-		reduce2( matrix4 , 3 , row_perms );
+		reduce( matrix4 , 3 , row_perms , pivot_cols );
 		for( int i = 0 ; i < 3 ; i++ )
 		{
-			p1[ i ] = matrix4[ row_perms[ i ] ][ 3 ];
+			p1[ pivot_cols[ i ] ] = matrix4[ row_perms[ i ] ][ 3 ];
 		}
 		
 		setf( out , dot3( p0 , direction ) < dot3( p1 , direction ) ? p0 : p1 );
-	}
-	
-	void reduce( float[ ][ ] A , int rows , int[ ] row_perms )
-	{
-		for( int i = 0 ; i < rows ; i++ )
-		{
-			// find the largest pivot (first nonzero column) in row i
-			int j;
-			for( j = 0 ; j < 3 ; j++ )
-			{
-				if( A[ i ][ j ] != 0 )
-				{
-					break;
-				}
-			}
-			
-			if( j == 3 )
-			{
-				throw new RuntimeException( "zero rows not allowed" );
-			}
-			
-			if( row_perms != null )
-			{
-				row_perms[ i ] = j;
-			}
-			
-			// divide all values in row i by the pivot
-			for( int k = j + 1 ; k < 4 ; k++ )
-			{
-				A[ i ][ k ] /= A[ i ][ j ];
-			}
-			A[ i ][ j ] = 1f;
-			
-			// reduce the other rows by row i
-			for( int h = 0 ; h < 3 ; h++ )
-			{
-				if( h == i )
-				{
-					continue;
-				}
-				float f = -A[ h ][ j ];
-				A[ h ][ j ] = 0f;
-				
-				for( int k = j + 1 ; k < 4 ; k++ )
-				{
-					A[ h ][ k ] += f * A[ i ][ k ];
-				}
-			}
-		}
 	}
 	
 	/**
@@ -217,11 +175,8 @@ public class FittingFrustum
 	 * @param maxNumToReduce
 	 *            only the topmost {@code maxNumToReduce} rows will be fully reduced
 	 */
-	static void reduce2( float[ ][ ] A , int maxNumToReduce , int[ ] row_perms )
+	static void reduce( float[ ][ ] A , int maxNumToReduce , int[ ] row_perms , int[ ] pivot_cols )
 	{
-		int i = 0;
-		int j = 0;
-		
 		int m = A.length;
 		int n = A.length == 0 ? 0 : A[ 0 ].length;
 		
@@ -230,61 +185,74 @@ public class FittingFrustum
 			throw new IllegalArgumentException( "row_perms.length must equal A.length" );
 		}
 		
-		for( int k = 0 ; k < row_perms.length ; k++ )
+		for( int h = 0 ; h < row_perms.length ; h++ )
 		{
-			row_perms[ k ] = k;
+			row_perms[ h ] = h;
 		}
 		
-		while( i < maxNumToReduce && i < m && j < n )
+		for( int k = 0 ; k < n - 1 ; k++ )
 		{
-			int maxi = i;
-			float maxpivot = A[ row_perms[ i ] ][ j ];
+			pivot_cols[ k ] = k;
+		}
+		
+		int i = 0;
+		
+		while( i < maxNumToReduce && i < m )
+		{
+			int pivot_row = 0;
+			int pivot_col = 0;
+			float pivot = Float.NaN;
 			
-			// find the largest pivot in column j
-			for( int k = i + 1 ; k < maxNumToReduce ; k++ )
+			// find the next pivot row and column
+			
+			for( int h = i ; h < maxNumToReduce ; h++ )
 			{
-				float newpivot = A[ row_perms[ k ] ][ j ];
-				if( Math.abs( newpivot ) > Math.abs( maxpivot ) )
+				for( int k = i ; k < n - 1 ; k++ )
 				{
-					maxpivot = newpivot;
-					maxi = k;
-				}
-			}
-			if( maxpivot != 0 )
-			{
-				// swap the row with the largest pivot with row i
-				if( i != maxi )
-				{
-					int temp = row_perms[ i ];
-					row_perms[ i ] = row_perms[ maxi ];
-					row_perms[ maxi ] = temp;
-				}
-				
-				// divide row i by the pivot value
-				for( int k = j ; k < n ; k++ )
-				{
-					A[ row_perms[ i ] ][ k ] /= maxpivot;
-				}
-				
-				// subtract row i from the rows below
-				for( int u = 0 ; u < m ; u++ )
-				{
-					if( u == i )
+					if( Float.isNaN( pivot ) || Math.abs( A[ row_perms[ h ] ][ pivot_cols[ k ] ] ) > Math.abs( pivot ) )
 					{
-						continue;
-					}
-					
-					float multiplier = A[ row_perms[ u ] ][ j ];
-					
-					for( int k = j ; k < n ; k++ )
-					{
-						A[ row_perms[ u ] ][ k ] -= multiplier * A[ row_perms[ i ] ][ k ];
+						pivot = A[ row_perms[ h ] ][ pivot_cols[ k ] ];
+						pivot_row = h;
+						pivot_col = k;
 					}
 				}
-				i++ ;
 			}
-			j++ ;
+			
+			if( Float.isNaN( pivot ) || pivot == 0 )
+			{
+				break;
+			}
+			
+			int temp = row_perms[ i ];
+			row_perms[ i ] = row_perms[ pivot_row ];
+			row_perms[ pivot_row ] = temp;
+			
+			temp = pivot_cols[ i ];
+			pivot_cols[ i ] = pivot_cols[ pivot_col ];
+			pivot_cols[ pivot_col ] = temp;
+			
+			// divide pivot row by the pivot value
+			for( int j = 0 ; j < n ; j++ )
+			{
+				A[ row_perms[ i ] ][ j ] /= pivot;
+			}
+			
+			// subtract pivot row from the other rows
+			for( int h = 0 ; h < m ; h++ )
+			{
+				if( h == i )
+				{
+					continue;
+				}
+				
+				float multiplier = A[ row_perms[ h ] ][ pivot_cols[ i ] ];
+				
+				for( int j = 0 ; j < n ; j++ )
+				{
+					A[ row_perms[ h ] ][ j ] -= multiplier * A[ row_perms[ i ] ][ j ];
+				}
+			}
+			i++ ;
 		}
 	}
-	
 }

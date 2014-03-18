@@ -1,4 +1,4 @@
-package org.andork.jogl.basic;
+package org.andork.jogl;
 
 import static org.andork.math3d.Vecmath.invAffine;
 import static org.andork.math3d.Vecmath.mmulAffine;

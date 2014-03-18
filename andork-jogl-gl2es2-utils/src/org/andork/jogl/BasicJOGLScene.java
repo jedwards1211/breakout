@@ -1,4 +1,4 @@
-package org.andork.jogl.basic;
+package org.andork.jogl;
 
 import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
 import static org.andork.math3d.Vecmath.newMat4f;
@@ -18,6 +18,7 @@ import javax.media.opengl.GLEventListener;
 
 import org.andork.math3d.PickXform;
 import org.andork.math3d.Vecmath;
+import org.andork.util.ArrayUtils;
 
 public class BasicJOGLScene implements GLEventListener
 {
@@ -229,6 +230,11 @@ public class BasicJOGLScene implements GLEventListener
 	
 	public void setViewXform( float[ ] v )
 	{
+		if( Vecmath.hasNaNsOrInfinites( v ) )
+		{
+			throw new IllegalArgumentException( "v must not contain NaN or Infinite values" );
+		}
+		
 		lastVchange = System.currentTimeMillis( );
 		System.arraycopy( v , 0 , this.v , 0 , 16 );
 	}

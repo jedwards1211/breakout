@@ -1,4 +1,4 @@
-package org.andork.jogl.basic;
+package org.andork.jogl;
 
 import java.nio.ByteBuffer;
 

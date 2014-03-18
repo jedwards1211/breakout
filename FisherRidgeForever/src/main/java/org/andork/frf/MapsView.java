@@ -39,6 +39,8 @@ import javax.swing.table.TableColumn;
 import javax.swing.text.JTextComponent;
 
 import org.andork.awt.GridBagWizard;
+import org.andork.awt.anim.Animation;
+import org.andork.awt.anim.AnimationQueue;
 import org.andork.awt.event.UIBindings;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
@@ -55,9 +57,13 @@ import org.andork.frf.model.Survey3dModel.Shot;
 import org.andork.frf.model.Survey3dModel.ShotPickContext;
 import org.andork.frf.model.Survey3dModel.ShotPickResult;
 import org.andork.frf.model.SurveyShot;
-import org.andork.jogl.basic.BasicJOGLObject;
-import org.andork.jogl.basic.BasicJOGLScene;
-import org.andork.jogl.basic.awt.BasicJOGLSetup;
+import org.andork.jogl.BasicJOGLObject;
+import org.andork.jogl.BasicJOGLScene;
+import org.andork.jogl.awt.BasicJOGLSetup;
+import org.andork.jogl.awt.anim.RandomOrbit;
+import org.andork.jogl.awt.anim.SinusoidalTranslation;
+import org.andork.jogl.awt.anim.SpringOrbit;
+import org.andork.jogl.awt.anim.SpringTranslation;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
@@ -97,12 +103,12 @@ public class MapsView extends BasicJOGLSetup
 	DefaultNavigator									navigator;
 	
 	TaskService											taskService;
-	final double[ ]										fromLoc			= new double[ 3 ];
-	final double[ ]										toLoc			= new double[ 3 ];
-	final double[ ]										toToLoc			= new double[ 3 ];
-	final double[ ]										leftAtTo		= new double[ 3 ];
-	final double[ ]										leftAtTo2		= new double[ 3 ];
-	final double[ ]										leftAtFrom		= new double[ 3 ];
+	final double[ ]										fromLoc					= new double[ 3 ];
+	final double[ ]										toLoc					= new double[ 3 ];
+	final double[ ]										toToLoc					= new double[ 3 ];
+	final double[ ]										leftAtTo				= new double[ 3 ];
+	final double[ ]										leftAtTo2				= new double[ 3 ];
+	final double[ ]										leftAtFrom				= new double[ 3 ];
 	
 	PlotAxis											xaxis;
 	PlotAxis											yaxis;
@@ -114,6 +120,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	PlotController										plotController;
 	MouseLooper											mouseLooper;
+	CameraAnimationInterrupter							cameraAnimationInterrupter;
 	MousePickHandler									pickHandler;
 	MouseAdapterChain									mouseAdapterChain;
 	
@@ -127,20 +134,22 @@ public class MapsView extends BasicJOGLSetup
 	
 	Survey3dModel										model3d;
 	
-	float[ ]											v				= newMat4f( );
+	float[ ]											v						= newMat4f( );
 	
-	int													debugMbrCount	= 0;
-	List<BasicJOGLObject>								debugMbrs		= new ArrayList<BasicJOGLObject>( );
+	int													debugMbrCount			= 0;
+	List<BasicJOGLObject>								debugMbrs				= new ArrayList<BasicJOGLObject>( );
 	
-	ShotPickContext										spc				= new ShotPickContext( );
+	ShotPickContext										spc						= new ShotPickContext( );
 	
-	final LinePlaneIntersection3f						lpx				= new LinePlaneIntersection3f( );
-	final float[ ]										p0				= new float[ 3 ];
-	final float[ ]										p1				= new float[ 3 ];
-	final float[ ]										p2				= new float[ 3 ];
+	final LinePlaneIntersection3f						lpx						= new LinePlaneIntersection3f( );
+	final float[ ]										p0						= new float[ 3 ];
+	final float[ ]										p1						= new float[ 3 ];
+	final float[ ]										p2						= new float[ 3 ];
 	
-	final Binder<YamlObject<Model>>						binder			= new Binder<YamlObject<Model>>( );
+	final Binder<YamlObject<Model>>						binder					= new Binder<YamlObject<Model>>( );
 	final TaskServiceFilePersister<YamlObject<Model>>	persister;
+	
+	final AnimationQueue								cameraAnimationQueue	= new AnimationQueue( );
 	
 	public MapsView( )
 	{
@@ -239,10 +248,13 @@ public class MapsView extends BasicJOGLSetup
 		
 		autoshowController = new DrawerAutoshowController( );
 		
+		cameraAnimationInterrupter = new CameraAnimationInterrupter( );
+		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
+		mouseAdapterChain.addMouseAdapter( cameraAnimationInterrupter );
 		
 		plotPanel = new JPanel( new PlotPanelLayout( ) );
 		plotPanel.add( plot );
@@ -557,6 +569,29 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
+		settingsDrawer.getOrbitToPlanButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				if( model3d == null )
+				{
+					return;
+				}
+				
+				float[ ] center = new float[ 3 ];
+				orbiter.getCenter( center );
+				
+				if( Vecmath.hasNaNsOrInfinites( center ) )
+				{
+					model3d.getCenter( center );
+				}
+				
+				cameraAnimationQueue.clear( );
+				cameraAnimationQueue.add( new SpringOrbit( MapsView.this , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
+			}
+		} );
+		
 		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
 		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
 	}
@@ -575,8 +610,6 @@ public class MapsView extends BasicJOGLSetup
 			return;
 		}
 		
-		List<SurveyShot> origShots = model3d.getOriginalShots( );
-		
 		FittingFrustum frustum = new FittingFrustum( );
 		
 		frustum.init( scene.pickXform( ) , .8f );
@@ -588,7 +621,6 @@ public class MapsView extends BasicJOGLSetup
 				continue;
 			}
 			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
-			
 			if( shot == null )
 			{
 				continue;
@@ -611,16 +643,50 @@ public class MapsView extends BasicJOGLSetup
 		
 		frustum.calculateOrigin( coord );
 		
-		float[ ] v = new float[ 16 ];
-		scene.getViewXform( v );
-		Vecmath.invAffine( v );
-		v[ 12 ] = coord[ 0 ];
-		v[ 13 ] = coord[ 1 ];
-		v[ 14 ] = coord[ 2 ];
-		Vecmath.invAffine( v );
-		// scene.setViewXform( v );
+		cameraAnimationQueue.clear( );
+		cameraAnimationQueue.add( new SinusoidalTranslation( this , coord , 30 , 1000 ) );
+	}
+	
+	protected void flyToFiltered( final AnnotatingJTable<?, ?> table )
+	{
+		if( model3d == null )
+		{
+			return;
+		}
 		
-		cameraAnimationController.setTarget( v );
+		float[ ] center = new float[ 3 ];
+		orbiter.getCenter( center );
+		
+		if( Vecmath.hasNaNsOrInfinites( center ) )
+		{
+			model3d.getCenter( center );
+		}
+		
+		cameraAnimationQueue.clear( );
+		cameraAnimationQueue.add( new SpringOrbit( this , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
+		cameraAnimationQueue.add( new Animation( )
+		{
+			@Override
+			public long animate( long animTime )
+			{
+				table.getModelSelectionModel( ).clearSelection( );
+				table.selectAll( );
+				
+				fitViewToSelected( );
+				
+				float[ ] center = new float[ 3 ];
+				orbiter.getCenter( center );
+				
+				if( Vecmath.hasNaNsOrInfinites( center ) )
+				{
+					model3d.getCenter( center );
+				}
+				
+				cameraAnimationQueue.add( new RandomOrbit( MapsView.this , center , 0.001f ,
+						( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 100000 ) );
+				return 0;
+			}
+		} );
 	}
 	
 	@Override
@@ -736,6 +802,7 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
+		mouseAdapterChain.addMouseAdapter( cameraAnimationInterrupter );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( true );
@@ -753,6 +820,7 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain.addMouseAdapter( orbiter );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
+		mouseAdapterChain.addMouseAdapter( cameraAnimationInterrupter );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setOrthoMode( false );
@@ -994,12 +1062,23 @@ public class MapsView extends BasicJOGLSetup
 				{
 					if( time >= lastAction )
 					{
-						table.getModelSelectionModel( ).clearSelection( );
-						table.selectAll( );
-						fitViewToSelected( );
+						// table.getModelSelectionModel( ).clearSelection( );
+						// table.selectAll( );
+						// fitViewToSelected( );
+						
+						flyToFiltered( table );
 					}
 				}
 			} );
 		}
 	};
+	
+	class CameraAnimationInterrupter extends MouseAdapter
+	{
+		@Override
+		public void mousePressed( MouseEvent e )
+		{
+			cameraAnimationQueue.clear( );
+		}
+	}
 }

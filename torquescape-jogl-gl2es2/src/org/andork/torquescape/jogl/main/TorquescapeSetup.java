@@ -1,6 +1,6 @@
 package org.andork.torquescape.jogl.main;
 
-import org.andork.jogl.basic.BasicJOGLSetup;
+import org.andork.jogl.BasicJOGLSetup;
 import org.andork.torquescape.jogl.control.ControlStateKeyboardHandler;
 
 import com.jogamp.opengl.util.FPSAnimator;

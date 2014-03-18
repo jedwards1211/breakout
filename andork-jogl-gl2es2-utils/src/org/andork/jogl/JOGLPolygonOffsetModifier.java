@@ -1,4 +1,4 @@
-package org.andork.jogl.basic;
+package org.andork.jogl;
 
 import javax.media.opengl.GL2ES2;
 

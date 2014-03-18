@@ -8,8 +8,8 @@ import java.util.List;
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLAutoDrawable;
 
-import org.andork.jogl.basic.BasicJOGLScene;
-import org.andork.jogl.basic.BasicJOGLSetup;
+import org.andork.jogl.BasicJOGLScene;
+import org.andork.jogl.BasicJOGLSetup;
 import org.andork.torquescape.jogl.render.ZoneRenderer;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DirectZoneGenerator;

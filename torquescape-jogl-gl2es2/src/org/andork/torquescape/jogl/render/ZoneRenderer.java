@@ -10,7 +10,7 @@ import java.util.Map;
 import javax.media.opengl.GL2ES2;
 
 import org.andork.collect.CollectionUtils;
-import org.andork.jogl.basic.JOGLObject;
+import org.andork.jogl.JOGLObject;
 import org.andork.torquescape.model.ISlice;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.slice.ColorWaveSlice;

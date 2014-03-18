@@ -11,9 +11,9 @@ import java.util.List;
 
 import javax.media.opengl.GL2ES2;
 
-import org.andork.jogl.basic.BasicJOGLObject;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform4fv;
+import org.andork.jogl.BasicJOGLObject;
+import org.andork.jogl.BasicJOGLObject.Uniform1fv;
+import org.andork.jogl.BasicJOGLObject.Uniform4fv;
 import org.andork.torquescape.jogl.main.TorquescapeScene;
 import org.andork.torquescape.jogl.main.TorquescapeSetup;
 import org.andork.torquescape.model.Zone;

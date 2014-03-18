@@ -1,17 +1,15 @@
-package org.andork.jogl.basic.awt;
+package org.andork.jogl;
 
-import java.awt.Component;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-
-import org.andork.jogl.basic.BasicJOGLScene;
 import org.andork.math3d.Vecmath;
 
+import com.jogamp.newt.Window;
+import com.jogamp.newt.event.MouseAdapter;
+import com.jogamp.newt.event.MouseEvent;
+import com.jogamp.newt.opengl.GLWindow;
 
 public class BasicNavigator extends MouseAdapter
 {
-	final Component			canvas;
+	final GLWindow			window;
 	final BasicJOGLScene	scene;
 	
 	MouseEvent				lastEvent	= null;
@@ -36,7 +34,7 @@ public class BasicNavigator extends MouseAdapter
 	public BasicNavigator( BasicJOGLSetup setup )
 	{
 		super( );
-		this.canvas = setup.canvas;
+		this.window = setup.glWindow;
 		this.scene = setup.scene;
 	}
 	
@@ -100,16 +98,6 @@ public class BasicNavigator extends MouseAdapter
 		this.wheelFactor = wheelFactor;
 	}
 	
-	public float getSensitivity( )
-	{
-		return sensitivity;
-	}
-
-	public void setSensitivity( float sensitivity )
-	{
-		this.sensitivity = sensitivity;
-	}
-
 	@Override
 	public void mousePressed( MouseEvent e )
 	{
@@ -132,9 +120,10 @@ public class BasicNavigator extends MouseAdapter
 		scene.getViewXform( cam );
 		Vecmath.invAffine( cam );
 		
-		Component canvas = ( Component ) e.getSource( );
+		Window window = ( Window ) e.getSource( );
 		
 		float scaledMoveFactor = moveFactor * sensitivity;
+		
 		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 		{
 			Vecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
@@ -146,8 +135,8 @@ public class BasicNavigator extends MouseAdapter
 			
 			lastPan = pan;
 			
-			float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
-			float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
+			float dpan = ( float ) ( dx * panFactor * sensitivity / window.getWidth( ) );
+			float dtilt = ( float ) ( dy * tiltFactor * sensitivity / window.getHeight( ) );
 			
 			Vecmath.rotY( temp , dpan );
 			Vecmath.mmulRotational( temp , cam , cam );
@@ -178,12 +167,12 @@ public class BasicNavigator extends MouseAdapter
 		
 		if( callDisplay )
 		{
-			this.canvas.repaint( );
+			this.window.display( );
 		}
 	}
 	
 	@Override
-	public void mouseWheelMoved( MouseWheelEvent e )
+	public void mouseWheelMoved( MouseEvent e )
 	{
 		if( !active || e.isControlDown( ) )
 		{
@@ -193,7 +182,7 @@ public class BasicNavigator extends MouseAdapter
 		scene.getViewXform( cam );
 		Vecmath.invAffine( cam );
 		
-		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
+		float distance = -e.getRotation( )[ 1 ] * wheelFactor * sensitivity;
 		
 		cam[ 12 ] += cam[ 8 ] * distance;
 		cam[ 13 ] += cam[ 9 ] * distance;
@@ -204,7 +193,7 @@ public class BasicNavigator extends MouseAdapter
 		
 		if( callDisplay )
 		{
-			this.canvas.repaint( );
+			this.window.display( );
 		}
 	}
 }

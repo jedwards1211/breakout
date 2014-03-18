@@ -5,11 +5,11 @@ import java.util.List;
 
 import javax.media.opengl.GL2ES2;
 
-import org.andork.jogl.basic.BasicJOGLObject;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform4fv;
-import org.andork.jogl.basic.BasicJOGLScene;
-import org.andork.jogl.basic.BasicJOGLSetup;
+import org.andork.jogl.BasicJOGLObject;
+import org.andork.jogl.BasicJOGLScene;
+import org.andork.jogl.BasicJOGLSetup;
+import org.andork.jogl.BasicJOGLObject.Uniform1fv;
+import org.andork.jogl.BasicJOGLObject.Uniform4fv;
 import org.andork.torquescape.model.Zone;
 import org.andork.torquescape.model.gen.DirectZoneGenerator;
 import org.andork.torquescape.model.normal.NormalGenerator;

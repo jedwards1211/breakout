@@ -5,16 +5,16 @@ import java.util.Arrays;
 
 import javax.media.opengl.GL2ES2;
 
-import org.andork.jogl.basic.BasicJOGLObject;
-import org.andork.jogl.basic.BasicJOGLObject.PerVertexDiffuseVertexShader;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform1fv;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform1iv;
-import org.andork.jogl.basic.BasicJOGLObject.Uniform4fv;
-import org.andork.jogl.basic.BasicJOGLObject.VaryingColorFragmentShader;
-import org.andork.jogl.basic.BasicJOGLScene;
-import org.andork.jogl.basic.BasicJOGLSetup;
-import org.andork.jogl.basic.BufferHelper;
-import org.andork.jogl.basic.JOGLDepthModifier;
+import org.andork.jogl.BasicJOGLObject;
+import org.andork.jogl.BasicJOGLScene;
+import org.andork.jogl.BasicJOGLSetup;
+import org.andork.jogl.BufferHelper;
+import org.andork.jogl.JOGLDepthModifier;
+import org.andork.jogl.BasicJOGLObject.PerVertexDiffuseVertexShader;
+import org.andork.jogl.BasicJOGLObject.Uniform1fv;
+import org.andork.jogl.BasicJOGLObject.Uniform1iv;
+import org.andork.jogl.BasicJOGLObject.Uniform4fv;
+import org.andork.jogl.BasicJOGLObject.VaryingColorFragmentShader;
 import org.andork.jogl.util.NormalGenerator;
 import org.andork.math3d.Primitives;
 

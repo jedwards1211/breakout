@@ -1,10 +1,10 @@
-package org.andork.jogl.basic.awt;
+package org.andork.jogl.awt;
 
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 
-import org.andork.jogl.basic.BasicJOGLScene;
+import org.andork.jogl.BasicJOGLScene;
 
 public class BasicJOGLSetup
 {
@@ -13,8 +13,6 @@ public class BasicJOGLSetup
 	
 	protected BasicNavigator					navigator;
 	protected BasicOrbiter						orbiter;
-	
-	protected BasicCameraAnimationController	cameraAnimationController;
 	
 	public BasicJOGLSetup( )
 	{
@@ -39,8 +37,6 @@ public class BasicJOGLSetup
 	{
 		scene = createScene( );
 		canvas.addGLEventListener( scene );
-		
-		cameraAnimationController = new BasicCameraAnimationController( this );
 		
 		initMouseInput( );
 		initKeyboardInput( );
@@ -88,10 +84,5 @@ public class BasicJOGLSetup
 	public BasicOrbiter getOrbiter( )
 	{
 		return orbiter;
-	}
-	
-	public BasicCameraAnimationController getCameraAnimationController( )
-	{
-		return cameraAnimationController;
 	}
 }

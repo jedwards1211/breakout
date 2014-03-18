@@ -1,4 +1,4 @@
-package org.andork.jogl.basic;
+package org.andork.jogl;
 
 import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
 import static org.andork.math3d.Vecmath.mmul3x3;

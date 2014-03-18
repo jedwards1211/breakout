@@ -8,6 +8,7 @@ import java.util.Arrays;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JSlider;
 
 import org.andork.awt.ColorUtils;
@@ -48,6 +49,7 @@ public class SettingsDrawer extends Drawer
 	PlotAxis					highlightDistAxis;
 	PaintablePanel				highlightDistAxisPanel;
 	JButton						fitViewButton;
+	JButton						orbitToPlanButton;
 	JButton						debugButton;
 	
 	DefaultSelector<FilterType>	filterTypeSelector;
@@ -121,6 +123,7 @@ public class SettingsDrawer extends Drawer
 		mouseSensitivitySlider.setOpaque( false );
 		
 		fitViewButton = new JButton( "Fit View" );
+		orbitToPlanButton = new JButton( "Orbit to Plan" );
 		
 		filterTypeSelector = new DefaultSelector<FilterType>( );
 		filterTypeSelector.setAvailableValues( Arrays.asList( FilterType.values( ) ) );
@@ -132,12 +135,13 @@ public class SettingsDrawer extends Drawer
 	{
 		GridBagWizard w = GridBagWizard.create( this );
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
-		w.put( viewButtonsPanel ).xy( 0 , 0 );
+		w.put( updateViewButton ).xy( 0 , 0 ).fillx( 1.0 ).insets( 3 , 3 , 3 , 3 );
+		w.put( viewButtonsPanel ).belowLast( ).insets( 23 , 3 , 3 , 3 );
 		w.put( fitViewButton ).belowLast( ).fillx( 1.0 );
-		w.put( updateViewButton ).belowLast( ).fillx( 1.0 ).insets( 43 , 3 , 3 , 3 );
+		w.put( orbitToPlanButton ).belowLast( ).fillx( 1.0 );
 		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
-		w.put( sensLabel ).below( updateViewButton ).west( ).insets( 13 , 3 , 3 , 3 );
-		w.put( mouseSensitivitySlider ).below( sensLabel ).fillx( ).north( );
+		w.put( sensLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
+		w.put( mouseSensitivitySlider ).belowLast( ).fillx( ).north( );
 		JLabel distLabel = new JLabel( "Distance coloration:" );
 		w.put( distLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( distColorationAxisPanel ).belowLast( ).fillx( );
@@ -151,7 +155,16 @@ public class SettingsDrawer extends Drawer
 		w.put( filterTypeLabel ).belowLast( ).west( ).insets( 43 , 3 , 3 , 3 );
 		w.put( filterTypeSelector.getComboBox( ) ).belowLast( ).fillx( );
 		
-		w.put( debugButton ).belowLast( ).southwest( ).weighty( 1.0 );
+		JPanel paddingPanel = new JPanel( );
+		paddingPanel.setOpaque( false );
+		w.put( paddingPanel ).belowLast( ).fillboth( 1.0 , 1.0 );
+		
+		filterTypeLabel.setVisible( false );
+		filterTypeSelector.getComboBox( ).setVisible( false );
+		
+		w.put( debugButton ).belowLast( ).southwest( );
+		
+		debugButton.setVisible( false );
 	}
 	
 	private void createListeners( )
@@ -195,6 +208,11 @@ public class SettingsDrawer extends Drawer
 	public JButton getFitViewButton( )
 	{
 		return fitViewButton;
+	}
+	
+	public JButton getOrbitToPlanButton( )
+	{
+		return orbitToPlanButton;
 	}
 	
 	public PlotAxis getDistColorationAxis( )

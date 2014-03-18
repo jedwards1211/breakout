@@ -314,6 +314,28 @@ public class ArrayUtils
 		return sb.toString( );
 	}
 	
+	public static String prettyPrint( float[ ][ ] a , String elemFormat )
+	{
+		StringBuffer sb = new StringBuffer( );
+		
+		int indexWidth = ( int ) Math.log10( a.length ) + 1;
+		String indexFormat = "%" + indexWidth + "d";
+		
+		for( int row = 0 ; row < a.length ; row++ )
+		{
+			sb.append( '[' ).append( String.format( indexFormat , row ) ).append( "] " );
+			
+			for( int col = 0 ; col < a[ row ].length ; col++ )
+			{
+				sb.append( String.format( elemFormat , a[ row ][ col ] ) ).append( "  " );
+			}
+			
+			sb.append( '\n' );
+		}
+		
+		return sb.toString( );
+	}
+	
 	/**
 	 * Finds the index of an equivalent {@link Object} in an arbitrary-order {@code Object} array.
 	 * 
