@@ -118,14 +118,6 @@ public class SpringOrbit implements Animation
 		float panAmount = nextPan - dPan;
 		float tiltAmount = nextTilt - dTilt;
 		
-		System.out.println( "Ratio:\t" + ratio );
-		System.out.println( "dPan:\t" + dPan );
-		System.out.println( "dTilt:\t" + dTilt );
-		System.out.println( "nextPan:\t" + nextPan );
-		System.out.println( "nextTilt:\t" + nextTilt );
-		System.out.println( "Pan amount:\t" + panAmount );
-		System.out.println( "Tilt amount:\t" + tiltAmount );
-		
 		setIdentity( m1 );
 		setIdentity( m2 );
 		
