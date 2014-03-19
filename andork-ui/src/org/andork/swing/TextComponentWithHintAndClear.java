@@ -57,6 +57,7 @@ public class TextComponentWithHintAndClear extends JPanel
 			public void actionPerformed( ActionEvent e )
 			{
 				TextComponentWithHintAndClear.this.textComponent.setText( "" );
+				TextComponentWithHintAndClear.this.textComponent.requestFocus( );
 			}
 		} );
 		

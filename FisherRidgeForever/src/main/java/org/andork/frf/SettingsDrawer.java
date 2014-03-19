@@ -48,7 +48,8 @@ public class SettingsDrawer extends Drawer
 	PaintablePanel				paramColorationAxisPanel;
 	PlotAxis					highlightDistAxis;
 	PaintablePanel				highlightDistAxisPanel;
-	JButton						fitViewButton;
+	JButton						fitViewToEverythingButton;
+	JButton						fitViewToSelectedButton;
 	JButton						orbitToPlanButton;
 	JButton						debugButton;
 	
@@ -122,7 +123,8 @@ public class SettingsDrawer extends Drawer
 		mouseSensitivitySlider.setValue( 20 );
 		mouseSensitivitySlider.setOpaque( false );
 		
-		fitViewButton = new JButton( "Fit View" );
+		fitViewToSelectedButton = new JButton( "Fit View to Selected" );
+		fitViewToEverythingButton = new JButton( "Fit View to Everything" );
 		orbitToPlanButton = new JButton( "Orbit to Plan" );
 		
 		filterTypeSelector = new DefaultSelector<FilterType>( );
@@ -137,7 +139,8 @@ public class SettingsDrawer extends Drawer
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
 		w.put( updateViewButton ).xy( 0 , 0 ).fillx( 1.0 ).insets( 3 , 3 , 3 , 3 );
 		w.put( viewButtonsPanel ).belowLast( ).insets( 23 , 3 , 3 , 3 );
-		w.put( fitViewButton ).belowLast( ).fillx( 1.0 );
+		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
+		w.put( fitViewToEverythingButton ).belowLast( ).fillx( 1.0 );
 		w.put( orbitToPlanButton ).belowLast( ).fillx( 1.0 );
 		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
 		w.put( sensLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
@@ -205,9 +208,14 @@ public class SettingsDrawer extends Drawer
 		return binder.getModel( );
 	}
 	
-	public JButton getFitViewButton( )
+	public JButton getFitViewToSelectedButton( )
 	{
-		return fitViewButton;
+		return fitViewToSelectedButton;
+	}
+	
+	public JButton getFitViewToEverythingButton( )
+	{
+		return fitViewToEverythingButton;
 	}
 	
 	public JButton getOrbitToPlanButton( )

@@ -2003,7 +2003,7 @@ public class Vecmath
 	
 	public static void setf( float[ ] array , float ... values )
 	{
-		System.arraycopy( values , 0 , array , 0 , values.length );
+		System.arraycopy( values , 0 , array , 0 , Math.min( array.length , values.length ) );
 	}
 	
 	public static void setIdentity( float[ ] m )

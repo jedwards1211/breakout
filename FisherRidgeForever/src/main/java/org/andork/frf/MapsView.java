@@ -560,12 +560,21 @@ public class MapsView extends BasicJOGLSetup
 		binder.setModel( model );
 		binder.modelToView( );
 		
-		settingsDrawer.getFitViewButton( ).addActionListener( new ActionListener( )
+		settingsDrawer.getFitViewToSelectedButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
 				fitViewToSelected( );
+			}
+		} );
+		
+		settingsDrawer.getFitViewToEverythingButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				fitViewToEverything( );
 			}
 		} );
 		
@@ -647,6 +656,46 @@ public class MapsView extends BasicJOGLSetup
 		cameraAnimationQueue.add( new SinusoidalTranslation( this , coord , 30 , 1000 ) );
 	}
 	
+	protected void fitViewToEverything( )
+	{
+		if( settingsDrawer.getModel( ).get( SettingsDrawer.Model.cameraView ) != CameraView.PERSPECTIVE )
+		{
+			return;
+		}
+		
+		FittingFrustum frustum = new FittingFrustum( );
+		
+		frustum.init( scene.pickXform( ) , .8f );
+		
+		for( int i = 0 ; i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
+		{
+			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
+			if( shot == null )
+			{
+				continue;
+			}
+			
+			frustum.addPoint(
+					( float ) shot.from.position[ 0 ] ,
+					( float ) shot.from.position[ 1 ] ,
+					( float ) shot.from.position[ 2 ]
+					);
+			frustum.addPoint(
+					( float ) shot.to.position[ 0 ] ,
+					( float ) shot.to.position[ 1 ] ,
+					( float ) shot.to.position[ 2 ]
+					);
+			
+		}
+		
+		float[ ] coord = new float[ 3 ];
+		
+		frustum.calculateOrigin( coord );
+		
+		cameraAnimationQueue.clear( );
+		cameraAnimationQueue.add( new SinusoidalTranslation( this , coord , 30 , 1000 ) );
+	}
+	
 	protected void flyToFiltered( final AnnotatingJTable<?, ?> table )
 	{
 		if( model3d == null )
@@ -682,8 +731,8 @@ public class MapsView extends BasicJOGLSetup
 					model3d.getCenter( center );
 				}
 				
-				cameraAnimationQueue.add( new RandomOrbit( MapsView.this , center , 0.001f ,
-						( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 100000 ) );
+				cameraAnimationQueue.add( new RandomOrbit( MapsView.this , center , 0.0005f ,
+						( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 60000 ) );
 				return 0;
 			}
 		} );
@@ -848,18 +897,31 @@ public class MapsView extends BasicJOGLSetup
 		
 		Set<Survey3dModel.Shot> newSelectedShots = model3d.getSelectedShots( );
 		
+		float[ ] bounds = Rectmath.voidRectf( 3 );
+		float[ ] p = Rectmath.voidRectf( 3 );
+		
 		double[ ] center = new double[ 3 ];
 		for( Survey3dModel.Shot shot : newSelectedShots )
 		{
 			SurveyShot origShot = origShots.get( shot.getIndex( ) );
-			add3( center , origShot.from.position , center );
-			add3( center , origShot.to.position , center );
+			p[ 0 ] = ( float ) Math.min( origShot.from.position[ 0 ] , origShot.to.position[ 0 ] );
+			p[ 1 ] = ( float ) Math.min( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
+			p[ 2 ] = ( float ) Math.min( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
+			p[ 3 ] = ( float ) Math.max( origShot.from.position[ 0 ] , origShot.to.position[ 0 ] );
+			p[ 4 ] = ( float ) Math.max( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
+			p[ 5 ] = ( float ) Math.max( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
+			Rectmath.union3( bounds , p , bounds );
+			// add3( center , origShot.from.position , center );
+			// add3( center , origShot.to.position , center );
 		}
 		
 		if( !newSelectedShots.isEmpty( ) )
 		{
-			scale3( center , 0.5 / newSelectedShots.size( ) );
-			orbiter.setCenter( Vecmath.toFloats( center ) );
+			// scale3( center , 0.5 / newSelectedShots.size( ) );
+			p[ 0 ] = ( float ) ( bounds[ 0 ] + bounds[ 3 ] ) * 0.5f;
+			p[ 1 ] = ( float ) ( bounds[ 1 ] + bounds[ 4 ] ) * 0.5f;
+			p[ 2 ] = ( float ) ( bounds[ 2 ] + bounds[ 5 ] ) * 0.5f;
+			orbiter.setCenter( p );
 		}
 	}
 	
