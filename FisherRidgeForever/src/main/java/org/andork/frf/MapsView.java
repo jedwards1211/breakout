@@ -1062,10 +1062,6 @@ public class MapsView extends BasicJOGLSetup
 				{
 					if( time >= lastAction )
 					{
-						// table.getModelSelectionModel( ).clearSelection( );
-						// table.selectAll( );
-						// fitViewToSelected( );
-						
 						flyToFiltered( table );
 					}
 				}
