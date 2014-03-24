@@ -1,8 +1,6 @@
 package org.andork.frf;
 
-import static org.andork.math3d.Vecmath.add3;
 import static org.andork.math3d.Vecmath.newMat4f;
-import static org.andork.math3d.Vecmath.scale3;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -19,7 +17,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -50,6 +47,7 @@ import org.andork.awt.layout.Side;
 import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
 import org.andork.frf.SettingsDrawer.CameraView;
+import org.andork.frf.SettingsDrawer.FilterType;
 import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.frf.model.Survey3dModel;
 import org.andork.frf.model.Survey3dModel.SelectionEditor;
@@ -63,7 +61,6 @@ import org.andork.jogl.awt.BasicJOGLSetup;
 import org.andork.jogl.awt.anim.RandomOrbit;
 import org.andork.jogl.awt.anim.SinusoidalTranslation;
 import org.andork.jogl.awt.anim.SpringOrbit;
-import org.andork.jogl.awt.anim.SpringTranslation;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
@@ -84,7 +81,9 @@ import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.LayeredBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
 import org.andork.swing.table.AnnotatingJTable;
+import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
+import org.andork.swing.table.RowFilterFactory;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.LinearAxisConversion;
@@ -128,6 +127,8 @@ public class MapsView extends BasicJOGLSetup
 	
 	TableSelectionHandler								selectionHandler;
 	
+	SurveyFilterFactory									surveyFilterFactory		= new SurveyFilterFactory( );
+	
 	SurveyDrawer										surveyDrawer;
 	TaskListDrawer										taskListDrawer;
 	SettingsDrawer										settingsDrawer;
@@ -146,6 +147,7 @@ public class MapsView extends BasicJOGLSetup
 	final float[ ]										p1						= new float[ 3 ];
 	final float[ ]										p2						= new float[ 3 ];
 	
+	YamlObject<Model>									model;
 	final Binder<YamlObject<Model>>						binder					= new Binder<YamlObject<Model>>( );
 	final TaskServiceFilePersister<YamlObject<Model>>	persister;
 	
@@ -182,6 +184,12 @@ public class MapsView extends BasicJOGLSetup
 			public void run( )
 			{
 				surveyDrawer = new SurveyDrawer( sortRunner );
+				surveyDrawer.filterField( ).textComponent.getDocument( ).addDocumentListener(
+						AnnotatingJTables.createFilterFieldListener( surveyDrawer.table( ) ,
+								surveyDrawer.filterField( ).textComponent , surveyFilterFactory ) );
+				surveyDrawer.highlightField( ).textComponent.getDocument( ).addDocumentListener(
+						AnnotatingJTables.createHighlightFieldListener( surveyDrawer.table( ) ,
+								surveyDrawer.highlightField( ).textComponent , surveyFilterFactory , Color.YELLOW ) );
 			}
 		};
 		
@@ -383,8 +391,10 @@ public class MapsView extends BasicJOGLSetup
 				DefaultTableColumnModel quickTableColumnModel = new DefaultTableColumnModel( );
 				TableColumn fromColumn = new TableColumn( SurveyTable.FROM_COLUMN );
 				fromColumn.setIdentifier( "From" );
+				fromColumn.setHeaderValue( "From" );
 				TableColumn toColumn = new TableColumn( SurveyTable.TO_COLUMN );
 				toColumn.setIdentifier( "To" );
+				toColumn.setHeaderValue( "To" );
 				quickTableColumnModel.addColumn( fromColumn );
 				quickTableColumnModel.addColumn( toColumn );
 				
@@ -402,15 +412,8 @@ public class MapsView extends BasicJOGLSetup
 					protected DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> doRun( )
 					{
 						DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> quickTableSetup =
-								new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>( quickTable , sortRunner )
-								{
-									@Override
-									protected RowFilter<SurveyTableModel, Integer> createFilter( JTextComponent highlightField )
-									{
-										return new SurveyDesignationFilter( highlightField.getText( ) );
-									}
-									
-								};
+								new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>(
+										quickTable , sortRunner );
 						quickTableSetup.table.getAnnotatingRowSorter( ).setModelCopier( new SurveyTableModelCopier( ) );
 						return quickTableSetup;
 					}
@@ -419,12 +422,14 @@ public class MapsView extends BasicJOGLSetup
 		JLabel quickTableFilterLabel = new JLabel( "Filter: " );
 		TextComponentWithHintAndClear quickTableFilterField = new TextComponentWithHintAndClear( "Enter Filter Regexp" );
 		quickTableFilterField.textComponent.getDocument( ).addDocumentListener(
-				DefaultAnnotatingJTableSetup.createFilterFieldListener( quickTableSetup , quickTableFilterField.textComponent ) );
+				AnnotatingJTables.createFilterFieldListener( quickTableSetup.table ,
+						quickTableFilterField.textComponent , surveyFilterFactory ) );
 		
 		JLabel quickTableHighlightLabel = new JLabel( "Highlight: " );
 		TextComponentWithHintAndClear quickTableHighlightField = new TextComponentWithHintAndClear( "Enter Highlight Regexp" );
 		quickTableHighlightField.textComponent.getDocument( ).addDocumentListener(
-				DefaultAnnotatingJTableSetup.createHighlightFieldListener( quickTableSetup , quickTableHighlightField.textComponent , Color.YELLOW ) );
+				AnnotatingJTables.createHighlightFieldListener( quickTableSetup.table ,
+						quickTableHighlightField.textComponent , surveyFilterFactory , Color.YELLOW ) );
 		
 		JPanel quickTablePanel = new JPanel( );
 		quickTablePanel.setPreferredSize( new Dimension( 150 , 500 ) );
@@ -552,13 +557,11 @@ public class MapsView extends BasicJOGLSetup
 			settingsDrawerModel.set( SettingsDrawer.Model.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
 			settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
 			settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.filterType , FilterType.ALPHA_DESIGNATION );
 			model.set( Model.settingsDrawerModel , settingsDrawerModel );
 		}
 		
-		model.changeSupport( ).addPropertyChangeListener( persister );
-		
-		binder.setModel( model );
-		binder.modelToView( );
+		setModel( model );
 		
 		settingsDrawer.getFitViewToSelectedButton( ).addActionListener( new ActionListener( )
 		{
@@ -603,6 +606,24 @@ public class MapsView extends BasicJOGLSetup
 		
 		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
 		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
+	}
+	
+	public void setModel( YamlObject<Model> model )
+	{
+		if( this.model != model )
+		{
+			if( this.model != null )
+			{
+				this.model.changeSupport( ).removePropertyChangeListener( persister );
+			}
+			this.model = model;
+			binder.setModel( model );
+			binder.modelToView( );
+			if( model != null )
+			{
+				model.changeSupport( ).addPropertyChangeListener( persister );
+			}
+		}
 	}
 	
 	protected void fitViewToSelected( )
@@ -1137,6 +1158,23 @@ public class MapsView extends BasicJOGLSetup
 		public void mousePressed( MouseEvent e )
 		{
 			cameraAnimationQueue.clear( );
+		}
+	}
+	
+	class SurveyFilterFactory implements RowFilterFactory<String, SurveyTableModel, Integer>
+	{
+		@Override
+		public RowFilter<SurveyTableModel, Integer> createFilter( String input )
+		{
+			switch( model.get( Model.settingsDrawerModel ).get( SettingsDrawer.Model.filterType ) )
+			{
+				case ALPHA_DESIGNATION:
+					return new SurveyDesignationFilter( input );
+				case REGEXP:
+					return new SurveyRegexFilter( input );
+				default:
+					return null;
+			}
 		}
 	}
 }

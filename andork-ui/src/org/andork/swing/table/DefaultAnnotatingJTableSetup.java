@@ -10,7 +10,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 
-import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.AnnotatingRowSorterCursorController;
 import org.andork.swing.RowAnnotator;
@@ -43,95 +42,9 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 		return new AnnotatingJTable<M, A>( model );
 	}
 	
-	protected RowFilter<M, Integer> createFilter( final JTextComponent textComp )
-	{
-		RowFilter<M, Integer> filter;
-		filter = RowFilter.regexFilter( textComp.getText( ) , 0 );
-		return filter;
-	}
-	
-	public void setAnnotationColors( Map<?, Color> colors )
+	public void setAnnotationColors( Map<? extends A, Color> colors )
 	{
 		table.setAnnotationColors( colors );
 		scrollPane.getJumpBar( ).setColorMap( colors );
-	}
-	
-	public static <M extends TableModel> DocumentListener createHighlightFieldListener(
-			final DefaultAnnotatingJTableSetup<M, ? super RowFilter<M, Integer>> setup ,
-			final JTextComponent highlightField , final Color highlightColor )
-	{
-		return new EasyDocumentListener( )
-		{
-			@Override
-			public void documentChanged( DocumentEvent e )
-			{
-				if( setup.table.getAnnotatingRowSorter( ) == null )
-				{
-					{
-						return;
-					}
-				}
-				
-				if( highlightField.getText( ) != null && highlightField.getText( ).length( ) > 0 )
-				{
-					RowFilter<M, Integer> filter = null;
-					try
-					{
-						filter = setup.createFilter( highlightField );
-						highlightField.setForeground( Color.BLACK );
-					}
-					catch( Exception ex )
-					{
-						highlightField.setForeground( Color.RED );
-					}
-					setup.table.getAnnotatingRowSorter( ).setRowAnnotator( RowAnnotator.filterAnnotator( filter ) );
-					setup.setAnnotationColors( Collections.singletonMap( filter , highlightColor ) );
-				}
-				else
-				{
-					highlightField.setForeground( Color.BLACK );
-					
-					setup.table.getAnnotatingRowSorter( ).setRowAnnotator( null );
-					setup.setAnnotationColors( Collections.<Object,Color>emptyMap( ) );
-				}
-				
-			}
-		};
-	}
-	
-	public static <M extends TableModel> DocumentListener createFilterFieldListener(
-			final DefaultAnnotatingJTableSetup<M, ? super RowFilter<M, Integer>> setup , final JTextComponent filterField )
-	{
-		return new EasyDocumentListener( )
-		{
-			@Override
-			public void documentChanged( DocumentEvent e )
-			{
-				if( setup.table.getAnnotatingRowSorter( ) == null )
-				{
-					return;
-				}
-				if( filterField.getText( ) != null && filterField.getText( ).length( ) > 0 )
-				{
-					RowFilter<M, Integer> filter = null;
-					try
-					{
-						filter = setup.createFilter( filterField );
-						filterField.setForeground( Color.BLACK );
-					}
-					catch( Exception ex )
-					{
-						filterField.setForeground( Color.RED );
-					}
-					setup.table.getAnnotatingRowSorter( ).setRowFilter( filter );
-				}
-				else
-				{
-					filterField.setForeground( Color.BLACK );
-					
-					setup.table.getAnnotatingRowSorter( ).setRowFilter( null );
-				}
-			}
-		};
 	}
 }

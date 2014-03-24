@@ -10,7 +10,7 @@ settingsDrawerModel:
   highlightRange:
     scale: 0.19804221343978426
     offset: -31.897105245625426
-  filterType: ALPHA_DESIGNATION
+  filterType: REGEXP
 surveyDrawerPinned: false
 miniSurveyDrawerPinned: false
 taskListDrawerPinned: false

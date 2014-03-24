@@ -162,9 +162,6 @@ public class SettingsDrawer extends Drawer
 		paddingPanel.setOpaque( false );
 		w.put( paddingPanel ).belowLast( ).fillboth( 1.0 , 1.0 );
 		
-		filterTypeLabel.setVisible( false );
-		filterTypeSelector.getComboBox( ).setVisible( false );
-		
 		w.put( debugButton ).belowLast( ).southwest( );
 		
 		debugButton.setVisible( false );

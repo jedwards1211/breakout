@@ -1,11 +1,9 @@
 package org.andork.frf;
 
-import java.awt.Color;
 import java.awt.Dimension;
 
 import javax.swing.JLabel;
 import javax.swing.RowFilter;
-import javax.swing.text.JTextComponent;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
@@ -16,6 +14,7 @@ import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 
+@SuppressWarnings( "serial" )
 public class SurveyDrawer extends Drawer
 {
 	JLabel																							highlightLabel;
@@ -38,23 +37,8 @@ public class SurveyDrawer extends Drawer
 		
 		surveyTable = new SurveyTable( );
 		surveyTableSetup = new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>(
-				surveyTable , sortRunner )
-		{
-			@Override
-			protected RowFilter<SurveyTableModel, Integer> createFilter( JTextComponent highlightField )
-			{
-				return new SurveyDesignationFilter( highlightField.getText( ) );
-			}
-		};
+				surveyTable , sortRunner );
 		surveyTableSetup.table.getAnnotatingRowSorter( ).setModelCopier( new SurveyTableModelCopier( ) );
-		
-		highlightField.textComponent.getDocument( ).addDocumentListener(
-				DefaultAnnotatingJTableSetup.createHighlightFieldListener(
-						surveyTableSetup , highlightField.textComponent , Color.YELLOW ) );
-		
-		filterField.textComponent.getDocument( ).addDocumentListener(
-				DefaultAnnotatingJTableSetup.createFilterFieldListener(
-						surveyTableSetup , filterField.textComponent ) );
 		
 		delegate( ).dockingSide( Side.BOTTOM );
 		mainResizeHandle( );

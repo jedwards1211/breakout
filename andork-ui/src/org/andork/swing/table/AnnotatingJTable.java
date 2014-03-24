@@ -12,7 +12,6 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
 import org.andork.swing.AnnotatingRowSorter;
-import org.andork.swing.RowAnnotator;
 
 /**
  * A {@link BetterJTable} with the following added features:
@@ -25,7 +24,7 @@ import org.andork.swing.RowAnnotator;
 @SuppressWarnings( "serial" )
 public class AnnotatingJTable<M extends TableModel, A> extends BetterJTable
 {
-	protected final Map<Object, Color>	annotationColors	= new HashMap<Object, Color>( );
+	protected final Map<A, Color>	annotationColors	= new HashMap<A, Color>( );
 	
 	public AnnotatingJTable( )
 	{
@@ -119,7 +118,7 @@ public class AnnotatingJTable<M extends TableModel, A> extends BetterJTable
 		return comp;
 	}
 	
-	public void setAnnotationColors( Map<?, Color> annotationColors )
+	public void setAnnotationColors( Map<? extends A, Color> annotationColors )
 	{
 		this.annotationColors.clear( );
 		this.annotationColors.putAll( annotationColors );
