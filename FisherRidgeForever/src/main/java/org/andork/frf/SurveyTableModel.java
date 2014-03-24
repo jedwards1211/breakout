@@ -18,6 +18,11 @@ public class SurveyTableModel extends DefaultTableModel
 	
 	private Map<Integer, Integer>	shotIndexToRowMap	= CollectionUtils.newHashMap( );
 	
+	public SurveyShot getShotAtRow( int row )
+	{
+		return ( SurveyShot ) getValueAt( row , SurveyTable.SHOT_COLUMN );
+	}
+	
 	@Override
 	public void setValueAt( Object aValue , int row , int column )
 	{

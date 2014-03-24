@@ -7,10 +7,10 @@ import java.util.regex.Pattern;
 
 import javax.swing.RowFilter;
 
+import org.andork.frf.model.SurveyShot;
+
 public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer>
 {
-	// String designation;
-	
 	Segment[ ]						segments;
 	
 	private static final Pattern	SEGMENT_PATTERN	= Pattern.compile( "\\s*(\\p{Alpha}+)\\s*(([0-9]+(\\.[0-9]+)?)\\s*(\\+|(-\\s*([0-9]+(\\.[0-9]+)?)))?)?\\s*" );
@@ -26,8 +26,6 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 			}
 			
 			designation = m.group( 1 );
-			requireFrom = true;
-			requireTo = true;
 			
 			if( m.group( 2 ) != null )
 			{
@@ -48,27 +46,17 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 		}
 		
 		String		designation;
-		boolean		requireFrom;
-		boolean		requireTo;
 		BigDecimal	lowerBound;
 		BigDecimal	upperBound;
 		
-		public boolean include( javax.swing.RowFilter.Entry<? extends SurveyTableModel, ? extends Integer> entry )
+		public boolean include( String from )
 		{
-			String from = entry.getStringValue( SurveyTable.FROM_COLUMN );
-			String to = entry.getStringValue( SurveyTable.TO_COLUMN );
-			
-			if( ( requireFrom && !from.startsWith( designation ) ) || ( requireTo && !to.startsWith( designation ) ) )
+			if( !from.startsWith( designation ) )
 			{
 				return false;
 			}
 			
-			if( requireFrom && from.length( ) > designation.length( ) && Character.isLetter( from.charAt( designation.length( ) ) ) )
-			{
-				return false;
-			}
-			
-			if( requireTo && to.length( ) > designation.length( ) && Character.isLetter( to.charAt( designation.length( ) ) ) )
+			if( from.length( ) > designation.length( ) && Character.isLetter( from.charAt( designation.length( ) ) ) )
 			{
 				return false;
 			}
@@ -77,26 +65,12 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 			{
 				if( lowerBound != null )
 				{
-					if( requireFrom )
-					{
-						checkBound( from , lowerBound );
-					}
-					if( requireTo )
-					{
-						checkBound( to , lowerBound );
-					}
+					checkBound( from , lowerBound );
 				}
 				
 				if( upperBound != null )
 				{
-					if( requireFrom )
-					{
-						checkBound( from , upperBound );
-					}
-					if( requireTo )
-					{
-						checkBound( to , upperBound );
-					}
+					checkBound( from , upperBound );
 				}
 			}
 			catch( Exception ex )
@@ -144,17 +118,32 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 	@Override
 	public boolean include( javax.swing.RowFilter.Entry<? extends SurveyTableModel, ? extends Integer> entry )
 	{
-		// String from = entry.getStringValue( SurveyTable.FROM_COLUMN );
-		// String to = entry.getStringValue( SurveyTable.TO_COLUMN );
-		//
-		// return from.startsWith( designation ) && from.length( ) > designation.length( ) && Character.isDigit( from.charAt( designation.length( ) ) )
-		// && to.startsWith( designation ) && to.length( ) > designation.length( ) && Character.isDigit( to.charAt( designation.length( ) ) );
+		SurveyShot shot = entry.getModel( ).getShotAtRow( entry.getIdentifier( ) );
+		if( shot == null )
+		{
+			return false;
+		}
+		
+		boolean foundFrom = false;
+		boolean foundTo = false;
 		
 		for( Segment segment : segments )
 		{
-			if( segment.include( entry ) )
+			if( !foundFrom && segment.include( shot.from.name ) )
 			{
-				return true;
+				foundFrom = true;
+				if( foundTo )
+				{
+					return true;
+				}
+			}
+			if( !foundTo && segment.include( shot.to.name ) )
+			{
+				foundTo = true;
+				if( foundFrom )
+				{
+					return true;
+				}
 			}
 		}
 		return false;
