@@ -22,8 +22,11 @@ import java.util.List;
 import java.util.Set;
 
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -33,8 +36,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
-import javax.swing.text.JTextComponent;
 
+import org.andork.awt.AWTUtil;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
@@ -43,20 +46,21 @@ import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
+import org.andork.awt.layout.DrawerLayoutDelegate;
 import org.andork.awt.layout.Side;
+import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
 import org.andork.frf.SettingsDrawer.CameraView;
 import org.andork.frf.SettingsDrawer.FilterType;
 import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
-import org.andork.frf.model.MedianTiltAxisInferrer;
 import org.andork.frf.model.Survey3dModel;
-import org.andork.frf.model.WeightedAverageTiltAxisInferrer;
 import org.andork.frf.model.Survey3dModel.SelectionEditor;
 import org.andork.frf.model.Survey3dModel.Shot;
 import org.andork.frf.model.Survey3dModel.ShotPickContext;
 import org.andork.frf.model.Survey3dModel.ShotPickResult;
 import org.andork.frf.model.SurveyShot;
+import org.andork.frf.model.WeightedAverageTiltAxisInferrer;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.BasicJOGLScene;
 import org.andork.jogl.awt.BasicJOGLSetup;
@@ -66,6 +70,7 @@ import org.andork.jogl.awt.anim.SpringOrbit;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
+import org.andork.snakeyaml.YamlArrayList;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlObjectStringBimapper;
 import org.andork.snakeyaml.YamlSpec;
@@ -101,6 +106,10 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
+	JMenuBar											menuBar;
+	JMenu												fileMenu;
+	JMenu												recentFilesMenu;
+	
 	DefaultNavigator									navigator;
 	
 	TaskService											taskService;
@@ -158,6 +167,13 @@ public class MapsView extends BasicJOGLSetup
 	public MapsView( )
 	{
 		super( );
+		
+		recentFilesMenu = new JMenu( "Recent Files" );
+		fileMenu = new JMenu( "File" );
+		fileMenu.add( recentFilesMenu );
+		
+		menuBar = new JMenuBar( );
+		menuBar.add( fileMenu );
 		
 		JLabel highlightLabel = new JLabel( "Highlight: " );
 		JLabel filterLabel = new JLabel( "Filter: " );
@@ -301,6 +317,23 @@ public class MapsView extends BasicJOGLSetup
 		taskService = new SingleThreadedTaskService( );
 		taskListDrawer = new TaskListDrawer( taskService );
 		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
+		
+		taskListDrawer.delegate( ).changeSupport( ).addPropertyChangeListener( DrawerLayoutDelegate.OPEN , new BasicPropertyChangeListener( )
+		{
+			@Override
+			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
+			{
+				JFrame frame = AWTUtil.getAncestorOfClass( JFrame.class , mainPanel );
+				if( frame != null )
+				{
+					if( frame.getJMenuBar( ) == null )
+					{
+						frame.setJMenuBar( menuBar );
+					}
+					menuBar.setVisible( taskListDrawer.delegate( ).isOpen( ) );
+				}
+			}
+		} );
 		
 		settingsDrawer = new SettingsDrawer( binder.subBinder( Model.settingsDrawerModel ) );
 		settingsDrawer.addTo( layeredPane , 1 );
@@ -1142,6 +1175,7 @@ public class MapsView extends BasicJOGLSetup
 		public static final Attribute<Boolean>							surveyDrawerMaximized	= booleanAttribute( "surveyDrawerMaximized" );
 		public static final Attribute<Boolean>							miniSurveyDrawerPinned	= booleanAttribute( "miniSurveyDrawerPinned" );
 		public static final Attribute<Boolean>							taskListDrawerPinned	= booleanAttribute( "taskListDrawerPinned" );
+		public static final Attribute<YamlArrayList<File>>				recentFiles				= yamlArrayListAttribute( "recentFiles" , YamlSpec.fileObjectBimapper );
 		
 		private Model( )
 		{

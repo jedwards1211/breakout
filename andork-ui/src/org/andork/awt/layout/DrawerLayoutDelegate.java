@@ -12,25 +12,32 @@ import java.util.List;
 import javax.swing.Timer;
 
 import org.andork.awt.layout.DelegatingLayoutManager.LayoutDelegate;
+import org.andork.event.BasicPropertyChangeSupport;
 
 public class DrawerLayoutDelegate implements LayoutDelegate
 {
-	boolean			open		= true;
-	boolean			pinned		= false;
-	boolean			maximized	= false;
-	boolean			animating	= false;
+	boolean								open			= true;
+	boolean								pinned			= false;
+	boolean								maximized		= false;
+	boolean								animating		= false;
 	
-	Corner			dockingCorner;
-	Side			dockingSide;
-	float			animFactor	= .2f;
-	int				animSpeed	= 10;
+	Corner								dockingCorner;
+	Side								dockingSide;
+	float								animFactor		= .2f;
+	int									animSpeed		= 10;
 	
-	private long	lastAnimTime;
-	private Timer	animTimer;
+	private long						lastAnimTime;
+	private Timer						animTimer;
 	
-	Component		drawer;
+	Component							drawer;
 	
-	boolean			fill		= false;
+	boolean								fill			= false;
+	
+	public static final String			OPEN			= "open";
+	public static final String			PINNED			= "pinned";
+	public static final String			MAXIMIZED		= "maximized";
+
+	private BasicPropertyChangeSupport	changeSupport	= new BasicPropertyChangeSupport( );
 	
 	public DrawerLayoutDelegate( Component drawer , Side dockingSide )
 	{
@@ -139,6 +146,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 				drawer.getParent( ).invalidate( );
 				drawer.getParent( ).validate( );
 			}
+			changeSupport.firePropertyChange( this , OPEN , !open , open );
 		}
 	}
 	
@@ -167,9 +175,13 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 	
 	public void setPinned( boolean pinned , boolean animate )
 	{
-		this.pinned = pinned;
-		
-		setOpen( pinned , animate );
+		if( this.pinned != pinned )
+		{
+			this.pinned = pinned;
+			
+			setOpen( pinned , animate );
+			changeSupport.firePropertyChange( this , PINNED , !pinned , pinned );
+		}
 	}
 	
 	public boolean isMaximized( )
@@ -211,6 +223,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			drawer.getParent( ).invalidate( );
 			drawer.getParent( ).validate( );
 		}
+		changeSupport.firePropertyChange( this , MAXIMIZED , !maximized , maximized );
 	}
 	
 	public void setMaximized( boolean maximized )
@@ -388,5 +401,10 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 	public List<Component> getDependencies( )
 	{
 		return Collections.emptyList( );
+	}
+	
+	public BasicPropertyChangeSupport.External changeSupport( )
+	{
+		return changeSupport.external( );
 	}
 }

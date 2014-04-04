@@ -1,5 +1,6 @@
 package org.andork.snakeyaml;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
@@ -12,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.andork.func.Bimapper;
+import org.andork.func.CompoundBimapper;
+import org.andork.func.FileStringBimapper;
+import org.andork.func.StringObjectBimapper;
 
 /**
  * Base class for {@link YamlObject} format specifications. To create a specification for a new type, simply create a subclass that calls one of the
@@ -310,6 +314,8 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 			}
 		}
 	}
+	
+	public static final Bimapper<File, Object>	fileObjectBimapper	= CompoundBimapper.compose( FileStringBimapper.instance , StringObjectBimapper.instance );
 	
 	public static class SpecArrayListBimapper<E> implements Bimapper<YamlArrayList<E>, Object>
 	{

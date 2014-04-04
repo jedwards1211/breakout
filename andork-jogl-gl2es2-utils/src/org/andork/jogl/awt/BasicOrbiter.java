@@ -110,7 +110,7 @@ public class BasicOrbiter extends MouseAdapter
 	@Override
 	public void mouseDragged( MouseEvent e )
 	{
-		if( !active )
+		if( !active || pressEvent == null )
 		{
 			return;
 		}

@@ -33,8 +33,8 @@ public class FrfMainFrame extends JFrame
 			public void run( )
 			{
 				FrfMainFrame frame = new FrfMainFrame( );
-				frame.setVisible( true );
 				frame.setExtendedState( JFrame.MAXIMIZED_BOTH );
+				frame.setVisible( true );
 			}
 		};
 	}

@@ -1,28 +1,14 @@
 package org.andork.frf;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Properties;
+import java.awt.Image;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.imageio.ImageIO;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import org.andork.awt.GridBagWizard;
-import org.andork.awt.I18n;
-import org.andork.frf.update.UpdateProperties;
-import org.andork.frf.update.UpdateStatus;
-import org.andork.frf.update.UpdateStatusPanel;
-import org.andork.frf.update.UpdateStatusPanelController;
 
 @SuppressWarnings( "serial" )
 public class FrfMainPane extends JPanel
@@ -53,6 +39,19 @@ public class FrfMainPane extends JPanel
 		
 		mapsView.loadInBackgroundIfNecessary( );
 		
+		Image splashImage = null;
+		
+		try
+		{
+			splashImage = ImageIO.read( getClass( ).getResource( "splash.jpg" ) );
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace( );
+		}
+		
+		final Image finalSplashImage = splashImage;
+		
 		mapsViewHolder = new BackgroundLoadedPane<MapsView>( mapsView )
 		{
 			@Override
@@ -64,7 +63,7 @@ public class FrfMainPane extends JPanel
 			@Override
 			protected Component createLoadingContent( )
 			{
-				return super.createLoadingContent( "Initializing 3D view..." );
+				return super.createLoadingContent( finalSplashImage , "Initializing 3D view..." , Color.WHITE );
 			}
 		};
 		

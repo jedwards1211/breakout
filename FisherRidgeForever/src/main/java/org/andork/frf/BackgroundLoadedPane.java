@@ -1,13 +1,17 @@
 package org.andork.frf;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
 
 import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
@@ -47,6 +51,52 @@ public abstract class BackgroundLoadedPane<C> extends JPanel
 	{
 		JPanel loadingPane = new JPanel( );
 		JLabel loadingLabel = new JLabel( message );
+		JProgressBar loadingBar = new JProgressBar( );
+		loadingBar.setIndeterminate( true );
+		
+		GridBagWizard g = GridBagWizard.create( loadingPane );
+		g.put( loadingLabel , loadingBar ).intoColumn( ).insets( 10 , 10 , 10 , 10 );
+		
+		return loadingPane;
+	}
+	
+	protected Component createLoadingContent( final Image image , String message , Color fg )
+	{
+		JPanel loadingPane = new JPanel( )
+		{
+			protected void paintComponent( Graphics g )
+			{
+				super.paintComponent( g );
+				if( image == null )
+				{
+					return;
+				}
+				int iw, ih;
+				if( image.getWidth( null ) / image.getHeight( null ) > getWidth( ) / getHeight( ) )
+				{
+					ih = image.getHeight( null );
+					iw = image.getWidth( null ) * getHeight( ) / image.getHeight( null );
+				}
+				else
+				{
+					iw = getWidth( );
+					ih = image.getHeight( null ) * getWidth( ) / image.getWidth( null );
+				}
+				
+				int x = getWidth( ) / 2 - iw / 2;
+				int y = getHeight( ) / 2 - ih / 2;
+				Graphics2D g2 = ( Graphics2D ) g;
+//				Object prevInterp = g2.getRenderingHint( RenderingHints.KEY_INTERPOLATION );
+//				g2.setRenderingHint( RenderingHints.KEY_INTERPOLATION , RenderingHints.VALUE_INTERPOLATION_BICUBIC );
+				g.drawImage( image , x , y , iw , ih , null );
+//				if( prevInterp != null )
+//				{
+//					g2.setRenderingHint( RenderingHints.KEY_INTERPOLATION , prevInterp );
+//				}
+			}
+		};
+		JLabel loadingLabel = new JLabel( message );
+		loadingLabel.setForeground( fg );
 		JProgressBar loadingBar = new JProgressBar( );
 		loadingBar.setIndeterminate( true );
 		
