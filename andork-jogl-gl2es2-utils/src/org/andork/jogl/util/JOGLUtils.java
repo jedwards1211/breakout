@@ -47,17 +47,21 @@ public class JOGLUtils
 		gl.glShaderSource( shader , 1 , new String[ ] { shaderCode } , new int[ ] { shaderCode.length( ) } , 0 );
 		gl.glCompileShader( shader );
 		
-		int[ ] params = new int[ 1 ];
+		int[ ] params = new int[ 2 ];
 		gl.glGetShaderiv( shader , GL2ES2.GL_COMPILE_STATUS , params , 0 );
+			gl.glGetShaderiv( shader , GL2ES2.GL_INFO_LOG_LENGTH , params , 1 );
 		
 		if( params[ 0 ] == GL2ES2.GL_FALSE )
 		{
-			gl.glGetShaderiv( shader , GL2ES2.GL_INFO_LOG_LENGTH , params , 0 );
-			byte[ ] bytes = new byte[ params[ 0 ] ];
-			gl.glGetShaderInfoLog( shader , params[ 0 ] , params , 0 , bytes , 0 );
-			
-			bytes = Arrays.copyOf( bytes , params[ 0 ] );
+			byte[ ] bytes = new byte[ params[ 1 ] ];
+			gl.glGetShaderInfoLog( shader , params[ 1 ] , params , 1 , bytes , 0 );
+//			bytes = Arrays.copyOf( bytes , params[ 0 ] );
 			throw new RuntimeException( new String( bytes ) );
+		} else if (params[1] > 0) {
+			byte[ ] bytes = new byte[ params[ 1 ] ];
+			gl.glGetShaderInfoLog( shader , params[ 1 ] , params , 1 , bytes , 0 );
+			System.out.println("Shader info log: " + new String(bytes));
+			
 		}
 		
 		return shader;
@@ -79,17 +83,23 @@ public class JOGLUtils
 		gl.glAttachShader( program , fragmentShader );
 		gl.glLinkProgram( program );
 		
-		int[ ] params = new int[ 1 ];
+		int[ ] params = new int[ 2 ];
 		gl.glGetProgramiv( program , GL2ES2.GL_LINK_STATUS , params , 0 );
+		gl.glGetProgramiv( program , GL2ES2.GL_INFO_LOG_LENGTH , params , 1 );
 		
 		if( params[ 0 ] == GL2ES2.GL_FALSE )
 		{
-			gl.glGetProgramiv( program , GL2ES2.GL_INFO_LOG_LENGTH , params , 0 );
-			byte[ ] bytes = new byte[ params[ 0 ] ];
-			gl.glGetProgramInfoLog( program , params[ 0 ] , params , 0 , bytes , 0 );
-			
-			bytes = Arrays.copyOf( bytes , params[ 0 ] );
+			byte[ ] bytes = new byte[ params[ 1 ] ];
+			gl.glGetProgramInfoLog( program , params[ 1 ] , params , 1 , bytes , 0 );
+//			bytes = Arrays.copyOf( bytes , params[ 1 ] );
 			throw new RuntimeException( new String( bytes ) );
+		}
+		else if( params[ 1 ] > 0 )
+		{
+			byte[ ] bytes = new byte[ params[ 1 ] ];
+			gl.glGetProgramInfoLog( program , params[ 1 ] , params , 1 , bytes , 0 );
+//			bytes = Arrays.copyOf( bytes , params[ 1 ] );
+			System.out.println( "Program info log: " + new String( bytes ) );
 		}
 		
 		return program;

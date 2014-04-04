@@ -2,10 +2,8 @@ package org.andork.jogl;
 
 import javax.media.opengl.GL2ES2;
 
-public interface JOGLObject
+public interface JOGLObject extends JOGLResource
 {
-	public void init( GL2ES2 gl );
-	
 	/**
 	 * @param gl
 	 * @param m
@@ -18,6 +16,4 @@ public interface JOGLObject
 	 *            the projection matrix
 	 */
 	public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p );
-	
-	public void destroy( GL2ES2 gl );
 }

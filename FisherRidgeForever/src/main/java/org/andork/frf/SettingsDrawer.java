@@ -23,6 +23,7 @@ import org.andork.plot.PlotAxisConversionBinding;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlSpec;
 import org.andork.swing.PaintablePanel;
+import org.andork.swing.border.FillBorder;
 import org.andork.swing.border.GradientFillBorder;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.MultipleGradientFillBorder;
@@ -46,6 +47,8 @@ public class SettingsDrawer extends Drawer
 	PaintablePanel				distColorationAxisPanel;
 	PlotAxis					paramColorationAxis;
 	PaintablePanel				paramColorationAxisPanel;
+	JButton						inferDepthAxisTiltButton;
+	JButton						resetDepthAxisTiltButton;
 	PlotAxis					highlightDistAxis;
 	PaintablePanel				highlightDistAxisPanel;
 	JButton						fitViewToEverythingButton;
@@ -109,6 +112,9 @@ public class SettingsDrawer extends Drawer
 		paramColorationAxis.setMajorTickColor( Color.WHITE );
 		paramColorationAxis.setMinorTickColor( Color.WHITE );
 		
+		inferDepthAxisTiltButton = new JButton( "Infer Depth Axis Tilt" );
+		resetDepthAxisTiltButton = new JButton( "Reset Depth Axis Tilt" );
+		
 		highlightDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		highlightDistAxisPanel = PaintablePanel.wrap( highlightDistAxis );
 		highlightDistAxisPanel.setUnderpaintBorder(
@@ -151,6 +157,8 @@ public class SettingsDrawer extends Drawer
 		JLabel paramLabel = new JLabel( "Depth coloration:" );
 		w.put( paramLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( paramColorationAxisPanel ).belowLast( ).fillx( );
+		w.put( inferDepthAxisTiltButton ).belowLast( ).fillx( );
+		w.put( resetDepthAxisTiltButton ).belowLast( ).fillx( );
 		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
 		w.put( highlightRangeLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
@@ -295,5 +303,15 @@ public class SettingsDrawer extends Drawer
 	public PlotAxis highlightDistAxis( )
 	{
 		return highlightDistAxis;
+	}
+	
+	public JButton getInferDepthAxisTiltButton( )
+	{
+		return inferDepthAxisTiltButton;
+	}
+	
+	public JButton getResetDepthAxisTiltButton( )
+	{
+		return resetDepthAxisTiltButton;
 	}
 }

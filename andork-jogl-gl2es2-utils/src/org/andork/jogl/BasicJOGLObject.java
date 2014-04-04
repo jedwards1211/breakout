@@ -238,14 +238,19 @@ public class BasicJOGLObject implements JOGLObject
 		gl.glBindBuffer( GL2ES2.GL_ELEMENT_ARRAY_BUFFER , 0 );
 	}
 	
+	public int getProgram( )
+	{
+		return program;
+	}
+	
 	public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
 	{
+		gl.glUseProgram( program );
+		
 		for( JOGLModifier modifier : modifiers )
 		{
 			modifier.beforeDraw( gl , this );
 		}
-		
-		gl.glUseProgram( program );
 		
 		for( Uniform uniform : uniforms )
 		{

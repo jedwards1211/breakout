@@ -7,8 +7,8 @@ import javax.media.opengl.GL2ES2;
 
 public class JOGLGroup implements JOGLObject
 {
-	public Object			userObj;
-	public List<JOGLObject>	objects	= new ArrayList<JOGLObject>( );
+	public Object				userObj;
+	public List<JOGLResource>	objects	= new ArrayList<JOGLResource>( );
 	
 	public JOGLGroup( )
 	{
@@ -23,7 +23,7 @@ public class JOGLGroup implements JOGLObject
 	@Override
 	public void init( GL2ES2 gl )
 	{
-		for( JOGLObject object : objects )
+		for( JOGLResource object : objects )
 		{
 			object.init( gl );
 		}
@@ -32,16 +32,19 @@ public class JOGLGroup implements JOGLObject
 	@Override
 	public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
 	{
-		for( JOGLObject object : objects )
+		for( JOGLResource object : objects )
 		{
-			object.draw( gl , m , n , v , p );
+			if( object instanceof JOGLObject )
+			{
+				( ( JOGLObject ) object ).draw( gl , m , n , v , p );
+			}
 		}
 	}
 	
 	@Override
 	public void destroy( GL2ES2 gl )
 	{
-		for( JOGLObject object : objects )
+		for( JOGLResource object : objects )
 		{
 			object.destroy( gl );
 		}

@@ -49,7 +49,9 @@ import org.andork.event.Binder.BindingAdapter;
 import org.andork.frf.SettingsDrawer.CameraView;
 import org.andork.frf.SettingsDrawer.FilterType;
 import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
+import org.andork.frf.model.MedianTiltAxisInferrer;
 import org.andork.frf.model.Survey3dModel;
+import org.andork.frf.model.WeightedAverageTiltAxisInferrer;
 import org.andork.frf.model.Survey3dModel.SelectionEditor;
 import org.andork.frf.model.Survey3dModel.Shot;
 import org.andork.frf.model.Survey3dModel.ShotPickContext;
@@ -601,6 +603,34 @@ public class MapsView extends BasicJOGLSetup
 				
 				cameraAnimationQueue.clear( );
 				cameraAnimationQueue.add( new SpringOrbit( MapsView.this , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
+			}
+		} );
+		
+		settingsDrawer.getInferDepthAxisTiltButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				if( model3d == null )
+				{
+					return;
+				}
+				model3d.setDepthAxis( new WeightedAverageTiltAxisInferrer( ).inferTiltAxis( model3d.getOriginalShots( ) ) );
+				canvas.display( );
+			}
+		} );
+		
+		settingsDrawer.getResetDepthAxisTiltButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				if( model3d == null )
+				{
+					return;
+				}
+				model3d.setDepthAxis( new float[ ] { 0f , -1f , 0f } );
+				canvas.display( );
 			}
 		} );
 		

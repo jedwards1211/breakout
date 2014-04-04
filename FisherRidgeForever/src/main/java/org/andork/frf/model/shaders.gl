@@ -1,0 +1,71 @@
+uniform mat4 m;
+uniform mat4 p;
+uniform mat4 v;
+attribute vec3 a_pos;
+varying vec3 v_norm;
+attribute vec3 a_norm;
+uniform mat3 n;
+varying float v_axisParam;
+uniform vec3 u_axis;
+uniform vec3 u_origin;
+varying float v_dist;
+varying vec2 v_glow;
+attribute vec2 a_glow;
+attribute float a_highlightIndex;
+varying float v_highlightIndex;
+void main() 
+{
+  gl_Position = p * v * m * vec4(a_pos, 1.0);
+  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;
+  v_axisParam = dot(a_pos - u_origin, u_axis);
+  v_dist = -(v * m * vec4(a_pos, 1.0)).z;
+  v_glow = a_glow;
+  v_highlightIndex = a_highlightIndex;
+}
+
+// lighting
+varying vec3 v_norm;
+
+// depth coloration
+varying float v_axisParam;
+uniform float hiValue;
+uniform vec4 hiColor;
+uniform vec4 loColor;
+uniform float loValue;
+
+// distance coloration
+varying float v_dist;
+uniform float farDist;
+uniform float nearDist;
+
+// glow
+varying vec2 v_glow;
+
+// highlights
+uniform vec4 highlightColors[3];
+varying float v_highlightIndex;
+
+void main() 
+{
+  float temp;
+  vec4 indexedHighlight;
+
+  // depth coloration
+  gl_FragColor = mix(loColor, hiColor, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0));
+  
+  // distance coloration
+  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - nearDist) / (farDist - nearDist), 0.0, 1.0));
+  
+  //glow
+  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 0.0, 1.0), clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));
+
+  // lighting
+  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));
+  temp = 0.3 + temp * (1.0 - 0.3);
+  gl_FragColor = temp * gl_FragColor;
+  
+  // highlights
+  indexedHighlight = highlightColors[int(floor(v_highlightIndex + 0.5))];
+  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);
+}
+
