@@ -81,28 +81,33 @@ public class TaskList extends JPanel implements Scrollable
 	private class ModelChangeHandler extends HierarchicalBasicPropertyChangeAdapter
 	{
 		@Override
-		public void childrenChanged( Object source , ChangeType changeType , Object child )
+		public void childrenChanged( Object source , ChangeType changeType , Object ... children )
 		{
-			Task task = ( Task ) child;
-			if( changeType == ChangeType.CHILD_ADDED )
+			switch( changeType )
 			{
-				TaskPane taskPane = new TaskPane( task );
-				taskMap.put( task , taskPane );
-				add( taskPane );
-				revalidate( );
-			}
-			else if( changeType == ChangeType.CHILD_REMOVED )
-			{
-				TaskPane taskPane = taskMap.remove( task );
-				if( taskPane != null )
-				{
-					taskPane.setTask( null );
-					remove( taskPane );
-				}
-			}
-			else if( changeType == ChangeType.ALL_CHILDREN_CHANGED )
-			{
-				rebuild( );
+				case ALL_CHILDREN_CHANGED:
+					rebuild( );
+					break;
+				case CHILDREN_ADDED:
+					for( Task task : ( Task[ ] ) children )
+					{
+						TaskPane taskPane = new TaskPane( task );
+						taskMap.put( task , taskPane );
+						add( taskPane );
+					}
+					revalidate( );
+					break;
+				case CHILDREN_REMOVED:
+					for( Task task : ( Task[ ] ) children )
+					{
+						TaskPane taskPane = taskMap.remove( task );
+						if( taskPane != null )
+						{
+							taskPane.setTask( null );
+							remove( taskPane );
+						}
+					}
+					break;
 			}
 		}
 	}

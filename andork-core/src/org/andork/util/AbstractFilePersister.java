@@ -125,7 +125,7 @@ public abstract class AbstractFilePersister<M> implements HierarchicalBasicPrope
 	}
 	
 	@Override
-	public void childrenChanged( Object source , ChangeType changeType , Object child )
+	public void childrenChanged( Object source , ChangeType changeType , Object... children )
 	{
 		batcher.add( getRootModel( source ) );
 	}

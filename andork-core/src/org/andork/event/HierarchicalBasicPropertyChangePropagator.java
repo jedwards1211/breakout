@@ -20,7 +20,7 @@ public class HierarchicalBasicPropertyChangePropagator implements HierarchicalBa
 	}
 
 	@Override
-	public void childrenChanged(Object source, ChangeType changeType, Object child) {
-		parentChangeSupport.fireChildrenChanged(new SourcePath(parent, source), changeType, child);
+	public void childrenChanged(Object source, ChangeType changeType, Object... children) {
+		parentChangeSupport.fireChildrenChanged(new SourcePath(parent, source), changeType, children);
 	}
 }

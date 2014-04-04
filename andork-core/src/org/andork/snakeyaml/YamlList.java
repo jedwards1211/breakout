@@ -43,4 +43,26 @@ public abstract class YamlList<E> extends YamlCollection<E>
 		}
 		return oldValue;
 	}
+	
+	public void add( int index , E element )
+	{
+		( ( List<E> ) collection ).add( index , element );
+		if( element instanceof YamlElement )
+		{
+			( ( YamlElement ) element ).changeSupport( ).addPropertyChangeListener( propagator );
+		}
+		changeSupport.fireChildAdded( this , element );
+	}
+	
+	public E remove( int index )
+	{
+		E removed = ( ( List<E> ) collection ).remove( index );
+		if( removed instanceof YamlElement )
+		{
+			( ( YamlElement ) removed ).changeSupport( ).removePropertyChangeListener( propagator );
+		}
+		changeSupport.fireChildRemoved( this , removed );
+		return removed;
+	}
+	
 }

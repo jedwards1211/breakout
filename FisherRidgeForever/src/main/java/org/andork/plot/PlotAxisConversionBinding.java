@@ -66,7 +66,7 @@ public class PlotAxisConversionBinding extends Binding implements HierarchicalBa
 	}
 	
 	@Override
-	public void childrenChanged( Object source , ChangeType changeType , Object child )
+	public void childrenChanged( Object source , ChangeType changeType , Object... children )
 	{
 	}
 }

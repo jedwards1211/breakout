@@ -4,18 +4,18 @@ import org.andork.event.HierarchicalBasicPropertyChangeListener.ChangeType;
 
 @SuppressWarnings("serial")
 public class HierarchicalBasicPropertyChangeSupport extends BasicPropertyChangeSupport {
-	public void fireChildAdded(Object parent, Object addedChild) {
+	public void fireChildAdded(Object parent, Object... addedChildren) {
 		for (BasicPropertyChangeListener listener : listeners) {
 			if (listener instanceof HierarchicalBasicPropertyChangeListener) {
-				((HierarchicalBasicPropertyChangeListener) listener).childrenChanged(parent, ChangeType.CHILD_ADDED, addedChild);
+				((HierarchicalBasicPropertyChangeListener) listener).childrenChanged(parent, ChangeType.CHILDREN_ADDED, addedChildren);
 			}
 		}
 	}
 
-	public void fireChildRemoved(Object parent, Object removedChild) {
+	public void fireChildRemoved(Object parent, Object... removedChildren) {
 		for (BasicPropertyChangeListener listener : listeners) {
 			if (listener instanceof HierarchicalBasicPropertyChangeListener) {
-				((HierarchicalBasicPropertyChangeListener) listener).childrenChanged(parent, ChangeType.CHILD_REMOVED, removedChild);
+				((HierarchicalBasicPropertyChangeListener) listener).childrenChanged(parent, ChangeType.CHILDREN_REMOVED, removedChildren);
 			}
 		}
 	}
@@ -23,15 +23,15 @@ public class HierarchicalBasicPropertyChangeSupport extends BasicPropertyChangeS
 	public void fireChildrenChanged(Object parent) {
 		for (BasicPropertyChangeListener listener : listeners) {
 			if (listener instanceof HierarchicalBasicPropertyChangeListener) {
-				((HierarchicalBasicPropertyChangeListener) listener).childrenChanged(parent, ChangeType.ALL_CHILDREN_CHANGED, null);
+				((HierarchicalBasicPropertyChangeListener) listener).childrenChanged(parent, ChangeType.ALL_CHILDREN_CHANGED);
 			}
 		}
 	}
 
-	public void fireChildrenChanged(Object parent, ChangeType changeType, Object child) {
+	public void fireChildrenChanged(Object parent, ChangeType changeType, Object... children) {
 		for (BasicPropertyChangeListener listener : listeners) {
 			if (listener instanceof HierarchicalBasicPropertyChangeListener) {
-				((HierarchicalBasicPropertyChangeListener) listener).childrenChanged(parent, changeType, child);
+				((HierarchicalBasicPropertyChangeListener) listener).childrenChanged(parent, changeType, children);
 			}
 		}
 	}

@@ -341,7 +341,7 @@ public class Binder<M extends Model>
 		}
 		
 		@Override
-		public void childrenChanged( Object source , ChangeType changeType , Object child )
+		public void childrenChanged( Object source , ChangeType changeType , Object... children )
 		{
 		}
 	}
@@ -366,7 +366,7 @@ public class Binder<M extends Model>
 		}
 		
 		@Override
-		public void childrenChanged( Object source , ChangeType changeType , Object child )
+		public void childrenChanged( Object source , ChangeType changeType , Object... children )
 		{
 			
 		}

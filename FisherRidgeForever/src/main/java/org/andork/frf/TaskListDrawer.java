@@ -65,7 +65,7 @@ public class TaskListDrawer extends Drawer
 	private class SpinnerButtonController extends HierarchicalBasicPropertyChangeAdapter
 	{
 		@Override
-		public void childrenChanged( Object source , ChangeType changeType , Object child )
+		public void childrenChanged( Object source , ChangeType changeType , Object... children )
 		{
 			( ( SpinnerButtonUI ) pinButton( ).getUI( ) ).setSpinning( taskService.hasTasks( ) );
 		}

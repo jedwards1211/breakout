@@ -9,7 +9,7 @@ public class HierarchicalBasicPropertyChangeAdapter implements HierarchicalBasic
 	}
 	
 	@Override
-	public void childrenChanged( Object source , ChangeType changeType , Object child )
+	public void childrenChanged( Object source , ChangeType changeType , Object... children )
 	{
 		
 	}
