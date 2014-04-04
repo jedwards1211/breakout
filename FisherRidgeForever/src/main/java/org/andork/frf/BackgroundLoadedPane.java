@@ -85,14 +85,7 @@ public abstract class BackgroundLoadedPane<C> extends JPanel
 				
 				int x = getWidth( ) / 2 - iw / 2;
 				int y = getHeight( ) / 2 - ih / 2;
-				Graphics2D g2 = ( Graphics2D ) g;
-//				Object prevInterp = g2.getRenderingHint( RenderingHints.KEY_INTERPOLATION );
-//				g2.setRenderingHint( RenderingHints.KEY_INTERPOLATION , RenderingHints.VALUE_INTERPOLATION_BICUBIC );
 				g.drawImage( image , x , y , iw , ih , null );
-//				if( prevInterp != null )
-//				{
-//					g2.setRenderingHint( RenderingHints.KEY_INTERPOLATION , prevInterp );
-//				}
 			}
 		};
 		JLabel loadingLabel = new JLabel( message );

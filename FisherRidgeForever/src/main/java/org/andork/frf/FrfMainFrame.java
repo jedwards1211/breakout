@@ -25,6 +25,16 @@ public class FrfMainFrame extends JFrame
 		setLocationRelativeTo( null );
 	}
 	
+	public FrfMainFrame( MapsView mapsView )
+	{
+		super( "Fisher Ridge Forever" );
+		getContentPane( ).add( mapsView.getMainPanel( ) , BorderLayout.CENTER );
+		Dimension screenSize = Toolkit.getDefaultToolkit( ).getScreenSize( );
+		setSize( screenSize.width * 2 / 3 , screenSize.height * 2 / 3 );
+		setDefaultCloseOperation( EXIT_ON_CLOSE );
+		setLocationRelativeTo( null );
+	}
+	
 	public static void main( String[ ] args )
 	{
 		new DoSwing( )
