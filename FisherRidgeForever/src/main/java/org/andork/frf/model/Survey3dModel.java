@@ -1,9 +1,15 @@
 package org.andork.frf.model;
 
-import static javax.media.opengl.GL2ES2.*;
+import static javax.media.opengl.GL.GL_CLAMP_TO_EDGE;
+import static javax.media.opengl.GL.GL_LINEAR;
+import static javax.media.opengl.GL.GL_RGBA;
 import static javax.media.opengl.GL.GL_TEXTURE0;
 import static javax.media.opengl.GL.GL_TEXTURE_2D;
-import static javax.media.opengl.GL.GL_UNSIGNED_INT;
+import static javax.media.opengl.GL.GL_TEXTURE_MAG_FILTER;
+import static javax.media.opengl.GL.GL_TEXTURE_MIN_FILTER;
+import static javax.media.opengl.GL.GL_TEXTURE_WRAP_S;
+import static javax.media.opengl.GL.GL_TEXTURE_WRAP_T;
+import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
 import static org.andork.math3d.Vecmath.setf;
 import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
@@ -16,6 +22,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.channels.CancelledKeyException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 
 import org.andork.frf.PickResult;
@@ -63,6 +69,7 @@ import org.andork.spatial.RfStarTree;
 import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
+import org.andork.swing.async.Task;
 
 import com.andork.plot.LinearAxisConversion;
 
@@ -904,27 +911,51 @@ public class Survey3dModel
 		}
 	}
 	
-	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , int segmentLevel )
+	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , int segmentLevel , Task task )
 	{
 		List<Shot> shots = new ArrayList<Shot>( );
 		for( int i = 0 ; i < originalShots.size( ) ; i++ )
 		{
 			shots.add( new Shot( i ) );
 		}
+		if( task != null && task.isCanceling( ) )
+		{
+			return null;
+		}
 		
-		ByteBuffer geomBuffer = createInitialGeometry( originalShots );
+		ByteBuffer geomBuffer = createInitialGeometry( originalShots , task );
+		if( task != null && task.isCanceling( ) )
+		{
+			return null;
+		}
 		
-		RfStarTree<Shot> tree = createTree( shots , geomBuffer , M , m , p );
+		RfStarTree<Shot> tree = createTree( shots , geomBuffer , M , m , p , task );
+		if( task != null && task.isCanceling( ) )
+		{
+			return null;
+		}
 		
-		Set<Segment> segments = createSegments( tree , segmentLevel );
+		Set<Segment> segments = createSegments( tree , segmentLevel , task );
+		if( task != null && task.isCanceling( ) )
+		{
+			return null;
+		}
 		
 		for( Segment segment : segments )
 		{
 			segment.populateData( geomBuffer );
 			segment.renderData( );
+			if( task != null && task.isCanceling( ) )
+			{
+				return null;
+			}
 		}
 		
 		Survey3dModel model = new Survey3dModel( originalShots , shots , tree , segments );
+		if( task != null && task.isCanceling( ) )
+		{
+			return null;
+		}
 		
 		return model;
 	}
@@ -974,7 +1005,7 @@ public class Survey3dModel
 		return buffer;
 	}
 	
-	private static Set<Segment> createSegments( RfStarTree<Shot> tree , int segmentLevel )
+	private static Set<Segment> createSegments( RfStarTree<Shot> tree , int segmentLevel , Task task )
 	{
 		Set<Segment> result = new HashSet<Segment>( );
 		
@@ -1026,7 +1057,7 @@ public class Survey3dModel
 		}
 	}
 	
-	private static RfStarTree<Shot> createTree( List<Shot> shots , ByteBuffer geomBuffer , int M , int m , int p )
+	private static RfStarTree<Shot> createTree( List<Shot> shots , ByteBuffer geomBuffer , int M , int m , int p , Task task )
 	{
 		RfStarTree<Shot> tree = new RfStarTree<Shot>( 3 , M , m , p );
 		
@@ -1056,12 +1087,17 @@ public class Survey3dModel
 			RfStarTree.Leaf<Shot> leaf = tree.createLeaf( mbr , shots.get( s ) );
 			
 			tree.insert( leaf );
+			
+			if( ( s % 100 ) == 0 && task != null && task.isCanceling( ) )
+			{
+				return null;
+			}
 		}
 		
 		return tree;
 	}
 	
-	private static ByteBuffer createInitialGeometry( List<SurveyShot> originalShots )
+	private static ByteBuffer createInitialGeometry( List<SurveyShot> originalShots , Task task )
 	{
 		final double[ ] fromLoc = new double[ 3 ];
 		final double[ ] toLoc = new double[ 3 ];
@@ -1072,6 +1108,7 @@ public class Survey3dModel
 		
 		BufferHelper geomHelper = new BufferHelper( );
 		
+		int count = 0;
 		for( SurveyShot shot : originalShots )
 		{
 			fromLoc[ 0 ] = shot.from.position[ 0 ];
@@ -1183,6 +1220,11 @@ public class Survey3dModel
 				geomHelper.putAsFloats( 0 , 1 , 0 );
 				geomHelper.putAsFloats( shot.to.position );
 				geomHelper.putAsFloats( 0 , -1 , 0 );
+			}
+			
+			if( ( count++ % 100 ) == 0 && task != null && task.isCanceling( ) )
+			{
+				return null;
 			}
 		}
 		

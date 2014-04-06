@@ -133,7 +133,7 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 		
 		for( Segment segment : segments )
 		{
-			if( !foundFrom && from != null && segment.include( row.get( Row.from ) ) )
+			if( !foundFrom && from != null && segment.include( from ) )
 			{
 				foundFrom = true;
 				if( foundTo )
@@ -141,7 +141,7 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 					return true;
 				}
 			}
-			if( !foundTo && to != null && segment.include( row.get( Row.to ) ) )
+			if( !foundTo && to != null && segment.include( to ) )
 			{
 				foundTo = true;
 				if( foundFrom )

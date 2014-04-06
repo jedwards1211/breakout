@@ -2,7 +2,7 @@ settingsDrawerModel:
   cameraView: PERSPECTIVE
   mouseSensitivity: 20
   distRange:
-    scale: 0.01
+    scale: 0.002824858757062145
     offset: 0.0
   paramRange:
     scale: 1.550880153075795
@@ -12,3 +12,4 @@ settingsDrawerModel:
     offset: 81.83168316831683
   filterType: ALPHA_DESIGNATION
 surveyDrawerPinned: false
+taskListDrawerPinned: false

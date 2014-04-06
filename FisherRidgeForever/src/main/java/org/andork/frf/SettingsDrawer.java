@@ -40,7 +40,6 @@ import com.andork.plot.PlotAxisController;
 public class SettingsDrawer extends Drawer
 {
 	
-	JButton						updateViewButton;
 	ViewButtonsPanel			viewButtonsPanel;
 	JSlider						mouseSensitivitySlider;
 	PlotAxis					distColorationAxis;
@@ -85,8 +84,6 @@ public class SettingsDrawer extends Drawer
 	
 	private void createComponents( )
 	{
-		updateViewButton = new JButton( "Update View" );
-		
 		viewButtonsPanel = new ViewButtonsPanel( );
 		
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
@@ -143,8 +140,7 @@ public class SettingsDrawer extends Drawer
 	{
 		GridBagWizard w = GridBagWizard.create( this );
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
-		w.put( updateViewButton ).xy( 0 , 0 ).fillx( 1.0 ).insets( 3 , 3 , 3 , 3 );
-		w.put( viewButtonsPanel ).belowLast( ).insets( 23 , 3 , 3 , 3 );
+		w.put( viewButtonsPanel ).xy( 0 , 0 ).belowLast( );
 		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
 		w.put( fitViewToEverythingButton ).belowLast( ).fillx( 1.0 );
 		w.put( orbitToPlanButton ).belowLast( ).fillx( 1.0 );
@@ -195,11 +191,6 @@ public class SettingsDrawer extends Drawer
 		binder.bind( new PlotAxisConversionBinding( Model.paramRange , paramColorationAxis ) );
 		binder.bind( new PlotAxisConversionBinding( Model.highlightRange , highlightDistAxis ) );
 		bind( binder , filterTypeSelector , Model.filterType );
-	}
-	
-	public JButton updateViewButton( )
-	{
-		return updateViewButton;
 	}
 	
 	public void setModel( YamlObject<Model> model )

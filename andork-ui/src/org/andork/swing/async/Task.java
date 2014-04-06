@@ -56,7 +56,7 @@ public abstract class Task implements HasChangeSupport
 			@Override
 			public void run( )
 			{
-				propertyChangeSupport.firePropertyChange( this , property , oldValue , newValue );
+				propertyChangeSupport.firePropertyChange( Task.this , property , oldValue , newValue );
 			}
 		} );
 	}
@@ -77,6 +77,11 @@ public abstract class Task implements HasChangeSupport
 	public final boolean isCanceled( )
 	{
 		return getState( ) == State.CANCELED;
+	}
+	
+	public final boolean isCanceling( )
+	{
+		return getState( ) == State.CANCELING;
 	}
 	
 	public String getStatus( )
@@ -223,7 +228,7 @@ public abstract class Task implements HasChangeSupport
 		{
 			synchronized( lock )
 			{
-				if( e instanceof InterruptedException && state == State.CANCELING )
+				if( state == State.CANCELING )
 				{
 					setCanceledOrFinished( );
 				}
@@ -239,17 +244,25 @@ public abstract class Task implements HasChangeSupport
 	
 	public final void cancel( )
 	{
+		if( !isCancelable( ) )
+		{
+			throw new UnsupportedOperationException( "task is not cancelable" );
+		}
 		State oldState;
+		State newState;
 		TaskService service;
 		synchronized( lock )
 		{
-			checkState( State.WAITING , State.RUNNING , State.CANCELING );
+			if( state == State.CANCELED || state == State.CANCELING || state == State.FINISHED || state == State.FAILED )
+			{
+				return;
+			}
 			oldState = state;
-			state = State.CANCELING;
+			newState = state = State.CANCELING;
 			service = this.service;
 		}
 		service.cancel( this );
-		firePropertyChange( Property.STATE , oldState , State.CANCELING );
+		firePropertyChange( Property.STATE , oldState , newState );
 	}
 	
 	public final void reset( )
@@ -270,7 +283,7 @@ public abstract class Task implements HasChangeSupport
 	{
 		if( state != required )
 		{
-			throw new IllegalStateException( "Operation not allowed unless state is " + required );
+			throw new IllegalStateException( "Operation not allowed unless state is " + required + "; state is currently " + state );
 		}
 	}
 	
@@ -278,7 +291,7 @@ public abstract class Task implements HasChangeSupport
 	{
 		if( ArrayUtils.indexOf( required , state ) < 0 )
 		{
-			throw new IllegalStateException( "Operation not allowed unless state is " + ArrayUtils.cat( required , " or " ) );
+			throw new IllegalStateException( "Operation not allowed unless state is " + ArrayUtils.cat( required , " or " ) + "; state is currently " + state );
 		}
 	}
 	

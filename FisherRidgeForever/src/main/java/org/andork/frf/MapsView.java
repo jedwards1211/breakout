@@ -18,6 +18,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +35,8 @@ import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 
@@ -84,6 +87,7 @@ import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Task;
 import org.andork.swing.async.TaskService;
+import org.andork.swing.async.TaskServiceBatcher;
 import org.andork.swing.async.TaskServiceFilePersister;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.LayeredBorder;
@@ -339,75 +343,7 @@ public class MapsView extends BasicJOGLSetup
 		settingsDrawer = new SettingsDrawer( binder.subBinder( Model.settingsDrawerModel ) );
 		settingsDrawer.addTo( layeredPane , 1 );
 		
-		settingsDrawer.updateViewButton( ).addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				Task task = new Task( "Updating view: parsing data..." )
-				{
-					@Override
-					protected void execute( )
-					{
-						List<SurveyShot> shots = new DoSwingR2<List<SurveyShot>>( )
-						{
-							@Override
-							protected List<SurveyShot> doRun( )
-							{
-								return surveyDrawer.table( ).createShots( );
-							}
-						}.result( );
-						
-						updateModel( shots , this );
-					}
-				};
-				
-				taskService.submit( task );
-			}
-			
-			public void updateModel( List<SurveyShot> shots , Task task )
-			{
-				task.setStatus( "Updating view..." );
-				
-				new DoSwing( )
-				{
-					@Override
-					public void run( )
-					{
-						if( model3d != null )
-						{
-							scene.remove( model3d.getRootGroup( ) );
-							scene.destroyLater( model3d.getRootGroup( ) );
-						}
-					}
-				};
-				
-				task.setStatus( "Updating view: constructing new model..." );
-				
-				final Survey3dModel model = Survey3dModel.create( shots , 10 , 3 , 3 , 3 );
-				
-				task.setStatus( "Updating view: installing new model..." );
-				
-				new DoSwing( )
-				{
-					@Override
-					public void run( )
-					{
-						MapsView.this.model3d = model;
-						scene.add( model.getRootGroup( ) );
-						scene.initLater( model.getRootGroup( ) );
-						
-						binder.modelToView( );
-						
-						float[ ] center = new float[ 3 ];
-						Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
-						orbiter.setCenter( center );
-						
-						canvas.repaint( );
-					}
-				};
-			}
-		} );
+		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableChangeHandler( taskService ) );
 		
 		layeredPane.add( plotPanel );
 		surveyDrawer.addTo( layeredPane , 5 );
@@ -1240,6 +1176,95 @@ public class MapsView extends BasicJOGLSetup
 				default:
 					return null;
 			}
+		}
+	}
+	
+	class TableChangeHandler extends TaskServiceBatcher<TableModelEvent> implements TableModelListener
+	{
+		public TableChangeHandler( TaskService taskService )
+		{
+			super( taskService , true );
+		}
+		
+		@Override
+		public void tableChanged( TableModelEvent e )
+		{
+			add( e );
+		}
+		
+		@Override
+		public BatcherTask<TableModelEvent> createTask( final LinkedList<TableModelEvent> batch )
+		{
+			BatcherTask<TableModelEvent> task = new BatcherTask<TableModelEvent>( "Updating view: parsing data..." )
+			{
+				@Override
+				protected void execute( )
+				{
+					List<SurveyShot> shots = new DoSwingR2<List<SurveyShot>>( )
+					{
+						@Override
+						protected List<SurveyShot> doRun( )
+						{
+							return surveyDrawer.table( ).createShots( );
+						}
+					}.result( );
+					
+					updateModel( shots );
+				}
+				
+				public boolean isCancelable( )
+				{
+					return true;
+				}
+				
+				public void updateModel( List<SurveyShot> shots )
+				{
+					setStatus( "Updating view..." );
+					
+					new DoSwing( )
+					{
+						@Override
+						public void run( )
+						{
+							if( model3d != null )
+							{
+								scene.remove( model3d.getRootGroup( ) );
+								scene.destroyLater( model3d.getRootGroup( ) );
+							}
+						}
+					};
+					
+					setStatus( "Updating view: constructing new model..." );
+					
+					final Survey3dModel model = Survey3dModel.create( shots , 10 , 3 , 3 , 3 , this );
+					if( isCanceling( ) )
+					{
+						return;
+					}
+					
+					setStatus( "Updating view: installing new model..." );
+					
+					new DoSwing( )
+					{
+						@Override
+						public void run( )
+						{
+							MapsView.this.model3d = model;
+							scene.add( model.getRootGroup( ) );
+							scene.initLater( model.getRootGroup( ) );
+							
+							binder.modelToView( );
+							
+							float[ ] center = new float[ 3 ];
+							Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
+							orbiter.setCenter( center );
+							
+							canvas.repaint( );
+						}
+					};
+				}
+			};
+			return task;
 		}
 	}
 }
