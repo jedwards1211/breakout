@@ -5,9 +5,10 @@ settingsDrawerModel:
     scale: 0.01
     offset: 0.0
   paramRange:
-    scale: 0.39211841976276823
-    offset: 85.31424999999996
+    scale: 1.550880153075795
+    offset: 122.04308762390355
   highlightRange:
     scale: 0.20199999999999996
     offset: 81.83168316831683
   filterType: ALPHA_DESIGNATION
+surveyDrawerPinned: false

@@ -15,6 +15,7 @@ import javax.swing.TransferHandler.TransferSupport;
 
 import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.swing.AnnotatingRowSorter;
+import org.andork.swing.AnnotatingRowSorter.ModelCopier;
 
 public class SurveyTableTransferHandler extends TransferHandler
 {
@@ -52,25 +53,47 @@ public class SurveyTableTransferHandler extends TransferHandler
 		SurveyTable table = ( SurveyTable ) support.getComponent( );
 		SurveyTableModel model = table.getModel( );
 		
-		SurveyTableModel temp = new SurveyTableModel( );
+		SurveyTableModel newModel = new SurveyTableModel( );
+		for( int row = 0 ; row < model.getRowCount( ) ; row++ )
+		{
+			for( int col = 0 ; col < model.getColumnCount( ) - 1 ; col++ ) // exclude shot column
+			{
+				newModel.setValueAt( model.getValueAt( row , col ) , row , col );
+			}
+		}
 		
 		JTable.DropLocation dropLocation = ( JTable.DropLocation ) support.getDropLocation( );
 		
 		String[ ] lines = text.split( "\r|\n|\r\n|\n\r" );
-		int row = 0;
+		int viewRow = dropLocation.getRow( );
 		for( String line : lines )
 		{
-			int column = dropLocation.getColumn( );
-			for( String cell : line.split( "\\t" ) )
+			int modelRow;
+			if( viewRow >= table.getRowCount( ) )
 			{
-				temp.setValueAt( cell , row , column , false );
-				column++ ;
+				modelRow = newModel.getRowCount( ) - 1;
+			}
+			else
+			{
+				modelRow = table.convertRowIndexToModel( viewRow );
 			}
 			
-			row++ ;
+			int viewColumn = dropLocation.getColumn( );
+			for( String cell : line.split( "\\t" ) )
+			{
+				if( viewColumn >= table.getColumnCount( ) )
+				{
+					break;
+				}
+				int modelColumn = table.convertColumnIndexToModel( viewColumn );
+				newModel.setValueAt( cell , modelRow , modelColumn );
+				viewColumn++ ;
+			}
+			
+			viewRow++ ;
 		}
 		
-		model.copyRowsFrom( temp , 0 , temp.getRowCount( ) - 1 , dropLocation.getRow( ) );
+		model.copyRowsFrom( newModel , 0 , newModel.getRowCount( ) - 1 , 0 );
 		
 		return true;
 	}
