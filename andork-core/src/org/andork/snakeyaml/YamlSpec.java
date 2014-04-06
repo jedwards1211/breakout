@@ -1,10 +1,12 @@
 package org.andork.snakeyaml;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -16,6 +18,7 @@ import org.andork.func.Bimapper;
 import org.andork.func.CompoundBimapper;
 import org.andork.func.FileStringBimapper;
 import org.andork.func.StringObjectBimapper;
+import org.andork.reflect.ReflectionUtils;
 
 /**
  * Base class for {@link YamlObject} format specifications. To create a specification for a new type, simply create a subclass that calls one of the
@@ -25,21 +28,62 @@ import org.andork.func.StringObjectBimapper;
  */
 public abstract class YamlSpec<S extends YamlSpec<S>>
 {
-	private final Map<String, Attribute<?>>	attributes	= new LinkedHashMap<String, Attribute<?>>( );
+	final Attribute<?>[ ]			attributes;
+	final Map<String, Attribute<?>>	attributesByName	= new LinkedHashMap<String, Attribute<?>>( );
+	
+	protected YamlSpec( )
+	{
+		for( Field field : ReflectionUtils.getStaticFieldList( getClass( ) , true ) )
+		{
+			if( field.getType( ) == Attribute.class )
+			{
+				try
+				{
+					Attribute<?> attr = ( Attribute<?> ) field.get( null );
+					attributesByName.put( attr.getName( ) , attr );
+				}
+				catch( Exception ex )
+				{
+					// Shouldn't happen...
+				}
+			}
+		}
+		this.attributes = attributesByName.values( ).toArray( new Attribute[ attributesByName.size( ) ] );
+		
+		for( int i = 0 ; i < attributes.length ; i++ )
+		{
+			if( attributes[ i ].index < 0 )
+			{
+				attributes[ i ].index = i;
+			}
+			else if( attributes[ i ].index != i )
+			{
+				throw new IllegalStateException( "attribute order conflicts with another spec" );
+			}
+		}
+		
+	}
 	
 	/**
-	 * Creates a Spec with the attributes.
-	 * 
-	 * @param attributes
-	 *            the attributes.
+	 * Creates a Spec with all attributes defined in static fields in the implementing class and its superclasses.
 	 */
 	protected YamlSpec( Attribute<?> ... attributes )
 	{
-		if( attributes != null )
+		for( Attribute<?> attr : attributes )
 		{
-			for( Attribute<?> Attribute : attributes )
+			attributesByName.put( attr.getName( ) , attr );
+		}
+		this.attributes = Arrays.copyOf( attributes , attributes.length );
+		
+		for( int i = 0 ; i < attributes.length ; i++ )
+		{
+			if( attributes[ i ].index < 0 )
 			{
-				this.attributes.put( Attribute.getName( ) , Attribute );
+				attributes[ i ].index = i;
+			}
+			else if( attributes[ i ].index != i )
+			{
+				throw new IllegalStateException( "attribute order conflicts with another spec" );
 			}
 		}
 	}
@@ -66,6 +110,43 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	}
 	
 	/**
+	 * Gets the {@link Attribute} with the given name.
+	 * 
+	 * @param name
+	 *            the name of the attribute to get.
+	 * @return the {@code Attribute} with the given name, or {@code null} if none is part of this spec.
+	 */
+	public Attribute<?> getAttribute( String name )
+	{
+		return attributesByName.get( name );
+	}
+	
+	/**
+	 * Gets all {@link Attribute}s in this spec.
+	 * 
+	 * @return an unmodifiable {@link Collection} of {@code Attribute}s.
+	 */
+	public List<Attribute<?>> getAttributes( )
+	{
+		return Collections.unmodifiableList( Arrays.asList( attributes ) );
+	}
+	
+	public Attribute<?>[ ] getAttributeArray( )
+	{
+		return Arrays.copyOf( attributes , attributes.length );
+	}
+	
+	public int getAttributeCount( )
+	{
+		return attributes.length;
+	}
+	
+	public Attribute<?> attributeAt( int index )
+	{
+		return attributes[ index ];
+	}
+	
+	/**
 	 * Defines an attribute that can be parsed by {@link YamlObject#parseXml(String)}.
 	 * 
 	 * @author james.a.edwards
@@ -75,8 +156,15 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	 */
 	public static class Attribute<T>
 	{
-		private final String								name;
-		private final Bimapper<? super T, ? extends Object>	format;
+		final Class<? super T>						valueClass;
+		int											index	= -1;
+		final String								name;
+		final Bimapper<? super T, ? extends Object>	format;
+		
+		public static <T> Attribute<T> newInstance( Class<? super T> valueClass , String name , Bimapper<? super T, ? extends Object> format )
+		{
+			return new Attribute<T>( valueClass , name , format );
+		}
 		
 		/**
 		 * Creates an attribute with the given name and format.
@@ -86,11 +174,22 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		 * @param format
 		 *            the format for converting from the attribute value to and from a {@code String} for XML.
 		 */
-		public Attribute( String name , Bimapper<? super T, ? extends Object> format )
+		public Attribute( Class<? super T> valueClass , String name , Bimapper<? super T, ? extends Object> format )
 		{
 			super( );
+			this.valueClass = valueClass;
 			this.name = name;
 			this.format = format;
+		}
+		
+		public Class<? super T> getValueClass( )
+		{
+			return valueClass;
+		}
+		
+		public int getIndex( )
+		{
+			return index;
 		}
 		
 		/**
@@ -277,7 +376,23 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 				throw new RuntimeException( e );
 			}
 		}
+	}
+	
+	public static class NullBimapper implements Bimapper<Object, Object>
+	{
+		public static final NullBimapper	instance	= new NullBimapper( );
 		
+		@Override
+		public Object map( Object o )
+		{
+			return null;
+		}
+		
+		@Override
+		public Object unmap( Object o )
+		{
+			return null;
+		}
 	}
 	
 	public static class SpecObjectBimapper<S extends YamlSpec<S>> implements Bimapper<YamlObject<S>, Object>
@@ -352,80 +467,58 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		}
 	}
 	
-	/**
-	 * Gets the {@link Attribute} with the given name.
-	 * 
-	 * @param name
-	 *            the name of the attribute to get.
-	 * @return the {@code Attribute} with the given name, or {@code null} if none is part of this spec.
-	 */
-	public Attribute<?> getAttribute( String name )
-	{
-		return attributes.get( name );
-	}
-	
-	/**
-	 * Gets all {@link Attribute}s in this spec.
-	 * 
-	 * @return an unmodifiable {@link Collection} of {@code Attribute}s.
-	 */
-	public Collection<Attribute<?>> getAttributes( )
-	{
-		return Collections.unmodifiableCollection( attributes.values( ) );
-	}
-	
 	public static Attribute<String> stringAttribute( String name )
 	{
-		return new Attribute<String>( name , new StringBimapper( ) );
+		return new Attribute<String>( String.class , name , new StringBimapper( ) );
 	}
 	
 	public static <E extends Enum<E>> Attribute<E> enumAttribute( String name , Class<E> cls )
 	{
-		return new Attribute<E>( name , EnumBimapper.newInstance( cls ) );
+		return new Attribute<E>( cls , name , EnumBimapper.newInstance( cls ) );
 	}
 	
 	public static Attribute<Boolean> booleanAttribute( String name )
 	{
-		return new Attribute<Boolean>( name , new BooleanBimapper( ) );
+		return new Attribute<Boolean>( Boolean.class , name , new BooleanBimapper( ) );
 	}
 	
 	public static Attribute<Integer> integerAttribute( String name )
 	{
-		return new Attribute<Integer>( name , new IntegerBimapper( ) );
+		return new Attribute<Integer>( Integer.class , name , new IntegerBimapper( ) );
 	}
 	
 	public static Attribute<Long> longAttribute( String name )
 	{
-		return new Attribute<Long>( name , new LongBimapper( ) );
+		return new Attribute<Long>( Long.class , name , new LongBimapper( ) );
 	}
 	
 	public static Attribute<Float> floatAttribute( String name )
 	{
-		return new Attribute<Float>( name , new FloatBimapper( ) );
+		return new Attribute<Float>( Float.class , name , new FloatBimapper( ) );
 	}
 	
 	public static Attribute<Double> doubleAttribute( String name )
 	{
-		return new Attribute<Double>( name , new DoubleBimapper( ) );
+		return new Attribute<Double>( Double.class , name , new DoubleBimapper( ) );
 	}
 	
 	public static Attribute<BigInteger> bigIntegerAttribute( String name )
 	{
-		return new Attribute<BigInteger>( name , new BigIntegerBimapper( ) );
+		return new Attribute<BigInteger>( BigInteger.class , name , new BigIntegerBimapper( ) );
 	}
 	
 	public static Attribute<BigDecimal> bigDecimalAttribute( String name )
 	{
-		return new Attribute<BigDecimal>( name , new BigDecimalBimapper( ) );
+		return new Attribute<BigDecimal>( BigDecimal.class , name , new BigDecimalBimapper( ) );
 	}
 	
 	public static <S extends YamlSpec<S>> Attribute<YamlObject<S>> yamlObjectAttribute( String name , S spec )
 	{
-		return new Attribute<YamlObject<S>>( name , SpecObjectBimapper.newInstance( spec ) );
+		return new Attribute<YamlObject<S>>( YamlObject.class , name , SpecObjectBimapper.newInstance( spec ) );
 	}
 	
 	public static <E> Attribute<YamlArrayList<E>> yamlArrayListAttribute( String name , Bimapper<? super E, Object> format )
 	{
-		return new Attribute<YamlArrayList<E>>( name , SpecArrayListBimapper.<E>newInstance( format ) );
+		return new Attribute<YamlArrayList<E>>( YamlArrayList.class , name , SpecArrayListBimapper.<E>newInstance( format ) );
 	}
 }

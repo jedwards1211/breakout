@@ -1,11 +1,5 @@
 package org.andork.frf;
 
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.UnsupportedFlavorException;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -13,18 +7,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.JTable;
 import javax.swing.RowFilter;
-import javax.swing.TransferHandler;
-import javax.swing.table.TableModel;
 
-import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
+import org.andork.frf.SurveyTableModel.Row;
 import org.andork.frf.model.SurveyShot;
 import org.andork.frf.model.SurveyStation;
-import org.andork.swing.AnnotatingRowSorter;
+import org.andork.snakeyaml.YamlObject;
 import org.andork.swing.table.AnnotatingJTable;
-import org.andork.swing.table.old.FilteringTableModel;
-import org.andork.swing.table.old.HighlightingTable;
 
 @SuppressWarnings( "serial" )
 public class SurveyTable extends AnnotatingJTable<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>
@@ -66,29 +55,31 @@ public class SurveyTable extends AnnotatingJTable<SurveyTableModel, RowFilter<Su
 		Map<String, SurveyStation> stations = new LinkedHashMap<String, SurveyStation>( );
 		List<SurveyShot> shots = new ArrayList<SurveyShot>( );
 		
-		TableModel model = getModel( );
+		SurveyTableModel model = getModel( );
 		
-		for( int row = 0 ; row < model.getRowCount( ) ; row++ )
+		for( int i = 0 ; i < model.getRowCount( ) ; i++ )
 		{
+			YamlObject<Row> row = model.getRow( i );
+			
 			try
 			{
-				Object fromName = getValueAt( row , FROM_COLUMN );
-				Object toName = getValueAt( row , TO_COLUMN );
-				Double dist = parse( getValueAt( row , DISTANCE_COLUMN ) );
-				Double fsAzm = parse( getValueAt( row , FS_AZM_COLUMN ) );
-				Double bsAzm = parse( getValueAt( row , BS_AZM_COLUMN ) );
-				Double fsInc = parse( getValueAt( row , FS_INC_COLUMN ) );
-				Double bsInc = parse( getValueAt( row , BS_INC_COLUMN ) );
+				Object fromName = row.get( Row.from );
+				Object toName = row.get( Row.to );
+				Double dist = parse( row.get( Row.distance ) );
+				Double fsAzm = parse( row.get( Row.fsAzm ) );
+				Double bsAzm = parse( row.get( Row.bsAzm ) );
+				Double fsInc = parse( row.get( Row.fsInc ) );
+				Double bsInc = parse( row.get( Row.bsInc ) );
 				
 				if( fromName == null || toName == null || dist == null || fsAzm == null || bsAzm == null || fsInc == null || bsInc == null )
 				{
 					continue;
 				}
 				
-				Double left = parse( getValueAt( row , LEFT_COLUMN ) );
-				Double right = parse( getValueAt( row , RIGHT_COLUMN ) );
-				Double up = parse( getValueAt( row , UP_COLUMN ) );
-				Double down = parse( getValueAt( row , DOWN_COLUMN ) );
+				Double left = parse( row.get( Row.left ) );
+				Double right = parse( row.get( Row.right ) );
+				Double up = parse( row.get( Row.up ) );
+				Double down = parse( row.get( Row.down ) );
 				
 				SurveyStation from = stations.get( fromName.toString( ) );
 				if( from == null )
@@ -132,7 +123,7 @@ public class SurveyTable extends AnnotatingJTable<SurveyTableModel, RowFilter<Su
 				from.frontsights.add( shot );
 				to.backsights.add( shot );
 				
-				model.setValueAt( shot , row , SHOT_COLUMN );
+				row.set( Row.shot , shot );
 				shots.add( shot );
 			}
 			catch( Exception ex )
@@ -140,6 +131,8 @@ public class SurveyTable extends AnnotatingJTable<SurveyTableModel, RowFilter<Su
 				continue;
 			}
 		}
+		
+		model.rebuildShotIndexToRowMap( );
 		
 		int numFixed;
 		do

@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import javax.swing.JTable;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableStringConverter;
@@ -293,7 +294,7 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 		}
 	}
 	
-	public static abstract class AbstractDefaultTableModelCopier<M extends DefaultTableModel> extends ModelCopier<M>
+	public static abstract class AbstractTableModelCopier<M extends AbstractTableModel> extends ModelCopier<M>
 	{
 		protected static Class<?>[ ] getColumnClasses( TableModel model )
 		{
@@ -325,7 +326,7 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 		}
 	}
 	
-	public static class DefaultTableModelCopier extends AbstractDefaultTableModelCopier<DefaultTableModel>
+	public static class DefaultTableModelCopier extends AbstractTableModelCopier<DefaultTableModel>
 	{
 		@Override
 		public DefaultTableModel createEmptyCopy( DefaultTableModel model )

@@ -1179,7 +1179,7 @@ public class MapsView extends BasicJOGLSetup
 		
 		private Model( )
 		{
-			super( settingsDrawerModel , settingsDrawerPinned , surveyDrawerPinned , surveyDrawerMaximized , miniSurveyDrawerPinned , taskListDrawerPinned );
+			super( );
 		}
 		
 		public static final Model	instance	= new Model( );

@@ -89,8 +89,9 @@ public class TaskList extends JPanel implements Scrollable
 					rebuild( );
 					break;
 				case CHILDREN_ADDED:
-					for( Task task : ( Task[ ] ) children )
+					for( Object o : children )
 					{
+						Task task = ( Task ) o;
 						TaskPane taskPane = new TaskPane( task );
 						taskMap.put( task , taskPane );
 						add( taskPane );
@@ -98,8 +99,9 @@ public class TaskList extends JPanel implements Scrollable
 					revalidate( );
 					break;
 				case CHILDREN_REMOVED:
-					for( Task task : ( Task[ ] ) children )
+					for( Object o : children )
 					{
+						Task task = ( Task ) o;
 						TaskPane taskPane = taskMap.remove( task );
 						if( taskPane != null )
 						{

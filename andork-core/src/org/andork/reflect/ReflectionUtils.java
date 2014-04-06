@@ -79,6 +79,37 @@ public class ReflectionUtils
 		return result;
 	}
 	
+	/**
+	 * Gets all static fields declared in the given class.
+	 * 
+	 * @param clazz
+	 *            the class to get static fields of.
+	 * @param includeSuperclasses
+	 *            whether to include static fields declared in superclasses. They will come before the {@code clazz}'s fields in the result list.
+	 * @return a {@link List} of {@link Field}s.
+	 */
+	public static List<Field> getStaticFieldList( Class<?> clazz , boolean includeSuperclasses )
+	{
+		List<Field> result = new ArrayList<Field>( );
+		addStaticFields( clazz , includeSuperclasses , result );
+		return result;
+	}
+	
+	private static void addStaticFields( Class<?> clazz , boolean includeSuperclasses , Collection<Field> out )
+	{
+		if( includeSuperclasses && clazz != Object.class )
+		{
+			addStaticFields( clazz.getSuperclass( ) , true , out );
+		}
+		for( Field field : clazz.getDeclaredFields( ) )
+		{
+			if( Modifier.isStatic( field.getModifiers( ) ) )
+			{
+				out.add( field );
+			}
+		}
+	}
+	
 	public static List<Method> getInstanceMethodList( Class<?> clazz )
 	{
 		List<Method> result = new ArrayList<Method>( );

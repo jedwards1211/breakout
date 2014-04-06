@@ -1,9 +1,9 @@
 package org.andork.snakeyaml;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.andork.func.Bimapper;
 import org.andork.model.Model;
 import org.andork.snakeyaml.YamlSpec.Attribute;
 import org.andork.util.Java7;
@@ -17,11 +17,12 @@ import org.andork.util.Java7;
  * 
  * @author james.a.edwards
  */
-@SuppressWarnings( "serial" )
 public final class YamlObject<S extends YamlSpec<S>> extends YamlElement implements Model
 {
-	private final S							spec;
-	private final Map<Attribute<?>, Object>	attributes	= new LinkedHashMap<Attribute<?>, Object>( );
+	private final S				spec;
+	private final Object[ ]		attributes;
+	
+	private static final Object	NOT_PRESENT	= new Object( );
 	
 	/**
 	 * Creates a {@code SpecObject} with the given spec.
@@ -32,6 +33,8 @@ public final class YamlObject<S extends YamlSpec<S>> extends YamlElement impleme
 	private YamlObject( S spec )
 	{
 		this.spec = spec;
+		this.attributes = new Object[ spec.getAttributeCount( ) ];
+		Arrays.fill( this.attributes , NOT_PRESENT );
 	}
 	
 	public static <S extends YamlSpec<S>> YamlObject<S> newInstance( S spec )
@@ -47,28 +50,52 @@ public final class YamlObject<S extends YamlSpec<S>> extends YamlElement impleme
 		return spec;
 	}
 	
+	private <T> void checkBelongs( Attribute<T> attribute )
+	{
+		if( spec.attributes[ attribute.index ] != attribute )
+		{
+			throw new IllegalArgumentException( "attribute does not belong to this spec" );
+		}
+	}
+	
+	public Object valueAt( int index )
+	{
+		return attributes[ index ] == NOT_PRESENT ? null : attributes[ index ];
+	}
+	
+	public void setValueAt( int index , Object value )
+	{
+		attributes[ index ] = value;
+	}
+	
 	/**
 	 * Gets the value of an attribute.<br>
 	 * <br>
 	 * To see the list of attributes this SpecObject has, use {@link YamlSpec#getAttributes() getSpec().getAttributes()}.
 	 * 
-	 * @param Attribute
+	 * @param attribute
 	 *            the attribute to get the value of.
 	 * @return the value of the attribute (may be {@code null}).
 	 */
-	public <T> T get( Attribute<T> Attribute )
+	public <T> T get( Attribute<T> attribute )
 	{
-		return ( T ) attributes.get( Attribute );
+		checkBelongs( attribute );
+		return attributes[ attribute.index ] == NOT_PRESENT ? null : ( T ) attributes[ attribute.index ];
 	}
 	
 	public <T> T set( Attribute<T> attribute , T newValue )
 	{
-		T oldValue = ( T ) attributes.get( attribute );
+		checkBelongs( attribute );
+		T oldValue = ( T ) attributes[ attribute.index ];
+		if( oldValue == NOT_PRESENT )
+		{
+			oldValue = null;
+		}
 		if( oldValue instanceof YamlElement )
 		{
 			( ( YamlElement ) oldValue ).changeSupport( ).removePropertyChangeListener( propagator );
 		}
-		attributes.put( attribute , newValue );
+		attributes[ attribute.index ] = newValue;
 		if( newValue instanceof YamlElement )
 		{
 			( ( YamlElement ) newValue ).changeSupport( ).addPropertyChangeListener( propagator );
@@ -82,30 +109,36 @@ public final class YamlObject<S extends YamlSpec<S>> extends YamlElement impleme
 	
 	public <T> T remove( Attribute<T> attribute )
 	{
-		T oldValue = ( T ) attributes.get( attribute );
-		if( attributes.containsKey( attribute ) )
+		checkBelongs( attribute );
+		Object oldValue = attributes[ attribute.index ];
+		if( oldValue == NOT_PRESENT )
 		{
-			if( oldValue instanceof YamlElement )
-			{
-				( ( YamlElement ) oldValue ).changeSupport( ).removePropertyChangeListener( propagator );
-			}
-			attributes.remove( attribute );
-			changeSupport.firePropertyChange( this , attribute , oldValue , null );
+			return null;
 		}
-		return oldValue;
+		if( oldValue instanceof YamlElement )
+		{
+			( ( YamlElement ) oldValue ).changeSupport( ).removePropertyChangeListener( propagator );
+		}
+		attributes[ attribute.index ] = NOT_PRESENT;
+		changeSupport.firePropertyChange( this , attribute , oldValue , null );
+		return ( T ) oldValue;
 	}
 	
 	public boolean has( Attribute<?> attribute )
 	{
-		return attributes.containsKey( attribute );
+		checkBelongs( attribute );
+		return attributes[ attribute.index ] != NOT_PRESENT;
 	}
 	
 	public Map<String, Object> toYaml( )
 	{
 		Map<String, Object> result = new LinkedHashMap<String, Object>( );
-		for( Map.Entry<Attribute<?>, Object> entry : attributes.entrySet( ) )
+		for( int i = 0 ; i < spec.getAttributeCount( ) ; i++ )
 		{
-			result.put( entry.getKey( ).getName( ) , ( ( Bimapper ) entry.getKey( ).getBimapper( ) ).map( entry.getValue( ) ) );
+			if( attributes[ i ] != NOT_PRESENT )
+			{
+				result.put( spec.attributeAt( i ).getName( ) , ((Attribute) spec.attributeAt( i )).format.map( attributes[ i ] ) );
+			}
 		}
 		return result;
 	}

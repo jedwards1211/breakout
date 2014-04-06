@@ -71,11 +71,10 @@ public class YamlTest
 		
 		private Conversion( )
 		{
-			super( a1 , a2 , b1 , b2 );
+			super( );
 		}
 		
 		public static final Conversion	instance	= new Conversion( );
-		
 	}
 	
 	public static class Settings extends YamlSpec<Settings>
@@ -84,7 +83,7 @@ public class YamlTest
 		
 		private Settings( )
 		{
-			super( distanceConversion );
+			super( );
 		}
 		
 		public static final Settings	instance	= new Settings( );
