@@ -480,13 +480,18 @@ public class EasyTableModel<T> extends AbstractTableModel
 		return getRowFormat( rowIndex ).isCellEditable( rows.get( rowIndex ) , columnIndex );
 	}
 	
-	@Override
-	public void setValueAt( Object aValue , int rowIndex , int columnIndex )
+	public void setValueAt( Object aValue , int rowIndex , int columnIndex , boolean fireEvent )
 	{
-		if( getRowFormat( rowIndex ).setValueAt( rows.get( rowIndex ) , aValue , columnIndex ) )
+		if( getRowFormat( rowIndex ).setValueAt( rows.get( rowIndex ) , aValue , columnIndex ) && fireEvent )
 		{
 			fireTableCellUpdated( rowIndex , columnIndex );
 		}
+	}
+	
+	@Override
+	public void setValueAt( Object aValue , int rowIndex , int columnIndex )
+	{
+		setValueAt( aValue , rowIndex , columnIndex , true );
 	}
 	
 	public T getRow( int index )
@@ -630,5 +635,26 @@ public class EasyTableModel<T> extends AbstractTableModel
 			}
 		}
 		return -1;
+	}
+	
+	public void copyRowsFrom( EasyTableModel<T> src , int srcStart , int srcEnd , int myStart )
+	{
+		int origRowCount = rows.size( );
+		int myEnd = myStart + srcEnd - srcStart;
+		for( int i = srcStart ; i <= srcEnd ; i++ )
+		{
+			T srcRow = src.getRow( i );
+			int destI = i + myStart - srcStart;
+			if( destI == rows.size( ) )
+			{
+				rows.add( null );
+			}
+			rows.set( destI , srcRow );
+		}
+		fireTableRowsUpdated( myStart , Math.min( origRowCount - 1 , myEnd ) );
+		if( myEnd >= origRowCount )
+		{
+			fireTableRowsInserted( origRowCount , myEnd );
+		}
 	}
 }

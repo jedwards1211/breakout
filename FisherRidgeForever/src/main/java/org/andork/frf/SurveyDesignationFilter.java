@@ -7,7 +7,8 @@ import java.util.regex.Pattern;
 
 import javax.swing.RowFilter;
 
-import org.andork.frf.model.SurveyShot;
+import org.andork.frf.SurveyTableModel.Row;
+import org.andork.snakeyaml.YamlObject;
 
 public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer>
 {
@@ -118,8 +119,8 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 	@Override
 	public boolean include( javax.swing.RowFilter.Entry<? extends SurveyTableModel, ? extends Integer> entry )
 	{
-		SurveyShot shot = entry.getModel( ).getShotAtRow( entry.getIdentifier( ) );
-		if( shot == null )
+		YamlObject<Row> row = entry.getModel( ).getRow( entry.getIdentifier( ) );
+		if( row == null )
 		{
 			return false;
 		}
@@ -127,9 +128,12 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 		boolean foundFrom = false;
 		boolean foundTo = false;
 		
+		String from = row.get( Row.from );
+		String to = row.get( Row.to );
+		
 		for( Segment segment : segments )
 		{
-			if( !foundFrom && segment.include( shot.from.name ) )
+			if( !foundFrom && from != null && segment.include( row.get( Row.from ) ) )
 			{
 				foundFrom = true;
 				if( foundTo )
@@ -137,7 +141,7 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 					return true;
 				}
 			}
-			if( !foundTo && segment.include( shot.to.name ) )
+			if( !foundTo && to != null && segment.include( row.get( Row.to ) ) )
 			{
 				foundTo = true;
 				if( foundFrom )

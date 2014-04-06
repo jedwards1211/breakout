@@ -50,38 +50,27 @@ public class SurveyTableTransferHandler extends TransferHandler
 		}
 		
 		SurveyTable table = ( SurveyTable ) support.getComponent( );
+		SurveyTableModel model = table.getModel( );
 		
-		// TableModel model = getModel( );
-		SurveyTableModelCopier copier = new SurveyTableModelCopier( );
-		SurveyTableModel oldModel = table.getModel( );
-		SurveyTableModel newModel = copier.createEmptyCopy( oldModel );
-		for( int row = 0 ; row < oldModel.getRowCount( ) ; row++ )
-		{
-			copier.copyRow( oldModel , row , newModel );
-		}
+		SurveyTableModel temp = new SurveyTableModel( );
 		
 		JTable.DropLocation dropLocation = ( JTable.DropLocation ) support.getDropLocation( );
 		
-		int row = dropLocation.getRow( );
-		for( String line : text.split( "\r|\n|\r\n|\n\r" ) )
+		String[ ] lines = text.split( "\r|\n|\r\n|\n\r" );
+		int row = 0;
+		for( String line : lines )
 		{
 			int column = dropLocation.getColumn( );
 			for( String cell : line.split( "\\t" ) )
 			{
-				newModel.setValueAt( cell , row , column );
+				temp.setValueAt( cell , row , column , false );
 				column++ ;
 			}
 			
 			row++ ;
 		}
 		
-		AnnotatingRowSorter<SurveyTableModel, Integer, RowFilter<SurveyTableModel, Integer>> sorter =
-				( AnnotatingRowSorter<SurveyTableModel, Integer, RowFilter<SurveyTableModel, Integer>> ) table.getRowSorter( );
-		
-		table.setRowSorter( null );
-		table.setModel( newModel );
-		sorter.setModel( newModel );
-		table.setRowSorter( sorter );
+		model.copyRowsFrom( temp , 0 , temp.getRowCount( ) - 1 , dropLocation.getRow( ) );
 		
 		return true;
 	}

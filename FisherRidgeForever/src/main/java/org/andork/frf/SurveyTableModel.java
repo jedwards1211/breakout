@@ -3,6 +3,7 @@ package org.andork.frf;
 import java.util.Map;
 
 import org.andork.collect.CollectionUtils;
+import org.andork.frf.SurveyTableModel.Row;
 import org.andork.frf.model.SurveyShot;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlSpec;
@@ -63,24 +64,24 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 	
 	public SurveyShot getShotAtRow( int row )
 	{
-		return ( SurveyShot ) getValueAt( row , SurveyTable.SHOT_COLUMN );
+		return getRow( row ).get( Row.shot );
 	}
 	
 	@Override
-	public void setValueAt( Object aValue , int row , int column )
+	public void setValueAt( Object aValue , int row , int column , boolean fireEvent )
 	{
 		Object prevValue = getValueAt( row , column );
 		if( aValue != null )
 		{
 			ensureNumRows( row + 2 );
 		}
-		super.setValueAt( aValue , row , column );
+		super.setValueAt( aValue , row , column , fireEvent );
 		if( aValue == null || "".equals( aValue ) )
 		{
 			trimEmptyRows( );
 		}
 		
-		if( column == SurveyTable.SHOT_COLUMN )
+		if( column == Row.shot.getIndex( ) )
 		{
 			SurveyShot shot = ( SurveyShot ) aValue;
 			if( prevValue != null )
@@ -130,6 +131,21 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		while( getRowCount( ) < numRows )
 		{
 			addRow( YamlObject.newInstance( Row.instance ) );
+		}
+	}
+	
+	@Override
+	public void copyRowsFrom( EasyTableModel<YamlObject<Row>> src , int srcStart , int srcEnd , int myStart )
+	{
+		super.copyRowsFrom( src , srcStart , srcEnd , myStart );
+		int row = getRowCount( ) - 1;
+		for( int col = 0 ; col < getColumnCount( ) ; col++ )
+		{
+			if( getValueAt( row , col ) != null )
+			{
+				ensureNumRows( row + 2 );
+				break;
+			}
 		}
 	}
 	

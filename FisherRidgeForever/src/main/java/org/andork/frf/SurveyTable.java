@@ -21,29 +21,12 @@ public class SurveyTable extends AnnotatingJTable<SurveyTableModel, RowFilter<Su
 	public void createDefaultColumnsFromModel( )
 	{
 		super.createDefaultColumnsFromModel( );
-		if( getColumnCount( ) > SHOT_COLUMN )
-		{
-			getColumnModel( ).removeColumn( getColumnModel( ).getColumn( SHOT_COLUMN ) );
-		}
 	}
 	
 	public SurveyTable( )
 	{
 		super( new SurveyTableModel( ) );
 	}
-	
-	public static final int	FROM_COLUMN		= 0;
-	public static final int	TO_COLUMN		= 1;
-	public static final int	DISTANCE_COLUMN	= 2;
-	public static final int	FS_AZM_COLUMN	= 3;
-	public static final int	BS_AZM_COLUMN	= 5;
-	public static final int	FS_INC_COLUMN	= 4;
-	public static final int	BS_INC_COLUMN	= 6;
-	public static final int	LEFT_COLUMN		= 7;
-	public static final int	RIGHT_COLUMN	= 8;
-	public static final int	UP_COLUMN		= 9;
-	public static final int	DOWN_COLUMN		= 10;
-	public static final int	SHOT_COLUMN		= 11;
 	
 	public SurveyTableModel getModel( )
 	{

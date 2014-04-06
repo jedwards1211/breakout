@@ -53,6 +53,7 @@ import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
 import org.andork.frf.SettingsDrawer.CameraView;
 import org.andork.frf.SettingsDrawer.FilterType;
+import org.andork.frf.SurveyTableModel.Row;
 import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.frf.model.Survey3dModel;
 import org.andork.frf.model.Survey3dModel.SelectionEditor;
@@ -424,10 +425,10 @@ public class MapsView extends BasicJOGLSetup
 			public AnnotatingJTable doRun( )
 			{
 				DefaultTableColumnModel quickTableColumnModel = new DefaultTableColumnModel( );
-				TableColumn fromColumn = new TableColumn( SurveyTable.FROM_COLUMN );
+				TableColumn fromColumn = new TableColumn( SurveyTableModel.Row.from.getIndex( ) );
 				fromColumn.setIdentifier( "From" );
 				fromColumn.setHeaderValue( "From" );
-				TableColumn toColumn = new TableColumn( SurveyTable.TO_COLUMN );
+				TableColumn toColumn = new TableColumn( SurveyTableModel.Row.to.getIndex( ) );
 				toColumn.setIdentifier( "To" );
 				toColumn.setHeaderValue( "To" );
 				quickTableColumnModel.addColumn( fromColumn );
@@ -713,7 +714,7 @@ public class MapsView extends BasicJOGLSetup
 			{
 				continue;
 			}
-			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
+			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getRow( i ).get( Row.shot );
 			if( shot == null )
 			{
 				continue;
@@ -753,7 +754,7 @@ public class MapsView extends BasicJOGLSetup
 		
 		for( int i = 0 ; i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
 		{
-			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
+			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getRow( i ).get( Row.shot );
 			if( shot == null )
 			{
 				continue;
@@ -1143,7 +1144,7 @@ public class MapsView extends BasicJOGLSetup
 			{
 				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) ; i++ )
 				{
-					SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getValueAt( i , SurveyTable.SHOT_COLUMN );
+					SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getRow( i ).get( Row.shot );
 					if( shot == null )
 					{
 						continue;
