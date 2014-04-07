@@ -159,10 +159,10 @@
 
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/${ant.project.name}-main-win-i586.jar" basedir="${build.main}" manifest="MANIFEST-main-win-i586.MF" />
-		
+
 		<delete file="${dist}/update.properties" />
 		<copy file="${basedir}/update-win-i586.properties" tofile="${dist}/update.properties" />
-		
+
 		<touch file="lastUpdate" />
 
 		<zip destfile="${dist}/${ant.project.name}-win-i586.zip">
@@ -208,5 +208,16 @@
 		<delete dir="${build.main}" />
 		<delete dir="${build.update}" />
 		<delete dir="${dist}" />
+	</target>
+
+	<target name="clean-all" description="clean up all">
+		<antcall target="clean" />
+		<ant antfile="../andork-core/build.xml" inheritAll="false" target="clean" />
+		<ant antfile="../andork-ui/build.xml" inheritAll="false" target="clean" />
+		<ant antfile="../andork-plot/build.xml" inheritAll="false" target="clean" />
+		<ant antfile="../andork-math/build.xml" inheritAll="false" target="clean" />
+		<ant antfile="../andork-math3d/build.xml" inheritAll="false" target="clean" />
+		<ant antfile="../andork-spatial/build.xml" inheritAll="false" target="clean" />
+		<ant antfile="../andork-jogl-gl2es2-utils/build.xml" inheritAll="false" target="clean" />
 	</target>
 </project>

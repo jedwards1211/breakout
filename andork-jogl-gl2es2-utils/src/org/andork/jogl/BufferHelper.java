@@ -22,6 +22,15 @@ public class BufferHelper
 	{
 		return result.size( );
 	}
+
+	public BufferHelper putBytes( byte ... values )
+	{
+		for( byte f : values )
+		{
+			result.add( f );
+		}
+		return this;
+	}
 	
 	public BufferHelper put( byte ... values )
 	{

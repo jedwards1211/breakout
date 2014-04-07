@@ -166,10 +166,10 @@ public class Survey3dModel
 					byte r = ( byte ) ( ( rgb >> 16 ) & 0xff );
 					byte g = ( byte ) ( ( rgb >> 8 ) & 0xff );
 					byte b = ( byte ) ( rgb & 0xff );
-					texBufferHelper.put( r );
-					texBufferHelper.put( g );
-					texBufferHelper.put( b );
-					texBufferHelper.put( a );
+					texBufferHelper.putBytes( r );
+					texBufferHelper.putBytes( g );
+					texBufferHelper.putBytes( b );
+					texBufferHelper.putBytes( a );
 					// texBufferHelper.put( rgb );
 				}
 			}

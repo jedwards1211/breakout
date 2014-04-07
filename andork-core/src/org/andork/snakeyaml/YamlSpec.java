@@ -28,7 +28,7 @@ import org.andork.reflect.ReflectionUtils;
  */
 public abstract class YamlSpec<S extends YamlSpec<S>>
 {
-	final Attribute<?>[ ]			attributes;
+	Attribute<?>[ ]					attributes;
 	final Map<String, Attribute<?>>	attributesByName	= new LinkedHashMap<String, Attribute<?>>( );
 	
 	protected YamlSpec( )
