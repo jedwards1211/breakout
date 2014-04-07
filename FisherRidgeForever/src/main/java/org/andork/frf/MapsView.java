@@ -76,7 +76,6 @@ import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlObjectStringBimapper;
-import org.andork.snakeyaml.YamlSpec;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
@@ -317,7 +316,7 @@ public class MapsView extends BasicJOGLSetup
 		taskListDrawer = new TaskListDrawer( taskService );
 		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
 		
-		settingsDrawer = new SettingsDrawer( projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ) );
+		settingsDrawer = new SettingsDrawer( projectModelBinder );
 		settingsDrawer.addTo( layeredPane , 1 );
 		
 		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableChangeHandler( taskService ) );
@@ -422,19 +421,19 @@ public class MapsView extends BasicJOGLSetup
 		UIBindings.bind( projectModelBinder , taskListDrawer.pinButton( ) , ProjectModel.taskListDrawerPinned );
 		UIBindings.bind( projectModelBinder , quickTableDrawer.pinButton( ) , ProjectModel.miniSurveyDrawerPinned );
 		
-		projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.cameraView )
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.cameraView )
 		{
 			public void modelToView( )
 			{
 				org.andork.model.Model model = getModel( );
 				if( model != null )
 				{
-					setCameraView( ( CameraView ) model.get( SettingsDrawer.Model.cameraView ) );
+					setCameraView( ( CameraView ) model.get( ProjectModel.cameraView ) );
 				}
 			}
 		} );
 		
-		projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.mouseSensitivity )
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.mouseSensitivity )
 		{
 			@Override
 			public void modelToView( )
@@ -442,14 +441,14 @@ public class MapsView extends BasicJOGLSetup
 				org.andork.model.Model model = getModel( );
 				if( model != null )
 				{
-					float sensitivity = ( Integer ) model.get( SettingsDrawer.Model.mouseSensitivity ) / 20f;
+					float sensitivity = ( Integer ) model.get( ProjectModel.mouseSensitivity ) / 20f;
 					orbiter.setSensitivity( sensitivity );
 					navigator.setSensitivity( sensitivity );
 				}
 			}
 		} );
 		
-		projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.distRange )
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.distRange )
 		{
 			@Override
 			public void modelToView( )
@@ -457,7 +456,7 @@ public class MapsView extends BasicJOGLSetup
 				org.andork.model.Model model = getModel( );
 				if( model != null && model3d != null )
 				{
-					LinearAxisConversion range = ( LinearAxisConversion ) model.get( SettingsDrawer.Model.distRange );
+					LinearAxisConversion range = ( LinearAxisConversion ) model.get( ProjectModel.distRange );
 					float nearDist = ( float ) range.invert( 0.0 );
 					float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
 					model3d.setNearDist( nearDist );
@@ -467,7 +466,7 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.paramRange )
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.paramRange )
 		{
 			@Override
 			public void modelToView( )
@@ -475,7 +474,7 @@ public class MapsView extends BasicJOGLSetup
 				org.andork.model.Model model = getModel( );
 				if( model != null && model3d != null )
 				{
-					LinearAxisConversion range = ( LinearAxisConversion ) model.get( SettingsDrawer.Model.paramRange );
+					LinearAxisConversion range = ( LinearAxisConversion ) model.get( ProjectModel.paramRange );
 					float loParam = ( float ) range.invert( 0.0 );
 					float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
 					model3d.setLoParam( loParam );
@@ -596,14 +595,12 @@ public class MapsView extends BasicJOGLSetup
 		if( projectModel == null )
 		{
 			projectModel = ProjectModel.instance.newObject( );
-			YamlObject<SettingsDrawer.Model> settingsDrawerModel = SettingsDrawer.Model.instance.newObject( );
-			settingsDrawerModel.set( SettingsDrawer.Model.cameraView , CameraView.PERSPECTIVE );
-			settingsDrawerModel.set( SettingsDrawer.Model.mouseSensitivity , 20 );
-			settingsDrawerModel.set( SettingsDrawer.Model.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
-			settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
-			settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
-			settingsDrawerModel.set( SettingsDrawer.Model.filterType , FilterType.ALPHA_DESIGNATION );
-			projectModel.set( ProjectModel.settingsDrawerModel , settingsDrawerModel );
+			projectModel.set( ProjectModel.cameraView , CameraView.PERSPECTIVE );
+			projectModel.set( ProjectModel.mouseSensitivity , 20 );
+			projectModel.set( ProjectModel.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
+			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
+			projectModel.set( ProjectModel.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
+			projectModel.set( ProjectModel.filterType , FilterType.ALPHA_DESIGNATION );
 		}
 		
 		if( projectModel.get( ProjectModel.surveyFile ) == null )
@@ -676,7 +673,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	protected void fitViewToSelected( )
 	{
-		if( settingsDrawer.getModel( ).get( SettingsDrawer.Model.cameraView ) != CameraView.PERSPECTIVE )
+		if( projectModel.get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
 		{
 			return;
 		}
@@ -727,7 +724,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	protected void fitViewToEverything( )
 	{
-		if( settingsDrawer.getModel( ).get( SettingsDrawer.Model.cameraView ) != CameraView.PERSPECTIVE )
+		if( projectModel.get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
 		{
 			return;
 		}
@@ -1033,7 +1030,7 @@ public class MapsView extends BasicJOGLSetup
 				
 				if( picked != null )
 				{
-					LinearAxisConversion conversion = settingsDrawer.getModel( ).get( SettingsDrawer.Model.highlightRange );
+					LinearAxisConversion conversion = projectModel.get( ProjectModel.highlightRange );
 					LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getHighlightDistAxis( ).getViewSpan( ) ) , 0.0 );
 					editor.hover( picked.picked , picked.locationAlongShot , conversion2 );
 				}
@@ -1152,36 +1149,6 @@ public class MapsView extends BasicJOGLSetup
 		}
 	}
 	
-	public static final class RootModel extends YamlSpec<RootModel>
-	{
-		public static final Attribute<File>	currentProjectFile	= fileAttribute( "currentProjectFile" );
-		
-		private RootModel( )
-		{
-			super( );
-		}
-		
-		public static final RootModel	instance	= new RootModel( );
-	}
-	
-	public static final class ProjectModel extends YamlSpec<ProjectModel>
-	{
-		public static final Attribute<YamlObject<SettingsDrawer.Model>>	settingsDrawerModel		= yamlObjectAttribute( "settingsDrawerModel" , SettingsDrawer.Model.instance );
-		public static final Attribute<Boolean>							settingsDrawerPinned	= booleanAttribute( "settingsDrawerPinned" );
-		public static final Attribute<Boolean>							surveyDrawerPinned		= booleanAttribute( "surveyDrawerPinned" );
-		public static final Attribute<Boolean>							surveyDrawerMaximized	= booleanAttribute( "surveyDrawerMaximized" );
-		public static final Attribute<Boolean>							miniSurveyDrawerPinned	= booleanAttribute( "miniSurveyDrawerPinned" );
-		public static final Attribute<Boolean>							taskListDrawerPinned	= booleanAttribute( "taskListDrawerPinned" );
-		public static final Attribute<File>								surveyFile				= fileAttribute( "surveyFile" );
-		
-		private ProjectModel( )
-		{
-			super( );
-		}
-		
-		public static final ProjectModel	instance	= new ProjectModel( );
-	}
-	
 	class FitToFilteredHandler implements ActionListener
 	{
 		AnnotatingJTable<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>	table;
@@ -1227,7 +1194,7 @@ public class MapsView extends BasicJOGLSetup
 		@Override
 		public RowFilter<SurveyTableModel, Integer> createFilter( String input )
 		{
-			switch( projectModel.get( ProjectModel.settingsDrawerModel ).get( SettingsDrawer.Model.filterType ) )
+			switch( projectModel.get( ProjectModel.filterType ) )
 			{
 				case ALPHA_DESIGNATION:
 					return new SurveyDesignationFilter( input );

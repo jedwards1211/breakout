@@ -18,19 +18,15 @@ import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
 import org.andork.event.Binder;
-import org.andork.frf.model.LinearAxisConversionYamlBimapper;
 import org.andork.plot.PlotAxisConversionBinding;
 import org.andork.snakeyaml.YamlObject;
-import org.andork.snakeyaml.YamlSpec;
 import org.andork.swing.PaintablePanel;
-import org.andork.swing.border.FillBorder;
 import org.andork.swing.border.GradientFillBorder;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
 import org.andork.swing.selector.DefaultSelector;
 
-import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.PlotAxis;
 import com.andork.plot.PlotAxis.LabelPosition;
 import com.andork.plot.PlotAxis.Orientation;
@@ -40,28 +36,28 @@ import com.andork.plot.PlotAxisController;
 public class SettingsDrawer extends Drawer
 {
 	
-	ViewButtonsPanel			viewButtonsPanel;
-	JSlider						mouseSensitivitySlider;
-	PlotAxis					distColorationAxis;
-	PaintablePanel				distColorationAxisPanel;
-	PlotAxis					paramColorationAxis;
-	PaintablePanel				paramColorationAxisPanel;
-	JButton						inferDepthAxisTiltButton;
-	JButton						resetDepthAxisTiltButton;
-	PlotAxis					highlightDistAxis;
-	PaintablePanel				highlightDistAxisPanel;
-	JButton						fitViewToEverythingButton;
-	JButton						fitViewToSelectedButton;
-	JButton						orbitToPlanButton;
-	JButton						debugButton;
+	ViewButtonsPanel					viewButtonsPanel;
+	JSlider								mouseSensitivitySlider;
+	PlotAxis							distColorationAxis;
+	PaintablePanel						distColorationAxisPanel;
+	PlotAxis							paramColorationAxis;
+	PaintablePanel						paramColorationAxisPanel;
+	JButton								inferDepthAxisTiltButton;
+	JButton								resetDepthAxisTiltButton;
+	PlotAxis							highlightDistAxis;
+	PaintablePanel						highlightDistAxisPanel;
+	JButton								fitViewToEverythingButton;
+	JButton								fitViewToSelectedButton;
+	JButton								orbitToPlanButton;
+	JButton								debugButton;
 	
-	DefaultSelector<FilterType>	filterTypeSelector;
+	DefaultSelector<FilterType>			filterTypeSelector;
 	
-	Binder<YamlObject<Model>>	binder;
+	Binder<YamlObject<ProjectModel>>	projectBinder;
 	
-	public SettingsDrawer( Binder<YamlObject<Model>> binder )
+	public SettingsDrawer( Binder<YamlObject<ProjectModel>> projectBinder )
 	{
-		this.binder = binder;
+		this.projectBinder = projectBinder;
 		
 		delegate( ).dockingSide( Side.RIGHT );
 		pinButton( );
@@ -78,8 +74,6 @@ public class SettingsDrawer extends Drawer
 		createLayout( );
 		createListeners( );
 		createBindings( );
-		
-		binder.modelToView( );
 	}
 	
 	private void createComponents( )
@@ -180,28 +174,17 @@ public class SettingsDrawer extends Drawer
 	
 	private void createBindings( )
 	{
-		bind( binder , viewButtonsPanel.getPlanButton( ) , Model.cameraView , CameraView.PLAN );
-		bind( binder , viewButtonsPanel.getPerspectiveButton( ) , Model.cameraView , CameraView.PERSPECTIVE );
-		bind( binder , viewButtonsPanel.getNorthButton( ) , Model.cameraView , CameraView.NORTH_FACING_PROFILE );
-		bind( binder , viewButtonsPanel.getSouthButton( ) , Model.cameraView , CameraView.SOUTH_FACING_PROFILE );
-		bind( binder , viewButtonsPanel.getEastButton( ) , Model.cameraView , CameraView.EAST_FACING_PROFILE );
-		bind( binder , viewButtonsPanel.getWestButton( ) , Model.cameraView , CameraView.WEST_FACING_PROFILE );
-		bind( binder , mouseSensitivitySlider , Model.mouseSensitivity );
-		binder.bind( new PlotAxisConversionBinding( Model.distRange , distColorationAxis ) );
-		binder.bind( new PlotAxisConversionBinding( Model.paramRange , paramColorationAxis ) );
-		binder.bind( new PlotAxisConversionBinding( Model.highlightRange , highlightDistAxis ) );
-		bind( binder , filterTypeSelector , Model.filterType );
-	}
-	
-	public void setModel( YamlObject<Model> model )
-	{
-		binder.setModel( model );
-		binder.modelToView( );
-	}
-	
-	public YamlObject<Model> getModel( )
-	{
-		return binder.getModel( );
+		bind( projectBinder , viewButtonsPanel.getPlanButton( ) , ProjectModel.cameraView , CameraView.PLAN );
+		bind( projectBinder , viewButtonsPanel.getPerspectiveButton( ) , ProjectModel.cameraView , CameraView.PERSPECTIVE );
+		bind( projectBinder , viewButtonsPanel.getNorthButton( ) , ProjectModel.cameraView , CameraView.NORTH_FACING_PROFILE );
+		bind( projectBinder , viewButtonsPanel.getSouthButton( ) , ProjectModel.cameraView , CameraView.SOUTH_FACING_PROFILE );
+		bind( projectBinder , viewButtonsPanel.getEastButton( ) , ProjectModel.cameraView , CameraView.EAST_FACING_PROFILE );
+		bind( projectBinder , viewButtonsPanel.getWestButton( ) , ProjectModel.cameraView , CameraView.WEST_FACING_PROFILE );
+		bind( projectBinder , mouseSensitivitySlider , ProjectModel.mouseSensitivity );
+		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.distRange , distColorationAxis ) );
+		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.paramRange , paramColorationAxis ) );
+		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.highlightRange , highlightDistAxis ) );
+		bind( projectBinder , filterTypeSelector , ProjectModel.filterType );
 	}
 	
 	public JButton getFitViewToSelectedButton( )
@@ -272,23 +255,6 @@ public class SettingsDrawer extends Drawer
 		{
 			return displayText;
 		}
-	}
-	
-	public static class Model extends YamlSpec<Model>
-	{
-		public static final Attribute<CameraView>			cameraView			= enumAttribute( "cameraView" , CameraView.class );
-		public static final Attribute<Integer>				mouseSensitivity	= integerAttribute( "mouseSensitivity" );
-		public static final Attribute<LinearAxisConversion>	distRange			= Attribute.newInstance( LinearAxisConversion.class , "distRange" , new LinearAxisConversionYamlBimapper( ) );
-		public static final Attribute<LinearAxisConversion>	paramRange			= Attribute.newInstance( LinearAxisConversion.class , "paramRange" , new LinearAxisConversionYamlBimapper( ) );
-		public static final Attribute<LinearAxisConversion>	highlightRange		= Attribute.newInstance( LinearAxisConversion.class , "highlightRange" , new LinearAxisConversionYamlBimapper( ) );
-		public static final Attribute<FilterType>			filterType			= enumAttribute( "filterType" , FilterType.class );
-		
-		private Model( )
-		{
-			super( );
-		}
-		
-		public static final Model	instance	= new Model( );
 	}
 	
 	public PlotAxis highlightDistAxis( )
