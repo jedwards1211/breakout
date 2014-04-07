@@ -19,8 +19,13 @@ public abstract class AbstractFilePersister<M> implements HierarchicalBasicPrope
 	
 	public AbstractFilePersister( File file , Bimapper<M, String> format )
 	{
+		this( file , new BimapperStreamBimapper<M>( format ) );
+	}
+	
+	public AbstractFilePersister( File file , StreamBimapper<M> bimapper )
+	{
 		this.file = file;
-		this.bimapper = new BimapperStreamBimapper<M>( format );
+		this.bimapper = bimapper;
 		
 		batcher = new Batcher<M>( )
 		{
@@ -30,6 +35,11 @@ public abstract class AbstractFilePersister<M> implements HierarchicalBasicPrope
 				saveInBackground( batch );
 			}
 		};
+	}
+	
+	public void saveLater( M model )
+	{
+		batcher.add( model );
 	}
 	
 	protected abstract void saveInBackground( final LinkedList<M> batch );

@@ -110,10 +110,6 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
-	JMenuBar											menuBar;
-	JMenu												fileMenu;
-	JMenu												recentFilesMenu;
-	
 	DefaultNavigator									navigator;
 	
 	TaskService											taskService;
@@ -177,13 +173,6 @@ public class MapsView extends BasicJOGLSetup
 	public MapsView( )
 	{
 		super( );
-		
-		recentFilesMenu = new JMenu( "Recent Files" );
-		fileMenu = new JMenu( "File" );
-		fileMenu.add( recentFilesMenu );
-		
-		menuBar = new JMenuBar( );
-		menuBar.add( fileMenu );
 		
 		JLabel highlightLabel = new JLabel( "Highlight: " );
 		JLabel filterLabel = new JLabel( "Filter: " );
@@ -327,23 +316,6 @@ public class MapsView extends BasicJOGLSetup
 		taskService = new SingleThreadedTaskService( );
 		taskListDrawer = new TaskListDrawer( taskService );
 		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
-		
-		taskListDrawer.delegate( ).changeSupport( ).addPropertyChangeListener( DrawerLayoutDelegate.OPEN , new BasicPropertyChangeListener( )
-		{
-			@Override
-			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
-			{
-				JFrame frame = AWTUtil.getAncestorOfClass( JFrame.class , mainPanel );
-				if( frame != null )
-				{
-					if( frame.getJMenuBar( ) == null )
-					{
-						frame.setJMenuBar( menuBar );
-					}
-					menuBar.setVisible( taskListDrawer.delegate( ).isOpen( ) );
-				}
-			}
-		} );
 		
 		settingsDrawer = new SettingsDrawer( projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ) );
 		settingsDrawer.addTo( layeredPane , 1 );
@@ -634,12 +606,36 @@ public class MapsView extends BasicJOGLSetup
 			projectModel.set( ProjectModel.settingsDrawerModel , settingsDrawerModel );
 		}
 		
-		if( projectModel.get( ProjectModel.surveyFile ) != null )
+		if( projectModel.get( ProjectModel.surveyFile ) == null )
 		{
-			
+			projectModel.set( ProjectModel.surveyFile , new File( new File( ".breakout" ) , "defaultSurvey.txt" ) );
+		}
+		setProjectModel( projectModel );
+		
+		surveyPersister = new TaskServiceFilePersister<SurveyTableModel>( taskService , "Saving survey..." ,
+				SurveyTableModelStreamBimapper.instance , projectModel.get( ProjectModel.surveyFile ) );
+		
+		try
+		{
+			SurveyTableModel surveyModel = surveyPersister.load( );
+			if( surveyModel != null && surveyModel.getRowCount( ) > 0 )
+			{
+				surveyDrawer.table( ).getModel( ).copyRowsFrom( surveyModel , 0 , surveyModel.getRowCount( ) - 1 , 0 );
+			}
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace( );
 		}
 		
-		setProjectModel( projectModel );
+		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableModelListener( )
+		{
+			@Override
+			public void tableChanged( TableModelEvent e )
+			{
+				surveyPersister.saveLater( surveyDrawer.table( ).getModel( ) );
+			}
+		} );
 	}
 	
 	public void setRootModel( YamlObject<RootModel> rootModel )

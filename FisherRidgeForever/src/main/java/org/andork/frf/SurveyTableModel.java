@@ -12,6 +12,8 @@ import org.andork.swing.table.EasyTableModel;
 
 public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel.Row>>
 {
+	private Map<Integer, Integer>	shotIndexToRowMap	= CollectionUtils.newHashMap( );
+
 	public SurveyTableModel( )
 	{
 		super( true );
@@ -59,8 +61,6 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		public static final Row	instance	= new Row( );
 		
 	}
-	
-	private Map<Integer, Integer>	shotIndexToRowMap	= CollectionUtils.newHashMap( );
 	
 	public SurveyShot getShotAtRow( int row )
 	{

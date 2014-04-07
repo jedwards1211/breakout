@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.LinkedList;
 
 import org.andork.func.Bimapper;
+import org.andork.func.StreamBimapper;
 import org.andork.util.AbstractFilePersister;
 
 public class TaskServiceFilePersister<M> extends AbstractFilePersister<M>
@@ -14,6 +15,13 @@ public class TaskServiceFilePersister<M> extends AbstractFilePersister<M>
 	public TaskServiceFilePersister( TaskService service , String description , Bimapper<M, String> format , File file )
 	{
 		super( file , format );
+		this.service = service;
+		this.description = description;
+	}
+	
+	public TaskServiceFilePersister( TaskService service , String description , StreamBimapper<M> bimapper , File file )
+	{
+		super( file , bimapper );
 		this.service = service;
 		this.description = description;
 	}
