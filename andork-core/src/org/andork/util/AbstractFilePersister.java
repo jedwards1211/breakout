@@ -1,28 +1,26 @@
 package org.andork.util;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.util.LinkedList;
 
 import org.andork.event.HierarchicalBasicPropertyChangeListener;
 import org.andork.event.SourcePath;
 import org.andork.func.Bimapper;
+import org.andork.func.BimapperStreamBimapper;
+import org.andork.func.StreamBimapper;
 
 public abstract class AbstractFilePersister<M> implements HierarchicalBasicPropertyChangeListener
 {
-	
-	protected Batcher<M>			batcher;
-	protected File					file;
-	protected Bimapper<M, String>	format;
+	protected StreamBimapper<M>	bimapper;
+	protected Batcher<M>		batcher;
+	protected File				file;
 	
 	public AbstractFilePersister( File file , Bimapper<M, String> format )
 	{
 		this.file = file;
-		this.format = format;
+		this.bimapper = new BimapperStreamBimapper<M>( format );
 		
 		batcher = new Batcher<M>( )
 		{
@@ -38,75 +36,27 @@ public abstract class AbstractFilePersister<M> implements HierarchicalBasicPrope
 	
 	protected void save( M model )
 	{
-		FileOutputStream fs = null;
-		PrintStream ps = null;
 		try
 		{
-			ps = new PrintStream( fs = new FileOutputStream( file ) );
-			ps.print( format.map( model ) );
+			if( !file.getParentFile( ).exists( ) )
+			{
+				file.getParentFile( ).mkdirs( );
+			}
+			bimapper.write( model , new FileOutputStream( file ) );
 		}
 		catch( Throwable t )
 		{
 			t.printStackTrace( );
 		}
-		finally
-		{
-			if( ps != null )
-			{
-				ps.close( );
-			}
-			if( fs != null )
-			{
-				try
-				{
-					fs.close( );
-				}
-				catch( IOException ex )
-				{
-					ex.printStackTrace( );
-				}
-			}
-		}
 	}
 	
 	public M load( ) throws Exception
 	{
-		ByteArrayOutputStream buffer = null;
-		FileInputStream in = null;
-		
-		try
+		if( !file.exists( ) )
 		{
-			buffer = new ByteArrayOutputStream( );
-			if( file.exists( ) )
-			{
-				in = new FileInputStream( file );
-				int c;
-				while( ( c = in.read( ) ) >= 0 )
-				{
-					buffer.write( c );
-				}
-			}
-			
-			return format.unmap( buffer.toString( ) );
+			return null;
 		}
-		finally
-		{
-			if( buffer != null )
-			{
-				buffer.close( );
-			}
-			if( in != null )
-			{
-				try
-				{
-					in.close( );
-				}
-				catch( IOException ex )
-				{
-					ex.printStackTrace( );
-				}
-			}
-		}
+		return bimapper.read( new FileInputStream( file ) );
 	}
 	
 	private M getRootModel( Object source )
@@ -125,7 +75,7 @@ public abstract class AbstractFilePersister<M> implements HierarchicalBasicPrope
 	}
 	
 	@Override
-	public void childrenChanged( Object source , ChangeType changeType , Object... children )
+	public void childrenChanged( Object source , ChangeType changeType , Object ... children )
 	{
 		batcher.add( getRootModel( source ) );
 	}

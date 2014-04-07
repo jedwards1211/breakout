@@ -74,7 +74,6 @@ import org.andork.jogl.awt.anim.SpringOrbit;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
-import org.andork.snakeyaml.YamlArrayList;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlObjectStringBimapper;
 import org.andork.snakeyaml.YamlSpec;
@@ -163,9 +162,15 @@ public class MapsView extends BasicJOGLSetup
 	final float[ ]										p1						= new float[ 3 ];
 	final float[ ]										p2						= new float[ 3 ];
 	
-	YamlObject<Model>									model;
-	final Binder<YamlObject<Model>>						binder					= new Binder<YamlObject<Model>>( );
-	final TaskServiceFilePersister<YamlObject<Model>>	persister;
+	YamlObject<RootModel>								rootModel;
+	TaskServiceFilePersister<YamlObject<RootModel>>		rootPersister;
+	final Binder<YamlObject<RootModel>>					rootModelBinder			= new Binder<YamlObject<RootModel>>( );
+	
+	YamlObject<ProjectModel>							projectModel;
+	TaskServiceFilePersister<YamlObject<ProjectModel>>	projectPersister;
+	final Binder<YamlObject<ProjectModel>>				projectModelBinder		= new Binder<YamlObject<ProjectModel>>( );
+	
+	TaskServiceFilePersister<SurveyTableModel>			surveyPersister;
 	
 	final AnimationQueue								cameraAnimationQueue	= new AnimationQueue( );
 	
@@ -340,7 +345,7 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		settingsDrawer = new SettingsDrawer( binder.subBinder( Model.settingsDrawerModel ) );
+		settingsDrawer = new SettingsDrawer( projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ) );
 		settingsDrawer.addTo( layeredPane , 1 );
 		
 		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableChangeHandler( taskService ) );
@@ -439,13 +444,13 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		UIBindings.bind( binder , surveyDrawer.pinButton( ) , Model.surveyDrawerPinned );
-		UIBindings.bind( binder , surveyDrawer.maxButton( ) , Model.surveyDrawerMaximized );
-		UIBindings.bind( binder , settingsDrawer.pinButton( ) , Model.settingsDrawerPinned );
-		UIBindings.bind( binder , taskListDrawer.pinButton( ) , Model.taskListDrawerPinned );
-		UIBindings.bind( binder , quickTableDrawer.pinButton( ) , Model.miniSurveyDrawerPinned );
+		UIBindings.bind( projectModelBinder , surveyDrawer.pinButton( ) , ProjectModel.surveyDrawerPinned );
+		UIBindings.bind( projectModelBinder , surveyDrawer.maxButton( ) , ProjectModel.surveyDrawerMaximized );
+		UIBindings.bind( projectModelBinder , settingsDrawer.pinButton( ) , ProjectModel.settingsDrawerPinned );
+		UIBindings.bind( projectModelBinder , taskListDrawer.pinButton( ) , ProjectModel.taskListDrawerPinned );
+		UIBindings.bind( projectModelBinder , quickTableDrawer.pinButton( ) , ProjectModel.miniSurveyDrawerPinned );
 		
-		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.cameraView )
+		projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.cameraView )
 		{
 			public void modelToView( )
 			{
@@ -457,7 +462,7 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.mouseSensitivity )
+		projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.mouseSensitivity )
 		{
 			@Override
 			public void modelToView( )
@@ -472,7 +477,7 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.distRange )
+		projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.distRange )
 		{
 			@Override
 			public void modelToView( )
@@ -490,7 +495,7 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		binder.subBinder( Model.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.paramRange )
+		projectModelBinder.subBinder( ProjectModel.settingsDrawerModel ).bind( new BindingAdapter( SettingsDrawer.Model.paramRange )
 		{
 			@Override
 			public void modelToView( )
@@ -507,33 +512,6 @@ public class MapsView extends BasicJOGLSetup
 				}
 			}
 		} );
-		
-		persister = new TaskServiceFilePersister<YamlObject<Model>>( taskService , "Saving settings..." ,
-				YamlObjectStringBimapper.newInstance( Model.instance ) , new File( "settings.frf.yaml" ) );
-		YamlObject<Model> model = null;
-		
-		try
-		{
-			model = persister.load( );
-		}
-		catch( Exception ex )
-		{
-		}
-		
-		if( model == null )
-		{
-			model = Model.instance.newObject( );
-			YamlObject<SettingsDrawer.Model> settingsDrawerModel = SettingsDrawer.Model.instance.newObject( );
-			settingsDrawerModel.set( SettingsDrawer.Model.cameraView , CameraView.PERSPECTIVE );
-			settingsDrawerModel.set( SettingsDrawer.Model.mouseSensitivity , 20 );
-			settingsDrawerModel.set( SettingsDrawer.Model.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
-			settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
-			settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
-			settingsDrawerModel.set( SettingsDrawer.Model.filterType , FilterType.ALPHA_DESIGNATION );
-			model.set( Model.settingsDrawerModel , settingsDrawerModel );
-		}
-		
-		setModel( model );
 		
 		settingsDrawer.getFitViewToSelectedButton( ).addActionListener( new ActionListener( )
 		{
@@ -606,22 +584,96 @@ public class MapsView extends BasicJOGLSetup
 		
 		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
 		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
+		
+		rootPersister = new TaskServiceFilePersister<YamlObject<RootModel>>( taskService , "Saving settings..." ,
+				YamlObjectStringBimapper.newInstance( RootModel.instance ) , new File( new File( ".breakout" ) , "settings.yaml" ) );
+		YamlObject<RootModel> rootModel = null;
+		
+		try
+		{
+			rootModel = rootPersister.load( );
+		}
+		catch( Exception ex )
+		{
+		}
+		
+		if( rootModel == null )
+		{
+			rootModel = RootModel.instance.newObject( );
+		}
+		
+		if( rootModel.get( RootModel.currentProjectFile ) == null )
+		{
+			rootModel.set( RootModel.currentProjectFile , new File( new File( ".breakout" ) , "defaultProject.yaml" ) );
+		}
+		
+		setRootModel( rootModel );
+		
+		projectPersister = new TaskServiceFilePersister<YamlObject<ProjectModel>>( taskService , "Saving project..." ,
+				YamlObjectStringBimapper.newInstance( ProjectModel.instance ) , rootModel.get( RootModel.currentProjectFile ) );
+		YamlObject<ProjectModel> projectModel = null;
+		
+		try
+		{
+			projectModel = projectPersister.load( );
+		}
+		catch( Exception ex )
+		{
+		}
+		
+		if( projectModel == null )
+		{
+			projectModel = ProjectModel.instance.newObject( );
+			YamlObject<SettingsDrawer.Model> settingsDrawerModel = SettingsDrawer.Model.instance.newObject( );
+			settingsDrawerModel.set( SettingsDrawer.Model.cameraView , CameraView.PERSPECTIVE );
+			settingsDrawerModel.set( SettingsDrawer.Model.mouseSensitivity , 20 );
+			settingsDrawerModel.set( SettingsDrawer.Model.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
+			settingsDrawerModel.set( SettingsDrawer.Model.filterType , FilterType.ALPHA_DESIGNATION );
+			projectModel.set( ProjectModel.settingsDrawerModel , settingsDrawerModel );
+		}
+		
+		if( projectModel.get( ProjectModel.surveyFile ) != null )
+		{
+			
+		}
+		
+		setProjectModel( projectModel );
 	}
 	
-	public void setModel( YamlObject<Model> model )
+	public void setRootModel( YamlObject<RootModel> rootModel )
 	{
-		if( this.model != model )
+		if( this.rootModel != rootModel )
 		{
-			if( this.model != null )
+			if( this.rootModel != null )
 			{
-				this.model.changeSupport( ).removePropertyChangeListener( persister );
+				this.rootModel.changeSupport( ).removePropertyChangeListener( rootPersister );
 			}
-			this.model = model;
-			binder.setModel( model );
-			binder.modelToView( );
-			if( model != null )
+			this.rootModel = rootModel;
+			rootModelBinder.setModel( rootModel );
+			rootModelBinder.modelToView( );
+			if( rootModel != null )
 			{
-				model.changeSupport( ).addPropertyChangeListener( persister );
+				rootModel.changeSupport( ).addPropertyChangeListener( rootPersister );
+			}
+		}
+	}
+	
+	public void setProjectModel( YamlObject<ProjectModel> projectModel )
+	{
+		if( this.projectModel != projectModel )
+		{
+			if( this.projectModel != null )
+			{
+				this.projectModel.changeSupport( ).removePropertyChangeListener( projectPersister );
+			}
+			this.projectModel = projectModel;
+			projectModelBinder.setModel( projectModel );
+			projectModelBinder.modelToView( );
+			if( projectModel != null )
+			{
+				projectModel.changeSupport( ).addPropertyChangeListener( projectPersister );
 			}
 		}
 	}
@@ -1104,7 +1156,19 @@ public class MapsView extends BasicJOGLSetup
 		}
 	}
 	
-	public static final class Model extends YamlSpec<Model>
+	public static final class RootModel extends YamlSpec<RootModel>
+	{
+		public static final Attribute<File>	currentProjectFile	= fileAttribute( "currentProjectFile" );
+		
+		private RootModel( )
+		{
+			super( );
+		}
+		
+		public static final RootModel	instance	= new RootModel( );
+	}
+	
+	public static final class ProjectModel extends YamlSpec<ProjectModel>
 	{
 		public static final Attribute<YamlObject<SettingsDrawer.Model>>	settingsDrawerModel		= yamlObjectAttribute( "settingsDrawerModel" , SettingsDrawer.Model.instance );
 		public static final Attribute<Boolean>							settingsDrawerPinned	= booleanAttribute( "settingsDrawerPinned" );
@@ -1112,14 +1176,14 @@ public class MapsView extends BasicJOGLSetup
 		public static final Attribute<Boolean>							surveyDrawerMaximized	= booleanAttribute( "surveyDrawerMaximized" );
 		public static final Attribute<Boolean>							miniSurveyDrawerPinned	= booleanAttribute( "miniSurveyDrawerPinned" );
 		public static final Attribute<Boolean>							taskListDrawerPinned	= booleanAttribute( "taskListDrawerPinned" );
-		public static final Attribute<YamlArrayList<File>>				recentFiles				= yamlArrayListAttribute( "recentFiles" , YamlSpec.fileObjectBimapper );
+		public static final Attribute<File>								surveyFile				= fileAttribute( "surveyFile" );
 		
-		private Model( )
+		private ProjectModel( )
 		{
 			super( );
 		}
 		
-		public static final Model	instance	= new Model( );
+		public static final ProjectModel	instance	= new ProjectModel( );
 	}
 	
 	class FitToFilteredHandler implements ActionListener
@@ -1167,7 +1231,7 @@ public class MapsView extends BasicJOGLSetup
 		@Override
 		public RowFilter<SurveyTableModel, Integer> createFilter( String input )
 		{
-			switch( model.get( Model.settingsDrawerModel ).get( SettingsDrawer.Model.filterType ) )
+			switch( projectModel.get( ProjectModel.settingsDrawerModel ).get( SettingsDrawer.Model.filterType ) )
 			{
 				case ALPHA_DESIGNATION:
 					return new SurveyDesignationFilter( input );
@@ -1253,7 +1317,7 @@ public class MapsView extends BasicJOGLSetup
 							scene.add( model.getRootGroup( ) );
 							scene.initLater( model.getRootGroup( ) );
 							
-							binder.modelToView( );
+							projectModelBinder.modelToView( );
 							
 							float[ ] center = new float[ 3 ];
 							Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );

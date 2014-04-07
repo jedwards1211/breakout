@@ -97,7 +97,14 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 			Attribute attrib = getAttribute( entry.getKey( ).toString( ) );
 			if( attrib != null )
 			{
-				result.set( attrib , attrib.getBimapper( ).unmap( entry.getValue( ) ) );
+				try
+				{
+					result.set( attrib , attrib.getBimapper( ).unmap( entry.getValue( ) ) );
+				}
+				catch( Exception ex )
+				{
+					ex.printStackTrace( );
+				}
 			}
 		}
 		
@@ -430,8 +437,6 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		}
 	}
 	
-	public static final Bimapper<File, Object>	fileObjectBimapper	= CompoundBimapper.compose( FileStringBimapper.instance , StringObjectBimapper.instance );
-	
 	public static class SpecArrayListBimapper<E> implements Bimapper<YamlArrayList<E>, Object>
 	{
 		Bimapper<? super E, Object>	format;
@@ -470,6 +475,11 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	public static Attribute<String> stringAttribute( String name )
 	{
 		return new Attribute<String>( String.class , name , new StringBimapper( ) );
+	}
+	
+	public static Attribute<File> fileAttribute( String name )
+	{
+		return new Attribute<File>( File.class , name , new FileStringBimapper( ) );
 	}
 	
 	public static <E extends Enum<E>> Attribute<E> enumAttribute( String name , Class<E> cls )
