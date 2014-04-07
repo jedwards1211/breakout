@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -13,17 +15,23 @@ import javax.swing.JLayeredPane;
 import javax.swing.JToggleButton;
 import javax.swing.plaf.basic.BasicButtonUI;
 
+import org.andork.awt.event.UIBindings;
+import org.andork.event.Binder;
+import org.andork.event.Binder.Binding;
+import org.andork.snakeyaml.YamlObject;
 import org.andork.swing.PaintablePanel;
 
 @SuppressWarnings( "serial" )
 public class Drawer extends PaintablePanel
 {
-	DrawerLayoutDelegate	delegate;
-	JToggleButton			pinButton;
-	TabLayoutDelegate		pinButtonDelegate;
-	JToggleButton			maxButton;
-	Component				mainResizeHandle;
-	ResizeKnobHandler		mainResizeHandler;
+	DrawerLayoutDelegate			delegate;
+	JToggleButton					pinButton;
+	TabLayoutDelegate				pinButtonDelegate;
+	JToggleButton					maxButton;
+	Component						mainResizeHandle;
+	ResizeKnobHandler				mainResizeHandler;
+	Binder<YamlObject<DrawerModel>>	binder;
+	final List<Binding>				bindings	= new ArrayList<Binding>( );
 	
 	public Drawer( )
 	{
@@ -36,6 +44,43 @@ public class Drawer extends PaintablePanel
 	{
 		this( );
 		add( content , BorderLayout.CENTER );
+	}
+	
+	public void setBinder( Binder<YamlObject<DrawerModel>> binder )
+	{
+		if( this.binder != binder )
+		{
+			if( this.binder != null && this.bindings != null )
+			{
+				for( Binding binding : bindings )
+				{
+					this.binder.unbind( binding );
+				}
+			}
+			this.binder = binder;
+			bindings.clear( );
+			refreshBindings( );
+		}
+	}
+	
+	void refreshBindings( )
+	{
+		if( binder != null )
+		{
+			for( Binding binding : bindings )
+			{
+				binder.unbind( binding );
+			}
+			bindings.clear( );
+			if( pinButton != null )
+			{
+				bindings.add( UIBindings.bind( binder , pinButton , DrawerModel.pinned ) );
+			}
+			if( maxButton != null )
+			{
+				bindings.add( UIBindings.bind( binder , maxButton , DrawerModel.maximized ) );
+			}
+		}
 	}
 	
 	public DrawerLayoutDelegate delegate( )
@@ -65,6 +110,7 @@ public class Drawer extends PaintablePanel
 					delegate.setPinned( pinButton.isSelected( ) );
 				}
 			} );
+			refreshBindings( );
 		}
 		return pinButton;
 	}
@@ -97,6 +143,7 @@ public class Drawer extends PaintablePanel
 					delegate.setMaximized( maxButton.isSelected( ) );
 				}
 			} );
+			refreshBindings( );
 		}
 		return maxButton;
 	}

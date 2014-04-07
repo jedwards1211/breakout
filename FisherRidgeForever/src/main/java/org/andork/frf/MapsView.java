@@ -50,6 +50,7 @@ import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
 import org.andork.awt.layout.DrawerLayoutDelegate;
+import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
@@ -415,11 +416,9 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		UIBindings.bind( projectModelBinder , surveyDrawer.pinButton( ) , ProjectModel.surveyDrawerPinned );
-		UIBindings.bind( projectModelBinder , surveyDrawer.maxButton( ) , ProjectModel.surveyDrawerMaximized );
-		UIBindings.bind( projectModelBinder , settingsDrawer.pinButton( ) , ProjectModel.settingsDrawerPinned );
-		UIBindings.bind( projectModelBinder , taskListDrawer.pinButton( ) , ProjectModel.taskListDrawerPinned );
-		UIBindings.bind( projectModelBinder , quickTableDrawer.pinButton( ) , ProjectModel.miniSurveyDrawerPinned );
+		surveyDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.surveyDrawer ) );
+		settingsDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.settingsDrawer ) );
+		taskListDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.taskListDrawer ) );
 		
 		projectModelBinder.bind( new BindingAdapter( ProjectModel.cameraView )
 		{
@@ -601,6 +600,22 @@ public class MapsView extends BasicJOGLSetup
 			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
 			projectModel.set( ProjectModel.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
 			projectModel.set( ProjectModel.filterType , FilterType.ALPHA_DESIGNATION );
+		}
+		if( projectModel.get( ProjectModel.surveyDrawer ) == null )
+		{
+			projectModel.set( ProjectModel.surveyDrawer , DrawerModel.instance.newObject( ) );
+		}
+		if( projectModel.get( ProjectModel.settingsDrawer ) == null )
+		{
+			projectModel.set( ProjectModel.settingsDrawer , DrawerModel.instance.newObject( ) );
+		}
+		if( projectModel.get( ProjectModel.miniSurveyDrawer ) == null )
+		{
+			projectModel.set( ProjectModel.miniSurveyDrawer , DrawerModel.instance.newObject( ) );
+		}
+		if( projectModel.get( ProjectModel.taskListDrawer ) == null )
+		{
+			projectModel.set( ProjectModel.taskListDrawer , DrawerModel.instance.newObject( ) );
 		}
 		
 		if( projectModel.get( ProjectModel.surveyFile ) == null )

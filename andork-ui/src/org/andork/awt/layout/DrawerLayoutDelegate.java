@@ -16,7 +16,7 @@ import org.andork.event.BasicPropertyChangeSupport;
 
 public class DrawerLayoutDelegate implements LayoutDelegate
 {
-	boolean								open			= true;
+	boolean								open			= false;
 	boolean								pinned			= false;
 	boolean								maximized		= false;
 	boolean								animating		= false;

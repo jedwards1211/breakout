@@ -220,6 +220,27 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		}
 	}
 	
+	public static class IdentityBimapper implements Bimapper<Object, Object>
+	{
+		private IdentityBimapper( )
+		{
+		}
+		
+		public static final IdentityBimapper	instance	= new IdentityBimapper( );
+		
+		@Override
+		public Object map( Object in )
+		{
+			return in;
+		}
+		
+		@Override
+		public Object unmap( Object out )
+		{
+			return out;
+		}
+	}
+	
 	public static class StringBimapper implements Bimapper<String, Object>
 	{
 		public Object map( String t )
@@ -530,5 +551,10 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	public static <E> Attribute<YamlArrayList<E>> yamlArrayListAttribute( String name , Bimapper<? super E, Object> format )
 	{
 		return new Attribute<YamlArrayList<E>>( YamlArrayList.class , name , SpecArrayListBimapper.<E>newInstance( format ) );
+	}
+	
+	public static Attribute<float[ ]> floatArrayAttribute( String name )
+	{
+		return new Attribute<float[ ]>( float[ ].class , name , IdentityBimapper.instance );
 	}
 }
