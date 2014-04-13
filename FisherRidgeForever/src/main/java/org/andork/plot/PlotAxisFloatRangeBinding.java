@@ -1,8 +1,8 @@
 package org.andork.plot;
 
+import org.andork.breakout.model.FloatRange;
 import org.andork.event.Binder.Binding;
 import org.andork.event.HierarchicalBasicPropertyChangeListener;
-import org.andork.frf.model.FloatRange;
 import org.andork.model.Model;
 
 import com.andork.plot.LinearAxisConversion;

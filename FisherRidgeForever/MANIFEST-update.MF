@@ -1,4 +1,4 @@
 Manifest-Version: 1.0
 Permissions: all-permissions
 Class-Path: lib/andork-core.jar lib/andork-spatial.jar lib/commons-io-2.4.jar
-Main-Class: org.andork.frf.update.UpdateCheckLauncher
+Main-Class: org.andork.breakout.update.UpdateCheckLauncher
