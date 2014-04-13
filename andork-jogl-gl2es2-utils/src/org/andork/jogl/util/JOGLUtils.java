@@ -55,13 +55,7 @@ public class JOGLUtils
 		{
 			byte[ ] bytes = new byte[ params[ 1 ] ];
 			gl.glGetShaderInfoLog( shader , params[ 1 ] , params , 1 , bytes , 0 );
-//			bytes = Arrays.copyOf( bytes , params[ 0 ] );
 			throw new RuntimeException( new String( bytes ) );
-		} else if (params[1] > 0) {
-			byte[ ] bytes = new byte[ params[ 1 ] ];
-			gl.glGetShaderInfoLog( shader , params[ 1 ] , params , 1 , bytes , 0 );
-			System.out.println("Shader info log: " + new String(bytes));
-			
 		}
 		
 		return shader;
@@ -91,15 +85,7 @@ public class JOGLUtils
 		{
 			byte[ ] bytes = new byte[ params[ 1 ] ];
 			gl.glGetProgramInfoLog( program , params[ 1 ] , params , 1 , bytes , 0 );
-//			bytes = Arrays.copyOf( bytes , params[ 1 ] );
 			throw new RuntimeException( new String( bytes ) );
-		}
-		else if( params[ 1 ] > 0 )
-		{
-			byte[ ] bytes = new byte[ params[ 1 ] ];
-			gl.glGetProgramInfoLog( program , params[ 1 ] , params , 1 , bytes , 0 );
-//			bytes = Arrays.copyOf( bytes , params[ 1 ] );
-			System.out.println( "Program info log: " + new String( bytes ) );
 		}
 		
 		return program;

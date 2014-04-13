@@ -150,15 +150,27 @@ public class BasicJOGLScene implements GLEventListener
 			objectsThatNeedDestroy.poll( ).destroy( gl );
 		}
 		
-		while( !doLaters.isEmpty( ) )
-		{
-			doLaters.poll( ).run( gl );
-		}
-		
 		invAffineToTranspose3x3( m , n );
 		
 		pickXform.calculate( p , v );
 		
+		while( !doLaters.isEmpty( ) )
+		{
+			try
+			{
+				doLaters.poll( ).run( gl );
+			}
+			catch( Exception ex )
+			{
+				ex.printStackTrace( );
+			}
+		}
+		
+		drawObjects( gl );
+	}
+	
+	public void drawObjects( GL2ES2 gl )
+	{
 		for( JOGLObject object : objects )
 		{
 			object.draw( gl , m , n , v , p );
@@ -247,5 +259,15 @@ public class BasicJOGLScene implements GLEventListener
 	public PickXform pickXform( )
 	{
 		return pickXform;
+	}
+	
+	public int getWidth( )
+	{
+		return width;
+	}
+	
+	public int getHeight( )
+	{
+		return height;
 	}
 }

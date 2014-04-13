@@ -7,7 +7,9 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import org.andork.frf.SurveyTableModel.Row;
+import org.andork.frf.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.snakeyaml.YamlObject;
+import org.andork.swing.FromEDT;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.SubtaskStreamBimapper;
 
@@ -19,11 +21,21 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 	}
 	
 	@Override
-	public void write( SurveyTableModel model , OutputStream out ) throws Exception
+	public void write( final SurveyTableModel model , OutputStream out ) throws Exception
 	{
+		SurveyTableModel copy = new FromEDT<SurveyTableModel>( )
+		{
+			@Override
+			public SurveyTableModel run( ) throws Throwable
+			{
+				SurveyTableModelCopier copier = new  SurveyTableModelCopier( );
+				return copier.copy( model );
+			}
+		}.result( );
+
 		PrintStream p = null;
 		
-		subtask( ).setTotal( model.getRowCount( ) );
+		subtask( ).setTotal( copy.getRowCount( ) );
 		subtask( ).setCompleted( 0 );
 		subtask( ).setIndeterminate( false );
 		
@@ -31,9 +43,9 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 		{
 			p = new PrintStream( out );
 			
-			for( int ri = 0 ; ri < model.getRowCount( ) ; ri++ )
+			for( int ri = 0 ; ri < copy.getRowCount( ) ; ri++ )
 			{
-				YamlObject<Row> row = model.getRow( ri );
+				YamlObject<Row> row = copy.getRow( ri );
 				
 				for( int ci = 0 ; ci < Row.shot.getIndex( ) ; ci++ )
 				{

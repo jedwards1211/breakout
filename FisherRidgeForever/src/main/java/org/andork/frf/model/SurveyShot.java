@@ -272,7 +272,6 @@ public class SurveyShot
 			SurveyShot shot = heap.poll( ).shot;
 			if( visited.add( shot.from ) )
 			{
-				System.out.println( "Calculating " + shot.from + " " + System.identityHashCode( shot.from ) );
 				try
 				{
 					shot.computeFrom( );
@@ -285,7 +284,6 @@ public class SurveyShot
 			}
 			if( visited.add( shot.to ) )
 			{
-				System.out.println( "Calculating " + shot.to + " " + System.identityHashCode( shot.to ) );
 				try
 				{
 					shot.computeTo( );

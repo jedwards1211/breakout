@@ -270,5 +270,15 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		{
 			return new SurveyTableModel( );
 		}
+		
+		public SurveyTableModel copy( SurveyTableModel src )
+		{
+			SurveyTableModel dest = createEmptyCopy( src );
+			for( int row = 0 ; row < src.getRowCount( ) ; row++ )
+			{
+				copyRow( src , row , dest );
+			}
+			return dest;
+		}
 	}
 }

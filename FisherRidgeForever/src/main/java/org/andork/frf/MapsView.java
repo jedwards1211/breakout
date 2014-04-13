@@ -13,6 +13,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -23,6 +24,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import javax.imageio.ImageIO;
+import javax.media.opengl.GL2ES2;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
@@ -63,6 +66,9 @@ import org.andork.frf.model.SurveyStation;
 import org.andork.frf.model.WeightedAverageTiltAxisInferrer;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.BasicJOGLScene;
+import org.andork.jogl.JOGLScreenCapture;
+import org.andork.jogl.JOGLTiledScreenCapture;
+import org.andork.jogl.JOGLTiledScreenCapture.Fit;
 import org.andork.jogl.awt.BasicJOGLSetup;
 import org.andork.jogl.awt.anim.RandomOrbit;
 import org.andork.jogl.awt.anim.SinusoidalTranslation;
@@ -662,6 +668,17 @@ public class MapsView extends BasicJOGLSetup
 			public void tableChanged( TableModelEvent e )
 			{
 				surveyPersister.saveLater( surveyDrawer.table( ).getModel( ) );
+			}
+		} );
+		
+		settingsDrawer.getExportImageButton( ).addActionListener( new ActionListener( )
+		{
+			public void actionPerformed( ActionEvent e )
+			{
+				// scene.doLater( new ScreenshotHandler( scene ) );
+				scene.doLater( new HiResScreenshotHandler( scene ,
+						new int[ ] { 500 , 500 , 500 } , new int[ ] { 500 , 500 , 500 } , Fit.BOTH ) );
+				canvas.display( );
 			}
 		} );
 	}
@@ -1342,6 +1359,74 @@ public class MapsView extends BasicJOGLSetup
 				}
 			};
 			return task;
+		}
+	}
+	
+	private class ScreenshotHandler extends JOGLScreenCapture
+	{
+		public ScreenshotHandler( BasicJOGLScene scene )
+		{
+			super( scene );
+			// TODO Auto-generated constructor stub
+		}
+		
+		@Override
+		public void run( GL2ES2 gl )
+		{
+			super.run( gl );
+			
+			Task saveTask = new Task( "Saving screen capture..." )
+			{
+				@Override
+				protected void execute( ) throws Exception
+				{
+					BufferedImage image = getCaptureAsBufferedImage( );
+					try
+					{
+						ImageIO.write( image , "png" , new File( "capture.png" ) );
+					}
+					catch( Exception ex )
+					{
+						ex.printStackTrace( );
+					}
+				}
+			};
+			
+			saveTaskService.submit( saveTask );
+		}
+	}
+	
+	private class HiResScreenshotHandler extends JOGLTiledScreenCapture
+	{
+		
+		public HiResScreenshotHandler( BasicJOGLScene scene , int[ ] tileWidths , int[ ] tileHeights , Fit fit )
+		{
+			super( scene , tileWidths , tileHeights , fit );
+		}
+		
+		@Override
+		public void run( GL2ES2 gl )
+		{
+			super.run( gl );
+			
+			Task saveTask = new Task( "Saving screen capture..." )
+			{
+				@Override
+				protected void execute( ) throws Exception
+				{
+					BufferedImage image = getCapturedImage( );
+					try
+					{
+						ImageIO.write( image , "png" , new File( "capture.png" ) );
+					}
+					catch( Exception ex )
+					{
+						ex.printStackTrace( );
+					}
+				}
+			};
+			
+			saveTaskService.submit( saveTask );
 		}
 	}
 }

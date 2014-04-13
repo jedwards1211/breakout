@@ -50,6 +50,7 @@ public class SettingsDrawer extends Drawer
 	JButton								fitViewToSelectedButton;
 	JButton								orbitToPlanButton;
 	JButton								debugButton;
+	JButton								exportImageButton;
 	
 	DefaultSelector<FilterType>			filterTypeSelector;
 	
@@ -127,6 +128,8 @@ public class SettingsDrawer extends Drawer
 		filterTypeSelector = new DefaultSelector<FilterType>( );
 		filterTypeSelector.setAvailableValues( Arrays.asList( FilterType.values( ) ) );
 		
+		exportImageButton = new JButton( "Export Image" );
+		
 		debugButton = new JButton( "Debug" );
 	}
 	
@@ -152,6 +155,7 @@ public class SettingsDrawer extends Drawer
 		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
 		w.put( highlightRangeLabel ).belowLast( ).west( ).insets( 13 , 3 , 3 , 3 );
 		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
+		w.put( exportImageButton ).belowLast( ).fillx( );
 		JLabel filterTypeLabel = new JLabel( "Filter type:" );
 		w.put( filterTypeLabel ).belowLast( ).west( ).insets( 43 , 3 , 3 , 3 );
 		w.put( filterTypeSelector.getComboBox( ) ).belowLast( ).fillx( );
@@ -271,4 +275,10 @@ public class SettingsDrawer extends Drawer
 	{
 		return resetDepthAxisTiltButton;
 	}
+	
+	public JButton getExportImageButton( )
+	{
+		return exportImageButton;
+	}
+	
 }
