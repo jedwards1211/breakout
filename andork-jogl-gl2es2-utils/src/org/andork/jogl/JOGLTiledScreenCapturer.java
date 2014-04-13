@@ -19,9 +19,9 @@ import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
 
-public class JOGLTiledScreenCapture implements JOGLRunnable
+public class JOGLTiledScreenCapturer implements JOGLRunnable
 {
-	public JOGLTiledScreenCapture( BasicJOGLScene scene , int[ ] tileWidths , int[ ] tileHeights , Fit fit )
+	public JOGLTiledScreenCapturer( BasicJOGLScene scene , int[ ] tileWidths , int[ ] tileHeights , Fit fit )
 	{
 		super( );
 		this.scene = scene;

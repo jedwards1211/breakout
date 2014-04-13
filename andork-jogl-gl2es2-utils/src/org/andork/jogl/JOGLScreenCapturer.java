@@ -17,9 +17,9 @@ import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
 
-public class JOGLScreenCapture implements JOGLRunnable
+public class JOGLScreenCapturer implements JOGLRunnable
 {
-	public JOGLScreenCapture( BasicJOGLScene scene )
+	public JOGLScreenCapturer( BasicJOGLScene scene )
 	{
 		super( );
 		this.scene = scene;

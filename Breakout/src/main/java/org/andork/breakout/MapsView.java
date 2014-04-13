@@ -66,9 +66,9 @@ import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.BasicJOGLScene;
-import org.andork.jogl.JOGLScreenCapture;
-import org.andork.jogl.JOGLTiledScreenCapture;
-import org.andork.jogl.JOGLTiledScreenCapture.Fit;
+import org.andork.jogl.JOGLScreenCapturer;
+import org.andork.jogl.JOGLTiledScreenCapturer;
+import org.andork.jogl.JOGLTiledScreenCapturer.Fit;
 import org.andork.jogl.awt.BasicJOGLSetup;
 import org.andork.jogl.awt.anim.RandomOrbit;
 import org.andork.jogl.awt.anim.SinusoidalTranslation;
@@ -1362,7 +1362,7 @@ public class MapsView extends BasicJOGLSetup
 		}
 	}
 	
-	private class ScreenshotHandler extends JOGLScreenCapture
+	private class ScreenshotHandler extends JOGLScreenCapturer
 	{
 		public ScreenshotHandler( BasicJOGLScene scene )
 		{
@@ -1395,7 +1395,7 @@ public class MapsView extends BasicJOGLSetup
 		}
 	}
 	
-	private class HiResScreenshotHandler extends JOGLTiledScreenCapture
+	private class HiResScreenshotHandler extends JOGLTiledScreenCapturer
 	{
 		
 		public HiResScreenshotHandler( BasicJOGLScene scene , int[ ] tileWidths , int[ ] tileHeights , Fit fit )
