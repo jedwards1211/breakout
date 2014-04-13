@@ -3194,6 +3194,17 @@ public class Vecmath
 		return result;
 	}
 	
+	public static boolean hasNaNsOrInfinites( double[ ] doubles )
+	{
+		for( double d : doubles )
+		{
+			if( Double.isNaN( d ) || Double.isInfinite( d ) )
+			{
+				return true;
+			}
+		}
+		return false;
+	}	
 	public static boolean hasNaNsOrInfinites( float[ ] floats )
 	{
 		for( float f : floats )

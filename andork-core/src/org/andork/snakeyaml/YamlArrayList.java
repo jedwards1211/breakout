@@ -30,4 +30,21 @@ public class YamlArrayList<E> extends YamlList<E>
 		fromYaml( array , list );
 		return list;
 	}
+	
+	public YamlArrayList<E> deepClone( )
+	{
+		YamlArrayList<E> clone = newInstance( format );
+		for( E elem : collection )
+		{
+			if( elem instanceof YamlElement )
+			{
+				add( ( E ) ( ( YamlElement ) elem ).deepClone( ) );
+			}
+			else
+			{
+				add( elem );
+			}
+		}
+		return clone;
+	}
 }

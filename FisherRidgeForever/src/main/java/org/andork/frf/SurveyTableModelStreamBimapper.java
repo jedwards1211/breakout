@@ -7,17 +7,25 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import org.andork.frf.SurveyTableModel.Row;
-import org.andork.func.StreamBimapper;
 import org.andork.snakeyaml.YamlObject;
+import org.andork.swing.async.Subtask;
+import org.andork.swing.async.SubtaskStreamBimapper;
 
-public class SurveyTableModelStreamBimapper implements StreamBimapper<SurveyTableModel>
+public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<SurveyTableModel>
 {
-	public static final SurveyTableModelStreamBimapper	instance	= new SurveyTableModelStreamBimapper( );
+	public SurveyTableModelStreamBimapper( Subtask subtask )
+	{
+		super( subtask );
+	}
 	
 	@Override
 	public void write( SurveyTableModel model , OutputStream out ) throws Exception
 	{
 		PrintStream p = null;
+		
+		subtask( ).setTotal( model.getRowCount( ) );
+		subtask( ).setCompleted( 0 );
+		subtask( ).setIndeterminate( false );
 		
 		try
 		{
@@ -39,10 +47,14 @@ public class SurveyTableModelStreamBimapper implements StreamBimapper<SurveyTabl
 					}
 				}
 				p.println( );
+				
+				subtask( ).setCompleted( ri );
 			}
 		}
 		finally
 		{
+			subtask( ).end( );
+
 			if( p != null )
 			{
 				try
@@ -60,6 +72,8 @@ public class SurveyTableModelStreamBimapper implements StreamBimapper<SurveyTabl
 	@Override
 	public SurveyTableModel read( InputStream in ) throws Exception
 	{
+		subtask( ).setIndeterminate( true );
+
 		BufferedReader reader = null;
 		try
 		{
@@ -83,6 +97,8 @@ public class SurveyTableModelStreamBimapper implements StreamBimapper<SurveyTabl
 		}
 		finally
 		{
+			subtask( ).end( );
+
 			if( reader != null )
 			{
 				try

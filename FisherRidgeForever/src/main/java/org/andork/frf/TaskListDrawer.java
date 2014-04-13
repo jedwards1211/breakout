@@ -3,6 +3,8 @@ package org.andork.frf;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JScrollPane;
 
@@ -16,7 +18,7 @@ import org.andork.swing.async.TaskService;
 @SuppressWarnings( "serial" )
 public class TaskListDrawer extends Drawer
 {
-	TaskService				taskService;
+	final Set<TaskService>	taskServices			= new HashSet<TaskService>( );
 	TaskList				taskList;
 	JScrollPane				taskListScrollPane;
 	
@@ -24,7 +26,7 @@ public class TaskListDrawer extends Drawer
 	
 	public TaskListDrawer( )
 	{
-		taskList = new TaskList( taskService );
+		taskList = new TaskList( );
 		taskListScrollPane = new JScrollPane( taskList );
 		taskListScrollPane.setPreferredSize( new Dimension( 400 , 100 ) );
 		
@@ -37,37 +39,35 @@ public class TaskListDrawer extends Drawer
 		pinButtonDelegate( ).side( Side.BOTTOM );
 	}
 	
-	public TaskListDrawer( TaskService taskService )
+	public void addTaskService( TaskService taskService )
 	{
-		this( );
-		setTaskService( taskService );
+		if( taskServices.add( taskService ) )
+		{
+			taskList.addService( taskService );
+			taskService.changeSupport( ).addPropertyChangeListener( spinnerButtonController );
+		}
 	}
 	
-	public void setTaskService( TaskService taskService )
+	public void removeTaskService( TaskService taskService )
 	{
-		if( this.taskService != taskService )
+		if( taskServices.add( taskService ) )
 		{
-			if( this.taskService != null )
-			{
-				this.taskService.changeSupport( ).removePropertyChangeListener( spinnerButtonController );
-			}
-			
-			this.taskService = taskService;
-			taskList.setService( taskService );
-			
-			if( taskService != null )
-			{
-				taskService.changeSupport( ).addPropertyChangeListener( spinnerButtonController );
-			}
+			taskList.removeService( taskService );
+			taskService.changeSupport( ).removePropertyChangeListener( spinnerButtonController );
 		}
 	}
 	
 	private class SpinnerButtonController extends HierarchicalBasicPropertyChangeAdapter
 	{
 		@Override
-		public void childrenChanged( Object source , ChangeType changeType , Object... children )
+		public void childrenChanged( Object source , ChangeType changeType , Object ... children )
 		{
-			( ( SpinnerButtonUI ) pinButton( ).getUI( ) ).setSpinning( taskService.hasTasks( ) );
+			boolean hasTasks = false;
+			for( TaskService service : taskServices )
+			{
+				hasTasks |= service.hasTasks( );
+			}
+			( ( SpinnerButtonUI ) pinButton( ).getUI( ) ).setSpinning( hasTasks );
 		}
 	}
 }

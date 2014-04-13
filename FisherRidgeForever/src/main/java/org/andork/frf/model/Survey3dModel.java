@@ -69,6 +69,7 @@ import org.andork.spatial.RfStarTree;
 import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
+import org.andork.swing.async.Subtask;
 import org.andork.swing.async.Task;
 
 import com.andork.plot.LinearAxisConversion;
@@ -157,10 +158,6 @@ public class Survey3dModel
 			{
 				for( int x = 0 ; x < texWidth ; x++ )
 				{
-					// if( image.getRGB( x , y ) != 0 )
-					// {
-					// System.out.println( "TEST" + image.getRGB( x , y ) );
-					// }
 					int rgb = image.getRGB( x , y );
 					byte a = ( byte ) ( ( rgb >> 24 ) & 0xff );
 					byte r = ( byte ) ( ( rgb >> 16 ) & 0xff );
@@ -170,7 +167,6 @@ public class Survey3dModel
 					texBufferHelper.putBytes( g );
 					texBufferHelper.putBytes( b );
 					texBufferHelper.putBytes( a );
-					// texBufferHelper.put( rgb );
 				}
 			}
 			
@@ -216,32 +212,6 @@ public class Survey3dModel
 			fillObj.transpose( false );
 			fillObj.add( new JOGLDepthModifier( ) );
 			fillObj.normalMatrixName( "n" );
-			
-			PositionVertexShadelet posShadelet = new PositionVertexShadelet( );
-			NormalVertexShadelet normShadelet = new NormalVertexShadelet( );
-			AxisParamShadelet axisShadelet = new AxisParamShadelet( );
-			GradientShadelet axisGradShadelet = new GradientShadelet( );
-			DistParamShadelet distShadelet = new DistParamShadelet( );
-			GradientShadelet distGradShadelet = new GradientShadelet( );
-			GlowShadelet glowShadelet = new GlowShadelet( );
-			SimpleLightingShadelet lightShadelet = new SimpleLightingShadelet( );
-			IndexedHighlightShadelet highlightShadelet = new IndexedHighlightShadelet( );
-			
-			axisGradShadelet.param( axisShadelet.out( ) );
-			
-			distGradShadelet.loColor( "gl_FragColor" ).hiColor( "$loColor * 0.3" )
-					.param( distShadelet.out( ) ).loColorDeclaration( null ).hiColorDeclaration( null )
-					.loValue( "nearDist" ).hiValue( "farDist" );
-			
-			glowShadelet.color( "vec4(1.0, 1.0, 0.0, 1.0)" );
-			glowShadelet.colorDeclaration( null );
-			
-			lightShadelet.color( "gl_FragColor" ).colorDeclaration( null ).ambientAmt( "0.3" );
-			
-			highlightShadelet.colorCount( 3 );
-			
-			CombinedShadelet combShadelet = new CombinedShadelet( posShadelet , normShadelet ,
-					axisShadelet , axisGradShadelet , distShadelet , distGradShadelet , glowShadelet , lightShadelet , highlightShadelet );
 			
 			String vertShader = "uniform mat4 m;" +
 					"uniform mat4 v;" +
@@ -387,14 +357,6 @@ public class Survey3dModel
 			lineObj.add( new JOGLDepthModifier( ) );
 			lineObj.normalMatrixName( "n" );
 			
-			DepthOffsetShadelet depthOffsShadelet = new DepthOffsetShadelet( ).offset( 0.1f );
-			
-			combShadelet = new CombinedShadelet( posShadelet , depthOffsShadelet , normShadelet ,
-					axisShadelet , axisGradShadelet , distShadelet , distGradShadelet , glowShadelet , lightShadelet , highlightShadelet );
-			
-			System.out.println( Shadelet.prettyPrint( combShadelet.createVertexShaderCode( ) ) );
-			System.out.println( Shadelet.prettyPrint( combShadelet.createFragmentShaderCode( ) ) );
-			
 			vertShader = "uniform mat4 m;" +
 					"uniform mat4 p;" +
 					"uniform mat4 v;" +
@@ -469,18 +431,18 @@ public class Survey3dModel
 			lineObj.vertexShaderCode( vertShader );
 			lineObj.fragmentShaderCode( fragShader );
 			
-			lineObj.add( lineObj.new Attribute3fv( ).name( posShadelet.pos( ) ) );
-			lineObj.add( lineObj.new Attribute3fv( ).name( normShadelet.norm( ) ) );
-			lineObj.add( lineObj.new Attribute2fv( ).name( glowShadelet.vertParam( ) ).bufferIndex( 1 ) );
-			lineObj.add( lineObj.new Attribute1fv( ).name( highlightShadelet.vertIndexParam( ) ).bufferIndex( 1 ) );
+			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
+			lineObj.add( lineObj.new Attribute3fv( ).name( "a_norm" ) );
+			lineObj.add( lineObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
+			lineObj.add( lineObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
 			// lineObj.add( new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
 			// lineObj.add( new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
 			// lineObj.add( new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
 			// lineObj.add( new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
-			lineObj.add( lineLoParam = new Uniform1fv( ).name( axisGradShadelet.loValue( ) ).value( 0 ) );
-			lineObj.add( lineHiParam = new Uniform1fv( ).name( axisGradShadelet.hiValue( ) ).value( 1000 ) );
-			lineObj.add( lineNearDist = new Uniform1fv( ).name( distGradShadelet.loValue( ) ).value( 0 ) );
-			lineObj.add( lineFarDist = new Uniform1fv( ).name( distGradShadelet.hiValue( ) ).value( 10000 ) );
+			lineObj.add( lineLoParam = new Uniform1fv( ).name( "loValue" ).value( 0 ) );
+			lineObj.add( lineHiParam = new Uniform1fv( ).name( "hiValue" ).value( 1000 ) );
+			lineObj.add( lineNearDist = new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
+			lineObj.add( lineFarDist = new Uniform1fv( ).name( "farDist" ).value( 10000 ) );
 			
 			lineObj.add( new JOGLModifier( )
 			{
@@ -913,46 +875,73 @@ public class Survey3dModel
 	
 	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , int segmentLevel , Task task )
 	{
+		task.setTotal( 1000 );
+		
+		Subtask rootSubtask = null;
+		int renderProportion = 5;
+		
+		if( task != null )
+		{
+			rootSubtask = new Subtask( task );
+		}
+		else
+		{
+			rootSubtask = Subtask.dummySubtask( );
+		}
+		rootSubtask.setStatus( "Updating view" );
+		rootSubtask.setTotal( renderProportion + 5 );
+		
 		List<Shot> shots = new ArrayList<Shot>( );
 		for( int i = 0 ; i < originalShots.size( ) ; i++ )
 		{
 			shots.add( new Shot( i ) );
 		}
-		if( task != null && task.isCanceling( ) )
+		if( rootSubtask.isCanceling( ) )
 		{
 			return null;
 		}
+		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + 1 );
 		
-		ByteBuffer geomBuffer = createInitialGeometry( originalShots , task );
-		if( task != null && task.isCanceling( ) )
+		ByteBuffer geomBuffer = createInitialGeometry( originalShots , rootSubtask.beginSubtask( 1 ) );
+		if( rootSubtask.isCanceling( ) )
 		{
 			return null;
 		}
+		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + 1 );
 		
-		RfStarTree<Shot> tree = createTree( shots , geomBuffer , M , m , p , task );
-		if( task != null && task.isCanceling( ) )
+		RfStarTree<Shot> tree = createTree( shots , geomBuffer , M , m , p , rootSubtask.beginSubtask( 1 ) );
+		if( rootSubtask.isCanceling( ) )
 		{
 			return null;
 		}
+		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + 1 );
 		
-		Set<Segment> segments = createSegments( tree , segmentLevel , task );
-		if( task != null && task.isCanceling( ) )
+		Set<Segment> segments = createSegments( tree , segmentLevel , rootSubtask.beginSubtask( 1 ) );
+		if( rootSubtask.isCanceling( ) )
 		{
 			return null;
 		}
+		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + 1 );
+		
+		Subtask renderSubtask = rootSubtask.beginSubtask( renderProportion );
+		renderSubtask.setStatus( "sending data to graphics card" );
+		renderSubtask.setTotal( segments.size( ) );
 		
 		for( Segment segment : segments )
 		{
 			segment.populateData( geomBuffer );
 			segment.renderData( );
-			if( task != null && task.isCanceling( ) )
+			if( renderSubtask.isCanceling( ) )
 			{
 				return null;
 			}
+			renderSubtask.setCompleted( renderSubtask.getCompleted( ) + 1 );
 		}
+		renderSubtask.end( );
+		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + renderProportion );
 		
 		Survey3dModel model = new Survey3dModel( originalShots , shots , tree , segments );
-		if( task != null && task.isCanceling( ) )
+		if( rootSubtask.isCanceling( ) )
 		{
 			return null;
 		}
@@ -1005,12 +994,15 @@ public class Survey3dModel
 		return buffer;
 	}
 	
-	private static Set<Segment> createSegments( RfStarTree<Shot> tree , int segmentLevel , Task task )
+	private static Set<Segment> createSegments( RfStarTree<Shot> tree , int segmentLevel , Subtask task )
 	{
+		task.setStatus( "creating render segments" );
+		task.setIndeterminate( true );
 		Set<Segment> result = new HashSet<Segment>( );
 		
 		createSegments( tree.getRoot( ) , segmentLevel , result );
 		
+		task.end( );
 		return result;
 	}
 	
@@ -1057,11 +1049,14 @@ public class Survey3dModel
 		}
 	}
 	
-	private static RfStarTree<Shot> createTree( List<Shot> shots , ByteBuffer geomBuffer , int M , int m , int p , Task task )
+	private static RfStarTree<Shot> createTree( List<Shot> shots , ByteBuffer geomBuffer , int M , int m , int p , Subtask task )
 	{
 		RfStarTree<Shot> tree = new RfStarTree<Shot>( 3 , M , m , p );
 		
 		int numShots = geomBuffer.capacity( ) / GEOM_BPS;
+		
+		task.setStatus( "creating spatial index" );
+		task.setTotal( numShots );
 		
 		for( int s = 0 ; s < numShots ; s++ )
 		{
@@ -1088,17 +1083,22 @@ public class Survey3dModel
 			
 			tree.insert( leaf );
 			
-			if( ( s % 100 ) == 0 && task != null && task.isCanceling( ) )
+			if( ( s % 100 ) == 0 && task.isCanceling( ) )
 			{
 				return null;
 			}
+			task.setCompleted( s );
 		}
 		
+		task.end( );
 		return tree;
 	}
 	
-	private static ByteBuffer createInitialGeometry( List<SurveyShot> originalShots , Task task )
+	private static ByteBuffer createInitialGeometry( List<SurveyShot> originalShots , Subtask task )
 	{
+		task.setStatus( "creating geometry" );
+		task.setTotal( originalShots.size( ) );
+		
 		final double[ ] fromLoc = new double[ 3 ];
 		final double[ ] toLoc = new double[ 3 ];
 		final double[ ] toToLoc = new double[ 3 ];
@@ -1119,7 +1119,7 @@ public class Survey3dModel
 			
 			if( Vecmath.distance3( shot.from.position , shot.to.position ) > 200 )
 			{
-				System.out.println( shot.from.name + ": " + Arrays.toString( shot.from.position ) + " - " + shot.to.name + ": " + Arrays.toString( shot.to.position ) );
+				System.err.println( shot.from.name + ": " + Arrays.toString( shot.from.position ) + " - " + shot.to.name + ": " + Arrays.toString( shot.to.position ) );
 			}
 			
 			leftAtFrom[ 0 ] = shot.from.position[ 2 ] - shot.to.position[ 2 ];
@@ -1154,6 +1154,8 @@ public class Survey3dModel
 			
 			SurveyShot nextNonVertical = nextNonVerticalShot( shot );
 			
+			boolean foundNext = false;
+			
 			if( nextNonVertical != null )
 			{
 				double bestWidth = -1.0;
@@ -1184,33 +1186,32 @@ public class Survey3dModel
 					}
 				}
 				
-				if( bestShot == null )
+				if( bestShot != null )
 				{
-					System.err.println( shot.from.name );
+					foundNext = true;
+					for( int i = 0 ; i < 3 ; i++ )
+					{
+						geomHelper.putAsFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.left );
+					}
+					geomHelper.putAsFloats( leftAtTo );
+					for( int i = 0 ; i < 3 ; i++ )
+					{
+						geomHelper.putAsFloats( shot.to.position[ i ] - leftAtTo[ i ] * bestShot.right );
+					}
+					geomHelper.putAsFloats( -leftAtTo[ 0 ] , -leftAtTo[ 1 ] , -leftAtTo[ 2 ] );
+					for( int i = 0 ; i < 3 ; i++ )
+					{
+						geomHelper.putAsFloats( shot.to.position[ i ] + ( i == 1 ? bestShot.up : 0.0 ) );
+					}
+					geomHelper.putAsFloats( 0 , 1 , 0 );
+					for( int i = 0 ; i < 3 ; i++ )
+					{
+						geomHelper.putAsFloats( shot.to.position[ i ] - ( i == 1 ? bestShot.down : 0.0 ) );
+					}
+					geomHelper.putAsFloats( 0 , -1 , 0 );
 				}
-				
-				for( int i = 0 ; i < 3 ; i++ )
-				{
-					geomHelper.putAsFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.left );
-				}
-				geomHelper.putAsFloats( leftAtTo );
-				for( int i = 0 ; i < 3 ; i++ )
-				{
-					geomHelper.putAsFloats( shot.to.position[ i ] - leftAtTo[ i ] * bestShot.right );
-				}
-				geomHelper.putAsFloats( -leftAtTo[ 0 ] , -leftAtTo[ 1 ] , -leftAtTo[ 2 ] );
-				for( int i = 0 ; i < 3 ; i++ )
-				{
-					geomHelper.putAsFloats( shot.to.position[ i ] + ( i == 1 ? bestShot.up : 0.0 ) );
-				}
-				geomHelper.putAsFloats( 0 , 1 , 0 );
-				for( int i = 0 ; i < 3 ; i++ )
-				{
-					geomHelper.putAsFloats( shot.to.position[ i ] - ( i == 1 ? bestShot.down : 0.0 ) );
-				}
-				geomHelper.putAsFloats( 0 , -1 , 0 );
 			}
-			else
+			if( !foundNext )
 			{
 				geomHelper.putAsFloats( shot.to.position );
 				geomHelper.putAsFloats( leftAtFrom );
@@ -1222,12 +1223,17 @@ public class Survey3dModel
 				geomHelper.putAsFloats( 0 , -1 , 0 );
 			}
 			
-			if( ( count++ % 100 ) == 0 && task != null && task.isCanceling( ) )
+			if( ( count++ % 100 ) == 0 && task != null )
 			{
-				return null;
+				if( task.isCanceling( ) )
+				{
+					return null;
+				}
+				task.setCompleted( count );
 			}
 		}
 		
+		task.end( );
 		return geomHelper.toByteBuffer( );
 	}
 	

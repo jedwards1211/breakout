@@ -2,7 +2,13 @@ package org.andork.swing.async;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Set;
 
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
@@ -14,7 +20,7 @@ import org.andork.event.HierarchicalBasicPropertyChangeAdapter;
 @SuppressWarnings( "serial" )
 public class TaskList extends JPanel implements Scrollable
 {
-	TaskService						service;
+	final Set<TaskService>			services			= new HashSet<TaskService>( );
 	LinkedHashMap<Task, TaskPane>	taskMap				= CollectionUtils.newLinkedHashMap( );
 	
 	private ModelChangeHandler		modelChangeHandler	= new ModelChangeHandler( );
@@ -24,37 +30,27 @@ public class TaskList extends JPanel implements Scrollable
 		init( );
 	}
 	
-	public TaskList( TaskService service )
-	{
-		this( );
-		setService( service );
-	}
-	
 	protected void init( )
 	{
 		setLayout( new BoxLayout( this , BoxLayout.Y_AXIS ) );
 	}
 	
-	public void setService( TaskService service )
+	public void addService( TaskService service )
 	{
-		if( this.service != service )
+		if( services.add( service ) )
 		{
-			if( this.service != null )
-			{
-				this.service.changeSupport( ).removePropertyChangeListener( modelChangeHandler );
-			}
-			this.service = service;
-			if( service != null )
-			{
-				service.changeSupport( ).addPropertyChangeListener( modelChangeHandler );
-			}
+			service.changeSupport( ).addPropertyChangeListener( modelChangeHandler );
 			rebuild( );
 		}
 	}
 	
-	public TaskService getService( )
+	public void removeService( TaskService service )
 	{
-		return service;
+		if( services.remove( service ) )
+		{
+			service.changeSupport( ).removePropertyChangeListener( modelChangeHandler );
+			rebuild( );
+		}
 	}
 	
 	protected void rebuild( )
@@ -65,14 +61,28 @@ public class TaskList extends JPanel implements Scrollable
 		}
 		removeAll( );
 		
-		if( service != null )
+		List<Task> tasks = new ArrayList<Task>( );
+		
+		for( TaskService service : services )
 		{
-			for( Task task : service.getTasks( ) )
+			tasks.addAll( service.getTasks( ) );
+		}
+		
+		Collections.sort( tasks , new Comparator<Task>( )
+		{
+			@Override
+			public int compare( Task o1 , Task o2 )
 			{
-				TaskPane pane = new TaskPane( task );
-				taskMap.put( task , pane );
-				add( pane );
+				long l = o1.getCreationTimestamp( ) - o2.getCreationTimestamp( );
+				return l > 0 ? 1 : l == 0 ? 0 : -1;
 			}
+		} );
+		
+		for( Task task : tasks )
+		{
+			TaskPane pane = new TaskPane( task );
+			taskMap.put( task , pane );
+			add( pane );
 		}
 		
 		revalidate( );

@@ -4,8 +4,10 @@ import javax.swing.SwingUtilities;
 
 import org.andork.event.BasicPropertyChangeSupport;
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
+import org.andork.logging.Java17SimpleFormatter;
 import org.andork.model.HasChangeSupport;
 import org.andork.util.ArrayUtils;
+import org.andork.util.Java7;
 
 public abstract class Task implements HasChangeSupport
 {
@@ -18,6 +20,8 @@ public abstract class Task implements HasChangeSupport
 	{
 		NOT_SUBMITTED , WAITING , RUNNING , CANCELING , CANCELED , FINISHED , FAILED;
 	}
+	
+	private final long							creationTimestamp;
 	
 	private final Object						lock					= new Object( );
 	private State								state					= State.NOT_SUBMITTED;
@@ -35,13 +39,18 @@ public abstract class Task implements HasChangeSupport
 	
 	public Task( )
 	{
-		
+		creationTimestamp = System.nanoTime( );
 	}
 	
 	public Task( String status )
 	{
 		this( );
 		setStatus( status );
+	}
+	
+	public long getCreationTimestamp( )
+	{
+		return creationTimestamp;
 	}
 	
 	public HierarchicalBasicPropertyChangeSupport.External changeSupport( )
@@ -94,7 +103,7 @@ public abstract class Task implements HasChangeSupport
 		String oldValue = null;
 		synchronized( lock )
 		{
-			if( this.status != status )
+			if( !Java7.Objects.equals( this.status , status ) )
 			{
 				oldValue = this.status;
 				this.status = status;

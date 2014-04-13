@@ -11,7 +11,8 @@ public class TaskPaneTest
 	public static void main( String[ ] args ) throws Exception
 	{
 		SingleThreadedTaskService service = new SingleThreadedTaskService( );
-		TaskList taskList = new TaskList( service );
+		TaskList taskList = new TaskList( );
+		taskList.addService( service );
 		JScrollPane taskListScrollPane = new JScrollPane( taskList );
 		taskListScrollPane.setPreferredSize( new Dimension( 300 , 500 ) );
 		
@@ -30,6 +31,7 @@ public class TaskPaneTest
 	{
 		public TestTask( String status )
 		{
+			setIndeterminate( false );
 			setStatus( status );
 			setCompleted( 0 );
 			setTotal( 10 );

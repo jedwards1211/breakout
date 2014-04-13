@@ -15,4 +15,6 @@ public abstract class YamlElement implements HasChangeSupport
 	}
 	
 	public abstract Object toYaml( );
+	
+	public abstract YamlElement deepClone( );
 }

@@ -17,17 +17,15 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 import javax.media.opengl.awt.GLCanvas;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -40,19 +38,15 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 
-import org.andork.awt.AWTUtil;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
-import org.andork.awt.event.UIBindings;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
-import org.andork.awt.layout.DrawerLayoutDelegate;
 import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
-import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
 import org.andork.frf.SettingsDrawer.CameraView;
@@ -65,6 +59,7 @@ import org.andork.frf.model.Survey3dModel.Shot;
 import org.andork.frf.model.Survey3dModel.ShotPickContext;
 import org.andork.frf.model.Survey3dModel.ShotPickResult;
 import org.andork.frf.model.SurveyShot;
+import org.andork.frf.model.SurveyStation;
 import org.andork.frf.model.WeightedAverageTiltAxisInferrer;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.BasicJOGLScene;
@@ -75,8 +70,8 @@ import org.andork.jogl.awt.anim.SpringOrbit;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
+import org.andork.snakeyaml.EDTYamlObjectStringBimapper;
 import org.andork.snakeyaml.YamlObject;
-import org.andork.snakeyaml.YamlObjectStringBimapper;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
@@ -84,10 +79,15 @@ import org.andork.swing.DoSwing;
 import org.andork.swing.DoSwingR2;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.async.SingleThreadedTaskService;
+import org.andork.swing.async.Subtask;
+import org.andork.swing.async.SubtaskFilePersister;
+import org.andork.swing.async.SubtaskStreamBimapper;
+import org.andork.swing.async.SubtaskStreamBimapperFactory;
 import org.andork.swing.async.Task;
 import org.andork.swing.async.TaskService;
 import org.andork.swing.async.TaskServiceBatcher;
 import org.andork.swing.async.TaskServiceFilePersister;
+import org.andork.swing.async.TaskServiceSubtaskFilePersister;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.LayeredBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
@@ -112,7 +112,10 @@ public class MapsView extends BasicJOGLSetup
 {
 	DefaultNavigator									navigator;
 	
-	TaskService											taskService;
+	TaskService											rebuildTaskService;
+	TaskService											sortTaskService;
+	TaskService											saveTaskService;
+	
 	final double[ ]										fromLoc					= new double[ 3 ];
 	final double[ ]										toLoc					= new double[ 3 ];
 	final double[ ]										toToLoc					= new double[ 3 ];
@@ -166,13 +169,17 @@ public class MapsView extends BasicJOGLSetup
 	TaskServiceFilePersister<YamlObject<ProjectModel>>	projectPersister;
 	final Binder<YamlObject<ProjectModel>>				projectModelBinder		= new Binder<YamlObject<ProjectModel>>( );
 	
-	TaskServiceFilePersister<SurveyTableModel>			surveyPersister;
+	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
 	
 	final AnimationQueue								cameraAnimationQueue	= new AnimationQueue( );
 	
 	public MapsView( )
 	{
 		super( );
+		
+		saveTaskService = new SingleThreadedTaskService( );
+		rebuildTaskService = new SingleThreadedTaskService( );
+		sortTaskService = new SingleThreadedTaskService( );
 		
 		JLabel highlightLabel = new JLabel( "Highlight: " );
 		JLabel filterLabel = new JLabel( "Filter: " );
@@ -191,7 +198,7 @@ public class MapsView extends BasicJOGLSetup
 					}
 				};
 				
-				taskService.submit( task );
+				sortTaskService.submit( task );
 			}
 		};
 		
@@ -313,14 +320,16 @@ public class MapsView extends BasicJOGLSetup
 			}
 		} );
 		
-		taskService = new SingleThreadedTaskService( );
-		taskListDrawer = new TaskListDrawer( taskService );
+		taskListDrawer = new TaskListDrawer( );
+		taskListDrawer.addTaskService( rebuildTaskService );
+		taskListDrawer.addTaskService( sortTaskService );
+		taskListDrawer.addTaskService( saveTaskService );
 		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
 		
 		settingsDrawer = new SettingsDrawer( projectModelBinder );
 		settingsDrawer.addTo( layeredPane , 1 );
 		
-		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableChangeHandler( taskService ) );
+		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableChangeHandler( rebuildTaskService ) );
 		
 		layeredPane.add( plotPanel );
 		surveyDrawer.addTo( layeredPane , 5 );
@@ -555,8 +564,8 @@ public class MapsView extends BasicJOGLSetup
 		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
 		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
 		
-		rootPersister = new TaskServiceFilePersister<YamlObject<RootModel>>( taskService , "Saving settings..." ,
-				YamlObjectStringBimapper.newInstance( RootModel.instance ) , new File( new File( ".breakout" ) , "settings.yaml" ) );
+		rootPersister = new TaskServiceFilePersister<YamlObject<RootModel>>( saveTaskService , "Saving settings..." ,
+				EDTYamlObjectStringBimapper.newInstance( RootModel.instance ) , new File( new File( ".breakout" ) , "settings.yaml" ) );
 		YamlObject<RootModel> rootModel = null;
 		
 		try
@@ -579,8 +588,8 @@ public class MapsView extends BasicJOGLSetup
 		
 		setRootModel( rootModel );
 		
-		projectPersister = new TaskServiceFilePersister<YamlObject<ProjectModel>>( taskService , "Saving project..." ,
-				YamlObjectStringBimapper.newInstance( ProjectModel.instance ) , rootModel.get( RootModel.currentProjectFile ) );
+		projectPersister = new TaskServiceFilePersister<YamlObject<ProjectModel>>( saveTaskService , "Saving project..." ,
+				EDTYamlObjectStringBimapper.newInstance( ProjectModel.instance ) , rootModel.get( RootModel.currentProjectFile ) );
 		YamlObject<ProjectModel> projectModel = null;
 		
 		try
@@ -624,12 +633,19 @@ public class MapsView extends BasicJOGLSetup
 		}
 		setProjectModel( projectModel );
 		
-		surveyPersister = new TaskServiceFilePersister<SurveyTableModel>( taskService , "Saving survey..." ,
-				SurveyTableModelStreamBimapper.instance , projectModel.get( ProjectModel.surveyFile ) );
+		surveyPersister = new TaskServiceSubtaskFilePersister<SurveyTableModel>( saveTaskService , "Saving survey..." ,
+				new SubtaskStreamBimapperFactory<SurveyTableModel, SubtaskStreamBimapper<SurveyTableModel>>( )
+				{
+					@Override
+					public SubtaskStreamBimapper<SurveyTableModel> createSubtaskStreamBimapper( Subtask subtask )
+					{
+						return new SurveyTableModelStreamBimapper( subtask );
+					}
+				} , projectModel.get( ProjectModel.surveyFile ) );
 		
 		try
 		{
-			SurveyTableModel surveyModel = surveyPersister.load( );
+			SurveyTableModel surveyModel = surveyPersister.load( null );
 			if( surveyModel != null && surveyModel.getRowCount( ) > 0 )
 			{
 				surveyDrawer.table( ).getModel( ).copyRowsFrom( surveyModel , 0 , surveyModel.getRowCount( ) - 1 , 0 );
@@ -1237,19 +1253,38 @@ public class MapsView extends BasicJOGLSetup
 		@Override
 		public BatcherTask<TableModelEvent> createTask( final LinkedList<TableModelEvent> batch )
 		{
-			BatcherTask<TableModelEvent> task = new BatcherTask<TableModelEvent>( "Updating view: parsing data..." )
+			BatcherTask<TableModelEvent> task = new BatcherTask<TableModelEvent>( "Updating view" )
 			{
 				@Override
 				protected void execute( )
 				{
+					Subtask parsingSubtask = new Subtask( this );
+					parsingSubtask.setStatus( "parsing shot data" );
+					parsingSubtask.setIndeterminate( true );
+					
 					List<SurveyShot> shots = new DoSwingR2<List<SurveyShot>>( )
 					{
 						@Override
 						protected List<SurveyShot> doRun( )
 						{
-							return surveyDrawer.table( ).createShots( );
+							return surveyDrawer.table( ).getModel( ).createShots( );
 						}
 					}.result( );
+					
+					parsingSubtask.end( );
+					
+					if( !shots.isEmpty( ) )
+					{
+						Subtask calculatingSubtask = new Subtask( this );
+						calculatingSubtask.setStatus( "calculating" );
+						calculatingSubtask.setIndeterminate( true );
+						
+						SurveyStation first = shots.iterator( ).next( ).from;
+						Arrays.fill( first.position , 0.0 );
+						SurveyShot.computeConnected( first );
+						
+						calculatingSubtask.end( );
+					}
 					
 					updateModel( shots );
 				}

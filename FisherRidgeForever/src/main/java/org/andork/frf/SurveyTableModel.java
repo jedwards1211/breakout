@@ -1,19 +1,25 @@
 package org.andork.frf;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.frf.SurveyTableModel.Row;
 import org.andork.frf.model.SurveyShot;
+import org.andork.frf.model.SurveyStation;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlSpec;
+import org.andork.swing.async.Subtask;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.EasyTableModel;
 
 public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel.Row>>
 {
 	private Map<Integer, Integer>	shotIndexToRowMap	= CollectionUtils.newHashMap( );
-
+	
 	public SurveyTableModel( )
 	{
 		super( true );
@@ -153,6 +159,108 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 	{
 		Integer row = shotIndexToRowMap.get( shotIndex );
 		return row == null ? -1 : row;
+	}
+	
+	public List<SurveyShot> createShots( )
+	{
+		Map<String, SurveyStation> stations = new LinkedHashMap<String, SurveyStation>( );
+		Map<String, SurveyShot> shots = new LinkedHashMap<String, SurveyShot>( );
+		
+		for( int i = 0 ; i < getRowCount( ) ; i++ )
+		{
+			YamlObject<Row> row = getRow( i );
+			
+			try
+			{
+				Object fromName = row.get( Row.from );
+				Object toName = row.get( Row.to );
+				double dist = parse( row.get( Row.distance ) );
+				double fsAzm = parse( row.get( Row.fsAzm ) );
+				double bsAzm = parse( row.get( Row.bsAzm ) );
+				double fsInc = parse( row.get( Row.fsInc ) );
+				double bsInc = parse( row.get( Row.bsInc ) );
+				
+				if( fromName == null || toName == null || Double.isNaN( dist ) ||
+						( Double.isNaN( fsInc ) && Double.isNaN( bsInc ) ) )
+				{
+					continue;
+				}
+				
+				double left = parse( row.get( Row.left ) );
+				double right = parse( row.get( Row.right ) );
+				double up = parse( row.get( Row.up ) );
+				double down = parse( row.get( Row.down ) );
+				
+				SurveyStation from = stations.get( fromName.toString( ) );
+				if( from == null )
+				{
+					from = new SurveyStation( );
+					Arrays.fill( from.position , Double.NaN );
+					from.name = fromName.toString( );
+					stations.put( from.name , from );
+				}
+				
+				SurveyStation to = stations.get( toName.toString( ) );
+				if( to == null )
+				{
+					to = new SurveyStation( );
+					to.name = toName.toString( );
+					stations.put( to.name , to );
+					
+					Arrays.fill( to.position , Double.NaN );
+					// to.position[ 0 ] = from.position[ 0 ] + Math.sin( azm ) * Math.cos( inc ) * dist;
+					// to.position[ 1 ] = from.position[ 1 ] + Math.sin( inc ) * dist;
+					// to.position[ 2 ] = from.position[ 2 ] - Math.cos( azm ) * Math.cos( inc ) * dist;
+				}
+				
+				SurveyShot shot = new SurveyShot( );
+				shot.index = shots.size( );
+				shot.from = from;
+				shot.to = to;
+				shot.dist = dist;
+				shot.fsAzm = fsAzm;
+				shot.bsAzm = bsAzm;
+				shot.fsInc = fsInc;
+				shot.bsInc = bsInc;
+				shot.left = Double.isNaN( left ) ? 0.0 : left;
+				shot.right = Double.isNaN( right ) ? 0.0 : right;
+				shot.up = Double.isNaN( up ) ? 0.0 : up;
+				shot.down = Double.isNaN( down ) ? 0.0 : down;
+				
+				row.set( Row.shot , shot );
+				shots.put( shot.from.name + " - " + shot.to.name , shot );
+			}
+			catch( Exception ex )
+			{
+				continue;
+			}
+		}
+		
+		for( SurveyShot shot : shots.values( ) )
+		{
+			shot.from.frontsights.add( shot );
+			shot.to.backsights.add( shot );
+		}
+		
+		rebuildShotIndexToRowMap( );
+		
+		return new ArrayList<SurveyShot>( shots.values( ) );
+	}
+	
+	private static double parse( Object o )
+	{
+		if( o == null )
+		{
+			return Double.NaN;
+		}
+		try
+		{
+			return Double.valueOf( o.toString( ) );
+		}
+		catch( Exception ex )
+		{
+			return Double.NaN;
+		}
 	}
 	
 	public static class SurveyTableModelCopier extends AbstractTableModelCopier<SurveyTableModel>

@@ -137,7 +137,7 @@ public final class YamlObject<S extends YamlSpec<S>> extends YamlElement impleme
 		{
 			if( attributes[ i ] != NOT_PRESENT )
 			{
-				result.put( spec.attributeAt( i ).getName( ) , ((Attribute) spec.attributeAt( i )).format.map( attributes[ i ] ) );
+				result.put( spec.attributeAt( i ).getName( ) , ( ( Attribute ) spec.attributeAt( i ) ).format.map( attributes[ i ] ) );
 			}
 		}
 		return result;
@@ -158,5 +158,22 @@ public final class YamlObject<S extends YamlSpec<S>> extends YamlElement impleme
 	public void set( Object key , Object newValue )
 	{
 		set( ( Attribute ) key , newValue );
+	}
+	
+	public YamlObject<S> deepClone( )
+	{
+		YamlObject<S> result = spec.newObject( );
+		for( int i = 0 ; i < attributes.length ; i++ )
+		{
+			if( attributes[ i ] instanceof YamlElement )
+			{
+				result.attributes[ i ] = ( ( YamlElement ) attributes[ i ] ).deepClone( );
+			}
+			else
+			{
+				result.attributes[ i ] = attributes[ i ];
+			}
+		}
+		return result;
 	}
 }
