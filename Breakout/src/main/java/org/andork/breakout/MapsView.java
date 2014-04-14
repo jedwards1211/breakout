@@ -437,7 +437,7 @@ public class MapsView extends BasicJOGLSetup
 		
 		projectModelBinder.bind( new BindingAdapter( ProjectModel.cameraView )
 		{
-			public void modelToView( )
+			public void modelToViewImpl( )
 			{
 				org.andork.model.Model model = getModel( );
 				if( model != null )
@@ -450,7 +450,7 @@ public class MapsView extends BasicJOGLSetup
 		projectModelBinder.bind( new BindingAdapter( ProjectModel.mouseSensitivity )
 		{
 			@Override
-			public void modelToView( )
+			public void modelToViewImpl( )
 			{
 				org.andork.model.Model model = getModel( );
 				if( model != null )
@@ -465,7 +465,7 @@ public class MapsView extends BasicJOGLSetup
 		projectModelBinder.bind( new BindingAdapter( ProjectModel.distRange )
 		{
 			@Override
-			public void modelToView( )
+			public void modelToViewImpl( )
 			{
 				org.andork.model.Model model = getModel( );
 				if( model != null && model3d != null )
@@ -483,7 +483,7 @@ public class MapsView extends BasicJOGLSetup
 		projectModelBinder.bind( new BindingAdapter( ProjectModel.paramRange )
 		{
 			@Override
-			public void modelToView( )
+			public void modelToViewImpl( )
 			{
 				org.andork.model.Model model = getModel( );
 				if( model != null && model3d != null )

@@ -10,6 +10,11 @@ public class IconScaler
 {
 	public static ImageIcon rescale( Icon icon , int maxWidth , int maxHeight )
 	{
+		if( icon == null )
+		{
+			return null;
+		}
+		
 		BufferedImage b = new BufferedImage( icon.getIconWidth( ) , icon.getIconHeight( ) , BufferedImage.TYPE_INT_ARGB );
 		icon.paintIcon( null , b.getGraphics( ) , 0 , 0 );
 		

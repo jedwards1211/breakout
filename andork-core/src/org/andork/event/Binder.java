@@ -234,6 +234,7 @@ public class Binder<M extends Model>
 	
 	public static abstract class Binding
 	{
+		boolean				updating;
 		public final Object	property;
 		private Binder<?>	binder;
 		
@@ -252,9 +253,43 @@ public class Binder<M extends Model>
 			return property;
 		}
 		
-		public abstract void modelToView( );
+		protected abstract void modelToViewImpl( );
 		
-		public abstract void viewToModel( );
+		protected abstract void viewToModelImpl( );
+		
+		public final void modelToView( )
+		{
+			if( updating )
+			{
+				return;
+			}
+			updating = true;
+			try
+			{
+				modelToViewImpl( );
+			}
+			finally
+			{
+				updating = false;
+			}
+		}
+		
+		public final void viewToModel( )
+		{
+			if( updating )
+			{
+				return;
+			}
+			updating = true;
+			try
+			{
+				viewToModelImpl( );
+			}
+			finally
+			{
+				updating = false;
+			}
+		}
 		
 		public abstract void registerWithView( );
 		
@@ -268,12 +303,12 @@ public class Binder<M extends Model>
 			super( property );
 		}
 		
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			
 		}
 		
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			
 		}
@@ -300,7 +335,7 @@ public class Binder<M extends Model>
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model != null )
@@ -310,7 +345,7 @@ public class Binder<M extends Model>
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model != null )
@@ -341,7 +376,7 @@ public class Binder<M extends Model>
 		}
 		
 		@Override
-		public void childrenChanged( Object source , ChangeType changeType , Object... children )
+		public void childrenChanged( Object source , ChangeType changeType , Object ... children )
 		{
 		}
 	}
@@ -366,7 +401,7 @@ public class Binder<M extends Model>
 		}
 		
 		@Override
-		public void childrenChanged( Object source , ChangeType changeType , Object... children )
+		public void childrenChanged( Object source , ChangeType changeType , Object ... children )
 		{
 			
 		}

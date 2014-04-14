@@ -42,7 +42,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -57,7 +57,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -106,7 +106,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -121,7 +121,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -162,6 +162,7 @@ public class UIBindings
 	
 	public static class JTextComponentBinding extends Binding implements DocumentListener
 	{
+		boolean			updating;
 		JTextComponent	textComp;
 		
 		public JTextComponentBinding( JTextComponent textComp , Object property )
@@ -171,7 +172,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -182,7 +183,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -241,7 +242,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -252,7 +253,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -299,7 +300,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -313,7 +314,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -360,7 +361,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -378,7 +379,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -425,7 +426,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -436,7 +437,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -465,7 +466,7 @@ public class UIBindings
 		}
 	}
 	
-	public static ISelectorEnumBinding bind( Binder b, ISelector selector , Object property )
+	public static ISelectorEnumBinding bind( Binder b , ISelector selector , Object property )
 	{
 		ISelectorEnumBinding binding = new ISelectorEnumBinding( selector , property );
 		b.bind( binding );
@@ -483,7 +484,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void modelToView( )
+		public void modelToViewImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )
@@ -494,7 +495,7 @@ public class UIBindings
 		}
 		
 		@Override
-		public void viewToModel( )
+		public void viewToModelImpl( )
 		{
 			Model model = getModel( );
 			if( model == null )

@@ -16,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.AbstractButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 public class I18n
@@ -155,6 +156,12 @@ public class I18n
 			updaters.remove( localizedObject );
 		}
 		
+		public void setToolTipText( JComponent component , String key )
+		{
+			checkEDT( );
+			register( component , new ToolTipTextI18nUpdater( key ) );
+		}
+		
 		public void setText( JLabel label , String key )
 		{
 			checkEDT( );
@@ -189,6 +196,22 @@ public class I18n
 	public static interface I18nUpdater<T>
 	{
 		public void updateI18n( Localizer localizer , T localizedObject );
+	}
+	
+	private static class ToolTipTextI18nUpdater implements I18nUpdater<JComponent>
+	{
+		String	key;
+		
+		protected ToolTipTextI18nUpdater( String key )
+		{
+			super( );
+			this.key = key;
+		}
+		
+		public void updateI18n( Localizer localizer , JComponent localizedObject )
+		{
+			localizedObject.setToolTipText( localizer.getString( key ) );
+		}
 	}
 	
 	private static class LabelI18nUpdater implements I18nUpdater<JLabel>

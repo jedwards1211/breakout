@@ -20,7 +20,7 @@ public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBa
 	}
 	
 	@Override
-	public void modelToView( )
+	public void modelToViewImpl( )
 	{
 		Model model = getModel( );
 		if( axis.getViewSpan( ) == 0 )
@@ -42,7 +42,7 @@ public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBa
 	}
 	
 	@Override
-	public void viewToModel( )
+	public void viewToModelImpl( )
 	{
 		Model model = getModel( );
 		if( model == null || axis.getViewSpan( ) == 0 )
@@ -80,7 +80,7 @@ public class PlotAxisFloatRangeBinding extends Binding implements HierarchicalBa
 	}
 	
 	@Override
-	public void childrenChanged( Object source , ChangeType changeType , Object... children )
+	public void childrenChanged( Object source , ChangeType changeType , Object ... children )
 	{
 	}
 }

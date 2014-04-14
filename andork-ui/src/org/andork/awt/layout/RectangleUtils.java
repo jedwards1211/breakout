@@ -115,4 +115,19 @@ public class RectangleUtils
 		inset( r , insets , out );
 		return out;
 	}
+	
+	public static void outset( Rectangle r , Insets outsets , Rectangle out )
+	{
+		out.x = r.x - outsets.left;
+		out.y = r.y - outsets.top;
+		out.width = r.width + outsets.left + outsets.right;
+		out.height = r.height + outsets.top + outsets.bottom;
+	}
+	
+	public static Rectangle outsetCopy( Rectangle r , Insets outsets )
+	{
+		Rectangle out = new Rectangle( );
+		outset( r , outsets , out );
+		return out;
+	}
 }

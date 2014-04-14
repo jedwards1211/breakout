@@ -3,6 +3,7 @@ package org.andork.swing.selector;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -156,13 +157,13 @@ public class DefaultSelector<T> implements ISelector<T>
 		}
 	}
 	
-	protected void notifySelectionChanged( T newSelection )
+	protected void notifySelectionChanged( T oldSelection , T newSelection )
 	{
 		for( ISelectorListener<T> listener : listeners )
 		{
 			try
 			{
-				listener.selectionChanged( this , null , newSelection );
+				listener.selectionChanged( this , oldSelection , newSelection );
 			}
 			catch( Exception ex )
 			{
@@ -283,6 +284,11 @@ public class DefaultSelector<T> implements ISelector<T>
 		}
 	}
 	
+	public <TT extends T> void setAvailableValues( TT ... newAvailableValues )
+	{
+		setAvailableValues( Arrays.asList( newAvailableValues ) );
+	}
+	
 	/**
 	 * Sets the list of values available for user selection. If the selected value is not in the list, the selection will be cleared.
 	 * 
@@ -336,9 +342,10 @@ public class DefaultSelector<T> implements ISelector<T>
 	{
 		if( !Java7.Objects.equals( newSelection , selection ) )
 		{
+			T oldSelection = selection;
 			selection = newSelection;
 			updateComboBoxSelectedItem( );
-			notifySelectionChanged( newSelection );
+			notifySelectionChanged( oldSelection , newSelection );
 		}
 	}
 	
