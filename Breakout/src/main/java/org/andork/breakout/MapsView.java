@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,6 +43,7 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 
 import org.andork.awt.GridBagWizard;
+import org.andork.awt.I18n;
 import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
 import org.andork.awt.layout.Corner;
@@ -68,8 +70,10 @@ import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.BasicJOGLScene;
 import org.andork.jogl.JOGLScreenCapturer;
 import org.andork.jogl.JOGLTiledScreenCapturer;
-import org.andork.jogl.JOGLTiledScreenCapturer.Fit;
 import org.andork.jogl.awt.BasicJOGLSetup;
+import org.andork.jogl.awt.ScreenCaptureDialog;
+import org.andork.jogl.awt.ScreenCaptureDialogModel;
+import org.andork.jogl.awt.ScreenCaptureDialog.ResolutionUnit;
 import org.andork.jogl.awt.anim.RandomOrbit;
 import org.andork.jogl.awt.anim.SinusoidalTranslation;
 import org.andork.jogl.awt.anim.SpringOrbit;
@@ -116,6 +120,8 @@ import com.andork.plot.PlotPanelLayout;
 
 public class MapsView extends BasicJOGLSetup
 {
+	I18n												i18n					= new I18n( );
+	
 	DefaultNavigator									navigator;
 	
 	TaskService											rebuildTaskService;
@@ -161,6 +167,8 @@ public class MapsView extends BasicJOGLSetup
 	List<BasicJOGLObject>								debugMbrs				= new ArrayList<BasicJOGLObject>( );
 	
 	ShotPickContext										spc						= new ShotPickContext( );
+	
+	ScreenCaptureDialog									screenCaptureDialog;
 	
 	final LinePlaneIntersection3f						lpx						= new LinePlaneIntersection3f( );
 	final float[ ]										p0						= new float[ 3 ];
@@ -675,10 +683,43 @@ public class MapsView extends BasicJOGLSetup
 		{
 			public void actionPerformed( ActionEvent e )
 			{
-				// scene.doLater( new ScreenshotHandler( scene ) );
-				scene.doLater( new HiResScreenshotHandler( scene ,
-						new int[ ] { 500 , 500 , 500 } , new int[ ] { 500 , 500 , 500 } , Fit.BOTH ) );
-				canvas.display( );
+				// // scene.doLater( new ScreenshotHandler( scene ) );
+				// scene.doLater( new HiResScreenshotHandler( scene ,
+				// new int[ ] { 500 , 500 , 500 } , new int[ ] { 500 , 500 , 500 } , Fit.BOTH ) );
+				// canvas.display( );
+				
+				if( screenCaptureDialog == null )
+				{
+					screenCaptureDialog = new ScreenCaptureDialog( SwingUtilities.getWindowAncestor( mainPanel ) , canvas.getContext( ) , i18n );
+					screenCaptureDialog.setTitle( "Export Image" );
+					YamlObject<ScreenCaptureDialogModel> screenCaptureDialogModel =
+							MapsView.this.projectModel.get( ProjectModel.screenCaptureDialogModel );
+					if( screenCaptureDialogModel == null )
+					{
+						screenCaptureDialogModel = ScreenCaptureDialogModel.instance.newObject( );
+						screenCaptureDialogModel.set( ScreenCaptureDialogModel.outputDirectory , "screenshots" );
+						screenCaptureDialogModel.set( ScreenCaptureDialogModel.fileNamePrefix , "breakout-screenshot" );
+						screenCaptureDialogModel.set( ScreenCaptureDialogModel.fileNumber , 1 );
+						screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelWidth , canvas.getWidth( ) );
+						screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelHeight , canvas.getHeight( ) );
+						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolution , new BigDecimal( 300 ) );
+						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ResolutionUnit.PIXELS_PER_IN );
+						MapsView.this.projectModel.set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
+					}
+					Binder<YamlObject<ScreenCaptureDialogModel>> screenCaptureBinder = projectModelBinder.subBinder( ProjectModel.screenCaptureDialogModel );
+					screenCaptureDialog.setBinder( screenCaptureBinder );
+					screenCaptureBinder.modelToView( );
+					
+					screenCaptureDialog.setScene( scene );
+					
+					Dimension size = mainPanel.getSize( );
+					size.width = size.width * 3 / 4;
+					size.height = size.height * 3 / 4;
+					screenCaptureDialog.setSize( size );
+					screenCaptureDialog.setLocationRelativeTo( mainPanel );
+				}
+				
+				screenCaptureDialog.setVisible( true );
 			}
 		} );
 	}

@@ -128,7 +128,7 @@ public class SettingsDrawer extends Drawer
 		filterTypeSelector = new DefaultSelector<FilterType>( );
 		filterTypeSelector.setAvailableValues( Arrays.asList( FilterType.values( ) ) );
 		
-		exportImageButton = new JButton( "Export Image" );
+		exportImageButton = new JButton( "Export Image..." );
 		
 		debugButton = new JButton( "Debug" );
 	}

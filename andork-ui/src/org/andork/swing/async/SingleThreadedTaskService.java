@@ -76,11 +76,13 @@ public class SingleThreadedTaskService implements TaskService
 				task.cancel( );
 			}
 			int index = taskQueue.indexOf( task );
-			if( index == 0 )
-			{
-				thread.interrupt( );
-			}
-			else if( index > 0 )
+			
+			// TODO figure out how to handle interruption properly
+			// if( index == 0 )
+			// {
+			// thread.interrupt( );
+			// }
+			if( index > 0 )
 			{
 				removed = taskQueue.remove( index );
 			}
