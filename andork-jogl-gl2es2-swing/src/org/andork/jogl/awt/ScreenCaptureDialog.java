@@ -1,5 +1,9 @@
 package org.andork.jogl.awt;
 
+import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
+import static org.andork.math3d.Vecmath.newMat3f;
+import static org.andork.math3d.Vecmath.newMat4f;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -57,11 +61,12 @@ import org.andork.awt.layout.RectangleUtils;
 import org.andork.event.Binder;
 import org.andork.event.Binder.Binding;
 import org.andork.jogl.BasicJOGLScene;
+import org.andork.jogl.JOGLObject;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
+import org.andork.swing.async.SelfReportingTask;
 import org.andork.swing.async.SingleThreadedTaskService;
-import org.andork.swing.async.Task;
 import org.andork.swing.async.TaskPane;
 import org.andork.swing.async.TaskService;
 import org.andork.swing.border.InnerGradientBorder;
@@ -171,7 +176,6 @@ public class ScreenCaptureDialog extends JDialog
 				binder.modelToView( );
 				
 				dialog.setSize( 800 , 600 );
-				dialog.setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
 				dialog.setLocationRelativeTo( null );
 				dialog.setVisible( true );
 			}
@@ -210,6 +214,7 @@ public class ScreenCaptureDialog extends JDialog
 			@Override
 			public void run( ) throws Throwable
 			{
+				setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
 				localizer = i18n.forClass( ScreenCaptureDialog.class );
 				setModalityType( ModalityType.DOCUMENT_MODAL );
 				createComponents( );
@@ -890,6 +895,11 @@ public class ScreenCaptureDialog extends JDialog
 	
 	private class Renderer implements GLEventListener
 	{
+		float[ ]	m	= newMat4f( );
+		float[ ]	n	= newMat3f( );
+		float[ ]	v	= newMat4f( );
+		float[ ]	p	= newMat4f( );
+		
 		@Override
 		public void init( GLAutoDrawable drawable )
 		{
@@ -908,9 +918,9 @@ public class ScreenCaptureDialog extends JDialog
 			GL2ES2 gl = new DebugGL2( ( GL2 ) drawable.getGL( ) );
 			gl.glClear( GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_DEPTH_BUFFER_BIT );
 			
-			if( scene != null )
+			for( JOGLObject object : scene.getObjects( ) )
 			{
-				scene.display( drawable );
+				object.draw( gl , m , n , v , p );
 			}
 		}
 		
@@ -918,6 +928,13 @@ public class ScreenCaptureDialog extends JDialog
 		public void reshape( GLAutoDrawable drawable , int x , int y , int width , int height )
 		{
 			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+			if( scene != null )
+			{
+				scene.getModelXform( m );
+				invAffineToTranspose3x3( m , n );
+				scene.getViewXform( v );
+				scene.getProjectionCalculator( ).calculate( width , height , p );
+			}
 			gl.glViewport( 0 , 0 , drawable.getWidth( ) , drawable.getHeight( ) );
 		}
 	}
@@ -935,7 +952,12 @@ public class ScreenCaptureDialog extends JDialog
 				@Override
 				public void run( )
 				{
-					canvas.setNEWTChild( newtWindow );
+					if( canvas.getNEWTChild( ) != newtWindow )
+					{
+						canvas.setNEWTChild( newtWindow );
+					}
+					canvasHolder.revalidate( );
+					canvas.repaint( );
 					newtWindow.display( );
 				}
 			} );
@@ -943,60 +965,29 @@ public class ScreenCaptureDialog extends JDialog
 		super.setVisible( visible );
 	}
 	
-	private class NEWTInitializer extends Task
+	private class NEWTInitializer extends SelfReportingTask
 	{
-		JDialog	taskDialog;
-		
 		public NEWTInitializer( )
 		{
-			setStatus( "Initializing preview..." );
+			super( "Initializing preview..." , ScreenCaptureDialog.this );
 		}
 		
 		@Override
-		protected void execute( ) throws Exception
+		protected void duringDialog( ) throws Exception
 		{
-			SwingUtilities.invokeLater( new Runnable( )
+			final GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
+			final GLCapabilities caps = new GLCapabilities( glp );
+			if( newtWindow == null )
 			{
-				@Override
-				public void run( )
+				newtWindow = GLWindow.create( caps );
+				if( glContext != null )
 				{
-					TaskPane taskPane = new TaskPane( NEWTInitializer.this );
-					taskDialog = new JDialog( ScreenCaptureDialog.this );
-					taskDialog.setModalityType( ModalityType.DOCUMENT_MODAL );
-					taskDialog.getContentPane( ).add( taskPane , BorderLayout.CENTER );
-					taskDialog.pack( );
-					taskDialog.setLocationRelativeTo( taskDialog.getOwner( ) );
-					taskDialog.setVisible( true );
+					newtWindow.setSharedContext( glContext );
+					newtWindow.addGLEventListener( renderer );
 				}
-			} );
-			
-			try
-			{
-				final GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
-				final GLCapabilities caps = new GLCapabilities( glp );
-				if( newtWindow == null )
-				{
-					newtWindow = GLWindow.create( caps );
-					if( glContext != null )
-					{
-						newtWindow.setSharedContext( glContext );
-						newtWindow.addGLEventListener( renderer );
-					}
-				}
-				canvas.setNEWTChild( newtWindow );
-				newtWindow.display( );
 			}
-			finally
-			{
-				SwingUtilities.invokeLater( new Runnable( )
-				{
-					@Override
-					public void run( )
-					{
-						taskDialog.dispose( );
-					}
-				} );
-			}
+			canvas.setNEWTChild( newtWindow );
+			newtWindow.display( );
 		}
 	}
 }

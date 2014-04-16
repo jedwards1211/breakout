@@ -1651,6 +1651,11 @@ public class Vecmath
 		}
 	}
 	
+	public static float[ ] newMat3f( )
+	{
+		return new float[ ] { 1 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 1 };
+	}
+	
 	public static float[ ] newMat4f( )
 	{
 		return new float[ ] { 1 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 1 };
@@ -3204,7 +3209,8 @@ public class Vecmath
 			}
 		}
 		return false;
-	}	
+	}
+	
 	public static boolean hasNaNsOrInfinites( float[ ] floats )
 	{
 		for( float f : floats )

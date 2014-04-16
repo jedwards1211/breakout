@@ -70,6 +70,8 @@ import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.BasicJOGLScene;
 import org.andork.jogl.JOGLScreenCapturer;
 import org.andork.jogl.JOGLTiledScreenCapturer;
+import org.andork.jogl.OrthoProjectionCalculator;
+import org.andork.jogl.PerspectiveProjectionCalculator;
 import org.andork.jogl.awt.BasicJOGLSetup;
 import org.andork.jogl.awt.ScreenCaptureDialog;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
@@ -122,6 +124,8 @@ public class MapsView extends BasicJOGLSetup
 {
 	I18n												i18n					= new I18n( );
 	
+	PerspectiveProjectionCalculator						perspCalculator			= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
+	OrthoProjectionCalculator							orthoCalculator			= new OrthoProjectionCalculator( -1 , 1 , -1 , 1 , -10000 , 10000 );
 	DefaultNavigator									navigator;
 	
 	TaskService											rebuildTaskService;
@@ -231,9 +235,6 @@ public class MapsView extends BasicJOGLSetup
 			}
 		};
 		
-		scene.orthoFrame[ 4 ] = -10000f;
-		scene.orthoFrame[ 5 ] = 10000f;
-		
 		plot = new Plot( );
 		plot.setLayout( new BorderLayout( ) );
 		plot.add( canvas , BorderLayout.CENTER );
@@ -261,9 +262,10 @@ public class MapsView extends BasicJOGLSetup
 			protected void setAxisRange( double start , double end )
 			{
 				super.setAxisRange( start , end );
-				scene.orthoFrame[ 0 ] = ( float ) xaxis.getAxisConversion( ).invert( 0 );
-				scene.orthoFrame[ 1 ] = ( float ) xaxis.getAxisConversion( ).invert( plot.getWidth( ) );
-				scene.recomputeProjection( );
+				OrthoProjectionCalculator calc = ( OrthoProjectionCalculator ) scene.getProjectionCalculator( );
+				orthoCalculator.orthoFrame[ 0 ] = ( float ) xaxis.getAxisConversion( ).invert( 0 );
+				orthoCalculator.orthoFrame[ 1 ] = ( float ) xaxis.getAxisConversion( ).invert( plot.getWidth( ) );
+				scene.recalculateProjection( );
 				canvas.repaint( );
 			}
 		};
@@ -273,9 +275,9 @@ public class MapsView extends BasicJOGLSetup
 			protected void setAxisRange( double start , double end )
 			{
 				super.setAxisRange( start , end );
-				scene.orthoFrame[ 2 ] = ( float ) yaxis.getAxisConversion( ).invert( plot.getHeight( ) );
-				scene.orthoFrame[ 3 ] = ( float ) yaxis.getAxisConversion( ).invert( 0 );
-				scene.recomputeProjection( );
+				orthoCalculator.orthoFrame[ 2 ] = ( float ) yaxis.getAxisConversion( ).invert( plot.getHeight( ) );
+				orthoCalculator.orthoFrame[ 3 ] = ( float ) yaxis.getAxisConversion( ).invert( 0 );
+				scene.recalculateProjection( );
 				canvas.repaint( );
 			}
 		};
@@ -1009,7 +1011,7 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain.addMouseAdapter( cameraAnimationInterrupter );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
-		scene.setOrthoMode( true );
+		scene.setProjectionCalculator( orthoCalculator );
 	}
 	
 	public void perspectiveMode( )
@@ -1027,7 +1029,7 @@ public class MapsView extends BasicJOGLSetup
 		mouseAdapterChain.addMouseAdapter( cameraAnimationInterrupter );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
-		scene.setOrthoMode( false );
+		scene.setProjectionCalculator( perspCalculator );
 	}
 	
 	@Override

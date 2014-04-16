@@ -25,7 +25,7 @@ public class BasicJOGLScene implements GLEventListener
 	/**
 	 * The model matrix.
 	 */
-	public final float[ ]				m						= newMat4f( );
+	private final float[ ]				m						= newMat4f( );
 	
 	/**
 	 * The normal matrix.
@@ -35,22 +35,19 @@ public class BasicJOGLScene implements GLEventListener
 	/**
 	 * The view matrix.
 	 */
-	protected final float[ ]			v						= newMat4f( );
-	
-	private long						lastVchange				= 0;
+	private final float[ ]				v						= newMat4f( );
 	
 	/**
 	 * The projection matrix;
 	 */
-	public final float[ ]				p						= newMat4f( );
+	private final float[ ]				p						= newMat4f( );
+	
+	private ProjectionCalculator		pCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
 	
 	private int							width , height;
 	
-	public float						fov						= ( float ) Math.PI / 2;
-	public float						zNear					= 1f;
-	public float						zFar					= 1e7f;
-	
 	private final List<JOGLObject>		objects					= new ArrayList<JOGLObject>( );
+	private final List<JOGLObject>		unmodifiableObjects		= Collections.unmodifiableList( objects );
 	
 	private final Queue<JOGLObject>		objectsThatNeedInit		= new LinkedList<JOGLObject>( );
 	private final Queue<JOGLObject>		objectsThatNeedDestroy	= new LinkedList<JOGLObject>( );
@@ -58,13 +55,6 @@ public class BasicJOGLScene implements GLEventListener
 	
 	private static boolean				USE_DEBUG_GL;
 	private DebugGL2					debugGL;
-	
-	private boolean						orthoMode;
-	
-	public float[ ]						orthoFrame				= { -1 , 1 , -1 , 1 , -100 , 100 };
-	
-	final float[ ]						lastOrthoView			= newMat4f( );
-	final float[ ]						lastPerspectiveView		= newMat4f( );
 	
 	private PickXform					pickXform				= new PickXform( );
 	
@@ -186,53 +176,37 @@ public class BasicJOGLScene implements GLEventListener
 		GL2ES2 gl = getGL( ( GL2ES2 ) drawable.getGL( ) );
 		gl.glViewport( 0 , 0 , width , height );
 		
-		recomputeProjection( );
+		recalculateProjection( );
 	}
 	
-	public void setOrthoMode( boolean ortho )
+	public void recalculateProjection( )
 	{
-		if( this.orthoMode != ortho )
-		{
-			if( this.orthoMode )
-			{
-				Vecmath.setf( lastOrthoView , v );
-				Vecmath.setf( v , lastPerspectiveView );
-			}
-			else
-			{
-				Vecmath.setf( lastPerspectiveView , v );
-				Vecmath.setf( v , lastOrthoView );
-			}
-			
-			this.orthoMode = ortho;
-			recomputeProjection( );
-		}
-	}
-	
-	public void recomputeProjection( )
-	{
-		if( orthoMode )
-		{
-			Vecmath.ortho( p , orthoFrame[ 0 ] , orthoFrame[ 1 ] , orthoFrame[ 2 ] , orthoFrame[ 3 ] , orthoFrame[ 4 ] , orthoFrame[ 5 ] );
-		}
-		else
-		{
-			perspective( p , fov , ( float ) width / height , zNear , zFar );
-		}
-		// p[ 2 ] = -p[ 2 ];
-		// p[ 6 ] = -p[ 6 ];
-		// p[ 10 ] = -p[ 10 ];
-		// p[ 14 ] = -p[ 14 ];
+		pCalculator.calculate( width , height , p );
 	}
 	
 	public List<JOGLObject> getObjects( )
 	{
-		return Collections.unmodifiableList( objects );
+		return unmodifiableObjects;
 	}
 	
 	public void clear( )
 	{
 		objects.clear( );
+	}
+	
+	public void getModelXform( float[ ] out )
+	{
+		System.arraycopy( m , 0 , out , 0 , 16 );
+	}
+	
+	public void setModelXform( float[ ] m )
+	{
+		if( Vecmath.hasNaNsOrInfinites( m ) )
+		{
+			throw new IllegalArgumentException( "m must not contain NaN or Infinite values" );
+		}
+		
+		System.arraycopy( m , 0 , this.m , 0 , 16 );
 	}
 	
 	public void getViewXform( float[ ] out )
@@ -247,13 +221,7 @@ public class BasicJOGLScene implements GLEventListener
 			throw new IllegalArgumentException( "v must not contain NaN or Infinite values" );
 		}
 		
-		lastVchange = System.currentTimeMillis( );
 		System.arraycopy( v , 0 , this.v , 0 , 16 );
-	}
-	
-	public long getLastViewXformChange( )
-	{
-		return lastVchange;
 	}
 	
 	public PickXform pickXform( )
@@ -269,5 +237,19 @@ public class BasicJOGLScene implements GLEventListener
 	public int getHeight( )
 	{
 		return height;
+	}
+	
+	public void setProjectionCalculator( ProjectionCalculator calculator )
+	{
+		if( pCalculator != calculator )
+		{
+			pCalculator = calculator;
+			recalculateProjection( );
+		}
+	}
+	
+	public ProjectionCalculator getProjectionCalculator( )
+	{
+		return pCalculator;
 	}
 }
