@@ -10,8 +10,8 @@ import javax.swing.SwingUtilities;
 
 public abstract class SelfReportingTask extends Task
 {
-	private Component	dialogParent;
-	private JDialog		dialog;
+	protected Component	dialogParent;
+	protected JDialog	dialog;
 	
 	public SelfReportingTask( Component dialogParent )
 	{
@@ -32,6 +32,7 @@ public abstract class SelfReportingTask extends Task
 		dialog.setModalityType( ModalityType.DOCUMENT_MODAL );
 		dialog.getContentPane( ).add( taskPane , BorderLayout.CENTER );
 		dialog.pack( );
+		dialog.setDefaultCloseOperation( JDialog.DO_NOTHING_ON_CLOSE );
 		return dialog;
 	}
 	

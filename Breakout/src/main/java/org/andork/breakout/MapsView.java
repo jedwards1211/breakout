@@ -75,7 +75,7 @@ import org.andork.jogl.PerspectiveProjectionCalculator;
 import org.andork.jogl.awt.BasicJOGLSetup;
 import org.andork.jogl.awt.ScreenCaptureDialog;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
-import org.andork.jogl.awt.ScreenCaptureDialog.ResolutionUnit;
+import org.andork.jogl.awt.ScreenCaptureDialogModel.ResolutionUnit;
 import org.andork.jogl.awt.anim.RandomOrbit;
 import org.andork.jogl.awt.anim.SinusoidalTranslation;
 import org.andork.jogl.awt.anim.SpringOrbit;
@@ -705,7 +705,7 @@ public class MapsView extends BasicJOGLSetup
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelWidth , canvas.getWidth( ) );
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelHeight , canvas.getHeight( ) );
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolution , new BigDecimal( 300 ) );
-						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ResolutionUnit.PIXELS_PER_IN );
+						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
 						MapsView.this.projectModel.set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
 					}
 					Binder<YamlObject<ScreenCaptureDialogModel>> screenCaptureBinder = projectModelBinder.subBinder( ProjectModel.screenCaptureDialogModel );

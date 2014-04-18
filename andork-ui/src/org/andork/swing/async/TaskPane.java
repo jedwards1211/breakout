@@ -1,5 +1,6 @@
 package org.andork.swing.async;
 
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -64,6 +65,8 @@ public class TaskPane extends JPanel
 		statusLabel = new JLabel( );
 		progressBar = new JProgressBar( );
 		cancelButton = new JButton( "Cancel" );
+		
+		progressBar.setPreferredSize( new Dimension( 400 , cancelButton.getPreferredSize( ).height ) );
 		
 		cancelButton.addActionListener( new ActionListener( )
 		{

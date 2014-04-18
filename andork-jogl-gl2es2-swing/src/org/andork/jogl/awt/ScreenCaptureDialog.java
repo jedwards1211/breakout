@@ -1,5 +1,15 @@
 package org.andork.jogl.awt;
 
+import static javax.media.opengl.GL.*;
+import static javax.media.opengl.GL.GL_COLOR_ATTACHMENT0;
+import static javax.media.opengl.GL.GL_COLOR_BUFFER_BIT;
+import static javax.media.opengl.GL.GL_DEPTH_ATTACHMENT;
+import static javax.media.opengl.GL.GL_DEPTH_BUFFER_BIT;
+import static javax.media.opengl.GL.GL_DEPTH_COMPONENT32;
+import static javax.media.opengl.GL.GL_FRAMEBUFFER;
+import static javax.media.opengl.GL.GL_RENDERBUFFER;
+import static javax.media.opengl.GL.GL_RGB;
+import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
 import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
 import static org.andork.math3d.Vecmath.newMat3f;
 import static org.andork.math3d.Vecmath.newMat4f;
@@ -11,19 +21,26 @@ import java.awt.Container;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
+import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.LayoutManager;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.imageio.ImageIO;
 import javax.media.opengl.DebugGL2;
 import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
@@ -37,6 +54,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
@@ -49,6 +67,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.PlainDocument;
+import javax.swing.text.View;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
@@ -67,7 +86,7 @@ import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
 import org.andork.swing.async.SingleThreadedTaskService;
-import org.andork.swing.async.TaskPane;
+import org.andork.swing.async.Subtask;
 import org.andork.swing.async.TaskService;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.event.EasyDocumentListener;
@@ -82,72 +101,74 @@ import org.andork.swing.text.SimpleSpinnerEditor;
 import org.andork.util.Format;
 import org.andork.util.StringUtils;
 
+import com.jogamp.nativewindow.awt.DirectDataBufferInt;
+import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
 
 @SuppressWarnings( "serial" )
 public class ScreenCaptureDialog extends JDialog
 {
-	private static final BigDecimal					IN_TO_CM	= new BigDecimal( "2.54" );
-	private static final BigDecimal					CM_TO_IN	= new BigDecimal( 1.0 / IN_TO_CM.doubleValue( ) );
+	private static final BigDecimal								IN_TO_CM	= new BigDecimal( "2.54" );
+	private static final BigDecimal								CM_TO_IN	= new BigDecimal( 1.0 / IN_TO_CM.doubleValue( ) );
 	
-	Localizer										localizer;
+	Localizer													localizer;
 	
-	JPanel											canvasHolder;
-	NewtCanvasAWT									canvas;
-	GLContext										glContext;
-	GLWindow										newtWindow;
-	Renderer										renderer	= new Renderer( );
+	JPanel														canvasHolder;
+	NewtCanvasAWT												canvas;
+	GLContext													glContext;
+	GLWindow													newtWindow;
+	Renderer													renderer	= new Renderer( );
 	
-	JFileChooser									outputDirectoryChooser;
+	JFileChooser												outputDirectoryChooser;
 	
-	JLabel											outputDirectoryLabel;
-	JTextField										outputDirectoryField;
-	JButton											chooseOutputDirectoryButton;
+	JLabel														outputDirectoryLabel;
+	JTextField													outputDirectoryField;
+	JButton														chooseOutputDirectoryButton;
 	
-	JLabel											fileNamePrefixLabel;
-	JTextField										fileNamePrefixField;
+	JLabel														fileNamePrefixLabel;
+	JTextField													fileNamePrefixField;
 	
-	JLabel											fileNumberLabel;
-	JSpinner										fileNumberSpinner;
+	JLabel														fileNumberLabel;
+	JSpinner													fileNumberSpinner;
 	
-	JLabel											outputFormatLabel;
-	DefaultSelector<?>								outputFormatSelector;
+	JLabel														outputFormatLabel;
+	DefaultSelector<?>											outputFormatSelector;
 	
-	Icon											warningIcon	= IconScaler.rescale( UIManager.getIcon( "OptionPane.warningIcon" ) , 20 , 20 );
-	JLabel											outputFileOrWarningLabel;
-	JPanel											outputFileOrWarningLabelHolder;
+	Icon														warningIcon	= IconScaler.rescale( UIManager.getIcon( "OptionPane.warningIcon" ) , 20 , 20 );
+	JLabel														outputFileOrWarningLabel;
+	JPanel														outputFileOrWarningLabelHolder;
 	
-	JLabel											pixelSizeHeaderLabel;
-	JLabel											pixelWidthLabel;
-	JSpinner										pixelWidthSpinner;
-	JLabel											pixelWidthUnitLabel;
-	JLabel											pixelHeightLabel;
-	JSpinner										pixelHeightSpinner;
-	JLabel											pixelHeightUnitLabel;
-	JLabel											resolutionLabel;
-	JSpinner										resolutionSpinner;
-	DefaultSelector<ResolutionUnit>					resolutionUnitSelector;
+	JLabel														pixelSizeHeaderLabel;
+	JLabel														pixelWidthLabel;
+	JSpinner													pixelWidthSpinner;
+	JLabel														pixelWidthUnitLabel;
+	JLabel														pixelHeightLabel;
+	JSpinner													pixelHeightSpinner;
+	JLabel														pixelHeightUnitLabel;
+	JLabel														resolutionLabel;
+	JSpinner													resolutionSpinner;
+	DefaultSelector<ScreenCaptureDialogModel.ResolutionUnit>	resolutionUnitSelector;
 	
-	JLabel											printSizeHeaderLabel;
-	JLabel											printWidthLabel;
-	JSpinner										printWidthSpinner;
-	JLabel											printHeightLabel;
-	JSpinner										printHeightSpinner;
-	JLabel											printUnitLabel;
-	DefaultSelector<PrintSizeUnit>					printUnitSelector;
+	JLabel														printSizeHeaderLabel;
+	JLabel														printWidthLabel;
+	JSpinner													printWidthSpinner;
+	JLabel														printHeightLabel;
+	JSpinner													printHeightSpinner;
+	JLabel														printUnitLabel;
+	DefaultSelector<ScreenCaptureDialogModel.PrintSizeUnit>		printUnitSelector;
 	
-	JButton											exportButton;
-	JButton											cancelButton;
+	JButton														exportButton;
+	JButton														cancelButton;
 	
-	boolean											updating;
+	boolean														updating;
 	
-	Binder<YamlObject<ScreenCaptureDialogModel>>	binder;
-	final List<Binding>								bindings	= new ArrayList<Binding>( );
+	Binder<YamlObject<ScreenCaptureDialogModel>>				binder;
+	final List<Binding>											bindings	= new ArrayList<Binding>( );
 	
-	BasicJOGLScene									scene;
+	BasicJOGLScene												scene;
 	
-	TaskService										taskService;
+	TaskService													taskService;
 	
 	public static void main( String[ ] args )
 	{
@@ -169,7 +190,7 @@ public class ScreenCaptureDialog extends JDialog
 				model.set( ScreenCaptureDialogModel.pixelWidth , 600 );
 				model.set( ScreenCaptureDialogModel.pixelHeight , 400 );
 				model.set( ScreenCaptureDialogModel.resolution , new BigDecimal( 300 ) );
-				model.set( ScreenCaptureDialogModel.resolutionUnit , ResolutionUnit.PIXELS_PER_IN );
+				model.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
 				
 				dialog.setBinder( binder );
 				binder.setModel( model );
@@ -305,8 +326,8 @@ public class ScreenCaptureDialog extends JDialog
 		resolutionLabel = new JLabel( );
 		localizer.setText( resolutionLabel , "resolutionLabel.text" );
 		resolutionSpinner = createBigDecimalSpinner( 4 , 2 , new BigDecimal( 50 ) );
-		resolutionUnitSelector = new DefaultSelector<ScreenCaptureDialog.ResolutionUnit>( );
-		resolutionUnitSelector.setAvailableValues( ResolutionUnit.values( ) );
+		resolutionUnitSelector = new DefaultSelector<ScreenCaptureDialogModel.ResolutionUnit>( );
+		resolutionUnitSelector.setAvailableValues( ScreenCaptureDialogModel.ResolutionUnit.values( ) );
 		
 		printSizeHeaderLabel = new JLabel( );
 		localizer.setText( printSizeHeaderLabel , "printSizeHeaderLabel.text" );
@@ -314,8 +335,8 @@ public class ScreenCaptureDialog extends JDialog
 		printWidthLabel = new JLabel( );
 		localizer.setText( printWidthLabel , "widthLabel.text" );
 		printWidthSpinner = createBigDecimalSpinner( 4 , 2 , new BigDecimal( 1 ) );
-		printUnitSelector = new DefaultSelector<PrintSizeUnit>( );
-		printUnitSelector.setAvailableValues( PrintSizeUnit.values( ) );
+		printUnitSelector = new DefaultSelector<ScreenCaptureDialogModel.PrintSizeUnit>( );
+		printUnitSelector.setAvailableValues( ScreenCaptureDialogModel.PrintSizeUnit.values( ) );
 		
 		printHeightLabel = new JLabel( );
 		localizer.setText( printHeightLabel , "heightLabel.text" );
@@ -328,11 +349,11 @@ public class ScreenCaptureDialog extends JDialog
 			@Override
 			public void updateI18n( Localizer localizer , Object localizedObject )
 			{
-				PrintSizeUnit.INCHES.displayName = localizer.getString( "inches" );
-				PrintSizeUnit.CENTIMETERS.displayName = localizer.getString( "centimeters" );
+				ScreenCaptureDialogModel.PrintSizeUnit.INCHES.displayName = localizer.getString( "inches" );
+				ScreenCaptureDialogModel.PrintSizeUnit.CENTIMETERS.displayName = localizer.getString( "centimeters" );
 				
-				ResolutionUnit.PIXELS_PER_CM.displayName = localizer.getString( "pixelsPerCm" );
-				ResolutionUnit.PIXELS_PER_IN.displayName = localizer.getString( "pixelsPerIn" );
+				ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_CM.displayName = localizer.getString( "pixelsPerCm" );
+				ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN.displayName = localizer.getString( "pixelsPerIn" );
 				
 				printUnitSelector.getComboBox( ).repaint( );
 				resolutionUnitSelector.getComboBox( ).repaint( );
@@ -437,10 +458,10 @@ public class ScreenCaptureDialog extends JDialog
 	
 	protected void createListeners( )
 	{
-		resolutionUnitSelector.addSelectorListener( new ISelectorListener<ResolutionUnit>( )
+		resolutionUnitSelector.addSelectorListener( new ISelectorListener<ScreenCaptureDialogModel.ResolutionUnit>( )
 		{
 			@Override
-			public void selectionChanged( ISelector<ResolutionUnit> selector , ResolutionUnit oldSelection , ResolutionUnit newSelection )
+			public void selectionChanged( ISelector<ScreenCaptureDialogModel.ResolutionUnit> selector , ScreenCaptureDialogModel.ResolutionUnit oldSelection , ScreenCaptureDialogModel.ResolutionUnit newSelection )
 			{
 				if( updating || newSelection == null )
 				{
@@ -452,15 +473,15 @@ public class ScreenCaptureDialog extends JDialog
 					switch( newSelection )
 					{
 						case PIXELS_PER_IN:
-							printUnitSelector.setSelection( PrintSizeUnit.INCHES );
-							if( oldSelection == ResolutionUnit.PIXELS_PER_CM )
+							printUnitSelector.setSelection( ScreenCaptureDialogModel.PrintSizeUnit.INCHES );
+							if( oldSelection == ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_CM )
 							{
 								scaleUnits( CM_TO_IN );
 							}
 							break;
 						case PIXELS_PER_CM:
-							printUnitSelector.setSelection( PrintSizeUnit.CENTIMETERS );
-							if( oldSelection == ResolutionUnit.PIXELS_PER_IN )
+							printUnitSelector.setSelection( ScreenCaptureDialogModel.PrintSizeUnit.CENTIMETERS );
+							if( oldSelection == ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN )
 							{
 								scaleUnits( IN_TO_CM );
 							}
@@ -476,10 +497,10 @@ public class ScreenCaptureDialog extends JDialog
 			}
 		} );
 		
-		printUnitSelector.addSelectorListener( new ISelectorListener<ScreenCaptureDialog.PrintSizeUnit>( )
+		printUnitSelector.addSelectorListener( new ISelectorListener<ScreenCaptureDialogModel.PrintSizeUnit>( )
 		{
 			@Override
-			public void selectionChanged( ISelector<PrintSizeUnit> selector , PrintSizeUnit oldSelection , PrintSizeUnit newSelection )
+			public void selectionChanged( ISelector<ScreenCaptureDialogModel.PrintSizeUnit> selector , ScreenCaptureDialogModel.PrintSizeUnit oldSelection , ScreenCaptureDialogModel.PrintSizeUnit newSelection )
 			{
 				if( updating || newSelection == null )
 				{
@@ -491,15 +512,15 @@ public class ScreenCaptureDialog extends JDialog
 					switch( newSelection )
 					{
 						case INCHES:
-							resolutionUnitSelector.setSelection( ResolutionUnit.PIXELS_PER_IN );
-							if( oldSelection == PrintSizeUnit.CENTIMETERS )
+							resolutionUnitSelector.setSelection( ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
+							if( oldSelection == ScreenCaptureDialogModel.PrintSizeUnit.CENTIMETERS )
 							{
 								scaleUnits( CM_TO_IN );
 							}
 							break;
 						case CENTIMETERS:
-							resolutionUnitSelector.setSelection( ResolutionUnit.PIXELS_PER_CM );
-							if( oldSelection == PrintSizeUnit.INCHES )
+							resolutionUnitSelector.setSelection( ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_CM );
+							if( oldSelection == ScreenCaptureDialogModel.PrintSizeUnit.INCHES )
 							{
 								scaleUnits( IN_TO_CM );
 							}
@@ -588,6 +609,15 @@ public class ScreenCaptureDialog extends JDialog
 			public void actionPerformed( ActionEvent e )
 			{
 				dispose( );
+			}
+		} );
+		
+		exportButton.addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				taskService.submit( new CaptureTask( ) );
 			}
 		} );
 	}
@@ -811,30 +841,6 @@ public class ScreenCaptureDialog extends JDialog
 		return spinner;
 	}
 	
-	public static enum PrintSizeUnit
-	{
-		INCHES , CENTIMETERS;
-		
-		String	displayName;
-		
-		public String toString( )
-		{
-			return displayName;
-		}
-	}
-	
-	public static enum ResolutionUnit
-	{
-		PIXELS_PER_IN , PIXELS_PER_CM;
-		
-		String	displayName;
-		
-		public String toString( )
-		{
-			return displayName;
-		}
-	}
-	
 	private class CanvasHolderLayout implements LayoutManager
 	{
 		@Override
@@ -895,10 +901,16 @@ public class ScreenCaptureDialog extends JDialog
 	
 	private class Renderer implements GLEventListener
 	{
-		float[ ]	m	= newMat4f( );
-		float[ ]	n	= newMat3f( );
-		float[ ]	v	= newMat4f( );
-		float[ ]	p	= newMat4f( );
+		float[ ]				m		= newMat4f( );
+		float[ ]				n		= newMat3f( );
+		float[ ]				v		= newMat4f( );
+		float[ ]				p		= newMat4f( );
+		
+		volatile CaptureTask	captureTask;
+		
+		final Object			lock	= new Object( );
+		boolean					captureFinished;
+		BufferedImage			capturedImage;
 		
 		@Override
 		public void init( GLAutoDrawable drawable )
@@ -922,6 +934,140 @@ public class ScreenCaptureDialog extends JDialog
 			{
 				object.draw( gl , m , n , v , p );
 			}
+			
+			if( captureTask != null )
+			{
+				setCaptureFinished( false );
+				
+				int[ ] tileWidths = captureTask.tileWidths;
+				int[ ] tileHeights = captureTask.tileHeights;
+				
+				captureTask.setStatus( "Rendering image..." );
+				captureTask.setIndeterminate( false );
+				captureTask.setCompleted( 0 );
+				captureTask.setTotal( tileWidths.length * tileHeights.length );
+				
+				int[ ] i = new int[ 3 ];
+				gl.glGenFramebuffers( 1 , i , 0 );
+				gl.glGenRenderbuffers( 2 , i , 1 );
+				int fbo = i[ 0 ];
+				int colorBuf = i[ 1 ];
+				int depthBuf = i[ 2 ];
+				
+				int bufferWidth = max( tileWidths ), bufferHeight = max( tileHeights );
+				int totalWidth = total( tileWidths ), totalHeight = total( tileHeights );
+				
+				BufferedImage capturedImage = new BufferedImage( totalWidth , totalHeight , BufferedImage.TYPE_INT_ARGB );
+				
+				try
+				{
+					gl.glBindFramebuffer( GL_FRAMEBUFFER , fbo );
+					gl.glBindRenderbuffer( GL_RENDERBUFFER , colorBuf );
+					gl.glRenderbufferStorage( GL_RENDERBUFFER , GL_RGB , bufferWidth , bufferHeight );
+					gl.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_COLOR_ATTACHMENT0 , GL_RENDERBUFFER , colorBuf );
+					gl.glBindRenderbuffer( GL_RENDERBUFFER , depthBuf );
+					gl.glRenderbufferStorage( GL_RENDERBUFFER , GL_DEPTH_COMPONENT32 , bufferWidth , bufferHeight );
+					gl.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_DEPTH_ATTACHMENT , GL_RENDERBUFFER , depthBuf );
+					
+					Graphics2D g2 = ( Graphics2D ) capturedImage.createGraphics( );
+					
+					int viewportX = 0;
+					for( int tileX = 0 ; tileX < tileWidths.length ; tileX++ )
+					{
+						int viewportY = 0;
+						for( int tileY = 0 ; tileY < tileHeights.length ; tileY++ )
+						{
+							if( captureTask.isCanceling( ) )
+							{
+								return;
+							}
+							
+							gl.glViewport( viewportX , viewportY , totalWidth , totalHeight );
+							
+							gl.glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
+							
+							for( JOGLObject object : scene.getObjects( ) )
+							{
+								object.draw( gl , m , n , v , p );
+							}
+							
+							BufferedImageInt tile = DirectDataBufferInt.createBufferedImage( tileWidths[ tileX ] , tileHeights[ tileY ] ,
+									BufferedImage.TYPE_INT_ARGB , new Point( 0 , 0 ) , new Hashtable<Object, Object>( ) );
+							DirectDataBufferInt tileBuffer = ( DirectDataBufferInt ) tile.getRaster( ).getDataBuffer( );
+							
+							gl.glReadPixels( 0 , 0 , tileWidths[ tileX ] , tileHeights[ tileY ] , GL_BGRA , GL_UNSIGNED_BYTE , tileBuffer.getData( ) );
+							
+							if( captureTask.isCanceling( ) )
+							{
+								return;
+							}
+							
+							AffineTransform prevXform = g2.getTransform( );
+							g2.translate( -viewportX , totalHeight - 1 + viewportY );
+							g2.scale( 1.0 , -1.0 );
+							g2.drawImage( tile , 0 , 0 , null );
+							g2.setTransform( prevXform );
+							
+							captureTask.setCompleted( captureTask.getCompleted( ) + 1 );
+							
+							viewportY -= tileHeights[ tileY ];
+						}
+						viewportX -= tileWidths[ tileX ];
+					}
+					
+					setCapturedImage( capturedImage );
+				}
+				finally
+				{
+					captureTask = null;
+					try
+					{
+						gl.glBindFramebuffer( GL_FRAMEBUFFER , 0 );
+						
+						gl.glDeleteFramebuffers( 1 , i , 0 );
+						gl.glDeleteRenderbuffers( 1 , i , 1 );
+						gl.glDeleteRenderbuffers( 1 , i , 2 );
+						
+						gl.glViewport( 0 , 0 , scene.getWidth( ) , scene.getHeight( ) );
+					}
+					finally
+					{
+						setCaptureFinished( true );
+					}
+				}
+			}
+		}
+		
+		private void setCapturedImage( BufferedImage capturedImage )
+		{
+			synchronized( lock )
+			{
+				this.capturedImage = capturedImage;
+			}
+		}
+		
+		private void setCaptureFinished( boolean newValue )
+		{
+			synchronized( lock )
+			{
+				captureFinished = newValue;
+				lock.notifyAll( );
+			}
+		}
+		
+		public BufferedImage takeCapturedImage( ) throws InterruptedException
+		{
+			synchronized( lock )
+			{
+				while( !captureFinished )
+				{
+					lock.wait( );
+				}
+				
+				BufferedImage capturedImage = this.capturedImage;
+				this.capturedImage = null;
+				return capturedImage;
+			}
 		}
 		
 		@Override
@@ -937,6 +1083,199 @@ public class ScreenCaptureDialog extends JDialog
 			}
 			gl.glViewport( 0 , 0 , drawable.getWidth( ) , drawable.getHeight( ) );
 		}
+	}
+	
+	private class CaptureTask extends SelfReportingTask
+	{
+		File					outputFile;
+		
+		int[ ]					tileWidths;
+		int[ ]					tileHeights;
+		
+		public static final int	MAX_TILE_WIDTH	= 1024;
+		public static final int	MAX_TILE_HEIGHT	= 1024;
+		
+		public CaptureTask( )
+		{
+			super( "Rendering image..." , ScreenCaptureDialog.this );
+		}
+		
+		public boolean isCancelable( )
+		{
+			return true;
+		}
+		
+		@Override
+		protected void duringDialog( ) throws Exception
+		{
+			new OnEDT( )
+			{
+				@Override
+				public void run( ) throws Throwable
+				{
+					dialog.setTitle( "Exporting..." );
+					
+					try
+					{
+						outputFile = createOutputFile( );
+					}
+					catch( Exception ex )
+					{
+						return;
+					}
+					
+					if( outputFile.exists( ) )
+					{
+						if( outputFile.isDirectory( ) )
+						{
+							JOptionPane.showMessageDialog( dialog ,
+									"Weird...output file " + outputFile + " is a directory" ,
+									"Can't Export" ,
+									JOptionPane.ERROR_MESSAGE );
+							
+							outputFile = null;
+							return;
+						}
+						else
+						{
+							int option = JOptionPane.showConfirmDialog( dialog ,
+									"Output file " + outputFile + " already exists.  Overwrite?" ,
+									"Export Image" , JOptionPane.OK_CANCEL_OPTION , JOptionPane.WARNING_MESSAGE );
+							
+							if( option != JOptionPane.OK_OPTION )
+							{
+								outputFile = null;
+								return;
+							}
+						}
+					}
+					
+					File outputDir = outputFile.getParentFile( );
+					
+					if( !outputDir.exists( ) )
+					{
+						int option = JOptionPane.showConfirmDialog( dialog ,
+								"Output directory " + outputDir + " does not exist.  Create it?" ,
+								"Export Image" , JOptionPane.OK_CANCEL_OPTION , JOptionPane.INFORMATION_MESSAGE );
+						
+						if( option == JOptionPane.OK_OPTION )
+						{
+							try
+							{
+								outputDir.mkdirs( );
+							}
+							catch( Exception ex )
+							{
+								ex.printStackTrace( );
+								JOptionPane.showMessageDialog( dialog ,
+										"Failed to create directory " + outputDir + "; " +
+												ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
+										"Export Failed" , JOptionPane.ERROR_MESSAGE );
+								outputFile = null;
+								return;
+							}
+						}
+						else
+						{
+							outputFile = null;
+							return;
+						}
+					}
+					
+					Integer totalWidth = ( Integer ) pixelWidthSpinner.getValue( );
+					Integer totalHeight = ( Integer ) pixelHeightSpinner.getValue( );
+					
+					if( totalWidth != null && totalHeight != null )
+					{
+						int xTiles = ( totalWidth + MAX_TILE_WIDTH - 1 ) / MAX_TILE_WIDTH;
+						tileWidths = new int[ xTiles ];
+						Arrays.fill( tileWidths , MAX_TILE_WIDTH );
+						tileWidths[ xTiles - 1 ] = totalWidth % MAX_TILE_WIDTH;
+						
+						int yTiles = ( totalHeight + MAX_TILE_HEIGHT - 1 ) / MAX_TILE_HEIGHT;
+						tileHeights = new int[ yTiles ];
+						Arrays.fill( tileHeights , MAX_TILE_HEIGHT );
+						tileHeights[ yTiles - 1 ] = totalHeight % MAX_TILE_HEIGHT;
+					}
+				}
+			};
+			
+			if( outputFile == null || tileWidths == null || tileHeights == null || isCanceling( ) )
+			{
+				return;
+			}
+			
+			renderer.captureTask = this;
+			newtWindow.display( );
+			BufferedImage capturedImage = renderer.takeCapturedImage( );
+			
+			if( capturedImage != null )
+			{
+				setStatus( "Saving image to " + outputFile + "..." );
+				setIndeterminate( true );
+				
+				if( !isCanceling( ) )
+				{
+					try
+					{
+						ImageIO.write( capturedImage , "png" , outputFile );
+						
+						new OnEDT( )
+						{
+							@Override
+							public void run( ) throws Throwable
+							{
+								Integer value = ( Integer ) fileNumberSpinner.getValue( );
+								if( value == null )
+								{
+									fileNumberSpinner.setValue( 1 );
+								}
+								else
+								{
+									fileNumberSpinner.setValue( value + 1 );
+								}
+								ScreenCaptureDialog.this.dispose( );
+							}
+						};
+					}
+					catch( final Exception ex )
+					{
+						ex.printStackTrace( );
+						new OnEDT( )
+						{
+							@Override
+							public void run( ) throws Throwable
+							{
+								JOptionPane.showMessageDialog( dialog ,
+										ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
+										"Export Failed" ,
+										JOptionPane.ERROR_MESSAGE );
+							}
+						};
+					}
+				}
+			}
+		}
+	}
+	
+	private static int max( int ... values )
+	{
+		int max = Integer.MIN_VALUE;
+		for( int i : values )
+		{
+			max = Math.max( max , i );
+		}
+		return max;
+	}
+	
+	private static int total( int ... values )
+	{
+		int total = 0;
+		for( int i : values )
+		{
+			total += i;
+		}
+		return total;
 	}
 	
 	public void setVisible( boolean visible )
