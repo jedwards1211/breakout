@@ -213,15 +213,6 @@ public class SurveyShot
 		}
 		
 		return fsAzm + angle( fsAzm , bsAzm ) * 0.5;
-		//
-		// if( Math.abs( bsAzm - fsAzm ) < 180 )
-		// {
-		// return ( fsAzm + bsAzm ) * 0.5;
-		// }
-		// else
-		// {
-		// return 180.0 + ( fsAzm - 180.0 + bsAzm - 180.0 ) * 0.5;
-		// }
 	}
 	
 	public static void computeConnected( SurveyStation start )

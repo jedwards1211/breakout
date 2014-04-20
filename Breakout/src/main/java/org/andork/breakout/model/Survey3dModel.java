@@ -19,15 +19,20 @@ import static org.andork.spatial.Rectmath.voidRectf;
 import java.awt.Color;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
+import java.awt.LinearGradientPaint;
+import java.awt.MultipleGradientPaint;
+import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +65,8 @@ import org.andork.swing.async.Subtask;
 import org.andork.swing.async.Task;
 
 import com.andork.plot.LinearAxisConversion;
+import com.jogamp.nativewindow.awt.DirectDataBufferInt;
+import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 
 public class Survey3dModel
 {
@@ -100,14 +107,20 @@ public class Survey3dModel
 	int										lineProgram;
 	
 	int										paramTexture;
-	ByteBuffer								paramTextureBuffer;
+	IntBuffer								paramTextureBuffer;
 	
 	Uniform4fv								highlightColors;
 	
 	Uniform3fv								depthAxis;
 	Uniform3fv								depthOrigin;
 	
-	private Survey3dModel( List<SurveyShot> originalShots , List<Shot> shots , RfStarTree<Shot> tree , Set<Segment> segments )
+	Uniform1fv								nearDist;
+	Uniform1fv								farDist;
+	
+	Uniform1fv								loParam;
+	Uniform1fv								hiParam;
+	
+	private Survey3dModel( List<SurveyShot> originalShots , List<Shot> shots , RfStarTree<Shot> tree , Set<Segment> segments , Subtask renderSubtask )
 	{
 		super( );
 		this.originalShots = originalShots;
@@ -145,9 +158,19 @@ public class Survey3dModel
 			}
 		};
 		
+		loParam = new Uniform1fv( ).name( "u_loParam" ).value( 0 );
+		hiParam = new Uniform1fv( ).name( "u_hiParam" ).value( 1000 );
+		nearDist = new Uniform1fv( ).name( "u_nearDist" ).value( 0 );
+		farDist = new Uniform1fv( ).name( "u_farDist" ).value( 1000 );
+		
 		for( Segment segment : segments )
 		{
-			segment.parentModel = this;
+			segment.renderData( this );
+			if( renderSubtask.isCanceling( ) )
+			{
+				return;
+			}
+			renderSubtask.setCompleted( renderSubtask.getCompleted( ) + 1 );
 			
 			group.objects.add( segment.group );
 			segment.fillObj.add( highlightColors );
@@ -211,26 +234,24 @@ public class Survey3dModel
 		
 		Subtask renderSubtask = rootSubtask.beginSubtask( renderProportion );
 		renderSubtask.setStatus( "sending data to graphics card" );
-		renderSubtask.setTotal( segments.size( ) );
+		renderSubtask.setTotal( segments.size( ) * 2 );
 		
 		for( Segment segment : segments )
 		{
 			segment.populateData( geomBuffer );
-			segment.renderData( );
 			if( renderSubtask.isCanceling( ) )
 			{
 				return null;
 			}
 			renderSubtask.setCompleted( renderSubtask.getCompleted( ) + 1 );
 		}
-		renderSubtask.end( );
-		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + renderProportion );
-		
-		Survey3dModel model = new Survey3dModel( originalShots , shots , tree , segments );
+		Survey3dModel model = new Survey3dModel( originalShots , shots , tree , segments , renderSubtask );
 		if( rootSubtask.isCanceling( ) )
 		{
 			return null;
 		}
+		renderSubtask.end( );
+		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + renderProportion );
 		
 		return model;
 	}
@@ -576,38 +597,22 @@ public class Survey3dModel
 	
 	public void setNearDist( float nearDist )
 	{
-		for( Segment segment : segments )
-		{
-			segment.fillNearDist.value( nearDist );
-			segment.lineNearDist.value( nearDist );
-		}
+		this.nearDist.value( nearDist );
 	}
 	
 	public void setFarDist( float farDist )
 	{
-		for( Segment segment : segments )
-		{
-			segment.fillFarDist.value( farDist );
-			segment.lineFarDist.value( farDist );
-		}
+		this.farDist.value( farDist );
 	}
 	
 	public void setLoParam( float loParam )
 	{
-		for( Segment segment : segments )
-		{
-			segment.fillLoParam.value( loParam );
-			segment.lineLoParam.value( loParam );
-		}
+		this.loParam.value( loParam );
 	}
 	
 	public void setHiParam( float hiParam )
 	{
-		for( Segment segment : segments )
-		{
-			segment.fillHiParam.value( hiParam );
-			segment.lineHiParam.value( hiParam );
-		}
+		this.hiParam.value( hiParam );
 	}
 	
 	public void setDepthAxis( float[ ] axis )
@@ -885,25 +890,11 @@ public class Survey3dModel
 		
 		JOGLGroup				group;
 		
-		Uniform1fv				fillNearDist;
-		Uniform1fv				fillFarDist;
-		
-		Uniform1fv				lineNearDist;
-		Uniform1fv				lineFarDist;
-		
-		Uniform1fv				fillLoParam;
-		Uniform1fv				fillHiParam;
-		
-		Uniform1fv				lineLoParam;
-		Uniform1fv				lineHiParam;
-		
 		boolean					stationAttrsNeedRebuffering;
 		
-		private BasicJOGLObject	fillObj;
+		BasicJOGLObject			fillObj;
 		
-		private BasicJOGLObject	lineObj;
-		
-		Survey3dModel			parentModel;
+		BasicJOGLObject			lineObj;
 		
 		void addShot( Shot shot )
 		{
@@ -933,7 +924,7 @@ public class Survey3dModel
 			lineIndexBuffer.buffer( ).position( 0 );
 		}
 		
-		void renderData( )
+		void renderData( final Survey3dModel parentModel )
 		{
 			fillObj = new BasicJOGLObject( );
 			
@@ -951,13 +942,10 @@ public class Survey3dModel
 				@Override
 				public void beforeDraw( GL2ES2 gl , JOGLObject object )
 				{
-					if( parentModel != null )
-					{
-						gl.glActiveTexture( GL_TEXTURE0 );
-						int samplerLoc = gl.glGetUniformLocation( fillObj.getProgram( ) , "u_paramSampler" );
-						gl.glBindTexture( GL_TEXTURE_2D , parentModel.paramTexture );
-						gl.glUniform1i( samplerLoc , 0 );
-					}
+					gl.glActiveTexture( GL_TEXTURE0 );
+					int samplerLoc = gl.glGetUniformLocation( fillObj.getProgram( ) , "u_paramSampler" );
+					gl.glBindTexture( GL_TEXTURE_2D , parentModel.paramTexture );
+					gl.glUniform1i( samplerLoc , 0 );
 				}
 				
 				@Override
@@ -973,14 +961,10 @@ public class Survey3dModel
 			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
 			fillObj.add( fillObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
 			fillObj.add( fillObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
-			// fillObj.add( new Uniform4fv( ).name( "loColor" ).value( 1 , 0 , 0 , 1 ) );
-			// fillObj.add( new Uniform4fv( ).name( "hiColor" ).value( 0 , 0 , 1 , 1 ) );
-			// fillObj.add( new Uniform3fv( ).name( "u_origin" ).value( 0 , 0 , 0 ) );
-			// fillObj.add( new Uniform3fv( ).name( "u_axis" ).value( 0 , -1 , 0 ) );
-			fillObj.add( fillLoParam = new Uniform1fv( ).name( "u_loParam" ).value( 0 ) );
-			fillObj.add( fillHiParam = new Uniform1fv( ).name( "u_hiParam" ).value( 1000 ) );
-			fillObj.add( fillNearDist = new Uniform1fv( ).name( "u_nearDist" ).value( 0 ) );
-			fillObj.add( fillFarDist = new Uniform1fv( ).name( "u_farDist" ).value( 10000 ) );
+			fillObj.add( parentModel.loParam );
+			fillObj.add( parentModel.hiParam );
+			fillObj.add( parentModel.nearDist );
+			fillObj.add( parentModel.farDist );
 			
 			lineObj = new BasicJOGLObject( );
 			lineObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
@@ -997,14 +981,10 @@ public class Survey3dModel
 			lineObj.add( lineObj.new Attribute3fv( ).name( "a_norm" ) );
 			lineObj.add( lineObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
 			lineObj.add( lineObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
-			// lineObj.add( new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
-			// lineObj.add( new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
-			// lineObj.add( new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
-			// lineObj.add( new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
-			lineObj.add( lineLoParam = new Uniform1fv( ).name( "u_loParam" ).value( 0 ) );
-			lineObj.add( lineHiParam = new Uniform1fv( ).name( "u_hiParam" ).value( 1000 ) );
-			lineObj.add( lineNearDist = new Uniform1fv( ).name( "u_nearDist" ).value( 0 ) );
-			lineObj.add( lineFarDist = new Uniform1fv( ).name( "u_farDist" ).value( 10000 ) );
+			lineObj.add( parentModel.loParam );
+			lineObj.add( parentModel.hiParam );
+			lineObj.add( parentModel.nearDist );
+			lineObj.add( parentModel.farDist );
 			
 			lineObj.add( textureModifier );
 			
@@ -1233,37 +1213,18 @@ public class Survey3dModel
 		final int texWidth = 256;
 		final int texHeight = 256;
 		
-		BufferedImage image = new BufferedImage( texWidth , texHeight , BufferedImage.TYPE_INT_ARGB );
+		BufferedImageInt image = DirectDataBufferInt.createBufferedImage( texWidth , texHeight , BufferedImage.TYPE_INT_BGR ,
+				new Point( ) , new Hashtable<Object, Object>( ) );
 		
 		Graphics2D g2 = image.createGraphics( );
 		
-		g2.setPaint( new GradientPaint( 0 , 0 , new Color( 255 , 128 , 255 ) , 0 , texHeight / 2 , Color.RED ) );
-		g2.fillRect( 0 , 0 , texWidth , texHeight / 2 );
-		g2.setPaint( new GradientPaint( 0 , texHeight / 2 , Color.RED , 0 , texHeight , Color.BLUE ) );
-		g2.fillRect( 0 , texHeight / 2 , texWidth , texHeight / 2 );
+		g2.setPaint( new LinearGradientPaint( 0f , 0f , 0f , texHeight - 1 , new float[ ] { 0f , 0.5f , 1f } ,
+				new Color[ ] { new Color( 255 , 128 , 255 ) , Color.RED , Color.BLUE } ) );
+		g2.fillRect( 0 , 0 , texWidth , texHeight );
 		
 		g2.dispose( );
 		
-		BufferHelper texBufferHelper = new BufferHelper( );
-		
-		for( int y = 0 ; y < texHeight ; y++ )
-		{
-			for( int x = 0 ; x < texWidth ; x++ )
-			{
-				int rgb = image.getRGB( x , y );
-				byte a = ( byte ) ( ( rgb >> 24 ) & 0xff );
-				byte r = ( byte ) ( ( rgb >> 16 ) & 0xff );
-				byte g = ( byte ) ( ( rgb >> 8 ) & 0xff );
-				byte b = ( byte ) ( rgb & 0xff );
-				texBufferHelper.putBytes( r );
-				texBufferHelper.putBytes( g );
-				texBufferHelper.putBytes( b );
-				texBufferHelper.putBytes( a );
-			}
-		}
-		
-		paramTextureBuffer = texBufferHelper.toByteBuffer( );
-		paramTextureBuffer.position( 0 );
+		paramTextureBuffer = ( ( DirectDataBufferInt ) image.getRaster( ).getDataBuffer( ) ).getData( );
 		
 		int textures[] = new int[ 1 ];
 		gl.glGenTextures( 1 , textures , 0 );
