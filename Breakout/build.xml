@@ -43,6 +43,10 @@
 				<include name="jogl-gldesktop.jar" />
 				<include name="nativewindow-core.jar" />
 				<include name="nativewindow-awt.jar" />
+				<include name="newt-core.jar" />
+				<include name="newt-event.jar" />
+				<include name="newt-awt.jar" />
+				<include name="newt-ogl.jar" />
 			</fileset>
 
 			<fileset dir="../andork-core/dist/lib">
@@ -109,6 +113,7 @@
 			<fileset dir="${jogl-libs}/atomic">
 				<include name="jogl-os-win.jar" />
 				<include name="nativewindow-os-win.jar" />
+				<include name="newt-driver-win.jar" />
 			</fileset>
 		</copy>
 	</target>
@@ -121,6 +126,7 @@
 			<fileset dir="${jogl-libs}/atomic">
 				<include name="jogl-natives-windows-i586.jar" />
 				<include name="nativewindow-natives-windows-i586.jar" />
+				<include name="newt-natives-windows-i586.jar" />
 			</fileset>
 		</copy>
 	</target>
@@ -154,9 +160,9 @@
 			<classpath refid="master-classpath" />
 		</javac>
 	</target>
-	
+
 	<target name="jar-base" depends="compile-main,copy-resources">
-		<jar jarfile="${dist}/${ant.project.name}-base.jar" basedir="${build.main}" />	
+		<jar jarfile="${dist}/${ant.project.name}-base.jar" basedir="${build.main}" />
 	</target>
 
 	<target name="dist-win-i586" depends="jar-base,copy-deps-win-i586" description="generate the distribution">
@@ -202,6 +208,12 @@
 				<include name="lib/gluegen-rt-natives-windows-i586.jar" />
 				<include name="lib/jogl-natives-windows-i586.jar" />
 				<include name="lib/nativewindow-natives-windows-i586.jar" />
+				<include name="lib/newt-core.jar" />
+				<include name="lib/newt-event.jar" />
+				<include name="lib/newt-awt.jar" />
+				<include name="lib/newt-ogl.jar" />
+				<include name="lib/newt-driver-win.jar" />
+				<include name="lib/newt-natives-windows-i586.jar" />
 			</fileset>
 		</zip>
 	</target>

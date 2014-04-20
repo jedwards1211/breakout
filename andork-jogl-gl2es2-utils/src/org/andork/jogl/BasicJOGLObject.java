@@ -108,6 +108,12 @@ public class BasicJOGLObject implements JOGLObject
 		return this;
 	}
 	
+	public BasicJOGLObject program( int program )
+	{
+		this.program = program;
+		return this;
+	}
+	
 	public BasicJOGLObject vertexShaderCode( String vertexShaderCode )
 	{
 		this.vertexShaderCode = vertexShaderCode;
@@ -194,9 +200,12 @@ public class BasicJOGLObject implements JOGLObject
 		}
 		initialized = true;
 		
-		vertexShader = JOGLUtils.loadShader( gl , GL2ES2.GL_VERTEX_SHADER , vertexShaderCode );
-		fragmentShader = JOGLUtils.loadShader( gl , GL2ES2.GL_FRAGMENT_SHADER , fragmentShaderCode );
-		program = JOGLUtils.loadProgram( gl , vertexShader , fragmentShader );
+		if( vertexShaderCode != null && fragmentShaderCode != null )
+		{
+			vertexShader = JOGLUtils.loadShader( gl , GL2ES2.GL_VERTEX_SHADER , vertexShaderCode );
+			fragmentShader = JOGLUtils.loadShader( gl , GL2ES2.GL_FRAGMENT_SHADER , fragmentShaderCode );
+			program = JOGLUtils.loadProgram( gl , vertexShader , fragmentShader );
+		}
 		
 		int[ ] temp = new int[ 1 ];
 		
@@ -217,17 +226,17 @@ public class BasicJOGLObject implements JOGLObject
 			strides[ bi ] += bytes;
 		}
 		
-		for( Attribute attribute : attributes )
-		{
-			int bi = attribute.getBufferIndex( );
-			int bytes = attribute.getNumBytes( );
-			
-			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].id( ) );
-			
-			attribute.put( gl , strides[ bi ] , offsets[ bi ] );
-			
-			offsets[ bi ] += bytes;
-		}
+		// for( Attribute attribute : attributes )
+		// {
+		// int bi = attribute.getBufferIndex( );
+		// int bytes = attribute.getNumBytes( );
+		//
+		// gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].id( ) );
+		//
+		// attribute.put( gl , strides[ bi ] , offsets[ bi ] );
+		//
+		// offsets[ bi ] += bytes;
+		// }
 		
 		if( indexBuffer != null )
 		{
@@ -288,6 +297,7 @@ public class BasicJOGLObject implements JOGLObject
 			int bytes = attribute.getNumBytes( );
 			
 			gl.glBindBuffer( GL2ES2.GL_ARRAY_BUFFER , vertexBuffers[ bi ].id( ) );
+			checkGLError( gl );
 			
 			attribute.put( gl , strides[ bi ] , offsets[ bi ] );
 			
@@ -327,11 +337,14 @@ public class BasicJOGLObject implements JOGLObject
 				indexBuffer.destroy( gl );
 			}
 			
-			gl.glDetachShader( program , vertexShader );
-			gl.glDetachShader( program , fragmentShader );
-			gl.glDeleteShader( vertexShader );
-			gl.glDeleteShader( fragmentShader );
-			gl.glDeleteProgram( program );
+			if( vertexShaderCode != null && fragmentShaderCode != null )
+			{
+				gl.glDetachShader( program , vertexShader );
+				gl.glDetachShader( program , fragmentShader );
+				gl.glDeleteShader( vertexShader );
+				gl.glDeleteShader( fragmentShader );
+				gl.glDeleteProgram( program );
+			}
 			
 			initialized = false;
 		}
@@ -829,6 +842,7 @@ public class BasicJOGLObject implements JOGLObject
 			if( divisor > 0 )
 			{
 				( ( GL3 ) gl ).glVertexAttribDivisor( location , divisor );
+				checkGLError( gl );
 			}
 		}
 		

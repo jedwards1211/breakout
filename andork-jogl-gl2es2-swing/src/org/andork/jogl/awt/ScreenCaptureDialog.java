@@ -927,7 +927,7 @@ public class ScreenCaptureDialog extends JDialog
 		@Override
 		public void display( GLAutoDrawable drawable )
 		{
-			GL2ES2 gl = new DebugGL2( ( GL2 ) drawable.getGL( ) );
+			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
 			gl.glClear( GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_DEPTH_BUFFER_BIT );
 			
 			for( JOGLObject object : scene.getObjects( ) )

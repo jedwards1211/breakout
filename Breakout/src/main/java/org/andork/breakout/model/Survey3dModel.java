@@ -22,7 +22,6 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.channels.CancelledKeyException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,8 +36,6 @@ import javax.media.opengl.GL2ES2;
 
 import org.andork.breakout.PickResult;
 import org.andork.jogl.BasicJOGLObject;
-import org.andork.jogl.BasicJOGLObject.BasicVertexShader;
-import org.andork.jogl.BasicJOGLObject.DistanceFragmentShader;
 import org.andork.jogl.BasicJOGLObject.Uniform1fv;
 import org.andork.jogl.BasicJOGLObject.Uniform3fv;
 import org.andork.jogl.BasicJOGLObject.Uniform4fv;
@@ -49,16 +46,6 @@ import org.andork.jogl.JOGLLineWidthModifier;
 import org.andork.jogl.JOGLModifier;
 import org.andork.jogl.JOGLObject;
 import org.andork.jogl.SharedBuffer;
-import org.andork.jogl.shadelet.AxisParamShadelet;
-import org.andork.jogl.shadelet.CombinedShadelet;
-import org.andork.jogl.shadelet.DepthOffsetShadelet;
-import org.andork.jogl.shadelet.DistParamShadelet;
-import org.andork.jogl.shadelet.GradientShadelet;
-import org.andork.jogl.shadelet.IndexedHighlightShadelet;
-import org.andork.jogl.shadelet.NormalVertexShadelet;
-import org.andork.jogl.shadelet.PositionVertexShadelet;
-import org.andork.jogl.shadelet.Shadelet;
-import org.andork.jogl.shadelet.SimpleLightingShadelet;
 import org.andork.jogl.util.JOGLUtils;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
@@ -77,531 +64,23 @@ import com.andork.plot.LinearAxisConversion;
 public class Survey3dModel
 {
 	
-	public static class Segment
-	{
-		final ArrayList<Shot>	shots	= new ArrayList<Shot>( );
-		
-		SharedBuffer			geomBuffer;
-		SharedBuffer			stationAttrBuffer;
-		SharedBuffer			fillIndexBuffer;
-		SharedBuffer			lineIndexBuffer;
-		
-		JOGLGroup				group;
-		
-		Uniform1fv				fillNearDist;
-		Uniform1fv				fillFarDist;
-		
-		Uniform1fv				lineNearDist;
-		Uniform1fv				lineFarDist;
-		
-		Uniform1fv				fillLoParam;
-		Uniform1fv				fillHiParam;
-		
-		Uniform1fv				lineLoParam;
-		Uniform1fv				lineHiParam;
-		
-		boolean					stationAttrsNeedRebuffering;
-		
-		private BasicJOGLObject	fillObj;
-		
-		private BasicJOGLObject	lineObj;
-		
-		void addShot( Shot shot )
-		{
-			shot.segment = this;
-			shot.indexInSegment = shots.size( );
-			shots.add( shot );
-		}
-		
-		void populateData( ByteBuffer allGeomBuffer )
-		{
-			geomBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * GEOM_BPS ) );
-			stationAttrBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * STATION_ATTR_BPS ) );
-			fillIndexBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * BPI * FILL_IPS ) );
-			lineIndexBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * BPI * LINE_IPS ) );
-			
-			for( Shot shot : shots )
-			{
-				copyBytes( allGeomBuffer , geomBuffer.buffer( ) , shot.index , GEOM_BPS );
-			}
-			
-			createFillIndices( fillIndexBuffer.buffer( ) , shots.size( ) );
-			createLineIndices( lineIndexBuffer.buffer( ) , shots.size( ) );
-			
-			geomBuffer.buffer( ).position( 0 );
-			stationAttrBuffer.buffer( ).position( 0 );
-			fillIndexBuffer.buffer( ).position( 0 );
-			lineIndexBuffer.buffer( ).position( 0 );
-		}
-		
-		void renderData( )
-		{
-			final int[ ] textures = new int[ 1 ];
-			
-			final int texWidth = 256;
-			final int texHeight = 256;
-			
-			BufferedImage image = new BufferedImage( texWidth , texHeight , BufferedImage.TYPE_INT_ARGB );
-			
-			Graphics2D g2 = image.createGraphics( );
-			
-			g2.setPaint( new GradientPaint( 0 , 0 , new Color( 255 , 128 , 255 ) , 0 , texHeight / 2 , Color.RED ) );
-			g2.fillRect( 0 , 0 , texWidth , texHeight / 2 );
-			g2.setPaint( new GradientPaint( 0 , texHeight / 2 , Color.RED , 0 , texHeight , Color.BLUE ) );
-			g2.fillRect( 0 , texHeight / 2 , texWidth , texHeight / 2 );
-			
-			g2.dispose( );
-			
-			BufferHelper texBufferHelper = new BufferHelper( );
-			
-			for( int y = 0 ; y < texHeight ; y++ )
-			{
-				for( int x = 0 ; x < texWidth ; x++ )
-				{
-					int rgb = image.getRGB( x , y );
-					byte a = ( byte ) ( ( rgb >> 24 ) & 0xff );
-					byte r = ( byte ) ( ( rgb >> 16 ) & 0xff );
-					byte g = ( byte ) ( ( rgb >> 8 ) & 0xff );
-					byte b = ( byte ) ( rgb & 0xff );
-					texBufferHelper.putBytes( r );
-					texBufferHelper.putBytes( g );
-					texBufferHelper.putBytes( b );
-					texBufferHelper.putBytes( a );
-				}
-			}
-			
-			final ByteBuffer texBuffer = texBufferHelper.toByteBuffer( );
-			
-			fillObj = new BasicJOGLObject( )
-			{
-				
-				@Override
-				public void init( GL2ES2 gl )
-				{
-					gl.glGenTextures( 1 , textures , 0 );
-					JOGLUtils.checkGLError( gl , "glGenTextures" );
-					
-					gl.glBindTexture( GL_TEXTURE_2D , textures[ 0 ] );
-					JOGLUtils.checkGLError( gl , "glBindTexture" );
-					
-					gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_S , GL_CLAMP_TO_EDGE );
-					JOGLUtils.checkGLError( gl , "glTexParameteri" );
-					gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_T , GL_CLAMP_TO_EDGE );
-					JOGLUtils.checkGLError( gl , "glTexParameteri" );
-					gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MAG_FILTER , GL_LINEAR );
-					JOGLUtils.checkGLError( gl , "glTexParameteri" );
-					gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MIN_FILTER , GL_LINEAR );
-					JOGLUtils.checkGLError( gl , "glTexParameteri" );
-					
-					texBuffer.position( 0 );
-					
-					gl.glTexImage2D( GL_TEXTURE_2D , 0 , GL_RGBA , texWidth , texHeight , 0 , GL_RGBA , GL_UNSIGNED_BYTE , texBuffer );
-					JOGLUtils.checkGLError( gl , "glTexImage2D" );
-					
-					gl.glBindTexture( GL_TEXTURE_2D , 0 );
-					super.init( gl );
-				}
-			};
-			
-			// fillObj = new BasicJOGLObject( );
-			fillObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
-			fillObj.addVertexBuffer( stationAttrBuffer ).vertexCount( stationAttrBuffer.buffer( ).capacity( ) / STATION_ATTR_BPV );
-			fillObj.drawMode( GL2ES2.GL_TRIANGLES );
-			fillObj.indexBuffer( fillIndexBuffer ).indexCount( fillIndexBuffer.buffer( ).capacity( ) / BPI );
-			fillObj.indexType( GL2ES2.GL_UNSIGNED_INT );
-			fillObj.transpose( false );
-			fillObj.add( new JOGLDepthModifier( ) );
-			fillObj.normalMatrixName( "n" );
-			
-			String vertShader = "uniform mat4 m;" +
-					"uniform mat4 v;" +
-					"uniform mat4 p;" +
-					"attribute vec3 a_pos;" +
-					
-					// lighting
-					"attribute vec3 a_norm;" +
-					"varying vec3 v_norm;" +
-					"uniform mat3 n;" +
-					
-					// depth coloration
-					"uniform vec3 u_axis;" +
-					"uniform vec3 u_origin;" +
-					"varying float v_axisParam;" +
-					
-					// distance coloration
-					"varying float v_dist;" +
-					
-					// glow
-					"attribute vec2 a_glow;" +
-					"varying vec2 v_glow;" +
-					
-					// highlights
-					"attribute float a_highlightIndex;" +
-					"varying float v_highlightIndex;" +
-					
-					"void main() " +
-					"{" +
-					"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
-					"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
-					"  v_axisParam = dot(a_pos - u_origin, u_axis);" +
-					"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
-					"  v_glow = a_glow;" +
-					"  v_highlightIndex = a_highlightIndex;" +
-					"}";
-			
-			String fragShader = "#version 130\n" +
-					"varying vec3 v_norm;" +
-					
-					// depth coloration
-					"varying float v_axisParam;" +
-					"uniform float loValue;" +
-					"uniform float hiValue;" +
-					// "uniform vec4 loColor;" +
-					// "uniform vec4 hiColor;" +
-					"uniform sampler2D depthSampler;" +
-					
-					// distance coloration
-					"varying float v_dist;" +
-					"uniform float farDist;" +
-					"uniform float nearDist;" +
-					
-					// glow
-					"varying vec2 v_glow;" +
-					
-					// highlights
-					"uniform vec4 highlightColors[3];" +
-					"varying float v_highlightIndex;" +
-					
-					"void main() " +
-					"{" +
-					"  float temp;" +
-					"  vec4 indexedHighlight;" +
-					
-					// depth coloration
-					// "  gl_FragColor = mix(loColor, hiColor, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0));" +
-					"  gl_FragColor = texture2D(depthSampler, vec2(0.5, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0)));" +
-					// "  gl_FragColor = vec4(0.5, texture2D(depthSampler, vec2(0.0, 0.5)).ar,  1.0);" +
-					// "  gl_FragColor = vec4(texture2D(depthSampler, vec2(0.5, 0.5)).rgb, 1.0);" +
-					// "  gl_FragColor = vec4(texture(depthSampler, vec2(0.0, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0))).xy, 0.5, 1.0);" +
-					
-					// distance coloration
-					"  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - nearDist) / (farDist - nearDist), 0.0, 1.0));" +
-					
-					// glow
-					"  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 0.0, 1.0), clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
-					
-					// lighting
-					"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
-					"  temp = 0.3 + temp * (1.0 - 0.3);" +
-					"  gl_FragColor = temp * gl_FragColor;" +
-					
-					// highlights
-					"  indexedHighlight = highlightColors[int(floor(v_highlightIndex + 0.5))];" +
-					"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
-					"}";
-			
-			fillObj.add( new JOGLModifier( )
-			{
-				@Override
-				public void beforeDraw( GL2ES2 gl , JOGLObject object )
-				{
-					gl.glActiveTexture( GL_TEXTURE0 );
-					JOGLUtils.checkGLError( gl , "glActiveTexture" );
-					
-					int samplerLoc = gl.glGetUniformLocation( fillObj.getProgram( ) , "depthSampler" );
-					JOGLUtils.checkGLError( gl , "glGetUniformLocation" );
-					
-					gl.glBindTexture( GL_TEXTURE_2D , textures[ 0 ] );
-					JOGLUtils.checkGLError( gl , "glBindTexture" );
-					
-					gl.glUniform1i( samplerLoc , 0 );
-					JOGLUtils.checkGLError( gl , "glUniform1i" );
-				}
-				
-				@Override
-				public void afterDraw( GL2ES2 gl , JOGLObject object )
-				{
-					gl.glBindTexture( GL_TEXTURE_2D , 0 );
-					JOGLUtils.checkGLError( gl , "glBindTexture" );
-				}
-			} );
-			
-			// fillObj.vertexShaderCode( combShadelet.createVertexShaderCode( ) );
-			// fillObj.fragmentShaderCode( combShadelet.createFragmentShaderCode( ) );
-			fillObj.vertexShaderCode( vertShader );
-			fillObj.fragmentShaderCode( fragShader );
-			
-			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
-			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
-			fillObj.add( fillObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
-			fillObj.add( fillObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
-			// fillObj.add( new Uniform4fv( ).name( "loColor" ).value( 1 , 0 , 0 , 1 ) );
-			// fillObj.add( new Uniform4fv( ).name( "hiColor" ).value( 0 , 0 , 1 , 1 ) );
-			// fillObj.add( new Uniform3fv( ).name( "u_origin" ).value( 0 , 0 , 0 ) );
-			// fillObj.add( new Uniform3fv( ).name( "u_axis" ).value( 0 , -1 , 0 ) );
-			fillObj.add( fillLoParam = new Uniform1fv( ).name( "loValue" ).value( 0 ) );
-			fillObj.add( fillHiParam = new Uniform1fv( ).name( "hiValue" ).value( 1000 ) );
-			fillObj.add( fillNearDist = new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
-			fillObj.add( fillFarDist = new Uniform1fv( ).name( "farDist" ).value( 10000 ) );
-			
-			lineObj = new BasicJOGLObject( );
-			lineObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
-			lineObj.addVertexBuffer( stationAttrBuffer ).vertexCount( stationAttrBuffer.buffer( ).capacity( ) / STATION_ATTR_BPV );
-			lineObj.drawMode( GL2ES2.GL_LINES );
-			lineObj.indexBuffer( lineIndexBuffer ).indexCount( lineIndexBuffer.buffer( ).capacity( ) / BPI );
-			lineObj.indexType( GL2ES2.GL_UNSIGNED_INT );
-			lineObj.transpose( false );
-			lineObj.vertexShaderCode( new BasicVertexShader( ).passPosToFragmentShader( true ).toString( ) );
-			lineObj.fragmentShaderCode( new DistanceFragmentShader( ).toString( ) );
-			lineObj.add( new JOGLLineWidthModifier( 1f ) );
-			lineObj.add( new JOGLDepthModifier( ) );
-			lineObj.normalMatrixName( "n" );
-			
-			vertShader = "uniform mat4 m;" +
-					"uniform mat4 p;" +
-					"uniform mat4 v;" +
-					"uniform mat3 n;" +
-					
-					"attribute vec3 a_pos;" +
-					
-					"attribute vec3 a_norm;" +
-					"varying vec3 v_norm;" +
-					
-					"varying float v_axisParam;" +
-					"uniform vec3 u_axis;" +
-					"uniform vec3 u_origin;" +
-					
-					"varying float v_dist;" +
-					
-					"varying vec2 v_glow;" +
-					"attribute vec2 a_glow;" +
-					
-					"attribute float a_highlightIndex;" +
-					"varying float v_highlightIndex;" +
-					
-					"void main() " +
-					"{" +
-					"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
-					"  gl_Position.z += 0.1;" +
-					"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
-					"  v_axisParam = dot(a_pos - u_origin, u_axis);" +
-					"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
-					"  v_glow = a_glow;" +
-					"  v_highlightIndex = a_highlightIndex;" +
-					"}";
-			
-			fragShader = "varying vec3 v_norm;" +
-					
-					"varying float v_axisParam;" +
-					"uniform float loValue;" +
-					"uniform float hiValue;" +
-					// "uniform vec4 loColor;" +
-					// "uniform vec4 hiColor;" +
-					"uniform sampler2D depthSampler;" +
-					
-					"varying float v_dist;" +
-					"uniform float farDist;" +
-					"uniform float nearDist;" +
-					
-					"varying vec2 v_glow;" +
-					
-					"uniform vec4 highlightColors[3];" +
-					"varying float v_highlightIndex;" +
-					
-					"void main() " +
-					"{" +
-					"  float temp;" +
-					"  vec4 indexedHighlight;" +
-					
-					// "  gl_FragColor = mix(loColor, hiColor, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0));" +
-					"  gl_FragColor = texture2D(depthSampler, vec2(0.5, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0)));" +
-					
-					"  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - nearDist) / (farDist - nearDist), 0.0, 1.0));" +
-					
-					"  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 0.0, 1.0), clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
-					
-					"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
-					"  temp = 0.3 + temp * (1.0 - 0.3);" +
-					"  gl_FragColor = temp * gl_FragColor;" +
-					
-					"  indexedHighlight = highlightColors[int(floor(v_highlightIndex + 0.5))];" +
-					"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
-					"}";
-			
-			lineObj.vertexShaderCode( vertShader );
-			lineObj.fragmentShaderCode( fragShader );
-			
-			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
-			lineObj.add( lineObj.new Attribute3fv( ).name( "a_norm" ) );
-			lineObj.add( lineObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
-			lineObj.add( lineObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
-			// lineObj.add( new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
-			// lineObj.add( new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
-			// lineObj.add( new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
-			// lineObj.add( new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
-			lineObj.add( lineLoParam = new Uniform1fv( ).name( "loValue" ).value( 0 ) );
-			lineObj.add( lineHiParam = new Uniform1fv( ).name( "hiValue" ).value( 1000 ) );
-			lineObj.add( lineNearDist = new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
-			lineObj.add( lineFarDist = new Uniform1fv( ).name( "farDist" ).value( 10000 ) );
-			
-			lineObj.add( new JOGLModifier( )
-			{
-				@Override
-				public void beforeDraw( GL2ES2 gl , JOGLObject object )
-				{
-					gl.glActiveTexture( GL_TEXTURE0 );
-					JOGLUtils.checkGLError( gl , "glActiveTexture" );
-					
-					int samplerLoc = gl.glGetUniformLocation( lineObj.getProgram( ) , "depthSampler" );
-					JOGLUtils.checkGLError( gl , "glGetUniformLocation" );
-					
-					gl.glBindTexture( GL_TEXTURE_2D , textures[ 0 ] );
-					JOGLUtils.checkGLError( gl , "glBindTexture" );
-					
-					gl.glUniform1i( samplerLoc , 0 );
-					JOGLUtils.checkGLError( gl , "glUniform1i" );
-				}
-				
-				@Override
-				public void afterDraw( GL2ES2 gl , JOGLObject object )
-				{
-					gl.glBindTexture( GL_TEXTURE_2D , 0 );
-					JOGLUtils.checkGLError( gl , "glBindTexture" );
-				}
-			} );
-			
-			group = new JOGLGroup( this );
-			group.objects.add( new Rebufferer( ) );
-			group.objects.add( fillObj );
-			group.objects.add( lineObj );
-		}
-		
-		private class Rebufferer implements JOGLObject
-		{
-			@Override
-			public void init( GL2ES2 gl )
-			{
-			}
-			
-			@Override
-			public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
-			{
-				if( stationAttrsNeedRebuffering )
-				{
-					stationAttrsNeedRebuffering = false;
-					stationAttrBuffer.rebuffer( gl );
-				}
-			}
-			
-			@Override
-			public void destroy( GL2ES2 gl )
-			{
-			}
-			
-		}
-	}
+	private static final int				GEOM_BPV			= 24;
 	
-	public static class Shot
-	{
-		int		index;
-		
-		Segment	segment;
-		int		indexInSegment;
-		
-		Shot( int index )
-		{
-			super( );
-			this.index = index;
-		}
-		
-		public int getIndex( )
-		{
-			return index;
-		}
-		
-		public void getCoordinate( int i , float[ ] result )
-		{
-			ByteBuffer indexBuffer = segment.fillIndexBuffer.buffer( );
-			ByteBuffer vertBuffer = segment.geomBuffer.buffer( );
-			indexBuffer.position( indexInSegment * FILL_IPS * BPI + i * BPI );
-			vertBuffer.position( indexBuffer.getInt( ) * GEOM_BPV );
-			result[ 0 ] = vertBuffer.getFloat( );
-			result[ 1 ] = vertBuffer.getFloat( );
-			result[ 2 ] = vertBuffer.getFloat( );
-			vertBuffer.position( 0 );
-			indexBuffer.position( 0 );
-		}
-		
-		public void pick( float[ ] rayOrigin , float[ ] rayDirection , ShotPickContext c , List<PickResult<Shot>> pickResults )
-		{
-			ShotPickResult result = null;
-			
-			ByteBuffer indexBuffer = segment.fillIndexBuffer.buffer( );
-			ByteBuffer vertBuffer = segment.geomBuffer.buffer( );
-			indexBuffer.position( indexInSegment * FILL_IPS * BPI );
-			for( int i = 0 ; i < 8 ; i++ )
-			{
-				int i0 = indexBuffer.getInt( );
-				int i1 = indexBuffer.getInt( );
-				int i2 = indexBuffer.getInt( );
-				
-				vertBuffer.position( i0 * GEOM_BPV );
-				c.p0[ 0 ] = vertBuffer.getFloat( );
-				c.p0[ 1 ] = vertBuffer.getFloat( );
-				c.p0[ 2 ] = vertBuffer.getFloat( );
-				
-				vertBuffer.position( i1 * GEOM_BPV );
-				c.p1[ 0 ] = vertBuffer.getFloat( );
-				c.p1[ 1 ] = vertBuffer.getFloat( );
-				c.p1[ 2 ] = vertBuffer.getFloat( );
-				
-				vertBuffer.position( i2 * GEOM_BPV );
-				c.p2[ 0 ] = vertBuffer.getFloat( );
-				c.p2[ 1 ] = vertBuffer.getFloat( );
-				c.p2[ 2 ] = vertBuffer.getFloat( );
-				
-				try
-				{
-					c.lpx.lineFromRay( rayOrigin , rayDirection );
-					c.lpx.planeFromPoints( c.p0 , c.p1 , c.p2 );
-					c.lpx.findIntersection( );
-					if( c.lpx.isPointIntersection( ) && c.lpx.isOnRay( ) && c.lpx.isInTriangle( ) )
-					{
-						if( result == null || c.lpx.t < result.distance )
-						{
-							result = new ShotPickResult( );
-							result.picked = this;
-							result.distance = c.lpx.t;
-							result.locationAlongShot = i % 2 == 0 ? c.lpx.u : 1 - c.lpx.u;
-							setf( result.location , c.lpx.result );
-						}
-					}
-				}
-				catch( Exception ex )
-				{
-					
-				}
-			}
-			
-			if( result != null )
-			{
-				pickResults.add( result );
-			}
-			
-			vertBuffer.position( 0 );
-			indexBuffer.position( 0 );
-		}
-	}
+	private static final int				GEOM_VPS			= 8;
 	
-	public static class ShotPickResult extends PickResult<Shot>
-	{
-		public float	locationAlongShot;
-	}
+	private static final int				GEOM_BPS			= GEOM_BPV * GEOM_VPS;
 	
-	Uniform4fv								highlightColors;
+	private static final int				STATION_ATTR_BPV	= 12;
 	
-	Uniform3fv								depthAxis;
-	Uniform3fv								depthOrigin;
+	private static final int				STATION_ATTR_VPS	= GEOM_VPS;
+	
+	private static final int				STATION_ATTR_BPS	= STATION_ATTR_BPV * STATION_ATTR_VPS;
+	
+	private static final int				BPI					= 4;
+	
+	private static final int				FILL_IPS			= 24;
+	
+	private static final int				LINE_IPS			= 32;
 	
 	List<SurveyShot>						originalShots;
 	List<Shot>								shots;
@@ -617,23 +96,16 @@ public class Survey3dModel
 	
 	JOGLGroup								group;
 	
-	public static final class ShotPickContext
-	{
-		final LinePlaneIntersection3f	lpx	= new LinePlaneIntersection3f( );
-		final float[ ]					p0	= new float[ 3 ];
-		final float[ ]					p1	= new float[ 3 ];
-		final float[ ]					p2	= new float[ 3 ];
-	}
+	int										fillProgram;
+	int										lineProgram;
 	
-	private static final int	GEOM_BPV			= 24;
-	private static final int	GEOM_VPS			= 8;
-	private static final int	GEOM_BPS			= GEOM_BPV * GEOM_VPS;
-	private static final int	STATION_ATTR_BPV	= 12;
-	private static final int	STATION_ATTR_VPS	= GEOM_VPS;
-	private static final int	STATION_ATTR_BPS	= STATION_ATTR_BPV * STATION_ATTR_VPS;
-	private static final int	BPI					= 4;
-	private static final int	FILL_IPS			= 24;
-	private static final int	LINE_IPS			= 32;
+	int										paramTexture;
+	ByteBuffer								paramTextureBuffer;
+	
+	Uniform4fv								highlightColors;
+	
+	Uniform3fv								depthAxis;
+	Uniform3fv								depthOrigin;
 	
 	private Survey3dModel( List<SurveyShot> originalShots , List<Shot> shots , RfStarTree<Shot> tree , Set<Segment> segments )
 	{
@@ -654,9 +126,29 @@ public class Survey3dModel
 		depthAxis = new Uniform3fv( ).name( "u_axis" ).value( 0f , -1f , 0f );
 		depthOrigin = new Uniform3fv( ).name( "u_origin" ).value( 0f , 0f , 0f );
 		
-		group = new JOGLGroup( this );
+		group = new JOGLGroup( this )
+		{
+			@Override
+			public void init( GL2ES2 gl )
+			{
+				createPrograms( gl );
+				createParamTexture( gl );
+				super.init( gl );
+			}
+			
+			@Override
+			public void destroy( GL2ES2 gl )
+			{
+				destroyPrograms( gl );
+				destroyParamTexture( gl );
+				super.destroy( gl );
+			}
+		};
+		
 		for( Segment segment : segments )
 		{
+			segment.parentModel = this;
+			
 			group.objects.add( segment.group );
 			segment.fillObj.add( highlightColors );
 			segment.fillObj.add( depthAxis );
@@ -668,220 +160,14 @@ public class Survey3dModel
 		
 	}
 	
-	public JOGLGroup getRootGroup( )
-	{
-		return group;
-	}
-	
-	public RfStarTree<Shot> getTree( )
-	{
-		return tree;
-	}
-	
-	public void setNearDist( float nearDist )
-	{
-		for( Segment segment : segments )
-		{
-			segment.fillNearDist.value( nearDist );
-			segment.lineNearDist.value( nearDist );
-		}
-	}
-	
-	public void setFarDist( float farDist )
-	{
-		for( Segment segment : segments )
-		{
-			segment.fillFarDist.value( farDist );
-			segment.lineFarDist.value( farDist );
-		}
-	}
-	
-	public void setLoParam( float loParam )
-	{
-		for( Segment segment : segments )
-		{
-			segment.fillLoParam.value( loParam );
-			segment.lineLoParam.value( loParam );
-		}
-	}
-	
-	public void setHiParam( float hiParam )
-	{
-		for( Segment segment : segments )
-		{
-			segment.fillHiParam.value( hiParam );
-			segment.lineHiParam.value( hiParam );
-		}
-	}
-	
-	public void setDepthAxis( float[ ] axis )
-	{
-		depthAxis.value( axis );
-	}
-	
-	public void setDepthOrigin( float[ ] origin )
-	{
-		depthOrigin.value( origin );
-	}
-	
-	public void pickShots( float[ ] rayOrigin , float[ ] rayDirection ,
-			ShotPickContext spc , List<PickResult<Shot>> pickResults )
-	{
-		pickShots( tree.getRoot( ) , rayOrigin , rayDirection , spc , pickResults );
-	}
-	
-	private void pickShots( RNode<float[ ], Shot> node , float[ ] rayOrigin , float[ ] rayDirection ,
-			ShotPickContext spc , List<PickResult<Shot>> pickResults )
-	{
-		if( rayIntersects( rayOrigin , rayDirection , node.mbr( ) ) )
-		{
-			if( node instanceof RBranch )
-			{
-				RBranch<float[ ], Shot> branch = ( RBranch<float[ ], Shot> ) node;
-				for( int i = 0 ; i < branch.numChildren( ) ; i++ )
-				{
-					pickShots( branch.childAt( i ) , rayOrigin , rayDirection , spc , pickResults );
-				}
-			}
-			else if( node instanceof RLeaf )
-			{
-				Shot shot = ( ( RLeaf<float[ ], Shot> ) node ).object( );
-				shot.pick( rayOrigin , rayDirection , spc , pickResults );
-			}
-		}
-	}
-	
-	public List<SurveyShot> getOriginalShots( )
-	{
-		return Collections.unmodifiableList( originalShots );
-	}
-	
-	public List<Shot> getShots( )
-	{
-		return Collections.unmodifiableList( shots );
-	}
-	
-	public Set<Shot> getHoveredShots( )
-	{
-		return Collections.unmodifiableSet( hoveredShots );
-	}
-	
-	public Set<Shot> getSelectedShots( )
-	{
-		return Collections.unmodifiableSet( selectedShots );
-	}
-	
-	public void getCenter( float[ ] center )
-	{
-		float[ ] mbr = tree.getRoot( ).mbr( );
-		center[ 0 ] = ( mbr[ 0 ] + mbr[ 3 ] ) * 0.5f;
-		center[ 1 ] = ( mbr[ 1 ] + mbr[ 4 ] ) * 0.5f;
-		center[ 2 ] = ( mbr[ 2 ] + mbr[ 5 ] ) * 0.5f;
-	}
-	
-	public SelectionEditor editSelection( )
-	{
-		return new SelectionEditor( );
-	}
-	
-	public final class SelectionEditor
-	{
-		private SelectionEditor( )
-		{
-			
-		}
-		
-		final Set<Shot>							selected			= new HashSet<Shot>( );
-		final Set<Shot>							deselected			= new HashSet<Shot>( );
-		final Set<Shot>							hovered				= new HashSet<Shot>( );
-		final Map<Shot, Float>					hoverLocations		= new HashMap<Shot, Float>( );
-		final Map<Shot, LinearAxisConversion>	highlightExtents	= new HashMap<Shot, LinearAxisConversion>( );
-		final Set<Shot>							unhovered			= new HashSet<Shot>( );
-		
-		boolean									committed			= false;
-		
-		public SelectionEditor select( Shot shot )
-		{
-			selected.add( shot );
-			deselected.remove( shot );
-			return this;
-		}
-		
-		public SelectionEditor deselect( Shot shot )
-		{
-			selected.remove( shot );
-			deselected.add( shot );
-			return this;
-		}
-		
-		public SelectionEditor hover( Shot shot , float location , LinearAxisConversion highlightExtent )
-		{
-			hovered.add( shot );
-			unhovered.remove( shot );
-			hoverLocations.put( shot , location );
-			highlightExtents.put( shot , highlightExtent );
-			return this;
-		}
-		
-		public SelectionEditor unhover( Shot shot )
-		{
-			hovered.remove( shot );
-			unhovered.add( shot );
-			hoverLocations.remove( shot );
-			highlightExtents.remove( shot );
-			return this;
-		}
-		
-		public void commit( )
-		{
-			Map<Shot, LinearAxisConversion> prevHighlightExtents = new HashMap<Shot, LinearAxisConversion>( Survey3dModel.this.highlightExtents );
-			
-			if( committed )
-			{
-				throw new IllegalStateException( "already committed" );
-			}
-			committed = true;
-			
-			for( Shot shot : selected )
-			{
-				selectedShots.add( shot );
-			}
-			for( Shot shot : deselected )
-			{
-				selectedShots.remove( shot );
-			}
-			for( Shot shot : hovered )
-			{
-				hoveredShots.add( shot );
-				Survey3dModel.this.hoverLocations.put( shot , hoverLocations.get( shot ) );
-				Survey3dModel.this.highlightExtents.put( shot , highlightExtents.get( shot ) );
-			}
-			for( Shot shot : unhovered )
-			{
-				hoveredShots.remove( shot );
-				Survey3dModel.this.hoverLocations.remove( shot );
-				Survey3dModel.this.highlightExtents.remove( shot );
-			}
-			
-			Set<Shot> affectedShots = new HashSet<Shot>( );
-			affectedShots.addAll( selected );
-			affectedShots.addAll( deselected );
-			affectedShots.addAll( hovered );
-			affectedShots.addAll( unhovered );
-			
-			updateHighlights( affectedShots , prevHighlightExtents );
-		}
-	}
-	
 	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , int segmentLevel , Task task )
 	{
-		task.setTotal( 1000 );
-		
 		Subtask rootSubtask = null;
 		int renderProportion = 5;
 		
 		if( task != null )
 		{
+			task.setTotal( 1000 );
 			rootSubtask = new Subtask( task );
 		}
 		else
@@ -1278,6 +564,718 @@ public class Survey3dModel
 		return in;
 	}
 	
+	public JOGLGroup getRootGroup( )
+	{
+		return group;
+	}
+	
+	public RfStarTree<Shot> getTree( )
+	{
+		return tree;
+	}
+	
+	public void setNearDist( float nearDist )
+	{
+		for( Segment segment : segments )
+		{
+			segment.fillNearDist.value( nearDist );
+			segment.lineNearDist.value( nearDist );
+		}
+	}
+	
+	public void setFarDist( float farDist )
+	{
+		for( Segment segment : segments )
+		{
+			segment.fillFarDist.value( farDist );
+			segment.lineFarDist.value( farDist );
+		}
+	}
+	
+	public void setLoParam( float loParam )
+	{
+		for( Segment segment : segments )
+		{
+			segment.fillLoParam.value( loParam );
+			segment.lineLoParam.value( loParam );
+		}
+	}
+	
+	public void setHiParam( float hiParam )
+	{
+		for( Segment segment : segments )
+		{
+			segment.fillHiParam.value( hiParam );
+			segment.lineHiParam.value( hiParam );
+		}
+	}
+	
+	public void setDepthAxis( float[ ] axis )
+	{
+		depthAxis.value( axis );
+	}
+	
+	public void setDepthOrigin( float[ ] origin )
+	{
+		depthOrigin.value( origin );
+	}
+	
+	public void pickShots( float[ ] rayOrigin , float[ ] rayDirection ,
+			ShotPickContext spc , List<PickResult<Shot>> pickResults )
+	{
+		pickShots( tree.getRoot( ) , rayOrigin , rayDirection , spc , pickResults );
+	}
+	
+	private void pickShots( RNode<float[ ], Shot> node , float[ ] rayOrigin , float[ ] rayDirection ,
+			ShotPickContext spc , List<PickResult<Shot>> pickResults )
+	{
+		if( rayIntersects( rayOrigin , rayDirection , node.mbr( ) ) )
+		{
+			if( node instanceof RBranch )
+			{
+				RBranch<float[ ], Shot> branch = ( RBranch<float[ ], Shot> ) node;
+				for( int i = 0 ; i < branch.numChildren( ) ; i++ )
+				{
+					pickShots( branch.childAt( i ) , rayOrigin , rayDirection , spc , pickResults );
+				}
+			}
+			else if( node instanceof RLeaf )
+			{
+				Shot shot = ( ( RLeaf<float[ ], Shot> ) node ).object( );
+				shot.pick( rayOrigin , rayDirection , spc , pickResults );
+			}
+		}
+	}
+	
+	public List<SurveyShot> getOriginalShots( )
+	{
+		return Collections.unmodifiableList( originalShots );
+	}
+	
+	public List<Shot> getShots( )
+	{
+		return Collections.unmodifiableList( shots );
+	}
+	
+	public Set<Shot> getHoveredShots( )
+	{
+		return Collections.unmodifiableSet( hoveredShots );
+	}
+	
+	public Set<Shot> getSelectedShots( )
+	{
+		return Collections.unmodifiableSet( selectedShots );
+	}
+	
+	public void getCenter( float[ ] center )
+	{
+		float[ ] mbr = tree.getRoot( ).mbr( );
+		center[ 0 ] = ( mbr[ 0 ] + mbr[ 3 ] ) * 0.5f;
+		center[ 1 ] = ( mbr[ 1 ] + mbr[ 4 ] ) * 0.5f;
+		center[ 2 ] = ( mbr[ 2 ] + mbr[ 5 ] ) * 0.5f;
+	}
+	
+	public SelectionEditor editSelection( )
+	{
+		return new SelectionEditor( );
+	}
+	
+	public final class SelectionEditor
+	{
+		private SelectionEditor( )
+		{
+			
+		}
+		
+		final Set<Shot>							selected			= new HashSet<Shot>( );
+		final Set<Shot>							deselected			= new HashSet<Shot>( );
+		final Set<Shot>							hovered				= new HashSet<Shot>( );
+		final Map<Shot, Float>					hoverLocations		= new HashMap<Shot, Float>( );
+		final Map<Shot, LinearAxisConversion>	highlightExtents	= new HashMap<Shot, LinearAxisConversion>( );
+		final Set<Shot>							unhovered			= new HashSet<Shot>( );
+		
+		boolean									committed			= false;
+		
+		public SelectionEditor select( Shot shot )
+		{
+			selected.add( shot );
+			deselected.remove( shot );
+			return this;
+		}
+		
+		public SelectionEditor deselect( Shot shot )
+		{
+			selected.remove( shot );
+			deselected.add( shot );
+			return this;
+		}
+		
+		public SelectionEditor hover( Shot shot , float location , LinearAxisConversion highlightExtent )
+		{
+			hovered.add( shot );
+			unhovered.remove( shot );
+			hoverLocations.put( shot , location );
+			highlightExtents.put( shot , highlightExtent );
+			return this;
+		}
+		
+		public SelectionEditor unhover( Shot shot )
+		{
+			hovered.remove( shot );
+			unhovered.add( shot );
+			hoverLocations.remove( shot );
+			highlightExtents.remove( shot );
+			return this;
+		}
+		
+		public void commit( )
+		{
+			Map<Shot, LinearAxisConversion> prevHighlightExtents = new HashMap<Shot, LinearAxisConversion>( Survey3dModel.this.highlightExtents );
+			
+			if( committed )
+			{
+				throw new IllegalStateException( "already committed" );
+			}
+			committed = true;
+			
+			for( Shot shot : selected )
+			{
+				selectedShots.add( shot );
+			}
+			for( Shot shot : deselected )
+			{
+				selectedShots.remove( shot );
+			}
+			for( Shot shot : hovered )
+			{
+				hoveredShots.add( shot );
+				Survey3dModel.this.hoverLocations.put( shot , hoverLocations.get( shot ) );
+				Survey3dModel.this.highlightExtents.put( shot , highlightExtents.get( shot ) );
+			}
+			for( Shot shot : unhovered )
+			{
+				hoveredShots.remove( shot );
+				Survey3dModel.this.hoverLocations.remove( shot );
+				Survey3dModel.this.highlightExtents.remove( shot );
+			}
+			
+			Set<Shot> affectedShots = new HashSet<Shot>( );
+			affectedShots.addAll( selected );
+			affectedShots.addAll( deselected );
+			affectedShots.addAll( hovered );
+			affectedShots.addAll( unhovered );
+			
+			updateHighlights( affectedShots , prevHighlightExtents );
+		}
+	}
+	
+	public static class Shot
+	{
+		int		index;
+		
+		Segment	segment;
+		int		indexInSegment;
+		
+		Shot( int index )
+		{
+			super( );
+			this.index = index;
+		}
+		
+		public int getIndex( )
+		{
+			return index;
+		}
+		
+		public void getCoordinate( int i , float[ ] result )
+		{
+			ByteBuffer indexBuffer = segment.fillIndexBuffer.buffer( );
+			ByteBuffer vertBuffer = segment.geomBuffer.buffer( );
+			indexBuffer.position( indexInSegment * FILL_IPS * BPI + i * BPI );
+			vertBuffer.position( indexBuffer.getInt( ) * GEOM_BPV );
+			result[ 0 ] = vertBuffer.getFloat( );
+			result[ 1 ] = vertBuffer.getFloat( );
+			result[ 2 ] = vertBuffer.getFloat( );
+			vertBuffer.position( 0 );
+			indexBuffer.position( 0 );
+		}
+		
+		public void pick( float[ ] rayOrigin , float[ ] rayDirection , ShotPickContext c , List<PickResult<Shot>> pickResults )
+		{
+			ShotPickResult result = null;
+			
+			ByteBuffer indexBuffer = segment.fillIndexBuffer.buffer( );
+			ByteBuffer vertBuffer = segment.geomBuffer.buffer( );
+			indexBuffer.position( indexInSegment * FILL_IPS * BPI );
+			for( int i = 0 ; i < 8 ; i++ )
+			{
+				int i0 = indexBuffer.getInt( );
+				int i1 = indexBuffer.getInt( );
+				int i2 = indexBuffer.getInt( );
+				
+				vertBuffer.position( i0 * GEOM_BPV );
+				c.p0[ 0 ] = vertBuffer.getFloat( );
+				c.p0[ 1 ] = vertBuffer.getFloat( );
+				c.p0[ 2 ] = vertBuffer.getFloat( );
+				
+				vertBuffer.position( i1 * GEOM_BPV );
+				c.p1[ 0 ] = vertBuffer.getFloat( );
+				c.p1[ 1 ] = vertBuffer.getFloat( );
+				c.p1[ 2 ] = vertBuffer.getFloat( );
+				
+				vertBuffer.position( i2 * GEOM_BPV );
+				c.p2[ 0 ] = vertBuffer.getFloat( );
+				c.p2[ 1 ] = vertBuffer.getFloat( );
+				c.p2[ 2 ] = vertBuffer.getFloat( );
+				
+				try
+				{
+					c.lpx.lineFromRay( rayOrigin , rayDirection );
+					c.lpx.planeFromPoints( c.p0 , c.p1 , c.p2 );
+					c.lpx.findIntersection( );
+					if( c.lpx.isPointIntersection( ) && c.lpx.isOnRay( ) && c.lpx.isInTriangle( ) )
+					{
+						if( result == null || c.lpx.t < result.distance )
+						{
+							result = new ShotPickResult( );
+							result.picked = this;
+							result.distance = c.lpx.t;
+							result.locationAlongShot = i % 2 == 0 ? c.lpx.u : 1 - c.lpx.u;
+							setf( result.location , c.lpx.result );
+						}
+					}
+				}
+				catch( Exception ex )
+				{
+					
+				}
+			}
+			
+			if( result != null )
+			{
+				pickResults.add( result );
+			}
+			
+			vertBuffer.position( 0 );
+			indexBuffer.position( 0 );
+		}
+	}
+	
+	public static final class ShotPickContext
+	{
+		final LinePlaneIntersection3f	lpx	= new LinePlaneIntersection3f( );
+		final float[ ]					p0	= new float[ 3 ];
+		final float[ ]					p1	= new float[ 3 ];
+		final float[ ]					p2	= new float[ 3 ];
+	}
+	
+	public static class ShotPickResult extends PickResult<Shot>
+	{
+		public float	locationAlongShot;
+	}
+	
+	public static class Segment
+	{
+		final ArrayList<Shot>	shots	= new ArrayList<Shot>( );
+		
+		SharedBuffer			geomBuffer;
+		SharedBuffer			stationAttrBuffer;
+		SharedBuffer			fillIndexBuffer;
+		SharedBuffer			lineIndexBuffer;
+		
+		JOGLGroup				group;
+		
+		Uniform1fv				fillNearDist;
+		Uniform1fv				fillFarDist;
+		
+		Uniform1fv				lineNearDist;
+		Uniform1fv				lineFarDist;
+		
+		Uniform1fv				fillLoParam;
+		Uniform1fv				fillHiParam;
+		
+		Uniform1fv				lineLoParam;
+		Uniform1fv				lineHiParam;
+		
+		boolean					stationAttrsNeedRebuffering;
+		
+		private BasicJOGLObject	fillObj;
+		
+		private BasicJOGLObject	lineObj;
+		
+		Survey3dModel			parentModel;
+		
+		void addShot( Shot shot )
+		{
+			shot.segment = this;
+			shot.indexInSegment = shots.size( );
+			shots.add( shot );
+		}
+		
+		void populateData( ByteBuffer allGeomBuffer )
+		{
+			geomBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * GEOM_BPS ) );
+			stationAttrBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * STATION_ATTR_BPS ) );
+			fillIndexBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * BPI * FILL_IPS ) );
+			lineIndexBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * BPI * LINE_IPS ) );
+			
+			for( Shot shot : shots )
+			{
+				copyBytes( allGeomBuffer , geomBuffer.buffer( ) , shot.index , GEOM_BPS );
+			}
+			
+			createFillIndices( fillIndexBuffer.buffer( ) , shots.size( ) );
+			createLineIndices( lineIndexBuffer.buffer( ) , shots.size( ) );
+			
+			geomBuffer.buffer( ).position( 0 );
+			stationAttrBuffer.buffer( ).position( 0 );
+			fillIndexBuffer.buffer( ).position( 0 );
+			lineIndexBuffer.buffer( ).position( 0 );
+		}
+		
+		void renderData( )
+		{
+			fillObj = new BasicJOGLObject( );
+			
+			fillObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
+			fillObj.addVertexBuffer( stationAttrBuffer ).vertexCount( stationAttrBuffer.buffer( ).capacity( ) / STATION_ATTR_BPV );
+			fillObj.drawMode( GL2ES2.GL_TRIANGLES );
+			fillObj.indexBuffer( fillIndexBuffer ).indexCount( fillIndexBuffer.buffer( ).capacity( ) / BPI );
+			fillObj.indexType( GL2ES2.GL_UNSIGNED_INT );
+			fillObj.transpose( false );
+			fillObj.add( new JOGLDepthModifier( ) );
+			fillObj.normalMatrixName( "n" );
+			
+			JOGLModifier textureModifier = new JOGLModifier( )
+			{
+				@Override
+				public void beforeDraw( GL2ES2 gl , JOGLObject object )
+				{
+					if( parentModel != null )
+					{
+						gl.glActiveTexture( GL_TEXTURE0 );
+						int samplerLoc = gl.glGetUniformLocation( fillObj.getProgram( ) , "depthSampler" );
+						gl.glBindTexture( GL_TEXTURE_2D , parentModel.paramTexture );
+						gl.glUniform1i( samplerLoc , 0 );
+					}
+				}
+				
+				@Override
+				public void afterDraw( GL2ES2 gl , JOGLObject object )
+				{
+					gl.glBindTexture( GL_TEXTURE_2D , 0 );
+				}
+			};
+			
+			fillObj.add( textureModifier );
+			
+			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
+			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
+			fillObj.add( fillObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
+			fillObj.add( fillObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
+			// fillObj.add( new Uniform4fv( ).name( "loColor" ).value( 1 , 0 , 0 , 1 ) );
+			// fillObj.add( new Uniform4fv( ).name( "hiColor" ).value( 0 , 0 , 1 , 1 ) );
+			// fillObj.add( new Uniform3fv( ).name( "u_origin" ).value( 0 , 0 , 0 ) );
+			// fillObj.add( new Uniform3fv( ).name( "u_axis" ).value( 0 , -1 , 0 ) );
+			fillObj.add( fillLoParam = new Uniform1fv( ).name( "loValue" ).value( 0 ) );
+			fillObj.add( fillHiParam = new Uniform1fv( ).name( "hiValue" ).value( 1000 ) );
+			fillObj.add( fillNearDist = new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
+			fillObj.add( fillFarDist = new Uniform1fv( ).name( "farDist" ).value( 10000 ) );
+			
+			lineObj = new BasicJOGLObject( );
+			lineObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
+			lineObj.addVertexBuffer( stationAttrBuffer ).vertexCount( stationAttrBuffer.buffer( ).capacity( ) / STATION_ATTR_BPV );
+			lineObj.drawMode( GL2ES2.GL_LINES );
+			lineObj.indexBuffer( lineIndexBuffer ).indexCount( lineIndexBuffer.buffer( ).capacity( ) / BPI );
+			lineObj.indexType( GL2ES2.GL_UNSIGNED_INT );
+			lineObj.transpose( false );
+			lineObj.add( new JOGLLineWidthModifier( 1f ) );
+			lineObj.add( new JOGLDepthModifier( ) );
+			lineObj.normalMatrixName( "n" );
+			
+			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
+			lineObj.add( lineObj.new Attribute3fv( ).name( "a_norm" ) );
+			lineObj.add( lineObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
+			lineObj.add( lineObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
+			// lineObj.add( new Uniform4fv( ).name( axisGradShadelet.loColor( ) ).value( 1 , 0 , 0 , 1 ) );
+			// lineObj.add( new Uniform4fv( ).name( axisGradShadelet.hiColor( ) ).value( 0 , 0 , 1 , 1 ) );
+			// lineObj.add( new Uniform3fv( ).name( axisShadelet.origin( ) ).value( 0 , 0 , 0 ) );
+			// lineObj.add( new Uniform3fv( ).name( axisShadelet.axis( ) ).value( 0 , -1 , 0 ) );
+			lineObj.add( lineLoParam = new Uniform1fv( ).name( "loValue" ).value( 0 ) );
+			lineObj.add( lineHiParam = new Uniform1fv( ).name( "hiValue" ).value( 1000 ) );
+			lineObj.add( lineNearDist = new Uniform1fv( ).name( "nearDist" ).value( 0 ) );
+			lineObj.add( lineFarDist = new Uniform1fv( ).name( "farDist" ).value( 10000 ) );
+			
+			lineObj.add( textureModifier );
+			
+			group = new JOGLGroup( this );
+			group.objects.add( new Rebufferer( ) );
+			group.objects.add( fillObj );
+			group.objects.add( lineObj );
+		}
+		
+		private class Rebufferer implements JOGLObject
+		{
+			@Override
+			public void init( GL2ES2 gl )
+			{
+			}
+			
+			@Override
+			public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
+			{
+				if( stationAttrsNeedRebuffering )
+				{
+					stationAttrsNeedRebuffering = false;
+					stationAttrBuffer.rebuffer( gl );
+				}
+			}
+			
+			@Override
+			public void destroy( GL2ES2 gl )
+			{
+			}
+		}
+	}
+	
+	private void createPrograms( GL2ES2 gl )
+	{
+		String vertShader = "uniform mat4 m;" +
+				"uniform mat4 v;" +
+				"uniform mat4 p;" +
+				"attribute vec3 a_pos;" +
+				
+				// lighting
+				"attribute vec3 a_norm;" +
+				"varying vec3 v_norm;" +
+				"uniform mat3 n;" +
+				
+				// depth coloration
+				"uniform vec3 u_axis;" +
+				"uniform vec3 u_origin;" +
+				"varying float v_axisParam;" +
+				
+				// distance coloration
+				"varying float v_dist;" +
+				
+				// glow
+				"attribute vec2 a_glow;" +
+				"varying vec2 v_glow;" +
+				
+				// highlights
+				"attribute float a_highlightIndex;" +
+				"varying float v_highlightIndex;" +
+				
+				"void main() " +
+				"{" +
+				"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
+				"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
+				"  v_axisParam = dot(a_pos - u_origin, u_axis);" +
+				"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
+				"  v_glow = a_glow;" +
+				"  v_highlightIndex = a_highlightIndex;" +
+				"}";
+		
+		String fragShader = "#version 130\n" +
+				"varying vec3 v_norm;" +
+				
+				// depth coloration
+				"varying float v_axisParam;" +
+				"uniform float loValue;" +
+				"uniform float hiValue;" +
+				// "uniform vec4 loColor;" +
+				// "uniform vec4 hiColor;" +
+				"uniform sampler2D depthSampler;" +
+				
+				// distance coloration
+				"varying float v_dist;" +
+				"uniform float farDist;" +
+				"uniform float nearDist;" +
+				
+				// glow
+				"varying vec2 v_glow;" +
+				
+				// highlights
+				"uniform vec4 highlightColors[3];" +
+				"varying float v_highlightIndex;" +
+				
+				"void main() " +
+				"{" +
+				"  float temp;" +
+				"  vec4 indexedHighlight;" +
+				
+				// depth coloration
+				// "  gl_FragColor = mix(loColor, hiColor, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0));" +
+				"  gl_FragColor = texture2D(depthSampler, vec2(0.5, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0)));" +
+				// "  gl_FragColor = vec4(0.5, texture2D(depthSampler, vec2(0.0, 0.5)).ar,  1.0);" +
+				// "  gl_FragColor = vec4(texture2D(depthSampler, vec2(0.5, 0.5)).rgb, 1.0);" +
+				// "  gl_FragColor = vec4(texture(depthSampler, vec2(0.0, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0))).xy, 0.5, 1.0);" +
+				
+				// distance coloration
+				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - nearDist) / (farDist - nearDist), 0.0, 1.0));" +
+				
+				// glow
+				"  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 0.0, 1.0), clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
+				
+				// lighting
+				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
+				"  temp = 0.3 + temp * (1.0 - 0.3);" +
+				"  gl_FragColor = temp * gl_FragColor;" +
+				
+				// highlights
+				"  indexedHighlight = highlightColors[int(floor(v_highlightIndex + 0.5))];" +
+				"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
+				"}";
+		
+		fillProgram = JOGLUtils.loadProgram( gl , vertShader , fragShader );
+		
+		vertShader = "uniform mat4 m;" +
+				"uniform mat4 p;" +
+				"uniform mat4 v;" +
+				"uniform mat3 n;" +
+				
+				"attribute vec3 a_pos;" +
+				
+				"attribute vec3 a_norm;" +
+				"varying vec3 v_norm;" +
+				
+				"varying float v_axisParam;" +
+				"uniform vec3 u_axis;" +
+				"uniform vec3 u_origin;" +
+				
+				"varying float v_dist;" +
+				
+				"varying vec2 v_glow;" +
+				"attribute vec2 a_glow;" +
+				
+				"attribute float a_highlightIndex;" +
+				"varying float v_highlightIndex;" +
+				
+				"void main() " +
+				"{" +
+				"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
+				"  gl_Position.z += 0.1;" +
+				"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
+				"  v_axisParam = dot(a_pos - u_origin, u_axis);" +
+				"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
+				"  v_glow = a_glow;" +
+				"  v_highlightIndex = a_highlightIndex;" +
+				"}";
+		
+		fragShader = "varying vec3 v_norm;" +
+				
+				"varying float v_axisParam;" +
+				"uniform float loValue;" +
+				"uniform float hiValue;" +
+				// "uniform vec4 loColor;" +
+				// "uniform vec4 hiColor;" +
+				"uniform sampler2D depthSampler;" +
+				
+				"varying float v_dist;" +
+				"uniform float farDist;" +
+				"uniform float nearDist;" +
+				
+				"varying vec2 v_glow;" +
+				
+				"uniform vec4 highlightColors[3];" +
+				"varying float v_highlightIndex;" +
+				
+				"void main() " +
+				"{" +
+				"  float temp;" +
+				"  vec4 indexedHighlight;" +
+				
+				// "  gl_FragColor = mix(loColor, hiColor, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0));" +
+				"  gl_FragColor = texture2D(depthSampler, vec2(0.5, clamp((v_axisParam - loValue) / (hiValue - loValue), 0.0, 1.0)));" +
+				
+				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - nearDist) / (farDist - nearDist), 0.0, 1.0));" +
+				
+				"  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 0.0, 1.0), clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
+				
+				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
+				"  temp = 0.3 + temp * (1.0 - 0.3);" +
+				"  gl_FragColor = temp * gl_FragColor;" +
+				
+				"  indexedHighlight = highlightColors[int(floor(v_highlightIndex + 0.5))];" +
+				"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
+				"}";
+		
+		lineProgram = JOGLUtils.loadProgram( gl , vertShader , fragShader );
+		
+		for( Segment segment : segments )
+		{
+			segment.fillObj.program( fillProgram );
+			segment.lineObj.program( lineProgram );
+		}
+	}
+	
+	private void destroyPrograms( GL2ES2 gl )
+	{
+		for( Segment segment : segments )
+		{
+			segment.fillObj.program( 0 );
+			segment.lineObj.program( 0 );
+		}
+		
+		gl.glDeleteProgram( lineProgram );
+		gl.glDeleteProgram( fillProgram );
+		lineProgram = fillProgram = 0;
+	}
+	
+	private void createParamTexture( GL2ES2 gl )
+	{
+		final int texWidth = 256;
+		final int texHeight = 256;
+		
+		BufferedImage image = new BufferedImage( texWidth , texHeight , BufferedImage.TYPE_INT_ARGB );
+		
+		Graphics2D g2 = image.createGraphics( );
+		
+		g2.setPaint( new GradientPaint( 0 , 0 , new Color( 255 , 128 , 255 ) , 0 , texHeight / 2 , Color.RED ) );
+		g2.fillRect( 0 , 0 , texWidth , texHeight / 2 );
+		g2.setPaint( new GradientPaint( 0 , texHeight / 2 , Color.RED , 0 , texHeight , Color.BLUE ) );
+		g2.fillRect( 0 , texHeight / 2 , texWidth , texHeight / 2 );
+		
+		g2.dispose( );
+		
+		BufferHelper texBufferHelper = new BufferHelper( );
+		
+		for( int y = 0 ; y < texHeight ; y++ )
+		{
+			for( int x = 0 ; x < texWidth ; x++ )
+			{
+				int rgb = image.getRGB( x , y );
+				byte a = ( byte ) ( ( rgb >> 24 ) & 0xff );
+				byte r = ( byte ) ( ( rgb >> 16 ) & 0xff );
+				byte g = ( byte ) ( ( rgb >> 8 ) & 0xff );
+				byte b = ( byte ) ( rgb & 0xff );
+				texBufferHelper.putBytes( r );
+				texBufferHelper.putBytes( g );
+				texBufferHelper.putBytes( b );
+				texBufferHelper.putBytes( a );
+			}
+		}
+		
+		paramTextureBuffer = texBufferHelper.toByteBuffer( );
+		paramTextureBuffer.position( 0 );
+		
+		int textures[] = new int[ 1 ];
+		gl.glGenTextures( 1 , textures , 0 );
+		paramTexture = textures[ 0 ];
+		gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
+		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_S , GL_CLAMP_TO_EDGE );
+		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_T , GL_CLAMP_TO_EDGE );
+		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MAG_FILTER , GL_LINEAR );
+		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MIN_FILTER , GL_LINEAR );
+		gl.glTexImage2D( GL_TEXTURE_2D , 0 , GL_RGBA , texWidth , texHeight , 0 , GL_RGBA , GL_UNSIGNED_BYTE , paramTextureBuffer );
+		gl.glBindTexture( GL_TEXTURE_2D , 0 );
+	}
+	
+	private void destroyParamTexture( GL2ES2 gl )
+	{
+		gl.glDeleteTextures( 1 , new int[ ] { paramTexture } , 0 );
+	}
+	
 	private void updateHighlights( Collection<Shot> affectedShots , Map<Shot, LinearAxisConversion> prevHighlightExtents )
 	{
 		// find the segments that are affected by the affected shots
@@ -1393,62 +1391,6 @@ public class Survey3dModel
 		}
 	}
 	
-	private float getFromHighlightA( ByteBuffer buffer , int shotIndex )
-	{
-		return buffer.getFloat( shotIndex * STATION_ATTR_BPS );
-	}
-	
-	private float getFromHighlightB( ByteBuffer buffer , int shotIndex )
-	{
-		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + 4 );
-	}
-	
-	private float getToHighlightA( ByteBuffer buffer , int shotIndex )
-	{
-		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 );
-	}
-	
-	private float getToHighlightB( ByteBuffer buffer , int shotIndex )
-	{
-		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4 );
-	}
-	
-	private void setFromHighlightA( ByteBuffer buffer , int shotIndex , float value )
-	{
-		int index = shotIndex * STATION_ATTR_BPS;
-		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
-		{
-			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
-		}
-	}
-	
-	private void setFromHighlightB( ByteBuffer buffer , int shotIndex , float value )
-	{
-		int index = shotIndex * STATION_ATTR_BPS + 4;
-		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
-		{
-			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
-		}
-	}
-	
-	private void setToHighlightA( ByteBuffer buffer , int shotIndex , float value )
-	{
-		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2;
-		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
-		{
-			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
-		}
-	}
-	
-	private void setToHighlightB( ByteBuffer buffer , int shotIndex , float value )
-	{
-		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4;
-		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
-		{
-			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
-		}
-	}
-	
 	private void applyHoverHighlights( Shot shot )
 	{
 		SurveyShot origShot = originalShots.get( shot.index );
@@ -1537,6 +1479,62 @@ public class Survey3dModel
 				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
 				applyHoverHighlights( nextStation , direction , nextDistance , highlightConversion );
 			}
+		}
+	}
+	
+	private float getFromHighlightA( ByteBuffer buffer , int shotIndex )
+	{
+		return buffer.getFloat( shotIndex * STATION_ATTR_BPS );
+	}
+	
+	private float getFromHighlightB( ByteBuffer buffer , int shotIndex )
+	{
+		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + 4 );
+	}
+	
+	private float getToHighlightA( ByteBuffer buffer , int shotIndex )
+	{
+		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 );
+	}
+	
+	private float getToHighlightB( ByteBuffer buffer , int shotIndex )
+	{
+		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4 );
+	}
+	
+	private void setFromHighlightA( ByteBuffer buffer , int shotIndex , float value )
+	{
+		int index = shotIndex * STATION_ATTR_BPS;
+		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
+		{
+			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
+		}
+	}
+	
+	private void setFromHighlightB( ByteBuffer buffer , int shotIndex , float value )
+	{
+		int index = shotIndex * STATION_ATTR_BPS + 4;
+		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
+		{
+			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
+		}
+	}
+	
+	private void setToHighlightA( ByteBuffer buffer , int shotIndex , float value )
+	{
+		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2;
+		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
+		{
+			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
+		}
+	}
+	
+	private void setToHighlightB( ByteBuffer buffer , int shotIndex , float value )
+	{
+		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4;
+		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
+		{
+			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
 		}
 	}
 	
