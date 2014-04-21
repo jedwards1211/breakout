@@ -2947,6 +2947,13 @@ public class Vecmath
 		out[ 2 ] = ( float ) ( z * factor );
 	}
 	
+	public static void normalize2( float[ ] v , float[ ] out )
+	{
+		double factor = 1.0 / Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 1 ] * v[ 1 ] );
+		out[ 0 ] = ( float ) ( v[ 0 ] * factor );
+		out[ 1 ] = ( float ) ( v[ 1 ] * factor );
+	}
+	
 	public static void normalize3( float[ ] v , float[ ] out )
 	{
 		double factor = 1.0 / Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 1 ] * v[ 1 ] + v[ 2 ] * v[ 2 ] );
@@ -3199,7 +3206,7 @@ public class Vecmath
 		return result;
 	}
 	
-	public static boolean hasNaNsOrInfinites( double[ ] doubles )
+	public static boolean hasNaNsOrInfinites( double ... doubles )
 	{
 		for( double d : doubles )
 		{
@@ -3211,7 +3218,7 @@ public class Vecmath
 		return false;
 	}
 	
-	public static boolean hasNaNsOrInfinites( float[ ] floats )
+	public static boolean hasNaNsOrInfinites( float ... floats )
 	{
 		for( float f : floats )
 		{

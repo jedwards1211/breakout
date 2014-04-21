@@ -1,66 +1,138 @@
 package org.andork.jogl;
 
+import static javax.media.opengl.GL.GL_COLOR_ATTACHMENT0;
+import static javax.media.opengl.GL.GL_DEPTH_ATTACHMENT;
+import static javax.media.opengl.GL.GL_DEPTH_COMPONENT32;
+import static javax.media.opengl.GL.GL_FRAMEBUFFER;
+import static javax.media.opengl.GL.GL_RENDERBUFFER;
 import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
 import static org.andork.math3d.Vecmath.newMat4f;
-import static org.andork.math3d.Vecmath.perspective;
+import static org.andork.math3d.Vecmath.setf;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import javax.media.opengl.DebugGL2;
-import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
+import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 
+import org.andork.event.BasicPropertyChangeSupport;
 import org.andork.math3d.PickXform;
 import org.andork.math3d.Vecmath;
-import org.andork.util.ArrayUtils;
 
 public class BasicJOGLScene implements GLEventListener
 {
+	public static final Object					INITIALIZED				= new Object( );
+	
+	private boolean								initialized;
+	
 	/**
 	 * The model matrix.
 	 */
-	private final float[ ]				m						= newMat4f( );
+	private final float[ ]						m						= newMat4f( );
 	
 	/**
 	 * The normal matrix.
 	 */
-	private final float[ ]				n						= new float[ 9 ];
+	private final float[ ]						n						= new float[ 9 ];
 	
 	/**
 	 * The view matrix.
 	 */
-	private final float[ ]				v						= newMat4f( );
+	private final float[ ]						v						= newMat4f( );
 	
 	/**
 	 * The projection matrix;
 	 */
-	private final float[ ]				p						= newMat4f( );
+	private final float[ ]						p						= newMat4f( );
 	
-	private ProjectionCalculator		pCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
+	private ProjectionCalculator				pCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
 	
-	private int							width , height;
+	private int									width , height;
 	
-	private final List<JOGLObject>		objects					= new ArrayList<JOGLObject>( );
-	private final List<JOGLObject>		unmodifiableObjects		= Collections.unmodifiableList( objects );
+	private final List<JOGLObject>				objects					= new ArrayList<JOGLObject>( );
+	private final List<JOGLObject>				unmodifiableObjects		= Collections.unmodifiableList( objects );
 	
-	private final Queue<JOGLObject>		objectsThatNeedInit		= new LinkedList<JOGLObject>( );
-	private final Queue<JOGLObject>		objectsThatNeedDestroy	= new LinkedList<JOGLObject>( );
-	private final Queue<JOGLRunnable>	doLaters				= new LinkedList<JOGLRunnable>( );
+	private final Queue<JOGLObject>				objectsThatNeedInit		= new LinkedList<JOGLObject>( );
+	private final Queue<JOGLObject>				objectsThatNeedDestroy	= new LinkedList<JOGLObject>( );
+	private final Queue<JOGLRunnable>			doLaters				= new LinkedList<JOGLRunnable>( );
 	
-	private static boolean				USE_DEBUG_GL;
-	private DebugGL2					debugGL;
+	private PickXform							pickXform				= new PickXform( );
 	
-	private PickXform					pickXform				= new PickXform( );
+	private final float[ ]						bgColor					= { 0 , 0 , 0 , 1 };
+	private boolean								bgColorDirty;
 	
-	static
+	private long								lastDisplay;
+	
+	private boolean								renderToFbo				= false;
+	private int									maxNumSamples			= 1;
+	private int									desiredNumSamples		= 1;
+	private int									currentNumSamples		= 1;
+	private int									targetNumSamples		= 1;
+	
+	private int									renderingFboWidth;
+	private int									renderingFboHeight;
+	
+	private int									renderingFbo			= -1;
+	private int									renderingColorBuffer	= -1;
+	private int									renderingDepthBuffer	= -1;
+	private int									renderingFboTex			= -1;
+	
+	private final BasicPropertyChangeSupport	changeSupport			= new BasicPropertyChangeSupport( );
+	
+	public BasicPropertyChangeSupport.External changeSupport( )
 	{
-		USE_DEBUG_GL = System.getProperty( "useDebugGL" ) != null;
+		return changeSupport.external( );
+	}
+	
+	public boolean isInitialized( )
+	{
+		return initialized;
+	}
+	
+	public int getMaxNumSamples( )
+	{
+		return maxNumSamples;
+	}
+	
+	private void updateTargetNumSamples( )
+	{
+		targetNumSamples = Math.max( 1 , Math.min( desiredNumSamples , maxNumSamples ) );
+	}
+	
+	public void setBgColor( float ... bgColor )
+	{
+		if( !Arrays.equals( this.bgColor , bgColor ) )
+		{
+			setf( this.bgColor , bgColor );
+			bgColorDirty = true;
+		}
+	}
+	
+	public boolean isRenderToFbo( )
+	{
+		return renderToFbo;
+	}
+	
+	public void setRenderToFbo( boolean renderToFbo )
+	{
+		this.renderToFbo = renderToFbo;
+	}
+	
+	public int getDesiredNumSamples( )
+	{
+		return desiredNumSamples;
+	}
+	
+	public void setDesiredNumSamples( int numSamples )
+	{
+		this.desiredNumSamples = numSamples;
+		updateTargetNumSamples( );
 	}
 	
 	public BasicJOGLScene add( JOGLObject object )
@@ -93,41 +165,153 @@ public class BasicJOGLScene implements GLEventListener
 		return this;
 	}
 	
-	public GL2ES2 getGL( GL2ES2 orig )
-	{
-		if( !USE_DEBUG_GL )
-		{
-			return orig;
-		}
-		if( debugGL == null || debugGL.getDownstreamGL( ) != orig )
-		{
-			debugGL = new DebugGL2( ( GL2 ) orig );
-		}
-		return debugGL;
-	}
-	
 	@Override
 	public void init( GLAutoDrawable drawable )
 	{
-		GL2ES2 gl = getGL( ( GL2ES2 ) drawable.getGL( ) );
+		if( initialized )
+		{
+			return;
+		}
+		initialized = true;
+		
+		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+		
+		if( gl instanceof GL3 )
+		{
+			int[ ] temp = new int[ 1 ];
+			( ( GL3 ) gl ).glGetIntegerv( GL3.GL_MAX_SAMPLES , temp , 0 );
+			maxNumSamples = temp[ 0 ];
+		}
+		else
+		{
+			maxNumSamples = 1;
+		}
+		updateTargetNumSamples( );
 		
 		for( JOGLObject object : objects )
 		{
 			object.init( gl );
 		}
+		
+		changeSupport.firePropertyChange( this , INITIALIZED , false , true );
 	}
 	
 	@Override
 	public void dispose( GLAutoDrawable drawable )
 	{
+		if( !initialized )
+		{
+			return;
+		}
+		initialized = false;
 		
+		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+		
+		if( gl instanceof GL3 && renderToFbo )
+		{
+			GL3 gl3 = ( GL3 ) gl;
+			destroyOffscreenBuffers( gl3 );
+		}
+		
+		changeSupport.firePropertyChange( this , INITIALIZED , true , false );
+	}
+	
+	private void destroyOffscreenBuffers( GL3 gl3 )
+	{
+		int[ ] temps = new int[ 1 ];
+		if( renderingFbo >= 0 )
+		{
+			temps[ 0 ] = renderingFbo;
+			gl3.glDeleteFramebuffers( 1 , temps , 0 );
+			renderingFbo = -1;
+		}
+		if( renderingFboTex >= 0 )
+		{
+			temps[ 0 ] = renderingFboTex;
+			gl3.glDeleteTextures( 1 , temps , 0 );
+			renderingFboTex = -1;
+		}
+		if( renderingColorBuffer >= 0 )
+		{
+			temps[ 0 ] = renderingColorBuffer;
+			gl3.glDeleteRenderbuffers( 1 , temps , 0 );
+			renderingColorBuffer = -1;
+		}
+		if( renderingDepthBuffer >= 0 )
+		{
+			temps[ 0 ] = renderingDepthBuffer;
+			gl3.glDeleteRenderbuffers( 1 , temps , 0 );
+			renderingDepthBuffer = -1;
+		}
 	}
 	
 	@Override
 	public void display( GLAutoDrawable drawable )
 	{
-		GL2ES2 gl = getGL( ( GL2ES2 ) drawable.getGL( ) );
+		long lastDisplay = this.lastDisplay;
+		this.lastDisplay = System.currentTimeMillis( );
+		long elapsed = this.lastDisplay - lastDisplay;
 		
+		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+		
+		if( gl instanceof GL3 && renderToFbo )
+		{
+			GL3 gl3 = ( GL3 ) gl;
+			
+			if( renderingFbo < 0 || renderingFboWidth < width || renderingFboHeight < height || targetNumSamples != currentNumSamples ||
+					( elapsed >= 1000 && ( renderingFboWidth != width || renderingFboHeight != height ) ) )
+			{
+				destroyOffscreenBuffers( gl3 );
+				
+				int[ ] temps = new int[ 1 ];
+				renderingFboWidth = width;
+				renderingFboHeight = height;
+				
+				gl3.glGenFramebuffers( 1 , temps , 0 );
+				renderingFbo = temps[ 0 ];
+				gl3.glBindFramebuffer( GL3.GL_FRAMEBUFFER , renderingFbo );
+				
+				gl3.glGenRenderbuffers( 1 , temps , 0 );
+				renderingDepthBuffer = temps[ 0 ];
+				
+				currentNumSamples = targetNumSamples;
+				
+				if( currentNumSamples > 1 )
+				{
+					gl3.glGenTextures( 1 , temps , 0 );
+					renderingFboTex = temps[ 0 ];
+					gl3.glBindTexture( GL3.GL_TEXTURE_2D_MULTISAMPLE , renderingFboTex );
+					
+					gl3.glTexImage2DMultisample( GL3.GL_TEXTURE_2D_MULTISAMPLE , currentNumSamples , GL3.GL_RGBA8 , renderingFboWidth , renderingFboHeight , false );
+					gl3.glFramebufferTexture2D( GL3.GL_FRAMEBUFFER , GL3.GL_COLOR_ATTACHMENT0 , GL3.GL_TEXTURE_2D_MULTISAMPLE , renderingFboTex , 0 );
+					
+					gl3.glBindRenderbuffer( GL_RENDERBUFFER , renderingDepthBuffer );
+					gl3.glRenderbufferStorageMultisample( GL_RENDERBUFFER , currentNumSamples , GL_DEPTH_COMPONENT32 , renderingFboWidth , renderingFboHeight );
+					gl3.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_DEPTH_ATTACHMENT , GL_RENDERBUFFER , renderingDepthBuffer );
+				}
+				else
+				{
+					gl3.glGenRenderbuffers( 1 , temps , 0 );
+					renderingColorBuffer = temps[ 0 ];
+					gl3.glBindRenderbuffer( GL_RENDERBUFFER , renderingColorBuffer );
+					gl3.glRenderbufferStorage( GL_RENDERBUFFER , GL3.GL_RGBA8 , renderingFboWidth , renderingFboHeight );
+					gl3.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_COLOR_ATTACHMENT0 , GL_RENDERBUFFER , renderingColorBuffer );
+					
+					gl3.glBindRenderbuffer( GL_RENDERBUFFER , renderingDepthBuffer );
+					gl3.glRenderbufferStorage( GL_RENDERBUFFER , GL_DEPTH_COMPONENT32 , renderingFboWidth , renderingFboHeight );
+					gl3.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_DEPTH_ATTACHMENT , GL_RENDERBUFFER , renderingDepthBuffer );
+				}
+				
+			}
+			
+			gl3.glBindFramebuffer( GL3.GL_DRAW_FRAMEBUFFER , renderingFbo );
+		}
+		
+		if( bgColorDirty )
+		{
+			gl.glClearColor( bgColor[ 0 ] , bgColor[ 1 ] , bgColor[ 2 ] , bgColor[ 3 ] );
+			bgColorDirty = false;
+		}
 		gl.glClear( GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_DEPTH_BUFFER_BIT );
 		
 		while( !objectsThatNeedInit.isEmpty( ) )
@@ -157,6 +341,16 @@ public class BasicJOGLScene implements GLEventListener
 		}
 		
 		drawObjects( gl );
+		
+		if( gl instanceof GL3 && renderToFbo )
+		{
+			GL3 gl3 = ( GL3 ) gl;
+			
+			gl3.glBindFramebuffer( GL3.GL_DRAW_FRAMEBUFFER , 0 );
+			gl3.glBindFramebuffer( GL3.GL_READ_FRAMEBUFFER , renderingFbo );
+			gl3.glDrawBuffer( GL3.GL_BACK );
+			gl3.glBlitFramebuffer( 0 , 0 , renderingFboWidth , renderingFboHeight , 0 , 0 , renderingFboWidth , renderingFboHeight , GL3.GL_COLOR_BUFFER_BIT , GL3.GL_NEAREST );
+		}
 	}
 	
 	public void drawObjects( GL2ES2 gl )
@@ -173,7 +367,7 @@ public class BasicJOGLScene implements GLEventListener
 		this.width = width;
 		this.height = height;
 		
-		GL2ES2 gl = getGL( ( GL2ES2 ) drawable.getGL( ) );
+		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
 		gl.glViewport( 0 , 0 , width , height );
 		
 		recalculateProjection( );

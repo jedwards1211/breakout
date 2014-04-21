@@ -6,7 +6,8 @@ import org.andork.snakeyaml.YamlSpec;
 
 public final class RootModel extends YamlSpec<RootModel>
 {
-	public static final Attribute<File>	currentProjectFile	= fileAttribute( "currentProjectFile" );
+	public static final Attribute<File>		currentProjectFile	= fileAttribute( "currentProjectFile" );
+	public static final Attribute<Integer>	desiredNumSamples	= integerAttribute( "desiredNumSamples" );
 	
 	private RootModel( )
 	{

@@ -40,6 +40,7 @@ import java.util.Set;
 import javax.media.opengl.GL2ES2;
 
 import org.andork.breakout.PickResult;
+import org.andork.breakout.awt.ParamGradientMapPaint;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.BasicJOGLObject.Uniform1fv;
 import org.andork.jogl.BasicJOGLObject.Uniform3fv;
@@ -120,6 +121,8 @@ public class Survey3dModel
 	Uniform1fv								loParam;
 	Uniform1fv								hiParam;
 	
+	Uniform4fv								glowColor;
+	
 	private Survey3dModel( List<SurveyShot> originalShots , List<Shot> shots , RfStarTree<Shot> tree , Set<Segment> segments , Subtask renderSubtask )
 	{
 		super( );
@@ -132,12 +135,14 @@ public class Survey3dModel
 		highlightColors.value(
 				0f , 0f , 0f , 0f ,
 				0f , 1f , 1f , 0.5f ,
-				1f , 1f , 0f , 0.5f
+				0f , 1f , 1f , 0.5f
 				);
 		highlightColors.count( 3 );
 		
 		depthAxis = new Uniform3fv( ).name( "u_axis" ).value( 0f , -1f , 0f );
 		depthOrigin = new Uniform3fv( ).name( "u_origin" ).value( 0f , 0f , 0f );
+		
+		glowColor = new Uniform4fv( ).name( "u_glowColor" ).value( 0f , 1f , 1f , 1f );
 		
 		group = new JOGLGroup( this )
 		{
@@ -176,9 +181,11 @@ public class Survey3dModel
 			segment.fillObj.add( highlightColors );
 			segment.fillObj.add( depthAxis );
 			segment.fillObj.add( depthOrigin );
+			segment.fillObj.add( glowColor );
 			segment.lineObj.add( highlightColors );
 			segment.lineObj.add( depthAxis );
 			segment.lineObj.add( depthOrigin );
+			segment.lineObj.add( glowColor );
 		}
 		
 	}
@@ -1073,6 +1080,7 @@ public class Survey3dModel
 				
 				// glow
 				"varying vec2 v_glow;" +
+				"uniform vec4 u_glowColor;" +
 				
 				// highlights
 				"uniform vec4 u_highlightColors[3];" +
@@ -1084,18 +1092,18 @@ public class Survey3dModel
 				"  vec4 indexedHighlight;" +
 				
 				// param coloration
-				"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
+				"  gl_FragColor = vec4(texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0))).xyz, 1.0);" +
 				
 				// distance coloration
 				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
 				
 				// glow
-				"  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 0.0, 1.0), clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
+				"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
 				
 				// lighting
 				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
 				"  temp = 0.3 + temp * (1.0 - 0.3);" +
-				"  gl_FragColor = temp * gl_FragColor;" +
+				"  gl_FragColor.xyz = temp * gl_FragColor.xyz;" +
 				
 				// highlights
 				"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];" +
@@ -1157,6 +1165,7 @@ public class Survey3dModel
 				
 				// glow
 				"varying vec2 v_glow;" +
+				"uniform vec4 u_glowColor;" +
 				
 				// highlights
 				"uniform vec4 u_highlightColors[3];" +
@@ -1174,7 +1183,7 @@ public class Survey3dModel
 				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
 				
 				// glow
-				"  gl_FragColor = mix(gl_FragColor, vec4(1.0, 1.0, 0.0, 1.0), clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
+				"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
 				
 				// lighting
 				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
@@ -1218,8 +1227,10 @@ public class Survey3dModel
 		
 		Graphics2D g2 = image.createGraphics( );
 		
-		g2.setPaint( new LinearGradientPaint( 0f , 0f , 0f , texHeight - 1 , new float[ ] { 0f , 0.5f , 1f } ,
-				new Color[ ] { new Color( 255 , 128 , 255 ) , Color.RED , Color.BLUE } ) );
+		g2.setPaint( new ParamGradientMapPaint(
+				new float[ ] { 0 , 0 } , new float[ ] { 0 , texHeight } , new float[ ] { texWidth , 0 } , 0 , 100 ,
+				new float[ ] { 0 , 24 , 64 , 100 } ,
+				new Color[ ] { new Color( 255 , 249 , 204 ) , new Color( 255 , 195 , 0 ) , new Color( 214 , 6 , 127 ) , new Color( 34 , 19 , 150 ) } ) );
 		g2.fillRect( 0 , 0 , texWidth , texHeight );
 		
 		g2.dispose( );

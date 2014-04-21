@@ -1,13 +1,8 @@
 package com.andork.plot;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.geom.Rectangle2D;
-import java.io.IOException;
 
-import javax.imageio.ImageIO;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import org.andork.awt.layout.Corner;
@@ -59,6 +54,11 @@ public class ImagePlotPanel extends JPanel
 		addMouseListener( mouseLooper );
 		addMouseMotionListener( mouseLooper );
 		addMouseWheelListener( mouseLooper );
+	}
+	
+	public Plot getPlot( )
+	{
+		return plot;
 	}
 	
 	public Image getImage( )

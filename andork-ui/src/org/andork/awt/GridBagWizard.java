@@ -46,6 +46,7 @@ public class GridBagWizard
 	public static GridBagWizard quickPanel( )
 	{
 		JPanel panel = new JPanel( );
+		panel.setOpaque( false );
 		return GridBagWizard.create( panel );
 	}
 	

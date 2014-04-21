@@ -1,5 +1,6 @@
 package org.andork.snakeyaml;
 
+import java.awt.Color;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
@@ -15,9 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.andork.func.Bimapper;
-import org.andork.func.CompoundBimapper;
 import org.andork.func.FileStringBimapper;
-import org.andork.func.StringObjectBimapper;
 import org.andork.reflect.ReflectionUtils;
 
 /**
@@ -423,6 +422,28 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		}
 	}
 	
+	public static class ColorBimapper implements Bimapper<Color, Object>
+	{
+		public static final ColorBimapper	instance	= new ColorBimapper( );
+		
+		private ColorBimapper( )
+		{
+			
+		}
+		
+		@Override
+		public Object map( Color in )
+		{
+			return in == null ? null : String.format( "#%06x" , in.getRGB( ) & 0xffffff );
+		}
+		
+		@Override
+		public Color unmap( Object out )
+		{
+			return out == null ? null : new Color( Integer.parseInt( out.toString( ).substring( 1 ) , 16 ) );
+		}
+	}
+	
 	public static class SpecObjectBimapper<S extends YamlSpec<S>> implements Bimapper<YamlObject<S>, Object>
 	{
 		S	spec;
@@ -556,5 +577,10 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	public static Attribute<float[ ]> floatArrayAttribute( String name )
 	{
 		return new Attribute<float[ ]>( float[ ].class , name , IdentityBimapper.instance );
+	}
+	
+	public static Attribute<Color> colorAttribute( String name )
+	{
+		return new Attribute<Color>( Color.class , name , ColorBimapper.instance );
 	}
 }

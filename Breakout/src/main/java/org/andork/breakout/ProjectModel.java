@@ -1,5 +1,6 @@
 package org.andork.breakout;
 
+import java.awt.Color;
 import java.io.File;
 
 import org.andork.awt.layout.DrawerModel;
@@ -26,6 +27,7 @@ public final class ProjectModel extends YamlSpec<ProjectModel>
 	public static final Attribute<YamlObject<DrawerModel>>				miniSurveyDrawer			= yamlObjectAttribute( "miniSurveyDrawer" , DrawerModel.instance );
 	public static final Attribute<YamlObject<DrawerModel>>				taskListDrawer				= yamlObjectAttribute( "taskListDrawer" , DrawerModel.instance );
 	public static final Attribute<YamlObject<ScreenCaptureDialogModel>>	screenCaptureDialogModel	= yamlObjectAttribute( "screenCaptureDialogModel" , ScreenCaptureDialogModel.instance );
+	public static final Attribute<Color>								backgroundColor				= colorAttribute( "backgroundColor" );
 	
 	private ProjectModel( )
 	{

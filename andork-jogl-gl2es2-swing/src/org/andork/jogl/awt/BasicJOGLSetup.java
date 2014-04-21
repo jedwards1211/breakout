@@ -8,11 +8,11 @@ import org.andork.jogl.BasicJOGLScene;
 
 public class BasicJOGLSetup
 {
-	protected GLCanvas							canvas;
-	protected BasicJOGLScene					scene;
+	protected GLCanvas			canvas;
+	protected BasicJOGLScene	scene;
 	
-	protected BasicNavigator					navigator;
-	protected BasicOrbiter						orbiter;
+	protected BasicNavigator	navigator;
+	protected BasicOrbiter		orbiter;
 	
 	public BasicJOGLSetup( )
 	{

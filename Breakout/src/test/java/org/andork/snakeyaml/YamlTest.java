@@ -11,7 +11,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.andork.event.Binder;
-import org.andork.func.CompoundBimapper;
 import org.andork.swing.QuickTestFrame;
 import org.andork.util.ExecutorServiceFilePersister;
 

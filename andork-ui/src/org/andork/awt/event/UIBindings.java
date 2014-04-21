@@ -1,5 +1,7 @@
 package org.andork.awt.event;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
@@ -519,6 +521,74 @@ public class UIBindings
 		
 		@Override
 		public void selectionChanged( ISelector selector , Object oldSelection , Object newSelection )
+		{
+			viewToModel( );
+		}
+	}
+	
+	public static BgColorBinding bindBgColor( Binder b , Component comp , Object property )
+	{
+		BgColorBinding binding = new BgColorBinding( comp , property );
+		b.bind( binding );
+		return binding;
+	}
+
+	public static class BgColorBinding extends Binding implements PropertyChangeListener
+	{
+		Component	comp;
+		
+		public BgColorBinding( Component comp , Object property )
+		{
+			super( property );
+			this.comp = comp;
+		}
+		
+		@Override
+		public void modelToViewImpl( )
+		{
+			Model model = getModel( );
+			if( model == null )
+			{
+				return;
+			}
+			if( model.get( property ) != null )
+			{
+				Color color = ( Color ) model.get( property );
+				if( color != null )
+				{
+					comp.setBackground( color );
+				}
+			}
+		}
+		
+		@Override
+		public void viewToModelImpl( )
+		{
+			Model model = getModel( );
+			if( model == null )
+			{
+				return;
+			}
+			if( comp.isBackgroundSet( ) )
+			{
+				model.set( property , comp.getBackground( ) );
+			}
+		}
+		
+		@Override
+		public void unregisterFromView( )
+		{
+			comp.removePropertyChangeListener( "background" , this );
+		}
+		
+		@Override
+		public void registerWithView( )
+		{
+			comp.addPropertyChangeListener( "background" , this );
+		}
+		
+		@Override
+		public void propertyChange( PropertyChangeEvent e )
 		{
 			viewToModel( );
 		}

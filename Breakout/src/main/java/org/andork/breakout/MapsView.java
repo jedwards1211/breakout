@@ -27,6 +27,8 @@ import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.media.opengl.GL2ES2;
+import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
@@ -39,6 +41,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 
@@ -64,6 +67,7 @@ import org.andork.breakout.model.Survey3dModel.ShotPickResult;
 import org.andork.breakout.model.SurveyShot;
 import org.andork.breakout.model.SurveyStation;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
+import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
 import org.andork.jogl.BasicJOGLObject;
@@ -193,7 +197,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	public MapsView( )
 	{
-		super( );
+		super( createCanvas( ) );
 		
 		saveTaskService = new SingleThreadedTaskService( );
 		rebuildTaskService = new SingleThreadedTaskService( );
@@ -342,7 +346,7 @@ public class MapsView extends BasicJOGLSetup
 		taskListDrawer.addTaskService( saveTaskService );
 		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
 		
-		settingsDrawer = new SettingsDrawer( projectModelBinder );
+		settingsDrawer = new SettingsDrawer( rootModelBinder , projectModelBinder );
 		settingsDrawer.addTo( layeredPane , 1 );
 		
 		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableChangeHandler( rebuildTaskService ) );
@@ -453,6 +457,22 @@ public class MapsView extends BasicJOGLSetup
 				if( model != null )
 				{
 					setCameraView( ( CameraView ) model.get( ProjectModel.cameraView ) );
+				}
+			}
+		} );
+		
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.backgroundColor )
+		{
+			public void modelToViewImpl( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null )
+				{
+					Color bgColor = ( Color ) model.get( ProjectModel.backgroundColor );
+					if( bgColor != null )
+					{
+						scene.setBgColor( bgColor.getRed( ) / 255f , bgColor.getGreen( ) / 255f , bgColor.getBlue( ) / 255f , 1f );
+					}
 				}
 			}
 		} );
@@ -580,6 +600,41 @@ public class MapsView extends BasicJOGLSetup
 		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
 		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
 		
+		rootModelBinder.bind( new BindingAdapter( RootModel.desiredNumSamples )
+		{
+			@Override
+			public void modelToViewImpl( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null )
+				{
+					Integer desiredNumSamples = ( Integer ) model.get( RootModel.desiredNumSamples );
+					if( desiredNumSamples != null )
+					{
+						scene.setDesiredNumSamples( desiredNumSamples );
+					}
+					canvas.display( );
+				}
+			}
+		} );
+		
+		scene.changeSupport( ).addPropertyChangeListener( BasicJOGLScene.INITIALIZED , new BasicPropertyChangeListener( )
+		{
+			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
+			{
+				if( scene.isInitialized( ) )
+				{
+					SwingUtilities.invokeLater( new Runnable( )
+					{
+						public void run( )
+						{
+							settingsDrawer.setMaxNumSamples( scene.getMaxNumSamples( ) );
+						}
+					} );
+				}
+			}
+		} );
+		
 		rootPersister = new TaskServiceFilePersister<YamlObject<RootModel>>( saveTaskService , "Saving settings..." ,
 				EDTYamlObjectStringBimapper.newInstance( RootModel.instance ) , new File( new File( ".breakout" ) , "settings.yaml" ) );
 		YamlObject<RootModel> rootModel = null;
@@ -600,6 +655,7 @@ public class MapsView extends BasicJOGLSetup
 		if( rootModel.get( RootModel.currentProjectFile ) == null )
 		{
 			rootModel.set( RootModel.currentProjectFile , new File( new File( ".breakout" ) , "defaultProject.yaml" ) );
+			rootModel.set( RootModel.desiredNumSamples , 2 );
 		}
 		
 		setRootModel( rootModel );
@@ -625,6 +681,7 @@ public class MapsView extends BasicJOGLSetup
 			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
 			projectModel.set( ProjectModel.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
 			projectModel.set( ProjectModel.filterType , FilterType.ALPHA_DESIGNATION );
+			projectModel.set( ProjectModel.backgroundColor , Color.black );
 		}
 		if( projectModel.get( ProjectModel.surveyDrawer ) == null )
 		{
@@ -760,6 +817,23 @@ public class MapsView extends BasicJOGLSetup
 				projectModel.changeSupport( ).addPropertyChangeListener( projectPersister );
 			}
 		}
+	}
+	
+	private static GLCanvas createCanvas( )
+	{
+		GLProfile profile = GLProfile.get( GLProfile.GL3 );
+		final GLCapabilities caps = new GLCapabilities( profile );
+		GLCanvas canvas = new GLCanvas( caps );
+		return canvas;
+	}
+	
+	@Override
+	protected BasicJOGLScene createScene( )
+	{
+		BasicJOGLScene scene = new BasicJOGLScene( );
+		scene.setRenderToFbo( true );
+		scene.setDesiredNumSamples( 4 );
+		return scene;
 	}
 	
 	protected void fitViewToSelected( )
@@ -1030,17 +1104,6 @@ public class MapsView extends BasicJOGLSetup
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setProjectionCalculator( perspCalculator );
-	}
-	
-	@Override
-	protected BasicJOGLScene createScene( )
-	{
-		return new BasicJOGLScene( );
-	}
-	
-	public GLCanvas getCanvas( )
-	{
-		return canvas;
 	}
 	
 	public JPanel getMainPanel( )
