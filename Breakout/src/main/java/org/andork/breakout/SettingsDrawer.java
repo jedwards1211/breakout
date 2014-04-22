@@ -53,15 +53,17 @@ public class SettingsDrawer extends Drawer
 	
 	ViewButtonsPanel					viewButtonsPanel;
 	JSlider								mouseSensitivitySlider;
+	JSlider								mouseWheelSensitivitySlider;
 	JXColorSelectionButton				bgColorButton;
+	JSlider								ambientLightSlider;
 	PlotAxis							distColorationAxis;
 	PaintablePanel						distColorationAxisPanel;
 	PlotAxis							paramColorationAxis;
 	PaintablePanel						paramColorationAxisPanel;
 	JButton								inferDepthAxisTiltButton;
 	JButton								resetDepthAxisTiltButton;
-	PlotAxis							highlightDistAxis;
-	PaintablePanel						highlightDistAxisPanel;
+	PlotAxis							glowDistAxis;
+	PaintablePanel						glowDistAxisPanel;
 	JButton								fitViewToEverythingButton;
 	JButton								fitViewToSelectedButton;
 	JButton								orbitToPlanButton;
@@ -106,6 +108,9 @@ public class SettingsDrawer extends Drawer
 		
 		bgColorButton = new JXColorSelectionButton( );
 		
+		ambientLightSlider = new JSlider( 0 , 100 , 50 );
+		ambientLightSlider.setOpaque( false );
+		
 		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		distColorationAxisPanel = PaintablePanel.wrap( distColorationAxis );
 		distColorationAxisPanel.setUnderpaintBorder(
@@ -130,19 +135,22 @@ public class SettingsDrawer extends Drawer
 		inferDepthAxisTiltButton = new JButton( "Infer Depth Axis Tilt" );
 		resetDepthAxisTiltButton = new JButton( "Reset Depth Axis Tilt" );
 		
-		highlightDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
-		highlightDistAxisPanel = PaintablePanel.wrap( highlightDistAxis );
-		highlightDistAxisPanel.setUnderpaintBorder(
+		glowDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
+		glowDistAxisPanel = PaintablePanel.wrap( glowDistAxis );
+		glowDistAxisPanel.setUnderpaintBorder(
 				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
 						new float[ ] { 0f , 1f } , new Color[ ] { Color.YELLOW , ColorUtils.alphaColor( Color.YELLOW , 0 ) } ) );
 		
-		highlightDistAxis.setForeground( Color.BLACK );
-		highlightDistAxis.setMajorTickColor( Color.BLACK );
-		highlightDistAxis.setMinorTickColor( Color.BLACK );
+		glowDistAxis.setForeground( Color.BLACK );
+		glowDistAxis.setMajorTickColor( Color.BLACK );
+		glowDistAxis.setMinorTickColor( Color.BLACK );
 		
 		mouseSensitivitySlider = new JSlider( );
 		mouseSensitivitySlider.setValue( 20 );
 		mouseSensitivitySlider.setOpaque( false );
+		
+		mouseWheelSensitivitySlider = new JSlider( 1 , 2000 , 200 );
+		mouseWheelSensitivitySlider.setOpaque( false );
 		
 		fitViewToSelectedButton = new JButton( "Fit View to Selected" );
 		fitViewToEverythingButton = new JButton( "Fit View to Everything" );
@@ -173,10 +181,17 @@ public class SettingsDrawer extends Drawer
 		w.put( sensLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( mouseSensitivitySlider ).belowLast( ).fillx( ).north( );
 		
+		JLabel wheelSensLabel = new JLabel( "Mouse Wheel Sensitivity:" );
+		w.put( wheelSensLabel ).belowLast( ).west( ).addToInsets( 0 , 0 , 0 , 0 );
+		w.put( mouseWheelSensitivitySlider ).belowLast( ).fillx( ).north( );
+		
 		GridBagWizard bgPanel = GridBagWizard.quickPanel( );
 		bgPanel.put( new JLabel( "Background Color: " ) ).xy( 0 , 0 ).west( );
 		bgPanel.put( bgColorButton ).rightOfLast( ).west( ).weightx( 1.0 );
 		w.put( bgPanel.getTarget( ) ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
+		
+		w.put( new JLabel( "Ambient Light:" ) ).belowLast( ).west( );
+		w.put( ambientLightSlider ).belowLast( ).fillx( );
 		
 		JLabel distLabel = new JLabel( "Distance coloration:" );
 		w.put( distLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
@@ -188,7 +203,7 @@ public class SettingsDrawer extends Drawer
 		w.put( resetDepthAxisTiltButton ).belowLast( ).fillx( );
 		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
 		w.put( highlightRangeLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
-		w.put( highlightDistAxisPanel ).belowLast( ).fillx( );
+		w.put( glowDistAxisPanel ).belowLast( ).fillx( );
 		w.put( numSamplesLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( numSamplesSlider ).belowLast( ).fillx( );
 		w.put( exportImageButton ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
@@ -209,7 +224,7 @@ public class SettingsDrawer extends Drawer
 	{
 		new PlotAxisController( distColorationAxis );
 		new PlotAxisController( paramColorationAxis );
-		new PlotAxisController( highlightDistAxis );
+		new PlotAxisController( glowDistAxis );
 		
 		numSamplesSlider.addChangeListener( new ChangeListener( )
 		{
@@ -232,10 +247,12 @@ public class SettingsDrawer extends Drawer
 		bind( projectBinder , viewButtonsPanel.getEastButton( ) , ProjectModel.cameraView , CameraView.EAST_FACING_PROFILE );
 		bind( projectBinder , viewButtonsPanel.getWestButton( ) , ProjectModel.cameraView , CameraView.WEST_FACING_PROFILE );
 		bind( projectBinder , mouseSensitivitySlider , ProjectModel.mouseSensitivity );
+		bind( projectBinder , mouseWheelSensitivitySlider , ProjectModel.mouseWheelSensitivity );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.distRange , distColorationAxis ) );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.paramRange , paramColorationAxis ) );
-		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.highlightRange , highlightDistAxis ) );
+		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.highlightRange , glowDistAxis ) );
 		bind( projectBinder , filterTypeSelector , ProjectModel.filterType );
+		bind( projectBinder , ambientLightSlider , ProjectModel.ambientLight , 0f , 1f );
 		
 		bind( rootBinder , numSamplesSlider , RootModel.desiredNumSamples );
 	}
@@ -289,7 +306,7 @@ public class SettingsDrawer extends Drawer
 	
 	public PlotAxis getHighlightDistAxis( )
 	{
-		return highlightDistAxis;
+		return glowDistAxis;
 	}
 	
 	public static enum CameraView
@@ -334,7 +351,7 @@ public class SettingsDrawer extends Drawer
 	
 	public PlotAxis highlightDistAxis( )
 	{
-		return highlightDistAxis;
+		return glowDistAxis;
 	}
 	
 	public JButton getInferDepthAxisTiltButton( )

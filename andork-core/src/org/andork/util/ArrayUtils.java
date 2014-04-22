@@ -442,6 +442,16 @@ public class ArrayUtils
 		return -1;
 	}
 	
+	public static ArrayList<Float> toArrayList( float[ ] values )
+	{
+		ArrayList<Float> result = new ArrayList<Float>( );
+		for( float value : values )
+		{
+			result.add( value );
+		}
+		return result;
+	}
+	
 	public static ArrayList<Double> toArrayList( double[ ] values )
 	{
 		ArrayList<Double> result = new ArrayList<Double>( );

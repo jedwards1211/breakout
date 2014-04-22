@@ -483,11 +483,43 @@ public class MapsView extends BasicJOGLSetup
 			public void modelToViewImpl( )
 			{
 				org.andork.model.Model model = getModel( );
-				if( model != null )
+				if( model != null && model.get( ProjectModel.mouseSensitivity ) instanceof Integer )
 				{
 					float sensitivity = ( Integer ) model.get( ProjectModel.mouseSensitivity ) / 20f;
 					orbiter.setSensitivity( sensitivity );
 					navigator.setSensitivity( sensitivity );
+				}
+			}
+		} );
+		
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.mouseWheelSensitivity )
+		{
+			@Override
+			public void modelToViewImpl( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null && model.get( ProjectModel.mouseWheelSensitivity ) instanceof Integer )
+				{
+					float sensitivity = ( Integer ) model.get( ProjectModel.mouseWheelSensitivity ) / 20f;
+					navigator.setWheelFactor( sensitivity );
+				}
+			}
+		} );
+		
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.ambientLight )
+		{
+			@Override
+			public void modelToViewImpl( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null && model3d != null )
+				{
+					Float ambientLight = ( Float ) model.get( ProjectModel.ambientLight );
+					if( ambientLight != null )
+					{
+						model3d.setAmbientLight( ambientLight );
+						canvas.display( );
+					}
 				}
 			}
 		} );
@@ -501,11 +533,14 @@ public class MapsView extends BasicJOGLSetup
 				if( model != null && model3d != null )
 				{
 					LinearAxisConversion range = ( LinearAxisConversion ) model.get( ProjectModel.distRange );
-					float nearDist = ( float ) range.invert( 0.0 );
-					float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
-					model3d.setNearDist( nearDist );
-					model3d.setFarDist( farDist );
-					canvas.display( );
+					if( range != null )
+					{
+						float nearDist = ( float ) range.invert( 0.0 );
+						float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
+						model3d.setNearDist( nearDist );
+						model3d.setFarDist( farDist );
+						canvas.display( );
+					}
 				}
 			}
 		} );
@@ -519,11 +554,32 @@ public class MapsView extends BasicJOGLSetup
 				if( model != null && model3d != null )
 				{
 					LinearAxisConversion range = ( LinearAxisConversion ) model.get( ProjectModel.paramRange );
-					float loParam = ( float ) range.invert( 0.0 );
-					float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
-					model3d.setLoParam( loParam );
-					model3d.setHiParam( hiParam );
-					canvas.display( );
+					if( range != null )
+					{
+						float loParam = ( float ) range.invert( 0.0 );
+						float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
+						model3d.setLoParam( loParam );
+						model3d.setHiParam( hiParam );
+						canvas.display( );
+					}
+				}
+			}
+		} );
+		
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.depthAxis )
+		{
+			@Override
+			public void modelToViewImpl( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model != null && model3d != null )
+				{
+					float[ ] depthAxis = ( float[ ] ) model.get( ProjectModel.depthAxis );
+					if( depthAxis != null && depthAxis.length == 3 )
+					{
+						model3d.setDepthAxis( depthAxis );
+						canvas.display( );
+					}
 				}
 			}
 		} );
@@ -578,8 +634,7 @@ public class MapsView extends BasicJOGLSetup
 				{
 					return;
 				}
-				model3d.setDepthAxis( new WeightedAverageTiltAxisInferrer( ).inferTiltAxis( model3d.getOriginalShots( ) ) );
-				canvas.display( );
+				projectModel.set( ProjectModel.depthAxis , new WeightedAverageTiltAxisInferrer( ).inferTiltAxis( model3d.getOriginalShots( ) ) );
 			}
 		} );
 		
@@ -592,8 +647,7 @@ public class MapsView extends BasicJOGLSetup
 				{
 					return;
 				}
-				model3d.setDepthAxis( new float[ ] { 0f , -1f , 0f } );
-				canvas.display( );
+				projectModel.set( ProjectModel.depthAxis , new float[ ] { 0f , -1f , 0f } );
 			}
 		} );
 		
@@ -677,11 +731,20 @@ public class MapsView extends BasicJOGLSetup
 			projectModel = ProjectModel.instance.newObject( );
 			projectModel.set( ProjectModel.cameraView , CameraView.PERSPECTIVE );
 			projectModel.set( ProjectModel.mouseSensitivity , 20 );
-			projectModel.set( ProjectModel.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
-			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
-			projectModel.set( ProjectModel.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
 			projectModel.set( ProjectModel.filterType , FilterType.ALPHA_DESIGNATION );
 			projectModel.set( ProjectModel.backgroundColor , Color.black );
+		}
+		if( projectModel.get( ProjectModel.distRange ) == null )
+		{
+			projectModel.set( ProjectModel.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
+		}
+		if( projectModel.get( ProjectModel.paramRange ) == null )
+		{
+			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
+		}
+		if( projectModel.get( ProjectModel.highlightRange ) == null )
+		{
+			projectModel.set( ProjectModel.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
 		}
 		if( projectModel.get( ProjectModel.surveyDrawer ) == null )
 		{

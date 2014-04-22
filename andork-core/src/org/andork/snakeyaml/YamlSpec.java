@@ -18,6 +18,7 @@ import java.util.Map;
 import org.andork.func.Bimapper;
 import org.andork.func.FileStringBimapper;
 import org.andork.reflect.ReflectionUtils;
+import org.andork.util.ArrayUtils;
 
 /**
  * Base class for {@link YamlObject} format specifications. To create a specification for a new type, simply create a subclass that calls one of the
@@ -332,6 +333,44 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		}
 	}
 	
+	public static class FloatArrayBimapper implements Bimapper<float[ ], Object>
+	{
+		public static final FloatArrayBimapper	instance	= new FloatArrayBimapper( );
+		
+		private FloatArrayBimapper( )
+		{
+			
+		}
+		
+		public Object map( float[ ] f )
+		{
+			return f == null ? null : ArrayUtils.toArrayList( f );
+		}
+		
+		public float[ ] unmap( Object s )
+		{
+			if( !( s instanceof List ) )
+			{
+				return null;
+			}
+			List<?> list = ( List<?> ) s;
+			float[ ] result = new float[ list.size( ) ];
+			int k = 0;
+			for( Object o : list )
+			{
+				if( o instanceof Number )
+				{
+					result[ k++ ] = ( ( Number ) o ).floatValue( );
+				}
+				else if( o != null )
+				{
+					result[ k++ ] = Float.parseFloat( o.toString( ) );
+				}
+			}
+			return result;
+		}
+	}
+	
 	public static class DoubleBimapper implements Bimapper<Double, Object>
 	{
 		public Object map( Double t )
@@ -576,7 +615,7 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	
 	public static Attribute<float[ ]> floatArrayAttribute( String name )
 	{
-		return new Attribute<float[ ]>( float[ ].class , name , IdentityBimapper.instance );
+		return new Attribute<float[ ]>( float[ ].class , name , FloatArrayBimapper.instance );
 	}
 	
 	public static Attribute<Color> colorAttribute( String name )

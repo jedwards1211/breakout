@@ -2,6 +2,7 @@ package org.andork.awt.event;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.LinearGradientPaint;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
@@ -410,6 +411,78 @@ public class UIBindings
 		}
 	}
 	
+	public static JSliderFloatBinding bind( Binder b , JSlider slider , Object property , float minValue , float maxValue )
+	{
+		JSliderFloatBinding binding = new JSliderFloatBinding( slider , property , minValue , maxValue );
+		b.bind( binding );
+		return binding;
+	}
+	
+	public static class JSliderFloatBinding extends Binding implements ChangeListener
+	{
+		JSlider	slider;
+		float	minValue;
+		float	maxValue;
+		
+		public JSliderFloatBinding( JSlider slider , Object property , float minValue , float maxValue )
+		{
+			super( property );
+			this.slider = slider;
+			this.minValue = minValue;
+			this.maxValue = maxValue;
+		}
+		
+		@Override
+		public void modelToViewImpl( )
+		{
+			Model model = getModel( );
+			if( model == null )
+			{
+				return;
+			}
+			if( model.get( property ) != null )
+			{
+				Float value = ( Float ) model.get( property );
+				if( value != null )
+				{
+					float converted = ( value - minValue ) / ( maxValue - minValue );
+					int intValue = Math.max( slider.getMinimum( ) , Math.min( slider.getMaximum( ) , ( int ) Math.round( converted ) ) );
+					slider.setValue( intValue );
+				}
+			}
+		}
+		
+		@Override
+		public void viewToModelImpl( )
+		{
+			Model model = getModel( );
+			if( model == null )
+			{
+				return;
+			}
+			float converted = ( slider.getValue( ) - slider.getMinimum( ) ) * ( maxValue - minValue ) / ( slider.getMaximum( ) - slider.getMinimum( ) );
+			model.set( property , converted );
+		}
+		
+		@Override
+		public void unregisterFromView( )
+		{
+			slider.removeChangeListener( this );
+		}
+		
+		@Override
+		public void registerWithView( )
+		{
+			slider.addChangeListener( this );
+		}
+		
+		@Override
+		public void stateChanged( ChangeEvent e )
+		{
+			viewToModel( );
+		}
+	}
+	
 	public static JComboBoxEnumBinding bind( Binder b , JComboBox comboBox , Object property )
 	{
 		JComboBoxEnumBinding binding = new JComboBoxEnumBinding( comboBox , property );
@@ -532,7 +605,7 @@ public class UIBindings
 		b.bind( binding );
 		return binding;
 	}
-
+	
 	public static class BgColorBinding extends Binding implements PropertyChangeListener
 	{
 		Component	comp;

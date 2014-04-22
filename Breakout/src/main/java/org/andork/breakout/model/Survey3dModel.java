@@ -115,6 +115,8 @@ public class Survey3dModel
 	Uniform3fv								depthAxis;
 	Uniform3fv								depthOrigin;
 	
+	Uniform1fv								ambient;
+	
 	Uniform1fv								nearDist;
 	Uniform1fv								farDist;
 	
@@ -143,6 +145,8 @@ public class Survey3dModel
 		depthOrigin = new Uniform3fv( ).name( "u_origin" ).value( 0f , 0f , 0f );
 		
 		glowColor = new Uniform4fv( ).name( "u_glowColor" ).value( 0f , 1f , 1f , 1f );
+		
+		ambient = new Uniform1fv( ).name( "u_ambient" ).value( 0.5f );
 		
 		group = new JOGLGroup( this )
 		{
@@ -182,10 +186,12 @@ public class Survey3dModel
 			segment.fillObj.add( depthAxis );
 			segment.fillObj.add( depthOrigin );
 			segment.fillObj.add( glowColor );
+			segment.fillObj.add( ambient );
 			segment.lineObj.add( highlightColors );
 			segment.lineObj.add( depthAxis );
 			segment.lineObj.add( depthOrigin );
 			segment.lineObj.add( glowColor );
+			segment.lineObj.add( ambient );
 		}
 		
 	}
@@ -600,6 +606,11 @@ public class Survey3dModel
 	public RfStarTree<Shot> getTree( )
 	{
 		return tree;
+	}
+	
+	public void setAmbientLight( float ambientLight )
+	{
+		this.ambient.value( ambientLight );
 	}
 	
 	public void setNearDist( float nearDist )
@@ -1066,6 +1077,7 @@ public class Survey3dModel
 				"}";
 		
 		fragShader = "varying vec3 v_norm;" +
+				"uniform float u_ambient;" +
 				
 				// param coloration
 				"varying float v_param;" +
@@ -1092,17 +1104,17 @@ public class Survey3dModel
 				"  vec4 indexedHighlight;" +
 				
 				// param coloration
-				"  gl_FragColor = vec4(texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0))).xyz, 1.0);" +
+				"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
 				
 				// distance coloration
-				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
+				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
 				
 				// glow
 				"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
 				
 				// lighting
 				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
-				"  temp = 0.3 + temp * (1.0 - 0.3);" +
+				"  temp = u_ambient + temp * (1.0 - u_ambient);" +
 				"  gl_FragColor.xyz = temp * gl_FragColor.xyz;" +
 				
 				// highlights
@@ -1151,6 +1163,7 @@ public class Survey3dModel
 				"}";
 		
 		fragShader = "varying vec3 v_norm;" +
+				"uniform float u_ambient;" +
 				
 				// param coloration
 				"varying float v_param;" +
@@ -1180,14 +1193,14 @@ public class Survey3dModel
 				"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
 				
 				// distance coloration
-				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * 0.3, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
+				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
 				
 				// glow
 				"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
 				
 				// lighting
 				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
-				"  temp = 0.3 + temp * (1.0 - 0.3);" +
+				"  temp = u_ambient + temp * (1.0 - u_ambient);" +
 				"  gl_FragColor = temp * gl_FragColor;" +
 				
 				// highlights
