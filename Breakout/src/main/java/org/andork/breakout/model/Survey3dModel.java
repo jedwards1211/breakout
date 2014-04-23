@@ -196,7 +196,7 @@ public class Survey3dModel
 		
 	}
 	
-	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , int segmentLevel , Task task )
+	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , Task task )
 	{
 		Subtask rootSubtask = null;
 		int renderProportion = 5;
@@ -237,6 +237,8 @@ public class Survey3dModel
 			return null;
 		}
 		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + 1 );
+		
+		int segmentLevel = Math.min( tree.getRoot( ).level( ) , 3 );
 		
 		Set<Segment> segments = createSegments( tree , segmentLevel , rootSubtask.beginSubtask( 1 ) );
 		if( rootSubtask.isCanceling( ) )

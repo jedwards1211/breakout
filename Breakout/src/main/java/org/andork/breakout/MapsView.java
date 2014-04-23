@@ -1499,7 +1499,7 @@ public class MapsView extends BasicJOGLSetup
 					
 					setStatus( "Updating view: constructing new model..." );
 					
-					final Survey3dModel model = Survey3dModel.create( shots , 10 , 3 , 3 , 3 , this );
+					final Survey3dModel model = Survey3dModel.create( shots , 10 , 3 , 3 , this );
 					if( isCanceling( ) )
 					{
 						return;
