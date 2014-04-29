@@ -1,4 +1,4 @@
-package org.andork.breakout;
+package org.andork.breakout.model;
 
 import java.io.File;
 

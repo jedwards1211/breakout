@@ -1,9 +1,11 @@
 package org.andork.breakout.model;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import org.andork.breakout.model.Survey3dModel.Shot;
 import org.andork.math3d.Vecmath;
 
 public class SurveyShot
@@ -215,14 +217,29 @@ public class SurveyShot
 		return fsAzm + angle( fsAzm , bsAzm ) * 0.5;
 	}
 	
-	public static void computeConnected( SurveyStation start )
+	public static void computeConnected( Collection<SurveyStation> stations )
+	{
+		Set<SurveyStation> visited = new HashSet<SurveyStation>( );
+		
+		for( SurveyStation station : stations )
+		{
+			if( !Vecmath.hasNaNsOrInfinites( station.position ) )
+			{
+				if( !visited.contains( station ) )
+				{
+					computeConnected( station , visited );
+				}
+			}
+		}
+	}
+	
+	public static void computeConnected( SurveyStation start , Set<SurveyStation> visited )
 	{
 		if( Vecmath.hasNaNsOrInfinites( start.position ) )
 		{
 			throw new IllegalArgumentException( "start's position has NaN or infinite values" );
 		}
 		
-		Set<SurveyStation> visited = new HashSet<SurveyStation>( );
 		PriorityQueue<PriorityEntry> heap = new PriorityQueue<SurveyShot.PriorityEntry>( 10 );
 		
 		for( SurveyShot shot : start.frontsights )

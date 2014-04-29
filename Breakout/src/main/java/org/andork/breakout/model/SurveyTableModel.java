@@ -1,4 +1,4 @@
-package org.andork.breakout;
+package org.andork.breakout.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -6,10 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.andork.breakout.SurveyTableModel.Row;
-import org.andork.breakout.model.SurveyShot;
-import org.andork.breakout.model.SurveyStation;
+import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.collect.CollectionUtils;
+import org.andork.math3d.Vecmath;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlSpec;
 import org.andork.swing.async.Subtask;
@@ -191,11 +190,15 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 				double up = parse( row.get( Row.up ) );
 				double down = parse( row.get( Row.down ) );
 				
+				double north = parse( row.get( Row.north ) );
+				double east = parse( row.get( Row.east ) );
+				double elev = parse( row.get( Row.elev ) );
+				
 				SurveyStation from = stations.get( fromName.toString( ) );
 				if( from == null )
 				{
 					from = new SurveyStation( );
-					Arrays.fill( from.position , Double.NaN );
+					Vecmath.setd( from.position , east , elev , -north );
 					from.name = fromName.toString( );
 					stations.put( from.name , from );
 				}
@@ -208,9 +211,6 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 					stations.put( to.name , to );
 					
 					Arrays.fill( to.position , Double.NaN );
-					// to.position[ 0 ] = from.position[ 0 ] + Math.sin( azm ) * Math.cos( inc ) * dist;
-					// to.position[ 1 ] = from.position[ 1 ] + Math.sin( inc ) * dist;
-					// to.position[ 2 ] = from.position[ 2 ] - Math.cos( azm ) * Math.cos( inc ) * dist;
 				}
 				
 				SurveyShot shot = new SurveyShot( );

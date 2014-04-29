@@ -38,6 +38,7 @@ public class ScreenCaptureDialogModel extends YamlSpec<ScreenCaptureDialogModel>
 	public static final Attribute<Integer>									pixelHeight		= integerAttribute( "pixelHeight" );
 	public static final Attribute<BigDecimal>								resolution		= bigDecimalAttribute( "resolution" );
 	public static final Attribute<ScreenCaptureDialogModel.ResolutionUnit>	resolutionUnit	= enumAttribute( "resolutionUnit" , ScreenCaptureDialogModel.ResolutionUnit.class );
+	public static final Attribute<Integer>									numSamples		= integerAttribute( "numSamples" );
 	
 	private ScreenCaptureDialogModel( )
 	{

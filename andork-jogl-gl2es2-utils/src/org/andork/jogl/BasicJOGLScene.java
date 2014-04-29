@@ -114,6 +114,17 @@ public class BasicJOGLScene implements GLEventListener
 		}
 	}
 	
+	public float[ ] getBgColor( float[ ] out )
+	{
+		setf( out , this.bgColor );
+		return out;
+	}
+	
+	public float[ ] getBgColor( )
+	{
+		return Arrays.copyOf( bgColor , bgColor.length );
+	}
+	
 	public boolean isRenderToFbo( )
 	{
 		return renderToFbo;

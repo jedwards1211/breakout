@@ -6,8 +6,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
-import org.andork.breakout.SurveyTableModel.Row;
-import org.andork.breakout.SurveyTableModel.SurveyTableModelCopier;
+import org.andork.breakout.model.SurveyTableModel;
+import org.andork.breakout.model.SurveyTableModel.Row;
+import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.swing.FromEDT;
 import org.andork.swing.async.Subtask;

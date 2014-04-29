@@ -445,7 +445,7 @@ public class UIBindings
 				Float value = ( Float ) model.get( property );
 				if( value != null )
 				{
-					float converted = ( value - minValue ) / ( maxValue - minValue );
+					float converted = ( value - minValue ) * ( slider.getMaximum( ) - slider.getMinimum( ) ) / ( maxValue - minValue );
 					int intValue = Math.max( slider.getMinimum( ) , Math.min( slider.getMaximum( ) , ( int ) Math.round( converted ) ) );
 					slider.setValue( intValue );
 				}

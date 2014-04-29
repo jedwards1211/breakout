@@ -1,6 +1,6 @@
 package org.andork.jogl.awt;
 
-import static javax.media.opengl.GL.*;
+import static javax.media.opengl.GL.GL_BGRA;
 import static javax.media.opengl.GL.GL_COLOR_ATTACHMENT0;
 import static javax.media.opengl.GL.GL_COLOR_BUFFER_BIT;
 import static javax.media.opengl.GL.GL_DEPTH_ATTACHMENT;
@@ -41,8 +41,6 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-import javax.media.opengl.DebugGL2;
-import javax.media.opengl.GL2;
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
@@ -57,6 +55,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
+import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -67,7 +66,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.PlainDocument;
-import javax.swing.text.View;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
@@ -86,7 +84,6 @@ import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
 import org.andork.swing.async.SingleThreadedTaskService;
-import org.andork.swing.async.Subtask;
 import org.andork.swing.async.TaskService;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.event.EasyDocumentListener;
@@ -157,6 +154,9 @@ public class ScreenCaptureDialog extends JDialog
 	JSpinner													printHeightSpinner;
 	JLabel														printUnitLabel;
 	DefaultSelector<ScreenCaptureDialogModel.PrintSizeUnit>		printUnitSelector;
+	
+	JLabel														numSamplesLabel;
+	JSlider														numSamplesSlider;
 	
 	JButton														exportButton;
 	JButton														cancelButton;
@@ -270,6 +270,7 @@ public class ScreenCaptureDialog extends JDialog
 				bindings.add( UIBindings.bind( binder , pixelHeightSpinner , ScreenCaptureDialogModel.pixelHeight ) );
 				bindings.add( UIBindings.bind( binder , resolutionSpinner , ScreenCaptureDialogModel.resolution ) );
 				bindings.add( UIBindings.bind( binder , resolutionUnitSelector , ScreenCaptureDialogModel.resolutionUnit ) );
+				bindings.add( UIBindings.bind( binder , numSamplesSlider , ScreenCaptureDialogModel.numSamples ) );
 			}
 		}
 	}
@@ -360,6 +361,11 @@ public class ScreenCaptureDialog extends JDialog
 			}
 		} );
 		
+		numSamplesLabel = new JLabel( );
+		localizer.setText( numSamplesLabel , "numSamplesLabel.text.off" );
+		numSamplesSlider = new JSlider( 1 , 20 , 1 );
+		numSamplesSlider.setPreferredSize( new Dimension( 150 , numSamplesSlider.getPreferredSize( ).height ) );
+		
 		exportButton = new JButton( );
 		localizer.setText( exportButton , "exportButton.text" );
 		
@@ -430,11 +436,18 @@ public class ScreenCaptureDialog extends JDialog
 		
 		gbw.put( sizePanel.getTarget( ) ).below( namePanel.getTarget( ) ).addToInsets( 10 , 0 , 0 , 0 );
 		
+		GridBagWizard numSamplesPanel = GridBagWizard.quickPanel( );
+		
+		numSamplesPanel.put( numSamplesLabel , numSamplesSlider ).intoRow( );
+		numSamplesPanel.put( numSamplesLabel ).west( ).weightx( 1.0 ).insets( 0 , 0 , 0 , 15 );
+		
+		gbw.put( numSamplesPanel.getTarget( ) ).belowLast( ).fillx( 1.0 ).addToInsets( 10 , 0 , 0 , 0 );
+		
 		GridBagWizard buttonPanel = GridBagWizard.quickPanel( );
 		buttonPanel.defaults( ).defaultAutoinsets( 2 , 2 );
 		buttonPanel.put( exportButton , cancelButton ).intoRow( ).fillx( 1.0 );
 		
-		gbw.put( buttonPanel.getTarget( ) ).below( sizePanel.getTarget( ) ).south( ).fillx( 1.0 ).weighty( 1.0 ).addToInsets( 10 , 0 , 0 , 0 );
+		gbw.put( buttonPanel.getTarget( ) ).belowLast( ).south( ).fillx( 1.0 ).weighty( 1.0 ).addToInsets( 10 , 0 , 0 , 0 );
 		
 		JPanel leftPanel = ( JPanel ) gbw.getTarget( );
 		leftPanel.setBorder( new CompoundBorder( new InnerGradientBorder( new Insets( 0 , 0 , 0 , 8 ) , new Color( 164 , 164 , 164 ) ) ,
@@ -620,6 +633,30 @@ public class ScreenCaptureDialog extends JDialog
 				taskService.submit( new CaptureTask( ) );
 			}
 		} );
+		
+		numSamplesSlider.addChangeListener( new ChangeListener( )
+		{
+			@Override
+			public void stateChanged( ChangeEvent e )
+			{
+				updateNumSamplesLabel( );
+			}
+		} );
+	}
+	
+	private void updateNumSamplesLabel( )
+	{
+		localizer.unregister( numSamplesLabel );
+		
+		int value = numSamplesSlider.getValue( );
+		if( value <= 1 )
+		{
+			localizer.setText( numSamplesLabel , "numSamplesLabel.text.off" );
+		}
+		else
+		{
+			localizer.setFormattedText( numSamplesLabel , "numSamplesLabel.text.on" , value );
+		}
 	}
 	
 	private void showOutputDirectoryChooser( )
@@ -906,6 +943,8 @@ public class ScreenCaptureDialog extends JDialog
 		float[ ]				v		= newMat4f( );
 		float[ ]				p		= newMat4f( );
 		
+		float[ ]				bgColor	= new float[ 4 ];
+		
 		volatile CaptureTask	captureTask;
 		
 		final Object			lock	= new Object( );
@@ -928,6 +967,8 @@ public class ScreenCaptureDialog extends JDialog
 		public void display( GLAutoDrawable drawable )
 		{
 			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+			scene.getBgColor( bgColor );
+			gl.glClearColor( bgColor[ 0 ] , bgColor[ 1 ] , bgColor[ 2 ] , bgColor[ 3 ] );
 			gl.glClear( GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_DEPTH_BUFFER_BIT );
 			
 			for( JOGLObject object : scene.getObjects( ) )

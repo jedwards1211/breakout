@@ -2,6 +2,7 @@ package org.andork.breakout;
 
 import javax.swing.RowFilter;
 
+import org.andork.breakout.model.SurveyTableModel;
 import org.andork.swing.table.AnnotatingJTable;
 
 @SuppressWarnings( "serial" )

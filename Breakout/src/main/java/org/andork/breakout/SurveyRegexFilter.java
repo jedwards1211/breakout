@@ -5,6 +5,7 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 
 import org.andork.breakout.model.SurveyShot;
+import org.andork.breakout.model.SurveyTableModel;
 
 public class SurveyRegexFilter extends RowFilter<SurveyTableModel, Integer>
 {

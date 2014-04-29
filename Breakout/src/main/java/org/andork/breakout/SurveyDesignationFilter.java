@@ -7,7 +7,8 @@ import java.util.regex.Pattern;
 
 import javax.swing.RowFilter;
 
-import org.andork.breakout.SurveyTableModel.Row;
+import org.andork.breakout.model.SurveyTableModel;
+import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.snakeyaml.YamlObject;
 
 public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer>

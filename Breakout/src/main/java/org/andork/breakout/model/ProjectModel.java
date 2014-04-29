@@ -1,12 +1,12 @@
-package org.andork.breakout;
+package org.andork.breakout.model;
 
 import java.awt.Color;
 import java.io.File;
 
 import org.andork.awt.layout.DrawerModel;
+import org.andork.breakout.SettingsDrawer;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
-import org.andork.breakout.model.LinearAxisConversionYamlBimapper;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlSpec;

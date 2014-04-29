@@ -13,7 +13,8 @@ import javax.swing.RowFilter;
 import javax.swing.TransferHandler;
 import javax.swing.TransferHandler.TransferSupport;
 
-import org.andork.breakout.SurveyTableModel.SurveyTableModelCopier;
+import org.andork.breakout.model.SurveyTableModel;
+import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.ModelCopier;
 

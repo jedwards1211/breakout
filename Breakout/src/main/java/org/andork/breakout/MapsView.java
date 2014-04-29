@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -57,15 +58,18 @@ import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
-import org.andork.breakout.SurveyTableModel.Row;
-import org.andork.breakout.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.Survey3dModel;
 import org.andork.breakout.model.Survey3dModel.SelectionEditor;
 import org.andork.breakout.model.Survey3dModel.Shot;
 import org.andork.breakout.model.Survey3dModel.ShotPickContext;
 import org.andork.breakout.model.Survey3dModel.ShotPickResult;
+import org.andork.breakout.model.SurveyTableModel.Row;
+import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
+import org.andork.breakout.model.ProjectModel;
+import org.andork.breakout.model.RootModel;
 import org.andork.breakout.model.SurveyShot;
 import org.andork.breakout.model.SurveyStation;
+import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
@@ -1465,9 +1469,18 @@ public class MapsView extends BasicJOGLSetup
 						calculatingSubtask.setStatus( "calculating" );
 						calculatingSubtask.setIndeterminate( true );
 						
-						SurveyStation first = shots.iterator( ).next( ).from;
-						Arrays.fill( first.position , 0.0 );
-						SurveyShot.computeConnected( first );
+						LinkedHashSet<SurveyStation> stations = new LinkedHashSet<SurveyStation>( );
+						
+						for( SurveyShot shot : shots )
+						{
+							stations.add( shot.from );
+							stations.add( shot.to );
+						}
+						
+//						SurveyStation first = shots.iterator( ).next( ).from;
+//						Arrays.fill( first.position , 0.0 );
+//						SurveyShot.computeConnected( first );
+						SurveyShot.computeConnected( stations );
 						
 						calculatingSubtask.end( );
 					}
@@ -1493,6 +1506,7 @@ public class MapsView extends BasicJOGLSetup
 							{
 								scene.remove( model3d.getRootGroup( ) );
 								scene.destroyLater( model3d.getRootGroup( ) );
+								model3d = null;
 							}
 						}
 					};
