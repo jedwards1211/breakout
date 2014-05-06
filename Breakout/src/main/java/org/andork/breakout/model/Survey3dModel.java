@@ -22,6 +22,7 @@ import java.awt.Graphics2D;
 import java.awt.LinearGradientPaint;
 import java.awt.MultipleGradientPaint;
 import java.awt.Point;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -107,8 +108,10 @@ public class Survey3dModel
 	int										fillProgram;
 	int										lineProgram;
 	
+	LinearGradientPaint						paramPaint;
 	int										paramTexture;
-	IntBuffer								paramTextureBuffer;
+	BufferedImageInt						paramTextureImage;
+	boolean									paramTextureNeedsUpdate;
 	
 	Uniform4fv								highlightColors;
 	
@@ -154,7 +157,6 @@ public class Survey3dModel
 			public void init( GL2ES2 gl )
 			{
 				createPrograms( gl );
-				createParamTexture( gl );
 				super.init( gl );
 			}
 			
@@ -164,6 +166,17 @@ public class Survey3dModel
 				destroyPrograms( gl );
 				destroyParamTexture( gl );
 				super.destroy( gl );
+			}
+			
+			@Override
+			public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
+			{
+				if( paramTextureNeedsUpdate )
+				{
+					updateParamTexture( gl );
+					paramTextureNeedsUpdate = false;
+				}
+				super.draw( gl , m , n , v , p );
 			}
 		};
 		
@@ -598,6 +611,15 @@ public class Survey3dModel
 			in[ i ] += offset;
 		}
 		return in;
+	}
+	
+	public void setParamPaint( LinearGradientPaint paint )
+	{
+		if( paramPaint != paint )
+		{
+			this.paramPaint = paint;
+			paramTextureNeedsUpdate = true;
+		}
 	}
 	
 	public JOGLGroup getRootGroup( )
@@ -1232,41 +1254,57 @@ public class Survey3dModel
 		lineProgram = fillProgram = 0;
 	}
 	
-	private void createParamTexture( GL2ES2 gl )
+	private void updateParamTexture( GL2ES2 gl )
 	{
-		final int texWidth = 256;
-		final int texHeight = 256;
+		if( paramTextureImage == null )
+		{
+			paramTextureImage = DirectDataBufferInt.createBufferedImage( 256 , 256 , BufferedImage.TYPE_INT_BGR ,
+					new Point( ) , new Hashtable<Object, Object>( ) );
+		}
 		
-		BufferedImageInt image = DirectDataBufferInt.createBufferedImage( texWidth , texHeight , BufferedImage.TYPE_INT_BGR ,
-				new Point( ) , new Hashtable<Object, Object>( ) );
+		Graphics2D g2 = paramTextureImage.createGraphics( );
 		
-		Graphics2D g2 = image.createGraphics( );
+		g2.clearRect( 0 , 0 , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) );
 		
-		g2.setPaint( new ParamGradientMapPaint(
-				new float[ ] { 0 , 0 } , new float[ ] { 0 , texHeight } , new float[ ] { texWidth , 0 } , 0 , 100 ,
-				new float[ ] { 0 , 24 , 64 , 100 } ,
-				new Color[ ] { new Color( 255 , 249 , 204 ) , new Color( 255 , 195 , 0 ) , new Color( 214 , 6 , 127 ) , new Color( 34 , 19 , 150 ) } ) );
-		g2.fillRect( 0 , 0 , texWidth , texHeight );
+		if( paramPaint != null )
+		{
+			g2.setPaint( new ParamGradientMapPaint(
+					new float[ ] { 0 , 0 } ,
+					new float[ ] { 0 , paramTextureImage.getHeight( ) } ,
+					new float[ ] { paramTextureImage.getWidth( ) , 0 } ,
+					0 , 1 ,
+					paramPaint.getFractions( ) ,
+					paramPaint.getColors( ) ) );
+			g2.fillRect( 0 , 0 , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) );
+		}
 		
 		g2.dispose( );
 		
-		paramTextureBuffer = ( ( DirectDataBufferInt ) image.getRaster( ).getDataBuffer( ) ).getData( );
+		IntBuffer paramTextureBuffer = ( ( DirectDataBufferInt ) paramTextureImage.getRaster( ).getDataBuffer( ) ).getData( );
 		
-		int textures[] = new int[ 1 ];
-		gl.glGenTextures( 1 , textures , 0 );
-		paramTexture = textures[ 0 ];
+		if( paramTexture == 0 )
+		{
+			int textures[] = new int[ 1 ];
+			gl.glGenTextures( 1 , textures , 0 );
+			paramTexture = textures[ 0 ];
+		}
 		gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
 		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_S , GL_CLAMP_TO_EDGE );
 		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_T , GL_CLAMP_TO_EDGE );
 		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MAG_FILTER , GL_LINEAR );
 		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MIN_FILTER , GL_LINEAR );
-		gl.glTexImage2D( GL_TEXTURE_2D , 0 , GL_RGBA , texWidth , texHeight , 0 , GL_RGBA , GL_UNSIGNED_BYTE , paramTextureBuffer );
+		gl.glTexImage2D( GL_TEXTURE_2D , 0 , GL_RGBA , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) ,
+				0 , GL_RGBA , GL_UNSIGNED_BYTE , paramTextureBuffer );
 		gl.glBindTexture( GL_TEXTURE_2D , 0 );
 	}
 	
 	private void destroyParamTexture( GL2ES2 gl )
 	{
-		gl.glDeleteTextures( 1 , new int[ ] { paramTexture } , 0 );
+		if( paramTexture > 0 )
+		{
+			gl.glDeleteTextures( 1 , new int[ ] { paramTexture } , 0 );
+			paramTexture = 0;
+		}
 	}
 	
 	private void updateHighlights( Collection<Shot> affectedShots , Map<Shot, LinearAxisConversion> prevHighlightExtents )

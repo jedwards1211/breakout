@@ -7,12 +7,14 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.LinearGradientPaint;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -1252,7 +1254,7 @@ public class MapsView extends BasicJOGLSetup
 				if( picked != null )
 				{
 					LinearAxisConversion conversion = projectModel.get( ProjectModel.highlightRange );
-					LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getHighlightDistAxis( ).getViewSpan( ) ) , 0.0 );
+					LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getGlowDistAxis( ).getViewSpan( ) ) , 0.0 );
 					editor.hover( picked.picked , picked.locationAlongShot , conversion2 );
 				}
 				
@@ -1477,9 +1479,9 @@ public class MapsView extends BasicJOGLSetup
 							stations.add( shot.to );
 						}
 						
-//						SurveyStation first = shots.iterator( ).next( ).from;
-//						Arrays.fill( first.position , 0.0 );
-//						SurveyShot.computeConnected( first );
+						// SurveyStation first = shots.iterator( ).next( ).from;
+						// Arrays.fill( first.position , 0.0 );
+						// SurveyShot.computeConnected( first );
 						SurveyShot.computeConnected( stations );
 						
 						calculatingSubtask.end( );
@@ -1527,6 +1529,7 @@ public class MapsView extends BasicJOGLSetup
 						public void run( )
 						{
 							MapsView.this.model3d = model;
+							model.setParamPaint( settingsDrawer.getParamColorationAxisPaint( ) );
 							scene.add( model.getRootGroup( ) );
 							scene.initLater( model.getRootGroup( ) );
 							

@@ -20,6 +20,11 @@ public class PaintablePanel extends JPanel
 		setOpaque( false );
 	}
 	
+	public Border getUnderpaintBorder( )
+	{
+		return underpaintBorder;
+	}
+	
 	public void setUnderpaintBorder( Border b )
 	{
 		if( underpaintBorder != b )

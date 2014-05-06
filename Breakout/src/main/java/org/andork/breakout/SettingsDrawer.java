@@ -1,26 +1,20 @@
 package org.andork.breakout;
 
-import static org.andork.awt.event.UIBindings.*;
+import static org.andork.awt.event.UIBindings.bind;
+import static org.andork.awt.event.UIBindings.bindBgColor;
 
 import java.awt.Color;
 import java.awt.Insets;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import java.awt.LinearGradientPaint;
 import java.util.Arrays;
-import java.util.prefs.BackingStoreException;
 
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.JSpinner;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.plaf.SliderUI;
 
 import org.andork.awt.ColorUtils;
 import org.andork.awt.GridBagWizard;
@@ -33,15 +27,13 @@ import org.andork.breakout.model.RootModel;
 import org.andork.event.Binder;
 import org.andork.plot.PlotAxisConversionBinding;
 import org.andork.snakeyaml.YamlObject;
-import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.PaintablePanel;
+import org.andork.swing.border.FillBorder;
 import org.andork.swing.border.GradientFillBorder;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
 import org.andork.swing.selector.DefaultSelector;
-import org.andork.swing.text.SimpleSpinnerEditor;
-import org.andork.swing.text.Spinners;
 import org.jdesktop.swingx.JXColorSelectionButton;
 
 import com.andork.plot.PlotAxis;
@@ -128,7 +120,8 @@ public class SettingsDrawer extends Drawer
 		paramColorationAxisPanel = PaintablePanel.wrap( paramColorationAxis );
 		paramColorationAxisPanel.setUnderpaintBorder(
 				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
-						new float[ ] { 0f , 1f } , new Color[ ] { Color.RED , Color.BLUE } ) );
+						new float[ ] { 0f , 0.24f , 0.64f , 1f } ,
+						new Color[ ] { new Color( 255 , 249 , 204 ) , new Color( 255 , 195 , 0 ) , new Color( 214 , 6 , 127 ) , new Color( 34 , 19 , 150 ) } ) );
 		
 		paramColorationAxis.setForeground( Color.WHITE );
 		paramColorationAxis.setMajorTickColor( Color.WHITE );
@@ -141,7 +134,7 @@ public class SettingsDrawer extends Drawer
 		glowDistAxisPanel = PaintablePanel.wrap( glowDistAxis );
 		glowDistAxisPanel.setUnderpaintBorder(
 				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
-						new float[ ] { 0f , 1f } , new Color[ ] { Color.YELLOW , ColorUtils.alphaColor( Color.YELLOW , 0 ) } ) );
+						new float[ ] { 0f , 1f } , new Color[ ] { Color.CYAN , ColorUtils.alphaColor( Color.CYAN , 0 ) } ) );
 		
 		glowDistAxis.setForeground( Color.BLACK );
 		glowDistAxis.setMajorTickColor( Color.BLACK );
@@ -306,7 +299,19 @@ public class SettingsDrawer extends Drawer
 		return paramColorationAxis;
 	}
 	
-	public PlotAxis getHighlightDistAxis( )
+	public PaintablePanel getParamColorationAxisPanel( )
+	{
+		return paramColorationAxisPanel;
+	}
+	
+	public LinearGradientPaint getParamColorationAxisPaint( )
+	{
+		return ( LinearGradientPaint ) ( ( FillBorder ) paramColorationAxisPanel.getUnderpaintBorder( ) )
+				.getPaint( paramColorationAxisPanel , null ,
+						0 , 0 , paramColorationAxisPanel.getWidth( ) , paramColorationAxisPanel.getHeight( ) );
+	}
+	
+	public PlotAxis getGlowDistAxis( )
 	{
 		return glowDistAxis;
 	}
@@ -349,11 +354,6 @@ public class SettingsDrawer extends Drawer
 		{
 			return displayText;
 		}
-	}
-	
-	public PlotAxis highlightDistAxis( )
-	{
-		return glowDistAxis;
 	}
 	
 	public JButton getInferDepthAxisTiltButton( )

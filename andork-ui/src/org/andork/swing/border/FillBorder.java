@@ -17,7 +17,7 @@ public abstract class FillBorder implements Border
 		return new Rectangle( x , y , width , height );
 	}
 	
-	protected abstract Paint getPaint( Component c , Graphics g , int x , int y , int width , int height );
+	public abstract Paint getPaint( Component c , Graphics g , int x , int y , int width , int height );
 	
 	@Override
 	public void paintBorder( Component c , Graphics g , int x , int y , int width , int height )

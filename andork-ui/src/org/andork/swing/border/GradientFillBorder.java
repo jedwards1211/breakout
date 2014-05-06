@@ -33,7 +33,7 @@ public abstract class GradientFillBorder extends FillBorder
 	protected abstract Color getColor2( Component c , Graphics g );
 	
 	@Override
-	protected Paint getPaint( Component c , Graphics g , int x , int y , int width , int height )
+	public Paint getPaint( Component c , Graphics g , int x , int y , int width , int height )
 	{
 		return new GradientPaint(
 				getPoint1( c , g , x , y , width , height ) ,
