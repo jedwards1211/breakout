@@ -1,8 +1,13 @@
 package com.andork.plot;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.geom.Rectangle2D;
 
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 import org.andork.awt.layout.Corner;
@@ -24,6 +29,23 @@ public class ImagePlotPanel extends JPanel
 	PlotController		plotController;
 	MouseLooper			mouseLooper;
 	
+	public static JFrame showImageViewer( Image image )
+	{
+		ImagePlotPanel panel = new ImagePlotPanel( );
+		panel.setImage( image );
+		Dimension screensize = Toolkit.getDefaultToolkit( ).getScreenSize( );
+		panel.setPreferredSize( new Dimension( Math.min( image.getWidth( null ) , screensize.width * 3 / 4 ) ,
+				Math.min( image.getHeight( null ) , screensize.height * 3 / 4 ) ) );
+		
+		JFrame frame = new JFrame( );
+		frame.getContentPane( ).add( panel , BorderLayout.CENTER );
+		frame.pack( );
+		frame.setLocationRelativeTo( null );
+		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );
+		frame.setVisible( true );
+		return frame;
+	}
+	
 	public ImagePlotPanel( )
 	{
 		plot = new Plot( );
@@ -40,6 +62,7 @@ public class ImagePlotPanel extends JPanel
 		axisLinkButton = new AxisLinkButton( xAxisController , yAxisController );
 		
 		imagePlotLayer = new ImagePlotLayer( xAxis.getAxisConversion( ) , yAxis.getAxisConversion( ) );
+		plot.addLayer( new FillPlotLayer( new CheckerPaint( Color.LIGHT_GRAY , Color.GRAY , 9 ) ) );
 		plot.addLayer( imagePlotLayer );
 		
 		setLayout( new PlotPanelLayout( ) );
