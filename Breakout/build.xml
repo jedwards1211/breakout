@@ -51,34 +51,42 @@
 
 			<fileset dir="../andork-core/dist/lib">
 				<include name="andork-core.jar" />
+				<include name="andork-core-sources.jar" />
 			</fileset>
 
 			<fileset dir="../andork-ui/dist/lib">
 				<include name="andork-ui.jar" />
+				<include name="andork-ui-sources.jar" />
 			</fileset>
 
 			<fileset dir="../andork-math/dist/lib">
 				<include name="andork-math.jar" />
+				<include name="andork-math-sources.jar" />
 			</fileset>
 
 			<fileset dir="../andork-math3d/dist/lib">
 				<include name="andork-math3d.jar" />
+				<include name="andork-math3d-sources.jar" />
 			</fileset>
 
 			<fileset dir="../andork-plot/dist/lib">
 				<include name="andork-plot.jar" />
+				<include name="andork-plot-sources.jar" />
 			</fileset>
 
 			<fileset dir="../andork-spatial/dist/lib">
 				<include name="andork-spatial.jar" />
+				<include name="andork-spatial-sources.jar" />
 			</fileset>
 
 			<fileset dir="../andork-jogl-gl2es2-utils/dist/lib">
 				<include name="andork-jogl-gl2es2-utils.jar" />
+				<include name="andork-jogl-gl2es2-utils-sources.jar" />
 			</fileset>
 
 			<fileset dir="../andork-jogl-gl2es2-swing/dist/lib">
 				<include name="andork-jogl-gl2es2-swing.jar" />
+				<include name="andork-jogl-gl2es2-swing-sources.jar" />
 			</fileset>
 
 			<fileset dir="${swingx-lib}">
@@ -163,6 +171,26 @@
 
 	<target name="jar-base" depends="compile-main,copy-resources">
 		<jar jarfile="${dist}/${ant.project.name}-base.jar" basedir="${build.main}" />
+		<jar jarfile="${dist}/${ant.project.name}-base-sources.jar" basedir="${src.main}" />
+	</target>
+
+	<target name="dist-sources" depends="jar-base,copy-deps-shared" description="generate the source distribution">
+		<!-- Create the distribution directory -->
+		<mkdir dir="${dist}" />
+
+		<zip destfile="${dist}/${ant.project.name}-sources.zip">
+			<fileset dir="${dist}">
+				<include name="${ant.project.name}-base-sources.jar" />
+				<include name="lib/andork-core-sources.jar" />
+				<include name="lib/andork-ui-sources.jar" />
+				<include name="lib/andork-math-sources.jar" />
+				<include name="lib/andork-math3d-sources.jar" />
+				<include name="lib/andork-plot-sources.jar" />
+				<include name="lib/andork-spatial-sources.jar" />
+				<include name="lib/andork-jogl-gl2es2-utils-sources.jar" />
+				<include name="lib/andork-jogl-gl2es2-swing-sources.jar" />
+			</fileset>
+		</zip>
 	</target>
 
 	<target name="dist-win-i586" depends="jar-base,copy-deps-win-i586" description="generate the distribution">
@@ -220,6 +248,12 @@
 
 	<target name="dist-all">
 		<antcall target="dist-win-i586" />
+		<antcall target="dist-sources" />
+	</target>
+	
+	<target name="clean-and-dist-all">
+		<antcall target="clean-all" />
+		<antcall target="dist-all" />
 	</target>
 
 	<target name="clean" description="clean up">
