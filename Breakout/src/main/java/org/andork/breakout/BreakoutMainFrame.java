@@ -9,10 +9,10 @@ import javax.swing.JFrame;
 @SuppressWarnings( "serial" )
 public class BreakoutMainFrame extends JFrame
 {
-	public BreakoutMainFrame( MapsView mapsView )
+	public BreakoutMainFrame( BreakoutMainView breakoutMainView )
 	{
 		super( "Breakout" );
-		getContentPane( ).add( mapsView.getMainPanel( ) , BorderLayout.CENTER );
+		getContentPane( ).add( breakoutMainView.getMainPanel( ) , BorderLayout.CENTER );
 		Dimension screenSize = Toolkit.getDefaultToolkit( ).getScreenSize( );
 		setSize( screenSize.width * 2 / 3 , screenSize.height * 2 / 3 );
 		setDefaultCloseOperation( EXIT_ON_CLOSE );

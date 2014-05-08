@@ -130,7 +130,7 @@ import com.andork.plot.PlotAxisController;
 import com.andork.plot.PlotController;
 import com.andork.plot.PlotPanelLayout;
 
-public class MapsView extends BasicJOGLSetup
+public class BreakoutMainView extends BasicJOGLSetup
 {
 	I18n												i18n					= new I18n( );
 	
@@ -201,7 +201,7 @@ public class MapsView extends BasicJOGLSetup
 	
 	final AnimationQueue								cameraAnimationQueue	= new AnimationQueue( );
 	
-	public MapsView( )
+	public BreakoutMainView( )
 	{
 		super( createCanvas( ) );
 		
@@ -627,7 +627,7 @@ public class MapsView extends BasicJOGLSetup
 				}
 				
 				cameraAnimationQueue.clear( );
-				cameraAnimationQueue.add( new SpringOrbit( MapsView.this , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
+				cameraAnimationQueue.add( new SpringOrbit( BreakoutMainView.this , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
 			}
 		} );
 		
@@ -821,7 +821,7 @@ public class MapsView extends BasicJOGLSetup
 					screenCaptureDialog = new ScreenCaptureDialog( SwingUtilities.getWindowAncestor( mainPanel ) , canvas.getContext( ) , i18n );
 					screenCaptureDialog.setTitle( "Export Image" );
 					YamlObject<ScreenCaptureDialogModel> screenCaptureDialogModel =
-							MapsView.this.projectModel.get( ProjectModel.screenCaptureDialogModel );
+							BreakoutMainView.this.projectModel.get( ProjectModel.screenCaptureDialogModel );
 					if( screenCaptureDialogModel == null )
 					{
 						screenCaptureDialogModel = ScreenCaptureDialogModel.instance.newObject( );
@@ -832,7 +832,7 @@ public class MapsView extends BasicJOGLSetup
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelHeight , canvas.getHeight( ) );
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolution , new BigDecimal( 300 ) );
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
-						MapsView.this.projectModel.set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
+						BreakoutMainView.this.projectModel.set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
 					}
 					Binder<YamlObject<ScreenCaptureDialogModel>> screenCaptureBinder = projectModelBinder.subBinder( ProjectModel.screenCaptureDialogModel );
 					screenCaptureDialog.setBinder( screenCaptureBinder );
@@ -1031,7 +1031,7 @@ public class MapsView extends BasicJOGLSetup
 					model3d.getCenter( center );
 				}
 				
-				cameraAnimationQueue.add( new RandomOrbit( MapsView.this , center , 0.0005f ,
+				cameraAnimationQueue.add( new RandomOrbit( BreakoutMainView.this , center , 0.0005f ,
 						( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 60000 ) );
 				return 0;
 			}
@@ -1528,7 +1528,7 @@ public class MapsView extends BasicJOGLSetup
 						@Override
 						public void run( )
 						{
-							MapsView.this.model3d = model;
+							BreakoutMainView.this.model3d = model;
 							model.setParamPaint( settingsDrawer.getParamColorationAxisPaint( ) );
 							scene.add( model.getRootGroup( ) );
 							scene.initLater( model.getRootGroup( ) );

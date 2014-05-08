@@ -49,7 +49,7 @@ public class BreakoutMainLauncher
 				{
 					public void run( )
 					{
-						final MapsView view = new MapsView( );
+						final BreakoutMainView view = new BreakoutMainView( );
 						new DoSwing( )
 						{
 							@Override
