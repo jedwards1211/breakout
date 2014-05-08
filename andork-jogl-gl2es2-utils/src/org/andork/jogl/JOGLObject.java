@@ -2,7 +2,9 @@ package org.andork.jogl;
 
 import javax.media.opengl.GL2ES2;
 
-public interface JOGLObject extends JOGLResource
+import org.andork.jogl.neu.JoglDrawable;
+
+public interface JOGLObject extends JOGLResource, JoglDrawable
 {
 	/**
 	 * @param gl

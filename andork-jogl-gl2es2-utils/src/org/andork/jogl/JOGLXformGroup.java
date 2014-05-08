@@ -8,6 +8,8 @@ import static org.andork.math3d.Vecmath.newMat4f;
 
 import javax.media.opengl.GL2ES2;
 
+import org.andork.jogl.neu.JoglDrawContext;
+
 public class JOGLXformGroup extends JOGLGroup implements JOGLObject
 {
 	public float[ ]			xform	= newMat4f( );
@@ -32,5 +34,14 @@ public class JOGLXformGroup extends JOGLGroup implements JOGLObject
 		mmul3x3( n , nxform , this.n );
 		
 		super.draw( gl , this.m , this.n , v , p );
+	}
+
+	@Override
+	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m, float[ ] n )
+	{
+		mmulAffine( m , xform , this.m );
+		mmul3x3( n , nxform , this.n );
+		
+		super.draw( context , gl , m, n );
 	}
 }

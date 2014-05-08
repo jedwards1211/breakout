@@ -12,6 +12,7 @@ import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GL3;
 
+import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.util.JOGLUtils;
 
 public class BasicJOGLObject implements JOGLObject
@@ -250,6 +251,12 @@ public class BasicJOGLObject implements JOGLObject
 	public int getProgram( )
 	{
 		return program;
+	}
+	
+	@Override
+	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+	{
+		draw( gl , m , n , context.viewXform( ) , context.projXform( ) );
 	}
 	
 	public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )

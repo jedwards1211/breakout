@@ -53,6 +53,7 @@ import org.andork.jogl.JOGLLineWidthModifier;
 import org.andork.jogl.JOGLModifier;
 import org.andork.jogl.JOGLObject;
 import org.andork.jogl.SharedBuffer;
+import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.util.JOGLUtils;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
@@ -1056,6 +1057,12 @@ public class Survey3dModel
 			@Override
 			public void destroy( GL2ES2 gl )
 			{
+			}
+			
+			@Override
+			public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+			{
+				draw( gl , m , n , context.viewXform( ) , context.projXform( ) );
 			}
 		}
 	}

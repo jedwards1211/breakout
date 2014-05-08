@@ -5,6 +5,9 @@ import java.util.List;
 
 import javax.media.opengl.GL2ES2;
 
+import org.andork.jogl.neu.JoglDrawContext;
+import org.andork.jogl.neu.JoglDrawable;
+
 public class JOGLGroup implements JOGLObject
 {
 	public Object				userObj;
@@ -47,6 +50,18 @@ public class JOGLGroup implements JOGLObject
 		for( JOGLResource object : objects )
 		{
 			object.destroy( gl );
+		}
+	}
+	
+	@Override
+	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m, float[ ] n )
+	{
+		for( JOGLResource object : objects )
+		{
+			if( object instanceof JoglDrawable )
+			{
+				( ( JoglDrawable ) object ).draw( context , gl , m, n );
+			}
 		}
 	}
 	
