@@ -376,6 +376,9 @@ public class ScreenCaptureDialog extends JDialog
 		numSamplesSlider = new JSlider( 1 , 20 , 1 );
 		numSamplesSlider.setPreferredSize( new Dimension( 150 , numSamplesSlider.getPreferredSize( ).height ) );
 		
+		numSamplesLabel.setVisible( false );
+		numSamplesSlider.setVisible( false );
+		
 		exportButton = new JButton( );
 		localizer.setText( exportButton , "exportButton.text" );
 		
