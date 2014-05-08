@@ -12,6 +12,7 @@ import static org.andork.math3d.Vecmath.setf;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -29,67 +30,68 @@ import org.andork.math3d.Vecmath;
 
 public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEventListener
 {
-	public static final Object						INITIALIZED				= new Object( );
+	public static final Object					INITIALIZED				= new Object( );
 	
-	private boolean									initialized;
+	private boolean								initialized;
 	
 	/**
 	 * The model matrix.
 	 */
-	private final float[ ]							m						= newMat4f( );
+	protected final float[ ]					m						= newMat4f( );
 	
 	/**
 	 * The normal matrix.
 	 */
-	private final float[ ]							n						= new float[ 9 ];
+	protected final float[ ]					n						= new float[ 9 ];
 	
 	/**
 	 * The view matrix.
 	 */
-	private final float[ ]							v						= newMat4f( );
+	protected final float[ ]					v						= newMat4f( );
 	
 	/**
 	 * The projection matrix;
 	 */
-	private final float[ ]							p						= newMat4f( );
+	protected final float[ ]					p						= newMat4f( );
 	
 	/**
 	 * Transforms from pixel space coordinates to clipping coordinates.
 	 */
-	private final float[ ]							screenXform				= newMat4f( );
+	protected final float[ ]					screenXform				= newMat4f( );
 	
-	private ProjectionCalculator					pCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
+	private ProjectionCalculator				pCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
 	
-	private int										width , height;
+	private int									width , height;
 	
-	private final ReentrantReadWriteLock			lock					= new ReentrantReadWriteLock( );
+	private final ReentrantReadWriteLock		lock					= new ReentrantReadWriteLock( );
 	
-	private final LinkedList<JoglResource>	needDispose				= new LinkedList<JoglResource>( );
-	private final LinkedList<JoglResource>	needInitialize			= new LinkedList<JoglResource>( );
-	private final List<JoglDrawable>				drawables				= new ArrayList<JoglDrawable>( );
+	private final LinkedList<JoglResource>		needDispose				= new LinkedList<JoglResource>( );
+	private final LinkedList<JoglResource>		needInitialize			= new LinkedList<JoglResource>( );
+	private List<JoglDrawable>					drawables				= new ArrayList<JoglDrawable>( );
+	private List<JoglDrawable>					unmodifiableDrawables	= Collections.unmodifiableList( drawables );
 	
-	private PickXform								pickXform				= new PickXform( );
+	private PickXform							pickXform				= new PickXform( );
 	
-	private final float[ ]							bgColor					= { 0 , 0 , 0 , 1 };
-	private boolean									bgColorDirty;
+	private final float[ ]						bgColor					= { 0 , 0 , 0 , 1 };
+	private boolean								bgColorDirty;
 	
-	private long									lastDisplay;
+	private long								lastDisplay;
 	
-	private boolean									renderToFbo				= false;
-	private int										maxNumSamples			= 1;
-	private int										desiredNumSamples		= 1;
-	private int										currentNumSamples		= 1;
-	private int										targetNumSamples		= 1;
+	private boolean								renderToFbo				= false;
+	private int									maxNumSamples			= 1;
+	private int									desiredNumSamples		= 1;
+	private int									currentNumSamples		= 1;
+	private int									targetNumSamples		= 1;
 	
-	private int										renderingFboWidth;
-	private int										renderingFboHeight;
+	private int									renderingFboWidth;
+	private int									renderingFboHeight;
 	
-	private int										renderingFbo			= -1;
-	private int										renderingColorBuffer	= -1;
-	private int										renderingDepthBuffer	= -1;
-	private int										renderingFboTex			= -1;
+	private int									renderingFbo			= -1;
+	private int									renderingColorBuffer	= -1;
+	private int									renderingDepthBuffer	= -1;
+	private int									renderingFboTex			= -1;
 	
-	private final BasicPropertyChangeSupport		changeSupport			= new BasicPropertyChangeSupport( );
+	private final BasicPropertyChangeSupport	changeSupport			= new BasicPropertyChangeSupport( );
 	
 	public BasicPropertyChangeSupport.External changeSupport( )
 	{
@@ -158,6 +160,32 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 	{
 		this.desiredNumSamples = numSamples;
 		updateTargetNumSamples( );
+	}
+	
+	public void add( JoglDrawable drawable )
+	{
+		drawables.add( drawable );
+	}
+	
+	public void remove( JoglDrawable drawable )
+	{
+		drawables.remove( drawable );
+	}
+	
+	public void setDrawablesDirect( List<JoglDrawable> drawables )
+	{
+		this.drawables = drawables;
+		unmodifiableDrawables = Collections.unmodifiableList( drawables );
+	}
+	
+	public List<JoglDrawable> getDrawablesDirect( )
+	{
+		return this.drawables;
+	}
+	
+	public List<JoglDrawable> getDrawables( )
+	{
+		return unmodifiableDrawables;
 	}
 	
 	public void initLater( JoglResource resource )
@@ -346,7 +374,7 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 		
 		for( JoglDrawable drawable2 : drawables )
 		{
-			drawable2.draw( this , gl , m, n );
+			drawable2.draw( this , gl , m , n );
 		}
 	}
 	

@@ -5,35 +5,35 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
-import org.andork.jogl.BasicJOGLScene;
-import org.andork.jogl.awt.BasicJOGLSetup;
+import org.andork.jogl.neu.JoglScene;
+import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.Vecmath;
 
 public class DefaultNavigator extends MouseAdapter
 {
-	final Component			canvas;
-	final BasicJOGLScene	scene;
+	final Component	canvas;
+	final JoglScene	scene;
 	
-	MouseEvent				lastEvent	= null;
-	float[ ]				v			= new float[ 3 ];
-	MouseEvent				pressEvent	= null;
+	MouseEvent		lastEvent	= null;
+	float[ ]		v			= new float[ 3 ];
+	MouseEvent		pressEvent	= null;
 	
-	final float[ ]			temp		= Vecmath.newMat4f( );
-	final float[ ]			cam			= Vecmath.newMat4f( );
+	final float[ ]	temp		= Vecmath.newMat4f( );
+	final float[ ]	cam			= Vecmath.newMat4f( );
 	
-	float					lastPan		= 0;
+	float			lastPan		= 0;
 	
-	boolean					active		= true;
-	boolean					callDisplay	= true;
+	boolean			active		= true;
+	boolean			callDisplay	= true;
 	
-	float					moveFactor	= 0.05f;
-	float					panFactor	= ( float ) Math.PI;
-	float					tiltFactor	= ( float ) Math.PI;
-	float					wheelFactor	= 1f;
+	float			moveFactor	= 0.05f;
+	float			panFactor	= ( float ) Math.PI;
+	float			tiltFactor	= ( float ) Math.PI;
+	float			wheelFactor	= 1f;
 	
-	float					sensitivity	= 1f;
+	float			sensitivity	= 1f;
 	
-	public DefaultNavigator( BasicJOGLSetup setup )
+	public DefaultNavigator( BasicJoglSetup setup )
 	{
 		super( );
 		this.canvas = setup.getCanvas( );

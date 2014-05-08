@@ -7,21 +7,18 @@ import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.LinearGradientPaint;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -44,7 +41,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MaximizeAction;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 
@@ -60,18 +56,18 @@ import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
+import org.andork.breakout.model.ProjectModel;
+import org.andork.breakout.model.RootModel;
 import org.andork.breakout.model.Survey3dModel;
 import org.andork.breakout.model.Survey3dModel.SelectionEditor;
 import org.andork.breakout.model.Survey3dModel.Shot;
 import org.andork.breakout.model.Survey3dModel.ShotPickContext;
 import org.andork.breakout.model.Survey3dModel.ShotPickResult;
-import org.andork.breakout.model.SurveyTableModel.Row;
-import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
-import org.andork.breakout.model.ProjectModel;
-import org.andork.breakout.model.RootModel;
 import org.andork.breakout.model.SurveyShot;
 import org.andork.breakout.model.SurveyStation;
 import org.andork.breakout.model.SurveyTableModel;
+import org.andork.breakout.model.SurveyTableModel.Row;
+import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
@@ -82,13 +78,13 @@ import org.andork.jogl.JOGLScreenCapturer;
 import org.andork.jogl.JOGLTiledScreenCapturer;
 import org.andork.jogl.OrthoProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
-import org.andork.jogl.awt.BasicJOGLSetup;
 import org.andork.jogl.awt.ScreenCaptureDialog;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
-import org.andork.jogl.awt.ScreenCaptureDialogModel.ResolutionUnit;
 import org.andork.jogl.awt.anim.RandomOrbit;
 import org.andork.jogl.awt.anim.SinusoidalTranslation;
 import org.andork.jogl.awt.anim.SpringOrbit;
+import org.andork.jogl.neu.JoglScene;
+import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
@@ -130,7 +126,7 @@ import com.andork.plot.PlotAxisController;
 import com.andork.plot.PlotController;
 import com.andork.plot.PlotPanelLayout;
 
-public class BreakoutMainView extends BasicJOGLSetup
+public class BreakoutMainView extends BasicJoglSetup
 {
 	I18n												i18n					= new I18n( );
 	
@@ -897,9 +893,9 @@ public class BreakoutMainView extends BasicJOGLSetup
 	}
 	
 	@Override
-	protected BasicJOGLScene createScene( )
+	protected JoglScene createScene( )
 	{
-		BasicJOGLScene scene = new BasicJOGLScene( );
+		JoglScene scene = new JoglScene( );
 		scene.setRenderToFbo( true );
 		scene.setDesiredNumSamples( 4 );
 		return scene;
@@ -1507,7 +1503,7 @@ public class BreakoutMainView extends BasicJOGLSetup
 							if( model3d != null )
 							{
 								scene.remove( model3d.getRootGroup( ) );
-								scene.destroyLater( model3d.getRootGroup( ) );
+								scene.disposeLater( model3d.getRootGroup( ) );
 								model3d = null;
 							}
 						}

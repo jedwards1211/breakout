@@ -79,6 +79,9 @@ import org.andork.event.Binder;
 import org.andork.event.Binder.Binding;
 import org.andork.jogl.BasicJOGLScene;
 import org.andork.jogl.JOGLObject;
+import org.andork.jogl.neu.JoglDrawContext;
+import org.andork.jogl.neu.JoglDrawable;
+import org.andork.jogl.neu.JoglScene;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
@@ -166,7 +169,7 @@ public class ScreenCaptureDialog extends JDialog
 	Binder<YamlObject<ScreenCaptureDialogModel>>				binder;
 	final List<Binding>											bindings	= new ArrayList<Binding>( );
 	
-	BasicJOGLScene												scene;
+	JoglScene													scene;
 	
 	TaskService													taskService;
 	
@@ -275,9 +278,16 @@ public class ScreenCaptureDialog extends JDialog
 		}
 	}
 	
-	public void setScene( BasicJOGLScene scene )
+	public void setScene( JoglScene scene )
 	{
 		this.scene = scene;
+		renderer.setBgColor( scene.getBgColor( ) );
+		renderer.setDesiredNumSamples( scene.getDesiredNumSamples( ) );
+		renderer.setProjectionCalculator( scene.getProjectionCalculator( ) );
+		renderer.setViewXform( scene.viewXform( ) );
+		renderer.setRenderToFbo( scene.isRenderToFbo( ) );
+		renderer.setDrawablesDirect( scene.getDrawablesDirect( ) );
+		
 		if( newtWindow != null )
 		{
 			newtWindow.display( );
@@ -936,15 +946,8 @@ public class ScreenCaptureDialog extends JDialog
 		}
 	}
 	
-	private class Renderer implements GLEventListener
+	private class Renderer extends JoglScene
 	{
-		float[ ]				m		= newMat4f( );
-		float[ ]				n		= newMat3f( );
-		float[ ]				v		= newMat4f( );
-		float[ ]				p		= newMat4f( );
-		
-		float[ ]				bgColor	= new float[ 4 ];
-		
 		volatile CaptureTask	captureTask;
 		
 		final Object			lock	= new Object( );
@@ -952,29 +955,9 @@ public class ScreenCaptureDialog extends JDialog
 		BufferedImage			capturedImage;
 		
 		@Override
-		public void init( GLAutoDrawable drawable )
+		public void drawObjects( GL2ES2 gl )
 		{
-			
-		}
-		
-		@Override
-		public void dispose( GLAutoDrawable drawable )
-		{
-			
-		}
-		
-		@Override
-		public void display( GLAutoDrawable drawable )
-		{
-			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
-			scene.getBgColor( bgColor );
-			gl.glClearColor( bgColor[ 0 ] , bgColor[ 1 ] , bgColor[ 2 ] , bgColor[ 3 ] );
-			gl.glClear( GL2ES2.GL_COLOR_BUFFER_BIT | GL2ES2.GL_DEPTH_BUFFER_BIT );
-			
-			for( JOGLObject object : scene.getObjects( ) )
-			{
-				object.draw( gl , m , n , v , p );
-			}
+			super.drawObjects( gl );
 			
 			if( captureTask != null )
 			{
@@ -1027,10 +1010,7 @@ public class ScreenCaptureDialog extends JDialog
 							
 							gl.glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
 							
-							for( JOGLObject object : scene.getObjects( ) )
-							{
-								object.draw( gl , m , n , v , p );
-							}
+							super.drawObjects( gl );
 							
 							BufferedImageInt tile = DirectDataBufferInt.createBufferedImage( tileWidths[ tileX ] , tileHeights[ tileY ] ,
 									BufferedImage.TYPE_INT_ARGB , new Point( 0 , 0 ) , new Hashtable<Object, Object>( ) );
@@ -1109,20 +1089,6 @@ public class ScreenCaptureDialog extends JDialog
 				this.capturedImage = null;
 				return capturedImage;
 			}
-		}
-		
-		@Override
-		public void reshape( GLAutoDrawable drawable , int x , int y , int width , int height )
-		{
-			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
-			if( scene != null )
-			{
-				scene.getModelXform( m );
-				invAffineToTranspose3x3( m , n );
-				scene.getViewXform( v );
-				scene.getProjectionCalculator( ).calculate( width , height , p );
-			}
-			gl.glViewport( 0 , 0 , drawable.getWidth( ) , drawable.getHeight( ) );
 		}
 	}
 	

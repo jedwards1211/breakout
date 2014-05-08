@@ -7,8 +7,9 @@ import javax.media.opengl.GL2ES2;
 
 import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.neu.JoglDrawable;
+import org.andork.jogl.neu.JoglResource;
 
-public class JOGLGroup implements JOGLObject
+public class JOGLGroup implements JOGLObject , JoglResource
 {
 	public Object				userObj;
 	public List<JOGLResource>	objects	= new ArrayList<JOGLResource>( );
@@ -54,15 +55,15 @@ public class JOGLGroup implements JOGLObject
 	}
 	
 	@Override
-	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m, float[ ] n )
+	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
 	{
-		for( JOGLResource object : objects )
-		{
-			if( object instanceof JoglDrawable )
-			{
-				( ( JoglDrawable ) object ).draw( context , gl , m, n );
-			}
-		}
+		draw( gl , m , n , context.viewXform( ) , context.projXform( ) );
+	}
+	
+	@Override
+	public void dispose( GL2ES2 gl )
+	{
+		destroy( gl );
 	}
 	
 }

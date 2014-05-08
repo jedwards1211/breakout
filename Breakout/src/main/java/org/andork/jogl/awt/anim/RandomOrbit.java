@@ -3,8 +3,8 @@ package org.andork.jogl.awt.anim;
 import javax.media.opengl.awt.GLCanvas;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.BasicJOGLScene;
-import org.andork.jogl.awt.BasicJOGLSetup;
+import org.andork.jogl.neu.JoglScene;
+import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.Orbiter;
 import org.andork.math3d.Vecmath;
 import org.andork.util.Reparam;
@@ -12,7 +12,7 @@ import org.andork.util.Reparam;
 public class RandomOrbit implements Animation
 {
 	
-	public RandomOrbit( BasicJOGLSetup setup , float[ ] center , float panRate , float minTilt , float maxTilt , int period , int tiltPeriod )
+	public RandomOrbit( BasicJoglSetup setup , float[ ] center , float panRate , float minTilt , float maxTilt , int period , int tiltPeriod )
 	{
 		if( period <= 0 )
 		{
@@ -28,7 +28,7 @@ public class RandomOrbit implements Animation
 		this.tiltPeriod = tiltPeriod;
 	}
 	
-	BasicJOGLScene	scene;
+	JoglScene	scene;
 	GLCanvas		canvas;
 	
 	final float[ ]	v			= Vecmath.newMat4f( );

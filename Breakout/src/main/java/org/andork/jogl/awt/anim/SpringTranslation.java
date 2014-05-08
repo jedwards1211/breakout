@@ -3,15 +3,15 @@ package org.andork.jogl.awt.anim;
 import javax.media.opengl.awt.GLCanvas;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.BasicJOGLScene;
-import org.andork.jogl.awt.BasicJOGLSetup;
+import org.andork.jogl.neu.JoglScene;
+import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.Vecmath;
 import org.andork.util.AnimationUtils;
 
 public class SpringTranslation implements Animation
 {
 	
-	public SpringTranslation( BasicJOGLSetup setup , float[ ] target , float factor , float extra , int period )
+	public SpringTranslation( BasicJoglSetup setup , float[ ] target , float factor , float extra , int period )
 	{
 		if( period <= 0 )
 		{
@@ -25,7 +25,7 @@ public class SpringTranslation implements Animation
 		this.period = period;
 	}
 	
-	BasicJOGLScene	scene;
+	JoglScene	scene;
 	GLCanvas		canvas;
 	
 	final float[ ]	target	= new float[ 3 ];
