@@ -59,6 +59,8 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 	 */
 	protected final float[ ]					screenXform				= newMat4f( );
 	
+	protected final float[ ]					pixelScale				= new float[ 2 ];
+	
 	private ProjectionCalculator				pCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
 	
 	private int									width , height;
@@ -388,6 +390,8 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 		gl.glViewport( 0 , 0 , width , height );
 		
 		ortho( screenXform , 0 , width , 0 , height , 1 , -1 );
+		pixelScale[ 0 ] = screenXform[ 0 ];
+		pixelScale[ 1 ] = screenXform[ 5 ];
 		
 		recalculateProjection( );
 	}
@@ -478,5 +482,11 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 	public float[ ] normalXform( )
 	{
 		return n;
+	}
+	
+	@Override
+	public float[ ] pixelScale( )
+	{
+		return pixelScale;
 	}
 }

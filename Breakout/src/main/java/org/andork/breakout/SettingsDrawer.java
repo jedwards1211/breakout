@@ -341,7 +341,9 @@ public class SettingsDrawer extends Drawer
 	public static enum FilterType
 	{
 		ALPHA_DESIGNATION( "Alphabetic Designation" ) ,
-		REGEXP( "Regular Expression" );
+		REGEXP( "Regular Expression" ) ,
+		SURVEYORS( "Surveyors" ),
+		DESCRIPTION( "Description" );
 		
 		private String	displayText;
 		

@@ -9,4 +9,6 @@ public interface JoglDrawContext
 	public float[ ] projXform( );
 	
 	public float[ ] screenXform( );
+	
+	public float[ ] pixelScale( );
 }

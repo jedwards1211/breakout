@@ -56,6 +56,10 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		public static final Attribute<String>		backNorth	= stringAttribute( "backNorth" );
 		public static final Attribute<String>		backEast	= stringAttribute( "backEast" );
 		public static final Attribute<String>		backElev	= stringAttribute( "backElev" );
+		public static final Attribute<String>		desc		= stringAttribute( "desc" );
+		public static final Attribute<String>		date		= stringAttribute( "date" );
+		public static final Attribute<String>		surveyors	= stringAttribute( "surveyors" );
+		public static final Attribute<String>		comment		= stringAttribute( "comment" );
 		public static final Attribute<SurveyShot>	shot		= Attribute.newInstance( SurveyShot.class , "shot" , NullBimapper.instance );
 		
 		private Row( )

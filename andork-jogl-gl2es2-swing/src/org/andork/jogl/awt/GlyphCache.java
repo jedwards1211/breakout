@@ -12,9 +12,10 @@ public class GlyphCache
 {
 	JoglResourceManager						manager;
 	Font									font;
-	FontMetrics								fontMetrics;
+	public final FontMetrics				fontMetrics;
 	
 	BufferedImageFactory					imageFactory;
+	GlyphPagePainter						painter;
 	
 	int										cellWidth;
 	int										cellHeight;
@@ -28,11 +29,12 @@ public class GlyphCache
 	
 	final WeakHashMap<Integer, GlyphPage>	pageCache	= new WeakHashMap<Integer, GlyphPage>( );
 	
-	public GlyphCache( JoglResourceManager manager , Font f , int pageWidth , int pageHeight , BufferedImageFactory imageFactory )
+	public GlyphCache( JoglResourceManager manager , Font f , int pageWidth , int pageHeight , BufferedImageFactory imageFactory , GlyphPagePainter painter )
 	{
 		this.manager = manager;
 		this.font = f;
 		this.imageFactory = imageFactory;
+		this.painter = painter;
 		this.pageWidth = pageWidth;
 		this.pageHeight = pageHeight;
 		
@@ -81,6 +83,6 @@ public class GlyphCache
 		}
 		
 		BufferedImage image = imageFactory.newImage( pageWidth , pageHeight );
-		return new GlyphPage( manager , fontMetrics , image , ( char ) startChar );
+		return new GlyphPage( manager , fontMetrics , image , painter , ( char ) startChar );
 	}
 }

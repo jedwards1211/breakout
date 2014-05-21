@@ -2,10 +2,12 @@ package org.andork.breakout;
 
 import static org.andork.math3d.Vecmath.newMat4f;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
@@ -78,6 +80,10 @@ import org.andork.jogl.JOGLScreenCapturer;
 import org.andork.jogl.JOGLTiledScreenCapturer;
 import org.andork.jogl.OrthoProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
+import org.andork.jogl.awt.BufferedImageIntFactory;
+import org.andork.jogl.awt.GlyphCache;
+import org.andork.jogl.awt.JoglText;
+import org.andork.jogl.awt.OutlinedGlyphPagePainter;
 import org.andork.jogl.awt.ScreenCaptureDialog;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.jogl.awt.anim.RandomOrbit;
@@ -898,6 +904,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		JoglScene scene = new JoglScene( );
 		scene.setRenderToFbo( true );
 		scene.setDesiredNumSamples( 4 );
+		
 		return scene;
 	}
 	
@@ -1419,6 +1426,10 @@ public class BreakoutMainView extends BasicJoglSetup
 					return new SurveyDesignationFilter( input );
 				case REGEXP:
 					return new SurveyRegexFilter( input );
+				case SURVEYORS:
+					return new SurveyorFilter( input );
+				case DESCRIPTION:
+					return new DescriptionFilter( input );
 				default:
 					return null;
 			}
@@ -1528,6 +1539,18 @@ public class BreakoutMainView extends BasicJoglSetup
 							model.setParamPaint( settingsDrawer.getParamColorationAxisPaint( ) );
 							scene.add( model.getRootGroup( ) );
 							scene.initLater( model.getRootGroup( ) );
+							
+							GlyphCache cache = new GlyphCache( scene , new Font( "Arial" , Font.PLAIN , 72 ) , 1024 , 1024 ,
+									new BufferedImageIntFactory( BufferedImage.TYPE_INT_ARGB ) , new OutlinedGlyphPagePainter(
+											new BasicStroke( 3f , BasicStroke.CAP_ROUND , BasicStroke.JOIN_ROUND ) ,
+											Color.BLACK , Color.WHITE ) );
+							
+							JoglText text = new JoglText.Builder( )
+									.ascent( 0 , cache.fontMetrics.getAscent( ) , 0 ).baseline( cache.fontMetrics.getAscent( ) , 0 , 0 )
+									.add( "This is a test" , cache , 1f , 1f , 1f , 1f ).create( scene );
+							
+							text.use( );
+							scene.add( text );
 							
 							projectModelBinder.modelToView( );
 							

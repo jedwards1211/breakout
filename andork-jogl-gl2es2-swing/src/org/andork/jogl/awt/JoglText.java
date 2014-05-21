@@ -1,6 +1,6 @@
 package org.andork.jogl.awt;
 
-import static javax.media.opengl.GL.GL_ARRAY_BUFFER;
+import static javax.media.opengl.GL.*;
 import static javax.media.opengl.GL.GL_BLEND;
 import static javax.media.opengl.GL.GL_FLOAT;
 import static javax.media.opengl.GL.GL_ONE_MINUS_SRC_ALPHA;
@@ -9,6 +9,7 @@ import static javax.media.opengl.GL.GL_STATIC_DRAW;
 import static javax.media.opengl.GL.GL_TEXTURE0;
 import static javax.media.opengl.GL.GL_TEXTURE_2D;
 import static javax.media.opengl.GL.GL_TRIANGLES;
+import static javax.media.opengl.GL2ES2.*;
 
 import java.nio.FloatBuffer;
 import java.util.Arrays;
@@ -195,6 +196,7 @@ public class JoglText extends JoglManagedResource implements JoglDrawable
 					"uniform mat4 p;" +
 							"uniform mat4 v;" +
 							"uniform mat4 m;" +
+							"uniform vec2 px;" +
 							
 							"uniform vec3 u_origin;" +
 							"attribute vec3 a_pos;" +
@@ -204,7 +206,8 @@ public class JoglText extends JoglManagedResource implements JoglDrawable
 							
 							"void main() {" +
 							"  v_texcoord = a_texcoord;" +
-							"  gl_Position = p * (v * m * vec4(u_origin, 1.0) + vec4(a_pos, 1.0));" +
+							"  gl_Position = p * v * m * vec4(u_origin, 1.0);" +
+							"  gl_Position.xy += vec2(a_pos.xy * px * gl_Position.w);" +
 							"}";
 			
 			String fragmentShaderCode =
@@ -213,7 +216,11 @@ public class JoglText extends JoglManagedResource implements JoglDrawable
 							"varying vec2 v_texcoord;" +
 							
 							"void main() {" +
-							"  gl_FragColor = vec4(u_color.xyz , u_color.w * texture2D(u_texture, v_texcoord).r);" +
+							// "  gl_FragColor = vec4(u_color.xyz , u_color.w * texture2D(u_texture, v_texcoord).r);" +
+							"  gl_FragColor = vec4(u_color * texture2D(u_texture, v_texcoord));" +
+							"  if (gl_FragColor.a == 0.0) {" +
+							"    discard;" +
+							"  }" +
 							"}";
 			
 			BILLBOARD_PROGRAM = JOGLUtils.loadProgram( gl , vertexShaderCode , fragmentShaderCode );
@@ -274,9 +281,11 @@ public class JoglText extends JoglManagedResource implements JoglDrawable
 	}
 	
 	@Override
-	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m, float[ ] n )
+	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
 	{
 		gl.glUseProgram( program );
+		
+		gl.glEnable( GL_DEPTH_TEST );
 		
 		gl.glEnable( GL_BLEND );
 		gl.glBlendFunc( GL_SRC_ALPHA , GL_ONE_MINUS_SRC_ALPHA );
@@ -291,6 +300,9 @@ public class JoglText extends JoglManagedResource implements JoglDrawable
 		
 		loc = gl.glGetUniformLocation( program , "p" );
 		gl.glUniformMatrix4fv( loc , 1 , false , context.projXform( ) , 0 );
+		
+		loc = gl.glGetUniformLocation( program , "px" );
+		gl.glUniform2fv( loc , 1 , context.pixelScale( ) , 0 );
 		
 		loc = gl.glGetUniformLocation( program , "u_origin" );
 		gl.glUniform3fv( loc , 1 , origin , 0 );
@@ -323,6 +335,7 @@ public class JoglText extends JoglManagedResource implements JoglDrawable
 		gl.glBindTexture( GL_TEXTURE_2D , 0 );
 		
 		gl.glDisable( GL_BLEND );
+		gl.glDisable( GL_DEPTH_TEST );
 		
 		gl.glUseProgram( 0 );
 	}

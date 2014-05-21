@@ -1,5 +1,6 @@
 package org.andork.jogl.awt;
 
+import static javax.media.opengl.GL.GL_BGRA;
 import static javax.media.opengl.GL.GL_CLAMP_TO_EDGE;
 import static javax.media.opengl.GL.GL_LINEAR;
 import static javax.media.opengl.GL.GL_LINEAR_MIPMAP_LINEAR;
@@ -50,7 +51,7 @@ public class GlyphPage extends JoglManagedResource
 	
 	int							texture;
 	
-	public GlyphPage( JoglResourceManager manager , FontMetrics fm , BufferedImage image , char startChar )
+	public GlyphPage( JoglResourceManager manager , FontMetrics fm , BufferedImage image , GlyphPagePainter painter , char startChar )
 	{
 		super( manager );
 		this.metrics = fm;
@@ -78,7 +79,7 @@ public class GlyphPage extends JoglManagedResource
 		g2.clearRect( 0 , 0 , image.getWidth( ) , image.getHeight( ) );
 		g2.setColor( Color.white );
 		g2.setRenderingHint( RenderingHints.KEY_ANTIALIASING , RenderingHints.VALUE_ANTIALIAS_ON );
-		drawGlyphs( g2 , ( char ) startChar , rows , cols , cellHeight , cellWidth , cellBaseline );
+		painter.drawGlyphs( g2 , ( char ) startChar , rows , cols , cellHeight , cellWidth , cellBaseline );
 		
 		g2.dispose( );
 	}
@@ -149,7 +150,7 @@ public class GlyphPage extends JoglManagedResource
 		{
 			IntBuffer data = ( ( DirectDataBufferInt ) image.getRaster( ).getDataBuffer( ) ).getData( );
 			data.position( 0 );
-			gl.glTexImage2D( GL_TEXTURE_2D , 0 , GL_RGBA , image.getWidth( ) , image.getHeight( ) , 0 , GL_RGBA , GL_UNSIGNED_BYTE , data );
+			gl.glTexImage2D( GL_TEXTURE_2D , 0 , GL_RGBA , image.getWidth( ) , image.getHeight( ) , 0 , GL_BGRA , GL_UNSIGNED_BYTE , data );
 		}
 		
 		gl.glGenerateMipmap( GL_TEXTURE_2D );
