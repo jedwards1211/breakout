@@ -83,7 +83,7 @@ public class MouseAdapterChain extends MouseAdapter
 		}
 		if( !e.isConsumed( ) && second != null )
 		{
-			second.mouseClicked( e );
+			second.mouseReleased( e );
 		}
 	}
 	

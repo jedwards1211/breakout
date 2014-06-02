@@ -15,6 +15,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -94,6 +95,7 @@ import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
+import org.andork.model.Model;
 import org.andork.snakeyaml.EDTYamlObjectStringBimapper;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.spatial.Rectmath;
@@ -161,7 +163,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	PlotController										plotController;
 	MouseLooper											mouseLooper;
-	CameraAnimationInterrupter							cameraAnimationInterrupter;
+	OtherMouseHandler									otherMouseHandler;
 	MousePickHandler									pickHandler;
 	MouseAdapterChain									mouseAdapterChain;
 	
@@ -308,13 +310,13 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		autoshowController = new DrawerAutoshowController( );
 		
-		cameraAnimationInterrupter = new CameraAnimationInterrupter( );
+		otherMouseHandler = new OtherMouseHandler( );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
-		mouseAdapterChain.addMouseAdapter( cameraAnimationInterrupter );
+		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
 		
 		plotPanel = new JPanel( new PlotPanelLayout( ) );
 		plotPanel.add( plot );
@@ -456,6 +458,19 @@ public class BreakoutMainView extends BasicJoglSetup
 		surveyDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.surveyDrawer ) );
 		settingsDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.settingsDrawer ) );
 		taskListDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.taskListDrawer ) );
+		
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.viewXform )
+		{
+			@Override
+			public void modelToViewImpl( )
+			{
+				Model model = getModel( );
+				if( model != null )
+				{
+					scene.setViewXform( ( float[ ] ) model.get( ProjectModel.viewXform ) );
+				}
+			}
+		} );
 		
 		projectModelBinder.bind( new BindingAdapter( ProjectModel.cameraView )
 		{
@@ -630,6 +645,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				
 				cameraAnimationQueue.clear( );
 				cameraAnimationQueue.add( new SpringOrbit( BreakoutMainView.this , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
+				cameraAnimationQueue.add( new AnimationViewSaver( ) );
 			}
 		} );
 		
@@ -745,6 +761,10 @@ public class BreakoutMainView extends BasicJoglSetup
 		if( projectModel.get( ProjectModel.distRange ) == null )
 		{
 			projectModel.set( ProjectModel.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
+		}
+		if( projectModel.get( ProjectModel.viewXform ) == null )
+		{
+			projectModel.set( ProjectModel.viewXform , Vecmath.newMat4f( ) );
 		}
 		if( projectModel.get( ProjectModel.paramRange ) == null )
 		{
@@ -957,6 +977,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		cameraAnimationQueue.clear( );
 		cameraAnimationQueue.add( new SinusoidalTranslation( this , coord , 30 , 1000 ) );
+		cameraAnimationQueue.add( new AnimationViewSaver( ) );
 	}
 	
 	protected void fitViewToEverything( )
@@ -997,6 +1018,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		cameraAnimationQueue.clear( );
 		cameraAnimationQueue.add( new SinusoidalTranslation( this , coord , 30 , 1000 ) );
+		cameraAnimationQueue.add( new AnimationViewSaver( ) );
 	}
 	
 	protected void flyToFiltered( final AnnotatingJTable<?, ?> table )
@@ -1016,6 +1038,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		cameraAnimationQueue.clear( );
 		cameraAnimationQueue.add( new SpringOrbit( this , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
+		cameraAnimationQueue.add( new AnimationViewSaver( ) );
 		cameraAnimationQueue.add( new Animation( )
 		{
 			@Override
@@ -1154,7 +1177,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
-		mouseAdapterChain.addMouseAdapter( cameraAnimationInterrupter );
+		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setProjectionCalculator( orthoCalculator );
@@ -1172,7 +1195,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		mouseAdapterChain.addMouseAdapter( orbiter );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
-		mouseAdapterChain.addMouseAdapter( cameraAnimationInterrupter );
+		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
 		scene.setProjectionCalculator( perspCalculator );
@@ -1406,12 +1429,40 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	};
 	
-	class CameraAnimationInterrupter extends MouseAdapter
+	private class AnimationViewSaver implements Animation {
+		@Override
+		public long animate( long animTime )
+		{
+			saveViewXform( );
+			return 0;
+		}
+	}
+	
+	private void saveViewXform( )
+	{
+		float[ ] viewXform = Vecmath.newMat4f( );
+		scene.getViewXform( viewXform );
+		projectModel.set( ProjectModel.viewXform , viewXform );
+	}
+	
+	class OtherMouseHandler extends MouseAdapter
 	{
 		@Override
 		public void mousePressed( MouseEvent e )
 		{
 			cameraAnimationQueue.clear( );
+		}
+		
+		@Override
+		public void mouseReleased( MouseEvent e )
+		{
+			saveViewXform( );
+		}
+		
+		@Override
+		public void mouseWheelMoved( MouseWheelEvent e )
+		{
+			saveViewXform( );
 		}
 	}
 	
@@ -1540,17 +1591,17 @@ public class BreakoutMainView extends BasicJoglSetup
 							scene.add( model.getRootGroup( ) );
 							scene.initLater( model.getRootGroup( ) );
 							
-							GlyphCache cache = new GlyphCache( scene , new Font( "Arial" , Font.PLAIN , 72 ) , 1024 , 1024 ,
-									new BufferedImageIntFactory( BufferedImage.TYPE_INT_ARGB ) , new OutlinedGlyphPagePainter(
-											new BasicStroke( 3f , BasicStroke.CAP_ROUND , BasicStroke.JOIN_ROUND ) ,
-											Color.BLACK , Color.WHITE ) );
-							
-							JoglText text = new JoglText.Builder( )
-									.ascent( 0 , cache.fontMetrics.getAscent( ) , 0 ).baseline( cache.fontMetrics.getAscent( ) , 0 , 0 )
-									.add( "This is a test" , cache , 1f , 1f , 1f , 1f ).create( scene );
-							
-							text.use( );
-							scene.add( text );
+							// GlyphCache cache = new GlyphCache( scene , new Font( "Arial" , Font.PLAIN , 72 ) , 1024 , 1024 ,
+							// new BufferedImageIntFactory( BufferedImage.TYPE_INT_ARGB ) , new OutlinedGlyphPagePainter(
+							// new BasicStroke( 3f , BasicStroke.CAP_ROUND , BasicStroke.JOIN_ROUND ) ,
+							// Color.BLACK , Color.WHITE ) );
+							//
+							// JoglText text = new JoglText.Builder( )
+							// .ascent( 0 , cache.fontMetrics.getAscent( ) , 0 ).baseline( cache.fontMetrics.getAscent( ) , 0 , 0 )
+							// .add( "This is a test" , cache , 1f , 1f , 1f , 1f ).create( scene );
+							//
+							// text.use( );
+							// scene.add( text );
 							
 							projectModelBinder.modelToView( );
 							

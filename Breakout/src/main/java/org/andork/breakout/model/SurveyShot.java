@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import org.andork.breakout.model.Survey3dModel.Shot;
 import org.andork.math3d.Vecmath;
 
 public class SurveyShot

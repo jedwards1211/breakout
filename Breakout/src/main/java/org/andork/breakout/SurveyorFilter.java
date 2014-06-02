@@ -28,9 +28,10 @@ public class SurveyorFilter extends RowFilter<SurveyTableModel, Integer>
 		{
 			return false;
 		}
+		String surveyorString = row.get( Row.surveyors ).toLowerCase( );
 		for( String surveyor : surveyors )
 		{
-			if( row.get( Row.surveyors ).contains( surveyor ) )
+			if( surveyorString.contains( surveyor.toLowerCase( ) ) )
 			{
 				return true;
 			}

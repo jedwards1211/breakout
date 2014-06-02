@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.io.File;
 
 import org.andork.awt.layout.DrawerModel;
-import org.andork.breakout.SettingsDrawer;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
@@ -16,6 +15,7 @@ import com.andork.plot.LinearAxisConversion;
 public final class ProjectModel extends YamlSpec<ProjectModel>
 {
 	public static final Attribute<CameraView>							cameraView					= enumAttribute( "cameraView" , CameraView.class );
+	public static final Attribute<float[ ]>								viewXform					= floatArrayAttribute( "viewXform" );
 	public static final Attribute<Integer>								mouseSensitivity			= integerAttribute( "mouseSensitivity" );
 	public static final Attribute<Integer>								mouseWheelSensitivity		= integerAttribute( "mouseWheelSensitivity" );
 	public static final Attribute<LinearAxisConversion>					distRange					= Attribute.newInstance( LinearAxisConversion.class , "distRange" , new LinearAxisConversionYamlBimapper( ) );
