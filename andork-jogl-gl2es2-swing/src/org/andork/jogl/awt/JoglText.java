@@ -108,35 +108,35 @@ public class JoglText extends JoglManagedResource implements JoglDrawable
 				float ascentScale = page.metrics.getMaxAscent( ) * scale;
 				float descentScale = -page.metrics.getMaxDescent( ) * scale;
 				
-				buffer.put( dot[ 0 ] + ascent[ 0 ] * descentScale );
-				buffer.put( dot[ 1 ] + ascent[ 1 ] * descentScale );
-				buffer.put( dot[ 2 ] + ascent[ 2 ] * descentScale );
-				buffer.put( lrtb[ 0 ] , lrtb[ 3 ] );
+				buffer.putAsFloats( dot[ 0 ] + ascent[ 0 ] * descentScale );
+				buffer.putAsFloats( dot[ 1 ] + ascent[ 1 ] * descentScale );
+				buffer.putAsFloats( dot[ 2 ] + ascent[ 2 ] * descentScale );
+				buffer.putAsFloats( lrtb[ 0 ] , lrtb[ 3 ] );
 				
-				buffer.put( dot[ 0 ] + ascent[ 0 ] * ascentScale );
-				buffer.put( dot[ 1 ] + ascent[ 1 ] * ascentScale );
-				buffer.put( dot[ 2 ] + ascent[ 2 ] * ascentScale );
-				buffer.put( lrtb[ 0 ] , lrtb[ 2 ] );
+				buffer.putAsFloats( dot[ 0 ] + ascent[ 0 ] * ascentScale );
+				buffer.putAsFloats( dot[ 1 ] + ascent[ 1 ] * ascentScale );
+				buffer.putAsFloats( dot[ 2 ] + ascent[ 2 ] * ascentScale );
+				buffer.putAsFloats( lrtb[ 0 ] , lrtb[ 2 ] );
 				
-				buffer.put( nextDot[ 0 ] + ascent[ 0 ] * descentScale );
-				buffer.put( nextDot[ 1 ] + ascent[ 1 ] * descentScale );
-				buffer.put( nextDot[ 2 ] + ascent[ 2 ] * descentScale );
-				buffer.put( lrtb[ 1 ] , lrtb[ 3 ] );
+				buffer.putAsFloats( nextDot[ 0 ] + ascent[ 0 ] * descentScale );
+				buffer.putAsFloats( nextDot[ 1 ] + ascent[ 1 ] * descentScale );
+				buffer.putAsFloats( nextDot[ 2 ] + ascent[ 2 ] * descentScale );
+				buffer.putAsFloats( lrtb[ 1 ] , lrtb[ 3 ] );
 				
-				buffer.put( dot[ 0 ] + ascent[ 0 ] * ascentScale );
-				buffer.put( dot[ 1 ] + ascent[ 1 ] * ascentScale );
-				buffer.put( dot[ 2 ] + ascent[ 2 ] * ascentScale );
-				buffer.put( lrtb[ 0 ] , lrtb[ 2 ] );
+				buffer.putAsFloats( dot[ 0 ] + ascent[ 0 ] * ascentScale );
+				buffer.putAsFloats( dot[ 1 ] + ascent[ 1 ] * ascentScale );
+				buffer.putAsFloats( dot[ 2 ] + ascent[ 2 ] * ascentScale );
+				buffer.putAsFloats( lrtb[ 0 ] , lrtb[ 2 ] );
 				
-				buffer.put( nextDot[ 0 ] + ascent[ 0 ] * descentScale );
-				buffer.put( nextDot[ 1 ] + ascent[ 1 ] * descentScale );
-				buffer.put( nextDot[ 2 ] + ascent[ 2 ] * descentScale );
-				buffer.put( lrtb[ 1 ] , lrtb[ 3 ] );
+				buffer.putAsFloats( nextDot[ 0 ] + ascent[ 0 ] * descentScale );
+				buffer.putAsFloats( nextDot[ 1 ] + ascent[ 1 ] * descentScale );
+				buffer.putAsFloats( nextDot[ 2 ] + ascent[ 2 ] * descentScale );
+				buffer.putAsFloats( lrtb[ 1 ] , lrtb[ 3 ] );
 				
-				buffer.put( nextDot[ 0 ] + ascent[ 0 ] * ascentScale );
-				buffer.put( nextDot[ 1 ] + ascent[ 1 ] * ascentScale );
-				buffer.put( nextDot[ 2 ] + ascent[ 2 ] * ascentScale );
-				buffer.put( lrtb[ 1 ] , lrtb[ 2 ] );
+				buffer.putAsFloats( nextDot[ 0 ] + ascent[ 0 ] * ascentScale );
+				buffer.putAsFloats( nextDot[ 1 ] + ascent[ 1 ] * ascentScale );
+				buffer.putAsFloats( nextDot[ 2 ] + ascent[ 2 ] * ascentScale );
+				buffer.putAsFloats( lrtb[ 1 ] , lrtb[ 2 ] );
 				
 				float[ ] temp = dot;
 				dot = nextDot;
