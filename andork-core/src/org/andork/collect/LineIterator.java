@@ -6,12 +6,43 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 
 public class LineIterator extends EasyIterator<String>
 {
-	private InputStream		in;
 	private BufferedReader	reader;
+	
+	public LineIterator( InputStream in )
+	{
+		try
+		{
+			reader = new BufferedReader( new InputStreamReader( in ) );
+		}
+		catch( Exception ex )
+		{
+			
+		}
+	}
+	
+	public LineIterator( Reader reader )
+	{
+		if( reader instanceof BufferedReader )
+		{
+			this.reader = ( BufferedReader ) reader;
+		}
+		else
+		{
+			try
+			{
+				this.reader = new BufferedReader( reader );
+			}
+			catch( Exception ex )
+			{
+				
+			}
+		}
+	}
 	
 	public LineIterator( String file )
 	{
@@ -22,7 +53,7 @@ public class LineIterator extends EasyIterator<String>
 	{
 		try
 		{
-			in = new FileInputStream( file );
+			InputStream in = new FileInputStream( file );
 			reader = new BufferedReader( new InputStreamReader( in ) );
 		}
 		catch( Exception ex )
@@ -35,7 +66,7 @@ public class LineIterator extends EasyIterator<String>
 	{
 		try
 		{
-			in = url.openStream( );
+			InputStream in = url.openStream( );
 			reader = new BufferedReader( new InputStreamReader( in ) );
 		}
 		catch( Exception ex )
@@ -70,15 +101,6 @@ public class LineIterator extends EasyIterator<String>
 	
 	public void finalize( )
 	{
-		try
-		{
-			in.close( );
-		}
-		catch( Exception ex )
-		{
-			
-		}
-		in = null;
 		try
 		{
 			reader.close( );

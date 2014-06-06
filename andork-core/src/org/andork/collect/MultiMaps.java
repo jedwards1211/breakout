@@ -5,6 +5,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.andork.generic.Factory;
+
 public class MultiMaps {
 	public static <K, V> MultiMap<K, V> unmodifiableMultiMap(final MultiMap<K, V> m) {
 		return new MultiMap<K, V>() {
@@ -72,5 +74,20 @@ public class MultiMaps {
 				return m.values();
 			}
 		};
+	}
+
+	public static <K, V, C extends Collection<? super V>> int put(Map<K, C> m, K key, V value, Factory<? extends C> collectionFactory) {
+		C c = m.get(key);
+		if (c == null) {
+			c = collectionFactory.newInstance();
+			m.put(key, c);
+		}
+		c.add(value);
+		return c.size();
+	}
+
+	public static <K, V, C extends Collection<? super V>> C get(Map<K, C> m, K key, C emptyCollection) {
+		C c = m.get(key);
+		return c == null ? emptyCollection : c;
 	}
 }

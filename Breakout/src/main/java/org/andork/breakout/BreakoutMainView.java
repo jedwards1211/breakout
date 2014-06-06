@@ -696,7 +696,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
-		scene.changeSupport( ).addPropertyChangeListener( BasicJOGLScene.INITIALIZED , new BasicPropertyChangeListener( )
+		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
 		{
 			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
 			{
@@ -1429,7 +1429,8 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	};
 	
-	private class AnimationViewSaver implements Animation {
+	private class AnimationViewSaver implements Animation
+	{
 		@Override
 		public long animate( long animTime )
 		{

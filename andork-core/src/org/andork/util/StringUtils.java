@@ -60,4 +60,15 @@ public class StringUtils
 		}
 		return sb.toString( );
 	}
+
+	public static String join(String separator, String... strings) {
+		StringBuilder sb = new StringBuilder();
+		if (strings.length > 0) {
+			sb.append(strings[0]);
+		}
+		for (int i = 1; i < strings.length; i++) {
+			sb.append(separator).append(strings[i]);
+		}
+		return sb.toString();
+	}
 }
