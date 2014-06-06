@@ -860,14 +860,14 @@ public class BreakoutMainView extends BasicJoglSetup
 					screenCaptureDialog.setBinder( screenCaptureBinder );
 					screenCaptureBinder.modelToView( );
 					
-					screenCaptureDialog.setScene( scene );
-					
 					Dimension size = mainPanel.getSize( );
 					size.width = size.width * 3 / 4;
 					size.height = size.height * 3 / 4;
 					screenCaptureDialog.setSize( size );
 					screenCaptureDialog.setLocationRelativeTo( mainPanel );
 				}
+				
+				screenCaptureDialog.setScene( scene );
 				
 				screenCaptureDialog.setVisible( true );
 			}
