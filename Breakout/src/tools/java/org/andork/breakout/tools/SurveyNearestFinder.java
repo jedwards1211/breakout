@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,9 +36,11 @@ public class SurveyNearestFinder
 		}
 		
 		Set<String> visited = new HashSet<String>( );
-		List<Integer> nearest = new ArrayList<Integer>( );
+		LinkedHashSet<Integer> nearestSet = new LinkedHashSet<Integer>( );
 		
-		findNearest( lines , stationMap , args[ 0 ] , visited , Double.parseDouble( args[ 1 ] ) , nearest );
+		findNearest( lines , stationMap , args[ 0 ] , visited , Double.parseDouble( args[ 1 ] ) , nearestSet );
+		
+		List<Integer> nearest = new ArrayList<Integer>(nearestSet);
 		
 		Collections.sort( nearest );
 		for( Integer i2 : nearest )
@@ -58,7 +61,7 @@ public class SurveyNearestFinder
 	
 	private static final Set<Integer>			emptyIntegerSet			= Collections.emptySet( );
 	
-	private static void findNearest( List<String[ ]> lines , Map<String, Set<Integer>> stationMap , String station , Set<String> visited , double remainingDist , List<Integer> result )
+	private static void findNearest( List<String[ ]> lines , Map<String, Set<Integer>> stationMap , String station , Set<String> visited , double remainingDist , LinkedHashSet<Integer> result )
 	{
 		if( !visited.add( station ) )
 		{
