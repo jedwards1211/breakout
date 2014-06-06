@@ -2,10 +2,13 @@
 	<!-- set global properties for this build -->
 	<property name="src" location="src" />
 	<property name="src.main" location="src/main/java" />
+	<property name="src.tools" location="src/tools/java" />
 	<property name="src.update" location="src/update/java" />
 	<property name="build.main" location="build/main" />
+	<property name="build.tools" location="build/tools" />
 	<property name="build.update" location="build/update" />
 	<property name="dist" location="dist" />
+	<property name="tools.jar" value="breakout-tools.jar" />
 	<property name="jogl-libs" location="C:/jogamp-all-platforms/jar" />
 	<property name="swingx-lib" location="C:/Program Files/Java/swingx-1.6.4" />
 	<property name="commons-io-lib" location="C:/Program Files/Java/commons-io-2.4" />
@@ -250,7 +253,17 @@
 		<antcall target="dist-win-i586" />
 		<antcall target="dist-sources" />
 	</target>
-	
+
+	<target name="dist-tools">
+		<mkdir dir="${build.tools}" />
+		<ant antfile="../andork-core/build.xml" inheritAll="false" target="compile" />
+		<javac debug="on" srcdir="${src.tools}" destdir="${build.tools}" classpath="../andork-core/build" />
+		<jar jarfile="${dist}/${tools.jar}">
+			<fileset dir="${build.tools}" includes="**/*.class" />
+			<fileset dir="../andork-core/build" includes="**/*.class" />
+		</jar>
+	</target>
+
 	<target name="clean-and-dist-all">
 		<antcall target="clean-all" />
 		<antcall target="dist-all" />
