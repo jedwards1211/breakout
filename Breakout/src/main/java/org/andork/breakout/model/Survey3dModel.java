@@ -1,7 +1,12 @@
 package org.andork.breakout.model;
 
+import static javax.media.opengl.GL.GL_ARRAY_BUFFER;
 import static javax.media.opengl.GL.GL_CLAMP_TO_EDGE;
+import static javax.media.opengl.GL.GL_DEPTH_TEST;
+import static javax.media.opengl.GL.GL_ELEMENT_ARRAY_BUFFER;
+import static javax.media.opengl.GL.GL_FLOAT;
 import static javax.media.opengl.GL.GL_LINEAR;
+import static javax.media.opengl.GL.GL_LINES;
 import static javax.media.opengl.GL.GL_RGBA;
 import static javax.media.opengl.GL.GL_TEXTURE0;
 import static javax.media.opengl.GL.GL_TEXTURE_2D;
@@ -9,20 +14,18 @@ import static javax.media.opengl.GL.GL_TEXTURE_MAG_FILTER;
 import static javax.media.opengl.GL.GL_TEXTURE_MIN_FILTER;
 import static javax.media.opengl.GL.GL_TEXTURE_WRAP_S;
 import static javax.media.opengl.GL.GL_TEXTURE_WRAP_T;
+import static javax.media.opengl.GL.GL_TRIANGLES;
 import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
+import static javax.media.opengl.GL.GL_UNSIGNED_INT;
 import static org.andork.math3d.Vecmath.setf;
 import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
 import static org.andork.spatial.Rectmath.rayIntersects;
 import static org.andork.spatial.Rectmath.voidRectf;
 
-import java.awt.Color;
-import java.awt.GradientPaint;
 import java.awt.Graphics2D;
 import java.awt.LinearGradientPaint;
-import java.awt.MultipleGradientPaint;
 import java.awt.Point;
-import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -42,18 +45,16 @@ import javax.media.opengl.GL2ES2;
 
 import org.andork.breakout.PickResult;
 import org.andork.breakout.awt.ParamGradientMapPaint;
-import org.andork.jogl.BasicJOGLObject;
+import org.andork.collect.HashSetMultiMap;
+import org.andork.collect.MultiMap;
 import org.andork.jogl.BasicJOGLObject.Uniform1fv;
 import org.andork.jogl.BasicJOGLObject.Uniform3fv;
 import org.andork.jogl.BasicJOGLObject.Uniform4fv;
 import org.andork.jogl.BufferHelper;
-import org.andork.jogl.JOGLDepthModifier;
-import org.andork.jogl.JOGLGroup;
-import org.andork.jogl.JOGLLineWidthModifier;
-import org.andork.jogl.JOGLModifier;
-import org.andork.jogl.JOGLObject;
 import org.andork.jogl.SharedBuffer;
 import org.andork.jogl.neu.JoglDrawContext;
+import org.andork.jogl.neu.JoglDrawable;
+import org.andork.jogl.neu.JoglResource;
 import org.andork.jogl.util.JOGLUtils;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
@@ -71,7 +72,7 @@ import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 
-public class Survey3dModel
+public class Survey3dModel implements JoglDrawable , JoglResource
 {
 	
 	private static final int				GEOM_BPV			= 24;
@@ -99,15 +100,12 @@ public class Survey3dModel
 	
 	Set<Segment>							segments;
 	
+	MultiMap<SegmentDrawer, Segment>		drawers				= HashSetMultiMap.newInstance( );
+	
 	final Set<Shot>							selectedShots		= new HashSet<Shot>( );
 	final Set<Shot>							hoveredShots		= new HashSet<Shot>( );
 	final Map<Shot, Float>					hoverLocations		= new HashMap<Shot, Float>( );
 	final Map<Shot, LinearAxisConversion>	highlightExtents	= new HashMap<Shot, LinearAxisConversion>( );
-	
-	JOGLGroup								group;
-	
-	int										fillProgram;
-	int										lineProgram;
 	
 	LinearGradientPaint						paramPaint;
 	int										paramTexture;
@@ -152,62 +150,15 @@ public class Survey3dModel
 		
 		ambient = new Uniform1fv( ).name( "u_ambient" ).value( 0.5f );
 		
-		group = new JOGLGroup( this )
-		{
-			@Override
-			public void init( GL2ES2 gl )
-			{
-				createPrograms( gl );
-				super.init( gl );
-			}
-			
-			@Override
-			public void destroy( GL2ES2 gl )
-			{
-				destroyPrograms( gl );
-				destroyParamTexture( gl );
-				super.destroy( gl );
-			}
-			
-			@Override
-			public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
-			{
-				if( paramTextureNeedsUpdate )
-				{
-					updateParamTexture( gl );
-					paramTextureNeedsUpdate = false;
-				}
-				super.draw( gl , m , n , v , p );
-			}
-		};
-		
 		loParam = new Uniform1fv( ).name( "u_loParam" ).value( 0 );
 		hiParam = new Uniform1fv( ).name( "u_hiParam" ).value( 1000 );
 		nearDist = new Uniform1fv( ).name( "u_nearDist" ).value( 0 );
 		farDist = new Uniform1fv( ).name( "u_farDist" ).value( 1000 );
 		
-		for( Segment segment : segments )
-		{
-			segment.renderData( this );
-			if( renderSubtask.isCanceling( ) )
-			{
-				return;
-			}
-			renderSubtask.setCompleted( renderSubtask.getCompleted( ) + 1 );
-			
-			group.objects.add( segment.group );
-			segment.fillObj.add( highlightColors );
-			segment.fillObj.add( depthAxis );
-			segment.fillObj.add( depthOrigin );
-			segment.fillObj.add( glowColor );
-			segment.fillObj.add( ambient );
-			segment.lineObj.add( highlightColors );
-			segment.lineObj.add( depthAxis );
-			segment.lineObj.add( depthOrigin );
-			segment.lineObj.add( glowColor );
-			segment.lineObj.add( ambient );
-		}
-		
+		AxialLineSegmentDrawer lineSegmentDrawer = new AxialLineSegmentDrawer( );
+		drawers.putAll( lineSegmentDrawer , segments );
+		AxialFillSegmentDrawer fillSegmentDrawer = new AxialFillSegmentDrawer( );
+		drawers.putAll( fillSegmentDrawer , segments );
 	}
 	
 	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , Task task )
@@ -623,11 +574,6 @@ public class Survey3dModel
 		}
 	}
 	
-	public JOGLGroup getRootGroup( )
-	{
-		return group;
-	}
-	
 	public RfStarTree<Shot> getTree( )
 	{
 		return tree;
@@ -837,8 +783,8 @@ public class Survey3dModel
 		
 		public void getCoordinate( int i , float[ ] result )
 		{
-			ByteBuffer indexBuffer = segment.fillIndexBuffer.buffer( );
-			ByteBuffer vertBuffer = segment.geomBuffer.buffer( );
+			ByteBuffer indexBuffer = segment.fillIndices.buffer( );
+			ByteBuffer vertBuffer = segment.geometry.buffer( );
 			indexBuffer.position( indexInSegment * FILL_IPS * BPI + i * BPI );
 			vertBuffer.position( indexBuffer.getInt( ) * GEOM_BPV );
 			result[ 0 ] = vertBuffer.getFloat( );
@@ -852,8 +798,8 @@ public class Survey3dModel
 		{
 			ShotPickResult result = null;
 			
-			ByteBuffer indexBuffer = segment.fillIndexBuffer.buffer( );
-			ByteBuffer vertBuffer = segment.geomBuffer.buffer( );
+			ByteBuffer indexBuffer = segment.fillIndices.buffer( );
+			ByteBuffer vertBuffer = segment.geometry.buffer( );
 			indexBuffer.position( indexInSegment * FILL_IPS * BPI );
 			for( int i = 0 ; i < 8 ; i++ )
 			{
@@ -926,18 +872,11 @@ public class Survey3dModel
 	{
 		final ArrayList<Shot>	shots	= new ArrayList<Shot>( );
 		
-		SharedBuffer			geomBuffer;
-		SharedBuffer			stationAttrBuffer;
-		SharedBuffer			fillIndexBuffer;
-		SharedBuffer			lineIndexBuffer;
-		
-		JOGLGroup				group;
-		
+		SharedBuffer			geometry;
+		SharedBuffer			stationAttrs;
 		boolean					stationAttrsNeedRebuffering;
-		
-		BasicJOGLObject			fillObj;
-		
-		BasicJOGLObject			lineObj;
+		SharedBuffer			fillIndices;
+		SharedBuffer			lineIndices;
 		
 		void addShot( Shot shot )
 		{
@@ -948,317 +887,24 @@ public class Survey3dModel
 		
 		void populateData( ByteBuffer allGeomBuffer )
 		{
-			geomBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * GEOM_BPS ) );
-			stationAttrBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * STATION_ATTR_BPS ) );
-			fillIndexBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * BPI * FILL_IPS ) );
-			lineIndexBuffer = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * BPI * LINE_IPS ) );
+			geometry = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * GEOM_BPS ) );
+			stationAttrs = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * STATION_ATTR_BPS ) );
+			fillIndices = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * BPI * FILL_IPS ) );
+			lineIndices = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * BPI * LINE_IPS ) );
 			
 			for( Shot shot : shots )
 			{
-				copyBytes( allGeomBuffer , geomBuffer.buffer( ) , shot.index , GEOM_BPS );
+				copyBytes( allGeomBuffer , geometry.buffer( ) , shot.index , GEOM_BPS );
 			}
 			
-			createFillIndices( fillIndexBuffer.buffer( ) , shots.size( ) );
-			createLineIndices( lineIndexBuffer.buffer( ) , shots.size( ) );
+			createFillIndices( fillIndices.buffer( ) , shots.size( ) );
+			createLineIndices( lineIndices.buffer( ) , shots.size( ) );
 			
-			geomBuffer.buffer( ).position( 0 );
-			stationAttrBuffer.buffer( ).position( 0 );
-			fillIndexBuffer.buffer( ).position( 0 );
-			lineIndexBuffer.buffer( ).position( 0 );
+			geometry.buffer( ).position( 0 );
+			stationAttrs.buffer( ).position( 0 );
+			fillIndices.buffer( ).position( 0 );
+			lineIndices.buffer( ).position( 0 );
 		}
-		
-		void renderData( final Survey3dModel parentModel )
-		{
-			fillObj = new BasicJOGLObject( );
-			
-			fillObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
-			fillObj.addVertexBuffer( stationAttrBuffer ).vertexCount( stationAttrBuffer.buffer( ).capacity( ) / STATION_ATTR_BPV );
-			fillObj.drawMode( GL2ES2.GL_TRIANGLES );
-			fillObj.indexBuffer( fillIndexBuffer ).indexCount( fillIndexBuffer.buffer( ).capacity( ) / BPI );
-			fillObj.indexType( GL2ES2.GL_UNSIGNED_INT );
-			fillObj.transpose( false );
-			fillObj.add( new JOGLDepthModifier( ) );
-			fillObj.normalMatrixName( "n" );
-			
-			JOGLModifier textureModifier = new JOGLModifier( )
-			{
-				@Override
-				public void beforeDraw( GL2ES2 gl , JOGLObject object )
-				{
-					gl.glActiveTexture( GL_TEXTURE0 );
-					int samplerLoc = gl.glGetUniformLocation( fillObj.getProgram( ) , "u_paramSampler" );
-					gl.glBindTexture( GL_TEXTURE_2D , parentModel.paramTexture );
-					gl.glUniform1i( samplerLoc , 0 );
-				}
-				
-				@Override
-				public void afterDraw( GL2ES2 gl , JOGLObject object )
-				{
-					gl.glBindTexture( GL_TEXTURE_2D , 0 );
-				}
-			};
-			
-			fillObj.add( textureModifier );
-			
-			fillObj.add( fillObj.new Attribute3fv( ).name( "a_pos" ) );
-			fillObj.add( fillObj.new Attribute3fv( ).name( "a_norm" ) );
-			fillObj.add( fillObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
-			fillObj.add( fillObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
-			fillObj.add( parentModel.loParam );
-			fillObj.add( parentModel.hiParam );
-			fillObj.add( parentModel.nearDist );
-			fillObj.add( parentModel.farDist );
-			
-			lineObj = new BasicJOGLObject( );
-			lineObj.addVertexBuffer( geomBuffer ).vertexCount( geomBuffer.buffer( ).capacity( ) / GEOM_BPV );
-			lineObj.addVertexBuffer( stationAttrBuffer ).vertexCount( stationAttrBuffer.buffer( ).capacity( ) / STATION_ATTR_BPV );
-			lineObj.drawMode( GL2ES2.GL_LINES );
-			lineObj.indexBuffer( lineIndexBuffer ).indexCount( lineIndexBuffer.buffer( ).capacity( ) / BPI );
-			lineObj.indexType( GL2ES2.GL_UNSIGNED_INT );
-			lineObj.transpose( false );
-			lineObj.add( new JOGLLineWidthModifier( 1f ) );
-			lineObj.add( new JOGLDepthModifier( ) );
-			lineObj.normalMatrixName( "n" );
-			
-			lineObj.add( lineObj.new Attribute3fv( ).name( "a_pos" ) );
-			lineObj.add( lineObj.new Attribute3fv( ).name( "a_norm" ) );
-			lineObj.add( lineObj.new Attribute2fv( ).name( "a_glow" ).bufferIndex( 1 ) );
-			lineObj.add( lineObj.new Attribute1fv( ).name( "a_highlightIndex" ).bufferIndex( 1 ) );
-			lineObj.add( parentModel.loParam );
-			lineObj.add( parentModel.hiParam );
-			lineObj.add( parentModel.nearDist );
-			lineObj.add( parentModel.farDist );
-			
-			lineObj.add( textureModifier );
-			
-			group = new JOGLGroup( this );
-			group.objects.add( new Rebufferer( ) );
-			group.objects.add( fillObj );
-			group.objects.add( lineObj );
-		}
-		
-		private class Rebufferer implements JOGLObject
-		{
-			@Override
-			public void init( GL2ES2 gl )
-			{
-			}
-			
-			@Override
-			public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p )
-			{
-				if( stationAttrsNeedRebuffering )
-				{
-					stationAttrsNeedRebuffering = false;
-					stationAttrBuffer.rebuffer( gl );
-				}
-			}
-			
-			@Override
-			public void destroy( GL2ES2 gl )
-			{
-			}
-			
-			@Override
-			public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
-			{
-				draw( gl , m , n , context.viewXform( ) , context.projXform( ) );
-			}
-		}
-	}
-	
-	private void createPrograms( GL2ES2 gl )
-	{
-		String vertShader, fragShader;
-		
-		vertShader = "uniform mat4 m;" +
-				"uniform mat4 v;" +
-				"uniform mat4 p;" +
-				"attribute vec3 a_pos;" +
-				
-				// lighting
-				"attribute vec3 a_norm;" +
-				"varying vec3 v_norm;" +
-				"uniform mat3 n;" +
-				
-				// depth coloration
-				"uniform vec3 u_axis;" +
-				"uniform vec3 u_origin;" +
-				"varying float v_param;" +
-				
-				// distance coloration
-				"varying float v_dist;" +
-				
-				// glow
-				"attribute vec2 a_glow;" +
-				"varying vec2 v_glow;" +
-				
-				// highlights
-				"attribute float a_highlightIndex;" +
-				"varying float v_highlightIndex;" +
-				
-				"void main() " +
-				"{" +
-				"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
-				"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
-				"  v_param = dot(a_pos - u_origin, u_axis);" +
-				"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
-				"  v_glow = a_glow;" +
-				"  v_highlightIndex = a_highlightIndex;" +
-				"}";
-		
-		fragShader = "varying vec3 v_norm;" +
-				"uniform float u_ambient;" +
-				
-				// param coloration
-				"varying float v_param;" +
-				"uniform float u_loParam;" +
-				"uniform float u_hiParam;" +
-				"uniform sampler2D u_paramSampler;" +
-				
-				// distance coloration
-				"varying float v_dist;" +
-				"uniform float u_farDist;" +
-				"uniform float u_nearDist;" +
-				
-				// glow
-				"varying vec2 v_glow;" +
-				"uniform vec4 u_glowColor;" +
-				
-				// highlights
-				"uniform vec4 u_highlightColors[3];" +
-				"varying float v_highlightIndex;" +
-				
-				"void main() " +
-				"{" +
-				"  float temp;" +
-				"  vec4 indexedHighlight;" +
-				
-				// param coloration
-				"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
-				
-				// distance coloration
-				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
-				
-				// glow
-				"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
-				
-				// lighting
-				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
-				"  temp = u_ambient + temp * (1.0 - u_ambient);" +
-				"  gl_FragColor.xyz = temp * gl_FragColor.xyz;" +
-				
-				// highlights
-				"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];" +
-				"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
-				"}";
-		
-		fillProgram = JOGLUtils.loadProgram( gl , vertShader , fragShader );
-		
-		vertShader = "uniform mat4 m;" +
-				"uniform mat4 p;" +
-				"uniform mat4 v;" +
-				
-				"attribute vec3 a_pos;" +
-				
-				// lighting
-				"attribute vec3 a_norm;" +
-				"varying vec3 v_norm;" +
-				"uniform mat3 n;" +
-				
-				// depth coloration
-				"varying float v_param;" +
-				"uniform vec3 u_axis;" +
-				"uniform vec3 u_origin;" +
-				
-				// distance coloration
-				"varying float v_dist;" +
-				
-				// glow
-				"varying vec2 v_glow;" +
-				"attribute vec2 a_glow;" +
-				
-				// highlights
-				"attribute float a_highlightIndex;" +
-				"varying float v_highlightIndex;" +
-				
-				"void main() " +
-				"{" +
-				"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
-				"  gl_Position.z += 0.1;" +
-				"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
-				"  v_param = dot(a_pos - u_origin, u_axis);" +
-				"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
-				"  v_glow = a_glow;" +
-				"  v_highlightIndex = a_highlightIndex;" +
-				"}";
-		
-		fragShader = "varying vec3 v_norm;" +
-				"uniform float u_ambient;" +
-				
-				// param coloration
-				"varying float v_param;" +
-				"uniform float u_loParam;" +
-				"uniform float u_hiParam;" +
-				"uniform sampler2D u_paramSampler;" +
-				
-				// distance coloration
-				"varying float v_dist;" +
-				"uniform float u_farDist;" +
-				"uniform float u_nearDist;" +
-				
-				// glow
-				"varying vec2 v_glow;" +
-				"uniform vec4 u_glowColor;" +
-				
-				// highlights
-				"uniform vec4 u_highlightColors[3];" +
-				"varying float v_highlightIndex;" +
-				
-				"void main() " +
-				"{" +
-				"  float temp;" +
-				"  vec4 indexedHighlight;" +
-				
-				// param coloration
-				"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
-				
-				// distance coloration
-				"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
-				
-				// glow
-				"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
-				
-				// lighting
-				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
-				"  temp = u_ambient + temp * (1.0 - u_ambient);" +
-				"  gl_FragColor = temp * gl_FragColor;" +
-				
-				// highlights
-				"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];" +
-				"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
-				"}";
-		
-		lineProgram = JOGLUtils.loadProgram( gl , vertShader , fragShader );
-		
-		for( Segment segment : segments )
-		{
-			segment.fillObj.program( fillProgram );
-			segment.lineObj.program( lineProgram );
-		}
-	}
-	
-	private void destroyPrograms( GL2ES2 gl )
-	{
-		for( Segment segment : segments )
-		{
-			segment.fillObj.program( 0 );
-			segment.lineObj.program( 0 );
-		}
-		
-		gl.glDeleteProgram( lineProgram );
-		gl.glDeleteProgram( fillProgram );
-		lineProgram = fillProgram = 0;
 	}
 	
 	private void updateParamTexture( GL2ES2 gl )
@@ -1305,7 +951,7 @@ public class Survey3dModel
 		gl.glBindTexture( GL_TEXTURE_2D , 0 );
 	}
 	
-	private void destroyParamTexture( GL2ES2 gl )
+	private void disposeParamTexture( GL2ES2 gl )
 	{
 		if( paramTexture > 0 )
 		{
@@ -1419,7 +1065,7 @@ public class Survey3dModel
 	
 	private void clearHighlights( Segment segment )
 	{
-		ByteBuffer buffer = segment.stationAttrBuffer.buffer( );
+		ByteBuffer buffer = segment.stationAttrs.buffer( );
 		buffer.position( 0 );
 		for( int i = 0 ; i < buffer.capacity( ) ; i += STATION_ATTR_BPV )
 		{
@@ -1432,7 +1078,7 @@ public class Survey3dModel
 	private void applyHoverHighlights( Shot shot )
 	{
 		SurveyShot origShot = originalShots.get( shot.index );
-		ByteBuffer buffer = shot.segment.stationAttrBuffer.buffer( );
+		ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
 		
 		LinearAxisConversion highlightConversion = highlightExtents.get( shot );
 		
@@ -1475,7 +1121,7 @@ public class Survey3dModel
 	{
 		if( distance < highlightConversion.invert( 0 ) )
 		{
-			ByteBuffer buffer = shot.segment.stationAttrBuffer.buffer( );
+			ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
 			
 			SurveyShot origShot = originalShots.get( shot.index );
 			float nextDistance = ( float ) ( distance + origShot.dist );
@@ -1578,10 +1224,507 @@ public class Survey3dModel
 	
 	private void applySelectionHighlights( Shot shot )
 	{
-		ByteBuffer buffer = shot.segment.stationAttrBuffer.buffer( );
+		ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
 		for( int i = 0 ; i < STATION_ATTR_VPS ; i++ )
 		{
 			buffer.putFloat( shot.indexInSegment * STATION_ATTR_BPS + 8 + i * STATION_ATTR_BPV , 2f );
+		}
+	}
+	
+	private static interface SegmentDrawer extends JoglResource
+	{
+		public void draw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n );
+	}
+	
+	private class AxialLineSegmentDrawer implements SegmentDrawer
+	{
+		private int	program	= 0;
+		
+		private int	m_location;
+		private int	v_location;
+		private int	p_location;
+		private int	n_location;
+		
+		private int	a_pos_location;
+		private int	a_norm_location;
+		private int	u_ambient_location;
+		
+		private int	u_axis_location;
+		private int	u_origin_location;
+		
+		private int	u_loParam_location;
+		private int	u_hiParam_location;
+		private int	u_paramSampler_location;
+		
+		private int	u_nearDist_location;
+		private int	u_farDist_location;
+		
+		private int	a_glow_location;
+		private int	u_glowColor_location;
+		
+		private int	a_highlightIndex_location;
+		private int	u_highlightColors_location;
+		
+		public void init( GL2ES2 gl )
+		{
+			String vertShader, fragShader;
+			
+			if( program <= 0 )
+			{
+				vertShader = "uniform mat4 m;" +
+						"uniform mat4 p;" +
+						"uniform mat4 v;" +
+						
+						"attribute vec3 a_pos;" +
+						
+						// lighting
+						"attribute vec3 a_norm;" +
+						"varying vec3 v_norm;" +
+						"uniform mat3 n;" +
+						
+						// depth coloration
+						"varying float v_param;" +
+						"uniform vec3 u_axis;" +
+						"uniform vec3 u_origin;" +
+						
+						// distance coloration
+						"varying float v_dist;" +
+						
+						// glow
+						"varying vec2 v_glow;" +
+						"attribute vec2 a_glow;" +
+						
+						// highlights
+						"attribute float a_highlightIndex;" +
+						"varying float v_highlightIndex;" +
+						
+						"void main() " +
+						"{" +
+						"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
+						"  gl_Position.z += 0.1;" +
+						"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
+						"  v_param = dot(a_pos - u_origin, u_axis);" +
+						"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
+						"  v_glow = a_glow;" +
+						"  v_highlightIndex = a_highlightIndex;" +
+						"}";
+				
+				fragShader = "varying vec3 v_norm;" +
+						"uniform float u_ambient;" +
+						
+						// param coloration
+						"varying float v_param;" +
+						"uniform float u_loParam;" +
+						"uniform float u_hiParam;" +
+						"uniform sampler2D u_paramSampler;" +
+						
+						// distance coloration
+						"varying float v_dist;" +
+						"uniform float u_farDist;" +
+						"uniform float u_nearDist;" +
+						
+						// glow
+						"varying vec2 v_glow;" +
+						"uniform vec4 u_glowColor;" +
+						
+						// highlights
+						"uniform vec4 u_highlightColors[3];" +
+						"varying float v_highlightIndex;" +
+						
+						"void main() " +
+						"{" +
+						"  float temp;" +
+						"  vec4 indexedHighlight;" +
+						
+						// param coloration
+						"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
+						
+						// distance coloration
+						"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
+						
+						// glow
+						"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
+						
+						// lighting
+						"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
+						"  temp = u_ambient + temp * (1.0 - u_ambient);" +
+						"  gl_FragColor = temp * gl_FragColor;" +
+						
+						// highlights
+						"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];" +
+						"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
+						"}";
+				
+				program = JOGLUtils.loadProgram( gl , vertShader , fragShader );
+				
+				m_location = gl.glGetUniformLocation( program , "m" );
+				v_location = gl.glGetUniformLocation( program , "v" );
+				p_location = gl.glGetUniformLocation( program , "p" );
+				n_location = gl.glGetUniformLocation( program , "n" );
+				
+				a_pos_location = gl.glGetAttribLocation( program , "a_pos" );
+				a_norm_location = gl.glGetAttribLocation( program , "a_norm" );
+				
+				u_axis_location = gl.glGetUniformLocation( program , "u_axis" );
+				u_origin_location = gl.glGetUniformLocation( program , "u_origin" );
+				
+				a_glow_location = gl.glGetAttribLocation( program , "a_glow" );
+				a_highlightIndex_location = gl.glGetAttribLocation( program , "a_highlightIndex" );
+				
+				u_ambient_location = gl.glGetUniformLocation( program , "u_ambient" );
+				u_loParam_location = gl.glGetUniformLocation( program , "u_loParam" );
+				u_hiParam_location = gl.glGetUniformLocation( program , "u_hiParam" );
+				u_paramSampler_location = gl.glGetUniformLocation( program , "u_paramSampler" );
+				
+				u_nearDist_location = gl.glGetUniformLocation( program , "u_nearDist" );
+				u_farDist_location = gl.glGetUniformLocation( program , "u_farDist" );
+				
+				u_glowColor_location = gl.glGetUniformLocation( program , "u_glowColor" );
+				
+				u_highlightColors_location = gl.glGetUniformLocation( program , "u_highlightColors" );
+			}
+		}
+		
+		public void dispose( GL2ES2 gl )
+		{
+			if( program > 0 )
+			{
+				gl.glDeleteProgram( program );
+				program = 0;
+			}
+		}
+		
+		@Override
+		public void draw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			if( program <= 0 )
+			{
+				init( gl );
+			}
+			
+			gl.glUseProgram( program );
+			
+			gl.glActiveTexture( GL_TEXTURE0 );
+			gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
+			gl.glUniform1i( u_paramSampler_location , 0 );
+			
+			gl.glUniformMatrix4fv( m_location , 1 , false , m , 0 );
+			gl.glUniformMatrix3fv( n_location , 1 , false , n , 0 );
+			gl.glUniformMatrix4fv( v_location , 1 , false , context.viewXform( ) , 0 );
+			gl.glUniformMatrix4fv( p_location , 1 , false , context.projXform( ) , 0 );
+			
+			gl.glUniform3fv( u_axis_location , 1 , depthAxis.value( ) , 0 );
+			gl.glUniform3fv( u_origin_location , 1 , depthOrigin.value( ) , 0 );
+			
+			gl.glUniform1fv( u_ambient_location , 1 , ambient.value( ) , 0 );
+			
+			gl.glUniform1fv( u_loParam_location , 1 , loParam.value( ) , 0 );
+			gl.glUniform1fv( u_hiParam_location , 1 , hiParam.value( ) , 0 );
+			
+			gl.glUniform1fv( u_nearDist_location , 1 , nearDist.value( ) , 0 );
+			gl.glUniform1fv( u_farDist_location , 1 , farDist.value( ) , 0 );
+			
+			gl.glUniform4fv( u_glowColor_location , 1 , glowColor.value( ) , 0 );
+			
+			gl.glUniform4fv( u_highlightColors_location , highlightColors.count( ) , highlightColors.value( ) , 0 );
+			
+			gl.glEnableVertexAttribArray( a_pos_location );
+			gl.glEnableVertexAttribArray( a_norm_location );
+			gl.glEnableVertexAttribArray( a_glow_location );
+			gl.glEnableVertexAttribArray( a_highlightIndex_location );
+			
+			gl.glEnable( GL_DEPTH_TEST );
+			
+			for( Segment segment : segments )
+			{
+				draw( segment , context , gl , m , n );
+			}
+			
+			gl.glBindBuffer( GL_ARRAY_BUFFER , 0 );
+			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , 0 );
+			
+			gl.glDisable( GL_DEPTH_TEST );
+		}
+		
+		public void draw( Segment segment , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			segment.geometry.init( gl );
+			segment.stationAttrs.init( gl );
+			if( segment.stationAttrsNeedRebuffering )
+			{
+				segment.stationAttrs.rebuffer( gl );
+				segment.stationAttrsNeedRebuffering = false;
+			}
+			segment.lineIndices.init( gl );
+			
+			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.geometry.id( ) );
+			gl.glVertexAttribPointer( a_pos_location , 3 , GL_FLOAT , false , GEOM_BPV , 0 );
+			gl.glVertexAttribPointer( a_norm_location , 3 , GL_FLOAT , false , GEOM_BPV , 12 );
+			
+			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.stationAttrs.id( ) );
+			gl.glVertexAttribPointer( a_glow_location , 2 , GL_FLOAT , false , STATION_ATTR_BPV , 0 );
+			gl.glVertexAttribPointer( a_highlightIndex_location , 1 , GL_FLOAT , false , STATION_ATTR_BPV , 8 );
+			
+			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , segment.lineIndices.id( ) );
+			
+			gl.glDrawElements( GL_LINES , segment.lineIndices.buffer( ).capacity( ) / BPI , GL_UNSIGNED_INT , 0 );
+		}
+	}
+	
+	private class AxialFillSegmentDrawer implements SegmentDrawer
+	{
+		private int	program	= 0;
+		
+		private int	m_location;
+		private int	v_location;
+		private int	p_location;
+		private int	n_location;
+		private int	a_pos_location;
+		private int	a_norm_location;
+		private int	u_ambient_location;
+		
+		private int	u_axis_location;
+		private int	u_origin_location;
+		
+		private int	u_loParam_location;
+		private int	u_hiParam_location;
+		private int	u_paramSampler_location;
+		
+		private int	u_nearDist_location;
+		private int	u_farDist_location;
+		
+		private int	a_glow_location;
+		private int	u_glowColor_location;
+		
+		private int	a_highlightIndex_location;
+		private int	u_highlightColors_location;
+		
+		public void init( GL2ES2 gl )
+		{
+			String vertShader, fragShader;
+			
+			if( program <= 0 )
+			{
+				vertShader = "uniform mat4 m;" +
+						"uniform mat4 v;" +
+						"uniform mat4 p;" +
+						"attribute vec3 a_pos;" +
+						
+						// lighting
+						"attribute vec3 a_norm;" +
+						"varying vec3 v_norm;" +
+						"uniform mat3 n;" +
+						
+						// depth coloration
+						"uniform vec3 u_axis;" +
+						"uniform vec3 u_origin;" +
+						"varying float v_param;" +
+						
+						// distance coloration
+						"varying float v_dist;" +
+						
+						// glow
+						"attribute vec2 a_glow;" +
+						"varying vec2 v_glow;" +
+						
+						// highlights
+						"attribute float a_highlightIndex;" +
+						"varying float v_highlightIndex;" +
+						
+						"void main() " +
+						"{" +
+						"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
+						"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
+						"  v_param = dot(a_pos - u_origin, u_axis);" +
+						"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
+						"  v_glow = a_glow;" +
+						"  v_highlightIndex = a_highlightIndex;" +
+						"}";
+				
+				fragShader = "varying vec3 v_norm;" +
+						"uniform float u_ambient;" +
+						
+						// param coloration
+						"varying float v_param;" +
+						"uniform float u_loParam;" +
+						"uniform float u_hiParam;" +
+						"uniform sampler2D u_paramSampler;" +
+						
+						// distance coloration
+						"varying float v_dist;" +
+						"uniform float u_farDist;" +
+						"uniform float u_nearDist;" +
+						
+						// glow
+						"varying vec2 v_glow;" +
+						"uniform vec4 u_glowColor;" +
+						
+						// highlights
+						"uniform vec4 u_highlightColors[3];" +
+						"varying float v_highlightIndex;" +
+						
+						"void main() " +
+						"{" +
+						"  float temp;" +
+						"  vec4 indexedHighlight;" +
+						
+						// param coloration
+						"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
+						
+						// distance coloration
+						"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
+						
+						// glow
+						"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
+						
+						// lighting
+						"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
+						"  temp = u_ambient + temp * (1.0 - u_ambient);" +
+						"  gl_FragColor.xyz = temp * gl_FragColor.xyz;" +
+						
+						// highlights
+						"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];" +
+						"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
+						"}";
+				
+				program = JOGLUtils.loadProgram( gl , vertShader , fragShader );
+				
+				m_location = gl.glGetUniformLocation( program , "m" );
+				v_location = gl.glGetUniformLocation( program , "v" );
+				p_location = gl.glGetUniformLocation( program , "p" );
+				n_location = gl.glGetUniformLocation( program , "n" );
+				
+				a_pos_location = gl.glGetAttribLocation( program , "a_pos" );
+				a_norm_location = gl.glGetAttribLocation( program , "a_norm" );
+				
+				u_axis_location = gl.glGetUniformLocation( program , "u_axis" );
+				u_origin_location = gl.glGetUniformLocation( program , "u_origin" );
+				
+				a_glow_location = gl.glGetAttribLocation( program , "a_glow" );
+				a_highlightIndex_location = gl.glGetAttribLocation( program , "a_highlightIndex" );
+				
+				u_ambient_location = gl.glGetUniformLocation( program , "u_ambient" );
+				u_loParam_location = gl.glGetUniformLocation( program , "u_loParam" );
+				u_hiParam_location = gl.glGetUniformLocation( program , "u_hiParam" );
+				u_paramSampler_location = gl.glGetUniformLocation( program , "u_paramSampler" );
+				
+				u_nearDist_location = gl.glGetUniformLocation( program , "u_nearDist" );
+				u_farDist_location = gl.glGetUniformLocation( program , "u_farDist" );
+				
+				u_glowColor_location = gl.glGetUniformLocation( program , "u_glowColor" );
+				
+				u_highlightColors_location = gl.glGetUniformLocation( program , "u_highlightColors" );
+			}
+		}
+		
+		public void dispose( GL2ES2 gl )
+		{
+			if( program > 0 )
+			{
+				gl.glDeleteProgram( program );
+				program = 0;
+			}
+		}
+		
+		@Override
+		public void draw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			if( program <= 0 )
+			{
+				init( gl );
+			}
+			
+			gl.glUseProgram( program );
+			
+			gl.glActiveTexture( GL_TEXTURE0 );
+			gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
+			gl.glUniform1i( u_paramSampler_location , 0 );
+			
+			gl.glUniformMatrix4fv( m_location , 1 , false , m , 0 );
+			gl.glUniformMatrix3fv( n_location , 1 , false , n , 0 );
+			gl.glUniformMatrix4fv( v_location , 1 , false , context.viewXform( ) , 0 );
+			gl.glUniformMatrix4fv( p_location , 1 , false , context.projXform( ) , 0 );
+			
+			gl.glUniform3fv( u_axis_location , 1 , depthAxis.value( ) , 0 );
+			gl.glUniform3fv( u_origin_location , 1 , depthOrigin.value( ) , 0 );
+			
+			gl.glUniform1fv( u_ambient_location , 1 , ambient.value( ) , 0 );
+			
+			gl.glUniform1fv( u_loParam_location , 1 , loParam.value( ) , 0 );
+			gl.glUniform1fv( u_hiParam_location , 1 , hiParam.value( ) , 0 );
+			
+			gl.glUniform1fv( u_nearDist_location , 1 , nearDist.value( ) , 0 );
+			gl.glUniform1fv( u_farDist_location , 1 , farDist.value( ) , 0 );
+			
+			gl.glUniform4fv( u_glowColor_location , 1 , glowColor.value( ) , 0 );
+			
+			gl.glUniform4fv( u_highlightColors_location , highlightColors.count( ) , highlightColors.value( ) , 0 );
+			
+			gl.glEnableVertexAttribArray( a_pos_location );
+			gl.glEnableVertexAttribArray( a_norm_location );
+			gl.glEnableVertexAttribArray( a_glow_location );
+			gl.glEnableVertexAttribArray( a_highlightIndex_location );
+			
+			gl.glEnable( GL_DEPTH_TEST );
+
+			for( Segment segment : segments )
+			{
+				draw( segment , context , gl , m , n );
+			}
+
+			gl.glDisable( GL_DEPTH_TEST );
+			
+			gl.glBindBuffer( GL_ARRAY_BUFFER , 0 );
+			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , 0 );
+		}
+		
+		public void draw( Segment segment , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			segment.geometry.init( gl );
+			segment.stationAttrs.init( gl );
+			if( segment.stationAttrsNeedRebuffering )
+			{
+				segment.stationAttrs.rebuffer( gl );
+				segment.stationAttrsNeedRebuffering = false;
+			}
+			segment.fillIndices.init( gl );
+			
+			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.geometry.id( ) );
+			gl.glVertexAttribPointer( a_pos_location , 3 , GL_FLOAT , false , GEOM_BPV , 0 );
+			gl.glVertexAttribPointer( a_norm_location , 3 , GL_FLOAT , false , GEOM_BPV , 12 );
+			
+			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.stationAttrs.id( ) );
+			gl.glVertexAttribPointer( a_glow_location , 2 , GL_FLOAT , false , STATION_ATTR_BPV , 0 );
+			gl.glVertexAttribPointer( a_highlightIndex_location , 1 , GL_FLOAT , false , STATION_ATTR_BPV , 8 );
+			
+			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , segment.fillIndices.id( ) );
+			
+			gl.glDrawElements( GL_TRIANGLES , segment.fillIndices.buffer( ).capacity( ) / BPI , GL_UNSIGNED_INT , 0 );
+		}
+	}
+	
+	@Override
+	public void init( GL2ES2 gl )
+	{
+	}
+	
+	@Override
+	public void dispose( GL2ES2 gl )
+	{
+		disposeParamTexture( gl );
+	}
+	
+	@Override
+	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+	{
+		if( paramTextureNeedsUpdate )
+		{
+			updateParamTexture( gl );
+			paramTextureNeedsUpdate = false;
+		}
+		for( SegmentDrawer drawer : drawers.keySet( ) )
+		{
+			drawer.draw( drawers.get( drawer ) , context , gl , m , n );
 		}
 	}
 }

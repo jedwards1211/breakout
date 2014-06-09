@@ -435,10 +435,20 @@ public class BasicJOGLObject implements JOGLObject
 			return this;
 		}
 		
+		public int count( )
+		{
+			return count;
+		}
+		
 		public Uniform1fv count( int count )
 		{
 			this.count = count;
 			return this;
+		}
+		
+		public float[ ] value( )
+		{
+			return value;
 		}
 		
 		public Uniform1fv value( float ... value )
@@ -481,10 +491,20 @@ public class BasicJOGLObject implements JOGLObject
 			return this;
 		}
 		
+		public int count( )
+		{
+			return count;
+		}
+		
 		public Uniform2fv count( int count )
 		{
 			this.count = count;
 			return this;
+		}
+		
+		public float[ ] value( )
+		{
+			return value;
 		}
 		
 		public Uniform2fv value( float ... value )
@@ -527,10 +547,20 @@ public class BasicJOGLObject implements JOGLObject
 			return this;
 		}
 		
+		public int count( )
+		{
+			return count;
+		}
+		
 		public Uniform3fv count( int count )
 		{
 			this.count = count;
 			return this;
+		}
+		
+		public float[ ] value( )
+		{
+			return value;
 		}
 		
 		public Uniform3fv value( float ... value )
@@ -573,10 +603,20 @@ public class BasicJOGLObject implements JOGLObject
 			return this;
 		}
 		
+		public int count( )
+		{
+			return count;
+		}
+		
 		public Uniform4fv count( int count )
 		{
 			this.count = count;
 			return this;
+		}
+		
+		public float[ ] value( )
+		{
+			return value;
 		}
 		
 		public Uniform4fv value( float ... value )

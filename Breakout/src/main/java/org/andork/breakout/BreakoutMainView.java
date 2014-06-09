@@ -1565,8 +1565,8 @@ public class BreakoutMainView extends BasicJoglSetup
 						{
 							if( model3d != null )
 							{
-								scene.remove( model3d.getRootGroup( ) );
-								scene.disposeLater( model3d.getRootGroup( ) );
+								scene.remove( model3d );
+								scene.disposeLater( model3d );
 								model3d = null;
 							}
 						}
@@ -1589,8 +1589,8 @@ public class BreakoutMainView extends BasicJoglSetup
 						{
 							BreakoutMainView.this.model3d = model;
 							model.setParamPaint( settingsDrawer.getParamColorationAxisPaint( ) );
-							scene.add( model.getRootGroup( ) );
-							scene.initLater( model.getRootGroup( ) );
+							scene.add( model );
+							scene.initLater( model );
 							
 							// GlyphCache cache = new GlyphCache( scene , new Font( "Arial" , Font.PLAIN , 72 ) , 1024 , 1024 ,
 							// new BufferedImageIntFactory( BufferedImage.TYPE_INT_ARGB ) , new OutlinedGlyphPagePainter(
