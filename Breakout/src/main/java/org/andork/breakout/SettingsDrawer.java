@@ -7,11 +7,16 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Insets;
 import java.awt.LinearGradientPaint;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -24,14 +29,18 @@ import javax.swing.event.ChangeListener;
 import org.andork.awt.ColorUtils;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.awt.I18n;
+import org.andork.awt.I18n.Localizer;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
 import org.andork.event.Binder;
+import org.andork.func.FileStringBimapper;
 import org.andork.plot.PlotAxisConversionBinding;
 import org.andork.snakeyaml.YamlObject;
+import org.andork.swing.OnEDT;
 import org.andork.swing.PaintablePanel;
 import org.andork.swing.border.FillBorder;
 import org.andork.swing.border.GradientFillBorder;
@@ -49,13 +58,11 @@ import com.andork.plot.PlotAxisController;
 @SuppressWarnings( "serial" )
 public class SettingsDrawer extends Drawer
 {
+	Localizer							localizer;
+	
 	JLabel								projectFileLabel;
 	JTextField							projectFileField;
 	JButton								projectFileMenuButton;
-	
-	JLabel								surveyFileLabel;
-	JTextField							surveyFileField;
-	JButton								surveyFileMenuButton;
 	
 	ViewButtonsPanel					viewButtonsPanel;
 	JSlider								mouseSensitivitySlider;
@@ -87,30 +94,46 @@ public class SettingsDrawer extends Drawer
 	Binder<YamlObject<RootModel>>		rootBinder;
 	Binder<YamlObject<ProjectModel>>	projectBinder;
 	
-	public SettingsDrawer( Binder<YamlObject<RootModel>> rootBinder , Binder<YamlObject<ProjectModel>> projectBinder )
+	public SettingsDrawer( final I18n i18n , Binder<YamlObject<RootModel>> rootBinder , Binder<YamlObject<ProjectModel>> projectBinder )
 	{
 		this.rootBinder = rootBinder;
 		this.projectBinder = projectBinder;
 		
-		delegate( ).dockingSide( Side.RIGHT );
-		pinButton( );
-		pinButtonDelegate( ).corner( Corner.TOP_LEFT ).side( Side.LEFT );
-		
-		setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors(
-				ColorUtils.darkerColor( getBackground( ) , 0.05 ) ,
-				ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
-		setBorder( new OverrideInsetsBorder(
-				new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
-				new Insets( 0 , 8 , 0 , 0 ) ) );
-		
-		createComponents( );
-		createLayout( );
-		createListeners( );
-		createBindings( );
+		new OnEDT( )
+		{
+			@Override
+			public void run( ) throws Throwable
+			{
+				localizer = i18n.forClass( SettingsDrawer.this.getClass( ) );
+				
+				delegate( ).dockingSide( Side.RIGHT );
+				pinButton( );
+				pinButtonDelegate( ).corner( Corner.TOP_LEFT ).side( Side.LEFT );
+				
+				setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors(
+						ColorUtils.darkerColor( getBackground( ) , 0.05 ) ,
+						ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
+				setBorder( new OverrideInsetsBorder(
+						new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
+						new Insets( 0 , 8 , 0 , 0 ) ) );
+				
+				createComponents( );
+				createLayout( );
+				createListeners( );
+				createBindings( );
+			}
+		};
 	}
 	
 	private void createComponents( )
 	{
+		projectFileLabel = new JLabel( );
+		localizer.setText( projectFileLabel , "projectFileLabel.text" );
+		projectFileField = new JTextField( );
+		projectFileField.setEditable( false );
+		projectFileMenuButton = new JButton( "..." );
+		projectFileMenuButton.setMargin( new Insets( 2 , 4 , 2 , 4 ) );
+		
 		viewButtonsPanel = new ViewButtonsPanel( );
 		
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
@@ -194,7 +217,14 @@ public class SettingsDrawer extends Drawer
 	{
 		GridBagWizard w = GridBagWizard.create( mainPanel );
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
-		w.put( viewButtonsPanel ).xy( 0 , 0 ).belowLast( );
+		w.put( projectFileLabel ).xy( 0 , 0 ).west( );
+		GridBagWizard projectFilePanel = GridBagWizard.quickPanel( );
+		projectFilePanel.defaults( ).filly( );
+		projectFilePanel.put( projectFileField ).xy( 0 , 0 ).fillx( 1.0 );
+		projectFilePanel.put( projectFileMenuButton ).rightOfLast( );
+		w.put( projectFilePanel.getTarget( ) ).belowLast( ).fillx( );
+		
+		w.put( viewButtonsPanel ).belowLast( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
 		w.put( fitViewToEverythingButton ).belowLast( ).fillx( 1.0 );
 		w.put( orbitToPlanButton ).belowLast( ).fillx( 1.0 );
@@ -262,6 +292,8 @@ public class SettingsDrawer extends Drawer
 	
 	private void createBindings( )
 	{
+		bind( rootBinder , projectFileField , RootModel.currentProjectFile , FileStringBimapper.instance );
+		
 		bindBgColor( projectBinder , bgColorButton , ProjectModel.backgroundColor );
 		
 		bind( projectBinder , viewButtonsPanel.getPlanButton( ) , ProjectModel.cameraView , CameraView.PLAN );
@@ -270,8 +302,8 @@ public class SettingsDrawer extends Drawer
 		bind( projectBinder , viewButtonsPanel.getSouthButton( ) , ProjectModel.cameraView , CameraView.SOUTH_FACING_PROFILE );
 		bind( projectBinder , viewButtonsPanel.getEastButton( ) , ProjectModel.cameraView , CameraView.EAST_FACING_PROFILE );
 		bind( projectBinder , viewButtonsPanel.getWestButton( ) , ProjectModel.cameraView , CameraView.WEST_FACING_PROFILE );
-		bind( projectBinder , mouseSensitivitySlider , ProjectModel.mouseSensitivity );
-		bind( projectBinder , mouseWheelSensitivitySlider , ProjectModel.mouseWheelSensitivity );
+		bind( rootBinder , mouseSensitivitySlider , RootModel.mouseSensitivity );
+		bind( rootBinder , mouseWheelSensitivitySlider , RootModel.mouseWheelSensitivity );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.distRange , distColorationAxis ) );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.paramRange , paramColorationAxis ) );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.highlightRange , glowDistAxis ) );
@@ -303,6 +335,11 @@ public class SettingsDrawer extends Drawer
 		numSamplesLabel.setText( "<html>Multisampling: <b>" + ( numSamplesSlider.getValue( ) < 2 ? "Off" : numSamplesSlider.getValue( ) + "X" ) + "</b></html>" );
 	}
 	
+	public JButton getProjectFileMenuButton( )
+	{
+		return projectFileMenuButton;
+	}
+
 	public JButton getFitViewToSelectedButton( )
 	{
 		return fitViewToSelectedButton;

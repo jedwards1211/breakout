@@ -36,9 +36,7 @@ public abstract class SelfReportingTask extends Task
 		return dialog;
 	}
 	
-	@Override
-	protected void execute( ) throws Exception
-	{
+	public void showDialogLater() {
 		SwingUtilities.invokeLater( new Runnable( )
 		{
 			@Override
@@ -53,11 +51,23 @@ public abstract class SelfReportingTask extends Task
 				{
 					owner = SwingUtilities.getWindowAncestor( dialogParent );
 				}
-				dialog = createDialog( owner );
-				dialog.setLocationRelativeTo( owner );
-				dialog.setVisible( true );
+				if( dialog == null )
+				{
+					dialog = createDialog( owner );
+				}
+				if( !dialog.isVisible( ) )
+				{
+					dialog.setLocationRelativeTo( owner );
+					dialog.setVisible( true );
+				}
 			}
 		} );
+	}
+	
+	@Override
+	protected void execute( ) throws Exception
+	{
+		showDialogLater( );
 		
 		try
 		{

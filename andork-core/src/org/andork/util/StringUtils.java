@@ -10,6 +10,11 @@ public class StringUtils
 		
 	}
 	
+	public static String toStringOrNull( Object o )
+	{
+		return o == null ? null : o.toString( );
+	}
+	
 	public static String multiply( String s , int count )
 	{
 		StringBuffer sb = new StringBuffer( );
@@ -19,17 +24,17 @@ public class StringUtils
 		}
 		return sb.toString( );
 	}
-
+	
 	public static String formatThrowableForHTML( Throwable t )
 	{
 		return formatThrowableForHTML( "" , t , new HashSet<Throwable>( ) , 10 );
 	}
-
+	
 	public static String formatThrowableForHTML( Throwable t , int maxStackTraceLines )
 	{
 		return formatThrowableForHTML( "" , t , new HashSet<Throwable>( ) , maxStackTraceLines );
 	}
-
+	
 	private static String formatThrowableForHTML( String prefix , Throwable t , Set<Throwable> visited , int maxStackTraceLines )
 	{
 		if( !visited.add( t ) )
@@ -60,15 +65,18 @@ public class StringUtils
 		}
 		return sb.toString( );
 	}
-
-	public static String join(String separator, String... strings) {
-		StringBuilder sb = new StringBuilder();
-		if (strings.length > 0) {
-			sb.append(strings[0]);
+	
+	public static String join( String separator , String ... strings )
+	{
+		StringBuilder sb = new StringBuilder( );
+		if( strings.length > 0 )
+		{
+			sb.append( strings[ 0 ] );
 		}
-		for (int i = 1; i < strings.length; i++) {
-			sb.append(separator).append(strings[i]);
+		for( int i = 1 ; i < strings.length ; i++ )
+		{
+			sb.append( separator ).append( strings[ i ] );
 		}
-		return sb.toString();
+		return sb.toString( );
 	}
 }

@@ -5,6 +5,7 @@ import static org.andork.math3d.Vecmath.newMat4f;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -35,7 +36,9 @@ import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
@@ -103,7 +106,9 @@ import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.DoSwing;
 import org.andork.swing.DoSwingR2;
+import org.andork.swing.OnEDT;
 import org.andork.swing.TextComponentWithHintAndClear;
+import org.andork.swing.async.SelfReportingTask;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.SubtaskFilePersister;
@@ -144,7 +149,9 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	TaskService											rebuildTaskService;
 	TaskService											sortTaskService;
-	TaskService											saveTaskService;
+	TaskService											ioTaskService;
+	
+	SurveyTableChangeHandler							surveyTableChangeHandler;
 	
 	final double[ ]										fromLoc					= new double[ 3 ];
 	final double[ ]										toLoc					= new double[ 3 ];
@@ -197,19 +204,21 @@ public class BreakoutMainView extends BasicJoglSetup
 	TaskServiceFilePersister<YamlObject<RootModel>>		rootPersister;
 	final Binder<YamlObject<RootModel>>					rootModelBinder			= new Binder<YamlObject<RootModel>>( );
 	
-	YamlObject<ProjectModel>							projectModel;
-	TaskServiceFilePersister<YamlObject<ProjectModel>>	projectPersister;
 	final Binder<YamlObject<ProjectModel>>				projectModelBinder		= new Binder<YamlObject<ProjectModel>>( );
+	TaskServiceFilePersister<YamlObject<ProjectModel>>	projectPersister;
 	
 	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
 	
 	final AnimationQueue								cameraAnimationQueue	= new AnimationQueue( );
 	
+	NewProjectAction									newProjectAction		= new NewProjectAction( this );
+	OpenProjectAction									openProjectAction		= new OpenProjectAction( this );
+	
 	public BreakoutMainView( )
 	{
 		super( createCanvas( ) );
 		
-		saveTaskService = new SingleThreadedTaskService( );
+		ioTaskService = new SingleThreadedTaskService( );
 		rebuildTaskService = new SingleThreadedTaskService( );
 		sortTaskService = new SingleThreadedTaskService( );
 		
@@ -353,13 +362,14 @@ public class BreakoutMainView extends BasicJoglSetup
 		taskListDrawer = new TaskListDrawer( );
 		taskListDrawer.addTaskService( rebuildTaskService );
 		taskListDrawer.addTaskService( sortTaskService );
-		taskListDrawer.addTaskService( saveTaskService );
+		taskListDrawer.addTaskService( ioTaskService );
 		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
 		
-		settingsDrawer = new SettingsDrawer( rootModelBinder , projectModelBinder );
+		settingsDrawer = new SettingsDrawer( i18n , rootModelBinder , projectModelBinder );
 		settingsDrawer.addTo( layeredPane , 1 );
 		
-		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableChangeHandler( rebuildTaskService ) );
+		surveyTableChangeHandler = new SurveyTableChangeHandler( rebuildTaskService );
+		surveyDrawer.table( ).getModel( ).addTableModelListener( surveyTableChangeHandler );
 		
 		layeredPane.add( plotPanel );
 		surveyDrawer.addTo( layeredPane , 5 );
@@ -500,30 +510,30 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.mouseSensitivity )
+		rootModelBinder.bind( new BindingAdapter( RootModel.mouseSensitivity )
 		{
 			@Override
 			public void modelToViewImpl( )
 			{
 				org.andork.model.Model model = getModel( );
-				if( model != null && model.get( ProjectModel.mouseSensitivity ) instanceof Integer )
+				if( model != null && model.get( RootModel.mouseSensitivity ) instanceof Integer )
 				{
-					float sensitivity = ( Integer ) model.get( ProjectModel.mouseSensitivity ) / 20f;
+					float sensitivity = ( Integer ) model.get( RootModel.mouseSensitivity ) / 20f;
 					orbiter.setSensitivity( sensitivity );
 					navigator.setSensitivity( sensitivity );
 				}
 			}
 		} );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.mouseWheelSensitivity )
+		rootModelBinder.bind( new BindingAdapter( RootModel.mouseWheelSensitivity )
 		{
 			@Override
 			public void modelToViewImpl( )
 			{
 				org.andork.model.Model model = getModel( );
-				if( model != null && model.get( ProjectModel.mouseWheelSensitivity ) instanceof Integer )
+				if( model != null && model.get( RootModel.mouseWheelSensitivity ) instanceof Integer )
 				{
-					float sensitivity = ( Integer ) model.get( ProjectModel.mouseWheelSensitivity ) / 20f;
+					float sensitivity = ( Integer ) model.get( RootModel.mouseWheelSensitivity ) / 20f;
 					navigator.setWheelFactor( sensitivity );
 				}
 			}
@@ -607,6 +617,21 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
+		settingsDrawer.getProjectFileMenuButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				Component source = ( Component ) e.getSource( );
+				
+				JPopupMenu popupMenu = new JPopupMenu( );
+				popupMenu.add( new JMenuItem( newProjectAction ) );
+				popupMenu.add( new JMenuItem( openProjectAction ) );
+				
+				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
+			}
+		} );
+		
 		settingsDrawer.getFitViewToSelectedButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -658,7 +683,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					return;
 				}
-				projectModel.set( ProjectModel.depthAxis , new WeightedAverageTiltAxisInferrer( ).inferTiltAxis( model3d.getOriginalShots( ) ) );
+				getProjectModel( ).set( ProjectModel.depthAxis , new WeightedAverageTiltAxisInferrer( ).inferTiltAxis( model3d.getOriginalShots( ) ) );
 			}
 		} );
 		
@@ -671,7 +696,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					return;
 				}
-				projectModel.set( ProjectModel.depthAxis , new float[ ] { 0f , -1f , 0f } );
+				getProjectModel( ).set( ProjectModel.depthAxis , new float[ ] { 0f , -1f , 0f } );
 			}
 		} );
 		
@@ -713,7 +738,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
-		rootPersister = new TaskServiceFilePersister<YamlObject<RootModel>>( saveTaskService , "Saving settings..." ,
+		rootPersister = new TaskServiceFilePersister<YamlObject<RootModel>>( ioTaskService , "Saving settings..." ,
 				EDTYamlObjectStringBimapper.newInstance( RootModel.instance ) , new File( new File( ".breakout" ) , "settings.yaml" ) );
 		YamlObject<RootModel> rootModel = null;
 		
@@ -738,97 +763,6 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		setRootModel( rootModel );
 		
-		projectPersister = new TaskServiceFilePersister<YamlObject<ProjectModel>>( saveTaskService , "Saving project..." ,
-				EDTYamlObjectStringBimapper.newInstance( ProjectModel.instance ) , rootModel.get( RootModel.currentProjectFile ) );
-		YamlObject<ProjectModel> projectModel = null;
-		
-		try
-		{
-			projectModel = projectPersister.load( );
-		}
-		catch( Exception ex )
-		{
-		}
-		
-		if( projectModel == null )
-		{
-			projectModel = ProjectModel.instance.newObject( );
-			projectModel.set( ProjectModel.cameraView , CameraView.PERSPECTIVE );
-			projectModel.set( ProjectModel.mouseSensitivity , 20 );
-			projectModel.set( ProjectModel.filterType , FilterType.ALPHA_DESIGNATION );
-			projectModel.set( ProjectModel.backgroundColor , Color.black );
-		}
-		if( projectModel.get( ProjectModel.distRange ) == null )
-		{
-			projectModel.set( ProjectModel.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
-		}
-		if( projectModel.get( ProjectModel.viewXform ) == null )
-		{
-			projectModel.set( ProjectModel.viewXform , Vecmath.newMat4f( ) );
-		}
-		if( projectModel.get( ProjectModel.paramRange ) == null )
-		{
-			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
-		}
-		if( projectModel.get( ProjectModel.highlightRange ) == null )
-		{
-			projectModel.set( ProjectModel.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
-		}
-		if( projectModel.get( ProjectModel.surveyDrawer ) == null )
-		{
-			projectModel.set( ProjectModel.surveyDrawer , DrawerModel.instance.newObject( ) );
-		}
-		if( projectModel.get( ProjectModel.settingsDrawer ) == null )
-		{
-			projectModel.set( ProjectModel.settingsDrawer , DrawerModel.instance.newObject( ) );
-		}
-		if( projectModel.get( ProjectModel.miniSurveyDrawer ) == null )
-		{
-			projectModel.set( ProjectModel.miniSurveyDrawer , DrawerModel.instance.newObject( ) );
-		}
-		if( projectModel.get( ProjectModel.taskListDrawer ) == null )
-		{
-			projectModel.set( ProjectModel.taskListDrawer , DrawerModel.instance.newObject( ) );
-		}
-		
-		if( projectModel.get( ProjectModel.surveyFile ) == null )
-		{
-			projectModel.set( ProjectModel.surveyFile , new File( new File( ".breakout" ) , "defaultSurvey.txt" ) );
-		}
-		setProjectModel( projectModel );
-		
-		surveyPersister = new TaskServiceSubtaskFilePersister<SurveyTableModel>( saveTaskService , "Saving survey..." ,
-				new SubtaskStreamBimapperFactory<SurveyTableModel, SubtaskStreamBimapper<SurveyTableModel>>( )
-				{
-					@Override
-					public SubtaskStreamBimapper<SurveyTableModel> createSubtaskStreamBimapper( Subtask subtask )
-					{
-						return new SurveyTableModelStreamBimapper( subtask );
-					}
-				} , projectModel.get( ProjectModel.surveyFile ) );
-		
-		try
-		{
-			SurveyTableModel surveyModel = surveyPersister.load( null );
-			if( surveyModel != null && surveyModel.getRowCount( ) > 0 )
-			{
-				surveyDrawer.table( ).getModel( ).copyRowsFrom( surveyModel , 0 , surveyModel.getRowCount( ) - 1 , 0 );
-			}
-		}
-		catch( Exception ex )
-		{
-			ex.printStackTrace( );
-		}
-		
-		surveyDrawer.table( ).getModel( ).addTableModelListener( new TableModelListener( )
-		{
-			@Override
-			public void tableChanged( TableModelEvent e )
-			{
-				surveyPersister.saveLater( surveyDrawer.table( ).getModel( ) );
-			}
-		} );
-		
 		settingsDrawer.getExportImageButton( ).addActionListener( new ActionListener( )
 		{
 			public void actionPerformed( ActionEvent e )
@@ -843,7 +777,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					screenCaptureDialog = new ScreenCaptureDialog( SwingUtilities.getWindowAncestor( mainPanel ) , canvas.getContext( ) , i18n );
 					screenCaptureDialog.setTitle( "Export Image" );
 					YamlObject<ScreenCaptureDialogModel> screenCaptureDialogModel =
-							BreakoutMainView.this.projectModel.get( ProjectModel.screenCaptureDialogModel );
+							BreakoutMainView.this.getProjectModel( ).get( ProjectModel.screenCaptureDialogModel );
 					if( screenCaptureDialogModel == null )
 					{
 						screenCaptureDialogModel = ScreenCaptureDialogModel.instance.newObject( );
@@ -854,7 +788,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelHeight , canvas.getHeight( ) );
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolution , new BigDecimal( 300 ) );
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
-						BreakoutMainView.this.projectModel.set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
+						BreakoutMainView.this.getProjectModel( ).set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
 					}
 					Binder<YamlObject<ScreenCaptureDialogModel>> screenCaptureBinder = projectModelBinder.subBinder( ProjectModel.screenCaptureDialogModel );
 					screenCaptureDialog.setBinder( screenCaptureBinder );
@@ -872,6 +806,13 @@ public class BreakoutMainView extends BasicJoglSetup
 				screenCaptureDialog.setVisible( true );
 			}
 		} );
+		
+		openProject( getRootModel( ).get( RootModel.currentProjectFile ) );
+	}
+	
+	public YamlObject<RootModel> getRootModel( )
+	{
+		return rootModel;
 	}
 	
 	public void setRootModel( YamlObject<RootModel> rootModel )
@@ -892,22 +833,14 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
-	public void setProjectModel( YamlObject<ProjectModel> projectModel )
+	public YamlObject<ProjectModel> getProjectModel( )
 	{
-		if( this.projectModel != projectModel )
-		{
-			if( this.projectModel != null )
-			{
-				this.projectModel.changeSupport( ).removePropertyChangeListener( projectPersister );
-			}
-			this.projectModel = projectModel;
-			projectModelBinder.setModel( projectModel );
-			projectModelBinder.modelToView( );
-			if( projectModel != null )
-			{
-				projectModel.changeSupport( ).addPropertyChangeListener( projectPersister );
-			}
-		}
+		return projectModelBinder.getModel( );
+	}
+	
+	public I18n getI18n( )
+	{
+		return i18n;
 	}
 	
 	private static GLCanvas createCanvas( )
@@ -930,7 +863,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	protected void fitViewToSelected( )
 	{
-		if( projectModel.get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
+		if( getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
 		{
 			return;
 		}
@@ -982,7 +915,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	protected void fitViewToEverything( )
 	{
-		if( projectModel.get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
+		if( getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
 		{
 			return;
 		}
@@ -1206,6 +1139,26 @@ public class BreakoutMainView extends BasicJoglSetup
 		return mainPanel;
 	}
 	
+	public NewProjectAction getNewProjectAction( )
+	{
+		return newProjectAction;
+	}
+	
+	public void setNewProjectAction( NewProjectAction newProjectAction )
+	{
+		this.newProjectAction = newProjectAction;
+	}
+	
+	public OpenProjectAction getOpenProjectAction( )
+	{
+		return openProjectAction;
+	}
+	
+	public void setOpenProjectAction( OpenProjectAction openProjectAction )
+	{
+		this.openProjectAction = openProjectAction;
+	}
+	
 	private void updateCenterOfOrbit( )
 	{
 		List<SurveyShot> origShots = model3d.getOriginalShots( );
@@ -1274,7 +1227,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				
 				if( picked != null )
 				{
-					LinearAxisConversion conversion = projectModel.get( ProjectModel.highlightRange );
+					LinearAxisConversion conversion = getProjectModel( ).get( ProjectModel.highlightRange );
 					LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getGlowDistAxis( ).getViewSpan( ) ) , 0.0 );
 					editor.hover( picked.picked , picked.locationAlongShot , conversion2 );
 				}
@@ -1442,7 +1395,59 @@ public class BreakoutMainView extends BasicJoglSetup
 	{
 		float[ ] viewXform = Vecmath.newMat4f( );
 		scene.getViewXform( viewXform );
-		projectModel.set( ProjectModel.viewXform , viewXform );
+		getProjectModel( ).set( ProjectModel.viewXform , viewXform );
+	}
+	
+	private void replaceNulls( YamlObject<ProjectModel> projectModel )
+	{
+		if( projectModel.get( ProjectModel.cameraView ) == null )
+		{
+			projectModel.set( ProjectModel.cameraView , CameraView.PERSPECTIVE );
+		}
+		if( projectModel.get( ProjectModel.filterType ) == null )
+		{
+			projectModel.set( ProjectModel.filterType , FilterType.ALPHA_DESIGNATION );
+		}
+		if( projectModel.get( ProjectModel.backgroundColor ) == null )
+		{
+			projectModel.set( ProjectModel.backgroundColor , Color.black );
+		}
+		if( projectModel.get( ProjectModel.distRange ) == null )
+		{
+			projectModel.set( ProjectModel.distRange , new LinearAxisConversion( 0 , 0 , 20000 , 200 ) );
+		}
+		if( projectModel.get( ProjectModel.viewXform ) == null )
+		{
+			projectModel.set( ProjectModel.viewXform , Vecmath.newMat4f( ) );
+		}
+		if( projectModel.get( ProjectModel.paramRange ) == null )
+		{
+			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
+		}
+		if( projectModel.get( ProjectModel.highlightRange ) == null )
+		{
+			projectModel.set( ProjectModel.highlightRange , new LinearAxisConversion( 0 , 0 , 1000 , 200 ) );
+		}
+		if( projectModel.get( ProjectModel.surveyDrawer ) == null )
+		{
+			projectModel.set( ProjectModel.surveyDrawer , DrawerModel.instance.newObject( ) );
+		}
+		if( projectModel.get( ProjectModel.settingsDrawer ) == null )
+		{
+			projectModel.set( ProjectModel.settingsDrawer , DrawerModel.instance.newObject( ) );
+		}
+		if( projectModel.get( ProjectModel.miniSurveyDrawer ) == null )
+		{
+			projectModel.set( ProjectModel.miniSurveyDrawer , DrawerModel.instance.newObject( ) );
+		}
+		if( projectModel.get( ProjectModel.taskListDrawer ) == null )
+		{
+			projectModel.set( ProjectModel.taskListDrawer , DrawerModel.instance.newObject( ) );
+		}
+		if( projectModel.get( ProjectModel.surveyFile ) == null )
+		{
+			projectModel.set( ProjectModel.surveyFile , new File( new File( ".breakout" ) , "defaultSurvey.txt" ) );
+		}
 	}
 	
 	class OtherMouseHandler extends MouseAdapter
@@ -1471,7 +1476,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		@Override
 		public RowFilter<SurveyTableModel, Integer> createFilter( String input )
 		{
-			switch( projectModel.get( ProjectModel.filterType ) )
+			switch( getProjectModel( ).get( ProjectModel.filterType ) )
 			{
 				case ALPHA_DESIGNATION:
 					return new SurveyDesignationFilter( input );
@@ -1487,16 +1492,32 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
-	class TableChangeHandler extends TaskServiceBatcher<TableModelEvent> implements TableModelListener
+	class SurveyTableChangeHandler extends TaskServiceBatcher<TableModelEvent> implements TableModelListener
 	{
-		public TableChangeHandler( TaskService taskService )
+		private boolean	persistOnUpdate	= true;
+		
+		public SurveyTableChangeHandler( TaskService taskService )
 		{
 			super( taskService , true );
+		}
+		
+		public boolean isPersistOnUpdate( )
+		{
+			return persistOnUpdate;
+		}
+		
+		public void setPersistOnUpdate( boolean persistOnUpdate )
+		{
+			this.persistOnUpdate = persistOnUpdate;
 		}
 		
 		@Override
 		public void tableChanged( TableModelEvent e )
 		{
+			if( persistOnUpdate && surveyPersister != null )
+			{
+				surveyPersister.saveLater( ( SurveyTableModel ) e.getSource( ) );
+			}
 			add( e );
 		}
 		
@@ -1618,70 +1639,145 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
-	private class ScreenshotHandler extends JOGLScreenCapturer
+	public void openProject( File newProjectFile )
 	{
-		public ScreenshotHandler( BasicJOGLScene scene )
+		ioTaskService.submit( new OpenProjectTask( newProjectFile ) );
+	}
+	
+	private class OpenProjectTask extends SelfReportingTask
+	{
+		File	newProjectFile;
+		
+		private OpenProjectTask( File newProjectFile )
 		{
-			super( scene );
+			super( getMainPanel( ) );
+			this.newProjectFile = newProjectFile;
+			setStatus( "Saving current project..." );
+			setIndeterminate( true );
 		}
 		
 		@Override
-		public void run( GL2ES2 gl )
+		protected void duringDialog( ) throws Exception
 		{
-			super.run( gl );
+			setStatus( "Opening project: " + newProjectFile + "..." );
 			
-			Task saveTask = new Task( "Saving screen capture..." )
+			new OnEDT( )
 			{
 				@Override
-				protected void execute( ) throws Exception
+				public void run( ) throws Throwable
 				{
-					BufferedImage image = getCaptureAsBufferedImage( );
-					try
+					rootModel.set( RootModel.currentProjectFile , newProjectFile );
+					if( getProjectModel( ) != null && projectPersister != null )
 					{
-						ImageIO.write( image , "png" , new File( "capture.png" ) );
+						getProjectModel( ).changeSupport( ).removePropertyChangeListener( projectPersister );
 					}
-					catch( Exception ex )
-					{
-						ex.printStackTrace( );
-					}
+					projectPersister = new TaskServiceFilePersister<YamlObject<ProjectModel>>( ioTaskService , "Saving project..." ,
+							EDTYamlObjectStringBimapper.newInstance( ProjectModel.instance ) , newProjectFile );
+				}
+			};
+			YamlObject<ProjectModel> projectModel = null;
+			
+			try
+			{
+				projectModel = projectPersister.load( );
+			}
+			catch( Exception ex )
+			{
+			}
+			
+			if( projectModel == null )
+			{
+				projectModel = ProjectModel.instance.newObject( );
+			}
+			replaceNulls( projectModel );
+			
+			final YamlObject<ProjectModel> finalProjectModel = projectModel;
+			
+			new OnEDT( )
+			{
+				@Override
+				public void run( ) throws Throwable
+				{
+					finalProjectModel.changeSupport( ).addPropertyChangeListener( projectPersister );
+					projectModelBinder.setModel( finalProjectModel );
+					projectModelBinder.modelToView( );
 				}
 			};
 			
-			saveTaskService.submit( saveTask );
+			openSurveyFile( finalProjectModel.get( ProjectModel.surveyFile ) );
 		}
 	}
 	
-	private class HiResScreenshotHandler extends JOGLTiledScreenCapturer
+	public void openSurveyFile( File newSurveyFile )
 	{
+		ioTaskService.submit( new OpenSurveyTask( newSurveyFile ) );
+	}
+	
+	private class OpenSurveyTask extends SelfReportingTask
+	{
+		File	newSurveyFile;
 		
-		public HiResScreenshotHandler( BasicJOGLScene scene , int[ ] tileWidths , int[ ] tileHeights , Fit fit )
+		private OpenSurveyTask( File newSurveyFile )
 		{
-			super( scene , tileWidths , tileHeights , fit );
+			super( getMainPanel( ) );
+			this.newSurveyFile = newSurveyFile;
+			setStatus( "Saving current survey..." );
+			setIndeterminate( true );
+			
+			showDialogLater( );
 		}
 		
 		@Override
-		public void run( GL2ES2 gl )
+		protected void duringDialog( ) throws Exception
 		{
-			super.run( gl );
-			
-			Task saveTask = new Task( "Saving screen capture..." )
+			new OnEDT( )
 			{
 				@Override
-				protected void execute( ) throws Exception
+				public void run( ) throws Throwable
 				{
-					BufferedImage image = getCapturedImage( );
-					try
-					{
-						ImageIO.write( image , "png" , new File( "capture.png" ) );
-					}
-					catch( Exception ex )
-					{
-						ex.printStackTrace( );
-					}
+					getProjectModel( ).set( ProjectModel.surveyFile , newSurveyFile );
+					surveyPersister = new TaskServiceSubtaskFilePersister<SurveyTableModel>( ioTaskService , "Saving survey..." ,
+							new SubtaskStreamBimapperFactory<SurveyTableModel, SubtaskStreamBimapper<SurveyTableModel>>( )
+							{
+								@Override
+								public SubtaskStreamBimapper<SurveyTableModel> createSubtaskStreamBimapper( Subtask subtask )
+								{
+									return new SurveyTableModelStreamBimapper( subtask );
+								}
+							} , newSurveyFile );
 				}
 			};
 			
-			saveTaskService.submit( saveTask );
+			setStatus( "Opening survey: " + newSurveyFile + "..." );
+			
+			try
+			{
+				final SurveyTableModel surveyModel = surveyPersister.load( null );
+				
+				new OnEDT( )
+				{
+					@Override
+					public void run( ) throws Throwable
+					{
+						if( surveyModel != null && surveyModel.getRowCount( ) > 0 )
+						{
+							try
+							{
+								surveyTableChangeHandler.setPersistOnUpdate( false );
+								surveyDrawer.table( ).getModel( ).copyRowsFrom( surveyModel , 0 , surveyModel.getRowCount( ) - 1 , 0 );
+							}
+							finally
+							{
+								surveyTableChangeHandler.setPersistOnUpdate( true );
+							}
+						}
+					}
+				};
+			}
+			catch( Exception ex )
+			{
+				ex.printStackTrace( );
+			}
 		}
 	}
 }

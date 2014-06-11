@@ -1,5 +1,7 @@
 package org.andork.awt.event;
 
+import static org.andork.util.StringUtils.*;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.LinearGradientPaint;
@@ -21,6 +23,8 @@ import javax.swing.text.JTextComponent;
 
 import org.andork.event.Binder;
 import org.andork.event.Binder.Binding;
+import org.andork.func.Bimapper;
+import org.andork.func.Mapper;
 import org.andork.model.Model;
 import org.andork.swing.selector.ISelector;
 import org.andork.swing.selector.ISelectorListener;
@@ -163,15 +167,29 @@ public class UIBindings
 		return binding;
 	}
 	
+	public static JTextComponentBinding bind( Binder b , JTextComponent textComp , Object property , Mapper mapper )
+	{
+		JTextComponentBinding binding = new JTextComponentBinding( textComp , property , mapper );
+		b.bind( binding );
+		return binding;
+	}
+	
 	public static class JTextComponentBinding extends Binding implements DocumentListener
 	{
 		boolean			updating;
 		JTextComponent	textComp;
+		Mapper			mapper;
 		
 		public JTextComponentBinding( JTextComponent textComp , Object property )
 		{
 			super( property );
 			this.textComp = textComp;
+		}
+		
+		public JTextComponentBinding( JTextComponent textComp , Object property , Mapper mapper )
+		{
+			this( textComp , property );
+			this.mapper = mapper;
 		}
 		
 		@Override
@@ -182,7 +200,14 @@ public class UIBindings
 			{
 				return;
 			}
-			textComp.setText( ( String ) model.get( property ) );
+			if( mapper != null )
+			{
+				textComp.setText( toStringOrNull( mapper.map( model.get( property ) ) ) );
+			}
+			else
+			{
+				textComp.setText( toStringOrNull( model.get( property ) ) );
+			}
 		}
 		
 		@Override
@@ -193,7 +218,14 @@ public class UIBindings
 			{
 				return;
 			}
-			model.set( property , textComp.getText( ) );
+			if( mapper instanceof Bimapper )
+			{
+				model.set( property , ( ( Bimapper ) mapper ).unmap( textComp.getText( ) ) );
+			}
+			else
+			{
+				model.set( property , textComp.getText( ) );
+			}
 		}
 		
 		@Override
