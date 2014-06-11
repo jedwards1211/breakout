@@ -651,7 +651,11 @@ public class EasyTableModel<T> extends AbstractTableModel
 			}
 			rows.set( destI , srcRow );
 		}
-		fireTableRowsUpdated( myStart , Math.min( origRowCount - 1 , myEnd ) );
+		int updateEnd = Math.min( origRowCount - 1 , myEnd );
+		if( updateEnd >= myStart )
+		{
+			fireTableRowsUpdated( myStart , updateEnd );
+		}
 		if( myEnd >= origRowCount )
 		{
 			fireTableRowsInserted( origRowCount , myEnd );

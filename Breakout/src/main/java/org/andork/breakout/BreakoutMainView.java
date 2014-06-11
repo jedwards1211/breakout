@@ -1446,7 +1446,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 		if( projectModel.get( ProjectModel.surveyFile ) == null )
 		{
-			projectModel.set( ProjectModel.surveyFile , new File( new File( ".breakout" ) , "defaultSurvey.txt" ) );
+			projectModel.set( ProjectModel.surveyFile , new File("defaultSurvey.txt" ) );
 		}
 	}
 	
@@ -1730,6 +1730,16 @@ public class BreakoutMainView extends BasicJoglSetup
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
+			final File absoluteSurveyFile;
+			if( newSurveyFile.isAbsolute( ) )
+			{
+				absoluteSurveyFile = newSurveyFile;
+			}
+			else
+			{
+				absoluteSurveyFile = new File( getRootModel( ).get( RootModel.currentProjectFile ).getParentFile( ) , newSurveyFile.getPath( ) );
+			}
+			
 			new OnEDT( )
 			{
 				@Override
@@ -1744,11 +1754,11 @@ public class BreakoutMainView extends BasicJoglSetup
 								{
 									return new SurveyTableModelStreamBimapper( subtask );
 								}
-							} , newSurveyFile );
+							} , absoluteSurveyFile );
 				}
 			};
 			
-			setStatus( "Opening survey: " + newSurveyFile + "..." );
+			setStatus( "Opening survey: " + absoluteSurveyFile + "..." );
 			
 			try
 			{
@@ -1764,6 +1774,7 @@ public class BreakoutMainView extends BasicJoglSetup
 							try
 							{
 								surveyTableChangeHandler.setPersistOnUpdate( false );
+								surveyDrawer.table( ).getModel( ).removeAllRows( );
 								surveyDrawer.table( ).getModel( ).copyRowsFrom( surveyModel , 0 , surveyModel.getRowCount( ) - 1 , 0 );
 							}
 							finally
