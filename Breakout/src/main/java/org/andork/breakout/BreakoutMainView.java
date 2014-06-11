@@ -1272,16 +1272,15 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				SelectionEditor editor = model3d.editSelection( );
 				
-				for( Shot shot : model3d.getHoveredShots( ) )
-				{
-					editor.unhover( shot );
-				}
-				
 				if( picked != null )
 				{
 					LinearAxisConversion conversion = projectModel.get( ProjectModel.highlightRange );
 					LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getGlowDistAxis( ).getViewSpan( ) ) , 0.0 );
 					editor.hover( picked.picked , picked.locationAlongShot , conversion2 );
+				}
+				else
+				{
+					editor.unhover( );
 				}
 				
 				editor.commit( );

@@ -478,8 +478,6 @@ public class ScreenCaptureDialog extends JDialog
 		
 		getContentPane( ).add( leftPanel , BorderLayout.WEST );
 		getContentPane( ).add( canvasHolder , BorderLayout.CENTER );
-		
-		setResizable( false );
 	}
 	
 	protected void createListeners( )

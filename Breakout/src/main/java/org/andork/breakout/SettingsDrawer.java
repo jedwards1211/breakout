@@ -3,6 +3,7 @@ package org.andork.breakout;
 import static org.andork.awt.event.UIBindings.bind;
 import static org.andork.awt.event.UIBindings.bindBgColor;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Insets;
 import java.awt.LinearGradientPaint;
@@ -12,7 +13,11 @@ import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -44,6 +49,13 @@ import com.andork.plot.PlotAxisController;
 @SuppressWarnings( "serial" )
 public class SettingsDrawer extends Drawer
 {
+	JLabel								projectFileLabel;
+	JTextField							projectFileField;
+	JButton								projectFileMenuButton;
+	
+	JLabel								surveyFileLabel;
+	JTextField							surveyFileField;
+	JButton								surveyFileMenuButton;
 	
 	ViewButtonsPanel					viewButtonsPanel;
 	JSlider								mouseSensitivitySlider;
@@ -69,6 +81,9 @@ public class SettingsDrawer extends Drawer
 	
 	DefaultSelector<FilterType>			filterTypeSelector;
 	
+	JPanel								mainPanel;
+	JScrollPane							mainPanelScrollPane;
+	
 	Binder<YamlObject<RootModel>>		rootBinder;
 	Binder<YamlObject<ProjectModel>>	projectBinder;
 	
@@ -86,7 +101,7 @@ public class SettingsDrawer extends Drawer
 				ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
 		setBorder( new OverrideInsetsBorder(
 				new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
-				new Insets( 3 , 8 , 3 , 3 ) ) );
+				new Insets( 0 , 8 , 0 , 0 ) ) );
 		
 		createComponents( );
 		createLayout( );
@@ -162,11 +177,22 @@ public class SettingsDrawer extends Drawer
 		numSamplesSlider.setEnabled( false );
 		
 		debugButton = new JButton( "Debug" );
+		
+		mainPanel = new JPanel( );
+		mainPanel.setBorder( new EmptyBorder( 5 , 0 , 5 , 5 ) );
+		mainPanel.setOpaque( false );
+		mainPanelScrollPane = new JScrollPane( mainPanel );
+		mainPanelScrollPane.setBorder( null );
+		mainPanelScrollPane.setHorizontalScrollBarPolicy( JScrollPane.HORIZONTAL_SCROLLBAR_NEVER );
+		mainPanelScrollPane.setOpaque( false );
+		mainPanelScrollPane.getViewport( ).setOpaque( false );
+		JScrollBar verticalScrollBar = mainPanelScrollPane.getVerticalScrollBar( );
+		verticalScrollBar.setUnitIncrement( 5 );
 	}
 	
 	private void createLayout( )
 	{
-		GridBagWizard w = GridBagWizard.create( this );
+		GridBagWizard w = GridBagWizard.create( mainPanel );
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
 		w.put( viewButtonsPanel ).xy( 0 , 0 ).belowLast( );
 		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
@@ -213,13 +239,16 @@ public class SettingsDrawer extends Drawer
 		w.put( debugButton ).belowLast( ).southwest( );
 		
 		debugButton.setVisible( false );
+		
+		setLayout( new BorderLayout( ) );
+		add( mainPanelScrollPane , BorderLayout.CENTER );
 	}
 	
 	private void createListeners( )
 	{
-		new PlotAxisController( distColorationAxis );
-		new PlotAxisController( paramColorationAxis );
-		new PlotAxisController( glowDistAxis );
+		new PlotAxisController( distColorationAxis ).removeMouseWheelListener( );
+		new PlotAxisController( paramColorationAxis ).removeMouseWheelListener( );
+		new PlotAxisController( glowDistAxis ).removeMouseWheelListener( );
 		
 		numSamplesSlider.addChangeListener( new ChangeListener( )
 		{
@@ -342,7 +371,7 @@ public class SettingsDrawer extends Drawer
 	{
 		ALPHA_DESIGNATION( "Alphabetic Designation" ) ,
 		REGEXP( "Regular Expression" ) ,
-		SURVEYORS( "Surveyors" ),
+		SURVEYORS( "Surveyors" ) ,
 		DESCRIPTION( "Description" );
 		
 		private String	displayText;

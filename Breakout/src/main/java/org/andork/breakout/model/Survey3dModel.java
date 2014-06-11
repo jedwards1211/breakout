@@ -75,57 +75,57 @@ import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 public class Survey3dModel implements JoglDrawable , JoglResource
 {
 	
-	private static final int				GEOM_BPV			= 24;
+	private static final int			GEOM_BPV			= 24;
 	
-	private static final int				GEOM_VPS			= 8;
+	private static final int			GEOM_VPS			= 8;
 	
-	private static final int				GEOM_BPS			= GEOM_BPV * GEOM_VPS;
+	private static final int			GEOM_BPS			= GEOM_BPV * GEOM_VPS;
 	
-	private static final int				STATION_ATTR_BPV	= 12;
+	private static final int			STATION_ATTR_BPV	= 12;
 	
-	private static final int				STATION_ATTR_VPS	= GEOM_VPS;
+	private static final int			STATION_ATTR_VPS	= GEOM_VPS;
 	
-	private static final int				STATION_ATTR_BPS	= STATION_ATTR_BPV * STATION_ATTR_VPS;
+	private static final int			STATION_ATTR_BPS	= STATION_ATTR_BPV * STATION_ATTR_VPS;
 	
-	private static final int				BPI					= 4;
+	private static final int			BPI					= 4;
 	
-	private static final int				FILL_IPS			= 24;
+	private static final int			FILL_IPS			= 24;
 	
-	private static final int				LINE_IPS			= 32;
+	private static final int			LINE_IPS			= 32;
 	
-	List<SurveyShot>						originalShots;
-	List<Shot>								shots;
+	List<SurveyShot>					originalShots;
+	List<Shot>							shots;
 	
-	RfStarTree<Shot>						tree;
+	RfStarTree<Shot>					tree;
 	
-	Set<Segment>							segments;
+	Set<Segment>						segments;
 	
-	MultiMap<SegmentDrawer, Segment>		drawers				= HashSetMultiMap.newInstance( );
+	MultiMap<SegmentDrawer, Segment>	drawers				= HashSetMultiMap.newInstance( );
 	
-	final Set<Shot>							selectedShots		= new HashSet<Shot>( );
-	final Set<Shot>							hoveredShots		= new HashSet<Shot>( );
-	final Map<Shot, Float>					hoverLocations		= new HashMap<Shot, Float>( );
-	final Map<Shot, LinearAxisConversion>	highlightExtents	= new HashMap<Shot, LinearAxisConversion>( );
+	final Set<Shot>						selectedShots		= new HashSet<Shot>( );
+	Shot								hoveredShot;
+	Float								hoverLocation;
+	LinearAxisConversion				highlightExtentConversion;
 	
-	LinearGradientPaint						paramPaint;
-	int										paramTexture;
-	BufferedImageInt						paramTextureImage;
-	boolean									paramTextureNeedsUpdate;
+	LinearGradientPaint					paramPaint;
+	int									paramTexture;
+	BufferedImageInt					paramTextureImage;
+	boolean								paramTextureNeedsUpdate;
 	
-	Uniform4fv								highlightColors;
+	Uniform4fv							highlightColors;
 	
-	Uniform3fv								depthAxis;
-	Uniform3fv								depthOrigin;
+	Uniform3fv							depthAxis;
+	Uniform3fv							depthOrigin;
 	
-	Uniform1fv								ambient;
+	Uniform1fv							ambient;
 	
-	Uniform1fv								nearDist;
-	Uniform1fv								farDist;
+	Uniform1fv							nearDist;
+	Uniform1fv							farDist;
 	
-	Uniform1fv								loParam;
-	Uniform1fv								hiParam;
+	Uniform1fv							loParam;
+	Uniform1fv							hiParam;
 	
-	Uniform4fv								glowColor;
+	Uniform4fv							glowColor;
 	
 	private Survey3dModel( List<SurveyShot> originalShots , List<Shot> shots , RfStarTree<Shot> tree , Set<Segment> segments , Subtask renderSubtask )
 	{
@@ -653,7 +653,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	
 	public Set<Shot> getHoveredShots( )
 	{
-		return Collections.unmodifiableSet( hoveredShots );
+		return hoveredShot == null ? Collections.<Shot>emptySet( ) : Collections.singleton( hoveredShot );
 	}
 	
 	public Set<Shot> getSelectedShots( )
@@ -681,14 +681,13 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			
 		}
 		
-		final Set<Shot>							selected			= new HashSet<Shot>( );
-		final Set<Shot>							deselected			= new HashSet<Shot>( );
-		final Set<Shot>							hovered				= new HashSet<Shot>( );
-		final Map<Shot, Float>					hoverLocations		= new HashMap<Shot, Float>( );
-		final Map<Shot, LinearAxisConversion>	highlightExtents	= new HashMap<Shot, LinearAxisConversion>( );
-		final Set<Shot>							unhovered			= new HashSet<Shot>( );
+		final Set<Shot>			selected	= new HashSet<Shot>( );
+		final Set<Shot>			deselected	= new HashSet<Shot>( );
+		Shot					newHoveredShot;
+		Float					newHoverLocation;
+		LinearAxisConversion	newHighlightExtentConversion;
 		
-		boolean									committed			= false;
+		boolean					committed	= false;
 		
 		public SelectionEditor select( Shot shot )
 		{
@@ -706,26 +705,22 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		
 		public SelectionEditor hover( Shot shot , float location , LinearAxisConversion highlightExtent )
 		{
-			hovered.add( shot );
-			unhovered.remove( shot );
-			hoverLocations.put( shot , location );
-			highlightExtents.put( shot , highlightExtent );
+			newHoveredShot = shot;
+			newHoverLocation = location;
+			newHighlightExtentConversion = new LinearAxisConversion( highlightExtent );
 			return this;
 		}
 		
-		public SelectionEditor unhover( Shot shot )
+		public SelectionEditor unhover( )
 		{
-			hovered.remove( shot );
-			unhovered.add( shot );
-			hoverLocations.remove( shot );
-			highlightExtents.remove( shot );
+			newHoveredShot = null;
+			newHoverLocation = null;
+			newHighlightExtentConversion = null;
 			return this;
 		}
 		
 		public void commit( )
 		{
-			Map<Shot, LinearAxisConversion> prevHighlightExtents = new HashMap<Shot, LinearAxisConversion>( Survey3dModel.this.highlightExtents );
-			
 			if( committed )
 			{
 				throw new IllegalStateException( "already committed" );
@@ -740,26 +735,27 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			{
 				selectedShots.remove( shot );
 			}
-			for( Shot shot : hovered )
-			{
-				hoveredShots.add( shot );
-				Survey3dModel.this.hoverLocations.put( shot , hoverLocations.get( shot ) );
-				Survey3dModel.this.highlightExtents.put( shot , highlightExtents.get( shot ) );
-			}
-			for( Shot shot : unhovered )
-			{
-				hoveredShots.remove( shot );
-				Survey3dModel.this.hoverLocations.remove( shot );
-				Survey3dModel.this.highlightExtents.remove( shot );
-			}
-			
 			Set<Shot> affectedShots = new HashSet<Shot>( );
 			affectedShots.addAll( selected );
 			affectedShots.addAll( deselected );
-			affectedShots.addAll( hovered );
-			affectedShots.addAll( unhovered );
+			if( hoveredShot != null )
+			{
+				affectedShots.add( hoveredShot );
+			}
+			if( newHoveredShot != null )
+			{
+				affectedShots.add( newHoveredShot );
+			}
 			
-			updateHighlights( affectedShots , prevHighlightExtents );
+			Shot prevHoveredShot = hoveredShot;
+			Float prevHoverLocation = hoverLocation;
+			LinearAxisConversion prevHighlightExtentConversion = highlightExtentConversion;
+			
+			hoveredShot = newHoveredShot;
+			hoverLocation = newHoverLocation;
+			highlightExtentConversion = newHighlightExtentConversion;
+			
+			updateHighlights( affectedShots , prevHoveredShot , prevHoverLocation , prevHighlightExtentConversion );
 		}
 	}
 	
@@ -960,7 +956,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	private void updateHighlights( Collection<Shot> affectedShots , Map<Shot, LinearAxisConversion> prevHighlightExtents )
+	private void updateHighlights( Collection<Shot> affectedShots , Shot prevHoveredShot , Float prevHoverLocation , LinearAxisConversion prevHighlightExtentConversion )
 	{
 		// find the segments that are affected by the affected shots
 		// (not just the segments containing those shots but segments containing
@@ -968,7 +964,17 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		Set<Segment> affectedSegments = new HashSet<Segment>( );
 		for( Shot shot : affectedShots )
 		{
-			findAffectedSegments( shot , affectedSegments , prevHighlightExtents );
+			affectedSegments.add( shot.segment );
+		}
+		
+		if( prevHoveredShot != null )
+		{
+			findAffectedSegments( prevHoveredShot , affectedSegments , prevHoverLocation , ( float ) prevHighlightExtentConversion.invert( 0.0 ) );
+		}
+		
+		if( hoveredShot != null )
+		{
+			findAffectedSegments( hoveredShot , affectedSegments , hoverLocation , ( float ) highlightExtentConversion.invert( 0.0 ) );
 		}
 		
 		for( Segment segment : affectedSegments )
@@ -976,13 +982,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			clearHighlights( segment );
 		}
 		
-		for( Shot shot : hoveredShots )
-		{
-			if( affectedSegments.contains( shot.segment ) )
-			{
-				applyHoverHighlights( shot );
-			}
-		}
+		applyHoverHighlights( );
+		
 		for( Shot shot : selectedShots )
 		{
 			if( affectedSegments.contains( shot.segment ) )
@@ -1002,35 +1003,17 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		FORWARD , BACKWARD;
 	}
 	
-	private void findAffectedSegments( Shot shot , Set<Segment> affectedSegments , Map<Shot, LinearAxisConversion> prevHighlightExtents )
+	private void findAffectedSegments( Shot shot , Set<Segment> affectedSegments , float location , float distance )
 	{
 		Set<Shot> visitedShots = new HashSet<Shot>( );
-		LinearAxisConversion newConversion = highlightExtents.get( shot );
-		Float newRemainingDistance;
-		if( newConversion != null )
-		{
-			newRemainingDistance = ( float ) newConversion.invert( 0.0 );
-		}
-		else
-		{
-			newRemainingDistance = 0f;
-		}
-		LinearAxisConversion prevConversion = prevHighlightExtents.get( shot );
-		Float prevRemainingDistance;
-		if( prevConversion != null )
-		{
-			prevRemainingDistance = ( float ) prevConversion.invert( 0.0 );
-		}
-		else
-		{
-			prevRemainingDistance = 0f;
-		}
-		float remainingDistance = Math.max( prevRemainingDistance , newRemainingDistance );
 		
 		SurveyShot origShot = originalShots.get( shot.index );
 		
-		findAffectedSegments( origShot.to , Direction.FORWARD , visitedShots , remainingDistance , affectedSegments );
-		findAffectedSegments( origShot.from , Direction.BACKWARD , visitedShots , remainingDistance , affectedSegments );
+		float forwardRemainingDistance = distance * 2 - ( float ) origShot.dist * ( 1f - location );
+		float backwardRemainingDistance = distance * 2 - ( float ) origShot.dist * location;
+		
+		findAffectedSegments( origShot.to , Direction.FORWARD , visitedShots , forwardRemainingDistance , affectedSegments );
+		findAffectedSegments( origShot.from , Direction.BACKWARD , visitedShots , backwardRemainingDistance , affectedSegments );
 	}
 	
 	private void findAffectedSegments( SurveyStation station , Direction direction , Set<Shot> visitedShots , float remainingDistance , Set<Segment> affectedSegments )
@@ -1075,34 +1058,31 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	private void applyHoverHighlights( Shot shot )
+	private void applyHoverHighlights( )
 	{
-		SurveyShot origShot = originalShots.get( shot.index );
-		ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
-		
-		LinearAxisConversion highlightConversion = highlightExtents.get( shot );
-		
-		Float hoverLocation = hoverLocations.get( shot );
-		if( hoverLocation == null )
+		if( hoveredShot == null )
 		{
-			hoverLocation = 0.5f;
+			return;
 		}
+		
+		SurveyShot origShot = originalShots.get( hoveredShot.index );
+		ByteBuffer buffer = hoveredShot.segment.stationAttrs.buffer( );
 		
 		float distToFrom = ( float ) ( origShot.dist * hoverLocation );
 		float distToTo = ( float ) ( origShot.dist * ( 1f - hoverLocation ) );
 		
-		applyHoverHighlights( origShot.from , Direction.BACKWARD , distToFrom , highlightConversion );
-		applyHoverHighlights( origShot.to , Direction.FORWARD , distToTo , highlightConversion );
+		applyHoverHighlights( origShot.from , Direction.BACKWARD , distToFrom , highlightExtentConversion );
+		applyHoverHighlights( origShot.to , Direction.FORWARD , distToTo , highlightExtentConversion );
 		
-		float fromHighlightA = ( float ) highlightConversion.convert( distToTo - origShot.dist );
-		float fromHighlightB = ( float ) highlightConversion.convert( distToFrom );
-		float toHighlightA = ( float ) highlightConversion.convert( distToTo );
-		float toHighlightB = ( float ) highlightConversion.convert( distToFrom - origShot.dist );
+		float fromHighlightA = ( float ) highlightExtentConversion.convert( distToTo - origShot.dist );
+		float fromHighlightB = ( float ) highlightExtentConversion.convert( distToFrom );
+		float toHighlightA = ( float ) highlightExtentConversion.convert( distToTo );
+		float toHighlightB = ( float ) highlightExtentConversion.convert( distToFrom - origShot.dist );
 		
-		setFromHighlightA( buffer , shot.indexInSegment , fromHighlightA );
-		setFromHighlightB( buffer , shot.indexInSegment , fromHighlightB );
-		setToHighlightA( buffer , shot.indexInSegment , toHighlightA );
-		setToHighlightB( buffer , shot.indexInSegment , toHighlightB );
+		setFromHighlightA( buffer , hoveredShot.indexInSegment , fromHighlightA );
+		setFromHighlightB( buffer , hoveredShot.indexInSegment , fromHighlightB );
+		setToHighlightA( buffer , hoveredShot.indexInSegment , toHighlightA );
+		setToHighlightB( buffer , hoveredShot.indexInSegment , toHighlightB );
 	}
 	
 	private void applyHoverHighlights( SurveyStation station , Direction direction , float distance , LinearAxisConversion highlightConversion )
@@ -1119,7 +1099,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	
 	private void applyHoverHighlights( Shot shot , Direction direction , float distance , LinearAxisConversion highlightConversion )
 	{
-		if( distance < highlightConversion.invert( 0 ) )
+		if( highlightConversion.convert( distance ) >= 0.0 )
 		{
 			ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
 			
@@ -1666,12 +1646,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			gl.glEnableVertexAttribArray( a_highlightIndex_location );
 			
 			gl.glEnable( GL_DEPTH_TEST );
-
+			
 			for( Segment segment : segments )
 			{
 				draw( segment , context , gl , m , n );
 			}
-
+			
 			gl.glDisable( GL_DEPTH_TEST );
 			
 			gl.glBindBuffer( GL_ARRAY_BUFFER , 0 );

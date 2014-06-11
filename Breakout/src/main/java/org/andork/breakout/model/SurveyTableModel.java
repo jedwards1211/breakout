@@ -206,6 +206,18 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 					from.name = fromName.toString( );
 					stations.put( from.name , from );
 				}
+				if( !Double.isNaN( north ) && !Double.isInfinite( north ) )
+				{
+					from.position[ 2 ] = -north;
+				}
+				if( !Double.isNaN( east ) && !Double.isInfinite( east ) )
+				{
+					from.position[ 0 ] = east;
+				}
+				if( !Double.isNaN( elev ) && !Double.isInfinite( elev ) )
+				{
+					from.position[ 1 ] = elev;
+				}
 				
 				SurveyStation to = stations.get( toName.toString( ) );
 				if( to == null )

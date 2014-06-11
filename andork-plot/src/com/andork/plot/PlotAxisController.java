@@ -149,6 +149,11 @@ public class PlotAxisController
 		}
 	}
 	
+	public void removeMouseWheelListener( )
+	{
+		view.removeMouseWheelListener( mouseLooper );
+	}
+
 	public double getDragZoomSpeed( )
 	{
 		return dragZoomSpeed;
