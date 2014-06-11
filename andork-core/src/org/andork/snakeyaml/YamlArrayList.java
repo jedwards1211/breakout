@@ -38,11 +38,11 @@ public class YamlArrayList<E> extends YamlList<E>
 		{
 			if( elem instanceof YamlElement )
 			{
-				add( ( E ) ( ( YamlElement ) elem ).deepClone( ) );
+				clone.add( ( E ) ( ( YamlElement ) elem ).deepClone( ) );
 			}
 			else
 			{
-				add( elem );
+				clone.add( elem );
 			}
 		}
 		return clone;

@@ -2,13 +2,11 @@ package org.andork.breakout;
 
 import static org.andork.math3d.Vecmath.newMat4f;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
@@ -17,7 +15,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -29,8 +26,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import javax.imageio.ImageIO;
-import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -39,6 +34,7 @@ import javax.swing.JLayeredPane;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
@@ -78,16 +74,12 @@ import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
+import org.andork.func.CompoundBimapper;
+import org.andork.func.FileStringBimapper;
+import org.andork.func.StringObjectBimapper;
 import org.andork.jogl.BasicJOGLObject;
-import org.andork.jogl.BasicJOGLScene;
-import org.andork.jogl.JOGLScreenCapturer;
-import org.andork.jogl.JOGLTiledScreenCapturer;
 import org.andork.jogl.OrthoProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
-import org.andork.jogl.awt.BufferedImageIntFactory;
-import org.andork.jogl.awt.GlyphCache;
-import org.andork.jogl.awt.JoglText;
-import org.andork.jogl.awt.OutlinedGlyphPagePainter;
 import org.andork.jogl.awt.ScreenCaptureDialog;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.jogl.awt.anim.RandomOrbit;
@@ -100,6 +92,7 @@ import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.model.Model;
 import org.andork.snakeyaml.EDTYamlObjectStringBimapper;
+import org.andork.snakeyaml.YamlArrayList;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
@@ -627,6 +620,15 @@ public class BreakoutMainView extends BasicJoglSetup
 				JPopupMenu popupMenu = new JPopupMenu( );
 				popupMenu.add( new JMenuItem( newProjectAction ) );
 				popupMenu.add( new JMenuItem( openProjectAction ) );
+				YamlArrayList<File> recentProjectFiles = getRootModel( ).get( RootModel.recentProjectFiles );
+				if( recentProjectFiles != null && !recentProjectFiles.isEmpty( ) )
+				{
+					popupMenu.add( new JSeparator( ) );
+					for( File file : recentProjectFiles )
+					{
+						popupMenu.add( new JMenuItem( new OpenRecentProjectAction( BreakoutMainView.this , file ) ) );
+					}
+				}
 				
 				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
 			}
@@ -1446,7 +1448,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 		if( projectModel.get( ProjectModel.surveyFile ) == null )
 		{
-			projectModel.set( ProjectModel.surveyFile , new File("defaultSurvey.txt" ) );
+			projectModel.set( ProjectModel.surveyFile , new File( "defaultSurvey.txt" ) );
 		}
 	}
 	
@@ -1667,6 +1669,20 @@ public class BreakoutMainView extends BasicJoglSetup
 				public void run( ) throws Throwable
 				{
 					rootModel.set( RootModel.currentProjectFile , newProjectFile );
+					YamlArrayList<File> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
+					if( recentProjectFiles == null )
+					{
+						recentProjectFiles = YamlArrayList.newInstance( CompoundBimapper.compose( FileStringBimapper.instance , StringObjectBimapper.instance ) );
+						rootModel.set( RootModel.recentProjectFiles , recentProjectFiles );
+					}
+
+					recentProjectFiles.remove( newProjectFile );
+					while( recentProjectFiles.size( ) > 20 )
+					{
+						recentProjectFiles.remove( recentProjectFiles.size( ) - 1 );
+					}
+					recentProjectFiles.add( 0 , newProjectFile );
+					
 					if( getProjectModel( ) != null && projectPersister != null )
 					{
 						getProjectModel( ).changeSupport( ).removePropertyChangeListener( projectPersister );

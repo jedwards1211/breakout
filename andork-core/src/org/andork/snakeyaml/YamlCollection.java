@@ -2,14 +2,15 @@ package org.andork.snakeyaml;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.andork.func.Bimapper;
 
-public abstract class YamlCollection<E> extends YamlElement
+public abstract class YamlCollection<E> extends YamlElement implements Iterable<E>
 {
 	protected final Bimapper<? super E, Object>	format;
-	protected final Collection<E>		collection;
+	protected final Collection<E>				collection;
 	
 	protected YamlCollection( Bimapper<? super E, Object> format )
 	{
@@ -31,6 +32,11 @@ public abstract class YamlCollection<E> extends YamlElement
 			return true;
 		}
 		return false;
+	}
+	
+	public int size( )
+	{
+		return collection.size( );
 	}
 	
 	public boolean remove( E element )
@@ -76,5 +82,43 @@ public abstract class YamlCollection<E> extends YamlElement
 		{
 			collection.add( collection.format.unmap( elem ) );
 		}
+	}
+	
+	public Iterator<E> iterator( )
+	{
+		return new Iterator<E>( )
+		{
+			Iterator<E>	wrapped	= collection.iterator( );
+			E			last;
+			
+			@Override
+			public boolean hasNext( )
+			{
+				return wrapped.hasNext( );
+			}
+			
+			@Override
+			public E next( )
+			{
+				return last = wrapped.next( );
+			}
+			
+			@Override
+			public void remove( )
+			{
+				wrapped.remove( );
+
+				if( last instanceof YamlElement )
+				{
+					( ( YamlElement ) last ).changeSupport( ).removePropertyChangeListener( propagator );
+				}
+				changeSupport.fireChildRemoved( this , last );
+			}
+		};
+	}
+
+	public boolean isEmpty( )
+	{
+		return collection.isEmpty( );
 	}
 }
