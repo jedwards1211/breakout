@@ -554,6 +554,23 @@ public class EasyTableModel<T> extends AbstractTableModel
 		}
 	}
 	
+	public void setRows(List<T> rows) {
+		this.rows.clear( );
+		this.rows.addAll( rows );
+		rowIndexCache.clear( );
+		fireTableDataChanged( );
+	}
+	
+	public void removeAllRows( boolean fireEvent )
+	{
+		rows.clear( );
+		rowIndexCache.clear( );
+		if( fireEvent )
+		{
+			fireTableDataChanged( );
+		}
+	}
+	
 	public void removeAllRows( )
 	{
 		rows.clear( );

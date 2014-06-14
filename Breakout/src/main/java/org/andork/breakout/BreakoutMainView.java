@@ -32,6 +32,7 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
@@ -99,6 +100,7 @@ import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.DoSwing;
 import org.andork.swing.DoSwingR2;
+import org.andork.swing.FromEDT;
 import org.andork.swing.OnEDT;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.async.SelfReportingTask;
@@ -119,6 +121,7 @@ import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 import org.andork.swing.table.RowFilterFactory;
+import org.andork.util.Java7;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.LinearAxisConversion;
@@ -193,7 +196,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	final float[ ]										p1						= new float[ 3 ];
 	final float[ ]										p2						= new float[ 3 ];
 	
-	YamlObject<RootModel>								rootModel;
+	File												rootFile;
 	TaskServiceFilePersister<YamlObject<RootModel>>		rootPersister;
 	final Binder<YamlObject<RootModel>>					rootModelBinder			= new Binder<YamlObject<RootModel>>( );
 	
@@ -618,6 +621,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				Component source = ( Component ) e.getSource( );
 				
 				JPopupMenu popupMenu = new JPopupMenu( );
+				popupMenu.setLightWeightPopupEnabled( false );
 				popupMenu.add( new JMenuItem( newProjectAction ) );
 				popupMenu.add( new JMenuItem( openProjectAction ) );
 				YamlArrayList<File> recentProjectFiles = getRootModel( ).get( RootModel.recentProjectFiles );
@@ -740,8 +744,9 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
+		rootFile = new File( new File( ".breakout" ) , "settings.yaml" );
 		rootPersister = new TaskServiceFilePersister<YamlObject<RootModel>>( ioTaskService , "Saving settings..." ,
-				EDTYamlObjectStringBimapper.newInstance( RootModel.instance ) , new File( new File( ".breakout" ) , "settings.yaml" ) );
+				EDTYamlObjectStringBimapper.newInstance( RootModel.instance ) , rootFile );
 		YamlObject<RootModel> rootModel = null;
 		
 		try
@@ -812,20 +817,30 @@ public class BreakoutMainView extends BasicJoglSetup
 		openProject( getRootModel( ).get( RootModel.currentProjectFile ) );
 	}
 	
+	public File getRootFile( )
+	{
+		return rootFile;
+	}
+	
+	public Binder<YamlObject<RootModel>> getRootModelBinder( )
+	{
+		return rootModelBinder;
+	}
+	
 	public YamlObject<RootModel> getRootModel( )
 	{
-		return rootModel;
+		return rootModelBinder.getModel( );
 	}
 	
 	public void setRootModel( YamlObject<RootModel> rootModel )
 	{
-		if( this.rootModel != rootModel )
+		YamlObject<RootModel> currentModel = getRootModel( );
+		if( currentModel != rootModel )
 		{
-			if( this.rootModel != null )
+			if( currentModel != null )
 			{
-				this.rootModel.changeSupport( ).removePropertyChangeListener( rootPersister );
+				currentModel.changeSupport( ).removePropertyChangeListener( rootPersister );
 			}
-			this.rootModel = rootModel;
 			rootModelBinder.setModel( rootModel );
 			rootModelBinder.modelToView( );
 			if( rootModel != null )
@@ -1668,6 +1683,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				@Override
 				public void run( ) throws Throwable
 				{
+					YamlObject<RootModel> rootModel = getRootModel( );
 					rootModel.set( RootModel.currentProjectFile , newProjectFile );
 					YamlArrayList<File> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
 					if( recentProjectFiles == null )
@@ -1675,7 +1691,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						recentProjectFiles = YamlArrayList.newInstance( CompoundBimapper.compose( FileStringBimapper.instance , StringObjectBimapper.instance ) );
 						rootModel.set( RootModel.recentProjectFiles , recentProjectFiles );
 					}
-
+					
 					recentProjectFiles.remove( newProjectFile );
 					while( recentProjectFiles.size( ) > 20 )
 					{
@@ -1696,16 +1712,28 @@ public class BreakoutMainView extends BasicJoglSetup
 			try
 			{
 				projectModel = projectPersister.load( );
+				
+				if( projectModel == null )
+				{
+					projectModel = ProjectModel.instance.newObject( );
+				}
+				replaceNulls( projectModel );
 			}
-			catch( Exception ex )
+			catch( final Exception ex )
 			{
+				new OnEDT( )
+				{
+					@Override
+					public void run( ) throws Throwable
+					{
+						JOptionPane.showMessageDialog( getMainPanel( ) ,
+								ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Failed to load project" ,
+								JOptionPane.ERROR_MESSAGE );
+					}
+				};
+				return;
 			}
-			
-			if( projectModel == null )
-			{
-				projectModel = ProjectModel.instance.newObject( );
-			}
-			replaceNulls( projectModel );
 			
 			final YamlObject<ProjectModel> finalProjectModel = projectModel;
 			
@@ -1756,55 +1784,95 @@ public class BreakoutMainView extends BasicJoglSetup
 				absoluteSurveyFile = new File( getRootModel( ).get( RootModel.currentProjectFile ).getParentFile( ) , newSurveyFile.getPath( ) );
 			}
 			
-			new OnEDT( )
+			boolean changed = new FromEDT<Boolean>( )
 			{
 				@Override
-				public void run( ) throws Throwable
+				public Boolean run( ) throws Throwable
 				{
-					getProjectModel( ).set( ProjectModel.surveyFile , newSurveyFile );
-					surveyPersister = new TaskServiceSubtaskFilePersister<SurveyTableModel>( ioTaskService , "Saving survey..." ,
-							new SubtaskStreamBimapperFactory<SurveyTableModel, SubtaskStreamBimapper<SurveyTableModel>>( )
-							{
-								@Override
-								public SubtaskStreamBimapper<SurveyTableModel> createSubtaskStreamBimapper( Subtask subtask )
+					if( surveyPersister == null || !absoluteSurveyFile.equals( surveyPersister.getFile( ) ) )
+					{
+						surveyPersister = new TaskServiceSubtaskFilePersister<SurveyTableModel>( ioTaskService , "Saving survey..." ,
+								new SubtaskStreamBimapperFactory<SurveyTableModel, SubtaskStreamBimapper<SurveyTableModel>>( )
 								{
-									return new SurveyTableModelStreamBimapper( subtask );
-								}
-							} , absoluteSurveyFile );
+									@Override
+									public SubtaskStreamBimapper<SurveyTableModel> createSubtaskStreamBimapper( Subtask subtask )
+									{
+										return new SurveyTableModelStreamBimapper( subtask );
+									}
+								} , absoluteSurveyFile );
+					}
+					else
+					{
+						return false;
+					}
+					getProjectModel( ).set( ProjectModel.surveyFile , newSurveyFile );
+					
+					try
+					{
+						surveyTableChangeHandler.setPersistOnUpdate( false );
+						surveyDrawer.table( ).getModel( ).clear( );
+					}
+					finally
+					{
+						surveyTableChangeHandler.setPersistOnUpdate( true );
+					}
+					return true;
 				}
-			};
+			}.result( );
+			
+			if( !changed )
+			{
+				return;
+			}
 			
 			setStatus( "Opening survey: " + absoluteSurveyFile + "..." );
 			
+			SurveyTableModel surveyModel;
+			
 			try
 			{
-				final SurveyTableModel surveyModel = surveyPersister.load( null );
-				
+				surveyModel = surveyPersister.load( null );
+			}
+			catch( final Exception ex )
+			{
+				ex.printStackTrace( );
 				new OnEDT( )
 				{
 					@Override
 					public void run( ) throws Throwable
 					{
-						if( surveyModel != null && surveyModel.getRowCount( ) > 0 )
-						{
-							try
-							{
-								surveyTableChangeHandler.setPersistOnUpdate( false );
-								surveyDrawer.table( ).getModel( ).removeAllRows( );
-								surveyDrawer.table( ).getModel( ).copyRowsFrom( surveyModel , 0 , surveyModel.getRowCount( ) - 1 , 0 );
-							}
-							finally
-							{
-								surveyTableChangeHandler.setPersistOnUpdate( true );
-							}
-						}
+						JOptionPane.showConfirmDialog( getMainPanel( ) ,
+								ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Failed to load survey" ,
+								JOptionPane.ERROR_MESSAGE );
 					}
 				};
+				
+				return;
 			}
-			catch( Exception ex )
+			
+			final SurveyTableModel finalSurveyModel = surveyModel;
+			
+			new OnEDT( )
 			{
-				ex.printStackTrace( );
-			}
+				@Override
+				public void run( ) throws Throwable
+				{
+					if( finalSurveyModel != null && finalSurveyModel.getRowCount( ) > 0 )
+					{
+						try
+						{
+							surveyTableChangeHandler.setPersistOnUpdate( false );
+							surveyDrawer.table( ).getModel( ).copyRowsFrom( finalSurveyModel , 0 ,
+									finalSurveyModel.getRowCount( ) - 1 , 0 );
+						}
+						finally
+						{
+							surveyTableChangeHandler.setPersistOnUpdate( true );
+						}
+					}
+				}
+			};
 		}
 	}
 }

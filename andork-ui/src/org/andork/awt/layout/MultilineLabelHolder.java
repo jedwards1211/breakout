@@ -25,14 +25,29 @@ public class MultilineLabelHolder extends JPanel
 		setLayout( new Layout( ) );
 	}
 	
+	public MultilineLabelHolder( String text )
+	{
+		this( new JLabel( wrapText( text ) ) );
+	}
+	
+	private static String wrapText( String text )
+	{
+		if( !text.trim( ).toLowerCase( ).startsWith( "<html>" ) )
+		{
+			text = "<html>" + text + "</html>";
+		}
+		return text;
+	}
+	
 	public int getWidth( )
 	{
 		return width;
 	}
 	
-	public void setWidth( int width )
+	public MultilineLabelHolder setWidth( int width )
 	{
 		this.width = width;
+		return this;
 	}
 	
 	private class Layout implements LayoutManager

@@ -2,6 +2,7 @@ package org.andork.breakout.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,6 +136,11 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		}
 	}
 	
+	public void clear( )
+	{
+		setRows( Collections.singletonList( Row.instance.newObject( ) ) );
+	}
+	
 	private void ensureNumRows( int numRows )
 	{
 		while( getRowCount( ) < numRows )
@@ -148,6 +154,7 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 	{
 		super.copyRowsFrom( src , srcStart , srcEnd , myStart );
 		int row = getRowCount( ) - 1;
+		ensureNumRows( 1 );
 		for( int col = 0 ; col < getColumnCount( ) ; col++ )
 		{
 			if( getValueAt( row , col ) != null )

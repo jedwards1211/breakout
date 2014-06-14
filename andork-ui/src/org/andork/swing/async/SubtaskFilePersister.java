@@ -33,6 +33,11 @@ public abstract class SubtaskFilePersister<M> implements HierarchicalBasicProper
 		};
 	}
 	
+	public File getFile( )
+	{
+		return file;
+	}
+	
 	public void saveLater( M model )
 	{
 		batcher.add( model );
