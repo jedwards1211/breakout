@@ -110,6 +110,7 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 	
 	public void clear( )
 	{
+		setShots( Collections.<SurveyShot>emptyList( ) );
 		setRows( Collections.singletonList( Row.instance.newObject( ) ) );
 	}
 	

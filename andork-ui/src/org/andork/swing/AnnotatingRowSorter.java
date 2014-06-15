@@ -569,13 +569,17 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 */
 	public int convertRowIndexToView( int index )
 	{
+		if( index < 0 || index >= getModelWrapper( ).getRowCount( ) )
+		{
+			throw new IndexOutOfBoundsException( "Invalid index" );
+		}
 		if( modelToView == null )
 		{
-			if( index < 0 || index >= getModelWrapper( ).getRowCount( ) )
-			{
-				throw new IndexOutOfBoundsException( "Invalid index" );
-			}
 			return index;
+		}
+		if( index >= modelToView.length )
+		{
+			return -1;
 		}
 		return modelToView[ index ];
 	}

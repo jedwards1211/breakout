@@ -1342,7 +1342,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 			else
 			{
-				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) ; i++ )
+				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) && i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
 				{
 					SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
 					if( shot == null )
@@ -1712,6 +1712,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	private class OpenProjectTask extends SelfReportingTask
 	{
+		boolean	taskListWasOpen;
 		File	newProjectFile;
 		
 		private OpenProjectTask( File newProjectFile )
@@ -1720,6 +1721,10 @@ public class BreakoutMainView extends BasicJoglSetup
 			this.newProjectFile = newProjectFile;
 			setStatus( "Saving current project..." );
 			setIndeterminate( true );
+			
+			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
+			taskListDrawer.delegate( ).open( );
+			showDialogLater( );
 		}
 		
 		@Override
@@ -1732,6 +1737,8 @@ public class BreakoutMainView extends BasicJoglSetup
 				@Override
 				public void run( ) throws Throwable
 				{
+					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
+					
 					YamlObject<RootModel> rootModel = getRootModel( );
 					rootModel.set( RootModel.currentProjectFile , newProjectFile );
 					YamlArrayList<File> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
@@ -1809,6 +1816,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	private class OpenSurveyTask extends SelfReportingTask
 	{
+		boolean	taskListWasOpen;
 		File	newSurveyFile;
 		
 		private OpenSurveyTask( File newSurveyFile )
@@ -1818,6 +1826,8 @@ public class BreakoutMainView extends BasicJoglSetup
 			setStatus( "Saving current survey..." );
 			setIndeterminate( true );
 			
+			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
+			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
 		
@@ -1839,6 +1849,8 @@ public class BreakoutMainView extends BasicJoglSetup
 				@Override
 				public Boolean run( ) throws Throwable
 				{
+					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
+					
 					if( surveyPersister == null || !absoluteSurveyFile.equals( surveyPersister.getFile( ) ) )
 					{
 						surveyPersister = new TaskServiceSubtaskFilePersister<SurveyTableModel>( ioTaskService , "Saving survey..." ,
@@ -1860,13 +1872,11 @@ public class BreakoutMainView extends BasicJoglSetup
 					try
 					{
 						surveyTableChangeHandler.setPersistOnUpdate( false );
-						surveyTableChangeHandler.setRebuildViewOnUpdate( false );
 						surveyDrawer.table( ).getModel( ).clear( );
 					}
 					finally
 					{
 						surveyTableChangeHandler.setPersistOnUpdate( true );
-						surveyTableChangeHandler.setRebuildViewOnUpdate( true );
 					}
 					return true;
 				}

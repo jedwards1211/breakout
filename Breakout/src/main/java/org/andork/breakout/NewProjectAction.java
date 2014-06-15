@@ -22,6 +22,8 @@ import org.andork.breakout.model.RootModel;
 import org.andork.io.FileUtils;
 import org.andork.snakeyaml.YamlObject;
 import org.andork.snakeyaml.YamlObjectStringBimapper;
+import org.andork.swing.DoNotShowAgainDialogs;
+import org.andork.swing.JFileChooserUtils;
 import org.andork.swing.OnEDT;
 
 @SuppressWarnings( "serial" )
@@ -86,7 +88,7 @@ public class NewProjectAction extends AbstractAction
 		do
 		{
 			int choice = projectFileChooser.showSaveDialog( mainView.getMainPanel( ) );
-			projectFile = projectFileChooser.getSelectedFile( );
+			projectFile = JFileChooserUtils.correctSelectedFileExtension( projectFileChooser );
 			
 			if( choice != JFileChooser.APPROVE_OPTION || projectFile == null )
 			{
@@ -130,7 +132,7 @@ public class NewProjectAction extends AbstractAction
 					return;
 				}
 				
-				surveyFile = surveyFileChooser.getSelectedFile( );
+				surveyFile = JFileChooserUtils.correctSelectedFileExtension( surveyFileChooser );
 				
 				if( surveyFile.exists( ) )
 				{

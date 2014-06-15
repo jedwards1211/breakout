@@ -13,6 +13,8 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import org.andork.swing.AnnotatingRowSorter;
+
 /**
  * A {@link JTable} with the following added features:
  * <ul>
@@ -157,6 +159,10 @@ public class BetterJTable extends JTable
 		{
 			if( !ignoreModelSelectionChanges )
 			{
+				if( getRowSorter( ) instanceof AnnotatingRowSorter && ( ( AnnotatingRowSorter ) getRowSorter( ) ).isSortingInBackground( ) )
+				{
+					return;
+				}
 				updateViewSelectionModel( e );
 			}
 		}

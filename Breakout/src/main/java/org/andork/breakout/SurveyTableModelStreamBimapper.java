@@ -10,7 +10,6 @@ import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.snakeyaml.YamlObject;
-import org.andork.swing.FromEDT;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.SubtaskStreamBimapper;
 
@@ -24,15 +23,10 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 	@Override
 	public void write( final SurveyTableModel model , OutputStream out ) throws Exception
 	{
-		SurveyTableModel copy = new FromEDT<SurveyTableModel>( )
-		{
-			@Override
-			public SurveyTableModel run( ) throws Throwable
-			{
-				SurveyTableModelCopier copier = new SurveyTableModelCopier( );
-				return copier.copy( model );
-			}
-		}.result( );
+		SurveyTableModel copy = new SurveyTableModel( );
+		SurveyTableModelCopier copier = new SurveyTableModelCopier( );
+		
+		copier.copyInBackground( model , copy , 1000 , null );
 		
 		PrintStream p = null;
 		

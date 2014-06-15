@@ -1,4 +1,4 @@
-package org.andork.breakout;
+package org.andork.swing;
 
 import java.awt.Component;
 
