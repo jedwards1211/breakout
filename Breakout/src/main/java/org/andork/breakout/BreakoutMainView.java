@@ -20,7 +20,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -69,7 +68,6 @@ import org.andork.breakout.model.Survey3dModel.ShotPickResult;
 import org.andork.breakout.model.SurveyShot;
 import org.andork.breakout.model.SurveyStation;
 import org.andork.breakout.model.SurveyTableModel;
-import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
@@ -121,7 +119,6 @@ import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 import org.andork.swing.table.RowFilterFactory;
-import org.andork.util.Java7;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.LinearAxisConversion;
@@ -902,7 +899,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				continue;
 			}
-			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getRow( i ).get( Row.shot );
+			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
 			if( shot == null )
 			{
 				continue;
@@ -943,7 +940,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		for( int i = 0 ; i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
 		{
-			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getRow( i ).get( Row.shot );
+			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
 			if( shot == null )
 			{
 				continue;
@@ -1347,18 +1344,18 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) ; i++ )
 				{
-					SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).getRow( i ).get( Row.shot );
+					SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
 					if( shot == null )
 					{
 						continue;
 					}
 					if( selModel.isSelectedIndex( i ) )
 					{
-						editor.select( shots.get( shot.index ) );
+						editor.select( shots.get( shot.number ) );
 					}
 					else
 					{
-						editor.deselect( shots.get( shot.index ) );
+						editor.deselect( shots.get( shot.number ) );
 					}
 				}
 			}
@@ -1564,20 +1561,53 @@ public class BreakoutMainView extends BasicJoglSetup
 				@Override
 				protected void execute( )
 				{
-					Subtask parsingSubtask = new Subtask( this );
-					parsingSubtask.setStatus( "parsing shot data" );
-					parsingSubtask.setIndeterminate( true );
+					setTotal( 1000 );
+					Subtask copySubtask = new Subtask( this );
+					copySubtask.setStatus( "Parsing shot data" );
+					copySubtask.setIndeterminate( false );
 					
-					List<SurveyShot> shots = new DoSwingR2<List<SurveyShot>>( )
+					SurveyTableModel copy = new SurveyTableModel( );
+					SurveyTableModelCopier copier = new SurveyTableModelCopier( );
+					
+					SurveyTableModel model = new FromEDT<SurveyTableModel>( )
 					{
 						@Override
-						protected List<SurveyShot> doRun( )
+						public SurveyTableModel run( ) throws Throwable
 						{
-							return surveyDrawer.table( ).getModel( ).createShots( );
+							return surveyDrawer.table( ).getModel( );
 						}
 					}.result( );
 					
-					parsingSubtask.end( );
+					copier.copyInBackground( model , copy , 1000 , copySubtask );
+					
+					if( copySubtask.isCanceling( ) )
+					{
+						return;
+					}
+					
+					copySubtask.end( );
+					
+					Subtask parsingSubtask = new Subtask( this );
+					parsingSubtask.setStatus( "Parsing shot data" );
+					parsingSubtask.setIndeterminate( false );
+					
+					final List<SurveyShot> shots = copy.createShots( parsingSubtask );
+					
+					if( parsingSubtask.isCanceling( ) )
+					{
+						return;
+					}
+					
+					new OnEDT( )
+					{
+						@Override
+						public void run( ) throws Throwable
+						{
+							surveyDrawer.table( ).getModel( ).setShots( shots );
+						}
+					};
+					
+					final List<SurveyShot> nonNullShots = new ArrayList<SurveyShot>( );
 					
 					if( !shots.isEmpty( ) )
 					{
@@ -1589,19 +1619,20 @@ public class BreakoutMainView extends BasicJoglSetup
 						
 						for( SurveyShot shot : shots )
 						{
-							stations.add( shot.from );
-							stations.add( shot.to );
+							if( shot != null )
+							{
+								nonNullShots.add( shot );
+								stations.add( shot.from );
+								stations.add( shot.to );
+							}
 						}
 						
-						// SurveyStation first = shots.iterator( ).next( ).from;
-						// Arrays.fill( first.position , 0.0 );
-						// SurveyShot.computeConnected( first );
 						SurveyShot.computeConnected( stations );
 						
 						calculatingSubtask.end( );
 					}
 					
-					updateModel( shots );
+					updateModel( nonNullShots );
 				}
 				
 				public boolean isCancelable( )

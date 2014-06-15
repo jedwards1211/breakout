@@ -9,7 +9,7 @@ import org.andork.math3d.Vecmath;
 
 public class SurveyShot
 {
-	public int				index	= -1;
+	public int				number	= -1;
 	public SurveyStation	from;
 	public SurveyStation	to;
 	public double			dist	= Double.NaN;

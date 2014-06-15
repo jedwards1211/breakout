@@ -789,20 +789,20 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	
 	public static class Shot
 	{
-		int		index;
+		int		number;
 		
 		Segment	segment;
 		int		indexInSegment;
 		
-		Shot( int index )
+		Shot( int number )
 		{
 			super( );
-			this.index = index;
+			this.number = number;
 		}
 		
 		public int getIndex( )
 		{
-			return index;
+			return number;
 		}
 		
 		public void getCoordinate( int i , float[ ] result )
@@ -1036,7 +1036,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			
 			for( Shot shot : shots )
 			{
-				copyBytes( allGeomBuffer , geometry.buffer( ) , shot.index , GEOM_BPS );
+				copyBytes( allGeomBuffer , geometry.buffer( ) , shot.number , GEOM_BPS );
 			}
 			
 			createFillIndices( fillIndices.buffer( ) , shots.size( ) );
@@ -1161,7 +1161,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	{
 		Set<Shot> visitedShots = new HashSet<Shot>( );
 		
-		SurveyShot origShot = originalShots.get( shot.index );
+		SurveyShot origShot = originalShots.get( shot.number );
 		
 		float forwardRemainingDistance = distance * 2 - ( float ) origShot.dist * ( 1f - location );
 		float backwardRemainingDistance = distance * 2 - ( float ) origShot.dist * location;
@@ -1174,12 +1174,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	{
 		for( SurveyShot next : station.frontsights )
 		{
-			findAffectedSegments( shots.get( next.index ) , Direction.FORWARD , visitedShots , remainingDistance ,
+			findAffectedSegments( shots.get( next.number ) , Direction.FORWARD , visitedShots , remainingDistance ,
 					affectedSegments );
 		}
 		for( SurveyShot next : station.backsights )
 		{
-			findAffectedSegments( shots.get( next.index ) , Direction.BACKWARD , visitedShots , remainingDistance ,
+			findAffectedSegments( shots.get( next.number ) , Direction.BACKWARD , visitedShots , remainingDistance ,
 					affectedSegments );
 		}
 	}
@@ -1191,7 +1191,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			affectedSegments.add( shot.segment );
 			if( remainingDistance > 0 )
 			{
-				SurveyShot origShot = originalShots.get( shot.index );
+				SurveyShot origShot = originalShots.get( shot.number );
 				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
 				float nextRemainingDistance = ( float ) ( remainingDistance - origShot.dist );
 				
@@ -1219,7 +1219,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			return;
 		}
 		
-		SurveyShot origShot = originalShots.get( hoveredShot.index );
+		SurveyShot origShot = originalShots.get( hoveredShot.number );
 		ByteBuffer buffer = hoveredShot.segment.stationAttrs.buffer( );
 		
 		float distToFrom = ( float ) ( origShot.dist * hoverLocation );
@@ -1243,11 +1243,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	{
 		for( SurveyShot next : station.frontsights )
 		{
-			applyHoverHighlights( shots.get( next.index ) , Direction.FORWARD , distance , highlightConversion );
+			applyHoverHighlights( shots.get( next.number ) , Direction.FORWARD , distance , highlightConversion );
 		}
 		for( SurveyShot next : station.backsights )
 		{
-			applyHoverHighlights( shots.get( next.index ) , Direction.BACKWARD , distance , highlightConversion );
+			applyHoverHighlights( shots.get( next.number ) , Direction.BACKWARD , distance , highlightConversion );
 		}
 	}
 	
@@ -1257,7 +1257,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
 			
-			SurveyShot origShot = originalShots.get( shot.index );
+			SurveyShot origShot = originalShots.get( shot.number );
 			float nextDistance = ( float ) ( distance + origShot.dist );
 			
 			float fromHighlight;

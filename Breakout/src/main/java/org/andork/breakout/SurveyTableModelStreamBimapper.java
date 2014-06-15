@@ -29,11 +29,11 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 			@Override
 			public SurveyTableModel run( ) throws Throwable
 			{
-				SurveyTableModelCopier copier = new  SurveyTableModelCopier( );
+				SurveyTableModelCopier copier = new SurveyTableModelCopier( );
 				return copier.copy( model );
 			}
 		}.result( );
-
+		
 		PrintStream p = null;
 		
 		subtask( ).setTotal( copy.getRowCount( ) );
@@ -48,7 +48,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 			{
 				YamlObject<Row> row = copy.getRow( ri );
 				
-				for( int ci = 0 ; ci < Row.shot.getIndex( ) ; ci++ )
+				for( int ci = 0 ; ci < copy.getColumnCount( ) ; ci++ )
 				{
 					if( ci > 0 )
 					{
@@ -67,7 +67,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 		finally
 		{
 			subtask( ).end( );
-
+			
 			if( p != null )
 			{
 				try
@@ -86,7 +86,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 	public SurveyTableModel read( InputStream in ) throws Exception
 	{
 		subtask( ).setIndeterminate( true );
-
+		
 		BufferedReader reader = null;
 		try
 		{
@@ -111,7 +111,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 		finally
 		{
 			subtask( ).end( );
-
+			
 			if( reader != null )
 			{
 				try

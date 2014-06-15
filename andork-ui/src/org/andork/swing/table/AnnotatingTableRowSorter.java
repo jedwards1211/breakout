@@ -29,12 +29,17 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import javax.swing.JTable;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableStringConverter;
 
 import org.andork.swing.AnnotatingRowSorter;
+import org.andork.swing.FromEDT;
+import org.andork.swing.OnEDT;
+import org.andork.swing.async.Subtask;
 
 /**
  * An implementation of <code>RowSorter</code> that provides sorting and filtering using a <code>TableModel</code>. The following example shows adding sorting
@@ -322,6 +327,81 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 			for( int column = 0 ; column < Math.min( src.getColumnCount( ) , dest.getColumnCount( ) ) ; column++ )
 			{
 				dest.setValueAt( src.getValueAt( row , column ) , row , column );
+			}
+		}
+		
+		public void copyInBackground( final M src , final M dest , final int step , Subtask subtask )
+		{
+			class ChangeHandler implements TableModelListener
+			{
+				boolean	changed	= false;
+				
+				@Override
+				public void tableChanged( TableModelEvent e )
+				{
+					changed = true;
+				}
+			}
+			
+			final ChangeHandler changeHandler = new ChangeHandler( );
+			
+			new OnEDT( )
+			{
+				@Override
+				public void run( ) throws Throwable
+				{
+					src.addTableModelListener( changeHandler );
+				}
+			};
+			
+			try
+			{
+				int row = 0;
+				while( row < src.getRowCount( ) )
+				{
+					final int finalRow = row;
+					int[ ] progress = new FromEDT<int[ ]>( )
+					{
+						@Override
+						public int[ ] run( ) throws Throwable
+						{
+							
+							if( changeHandler.changed )
+							{
+								changeHandler.changed = false;
+								return new int[ ] { 0 , src.getRowCount( ) };
+							}
+							int nextRow;
+							for( nextRow = finalRow ; nextRow < Math.min( src.getRowCount( ) , finalRow + step ) ; nextRow++ )
+							{
+								copyRow( src , nextRow , dest );
+							}
+							
+							return new int[ ] { nextRow , src.getRowCount( ) };
+						}
+					}.result( );
+					row = progress[ 0 ];
+					if( subtask != null )
+					{
+						if( subtask.isCanceling( ) )
+						{
+							return;
+						}
+						subtask.setTotal( progress[ 1 ] );
+						subtask.setCompleted( progress[ 0 ] );
+					}
+				}
+			}
+			finally
+			{
+				new OnEDT( )
+				{
+					@Override
+					public void run( ) throws Throwable
+					{
+						src.removeTableModelListener( changeHandler );
+					}
+				};
 			}
 		}
 	}
