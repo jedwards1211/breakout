@@ -3047,6 +3047,13 @@ public class Vecmath
 		out[ 2 ] = a * b[ 2 ] + c[ 2 ];
 	}
 	
+	public static void interp3( float[ ] a , float[ ] b , float f , float[ ] out )
+	{
+		out[ 0 ] = ( 1 - f ) * a[ 0 ] + f * b[ 0 ];
+		out[ 1 ] = ( 1 - f ) * a[ 1 ] + f * b[ 1 ];
+		out[ 2 ] = ( 1 - f ) * a[ 2 ] + f * b[ 2 ];
+	}
+	
 	public static float length( float[ ] v , int start , int count )
 	{
 		float total = 0;

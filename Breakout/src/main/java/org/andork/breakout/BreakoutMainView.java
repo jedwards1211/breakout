@@ -1185,7 +1185,6 @@ public class BreakoutMainView extends BasicJoglSetup
 		float[ ] bounds = Rectmath.voidRectf( 3 );
 		float[ ] p = Rectmath.voidRectf( 3 );
 		
-		double[ ] center = new double[ 3 ];
 		for( Survey3dModel.Shot shot : newSelectedShots )
 		{
 			SurveyShot origShot = origShots.get( shot.getIndex( ) );
@@ -1196,8 +1195,6 @@ public class BreakoutMainView extends BasicJoglSetup
 			p[ 4 ] = ( float ) Math.max( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
 			p[ 5 ] = ( float ) Math.max( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
 			Rectmath.union3( bounds , p , bounds );
-			// add3( center , origShot.from.position , center );
-			// add3( center , origShot.to.position , center );
 		}
 		
 		if( !newSelectedShots.isEmpty( ) )
@@ -1221,13 +1218,20 @@ public class BreakoutMainView extends BasicJoglSetup
 			if( model3d != null )
 			{
 				List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
-				model3d.pickShots( origin , direction , spc , pickResults );
+				model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
 				
-				if( !pickResults.isEmpty( ) )
+				PickResult<Shot> best = null;
+				
+				for( PickResult<Shot> result : pickResults )
 				{
-					Collections.sort( pickResults );
-					return ( ShotPickResult ) pickResults.get( 0 );
+					if( best == null || result.lateralDistance * best.distance < best.lateralDistance * result.distance ||
+							( result.lateralDistance == 0 && best.lateralDistance == 0 && result.distance < best.distance ) )
+					{
+						best = result;
+					}
 				}
+				
+				return ( ShotPickResult ) best;
 			}
 			
 			return null;
@@ -1560,7 +1564,6 @@ public class BreakoutMainView extends BasicJoglSetup
 				@Override
 				protected void execute( )
 				{
-					new RuntimeException( ).printStackTrace( );
 					Subtask parsingSubtask = new Subtask( this );
 					parsingSubtask.setStatus( "parsing shot data" );
 					parsingSubtask.setIndeterminate( true );

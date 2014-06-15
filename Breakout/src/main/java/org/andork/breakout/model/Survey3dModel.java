@@ -56,6 +56,7 @@ import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.neu.JoglDrawable;
 import org.andork.jogl.neu.JoglResource;
 import org.andork.jogl.util.JOGLUtils;
+import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.RBranch;
@@ -641,6 +642,33 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
+	public void pickShots( float[ ] coneOrigin , float[ ] coneDirection , float coneAngle ,
+			ShotPickContext spc , List<PickResult<Shot>> pickResults )
+	{
+		pickShots( tree.getRoot( ) , coneOrigin , coneDirection , coneAngle , spc , pickResults );
+	}
+	
+	private void pickShots( RNode<float[ ], Shot> node , float[ ] coneOrigin , float[ ] coneDirection , float coneAngle ,
+			ShotPickContext spc , List<PickResult<Shot>> pickResults )
+	{
+		if( spc.inConeTester.boxIntersectsCone( node.mbr( ) , coneOrigin , coneDirection , coneAngle ) )
+		{
+			if( node instanceof RBranch )
+			{
+				RBranch<float[ ], Shot> branch = ( RBranch<float[ ], Shot> ) node;
+				for( int i = 0 ; i < branch.numChildren( ) ; i++ )
+				{
+					pickShots( branch.childAt( i ) , coneOrigin , coneDirection , coneAngle , spc , pickResults );
+				}
+			}
+			else if( node instanceof RLeaf )
+			{
+				Shot shot = ( ( RLeaf<float[ ], Shot> ) node ).object( );
+				shot.pick( coneOrigin , coneDirection , coneAngle , spc , pickResults );
+			}
+		}
+	}
+	
 	public List<SurveyShot> getOriginalShots( )
 	{
 		return Collections.unmodifiableList( originalShots );
@@ -849,14 +877,132 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			vertBuffer.position( 0 );
 			indexBuffer.position( 0 );
 		}
+		
+		public void pick( float[ ] coneOrigin , float[ ] coneDirection , float coneAngle , ShotPickContext c , List<PickResult<Shot>> pickResults )
+		{
+			ShotPickResult result = null;
+			
+			ByteBuffer indexBuffer = segment.fillIndices.buffer( );
+			ByteBuffer vertBuffer = segment.geometry.buffer( );
+			indexBuffer.position( indexInSegment * FILL_IPS * BPI );
+			for( int i = 0 ; i < 8 ; i++ )
+			{
+				int i0 = indexBuffer.getInt( );
+				int i1 = indexBuffer.getInt( );
+				int i2 = indexBuffer.getInt( );
+				
+				vertBuffer.position( i0 * GEOM_BPV );
+				c.p0[ 0 ] = vertBuffer.getFloat( );
+				c.p0[ 1 ] = vertBuffer.getFloat( );
+				c.p0[ 2 ] = vertBuffer.getFloat( );
+				
+				vertBuffer.position( i1 * GEOM_BPV );
+				c.p1[ 0 ] = vertBuffer.getFloat( );
+				c.p1[ 1 ] = vertBuffer.getFloat( );
+				c.p1[ 2 ] = vertBuffer.getFloat( );
+				
+				vertBuffer.position( i2 * GEOM_BPV );
+				c.p2[ 0 ] = vertBuffer.getFloat( );
+				c.p2[ 1 ] = vertBuffer.getFloat( );
+				c.p2[ 2 ] = vertBuffer.getFloat( );
+				
+				try
+				{
+					c.lpx.lineFromRay( coneOrigin , coneDirection );
+					c.lpx.planeFromPoints( c.p0 , c.p1 , c.p2 );
+					c.lpx.findIntersection( );
+					if( c.lpx.isPointIntersection( ) && c.lpx.isOnRay( ) && c.lpx.isInTriangle( ) )
+					{
+						if( result == null || result.lateralDistance > 0 || c.lpx.t < result.distance )
+						{
+							if( result == null )
+							{
+								result = new ShotPickResult( );
+							}
+							result.picked = this;
+							result.distance = c.lpx.t;
+							result.locationAlongShot = i % 2 == 0 ? c.lpx.u : 1 - c.lpx.u;
+							result.lateralDistance = 0;
+							setf( result.location , c.lpx.result );
+						}
+					}
+					else if( result == null || result.lateralDistance > 0 )
+					{
+						if( c.inConeTester.isLineSegmentInCone( c.p0 , c.p1 , coneOrigin , coneDirection , coneAngle ) )
+						{
+							if( result == null || c.inConeTester.lateralDistance * result.distance <
+									result.lateralDistance * c.inConeTester.t )
+							{
+								if( result == null )
+								{
+									result = new ShotPickResult( );
+								}
+								result.picked = this;
+								result.distance = c.inConeTester.t;
+								result.lateralDistance = c.inConeTester.lateralDistance;
+								result.locationAlongShot = i % 2 == 0 ? c.inConeTester.s : 1 - c.inConeTester.s;
+								Vecmath.interp3( c.p0 , c.p1 , c.inConeTester.s , result.location );
+							}
+						}
+						else if( c.inConeTester.isLineSegmentInCone( c.p1 , c.p2 , coneOrigin , coneDirection , coneAngle ) )
+						{
+							if( result == null || c.inConeTester.lateralDistance * result.distance <
+									result.lateralDistance * c.inConeTester.t )
+							{
+								if( result == null )
+								{
+									result = new ShotPickResult( );
+								}
+								result.picked = this;
+								result.distance = c.inConeTester.t;
+								result.lateralDistance = c.inConeTester.lateralDistance;
+								result.locationAlongShot = i % 2 == 0 ? 1 - c.inConeTester.s : c.inConeTester.s;
+								Vecmath.interp3( c.p1 , c.p2 , c.inConeTester.s , result.location );
+							}
+						}
+						else if( c.inConeTester.isLineSegmentInCone( c.p2 , c.p0 , coneOrigin , coneDirection , coneAngle ) )
+						{
+							if( result == null || c.inConeTester.lateralDistance * result.distance <
+									result.lateralDistance * c.inConeTester.t )
+							{
+								if( result == null )
+								{
+									result = new ShotPickResult( );
+								}
+								result.picked = this;
+								result.distance = c.inConeTester.t;
+								result.lateralDistance = c.inConeTester.lateralDistance;
+								result.locationAlongShot = i % 2;
+								Vecmath.interp3( c.p2 , c.p0 , c.inConeTester.s , result.location );
+							}
+						}
+					}
+				}
+				catch( Exception ex )
+				{
+					
+				}
+			}
+			
+			if( result != null )
+			{
+				pickResults.add( result );
+			}
+			
+			vertBuffer.position( 0 );
+			indexBuffer.position( 0 );
+		}
 	}
 	
 	public static final class ShotPickContext
 	{
-		final LinePlaneIntersection3f	lpx	= new LinePlaneIntersection3f( );
-		final float[ ]					p0	= new float[ 3 ];
-		final float[ ]					p1	= new float[ 3 ];
-		final float[ ]					p2	= new float[ 3 ];
+		final LinePlaneIntersection3f	lpx				= new LinePlaneIntersection3f( );
+		final float[ ]					p0				= new float[ 3 ];
+		final float[ ]					p1				= new float[ 3 ];
+		final float[ ]					p2				= new float[ 3 ];
+		final float[ ]					adjacent		= new float[ 3 ];
+		final float[ ]					opposite		= new float[ 3 ];
+		final InConeTester3f			inConeTester	= new InConeTester3f( );
 	}
 	
 	public static class ShotPickResult extends PickResult<Shot>

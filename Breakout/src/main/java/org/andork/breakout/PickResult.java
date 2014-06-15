@@ -6,6 +6,7 @@ public class PickResult<T> implements Comparable<PickResult<T>>
 {
 	public final float[ ]					location			= new float[ 3 ];
 	public float							distance;
+	public float							lateralDistance;
 	public T								picked;
 	
 	public static final DistanceComparator	DISTANCE_COMPARATOR	= new DistanceComparator( );
