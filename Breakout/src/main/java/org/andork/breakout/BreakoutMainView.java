@@ -24,6 +24,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
@@ -1416,7 +1417,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		getProjectModel( ).set( ProjectModel.viewXform , viewXform );
 	}
 	
-	private void replaceNulls( YamlObject<ProjectModel> projectModel )
+	private void replaceNulls( YamlObject<ProjectModel> projectModel , File projectFile )
 	{
 		if( projectModel.get( ProjectModel.cameraView ) == null )
 		{
@@ -1464,7 +1465,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 		if( projectModel.get( ProjectModel.surveyFile ) == null )
 		{
-			projectModel.set( ProjectModel.surveyFile , new File( "defaultSurvey.txt" ) );
+			projectModel.set( ProjectModel.surveyFile , new File( NewProjectAction.pickDefaultSurveyFile( projectFile ).getName( ) ) );
 		}
 	}
 	
@@ -1773,7 +1774,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					projectModel = ProjectModel.instance.newObject( );
 				}
-				replaceNulls( projectModel );
+				replaceNulls( projectModel , newProjectFile );
 			}
 			catch( final Exception ex )
 			{

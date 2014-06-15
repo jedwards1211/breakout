@@ -5,10 +5,8 @@ import java.io.File;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.andork.awt.CheckEDT;
 import org.andork.awt.I18n.Localizer;
 import org.andork.breakout.model.RootModel;
 import org.andork.swing.OnEDT;

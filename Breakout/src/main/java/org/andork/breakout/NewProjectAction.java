@@ -64,17 +64,6 @@ public class NewProjectAction extends AbstractAction
 		I18n i18n = mainView.getI18n( );
 		Localizer localizer = i18n.forClass( getClass( ) );
 		
-		JLabel messageLabel = new JLabel( "<html>" + localizer.getString( "newProjectInfoDialog.message" ) + "</html>" );
-		messageLabel.setMaximumSize( new Dimension( 600 , Integer.MAX_VALUE ) );
-		String title = localizer.getString( "newProjectInfoDialog.title" );
-		
-		MultilineLabelHolder messageLabelHolder = new MultilineLabelHolder( messageLabel );
-		messageLabelHolder.setWidth( 600 );
-		
-		DoNotShowAgainDialogs.showMessageDialog( mainView.getMainPanel( ) ,
-				messageLabelHolder , title , JOptionPane.INFORMATION_MESSAGE ,
-				i18n , mainView.getRootModelBinder( ) , RootModel.doNotShowNewProjectInfoDialog );
-		
 		File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
 		if( currentProjectFile != null )
 		{
@@ -98,8 +87,10 @@ public class NewProjectAction extends AbstractAction
 			if( projectFile.exists( ) )
 			{
 				choice = JOptionPane.showConfirmDialog( mainView.getMainPanel( ) ,
-						new MultilineLabelHolder( localizer.getFormattedString( "projectFileAlreadyExistsDialog.message" , projectFile.toString( ) ) ).setWidth( 600 ) ,
-						localizer.getString( "projectFileAlreadyExistsDialog.title" ) , JOptionPane.YES_NO_CANCEL_OPTION );
+						new MultilineLabelHolder( localizer.getFormattedString( "projectFileAlreadyExistsDialog.message" ,
+								projectFile.getName( ) ) ).setWidth( 600 ) ,
+						localizer.getString( "projectFileAlreadyExistsDialog.title" ) ,
+						JOptionPane.YES_NO_CANCEL_OPTION );
 				if( choice == JOptionPane.YES_OPTION )
 				{
 					break;
@@ -111,34 +102,15 @@ public class NewProjectAction extends AbstractAction
 			}
 			else
 			{
-				break;
-			}
-		} while( true );
-		
-		if( !projectFile.exists( ) )
-		{
-			surveyFileChooser.setDialogTitle( "Save New Survey As" );
-			surveyFileChooser.setCurrentDirectory( projectFileChooser.getCurrentDirectory( ) );
-			
-			File surveyFile;
-			
-			do
-			{
-				
-				int choice = surveyFileChooser.showSaveDialog( mainView.getMainPanel( ) );
-				
-				if( choice != JFileChooser.APPROVE_OPTION )
-				{
-					return;
-				}
-				
-				surveyFile = JFileChooserUtils.correctSelectedFileExtension( surveyFileChooser );
+				File surveyFile = pickDefaultSurveyFile( projectFile );
 				
 				if( surveyFile.exists( ) )
 				{
 					choice = JOptionPane.showConfirmDialog( mainView.getMainPanel( ) ,
-							surveyFile + " already exists.  Would you like to use its survey data in the new project?" ,
-							"New Project" , JOptionPane.YES_NO_CANCEL_OPTION );
+							new MultilineLabelHolder( localizer.getFormattedString( "surveyFileAlreadyExistsDialog.message" ,
+									surveyFile.getName( ) ) ).setWidth( 600 ) ,
+							localizer.getString( "surveyFileAlreadyExistsDialog.title" ) ,
+							JOptionPane.YES_NO_CANCEL_OPTION );
 					if( choice == JOptionPane.YES_OPTION )
 					{
 						break;
@@ -148,53 +120,39 @@ public class NewProjectAction extends AbstractAction
 						return;
 					}
 				}
-				else
-				{
-					break;
-				}
-			} while( true );
-			
-			YamlObject<ProjectModel> newProjectModel = ProjectModel.instance.newObject( );
-			newProjectModel.set( ProjectModel.surveyFile , FileUtils.canonicalize( projectFile.getParentFile( ) , surveyFile ) );
-			
-			YamlObjectStringBimapper<ProjectModel> bimapper = YamlObjectStringBimapper.newInstance( ProjectModel.instance );
-			String yaml = bimapper.map( newProjectModel );
-			
-			FileOutputStream fileOut = null;
-			BufferedWriter writer = null;
-			
-			try
-			{
-				fileOut = new FileOutputStream( projectFile );
-				writer = new BufferedWriter( new OutputStreamWriter( fileOut ) );
-				writer.write( yaml );
+				
+				break;
 			}
-			catch( Exception ex )
-			{
-				ex.printStackTrace( );
-				JOptionPane.showMessageDialog( mainView.getMainPanel( ) ,
-						localizer.getFormattedString( "failedToSaveNewProjectFileDialog.message" , projectFile ) +
-								ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
-						localizer.getString( "failedToSaveNewProjectFileDialog.title" ) ,
-						JOptionPane.ERROR_MESSAGE );
-				return;
-			}
-			finally
-			{
-				if( writer != null )
-				{
-					try
-					{
-						writer.close( );
-					}
-					catch( Exception ex )
-					{
-						ex.printStackTrace( );
-					}
-				}
-			}
+		} while( true );
+		
+		try
+		{
+			projectFile.createNewFile( );
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace( );
+			JOptionPane.showMessageDialog( mainView.getMainPanel( ) ,
+					new MultilineLabelHolder( localizer.getFormattedString( "failedToCreateProjectFileDialog.message" ,
+							projectFile.toString( ) + "<br><b>" + ex.getClass( ).getName( ) + "</b>: " + ex.getLocalizedMessage( ) ) )
+							.setWidth( 600 ) ,
+					localizer.getString( "failedToCreateProjectFileDialog.title" ) ,
+					JOptionPane.ERROR_MESSAGE );
+			return;
 		}
 		
 		mainView.openProject( projectFile );
+	}
+	
+	public static final File pickDefaultSurveyFile( File projectFile )
+	{
+		String surveyFileName = projectFile.getName( );
+		int extIndex = surveyFileName.lastIndexOf( '.' );
+		if( extIndex > 0 )
+		{
+			surveyFileName = surveyFileName.substring( 0 , extIndex );
+		}
+		surveyFileName += "-survey.txt";
+		return new File( projectFile.getParentFile( ) , surveyFileName );
 	}
 }

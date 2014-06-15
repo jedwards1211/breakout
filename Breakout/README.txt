@@ -17,6 +17,9 @@ GETTING STARTED
 2. The 3D model should be built automatically, and the table will be automatically saved.  The next time you run the program, it will
    reload the surveys saved from the table.
    
+3. To create a new project or open existing project, click the button next to the "Project:" field at the top of the settings
+   drawer (which autoshows/hides at the right of the window).  It will show a popup menu including recent files.
+   
 COLORATION
 
 The depth coloration, fade out, and mouseover highlight coloration can be adjusted by left and right clicking the coloration axes in
