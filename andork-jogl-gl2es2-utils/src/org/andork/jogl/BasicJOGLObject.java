@@ -336,12 +336,12 @@ public class BasicJOGLObject implements JOGLObject
 		{
 			for( SharedBuffer buffer : vertexBuffers )
 			{
-				buffer.destroy( gl );
+				buffer.dispose( gl );
 			}
 			
 			if( indexBuffer != null )
 			{
-				indexBuffer.destroy( gl );
+				indexBuffer.dispose( gl );
 			}
 			
 			if( vertexShaderCode != null && fragmentShaderCode != null )

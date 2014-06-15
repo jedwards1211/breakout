@@ -901,6 +901,14 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			fillIndices.buffer( ).position( 0 );
 			lineIndices.buffer( ).position( 0 );
 		}
+		
+		public void dispose( GL2ES2 gl )
+		{
+			geometry.dispose( gl );
+			stationAttrs.dispose( gl );
+			fillIndices.dispose( gl );
+			lineIndices.dispose( gl );
+		}
 	}
 	
 	private void updateParamTexture( GL2ES2 gl )
@@ -1691,6 +1699,16 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	@Override
 	public void dispose( GL2ES2 gl )
 	{
+		for( Segment segment : segments )
+		{
+			segment.dispose( gl );
+		}
+		
+		for( SegmentDrawer drawer : drawers.keySet( ) )
+		{
+			drawer.dispose( gl );
+		}
+		
 		disposeParamTexture( gl );
 	}
 	

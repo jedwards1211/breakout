@@ -5,18 +5,14 @@ import static org.andork.awt.event.UIBindings.bindBgColor;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.LinearGradientPaint;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
@@ -131,6 +127,7 @@ public class SettingsDrawer extends Drawer
 		localizer.setText( projectFileLabel , "projectFileLabel.text" );
 		projectFileField = new JTextField( );
 		projectFileField.setEditable( false );
+		projectFileField.setPreferredSize( new Dimension( 150 , projectFileField.getPreferredSize( ).height ) );
 		projectFileMenuButton = new JButton( "..." );
 		projectFileMenuButton.setMargin( new Insets( 2 , 4 , 2 , 4 ) );
 		
@@ -339,7 +336,7 @@ public class SettingsDrawer extends Drawer
 	{
 		return projectFileMenuButton;
 	}
-
+	
 	public JButton getFitViewToSelectedButton( )
 	{
 		return fitViewToSelectedButton;

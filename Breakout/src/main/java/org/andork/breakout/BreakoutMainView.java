@@ -1511,7 +1511,8 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	class SurveyTableChangeHandler extends TaskServiceBatcher<TableModelEvent> implements TableModelListener
 	{
-		private boolean	persistOnUpdate	= true;
+		private boolean	persistOnUpdate		= true;
+		private boolean	rebuildViewOnUpdate	= true;
 		
 		public SurveyTableChangeHandler( TaskService taskService )
 		{
@@ -1528,6 +1529,16 @@ public class BreakoutMainView extends BasicJoglSetup
 			this.persistOnUpdate = persistOnUpdate;
 		}
 		
+		public boolean isRebuildViewOnUpdate( )
+		{
+			return rebuildViewOnUpdate;
+		}
+		
+		public void setRebuildViewOnUpdate( boolean rebuildViewOnUpdate )
+		{
+			this.rebuildViewOnUpdate = rebuildViewOnUpdate;
+		}
+		
 		@Override
 		public void tableChanged( TableModelEvent e )
 		{
@@ -1535,7 +1546,10 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				surveyPersister.saveLater( ( SurveyTableModel ) e.getSource( ) );
 			}
-			add( e );
+			if( rebuildViewOnUpdate )
+			{
+				add( e );
+			}
 		}
 		
 		@Override
@@ -1546,6 +1560,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				@Override
 				protected void execute( )
 				{
+					new RuntimeException( ).printStackTrace( );
 					Subtask parsingSubtask = new Subtask( this );
 					parsingSubtask.setStatus( "parsing shot data" );
 					parsingSubtask.setIndeterminate( true );
@@ -1721,6 +1736,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 			catch( final Exception ex )
 			{
+				ex.printStackTrace( );
 				new OnEDT( )
 				{
 					@Override
@@ -1810,11 +1826,13 @@ public class BreakoutMainView extends BasicJoglSetup
 					try
 					{
 						surveyTableChangeHandler.setPersistOnUpdate( false );
+						surveyTableChangeHandler.setRebuildViewOnUpdate( false );
 						surveyDrawer.table( ).getModel( ).clear( );
 					}
 					finally
 					{
 						surveyTableChangeHandler.setPersistOnUpdate( true );
+						surveyTableChangeHandler.setRebuildViewOnUpdate( true );
 					}
 					return true;
 				}

@@ -5,7 +5,9 @@ import java.nio.ByteBuffer;
 import javax.media.opengl.GL;
 import javax.media.opengl.GL2ES2;
 
-public class SharedBuffer
+import org.andork.jogl.neu.JoglResource;
+
+public class SharedBuffer implements JoglResource
 {
 	ByteBuffer	buffer;
 	
@@ -84,7 +86,7 @@ public class SharedBuffer
 		gl.glBindBuffer( target , 0 );
 	}
 	
-	public void destroy( GL2ES2 gl )
+	public void dispose( GL2ES2 gl )
 	{
 		if( initialized )
 		{
