@@ -6,10 +6,12 @@ import static org.andork.awt.event.UIBindings.bindBgColor;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Insets;
 import java.awt.LinearGradientPaint;
 import java.util.Arrays;
 
+import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -59,6 +61,9 @@ public class SettingsDrawer extends Drawer
 	JLabel								projectFileLabel;
 	JTextField							projectFileField;
 	JButton								projectFileMenuButton;
+	
+	JButton								importButton;
+	JButton								exportButton;
 	
 	ViewButtonsPanel					viewButtonsPanel;
 	JSlider								mouseSensitivitySlider;
@@ -124,12 +129,18 @@ public class SettingsDrawer extends Drawer
 	private void createComponents( )
 	{
 		projectFileLabel = new JLabel( );
+		projectFileLabel.setFont( projectFileLabel.getFont( ).deriveFont( Font.BOLD ).deriveFont( 14f ) );
 		localizer.setText( projectFileLabel , "projectFileLabel.text" );
 		projectFileField = new JTextField( );
 		projectFileField.setEditable( false );
 		projectFileField.setPreferredSize( new Dimension( 150 , projectFileField.getPreferredSize( ).height ) );
 		projectFileMenuButton = new JButton( "..." );
 		projectFileMenuButton.setMargin( new Insets( 2 , 4 , 2 , 4 ) );
+		
+		importButton = new JButton( );
+		localizer.setText( importButton , "importButton.text" );
+		exportButton = new JButton( );
+		localizer.setText( exportButton , "exportButton.text" );
 		
 		viewButtonsPanel = new ViewButtonsPanel( );
 		
@@ -219,7 +230,14 @@ public class SettingsDrawer extends Drawer
 		projectFilePanel.defaults( ).filly( );
 		projectFilePanel.put( projectFileField ).xy( 0 , 0 ).fillx( 1.0 );
 		projectFilePanel.put( projectFileMenuButton ).rightOfLast( );
+		
 		w.put( projectFilePanel.getTarget( ) ).belowLast( ).fillx( );
+		
+		GridBagWizard importExportPanel = GridBagWizard.quickPanel( );
+		importExportPanel.put( importButton ).fillx( 0.5 );
+		importExportPanel.put( exportButton ).fillx( 0.5 );
+		
+		w.put( importExportPanel.getTarget( ) ).belowLast( ).fillx( );
 		
 		w.put( viewButtonsPanel ).belowLast( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
@@ -434,6 +452,16 @@ public class SettingsDrawer extends Drawer
 	public JButton getExportImageButton( )
 	{
 		return exportImageButton;
+	}
+	
+	public AbstractButton getImportButton( )
+	{
+		return importButton;
+	}
+	
+	public AbstractButton getExportButton( )
+	{
+		return exportButton;
 	}
 	
 }

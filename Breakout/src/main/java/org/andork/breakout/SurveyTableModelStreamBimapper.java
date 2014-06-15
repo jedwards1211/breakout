@@ -15,9 +15,17 @@ import org.andork.swing.async.SubtaskStreamBimapper;
 
 public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<SurveyTableModel>
 {
+	boolean	closeStreams;
+	
 	public SurveyTableModelStreamBimapper( Subtask subtask )
 	{
+		this( subtask , true );
+	}
+	
+	public SurveyTableModelStreamBimapper( Subtask subtask , boolean closeStreams )
+	{
 		super( subtask );
+		this.closeStreams = closeStreams;
 	}
 	
 	@Override
@@ -62,7 +70,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 		{
 			subtask( ).end( );
 			
-			if( p != null )
+			if( closeStreams && p != null )
 			{
 				try
 				{
@@ -106,7 +114,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 		{
 			subtask( ).end( );
 			
-			if( reader != null )
+			if( closeStreams && reader != null )
 			{
 				try
 				{

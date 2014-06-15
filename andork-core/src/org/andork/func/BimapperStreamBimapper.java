@@ -8,11 +8,18 @@ import java.io.OutputStreamWriter;
 public class BimapperStreamBimapper<T> implements StreamBimapper<T>
 {
 	Bimapper<T, String>	format;
+	boolean				closeStreams;
 	
 	public BimapperStreamBimapper( Bimapper<T, String> format )
 	{
+		this( format , true );
+	}
+	
+	public BimapperStreamBimapper( Bimapper<T, String> format , boolean closeStreams )
+	{
 		super( );
 		this.format = format;
+		this.closeStreams = closeStreams;
 	}
 	
 	@Override
@@ -26,7 +33,7 @@ public class BimapperStreamBimapper<T> implements StreamBimapper<T>
 		}
 		finally
 		{
-			if( writer != null )
+			if( closeStreams && writer != null )
 			{
 				try
 				{
@@ -59,7 +66,7 @@ public class BimapperStreamBimapper<T> implements StreamBimapper<T>
 		}
 		finally
 		{
-			if( reader != null )
+			if( closeStreams && reader != null )
 			{
 				try
 				{

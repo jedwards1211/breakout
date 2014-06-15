@@ -18,6 +18,7 @@ import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -59,6 +60,7 @@ import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
+import org.andork.breakout.model.ProjectArchiveModel;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
 import org.andork.breakout.model.Survey3dModel;
@@ -135,10 +137,10 @@ import com.andork.plot.PlotPanelLayout;
 
 public class BreakoutMainView extends BasicJoglSetup
 {
-	I18n												i18n					= new I18n( );
+	I18n												i18n						= new I18n( );
 	
-	PerspectiveProjectionCalculator						perspCalculator			= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
-	OrthoProjectionCalculator							orthoCalculator			= new OrthoProjectionCalculator( -1 , 1 , -1 , 1 , -10000 , 10000 );
+	PerspectiveProjectionCalculator						perspCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
+	OrthoProjectionCalculator							orthoCalculator				= new OrthoProjectionCalculator( -1 , 1 , -1 , 1 , -10000 , 10000 );
 	DefaultNavigator									navigator;
 	
 	TaskService											rebuildTaskService;
@@ -147,12 +149,12 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	SurveyTableChangeHandler							surveyTableChangeHandler;
 	
-	final double[ ]										fromLoc					= new double[ 3 ];
-	final double[ ]										toLoc					= new double[ 3 ];
-	final double[ ]										toToLoc					= new double[ 3 ];
-	final double[ ]										leftAtTo				= new double[ 3 ];
-	final double[ ]										leftAtTo2				= new double[ 3 ];
-	final double[ ]										leftAtFrom				= new double[ 3 ];
+	final double[ ]										fromLoc						= new double[ 3 ];
+	final double[ ]										toLoc						= new double[ 3 ];
+	final double[ ]										toToLoc						= new double[ 3 ];
+	final double[ ]										leftAtTo					= new double[ 3 ];
+	final double[ ]										leftAtTo2					= new double[ 3 ];
+	final double[ ]										leftAtFrom					= new double[ 3 ];
 	
 	PlotAxis											xaxis;
 	PlotAxis											yaxis;
@@ -172,7 +174,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	TableSelectionHandler								selectionHandler;
 	
-	SurveyFilterFactory									surveyFilterFactory		= new SurveyFilterFactory( );
+	SurveyFilterFactory									surveyFilterFactory			= new SurveyFilterFactory( );
 	
 	SurveyDrawer										surveyDrawer;
 	TaskListDrawer										taskListDrawer;
@@ -180,33 +182,34 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	Survey3dModel										model3d;
 	
-	float[ ]											v						= newMat4f( );
+	float[ ]											v							= newMat4f( );
 	
-	int													debugMbrCount			= 0;
-	List<BasicJOGLObject>								debugMbrs				= new ArrayList<BasicJOGLObject>( );
+	int													debugMbrCount				= 0;
+	List<BasicJOGLObject>								debugMbrs					= new ArrayList<BasicJOGLObject>( );
 	
-	ShotPickContext										spc						= new ShotPickContext( );
+	ShotPickContext										spc							= new ShotPickContext( );
 	
 	ScreenCaptureDialog									screenCaptureDialog;
 	
-	final LinePlaneIntersection3f						lpx						= new LinePlaneIntersection3f( );
-	final float[ ]										p0						= new float[ 3 ];
-	final float[ ]										p1						= new float[ 3 ];
-	final float[ ]										p2						= new float[ 3 ];
+	final LinePlaneIntersection3f						lpx							= new LinePlaneIntersection3f( );
+	final float[ ]										p0							= new float[ 3 ];
+	final float[ ]										p1							= new float[ 3 ];
+	final float[ ]										p2							= new float[ 3 ];
 	
 	File												rootFile;
 	TaskServiceFilePersister<YamlObject<RootModel>>		rootPersister;
-	final Binder<YamlObject<RootModel>>					rootModelBinder			= new Binder<YamlObject<RootModel>>( );
+	final Binder<YamlObject<RootModel>>					rootModelBinder				= new Binder<YamlObject<RootModel>>( );
 	
-	final Binder<YamlObject<ProjectModel>>				projectModelBinder		= new Binder<YamlObject<ProjectModel>>( );
+	final Binder<YamlObject<ProjectModel>>				projectModelBinder			= new Binder<YamlObject<ProjectModel>>( );
 	TaskServiceFilePersister<YamlObject<ProjectModel>>	projectPersister;
 	
 	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
 	
-	final AnimationQueue								cameraAnimationQueue	= new AnimationQueue( );
+	final AnimationQueue								cameraAnimationQueue		= new AnimationQueue( );
 	
-	NewProjectAction									newProjectAction		= new NewProjectAction( this );
-	OpenProjectAction									openProjectAction		= new OpenProjectAction( this );
+	NewProjectAction									newProjectAction			= new NewProjectAction( this );
+	OpenProjectAction									openProjectAction			= new OpenProjectAction( this );
+	ImportProjectArchiveAction							importProjectArchiveAction	= new ImportProjectArchiveAction( this );
 	
 	public BreakoutMainView( )
 	{
@@ -636,6 +639,19 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
+		settingsDrawer.getImportButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				Component source = ( Component ) e.getSource( );
+				
+				JPopupMenu popupMenu = new JPopupMenu( );
+				popupMenu.setLightWeightPopupEnabled( false );
+				popupMenu.add( new JMenuItem( importProjectArchiveAction ) );
+				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
+			}
+		} );
 		settingsDrawer.getFitViewToSelectedButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -1703,6 +1719,90 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			};
 			return task;
+		}
+	}
+	
+	public void importProjectArchive( File newProjectFile )
+	{
+		ioTaskService.submit( new ImportProjectArchiveTask( newProjectFile ) );
+	}
+	
+	private class ImportProjectArchiveTask extends SelfReportingTask
+	{
+		boolean	taskListWasOpen;
+		File	newProjectFile;
+		
+		private ImportProjectArchiveTask( File newProjectFile )
+		{
+			super( getMainPanel( ) );
+			this.newProjectFile = newProjectFile;
+			setStatus( "Saving current project..." );
+			setIndeterminate( true );
+			
+			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
+			taskListDrawer.delegate( ).open( );
+			showDialogLater( );
+		}
+		
+		@Override
+		protected void duringDialog( ) throws Exception
+		{
+			setStatus( "Importing project archive: " + newProjectFile + "..." );
+			
+			new OnEDT( )
+			{
+				@Override
+				public void run( ) throws Throwable
+				{
+					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
+				}
+			};
+			
+			ProjectArchiveModel projectModel = null;
+			
+			Subtask rootSubtask = new Subtask( this );
+			
+			try
+			{
+				projectModel = new ProjectArchiveModelStreamBimapper( getI18n( ) , rootSubtask ).read( new FileInputStream( newProjectFile ) );
+				
+				if( projectModel == null )
+				{
+					return;
+				}
+			}
+			catch( final Exception ex )
+			{
+				ex.printStackTrace( );
+				new OnEDT( )
+				{
+					@Override
+					public void run( ) throws Throwable
+					{
+						JOptionPane.showMessageDialog( getMainPanel( ) ,
+								ex.getClass( ).getName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Failed to import project archive" ,
+								JOptionPane.ERROR_MESSAGE );
+					}
+				};
+				return;
+			}
+			
+			final ProjectArchiveModel finalProjectModel = projectModel;
+			
+			new OnEDT( )
+			{
+				@Override
+				public void run( ) throws Throwable
+				{
+					finalProjectModel.getProjectModel( ).set( ProjectModel.surveyFile , getProjectModel( ).get( ProjectModel.surveyFile ) );
+					projectModelBinder.setModel( finalProjectModel.getProjectModel( ) );
+					projectModelBinder.modelToView( );
+					
+					surveyDrawer.table( ).getModel( ).copyRowsFrom( finalProjectModel.getSurveyTableModel( ) ,
+							0 , finalProjectModel.getSurveyTableModel( ).getRowCount( ) - 1 , 0 );
+				}
+			};
 		}
 	}
 	
