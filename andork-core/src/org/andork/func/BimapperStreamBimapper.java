@@ -30,6 +30,7 @@ public class BimapperStreamBimapper<T> implements StreamBimapper<T>
 		{
 			writer = new OutputStreamWriter( out );
 			writer.write( format.map( t ) );
+			writer.flush( );
 		}
 		finally
 		{

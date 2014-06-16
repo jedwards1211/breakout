@@ -16,29 +16,40 @@ import org.andork.swing.async.SubtaskStreamBimapper;
 public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<SurveyTableModel>
 {
 	boolean	closeStreams;
+	boolean	makeCopy;
 	
 	public SurveyTableModelStreamBimapper( Subtask subtask )
 	{
-		this( subtask , true );
+		super( subtask );
 	}
 	
-	public SurveyTableModelStreamBimapper( Subtask subtask , boolean closeStreams )
+	public SurveyTableModelStreamBimapper closeStreams( boolean closeStreams )
 	{
-		super( subtask );
 		this.closeStreams = closeStreams;
+		return this;
+	}
+	
+	public SurveyTableModelStreamBimapper makeCopy( boolean makeCopy )
+	{
+		this.makeCopy = makeCopy;
+		return this;
 	}
 	
 	@Override
-	public void write( final SurveyTableModel model , OutputStream out ) throws Exception
+	public void write( SurveyTableModel model , OutputStream out ) throws Exception
 	{
-		SurveyTableModel copy = new SurveyTableModel( );
-		SurveyTableModelCopier copier = new SurveyTableModelCopier( );
-		
-		copier.copyInBackground( model , copy , 1000 , null );
+		if( makeCopy )
+		{
+			SurveyTableModel copy = new SurveyTableModel( );
+			SurveyTableModelCopier copier = new SurveyTableModelCopier( );
+			
+			copier.copyInBackground( model , copy , 1000 , null );
+			model = copy;
+		}
 		
 		PrintStream p = null;
 		
-		subtask( ).setTotal( copy.getRowCount( ) );
+		subtask( ).setTotal( model.getRowCount( ) );
 		subtask( ).setCompleted( 0 );
 		subtask( ).setIndeterminate( false );
 		
@@ -46,11 +57,11 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 		{
 			p = new PrintStream( out );
 			
-			for( int ri = 0 ; ri < copy.getRowCount( ) ; ri++ )
+			for( int ri = 0 ; ri < model.getRowCount( ) ; ri++ )
 			{
-				YamlObject<Row> row = copy.getRow( ri );
+				YamlObject<Row> row = model.getRow( ri );
 				
-				for( int ci = 0 ; ci < copy.getColumnCount( ) ; ci++ )
+				for( int ci = 0 ; ci < model.getColumnCount( ) ; ci++ )
 				{
 					if( ci > 0 )
 					{

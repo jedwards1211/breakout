@@ -55,6 +55,11 @@ public class Subtask
 		return total;
 	}
 	
+	public int getProportion( )
+	{
+		return proportion;
+	}
+	
 	public boolean isCanceling( )
 	{
 		return parent instanceof Task ? ( ( Task ) parent ).isCanceling( )

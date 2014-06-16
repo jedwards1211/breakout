@@ -51,7 +51,8 @@ public class ProjectArchiveModelStreamBimapper extends SubtaskStreamBimapper<Pro
 			
 			zipOut.putNextEntry( new ZipEntry( "project-survey.txt" ) );
 			
-			new SurveyTableModelStreamBimapper( subtask( ) , false ).write( model.getSurveyTableModel( ) , zipOut );
+			new SurveyTableModelStreamBimapper( subtask( ) ).closeStreams( false ).makeCopy( false )
+					.write( model.getSurveyTableModel( ) , zipOut );
 		}
 		finally
 		{
@@ -82,7 +83,8 @@ public class ProjectArchiveModelStreamBimapper extends SubtaskStreamBimapper<Pro
 				}
 				else if( zipEntry.getName( ).equals( "project-survey.txt" ) )
 				{
-					surveyTableModel = new SurveyTableModelStreamBimapper( subtask( ) , false ).read( zipIn );
+					surveyTableModel = new SurveyTableModelStreamBimapper( subtask( ) )
+							.closeStreams( false ).makeCopy( false ).read( zipIn );
 				}
 			}
 		}

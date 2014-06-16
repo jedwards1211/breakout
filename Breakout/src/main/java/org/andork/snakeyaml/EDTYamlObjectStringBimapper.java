@@ -46,7 +46,8 @@ public class EDTYamlObjectStringBimapper<S extends YamlSpec<S>> implements Bimap
 	{
 		try
 		{
-			return spec.fromYaml( ( Map<?, ?> ) yaml.load( out ) );
+			Map<?, ?> parsed = ( Map<?, ?> ) yaml.load( out );
+			return parsed == null ? null : spec.fromYaml( parsed );
 		}
 		catch( Exception ex )
 		{

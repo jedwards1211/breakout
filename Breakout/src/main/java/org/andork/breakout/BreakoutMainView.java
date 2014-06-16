@@ -19,6 +19,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -210,6 +211,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	NewProjectAction									newProjectAction			= new NewProjectAction( this );
 	OpenProjectAction									openProjectAction			= new OpenProjectAction( this );
 	ImportProjectArchiveAction							importProjectArchiveAction	= new ImportProjectArchiveAction( this );
+	ExportProjectArchiveAction							exportProjectArchiveAction	= new ExportProjectArchiveAction( this );
 	
 	public BreakoutMainView( )
 	{
@@ -652,6 +654,21 @@ public class BreakoutMainView extends BasicJoglSetup
 				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
 			}
 		} );
+		
+		settingsDrawer.getExportButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				Component source = ( Component ) e.getSource( );
+				
+				JPopupMenu popupMenu = new JPopupMenu( );
+				popupMenu.setLightWeightPopupEnabled( false );
+				popupMenu.add( new JMenuItem( exportProjectArchiveAction ) );
+				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
+			}
+		} );
+		
 		settingsDrawer.getFitViewToSelectedButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -1736,7 +1753,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		{
 			super( getMainPanel( ) );
 			this.newProjectFile = newProjectFile;
-			setStatus( "Saving current project..." );
+			setStatus( "Saving project..." );
 			setIndeterminate( true );
 			
 			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
@@ -1764,7 +1781,8 @@ public class BreakoutMainView extends BasicJoglSetup
 			
 			try
 			{
-				projectModel = new ProjectArchiveModelStreamBimapper( getI18n( ) , rootSubtask ).read( new FileInputStream( newProjectFile ) );
+				projectModel = new ProjectArchiveModelStreamBimapper( getI18n( ) , rootSubtask )
+						.read( new FileInputStream( newProjectFile ) );
 				
 				if( projectModel == null )
 				{
@@ -1803,6 +1821,87 @@ public class BreakoutMainView extends BasicJoglSetup
 							0 , finalProjectModel.getSurveyTableModel( ).getRowCount( ) - 1 , 0 );
 				}
 			};
+		}
+	}
+	
+	public void exportProjectArchive( File newProjectFile )
+	{
+		ioTaskService.submit( new ExportProjectArchiveTask( newProjectFile ) );
+	}
+	
+	private class ExportProjectArchiveTask extends SelfReportingTask
+	{
+		boolean	taskListWasOpen;
+		File	newProjectFile;
+		
+		private ExportProjectArchiveTask( File newProjectFile )
+		{
+			super( getMainPanel( ) );
+			this.newProjectFile = newProjectFile;
+			setStatus( "Saving project..." );
+			setIndeterminate( true );
+			
+			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
+			taskListDrawer.delegate( ).open( );
+			showDialogLater( );
+		}
+		
+		@Override
+		protected void duringDialog( ) throws Exception
+		{
+			setStatus( "Exporting project archive: " + newProjectFile + "..." );
+			
+			setTotal( 1000 );
+			
+			Subtask rootSubtask = new Subtask( this );
+			rootSubtask.setTotal( 3 );
+			Subtask prepareSubtask = rootSubtask.beginSubtask( 1 );
+			prepareSubtask.setStatus( "Preparing for export" );
+			
+			new OnEDT( )
+			{
+				@Override
+				public void run( ) throws Throwable
+				{
+					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
+				}
+			};
+			
+			SurveyTableModel surveyTableModelCopy = new SurveyTableModel( );
+			SurveyTableModelCopier copier = new SurveyTableModelCopier( );
+			copier.copyInBackground( surveyDrawer.table( ).getModel( ) , surveyTableModelCopy , 1000 , prepareSubtask );
+			
+			ProjectArchiveModel projectModel = new ProjectArchiveModel( getProjectModel( ) , surveyTableModelCopy );
+			
+			prepareSubtask.end( );
+			rootSubtask.setCompleted( prepareSubtask.getProportion( ) );
+			
+			Subtask exportSubtask = rootSubtask.beginSubtask( 2 );
+			exportSubtask.setStatus( "Exporting project to " + newProjectFile );
+			
+			try
+			{
+				new ProjectArchiveModelStreamBimapper( getI18n( ) , exportSubtask )
+						.write( projectModel , new FileOutputStream( newProjectFile ) );
+				exportSubtask.end( );
+				rootSubtask.setCompleted( rootSubtask.getCompleted( ) + exportSubtask.getProportion( ) );
+			}
+			catch( final Exception ex )
+			{
+				ex.printStackTrace( );
+				new OnEDT( )
+				{
+					@Override
+					public void run( ) throws Throwable
+					{
+						JOptionPane.showMessageDialog( getMainPanel( ) ,
+								ex.getClass( ).getName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Failed to export project archive" ,
+								JOptionPane.ERROR_MESSAGE );
+					}
+				};
+				return;
+			}
 		}
 	}
 	
