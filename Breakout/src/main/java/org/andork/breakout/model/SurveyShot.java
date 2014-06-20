@@ -9,20 +9,18 @@ import org.andork.math3d.Vecmath;
 
 public class SurveyShot
 {
-	public int				number	= -1;
+	public int				number			= -1;
 	public SurveyStation	from;
 	public SurveyStation	to;
-	public double			dist	= Double.NaN;
-	public double			fsAzm	= Double.NaN;
-	public double			bsAzm	= Double.NaN;
-	public double			fsInc	= Double.NaN;
-	public double			bsInc	= Double.NaN;
-	public double			left	= Double.NaN;
-	public double			right	= Double.NaN;
-	public double			up		= Double.NaN;
-	public double			down	= Double.NaN;
+	public double			dist			= Double.NaN;
+	public double			fsAzm			= Double.NaN;
+	public double			bsAzm			= Double.NaN;
+	public double			fsInc			= Double.NaN;
+	public double			bsInc			= Double.NaN;
+	public CrossSection		fromXsection	= new CrossSection( );
+	public CrossSection		toXsection		= new CrossSection( );
 	
-	private PriorityEntry	priorityEntry;
+	PriorityEntry			priorityEntry;
 	
 	private static class PriorityEntry implements Comparable<PriorityEntry>
 	{
@@ -368,8 +366,18 @@ public class SurveyShot
 		}
 	}
 	
+	public static String getName( String fromName , String toName )
+	{
+		return String.valueOf( fromName ) + " - " + String.valueOf( toName );
+	}
+	
+	public String getName( )
+	{
+		return getName( from.name , to.name );
+	}
+	
 	public String toString( )
 	{
-		return String.valueOf( from ) + " - " + String.valueOf( to );
+		return getName( );
 	}
 }

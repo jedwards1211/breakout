@@ -26,6 +26,7 @@ import static org.andork.spatial.Rectmath.voidRectf;
 import java.awt.Graphics2D;
 import java.awt.LinearGradientPaint;
 import java.awt.Point;
+import java.awt.PageAttributes.OriginType;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -45,6 +46,7 @@ import javax.media.opengl.GL2ES2;
 
 import org.andork.breakout.PickResult;
 import org.andork.breakout.awt.ParamGradientMapPaint;
+import org.andork.breakout.model.Survey3dModel.Segment;
 import org.andork.collect.HashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.jogl.BasicJOGLObject.Uniform1fv;
@@ -156,10 +158,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		nearDist = new Uniform1fv( ).name( "u_nearDist" ).value( 0 );
 		farDist = new Uniform1fv( ).name( "u_farDist" ).value( 1000 );
 		
-		AxialLineSegmentDrawer lineSegmentDrawer = new AxialLineSegmentDrawer( );
-		drawers.putAll( lineSegmentDrawer , segments );
-		AxialFillSegmentDrawer fillSegmentDrawer = new AxialFillSegmentDrawer( );
-		drawers.putAll( fillSegmentDrawer , segments );
+		AxialSegmentDrawer axialSegmentDrawer = new AxialSegmentDrawer( );
+		drawers.putAll( axialSegmentDrawer , segments );
 	}
 	
 	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , Task task )
@@ -421,22 +421,22 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			
 			for( int i = 0 ; i < 3 ; i++ )
 			{
-				geomHelper.putAsFloats( shot.from.position[ i ] + leftAtFrom[ i ] * shot.left );
+				geomHelper.putAsFloats( shot.from.position[ i ] + leftAtFrom[ i ] * shot.fromXsection.dist[ 0 ] );
 			}
 			geomHelper.putAsFloats( leftAtFrom );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
-				geomHelper.putAsFloats( shot.from.position[ i ] - leftAtFrom[ i ] * shot.right );
+				geomHelper.putAsFloats( shot.from.position[ i ] - leftAtFrom[ i ] * shot.fromXsection.dist[ 1 ] );
 			}
 			geomHelper.putAsFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
-				geomHelper.putAsFloats( shot.from.position[ i ] + ( i == 1 ? shot.up : 0.0 ) );
+				geomHelper.putAsFloats( shot.from.position[ i ] + ( i == 1 ? shot.fromXsection.dist[ 2 ] : 0.0 ) );
 			}
 			geomHelper.putAsFloats( 0 , 1 , 0 );
 			for( int i = 0 ; i < 3 ; i++ )
 			{
-				geomHelper.putAsFloats( shot.from.position[ i ] - ( i == 1 ? shot.down : 0.0 ) );
+				geomHelper.putAsFloats( shot.from.position[ i ] - ( i == 1 ? shot.fromXsection.dist[ 3 ] : 0.0 ) );
 			}
 			geomHelper.putAsFloats( 0 , -1 , 0 );
 			
@@ -479,22 +479,22 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 					foundNext = true;
 					for( int i = 0 ; i < 3 ; i++ )
 					{
-						geomHelper.putAsFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.left );
+						geomHelper.putAsFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.fromXsection.dist[ 0 ] );
 					}
 					geomHelper.putAsFloats( leftAtTo );
 					for( int i = 0 ; i < 3 ; i++ )
 					{
-						geomHelper.putAsFloats( shot.to.position[ i ] - leftAtTo[ i ] * bestShot.right );
+						geomHelper.putAsFloats( shot.to.position[ i ] - leftAtTo[ i ] * bestShot.fromXsection.dist[ 1 ] );
 					}
 					geomHelper.putAsFloats( -leftAtTo[ 0 ] , -leftAtTo[ 1 ] , -leftAtTo[ 2 ] );
 					for( int i = 0 ; i < 3 ; i++ )
 					{
-						geomHelper.putAsFloats( shot.to.position[ i ] + ( i == 1 ? bestShot.up : 0.0 ) );
+						geomHelper.putAsFloats( shot.to.position[ i ] + ( i == 1 ? bestShot.fromXsection.dist[ 2 ] : 0.0 ) );
 					}
 					geomHelper.putAsFloats( 0 , 1 , 0 );
 					for( int i = 0 ; i < 3 ; i++ )
 					{
-						geomHelper.putAsFloats( shot.to.position[ i ] - ( i == 1 ? bestShot.down : 0.0 ) );
+						geomHelper.putAsFloats( shot.to.position[ i ] - ( i == 1 ? bestShot.fromXsection.dist[ 3 ] : 0.0 ) );
 					}
 					geomHelper.putAsFloats( 0 , -1 , 0 );
 				}
@@ -700,6 +700,314 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	public SelectionEditor editSelection( )
 	{
 		return new SelectionEditor( );
+	}
+	
+	private void updateParamTexture( GL2ES2 gl )
+	{
+		if( paramTextureImage == null )
+		{
+			paramTextureImage = DirectDataBufferInt.createBufferedImage( 256 , 256 , BufferedImage.TYPE_INT_BGR ,
+					new Point( ) , new Hashtable<Object, Object>( ) );
+		}
+		
+		Graphics2D g2 = paramTextureImage.createGraphics( );
+		
+		g2.clearRect( 0 , 0 , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) );
+		
+		if( paramPaint != null )
+		{
+			g2.setPaint( new ParamGradientMapPaint(
+					new float[ ] { 0 , 0 } ,
+					new float[ ] { 0 , paramTextureImage.getHeight( ) } ,
+					new float[ ] { paramTextureImage.getWidth( ) , 0 } ,
+					0 , 1 ,
+					paramPaint.getFractions( ) ,
+					paramPaint.getColors( ) ) );
+			g2.fillRect( 0 , 0 , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) );
+		}
+		
+		g2.dispose( );
+		
+		IntBuffer paramTextureBuffer = ( ( DirectDataBufferInt ) paramTextureImage.getRaster( ).getDataBuffer( ) ).getData( );
+		
+		if( paramTexture == 0 )
+		{
+			int textures[] = new int[ 1 ];
+			gl.glGenTextures( 1 , textures , 0 );
+			paramTexture = textures[ 0 ];
+		}
+		gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
+		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_S , GL_CLAMP_TO_EDGE );
+		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_T , GL_CLAMP_TO_EDGE );
+		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MAG_FILTER , GL_LINEAR );
+		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MIN_FILTER , GL_LINEAR );
+		gl.glTexImage2D( GL_TEXTURE_2D , 0 , GL_RGBA , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) ,
+				0 , GL_RGBA , GL_UNSIGNED_BYTE , paramTextureBuffer );
+		gl.glBindTexture( GL_TEXTURE_2D , 0 );
+	}
+	
+	private void disposeParamTexture( GL2ES2 gl )
+	{
+		if( paramTexture > 0 )
+		{
+			gl.glDeleteTextures( 1 , new int[ ] { paramTexture } , 0 );
+			paramTexture = 0;
+		}
+	}
+	
+	private void updateHighlights( Collection<Shot> affectedShots , Shot prevHoveredShot , Float prevHoverLocation , LinearAxisConversion prevHighlightExtentConversion )
+	{
+		// find the segments that are affected by the affected shots
+		// (not just the segments containing those shots but segments containing
+		// shots within highlight distance from an affected shot)
+		Set<Segment> affectedSegments = new HashSet<Segment>( );
+		for( Shot shot : affectedShots )
+		{
+			affectedSegments.add( shot.segment );
+		}
+		
+		if( prevHoveredShot != null )
+		{
+			findAffectedSegments( prevHoveredShot , affectedSegments , prevHoverLocation , ( float ) prevHighlightExtentConversion.invert( 0.0 ) );
+		}
+		
+		if( hoveredShot != null )
+		{
+			findAffectedSegments( hoveredShot , affectedSegments , hoverLocation , ( float ) highlightExtentConversion.invert( 0.0 ) );
+		}
+		
+		for( Segment segment : affectedSegments )
+		{
+			clearHighlights( segment );
+		}
+		
+		applyHoverHighlights( );
+		
+		for( Shot shot : selectedShots )
+		{
+			if( affectedSegments.contains( shot.segment ) )
+			{
+				applySelectionHighlights( shot );
+			}
+		}
+		
+		for( Segment segment : affectedSegments )
+		{
+			segment.stationAttrsNeedRebuffering = true;
+		}
+	}
+	
+	private static enum Direction
+	{
+		FORWARD , BACKWARD;
+	}
+	
+	private void findAffectedSegments( Shot shot , Set<Segment> affectedSegments , float location , float distance )
+	{
+		Set<Shot> visitedShots = new HashSet<Shot>( );
+		
+		SurveyShot origShot = originalShots.get( shot.number );
+		
+		float forwardRemainingDistance = distance * 2 - ( float ) origShot.dist * ( 1f - location );
+		float backwardRemainingDistance = distance * 2 - ( float ) origShot.dist * location;
+		
+		findAffectedSegments( origShot.to , Direction.FORWARD , visitedShots , forwardRemainingDistance , affectedSegments );
+		findAffectedSegments( origShot.from , Direction.BACKWARD , visitedShots , backwardRemainingDistance , affectedSegments );
+	}
+	
+	private void findAffectedSegments( SurveyStation station , Direction direction , Set<Shot> visitedShots , float remainingDistance , Set<Segment> affectedSegments )
+	{
+		for( SurveyShot next : station.frontsights )
+		{
+			findAffectedSegments( shots.get( next.number ) , Direction.FORWARD , visitedShots , remainingDistance ,
+					affectedSegments );
+		}
+		for( SurveyShot next : station.backsights )
+		{
+			findAffectedSegments( shots.get( next.number ) , Direction.BACKWARD , visitedShots , remainingDistance ,
+					affectedSegments );
+		}
+	}
+	
+	private void findAffectedSegments( Shot shot , Direction direction , Set<Shot> visitedShots , float remainingDistance , Set<Segment> affectedSegments )
+	{
+		if( visitedShots.add( shot ) )
+		{
+			affectedSegments.add( shot.segment );
+			if( remainingDistance > 0 )
+			{
+				SurveyShot origShot = originalShots.get( shot.number );
+				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
+				float nextRemainingDistance = ( float ) ( remainingDistance - origShot.dist );
+				
+				findAffectedSegments( nextStation , direction , visitedShots , nextRemainingDistance , affectedSegments );
+			}
+		}
+	}
+	
+	private void clearHighlights( Segment segment )
+	{
+		ByteBuffer buffer = segment.stationAttrs.buffer( );
+		buffer.position( 0 );
+		for( int i = 0 ; i < buffer.capacity( ) ; i += STATION_ATTR_BPV )
+		{
+			buffer.putFloat( i , -Float.MAX_VALUE );
+			buffer.putFloat( i + 4 , -Float.MAX_VALUE );
+			buffer.putFloat( i + 8 , 0f );
+		}
+	}
+	
+	private void applyHoverHighlights( )
+	{
+		if( hoveredShot == null )
+		{
+			return;
+		}
+		
+		SurveyShot origShot = originalShots.get( hoveredShot.number );
+		ByteBuffer buffer = hoveredShot.segment.stationAttrs.buffer( );
+		
+		float distToFrom = ( float ) ( origShot.dist * hoverLocation );
+		float distToTo = ( float ) ( origShot.dist * ( 1f - hoverLocation ) );
+		
+		applyHoverHighlights( origShot.from , Direction.BACKWARD , distToFrom , highlightExtentConversion );
+		applyHoverHighlights( origShot.to , Direction.FORWARD , distToTo , highlightExtentConversion );
+		
+		float fromHighlightA = ( float ) highlightExtentConversion.convert( distToTo - origShot.dist );
+		float fromHighlightB = ( float ) highlightExtentConversion.convert( distToFrom );
+		float toHighlightA = ( float ) highlightExtentConversion.convert( distToTo );
+		float toHighlightB = ( float ) highlightExtentConversion.convert( distToFrom - origShot.dist );
+		
+		setFromHighlightA( buffer , hoveredShot.indexInSegment , fromHighlightA );
+		setFromHighlightB( buffer , hoveredShot.indexInSegment , fromHighlightB );
+		setToHighlightA( buffer , hoveredShot.indexInSegment , toHighlightA );
+		setToHighlightB( buffer , hoveredShot.indexInSegment , toHighlightB );
+	}
+	
+	private void applyHoverHighlights( SurveyStation station , Direction direction , float distance , LinearAxisConversion highlightConversion )
+	{
+		for( SurveyShot next : station.frontsights )
+		{
+			applyHoverHighlights( shots.get( next.number ) , Direction.FORWARD , distance , highlightConversion );
+		}
+		for( SurveyShot next : station.backsights )
+		{
+			applyHoverHighlights( shots.get( next.number ) , Direction.BACKWARD , distance , highlightConversion );
+		}
+	}
+	
+	private void applyHoverHighlights( Shot shot , Direction direction , float distance , LinearAxisConversion highlightConversion )
+	{
+		if( highlightConversion.convert( distance ) >= 0.0 )
+		{
+			ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
+			
+			SurveyShot origShot = originalShots.get( shot.number );
+			float nextDistance = ( float ) ( distance + origShot.dist );
+			
+			float fromHighlight;
+			float toHighlight;
+			
+			if( direction == Direction.FORWARD )
+			{
+				fromHighlight = ( float ) highlightConversion.convert( distance );
+				toHighlight = ( float ) highlightConversion.convert( nextDistance );
+			}
+			else
+			{
+				fromHighlight = ( float ) highlightConversion.convert( nextDistance );
+				toHighlight = ( float ) highlightConversion.convert( distance );
+			}
+			
+			float currentFromHighlight = Math.min( getFromHighlightA( buffer , shot.indexInSegment ) , getFromHighlightB( buffer , shot.indexInSegment ) );
+			float currentToHighlight = Math.min( getToHighlightA( buffer , shot.indexInSegment ) , getToHighlightB( buffer , shot.indexInSegment ) );
+			
+			boolean keepGoing = false;
+			
+			if( fromHighlight > currentFromHighlight )
+			{
+				keepGoing = true;
+				setFromHighlightA( buffer , shot.indexInSegment , fromHighlight );
+				setFromHighlightB( buffer , shot.indexInSegment , fromHighlight );
+			}
+			if( toHighlight > currentToHighlight )
+			{
+				keepGoing = true;
+				setToHighlightA( buffer , shot.indexInSegment , toHighlight );
+				setToHighlightB( buffer , shot.indexInSegment , toHighlight );
+			}
+			
+			if( keepGoing )
+			{
+				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
+				applyHoverHighlights( nextStation , direction , nextDistance , highlightConversion );
+			}
+		}
+	}
+	
+	private float getFromHighlightA( ByteBuffer buffer , int shotIndex )
+	{
+		return buffer.getFloat( shotIndex * STATION_ATTR_BPS );
+	}
+	
+	private float getFromHighlightB( ByteBuffer buffer , int shotIndex )
+	{
+		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + 4 );
+	}
+	
+	private float getToHighlightA( ByteBuffer buffer , int shotIndex )
+	{
+		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 );
+	}
+	
+	private float getToHighlightB( ByteBuffer buffer , int shotIndex )
+	{
+		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4 );
+	}
+	
+	private void setFromHighlightA( ByteBuffer buffer , int shotIndex , float value )
+	{
+		int index = shotIndex * STATION_ATTR_BPS;
+		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
+		{
+			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
+		}
+	}
+	
+	private void setFromHighlightB( ByteBuffer buffer , int shotIndex , float value )
+	{
+		int index = shotIndex * STATION_ATTR_BPS + 4;
+		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
+		{
+			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
+		}
+	}
+	
+	private void setToHighlightA( ByteBuffer buffer , int shotIndex , float value )
+	{
+		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2;
+		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
+		{
+			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
+		}
+	}
+	
+	private void setToHighlightB( ByteBuffer buffer , int shotIndex , float value )
+	{
+		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4;
+		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
+		{
+			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
+		}
+	}
+	
+	private void applySelectionHighlights( Shot shot )
+	{
+		ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
+		for( int i = 0 ; i < STATION_ATTR_VPS ; i++ )
+		{
+			buffer.putFloat( shot.indexInSegment * STATION_ATTR_BPS + 8 + i * STATION_ATTR_BPV , 2f );
+		}
 	}
 	
 	public final class SelectionEditor
@@ -1017,6 +1325,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		SharedBuffer			geometry;
 		SharedBuffer			stationAttrs;
 		boolean					stationAttrsNeedRebuffering;
+		SharedBuffer			param0;
+		boolean					param0NeedsRebuffering;
 		SharedBuffer			fillIndices;
 		SharedBuffer			lineIndices;
 		
@@ -1025,6 +1335,28 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			shot.segment = this;
 			shot.indexInSegment = shots.size( );
 			shots.add( shot );
+		}
+		
+		void calcParam0( Survey3dModel model )
+		{
+			param0 = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * GEOM_VPS * 4 ) );
+			param0.buffer( ).position( 0 );
+			for( Shot shot : shots )
+			{
+				SurveyShot origShot = model.originalShots.get( shot.number );
+				float width = origShot.fromXsection.dist[ 0 ] + origShot.fromXsection.dist[ 1 ];
+				float height = origShot.fromXsection.dist[ 2 ] + origShot.fromXsection.dist[ 3 ];
+				float area = width * height;
+				param0.buffer( ).putFloat( area );
+				param0.buffer( ).putFloat( area );
+				param0.buffer( ).putFloat( area );
+				param0.buffer( ).putFloat( area );
+				// height = origShot.toXsection.dist[ 2 ] + origShot.toXsection.dist[ 3 ];
+				param0.buffer( ).putFloat( area );
+				param0.buffer( ).putFloat( area );
+				param0.buffer( ).putFloat( area );
+				param0.buffer( ).putFloat( area );
+			}
 		}
 		
 		void populateData( ByteBuffer allGeomBuffer )
@@ -1052,316 +1384,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			geometry.dispose( gl );
 			stationAttrs.dispose( gl );
+			if( param0 != null )
+			{
+				param0.dispose( gl );
+			}
 			fillIndices.dispose( gl );
 			lineIndices.dispose( gl );
-		}
-	}
-	
-	private void updateParamTexture( GL2ES2 gl )
-	{
-		if( paramTextureImage == null )
-		{
-			paramTextureImage = DirectDataBufferInt.createBufferedImage( 256 , 256 , BufferedImage.TYPE_INT_BGR ,
-					new Point( ) , new Hashtable<Object, Object>( ) );
-		}
-		
-		Graphics2D g2 = paramTextureImage.createGraphics( );
-		
-		g2.clearRect( 0 , 0 , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) );
-		
-		if( paramPaint != null )
-		{
-			g2.setPaint( new ParamGradientMapPaint(
-					new float[ ] { 0 , 0 } ,
-					new float[ ] { 0 , paramTextureImage.getHeight( ) } ,
-					new float[ ] { paramTextureImage.getWidth( ) , 0 } ,
-					0 , 1 ,
-					paramPaint.getFractions( ) ,
-					paramPaint.getColors( ) ) );
-			g2.fillRect( 0 , 0 , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) );
-		}
-		
-		g2.dispose( );
-		
-		IntBuffer paramTextureBuffer = ( ( DirectDataBufferInt ) paramTextureImage.getRaster( ).getDataBuffer( ) ).getData( );
-		
-		if( paramTexture == 0 )
-		{
-			int textures[] = new int[ 1 ];
-			gl.glGenTextures( 1 , textures , 0 );
-			paramTexture = textures[ 0 ];
-		}
-		gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
-		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_S , GL_CLAMP_TO_EDGE );
-		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_WRAP_T , GL_CLAMP_TO_EDGE );
-		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MAG_FILTER , GL_LINEAR );
-		gl.glTexParameteri( GL_TEXTURE_2D , GL_TEXTURE_MIN_FILTER , GL_LINEAR );
-		gl.glTexImage2D( GL_TEXTURE_2D , 0 , GL_RGBA , paramTextureImage.getWidth( ) , paramTextureImage.getHeight( ) ,
-				0 , GL_RGBA , GL_UNSIGNED_BYTE , paramTextureBuffer );
-		gl.glBindTexture( GL_TEXTURE_2D , 0 );
-	}
-	
-	private void disposeParamTexture( GL2ES2 gl )
-	{
-		if( paramTexture > 0 )
-		{
-			gl.glDeleteTextures( 1 , new int[ ] { paramTexture } , 0 );
-			paramTexture = 0;
-		}
-	}
-	
-	private void updateHighlights( Collection<Shot> affectedShots , Shot prevHoveredShot , Float prevHoverLocation , LinearAxisConversion prevHighlightExtentConversion )
-	{
-		// find the segments that are affected by the affected shots
-		// (not just the segments containing those shots but segments containing
-		// shots within highlight distance from an affected shot)
-		Set<Segment> affectedSegments = new HashSet<Segment>( );
-		for( Shot shot : affectedShots )
-		{
-			affectedSegments.add( shot.segment );
-		}
-		
-		if( prevHoveredShot != null )
-		{
-			findAffectedSegments( prevHoveredShot , affectedSegments , prevHoverLocation , ( float ) prevHighlightExtentConversion.invert( 0.0 ) );
-		}
-		
-		if( hoveredShot != null )
-		{
-			findAffectedSegments( hoveredShot , affectedSegments , hoverLocation , ( float ) highlightExtentConversion.invert( 0.0 ) );
-		}
-		
-		for( Segment segment : affectedSegments )
-		{
-			clearHighlights( segment );
-		}
-		
-		applyHoverHighlights( );
-		
-		for( Shot shot : selectedShots )
-		{
-			if( affectedSegments.contains( shot.segment ) )
-			{
-				applySelectionHighlights( shot );
-			}
-		}
-		
-		for( Segment segment : affectedSegments )
-		{
-			segment.stationAttrsNeedRebuffering = true;
-		}
-	}
-	
-	private static enum Direction
-	{
-		FORWARD , BACKWARD;
-	}
-	
-	private void findAffectedSegments( Shot shot , Set<Segment> affectedSegments , float location , float distance )
-	{
-		Set<Shot> visitedShots = new HashSet<Shot>( );
-		
-		SurveyShot origShot = originalShots.get( shot.number );
-		
-		float forwardRemainingDistance = distance * 2 - ( float ) origShot.dist * ( 1f - location );
-		float backwardRemainingDistance = distance * 2 - ( float ) origShot.dist * location;
-		
-		findAffectedSegments( origShot.to , Direction.FORWARD , visitedShots , forwardRemainingDistance , affectedSegments );
-		findAffectedSegments( origShot.from , Direction.BACKWARD , visitedShots , backwardRemainingDistance , affectedSegments );
-	}
-	
-	private void findAffectedSegments( SurveyStation station , Direction direction , Set<Shot> visitedShots , float remainingDistance , Set<Segment> affectedSegments )
-	{
-		for( SurveyShot next : station.frontsights )
-		{
-			findAffectedSegments( shots.get( next.number ) , Direction.FORWARD , visitedShots , remainingDistance ,
-					affectedSegments );
-		}
-		for( SurveyShot next : station.backsights )
-		{
-			findAffectedSegments( shots.get( next.number ) , Direction.BACKWARD , visitedShots , remainingDistance ,
-					affectedSegments );
-		}
-	}
-	
-	private void findAffectedSegments( Shot shot , Direction direction , Set<Shot> visitedShots , float remainingDistance , Set<Segment> affectedSegments )
-	{
-		if( visitedShots.add( shot ) )
-		{
-			affectedSegments.add( shot.segment );
-			if( remainingDistance > 0 )
-			{
-				SurveyShot origShot = originalShots.get( shot.number );
-				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
-				float nextRemainingDistance = ( float ) ( remainingDistance - origShot.dist );
-				
-				findAffectedSegments( nextStation , direction , visitedShots , nextRemainingDistance , affectedSegments );
-			}
-		}
-	}
-	
-	private void clearHighlights( Segment segment )
-	{
-		ByteBuffer buffer = segment.stationAttrs.buffer( );
-		buffer.position( 0 );
-		for( int i = 0 ; i < buffer.capacity( ) ; i += STATION_ATTR_BPV )
-		{
-			buffer.putFloat( i , -Float.MAX_VALUE );
-			buffer.putFloat( i + 4 , -Float.MAX_VALUE );
-			buffer.putFloat( i + 8 , 0f );
-		}
-	}
-	
-	private void applyHoverHighlights( )
-	{
-		if( hoveredShot == null )
-		{
-			return;
-		}
-		
-		SurveyShot origShot = originalShots.get( hoveredShot.number );
-		ByteBuffer buffer = hoveredShot.segment.stationAttrs.buffer( );
-		
-		float distToFrom = ( float ) ( origShot.dist * hoverLocation );
-		float distToTo = ( float ) ( origShot.dist * ( 1f - hoverLocation ) );
-		
-		applyHoverHighlights( origShot.from , Direction.BACKWARD , distToFrom , highlightExtentConversion );
-		applyHoverHighlights( origShot.to , Direction.FORWARD , distToTo , highlightExtentConversion );
-		
-		float fromHighlightA = ( float ) highlightExtentConversion.convert( distToTo - origShot.dist );
-		float fromHighlightB = ( float ) highlightExtentConversion.convert( distToFrom );
-		float toHighlightA = ( float ) highlightExtentConversion.convert( distToTo );
-		float toHighlightB = ( float ) highlightExtentConversion.convert( distToFrom - origShot.dist );
-		
-		setFromHighlightA( buffer , hoveredShot.indexInSegment , fromHighlightA );
-		setFromHighlightB( buffer , hoveredShot.indexInSegment , fromHighlightB );
-		setToHighlightA( buffer , hoveredShot.indexInSegment , toHighlightA );
-		setToHighlightB( buffer , hoveredShot.indexInSegment , toHighlightB );
-	}
-	
-	private void applyHoverHighlights( SurveyStation station , Direction direction , float distance , LinearAxisConversion highlightConversion )
-	{
-		for( SurveyShot next : station.frontsights )
-		{
-			applyHoverHighlights( shots.get( next.number ) , Direction.FORWARD , distance , highlightConversion );
-		}
-		for( SurveyShot next : station.backsights )
-		{
-			applyHoverHighlights( shots.get( next.number ) , Direction.BACKWARD , distance , highlightConversion );
-		}
-	}
-	
-	private void applyHoverHighlights( Shot shot , Direction direction , float distance , LinearAxisConversion highlightConversion )
-	{
-		if( highlightConversion.convert( distance ) >= 0.0 )
-		{
-			ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
-			
-			SurveyShot origShot = originalShots.get( shot.number );
-			float nextDistance = ( float ) ( distance + origShot.dist );
-			
-			float fromHighlight;
-			float toHighlight;
-			
-			if( direction == Direction.FORWARD )
-			{
-				fromHighlight = ( float ) highlightConversion.convert( distance );
-				toHighlight = ( float ) highlightConversion.convert( nextDistance );
-			}
-			else
-			{
-				fromHighlight = ( float ) highlightConversion.convert( nextDistance );
-				toHighlight = ( float ) highlightConversion.convert( distance );
-			}
-			
-			float currentFromHighlight = Math.min( getFromHighlightA( buffer , shot.indexInSegment ) , getFromHighlightB( buffer , shot.indexInSegment ) );
-			float currentToHighlight = Math.min( getToHighlightA( buffer , shot.indexInSegment ) , getToHighlightB( buffer , shot.indexInSegment ) );
-			
-			boolean keepGoing = false;
-			
-			if( fromHighlight > currentFromHighlight )
-			{
-				keepGoing = true;
-				setFromHighlightA( buffer , shot.indexInSegment , fromHighlight );
-				setFromHighlightB( buffer , shot.indexInSegment , fromHighlight );
-			}
-			if( toHighlight > currentToHighlight )
-			{
-				keepGoing = true;
-				setToHighlightA( buffer , shot.indexInSegment , toHighlight );
-				setToHighlightB( buffer , shot.indexInSegment , toHighlight );
-			}
-			
-			if( keepGoing )
-			{
-				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
-				applyHoverHighlights( nextStation , direction , nextDistance , highlightConversion );
-			}
-		}
-	}
-	
-	private float getFromHighlightA( ByteBuffer buffer , int shotIndex )
-	{
-		return buffer.getFloat( shotIndex * STATION_ATTR_BPS );
-	}
-	
-	private float getFromHighlightB( ByteBuffer buffer , int shotIndex )
-	{
-		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + 4 );
-	}
-	
-	private float getToHighlightA( ByteBuffer buffer , int shotIndex )
-	{
-		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 );
-	}
-	
-	private float getToHighlightB( ByteBuffer buffer , int shotIndex )
-	{
-		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4 );
-	}
-	
-	private void setFromHighlightA( ByteBuffer buffer , int shotIndex , float value )
-	{
-		int index = shotIndex * STATION_ATTR_BPS;
-		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
-		{
-			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
-		}
-	}
-	
-	private void setFromHighlightB( ByteBuffer buffer , int shotIndex , float value )
-	{
-		int index = shotIndex * STATION_ATTR_BPS + 4;
-		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
-		{
-			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
-		}
-	}
-	
-	private void setToHighlightA( ByteBuffer buffer , int shotIndex , float value )
-	{
-		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2;
-		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
-		{
-			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
-		}
-	}
-	
-	private void setToHighlightB( ByteBuffer buffer , int shotIndex , float value )
-	{
-		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4;
-		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
-		{
-			buffer.putFloat( index + i * STATION_ATTR_BPV , value );
-		}
-	}
-	
-	private void applySelectionHighlights( Shot shot )
-	{
-		ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
-		for( int i = 0 ; i < STATION_ATTR_VPS ; i++ )
-		{
-			buffer.putFloat( shot.indexInSegment * STATION_ATTR_BPS + 8 + i * STATION_ATTR_BPV , 2f );
 		}
 	}
 	
@@ -1370,34 +1398,117 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		public void draw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n );
 	}
 	
-	private class AxialLineSegmentDrawer implements SegmentDrawer
+	private abstract class BaseSegmentDrawer implements SegmentDrawer
 	{
-		private int	program	= 0;
+		protected int	program	= 0;
 		
-		private int	m_location;
-		private int	v_location;
-		private int	p_location;
-		private int	n_location;
+		protected int	m_location;
+		protected int	v_location;
+		protected int	p_location;
+		protected int	n_location;
+		protected int	a_pos_location;
+		protected int	a_norm_location;
+		protected int	u_ambient_location;
 		
-		private int	a_pos_location;
-		private int	a_norm_location;
-		private int	u_ambient_location;
+		protected int	u_nearDist_location;
+		protected int	u_farDist_location;
 		
-		private int	u_axis_location;
-		private int	u_origin_location;
+		protected int	a_glow_location;
+		protected int	u_glowColor_location;
 		
-		private int	u_loParam_location;
-		private int	u_hiParam_location;
-		private int	u_paramSampler_location;
+		protected int	a_highlightIndex_location;
+		protected int	u_highlightColors_location;
 		
-		private int	u_nearDist_location;
-		private int	u_farDist_location;
+		protected String createVertexShaderVariables( )
+		{
+			return "uniform mat4 m;" +
+					"uniform mat4 v;" +
+					"uniform mat4 p;" +
+					"attribute vec3 a_pos;" +
+					
+					// lighting
+					"attribute vec3 a_norm;" +
+					"varying vec3 v_norm;" +
+					"uniform mat3 n;" +
+					
+					// distance coloration
+					"varying float v_dist;" +
+					
+					// glow
+					"attribute vec2 a_glow;" +
+					"varying vec2 v_glow;" +
+					
+					// highlights
+					"attribute float a_highlightIndex;" +
+					"varying float v_highlightIndex;";
+		}
 		
-		private int	a_glow_location;
-		private int	u_glowColor_location;
+		protected String createVertexShaderCode( )
+		{
+			return "  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
+					"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
+					"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
+					"  v_glow = a_glow;" +
+					"  v_highlightIndex = a_highlightIndex;";
+		}
 		
-		private int	a_highlightIndex_location;
-		private int	u_highlightColors_location;
+		protected String createVertexShader( )
+		{
+			return createVertexShaderVariables( ) +
+					"void main() {" +
+					createVertexShaderCode( ) +
+					"}";
+		}
+		
+		protected String createFragmentShaderVariables( )
+		{
+			// lighting
+			return "varying vec3 v_norm;" +
+					"uniform float u_ambient;" +
+					
+					// distance coloration
+					"varying float v_dist;" +
+					"uniform float u_farDist;" +
+					"uniform float u_nearDist;" +
+					
+					// glow
+					"varying vec2 v_glow;" +
+					"uniform vec4 u_glowColor;" +
+					
+					// highlights
+					"uniform vec4 u_highlightColors[3];" +
+					"varying float v_highlightIndex;";
+			
+		}
+		
+		protected String createFragmentShaderCode( )
+		{
+			return "  float temp;" +
+					"  vec4 indexedHighlight;" +
+					
+					// distance coloration
+					"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
+					
+					// glow
+					"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
+					
+					// lighting
+					"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
+					"  temp = u_ambient + temp * (1.0 - u_ambient);" +
+					"  gl_FragColor.xyz = temp * gl_FragColor.xyz;" +
+					
+					// highlights
+					"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];" +
+					"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);";
+		}
+		
+		protected String createFragmentShader( )
+		{
+			return createFragmentShaderVariables( ) +
+					"void main() {" +
+					createFragmentShaderCode( ) +
+					"}";
+		}
 		
 		public void init( GL2ES2 gl )
 		{
@@ -1405,89 +1516,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			
 			if( program <= 0 )
 			{
-				vertShader = "uniform mat4 m;" +
-						"uniform mat4 p;" +
-						"uniform mat4 v;" +
-						
-						"attribute vec3 a_pos;" +
-						
-						// lighting
-						"attribute vec3 a_norm;" +
-						"varying vec3 v_norm;" +
-						"uniform mat3 n;" +
-						
-						// depth coloration
-						"varying float v_param;" +
-						"uniform vec3 u_axis;" +
-						"uniform vec3 u_origin;" +
-						
-						// distance coloration
-						"varying float v_dist;" +
-						
-						// glow
-						"varying vec2 v_glow;" +
-						"attribute vec2 a_glow;" +
-						
-						// highlights
-						"attribute float a_highlightIndex;" +
-						"varying float v_highlightIndex;" +
-						
-						"void main() " +
-						"{" +
-						"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
-						"  gl_Position.z += 0.1;" +
-						"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
-						"  v_param = dot(a_pos - u_origin, u_axis);" +
-						"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
-						"  v_glow = a_glow;" +
-						"  v_highlightIndex = a_highlightIndex;" +
-						"}";
-				
-				fragShader = "varying vec3 v_norm;" +
-						"uniform float u_ambient;" +
-						
-						// param coloration
-						"varying float v_param;" +
-						"uniform float u_loParam;" +
-						"uniform float u_hiParam;" +
-						"uniform sampler2D u_paramSampler;" +
-						
-						// distance coloration
-						"varying float v_dist;" +
-						"uniform float u_farDist;" +
-						"uniform float u_nearDist;" +
-						
-						// glow
-						"varying vec2 v_glow;" +
-						"uniform vec4 u_glowColor;" +
-						
-						// highlights
-						"uniform vec4 u_highlightColors[3];" +
-						"varying float v_highlightIndex;" +
-						
-						"void main() " +
-						"{" +
-						"  float temp;" +
-						"  vec4 indexedHighlight;" +
-						
-						// param coloration
-						"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
-						
-						// distance coloration
-						"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
-						
-						// glow
-						"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
-						
-						// lighting
-						"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
-						"  temp = u_ambient + temp * (1.0 - u_ambient);" +
-						"  gl_FragColor = temp * gl_FragColor;" +
-						
-						// highlights
-						"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];" +
-						"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
-						"}";
+				vertShader = createVertexShader( );
+				fragShader = createFragmentShader( );
 				
 				program = JOGLUtils.loadProgram( gl , vertShader , fragShader );
 				
@@ -1499,16 +1529,10 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				a_pos_location = gl.glGetAttribLocation( program , "a_pos" );
 				a_norm_location = gl.glGetAttribLocation( program , "a_norm" );
 				
-				u_axis_location = gl.glGetUniformLocation( program , "u_axis" );
-				u_origin_location = gl.glGetUniformLocation( program , "u_origin" );
-				
 				a_glow_location = gl.glGetAttribLocation( program , "a_glow" );
 				a_highlightIndex_location = gl.glGetAttribLocation( program , "a_highlightIndex" );
 				
 				u_ambient_location = gl.glGetUniformLocation( program , "u_ambient" );
-				u_loParam_location = gl.glGetUniformLocation( program , "u_loParam" );
-				u_hiParam_location = gl.glGetUniformLocation( program , "u_hiParam" );
-				u_paramSampler_location = gl.glGetUniformLocation( program , "u_paramSampler" );
 				
 				u_nearDist_location = gl.glGetUniformLocation( program , "u_nearDist" );
 				u_farDist_location = gl.glGetUniformLocation( program , "u_farDist" );
@@ -1538,22 +1562,24 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			
 			gl.glUseProgram( program );
 			
-			gl.glActiveTexture( GL_TEXTURE0 );
-			gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
-			gl.glUniform1i( u_paramSampler_location , 0 );
+			beforeDraw( segments , context , gl , m , n );
 			
+			for( Segment segment : segments )
+			{
+				draw( segment , context , gl , m , n );
+			}
+			
+			afterDraw( segments , context , gl , m , n );
+		}
+		
+		protected void beforeDraw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
 			gl.glUniformMatrix4fv( m_location , 1 , false , m , 0 );
 			gl.glUniformMatrix3fv( n_location , 1 , false , n , 0 );
 			gl.glUniformMatrix4fv( v_location , 1 , false , context.viewXform( ) , 0 );
 			gl.glUniformMatrix4fv( p_location , 1 , false , context.projXform( ) , 0 );
 			
-			gl.glUniform3fv( u_axis_location , 1 , depthAxis.value( ) , 0 );
-			gl.glUniform3fv( u_origin_location , 1 , depthOrigin.value( ) , 0 );
-			
 			gl.glUniform1fv( u_ambient_location , 1 , ambient.value( ) , 0 );
-			
-			gl.glUniform1fv( u_loParam_location , 1 , loParam.value( ) , 0 );
-			gl.glUniform1fv( u_hiParam_location , 1 , hiParam.value( ) , 0 );
 			
 			gl.glUniform1fv( u_nearDist_location , 1 , nearDist.value( ) , 0 );
 			gl.glUniform1fv( u_farDist_location , 1 , farDist.value( ) , 0 );
@@ -1568,19 +1594,24 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			gl.glEnableVertexAttribArray( a_highlightIndex_location );
 			
 			gl.glEnable( GL_DEPTH_TEST );
-			
-			for( Segment segment : segments )
-			{
-				draw( segment , context , gl , m , n );
-			}
+		}
+		
+		protected void afterDraw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			gl.glDisable( GL_DEPTH_TEST );
 			
 			gl.glBindBuffer( GL_ARRAY_BUFFER , 0 );
 			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , 0 );
-			
-			gl.glDisable( GL_DEPTH_TEST );
 		}
 		
 		public void draw( Segment segment , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			beforeDraw( segment , gl , m , n );
+			
+			doDraw( segment , gl );
+		}
+		
+		protected void beforeDraw( Segment segment , GL2ES2 gl , float[ ] m , float[ ] n )
 		{
 			segment.geometry.init( gl );
 			segment.stationAttrs.init( gl );
@@ -1589,7 +1620,6 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				segment.stationAttrs.rebuffer( gl );
 				segment.stationAttrsNeedRebuffering = false;
 			}
-			segment.lineIndices.init( gl );
 			
 			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.geometry.id( ) );
 			gl.glVertexAttribPointer( a_pos_location , 3 , GL_FLOAT , false , GEOM_BPV , 0 );
@@ -1598,241 +1628,176 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.stationAttrs.id( ) );
 			gl.glVertexAttribPointer( a_glow_location , 2 , GL_FLOAT , false , STATION_ATTR_BPV , 0 );
 			gl.glVertexAttribPointer( a_highlightIndex_location , 1 , GL_FLOAT , false , STATION_ATTR_BPV , 8 );
+		}
+		
+		protected abstract void doDraw( Segment segment , GL2ES2 gl );
+	}
+	
+	private abstract class OneParamSegmentDrawer extends BaseSegmentDrawer
+	{
+		private int	u_loParam_location;
+		private int	u_hiParam_location;
+		private int	u_paramSampler_location;
+		
+		@Override
+		protected String createFragmentShaderVariables( )
+		{
+			return super.createFragmentShaderVariables( ) +
+					"uniform float u_loParam;" +
+					"uniform float u_hiParam;" +
+					"uniform sampler2D u_paramSampler;" +
+					"varying float v_param;";
+		}
+		
+		@Override
+		protected String createFragmentShaderCode( )
+		{
+			// param coloration
+			return "  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
+					super.createFragmentShaderCode( );
+		}
+		
+		public void init( GL2ES2 gl )
+		{
+			if( program <= 0 )
+			{
+				super.init( gl );
+				
+				u_loParam_location = gl.glGetUniformLocation( program , "u_loParam" );
+				u_hiParam_location = gl.glGetUniformLocation( program , "u_hiParam" );
+				u_paramSampler_location = gl.glGetUniformLocation( program , "u_paramSampler" );
+			}
+		}
+		
+		@Override
+		protected void beforeDraw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			super.beforeDraw( segments , context , gl , m , n );
 			
-			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , segment.lineIndices.id( ) );
+			gl.glActiveTexture( GL_TEXTURE0 );
+			gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
+			gl.glUniform1i( u_paramSampler_location , 0 );
 			
-			gl.glDrawElements( GL_LINES , segment.lineIndices.buffer( ).capacity( ) / BPI , GL_UNSIGNED_INT , 0 );
+			gl.glUniform1fv( u_loParam_location , 1 , loParam.value( ) , 0 );
+			gl.glUniform1fv( u_hiParam_location , 1 , hiParam.value( ) , 0 );
 		}
 	}
 	
-	private class AxialFillSegmentDrawer implements SegmentDrawer
+	private class AxialSegmentDrawer extends OneParamSegmentDrawer
 	{
-		private int	program	= 0;
-		
-		private int	m_location;
-		private int	v_location;
-		private int	p_location;
-		private int	n_location;
-		private int	a_pos_location;
-		private int	a_norm_location;
-		private int	u_ambient_location;
-		
 		private int	u_axis_location;
 		private int	u_origin_location;
 		
-		private int	u_loParam_location;
-		private int	u_hiParam_location;
-		private int	u_paramSampler_location;
+		@Override
+		protected String createVertexShaderVariables( )
+		{
+			return super.createVertexShaderVariables( ) +
+					"uniform vec3 u_axis;" +
+					"uniform vec3 u_origin;" +
+					"varying float v_param;";
+		}
 		
-		private int	u_nearDist_location;
-		private int	u_farDist_location;
-		
-		private int	a_glow_location;
-		private int	u_glowColor_location;
-		
-		private int	a_highlightIndex_location;
-		private int	u_highlightColors_location;
+		@Override
+		protected String createVertexShaderCode( )
+		{
+			return super.createVertexShaderCode( ) +
+					"  v_param = dot(a_pos - u_origin, u_axis);";
+		}
 		
 		public void init( GL2ES2 gl )
 		{
-			String vertShader, fragShader;
-			
 			if( program <= 0 )
 			{
-				vertShader = "uniform mat4 m;" +
-						"uniform mat4 v;" +
-						"uniform mat4 p;" +
-						"attribute vec3 a_pos;" +
-						
-						// lighting
-						"attribute vec3 a_norm;" +
-						"varying vec3 v_norm;" +
-						"uniform mat3 n;" +
-						
-						// depth coloration
-						"uniform vec3 u_axis;" +
-						"uniform vec3 u_origin;" +
-						"varying float v_param;" +
-						
-						// distance coloration
-						"varying float v_dist;" +
-						
-						// glow
-						"attribute vec2 a_glow;" +
-						"varying vec2 v_glow;" +
-						
-						// highlights
-						"attribute float a_highlightIndex;" +
-						"varying float v_highlightIndex;" +
-						
-						"void main() " +
-						"{" +
-						"  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
-						"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
-						"  v_param = dot(a_pos - u_origin, u_axis);" +
-						"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
-						"  v_glow = a_glow;" +
-						"  v_highlightIndex = a_highlightIndex;" +
-						"}";
-				
-				fragShader = "varying vec3 v_norm;" +
-						"uniform float u_ambient;" +
-						
-						// param coloration
-						"varying float v_param;" +
-						"uniform float u_loParam;" +
-						"uniform float u_hiParam;" +
-						"uniform sampler2D u_paramSampler;" +
-						
-						// distance coloration
-						"varying float v_dist;" +
-						"uniform float u_farDist;" +
-						"uniform float u_nearDist;" +
-						
-						// glow
-						"varying vec2 v_glow;" +
-						"uniform vec4 u_glowColor;" +
-						
-						// highlights
-						"uniform vec4 u_highlightColors[3];" +
-						"varying float v_highlightIndex;" +
-						
-						"void main() " +
-						"{" +
-						"  float temp;" +
-						"  vec4 indexedHighlight;" +
-						
-						// param coloration
-						"  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));" +
-						
-						// distance coloration
-						"  gl_FragColor = mix(gl_FragColor, gl_FragColor * u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));" +
-						
-						// glow
-						"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));" +
-						
-						// lighting
-						"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));" +
-						"  temp = u_ambient + temp * (1.0 - u_ambient);" +
-						"  gl_FragColor.xyz = temp * gl_FragColor.xyz;" +
-						
-						// highlights
-						"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];" +
-						"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);" +
-						"}";
-				
-				program = JOGLUtils.loadProgram( gl , vertShader , fragShader );
-				
-				m_location = gl.glGetUniformLocation( program , "m" );
-				v_location = gl.glGetUniformLocation( program , "v" );
-				p_location = gl.glGetUniformLocation( program , "p" );
-				n_location = gl.glGetUniformLocation( program , "n" );
-				
-				a_pos_location = gl.glGetAttribLocation( program , "a_pos" );
-				a_norm_location = gl.glGetAttribLocation( program , "a_norm" );
-				
+				super.init( gl );
 				u_axis_location = gl.glGetUniformLocation( program , "u_axis" );
 				u_origin_location = gl.glGetUniformLocation( program , "u_origin" );
-				
-				a_glow_location = gl.glGetAttribLocation( program , "a_glow" );
-				a_highlightIndex_location = gl.glGetAttribLocation( program , "a_highlightIndex" );
-				
-				u_ambient_location = gl.glGetUniformLocation( program , "u_ambient" );
-				u_loParam_location = gl.glGetUniformLocation( program , "u_loParam" );
-				u_hiParam_location = gl.glGetUniformLocation( program , "u_hiParam" );
-				u_paramSampler_location = gl.glGetUniformLocation( program , "u_paramSampler" );
-				
-				u_nearDist_location = gl.glGetUniformLocation( program , "u_nearDist" );
-				u_farDist_location = gl.glGetUniformLocation( program , "u_farDist" );
-				
-				u_glowColor_location = gl.glGetUniformLocation( program , "u_glowColor" );
-				
-				u_highlightColors_location = gl.glGetUniformLocation( program , "u_highlightColors" );
-			}
-		}
-		
-		public void dispose( GL2ES2 gl )
-		{
-			if( program > 0 )
-			{
-				gl.glDeleteProgram( program );
-				program = 0;
 			}
 		}
 		
 		@Override
-		public void draw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		protected void beforeDraw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			super.beforeDraw( segments , context , gl , m , n );
+			gl.glUniform3fv( u_axis_location , 1 , depthAxis.value( ) , 0 );
+			gl.glUniform3fv( u_origin_location , 1 , depthOrigin.value( ) , 0 );
+		}
+		
+		@Override
+		protected void beforeDraw( Segment segment , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			super.beforeDraw( segment , gl , m , n );
+			segment.lineIndices.init( gl );
+			segment.fillIndices.init( gl );
+		}
+		
+		@Override
+		protected void doDraw( Segment segment , GL2ES2 gl )
+		{
+			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , segment.lineIndices.id( ) );
+			gl.glDrawElements( GL_LINES , segment.lineIndices.buffer( ).capacity( ) / BPI , GL_UNSIGNED_INT , 0 );
+			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , segment.fillIndices.id( ) );
+			gl.glDrawElements( GL_TRIANGLES , segment.fillIndices.buffer( ).capacity( ) / BPI , GL_UNSIGNED_INT , 0 );
+		}
+	}
+	
+	private class Param0SegmentDrawer extends OneParamSegmentDrawer
+	{
+		private int	a_param0_location;
+		
+		@Override
+		protected String createVertexShaderVariables( )
+		{
+			return super.createVertexShaderVariables( ) +
+					"attribute float a_param0;" +
+					"varying float v_param;";
+		}
+		
+		@Override
+		protected String createVertexShaderCode( )
+		{
+			return super.createVertexShaderCode( ) +
+					"  v_param = a_param0;";
+		}
+		
+		public void init( GL2ES2 gl )
 		{
 			if( program <= 0 )
 			{
-				init( gl );
+				super.init( gl );
+				a_param0_location = gl.glGetAttribLocation( program , "a_param0" );
 			}
-			
-			gl.glUseProgram( program );
-			
-			gl.glActiveTexture( GL_TEXTURE0 );
-			gl.glBindTexture( GL_TEXTURE_2D , paramTexture );
-			gl.glUniform1i( u_paramSampler_location , 0 );
-			
-			gl.glUniformMatrix4fv( m_location , 1 , false , m , 0 );
-			gl.glUniformMatrix3fv( n_location , 1 , false , n , 0 );
-			gl.glUniformMatrix4fv( v_location , 1 , false , context.viewXform( ) , 0 );
-			gl.glUniformMatrix4fv( p_location , 1 , false , context.projXform( ) , 0 );
-			
-			gl.glUniform3fv( u_axis_location , 1 , depthAxis.value( ) , 0 );
-			gl.glUniform3fv( u_origin_location , 1 , depthOrigin.value( ) , 0 );
-			
-			gl.glUniform1fv( u_ambient_location , 1 , ambient.value( ) , 0 );
-			
-			gl.glUniform1fv( u_loParam_location , 1 , loParam.value( ) , 0 );
-			gl.glUniform1fv( u_hiParam_location , 1 , hiParam.value( ) , 0 );
-			
-			gl.glUniform1fv( u_nearDist_location , 1 , nearDist.value( ) , 0 );
-			gl.glUniform1fv( u_farDist_location , 1 , farDist.value( ) , 0 );
-			
-			gl.glUniform4fv( u_glowColor_location , 1 , glowColor.value( ) , 0 );
-			
-			gl.glUniform4fv( u_highlightColors_location , highlightColors.count( ) , highlightColors.value( ) , 0 );
-			
-			gl.glEnableVertexAttribArray( a_pos_location );
-			gl.glEnableVertexAttribArray( a_norm_location );
-			gl.glEnableVertexAttribArray( a_glow_location );
-			gl.glEnableVertexAttribArray( a_highlightIndex_location );
-			
-			gl.glEnable( GL_DEPTH_TEST );
-			
-			for( Segment segment : segments )
-			{
-				draw( segment , context , gl , m , n );
-			}
-			
-			gl.glDisable( GL_DEPTH_TEST );
-			
-			gl.glBindBuffer( GL_ARRAY_BUFFER , 0 );
-			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , 0 );
 		}
 		
-		public void draw( Segment segment , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		@Override
+		protected void beforeDraw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
 		{
-			segment.geometry.init( gl );
-			segment.stationAttrs.init( gl );
-			if( segment.stationAttrsNeedRebuffering )
+			super.beforeDraw( segments , context , gl , m , n );
+			
+			gl.glEnableVertexAttribArray( a_param0_location );
+		}
+		
+		@Override
+		protected void beforeDraw( Segment segment , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			super.beforeDraw( segment , gl , m , n );
+			segment.param0.init( gl );
+			if( segment.param0NeedsRebuffering )
 			{
-				segment.stationAttrs.rebuffer( gl );
-				segment.stationAttrsNeedRebuffering = false;
+				segment.param0.rebuffer( gl );
 			}
+			segment.lineIndices.init( gl );
 			segment.fillIndices.init( gl );
 			
-			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.geometry.id( ) );
-			gl.glVertexAttribPointer( a_pos_location , 3 , GL_FLOAT , false , GEOM_BPV , 0 );
-			gl.glVertexAttribPointer( a_norm_location , 3 , GL_FLOAT , false , GEOM_BPV , 12 );
-			
-			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.stationAttrs.id( ) );
-			gl.glVertexAttribPointer( a_glow_location , 2 , GL_FLOAT , false , STATION_ATTR_BPV , 0 );
-			gl.glVertexAttribPointer( a_highlightIndex_location , 1 , GL_FLOAT , false , STATION_ATTR_BPV , 8 );
-			
+			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.param0.id( ) );
+			gl.glVertexAttribPointer( a_param0_location , 1 , GL_FLOAT , false , 4 , 0 );
+		}
+		
+		@Override
+		protected void doDraw( Segment segment , GL2ES2 gl )
+		{
+			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , segment.lineIndices.id( ) );
+			gl.glDrawElements( GL_LINES , segment.lineIndices.buffer( ).capacity( ) / BPI , GL_UNSIGNED_INT , 0 );
 			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , segment.fillIndices.id( ) );
-			
 			gl.glDrawElements( GL_TRIANGLES , segment.fillIndices.buffer( ).capacity( ) / BPI , GL_UNSIGNED_INT , 0 );
 		}
 	}

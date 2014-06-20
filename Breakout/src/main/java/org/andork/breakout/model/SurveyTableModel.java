@@ -1,11 +1,13 @@
 package org.andork.breakout.model;
 
+import static org.andork.util.StringUtils.toStringOrNull;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.math3d.Vecmath;
@@ -30,38 +32,27 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 	
 	public static class Row extends YamlSpec<Row>
 	{
-		public static final Attribute<String>	from		= stringAttribute( "from" );
-		public static final Attribute<String>	to			= stringAttribute( "to" );
-		public static final Attribute<String>	distance	= stringAttribute( "dist" );
-		public static final Attribute<String>	fsAzm		= stringAttribute( "fsAzm" );
-		public static final Attribute<String>	fsInc		= stringAttribute( "fsInc" );
-		public static final Attribute<String>	bsAzm		= stringAttribute( "bsAzm" );
-		public static final Attribute<String>	bsInc		= stringAttribute( "bsInc" );
-		public static final Attribute<String>	left		= stringAttribute( "left" );
-		public static final Attribute<String>	right		= stringAttribute( "right" );
-		public static final Attribute<String>	up			= stringAttribute( "up" );
-		public static final Attribute<String>	down		= stringAttribute( "down" );
-		public static final Attribute<String>	fwd			= stringAttribute( "fwd" );
-		public static final Attribute<String>	back		= stringAttribute( "back" );
-		public static final Attribute<String>	north		= stringAttribute( "north" );
-		public static final Attribute<String>	east		= stringAttribute( "east" );
-		public static final Attribute<String>	elev		= stringAttribute( "elev" );
-		public static final Attribute<String>	leftNorth	= stringAttribute( "leftNorth" );
-		public static final Attribute<String>	leftEast	= stringAttribute( "leftEast" );
-		public static final Attribute<String>	leftElev	= stringAttribute( "leftElev" );
-		public static final Attribute<String>	rightNorth	= stringAttribute( "rightNorth" );
-		public static final Attribute<String>	rightEast	= stringAttribute( "rightEast" );
-		public static final Attribute<String>	rightElev	= stringAttribute( "rightElev" );
-		public static final Attribute<String>	fwdNorth	= stringAttribute( "fwdNorth" );
-		public static final Attribute<String>	fwdEast		= stringAttribute( "fwdEast" );
-		public static final Attribute<String>	fwdElev		= stringAttribute( "fwdElev" );
-		public static final Attribute<String>	backNorth	= stringAttribute( "backNorth" );
-		public static final Attribute<String>	backEast	= stringAttribute( "backEast" );
-		public static final Attribute<String>	backElev	= stringAttribute( "backElev" );
-		public static final Attribute<String>	desc		= stringAttribute( "desc" );
-		public static final Attribute<String>	date		= stringAttribute( "date" );
-		public static final Attribute<String>	surveyors	= stringAttribute( "surveyors" );
-		public static final Attribute<String>	comment		= stringAttribute( "comment" );
+		public static final Attribute<String>			from			= stringAttribute( "from" );
+		public static final Attribute<String>			to				= stringAttribute( "to" );
+		public static final Attribute<String>			distance		= stringAttribute( "dist" );
+		public static final Attribute<String>			fsAzm			= stringAttribute( "fsAzm" );
+		public static final Attribute<String>			fsInc			= stringAttribute( "fsInc" );
+		public static final Attribute<String>			bsAzm			= stringAttribute( "bsAzm" );
+		public static final Attribute<String>			bsInc			= stringAttribute( "bsInc" );
+		public static final Attribute<CrossSectionType>	xSectionType	= enumAttribute( "xSectionType" , CrossSectionType.class );
+		public static final Attribute<SurveyShotSide>	xSectionSide	= enumAttribute( "xSectionSide" , SurveyShotSide.class );
+		public static final Attribute<String>			left			= stringAttribute( "left" );
+		public static final Attribute<String>			right			= stringAttribute( "right" );
+		public static final Attribute<String>			up				= stringAttribute( "up" );
+		public static final Attribute<String>			down			= stringAttribute( "down" );
+		public static final Attribute<SurveyShotSide>	positionSide	= enumAttribute( "positionSide" , SurveyShotSide.class );
+		public static final Attribute<String>			north			= stringAttribute( "north" );
+		public static final Attribute<String>			east			= stringAttribute( "east" );
+		public static final Attribute<String>			elev			= stringAttribute( "elev" );
+		public static final Attribute<String>			desc			= stringAttribute( "desc" );
+		public static final Attribute<String>			date			= stringAttribute( "date" );
+		public static final Attribute<String>			surveyors		= stringAttribute( "surveyors" );
+		public static final Attribute<String>			comment			= stringAttribute( "comment" );
 		
 		private Row( )
 		{
@@ -158,59 +149,81 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 			
 			try
 			{
-				Object fromName = row.get( Row.from );
-				Object toName = row.get( Row.to );
+				String fromName = toStringOrNull( row.get( Row.from ) );
+				String toName = toStringOrNull( row.get( Row.to ) );
 				double dist = parse( row.get( Row.distance ) );
 				double fsAzm = parse( row.get( Row.fsAzm ) );
 				double bsAzm = parse( row.get( Row.bsAzm ) );
 				double fsInc = parse( row.get( Row.fsInc ) );
 				double bsInc = parse( row.get( Row.bsInc ) );
 				
-				if( fromName == null || toName == null || Double.isNaN( dist ) ||
-						( Double.isNaN( fsInc ) && Double.isNaN( bsInc ) ) )
+				CrossSectionType xSectionType = row.get( Row.xSectionType );
+				if( xSectionType == null )
+				{
+					xSectionType = CrossSectionType.LRUD;
+				}
+				SurveyShotSide xSectionSide = row.get( Row.xSectionSide );
+				if( xSectionSide == null )
+				{
+					xSectionSide = SurveyShotSide.AT_FROM;
+				}
+				
+				float left = parseFloat( row.get( Row.left ) );
+				float right = parseFloat( row.get( Row.right ) );
+				float up = parseFloat( row.get( Row.up ) );
+				float down = parseFloat( row.get( Row.down ) );
+				
+				SurveyShotSide positionSide = row.get( Row.positionSide );
+				if( positionSide == null )
+				{
+					positionSide = SurveyShotSide.AT_FROM;
+				}
+				
+				if( fromName == null || toName == null )
 				{
 					continue;
 				}
 				
-				double left = parse( row.get( Row.left ) );
-				double right = parse( row.get( Row.right ) );
-				double up = parse( row.get( Row.up ) );
-				double down = parse( row.get( Row.down ) );
+				shot = shots.get( SurveyShot.getName( fromName , toName ) );
+				if( shot == null )
+				{
+					shot = shots.get( SurveyShot.getName( toName , fromName ) );
+					if( shot != null )
+					{
+						shot = new SurveyShot( );
+						String s = fromName;
+						fromName = toName;
+						toName = s;
+						
+						double d = fsAzm;
+						fsAzm = bsAzm;
+						bsAzm = d;
+						
+						d = fsInc;
+						fsInc = bsInc;
+						bsInc = d;
+						
+						xSectionSide = xSectionSide.opposite( );
+						positionSide = positionSide.opposite( );
+					}
+					else
+					{
+						if( Double.isNaN( dist ) || ( ( Double.isNaN( fsInc ) && Double.isNaN( bsInc ) ) ) )
+						{
+							continue;
+						}
+					}
+				}
 				
 				double north = parse( row.get( Row.north ) );
 				double east = parse( row.get( Row.east ) );
 				double elev = parse( row.get( Row.elev ) );
 				
-				SurveyStation from = stations.get( fromName.toString( ) );
-				if( from == null )
-				{
-					from = new SurveyStation( );
-					Vecmath.setd( from.position , east , elev , -north );
-					from.name = fromName.toString( );
-					stations.put( from.name , from );
-				}
-				if( !Double.isNaN( north ) && !Double.isInfinite( north ) )
-				{
-					from.position[ 2 ] = -north;
-				}
-				if( !Double.isNaN( east ) && !Double.isInfinite( east ) )
-				{
-					from.position[ 0 ] = east;
-				}
-				if( !Double.isNaN( elev ) && !Double.isInfinite( elev ) )
-				{
-					from.position[ 1 ] = elev;
-				}
+				SurveyStation from = getStation( stations , fromName );
+				SurveyStation to = getStation( stations , toName );
 				
-				SurveyStation to = stations.get( toName.toString( ) );
-				if( to == null )
-				{
-					to = new SurveyStation( );
-					to.name = toName.toString( );
-					stations.put( to.name , to );
-					
-					Arrays.fill( to.position , Double.NaN );
-				}
+				Vecmath.setdNoNaNOrInf( positionSide == SurveyShotSide.AT_FROM ?
+						from.position : to.position , east , elev , -north );
 				
 				shot = new SurveyShot( );
 				shot.from = from;
@@ -220,10 +233,13 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 				shot.bsAzm = bsAzm;
 				shot.fsInc = fsInc;
 				shot.bsInc = bsInc;
-				shot.left = Double.isNaN( left ) ? 0.0 : left;
-				shot.right = Double.isNaN( right ) ? 0.0 : right;
-				shot.up = Double.isNaN( up ) ? 0.0 : up;
-				shot.down = Double.isNaN( down ) ? 0.0 : down;
+				
+				CrossSection xSection = xSectionSide == SurveyShotSide.AT_FROM ? shot.fromXsection : shot.toXsection;
+				xSection.type = xSectionType;
+				xSection.dist[ 0 ] = coalesceNaNOrInf( left , xSection.dist[ 0 ] );
+				xSection.dist[ 1 ] = coalesceNaNOrInf( right , xSection.dist[ 1 ] );
+				xSection.dist[ 2 ] = coalesceNaNOrInf( up , xSection.dist[ 2 ] );
+				xSection.dist[ 3 ] = coalesceNaNOrInf( down , xSection.dist[ 3 ] );
 				
 				if( subtask != null )
 				{
@@ -242,7 +258,7 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 			{
 				if( shot != null )
 				{
-					shots.put( shot.from.name + " - " + shot.to.name , shot );
+					shots.put( shotName( shot ) , shot );
 				}
 				// DO add null shots to shotList
 				shotList.add( shot );
@@ -265,6 +281,28 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		}
 		
 		return shotList;
+	}
+	
+	private static SurveyStation getStation( Map<String, SurveyStation> stations , String name )
+	{
+		SurveyStation station = stations.get( name );
+		if( station == null )
+		{
+			station = new SurveyStation( );
+			station.name = name;
+			stations.put( name , station );
+		}
+		return station;
+	}
+	
+	private static float coalesceNaNOrInf( float a , float b )
+	{
+		return Float.isNaN( a ) || Float.isInfinite( a ) ? b : a;
+	}
+	
+	protected String shotName( SurveyShot shot )
+	{
+		return shot.from.name + " - " + shot.to.name;
 	}
 	
 	public SurveyShot shotAtRow( int rowIndex )
@@ -320,6 +358,22 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		catch( Exception ex )
 		{
 			return Double.NaN;
+		}
+	}
+	
+	private static float parseFloat( Object o )
+	{
+		if( o == null )
+		{
+			return Float.NaN;
+		}
+		try
+		{
+			return Float.valueOf( o.toString( ) );
+		}
+		catch( Exception ex )
+		{
+			return Float.NaN;
 		}
 	}
 	

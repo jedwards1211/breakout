@@ -465,6 +465,18 @@ public class Vecmath
 		System.arraycopy( values , 0 , array , 0 , values.length );
 	}
 	
+	public static void setdNoNaNOrInf( double[ ] array , double ... values )
+	{
+		for( int i = 0 ; i < values.length ; i++ )
+		{
+			double d = values[ i ];
+			if( !Double.isNaN( d ) && !Double.isInfinite( d ) )
+			{
+				array[ i ] = d;
+			}
+		}
+	}
+	
 	public static void setIdentity( double[ ] m )
 	{
 		m[ 0 ] = 1;
