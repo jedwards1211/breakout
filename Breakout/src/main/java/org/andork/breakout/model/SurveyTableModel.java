@@ -7,18 +7,18 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.math3d.Vecmath;
-import org.andork.snakeyaml.YamlObject;
-import org.andork.snakeyaml.YamlSpec;
+import org.andork.q.QObject;
+import org.andork.q.QSpec;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.EasyTableModel;
+import org.andork.swing.table.QObjectRowFormat;
 
 @SuppressWarnings( "serial" )
-public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel.Row>>
+public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Row>>
 {
 	private Map<Integer, Integer>	shotNumberToRowIndexMap	= CollectionUtils.newHashMap( );
 	private final List<SurveyShot>	shots					= new ArrayList<SurveyShot>( );
@@ -26,33 +26,33 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 	public SurveyTableModel( )
 	{
 		super( true );
-		setPrototypeFormat( new YamlObjectRowFormat<Row>( Row.instance ) );
+		setPrototypeFormat( new QObjectRowFormat<Row>( Row.instance ) );
 		ensureNumRows( 1 );
 	}
 	
-	public static class Row extends YamlSpec<Row>
+	public static class Row extends QSpec<Row>
 	{
-		public static final Attribute<String>			from			= stringAttribute( "from" );
-		public static final Attribute<String>			to				= stringAttribute( "to" );
-		public static final Attribute<String>			distance		= stringAttribute( "dist" );
-		public static final Attribute<String>			fsAzm			= stringAttribute( "fsAzm" );
-		public static final Attribute<String>			fsInc			= stringAttribute( "fsInc" );
-		public static final Attribute<String>			bsAzm			= stringAttribute( "bsAzm" );
-		public static final Attribute<String>			bsInc			= stringAttribute( "bsInc" );
-		public static final Attribute<CrossSectionType>	xSectionType	= enumAttribute( "xSectionType" , CrossSectionType.class );
-		public static final Attribute<SurveyShotSide>	xSectionSide	= enumAttribute( "xSectionSide" , SurveyShotSide.class );
-		public static final Attribute<String>			left			= stringAttribute( "left" );
-		public static final Attribute<String>			right			= stringAttribute( "right" );
-		public static final Attribute<String>			up				= stringAttribute( "up" );
-		public static final Attribute<String>			down			= stringAttribute( "down" );
-		public static final Attribute<SurveyShotSide>	positionSide	= enumAttribute( "positionSide" , SurveyShotSide.class );
-		public static final Attribute<String>			north			= stringAttribute( "north" );
-		public static final Attribute<String>			east			= stringAttribute( "east" );
-		public static final Attribute<String>			elev			= stringAttribute( "elev" );
-		public static final Attribute<String>			desc			= stringAttribute( "desc" );
-		public static final Attribute<String>			date			= stringAttribute( "date" );
-		public static final Attribute<String>			surveyors		= stringAttribute( "surveyors" );
-		public static final Attribute<String>			comment			= stringAttribute( "comment" );
+		public static final Attribute<String>			from			= newAttribute( String.class , "from" );
+		public static final Attribute<String>			to				= newAttribute( String.class , "to" );
+		public static final Attribute<String>			distance		= newAttribute( String.class , "dist" );
+		public static final Attribute<String>			fsAzm			= newAttribute( String.class , "fsAzm" );
+		public static final Attribute<String>			fsInc			= newAttribute( String.class , "fsInc" );
+		public static final Attribute<String>			bsAzm			= newAttribute( String.class , "bsAzm" );
+		public static final Attribute<String>			bsInc			= newAttribute( String.class , "bsInc" );
+		public static final Attribute<CrossSectionType>	xSectionType	= newAttribute( CrossSectionType.class , "xSectionType" );
+		public static final Attribute<SurveyShotSide>	xSectionSide	= newAttribute( SurveyShotSide.class , "xSectionSide" );
+		public static final Attribute<String>			left			= newAttribute( String.class , "left" );
+		public static final Attribute<String>			right			= newAttribute( String.class , "right" );
+		public static final Attribute<String>			up				= newAttribute( String.class , "up" );
+		public static final Attribute<String>			down			= newAttribute( String.class , "down" );
+		public static final Attribute<SurveyShotSide>	positionSide	= newAttribute( SurveyShotSide.class , "positionSide" );
+		public static final Attribute<String>			north			= newAttribute( String.class , "north" );
+		public static final Attribute<String>			east			= newAttribute( String.class , "east" );
+		public static final Attribute<String>			elev			= newAttribute( String.class , "elev" );
+		public static final Attribute<String>			desc			= newAttribute( String.class , "desc" );
+		public static final Attribute<String>			date			= newAttribute( String.class , "date" );
+		public static final Attribute<String>			surveyors		= newAttribute( String.class , "surveyors" );
+		public static final Attribute<String>			comment			= newAttribute( String.class , "comment" );
 		
 		private Row( )
 		{
@@ -60,7 +60,6 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		}
 		
 		public static final Row	instance	= new Row( );
-		
 	}
 	
 	public SurveyShot getShotAtRow( int row )
@@ -109,12 +108,12 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 	{
 		while( getRowCount( ) < numRows )
 		{
-			addRow( YamlObject.newInstance( Row.instance ) );
+			addRow( QObject.newInstance( Row.instance ) );
 		}
 	}
 	
 	@Override
-	public void copyRowsFrom( EasyTableModel<YamlObject<Row>> src , int srcStart , int srcEnd , int myStart )
+	public void copyRowsFrom( EasyTableModel<QObject<Row>> src , int srcStart , int srcEnd , int myStart )
 	{
 		super.copyRowsFrom( src , srcStart , srcEnd , myStart );
 		int row = getRowCount( ) - 1;
@@ -143,7 +142,7 @@ public class SurveyTableModel extends EasyTableModel<YamlObject<SurveyTableModel
 		
 		for( int i = 0 ; i < getRowCount( ) ; i++ )
 		{
-			YamlObject<Row> row = getRow( i );
+			QObject<Row> row = getRow( i );
 			
 			SurveyShot shot = null;
 			

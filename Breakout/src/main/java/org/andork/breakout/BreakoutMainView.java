@@ -26,7 +26,6 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
@@ -79,7 +78,7 @@ import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
 import org.andork.func.CompoundBimapper;
 import org.andork.func.FileStringBimapper;
-import org.andork.func.StringObjectBimapper;
+import org.andork.func.StringBimapper;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.OrthoProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
@@ -1944,7 +1943,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					YamlArrayList<File> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
 					if( recentProjectFiles == null )
 					{
-						recentProjectFiles = YamlArrayList.newInstance( CompoundBimapper.compose( FileStringBimapper.instance , StringObjectBimapper.instance ) );
+						recentProjectFiles = YamlArrayList.newInstance( CompoundBimapper.compose( FileStringBimapper.instance , StringBimapper.instance ) );
 						rootModel.set( RootModel.recentProjectFiles , recentProjectFiles );
 					}
 					

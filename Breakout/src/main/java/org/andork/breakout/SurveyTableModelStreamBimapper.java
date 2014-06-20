@@ -9,7 +9,7 @@ import java.io.PrintStream;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QObject;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.SubtaskStreamBimapper;
 
@@ -59,7 +59,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 			
 			for( int ri = 0 ; ri < model.getRowCount( ) ; ri++ )
 			{
-				YamlObject<Row> row = model.getRow( ri );
+				QObject<Row> row = model.getRow( ri );
 				
 				for( int ci = 0 ; ci < model.getColumnCount( ) ; ci++ )
 				{
@@ -114,7 +114,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 				int ci = 0;
 				for( String s : line.split( "\t" ) )
 				{
-					if( String.class.isAssignableFrom( SurveyTableModel.Row.instance.getAttributeArray( )[ ci ].getValueClass( ) ) )
+					if( String.class.isAssignableFrom( SurveyTableModel.Row.instance.attributeAt( ci ).getValueClass( ) ) )
 					{
 						result.setValueAt( s , ri , ci );
 					}

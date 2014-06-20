@@ -9,7 +9,7 @@ import javax.swing.RowFilter;
 
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QObject;
 
 public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer>
 {
@@ -120,7 +120,7 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 	@Override
 	public boolean include( javax.swing.RowFilter.Entry<? extends SurveyTableModel, ? extends Integer> entry )
 	{
-		YamlObject<Row> row = entry.getModel( ).getRow( entry.getIdentifier( ) );
+		QObject<Row> row = entry.getModel( ).getRow( entry.getIdentifier( ) );
 		if( row == null )
 		{
 			return false;

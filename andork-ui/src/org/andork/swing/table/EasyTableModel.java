@@ -15,8 +15,6 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 
 import org.andork.reflect.ReflectionUtils;
-import org.andork.snakeyaml.YamlObject;
-import org.andork.snakeyaml.YamlSpec;
 import org.andork.snakeyaml.YamlSpec.Attribute;
 
 @SuppressWarnings( "serial" )
@@ -70,54 +68,6 @@ public class EasyTableModel<T> extends AbstractTableModel
 		Class<?> getColumnClass( int columnIndex );
 		
 		int getColumnCount( );
-	}
-	
-	public static class YamlObjectRowFormat<S extends YamlSpec<S>> implements RowFormat<YamlObject<S>>
-	{
-		protected final YamlSpec<S>	spec;
-		
-		public YamlObjectRowFormat( YamlSpec<S> spec )
-		{
-			this.spec = spec;
-		}
-		
-		@Override
-		public Object getValueAt( YamlObject<S> row , int columnIndex )
-		{
-			return row.valueAt( columnIndex );
-		}
-		
-		@Override
-		public boolean setValueAt( YamlObject<S> row , Object value , int columnIndex )
-		{
-			row.setValueAt( columnIndex , value );
-			return true;
-		}
-		
-		@Override
-		public boolean isCellEditable( YamlObject<S> row , int columnIndex )
-		{
-			return true;
-		}
-		
-		@Override
-		public String getColumnName( int columnIndex )
-		{
-			return spec.attributeAt( columnIndex ).getName( );
-		}
-		
-		@Override
-		public Class<?> getColumnClass( int columnIndex )
-		{
-			return spec.attributeAt( columnIndex ).getValueClass( );
-		}
-		
-		@Override
-		public int getColumnCount( )
-		{
-			return spec.getAttributeCount( );
-		}
-		
 	}
 	
 	@Retention( RetentionPolicy.RUNTIME )

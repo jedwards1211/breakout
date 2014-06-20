@@ -17,6 +17,7 @@ import java.util.Map;
 
 import org.andork.func.Bimapper;
 import org.andork.func.FileStringBimapper;
+import org.andork.func.StringBimapper;
 import org.andork.reflect.ReflectionUtils;
 import org.andork.util.ArrayUtils;
 
@@ -238,19 +239,6 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 		public Object unmap( Object out )
 		{
 			return out;
-		}
-	}
-	
-	public static class StringBimapper implements Bimapper<String, Object>
-	{
-		public Object map( String t )
-		{
-			return t;
-		}
-		
-		public String unmap( Object s )
-		{
-			return s == null ? null : s.toString( );
 		}
 	}
 	
@@ -555,7 +543,7 @@ public abstract class YamlSpec<S extends YamlSpec<S>>
 	
 	public static Attribute<String> stringAttribute( String name )
 	{
-		return new Attribute<String>( String.class , name , new StringBimapper( ) );
+		return new Attribute<String>( String.class , name , StringBimapper.instance );
 	}
 	
 	public static Attribute<File> fileAttribute( String name )

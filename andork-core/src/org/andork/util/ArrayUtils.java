@@ -1,5 +1,6 @@
 package org.andork.util;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -500,6 +501,22 @@ public class ArrayUtils
 	{
 		int[ ] result = toIntArray( ints );
 		Arrays.sort( result );
+		return result;
+	}
+	
+	public static <T> T[ ] toArray( Iterable<? extends T> iterable , Class<T> componentType )
+	{
+		int count = 0;
+		for( T t : iterable )
+		{
+			count++ ;
+		}
+		T[ ] result = ( T[ ] ) Array.newInstance( componentType , count );
+		int k = 0;
+		for( T t : iterable )
+		{
+			result[ k++ ] = t;
+		}
 		return result;
 	}
 }

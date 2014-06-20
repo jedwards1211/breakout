@@ -4,7 +4,7 @@ import javax.swing.RowFilter;
 
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QObject;
 
 public class SurveyorFilter extends RowFilter<SurveyTableModel, Integer>
 {
@@ -23,7 +23,7 @@ public class SurveyorFilter extends RowFilter<SurveyTableModel, Integer>
 			return true;
 		}
 		
-		YamlObject<Row> row = entry.getModel( ).getRow( entry.getIdentifier( ) );
+		QObject<Row> row = entry.getModel( ).getRow( entry.getIdentifier( ) );
 		if( row == null || row.get( Row.surveyors ) == null )
 		{
 			return false;

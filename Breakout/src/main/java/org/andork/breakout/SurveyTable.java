@@ -6,7 +6,7 @@ import javax.swing.table.TableModel;
 
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
-import org.andork.snakeyaml.YamlSpec.Attribute;
+import org.andork.q.QSpec.Attribute;
 import org.andork.swing.table.AnnotatingJTable;
 import org.jdesktop.swingx.table.TableColumnExt;
 
