@@ -18,7 +18,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 import org.andork.awt.event.UIBindings;
 import org.andork.event.Binder;
 import org.andork.event.Binder.Binding;
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QObject;
 import org.andork.swing.PaintablePanel;
 
 @SuppressWarnings( "serial" )
@@ -30,7 +30,7 @@ public class Drawer extends PaintablePanel
 	JToggleButton					maxButton;
 	Component						mainResizeHandle;
 	ResizeKnobHandler				mainResizeHandler;
-	Binder<YamlObject<DrawerModel>>	binder;
+	Binder<QObject<DrawerModel>>	binder;
 	final List<Binding>				bindings	= new ArrayList<Binding>( );
 	
 	public Drawer( )
@@ -46,7 +46,7 @@ public class Drawer extends PaintablePanel
 		add( content , BorderLayout.CENTER );
 	}
 	
-	public void setBinder( Binder<YamlObject<DrawerModel>> binder )
+	public void setBinder( Binder<QObject<DrawerModel>> binder )
 	{
 		if( this.binder != binder )
 		{

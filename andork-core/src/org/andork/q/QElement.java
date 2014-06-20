@@ -2,6 +2,7 @@ package org.andork.q;
 
 import org.andork.event.HierarchicalBasicPropertyChangePropagator;
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
+import org.andork.func.Mapper;
 import org.andork.model.HasChangeSupport;
 
 public abstract class QElement implements HasChangeSupport
@@ -13,4 +14,6 @@ public abstract class QElement implements HasChangeSupport
 	{
 		return changeSupport.external( );
 	}
+	
+	public abstract QElement deepClone( Mapper<Object, Object> childMapper );
 }

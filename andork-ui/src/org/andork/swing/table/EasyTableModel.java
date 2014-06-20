@@ -15,7 +15,6 @@ import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 
 import org.andork.reflect.ReflectionUtils;
-import org.andork.snakeyaml.YamlSpec.Attribute;
 
 @SuppressWarnings( "serial" )
 public class EasyTableModel<T> extends AbstractTableModel

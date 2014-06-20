@@ -6,34 +6,60 @@ import java.io.File;
 import org.andork.awt.layout.DrawerModel;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
+import org.andork.func.Bimapper;
+import org.andork.func.BimapperFactory;
+import org.andork.func.Color2HexStringBimapper;
+import org.andork.func.EnumBimapper;
+import org.andork.func.FileStringBimapper;
+import org.andork.func.FloatArray2ListBimapper;
+import org.andork.func.IdentityHashMapBimapper;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
-import org.andork.snakeyaml.YamlObject;
-import org.andork.snakeyaml.YamlSpec;
+import org.andork.q.QObject;
+import org.andork.q.QObjectMapBimapper;
+import org.andork.q.QSpec;
+import org.andork.swing.table.old.FilteringTableController;
 
 import com.andork.plot.LinearAxisConversion;
 
-public final class ProjectModel extends YamlSpec<ProjectModel>
+public final class ProjectModel extends QSpec<ProjectModel>
 {
-	public static final Attribute<CameraView>							cameraView					= enumAttribute( "cameraView" , CameraView.class );
-	public static final Attribute<float[ ]>								viewXform					= floatArrayAttribute( "viewXform" );
-	public static final Attribute<LinearAxisConversion>					distRange					= Attribute.newInstance( LinearAxisConversion.class , "distRange" , new LinearAxisConversionYamlBimapper( ) );
-	public static final Attribute<LinearAxisConversion>					paramRange					= Attribute.newInstance( LinearAxisConversion.class , "paramRange" , new LinearAxisConversionYamlBimapper( ) );
-	public static final Attribute<LinearAxisConversion>					highlightRange				= Attribute.newInstance( LinearAxisConversion.class , "highlightRange" , new LinearAxisConversionYamlBimapper( ) );
-	public static final Attribute<FilterType>							filterType					= enumAttribute( "filterType" , FilterType.class );
-	public static final Attribute<File>									surveyFile					= fileAttribute( "surveyFile" );
-	public static final Attribute<YamlObject<DrawerModel>>				settingsDrawer				= yamlObjectAttribute( "settingsDrawer" , DrawerModel.instance );
-	public static final Attribute<YamlObject<DrawerModel>>				surveyDrawer				= yamlObjectAttribute( "surveyDrawer" , DrawerModel.instance );
-	public static final Attribute<YamlObject<DrawerModel>>				miniSurveyDrawer			= yamlObjectAttribute( "miniSurveyDrawer" , DrawerModel.instance );
-	public static final Attribute<YamlObject<DrawerModel>>				taskListDrawer				= yamlObjectAttribute( "taskListDrawer" , DrawerModel.instance );
-	public static final Attribute<YamlObject<ScreenCaptureDialogModel>>	screenCaptureDialogModel	= yamlObjectAttribute( "screenCaptureDialogModel" , ScreenCaptureDialogModel.instance );
-	public static final Attribute<Color>								backgroundColor				= colorAttribute( "backgroundColor" );
-	public static final Attribute<Float>								ambientLight				= floatAttribute( "ambientLight" );
-	public static final Attribute<float[ ]>								depthAxis					= floatArrayAttribute( "depthAxis" );
+	public static final Attribute<CameraView>							cameraView					= newAttribute( CameraView.class , "cameraView" );
+	public static final Attribute<float[ ]>								viewXform					= newAttribute( float[ ].class , "viewXform" );
+	public static final Attribute<LinearAxisConversion>					distRange					= newAttribute( LinearAxisConversion.class , "distRange" );
+	public static final Attribute<LinearAxisConversion>					paramRange					= newAttribute( LinearAxisConversion.class , "paramRange" );
+	public static final Attribute<LinearAxisConversion>					highlightRange				= newAttribute( LinearAxisConversion.class , "highlightRange" );
+	public static final Attribute<FilterType>							filterType					= newAttribute( FilterType.class , "filterType" );
+	public static final Attribute<File>									surveyFile					= newAttribute( File.class , "surveyFile" );
+	public static final Attribute<QObject<DrawerModel>>					settingsDrawer				= newAttribute( DrawerModel.instance , "settingsDrawer" );
+	public static final Attribute<QObject<DrawerModel>>					surveyDrawer				= newAttribute( DrawerModel.instance , "surveyDrawer" );
+	public static final Attribute<QObject<DrawerModel>>					miniSurveyDrawer			= newAttribute( DrawerModel.instance , "miniSurveyDrawer" );
+	public static final Attribute<QObject<DrawerModel>>					taskListDrawer				= newAttribute( DrawerModel.instance , "taskListDrawer" );
+	public static final Attribute<QObject<ScreenCaptureDialogModel>>	screenCaptureDialogModel	= newAttribute( ScreenCaptureDialogModel.instance , "screenCaptureDialogModel" );
+	public static final Attribute<Color>								backgroundColor				= newAttribute( Color.class , "backgroundColor" );
+	public static final Attribute<Float>								ambientLight				= newAttribute( Float.class , "ambientLight" );
+	public static final Attribute<float[ ]>								depthAxis					= newAttribute( float[ ].class , "depthAxis" );
+	
+	public static final ProjectModel									instance					= new ProjectModel( );
+	
+	public static final Bimapper<QObject<ProjectModel>, Object>			defaultMapper;
+	
+	static
+	{
+		defaultMapper = new QObjectMapBimapper<ProjectModel>( instance )
+				.map( distRange , LinearAxisConversionMapBimapper.instance )
+				.map( paramRange , LinearAxisConversionMapBimapper.instance )
+				.map( highlightRange , LinearAxisConversionMapBimapper.instance )
+				.map( surveyFile , FileStringBimapper.instance )
+				.map( settingsDrawer , DrawerModel.defaultMapper )
+				.map( surveyDrawer , DrawerModel.defaultMapper )
+				.map( miniSurveyDrawer , DrawerModel.defaultMapper )
+				.map( taskListDrawer , DrawerModel.defaultMapper )
+				.map( screenCaptureDialogModel , ScreenCaptureDialogModel.defaultMapper )
+				.map( backgroundColor , Color2HexStringBimapper.instance );
+	}
 	
 	private ProjectModel( )
 	{
 		super( );
 	}
-	
-	public static final ProjectModel	instance	= new ProjectModel( );
 }

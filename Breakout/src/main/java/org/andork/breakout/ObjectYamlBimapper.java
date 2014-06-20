@@ -1,4 +1,4 @@
-package org.andork.snakeyaml;
+package org.andork.breakout;
 
 import org.andork.func.Bimapper;
 import org.yaml.snakeyaml.DumperOptions;

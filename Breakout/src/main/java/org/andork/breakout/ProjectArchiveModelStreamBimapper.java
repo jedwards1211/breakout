@@ -13,8 +13,8 @@ import org.andork.breakout.model.ProjectArchiveModel;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.func.BimapperStreamBimapper;
-import org.andork.snakeyaml.EDTYamlObjectStringBimapper;
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QObject;
+import org.andork.q.QObjectMapBimapper;
 import org.andork.swing.FromEDT;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.SubtaskStreamBimapper;
@@ -46,7 +46,7 @@ public class ProjectArchiveModelStreamBimapper extends SubtaskStreamBimapper<Pro
 			zipOut.setMethod( ZipOutputStream.DEFLATED );
 			zipOut.putNextEntry( new ZipEntry( "project.yaml" ) );
 			
-			new BimapperStreamBimapper( EDTYamlObjectStringBimapper.newInstance( ProjectModel.instance ) , false )
+			new BimapperStreamBimapper( QObjectBimappers.defaultBimapper( ProjectModel.defaultMapper ) , false )
 					.write( model.getProjectModel( ) , zipOut );
 			
 			zipOut.putNextEntry( new ZipEntry( "project-survey.txt" ) );
@@ -66,7 +66,7 @@ public class ProjectArchiveModelStreamBimapper extends SubtaskStreamBimapper<Pro
 	@Override
 	public ProjectArchiveModel read( InputStream in ) throws Exception
 	{
-		YamlObject<ProjectModel> projectModel = null;
+		QObject<ProjectModel> projectModel = null;
 		SurveyTableModel surveyTableModel = null;
 		
 		ZipInputStream zipIn = null;
@@ -78,8 +78,8 @@ public class ProjectArchiveModelStreamBimapper extends SubtaskStreamBimapper<Pro
 			{
 				if( zipEntry.getName( ).equals( "project.yaml" ) )
 				{
-					projectModel = new BimapperStreamBimapper<YamlObject<ProjectModel>>(
-							EDTYamlObjectStringBimapper.newInstance( ProjectModel.instance ) , false ).read( zipIn );
+					projectModel = new BimapperStreamBimapper<QObject<ProjectModel>>(
+							QObjectBimappers.defaultBimapper( ProjectModel.defaultMapper ) , false ).read( zipIn );
 				}
 				else if( zipEntry.getName( ).equals( "project-survey.txt" ) )
 				{

@@ -1,20 +1,20 @@
 package org.andork.breakout.model;
 
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QObject;
 
 public class ProjectArchiveModel
 {
-	YamlObject<ProjectModel>	projectModel;
+	QObject<ProjectModel>	projectModel;
 	SurveyTableModel			surveyTableModel;
 	
-	public ProjectArchiveModel( YamlObject<ProjectModel> projectModel , SurveyTableModel surveyTableModel )
+	public ProjectArchiveModel( QObject<ProjectModel> projectModel , SurveyTableModel surveyTableModel )
 	{
 		super( );
 		this.projectModel = projectModel;
 		this.surveyTableModel = surveyTableModel;
 	}
 	
-	public YamlObject<ProjectModel> getProjectModel( )
+	public QObject<ProjectModel> getProjectModel( )
 	{
 		return projectModel;
 	}

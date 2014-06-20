@@ -7,8 +7,15 @@ import org.andork.func.Bimapper;
 
 import com.andork.plot.LinearAxisConversion;
 
-public class LinearAxisConversionYamlBimapper implements Bimapper<LinearAxisConversion, Object>
+public class LinearAxisConversionMapBimapper implements Bimapper<LinearAxisConversion, Object>
 {
+	private LinearAxisConversionMapBimapper( )
+	{
+		
+	}
+	
+	public static final LinearAxisConversionMapBimapper	instance	= new LinearAxisConversionMapBimapper( );
+	
 	@Override
 	public Map<String, Double> map( LinearAxisConversion in )
 	{

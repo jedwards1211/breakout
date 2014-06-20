@@ -114,11 +114,15 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 				int ci = 0;
 				for( String s : line.split( "\t" ) )
 				{
+					if( ci >= SurveyTableModel.Row.instance.getAttributeCount( ) )
+					{
+						break;
+					}
 					if( String.class.isAssignableFrom( SurveyTableModel.Row.instance.attributeAt( ci ).getValueClass( ) ) )
 					{
 						result.setValueAt( s , ri , ci );
 					}
-					ci++;
+					ci++ ;
 				}
 				ri++ ;
 			}

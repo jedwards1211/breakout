@@ -76,9 +76,6 @@ import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
-import org.andork.func.CompoundBimapper;
-import org.andork.func.FileStringBimapper;
-import org.andork.func.StringBimapper;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.OrthoProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
@@ -93,9 +90,8 @@ import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.model.Model;
-import org.andork.snakeyaml.EDTYamlObjectStringBimapper;
-import org.andork.snakeyaml.YamlArrayList;
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QArrayList;
+import org.andork.q.QObject;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
@@ -137,80 +133,80 @@ import com.andork.plot.PlotPanelLayout;
 
 public class BreakoutMainView extends BasicJoglSetup
 {
-	I18n												i18n						= new I18n( );
+	I18n											i18n						= new I18n( );
 	
-	PerspectiveProjectionCalculator						perspCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
-	OrthoProjectionCalculator							orthoCalculator				= new OrthoProjectionCalculator( -1 , 1 , -1 , 1 , -10000 , 10000 );
-	DefaultNavigator									navigator;
+	PerspectiveProjectionCalculator					perspCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
+	OrthoProjectionCalculator						orthoCalculator				= new OrthoProjectionCalculator( -1 , 1 , -1 , 1 , -10000 , 10000 );
+	DefaultNavigator								navigator;
 	
-	TaskService											rebuildTaskService;
-	TaskService											sortTaskService;
-	TaskService											ioTaskService;
+	TaskService										rebuildTaskService;
+	TaskService										sortTaskService;
+	TaskService										ioTaskService;
 	
-	SurveyTableChangeHandler							surveyTableChangeHandler;
+	SurveyTableChangeHandler						surveyTableChangeHandler;
 	
-	final double[ ]										fromLoc						= new double[ 3 ];
-	final double[ ]										toLoc						= new double[ 3 ];
-	final double[ ]										toToLoc						= new double[ 3 ];
-	final double[ ]										leftAtTo					= new double[ 3 ];
-	final double[ ]										leftAtTo2					= new double[ 3 ];
-	final double[ ]										leftAtFrom					= new double[ 3 ];
+	final double[ ]									fromLoc						= new double[ 3 ];
+	final double[ ]									toLoc						= new double[ 3 ];
+	final double[ ]									toToLoc						= new double[ 3 ];
+	final double[ ]									leftAtTo					= new double[ 3 ];
+	final double[ ]									leftAtTo2					= new double[ 3 ];
+	final double[ ]									leftAtFrom					= new double[ 3 ];
 	
-	PlotAxis											xaxis;
-	PlotAxis											yaxis;
-	AxisLinkButton										axisLinkButton;
-	Plot												plot;
-	JPanel												plotPanel;
-	JPanel												mainPanel;
-	JLayeredPane										layeredPane;
+	PlotAxis										xaxis;
+	PlotAxis										yaxis;
+	AxisLinkButton									axisLinkButton;
+	Plot											plot;
+	JPanel											plotPanel;
+	JPanel											mainPanel;
+	JLayeredPane									layeredPane;
 	
-	PlotController										plotController;
-	MouseLooper											mouseLooper;
-	OtherMouseHandler									otherMouseHandler;
-	MousePickHandler									pickHandler;
-	MouseAdapterChain									mouseAdapterChain;
+	PlotController									plotController;
+	MouseLooper										mouseLooper;
+	OtherMouseHandler								otherMouseHandler;
+	MousePickHandler								pickHandler;
+	MouseAdapterChain								mouseAdapterChain;
 	
-	DrawerAutoshowController							autoshowController;
+	DrawerAutoshowController						autoshowController;
 	
-	TableSelectionHandler								selectionHandler;
+	TableSelectionHandler							selectionHandler;
 	
-	SurveyFilterFactory									surveyFilterFactory			= new SurveyFilterFactory( );
+	SurveyFilterFactory								surveyFilterFactory			= new SurveyFilterFactory( );
 	
-	SurveyDrawer										surveyDrawer;
-	TaskListDrawer										taskListDrawer;
-	SettingsDrawer										settingsDrawer;
+	SurveyDrawer									surveyDrawer;
+	TaskListDrawer									taskListDrawer;
+	SettingsDrawer									settingsDrawer;
 	
-	Survey3dModel										model3d;
+	Survey3dModel									model3d;
 	
-	float[ ]											v							= newMat4f( );
+	float[ ]										v							= newMat4f( );
 	
-	int													debugMbrCount				= 0;
-	List<BasicJOGLObject>								debugMbrs					= new ArrayList<BasicJOGLObject>( );
+	int												debugMbrCount				= 0;
+	List<BasicJOGLObject>							debugMbrs					= new ArrayList<BasicJOGLObject>( );
 	
-	ShotPickContext										spc							= new ShotPickContext( );
+	ShotPickContext									spc							= new ShotPickContext( );
 	
-	ScreenCaptureDialog									screenCaptureDialog;
+	ScreenCaptureDialog								screenCaptureDialog;
 	
-	final LinePlaneIntersection3f						lpx							= new LinePlaneIntersection3f( );
-	final float[ ]										p0							= new float[ 3 ];
-	final float[ ]										p1							= new float[ 3 ];
-	final float[ ]										p2							= new float[ 3 ];
+	final LinePlaneIntersection3f					lpx							= new LinePlaneIntersection3f( );
+	final float[ ]									p0							= new float[ 3 ];
+	final float[ ]									p1							= new float[ 3 ];
+	final float[ ]									p2							= new float[ 3 ];
 	
-	File												rootFile;
-	TaskServiceFilePersister<YamlObject<RootModel>>		rootPersister;
-	final Binder<YamlObject<RootModel>>					rootModelBinder				= new Binder<YamlObject<RootModel>>( );
+	File											rootFile;
+	TaskServiceFilePersister<QObject<RootModel>>	rootPersister;
+	final Binder<QObject<RootModel>>				rootModelBinder				= new Binder<QObject<RootModel>>( );
 	
-	final Binder<YamlObject<ProjectModel>>				projectModelBinder			= new Binder<YamlObject<ProjectModel>>( );
-	TaskServiceFilePersister<YamlObject<ProjectModel>>	projectPersister;
+	final Binder<QObject<ProjectModel>>				projectModelBinder			= new Binder<QObject<ProjectModel>>( );
+	TaskServiceFilePersister<QObject<ProjectModel>>	projectPersister;
 	
-	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
+	SubtaskFilePersister<SurveyTableModel>			surveyPersister;
 	
-	final AnimationQueue								cameraAnimationQueue		= new AnimationQueue( );
+	final AnimationQueue							cameraAnimationQueue		= new AnimationQueue( );
 	
-	NewProjectAction									newProjectAction			= new NewProjectAction( this );
-	OpenProjectAction									openProjectAction			= new OpenProjectAction( this );
-	ImportProjectArchiveAction							importProjectArchiveAction	= new ImportProjectArchiveAction( this );
-	ExportProjectArchiveAction							exportProjectArchiveAction	= new ExportProjectArchiveAction( this );
+	NewProjectAction								newProjectAction			= new NewProjectAction( this );
+	OpenProjectAction								openProjectAction			= new OpenProjectAction( this );
+	ImportProjectArchiveAction						importProjectArchiveAction	= new ImportProjectArchiveAction( this );
+	ExportProjectArchiveAction						exportProjectArchiveAction	= new ExportProjectArchiveAction( this );
 	
 	public BreakoutMainView( )
 	{
@@ -626,7 +622,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				popupMenu.setLightWeightPopupEnabled( false );
 				popupMenu.add( new JMenuItem( newProjectAction ) );
 				popupMenu.add( new JMenuItem( openProjectAction ) );
-				YamlArrayList<File> recentProjectFiles = getRootModel( ).get( RootModel.recentProjectFiles );
+				QArrayList<File> recentProjectFiles = getRootModel( ).get( RootModel.recentProjectFiles );
 				if( recentProjectFiles != null && !recentProjectFiles.isEmpty( ) )
 				{
 					popupMenu.add( new JSeparator( ) );
@@ -775,9 +771,9 @@ public class BreakoutMainView extends BasicJoglSetup
 		} );
 		
 		rootFile = new File( new File( ".breakout" ) , "settings.yaml" );
-		rootPersister = new TaskServiceFilePersister<YamlObject<RootModel>>( ioTaskService , "Saving settings..." ,
-				EDTYamlObjectStringBimapper.newInstance( RootModel.instance ) , rootFile );
-		YamlObject<RootModel> rootModel = null;
+		rootPersister = new TaskServiceFilePersister<QObject<RootModel>>( ioTaskService , "Saving settings..." ,
+				QObjectBimappers.defaultBimapper( RootModel.defaultMapper ) , rootFile );
+		QObject<RootModel> rootModel = null;
 		
 		try
 		{
@@ -813,7 +809,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					screenCaptureDialog = new ScreenCaptureDialog( SwingUtilities.getWindowAncestor( mainPanel ) , canvas.getContext( ) , i18n );
 					screenCaptureDialog.setTitle( "Export Image" );
-					YamlObject<ScreenCaptureDialogModel> screenCaptureDialogModel =
+					QObject<ScreenCaptureDialogModel> screenCaptureDialogModel =
 							BreakoutMainView.this.getProjectModel( ).get( ProjectModel.screenCaptureDialogModel );
 					if( screenCaptureDialogModel == null )
 					{
@@ -827,7 +823,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
 						BreakoutMainView.this.getProjectModel( ).set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
 					}
-					Binder<YamlObject<ScreenCaptureDialogModel>> screenCaptureBinder = projectModelBinder.subBinder( ProjectModel.screenCaptureDialogModel );
+					Binder<QObject<ScreenCaptureDialogModel>> screenCaptureBinder = projectModelBinder.subBinder( ProjectModel.screenCaptureDialogModel );
 					screenCaptureDialog.setBinder( screenCaptureBinder );
 					screenCaptureBinder.modelToView( );
 					
@@ -852,19 +848,19 @@ public class BreakoutMainView extends BasicJoglSetup
 		return rootFile;
 	}
 	
-	public Binder<YamlObject<RootModel>> getRootModelBinder( )
+	public Binder<QObject<RootModel>> getRootModelBinder( )
 	{
 		return rootModelBinder;
 	}
 	
-	public YamlObject<RootModel> getRootModel( )
+	public QObject<RootModel> getRootModel( )
 	{
 		return rootModelBinder.getModel( );
 	}
 	
-	public void setRootModel( YamlObject<RootModel> rootModel )
+	public void setRootModel( QObject<RootModel> rootModel )
 	{
-		YamlObject<RootModel> currentModel = getRootModel( );
+		QObject<RootModel> currentModel = getRootModel( );
 		if( currentModel != rootModel )
 		{
 			if( currentModel != null )
@@ -880,7 +876,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
-	public YamlObject<ProjectModel> getProjectModel( )
+	public QObject<ProjectModel> getProjectModel( )
 	{
 		return projectModelBinder.getModel( );
 	}
@@ -1449,7 +1445,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		getProjectModel( ).set( ProjectModel.viewXform , viewXform );
 	}
 	
-	private void replaceNulls( YamlObject<ProjectModel> projectModel , File projectFile )
+	private void replaceNulls( QObject<ProjectModel> projectModel , File projectFile )
 	{
 		if( projectModel.get( ProjectModel.cameraView ) == null )
 		{
@@ -1938,12 +1934,12 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
 					
-					YamlObject<RootModel> rootModel = getRootModel( );
+					QObject<RootModel> rootModel = getRootModel( );
 					rootModel.set( RootModel.currentProjectFile , newProjectFile );
-					YamlArrayList<File> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
+					QArrayList<File> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
 					if( recentProjectFiles == null )
 					{
-						recentProjectFiles = YamlArrayList.newInstance( CompoundBimapper.compose( FileStringBimapper.instance , StringBimapper.instance ) );
+						recentProjectFiles = QArrayList.newInstance( );
 						rootModel.set( RootModel.recentProjectFiles , recentProjectFiles );
 					}
 					
@@ -1958,11 +1954,11 @@ public class BreakoutMainView extends BasicJoglSetup
 					{
 						getProjectModel( ).changeSupport( ).removePropertyChangeListener( projectPersister );
 					}
-					projectPersister = new TaskServiceFilePersister<YamlObject<ProjectModel>>( ioTaskService , "Saving project..." ,
-							EDTYamlObjectStringBimapper.newInstance( ProjectModel.instance ) , newProjectFile );
+					projectPersister = new TaskServiceFilePersister<QObject<ProjectModel>>( ioTaskService , "Saving project..." ,
+							QObjectBimappers.defaultBimapper( ProjectModel.defaultMapper ) , newProjectFile );
 				}
 			};
-			YamlObject<ProjectModel> projectModel = null;
+			QObject<ProjectModel> projectModel = null;
 			
 			try
 			{
@@ -1991,7 +1987,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				return;
 			}
 			
-			final YamlObject<ProjectModel> finalProjectModel = projectModel;
+			final QObject<ProjectModel> finalProjectModel = projectModel;
 			
 			new OnEDT( )
 			{

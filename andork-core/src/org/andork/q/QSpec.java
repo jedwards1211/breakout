@@ -10,7 +10,6 @@ import java.util.Map;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.reflect.ReflectionUtils;
-import org.andork.snakeyaml.YamlSpec.Attribute;
 
 public abstract class QSpec<S extends QSpec<S>>
 {
@@ -107,16 +106,16 @@ public abstract class QSpec<S extends QSpec<S>>
 	
 	public static class Attribute<T>
 	{
-		final Class<T>	valueClass;
-		int				index	= -1;
-		final String	name;
+		final Class<? super T>	valueClass;
+		int						index	= -1;
+		final String			name;
 		
-		public static <T> Attribute<T> newInstance( Class<T> valueClass , String name )
+		public static <T> Attribute<T> newInstance( Class<? super T> valueClass , String name )
 		{
 			return new Attribute<T>( valueClass , name );
 		}
 		
-		public Attribute( Class<T> valueClass , String name )
+		public Attribute( Class<? super T> valueClass , String name )
 		{
 			super( );
 			this.valueClass = valueClass;
@@ -144,8 +143,13 @@ public abstract class QSpec<S extends QSpec<S>>
 		}
 	}
 	
-	public static <T> Attribute<T> newAttribute( Class<T> valueClass , String name )
+	public static <T> Attribute<T> newAttribute( Class<? super T> valueClass , String name )
 	{
 		return new Attribute<T>( valueClass , name );
+	}
+	
+	public static <S extends QSpec<S>> Attribute<QObject<S>> newAttribute( S spec , String name )
+	{
+		return  new Attribute<QObject<S>>( QObject.class , name );
 	}
 }

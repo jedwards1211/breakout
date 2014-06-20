@@ -2,25 +2,36 @@ package org.andork.breakout.model;
 
 import java.io.File;
 
-import org.andork.func.CompoundBimapper;
+import org.andork.func.Bimapper;
 import org.andork.func.FileStringBimapper;
-import org.andork.func.StringBimapper;
-import org.andork.snakeyaml.YamlArrayList;
-import org.andork.snakeyaml.YamlSpec;
+import org.andork.q.QArrayList;
+import org.andork.q.QArrayListBimapper;
+import org.andork.q.QObject;
+import org.andork.q.QObjectMapBimapper;
+import org.andork.q.QSpec;
 
-public final class RootModel extends YamlSpec<RootModel>
+public final class RootModel extends QSpec<RootModel>
 {
-	public static final Attribute<File>					currentProjectFile				= fileAttribute( "currentProjectFile" );
-	public static final Attribute<YamlArrayList<File>>	recentProjectFiles				= yamlArrayListAttribute( "recentProjectFiles" , CompoundBimapper.compose( FileStringBimapper.instance , StringBimapper.instance ) );
-	public static final Attribute<Integer>				desiredNumSamples				= integerAttribute( "desiredNumSamples" );
-	public static final Attribute<Integer>				mouseSensitivity				= integerAttribute( "mouseSensitivity" );
-	public static final Attribute<Integer>				mouseWheelSensitivity			= integerAttribute( "mouseWheelSensitivity" );
-	public static final Attribute<Boolean>				doNotShowNewProjectInfoDialog	= booleanAttribute( "doNotShowNewProjectInfoDialog" );
+	public static final Attribute<File>							currentProjectFile				= newAttribute( File.class , "currentProjectFile" );
+	public static final Attribute<QArrayList<File>>				recentProjectFiles				= newAttribute( QArrayList.class , "recentProjectFiles" );
+	public static final Attribute<Integer>						desiredNumSamples				= newAttribute( Integer.class , "desiredNumSamples" );
+	public static final Attribute<Integer>						mouseSensitivity				= newAttribute( Integer.class , "mouseSensitivity" );
+	public static final Attribute<Integer>						mouseWheelSensitivity			= newAttribute( Integer.class , "mouseWheelSensitivity" );
+	public static final Attribute<Boolean>						doNotShowNewProjectInfoDialog	= newAttribute( Boolean.class , "doNotShowNewProjectInfoDialog" );
+	
+	public static final RootModel								instance						= new RootModel( );
+	
+	public static final Bimapper<QObject<RootModel>, Object>	defaultMapper;
+	
+	static
+	{
+		defaultMapper = new QObjectMapBimapper<RootModel>( instance )
+				.map( currentProjectFile , FileStringBimapper.instance )
+				.map( recentProjectFiles , QArrayListBimapper.newInstance( FileStringBimapper.instance ) );
+	}
 	
 	private RootModel( )
 	{
 		super( );
 	}
-	
-	public static final RootModel	instance	= new RootModel( );
 }

@@ -10,9 +10,6 @@ import static javax.media.opengl.GL.GL_FRAMEBUFFER;
 import static javax.media.opengl.GL.GL_RENDERBUFFER;
 import static javax.media.opengl.GL.GL_RGB;
 import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
-import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
-import static org.andork.math3d.Vecmath.newMat3f;
-import static org.andork.math3d.Vecmath.newMat4f;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -42,10 +39,8 @@ import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.media.opengl.GL2ES2;
-import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLContext;
-import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -77,12 +72,8 @@ import org.andork.awt.event.UIBindings;
 import org.andork.awt.layout.RectangleUtils;
 import org.andork.event.Binder;
 import org.andork.event.Binder.Binding;
-import org.andork.jogl.BasicJOGLScene;
-import org.andork.jogl.JOGLObject;
-import org.andork.jogl.neu.JoglDrawContext;
-import org.andork.jogl.neu.JoglDrawable;
 import org.andork.jogl.neu.JoglScene;
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QObject;
 import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
@@ -166,7 +157,7 @@ public class ScreenCaptureDialog extends JDialog
 	
 	boolean														updating;
 	
-	Binder<YamlObject<ScreenCaptureDialogModel>>				binder;
+	Binder<QObject<ScreenCaptureDialogModel>>				binder;
 	final List<Binding>											bindings	= new ArrayList<Binding>( );
 	
 	JoglScene													scene;
@@ -184,8 +175,8 @@ public class ScreenCaptureDialog extends JDialog
 				
 				ScreenCaptureDialog dialog = new ScreenCaptureDialog( null , new I18n( ) );
 				
-				Binder<YamlObject<ScreenCaptureDialogModel>> binder = new Binder<YamlObject<ScreenCaptureDialogModel>>( );
-				YamlObject<ScreenCaptureDialogModel> model = ScreenCaptureDialogModel.instance.newObject( );
+				Binder<QObject<ScreenCaptureDialogModel>> binder = new Binder<QObject<ScreenCaptureDialogModel>>( );
+				QObject<ScreenCaptureDialogModel> model = ScreenCaptureDialogModel.instance.newObject( );
 				
 				model.set( ScreenCaptureDialogModel.outputDirectory , "screenshots" );
 				model.set( ScreenCaptureDialogModel.fileNamePrefix , "breakout-screenshot" );
@@ -250,7 +241,7 @@ public class ScreenCaptureDialog extends JDialog
 		taskService = new SingleThreadedTaskService( );
 	}
 	
-	public void setBinder( Binder<YamlObject<ScreenCaptureDialogModel>> binder )
+	public void setBinder( Binder<QObject<ScreenCaptureDialogModel>> binder )
 	{
 		if( this.binder != binder )
 		{

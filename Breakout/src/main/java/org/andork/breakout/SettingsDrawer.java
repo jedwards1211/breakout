@@ -37,7 +37,7 @@ import org.andork.breakout.model.RootModel;
 import org.andork.event.Binder;
 import org.andork.func.FileStringBimapper;
 import org.andork.plot.PlotAxisConversionBinding;
-import org.andork.snakeyaml.YamlObject;
+import org.andork.q.QObject;
 import org.andork.swing.OnEDT;
 import org.andork.swing.PaintablePanel;
 import org.andork.swing.border.FillBorder;
@@ -92,10 +92,10 @@ public class SettingsDrawer extends Drawer
 	JPanel								mainPanel;
 	JScrollPane							mainPanelScrollPane;
 	
-	Binder<YamlObject<RootModel>>		rootBinder;
-	Binder<YamlObject<ProjectModel>>	projectBinder;
+	Binder<QObject<RootModel>>		rootBinder;
+	Binder<QObject<ProjectModel>>	projectBinder;
 	
-	public SettingsDrawer( final I18n i18n , Binder<YamlObject<RootModel>> rootBinder , Binder<YamlObject<ProjectModel>> projectBinder )
+	public SettingsDrawer( final I18n i18n , Binder<QObject<RootModel>> rootBinder , Binder<QObject<ProjectModel>> projectBinder )
 	{
 		this.rootBinder = rootBinder;
 		this.projectBinder = projectBinder;
