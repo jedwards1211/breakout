@@ -60,6 +60,7 @@ import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
+import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectArchiveModel;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
@@ -185,8 +186,6 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	ShotPickContext									spc							= new ShotPickContext( );
 	
-	ScreenCaptureDialog								screenCaptureDialog;
-	
 	final LinePlaneIntersection3f					lpx							= new LinePlaneIntersection3f( );
 	final float[ ]									p0							= new float[ 3 ];
 	final float[ ]									p1							= new float[ 3 ];
@@ -207,6 +206,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	OpenProjectAction								openProjectAction			= new OpenProjectAction( this );
 	ImportProjectArchiveAction						importProjectArchiveAction	= new ImportProjectArchiveAction( this );
 	ExportProjectArchiveAction						exportProjectArchiveAction	= new ExportProjectArchiveAction( this );
+	ExportImageAction								exportImageAction			= new ExportImageAction( this );
 	
 	public BreakoutMainView( )
 	{
@@ -660,6 +660,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				JPopupMenu popupMenu = new JPopupMenu( );
 				popupMenu.setLightWeightPopupEnabled( false );
 				popupMenu.add( new JMenuItem( exportProjectArchiveAction ) );
+				popupMenu.add( new JMenuItem( exportImageAction ) );
 				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
 			}
 		} );
@@ -796,50 +797,6 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		setRootModel( rootModel );
 		
-		settingsDrawer.getExportImageButton( ).addActionListener( new ActionListener( )
-		{
-			public void actionPerformed( ActionEvent e )
-			{
-				// // scene.doLater( new ScreenshotHandler( scene ) );
-				// scene.doLater( new HiResScreenshotHandler( scene ,
-				// new int[ ] { 500 , 500 , 500 } , new int[ ] { 500 , 500 , 500 } , Fit.BOTH ) );
-				// canvas.display( );
-				
-				if( screenCaptureDialog == null )
-				{
-					screenCaptureDialog = new ScreenCaptureDialog( SwingUtilities.getWindowAncestor( mainPanel ) , canvas.getContext( ) , i18n );
-					screenCaptureDialog.setTitle( "Export Image" );
-					QObject<ScreenCaptureDialogModel> screenCaptureDialogModel =
-							BreakoutMainView.this.getProjectModel( ).get( ProjectModel.screenCaptureDialogModel );
-					if( screenCaptureDialogModel == null )
-					{
-						screenCaptureDialogModel = ScreenCaptureDialogModel.instance.newObject( );
-						screenCaptureDialogModel.set( ScreenCaptureDialogModel.outputDirectory , "screenshots" );
-						screenCaptureDialogModel.set( ScreenCaptureDialogModel.fileNamePrefix , "breakout-screenshot" );
-						screenCaptureDialogModel.set( ScreenCaptureDialogModel.fileNumber , 1 );
-						screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelWidth , canvas.getWidth( ) );
-						screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelHeight , canvas.getHeight( ) );
-						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolution , new BigDecimal( 300 ) );
-						screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
-						BreakoutMainView.this.getProjectModel( ).set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
-					}
-					Binder<QObject<ScreenCaptureDialogModel>> screenCaptureBinder = projectModelBinder.subBinder( ProjectModel.screenCaptureDialogModel );
-					screenCaptureDialog.setBinder( screenCaptureBinder );
-					screenCaptureBinder.modelToView( );
-					
-					Dimension size = mainPanel.getSize( );
-					size.width = size.width * 3 / 4;
-					size.height = size.height * 3 / 4;
-					screenCaptureDialog.setSize( size );
-					screenCaptureDialog.setLocationRelativeTo( mainPanel );
-				}
-				
-				screenCaptureDialog.setScene( scene );
-				
-				screenCaptureDialog.setVisible( true );
-			}
-		} );
-		
 		openProject( getRootModel( ).get( RootModel.currentProjectFile ) );
 	}
 	
@@ -874,6 +831,11 @@ public class BreakoutMainView extends BasicJoglSetup
 				rootModel.changeSupport( ).addPropertyChangeListener( rootPersister );
 			}
 		}
+	}
+	
+	public Binder<QObject<ProjectModel>> getProjectModelBinder( )
+	{
+		return projectModelBinder;
 	}
 	
 	public QObject<ProjectModel> getProjectModel( )
@@ -1466,6 +1428,10 @@ public class BreakoutMainView extends BasicJoglSetup
 		if( projectModel.get( ProjectModel.viewXform ) == null )
 		{
 			projectModel.set( ProjectModel.viewXform , Vecmath.newMat4f( ) );
+		}
+		if( projectModel.get( ProjectModel.colorParam ) == null )
+		{
+			projectModel.set( ProjectModel.colorParam , ColorParam.DEPTH );
 		}
 		if( projectModel.get( ProjectModel.paramRange ) == null )
 		{

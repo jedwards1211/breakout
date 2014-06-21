@@ -1,10 +1,10 @@
 package org.andork.awt.event;
 
-import static org.andork.util.StringUtils.*;
+import static org.andork.util.StringUtils.toStringOrNull;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.LinearGradientPaint;
+import java.awt.Container;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
@@ -21,6 +21,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 
+import org.andork.awt.layout.BetterCardLayout;
 import org.andork.event.Binder;
 import org.andork.event.Binder.Binding;
 import org.andork.func.Bimapper;
@@ -570,6 +571,52 @@ public class UIBindings
 		public void registerWithView( )
 		{
 			comboBox.addItemListener( this );
+		}
+	}
+	
+	public static BetterCardLayoutEnumBinding bind( Binder b , Container parent , BetterCardLayout cardLayout , Object property )
+	{
+		BetterCardLayoutEnumBinding binding = new BetterCardLayoutEnumBinding( parent , cardLayout , property );
+		b.bind( binding );
+		return binding;
+	}
+	
+	public static class BetterCardLayoutEnumBinding extends Binding
+	{
+		Container			parent;
+		BetterCardLayout	cardLayout;
+		
+		public BetterCardLayoutEnumBinding( Container parent , BetterCardLayout cardLayout , Object property )
+		{
+			super( property );
+			this.parent = parent;
+			this.cardLayout = cardLayout;
+		}
+		
+		@Override
+		public void modelToViewImpl( )
+		{
+			Model model = getModel( );
+			if( model == null )
+			{
+				return;
+			}
+			cardLayout.show( parent , model.get( property ) );
+		}
+		
+		@Override
+		public void viewToModelImpl( )
+		{
+		}
+		
+		@Override
+		public void unregisterFromView( )
+		{
+		}
+		
+		@Override
+		public void registerWithView( )
+		{
 		}
 	}
 	

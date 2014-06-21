@@ -7,17 +7,12 @@ import org.andork.awt.layout.DrawerModel;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
 import org.andork.func.Bimapper;
-import org.andork.func.BimapperFactory;
 import org.andork.func.Color2HexStringBimapper;
-import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
-import org.andork.func.FloatArray2ListBimapper;
-import org.andork.func.IdentityHashMapBimapper;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.q.QObject;
 import org.andork.q.QObjectMapBimapper;
 import org.andork.q.QSpec;
-import org.andork.swing.table.old.FilteringTableController;
 
 import com.andork.plot.LinearAxisConversion;
 
@@ -26,6 +21,7 @@ public final class ProjectModel extends QSpec<ProjectModel>
 	public static final Attribute<CameraView>							cameraView					= newAttribute( CameraView.class , "cameraView" );
 	public static final Attribute<float[ ]>								viewXform					= newAttribute( float[ ].class , "viewXform" );
 	public static final Attribute<LinearAxisConversion>					distRange					= newAttribute( LinearAxisConversion.class , "distRange" );
+	public static final Attribute<ColorParam>							colorParam					= newAttribute( ColorParam.class , "colorParam" );
 	public static final Attribute<LinearAxisConversion>					paramRange					= newAttribute( LinearAxisConversion.class , "paramRange" );
 	public static final Attribute<LinearAxisConversion>					highlightRange				= newAttribute( LinearAxisConversion.class , "highlightRange" );
 	public static final Attribute<FilterType>							filterType					= newAttribute( FilterType.class , "filterType" );

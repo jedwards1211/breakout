@@ -30,9 +30,11 @@ import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.awt.I18n;
 import org.andork.awt.I18n.Localizer;
+import org.andork.awt.layout.BetterCardLayout;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
+import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
 import org.andork.event.Binder;
@@ -48,6 +50,7 @@ import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
 import org.andork.swing.selector.DefaultSelector;
 import org.jdesktop.swingx.JXColorSelectionButton;
+import org.jdesktop.swingx.VerticalLayout;
 
 import com.andork.plot.PlotAxis;
 import com.andork.plot.PlotAxis.LabelPosition;
@@ -73,17 +76,24 @@ public class SettingsDrawer extends Drawer
 	JSlider							ambientLightSlider;
 	PlotAxis						distColorationAxis;
 	PaintablePanel					distColorationAxisPanel;
+	
+	JLabel							colorParamLabel;
+	DefaultSelector<ColorParam>		colorParamSelector;
+	JPanel							colorParamDetailsPanel;
+	BetterCardLayout				colorParamDetailsLayout;
 	PlotAxis						paramColorationAxis;
 	PaintablePanel					paramColorationAxisPanel;
+	
+	JPanel							colorByDepthDetailsPanel;
 	JButton							inferDepthAxisTiltButton;
 	JButton							resetDepthAxisTiltButton;
+	
 	PlotAxis						glowDistAxis;
 	PaintablePanel					glowDistAxisPanel;
 	JButton							fitViewToEverythingButton;
 	JButton							fitViewToSelectedButton;
 	JButton							orbitToPlanButton;
 	JButton							debugButton;
-	JButton							exportImageButton;
 	
 	JLabel							numSamplesLabel;
 	JSlider							numSamplesSlider;
@@ -166,6 +176,13 @@ public class SettingsDrawer extends Drawer
 		distColorationAxis.setMajorTickColor( Color.WHITE );
 		distColorationAxis.setMinorTickColor( Color.WHITE );
 		
+		colorParamLabel = new JLabel( );
+		localizer.setText( colorParamLabel , "colorParamLabel.text" );
+		colorParamSelector = new DefaultSelector<ColorParam>( );
+		colorParamSelector.setAvailableValues( Arrays.asList( ColorParam.DEPTH ) );
+		colorParamDetailsPanel = new JPanel( );
+		colorParamDetailsPanel.setOpaque( false );
+		
 		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		paramColorationAxisPanel = PaintablePanel.wrap( paramColorationAxis );
 		paramColorationAxisPanel.setUnderpaintBorder(
@@ -177,6 +194,8 @@ public class SettingsDrawer extends Drawer
 		paramColorationAxis.setMajorTickColor( Color.WHITE );
 		paramColorationAxis.setMinorTickColor( Color.WHITE );
 		
+		colorByDepthDetailsPanel = new JPanel( );
+		colorByDepthDetailsPanel.setOpaque( false );
 		inferDepthAxisTiltButton = new JButton( "Infer Depth Axis Tilt" );
 		resetDepthAxisTiltButton = new JButton( "Reset Depth Axis Tilt" );
 		
@@ -203,8 +222,6 @@ public class SettingsDrawer extends Drawer
 		
 		filterTypeSelector = new DefaultSelector<FilterType>( );
 		filterTypeSelector.setAvailableValues( Arrays.asList( FilterType.values( ) ) );
-		
-		exportImageButton = new JButton( "Export Image..." );
 		
 		numSamplesLabel = new JLabel( "Multisampling: Off" );
 		numSamplesSlider = new JSlider( 1 , 1 , 1 );
@@ -266,17 +283,25 @@ public class SettingsDrawer extends Drawer
 		JLabel distLabel = new JLabel( "Distance coloration:" );
 		w.put( distLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( distColorationAxisPanel ).belowLast( ).fillx( );
-		JLabel paramLabel = new JLabel( "Depth coloration:" );
-		w.put( paramLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
+		
+		GridBagWizard colorParamPanel = GridBagWizard.quickPanel( );
+		colorParamPanel.put( colorParamLabel ).xy( 0 , 0 ).west( );
+		colorParamPanel.put( colorParamSelector.getComboBox( ) ).rightOfLast( ).fillx( 1.0 ).addToInsets( 0 , 5 , 0 , 0 );
+		w.put( colorParamPanel.getTarget( ) ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
+		colorParamDetailsPanel.setLayout( colorParamDetailsLayout = new BetterCardLayout( ) );
+		w.put( colorParamDetailsPanel ).belowLast( ).fillx( );
 		w.put( paramColorationAxisPanel ).belowLast( ).fillx( );
-		w.put( inferDepthAxisTiltButton ).belowLast( ).fillx( );
-		w.put( resetDepthAxisTiltButton ).belowLast( ).fillx( );
+		
+		colorByDepthDetailsPanel.setLayout( new VerticalLayout( 2 ) );
+		colorByDepthDetailsPanel.add( inferDepthAxisTiltButton );
+		colorByDepthDetailsPanel.add( resetDepthAxisTiltButton );
+		colorParamDetailsPanel.add( colorByDepthDetailsPanel , ColorParam.DEPTH );
+		
 		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
 		w.put( highlightRangeLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( glowDistAxisPanel ).belowLast( ).fillx( );
 		w.put( numSamplesLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( numSamplesSlider ).belowLast( ).fillx( );
-		w.put( exportImageButton ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
 		JLabel filterTypeLabel = new JLabel( "Filter type:" );
 		w.put( filterTypeLabel ).belowLast( ).west( ).insets( 40 , 0 , 0 , 0 );
 		w.put( filterTypeSelector.getComboBox( ) ).belowLast( ).fillx( );
@@ -324,6 +349,8 @@ public class SettingsDrawer extends Drawer
 		bind( rootBinder , mouseSensitivitySlider , RootModel.mouseSensitivity );
 		bind( rootBinder , mouseWheelSensitivitySlider , RootModel.mouseWheelSensitivity );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.distRange , distColorationAxis ) );
+		bind( projectBinder , colorParamSelector , ProjectModel.colorParam );
+		bind( projectBinder , colorParamDetailsPanel , colorParamDetailsLayout , ProjectModel.colorParam );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.paramRange , paramColorationAxis ) );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.highlightRange , glowDistAxis ) );
 		bind( projectBinder , filterTypeSelector , ProjectModel.filterType );
@@ -451,11 +478,6 @@ public class SettingsDrawer extends Drawer
 	public JButton getResetDepthAxisTiltButton( )
 	{
 		return resetDepthAxisTiltButton;
-	}
-	
-	public JButton getExportImageButton( )
-	{
-		return exportImageButton;
 	}
 	
 	public AbstractButton getImportButton( )

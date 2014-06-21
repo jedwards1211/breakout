@@ -69,4 +69,16 @@ public class IterableUtils
 			}
 		};
 	}
+	
+	public static <E> Iterable<E> iterable( final Iterator<E> iterator )
+	{
+		return new Iterable<E>( )
+		{
+			@Override
+			public Iterator<E> iterator( )
+			{
+				return iterator;
+			}
+		};
+	}
 }
