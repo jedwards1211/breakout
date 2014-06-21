@@ -13,6 +13,7 @@ import java.util.Arrays;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -56,41 +57,41 @@ import com.andork.plot.PlotAxisController;
 @SuppressWarnings( "serial" )
 public class SettingsDrawer extends Drawer
 {
-	Localizer							localizer;
+	Localizer						localizer;
 	
-	JLabel								projectFileLabel;
-	JTextField							projectFileField;
-	JButton								projectFileMenuButton;
+	JLabel							projectFileLabel;
+	JTextField						projectFileField;
+	JButton							projectFileMenuButton;
 	
-	JButton								importButton;
-	JButton								exportButton;
+	JButton							importButton;
+	JButton							exportButton;
 	
-	ViewButtonsPanel					viewButtonsPanel;
-	JSlider								mouseSensitivitySlider;
-	JSlider								mouseWheelSensitivitySlider;
-	JXColorSelectionButton				bgColorButton;
-	JSlider								ambientLightSlider;
-	PlotAxis							distColorationAxis;
-	PaintablePanel						distColorationAxisPanel;
-	PlotAxis							paramColorationAxis;
-	PaintablePanel						paramColorationAxisPanel;
-	JButton								inferDepthAxisTiltButton;
-	JButton								resetDepthAxisTiltButton;
-	PlotAxis							glowDistAxis;
-	PaintablePanel						glowDistAxisPanel;
-	JButton								fitViewToEverythingButton;
-	JButton								fitViewToSelectedButton;
-	JButton								orbitToPlanButton;
-	JButton								debugButton;
-	JButton								exportImageButton;
+	ViewButtonsPanel				viewButtonsPanel;
+	JSlider							mouseSensitivitySlider;
+	JSlider							mouseWheelSensitivitySlider;
+	JXColorSelectionButton			bgColorButton;
+	JSlider							ambientLightSlider;
+	PlotAxis						distColorationAxis;
+	PaintablePanel					distColorationAxisPanel;
+	PlotAxis						paramColorationAxis;
+	PaintablePanel					paramColorationAxisPanel;
+	JButton							inferDepthAxisTiltButton;
+	JButton							resetDepthAxisTiltButton;
+	PlotAxis						glowDistAxis;
+	PaintablePanel					glowDistAxisPanel;
+	JButton							fitViewToEverythingButton;
+	JButton							fitViewToSelectedButton;
+	JButton							orbitToPlanButton;
+	JButton							debugButton;
+	JButton							exportImageButton;
 	
-	JLabel								numSamplesLabel;
-	JSlider								numSamplesSlider;
+	JLabel							numSamplesLabel;
+	JSlider							numSamplesSlider;
 	
-	DefaultSelector<FilterType>			filterTypeSelector;
+	DefaultSelector<FilterType>		filterTypeSelector;
 	
-	JPanel								mainPanel;
-	JScrollPane							mainPanelScrollPane;
+	JPanel							mainPanel;
+	JScrollPane						mainPanelScrollPane;
 	
 	Binder<QObject<RootModel>>		rootBinder;
 	Binder<QObject<ProjectModel>>	projectBinder;
@@ -134,12 +135,15 @@ public class SettingsDrawer extends Drawer
 		projectFileField = new JTextField( );
 		projectFileField.setEditable( false );
 		projectFileField.setPreferredSize( new Dimension( 150 , projectFileField.getPreferredSize( ).height ) );
-		projectFileMenuButton = new JButton( "..." );
+		ImageIcon dropdownIcon = new ImageIcon( getClass( ).getResource( "dropdown.png" ) );
+		projectFileMenuButton = new JButton( dropdownIcon );
 		projectFileMenuButton.setMargin( new Insets( 2 , 4 , 2 , 4 ) );
 		
-		importButton = new JButton( );
+		importButton = new JButton( dropdownIcon );
+		importButton.setHorizontalTextPosition( JButton.LEFT );
 		localizer.setText( importButton , "importButton.text" );
-		exportButton = new JButton( );
+		exportButton = new JButton( dropdownIcon );
+		exportButton.setHorizontalTextPosition( JButton.LEFT );
 		localizer.setText( exportButton , "exportButton.text" );
 		
 		viewButtonsPanel = new ViewButtonsPanel( );
