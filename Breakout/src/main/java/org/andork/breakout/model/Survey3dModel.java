@@ -1454,7 +1454,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		
 		protected String createVertexShader( )
 		{
-			return createVertexShaderVariables( ) +
+			return "#version 120\n" +
+					createVertexShaderVariables( ) +
 					"void main() {" +
 					createVertexShaderCode( ) +
 					"}";
@@ -1504,7 +1505,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		
 		protected String createFragmentShader( )
 		{
-			return createFragmentShaderVariables( ) +
+			return "#version 120\n" +
+					createFragmentShaderVariables( ) +
 					"void main() {" +
 					createFragmentShaderCode( ) +
 					"}";
