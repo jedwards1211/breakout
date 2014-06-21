@@ -73,7 +73,7 @@ public class BreakoutMainLauncher
 				
 				try
 				{
-					image = ImageIO.read( getClass( ).getResource( "splash.jpg" ) );
+					image = ImageIO.read( getClass( ).getResource( "splash.png" ) );
 				}
 				catch( Exception e )
 				{

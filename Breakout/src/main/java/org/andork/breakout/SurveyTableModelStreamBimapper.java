@@ -5,22 +5,49 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.List;
 
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
+import org.andork.func.DateBimapper;
 import org.andork.q.QObject;
+import org.andork.q.QObjectTabDelimBimapper;
+import org.andork.q.QSpec.Attribute;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.SubtaskStreamBimapper;
 
 public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<SurveyTableModel>
 {
-	boolean	closeStreams;
-	boolean	makeCopy;
+	boolean							closeStreams;
+	boolean							makeCopy;
+	
+	QObjectTabDelimBimapper<Row>	rowBimapper;
 	
 	public SurveyTableModelStreamBimapper( Subtask subtask )
 	{
 		super( subtask );
+		rowBimapper = QObjectTabDelimBimapper.newInstance( Row.instance )
+				.addColumn( "From" , Row.from )
+				.addColumn( "To" , Row.to )
+				.addColumn( "Distance" , Row.distance )
+				.addColumn( "Frontsight Azimuth" , Row.fsAzm )
+				.addColumn( "Frontsight Inclination" , Row.fsInc )
+				.addColumn( "Backsight Azimuth" , Row.bsAzm )
+				.addColumn( "Backsignt Inclination" , Row.bsInc )
+				.addColumn( "Left" , Row.left )
+				.addColumn( "Right" , Row.right )
+				.addColumn( "Up" , Row.up )
+				.addColumn( "Down" , Row.down )
+				.addColumn( "North" , Row.north )
+				.addColumn( "East" , Row.east )
+				.addColumn( "Elevation" , Row.elev )
+				.addColumn( "Description" , Row.desc )
+				.addColumn( "Date" , Row.date )
+				.addColumn( "Surveyors" , Row.surveyors )
+				.addColumn( "Comment" , Row.comment );
 	}
 	
 	public SurveyTableModelStreamBimapper closeStreams( boolean closeStreams )
@@ -57,23 +84,11 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 		{
 			p = new PrintStream( out );
 			
+			p.println( rowBimapper.createHeader( ) );
+			
 			for( int ri = 0 ; ri < model.getRowCount( ) ; ri++ )
 			{
-				QObject<Row> row = model.getRow( ri );
-				
-				for( int ci = 0 ; ci < model.getColumnCount( ) ; ci++ )
-				{
-					if( ci > 0 )
-					{
-						p.print( '\t' );
-					}
-					if( row.valueAt( ci ) != null )
-					{
-						p.print( row.valueAt( ci ).toString( ) );
-					}
-				}
-				p.println( );
-				
+				p.println( rowBimapper.map( model.getRow( ri ) ) );
 				subtask( ).setCompleted( ri );
 			}
 		}
@@ -107,24 +122,18 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 			
 			SurveyTableModel result = new SurveyTableModel( );
 			
-			String line;
+			String line = reader.readLine( );
+			if( line == null )
+			{
+				return result;
+			}
+			
+			QObjectTabDelimBimapper<Row> rowBimapper = this.rowBimapper.deriveFromHeader( line );
+			
 			int ri = 0;
 			while( ( line = reader.readLine( ) ) != null )
 			{
-				int ci = 0;
-				for( String s : line.split( "\t" ) )
-				{
-					if( ci >= SurveyTableModel.Row.instance.getAttributeCount( ) )
-					{
-						break;
-					}
-					if( String.class.isAssignableFrom( SurveyTableModel.Row.instance.attributeAt( ci ).getValueClass( ) ) )
-					{
-						result.setValueAt( s , ri , ci );
-					}
-					ci++ ;
-				}
-				ri++ ;
+				result.setRow( ri++ , rowBimapper.unmap( line ) );
 			}
 			
 			return result;

@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.collect.CollectionUtils;
 import org.andork.math3d.Vecmath;
 import org.andork.q.QObject;
@@ -27,7 +28,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 	{
 		super( true );
 		setPrototypeFormat( new QObjectRowFormat<Row>( Row.instance ) );
-		ensureNumRows( 1 );
+		fixEndRows( );
 	}
 	
 	public static class Row extends QSpec<Row>
@@ -54,12 +55,12 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		public static final Attribute<String>			surveyors		= newAttribute( String.class , "surveyors" );
 		public static final Attribute<String>			comment			= newAttribute( String.class , "comment" );
 		
+		public static final Row							instance		= new Row( );
+		
 		private Row( )
 		{
 			super( );
 		}
-		
-		public static final Row	instance	= new Row( );
 	}
 	
 	public SurveyShot getShotAtRow( int row )
@@ -68,33 +69,54 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 	}
 	
 	@Override
-	public void setValueAt( Object aValue , int row , int column , boolean fireEvent )
+	public void setRow( int index , QObject<Row> row )
 	{
-		Object prevValue = getValueAt( row , column );
-		if( aValue != null )
+		super.setRow( index , row );
+		if( index >= getRowCount( ) - 2 )
 		{
-			ensureNumRows( row + 2 );
-		}
-		super.setValueAt( aValue , row , column , fireEvent );
-		if( aValue == null || "".equals( aValue ) )
-		{
-			trimEmptyRows( );
+			fixEndRows( );
 		}
 	}
 	
-	private void trimEmptyRows( )
+	@Override
+	public void setValueAt( Object aValue , int row , int column , boolean fireEvent )
 	{
-		for( int row = getRowCount( ) - 2 ; row >= 0 ; row-- )
+		Object prevValue = getValueAt( row , column );
+		super.setValueAt( aValue , row , column , fireEvent );
+		if( ( prevValue == null || "".equals( prevValue ) != ( aValue == null || "".equals( aValue ) ) ) )
 		{
-			for( int column = 0 ; column < getColumnCount( ) ; column++ )
+			fixEndRows( );
+		}
+	}
+	
+	private boolean isEmpty( int row )
+	{
+		for( int column = 0 ; column < getColumnCount( ) ; column++ )
+		{
+			Object value = getValueAt( row , column );
+			if( value != null && !"".equals( value ) )
 			{
-				Object value = getValueAt( row , column );
-				if( value != null && !"".equals( value ) )
-				{
-					return;
-				}
+				return false;
 			}
-			removeRow( row );
+		}
+		return true;
+	}
+	
+	private void fixEndRows( )
+	{
+		int startOfEmptyRows = getRowCount( );
+		while( startOfEmptyRows > 0 && isEmpty( startOfEmptyRows - 1 ) )
+		{
+			startOfEmptyRows-- ;
+		}
+		
+		if( startOfEmptyRows == getRowCount( ) )
+		{
+			addRow( Row.instance.newObject( ) );
+		}
+		else if( startOfEmptyRows <= getRowCount( ) - 2 )
+		{
+			removeRows( startOfEmptyRows , getRowCount( ) - 2 );
 		}
 	}
 	
@@ -104,28 +126,11 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		setRows( Collections.singletonList( Row.instance.newObject( ) ) );
 	}
 	
-	private void ensureNumRows( int numRows )
-	{
-		while( getRowCount( ) < numRows )
-		{
-			addRow( QObject.newInstance( Row.instance ) );
-		}
-	}
-	
 	@Override
 	public void copyRowsFrom( EasyTableModel<QObject<Row>> src , int srcStart , int srcEnd , int myStart )
 	{
 		super.copyRowsFrom( src , srcStart , srcEnd , myStart );
-		int row = getRowCount( ) - 1;
-		ensureNumRows( 1 );
-		for( int col = 0 ; col < getColumnCount( ) ; col++ )
-		{
-			if( getValueAt( row , col ) != null )
-			{
-				ensureNumRows( row + 2 );
-				break;
-			}
-		}
+		fixEndRows( );
 	}
 	
 	public List<SurveyShot> createShots( Subtask subtask )

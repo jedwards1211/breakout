@@ -1809,6 +1809,15 @@ public class BreakoutMainView extends BasicJoglSetup
 				public void run( ) throws Throwable
 				{
 					finalProjectModel.getProjectModel( ).set( ProjectModel.surveyFile , getProjectModel( ).get( ProjectModel.surveyFile ) );
+					if( projectPersister != null )
+					{
+						if( getProjectModel( ) != null )
+						{
+							getProjectModel( ).changeSupport( ).removePropertyChangeListener( projectPersister );
+						}
+						finalProjectModel.getProjectModel( ).changeSupport( ).addPropertyChangeListener( projectPersister );
+						projectPersister.saveLater( finalProjectModel.getProjectModel( ) );
+					}
 					projectModelBinder.setModel( finalProjectModel.getProjectModel( ) );
 					projectModelBinder.modelToView( );
 					

@@ -21,7 +21,6 @@ public class NewProjectAction extends AbstractAction
 	BreakoutMainView	mainView;
 	
 	JFileChooser		projectFileChooser;
-	JFileChooser		surveyFileChooser;
 	
 	public NewProjectAction( final BreakoutMainView mainView )
 	{
@@ -38,11 +37,7 @@ public class NewProjectAction extends AbstractAction
 				
 				projectFileChooser = new JFileChooser( );
 				projectFileChooser.setAcceptAllFileFilterUsed( false );
-				projectFileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout YAML Project File (*.yaml)" , "yaml" ) );
-				
-				surveyFileChooser = new JFileChooser( );
-				surveyFileChooser.setAcceptAllFileFilterUsed( true );
-				surveyFileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Tab-Delimited Survey Data (*.txt)" , "txt" ) );
+				projectFileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project File (*.bop)" , "bop" ) );
 			}
 		};
 	}

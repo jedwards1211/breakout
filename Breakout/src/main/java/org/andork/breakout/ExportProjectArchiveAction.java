@@ -37,7 +37,7 @@ public class ExportProjectArchiveAction extends AbstractAction
 				
 				projectFileChooser = new JFileChooser( );
 				projectFileChooser.setAcceptAllFileFilterUsed( true );
-				projectFileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project Archive File (*.zip)" , "zip" ) );
+				projectFileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project Archive File (*.boa)" , "boa" ) );
 			}
 		};
 	}

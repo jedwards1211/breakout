@@ -494,6 +494,19 @@ public class EasyTableModel<T> extends AbstractTableModel
 		super.fireTableRowsDeleted( index , index );
 	}
 	
+	public void removeRows( int startIndex , int endIndex )
+	{
+		List<T> removed = rows.subList( startIndex , endIndex + 1 );
+		if( rowIndexCache != null )
+		{
+			for( T row : removed )
+			{
+				rowIndexCache.remove( row );
+			}
+		}
+		super.fireTableRowsDeleted( startIndex , endIndex );
+	}
+	
 	public void removeRow( T row )
 	{
 		int index = rows.indexOf( row );
@@ -503,7 +516,8 @@ public class EasyTableModel<T> extends AbstractTableModel
 		}
 	}
 	
-	public void setRows(List<T> rows) {
+	public void setRows( List<T> rows )
+	{
 		this.rows.clear( );
 		this.rows.addAll( rows );
 		rowIndexCache.clear( );

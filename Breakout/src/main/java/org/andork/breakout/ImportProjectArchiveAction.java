@@ -33,7 +33,7 @@ public class ImportProjectArchiveAction extends AbstractAction
 				
 				fileChooser = new JFileChooser( );
 				fileChooser.setAcceptAllFileFilterUsed( false );
-				fileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project Archive (*.zip)" , "zip" ) );
+				fileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project Archive (*.boa)" , "boa" ) );
 			}
 		};
 	}

@@ -33,7 +33,7 @@ public class OpenProjectAction extends AbstractAction
 				
 				fileChooser = new JFileChooser( );
 				fileChooser.setAcceptAllFileFilterUsed( false );
-				fileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout YAML Project File (*.yaml)" , "yaml" ) );
+				fileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project File (*.bop)" , "bop" ) );
 			}
 		};
 	}
