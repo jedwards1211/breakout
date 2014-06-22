@@ -126,7 +126,10 @@ public class SingleThreadedTaskService implements TaskService
 					
 					try
 					{
-						task.run( );
+						if( !task.isCanceled( ) )
+						{
+							task.run( );
+						}
 					}
 					catch( Throwable t )
 					{

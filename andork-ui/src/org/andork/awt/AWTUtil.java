@@ -2,6 +2,10 @@ package org.andork.awt;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.util.Arrays;
+import java.util.LinkedList;
+
+import org.andork.collect.Visitor;
 
 public class AWTUtil
 {
@@ -18,5 +22,24 @@ public class AWTUtil
 		while( parent != null && !( c.isInstance( parent ) ) )
 			parent = parent.getParent( );
 		return c.cast( parent );
+	}
+	
+	public static void traverse( Component root , Visitor<Component> visitor )
+	{
+		LinkedList<Component> queue = new LinkedList<Component>( );
+		queue.add( root );
+		
+		while( !queue.isEmpty( ) )
+		{
+			Component c = queue.poll( );
+			if( !visitor.visit( c ) )
+			{
+				return;
+			}
+			if( c instanceof Container )
+			{
+				queue.addAll( Arrays.asList( ( ( Container ) c ).getComponents( ) ) );
+			}
+		}
 	}
 }

@@ -6,7 +6,6 @@ import java.awt.Image;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
 import org.andork.swing.DoSwing;

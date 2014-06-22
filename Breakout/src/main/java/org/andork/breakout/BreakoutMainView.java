@@ -748,7 +748,8 @@ public class BreakoutMainView extends BasicJoglSetup
 							
 							if( range != null )
 							{
-								if( getProjectModel( ).get( ProjectModel.colorParam ) != ColorParam.DEPTH )
+								ColorParam colorParam = getProjectModel( ).get( ProjectModel.colorParam );
+								if( !colorParam.isLoBright( ) )
 								{
 									float swap = range[ 0 ];
 									range[ 0 ] = range[ 1 ];
@@ -776,6 +777,35 @@ public class BreakoutMainView extends BasicJoglSetup
 				double end = conversion.invert( axis.getViewSpan( ) );
 				LinearAxisConversion newConversion = new LinearAxisConversion( end , 0.0 , start , axis.getViewSpan( ) );
 				getProjectModel( ).set( ProjectModel.paramRange , newConversion );
+			}
+		} );
+		
+		settingsDrawer.getRecalcColorByDistanceButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				if( model3d == null )
+				{
+					return;
+				}
+				rebuildTaskService.submit( new Task( )
+				{
+					@Override
+					protected void execute( ) throws Exception
+					{
+						if( model3d != null )
+						{
+							setTotal( 1000 );
+							Subtask rootSubtask = new Subtask( this );
+							rootSubtask.setTotal( 1 );
+							Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
+							model3d.calcDistFromSelectInBackground( calcSubtask , getCanvas( ) );
+							rootSubtask.setCompleted( 1 );
+							calcSubtask.end( );
+						}
+					}
+				} );
 			}
 		} );
 		

@@ -5,7 +5,9 @@ import static org.andork.awt.event.UIBindings.bindBgColor;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.LinearGradientPaint;
@@ -25,6 +27,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import jogamp.opengl.awt.AWTUtil;
+
 import org.andork.awt.ColorUtils;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
@@ -37,6 +41,7 @@ import org.andork.awt.layout.Side;
 import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
+import org.andork.collect.Visitor;
 import org.andork.event.Binder;
 import org.andork.func.FileStringBimapper;
 import org.andork.plot.PlotAxisConversionBinding;
@@ -79,6 +84,8 @@ public class SettingsDrawer extends Drawer
 	
 	JLabel							colorParamLabel;
 	DefaultSelector<ColorParam>		colorParamSelector;
+	JPanel							colorParamButtonsPanel;
+	BetterCardLayout				colorParamButtonsLayout;
 	JButton							fitParamColorationAxisButton;
 	JButton							flipParamColorationAxisButton;
 	JPanel							colorParamDetailsPanel;
@@ -86,9 +93,12 @@ public class SettingsDrawer extends Drawer
 	PlotAxis						paramColorationAxis;
 	PaintablePanel					paramColorationAxisPanel;
 	
-	JPanel							colorByDepthDetailsPanel;
+	JPanel							colorByDepthButtonsPanel;
 	JButton							inferDepthAxisTiltButton;
 	JButton							resetDepthAxisTiltButton;
+	
+	JPanel							colorByDistanceButtonsPanel;
+	JButton							recalcColorByDistanceButton;
 	
 	PlotAxis						glowDistAxis;
 	PaintablePanel					glowDistAxisPanel;
@@ -135,6 +145,20 @@ public class SettingsDrawer extends Drawer
 				createLayout( );
 				createListeners( );
 				createBindings( );
+				
+				org.andork.awt.AWTUtil.traverse( SettingsDrawer.this , new Visitor<Component>( )
+				{
+					@Override
+					public boolean visit( Component t )
+					{
+						if( t instanceof AbstractButton )
+						{
+							AbstractButton button = ( AbstractButton ) t;
+							button.setOpaque( false );
+						}
+						return true;
+					}
+				} );
 			}
 		};
 	}
@@ -182,12 +206,14 @@ public class SettingsDrawer extends Drawer
 		localizer.setText( colorParamLabel , "colorParamLabel.text" );
 		colorParamSelector = new DefaultSelector<ColorParam>( );
 		colorParamSelector.setAvailableValues( ColorParam.values( ) );
+		colorParamButtonsPanel = new JPanel( );
+		colorParamButtonsPanel.setOpaque( false );
 		fitParamColorationAxisButton = new JButton( new ImageIcon( getClass( ).getResource( "fit.png" ) ) );
 		fitParamColorationAxisButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
 		localizer.setToolTipText( fitParamColorationAxisButton , "fitParamColorationAxisButton.tooltip" );
 		flipParamColorationAxisButton = new JButton( new ImageIcon( getClass( ).getResource( "flip.png" ) ) );
 		flipParamColorationAxisButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
-		localizer.setToolTipText( fitParamColorationAxisButton , "flipParamColorationAxisButton.tooltip" );
+		localizer.setToolTipText( flipParamColorationAxisButton , "flipParamColorationAxisButton.tooltip" );
 		colorParamDetailsPanel = new JPanel( );
 		colorParamDetailsPanel.setOpaque( false );
 		
@@ -202,10 +228,20 @@ public class SettingsDrawer extends Drawer
 		paramColorationAxis.setMajorTickColor( Color.WHITE );
 		paramColorationAxis.setMinorTickColor( Color.WHITE );
 		
-		colorByDepthDetailsPanel = new JPanel( );
-		colorByDepthDetailsPanel.setOpaque( false );
-		inferDepthAxisTiltButton = new JButton( "Infer Depth Axis Tilt" );
-		resetDepthAxisTiltButton = new JButton( "Reset Depth Axis Tilt" );
+		colorByDepthButtonsPanel = new JPanel( );
+		colorByDepthButtonsPanel.setOpaque( false );
+		inferDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "tilted.png" ) ) );
+		inferDepthAxisTiltButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
+		localizer.setToolTipText( inferDepthAxisTiltButton , "inferDepthAxisTiltButton.tooltip" );
+		resetDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "straight-down.png" ) ) );
+		resetDepthAxisTiltButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
+		localizer.setToolTipText( resetDepthAxisTiltButton , "resetDepthAxisTiltButton.tooltip" );
+		
+		colorByDistanceButtonsPanel = new JPanel( );
+		colorByDistanceButtonsPanel.setOpaque( false );
+		recalcColorByDistanceButton = new JButton( new ImageIcon( getClass( ).getResource( "refresh.png" ) ) );
+		recalcColorByDistanceButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
+		localizer.setToolTipText( recalcColorByDistanceButton , "recalcColorByDistanceButton.tooltip" );
 		
 		glowDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		glowDistAxisPanel = PaintablePanel.wrap( glowDistAxis );
@@ -248,6 +284,13 @@ public class SettingsDrawer extends Drawer
 		mainPanelScrollPane.getViewport( ).setOpaque( false );
 		JScrollBar verticalScrollBar = mainPanelScrollPane.getVerticalScrollBar( );
 		verticalScrollBar.setUnitIncrement( 5 );
+		
+		Dimension iconButtonSize = flipParamColorationAxisButton.getPreferredSize( );
+		iconButtonSize.height = colorParamSelector.getComboBox( ).getPreferredSize( ).height;
+		fitParamColorationAxisButton.setPreferredSize( iconButtonSize );
+		recalcColorByDistanceButton.setPreferredSize( iconButtonSize );
+		inferDepthAxisTiltButton.setPreferredSize( iconButtonSize );
+		resetDepthAxisTiltButton.setPreferredSize( iconButtonSize );
 	}
 	
 	private void createLayout( )
@@ -293,19 +336,27 @@ public class SettingsDrawer extends Drawer
 		w.put( distColorationAxisPanel ).belowLast( ).fillx( );
 		
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel( );
-		colorParamPanel.put( colorParamLabel ).xy( 0 , 0 ).west( );
-		colorParamPanel.put( colorParamSelector.getComboBox( ) ).rightOfLast( ).fillx( 1.0 ).addToInsets( 0 , 5 , 0 , 0 );
-		colorParamPanel.put( fitParamColorationAxisButton ).rightOfLast( );
-		colorParamPanel.put( flipParamColorationAxisButton ).rightOfLast( );
+		colorParamPanel.put( colorParamLabel ).xy( 0 , 0 ).filly( ).west( );
+		colorParamPanel.put( colorParamSelector.getComboBox( ) ).rightOfLast( ).fillboth( 1.0 , 0.0 ).addToInsets( 0 , 5 , 0 , 0 );
+		colorParamButtonsPanel.setLayout( colorParamButtonsLayout = new BetterCardLayout( ) );
+		colorParamButtonsLayout.setSizeHidden( false );
+		colorParamPanel.put( colorParamButtonsPanel ).rightOfLast( ).filly( 1.0 );
+		colorParamPanel.put( fitParamColorationAxisButton ).rightOfLast( ).filly( );
+		colorParamPanel.put( flipParamColorationAxisButton ).rightOfLast( ).filly( );
 		w.put( colorParamPanel.getTarget( ) ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
 		colorParamDetailsPanel.setLayout( colorParamDetailsLayout = new BetterCardLayout( ) );
+		colorParamDetailsLayout.setSizeHidden( false );
 		w.put( colorParamDetailsPanel ).belowLast( ).fillx( );
 		w.put( paramColorationAxisPanel ).belowLast( ).fillx( );
 		
-		colorByDepthDetailsPanel.setLayout( new VerticalLayout( 2 ) );
-		colorByDepthDetailsPanel.add( inferDepthAxisTiltButton );
-		colorByDepthDetailsPanel.add( resetDepthAxisTiltButton );
-		colorParamDetailsPanel.add( colorByDepthDetailsPanel , ColorParam.DEPTH );
+		colorByDepthButtonsPanel.setLayout( new FlowLayout( FlowLayout.RIGHT , 0 , 0 ) );
+		colorByDepthButtonsPanel.add( inferDepthAxisTiltButton );
+		colorByDepthButtonsPanel.add( resetDepthAxisTiltButton );
+		colorParamButtonsPanel.add( colorByDepthButtonsPanel , ColorParam.DEPTH );
+		
+		colorByDistanceButtonsPanel.setLayout( new FlowLayout( FlowLayout.RIGHT , 0 , 0 ) );
+		colorByDistanceButtonsPanel.add( recalcColorByDistanceButton );
+		colorParamButtonsPanel.add( colorByDistanceButtonsPanel , ColorParam.DISTANCE_ALONG_SHOTS );
 		
 		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
 		w.put( highlightRangeLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
@@ -361,6 +412,7 @@ public class SettingsDrawer extends Drawer
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.distRange , distColorationAxis ) );
 		bind( projectBinder , colorParamSelector , ProjectModel.colorParam );
 		bind( projectBinder , colorParamDetailsPanel , colorParamDetailsLayout , ProjectModel.colorParam );
+		bind( projectBinder , colorParamButtonsPanel , colorParamButtonsLayout , ProjectModel.colorParam );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.paramRange , paramColorationAxis ) );
 		projectBinder.bind( new PlotAxisConversionBinding( ProjectModel.highlightRange , glowDistAxis ) );
 		bind( projectBinder , filterTypeSelector , ProjectModel.filterType );
@@ -508,5 +560,10 @@ public class SettingsDrawer extends Drawer
 	public AbstractButton getFlipParamColorationAxisButton( )
 	{
 		return flipParamColorationAxisButton;
+	}
+	
+	public AbstractButton getRecalcColorByDistanceButton( )
+	{
+		return recalcColorByDistanceButton;
 	}
 }

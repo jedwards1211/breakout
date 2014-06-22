@@ -29,7 +29,9 @@ public class BetterCardLayout implements LayoutManager2
 	 * 
 	 * @see java.util.Vector
 	 */
-	Vector<Card>	vector	= new Vector<Card>( );
+	Vector<Card>	vector		= new Vector<Card>( );
+	
+	private boolean	sizeHidden	= true;
 	
 	/*
 	 * A pair of Component and String that represents its name.
@@ -94,6 +96,12 @@ public class BetterCardLayout implements LayoutManager2
 		this.vgap = vgap;
 	}
 	
+	public BetterCardLayout( boolean sizeHidden )
+	{
+		super( );
+		this.sizeHidden = sizeHidden;
+	}
+	
 	/**
 	 * Gets the horizontal gap between components.
 	 * 
@@ -145,6 +153,16 @@ public class BetterCardLayout implements LayoutManager2
 	public void setVgap( int vgap )
 	{
 		this.vgap = vgap;
+	}
+	
+	public boolean isSizeHidden( )
+	{
+		return sizeHidden;
+	}
+	
+	public void setSizeHidden( boolean sizeHidden )
+	{
+		this.sizeHidden = sizeHidden;
 	}
 	
 	/**
@@ -248,14 +266,17 @@ public class BetterCardLayout implements LayoutManager2
 			{
 				Component comp = parent.getComponent( i );
 				anyVisible |= comp.isVisible( );
-				Dimension d = comp.getPreferredSize( );
-				if( d.width > w )
+				if( comp.isVisible( ) || sizeHidden )
 				{
-					w = d.width;
-				}
-				if( d.height > h )
-				{
-					h = d.height;
+					Dimension d = comp.getPreferredSize( );
+					if( d.width > w )
+					{
+						w = d.width;
+					}
+					if( d.height > h )
+					{
+						h = d.height;
+					}
 				}
 			}
 			if( !anyVisible )
@@ -291,14 +312,17 @@ public class BetterCardLayout implements LayoutManager2
 			{
 				Component comp = parent.getComponent( i );
 				anyVisible |= comp.isVisible( );
-				Dimension d = comp.getMinimumSize( );
-				if( d.width > w )
+				if( comp.isVisible( ) || sizeHidden )
 				{
-					w = d.width;
-				}
-				if( d.height > h )
-				{
-					h = d.height;
+					Dimension d = comp.getMinimumSize( );
+					if( d.width > w )
+					{
+						w = d.width;
+					}
+					if( d.height > h )
+					{
+						h = d.height;
+					}
 				}
 			}
 			if( !anyVisible )

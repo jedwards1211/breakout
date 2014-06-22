@@ -1,6 +1,7 @@
 package org.andork.breakout.model;
 
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -19,6 +20,7 @@ public class SurveyShot
 	public double			bsInc			= Double.NaN;
 	public CrossSection		fromXsection	= new CrossSection( );
 	public CrossSection		toXsection		= new CrossSection( );
+	public Date				date;
 	
 	PriorityEntry			priorityEntry;
 	

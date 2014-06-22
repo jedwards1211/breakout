@@ -17,5 +17,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math3d"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-swing"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui-debug"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

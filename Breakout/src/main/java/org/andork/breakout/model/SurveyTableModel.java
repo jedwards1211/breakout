@@ -2,8 +2,10 @@ package org.andork.breakout.model;
 
 import static org.andork.util.StringUtils.toStringOrNull;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,6 +145,8 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		Map<String, SurveyStation> stations = new LinkedHashMap<String, SurveyStation>( );
 		Map<String, SurveyShot> shots = new LinkedHashMap<String, SurveyShot>( );
 		
+		SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
+		
 		List<SurveyShot> shotList = new ArrayList<SurveyShot>( );
 		
 		for( int i = 0 ; i < getRowCount( ) ; i++ )
@@ -237,6 +241,15 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				shot.bsAzm = bsAzm;
 				shot.fsInc = fsInc;
 				shot.bsInc = bsInc;
+				
+				try
+				{
+					shot.date = dateFormat.parse( row.get( Row.date ) );
+				}
+				catch( Exception ex )
+				{
+					
+				}
 				
 				CrossSection xSection = xSectionSide == SurveyShotSide.AT_FROM ? shot.fromXsection : shot.toXsection;
 				xSection.type = xSectionType;
