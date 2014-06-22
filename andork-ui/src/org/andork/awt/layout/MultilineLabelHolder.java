@@ -66,6 +66,10 @@ public class MultilineLabelHolder extends JPanel
 		private Dimension layoutSize( Container parent , LayoutSize sizeType )
 		{
 			Dimension size = sizeType.get( label );
+			if( size.width <= width )
+			{
+				return size;
+			}
 			View view = ( View ) label.getClientProperty( BasicHTML.propertyKey );
 			if( view != null )
 			{

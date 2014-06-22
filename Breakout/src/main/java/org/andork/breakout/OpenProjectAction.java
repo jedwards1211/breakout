@@ -41,10 +41,19 @@ public class OpenProjectAction extends AbstractAction
 	@Override
 	public void actionPerformed( ActionEvent e )
 	{
-		File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
-		if( currentProjectFile != null )
+		
+		File directory = mainView.getRootModel( ).get( RootModel.currentProjectFileChooserDirectory );
+		if( directory == null )
 		{
-			fileChooser.setCurrentDirectory( currentProjectFile.getParentFile( ) );
+			File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
+			if( currentProjectFile != null )
+			{
+				directory = currentProjectFile.getParentFile( );
+			}
+		}
+		if( directory != null )
+		{
+			fileChooser.setCurrentDirectory( directory );
 		}
 		
 		int choice = fileChooser.showOpenDialog( mainView.getMainPanel( ) );
@@ -53,6 +62,8 @@ public class OpenProjectAction extends AbstractAction
 		{
 			return;
 		}
+		
+		mainView.getRootModel( ).set( RootModel.currentProjectFileChooserDirectory , fileChooser.getCurrentDirectory( ) );
 		
 		File file = fileChooser.getSelectedFile( );
 		mainView.openProject( file );

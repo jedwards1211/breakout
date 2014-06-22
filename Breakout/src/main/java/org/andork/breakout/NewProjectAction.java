@@ -48,10 +48,18 @@ public class NewProjectAction extends AbstractAction
 		I18n i18n = mainView.getI18n( );
 		Localizer localizer = i18n.forClass( getClass( ) );
 		
-		File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
-		if( currentProjectFile != null )
+		File directory = mainView.getRootModel( ).get( RootModel.currentProjectFileChooserDirectory );
+		if( directory == null )
 		{
-			projectFileChooser.setCurrentDirectory( currentProjectFile.getParentFile( ) );
+			File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
+			if( currentProjectFile != null )
+			{
+				directory = currentProjectFile.getParentFile( );
+			}
+		}
+		if( directory != null )
+		{
+			projectFileChooser.setCurrentDirectory( directory );
 		}
 		
 		projectFileChooser.setDialogTitle( "Save New Project As" );
@@ -108,6 +116,8 @@ public class NewProjectAction extends AbstractAction
 				break;
 			}
 		} while( true );
+		
+		mainView.getRootModel( ).set( RootModel.currentProjectFileChooserDirectory , projectFileChooser.getCurrentDirectory( ) );
 		
 		try
 		{

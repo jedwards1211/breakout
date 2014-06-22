@@ -41,10 +41,18 @@ public class ImportProjectArchiveAction extends AbstractAction
 	@Override
 	public void actionPerformed( ActionEvent e )
 	{
-		File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
-		if( currentProjectFile != null )
+		File directory = mainView.getRootModel( ).get( RootModel.currentArchiveFileChooserDirectory );
+		if( directory == null )
 		{
-			fileChooser.setCurrentDirectory( currentProjectFile.getParentFile( ) );
+			File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
+			if( currentProjectFile != null )
+			{
+				directory = currentProjectFile.getParentFile( );
+			}
+		}
+		if( directory != null )
+		{
+			fileChooser.setCurrentDirectory( directory );
 		}
 		
 		int choice = fileChooser.showOpenDialog( mainView.getMainPanel( ) );
@@ -53,6 +61,8 @@ public class ImportProjectArchiveAction extends AbstractAction
 		{
 			return;
 		}
+		
+		mainView.getRootModel( ).set( RootModel.currentArchiveFileChooserDirectory , fileChooser.getCurrentDirectory( ) );
 		
 		File file = fileChooser.getSelectedFile( );
 		mainView.importProjectArchive( file );
