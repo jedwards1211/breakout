@@ -30,6 +30,7 @@ public class PlotAxisConversionBinding extends Binding implements HierarchicalBa
 		if( conversion != null )
 		{
 			axis.setAxisConversion( new LinearAxisConversion( conversion ) );
+			axis.repaint( );
 		}
 	}
 	

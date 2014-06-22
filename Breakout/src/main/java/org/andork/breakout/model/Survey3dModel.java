@@ -26,7 +26,6 @@ import static org.andork.spatial.Rectmath.voidRectf;
 import java.awt.Graphics2D;
 import java.awt.LinearGradientPaint;
 import java.awt.Point;
-import java.awt.PageAttributes.OriginType;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -35,14 +34,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.media.opengl.GL2ES2;
+import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.breakout.PickResult;
 import org.andork.breakout.awt.ParamGradientMapPaint;
@@ -53,6 +53,7 @@ import org.andork.jogl.BasicJOGLObject.Uniform1fv;
 import org.andork.jogl.BasicJOGLObject.Uniform3fv;
 import org.andork.jogl.BasicJOGLObject.Uniform4fv;
 import org.andork.jogl.BufferHelper;
+import org.andork.jogl.FromJogl;
 import org.andork.jogl.SharedBuffer;
 import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.neu.JoglDrawable;
@@ -102,6 +103,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	RfStarTree<Shot>					tree;
 	
 	Set<Segment>						segments;
+	
+	ColorParam							colorParam			= ColorParam.DEPTH;
+	
+	AxialSegmentDrawer					axialSegmentDrawer	= new AxialSegmentDrawer( );
+	Param0SegmentDrawer					param0SegmentDrawer	= new Param0SegmentDrawer( );
 	
 	MultiMap<SegmentDrawer, Segment>	drawers				= HashSetMultiMap.newInstance( );
 	
@@ -158,7 +164,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		nearDist = new Uniform1fv( ).name( "u_nearDist" ).value( 0 );
 		farDist = new Uniform1fv( ).name( "u_farDist" ).value( 1000 );
 		
-		AxialSegmentDrawer axialSegmentDrawer = new AxialSegmentDrawer( );
+		for( Segment segment : segments )
+		{
+			segment.drawers.add( axialSegmentDrawer );
+		}
+		
 		drawers.putAll( axialSegmentDrawer , segments );
 	}
 	
@@ -1320,15 +1330,17 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	
 	public static class Segment
 	{
-		final ArrayList<Shot>	shots	= new ArrayList<Shot>( );
+		final ArrayList<Shot>			shots	= new ArrayList<Shot>( );
 		
-		SharedBuffer			geometry;
-		SharedBuffer			stationAttrs;
-		boolean					stationAttrsNeedRebuffering;
-		SharedBuffer			param0;
-		boolean					param0NeedsRebuffering;
-		SharedBuffer			fillIndices;
-		SharedBuffer			lineIndices;
+		final LinkedList<SegmentDrawer>	drawers	= new LinkedList<SegmentDrawer>( );
+		
+		SharedBuffer					geometry;
+		SharedBuffer					stationAttrs;
+		boolean							stationAttrsNeedRebuffering;
+		SharedBuffer					param0;
+		boolean							param0NeedsRebuffering;
+		SharedBuffer					fillIndices;
+		SharedBuffer					lineIndices;
 		
 		void addShot( Shot shot )
 		{
@@ -1337,7 +1349,45 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			shots.add( shot );
 		}
 		
-		void calcParam0( Survey3dModel model )
+		void calcParamRange( Survey3dModel model , ColorParam param , float[ ] rangeInOut )
+		{
+			float[ ] origin = model.depthOrigin.value( );
+			float[ ] axis = model.depthAxis.value( );
+			
+			if( param == ColorParam.DEPTH )
+			{
+				geometry.buffer( ).position( 0 );
+				for( int i = 0 ; i < geometry.buffer( ).capacity( ) ; i += GEOM_BPV )
+				{
+					float x = geometry.buffer( ).getFloat( i );
+					float y = geometry.buffer( ).getFloat( i + 4 );
+					float z = geometry.buffer( ).getFloat( i + 8 );
+					
+					float f = ( x - origin[ 0 ] ) * axis[ 0 ] + ( y - origin[ 1 ] ) * axis[ 1 ] + ( z - origin[ 2 ] ) * axis[ 2 ];
+					if( !Double.isNaN( f ) )
+					{
+						rangeInOut[ 0 ] = Math.min( rangeInOut[ 0 ] , f );
+						rangeInOut[ 1 ] = Math.max( rangeInOut[ 1 ] , f );
+					}
+				}
+			}
+			else
+			{
+				param0.buffer( ).position( 0 );
+				while( param0.buffer( ).hasRemaining( ) )
+				{
+					float f = param0.buffer( ).getFloat( );
+					if( !Double.isNaN( f ) )
+					{
+						rangeInOut[ 0 ] = Math.min( rangeInOut[ 0 ] , f );
+						rangeInOut[ 1 ] = Math.max( rangeInOut[ 1 ] , f );
+					}
+				}
+				param0.buffer( ).position( 0 );
+			}
+		}
+		
+		void calcParam0( Survey3dModel model , ColorParam param )
 		{
 			param0 = new SharedBuffer( ).buffer( createBuffer( shots.size( ) * GEOM_VPS * 4 ) );
 			param0.buffer( ).position( 0 );
@@ -1347,16 +1397,34 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				float width = origShot.fromXsection.dist[ 0 ] + origShot.fromXsection.dist[ 1 ];
 				float height = origShot.fromXsection.dist[ 2 ] + origShot.fromXsection.dist[ 3 ];
 				float area = width * height;
-				param0.buffer( ).putFloat( area );
-				param0.buffer( ).putFloat( area );
-				param0.buffer( ).putFloat( area );
-				param0.buffer( ).putFloat( area );
+				
+				float value;
+				switch( param )
+				{
+					case PASSAGE_AREA:
+						value = area;
+						break;
+					case PASSAGE_HEIGHT:
+						value = height;
+						break;
+					case PASSAGE_WIDTH:
+						value = width;
+						break;
+					default:
+						return;
+				}
+				
+				param0.buffer( ).putFloat( value );
+				param0.buffer( ).putFloat( value );
+				param0.buffer( ).putFloat( value );
+				param0.buffer( ).putFloat( value );
 				// height = origShot.toXsection.dist[ 2 ] + origShot.toXsection.dist[ 3 ];
-				param0.buffer( ).putFloat( area );
-				param0.buffer( ).putFloat( area );
-				param0.buffer( ).putFloat( area );
-				param0.buffer( ).putFloat( area );
+				param0.buffer( ).putFloat( value );
+				param0.buffer( ).putFloat( value );
+				param0.buffer( ).putFloat( value );
+				param0.buffer( ).putFloat( value );
 			}
+			param0NeedsRebuffering = true;
 		}
 		
 		void populateData( ByteBuffer allGeomBuffer )
@@ -1601,6 +1669,10 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		protected void afterDraw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
 		{
 			gl.glDisable( GL_DEPTH_TEST );
+			gl.glDisableVertexAttribArray( a_pos_location );
+			gl.glDisableVertexAttribArray( a_norm_location );
+			gl.glDisableVertexAttribArray( a_glow_location );
+			gl.glDisableVertexAttribArray( a_highlightIndex_location );
 			
 			gl.glBindBuffer( GL_ARRAY_BUFFER , 0 );
 			gl.glBindBuffer( GL_ELEMENT_ARRAY_BUFFER , 0 );
@@ -1779,6 +1851,13 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 		
 		@Override
+		protected void afterDraw( Collection<Segment> segments , JoglDrawContext context , GL2ES2 gl , float[ ] m , float[ ] n )
+		{
+			super.afterDraw( segments , context , gl , m , n );
+			gl.glDisableVertexAttribArray( a_param0_location );
+		}
+		
+		@Override
 		protected void beforeDraw( Segment segment , GL2ES2 gl , float[ ] m , float[ ] n )
 		{
 			super.beforeDraw( segment , gl , m , n );
@@ -1837,5 +1916,119 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			drawer.draw( drawers.get( drawer ) , context , gl , m , n );
 		}
+	}
+	
+	public float[ ] calcAutofitParamRangeInBackground( Subtask subtask , GLAutoDrawable drawable )
+	{
+		if( subtask != null )
+		{
+			subtask.setTotal( segments.size( ) );
+			subtask.setCompleted( 0 );
+			subtask.setIndeterminate( false );
+		}
+		final Iterator<Segment> segmentIterator = segments.iterator( );
+		
+		final float[ ] range = { Float.MAX_VALUE , -Float.MAX_VALUE };
+		
+		while( segmentIterator.hasNext( ) )
+		{
+			int processed = new FromJogl<Integer>( drawable )
+			{
+				public Integer run( GLAutoDrawable drawable ) throws Throwable
+				{
+					long start = System.currentTimeMillis( );
+					int processed = 0;
+					while( segmentIterator.hasNext( ) && System.currentTimeMillis( ) - start < 30 )
+					{
+						Segment segment = segmentIterator.next( );
+						segment.calcParamRange( Survey3dModel.this , colorParam , range );
+						
+						processed++ ;
+					}
+					
+					return processed;
+				}
+			}.result( );
+			
+			if( subtask != null )
+			{
+				if( subtask.isCanceling( ) )
+				{
+					return null;
+				}
+				subtask.setCompleted( subtask.getCompleted( ) + processed );
+			}
+		}
+		
+		return range;
+	}
+	
+	public void setColorParamInBackground( final ColorParam colorParam , Subtask subtask , GLAutoDrawable drawable )
+	{
+		if( this.colorParam == colorParam )
+		{
+			return;
+		}
+		this.colorParam = colorParam;
+		
+		if( subtask != null )
+		{
+			subtask.setTotal( segments.size( ) );
+			subtask.setCompleted( 0 );
+			subtask.setIndeterminate( false );
+		}
+		final Iterator<Segment> segmentIterator = segments.iterator( );
+		
+		while( segmentIterator.hasNext( ) )
+		{
+			int processed = new FromJogl<Integer>( drawable )
+			{
+				public Integer run( GLAutoDrawable drawable ) throws Throwable
+				{
+					long start = System.currentTimeMillis( );
+					int processed = 0;
+					while( segmentIterator.hasNext( ) && System.currentTimeMillis( ) - start < 30 )
+					{
+						Segment segment = segmentIterator.next( );
+						for( SegmentDrawer drawer : segment.drawers )
+						{
+							drawers.remove( drawer , segment );
+						}
+						
+						segment.drawers.clear( );
+						
+						if( colorParam == ColorParam.DEPTH )
+						{
+							segment.drawers.add( axialSegmentDrawer );
+						}
+						else
+						{
+							segment.calcParam0( Survey3dModel.this , colorParam );
+							segment.drawers.add( param0SegmentDrawer );
+						}
+						
+						for( SegmentDrawer drawer : segment.drawers )
+						{
+							drawers.put( drawer , segment );
+						}
+						
+						processed++ ;
+					}
+					
+					return processed;
+				}
+			}.result( );
+			
+			if( subtask != null )
+			{
+				if( subtask.isCanceling( ) )
+				{
+					return;
+				}
+				subtask.setCompleted( subtask.getCompleted( ) + processed );
+			}
+		}
+		
+		drawable.display( );
 	}
 }

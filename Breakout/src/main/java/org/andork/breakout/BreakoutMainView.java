@@ -611,6 +611,45 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
+		projectModelBinder.bind( new BindingAdapter( ProjectModel.colorParam )
+		{
+			@Override
+			public void modelToViewImpl( )
+			{
+				org.andork.model.Model model = getModel( );
+				if( model == null )
+				{
+					return;
+				}
+				final ColorParam colorParam = ( ColorParam ) model.get( ProjectModel.colorParam );
+				if( colorParam != null )
+				{
+					Task task = new Task( )
+					{
+						@Override
+						protected void execute( ) throws Exception
+						{
+							if( model3d != null )
+							{
+								Subtask rootSubtask = new Subtask( this );
+								rootSubtask.setTotal( 1 );
+								rootSubtask.setIndeterminate( false );
+								
+								Subtask subtask = rootSubtask.beginSubtask( 1 );
+								subtask.setIndeterminate( false );
+								subtask.setStatus( "Recoloring" );
+								model3d.setColorParamInBackground( colorParam , subtask , getCanvas( ) );
+								rootSubtask.setCompleted( 1 );
+								subtask.end( );
+							}
+						}
+					};
+					task.setTotal( 1000 );
+					rebuildTaskService.submit( task );
+				}
+			}
+		} );
+		
 		settingsDrawer.getProjectFileMenuButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -680,6 +719,63 @@ public class BreakoutMainView extends BasicJoglSetup
 			public void actionPerformed( ActionEvent e )
 			{
 				fitViewToEverything( );
+			}
+		} );
+		
+		settingsDrawer.getFitParamColorationAxisButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				if( model3d == null )
+				{
+					return;
+				}
+				rebuildTaskService.submit( new Task( )
+				{
+					@Override
+					protected void execute( ) throws Exception
+					{
+						if( model3d != null )
+						{
+							setTotal( 1000 );
+							Subtask rootSubtask = new Subtask( this );
+							rootSubtask.setTotal( 1 );
+							Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
+							float[ ] range = model3d.calcAutofitParamRangeInBackground( calcSubtask , getCanvas( ) );
+							rootSubtask.setCompleted( 1 );
+							calcSubtask.end( );
+							
+							if( range != null )
+							{
+								if( getProjectModel( ).get( ProjectModel.colorParam ) != ColorParam.DEPTH )
+								{
+									float swap = range[ 0 ];
+									range[ 0 ] = range[ 1 ];
+									range[ 1 ] = swap;
+								}
+								LinearAxisConversion conversion = new LinearAxisConversion(
+										range[ 0 ] , 0.0 , range[ 1 ] , settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
+								
+								getProjectModel( ).set( ProjectModel.paramRange , conversion );
+							}
+						}
+					}
+				} );
+			}
+		} );
+		
+		settingsDrawer.getFlipParamColorationAxisButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				PlotAxis axis = settingsDrawer.getParamColorationAxis( );
+				LinearAxisConversion conversion = axis.getAxisConversion( );
+				double start = conversion.invert( 0.0 );
+				double end = conversion.invert( axis.getViewSpan( ) );
+				LinearAxisConversion newConversion = new LinearAxisConversion( end , 0.0 , start , axis.getViewSpan( ) );
+				getProjectModel( ).set( ProjectModel.paramRange , newConversion );
 			}
 		} );
 		

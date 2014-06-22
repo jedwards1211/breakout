@@ -267,7 +267,7 @@ public abstract class Task implements HasChangeSupport
 				return;
 			}
 			oldState = state;
-			newState = state = State.CANCELING;
+			newState = state = state == State.RUNNING ? State.CANCELING : State.CANCELED;
 			service = this.service;
 		}
 		service.cancel( this );

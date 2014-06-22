@@ -79,6 +79,8 @@ public class SettingsDrawer extends Drawer
 	
 	JLabel							colorParamLabel;
 	DefaultSelector<ColorParam>		colorParamSelector;
+	JButton							fitParamColorationAxisButton;
+	JButton							flipParamColorationAxisButton;
 	JPanel							colorParamDetailsPanel;
 	BetterCardLayout				colorParamDetailsLayout;
 	PlotAxis						paramColorationAxis;
@@ -179,7 +181,13 @@ public class SettingsDrawer extends Drawer
 		colorParamLabel = new JLabel( );
 		localizer.setText( colorParamLabel , "colorParamLabel.text" );
 		colorParamSelector = new DefaultSelector<ColorParam>( );
-		colorParamSelector.setAvailableValues( Arrays.asList( ColorParam.DEPTH ) );
+		colorParamSelector.setAvailableValues( ColorParam.values( ) );
+		fitParamColorationAxisButton = new JButton( new ImageIcon( getClass( ).getResource( "fit.png" ) ) );
+		fitParamColorationAxisButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
+		localizer.setToolTipText( fitParamColorationAxisButton , "fitParamColorationAxisButton.tooltip" );
+		flipParamColorationAxisButton = new JButton( new ImageIcon( getClass( ).getResource( "flip.png" ) ) );
+		flipParamColorationAxisButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
+		localizer.setToolTipText( fitParamColorationAxisButton , "flipParamColorationAxisButton.tooltip" );
 		colorParamDetailsPanel = new JPanel( );
 		colorParamDetailsPanel.setOpaque( false );
 		
@@ -287,6 +295,8 @@ public class SettingsDrawer extends Drawer
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel( );
 		colorParamPanel.put( colorParamLabel ).xy( 0 , 0 ).west( );
 		colorParamPanel.put( colorParamSelector.getComboBox( ) ).rightOfLast( ).fillx( 1.0 ).addToInsets( 0 , 5 , 0 , 0 );
+		colorParamPanel.put( fitParamColorationAxisButton ).rightOfLast( );
+		colorParamPanel.put( flipParamColorationAxisButton ).rightOfLast( );
 		w.put( colorParamPanel.getTarget( ) ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
 		colorParamDetailsPanel.setLayout( colorParamDetailsLayout = new BetterCardLayout( ) );
 		w.put( colorParamDetailsPanel ).belowLast( ).fillx( );
@@ -490,4 +500,13 @@ public class SettingsDrawer extends Drawer
 		return exportButton;
 	}
 	
+	public AbstractButton getFitParamColorationAxisButton( )
+	{
+		return fitParamColorationAxisButton;
+	}
+	
+	public AbstractButton getFlipParamColorationAxisButton( )
+	{
+		return flipParamColorationAxisButton;
+	}
 }
