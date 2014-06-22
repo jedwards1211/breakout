@@ -19,6 +19,10 @@ public class LinearAxisConversionMapBimapper implements Bimapper<LinearAxisConve
 	@Override
 	public Map<String, Double> map( LinearAxisConversion in )
 	{
+		if( in == null )
+		{
+			return null;
+		}
 		Map<String, Double> result = new HashMap<String, Double>( );
 		result.put( "offset" , in.getOffset( ) );
 		result.put( "scale" , in.getScale( ) );

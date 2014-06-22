@@ -20,7 +20,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -77,11 +76,10 @@ import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.Binder;
 import org.andork.event.Binder.BindingAdapter;
+import org.andork.event.Binder.MappedPropertyBinding;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.OrthoProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
-import org.andork.jogl.awt.ScreenCaptureDialog;
-import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.jogl.awt.anim.RandomOrbit;
 import org.andork.jogl.awt.anim.SinusoidalTranslation;
 import org.andork.jogl.awt.anim.SpringOrbit;
@@ -650,6 +648,9 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			}
 		} );
+		
+		projectModelBinder.subBinder( ProjectModel.savedParamRanges ).bind(
+				new MappedPropertyBinding( ProjectModel.colorParam , ProjectModel.paramRange , projectModelBinder ) );
 		
 		settingsDrawer.getProjectFileMenuButton( ).addActionListener( new ActionListener( )
 		{

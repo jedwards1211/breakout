@@ -10,9 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.andork.model.Model;
 import org.andork.util.Java7;
 
-public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implements Map<K, V>
+public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implements Map<K, V> , Model
 {
 	protected final C						map			= createMap( );
 	transient volatile Set<K>				keySet		= null;
@@ -145,6 +146,12 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 	{
 		Set<java.util.Map.Entry<K, V>> es = entrySet;
 		return( es != null ? es : ( entrySet = new EntrySet( ) ) );
+	}
+	
+	@Override
+	public void set( Object key , Object newValue )
+	{
+		put( ( K ) key , ( V ) newValue );
 	}
 	
 	private abstract class HashIterator<E> implements Iterator<E>

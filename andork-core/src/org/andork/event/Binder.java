@@ -1,7 +1,9 @@
 package org.andork.event;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.collect.LinkedHashSetMultiMap;
@@ -10,15 +12,17 @@ import org.andork.model.Model;
 
 public class Binder<M extends Model>
 {
-	protected boolean							ignoreChanges	= false;
+	protected boolean							ignoreChanges		= false;
 	
 	protected M									model;
 	
-	protected final MultiMap<Object, Binding>	bindings		= LinkedHashSetMultiMap.newInstance( );
+	protected final MultiMap<Object, Binding>	bindings			= LinkedHashSetMultiMap.newInstance( );
 	
-	protected final Map<Object, Binder>			subBinders		= CollectionUtils.newLinkedHashMap( );
+	protected final Set<AllPropertyBinding>		allPropertyBindings	= new LinkedHashSet<AllPropertyBinding>( );
 	
-	protected final ChangeHandler				changeHandler	= new ChangeHandler( );
+	protected final Map<Object, Binder>			subBinders			= CollectionUtils.newLinkedHashMap( );
+	
+	protected final ChangeHandler				changeHandler		= new ChangeHandler( );
 	
 	public M getModel( )
 	{
@@ -58,6 +62,19 @@ public class Binder<M extends Model>
 		}
 	}
 	
+	public void bind( AllPropertyBinding binding )
+	{
+		if( binding.binder != null )
+		{
+			throw new IllegalArgumentException( "binding is already bound in a binder" );
+		}
+		if( allPropertyBindings.add( binding ) )
+		{
+			binding.binder = this;
+			binding.registerWithView( );
+		}
+	}
+	
 	public OtherModelBinding bind( Model otherModel , Object property )
 	{
 		OtherModelBinding binding = new OtherModelBinding( property , otherModel );
@@ -68,6 +85,15 @@ public class Binder<M extends Model>
 	public void unbind( Binding binding )
 	{
 		if( bindings.remove( binding.getProperty( ) , binding ) )
+		{
+			binding.binder = null;
+			binding.unregisterFromView( );
+		}
+	}
+	
+	public void unbind( AllPropertyBinding binding )
+	{
+		if( allPropertyBindings.remove( binding ) )
 		{
 			binding.binder = null;
 			binding.unregisterFromView( );
@@ -140,6 +166,11 @@ public class Binder<M extends Model>
 		try
 		{
 			for( Binding binding : bindings.get( property ) )
+			{
+				binding.modelToView( );
+			}
+			
+			for( AllPropertyBinding binding : allPropertyBindings )
 			{
 				binding.modelToView( );
 			}
@@ -321,6 +352,165 @@ public class Binder<M extends Model>
 		public void unregisterFromView( )
 		{
 			
+		}
+	}
+	
+	public static abstract class AllPropertyBinding
+	{
+		boolean				updating;
+		private Binder<?>	binder;
+		
+		public AllPropertyBinding( )
+		{
+		}
+		
+		public Model getModel( )
+		{
+			return binder == null ? null : binder.getModel( );
+		}
+		
+		protected abstract void modelToViewImpl( );
+		
+		protected abstract void viewToModelImpl( );
+		
+		public final void modelToView( )
+		{
+			if( updating )
+			{
+				return;
+			}
+			updating = true;
+			try
+			{
+				modelToViewImpl( );
+			}
+			finally
+			{
+				updating = false;
+			}
+		}
+		
+		public final void viewToModel( )
+		{
+			if( updating )
+			{
+				return;
+			}
+			updating = true;
+			try
+			{
+				viewToModelImpl( );
+			}
+			finally
+			{
+				updating = false;
+			}
+		}
+		
+		public abstract void registerWithView( );
+		
+		public abstract void unregisterFromView( );
+	}
+	
+	public static class MappedPropertyBinding extends AllPropertyBinding
+	{
+		Object		keyProperty;
+		Object		valueProperty;
+		Binder		viewBinder;
+		
+		ViewBinding	keyBinding;
+		ViewBinding	valueBinding;
+		
+		public MappedPropertyBinding( Object keyProperty , Object valueProperty , Binder viewBinder )
+		{
+			super( );
+			this.keyProperty = keyProperty;
+			this.valueProperty = valueProperty;
+			this.viewBinder = viewBinder;
+			
+			keyBinding = new ViewBinding( keyProperty );
+			valueBinding = new ViewBinding( valueProperty );
+		}
+		
+		@Override
+		protected void modelToViewImpl( )
+		{
+			Model view = viewBinder.getModel( );
+			if( view != null )
+			{
+				Object key = view.get( keyProperty );
+				Model map = getModel( );
+				if( key != null && map != null )
+				{
+					view.set( valueProperty , map.get( key ) );
+					viewBinder.modelToView( valueProperty );
+				}
+			}
+		}
+		
+		@Override
+		protected void viewToModelImpl( )
+		{
+			Model view = viewBinder.getModel( );
+			if( view != null )
+			{
+				Object key = view.get( keyProperty );
+				Model map = getModel( );
+				if( key != null && map != null )
+				{
+					map.set( key , view.get( valueProperty ) );
+				}
+			}
+		}
+		
+		@Override
+		public void registerWithView( )
+		{
+			viewBinder.bind( keyBinding );
+			viewBinder.bind( valueBinding );
+		}
+		
+		@Override
+		public void unregisterFromView( )
+		{
+			viewBinder.unbind( keyBinding );
+			viewBinder.unbind( valueBinding );
+		}
+		
+		private class ViewBinding extends Binding
+		{
+			public ViewBinding( Object property )
+			{
+				super( property );
+			}
+			
+			@Override
+			protected void modelToViewImpl( )
+			{
+				if( getProperty( ) == keyProperty )
+				{
+					MappedPropertyBinding.this.modelToView( );
+				}
+				else
+				{
+					MappedPropertyBinding.this.viewToModel( );
+				}
+			}
+			
+			@Override
+			protected void viewToModelImpl( )
+			{
+			}
+			
+			@Override
+			public void registerWithView( )
+			{
+			}
+			
+			@Override
+			public void unregisterFromView( )
+			{
+			}
 		}
 	}
 	

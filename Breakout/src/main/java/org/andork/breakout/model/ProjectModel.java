@@ -8,6 +8,7 @@ import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
 import org.andork.func.Bimapper;
 import org.andork.func.Color2HexStringBimapper;
+import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
 import org.andork.func.StringBimapper;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
@@ -48,7 +49,7 @@ public final class ProjectModel extends QSpec<ProjectModel>
 		defaultMapper = new QObjectMapBimapper<ProjectModel>( instance )
 				.map( distRange , LinearAxisConversionMapBimapper.instance )
 				.map( paramRange , LinearAxisConversionMapBimapper.instance )
-				.map( savedParamRanges , QMapBimapper.newInstance( StringBimapper.instance , LinearAxisConversionMapBimapper.instance ) )
+				.map( savedParamRanges , QMapBimapper.newInstance( EnumBimapper.newInstance( ColorParam.class ) , LinearAxisConversionMapBimapper.instance ) )
 				.map( highlightRange , LinearAxisConversionMapBimapper.instance )
 				.map( surveyFile , FileStringBimapper.instance )
 				.map( settingsDrawer , DrawerModel.defaultMapper )
