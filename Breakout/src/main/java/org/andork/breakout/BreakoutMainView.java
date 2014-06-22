@@ -92,6 +92,7 @@ import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
 import org.andork.model.Model;
 import org.andork.q.QArrayList;
+import org.andork.q.QLinkedHashMap;
 import org.andork.q.QObject;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
@@ -1562,6 +1563,10 @@ public class BreakoutMainView extends BasicJoglSetup
 		if( projectModel.get( ProjectModel.paramRange ) == null )
 		{
 			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
+		}
+		if( projectModel.get( ProjectModel.savedParamRanges ) == null )
+		{
+			projectModel.set( ProjectModel.savedParamRanges , QLinkedHashMap.<ColorParam,LinearAxisConversion>newInstance( ) );
 		}
 		if( projectModel.get( ProjectModel.highlightRange ) == null )
 		{

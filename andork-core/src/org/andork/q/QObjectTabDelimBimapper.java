@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.andork.func.BigDecimalBimapper;
 import org.andork.func.BigIntegerBimapper;
@@ -27,6 +29,8 @@ public class QObjectTabDelimBimapper<S extends QSpec<S>> implements Bimapper<QOb
 	private final List<String>			colNames		= new ArrayList<String>( );
 	private final List<Attribute<?>>	colAttributes	= new ArrayList<Attribute<?>>( );
 	private final List<Bimapper>		colBimappers	= new ArrayList<Bimapper>( );
+	
+	private static final Logger			LOGGER			= Logger.getLogger( QObjectTabDelimBimapper.class.getName( ) );
 	
 	private QObjectTabDelimBimapper( S spec )
 	{
@@ -194,12 +198,20 @@ public class QObjectTabDelimBimapper<S extends QSpec<S>> implements Bimapper<QOb
 		
 		for( int i = 0 ; i < Math.min( cols.length , colAttributes.size( ) ) ; i++ )
 		{
-			if( colAttributes.get( i ) == null )
+			Attribute<?> attr = colAttributes.get( i );
+			if( attr == null )
 			{
 				continue;
 			}
 			Bimapper bimapper = colBimappers.get( i );
-			result.set( colAttributes.get( i ) , bimapper == null ? cols[ i ] : bimapper.unmap( cols[ i ] ) );
+			try
+			{
+				result.set( attr , bimapper == null ? cols[ i ] : bimapper.unmap( cols[ i ] ) );
+			}
+			catch( Throwable t )
+			{
+				LOGGER.log( Level.WARNING , "Failed to set attribute: " + attr , t );
+			}
 		}
 		
 		return result;

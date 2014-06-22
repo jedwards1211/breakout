@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.andork.func.BigDecimalBimapper;
 import org.andork.func.BigIntegerBimapper;
@@ -20,9 +22,11 @@ import org.andork.q.QSpec.Attribute;
 
 public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<S>, Object>
 {
-	S			spec;
+	S							spec;
 	
-	Bimapper[ ]	attrBimappers;
+	Bimapper[ ]					attrBimappers;
+	
+	private static final Logger	LOGGER	= Logger.getLogger( QObjectMapBimapper.class.getName( ) );
 	
 	public QObjectMapBimapper( S spec )
 	{
@@ -130,7 +134,14 @@ public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<
 			if( m.containsKey( attribute.getName( ) ) )
 			{
 				Object value = m.get( attribute.getName( ) );
-				result.set( attribute , value == null || attrBimappers[ i ] == null ? value : attrBimappers[ i ].unmap( value ) );
+				try
+				{
+					result.set( attribute , value == null || attrBimappers[ i ] == null ? value : attrBimappers[ i ].unmap( value ) );
+				}
+				catch( Throwable t )
+				{
+					LOGGER.log( Level.WARNING , "Failed to set attribute: " + attribute , t );
+				}
 			}
 		}
 		return result;
