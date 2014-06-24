@@ -138,8 +138,8 @@ public class SettingsDrawer extends Drawer
 	Binder<Color>										backgroundColorBinder		= bind( ProjectModel.backgroundColor , projectBinder );
 	Binder<LinearAxisConversion>						distRangeBinder				= bind( ProjectModel.distRange , projectBinder );
 	Binder<ColorParam>									colorParamBinder			= bind( ProjectModel.colorParam , projectBinder );
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	savedParamRangesBinder		= bind( ProjectModel.savedParamRanges , projectBinder );
-	Binder<LinearAxisConversion>						paramRangeBinder			= bindKeyed( colorParamBinder , savedParamRangesBinder );
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= bind( ProjectModel.paramRanges , projectBinder );
+	Binder<LinearAxisConversion>						paramRangeBinder			= bindKeyed( colorParamBinder , paramRangesBinder );
 	Binder<LinearAxisConversion>						highlightRangeBinder		= bind( ProjectModel.highlightRange , projectBinder );
 	Binder<Float>										ambientLightBinder			= bind( ProjectModel.ambientLight , projectBinder );
 	Binder<FilterType>									filterTypeBinder			= bind( ProjectModel.filterType , projectBinder );

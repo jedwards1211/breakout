@@ -201,8 +201,8 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	final Binder<QObject<ProjectModel>>					projectModelBinder			= new DefaultBinder<QObject<ProjectModel>>( );
 	Binder<ColorParam>									colorParamBinder			= bind( ProjectModel.colorParam , projectModelBinder );
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	savedParamRangesBinder		= bind( ProjectModel.savedParamRanges , projectModelBinder );
-	Binder<LinearAxisConversion>						paramRangeBinder			= bindKeyed( colorParamBinder , savedParamRangesBinder );
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= bind( ProjectModel.paramRanges , projectModelBinder );
+	Binder<LinearAxisConversion>						paramRangeBinder			= bindKeyed( colorParamBinder , paramRangesBinder );
 	TaskServiceFilePersister<QObject<ProjectModel>>		projectPersister;
 	
 	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
@@ -1516,13 +1516,9 @@ public class BreakoutMainView extends BasicJoglSetup
 		{
 			projectModel.set( ProjectModel.colorParam , ColorParam.DEPTH );
 		}
-		if( projectModel.get( ProjectModel.paramRange ) == null )
+		if( projectModel.get( ProjectModel.paramRanges ) == null )
 		{
-			projectModel.set( ProjectModel.paramRange , new LinearAxisConversion( 0 , 0 , 500 , 200 ) );
-		}
-		if( projectModel.get( ProjectModel.savedParamRanges ) == null )
-		{
-			projectModel.set( ProjectModel.savedParamRanges , QLinkedHashMap.<ColorParam,LinearAxisConversion>newInstance( ) );
+			projectModel.set( ProjectModel.paramRanges , QLinkedHashMap.<ColorParam,LinearAxisConversion>newInstance( ) );
 		}
 		if( projectModel.get( ProjectModel.highlightRange ) == null )
 		{

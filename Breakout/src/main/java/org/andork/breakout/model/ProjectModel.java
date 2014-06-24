@@ -26,8 +26,7 @@ public final class ProjectModel extends QSpec<ProjectModel>
 	public static final Attribute<float[ ]>										viewXform					= newAttribute( float[ ].class , "viewXform" );
 	public static final Attribute<LinearAxisConversion>							distRange					= newAttribute( LinearAxisConversion.class , "distRange" );
 	public static final Attribute<ColorParam>									colorParam					= newAttribute( ColorParam.class , "colorParam" );
-	public static final Attribute<LinearAxisConversion>							paramRange					= newAttribute( LinearAxisConversion.class , "paramRange" );
-	public static final Attribute<QMap<ColorParam, LinearAxisConversion, ?>>	savedParamRanges			= newAttribute( QMap.class , "savedParamRanges" );
+	public static final Attribute<QMap<ColorParam, LinearAxisConversion, ?>>	paramRanges					= newAttribute( QMap.class , "savedParamRanges" );
 	public static final Attribute<LinearAxisConversion>							highlightRange				= newAttribute( LinearAxisConversion.class , "highlightRange" );
 	public static final Attribute<FilterType>									filterType					= newAttribute( FilterType.class , "filterType" );
 	public static final Attribute<File>											surveyFile					= newAttribute( File.class , "surveyFile" );
@@ -48,8 +47,7 @@ public final class ProjectModel extends QSpec<ProjectModel>
 	{
 		defaultMapper = new QObjectMapBimapper<ProjectModel>( instance )
 				.map( distRange , LinearAxisConversionMapBimapper.instance )
-				.map( paramRange , LinearAxisConversionMapBimapper.instance )
-				.map( savedParamRanges , QMapBimapper.newInstance( EnumBimapper.newInstance( ColorParam.class ) , LinearAxisConversionMapBimapper.instance ) )
+				.map( paramRanges , QMapBimapper.newInstance( EnumBimapper.newInstance( ColorParam.class ) , LinearAxisConversionMapBimapper.instance ) )
 				.map( highlightRange , LinearAxisConversionMapBimapper.instance )
 				.map( surveyFile , FileStringBimapper.instance )
 				.map( settingsDrawer , DrawerModel.defaultMapper )
