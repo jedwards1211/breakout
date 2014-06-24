@@ -1,5 +1,6 @@
 package org.andork.breakout;
 
+import static org.andork.bind.QObjectAttributeBinder.bind;
 import static org.andork.math3d.Vecmath.newMat4f;
 
 import java.awt.BorderLayout;
@@ -57,6 +58,10 @@ import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
 import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
+import org.andork.bind.Binder;
+import org.andork.bind.BinderWrapper;
+import org.andork.bind.DefaultBinder;
+import org.andork.bind.QMapKeyedBinder;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
 import org.andork.breakout.model.ColorParam;
@@ -74,9 +79,6 @@ import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
-import org.andork.event.Binder;
-import org.andork.event.Binder.BindingAdapter;
-import org.andork.event.Binder.MappedPropertyBinding;
 import org.andork.jogl.BasicJOGLObject;
 import org.andork.jogl.OrthoProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
@@ -88,9 +90,10 @@ import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.Vecmath;
-import org.andork.model.Model;
 import org.andork.q.QArrayList;
 import org.andork.q.QLinkedHashMap;
+import org.andork.q.QMap;
+import org.andork.q.QMapBimapper;
 import org.andork.q.QObject;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
@@ -131,81 +134,86 @@ import com.andork.plot.PlotAxisController;
 import com.andork.plot.PlotController;
 import com.andork.plot.PlotPanelLayout;
 
+import static org.andork.bind.QMapKeyedBinder.*;
+
 public class BreakoutMainView extends BasicJoglSetup
 {
-	I18n											i18n						= new I18n( );
+	I18n												i18n						= new I18n( );
 	
-	PerspectiveProjectionCalculator					perspCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
-	OrthoProjectionCalculator						orthoCalculator				= new OrthoProjectionCalculator( -1 , 1 , -1 , 1 , -10000 , 10000 );
-	DefaultNavigator								navigator;
+	PerspectiveProjectionCalculator						perspCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
+	OrthoProjectionCalculator							orthoCalculator				= new OrthoProjectionCalculator( -1 , 1 , -1 , 1 , -10000 , 10000 );
+	DefaultNavigator									navigator;
 	
-	TaskService										rebuildTaskService;
-	TaskService										sortTaskService;
-	TaskService										ioTaskService;
+	TaskService											rebuildTaskService;
+	TaskService											sortTaskService;
+	TaskService											ioTaskService;
 	
-	SurveyTableChangeHandler						surveyTableChangeHandler;
+	SurveyTableChangeHandler							surveyTableChangeHandler;
 	
-	final double[ ]									fromLoc						= new double[ 3 ];
-	final double[ ]									toLoc						= new double[ 3 ];
-	final double[ ]									toToLoc						= new double[ 3 ];
-	final double[ ]									leftAtTo					= new double[ 3 ];
-	final double[ ]									leftAtTo2					= new double[ 3 ];
-	final double[ ]									leftAtFrom					= new double[ 3 ];
+	final double[ ]										fromLoc						= new double[ 3 ];
+	final double[ ]										toLoc						= new double[ 3 ];
+	final double[ ]										toToLoc						= new double[ 3 ];
+	final double[ ]										leftAtTo					= new double[ 3 ];
+	final double[ ]										leftAtTo2					= new double[ 3 ];
+	final double[ ]										leftAtFrom					= new double[ 3 ];
 	
-	PlotAxis										xaxis;
-	PlotAxis										yaxis;
-	AxisLinkButton									axisLinkButton;
-	Plot											plot;
-	JPanel											plotPanel;
-	JPanel											mainPanel;
-	JLayeredPane									layeredPane;
+	PlotAxis											xaxis;
+	PlotAxis											yaxis;
+	AxisLinkButton										axisLinkButton;
+	Plot												plot;
+	JPanel												plotPanel;
+	JPanel												mainPanel;
+	JLayeredPane										layeredPane;
 	
-	PlotController									plotController;
-	MouseLooper										mouseLooper;
-	OtherMouseHandler								otherMouseHandler;
-	MousePickHandler								pickHandler;
-	MouseAdapterChain								mouseAdapterChain;
+	PlotController										plotController;
+	MouseLooper											mouseLooper;
+	OtherMouseHandler									otherMouseHandler;
+	MousePickHandler									pickHandler;
+	MouseAdapterChain									mouseAdapterChain;
 	
-	DrawerAutoshowController						autoshowController;
+	DrawerAutoshowController							autoshowController;
 	
-	TableSelectionHandler							selectionHandler;
+	TableSelectionHandler								selectionHandler;
 	
-	SurveyFilterFactory								surveyFilterFactory			= new SurveyFilterFactory( );
+	SurveyFilterFactory									surveyFilterFactory			= new SurveyFilterFactory( );
 	
-	SurveyDrawer									surveyDrawer;
-	TaskListDrawer									taskListDrawer;
-	SettingsDrawer									settingsDrawer;
+	SurveyDrawer										surveyDrawer;
+	TaskListDrawer										taskListDrawer;
+	SettingsDrawer										settingsDrawer;
 	
-	Survey3dModel									model3d;
+	Survey3dModel										model3d;
 	
-	float[ ]										v							= newMat4f( );
+	float[ ]											v							= newMat4f( );
 	
-	int												debugMbrCount				= 0;
-	List<BasicJOGLObject>							debugMbrs					= new ArrayList<BasicJOGLObject>( );
+	int													debugMbrCount				= 0;
+	List<BasicJOGLObject>								debugMbrs					= new ArrayList<BasicJOGLObject>( );
 	
-	ShotPickContext									spc							= new ShotPickContext( );
+	ShotPickContext										spc							= new ShotPickContext( );
 	
-	final LinePlaneIntersection3f					lpx							= new LinePlaneIntersection3f( );
-	final float[ ]									p0							= new float[ 3 ];
-	final float[ ]									p1							= new float[ 3 ];
-	final float[ ]									p2							= new float[ 3 ];
+	final LinePlaneIntersection3f						lpx							= new LinePlaneIntersection3f( );
+	final float[ ]										p0							= new float[ 3 ];
+	final float[ ]										p1							= new float[ 3 ];
+	final float[ ]										p2							= new float[ 3 ];
 	
-	File											rootFile;
-	TaskServiceFilePersister<QObject<RootModel>>	rootPersister;
-	final Binder<QObject<RootModel>>				rootModelBinder				= new Binder<QObject<RootModel>>( );
+	File												rootFile;
+	TaskServiceFilePersister<QObject<RootModel>>		rootPersister;
+	final Binder<QObject<RootModel>>					rootModelBinder				= new DefaultBinder<QObject<RootModel>>( );
 	
-	final Binder<QObject<ProjectModel>>				projectModelBinder			= new Binder<QObject<ProjectModel>>( );
-	TaskServiceFilePersister<QObject<ProjectModel>>	projectPersister;
+	final Binder<QObject<ProjectModel>>					projectModelBinder			= new DefaultBinder<QObject<ProjectModel>>( );
+	Binder<ColorParam>									colorParamBinder			= bind( ProjectModel.colorParam , projectModelBinder );
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	savedParamRangesBinder		= bind( ProjectModel.savedParamRanges , projectModelBinder );
+	Binder<LinearAxisConversion>						paramRangeBinder			= bindKeyed( colorParamBinder , savedParamRangesBinder );
+	TaskServiceFilePersister<QObject<ProjectModel>>		projectPersister;
 	
-	SubtaskFilePersister<SurveyTableModel>			surveyPersister;
+	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
 	
-	final AnimationQueue							cameraAnimationQueue		= new AnimationQueue( );
+	final AnimationQueue								cameraAnimationQueue		= new AnimationQueue( );
 	
-	NewProjectAction								newProjectAction			= new NewProjectAction( this );
-	OpenProjectAction								openProjectAction			= new OpenProjectAction( this );
-	ImportProjectArchiveAction						importProjectArchiveAction	= new ImportProjectArchiveAction( this );
-	ExportProjectArchiveAction						exportProjectArchiveAction	= new ExportProjectArchiveAction( this );
-	ExportImageAction								exportImageAction			= new ExportImageAction( this );
+	NewProjectAction									newProjectAction			= new NewProjectAction( this );
+	OpenProjectAction									openProjectAction			= new OpenProjectAction( this );
+	ImportProjectArchiveAction							importProjectArchiveAction	= new ImportProjectArchiveAction( this );
+	ExportProjectArchiveAction							exportProjectArchiveAction	= new ExportProjectArchiveAction( this );
+	ExportImageAction									exportImageAction			= new ExportImageAction( this );
 	
 	public BreakoutMainView( )
 	{
@@ -458,169 +466,126 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
-		surveyDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.surveyDrawer ) );
-		settingsDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.settingsDrawer ) );
-		taskListDrawer.setBinder( projectModelBinder.subBinder( ProjectModel.taskListDrawer ) );
+		surveyDrawer.setBinder( bind( ProjectModel.surveyDrawer , projectModelBinder ) );
+		settingsDrawer.setBinder( bind( ProjectModel.settingsDrawer , projectModelBinder ) );
+		taskListDrawer.setBinder( bind( ProjectModel.taskListDrawer , projectModelBinder ) );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.viewXform )
+		new BinderWrapper<float[ ]>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( float[ ] newValue )
 			{
-				Model model = getModel( );
-				if( model != null )
+				if( newValue != null )
 				{
-					scene.setViewXform( ( float[ ] ) model.get( ProjectModel.viewXform ) );
+					scene.setViewXform( newValue );
 				}
 			}
-		} );
+		}.bind( bind( ProjectModel.viewXform , projectModelBinder ) );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.cameraView )
+		new BinderWrapper<CameraView>( )
 		{
-			public void modelToViewImpl( )
+			protected void onValueChanged( CameraView newValue )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null )
+				if( newValue != null )
 				{
-					setCameraView( ( CameraView ) model.get( ProjectModel.cameraView ) );
+					setCameraView( newValue );
 				}
 			}
-		} );
+		}.bind( bind( ProjectModel.cameraView , projectModelBinder ) );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.backgroundColor )
+		new BinderWrapper<Color>( )
 		{
-			public void modelToViewImpl( )
+			protected void onValueChanged( Color bgColor )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null )
+				if( bgColor != null )
 				{
-					Color bgColor = ( Color ) model.get( ProjectModel.backgroundColor );
-					if( bgColor != null )
-					{
-						scene.setBgColor( bgColor.getRed( ) / 255f , bgColor.getGreen( ) / 255f , bgColor.getBlue( ) / 255f , 1f );
-					}
+					scene.setBgColor( bgColor.getRed( ) / 255f , bgColor.getGreen( ) / 255f , bgColor.getBlue( ) / 255f , 1f );
 				}
 			}
-		} );
+		}.bind( bind( ProjectModel.backgroundColor , projectModelBinder ) );
 		
-		rootModelBinder.bind( new BindingAdapter( RootModel.mouseSensitivity )
+		new BinderWrapper<Integer>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( Integer newValue )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null && model.get( RootModel.mouseSensitivity ) instanceof Integer )
+				if( newValue != null )
 				{
-					float sensitivity = ( Integer ) model.get( RootModel.mouseSensitivity ) / 20f;
+					float sensitivity = newValue / 20f;
 					orbiter.setSensitivity( sensitivity );
 					navigator.setSensitivity( sensitivity );
 				}
 			}
-		} );
+		}.bind( bind( RootModel.mouseSensitivity , rootModelBinder ) );
 		
-		rootModelBinder.bind( new BindingAdapter( RootModel.mouseWheelSensitivity )
+		new BinderWrapper<Integer>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( Integer newValue )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null && model.get( RootModel.mouseWheelSensitivity ) instanceof Integer )
+				if( newValue != null )
 				{
-					float sensitivity = ( Integer ) model.get( RootModel.mouseWheelSensitivity ) / 20f;
+					float sensitivity = newValue / 20f;
 					navigator.setWheelFactor( sensitivity );
 				}
 			}
-		} );
+		}.bind( bind( RootModel.mouseWheelSensitivity , rootModelBinder ) );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.ambientLight )
+		new BinderWrapper<Float>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( Float newValue )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null && model3d != null )
+				if( model3d != null && newValue != null )
 				{
-					Float ambientLight = ( Float ) model.get( ProjectModel.ambientLight );
-					if( ambientLight != null )
-					{
-						model3d.setAmbientLight( ambientLight );
-						canvas.display( );
-					}
+					model3d.setAmbientLight( newValue );
+					canvas.repaint( );
 				}
 			}
-		} );
+		}.bind( bind( ProjectModel.ambientLight , projectModelBinder ) );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.distRange )
+		new BinderWrapper<LinearAxisConversion>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( LinearAxisConversion range )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null && model3d != null )
+				if( model3d != null && range != null )
 				{
-					LinearAxisConversion range = ( LinearAxisConversion ) model.get( ProjectModel.distRange );
-					if( range != null )
-					{
-						float nearDist = ( float ) range.invert( 0.0 );
-						float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
-						model3d.setNearDist( nearDist );
-						model3d.setFarDist( farDist );
-						canvas.display( );
-					}
+					float nearDist = ( float ) range.invert( 0.0 );
+					float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
+					model3d.setNearDist( nearDist );
+					model3d.setFarDist( farDist );
+					canvas.repaint( );
 				}
 			}
-		} );
+		}.bind( bind( ProjectModel.distRange , projectModelBinder ) );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.paramRange )
+		new BinderWrapper<LinearAxisConversion>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( LinearAxisConversion range )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null && model3d != null )
+				if( model3d != null && range != null )
 				{
-					LinearAxisConversion range = ( LinearAxisConversion ) model.get( ProjectModel.paramRange );
-					if( range != null )
-					{
-						float loParam = ( float ) range.invert( 0.0 );
-						float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
-						model3d.setLoParam( loParam );
-						model3d.setHiParam( hiParam );
-						canvas.display( );
-					}
+					float loParam = ( float ) range.invert( 0.0 );
+					float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
+					model3d.setLoParam( loParam );
+					model3d.setHiParam( hiParam );
+					canvas.repaint( );
 				}
 			}
-		} );
+		}.bind( paramRangeBinder );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.depthAxis )
+		new BinderWrapper<float[ ]>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( float[ ] depthAxis )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null && model3d != null )
+				if( model3d != null && depthAxis != null && depthAxis.length == 3 )
 				{
-					float[ ] depthAxis = ( float[ ] ) model.get( ProjectModel.depthAxis );
-					if( depthAxis != null && depthAxis.length == 3 )
-					{
-						model3d.setDepthAxis( depthAxis );
-						canvas.display( );
-					}
+					model3d.setDepthAxis( depthAxis );
+					canvas.display( );
 				}
 			}
-		} );
+		}.bind( bind( ProjectModel.depthAxis , projectModelBinder ) );
 		
-		projectModelBinder.bind( new BindingAdapter( ProjectModel.colorParam )
+		new BinderWrapper<ColorParam>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( final ColorParam colorParam )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model == null )
-				{
-					return;
-				}
-				final ColorParam colorParam = ( ColorParam ) model.get( ProjectModel.colorParam );
 				if( colorParam != null )
 				{
 					Task task = new Task( )
@@ -647,10 +612,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					rebuildTaskService.submit( task );
 				}
 			}
-		} );
-		
-		projectModelBinder.subBinder( ProjectModel.savedParamRanges ).bind(
-				new MappedPropertyBinding( ProjectModel.colorParam , ProjectModel.paramRange , projectModelBinder ) );
+		}.bind( bind( ProjectModel.colorParam , projectModelBinder ) );
 		
 		settingsDrawer.getProjectFileMenuButton( ).addActionListener( new ActionListener( )
 		{
@@ -760,7 +722,7 @@ public class BreakoutMainView extends BasicJoglSetup
 								LinearAxisConversion conversion = new LinearAxisConversion(
 										range[ 0 ] , 0.0 , range[ 1 ] , settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
 								
-								getProjectModel( ).set( ProjectModel.paramRange , conversion );
+								paramRangeBinder.set( conversion );
 							}
 						}
 					}
@@ -778,7 +740,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				double start = conversion.invert( 0.0 );
 				double end = conversion.invert( axis.getViewSpan( ) );
 				LinearAxisConversion newConversion = new LinearAxisConversion( end , 0.0 , start , axis.getViewSpan( ) );
-				getProjectModel( ).set( ProjectModel.paramRange , newConversion );
+				paramRangeBinder.set( newConversion );
 			}
 		} );
 		
@@ -864,23 +826,17 @@ public class BreakoutMainView extends BasicJoglSetup
 		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
 		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
 		
-		rootModelBinder.bind( new BindingAdapter( RootModel.desiredNumSamples )
+		new BinderWrapper<Integer>( )
 		{
-			@Override
-			public void modelToViewImpl( )
+			protected void onValueChanged( Integer desiredNumSamples )
 			{
-				org.andork.model.Model model = getModel( );
-				if( model != null )
+				if( desiredNumSamples != null )
 				{
-					Integer desiredNumSamples = ( Integer ) model.get( RootModel.desiredNumSamples );
-					if( desiredNumSamples != null )
-					{
-						scene.setDesiredNumSamples( desiredNumSamples );
-					}
+					scene.setDesiredNumSamples( desiredNumSamples );
 					canvas.display( );
 				}
 			}
-		} );
+		}.bind( bind( RootModel.desiredNumSamples , rootModelBinder ) );
 		
 		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
 		{
@@ -940,7 +896,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	public QObject<RootModel> getRootModel( )
 	{
-		return rootModelBinder.getModel( );
+		return rootModelBinder.get( );
 	}
 	
 	public void setRootModel( QObject<RootModel> rootModel )
@@ -952,8 +908,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				currentModel.changeSupport( ).removePropertyChangeListener( rootPersister );
 			}
-			rootModelBinder.setModel( rootModel );
-			rootModelBinder.modelToView( );
+			rootModelBinder.set( rootModel );
 			if( rootModel != null )
 			{
 				rootModel.changeSupport( ).addPropertyChangeListener( rootPersister );
@@ -968,7 +923,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	public QObject<ProjectModel> getProjectModel( )
 	{
-		return projectModelBinder.getModel( );
+		return projectModelBinder.get( );
 	}
 	
 	public I18n getI18n( )
@@ -1817,7 +1772,7 @@ public class BreakoutMainView extends BasicJoglSetup
 							// text.use( );
 							// scene.add( text );
 							
-							projectModelBinder.modelToView( );
+							projectModelBinder.update( true );
 							
 							float[ ] center = new float[ 3 ];
 							Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
@@ -1916,8 +1871,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						finalProjectModel.getProjectModel( ).changeSupport( ).addPropertyChangeListener( projectPersister );
 						projectPersister.saveLater( finalProjectModel.getProjectModel( ) );
 					}
-					projectModelBinder.setModel( finalProjectModel.getProjectModel( ) );
-					projectModelBinder.modelToView( );
+					projectModelBinder.set( finalProjectModel.getProjectModel( ) );
 					
 					surveyDrawer.table( ).getModel( ).copyRowsFrom( finalProjectModel.getSurveyTableModel( ) ,
 							0 , finalProjectModel.getSurveyTableModel( ).getRowCount( ) - 1 , 0 );
@@ -2102,8 +2056,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				public void run( ) throws Throwable
 				{
 					finalProjectModel.changeSupport( ).addPropertyChangeListener( projectPersister );
-					projectModelBinder.setModel( finalProjectModel );
-					projectModelBinder.modelToView( );
+					projectModelBinder.set( finalProjectModel );
 				}
 			};
 			

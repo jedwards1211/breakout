@@ -1,5 +1,7 @@
 package org.andork.breakout;
 
+import static org.andork.bind.QObjectAttributeBinder.bind;
+
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
@@ -10,8 +12,8 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.andork.awt.I18n.Localizer;
+import org.andork.bind.Binder;
 import org.andork.breakout.model.ProjectModel;
-import org.andork.event.Binder;
 import org.andork.jogl.awt.ScreenCaptureDialog;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.q.QObject;
@@ -66,9 +68,8 @@ public class ExportImageAction extends AbstractAction
 				screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
 				mainView.getProjectModel( ).set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
 			}
-			Binder<QObject<ScreenCaptureDialogModel>> screenCaptureBinder = mainView.getProjectModelBinder( ).subBinder( ProjectModel.screenCaptureDialogModel );
+			Binder<QObject<ScreenCaptureDialogModel>> screenCaptureBinder = bind( ProjectModel.screenCaptureDialogModel , mainView.getProjectModelBinder( ) );
 			screenCaptureDialog.setBinder( screenCaptureBinder );
-			screenCaptureBinder.modelToView( );
 			
 			Dimension size = mainPanel.getSize( );
 			size.width = size.width * 3 / 4;

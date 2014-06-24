@@ -25,6 +25,7 @@ public abstract class QSpec<S extends QSpec<S>>
 			{
 				try
 				{
+					field.setAccessible( true );
 					Attribute<?> attr = ( Attribute<?> ) field.get( null );
 					attributesByName.put( attr.getName( ) , attr );
 				}
@@ -150,6 +151,6 @@ public abstract class QSpec<S extends QSpec<S>>
 	
 	public static <S extends QSpec<S>> Attribute<QObject<S>> newAttribute( S spec , String name )
 	{
-		return  new Attribute<QObject<S>>( QObject.class , name );
+		return new Attribute<QObject<S>>( QObject.class , name );
 	}
 }

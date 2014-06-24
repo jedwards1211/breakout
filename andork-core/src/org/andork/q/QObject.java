@@ -126,12 +126,15 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 		builder.append( '{' );
 		for( int i = 0 ; i < attributes.length ; i++ )
 		{
-			if( i > 0 )
+			if( attributes[ i ] != NOT_PRESENT )
 			{
-				builder.append( ',' );
+				if( builder.length( ) > 1 )
+				{
+					builder.append( ',' );
+				}
+				builder.append( '"' ).append( spec.attributes[ i ].getName( ) ).append( "\":" );
+				builder.append( String.valueOf( attributes[ i ] ) );
 			}
-			builder.append( '"' ).append( spec.attributes[ i ].getName( ) ).append( "\":" );
-			builder.append( String.valueOf( attributes[ i ] ) );
 		}
 		builder.append( '}' );
 		return builder.toString( );
@@ -155,13 +158,9 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 		QObject<S> result = spec.newObject( );
 		for( int i = 0 ; i < attributes.length ; i++ )
 		{
-			if( attributes[ i ] == NOT_PRESENT )
+			if( attributes[ i ] != NOT_PRESENT )
 			{
-				result.attributes[ i ] = NOT_PRESENT;
-			}
-			else
-			{
-				result.attributes[ i ] = childMapper.map( attributes[ i ] );
+				result.set( spec.attributeAt( i ) , childMapper.map( attributes[ i ] ) );
 			}
 		}
 		return result;

@@ -1,13 +1,13 @@
 package org.andork.awt.layout;
 
+import static org.andork.bind.ui.ButtonSelectedBinder.bind;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.List;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -15,23 +15,30 @@ import javax.swing.JLayeredPane;
 import javax.swing.JToggleButton;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import org.andork.awt.event.UIBindings;
-import org.andork.event.Binder;
-import org.andork.event.Binder.Binding;
+import org.andork.bind.Binder;
+import org.andork.bind.BinderWrapper;
+import org.andork.bind.QObjectAttributeBinder;
+import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.q.QObject;
 import org.andork.swing.PaintablePanel;
+
+import static org.andork.bind.QObjectAttributeBinder.*;
 
 @SuppressWarnings( "serial" )
 public class Drawer extends PaintablePanel
 {
-	DrawerLayoutDelegate			delegate;
-	JToggleButton					pinButton;
-	TabLayoutDelegate				pinButtonDelegate;
-	JToggleButton					maxButton;
-	Component						mainResizeHandle;
-	ResizeKnobHandler				mainResizeHandler;
-	Binder<QObject<DrawerModel>>	binder;
-	final List<Binding>				bindings	= new ArrayList<Binding>( );
+	DrawerLayoutDelegate				delegate;
+	JToggleButton						pinButton;
+	TabLayoutDelegate					pinButtonDelegate;
+	JToggleButton						maxButton;
+	Component							mainResizeHandle;
+	ResizeKnobHandler					mainResizeHandler;
+	
+	BinderWrapper<QObject<DrawerModel>>	binder			= new BinderWrapper<QObject<DrawerModel>>( );
+	QObjectAttributeBinder<Boolean>		pinnedBinder	= bind( DrawerModel.pinned , binder );
+	QObjectAttributeBinder<Boolean>		maximizedBinder	= bind( DrawerModel.maximized , binder );
+	ButtonSelectedBinder				pinButtonBinder;
+	ButtonSelectedBinder				maxButtonBinder;
 	
 	public Drawer( )
 	{
@@ -46,41 +53,9 @@ public class Drawer extends PaintablePanel
 		add( content , BorderLayout.CENTER );
 	}
 	
-	public void setBinder( Binder<QObject<DrawerModel>> binder )
+	public void setBinder( Binder<QObject<DrawerModel>> modelBinder )
 	{
-		if( this.binder != binder )
-		{
-			if( this.binder != null && this.bindings != null )
-			{
-				for( Binding binding : bindings )
-				{
-					this.binder.unbind( binding );
-				}
-			}
-			this.binder = binder;
-			bindings.clear( );
-			refreshBindings( );
-		}
-	}
-	
-	void refreshBindings( )
-	{
-		if( binder != null )
-		{
-			for( Binding binding : bindings )
-			{
-				binder.unbind( binding );
-			}
-			bindings.clear( );
-			if( pinButton != null )
-			{
-				bindings.add( UIBindings.bind( binder , pinButton , DrawerModel.pinned ) );
-			}
-			if( maxButton != null )
-			{
-				bindings.add( UIBindings.bind( binder , maxButton , DrawerModel.maximized ) );
-			}
-		}
+		this.binder.bind( modelBinder );
 	}
 	
 	public DrawerLayoutDelegate delegate( )
@@ -110,7 +85,8 @@ public class Drawer extends PaintablePanel
 					delegate.setPinned( pinButton.isSelected( ) );
 				}
 			} );
-			refreshBindings( );
+			
+			pinButtonBinder = bind( pinButton , pinnedBinder );
 		}
 		return pinButton;
 	}
@@ -143,7 +119,7 @@ public class Drawer extends PaintablePanel
 					delegate.setMaximized( maxButton.isSelected( ) );
 				}
 			} );
-			refreshBindings( );
+			maxButtonBinder = bind( maxButton , maximizedBinder );
 		}
 		return maxButton;
 	}
