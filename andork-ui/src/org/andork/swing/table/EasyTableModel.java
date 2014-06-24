@@ -625,7 +625,7 @@ public class EasyTableModel<T> extends AbstractTableModel
 		{
 			T srcRow = src.getRow( i );
 			int destI = i + myStart - srcStart;
-			if( destI == rows.size( ) )
+			while( destI >= rows.size( ) )
 			{
 				rows.add( null );
 			}

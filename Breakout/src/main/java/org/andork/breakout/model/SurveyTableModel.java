@@ -5,12 +5,10 @@ import static org.andork.util.StringUtils.toStringOrNull;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.collect.CollectionUtils;
 import org.andork.math3d.Vecmath;
 import org.andork.q.QObject;
@@ -70,27 +68,6 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		return row >= shots.size( ) ? null : shots.get( row );
 	}
 	
-	@Override
-	public void setRow( int index , QObject<Row> row )
-	{
-		super.setRow( index , row );
-		if( index >= getRowCount( ) - 2 )
-		{
-			fixEndRows( );
-		}
-	}
-	
-	@Override
-	public void setValueAt( Object aValue , int row , int column , boolean fireEvent )
-	{
-		Object prevValue = getValueAt( row , column );
-		super.setValueAt( aValue , row , column , fireEvent );
-		if( ( prevValue == null || "".equals( prevValue ) != ( aValue == null || "".equals( aValue ) ) ) )
-		{
-			fixEndRows( );
-		}
-	}
-	
 	private boolean isEmpty( int row )
 	{
 		for( int column = 0 ; column < getColumnCount( ) ; column++ )
@@ -122,6 +99,35 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		}
 	}
 	
+	@Override
+	public void setRow( int index , QObject<Row> row )
+	{
+		while( index >= getRowCount( ) )
+		{
+			addRow( Row.instance.newObject( ) );
+		}
+		super.setRow( index , row );
+		if( index >= getRowCount( ) - 2 )
+		{
+			fixEndRows( );
+		}
+	}
+
+	@Override
+	public void setValueAt( Object aValue , int row , int column , boolean fireEvent )
+	{
+		while( row >= getRowCount( ) )
+		{
+			addRow( Row.instance.newObject( ) );
+		}
+		Object prevValue = getValueAt( row , column );
+		super.setValueAt( aValue , row , column , fireEvent );
+		if( ( prevValue == null || "".equals( prevValue ) != ( aValue == null || "".equals( aValue ) ) ) )
+		{
+			fixEndRows( );
+		}
+	}
+
 	public void clear( )
 	{
 		setShots( Collections.<SurveyShot>emptyList( ) );
