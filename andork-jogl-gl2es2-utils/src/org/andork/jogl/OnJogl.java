@@ -12,7 +12,7 @@ import javax.swing.SwingUtilities;
  * 
  * @param <R>
  */
-public abstract class OnJogl<R>
+public abstract class OnJogl
 {
 	/**
 	 * This constructor calls {@link #run()} on the EDT immediately so that you can save a few keystrokes.

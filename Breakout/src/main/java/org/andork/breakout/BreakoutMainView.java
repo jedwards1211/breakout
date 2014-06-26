@@ -1,6 +1,5 @@
 package org.andork.breakout;
 
-import static org.andork.bind.QObjectAttributeBinder.bind;
 import static org.andork.math3d.Vecmath.newMat4f;
 
 import java.awt.BorderLayout;
@@ -22,11 +21,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -52,6 +53,8 @@ import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
 import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
+import org.andork.awt.event.MouseAdapterChain;
+import org.andork.awt.event.MouseAdapterWrapper;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
@@ -62,6 +65,7 @@ import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
 import org.andork.bind.QMapKeyedBinder;
+import org.andork.bind.QObjectAttributeBinder;
 import org.andork.breakout.SettingsDrawer.CameraView;
 import org.andork.breakout.SettingsDrawer.FilterType;
 import org.andork.breakout.model.ColorParam;
@@ -80,6 +84,7 @@ import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.jogl.BasicJOGLObject;
+import org.andork.jogl.OnJogl;
 import org.andork.jogl.OrthoProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
 import org.andork.jogl.awt.anim.RandomOrbit;
@@ -93,7 +98,6 @@ import org.andork.math3d.Vecmath;
 import org.andork.q.QArrayList;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q.QMap;
-import org.andork.q.QMapBimapper;
 import org.andork.q.QObject;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
@@ -124,7 +128,6 @@ import org.andork.swing.table.RowFilterFactory;
 
 import com.andork.plot.AxisLinkButton;
 import com.andork.plot.LinearAxisConversion;
-import com.andork.plot.MouseAdapterChain;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.Plot;
 import com.andork.plot.PlotAxis;
@@ -133,8 +136,6 @@ import com.andork.plot.PlotAxis.Orientation;
 import com.andork.plot.PlotAxisController;
 import com.andork.plot.PlotController;
 import com.andork.plot.PlotPanelLayout;
-
-import static org.andork.bind.QMapKeyedBinder.*;
 
 public class BreakoutMainView extends BasicJoglSetup
 {
@@ -165,23 +166,29 @@ public class BreakoutMainView extends BasicJoglSetup
 	JPanel												mainPanel;
 	JLayeredPane										layeredPane;
 	
-	PlotController										plotController;
-	MouseLooper											mouseLooper;
-	OtherMouseHandler									otherMouseHandler;
-	MousePickHandler									pickHandler;
-	MouseAdapterChain									mouseAdapterChain;
+	MouseAdapterWrapper									canvasMouseAdapterWrapper;
 	
+	// normal mouse mode
+	MouseLooper											mouseLooper;
+	MouseAdapterChain									mouseAdapterChain;
+	PlotController										plotController;
+	MousePickHandler									pickHandler;
 	DrawerAutoshowController							autoshowController;
+	OtherMouseHandler									otherMouseHandler;
+	
+	WindowSelectionMouseHandler							windowSelectionMouseHandler;
 	
 	TableSelectionHandler								selectionHandler;
 	
 	SurveyFilterFactory									surveyFilterFactory			= new SurveyFilterFactory( );
 	
 	SurveyDrawer										surveyDrawer;
+	Drawer												quickTableDrawer;
 	TaskListDrawer										taskListDrawer;
 	SettingsDrawer										settingsDrawer;
 	
 	Survey3dModel										model3d;
+	SelectionPolygon									selectionPolygon			= new SelectionPolygon( );
 	
 	float[ ]											v							= newMat4f( );
 	
@@ -200,9 +207,9 @@ public class BreakoutMainView extends BasicJoglSetup
 	final Binder<QObject<RootModel>>					rootModelBinder				= new DefaultBinder<QObject<RootModel>>( );
 	
 	final Binder<QObject<ProjectModel>>					projectModelBinder			= new DefaultBinder<QObject<ProjectModel>>( );
-	Binder<ColorParam>									colorParamBinder			= bind( ProjectModel.colorParam , projectModelBinder );
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= bind( ProjectModel.paramRanges , projectModelBinder );
-	Binder<LinearAxisConversion>						paramRangeBinder			= bindKeyed( colorParamBinder , paramRangesBinder );
+	Binder<ColorParam>									colorParamBinder			= QObjectAttributeBinder.bind( ProjectModel.colorParam , projectModelBinder );
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= QObjectAttributeBinder.bind( ProjectModel.paramRanges , projectModelBinder );
+	Binder<LinearAxisConversion>						paramRangeBinder			= QMapKeyedBinder.bindKeyed( colorParamBinder , paramRangesBinder );
 	TaskServiceFilePersister<QObject<ProjectModel>>		projectPersister;
 	
 	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
@@ -313,10 +320,14 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		pickHandler = new MousePickHandler( );
 		
+		canvasMouseAdapterWrapper = new MouseAdapterWrapper( );
+		canvas.addMouseListener( canvasMouseAdapterWrapper );
+		canvas.addMouseMotionListener( canvasMouseAdapterWrapper );
+		canvas.addMouseWheelListener( canvasMouseAdapterWrapper );
+		
 		mouseLooper = new MouseLooper( );
-		canvas.addMouseListener( mouseLooper );
-		canvas.addMouseMotionListener( mouseLooper );
-		canvas.addMouseWheelListener( mouseLooper );
+		windowSelectionMouseHandler = new WindowSelectionMouseHandler( );
+		canvasMouseAdapterWrapper.setWrapped( mouseLooper );
 		
 		autoshowController = new DrawerAutoshowController( );
 		
@@ -440,7 +451,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		gbw.put( quickTableSetup.scrollPane ).below( quickTableHighlightLabel , quickTableHighlightField ).fillboth( 1.0 , 1.0 );
 		
-		Drawer quickTableDrawer = new Drawer( quickTablePanel );
+		quickTableDrawer = new Drawer( quickTablePanel );
 		quickTableDrawer.delegate( ).dockingSide( Side.LEFT );
 		quickTableDrawer.mainResizeHandle( );
 		quickTableDrawer.pinButton( );
@@ -466,9 +477,9 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
-		surveyDrawer.setBinder( bind( ProjectModel.surveyDrawer , projectModelBinder ) );
-		settingsDrawer.setBinder( bind( ProjectModel.settingsDrawer , projectModelBinder ) );
-		taskListDrawer.setBinder( bind( ProjectModel.taskListDrawer , projectModelBinder ) );
+		surveyDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.surveyDrawer , projectModelBinder ) );
+		settingsDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.settingsDrawer , projectModelBinder ) );
+		taskListDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.taskListDrawer , projectModelBinder ) );
 		
 		new BinderWrapper<float[ ]>( )
 		{
@@ -479,7 +490,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					scene.setViewXform( newValue );
 				}
 			}
-		}.bind( bind( ProjectModel.viewXform , projectModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( ProjectModel.viewXform , projectModelBinder ) );
 		
 		new BinderWrapper<CameraView>( )
 		{
@@ -490,7 +501,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					setCameraView( newValue );
 				}
 			}
-		}.bind( bind( ProjectModel.cameraView , projectModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( ProjectModel.cameraView , projectModelBinder ) );
 		
 		new BinderWrapper<Color>( )
 		{
@@ -501,7 +512,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					scene.setBgColor( bgColor.getRed( ) / 255f , bgColor.getGreen( ) / 255f , bgColor.getBlue( ) / 255f , 1f );
 				}
 			}
-		}.bind( bind( ProjectModel.backgroundColor , projectModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( ProjectModel.backgroundColor , projectModelBinder ) );
 		
 		new BinderWrapper<Integer>( )
 		{
@@ -514,7 +525,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					navigator.setSensitivity( sensitivity );
 				}
 			}
-		}.bind( bind( RootModel.mouseSensitivity , rootModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( RootModel.mouseSensitivity , rootModelBinder ) );
 		
 		new BinderWrapper<Integer>( )
 		{
@@ -526,19 +537,27 @@ public class BreakoutMainView extends BasicJoglSetup
 					navigator.setWheelFactor( sensitivity );
 				}
 			}
-		}.bind( bind( RootModel.mouseWheelSensitivity , rootModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( RootModel.mouseWheelSensitivity , rootModelBinder ) );
 		
 		new BinderWrapper<Float>( )
 		{
-			protected void onValueChanged( Float newValue )
+			protected void onValueChanged( final Float newValue )
 			{
 				if( model3d != null && newValue != null )
 				{
-					model3d.setAmbientLight( newValue );
-					canvas.repaint( );
+					final Survey3dModel model3d = BreakoutMainView.this.model3d;
+					new OnJogl( getCanvas( ) )
+					{
+						@Override
+						public void run( GLAutoDrawable drawable ) throws Throwable
+						{
+							model3d.setAmbientLight( newValue );
+						}
+					};
+					getCanvas( ).repaint( );
 				}
 			}
-		}.bind( bind( ProjectModel.ambientLight , projectModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( ProjectModel.ambientLight , projectModelBinder ) );
 		
 		new BinderWrapper<LinearAxisConversion>( )
 		{
@@ -546,14 +565,22 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				if( model3d != null && range != null )
 				{
-					float nearDist = ( float ) range.invert( 0.0 );
-					float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
-					model3d.setNearDist( nearDist );
-					model3d.setFarDist( farDist );
-					canvas.repaint( );
+					final float nearDist = ( float ) range.invert( 0.0 );
+					final float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
+					final Survey3dModel model3d = BreakoutMainView.this.model3d;
+					new OnJogl( getCanvas( ) )
+					{
+						@Override
+						public void run( GLAutoDrawable drawable ) throws Throwable
+						{
+							model3d.setNearDist( nearDist );
+							model3d.setFarDist( farDist );
+						}
+					};
+					getCanvas( ).repaint( );
 				}
 			}
-		}.bind( bind( ProjectModel.distRange , projectModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( ProjectModel.distRange , projectModelBinder ) );
 		
 		new BinderWrapper<LinearAxisConversion>( )
 		{
@@ -561,10 +588,18 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				if( model3d != null && range != null )
 				{
-					float loParam = ( float ) range.invert( 0.0 );
-					float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
-					model3d.setLoParam( loParam );
-					model3d.setHiParam( hiParam );
+					final float loParam = ( float ) range.invert( 0.0 );
+					final float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
+					final Survey3dModel model3d = BreakoutMainView.this.model3d;
+					new OnJogl( getCanvas( ) )
+					{
+						@Override
+						public void run( GLAutoDrawable drawable ) throws Throwable
+						{
+							model3d.setLoParam( loParam );
+							model3d.setHiParam( hiParam );
+						}
+					};
 					canvas.repaint( );
 				}
 			}
@@ -574,45 +609,52 @@ public class BreakoutMainView extends BasicJoglSetup
 		{
 			protected void onValueChanged( float[ ] depthAxis )
 			{
+				final float[ ] finalDepthAxis = Arrays.copyOf( depthAxis , depthAxis.length );
 				if( model3d != null && depthAxis != null && depthAxis.length == 3 )
 				{
-					model3d.setDepthAxis( depthAxis );
+					final Survey3dModel model3d = BreakoutMainView.this.model3d;
+					new OnJogl( getCanvas( ) )
+					{
+						@Override
+						public void run( GLAutoDrawable drawable ) throws Throwable
+						{
+							model3d.setDepthAxis( finalDepthAxis );
+						}
+					};
 					canvas.display( );
 				}
 			}
-		}.bind( bind( ProjectModel.depthAxis , projectModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( ProjectModel.depthAxis , projectModelBinder ) );
 		
 		new BinderWrapper<ColorParam>( )
 		{
 			protected void onValueChanged( final ColorParam colorParam )
 			{
-				if( colorParam != null )
+				if( colorParam != null && model3d != null )
 				{
+					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					Task task = new Task( )
 					{
 						@Override
 						protected void execute( ) throws Exception
 						{
-							if( model3d != null )
-							{
-								Subtask rootSubtask = new Subtask( this );
-								rootSubtask.setTotal( 1 );
-								rootSubtask.setIndeterminate( false );
-								
-								Subtask subtask = rootSubtask.beginSubtask( 1 );
-								subtask.setIndeterminate( false );
-								subtask.setStatus( "Recoloring" );
-								model3d.setColorParamInBackground( colorParam , subtask , getCanvas( ) );
-								rootSubtask.setCompleted( 1 );
-								subtask.end( );
-							}
+							Subtask rootSubtask = new Subtask( this );
+							rootSubtask.setTotal( 1 );
+							rootSubtask.setIndeterminate( false );
+							
+							Subtask subtask = rootSubtask.beginSubtask( 1 );
+							subtask.setIndeterminate( false );
+							subtask.setStatus( "Recoloring" );
+							model3d.setColorParamInBackground( colorParam , subtask , getCanvas( ) );
+							rootSubtask.setCompleted( 1 );
+							subtask.end( );
 						}
 					};
 					task.setTotal( 1000 );
 					rebuildTaskService.submit( task );
 				}
 			}
-		}.bind( bind( ProjectModel.colorParam , projectModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( ProjectModel.colorParam , projectModelBinder ) );
 		
 		settingsDrawer.getProjectFileMenuButton( ).addActionListener( new ActionListener( )
 		{
@@ -695,35 +737,35 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					return;
 				}
+				
+				final Survey3dModel model3d = BreakoutMainView.this.model3d;
+				
 				rebuildTaskService.submit( new Task( )
 				{
 					@Override
 					protected void execute( ) throws Exception
 					{
-						if( model3d != null )
+						setTotal( 1000 );
+						Subtask rootSubtask = new Subtask( this );
+						rootSubtask.setTotal( 1 );
+						Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
+						float[ ] range = model3d.calcAutofitParamRangeInBackground( calcSubtask , getCanvas( ) );
+						rootSubtask.setCompleted( 1 );
+						calcSubtask.end( );
+						
+						if( range != null )
 						{
-							setTotal( 1000 );
-							Subtask rootSubtask = new Subtask( this );
-							rootSubtask.setTotal( 1 );
-							Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
-							float[ ] range = model3d.calcAutofitParamRangeInBackground( calcSubtask , getCanvas( ) );
-							rootSubtask.setCompleted( 1 );
-							calcSubtask.end( );
-							
-							if( range != null )
+							ColorParam colorParam = getProjectModel( ).get( ProjectModel.colorParam );
+							if( !colorParam.isLoBright( ) )
 							{
-								ColorParam colorParam = getProjectModel( ).get( ProjectModel.colorParam );
-								if( !colorParam.isLoBright( ) )
-								{
-									float swap = range[ 0 ];
-									range[ 0 ] = range[ 1 ];
-									range[ 1 ] = swap;
-								}
-								LinearAxisConversion conversion = new LinearAxisConversion(
-										range[ 0 ] , 0.0 , range[ 1 ] , settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
-								
-								paramRangeBinder.set( conversion );
+								float swap = range[ 0 ];
+								range[ 0 ] = range[ 1 ];
+								range[ 1 ] = swap;
 							}
+							LinearAxisConversion conversion = new LinearAxisConversion(
+									range[ 0 ] , 0.0 , range[ 1 ] , settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
+							
+							paramRangeBinder.set( conversion );
 						}
 					}
 				} );
@@ -753,21 +795,19 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					return;
 				}
+				final Survey3dModel model3d = BreakoutMainView.this.model3d;
 				rebuildTaskService.submit( new Task( )
 				{
 					@Override
 					protected void execute( ) throws Exception
 					{
-						if( model3d != null )
-						{
-							setTotal( 1000 );
-							Subtask rootSubtask = new Subtask( this );
-							rootSubtask.setTotal( 1 );
-							Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
-							model3d.calcDistFromSelectInBackground( calcSubtask , getCanvas( ) );
-							rootSubtask.setCompleted( 1 );
-							calcSubtask.end( );
-						}
+						setTotal( 1000 );
+						Subtask rootSubtask = new Subtask( this );
+						rootSubtask.setTotal( 1 );
+						Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
+						model3d.calcDistFromSelectInBackground( calcSubtask , getCanvas( ) );
+						rootSubtask.setCompleted( 1 );
+						calcSubtask.end( );
 					}
 				} );
 			}
@@ -815,10 +855,6 @@ public class BreakoutMainView extends BasicJoglSetup
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				if( model3d == null )
-				{
-					return;
-				}
 				getProjectModel( ).set( ProjectModel.depthAxis , new float[ ] { 0f , -1f , 0f } );
 			}
 		} );
@@ -836,7 +872,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					canvas.display( );
 				}
 			}
-		}.bind( bind( RootModel.desiredNumSamples , rootModelBinder ) );
+		}.bind( QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootModelBinder ) );
 		
 		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
 		{
@@ -1065,6 +1101,10 @@ public class BreakoutMainView extends BasicJoglSetup
 			@Override
 			public long animate( long animTime )
 			{
+				if( model3d == null )
+				{
+					return 0;
+				}
 				table.getModelSelectionModel( ).clearSelection( );
 				table.selectAll( );
 				
@@ -1249,6 +1289,10 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	private void updateCenterOfOrbit( )
 	{
+		if( model3d == null )
+		{
+			return;
+		}
 		List<SurveyShot> origShots = model3d.getOriginalShots( );
 		
 		Set<Survey3dModel.Shot> newSelectedShots = model3d.getSelectedShots( );
@@ -1278,59 +1322,102 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
-	private class MousePickHandler extends MouseAdapter
+	private static ShotPickContext	hoverUpdaterSpc	= new ShotPickContext( );
+	
+	private class HoverUpdater extends Task
 	{
-		private ShotPickResult pick( MouseEvent e )
+		Survey3dModel	model3d;
+		MouseEvent		e;
+		
+		public HoverUpdater( Survey3dModel model3d , MouseEvent e )
 		{
-			float[ ] origin = new float[ 3 ];
-			float[ ] direction = new float[ 3 ];
-			scene.pickXform( ).xform( e.getX( ) , e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
-			
-			if( model3d != null )
-			{
-				List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
-				model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
-				
-				PickResult<Shot> best = null;
-				
-				for( PickResult<Shot> result : pickResults )
-				{
-					if( best == null || result.lateralDistance * best.distance < best.lateralDistance * result.distance ||
-							( result.lateralDistance == 0 && best.lateralDistance == 0 && result.distance < best.distance ) )
-					{
-						best = result;
-					}
-				}
-				
-				return ( ShotPickResult ) best;
-			}
-			
-			return null;
+			super( "Updating mouseover glow...");
+			this.model3d = model3d;
+			this.e = e;
+		}
+		
+		public boolean isCancelable() {
+			return true;
 		}
 		
 		@Override
+		protected void execute( ) throws Exception
+		{
+			final ShotPickResult picked = pick( model3d , e , hoverUpdaterSpc );
+			
+			final SelectionEditor editor = model3d.editSelection( );
+			
+			if( picked != null )
+			{
+				LinearAxisConversion conversion = new FromEDT<LinearAxisConversion>( )
+				{
+					@Override
+					public LinearAxisConversion run( ) throws Throwable
+					{
+						LinearAxisConversion conversion = getProjectModel( ).get( ProjectModel.highlightRange );
+						LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getGlowDistAxis( ).getViewSpan( ) ) , 0.0 );
+						return conversion2;
+					}
+				}.result( );
+				editor.hover( picked.picked , picked.locationAlongShot , conversion );
+			}
+			else
+			{
+				editor.unhover( );
+			}
+			
+			if( !isCanceling( ) )
+			{
+				editor.commit( );
+				canvas.display( );
+			}
+		}
+	}
+	
+	private ShotPickResult pick( Survey3dModel model3d , MouseEvent e , ShotPickContext spc )
+	{
+		float[ ] origin = new float[ 3 ];
+		float[ ] direction = new float[ 3 ];
+		scene.pickXform( ).xform( e.getX( ) , e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
+		
+		if( model3d != null )
+		{
+			List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
+			model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
+			
+			PickResult<Shot> best = null;
+			
+			for( PickResult<Shot> result : pickResults )
+			{
+				if( best == null || result.lateralDistance * best.distance < best.lateralDistance * result.distance ||
+						( result.lateralDistance == 0 && best.lateralDistance == 0 && result.distance < best.distance ) )
+				{
+					best = result;
+				}
+			}
+			
+			return ( ShotPickResult ) best;
+		}
+		
+		return null;
+	}
+	
+	private class MousePickHandler extends MouseAdapter
+	{
+		@Override
 		public void mouseMoved( MouseEvent e )
 		{
-			ShotPickResult picked = pick( e );
-			
 			if( model3d != null )
 			{
-				SelectionEditor editor = model3d.editSelection( );
-				
-				if( picked != null )
+				HoverUpdater updater = new HoverUpdater( model3d , e );
+				for( Task task : rebuildTaskService.getTasks( ) )
 				{
-					LinearAxisConversion conversion = getProjectModel( ).get( ProjectModel.highlightRange );
-					LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getGlowDistAxis( ).getViewSpan( ) ) , 0.0 );
-					editor.hover( picked.picked , picked.locationAlongShot , conversion2 );
+					if( task instanceof HoverUpdater )
+					{
+						task.cancel( );
+					}
 				}
-				else
-				{
-					editor.unhover( );
-				}
-				
-				editor.commit( );
-				
-				canvas.display( );
+				rebuildTaskService.submit( updater );
 			}
 		}
 		
@@ -1342,7 +1429,13 @@ public class BreakoutMainView extends BasicJoglSetup
 				return;
 			}
 			
-			ShotPickResult picked = pick( e );
+			if( ( e.getModifiersEx( ) & MouseEvent.ALT_DOWN_MASK ) == MouseEvent.ALT_DOWN_MASK )
+			{
+				windowSelectionMouseHandler.start( e );
+				return;
+			}
+			
+			ShotPickResult picked = pick( model3d , e , spc );
 			
 			if( picked == null )
 			{
@@ -1351,43 +1444,40 @@ public class BreakoutMainView extends BasicJoglSetup
 			
 			ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
 			
-			if( model3d != null )
+			int index = picked.picked.getIndex( );
+			
+			int modelRow = surveyDrawer.table( ).getModel( ).rowOfShot( index );
+			
+			if( modelRow >= 0 )
 			{
-				int index = picked.picked.getIndex( );
-				
-				int modelRow = surveyDrawer.table( ).getModel( ).rowOfShot( index );
-				
-				if( modelRow >= 0 )
+				if( ( e.getModifiersEx( ) & MouseEvent.CTRL_DOWN_MASK ) != 0 )
 				{
-					if( ( e.getModifiersEx( ) & MouseEvent.CTRL_DOWN_MASK ) != 0 )
+					if( selModel.isSelectedIndex( modelRow ) )
 					{
-						if( selModel.isSelectedIndex( modelRow ) )
-						{
-							selModel.removeSelectionInterval( modelRow , modelRow );
-						}
-						else
-						{
-							selModel.addSelectionInterval( modelRow , modelRow );
-						}
+						selModel.removeSelectionInterval( modelRow , modelRow );
 					}
 					else
 					{
-						selModel.setSelectionInterval( modelRow , modelRow );
-					}
-					
-					int viewRow = surveyDrawer.table( ).convertRowIndexToView( modelRow );
-					
-					if( viewRow >= 0 )
-					{
-						Rectangle visibleRect = surveyDrawer.table( ).getVisibleRect( );
-						Rectangle cellRect = surveyDrawer.table( ).getCellRect( viewRow , 0 , true );
-						visibleRect.y = cellRect.y + cellRect.height / 2 - visibleRect.height / 2;
-						surveyDrawer.table( ).scrollRectToVisible( visibleRect );
+						selModel.addSelectionInterval( modelRow , modelRow );
 					}
 				}
+				else
+				{
+					selModel.setSelectionInterval( modelRow , modelRow );
+				}
 				
-				canvas.display( );
+				int viewRow = surveyDrawer.table( ).convertRowIndexToView( modelRow );
+				
+				if( viewRow >= 0 )
+				{
+					Rectangle visibleRect = surveyDrawer.table( ).getVisibleRect( );
+					Rectangle cellRect = surveyDrawer.table( ).getCellRect( viewRow , 0 , true );
+					visibleRect.y = cellRect.y + cellRect.height / 2 - visibleRect.height / 2;
+					surveyDrawer.table( ).scrollRectToVisible( visibleRect );
+				}
 			}
+			
+			canvas.display( );
 		}
 	}
 	
@@ -1403,7 +1493,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			
 			List<Survey3dModel.Shot> shots = model3d.getShots( );
 			
-			SelectionEditor editor = model3d.editSelection( );
+			final SelectionEditor editor = model3d.editSelection( );
 			
 			ListSelectionModel selModel = ( ListSelectionModel ) e.getSource( );
 			
@@ -1434,11 +1524,25 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			}
 			
-			editor.commit( );
-			
-			updateCenterOfOrbit( );
-			
-			canvas.display( );
+			rebuildTaskService.submit( new Task( )
+			{
+				@Override
+				protected void execute( ) throws Exception
+				{
+					editor.commit( );
+					
+					new OnEDT( )
+					{
+						@Override
+						public void run( ) throws Throwable
+						{
+							updateCenterOfOrbit( );
+						}
+					};
+					
+					canvas.display( );
+				}
+			} );
 		}
 	}
 	
@@ -1564,6 +1668,114 @@ public class BreakoutMainView extends BasicJoglSetup
 		public void mouseWheelMoved( MouseWheelEvent e )
 		{
 			saveViewXform( );
+		}
+	}
+	
+	class WindowSelectionMouseHandler extends MouseAdapter
+	{
+		private MouseAdapter			previousAdapter;
+		private final List<float[ ]>	points	= new ArrayList<float[ ]>( );
+		
+		public void start( MouseEvent e )
+		{
+			if( previousAdapter != null )
+			{
+				throw new IllegalStateException( );
+			}
+			for( Drawer drawer : Arrays.asList( surveyDrawer , quickTableDrawer , taskListDrawer , settingsDrawer ) )
+			{
+				if( !drawer.delegate( ).isPinned( ) )
+				{
+					drawer.delegate( ).close( );
+				}
+			}
+			points.add( new float[ ] { e.getX( ) , getCanvas( ).getHeight( ) - e.getY( ) } );
+			points.add( new float[ ] { e.getX( ) , getCanvas( ).getHeight( ) - e.getY( ) } );
+			new OnJogl( getCanvas( ) )
+			{
+				@Override
+				public void run( GLAutoDrawable drawable ) throws Throwable
+				{
+					selectionPolygon.setPoints( points );
+					scene.add( selectionPolygon );
+				}
+			};
+			previousAdapter = canvasMouseAdapterWrapper.getWrapped( );
+			canvasMouseAdapterWrapper.setWrapped( this );
+		}
+		
+		public void end( )
+		{
+			if( previousAdapter != null )
+			{
+				new OnJogl( getCanvas( ) )
+				{
+					@Override
+					public void run( GLAutoDrawable drawable ) throws Throwable
+					{
+						scene.remove( selectionPolygon );
+					}
+				};
+				points.clear( );
+				canvasMouseAdapterWrapper.setWrapped( previousAdapter );
+				previousAdapter = null;
+				getCanvas( ).repaint( );
+			}
+		}
+		
+		@Override
+		public void mousePressed( MouseEvent e )
+		{
+		}
+		
+		@Override
+		public void mouseReleased( MouseEvent e )
+		{
+			if( e.getButton( ) == MouseEvent.BUTTON3 )
+			{
+				end( );
+				return;
+			}
+			if( e.getButton( ) != MouseEvent.BUTTON1 )
+			{
+				return;
+			}
+			points.add( new float[ ] { e.getX( ) , getCanvas( ).getHeight( ) - e.getY( ) } );
+			new OnJogl( getCanvas( ) )
+			{
+				@Override
+				public void run( GLAutoDrawable drawable ) throws Throwable
+				{
+					selectionPolygon.setPoints( points );
+				}
+			};
+			getCanvas( ).repaint( );
+		}
+		
+		@Override
+		public void mouseDragged( MouseEvent e )
+		{
+			mouseMoved( e );
+		}
+		
+		@Override
+		public void mouseMoved( MouseEvent e )
+		{
+			if( !points.isEmpty( ) )
+			{
+				float[ ] last = points.get( points.size( ) - 1 );
+				last[ 0 ] = e.getX( );
+				last[ 1 ] = getCanvas( ).getHeight( ) - e.getY( );
+				new OnJogl( getCanvas( ) )
+				{
+					@Override
+					public void run( GLAutoDrawable drawable ) throws Throwable
+					{
+						selectionPolygon.setPoints( points );
+					}
+				};
+				getCanvas( ).repaint( );
+			}
 		}
 	}
 	

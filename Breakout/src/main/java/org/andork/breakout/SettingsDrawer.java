@@ -1,17 +1,7 @@
 package org.andork.breakout;
 
-import static org.andork.bind.BimapperBinder.bind;
 import static org.andork.bind.EqualsBinder.bindEquals;
-import static org.andork.bind.QMapKeyedBinder.bindKeyed;
-import static org.andork.bind.QObjectAttributeBinder.bind;
-import static org.andork.bind.ui.BetterCardLayoutBinder.bind;
-import static org.andork.bind.ui.ButtonSelectedBinder.bind;
-import static org.andork.bind.ui.ComponentBackgroundBinder.bind;
-import static org.andork.bind.ui.ComponentTextBinder.bind;
-import static org.andork.bind.ui.ISelectorSelectionBinder.bind;
-import static org.andork.bind.ui.JSliderValueBinder.bind;
 import static org.andork.func.CompoundBimapper.compose;
-import static org.andork.plot.PlotAxisConversionBinder.bind;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -47,8 +37,17 @@ import org.andork.awt.layout.BetterCardLayout;
 import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
+import org.andork.bind.BimapperBinder;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
+import org.andork.bind.QMapKeyedBinder;
+import org.andork.bind.QObjectAttributeBinder;
+import org.andork.bind.ui.BetterCardLayoutBinder;
+import org.andork.bind.ui.ButtonSelectedBinder;
+import org.andork.bind.ui.ComponentBackgroundBinder;
+import org.andork.bind.ui.ComponentTextBinder;
+import org.andork.bind.ui.ISelectorSelectionBinder;
+import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
@@ -56,6 +55,7 @@ import org.andork.collect.Visitor;
 import org.andork.func.FileStringBimapper;
 import org.andork.func.LinearFloatBimapper;
 import org.andork.func.RoundingFloat2IntegerBimapper;
+import org.andork.plot.PlotAxisConversionBinder;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
 import org.andork.swing.OnEDT;
@@ -128,21 +128,21 @@ public class SettingsDrawer extends Drawer
 	JScrollPane											mainPanelScrollPane;
 	
 	BinderWrapper<QObject<RootModel>>					rootBinder					= new BinderWrapper<QObject<RootModel>>( );
-	Binder<File>										currentProjectFileBinder	= bind( RootModel.currentProjectFile , rootBinder );
-	Binder<Integer>										desiredNumSamplesBinder		= bind( RootModel.desiredNumSamples , rootBinder );
-	Binder<Integer>										mouseSensitivityBinder		= bind( RootModel.mouseSensitivity , rootBinder );
-	Binder<Integer>										mouseWheelSensitivityBinder	= bind( RootModel.mouseWheelSensitivity , rootBinder );
+	Binder<File>										currentProjectFileBinder	= QObjectAttributeBinder.bind( RootModel.currentProjectFile , rootBinder );
+	Binder<Integer>										desiredNumSamplesBinder		= QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootBinder );
+	Binder<Integer>										mouseSensitivityBinder		= QObjectAttributeBinder.bind( RootModel.mouseSensitivity , rootBinder );
+	Binder<Integer>										mouseWheelSensitivityBinder	= QObjectAttributeBinder.bind( RootModel.mouseWheelSensitivity , rootBinder );
 	
 	BinderWrapper<QObject<ProjectModel>>				projectBinder				= new BinderWrapper<QObject<ProjectModel>>( );
-	Binder<CameraView>									cameraViewBinder			= bind( ProjectModel.cameraView , projectBinder );
-	Binder<Color>										backgroundColorBinder		= bind( ProjectModel.backgroundColor , projectBinder );
-	Binder<LinearAxisConversion>						distRangeBinder				= bind( ProjectModel.distRange , projectBinder );
-	Binder<ColorParam>									colorParamBinder			= bind( ProjectModel.colorParam , projectBinder );
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= bind( ProjectModel.paramRanges , projectBinder );
-	Binder<LinearAxisConversion>						paramRangeBinder			= bindKeyed( colorParamBinder , paramRangesBinder );
-	Binder<LinearAxisConversion>						highlightRangeBinder		= bind( ProjectModel.highlightRange , projectBinder );
-	Binder<Float>										ambientLightBinder			= bind( ProjectModel.ambientLight , projectBinder );
-	Binder<FilterType>									filterTypeBinder			= bind( ProjectModel.filterType , projectBinder );
+	Binder<CameraView>									cameraViewBinder			= QObjectAttributeBinder.bind( ProjectModel.cameraView , projectBinder );
+	Binder<Color>										backgroundColorBinder		= QObjectAttributeBinder.bind( ProjectModel.backgroundColor , projectBinder );
+	Binder<LinearAxisConversion>						distRangeBinder				= QObjectAttributeBinder.bind( ProjectModel.distRange , projectBinder );
+	Binder<ColorParam>									colorParamBinder			= QObjectAttributeBinder.bind( ProjectModel.colorParam , projectBinder );
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= QObjectAttributeBinder.bind( ProjectModel.paramRanges , projectBinder );
+	Binder<LinearAxisConversion>						paramRangeBinder			= QMapKeyedBinder.bindKeyed( colorParamBinder , paramRangesBinder );
+	Binder<LinearAxisConversion>						highlightRangeBinder		= QObjectAttributeBinder.bind( ProjectModel.highlightRange , projectBinder );
+	Binder<Float>										ambientLightBinder			= QObjectAttributeBinder.bind( ProjectModel.ambientLight , projectBinder );
+	Binder<FilterType>									filterTypeBinder			= QObjectAttributeBinder.bind( ProjectModel.filterType , projectBinder );
 	
 	public SettingsDrawer( final I18n i18n , Binder<QObject<RootModel>> rootBinder , Binder<QObject<ProjectModel>> projectBinder )
 	{
@@ -423,29 +423,30 @@ public class SettingsDrawer extends Drawer
 	
 	private void createBindings( )
 	{
-		bind( projectFileField , bind( FileStringBimapper.instance , currentProjectFileBinder ) );
+		ComponentTextBinder.bind( projectFileField , BimapperBinder.bind( FileStringBimapper.instance , currentProjectFileBinder ) );
 		
-		bind( bgColorButton , backgroundColorBinder );
+		ComponentBackgroundBinder.bind( bgColorButton , backgroundColorBinder );
 		
-		bind( viewButtonsPanel.getPlanButton( ) , bindEquals( CameraView.PLAN , cameraViewBinder ) );
-		bind( viewButtonsPanel.getPerspectiveButton( ) , bindEquals( CameraView.PERSPECTIVE , cameraViewBinder ) );
-		bind( viewButtonsPanel.getNorthButton( ) , bindEquals( CameraView.NORTH_FACING_PROFILE , cameraViewBinder ) );
-		bind( viewButtonsPanel.getSouthButton( ) , bindEquals( CameraView.SOUTH_FACING_PROFILE , cameraViewBinder ) );
-		bind( viewButtonsPanel.getEastButton( ) , bindEquals( CameraView.EAST_FACING_PROFILE , cameraViewBinder ) );
-		bind( viewButtonsPanel.getWestButton( ) , bindEquals( CameraView.WEST_FACING_PROFILE , cameraViewBinder ) );
-		bind( mouseSensitivitySlider , mouseSensitivityBinder );
-		bind( mouseWheelSensitivitySlider , mouseWheelSensitivityBinder );
-		bind( distColorationAxis , distRangeBinder );
-		bind( colorParamSelector , colorParamBinder );
-		bind( colorParamDetailsPanel , colorParamDetailsLayout , colorParamBinder );
-		bind( colorParamButtonsPanel , colorParamButtonsLayout , colorParamBinder );
-		bind( paramColorationAxis , paramRangeBinder );
-		bind( glowDistAxis , highlightRangeBinder );
-		bind( filterTypeSelector , filterTypeBinder );
-		bind( ambientLightSlider , bind( compose( new LinearFloatBimapper( 0f , 0f , 1f , ambientLightSlider.getMaximum( ) ) ,
-				RoundingFloat2IntegerBimapper.instance ) , ambientLightBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getPlanButton( ) , bindEquals( CameraView.PLAN , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getPerspectiveButton( ) , bindEquals( CameraView.PERSPECTIVE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getNorthButton( ) , bindEquals( CameraView.NORTH_FACING_PROFILE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getSouthButton( ) , bindEquals( CameraView.SOUTH_FACING_PROFILE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getEastButton( ) , bindEquals( CameraView.EAST_FACING_PROFILE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getWestButton( ) , bindEquals( CameraView.WEST_FACING_PROFILE , cameraViewBinder ) );
+		JSliderValueBinder.bind( mouseSensitivitySlider , mouseSensitivityBinder );
+		JSliderValueBinder.bind( mouseWheelSensitivitySlider , mouseWheelSensitivityBinder );
+		PlotAxisConversionBinder.bind( distColorationAxis , distRangeBinder );
+		ISelectorSelectionBinder.bind( colorParamSelector , colorParamBinder );
+		BetterCardLayoutBinder.bind( colorParamDetailsPanel , colorParamDetailsLayout , colorParamBinder );
+		BetterCardLayoutBinder.bind( colorParamButtonsPanel , colorParamButtonsLayout , colorParamBinder );
+		PlotAxisConversionBinder.bind( paramColorationAxis , paramRangeBinder );
+		PlotAxisConversionBinder.bind( glowDistAxis , highlightRangeBinder );
+		ISelectorSelectionBinder.bind( filterTypeSelector , filterTypeBinder );
+		JSliderValueBinder.bind( ambientLightSlider ,
+				BimapperBinder.bind( compose( new LinearFloatBimapper( 0f , 0f , 1f , ambientLightSlider.getMaximum( ) ) ,
+						RoundingFloat2IntegerBimapper.instance ) , ambientLightBinder ) );
 		
-		bind( numSamplesSlider , desiredNumSamplesBinder );
+		JSliderValueBinder.bind( numSamplesSlider , desiredNumSamplesBinder );
 	}
 	
 	public void setMaxNumSamples( int maxNumSamples )

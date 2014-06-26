@@ -7,6 +7,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/swingx-1.6.4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/snakeyaml-1.11"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jogl-util-graph"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-utils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-plot"/>
@@ -18,5 +19,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-swing"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui-debug"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jogl-util-gldesktop"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

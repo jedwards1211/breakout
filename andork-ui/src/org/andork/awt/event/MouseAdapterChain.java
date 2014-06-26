@@ -1,4 +1,4 @@
-package com.andork.plot;
+package org.andork.awt.event;
 
 import java.awt.Component;
 import java.awt.event.MouseAdapter;

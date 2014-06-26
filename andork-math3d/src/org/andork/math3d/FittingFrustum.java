@@ -6,9 +6,6 @@ import static org.andork.math3d.Vecmath.normalize3;
 import static org.andork.math3d.Vecmath.setf;
 
 import java.util.Arrays;
-import java.util.Comparator;
-
-import org.andork.util.ArrayUtils;
 
 public class FittingFrustum
 {

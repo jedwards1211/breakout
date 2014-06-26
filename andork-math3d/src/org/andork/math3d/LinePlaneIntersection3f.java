@@ -53,8 +53,8 @@ public class LinePlaneIntersection3f
 	 */
 	public ResultType		resultType;
 	
-	final float[ ]			w0				= new float[ 3 ];
-	final float[ ]			w				= new float[ 3 ];
+	private final float[ ]	w0				= new float[ 3 ];
+	private final float[ ]	w				= new float[ 3 ];
 	
 	/**
 	 * The line parameter. If a point intersection is found, t will be set such that <code>lo + lt * t = result</code> (approximately).
@@ -241,11 +241,20 @@ public class LinePlaneIntersection3f
 	/**
 	 * @return <code>true</code> if the intersection point lies within the triangle at {@link #po} spanned by {@link #pu} and {@link #pv} (if you used
 	 *         {@link #planeFromPoints(float[], float[], float[])}, that is the triangle between the three points you specified). That is, returns
-	 *         <code>u >= 0 && u <= 1 && v >= 0 && v <= 1 && ( u + v ) <= 1</code>.
+	 *         <code>u >= 0 && v >= 0 && ( u + v ) <= 1</code>.
 	 */
 	public boolean isInTriangle( )
 	{
-		return u >= 0 && u <= 1 && v >= 0 && v <= 1 && ( u + v ) <= 1;
+		return u >= 0 && v >= 0 && ( u + v ) <= 1;
+	}
+	
+	/**
+	 * @return <code>true</code> if the intersection point lies within the rhombus at {@link #po} spanned by {@link #pu} and {@link #pv}. That is, returns
+	 *         <code>u >= 0 && u <= 1 && v >= 0 && v <= 1</code>.
+	 */
+	public boolean isInRhombus( )
+	{
+		return u >= 0 && u <= 1 && v >= 0 && v <= 1;
 	}
 	
 	/**

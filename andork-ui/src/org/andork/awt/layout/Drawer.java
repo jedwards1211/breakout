@@ -1,7 +1,5 @@
 package org.andork.awt.layout;
 
-import static org.andork.bind.ui.ButtonSelectedBinder.bind;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -22,8 +20,6 @@ import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.q.QObject;
 import org.andork.swing.PaintablePanel;
 
-import static org.andork.bind.QObjectAttributeBinder.*;
-
 @SuppressWarnings( "serial" )
 public class Drawer extends PaintablePanel
 {
@@ -35,8 +31,8 @@ public class Drawer extends PaintablePanel
 	ResizeKnobHandler					mainResizeHandler;
 	
 	BinderWrapper<QObject<DrawerModel>>	binder			= new BinderWrapper<QObject<DrawerModel>>( );
-	QObjectAttributeBinder<Boolean>		pinnedBinder	= bind( DrawerModel.pinned , binder );
-	QObjectAttributeBinder<Boolean>		maximizedBinder	= bind( DrawerModel.maximized , binder );
+	QObjectAttributeBinder<Boolean>		pinnedBinder	= QObjectAttributeBinder.bind( DrawerModel.pinned , binder );
+	QObjectAttributeBinder<Boolean>		maximizedBinder	= QObjectAttributeBinder.bind( DrawerModel.maximized , binder );
 	ButtonSelectedBinder				pinButtonBinder;
 	ButtonSelectedBinder				maxButtonBinder;
 	
@@ -86,7 +82,7 @@ public class Drawer extends PaintablePanel
 				}
 			} );
 			
-			pinButtonBinder = bind( pinButton , pinnedBinder );
+			pinButtonBinder = ButtonSelectedBinder.bind( pinButton , pinnedBinder );
 		}
 		return pinButton;
 	}
@@ -119,7 +115,7 @@ public class Drawer extends PaintablePanel
 					delegate.setMaximized( maxButton.isSelected( ) );
 				}
 			} );
-			maxButtonBinder = bind( maxButton , maximizedBinder );
+			maxButtonBinder = ButtonSelectedBinder.bind( maxButton , maximizedBinder );
 		}
 		return maxButton;
 	}

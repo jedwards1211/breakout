@@ -22,7 +22,12 @@ public class BufferHelper
 	{
 		return result.size( );
 	}
-
+	
+	public void clear( )
+	{
+		result.clear( );
+	}
+	
 	public BufferHelper putBytes( byte ... values )
 	{
 		for( byte f : values )

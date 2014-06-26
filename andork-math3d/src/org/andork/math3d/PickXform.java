@@ -31,39 +31,39 @@ public class PickXform
 		}
 	}
 	
-	public void xform( float x , float y , float canvasWidth , float canvasHeight , float[ ] origin , float[ ] rayOut )
+	public void xform( float x , float y , float canvasWidth , float canvasHeight , float[ ] originOut , float[ ] directionOut )
 	{
 		if( perspective )
 		{
-			getColumn3( vi , 3 , origin );
+			getColumn3( vi , 3 , originOut );
 			x = btlrnf[ 2 ] + x / canvasWidth * ( btlrnf[ 3 ] - btlrnf[ 2 ] );
 			y = btlrnf[ 1 ] + y / canvasHeight * ( btlrnf[ 0 ] - btlrnf[ 1 ] );
-			mvmulAffine( vi , x , y , -btlrnf[ 4 ] , rayOut );
+			mvmulAffine( vi , x , y , -btlrnf[ 4 ] , directionOut );
 		}
 		else
 		{
 			x = Reparam.linear( x , 0 , canvasWidth , -1 , 1 );
 			y = Reparam.linear( y , 0 , canvasHeight , 1 , -1 );
-			mpmulAffine( vi , x , y , 0 , origin );
-			mvmulAffine( vi , 0 , 0 , 1 , rayOut );
+			mpmulAffine( vi , x , y , 0 , originOut );
+			mvmulAffine( vi , 0 , 0 , 1 , directionOut );
 		}
 	}
 	
-	public void xform( float x , float y , float canvasWidth , float canvasHeight , float[ ] origin , int origini , float[ ] rayOut , int rayOuti )
+	public void xform( float x , float y , float canvasWidth , float canvasHeight , float[ ] originOut , int originOuti , float[ ] directionOut , int directionOuti )
 	{
 		if( perspective )
 		{
-			getColumn3( vi , 3 , origin , origini );
+			getColumn3( vi , 3 , originOut , originOuti );
 			x = btlrnf[ 2 ] + x / canvasWidth * ( btlrnf[ 3 ] - btlrnf[ 2 ] );
 			y = btlrnf[ 1 ] + y / canvasHeight * ( btlrnf[ 0 ] - btlrnf[ 1 ] );
-			mvmulAffine( vi , x , y , -btlrnf[ 4 ] , rayOut , rayOuti );
+			mvmulAffine( vi , x , y , -btlrnf[ 4 ] , directionOut , directionOuti );
 		}
 		else
 		{
 			x = Reparam.linear( x , 0 , canvasWidth , -1 , 1 );
 			y = Reparam.linear( y , 0 , canvasHeight , 1 , -1 );
-			mpmulAffine( vi , x , y , 0 , origin , origini );
-			mvmulAffine( vi , 0 , 0 , 1 , rayOut , rayOuti );
+			mpmulAffine( vi , x , y , 0 , originOut , originOuti );
+			mvmulAffine( vi , 0 , 0 , 1 , directionOut , directionOuti );
 		}
 	}
 }

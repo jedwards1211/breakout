@@ -1,11 +1,8 @@
 package org.andork.jogl.awt;
 
 import java.math.BigDecimal;
-import java.text.Bidi;
 
-import org.andork.func.BigDecimalBimapper;
 import org.andork.func.Bimapper;
-import org.andork.func.EnumBimapper;
 import org.andork.q.QObject;
 import org.andork.q.QObjectMapBimapper;
 import org.andork.q.QSpec;

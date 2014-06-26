@@ -10,9 +10,6 @@ import static javax.media.opengl.GL.GL_FRAMEBUFFER;
 import static javax.media.opengl.GL.GL_RENDERBUFFER;
 import static javax.media.opengl.GL.GL_RGB;
 import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
-import static org.andork.bind.ui.ComponentTextBinder.*;
-import static org.andork.bind.ui.JSpinnerValueBinder.*;
-import static org.andork.bind.ui.ISelectorSelectionBinder.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -65,8 +62,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.PlainDocument;
 
-import static org.andork.bind.QObjectAttributeBinder.*;
-
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
 import org.andork.awt.I18n.I18nUpdater;
@@ -78,6 +73,9 @@ import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
 import org.andork.bind.QObjectAttributeBinder;
+import org.andork.bind.ui.ComponentTextBinder;
+import org.andork.bind.ui.ISelectorSelectionBinder;
+import org.andork.bind.ui.JSpinnerValueBinder;
 import org.andork.jogl.awt.ScreenCaptureDialogModel.ResolutionUnit;
 import org.andork.jogl.neu.JoglScene;
 import org.andork.q.QObject;
@@ -165,14 +163,14 @@ public class ScreenCaptureDialog extends JDialog
 	boolean														updating;
 	
 	BinderWrapper<QObject<ScreenCaptureDialogModel>>			binder					= new BinderWrapper<QObject<ScreenCaptureDialogModel>>( );
-	QObjectAttributeBinder<String>								outputDirectoryBinder	= bind( ScreenCaptureDialogModel.outputDirectory , binder );
-	QObjectAttributeBinder<String>								fileNamePrefixBinder	= bind( ScreenCaptureDialogModel.fileNamePrefix , binder );
-	QObjectAttributeBinder<Integer>								fileNumberBinder		= bind( ScreenCaptureDialogModel.fileNumber , binder );
-	QObjectAttributeBinder<Integer>								pixelWidthBinder		= bind( ScreenCaptureDialogModel.pixelWidth , binder );
-	QObjectAttributeBinder<Integer>								pixelHeightBinder		= bind( ScreenCaptureDialogModel.pixelHeight , binder );
-	QObjectAttributeBinder<BigDecimal>							resolutionBinder		= bind( ScreenCaptureDialogModel.resolution , binder );
-	QObjectAttributeBinder<ResolutionUnit>						resolutionUnitBinder	= bind( ScreenCaptureDialogModel.resolutionUnit , binder );
-	QObjectAttributeBinder<Integer>								numSamplesBinder		= bind( ScreenCaptureDialogModel.numSamples , binder );
+	QObjectAttributeBinder<String>								outputDirectoryBinder	= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.outputDirectory , binder );
+	QObjectAttributeBinder<String>								fileNamePrefixBinder	= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.fileNamePrefix , binder );
+	QObjectAttributeBinder<Integer>								fileNumberBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.fileNumber , binder );
+	QObjectAttributeBinder<Integer>								pixelWidthBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.pixelWidth , binder );
+	QObjectAttributeBinder<Integer>								pixelHeightBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.pixelHeight , binder );
+	QObjectAttributeBinder<BigDecimal>							resolutionBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.resolution , binder );
+	QObjectAttributeBinder<ResolutionUnit>						resolutionUnitBinder	= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.resolutionUnit , binder );
+	QObjectAttributeBinder<Integer>								numSamplesBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.numSamples , binder );
 	
 	JoglScene													scene;
 	
@@ -639,13 +637,13 @@ public class ScreenCaptureDialog extends JDialog
 	
 	protected void createBindings( )
 	{
-		bind( outputDirectoryField , outputDirectoryBinder );
-		bind( fileNamePrefixField , fileNamePrefixBinder );
-		bind( fileNumberSpinner , Integer.class , fileNumberBinder );
-		bind( pixelWidthSpinner , Integer.class , pixelWidthBinder );
-		bind( pixelHeightSpinner , Integer.class , pixelHeightBinder );
-		bind( resolutionSpinner , BigDecimal.class , resolutionBinder );
-		bind( resolutionUnitSelector , resolutionUnitBinder );
+		ComponentTextBinder.bind( outputDirectoryField , outputDirectoryBinder );
+		ComponentTextBinder.bind( fileNamePrefixField , fileNamePrefixBinder );
+		JSpinnerValueBinder.bind( fileNumberSpinner , Integer.class , fileNumberBinder );
+		JSpinnerValueBinder.bind( pixelWidthSpinner , Integer.class , pixelWidthBinder );
+		JSpinnerValueBinder.bind( pixelHeightSpinner , Integer.class , pixelHeightBinder );
+		JSpinnerValueBinder.bind( resolutionSpinner , BigDecimal.class , resolutionBinder );
+		ISelectorSelectionBinder.bind( resolutionUnitSelector , resolutionUnitBinder );
 	}
 	
 	private void updateNumSamplesLabel( )
