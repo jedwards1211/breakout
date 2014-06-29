@@ -28,12 +28,12 @@ public class QObjectAttributeBinder<T> extends Binder<T> implements BasicPropert
 		{
 			if( this.upstream != null )
 			{
-				unbind( this.upstream , this );
+				unbind0( this.upstream , this );
 			}
 			this.upstream = upstream;
 			if( this.upstream != null )
 			{
-				bind( this.upstream , this );
+				bind0( this.upstream , this );
 			}
 			
 			update( false );

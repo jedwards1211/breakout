@@ -30,11 +30,11 @@ public class JSpinnerValueBinder<T> extends Binder<T> implements PropertyChangeL
 	public JSpinnerValueBinder<T> bind(Binder<T> upstream) {
 		if (this.upstream != upstream) {
 			if (this.upstream != null) {
-				unbind(this.upstream, this);
+				unbind0(this.upstream, this);
 			}
 			this.upstream = upstream;
 			if (upstream != null) {
-				bind(this.upstream, this);
+				bind0(this.upstream, this);
 			}
 			update(false);
 		}

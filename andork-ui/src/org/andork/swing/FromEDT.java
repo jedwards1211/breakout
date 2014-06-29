@@ -1,8 +1,12 @@
 package org.andork.swing;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.Callable;
 
 import javax.swing.SwingUtilities;
+
+import org.andork.generic.Ref;
+import org.omg.CORBA.ObjectHolder;
 
 /**
  * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)} calls. Upon construction {@link #run()} method will be called on the EDT, and it
@@ -82,5 +86,19 @@ public abstract class FromEDT<R>
 	public final R result( )
 	{
 		return result;
+	}
+	
+	public static <R> R fromEDT( Callable<R> c )
+	{
+		Ref<R> result = new Ref<>( );
+		try
+		{
+			OnEDT.onEDT( ( ) -> result.value = c.call( ) );
+		}
+		catch( Exception ex )
+		{
+			
+		}
+		return result.value;
 	}
 }

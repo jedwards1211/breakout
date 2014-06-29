@@ -23,12 +23,12 @@ public class BinderWrapper<T> extends Binder<T>
 		{
 			if( this.wrapped != null )
 			{
-				unbind( this.wrapped , this );
+				unbind0( this.wrapped , this );
 			}
 			this.wrapped = wrapped;
 			if( wrapped != null )
 			{
-				bind( this.wrapped , this );
+				bind0( this.wrapped , this );
 			}
 			
 			update( false );

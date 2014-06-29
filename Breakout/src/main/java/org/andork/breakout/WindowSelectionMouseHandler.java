@@ -5,12 +5,13 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLRunnable;
 import javax.media.opengl.awt.GLCanvas;
 
 import org.andork.breakout.model.Survey3dModel;
+import org.andork.breakout.model.Survey3dModel.Shot;
 import org.andork.jogl.neu.JoglScene;
+import org.andork.spatial.RBranch;
+import org.andork.spatial.RTraversal;
 
 public class WindowSelectionMouseHandler extends MouseAdapter
 {
@@ -38,30 +39,21 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 	{
 		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
 		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
-		context.getCanvas( ).invoke( true , new GLRunnable( )
-		{
-			@Override
-			public boolean run( GLAutoDrawable drawable )
-			{
-				selectionPolygon.setPoints( points );
-				context.getScene( ).add( selectionPolygon );
-				return false;
-			}
+		context.getCanvas( ).invoke( true , drawable -> {
+			selectionPolygon.setPoints( points );
+			context.getScene( ).add( selectionPolygon );
+			return false;
 		} );
 	}
 	
 	public void end( )
 	{
 		points.clear( );
-		context.getCanvas( ).invoke( true , new GLRunnable( )
-		{
-			@Override
-			public boolean run( GLAutoDrawable drawable )
-			{
-				context.getScene( ).remove( selectionPolygon );
-				return true;
-			}
+		context.getCanvas( ).invoke( true , drawable -> {
+			context.getScene( ).remove( selectionPolygon );
+			return false;
 		} );
+		context.endSelection( );
 	}
 	
 	@Override
@@ -70,28 +62,29 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 	}
 	
 	@Override
-	public void mouseReleased( MouseEvent e ) {
-		if( e.getButton( ) == MouseEvent.BUTTON3 ) {
-//			RBranch root = context.getSurvey3dModel( ).getTree( ).getRoot( );
-//			RTraversal.traverse( root ,
-//					{ RNode node -> return node.mbr()[0] < 0 },
-//					{ System.out.println(it); return true });
+	public void mouseReleased( MouseEvent e )
+	{
+		if( e.getButton( ) == MouseEvent.BUTTON3 )
+		{
+			RBranch<float[ ], Shot> root = context.getSurvey3dModel( ).getTree( ).getRoot( );
+			RTraversal.traverse( root ,
+					node -> node.mbr( )[ 0 ] < 0.0 ,
+					leaf -> {
+						System.out.println( leaf );
+						return true;
+					} );
 			end( );
 			return;
 		}
-		if( e.getButton( ) != MouseEvent.BUTTON1 ) {
+		if( e.getButton( ) != MouseEvent.BUTTON1 )
+		{
 			return;
 		}
-		points.add( new float[] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
-		context.getCanvas().invoke(true, new GLRunnable( )
-		{
-			@Override
-			public boolean run( GLAutoDrawable drawable )
-			{
-				selectionPolygon.setPoints( points );
-				return true;
-			}
-		});
+		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
+		context.getCanvas( ).invoke( true , drawable -> {
+			selectionPolygon.setPoints( points );
+			return false;
+		} );
 	}
 	
 	@Override
@@ -108,15 +101,9 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 			float[ ] last = points.get( points.size( ) - 1 );
 			last[ 0 ] = e.getX( );
 			last[ 1 ] = context.getCanvas( ).getHeight( ) - e.getY( );
-			context.getCanvas( ).invoke( true , new GLRunnable( )
-			{
-				
-				@Override
-				public boolean run( GLAutoDrawable drawable )
-				{
-					selectionPolygon.setPoints( points );
-					return true;
-				}
+			context.getCanvas( ).invoke( true , drawable -> {
+				selectionPolygon.setPoints( points );
+				return false;
 			} );
 		}
 	}

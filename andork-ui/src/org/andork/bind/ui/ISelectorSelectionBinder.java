@@ -23,11 +23,11 @@ public class ISelectorSelectionBinder<T> extends Binder<T> implements ISelectorL
 	public ISelectorSelectionBinder<T> bind(Binder<T> upstream) {
 		if (this.upstream != upstream) {
 			if (this.upstream != null) {
-				unbind(this.upstream, this);
+				unbind0(this.upstream, this);
 			}
 			this.upstream = upstream;
 			if (this.upstream != null) {
-				bind(this.upstream, this);
+				bind0(this.upstream, this);
 			}
 
 			update(false);

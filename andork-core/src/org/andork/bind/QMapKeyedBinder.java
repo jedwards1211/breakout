@@ -25,24 +25,24 @@ public class QMapKeyedBinder<K, V> extends Binder<V> implements BasicPropertyCha
 		{
 			if( this.keyBinder != null )
 			{
-				unbind( this.keyBinder , this );
+				unbind0( this.keyBinder , this );
 			}
 			this.keyBinder = keyBinder;
 			if( keyBinder != null )
 			{
-				bind( keyBinder , this );
+				bind0( keyBinder , this );
 			}
 		}
 		if( this.mapBinder != mapBinder )
 		{
 			if( this.mapBinder != null )
 			{
-				unbind( mapBinder , this );
+				unbind0( mapBinder , this );
 			}
 			this.mapBinder = mapBinder;
 			if( mapBinder != null )
 			{
-				bind( mapBinder , this );
+				bind0( mapBinder , this );
 			}
 		}
 		

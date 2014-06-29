@@ -29,12 +29,12 @@ public class BetterCardLayoutBinder extends Binder<Object>
 		{
 			if( this.upstream != null )
 			{
-				unbind( this.upstream , this );
+				unbind0( this.upstream , this );
 			}
 			this.upstream = upstream;
 			if( this.upstream != null )
 			{
-				bind( this.upstream , this );
+				bind0( this.upstream , this );
 			}
 			
 			update(false );

@@ -24,11 +24,11 @@ public class BimapperBinder<I, O> extends Binder<O> {
 	public BimapperBinder<I, O> bind(Binder<I> inBinder) {
 		if (this.inBinder != inBinder) {
 			if (this.inBinder != null) {
-				unbind(inBinder, this);
+				unbind0(inBinder, this);
 			}
 			this.inBinder = inBinder;
 			if (inBinder != null) {
-				bind(inBinder, this);
+				bind0(inBinder, this);
 			}
 			update(false);
 		}

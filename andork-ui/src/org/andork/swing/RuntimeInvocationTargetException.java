@@ -1,6 +1,5 @@
 package org.andork.swing;
 
-import java.lang.reflect.InvocationTargetException;
 
 public class RuntimeInvocationTargetException extends RuntimeException
 {

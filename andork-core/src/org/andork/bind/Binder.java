@@ -20,7 +20,7 @@ public abstract class Binder<T>
 	
 	public abstract void update( boolean force );
 	
-	protected static void bind( Binder<?> upstream , Binder<?> downstream )
+	protected static void bind0( Binder<?> upstream , Binder<?> downstream )
 	{
 		if( !upstream.downstream.contains( downstream ) )
 		{
@@ -28,7 +28,7 @@ public abstract class Binder<T>
 		}
 	}
 	
-	protected static void unbind( Binder<?> upstream , Binder<?> downstream )
+	protected static void unbind0( Binder<?> upstream , Binder<?> downstream )
 	{
 		upstream.downstream.remove( downstream );
 	}

@@ -2,6 +2,8 @@ package org.andork.reflect;
 
 import static org.andork.util.ArrayUtils.copyOf;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.GenericDeclaration;
@@ -11,6 +13,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -879,6 +882,30 @@ public class ReflectionUtils
 		public String toString( )
 		{
 			return format( this );
+		}
+
+		@Override
+		public <T extends Annotation> T getAnnotation( Class<T> annotationClass )
+		{
+			throw new UnsupportedOperationException( );
+		}
+
+		@Override
+		public Annotation[ ] getAnnotations( )
+		{
+			throw new UnsupportedOperationException( );
+		}
+
+		@Override
+		public Annotation[ ] getDeclaredAnnotations( )
+		{
+			throw new UnsupportedOperationException( );
+		}
+
+		@Override
+		public AnnotatedType[ ] getAnnotatedBounds( )
+		{
+			throw new UnsupportedOperationException( );
 		}
 	}
 	

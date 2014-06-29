@@ -48,11 +48,11 @@ public class ComponentTextBinder extends Binder<String> implements PropertyChang
 	public ComponentTextBinder bind(Binder<String> upstream) {
 		if (this.upstream != upstream) {
 			if (this.upstream != null) {
-				unbind(this.upstream, this);
+				unbind0(this.upstream, this);
 			}
 			this.upstream = upstream;
 			if (upstream != null) {
-				bind(this.upstream, this);
+				bind0(this.upstream, this);
 			}
 			update(false);
 		}

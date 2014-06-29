@@ -28,11 +28,11 @@ public class ComponentBackgroundBinder extends Binder<Color> implements Property
 	public ComponentBackgroundBinder bind(Binder<Color> upstream) {
 		if (this.upstream != upstream) {
 			if (this.upstream != null) {
-				unbind(this.upstream, this);
+				unbind0(this.upstream, this);
 			}
 			this.upstream = upstream;
 			if (upstream != null) {
-				bind(this.upstream, this);
+				bind0(this.upstream, this);
 			}
 			update(false);
 		}

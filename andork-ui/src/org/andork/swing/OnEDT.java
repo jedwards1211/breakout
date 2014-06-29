@@ -70,4 +70,37 @@ public abstract class OnEDT
 	}
 	
 	public abstract void run( ) throws Throwable;
+	
+	public static void onEDT( ExceptionRunnable r )
+	{
+		try
+		{
+			SwingUtilities.invokeAndWait( ( ) ->
+			{
+				try
+				{
+					r.run( );
+				}
+				catch( Exception ex )
+				{
+					throw new RuntimeInvocationTargetException( ex );
+				}
+			} );
+		}
+		catch( InvocationTargetException e )
+		{
+			if( e.getCause( ) instanceof RuntimeInvocationTargetException )
+			{
+				throw ( RuntimeInvocationTargetException ) e.getCause( );
+			}
+			else
+			{
+				throw new RuntimeInvocationTargetException( e.getCause( ) );
+			}
+		}
+		catch( InterruptedException e )
+		{
+			throw new RuntimeInterruptedException( e );
+		}
+	}
 }
