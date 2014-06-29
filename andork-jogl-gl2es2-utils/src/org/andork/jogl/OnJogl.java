@@ -12,8 +12,7 @@ import javax.swing.SwingUtilities;
  * 
  * @param <R>
  */
-public abstract class OnJogl
-{
+public abstract class OnJogl {
 	/**
 	 * This constructor calls {@link #run()} on the EDT immediately so that you can save a few keystrokes.
 	 * 
@@ -22,27 +21,21 @@ public abstract class OnJogl
 	 * @throws RuntimeInterruptedException
 	 *             if the calling thread was interrupted while waiting for {@link SwingUtilities#invokeAndWait(Runnable)} to return.
 	 */
-	public OnJogl( GLAutoDrawable drawable )
-	{
-		drawable.invoke( true , new GLRunnable( )
-		{
-			@Override
-			public boolean run( GLAutoDrawable drawable )
-			{
-				OnJogl.this.callRun( drawable );
-				return true;
-			}
-		} );
+	public OnJogl( GLAutoDrawable drawable ) {
+		drawable.invoke( true , new GLRunnable( ) {
+					@Override
+					public boolean run( GLAutoDrawable drawable2 ) {
+						OnJogl.this.callRun( drawable2 );
+						return true;
+					}
+				} );
 	}
 	
-	private final void callRun( GLAutoDrawable drawable )
-	{
-		try
-		{
+	private final void callRun( GLAutoDrawable drawable ) {
+		try {
 			run( drawable );
 		}
-		catch( Throwable t )
-		{
+		catch( Throwable t ) {
 			throw new RuntimeException( t );
 		}
 	}

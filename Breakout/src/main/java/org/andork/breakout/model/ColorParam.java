@@ -7,7 +7,7 @@ import org.andork.date.DateUtils;
 public enum ColorParam
 {
 	DEPTH( "Depth" , true ) ,
-	DISTANCE_ALONG_SHOTS( "Distance (Along Shots)" , true )
+	DISTANCE_ALONG_SHOTS( "Distance (Along Shots)" , false )
 	{
 		public boolean isTraversalMetric( )
 		{
@@ -96,7 +96,7 @@ public enum ColorParam
 			return ( float ) shot.dist;
 		}
 	} ,
-	DATE( "Date (days since 1800)" , true )
+	DATE( "Date (days since 1800)" , false )
 	{
 		Calendar	calendar	= Calendar.getInstance( );
 		

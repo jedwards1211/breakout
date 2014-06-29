@@ -1,30 +1,27 @@
 package org.andork.breakout;
 
-import static javax.media.opengl.GL.*;
+import static javax.media.opengl.GL.GL_ARRAY_BUFFER;
+import static javax.media.opengl.GL.GL_BLEND;
+import static javax.media.opengl.GL.GL_DYNAMIC_DRAW;
 import static javax.media.opengl.GL.GL_FLOAT;
 import static javax.media.opengl.GL.GL_LINE_LOOP;
+import static javax.media.opengl.GL.GL_ONE_MINUS_SRC_ALPHA;
+import static javax.media.opengl.GL.GL_SRC_ALPHA;
 import static javax.media.opengl.GL.GL_STATIC_DRAW;
+import static javax.media.opengl.GL.GL_TRIANGLES;
 import static org.andork.math3d.Vecmath.setf;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.media.opengl.GL2ES2;
 
-import jogamp.graph.curve.tess.CDTriangulator2D;
-
 import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.neu.JoglDrawable;
 import org.andork.jogl.neu.JoglResource;
 import org.andork.jogl.util.JOGLUtils;
-
-import com.jogamp.graph.geom.Outline;
-import com.jogamp.graph.geom.Triangle;
-import com.jogamp.graph.geom.Vertex;
-import com.jogamp.graph.geom.opengl.SVertex;
 
 public class SelectionPolygon implements JoglDrawable , JoglResource
 {
@@ -56,11 +53,11 @@ public class SelectionPolygon implements JoglDrawable , JoglResource
 			data[ 0 ].order( ByteOrder.nativeOrder( ) );
 		}
 		data[ 0 ].position( 0 );
-//		Outline outline = new Outline( );
+		// Outline outline = new Outline( );
 		for( float[ ] point : points )
 		{
 			data[ 0 ].putFloat( point[ 0 ] ).putFloat( point[ 1 ] );
-//			outline.addVertex( new SVertex( point[ 0 ] , point[ 1 ] , 0f , true ) );
+			// outline.addVertex( new SVertex( point[ 0 ] , point[ 1 ] , 0f , true ) );
 		}
 		data[ 0 ].position( 0 );
 		

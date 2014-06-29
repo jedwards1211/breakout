@@ -176,7 +176,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	DrawerAutoshowController							autoshowController;
 	OtherMouseHandler									otherMouseHandler;
 	
-	WindowSelectionMouseHandler							windowSelectionMouseHandler;
+	WindowSelectionMouseHandler						windowSelectionMouseHandler;
 	
 	TableSelectionHandler								selectionHandler;
 	
@@ -188,8 +188,6 @@ public class BreakoutMainView extends BasicJoglSetup
 	SettingsDrawer										settingsDrawer;
 	
 	Survey3dModel										model3d;
-	SelectionPolygon									selectionPolygon			= new SelectionPolygon( );
-	
 	float[ ]											v							= newMat4f( );
 	
 	int													debugMbrCount				= 0;
@@ -326,7 +324,33 @@ public class BreakoutMainView extends BasicJoglSetup
 		canvas.addMouseWheelListener( canvasMouseAdapterWrapper );
 		
 		mouseLooper = new MouseLooper( );
-		windowSelectionMouseHandler = new WindowSelectionMouseHandler( );
+		windowSelectionMouseHandler = new WindowSelectionMouseHandler(
+				new WindowSelectionMouseHandler.Context( )
+				{
+					@Override
+					public Survey3dModel getSurvey3dModel( )
+					{
+						return model3d;
+					}
+					
+					@Override
+					public JoglScene getScene( )
+					{
+						return scene;
+					}
+					
+					@Override
+					public GLCanvas getCanvas( )
+					{
+						return canvas;
+					}
+					
+					@Override
+					public void endSelection( )
+					{
+						canvasMouseAdapterWrapper.setWrapped( mouseLooper );
+					}
+				});
 		canvasMouseAdapterWrapper.setWrapped( mouseLooper );
 		
 		autoshowController = new DrawerAutoshowController( );
@@ -969,7 +993,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	private static GLCanvas createCanvas( )
 	{
-		GLProfile profile = GLProfile.get( GLProfile.GL3 );
+		GLProfile profile = GLProfile.getMaximum( true );
 		final GLCapabilities caps = new GLCapabilities( profile );
 		GLCanvas canvas = new GLCanvas( caps );
 		return canvas;
@@ -1331,12 +1355,13 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		public HoverUpdater( Survey3dModel model3d , MouseEvent e )
 		{
-			super( "Updating mouseover glow...");
+			super( "Updating mouseover glow..." );
 			this.model3d = model3d;
 			this.e = e;
 		}
 		
-		public boolean isCancelable() {
+		public boolean isCancelable( )
+		{
 			return true;
 		}
 		
@@ -1431,6 +1456,14 @@ public class BreakoutMainView extends BasicJoglSetup
 			
 			if( ( e.getModifiersEx( ) & MouseEvent.ALT_DOWN_MASK ) == MouseEvent.ALT_DOWN_MASK )
 			{
+				for( Drawer drawer : Arrays.asList( surveyDrawer , quickTableDrawer , taskListDrawer , settingsDrawer ) )
+				{
+					if( !drawer.delegate( ).isPinned( ) )
+					{
+						drawer.delegate( ).close( );
+					}
+				}
+				canvasMouseAdapterWrapper.setWrapped( windowSelectionMouseHandler );
 				windowSelectionMouseHandler.start( e );
 				return;
 			}
@@ -1668,114 +1701,6 @@ public class BreakoutMainView extends BasicJoglSetup
 		public void mouseWheelMoved( MouseWheelEvent e )
 		{
 			saveViewXform( );
-		}
-	}
-	
-	class WindowSelectionMouseHandler extends MouseAdapter
-	{
-		private MouseAdapter			previousAdapter;
-		private final List<float[ ]>	points	= new ArrayList<float[ ]>( );
-		
-		public void start( MouseEvent e )
-		{
-			if( previousAdapter != null )
-			{
-				throw new IllegalStateException( );
-			}
-			for( Drawer drawer : Arrays.asList( surveyDrawer , quickTableDrawer , taskListDrawer , settingsDrawer ) )
-			{
-				if( !drawer.delegate( ).isPinned( ) )
-				{
-					drawer.delegate( ).close( );
-				}
-			}
-			points.add( new float[ ] { e.getX( ) , getCanvas( ).getHeight( ) - e.getY( ) } );
-			points.add( new float[ ] { e.getX( ) , getCanvas( ).getHeight( ) - e.getY( ) } );
-			new OnJogl( getCanvas( ) )
-			{
-				@Override
-				public void run( GLAutoDrawable drawable ) throws Throwable
-				{
-					selectionPolygon.setPoints( points );
-					scene.add( selectionPolygon );
-				}
-			};
-			previousAdapter = canvasMouseAdapterWrapper.getWrapped( );
-			canvasMouseAdapterWrapper.setWrapped( this );
-		}
-		
-		public void end( )
-		{
-			if( previousAdapter != null )
-			{
-				new OnJogl( getCanvas( ) )
-				{
-					@Override
-					public void run( GLAutoDrawable drawable ) throws Throwable
-					{
-						scene.remove( selectionPolygon );
-					}
-				};
-				points.clear( );
-				canvasMouseAdapterWrapper.setWrapped( previousAdapter );
-				previousAdapter = null;
-				getCanvas( ).repaint( );
-			}
-		}
-		
-		@Override
-		public void mousePressed( MouseEvent e )
-		{
-		}
-		
-		@Override
-		public void mouseReleased( MouseEvent e )
-		{
-			if( e.getButton( ) == MouseEvent.BUTTON3 )
-			{
-				end( );
-				return;
-			}
-			if( e.getButton( ) != MouseEvent.BUTTON1 )
-			{
-				return;
-			}
-			points.add( new float[ ] { e.getX( ) , getCanvas( ).getHeight( ) - e.getY( ) } );
-			new OnJogl( getCanvas( ) )
-			{
-				@Override
-				public void run( GLAutoDrawable drawable ) throws Throwable
-				{
-					selectionPolygon.setPoints( points );
-				}
-			};
-			getCanvas( ).repaint( );
-		}
-		
-		@Override
-		public void mouseDragged( MouseEvent e )
-		{
-			mouseMoved( e );
-		}
-		
-		@Override
-		public void mouseMoved( MouseEvent e )
-		{
-			if( !points.isEmpty( ) )
-			{
-				float[ ] last = points.get( points.size( ) - 1 );
-				last[ 0 ] = e.getX( );
-				last[ 1 ] = getCanvas( ).getHeight( ) - e.getY( );
-				new OnJogl( getCanvas( ) )
-				{
-					@Override
-					public void run( GLAutoDrawable drawable ) throws Throwable
-					{
-						selectionPolygon.setPoints( points );
-					}
-				};
-				getCanvas( ).repaint( );
-			}
 		}
 	}
 	
