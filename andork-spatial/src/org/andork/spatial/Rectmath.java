@@ -71,6 +71,22 @@ public class Rectmath
 		rout[ 5 ] = nmax( r[ 5 ] , p[ 2 ] );
 	}
 	
+	public static double[ ] ppunion( double[ ] p1 , double[ ] p2 )
+	{
+		double[ ] rout = new double[ p1.length * 2 ];
+		ppunion( p1 , p2 , rout );
+		return rout;
+	}
+
+	public static void ppunion( double[ ] p1 , double[ ] p2 , double[ ] rout )
+	{
+		for( int d = 0 ; d < p1.length ; d++ )
+		{
+			rout[ d ] = nmin( p1[ d ] , p2[ d ] );
+			rout[ d + p1.length ] = nmax( p1[ d ] , p2[ d ] );
+		}
+	}
+	
 	public static void ppunion3( double[ ] p1 , double[ ] p2 , double[ ] rout )
 	{
 		rout[ 0 ] = nmin( p1[ 0 ] , p2[ 0 ] );
@@ -301,6 +317,22 @@ public class Rectmath
 		rout[ 3 ] = nmax( r[ 3 ] , p[ 0 ] );
 		rout[ 4 ] = nmax( r[ 4 ] , p[ 1 ] );
 		rout[ 5 ] = nmax( r[ 5 ] , p[ 2 ] );
+	}
+	
+	public static float[ ] ppunion( float[ ] p1 , float[ ] p2 )
+	{
+		float[ ] rout = new float[ p1.length * 2 ];
+		ppunion( p1 , p2 , rout );
+		return rout;
+	}
+	
+	public static void ppunion( float[ ] p1 , float[ ] p2 , float[ ] rout )
+	{
+		for( int d = 0 ; d < p1.length ; d++ )
+		{
+			rout[ d ] = nmin( p1[ d ] , p2[ d ] );
+			rout[ d + p1.length ] = nmax( p1[ d ] , p2[ d ] );
+		}
 	}
 	
 	public static void ppunion3( float[ ] p1 , float[ ] p2 , float[ ] rout )

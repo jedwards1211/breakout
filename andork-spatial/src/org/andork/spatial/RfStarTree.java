@@ -15,7 +15,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 	
 	LowerUpperComparator[ ]	chooseSplitAxisComparators;
 	
-	int						M , m , p;
+	int						maxChildrenPerBranch , minSplitSize , numToReinsert;
 	
 	float[ ]				rt;
 	
@@ -24,16 +24,16 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 	
 	int						maxLevel	= 0;
 	
-	public RfStarTree( int dimension , int M , int m , int p )
+	public RfStarTree( int dimension , int maxChildrenPerBranch , int minSplitSize , int numToReinsert )
 	{
 		this.dimension = dimension;
-		this.M = M;
-		this.m = m;
-		this.p = p;
+		this.maxChildrenPerBranch = maxChildrenPerBranch;
+		this.minSplitSize = minSplitSize;
+		this.numToReinsert = numToReinsert;
 		
 		rt = Rectmath.voidRectf( dimension );
-		rt0 = new float[ M - m + 2 ][ dimension * 2 ];
-		rt1 = new float[ M - m + 2 ][ dimension * 2 ];
+		rt0 = new float[ maxChildrenPerBranch - minSplitSize + 2 ][ dimension * 2 ];
+		rt1 = new float[ maxChildrenPerBranch - minSplitSize + 2 ][ dimension * 2 ];
 		
 		chooseSplitAxisComparators = new LowerUpperComparator[ dimension ];
 		for( int axis = 0 ; axis < dimension ; axis++ )
@@ -41,7 +41,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 			chooseSplitAxisComparators[ axis ] = new LowerUpperComparator( axis , dimension );
 		}
 		
-		root = new Branch<T>( dimension , 1 , M );
+		root = new Branch<T>( dimension , 1 , maxChildrenPerBranch );
 	}
 	
 	@Override
@@ -163,7 +163,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 	{
 		Branch<T> target = chooseSubtree( toInsert , root );
 		
-		if( target.numChildren < M )
+		if( target.numChildren < maxChildrenPerBranch )
 		{
 			toInsert.parent = target;
 			target.children[ target.numChildren++ ] = toInsert;
@@ -232,7 +232,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 	{
 		addChild( overflowed , toInsert );
 		
-		while( overflowed != null && overflowed.numChildren > M )
+		while( overflowed != null && overflowed.numChildren > maxChildrenPerBranch )
 		{
 			if( !reinsertedLevels.get( toInsert.level( ) ) )
 			{
@@ -254,12 +254,12 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		
 		Arrays.sort( overflowed.children , new CenterDistanceComparator( overflowed.mbr ) );
 		
-		Node<T>[ ] pendingReinsertion = new Node[ p ];
+		Node<T>[ ] pendingReinsertion = new Node[ numToReinsert ];
 		
-		System.arraycopy( overflowed.children , 0 , pendingReinsertion , 0 , p );
-		System.arraycopy( overflowed.children , M + 1 - p , overflowed.children , 0 , p );
-		overflowed.children = Arrays.copyOf( overflowed.children , M );
-		overflowed.numChildren = M + 1 - p;
+		System.arraycopy( overflowed.children , 0 , pendingReinsertion , 0 , numToReinsert );
+		System.arraycopy( overflowed.children , maxChildrenPerBranch + 1 - numToReinsert , overflowed.children , 0 , numToReinsert );
+		overflowed.children = Arrays.copyOf( overflowed.children , maxChildrenPerBranch );
+		overflowed.numChildren = maxChildrenPerBranch + 1 - numToReinsert;
 		recalcMbrs( overflowed );
 		
 		for( Node<T> node : pendingReinsertion )
@@ -279,7 +279,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		if( overflowed == root )
 		{
 			maxLevel++ ;
-			root = new Branch<T>( dimension , split[ 0 ].level + 1 , M );
+			root = new Branch<T>( dimension , split[ 0 ].level + 1 , maxChildrenPerBranch );
 			addChild( root , split[ 0 ] );
 			addChild( root , split[ 1 ] );
 			root.recalcMbr( );
@@ -306,7 +306,7 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 				float bestAreaEnlargement = 0;
 				float bestArea = 0;
 				
-				for( int i = 0 ; i < Math.min( p , node.numChildren ) ; i++ )
+				for( int i = 0 ; i < Math.min( numToReinsert , node.numChildren ) ; i++ )
 				{
 					float[ ] current = node.children[ i ].mbr;
 					float[ ] enlarged = rt0[ 0 ];
@@ -388,22 +388,22 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 			
 			float totalMargin = 0f;
 			
-			for( int i = 0 ; i < m - 1 ; i++ )
+			for( int i = 0 ; i < minSplitSize - 1 ; i++ )
 			{
 				union( rt , branch.children[ i ].mbr , rt );
 			}
-			for( int k = m - 1 ; k < M + 1 - m ; k++ )
+			for( int k = minSplitSize - 1 ; k < maxChildrenPerBranch + 1 - minSplitSize ; k++ )
 			{
 				union( rt , branch.children[ k ].mbr , rt );
 				totalMargin += margin( rt );
 			}
 			
 			Arrays.fill( rt , Float.NaN );
-			for( int i = M ; i > M + 1 - m ; i-- )
+			for( int i = maxChildrenPerBranch ; i > maxChildrenPerBranch + 1 - minSplitSize ; i-- )
 			{
 				union( rt , branch.children[ i ].mbr , rt );
 			}
-			for( int k = M + 1 - m ; k >= m ; k-- )
+			for( int k = maxChildrenPerBranch + 1 - minSplitSize ; k >= minSplitSize ; k-- )
 			{
 				union( rt , branch.children[ k ].mbr , rt );
 				totalMargin += margin( rt );
@@ -430,18 +430,18 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		Arrays.fill( rt0[ 0 ] , Float.NaN );
 		Arrays.fill( rt1[ 0 ] , Float.NaN );
 		
-		for( int index = 1 ; index <= M + 1 - m ; index++ )
+		for( int index = 1 ; index <= maxChildrenPerBranch + 1 - minSplitSize ; index++ )
 		{
 			union( rt0[ index - 1 ] , branch.children[ index - 1 ].mbr , rt0[ index ] );
-			union( rt1[ index - 1 ] , branch.children[ M + 1 - index ].mbr , rt1[ index ] );
+			union( rt1[ index - 1 ] , branch.children[ maxChildrenPerBranch + 1 - index ].mbr , rt1[ index ] );
 		}
 		
-		for( int index = m ; index <= M + 1 - m ; index++ )
+		for( int index = minSplitSize ; index <= maxChildrenPerBranch + 1 - minSplitSize ; index++ )
 		{
-			float overlap = overlap( rt0[ index ] , rt1[ M + 1 - index ] );
-			float area = area( rt0[ index ] ) + area( rt1[ M + 1 - index ] );
+			float overlap = overlap( rt0[ index ] , rt1[ maxChildrenPerBranch + 1 - index ] );
+			float area = area( rt0[ index ] ) + area( rt1[ maxChildrenPerBranch + 1 - index ] );
 			
-			if( index == m || overlap < bestOverlap || ( overlap == bestOverlap && area < bestArea ) )
+			if( index == minSplitSize || overlap < bestOverlap || ( overlap == bestOverlap && area < bestArea ) )
 			{
 				bestIndex = index;
 				bestOverlap = overlap;
@@ -458,17 +458,17 @@ public class RfStarTree<T> implements SpatialIndex<float[ ], T>
 		int index = chooseSplitIndex( overflowed , axis );
 		
 		Branch<T>[ ] result = new Branch[ 2 ];
-		result[ 0 ] = new Branch<T>( dimension , overflowed.level , M );
-		result[ 1 ] = new Branch<T>( dimension , overflowed.level , M );
+		result[ 0 ] = new Branch<T>( dimension , overflowed.level , maxChildrenPerBranch );
+		result[ 1 ] = new Branch<T>( dimension , overflowed.level , maxChildrenPerBranch );
 		
 		result[ 0 ].numChildren = index;
-		result[ 1 ].numChildren = M + 1 - index;
+		result[ 1 ].numChildren = maxChildrenPerBranch + 1 - index;
 		System.arraycopy( overflowed.children , 0 , result[ 0 ].children , 0 , index );
 		for( int i = 0 ; i < result[ 0 ].numChildren ; i++ )
 		{
 			result[ 0 ].children[ i ].parent = result[ 0 ];
 		}
-		System.arraycopy( overflowed.children , index , result[ 1 ].children , 0 , M + 1 - index );
+		System.arraycopy( overflowed.children , index , result[ 1 ].children , 0 , maxChildrenPerBranch + 1 - index );
 		for( int i = 0 ; i < result[ 1 ].numChildren ; i++ )
 		{
 			result[ 1 ].children[ i ].parent = result[ 1 ];

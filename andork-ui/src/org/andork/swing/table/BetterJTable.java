@@ -150,14 +150,14 @@ public class BetterJTable extends JTable
 		{
 			super.valueChanged( e );
 			
-			if( !ignoreViewSelectionChanges )
+			if( !e.getValueIsAdjusting( ) && !ignoreViewSelectionChanges )
 			{
 				updateModelSelectionModel( e );
 			}
 		}
 		else if( e.getSource( ) == modelSelectionModel )
 		{
-			if( !ignoreModelSelectionChanges )
+			if( !e.getValueIsAdjusting( ) && !ignoreModelSelectionChanges )
 			{
 				if( getRowSorter( ) instanceof AnnotatingRowSorter && ( ( AnnotatingRowSorter ) getRowSorter( ) ).isSortingInBackground( ) )
 				{

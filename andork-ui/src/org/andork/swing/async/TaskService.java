@@ -15,4 +15,16 @@ public interface TaskService
 	public List<Task> getTasks( );
 	
 	public HierarchicalBasicPropertyChangeSupport.External changeSupport( );
+	
+	public default void submit( FunctionalTask task )
+	{
+		submit( new Task( )
+		{
+			@Override
+			protected void execute( ) throws Exception
+			{
+				task.execute( this );
+			}
+		} );
+	}
 }

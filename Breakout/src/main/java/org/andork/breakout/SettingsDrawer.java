@@ -83,9 +83,6 @@ public class SettingsDrawer extends Drawer
 	JTextField											projectFileField;
 	JButton												projectFileMenuButton;
 	
-	JButton												importButton;
-	JButton												exportButton;
-	
 	ViewButtonsPanel									viewButtonsPanel;
 	JSlider												mouseSensitivitySlider;
 	JSlider												mouseWheelSensitivitySlider;
@@ -200,13 +197,6 @@ public class SettingsDrawer extends Drawer
 		ImageIcon dropdownIcon = new ImageIcon( getClass( ).getResource( "dropdown.png" ) );
 		projectFileMenuButton = new JButton( dropdownIcon );
 		projectFileMenuButton.setMargin( new Insets( 2 , 4 , 2 , 4 ) );
-		
-		importButton = new JButton( dropdownIcon );
-		importButton.setHorizontalTextPosition( JButton.LEFT );
-		localizer.setText( importButton , "importButton.text" );
-		exportButton = new JButton( dropdownIcon );
-		exportButton.setHorizontalTextPosition( JButton.LEFT );
-		localizer.setText( exportButton , "exportButton.text" );
 		
 		viewButtonsPanel = new ViewButtonsPanel( );
 		
@@ -330,12 +320,6 @@ public class SettingsDrawer extends Drawer
 		projectFilePanel.put( projectFileMenuButton ).rightOfLast( );
 		
 		w.put( projectFilePanel.getTarget( ) ).belowLast( ).fillx( );
-		
-		GridBagWizard importExportPanel = GridBagWizard.quickPanel( );
-		importExportPanel.put( importButton ).fillx( 0.5 );
-		importExportPanel.put( exportButton ).fillx( 0.5 );
-		
-		w.put( importExportPanel.getTarget( ) ).belowLast( ).fillx( );
 		
 		w.put( viewButtonsPanel ).belowLast( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
@@ -568,16 +552,6 @@ public class SettingsDrawer extends Drawer
 	public JButton getResetDepthAxisTiltButton( )
 	{
 		return resetDepthAxisTiltButton;
-	}
-	
-	public AbstractButton getImportButton( )
-	{
-		return importButton;
-	}
-	
-	public AbstractButton getExportButton( )
-	{
-		return exportButton;
 	}
 	
 	public AbstractButton getFitParamColorationAxisButton( )

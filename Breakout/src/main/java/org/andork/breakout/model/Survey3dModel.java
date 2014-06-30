@@ -174,7 +174,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		drawers.putAll( axialSegmentDrawer , segments );
 	}
 	
-	public static Survey3dModel create( List<SurveyShot> originalShots , int M , int m , int p , Task task )
+	public static Survey3dModel create( List<SurveyShot> originalShots , int maxChildrenPerBranch , int minSplitSize , int numToReinsert , Task task )
 	{
 		Subtask rootSubtask = null;
 		int renderProportion = 5;
@@ -209,7 +209,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 		rootSubtask.setCompleted( rootSubtask.getCompleted( ) + 1 );
 		
-		RfStarTree<Shot> tree = createTree( shots , geomBuffer , M , m , p , rootSubtask.beginSubtask( 1 ) );
+		RfStarTree<Shot> tree = createTree( shots , geomBuffer , maxChildrenPerBranch , minSplitSize , numToReinsert , rootSubtask.beginSubtask( 1 ) );
 		if( rootSubtask.isCanceling( ) )
 		{
 			return null;
@@ -349,9 +349,9 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	private static RfStarTree<Shot> createTree( List<Shot> shots , ByteBuffer geomBuffer , int M , int m , int p , Subtask task )
+	private static RfStarTree<Shot> createTree( List<Shot> shots , ByteBuffer geomBuffer , int maxChildrenPerBranch , int minSplitSize , int numToReinsert , Subtask task )
 	{
-		RfStarTree<Shot> tree = new RfStarTree<Shot>( 3 , M , m , p );
+		RfStarTree<Shot> tree = new RfStarTree<Shot>( 3 , maxChildrenPerBranch , minSplitSize , numToReinsert );
 		
 		int numShots = geomBuffer.capacity( ) / GEOM_BPS;
 		
@@ -744,7 +744,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		
 		if( paramTexture == 0 )
 		{
-			int textures[] = new int[ 1 ];
+			int textures[ ] = new int[ 1 ];
 			gl.glGenTextures( 1 , textures , 0 );
 			paramTexture = textures[ 0 ];
 		}
@@ -1120,7 +1120,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			this.number = number;
 		}
 		
-		public int getIndex( )
+		public int getNumber( )
 		{
 			return number;
 		}
@@ -1136,6 +1136,35 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			result[ 2 ] = vertBuffer.getFloat( );
 			vertBuffer.position( 0 );
 			indexBuffer.position( 0 );
+		}
+		
+		public Iterable<float[ ]> coordIterable( )
+		{
+			return new Iterable<float[ ]>( )
+			{
+				public Iterator<float[ ]> iterator( )
+				{
+					return new Iterator<float[ ]>( )
+					{
+						int			index	= 0;
+						float[ ]	coord	= new float[ 3 ];
+						
+						@Override
+						public boolean hasNext( )
+						{
+							return index < GEOM_VPS;
+						}
+						
+						@Override
+						public float[ ] next( )
+						{
+							getCoordinate( index , coord );
+							index++ ;
+							return coord;
+						}
+					};
+				}
+			};
 		}
 		
 		public void pick( float[ ] rayOrigin , float[ ] rayDirection , ShotPickContext c , List<PickResult<Shot>> pickResults )

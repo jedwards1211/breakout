@@ -23,6 +23,14 @@ public class Vecmath
 		return ( double ) Math.sqrt( dx * dx + dy * dy + dz * dz );
 	}
 	
+	/**
+	 * Computes (a - b) dot c.
+	 */
+	public static double subDot3( double[ ] a , double[ ] b , double[ ] c )
+	{
+		return ( a[ 0 ] - b[ 0 ] ) * c[ 0 ] + ( a[ 1 ] - b[ 1 ] ) * c[ 1 ] + ( a[ 2 ] - b[ 2 ] ) * c[ 2 ];
+	}
+	
 	public static double dot3( double[ ] a , double[ ] b )
 	{
 		return a[ 0 ] * b[ 0 ] + a[ 1 ] * b[ 1 ] + a[ 2 ] * b[ 2 ];
@@ -911,8 +919,8 @@ public class Vecmath
 	 */
 	public static void invertGeneral( double[ ] mat , double[ ] out )
 	{
-		double tmp[] = new double[ 16 ];
-		int row_perm[] = new int[ 4 ];
+		double tmp[ ] = new double[ 16 ];
+		int row_perm[ ] = new int[ 4 ];
 		
 		// Use LU decomposition and backsubstitution code specifically
 		// for doubleing-point 4x4 matrices.
@@ -969,7 +977,7 @@ public class Vecmath
 	{
 		
 		// Can't re-use this temporary since the method is static.
-		double row_scale[] = new double[ 4 ];
+		double row_scale[ ] = new double[ 4 ];
 		
 		// Determine implicit scaling information by looping over rows
 		{
@@ -1567,6 +1575,14 @@ public class Vecmath
 		float dz = a[ ai + 2 ] - b[ bi + 2 ];
 		
 		return ( float ) Math.sqrt( dx * dx + dy * dy + dz * dz );
+	}
+	
+	/**
+	 * Computes (a - b) dot c.
+	 */
+	public static float subDot3( float[ ] a , float[ ] b , float[ ] c )
+	{
+		return ( a[ 0 ] - b[ 0 ] ) * c[ 0 ] + ( a[ 1 ] - b[ 1 ] ) * c[ 1 ] + ( a[ 2 ] - b[ 2 ] ) * c[ 2 ];
 	}
 	
 	public static float dot3( float[ ] a , float[ ] b )
@@ -2470,8 +2486,8 @@ public class Vecmath
 	 */
 	public static void invertGeneral( float[ ] mat , float[ ] out )
 	{
-		float tmp[] = new float[ 16 ];
-		int row_perm[] = new int[ 4 ];
+		float tmp[ ] = new float[ 16 ];
+		int row_perm[ ] = new int[ 4 ];
 		
 		// Use LU decomposition and backsubstitution code specifically
 		// for floating-point 4x4 matrices.
@@ -2528,7 +2544,7 @@ public class Vecmath
 	{
 		
 		// Can't re-use this temporary since the method is static.
-		float row_scale[] = new float[ 4 ];
+		float row_scale[ ] = new float[ 4 ];
 		
 		// Determine implicit scaling information by looping over rows
 		{

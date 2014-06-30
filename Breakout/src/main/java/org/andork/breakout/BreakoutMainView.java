@@ -20,6 +20,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -33,6 +34,7 @@ import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
+import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -51,6 +53,7 @@ import javax.swing.table.TableColumn;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
+import org.andork.awt.I18n.Localizer;
 import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
 import org.andork.awt.event.MouseAdapterChain;
@@ -176,7 +179,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	DrawerAutoshowController							autoshowController;
 	OtherMouseHandler									otherMouseHandler;
 	
-	WindowSelectionMouseHandler						windowSelectionMouseHandler;
+	WindowSelectionMouseHandler							windowSelectionMouseHandler;
 	
 	TableSelectionHandler								selectionHandler;
 	
@@ -350,7 +353,41 @@ public class BreakoutMainView extends BasicJoglSetup
 					{
 						canvasMouseAdapterWrapper.setWrapped( mouseLooper );
 					}
-				});
+					
+					@Override
+					public TaskService getRebuildTaskService( )
+					{
+						return rebuildTaskService;
+					}
+					
+					@Override
+					public void selectShots( Set<Shot> newSelected , boolean add , boolean toggle )
+					{
+						OnEDT.onEDT( ( ) -> {
+							ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
+							SurveyTableModel model = surveyDrawer.table( ).getModel( );
+							
+							selModel.setValueIsAdjusting( true );
+							if( !add && !toggle )
+							{
+								selModel.clearSelection( );
+							}
+							for( Shot shot : newSelected )
+							{
+								int row = model.rowOfShot( shot.getNumber( ) );
+								if( toggle && selModel.isSelectedIndex( row ) )
+								{
+									selModel.removeSelectionInterval( row , row );
+								}
+								else
+								{
+									selModel.addSelectionInterval( row , row );
+								}
+							}
+							selModel.setValueIsAdjusting( false );
+						} );
+					}
+				} );
 		canvasMouseAdapterWrapper.setWrapped( mouseLooper );
 		
 		autoshowController = new DrawerAutoshowController( );
@@ -687,10 +724,23 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				Component source = ( Component ) e.getSource( );
 				
+				Localizer localizer = i18n.forClass( BreakoutMainView.class );
+				
 				JPopupMenu popupMenu = new JPopupMenu( );
 				popupMenu.setLightWeightPopupEnabled( false );
 				popupMenu.add( new JMenuItem( newProjectAction ) );
 				popupMenu.add( new JMenuItem( openProjectAction ) );
+				popupMenu.add( new JSeparator( ) );
+				JMenu importMenu = new JMenu( );
+				localizer.setText( importMenu , "importMenu.text" );
+				importMenu.add( new JMenuItem( importProjectArchiveAction ) );
+				popupMenu.add( importMenu );
+				JMenu exportMenu = new JMenu( );
+				localizer.setText( exportMenu , "exportMenu.text" );
+				exportMenu.add( new JMenuItem( exportProjectArchiveAction ) );
+				exportMenu.add( new JMenuItem( exportImageAction ) );
+				popupMenu.add( exportMenu );
+				
 				QArrayList<File> recentProjectFiles = getRootModel( ).get( RootModel.recentProjectFiles );
 				if( recentProjectFiles != null && !recentProjectFiles.isEmpty( ) )
 				{
@@ -701,35 +751,6 @@ public class BreakoutMainView extends BasicJoglSetup
 					}
 				}
 				
-				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
-			}
-		} );
-		
-		settingsDrawer.getImportButton( ).addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				Component source = ( Component ) e.getSource( );
-				
-				JPopupMenu popupMenu = new JPopupMenu( );
-				popupMenu.setLightWeightPopupEnabled( false );
-				popupMenu.add( new JMenuItem( importProjectArchiveAction ) );
-				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
-			}
-		} );
-		
-		settingsDrawer.getExportButton( ).addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				Component source = ( Component ) e.getSource( );
-				
-				JPopupMenu popupMenu = new JPopupMenu( );
-				popupMenu.setLightWeightPopupEnabled( false );
-				popupMenu.add( new JMenuItem( exportProjectArchiveAction ) );
-				popupMenu.add( new JMenuItem( exportImageAction ) );
 				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
 			}
 		} );
@@ -1326,7 +1347,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		for( Survey3dModel.Shot shot : newSelectedShots )
 		{
-			SurveyShot origShot = origShots.get( shot.getIndex( ) );
+			SurveyShot origShot = origShots.get( shot.getNumber( ) );
 			p[ 0 ] = ( float ) Math.min( origShot.from.position[ 0 ] , origShot.to.position[ 0 ] );
 			p[ 1 ] = ( float ) Math.min( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
 			p[ 2 ] = ( float ) Math.min( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
@@ -1477,7 +1498,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			
 			ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
 			
-			int index = picked.picked.getIndex( );
+			int index = picked.picked.getNumber( );
 			
 			int modelRow = surveyDrawer.table( ).getModel( ).rowOfShot( index );
 			
