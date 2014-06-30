@@ -8,7 +8,7 @@ import org.andork.util.Java7;
 
 public class BetterCardLayoutBinder extends Binder<Object>
 {
-	Binder<?>		upstream;
+	Binder<?>			upstream;
 	Container			parent;
 	BetterCardLayout	layout;
 	
@@ -37,7 +37,7 @@ public class BetterCardLayoutBinder extends Binder<Object>
 				bind0( this.upstream , this );
 			}
 			
-			update(false );
+			update( false );
 		}
 		return this;
 	}
@@ -47,7 +47,7 @@ public class BetterCardLayoutBinder extends Binder<Object>
 	@Override
 	public Object get( )
 	{
-		return upstream == null ? null : upstream.get( );
+		return layout.getCurrentCardKey( );
 	}
 	
 	@Override
@@ -60,7 +60,7 @@ public class BetterCardLayoutBinder extends Binder<Object>
 	}
 	
 	@Override
-	public void update(boolean force )
+	public void update( boolean force )
 	{
 		updating = true;
 		try

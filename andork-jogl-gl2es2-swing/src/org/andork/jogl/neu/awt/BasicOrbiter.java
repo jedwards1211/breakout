@@ -101,10 +101,22 @@ public class BasicOrbiter extends MouseAdapter
 	}
 	
 	@Override
+	public void mouseReleased( MouseEvent e )
+	{
+		if( pressEvent != null && e.getButton( ) == pressEvent.getButton( ) )
+		{
+			pressEvent = null;
+		}
+	}
+	
+	@Override
 	public void mousePressed( MouseEvent e )
 	{
-		pressEvent = e;
-		lastEvent = e;
+		if( pressEvent == null )
+		{
+			pressEvent = e;
+			lastEvent = e;
+		}
 	}
 	
 	@Override
@@ -129,42 +141,49 @@ public class BasicOrbiter extends MouseAdapter
 				return;
 			}
 		}
+		float dx = e.getX( ) - lastEvent.getX( );
+		float dy = e.getY( ) - lastEvent.getY( );
+		if( e.isControlDown( ) )
+		{
+			dx /= 10f;
+			dy /= 10f;
+		}
+		lastEvent = e;
 		
 		Component canvas = ( Component ) e.getSource( );
 		
-		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 && pressEvent.isControlDown( ) )
+		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 		{
-			int dx = e.getX( ) - lastEvent.getX( );
-			int dy = e.getY( ) - lastEvent.getY( );
-			lastEvent = e;
-			
-			scene.getViewXform( v );
-			invAffine( v , m1 );
-			mvmulAffine( m1 , 1 , 0 , 0 , axis );
-			normalize3( axis );
-			
-			setIdentity( m1 );
-			setIdentity( m2 );
-			
-			m2[ 12 ] = -center[ 0 ];
-			m2[ 13 ] = -center[ 1 ];
-			m2[ 14 ] = -center[ 2 ];
-			
-			float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
-			float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
-			
-			rotY( m1 , dpan );
-			mmulAffine( m1 , m2 , m2 );
-			
-			setRotation( m1 , axis , dtilt );
-			mmulAffine( m1 , m2 , m2 );
-			
-			setIdentity( m1 );
-			setColumn3( m1 , 3 , center );
-			
-			mmulAffine( m1 , m2 , m2 );
-			mmulAffine( v , m2 , v );
-			scene.setViewXform( v );
+			if( !pressEvent.isShiftDown( ) )
+			{
+				scene.getViewXform( v );
+				invAffine( v , m1 );
+				mvmulAffine( m1 , 1 , 0 , 0 , axis );
+				normalize3( axis );
+				
+				setIdentity( m1 );
+				setIdentity( m2 );
+				
+				m2[ 12 ] = -center[ 0 ];
+				m2[ 13 ] = -center[ 1 ];
+				m2[ 14 ] = -center[ 2 ];
+				
+				float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
+				float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
+				
+				rotY( m1 , dpan );
+				mmulAffine( m1 , m2 , m2 );
+				
+				setRotation( m1 , axis , dtilt );
+				mmulAffine( m1 , m2 , m2 );
+				
+				setIdentity( m1 );
+				setColumn3( m1 , 3 , center );
+				
+				mmulAffine( m1 , m2 , m2 );
+				mmulAffine( v , m2 , v );
+				scene.setViewXform( v );
+			}
 		}
 		
 		if( callDisplay )

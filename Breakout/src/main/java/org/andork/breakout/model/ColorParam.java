@@ -7,7 +7,7 @@ import org.andork.date.DateUtils;
 public enum ColorParam
 {
 	DEPTH( "Depth" , true ) ,
-	DISTANCE_ALONG_SHOTS( "Distance (Along Shots)" , false )
+	DISTANCE_ALONG_SHOTS( "Distance (Along Shots)" , true )
 	{
 		public boolean isTraversalMetric( )
 		{

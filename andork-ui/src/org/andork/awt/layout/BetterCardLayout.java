@@ -589,6 +589,11 @@ public class BetterCardLayout implements LayoutManager2
 		}
 	}
 	
+	public Object getCurrentCardKey( )
+	{
+		return currentCard < 0 || currentCard >= vector.size( ) ? null : vector.get( currentCard ).key;
+	}
+	
 	/**
 	 * Returns a string representation of the state of this card layout.
 	 * 

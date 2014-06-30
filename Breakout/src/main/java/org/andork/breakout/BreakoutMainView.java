@@ -594,7 +594,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				if( newValue != null )
 				{
-					float sensitivity = newValue / 20f;
+					float sensitivity = newValue / 5f;
 					navigator.setWheelFactor( sensitivity );
 				}
 			}
@@ -670,6 +670,10 @@ public class BreakoutMainView extends BasicJoglSetup
 		{
 			protected void onValueChanged( float[ ] depthAxis )
 			{
+				if( depthAxis == null )
+				{
+					return;
+				}
 				final float[ ] finalDepthAxis = Arrays.copyOf( depthAxis , depthAxis.length );
 				if( model3d != null && depthAxis != null && depthAxis.length == 3 )
 				{

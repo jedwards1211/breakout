@@ -21,8 +21,8 @@ public class EdgeTrees
 					{
 						return 1;
 					}
-					// note; edge[1] != edge[3] because in that case we would have returned at point[1] == mbr[1],
-					// since point[1] is guaranteed to be between mbr[1] and mbr[3]
+					// note; edge[1] != edge[3] because in that case we would have returned at p[1] == mbr[1],
+					// since p[1] is guaranteed to be between mbr[1] and mbr[3]
 					return p[ 0 ] > edge[ 0 ] + ( p[ 1 ] - edge[ 1 ] ) * ( edge[ 2 ] - edge[ 0 ] ) / ( edge[ 3 ] - edge[ 1 ] ) ? 1 : 0;
 				} ,
 				( ) -> 0 ,

@@ -110,53 +110,73 @@ public class BasicNavigator extends MouseAdapter
 	}
 	
 	@Override
+	public void mouseReleased( MouseEvent e )
+	{
+		if( pressEvent != null && e.getButton( ) == pressEvent.getButton( ) )
+		{
+			pressEvent = null;
+		}
+	}
+	
+	@Override
 	public void mousePressed( MouseEvent e )
 	{
-		pressEvent = e;
-		lastEvent = e;
+		if( pressEvent == null )
+		{
+			pressEvent = e;
+			lastEvent = e;
+		}
 	}
 	
 	@Override
 	public void mouseDragged( MouseEvent e )
 	{
-		if( !active || pressEvent == null || pressEvent.isControlDown( ) )
+		if( !active || pressEvent == null )
 		{
 			return;
 		}
 		
-		int dx = e.getX( ) - lastEvent.getX( );
-		int dy = e.getY( ) - lastEvent.getY( );
+		float dx = e.getX( ) - lastEvent.getX( );
+		float dy = e.getY( ) - lastEvent.getY( );
+		if( e.isControlDown( ) )
+		{
+			dx /= 10f;
+			dy /= 10f;
+		}
 		lastEvent = e;
 		
 		scene.getViewXform( cam );
 		Vecmath.invAffine( cam );
+		
+		Vecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
+		
+		float xz = ( float ) Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 2 ] * v[ 2 ] );
+		
+		float tilt = ( float ) Math.atan2( v[ 1 ] , xz );
+		float pan = Math.abs( tilt ) == Math.PI / 2 ? lastPan : ( float ) Math.atan2( v[ 0 ] , v[ 2 ] );
+		
+		lastPan = pan;
 		
 		Component canvas = ( Component ) e.getSource( );
 		
 		float scaledMoveFactor = moveFactor * sensitivity;
 		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 		{
-			Vecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
-			
-			float xz = ( float ) Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 2 ] * v[ 2 ] );
-			
-			float tilt = ( float ) Math.atan2( v[ 1 ] , xz );
-			float pan = Math.abs( tilt ) == Math.PI / 2 ? lastPan : ( float ) Math.atan2( v[ 0 ] , v[ 2 ] );
-			
-			lastPan = pan;
-			
-			float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
-			float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
-			
-			Vecmath.rotY( temp , dpan );
-			Vecmath.mmulRotational( temp , cam , cam );
-			
-			Vecmath.mvmulAffine( cam , 1 , 0 , 0 , v );
-			Vecmath.setRotation( temp , v , dtilt );
-			Vecmath.mmulRotational( temp , cam , cam );
-			
-			Vecmath.invAffine( cam );
-			scene.setViewXform( cam );
+			if( pressEvent.isShiftDown( ) )
+			{
+				float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
+				float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
+				
+				Vecmath.rotY( temp , dpan );
+				Vecmath.mmulRotational( temp , cam , cam );
+				
+				Vecmath.mvmulAffine( cam , 1 , 0 , 0 , v );
+				Vecmath.setRotation( temp , v , dtilt );
+				Vecmath.mmulRotational( temp , cam , cam );
+				
+				Vecmath.invAffine( cam );
+				scene.setViewXform( cam );
+			}
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
