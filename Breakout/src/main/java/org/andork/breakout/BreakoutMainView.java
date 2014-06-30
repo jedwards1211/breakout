@@ -960,7 +960,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		if( rootModel.get( RootModel.currentProjectFile ) == null )
 		{
-			rootModel.set( RootModel.currentProjectFile , new File( new File( ".breakout" ) , "defaultProject.yaml" ) );
+			rootModel.set( RootModel.currentProjectFile , new File( new File( ".breakout" ) , "defaultProject.bop" ) );
 			rootModel.set( RootModel.desiredNumSamples , 2 );
 		}
 		
@@ -1682,6 +1682,14 @@ public class BreakoutMainView extends BasicJoglSetup
 		if( projectModel.get( ProjectModel.paramRanges ) == null )
 		{
 			projectModel.set( ProjectModel.paramRanges , QLinkedHashMap.<ColorParam,LinearAxisConversion>newInstance( ) );
+		}
+		QMap<ColorParam, LinearAxisConversion, ?> paramRanges = projectModel.get( ProjectModel.paramRanges );
+		for( ColorParam colorParam : ColorParam.values( ) )
+		{
+			if( !paramRanges.containsKey( colorParam ) )
+			{
+				paramRanges.put( colorParam , new LinearAxisConversion( ) );
+			}
 		}
 		if( projectModel.get( ProjectModel.highlightRange ) == null )
 		{
