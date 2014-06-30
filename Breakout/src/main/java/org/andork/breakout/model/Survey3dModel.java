@@ -43,6 +43,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLAutoDrawable;
@@ -51,6 +54,7 @@ import org.andork.breakout.PickResult;
 import org.andork.breakout.awt.ParamGradientMapPaint;
 import org.andork.collect.HashSetMultiMap;
 import org.andork.collect.MultiMap;
+import org.andork.graph.Graphs;
 import org.andork.jogl.BasicJOGLObject.Uniform1fv;
 import org.andork.jogl.BasicJOGLObject.Uniform3fv;
 import org.andork.jogl.BasicJOGLObject.Uniform4fv;
@@ -73,6 +77,7 @@ import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.Task;
+import org.andork.util.IterableUtils;
 
 import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
@@ -116,7 +121,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	final Set<Shot>						selectedShots		= new HashSet<Shot>( );
 	Shot								hoveredShot;
 	Float								hoverLocation;
-	LinearAxisConversion				highlightExtentConversion;
+	LinearAxisConversion				glowExtentConversion;
+	final Set<Segment>					segmentsWithGlow	= new HashSet<Segment>( );
 	
 	LinearGradientPaint					paramPaint;
 	int									paramTexture;
@@ -767,7 +773,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	private void updateHighlights( Collection<Shot> affectedShots , Shot prevHoveredShot , Float prevHoverLocation , LinearAxisConversion prevHighlightExtentConversion )
+	private void updateHighlights( Collection<Shot> affectedShots )
 	{
 		// find the segments that are affected by the affected shots
 		// (not just the segments containing those shots but segments containing
@@ -777,23 +783,6 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			affectedSegments.add( shot.segment );
 		}
-		
-		if( prevHoveredShot != null )
-		{
-			findAffectedSegments( prevHoveredShot , affectedSegments , prevHoverLocation , ( float ) prevHighlightExtentConversion.invert( 0.0 ) );
-		}
-		
-		if( hoveredShot != null )
-		{
-			findAffectedSegments( hoveredShot , affectedSegments , hoverLocation , ( float ) highlightExtentConversion.invert( 0.0 ) );
-		}
-		
-		for( Segment segment : affectedSegments )
-		{
-			clearHighlights( segment );
-		}
-		
-		applyHoverHighlights( );
 		
 		for( Shot shot : selectedShots )
 		{
@@ -805,7 +794,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		
 		for( Segment segment : affectedSegments )
 		{
-			segment.stationAttrsNeedRebuffering = true;
+			segment.stationAttrsNeedRebuffering.set( true );
 		}
 	}
 	
@@ -814,170 +803,27 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		FORWARD , BACKWARD;
 	}
 	
-	private void findAffectedSegments( Shot shot , Set<Segment> affectedSegments , float location , float distance )
-	{
-		Set<Shot> visitedShots = new HashSet<Shot>( );
-		
-		SurveyShot origShot = originalShots.get( shot.number );
-		
-		float forwardRemainingDistance = distance * 2 - ( float ) origShot.dist * ( 1f - location );
-		float backwardRemainingDistance = distance * 2 - ( float ) origShot.dist * location;
-		
-		findAffectedSegments( origShot.to , Direction.FORWARD , visitedShots , forwardRemainingDistance , affectedSegments );
-		findAffectedSegments( origShot.from , Direction.BACKWARD , visitedShots , backwardRemainingDistance , affectedSegments );
-	}
-	
-	private void findAffectedSegments( SurveyStation station , Direction direction , Set<Shot> visitedShots , float remainingDistance , Set<Segment> affectedSegments )
-	{
-		for( SurveyShot next : station.frontsights )
-		{
-			findAffectedSegments( shots.get( next.number ) , Direction.FORWARD , visitedShots , remainingDistance ,
-					affectedSegments );
-		}
-		for( SurveyShot next : station.backsights )
-		{
-			findAffectedSegments( shots.get( next.number ) , Direction.BACKWARD , visitedShots , remainingDistance ,
-					affectedSegments );
-		}
-	}
-	
-	private void findAffectedSegments( Shot shot , Direction direction , Set<Shot> visitedShots , float remainingDistance , Set<Segment> affectedSegments )
-	{
-		if( visitedShots.add( shot ) )
-		{
-			affectedSegments.add( shot.segment );
-			if( remainingDistance > 0 )
-			{
-				SurveyShot origShot = originalShots.get( shot.number );
-				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
-				float nextRemainingDistance = ( float ) ( remainingDistance - origShot.dist );
-				
-				findAffectedSegments( nextStation , direction , visitedShots , nextRemainingDistance , affectedSegments );
-			}
-		}
-	}
-	
-	private void clearHighlights( Segment segment )
-	{
-		ByteBuffer buffer = segment.stationAttrs.buffer( );
-		buffer.position( 0 );
-		for( int i = 0 ; i < buffer.capacity( ) ; i += STATION_ATTR_BPV )
-		{
-			buffer.putFloat( i , -Float.MAX_VALUE );
-			buffer.putFloat( i + 4 , -Float.MAX_VALUE );
-			buffer.putFloat( i + 8 , 0f );
-		}
-	}
-	
-	private void applyHoverHighlights( )
-	{
-		if( hoveredShot == null )
-		{
-			return;
-		}
-		
-		SurveyShot origShot = originalShots.get( hoveredShot.number );
-		ByteBuffer buffer = hoveredShot.segment.stationAttrs.buffer( );
-		
-		float distToFrom = ( float ) ( origShot.dist * hoverLocation );
-		float distToTo = ( float ) ( origShot.dist * ( 1f - hoverLocation ) );
-		
-		applyHoverHighlights( origShot.from , Direction.BACKWARD , distToFrom , highlightExtentConversion );
-		applyHoverHighlights( origShot.to , Direction.FORWARD , distToTo , highlightExtentConversion );
-		
-		float fromHighlightA = ( float ) highlightExtentConversion.convert( distToTo - origShot.dist );
-		float fromHighlightB = ( float ) highlightExtentConversion.convert( distToFrom );
-		float toHighlightA = ( float ) highlightExtentConversion.convert( distToTo );
-		float toHighlightB = ( float ) highlightExtentConversion.convert( distToFrom - origShot.dist );
-		
-		setFromHighlightA( buffer , hoveredShot.indexInSegment , fromHighlightA );
-		setFromHighlightB( buffer , hoveredShot.indexInSegment , fromHighlightB );
-		setToHighlightA( buffer , hoveredShot.indexInSegment , toHighlightA );
-		setToHighlightB( buffer , hoveredShot.indexInSegment , toHighlightB );
-	}
-	
-	private void applyHoverHighlights( SurveyStation station , Direction direction , float distance , LinearAxisConversion highlightConversion )
-	{
-		for( SurveyShot next : station.frontsights )
-		{
-			applyHoverHighlights( shots.get( next.number ) , Direction.FORWARD , distance , highlightConversion );
-		}
-		for( SurveyShot next : station.backsights )
-		{
-			applyHoverHighlights( shots.get( next.number ) , Direction.BACKWARD , distance , highlightConversion );
-		}
-	}
-	
-	private void applyHoverHighlights( Shot shot , Direction direction , float distance , LinearAxisConversion highlightConversion )
-	{
-		if( highlightConversion.convert( distance ) >= 0.0 )
-		{
-			ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
-			
-			SurveyShot origShot = originalShots.get( shot.number );
-			float nextDistance = ( float ) ( distance + origShot.dist );
-			
-			float fromHighlight;
-			float toHighlight;
-			
-			if( direction == Direction.FORWARD )
-			{
-				fromHighlight = ( float ) highlightConversion.convert( distance );
-				toHighlight = ( float ) highlightConversion.convert( nextDistance );
-			}
-			else
-			{
-				fromHighlight = ( float ) highlightConversion.convert( nextDistance );
-				toHighlight = ( float ) highlightConversion.convert( distance );
-			}
-			
-			float currentFromHighlight = Math.min( getFromHighlightA( buffer , shot.indexInSegment ) , getFromHighlightB( buffer , shot.indexInSegment ) );
-			float currentToHighlight = Math.min( getToHighlightA( buffer , shot.indexInSegment ) , getToHighlightB( buffer , shot.indexInSegment ) );
-			
-			boolean keepGoing = false;
-			
-			if( fromHighlight > currentFromHighlight )
-			{
-				keepGoing = true;
-				setFromHighlightA( buffer , shot.indexInSegment , fromHighlight );
-				setFromHighlightB( buffer , shot.indexInSegment , fromHighlight );
-			}
-			if( toHighlight > currentToHighlight )
-			{
-				keepGoing = true;
-				setToHighlightA( buffer , shot.indexInSegment , toHighlight );
-				setToHighlightB( buffer , shot.indexInSegment , toHighlight );
-			}
-			
-			if( keepGoing )
-			{
-				SurveyStation nextStation = direction == Direction.FORWARD ? origShot.to : origShot.from;
-				applyHoverHighlights( nextStation , direction , nextDistance , highlightConversion );
-			}
-		}
-	}
-	
-	private float getFromHighlightA( ByteBuffer buffer , int shotIndex )
+	private static float getFromGlowA( ByteBuffer buffer , int shotIndex )
 	{
 		return buffer.getFloat( shotIndex * STATION_ATTR_BPS );
 	}
 	
-	private float getFromHighlightB( ByteBuffer buffer , int shotIndex )
+	private static float getFromGlowB( ByteBuffer buffer , int shotIndex )
 	{
 		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + 4 );
 	}
 	
-	private float getToHighlightA( ByteBuffer buffer , int shotIndex )
+	private static float getToGlowA( ByteBuffer buffer , int shotIndex )
 	{
 		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 );
 	}
 	
-	private float getToHighlightB( ByteBuffer buffer , int shotIndex )
+	private static float getToGlowB( ByteBuffer buffer , int shotIndex )
 	{
 		return buffer.getFloat( shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4 );
 	}
 	
-	private void setFromHighlightA( ByteBuffer buffer , int shotIndex , float value )
+	private static void setFromGlowA( ByteBuffer buffer , int shotIndex , float value )
 	{
 		int index = shotIndex * STATION_ATTR_BPS;
 		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
@@ -986,7 +832,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	private void setFromHighlightB( ByteBuffer buffer , int shotIndex , float value )
+	private static void setFromGlowB( ByteBuffer buffer , int shotIndex , float value )
 	{
 		int index = shotIndex * STATION_ATTR_BPS + 4;
 		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
@@ -995,7 +841,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	private void setToHighlightA( ByteBuffer buffer , int shotIndex , float value )
+	private static void setToGlowA( ByteBuffer buffer , int shotIndex , float value )
 	{
 		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2;
 		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
@@ -1004,7 +850,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	private void setToHighlightB( ByteBuffer buffer , int shotIndex , float value )
+	private static void setToGlowB( ByteBuffer buffer , int shotIndex , float value )
 	{
 		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4;
 		for( int i = 0 ; i < STATION_ATTR_VPS / 2 ; i++ )
@@ -1029,13 +875,10 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			
 		}
 		
-		final Set<Shot>			selected	= new HashSet<Shot>( );
-		final Set<Shot>			deselected	= new HashSet<Shot>( );
-		Shot					newHoveredShot;
-		Float					newHoverLocation;
-		LinearAxisConversion	newHighlightExtentConversion;
+		final Set<Shot>	selected	= new HashSet<Shot>( );
+		final Set<Shot>	deselected	= new HashSet<Shot>( );
 		
-		boolean					committed	= false;
+		boolean			committed	= false;
 		
 		public SelectionEditor select( Shot shot )
 		{
@@ -1048,22 +891,6 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			selected.remove( shot );
 			deselected.add( shot );
-			return this;
-		}
-		
-		public SelectionEditor hover( Shot shot , float location , LinearAxisConversion highlightExtent )
-		{
-			newHoveredShot = shot;
-			newHoverLocation = location;
-			newHighlightExtentConversion = new LinearAxisConversion( highlightExtent );
-			return this;
-		}
-		
-		public SelectionEditor unhover( )
-		{
-			newHoveredShot = null;
-			newHoverLocation = null;
-			newHighlightExtentConversion = null;
 			return this;
 		}
 		
@@ -1090,20 +917,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			{
 				affectedShots.add( hoveredShot );
 			}
-			if( newHoveredShot != null )
-			{
-				affectedShots.add( newHoveredShot );
-			}
 			
 			Shot prevHoveredShot = hoveredShot;
 			Float prevHoverLocation = hoverLocation;
-			LinearAxisConversion prevHighlightExtentConversion = highlightExtentConversion;
+			LinearAxisConversion prevGlowExtentConversion = glowExtentConversion;
 			
-			hoveredShot = newHoveredShot;
-			hoverLocation = newHoverLocation;
-			highlightExtentConversion = newHighlightExtentConversion;
-			
-			updateHighlights( affectedShots , prevHoveredShot , prevHoverLocation , prevHighlightExtentConversion );
+			updateHighlights( affectedShots );
 		}
 	}
 	
@@ -1136,6 +955,46 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			result[ 2 ] = vertBuffer.getFloat( );
 			vertBuffer.position( 0 );
 			indexBuffer.position( 0 );
+		}
+		
+		public float getFromGlowA( )
+		{
+			return Survey3dModel.getFromGlowA( segment.stationAttrs.buffer( ) , indexInSegment );
+		}
+		
+		public float getFromGlowB( )
+		{
+			return Survey3dModel.getFromGlowB( segment.stationAttrs.buffer( ) , indexInSegment );
+		}
+		
+		public float getToGlowA( )
+		{
+			return Survey3dModel.getToGlowA( segment.stationAttrs.buffer( ) , indexInSegment );
+		}
+		
+		public float getToGlowB( )
+		{
+			return Survey3dModel.getToGlowB( segment.stationAttrs.buffer( ) , indexInSegment );
+		}
+		
+		public void setFromGlowA( float glow )
+		{
+			Survey3dModel.setFromGlowA( segment.stationAttrs.buffer( ) , indexInSegment , glow );
+		}
+		
+		public void setFromGlowB( float glow )
+		{
+			Survey3dModel.setFromGlowB( segment.stationAttrs.buffer( ) , indexInSegment , glow );
+		}
+		
+		public void setToGlowA( float glow )
+		{
+			Survey3dModel.setToGlowA( segment.stationAttrs.buffer( ) , indexInSegment , glow );
+		}
+		
+		public void setToGlowB( float glow )
+		{
+			Survey3dModel.setToGlowB( segment.stationAttrs.buffer( ) , indexInSegment , glow );
 		}
 		
 		public Iterable<float[ ]> coordIterable( )
@@ -1361,15 +1220,15 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	
 	public static class Segment
 	{
-		final ArrayList<Shot>			shots	= new ArrayList<Shot>( );
+		final ArrayList<Shot>			shots						= new ArrayList<Shot>( );
 		
-		final LinkedList<SegmentDrawer>	drawers	= new LinkedList<SegmentDrawer>( );
+		final LinkedList<SegmentDrawer>	drawers						= new LinkedList<SegmentDrawer>( );
 		
 		SharedBuffer					geometry;
 		SharedBuffer					stationAttrs;
-		boolean							stationAttrsNeedRebuffering;
+		final AtomicBoolean				stationAttrsNeedRebuffering	= new AtomicBoolean( );
 		SharedBuffer					param0;
-		boolean							param0NeedsRebuffering;
+		final AtomicBoolean				param0NeedsRebuffering		= new AtomicBoolean( );
 		SharedBuffer					fillIndices;
 		SharedBuffer					lineIndices;
 		
@@ -1444,7 +1303,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				param0.buffer( ).putFloat( toValue.floatValue( ) );
 				param0.buffer( ).putFloat( toValue.floatValue( ) );
 			}
-			param0NeedsRebuffering = true;
+			param0NeedsRebuffering.set( true );
 		}
 		
 		void calcParam0( Survey3dModel model , ColorParam param )
@@ -1480,7 +1339,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				param0.buffer( ).putFloat( toValue );
 				param0.buffer( ).putFloat( toValue );
 			}
-			param0NeedsRebuffering = true;
+			param0NeedsRebuffering.set( true );
 		}
 		
 		void populateData( ByteBuffer allGeomBuffer )
@@ -1514,6 +1373,18 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			}
 			fillIndices.dispose( gl );
 			lineIndices.dispose( gl );
+		}
+		
+		void clearGlow( )
+		{
+			ByteBuffer buffer = stationAttrs.buffer( );
+			buffer.position( 0 );
+			for( int i = 0 ; i < buffer.capacity( ) ; i += Survey3dModel.STATION_ATTR_BPV )
+			{
+				buffer.putFloat( i , -Float.MAX_VALUE );
+				buffer.putFloat( i + 4 , -Float.MAX_VALUE );
+				buffer.putFloat( i + 8 , 0f );
+			}
 		}
 	}
 	
@@ -1745,10 +1616,9 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			segment.geometry.init( gl );
 			segment.stationAttrs.init( gl );
-			if( segment.stationAttrsNeedRebuffering )
+			if( segment.stationAttrsNeedRebuffering.compareAndSet( true , false ) )
 			{
 				segment.stationAttrs.rebuffer( gl );
-				segment.stationAttrsNeedRebuffering = false;
 			}
 			
 			gl.glBindBuffer( GL_ARRAY_BUFFER , segment.geometry.id( ) );
@@ -1922,7 +1792,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			}
 			super.beforeDraw( segment , gl , m , n );
 			segment.param0.init( gl );
-			if( segment.param0NeedsRebuffering )
+			if( segment.param0NeedsRebuffering.compareAndSet( true , false ) )
 			{
 				segment.param0.rebuffer( gl );
 			}
@@ -2211,5 +2081,76 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 		
 		drawable.display( );
+	}
+	
+	public void updateGlowInBackground( Shot hoveredShot , Float hoverLocation , LinearAxisConversion glowExtentConversion , Subtask subtask )
+	{
+		this.hoveredShot = hoveredShot;
+		this.hoverLocation = hoverLocation;
+		this.glowExtentConversion = glowExtentConversion;
+		
+		Set<Segment> newSegmentsWithGlow = new HashSet<Segment>( );
+		
+		if( hoveredShot != null )
+		{
+			SurveyShot origShot = originalShots.get( hoveredShot.number );
+			
+			final Function<SurveyStation, Stream<SurveyShot>> connected =
+					station -> Stream.concat( station.frontsights.stream( ) , station.backsights.stream( ) );
+			
+			Graphs.traverse2( Stream.<SurveyStation>builder( ).add( origShot.from ).add( origShot.to ).build( ) ,
+					station -> ( station == origShot.from ? hoverLocation : 1 - hoverLocation ) * origShot.dist ,
+					( station , priority ) -> {
+						float glow = ( float ) glowExtentConversion.convert( priority );
+						
+						connected.apply( station ).forEach(
+								connectedShot -> {
+									Shot shot = shots.get( connectedShot.number );
+									
+									if( newSegmentsWithGlow.add( shot.segment ) )
+									{
+										segmentsWithGlow.add( shot.segment );
+										shot.segment.clearGlow( );
+									}
+									
+									if( station == connectedShot.from )
+									{
+										shot.setFromGlowA( glow );
+										shot.setFromGlowB( glow );
+									}
+									else
+									{
+										shot.setToGlowA( glow );
+										shot.setToGlowB( glow );
+									}
+									
+									shot.segment.stationAttrsNeedRebuffering.set( true );
+								} );
+						return glow > 0;
+					} ,
+					connected ,
+					( SurveyShot shot ) -> shot.dist ,
+					( station , shot ) -> station == shot.from ? shot.to : shot.from ,
+					( ) -> !subtask.isCanceling( ) );
+			
+			hoveredShot.setFromGlowA( 2 - hoveredShot.getFromGlowB( ) );
+			hoveredShot.setToGlowA( 2 - hoveredShot.getToGlowB( ) );
+		}
+		
+		Iterator<Segment> segIter = segmentsWithGlow.iterator( );
+		
+		for( Segment segment : IterableUtils.iterable( segIter ) )
+		{
+			if( subtask.isCanceling( ) )
+			{
+				return;
+			}
+			if( !newSegmentsWithGlow.contains( segment ) )
+			{
+				segIter.remove( );
+				segment.clearGlow( );
+				segment.stationAttrsNeedRebuffering.set( true );
+			}
+		}
 	}
 }

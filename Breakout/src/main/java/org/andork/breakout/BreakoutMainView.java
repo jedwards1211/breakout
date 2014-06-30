@@ -1395,7 +1395,9 @@ public class BreakoutMainView extends BasicJoglSetup
 		{
 			final ShotPickResult picked = pick( model3d , e , hoverUpdaterSpc );
 			
-			final SelectionEditor editor = model3d.editSelection( );
+			Subtask subtask = new Subtask( this );
+			Subtask glowSubtask = subtask.beginSubtask( 1 );
+			glowSubtask.setStatus( "Updating mouseover glow" );
 			
 			if( picked != null )
 			{
@@ -1409,16 +1411,15 @@ public class BreakoutMainView extends BasicJoglSetup
 						return conversion2;
 					}
 				}.result( );
-				editor.hover( picked.picked , picked.locationAlongShot , conversion );
+				
+				model3d.updateGlowInBackground( picked.picked , picked.locationAlongShot , conversion , glowSubtask );
 			}
 			else
 			{
-				editor.unhover( );
+				model3d.updateGlowInBackground( null , null , null , glowSubtask );
 			}
-			
 			if( !isCanceling( ) )
 			{
-				editor.commit( );
 				canvas.display( );
 			}
 		}
