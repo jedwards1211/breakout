@@ -784,6 +784,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			affectedSegments.add( shot.segment );
 		}
 		
+		for( Segment segment : affectedSegments )
+		{
+			segment.clearHighlights( );
+		}
+		
 		for( Shot shot : selectedShots )
 		{
 			if( affectedSegments.contains( shot.segment ) )
@@ -913,14 +918,6 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			Set<Shot> affectedShots = new HashSet<Shot>( );
 			affectedShots.addAll( selected );
 			affectedShots.addAll( deselected );
-			if( hoveredShot != null )
-			{
-				affectedShots.add( hoveredShot );
-			}
-			
-			Shot prevHoveredShot = hoveredShot;
-			Float prevHoverLocation = hoverLocation;
-			LinearAxisConversion prevGlowExtentConversion = glowExtentConversion;
 			
 			updateHighlights( affectedShots );
 		}
@@ -1383,7 +1380,16 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			{
 				buffer.putFloat( i , -Float.MAX_VALUE );
 				buffer.putFloat( i + 4 , -Float.MAX_VALUE );
-				buffer.putFloat( i + 8 , 0f );
+			}
+		}
+		
+		void clearHighlights( )
+		{
+			ByteBuffer buffer = stationAttrs.buffer( );
+			buffer.position( 0 );
+			for( int i = 0 ; i < buffer.capacity( ) ; i += Survey3dModel.STATION_ATTR_BPV )
+			{
+				buffer.putFloat( i + 8 , 0 );
 			}
 		}
 	}

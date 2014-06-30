@@ -98,14 +98,16 @@ public class SelectionPolygon implements JoglDrawable , JoglResource
 	private void initProgram( GL2ES2 gl )
 	{
 		String vertexShaderCode =
-				"uniform mat4 screenXform;" +
+				"#version 120\n" +
+						"uniform mat4 screenXform;" +
 						"attribute vec2 a_pos;" +
 						"void main() {" +
 						"  gl_Position = screenXform * vec4(a_pos, 0.0, 1.0);" +
 						"}";
 		
 		String fragmentShaderCode =
-				"uniform vec4 u_outlineColor;" +
+				"#version 120\n" +
+						"uniform vec4 u_outlineColor;" +
 						"void main() {" +
 						"  gl_FragColor = u_outlineColor;" +
 						"}";

@@ -112,7 +112,7 @@ public class BasicOrbiter extends MouseAdapter
 	@Override
 	public void mousePressed( MouseEvent e )
 	{
-		if( pressEvent == null )
+		if( pressEvent == null && e.getButton( ) == MouseEvent.BUTTON1 && !e.isShiftDown( ) && !e.isAltDown( ) )
 		{
 			pressEvent = e;
 			lastEvent = e;
@@ -122,7 +122,7 @@ public class BasicOrbiter extends MouseAdapter
 	@Override
 	public void mouseDragged( MouseEvent e )
 	{
-		if( !active || pressEvent == null )
+		if( !active || pressEvent == null || pressEvent.isShiftDown( ) || pressEvent.isAltDown( ) )
 		{
 			return;
 		}

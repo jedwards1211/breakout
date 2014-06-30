@@ -122,7 +122,7 @@ public class DefaultNavigator extends MouseAdapter
 	@Override
 	public void mousePressed( MouseEvent e )
 	{
-		if( pressEvent == null )
+		if( pressEvent == null && !e.isAltDown( ) )
 		{
 			pressEvent = e;
 			lastEvent = e;
