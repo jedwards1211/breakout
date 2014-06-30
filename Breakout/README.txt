@@ -2,7 +2,10 @@
       A cave survey viewer by Andy Edwards
 
 To run, open breakout-<your platform>.jar.
-Requires Java 1.6+.
+Requires Java 8+ (also known as 1.8, it's silly).
+	
+As of 2014-06-30, www.java.com still offers Java 7 by default.  Download Java 8 here:
+	http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 
 GETTING STARTED
 
@@ -22,17 +25,15 @@ GETTING STARTED
    
 COLORATION
 
-The depth coloration, fade out, and mouseover highlight coloration can be adjusted by left and right clicking the coloration axes in
+The depth coloration, fade out, and mouseover glow coloration can be adjusted by left and right clicking the coloration axes in
 the settings drawer on the right side of the window.  Experiment to see how they behave.
    
 NAVIGATION
 
-Move mouse over a survey shot: highlights that survey shot and connected shots up to a certain distance away from it (this distance is
-controlled by the yellow highlight axis in the settings drawer on the right side of the window).
+Move mouse over a survey shot: makes that survey shot and connected shots up to a certain distance away from it glow 
+(this distance is controlled by the cyan axis in the settings drawer on the right side of the window).
 
-Left Click + Drag:
-	Up/Down: move forward and backward horizontally
-	Left/Right: pan
+Left Click + Drag: orbit around the (last) selected survey shot(s)
 	
 Shift + Left Click + Drag:
 	Up/Down: tilt
@@ -42,7 +43,11 @@ Left Click on a survey shot: selects that shot (deselects everything else)
 
 Ctrl + Left Click on a survey shot: toggles whether that shot is selected, without deselecting anything else
 
-Ctrl + Left Click + Drag: orbit around the selected survey shots
+Alt + Left Click: lasso shots
+	In this mode, navigation controls are disabled.  
+	Left click adds a point to the selection polygon.
+	Right click when you are finished and it will select the shots that are (completely) inside the polygon,
+		and go back to normal mode.
 
 Middle Click + Drag: zoom in/out (move forward/back relative to the current view orientation)
 
@@ -50,6 +55,12 @@ Mouse Wheel: zoom in/out (duh ;)
 	
 Right Click + Drag: move up/down/left/right relative to the current view orientation
 
+Shift + Right Click + Drag:
+	Up/Down: move forward and backward horizontally
+	Left/Right: pan
+	
+Holding Ctrl while dragging makes the motion 10X slower, so you can have finer control.
+	
 SEARCHING
 
 To immediately select and fly to all surveys starting with the designation ALP, type "ALP" into the "Filter:" field in the survey table
