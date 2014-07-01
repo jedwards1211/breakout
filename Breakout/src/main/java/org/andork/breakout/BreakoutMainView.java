@@ -1414,6 +1414,22 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 		
 		@Override
+		public void mouseClicked( MouseEvent e )
+		{
+			if( e.getButton( ) != MouseEvent.BUTTON1 || e.isAltDown( ) )
+			{
+				return;
+			}
+			
+			ShotPickResult picked = pick( model3d , e , spc );
+			
+			if( picked == null )
+			{
+				surveyDrawer.table( ).clearSelection( );
+			}
+		}
+		
+		@Override
 		public void mousePressed( MouseEvent e )
 		{
 			if( e.getButton( ) != MouseEvent.BUTTON1 )
@@ -1421,7 +1437,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				return;
 			}
 			
-			if( ( e.getModifiersEx( ) & MouseEvent.ALT_DOWN_MASK ) == MouseEvent.ALT_DOWN_MASK )
+			if( e.isAltDown( ) )
 			{
 				for( Drawer drawer : Arrays.asList( surveyDrawer , quickTableDrawer , taskListDrawer , settingsDrawer ) )
 				{

@@ -883,7 +883,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		ByteBuffer buffer = shot.segment.stationAttrs.buffer( );
 		for( int i = 0 ; i < STATION_ATTR_VPS ; i++ )
 		{
-			buffer.putFloat( shot.indexInSegment * STATION_ATTR_BPS + 8 + i * STATION_ATTR_BPV , 2f );
+			int index = shot.indexInSegment * STATION_ATTR_BPS + 8 + i * STATION_ATTR_BPV;
+			if( buffer.getFloat( index ) != 1 )
+			{
+				buffer.putFloat( index , 2f );
+			}
 		}
 	}
 	
@@ -1010,14 +1014,18 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		
 		public Iterable<float[ ]> coordIterable( )
 		{
+			return coordIterable( new float[ 3 ] );
+		}
+		
+		public Iterable<float[ ]> coordIterable( float[ ] coord )
+		{
 			return new Iterable<float[ ]>( )
 			{
 				public Iterator<float[ ]> iterator( )
 				{
 					return new Iterator<float[ ]>( )
 					{
-						int			index	= 0;
-						float[ ]	coord	= new float[ 3 ];
+						int	index	= 0;
 						
 						@Override
 						public boolean hasNext( )
@@ -1211,6 +1219,44 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			vertBuffer.position( 0 );
 			indexBuffer.position( 0 );
 		}
+		
+		public void calcParamRange( Survey3dModel model , ColorParam param , float[ ] rangeInOut )
+		{
+			float[ ] origin = model.depthOrigin.value( );
+			float[ ] axis = model.depthAxis.value( );
+			
+			if( param == ColorParam.DEPTH )
+			{
+				for( float[ ] coord : coordIterable( ) )
+				{
+					float f = ( coord[ 0 ] - origin[ 0 ] ) * axis[ 0 ] +
+							( coord[ 1 ] - origin[ 1 ] ) * axis[ 1 ] +
+							( coord[ 2 ] - origin[ 2 ] ) * axis[ 2 ];
+					if( !Double.isNaN( f ) )
+					{
+						rangeInOut[ 0 ] = Math.min( rangeInOut[ 0 ] , f );
+						rangeInOut[ 1 ] = Math.max( rangeInOut[ 1 ] , f );
+					}
+				}
+			}
+			else
+			{
+				ByteBuffer indexBuffer = segment.fillIndices.buffer( );
+				indexBuffer.position( indexInSegment * FILL_IPS * BPI );
+				
+				for( int i = 0 ; i < FILL_IPS ; i++ )
+				{
+					float f = segment.param0.buffer( ).getFloat( indexBuffer.getInt( ) * 4 );
+					if( !Double.isNaN( f ) )
+					{
+						rangeInOut[ 0 ] = Math.min( rangeInOut[ 0 ] , f );
+						rangeInOut[ 1 ] = Math.max( rangeInOut[ 1 ] , f );
+					}
+				}
+				
+				indexBuffer.position( 0 );
+			}
+		}
 	}
 	
 	public static final class ShotPickContext
@@ -1401,9 +1447,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			ByteBuffer buffer = stationAttrs.buffer( );
 			buffer.position( 0 );
-			for( int i = 0 ; i < buffer.capacity( ) ; i += Survey3dModel.STATION_ATTR_BPV )
+			for( int i = 8 ; i < buffer.capacity( ) ; i += Survey3dModel.STATION_ATTR_BPV )
 			{
-				buffer.putFloat( i + 8 , 0 );
+				if( buffer.getFloat( i ) != 1 )
+				{
+					buffer.putFloat( i , 0 );
+				}
 			}
 		}
 	}
@@ -1874,34 +1923,73 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	
 	public float[ ] calcAutofitParamRange( Subtask subtask )
 	{
+		if( selectedShots.isEmpty( ) )
+		{
+			return calcAutofitAllParamRange( subtask );
+		}
+		else
+		{
+			return calcAutofitSelectedParamRange( subtask );
+		}
+	}
+	
+	public float[ ] calcAutofitSelectedParamRange( Subtask subtask )
+	{
 		if( subtask != null )
 		{
 			subtask.setTotal( segments.size( ) );
 			subtask.setCompleted( 0 );
 			subtask.setIndeterminate( false );
 		}
-		final Iterator<Segment> segmentIterator = segments.iterator( );
 		
 		final float[ ] range = { Float.MAX_VALUE , -Float.MAX_VALUE };
 		
 		int completed = 0;
-		while( segmentIterator.hasNext( ) )
+		for( Shot shot : selectedShots )
 		{
-			while( segmentIterator.hasNext( ) )
+			shot.calcParamRange( Survey3dModel.this , colorParam , range );
+			
+			if( completed++ % 100 == 0 )
 			{
-				Segment segment = segmentIterator.next( );
-				segment.calcParamRange( Survey3dModel.this , colorParam , range );
-				
-				if( completed++ % 100 == 0 )
+				if( subtask != null )
 				{
-					if( subtask != null )
+					if( subtask.isCanceling( ) )
 					{
-						if( subtask.isCanceling( ) )
-						{
-							return null;
-						}
-						subtask.setCompleted( completed );
+						return null;
 					}
+					subtask.setCompleted( completed );
+				}
+			}
+		}
+		
+		return range;
+	}
+	
+	public float[ ] calcAutofitAllParamRange( Subtask subtask )
+	{
+		if( subtask != null )
+		{
+			subtask.setTotal( segments.size( ) );
+			subtask.setCompleted( 0 );
+			subtask.setIndeterminate( false );
+		}
+		
+		final float[ ] range = { Float.MAX_VALUE , -Float.MAX_VALUE };
+		
+		int completed = 0;
+		for( Segment segment : segments )
+		{
+			segment.calcParamRange( Survey3dModel.this , colorParam , range );
+			
+			if( completed++ % 100 == 0 )
+			{
+				if( subtask != null )
+				{
+					if( subtask.isCanceling( ) )
+					{
+						return null;
+					}
+					subtask.setCompleted( completed );
 				}
 			}
 		}
