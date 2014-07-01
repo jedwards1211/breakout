@@ -20,15 +20,14 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -606,15 +605,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				if( model3d != null && newValue != null )
 				{
-					final Survey3dModel model3d = BreakoutMainView.this.model3d;
-					new OnJogl( getCanvas( ) )
-					{
-						@Override
-						public void run( GLAutoDrawable drawable ) throws Throwable
-						{
-							model3d.setAmbientLight( newValue );
-						}
-					};
+					model3d.setAmbientLight( newValue );
 					getCanvas( ).repaint( );
 				}
 			}
@@ -629,15 +620,8 @@ public class BreakoutMainView extends BasicJoglSetup
 					final float nearDist = ( float ) range.invert( 0.0 );
 					final float farDist = ( float ) range.invert( settingsDrawer.getDistColorationAxis( ).getViewSpan( ) );
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
-					new OnJogl( getCanvas( ) )
-					{
-						@Override
-						public void run( GLAutoDrawable drawable ) throws Throwable
-						{
-							model3d.setNearDist( nearDist );
-							model3d.setFarDist( farDist );
-						}
-					};
+					model3d.setNearDist( nearDist );
+					model3d.setFarDist( farDist );
 					getCanvas( ).repaint( );
 				}
 			}
@@ -652,16 +636,9 @@ public class BreakoutMainView extends BasicJoglSetup
 					final float loParam = ( float ) range.invert( 0.0 );
 					final float hiParam = ( float ) range.invert( settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
-					new OnJogl( getCanvas( ) )
-					{
-						@Override
-						public void run( GLAutoDrawable drawable ) throws Throwable
-						{
-							model3d.setLoParam( loParam );
-							model3d.setHiParam( hiParam );
-						}
-					};
-					canvas.repaint( );
+					model3d.setLoParam( loParam );
+					model3d.setHiParam( hiParam );
+					getCanvas( ).repaint( );
 				}
 			}
 		}.bind( paramRangeBinder );
@@ -678,15 +655,8 @@ public class BreakoutMainView extends BasicJoglSetup
 				if( model3d != null && depthAxis != null && depthAxis.length == 3 )
 				{
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
-					new OnJogl( getCanvas( ) )
-					{
-						@Override
-						public void run( GLAutoDrawable drawable ) throws Throwable
-						{
-							model3d.setDepthAxis( finalDepthAxis );
-						}
-					};
-					canvas.display( );
+					model3d.setDepthAxis( finalDepthAxis );
+					getCanvas( ).repaint( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.depthAxis , projectModelBinder ) );
@@ -710,9 +680,11 @@ public class BreakoutMainView extends BasicJoglSetup
 							Subtask subtask = rootSubtask.beginSubtask( 1 );
 							subtask.setIndeterminate( false );
 							subtask.setStatus( "Recoloring" );
-							model3d.setColorParamInBackground( colorParam , subtask , getCanvas( ) );
+							model3d.setColorParam( colorParam , subtask );
 							rootSubtask.setCompleted( 1 );
 							subtask.end( );
+							
+							getCanvas( ).display( );
 						}
 					};
 					task.setTotal( 1000 );
@@ -798,7 +770,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						Subtask rootSubtask = new Subtask( this );
 						rootSubtask.setTotal( 1 );
 						Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
-						float[ ] range = model3d.calcAutofitParamRangeInBackground( calcSubtask , getCanvas( ) );
+						float[ ] range = model3d.calcAutofitParamRange( calcSubtask );
 						rootSubtask.setCompleted( 1 );
 						calcSubtask.end( );
 						
@@ -854,7 +826,9 @@ public class BreakoutMainView extends BasicJoglSetup
 						Subtask rootSubtask = new Subtask( this );
 						rootSubtask.setTotal( 1 );
 						Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
-						model3d.calcDistFromSelectInBackground( calcSubtask , getCanvas( ) );
+						model3d.calcDistFromSelected( calcSubtask );
+						getCanvas( ).display( );
+						
 						rootSubtask.setCompleted( 1 );
 						calcSubtask.end( );
 					}
@@ -1134,6 +1108,8 @@ public class BreakoutMainView extends BasicJoglSetup
 			return;
 		}
 		
+		final Survey3dModel model3d = BreakoutMainView.this.model3d;
+		
 		float[ ] center = new float[ 3 ];
 		orbiter.getCenter( center );
 		
@@ -1150,25 +1126,25 @@ public class BreakoutMainView extends BasicJoglSetup
 			@Override
 			public long animate( long animTime )
 			{
-				if( model3d == null )
-				{
-					return 0;
-				}
 				table.getModelSelectionModel( ).clearSelection( );
 				table.selectAll( );
 				
 				fitViewToSelected( );
 				
-				float[ ] center = new float[ 3 ];
-				orbiter.getCenter( center );
-				
-				if( Vecmath.hasNaNsOrInfinites( center ) )
-				{
-					model3d.getCenter( center );
-				}
-				
-				cameraAnimationQueue.add( new RandomOrbit( BreakoutMainView.this , center , 0.0005f ,
-						( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 60000 ) );
+				rebuildTaskService.submit( task ->
+						SwingUtilities.invokeLater( ( ) -> {
+							
+							float[ ] center = new float[ 3 ];
+							orbiter.getCenter( center );
+							
+							if( Vecmath.hasNaNsOrInfinites( center ) )
+							{
+								model3d.getCenter( center );
+							}
+							
+							cameraAnimationQueue.add( new RandomOrbit( BreakoutMainView.this , center , 0.0005f ,
+									( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 60000 ) );
+						} ) );
 				return 0;
 			}
 		} );
@@ -1336,41 +1312,6 @@ public class BreakoutMainView extends BasicJoglSetup
 		this.openProjectAction = openProjectAction;
 	}
 	
-	private void updateCenterOfOrbit( )
-	{
-		if( model3d == null )
-		{
-			return;
-		}
-		List<SurveyShot> origShots = model3d.getOriginalShots( );
-		
-		Set<Survey3dModel.Shot> newSelectedShots = model3d.getSelectedShots( );
-		
-		float[ ] bounds = Rectmath.voidRectf( 3 );
-		float[ ] p = Rectmath.voidRectf( 3 );
-		
-		for( Survey3dModel.Shot shot : newSelectedShots )
-		{
-			SurveyShot origShot = origShots.get( shot.getNumber( ) );
-			p[ 0 ] = ( float ) Math.min( origShot.from.position[ 0 ] , origShot.to.position[ 0 ] );
-			p[ 1 ] = ( float ) Math.min( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
-			p[ 2 ] = ( float ) Math.min( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
-			p[ 3 ] = ( float ) Math.max( origShot.from.position[ 0 ] , origShot.to.position[ 0 ] );
-			p[ 4 ] = ( float ) Math.max( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
-			p[ 5 ] = ( float ) Math.max( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
-			Rectmath.union3( bounds , p , bounds );
-		}
-		
-		if( !newSelectedShots.isEmpty( ) )
-		{
-			// scale3( center , 0.5 / newSelectedShots.size( ) );
-			p[ 0 ] = ( float ) ( bounds[ 0 ] + bounds[ 3 ] ) * 0.5f;
-			p[ 1 ] = ( float ) ( bounds[ 1 ] + bounds[ 4 ] ) * 0.5f;
-			p[ 2 ] = ( float ) ( bounds[ 2 ] + bounds[ 5 ] ) * 0.5f;
-			orbiter.setCenter( p );
-		}
-	}
-	
 	private static ShotPickContext	hoverUpdaterSpc	= new ShotPickContext( );
 	
 	private class HoverUpdater extends Task
@@ -1412,11 +1353,11 @@ public class BreakoutMainView extends BasicJoglSetup
 					}
 				}.result( );
 				
-				model3d.updateGlowInBackground( picked.picked , picked.locationAlongShot , conversion , glowSubtask );
+				model3d.updateGlow( picked.picked , picked.locationAlongShot , conversion , glowSubtask );
 			}
 			else
 			{
-				model3d.updateGlowInBackground( null , null , null , glowSubtask );
+				model3d.updateGlow( null , null , null , glowSubtask );
 			}
 			if( !isCanceling( ) )
 			{
@@ -1550,6 +1491,8 @@ public class BreakoutMainView extends BasicJoglSetup
 				return;
 			}
 			
+			final Survey3dModel model3d = BreakoutMainView.this.model3d;
+			
 			List<Survey3dModel.Shot> shots = model3d.getShots( );
 			
 			final SelectionEditor editor = model3d.editSelection( );
@@ -1583,24 +1526,41 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			}
 			
-			rebuildTaskService.submit( new Task( )
-			{
-				@Override
-				protected void execute( ) throws Exception
+			rebuildTaskService.submit( task -> {
+				editor.commit( );
+				
+				List<SurveyShot> origShots = new ArrayList<>( );
+				Set<Survey3dModel.Shot> newSelectedShots = new HashSet<>( );
+				
+				model3d.addOriginalShotsTo( origShots );
+				model3d.addSelectedShotsTo( newSelectedShots );
+				
+				float[ ] bounds = Rectmath.voidRectf( 3 );
+				float[ ] p = Rectmath.voidRectf( 3 );
+				
+				for( Survey3dModel.Shot shot : newSelectedShots )
 				{
-					editor.commit( );
-					
-					new OnEDT( )
-					{
-						@Override
-						public void run( ) throws Throwable
-						{
-							updateCenterOfOrbit( );
-						}
-					};
-					
-					canvas.display( );
+					SurveyShot origShot = origShots.get( shot.getNumber( ) );
+					p[ 0 ] = ( float ) Math.min( origShot.from.position[ 0 ] , origShot.to.position[ 0 ] );
+					p[ 1 ] = ( float ) Math.min( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
+					p[ 2 ] = ( float ) Math.min( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
+					p[ 3 ] = ( float ) Math.max( origShot.from.position[ 0 ] , origShot.to.position[ 0 ] );
+					p[ 4 ] = ( float ) Math.max( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
+					p[ 5 ] = ( float ) Math.max( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
+					Rectmath.union3( bounds , p , bounds );
 				}
+				
+				if( !newSelectedShots.isEmpty( ) )
+				{
+					// scale3( center , 0.5 / newSelectedShots.size( ) );
+					p[ 0 ] = ( float ) ( bounds[ 0 ] + bounds[ 3 ] ) * 0.5f;
+					p[ 1 ] = ( float ) ( bounds[ 1 ] + bounds[ 4 ] ) * 0.5f;
+					p[ 2 ] = ( float ) ( bounds[ 2 ] + bounds[ 5 ] ) * 0.5f;
+					
+					SwingUtilities.invokeLater( ( ) -> orbiter.setCenter( p ) );
+				}
+				
+				canvas.display( );
 			} );
 		}
 	}
@@ -1622,15 +1582,10 @@ public class BreakoutMainView extends BasicJoglSetup
 			final long time = System.currentTimeMillis( );
 			lastAction = time;
 			
-			table.getAnnotatingRowSorter( ).invokeWhenDoneSorting( new Runnable( )
-			{
-				@Override
-				public void run( )
+			table.getAnnotatingRowSorter( ).invokeWhenDoneSorting( ( ) -> {
+				if( time >= lastAction )
 				{
-					if( time >= lastAction )
-					{
-						flyToFiltered( table );
-					}
+					flyToFiltered( table );
 				}
 			} );
 		}
@@ -1893,19 +1848,19 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					setStatus( "Updating view..." );
 					
-					new DoSwing( )
-					{
-						@Override
-						public void run( )
+					SwingUtilities.invokeLater( ( ) -> {
+						if( model3d != null )
 						{
-							if( model3d != null )
-							{
+							final Survey3dModel model3d = BreakoutMainView.this.model3d;
+							BreakoutMainView.this.model3d = null;
+							
+							getCanvas( ).invoke( false , drawable -> {
 								scene.remove( model3d );
 								scene.disposeLater( model3d );
-								model3d = null;
-							}
+								return false;
+							} );
 						}
-					};
+					} );
 					
 					setStatus( "Updating view: constructing new model..." );
 					
@@ -1917,37 +1872,34 @@ public class BreakoutMainView extends BasicJoglSetup
 					
 					setStatus( "Updating view: installing new model..." );
 					
-					new DoSwing( )
-					{
-						@Override
-						public void run( )
-						{
-							BreakoutMainView.this.model3d = model;
-							model.setParamPaint( settingsDrawer.getParamColorationAxisPaint( ) );
+					SwingUtilities.invokeLater( ( ) -> {
+						BreakoutMainView.this.model3d = model;
+						model.setParamPaint( settingsDrawer.getParamColorationAxisPaint( ) );
+						
+						// GlyphCache cache = new GlyphCache( scene , new Font( "Arial" , Font.PLAIN , 72 ) , 1024 , 1024 ,
+						// new BufferedImageIntFactory( BufferedImage.TYPE_INT_ARGB ) , new OutlinedGlyphPagePainter(
+						// new BasicStroke( 3f , BasicStroke.CAP_ROUND , BasicStroke.JOIN_ROUND ) ,
+						// Color.BLACK , Color.WHITE ) );
+						//
+						// JoglText text = new JoglText.Builder( )
+						// .ascent( 0 , cache.fontMetrics.getAscent( ) , 0 ).baseline( cache.fontMetrics.getAscent( ) , 0 , 0 )
+						// .add( "This is a test" , cache , 1f , 1f , 1f , 1f ).create( scene );
+						//
+						// text.use( );
+						// scene.add( text );
+						
+						projectModelBinder.update( true );
+						
+						float[ ] center = new float[ 3 ];
+						Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
+						orbiter.setCenter( center );
+						
+						getCanvas( ).invoke( false , drawable -> {
 							scene.add( model );
 							scene.initLater( model );
-							
-							// GlyphCache cache = new GlyphCache( scene , new Font( "Arial" , Font.PLAIN , 72 ) , 1024 , 1024 ,
-							// new BufferedImageIntFactory( BufferedImage.TYPE_INT_ARGB ) , new OutlinedGlyphPagePainter(
-							// new BasicStroke( 3f , BasicStroke.CAP_ROUND , BasicStroke.JOIN_ROUND ) ,
-							// Color.BLACK , Color.WHITE ) );
-							//
-							// JoglText text = new JoglText.Builder( )
-							// .ascent( 0 , cache.fontMetrics.getAscent( ) , 0 ).baseline( cache.fontMetrics.getAscent( ) , 0 , 0 )
-							// .add( "This is a test" , cache , 1f , 1f , 1f , 1f ).create( scene );
-							//
-							// text.use( );
-							// scene.add( text );
-							
-							projectModelBinder.update( true );
-							
-							float[ ] center = new float[ 3 ];
-							Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
-							orbiter.setCenter( center );
-							
-							canvas.repaint( );
-						}
-					};
+							return false;
+						} );
+					} );
 				}
 			};
 			return task;

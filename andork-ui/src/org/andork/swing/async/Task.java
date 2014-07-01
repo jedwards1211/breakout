@@ -1,10 +1,11 @@
 package org.andork.swing.async;
 
+import java.util.concurrent.ExecutionException;
+
 import javax.swing.SwingUtilities;
 
 import org.andork.event.BasicPropertyChangeSupport;
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
-import org.andork.logging.Java17SimpleFormatter;
 import org.andork.model.HasChangeSupport;
 import org.andork.util.ArrayUtils;
 import org.andork.util.Java7;
@@ -19,6 +20,11 @@ public abstract class Task implements HasChangeSupport
 	public static enum State
 	{
 		NOT_SUBMITTED , WAITING , RUNNING , CANCELING , CANCELED , FINISHED , FAILED;
+		
+		public boolean hasEnded( )
+		{
+			return this == CANCELED || this == FINISHED || this == FAILED;
+		}
 	}
 	
 	private final long							creationTimestamp;
@@ -78,6 +84,26 @@ public abstract class Task implements HasChangeSupport
 		}
 	}
 	
+	public final void waitUntilHasFinished( ) throws InterruptedException , ExecutionException
+	{
+		waitUntilHasEnded( );
+		if( throwable != null )
+		{
+			throw new ExecutionException( throwable );
+		}
+	}
+	
+	public final void waitUntilHasEnded( ) throws InterruptedException
+	{
+		synchronized( lock )
+		{
+			while( !hasEnded( ) )
+			{
+				lock.wait( );
+			}
+		}
+	}
+	
 	public boolean isCancelable( )
 	{
 		return false;
@@ -91,6 +117,11 @@ public abstract class Task implements HasChangeSupport
 	public final boolean isCanceling( )
 	{
 		return getState( ) == State.CANCELING;
+	}
+	
+	public final boolean hasEnded( )
+	{
+		return getState( ).hasEnded( );
 	}
 	
 	public String getStatus( )
@@ -215,6 +246,8 @@ public abstract class Task implements HasChangeSupport
 			checkState( State.NOT_SUBMITTED );
 			state = State.WAITING;
 			this.service = service;
+			
+			lock.notifyAll( );
 		}
 		
 		firePropertyChange( Property.STATE , State.NOT_SUBMITTED , State.WAITING );
@@ -269,6 +302,8 @@ public abstract class Task implements HasChangeSupport
 			oldState = state;
 			newState = state = state == State.RUNNING ? State.CANCELING : State.CANCELED;
 			service = this.service;
+			
+			lock.notifyAll( );
 		}
 		service.cancel( this );
 		firePropertyChange( Property.STATE , oldState , newState );
@@ -283,6 +318,8 @@ public abstract class Task implements HasChangeSupport
 			oldState = state;
 			state = State.NOT_SUBMITTED;
 			service = null;
+			
+			lock.notifyAll( );
 		}
 		firePropertyChange( Property.STATE , oldState , State.NOT_SUBMITTED );
 		afterReset( );
@@ -314,6 +351,8 @@ public abstract class Task implements HasChangeSupport
 		{
 			checkState( State.WAITING );
 			state = State.RUNNING;
+			
+			lock.notifyAll( );
 		}
 		firePropertyChange( Property.STATE , State.WAITING , State.RUNNING );
 	}
@@ -326,6 +365,8 @@ public abstract class Task implements HasChangeSupport
 			oldState = state;
 			state = State.FAILED;
 			throwable = t;
+			
+			lock.notifyAll( );
 		}
 		t.printStackTrace( );
 		firePropertyChange( Property.STATE , oldState , State.FAILED );
@@ -350,6 +391,8 @@ public abstract class Task implements HasChangeSupport
 					throw new IllegalStateException( "Operation not allowed unless state == CANCELED or FINISHED" );
 			}
 			newState = state;
+			
+			lock.notifyAll( );
 		}
 		firePropertyChange( Property.STATE , oldState , newState );
 	}

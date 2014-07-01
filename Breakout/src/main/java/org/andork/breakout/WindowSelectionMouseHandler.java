@@ -60,7 +60,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 	{
 		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
 		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
-		context.getCanvas( ).invoke( true , drawable -> {
+		context.getCanvas( ).invoke( false , drawable -> {
 			selectionPolygon.setPoints( points );
 			context.getScene( ).add( selectionPolygon );
 			return false;
@@ -157,7 +157,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 			return;
 		}
 		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
-		context.getCanvas( ).invoke( true , drawable -> {
+		context.getCanvas( ).invoke( false , drawable -> {
 			selectionPolygon.setPoints( points );
 			return false;
 		} );

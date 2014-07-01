@@ -48,7 +48,6 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javax.media.opengl.GL2ES2;
-import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.breakout.PickResult;
 import org.andork.breakout.awt.ParamGradientMapPaint;
@@ -692,6 +691,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		return Collections.unmodifiableList( originalShots );
 	}
 	
+	public void addOriginalShotsTo( Collection<? super SurveyShot> dest )
+	{
+		dest.addAll( originalShots );
+	}
+	
 	public List<Shot> getShots( )
 	{
 		return Collections.unmodifiableList( shots );
@@ -705,6 +709,16 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	public Set<Shot> getSelectedShots( )
 	{
 		return Collections.unmodifiableSet( selectedShots );
+	}
+	
+	public void addSelectedShotsTo( Collection<? super Shot> dest )
+	{
+		dest.addAll( selectedShots );
+	}
+	
+	public Set<Shot> copySelectedShots( )
+	{
+		return new HashSet<>( selectedShots );
 	}
 	
 	public void getCenter( float[ ] center )
@@ -1858,7 +1872,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	public float[ ] calcAutofitParamRangeInBackground( Subtask subtask , GLAutoDrawable drawable )
+	public float[ ] calcAutofitParamRange( Subtask subtask )
 	{
 		if( subtask != null )
 		{
@@ -1870,40 +1884,32 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		
 		final float[ ] range = { Float.MAX_VALUE , -Float.MAX_VALUE };
 		
+		int completed = 0;
 		while( segmentIterator.hasNext( ) )
 		{
-			int processed = new FromJogl<Integer>( drawable )
+			while( segmentIterator.hasNext( ) )
 			{
-				public Integer run( GLAutoDrawable drawable ) throws Throwable
+				Segment segment = segmentIterator.next( );
+				segment.calcParamRange( Survey3dModel.this , colorParam , range );
+				
+				if( completed++ % 100 == 0 )
 				{
-					long start = System.currentTimeMillis( );
-					int processed = 0;
-					while( segmentIterator.hasNext( ) && System.currentTimeMillis( ) - start < 30 )
+					if( subtask != null )
 					{
-						Segment segment = segmentIterator.next( );
-						segment.calcParamRange( Survey3dModel.this , colorParam , range );
-						
-						processed++ ;
+						if( subtask.isCanceling( ) )
+						{
+							return null;
+						}
+						subtask.setCompleted( completed );
 					}
-					
-					return processed;
 				}
-			}.result( );
-			
-			if( subtask != null )
-			{
-				if( subtask.isCanceling( ) )
-				{
-					return null;
-				}
-				subtask.setCompleted( subtask.getCompleted( ) + processed );
 			}
 		}
 		
 		return range;
 	}
 	
-	public void setColorParamInBackground( final ColorParam colorParam , Subtask subtask , GLAutoDrawable drawable )
+	public void setColorParam( final ColorParam colorParam , Subtask subtask )
 	{
 		if( this.colorParam == colorParam )
 		{
@@ -1919,80 +1925,56 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 		final Iterator<Segment> segmentIterator = segments.iterator( );
 		
+		int completed = 0;
 		while( segmentIterator.hasNext( ) )
 		{
-			int processed = new FromJogl<Integer>( drawable )
+			Segment segment = segmentIterator.next( );
+			for( SegmentDrawer drawer : segment.drawers )
 			{
-				public Integer run( GLAutoDrawable drawable ) throws Throwable
-				{
-					long start = System.currentTimeMillis( );
-					int processed = 0;
-					while( segmentIterator.hasNext( ) && System.currentTimeMillis( ) - start < 30 )
-					{
-						Segment segment = segmentIterator.next( );
-						for( SegmentDrawer drawer : segment.drawers )
-						{
-							drawers.remove( drawer , segment );
-						}
-						
-						segment.drawers.clear( );
-						
-						if( colorParam == ColorParam.DEPTH )
-						{
-							segment.drawers.add( axialSegmentDrawer );
-						}
-						else
-						{
-							if( colorParam.isStationMetric( ) )
-							{
-								segment.calcParam0( Survey3dModel.this , colorParam );
-							}
-							segment.drawers.add( param0SegmentDrawer );
-						}
-						
-						for( SegmentDrawer drawer : segment.drawers )
-						{
-							drawers.put( drawer , segment );
-						}
-						
-						processed++ ;
-					}
-					
-					return processed;
-				}
-			}.result( );
+				drawers.remove( drawer , segment );
+			}
 			
-			if( subtask != null )
+			segment.drawers.clear( );
+			
+			if( colorParam == ColorParam.DEPTH )
 			{
-				if( subtask.isCanceling( ) )
+				segment.drawers.add( axialSegmentDrawer );
+			}
+			else
+			{
+				if( colorParam.isStationMetric( ) )
 				{
-					return;
+					segment.calcParam0( Survey3dModel.this , colorParam );
 				}
-				subtask.setCompleted( subtask.getCompleted( ) + processed );
+				segment.drawers.add( param0SegmentDrawer );
+			}
+			
+			for( SegmentDrawer drawer : segment.drawers )
+			{
+				drawers.put( drawer , segment );
+			}
+			
+			if( completed++ % 100 == 0 )
+			{
+				if( subtask != null )
+				{
+					if( subtask.isCanceling( ) )
+					{
+						return;
+					}
+					subtask.setCompleted( completed );
+				}
 			}
 		}
 		
 		if( colorParam.isTraversalMetric( ) )
 		{
-			calcDistFromSelectInBackground( subtask , drawable );
-		}
-		else
-		{
-			drawable.display( );
+			calcDistFromSelected( subtask );
 		}
 	}
 	
-	public void calcDistFromSelectInBackground( Subtask subtask , GLAutoDrawable drawable )
+	public void calcDistFromSelected( Subtask subtask )
 	{
-		Set<Shot> selectedShots = new FromJogl<Set<Shot>>( drawable )
-		{
-			@Override
-			public Set<Shot> run( GLAutoDrawable drawable ) throws Throwable
-			{
-				return new HashSet<Shot>( Survey3dModel.this.selectedShots );
-			}
-		}.result( );
-		
 		final Map<SurveyStation, Double> distances = new HashMap<SurveyStation, Double>( );
 		
 		class PEntry implements Comparable<PEntry>
@@ -2056,40 +2038,27 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 		final Iterator<Segment> segmentIterator = segments.iterator( );
 		
+		int processed = 0;
 		while( segmentIterator.hasNext( ) )
 		{
-			int processed = new FromJogl<Integer>( drawable )
-			{
-				public Integer run( GLAutoDrawable drawable ) throws Throwable
-				{
-					long start = System.currentTimeMillis( );
-					int processed = 0;
-					while( segmentIterator.hasNext( ) && System.currentTimeMillis( ) - start < 30 )
-					{
-						Segment segment = segmentIterator.next( );
-						segment.calcParam0( Survey3dModel.this , distances );
-						
-						processed++ ;
-					}
-					
-					return processed;
-				}
-			}.result( );
+			Segment segment = segmentIterator.next( );
+			segment.calcParam0( Survey3dModel.this , distances );
 			
-			if( subtask != null )
+			if( processed++ % 100 == 0 )
 			{
-				if( subtask.isCanceling( ) )
+				if( subtask != null )
 				{
-					return;
+					if( subtask.isCanceling( ) )
+					{
+						return;
+					}
+					subtask.setCompleted( processed );
 				}
-				subtask.setCompleted( subtask.getCompleted( ) + processed );
 			}
 		}
-		
-		drawable.display( );
 	}
 	
-	public void updateGlowInBackground( Shot hoveredShot , Float hoverLocation , LinearAxisConversion glowExtentConversion , Subtask subtask )
+	public void updateGlow( Shot hoveredShot , Float hoverLocation , LinearAxisConversion glowExtentConversion , Subtask subtask )
 	{
 		this.hoveredShot = hoveredShot;
 		this.hoverLocation = hoverLocation;
@@ -2137,7 +2106,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 					connected ,
 					( SurveyShot shot ) -> shot.dist ,
 					( station , shot ) -> station == shot.from ? shot.to : shot.from ,
-					( ) -> !subtask.isCanceling( ) );
+					( ) -> subtask != null && !subtask.isCanceling( ) );
 			
 			hoveredShot.setFromGlowA( 2 - hoveredShot.getFromGlowB( ) );
 			hoveredShot.setToGlowA( 2 - hoveredShot.getToGlowB( ) );
@@ -2147,7 +2116,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		
 		for( Segment segment : IterableUtils.iterable( segIter ) )
 		{
-			if( subtask.isCanceling( ) )
+			if( subtask != null && subtask.isCanceling( ) )
 			{
 				return;
 			}
