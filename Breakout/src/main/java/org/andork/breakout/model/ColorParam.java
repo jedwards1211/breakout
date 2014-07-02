@@ -14,7 +14,7 @@ public enum ColorParam
 			return true;
 		}
 		
-		public double calcTraversalDistance( SurveyShot shot )
+		public double calcTraversalDistance( Shot shot )
 		{
 			return shot.dist;
 		}
@@ -26,7 +26,7 @@ public enum ColorParam
 			return true;
 		}
 		
-		public float calcStationParam( SurveyShot shot , SurveyStation station )
+		public float calcStationParam( Shot shot , Station station )
 		{
 			CrossSection xSection = station == shot.from ? shot.fromXsection : shot.toXsection;
 			if( xSection.type == CrossSectionType.NSEW )
@@ -46,7 +46,7 @@ public enum ColorParam
 			return true;
 		}
 		
-		public float calcStationParam( SurveyShot shot , SurveyStation station )
+		public float calcStationParam( Shot shot , Station station )
 		{
 			CrossSection xSection = station == shot.from ? shot.fromXsection : shot.toXsection;
 			if( xSection.type == CrossSectionType.NSEW )
@@ -67,7 +67,7 @@ public enum ColorParam
 			return true;
 		}
 		
-		public float calcStationParam( SurveyShot shot , SurveyStation station )
+		public float calcStationParam( Shot shot , Station station )
 		{
 			return Math.min( PASSAGE_WIDTH.calcStationParam( shot , station ) , PASSAGE_HEIGHT.calcStationParam( shot , station ) );
 		}
@@ -79,7 +79,7 @@ public enum ColorParam
 			return true;
 		}
 		
-		public float calcStationParam( SurveyShot shot , SurveyStation station )
+		public float calcStationParam( Shot shot , Station station )
 		{
 			return PASSAGE_WIDTH.calcStationParam( shot , station ) + PASSAGE_HEIGHT.calcStationParam( shot , station );
 		}
@@ -91,7 +91,7 @@ public enum ColorParam
 			return true;
 		}
 		
-		public float calcStationParam( SurveyShot shot , SurveyStation station )
+		public float calcStationParam( Shot shot , Station station )
 		{
 			return ( float ) shot.dist;
 		}
@@ -105,7 +105,7 @@ public enum ColorParam
 			return true;
 		}
 		
-		public float calcStationParam( SurveyShot shot , SurveyStation station )
+		public float calcStationParam( Shot shot , Station station )
 		{
 			if( shot.date == null )
 			{
@@ -142,7 +142,7 @@ public enum ColorParam
 		return false;
 	}
 	
-	public double calcTraversalDistance( SurveyShot shot )
+	public double calcTraversalDistance( Shot shot )
 	{
 		throw new UnsupportedOperationException( );
 	}
@@ -152,7 +152,7 @@ public enum ColorParam
 		return false;
 	}
 	
-	public float calcStationParam( SurveyShot shot , SurveyStation station )
+	public float calcStationParam( Shot shot , Station station )
 	{
 		throw new UnsupportedOperationException( );
 	}

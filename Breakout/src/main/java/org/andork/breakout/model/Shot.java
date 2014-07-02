@@ -8,28 +8,28 @@ import java.util.Set;
 
 import org.andork.math3d.Vecmath;
 
-public class SurveyShot
+public class Shot
 {
-	public int				number			= -1;
-	public SurveyStation	from;
-	public SurveyStation	to;
-	public double			dist			= Double.NaN;
-	public double			fsAzm			= Double.NaN;
-	public double			bsAzm			= Double.NaN;
-	public double			fsInc			= Double.NaN;
-	public double			bsInc			= Double.NaN;
-	public CrossSection		fromXsection	= new CrossSection( );
-	public CrossSection		toXsection		= new CrossSection( );
-	public Date				date;
+	public int			number			= -1;
+	public Station		from;
+	public Station		to;
+	public double		dist			= Double.NaN;
+	public double		fsAzm			= Double.NaN;
+	public double		bsAzm			= Double.NaN;
+	public double		fsInc			= Double.NaN;
+	public double		bsInc			= Double.NaN;
+	public CrossSection	fromXsection	= new CrossSection( );
+	public CrossSection	toXsection		= new CrossSection( );
+	public Date			date;
 	
-	PriorityEntry			priorityEntry;
+	PriorityEntry		priorityEntry;
 	
 	private static class PriorityEntry implements Comparable<PriorityEntry>
 	{
-		public final SurveyShot	shot;
-		public final double		priority;
+		public final Shot	shot;
+		public final double	priority;
 		
-		public PriorityEntry( SurveyShot shot , double priority )
+		public PriorityEntry( Shot shot , double priority )
 		{
 			super( );
 			this.shot = shot;
@@ -216,11 +216,11 @@ public class SurveyShot
 		return fsAzm + angle( fsAzm , bsAzm ) * 0.5;
 	}
 	
-	public static void computeConnected( Collection<SurveyStation> stations )
+	public static void computeConnected( Collection<Station> stations )
 	{
-		Set<SurveyStation> visited = new HashSet<SurveyStation>( );
+		Set<Station> visited = new HashSet<Station>( );
 		
-		for( SurveyStation station : stations )
+		for( Station station : stations )
 		{
 			if( !Vecmath.hasNaNsOrInfinites( station.position ) )
 			{
@@ -232,16 +232,16 @@ public class SurveyShot
 		}
 	}
 	
-	public static void computeConnected( SurveyStation start , Set<SurveyStation> visited )
+	public static void computeConnected( Station start , Set<Station> visited )
 	{
 		if( Vecmath.hasNaNsOrInfinites( start.position ) )
 		{
 			throw new IllegalArgumentException( "start's position has NaN or infinite values" );
 		}
 		
-		PriorityQueue<PriorityEntry> heap = new PriorityQueue<SurveyShot.PriorityEntry>( 10 );
+		PriorityQueue<PriorityEntry> heap = new PriorityQueue<Shot.PriorityEntry>( 10 );
 		
-		for( SurveyShot shot : start.frontsights )
+		for( Shot shot : start.frontsights )
 		{
 			if( Double.isNaN( shot.dist ) )
 			{
@@ -255,7 +255,7 @@ public class SurveyShot
 			shot.priorityEntry = new PriorityEntry( shot , shot.dist );
 			heap.add( shot.priorityEntry );
 		}
-		for( SurveyShot shot : start.backsights )
+		for( Shot shot : start.backsights )
 		{
 			if( Double.isNaN( shot.dist ) )
 			{
@@ -274,9 +274,9 @@ public class SurveyShot
 		
 		while( !heap.isEmpty( ) )
 		{
-			SurveyStation station = null;
+			Station station = null;
 			
-			SurveyShot shot = heap.poll( ).shot;
+			Shot shot = heap.poll( ).shot;
 			if( visited.add( shot.from ) )
 			{
 				try
@@ -304,7 +304,7 @@ public class SurveyShot
 			
 			if( station != null )
 			{
-				for( SurveyShot nextShot : station.frontsights )
+				for( Shot nextShot : station.frontsights )
 				{
 					if( nextShot == shot )
 					{
@@ -334,7 +334,7 @@ public class SurveyShot
 						heap.add( nextShot.priorityEntry );
 					}
 				}
-				for( SurveyShot nextShot : station.backsights )
+				for( Shot nextShot : station.backsights )
 				{
 					if( nextShot == shot )
 					{

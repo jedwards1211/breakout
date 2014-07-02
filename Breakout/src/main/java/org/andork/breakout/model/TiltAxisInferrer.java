@@ -4,5 +4,5 @@ import java.util.Collection;
 
 public interface TiltAxisInferrer
 {
-	public float[ ] inferTiltAxis( Collection<? extends SurveyShot> shots );
+	public float[ ] inferTiltAxis( Collection<? extends Shot> shots );
 }

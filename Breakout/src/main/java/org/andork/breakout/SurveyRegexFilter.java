@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.RowFilter;
 
-import org.andork.breakout.model.SurveyShot;
+import org.andork.breakout.model.Shot;
 import org.andork.breakout.model.SurveyTableModel;
 
 public class SurveyRegexFilter extends RowFilter<SurveyTableModel, Integer>
@@ -19,7 +19,7 @@ public class SurveyRegexFilter extends RowFilter<SurveyTableModel, Integer>
 	@Override
 	public boolean include( javax.swing.RowFilter.Entry<? extends SurveyTableModel, ? extends Integer> entry )
 	{
-		SurveyShot shot = entry.getModel( ).getShotAtRow( entry.getIdentifier( ) );
+		Shot shot = entry.getModel( ).getShotAtRow( entry.getIdentifier( ) );
 		if( shot == null )
 		{
 			return false;

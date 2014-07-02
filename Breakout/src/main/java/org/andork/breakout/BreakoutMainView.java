@@ -76,11 +76,11 @@ import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
 import org.andork.breakout.model.Survey3dModel;
 import org.andork.breakout.model.Survey3dModel.SelectionEditor;
-import org.andork.breakout.model.Survey3dModel.Shot;
-import org.andork.breakout.model.Survey3dModel.ShotPickContext;
-import org.andork.breakout.model.Survey3dModel.ShotPickResult;
-import org.andork.breakout.model.SurveyShot;
-import org.andork.breakout.model.SurveyStation;
+import org.andork.breakout.model.Survey3dModel.Shot3d;
+import org.andork.breakout.model.Survey3dModel.Shot3dPickContext;
+import org.andork.breakout.model.Survey3dModel.Shot3dPickResult;
+import org.andork.breakout.model.Shot;
+import org.andork.breakout.model.Station;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
@@ -195,7 +195,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	int													debugMbrCount				= 0;
 	List<BasicJOGLObject>								debugMbrs					= new ArrayList<BasicJOGLObject>( );
 	
-	ShotPickContext										spc							= new ShotPickContext( );
+	Shot3dPickContext										spc							= new Shot3dPickContext( );
 	
 	final LinePlaneIntersection3f						lpx							= new LinePlaneIntersection3f( );
 	final float[ ]										p0							= new float[ 3 ];
@@ -360,7 +360,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					}
 					
 					@Override
-					public void selectShots( Set<Shot> newSelected , boolean add , boolean toggle )
+					public void selectShots( Set<Shot3d> newSelected , boolean add , boolean toggle )
 					{
 						OnEDT.onEDT( ( ) -> {
 							ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
@@ -371,9 +371,9 @@ public class BreakoutMainView extends BasicJoglSetup
 							{
 								selModel.clearSelection( );
 							}
-							for( Shot shot : newSelected )
+							for( Shot3d shot3d : newSelected )
 							{
-								int row = model.rowOfShot( shot.getNumber( ) );
+								int row = model.rowOfShot( shot3d.getNumber( ) );
 								if( toggle && selModel.isSelectedIndex( row ) )
 								{
 									selModel.removeSelectionInterval( row , row );
@@ -1032,7 +1032,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				continue;
 			}
-			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
+			Shot shot = ( Shot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
 			if( shot == null )
 			{
 				continue;
@@ -1073,7 +1073,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		for( int i = 0 ; i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
 		{
-			SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
+			Shot shot = ( Shot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
 			if( shot == null )
 			{
 				continue;
@@ -1312,7 +1312,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		this.openProjectAction = openProjectAction;
 	}
 	
-	private static ShotPickContext	hoverUpdaterSpc	= new ShotPickContext( );
+	private static Shot3dPickContext	hoverUpdaterSpc	= new Shot3dPickContext( );
 	
 	private class HoverUpdater extends Task
 	{
@@ -1334,7 +1334,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		@Override
 		protected void execute( ) throws Exception
 		{
-			final ShotPickResult picked = pick( model3d , e , hoverUpdaterSpc );
+			final Shot3dPickResult picked = pick( model3d , e , hoverUpdaterSpc );
 			
 			Subtask subtask = new Subtask( this );
 			Subtask glowSubtask = subtask.beginSubtask( 1 );
@@ -1366,7 +1366,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
-	private ShotPickResult pick( Survey3dModel model3d , MouseEvent e , ShotPickContext spc )
+	private Shot3dPickResult pick( Survey3dModel model3d , MouseEvent e , Shot3dPickContext spc )
 	{
 		float[ ] origin = new float[ 3 ];
 		float[ ] direction = new float[ 3 ];
@@ -1374,12 +1374,12 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		if( model3d != null )
 		{
-			List<PickResult<Shot>> pickResults = new ArrayList<PickResult<Shot>>( );
+			List<PickResult<Shot3d>> pickResults = new ArrayList<PickResult<Shot3d>>( );
 			model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
 			
-			PickResult<Shot> best = null;
+			PickResult<Shot3d> best = null;
 			
-			for( PickResult<Shot> result : pickResults )
+			for( PickResult<Shot3d> result : pickResults )
 			{
 				if( best == null || result.lateralDistance * best.distance < best.lateralDistance * result.distance ||
 						( result.lateralDistance == 0 && best.lateralDistance == 0 && result.distance < best.distance ) )
@@ -1388,7 +1388,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			}
 			
-			return ( ShotPickResult ) best;
+			return ( Shot3dPickResult ) best;
 		}
 		
 		return null;
@@ -1421,7 +1421,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				return;
 			}
 			
-			ShotPickResult picked = pick( model3d , e , spc );
+			Shot3dPickResult picked = pick( model3d , e , spc );
 			
 			if( picked == null )
 			{
@@ -1451,7 +1451,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				return;
 			}
 			
-			ShotPickResult picked = pick( model3d , e , spc );
+			Shot3dPickResult picked = pick( model3d , e , spc );
 			
 			if( picked == null )
 			{
@@ -1509,7 +1509,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			
 			final Survey3dModel model3d = BreakoutMainView.this.model3d;
 			
-			List<Survey3dModel.Shot> shots = model3d.getShots( );
+			List<Survey3dModel.Shot3d> shot3ds = model3d.getShots( );
 			
 			final SelectionEditor editor = model3d.editSelection( );
 			
@@ -1517,27 +1517,27 @@ public class BreakoutMainView extends BasicJoglSetup
 			
 			if( e.getFirstIndex( ) < 0 )
 			{
-				for( Survey3dModel.Shot shot : shots )
+				for( Survey3dModel.Shot3d shot3d : shot3ds )
 				{
-					editor.deselect( shot );
+					editor.deselect( shot3d );
 				}
 			}
 			else
 			{
 				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) && i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
 				{
-					SurveyShot shot = ( SurveyShot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
+					Shot shot = ( Shot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
 					if( shot == null )
 					{
 						continue;
 					}
 					if( selModel.isSelectedIndex( i ) )
 					{
-						editor.select( shots.get( shot.number ) );
+						editor.select( shot3ds.get( shot.number ) );
 					}
 					else
 					{
-						editor.deselect( shots.get( shot.number ) );
+						editor.deselect( shot3ds.get( shot.number ) );
 					}
 				}
 			}
@@ -1545,8 +1545,8 @@ public class BreakoutMainView extends BasicJoglSetup
 			rebuildTaskService.submit( task -> {
 				editor.commit( );
 				
-				List<SurveyShot> origShots = new ArrayList<>( );
-				Set<Survey3dModel.Shot> newSelectedShots = new HashSet<>( );
+				List<Shot> origShots = new ArrayList<>( );
+				Set<Survey3dModel.Shot3d> newSelectedShots = new HashSet<>( );
 				
 				model3d.addOriginalShotsTo( origShots );
 				model3d.addSelectedShotsTo( newSelectedShots );
@@ -1554,9 +1554,9 @@ public class BreakoutMainView extends BasicJoglSetup
 				float[ ] bounds = Rectmath.voidRectf( 3 );
 				float[ ] p = Rectmath.voidRectf( 3 );
 				
-				for( Survey3dModel.Shot shot : newSelectedShots )
+				for( Survey3dModel.Shot3d shot3d : newSelectedShots )
 				{
-					SurveyShot origShot = origShots.get( shot.getNumber( ) );
+					Shot origShot = origShots.get( shot3d.getNumber( ) );
 					p[ 0 ] = ( float ) Math.min( origShot.from.position[ 0 ] , origShot.to.position[ 0 ] );
 					p[ 1 ] = ( float ) Math.min( origShot.from.position[ 1 ] , origShot.to.position[ 1 ] );
 					p[ 2 ] = ( float ) Math.min( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
@@ -1811,7 +1811,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					parsingSubtask.setStatus( "Parsing shot data" );
 					parsingSubtask.setIndeterminate( false );
 					
-					final List<SurveyShot> shots = copy.createShots( parsingSubtask );
+					final List<Shot> shots = copy.createShots( parsingSubtask );
 					
 					if( parsingSubtask.isCanceling( ) )
 					{
@@ -1827,7 +1827,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						}
 					};
 					
-					final List<SurveyShot> nonNullShots = new ArrayList<SurveyShot>( );
+					final List<Shot> nonNullShots = new ArrayList<Shot>( );
 					
 					if( !shots.isEmpty( ) )
 					{
@@ -1835,9 +1835,9 @@ public class BreakoutMainView extends BasicJoglSetup
 						calculatingSubtask.setStatus( "calculating" );
 						calculatingSubtask.setIndeterminate( true );
 						
-						LinkedHashSet<SurveyStation> stations = new LinkedHashSet<SurveyStation>( );
+						LinkedHashSet<Station> stations = new LinkedHashSet<Station>( );
 						
-						for( SurveyShot shot : shots )
+						for( Shot shot : shots )
 						{
 							if( shot != null )
 							{
@@ -1847,7 +1847,7 @@ public class BreakoutMainView extends BasicJoglSetup
 							}
 						}
 						
-						SurveyShot.computeConnected( stations );
+						Shot.computeConnected( stations );
 						
 						calculatingSubtask.end( );
 					}
@@ -1860,7 +1860,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					return true;
 				}
 				
-				public void updateModel( List<SurveyShot> shots )
+				public void updateModel( List<Shot> shots )
 				{
 					setStatus( "Updating view..." );
 					

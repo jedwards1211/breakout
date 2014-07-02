@@ -12,7 +12,7 @@ import java.util.Set;
 import javax.media.opengl.awt.GLCanvas;
 
 import org.andork.breakout.model.Survey3dModel;
-import org.andork.breakout.model.Survey3dModel.Shot;
+import org.andork.breakout.model.Survey3dModel.Shot3d;
 import org.andork.func.StreamUtils;
 import org.andork.jogl.neu.JoglScene;
 import org.andork.math3d.InFrustumTester3f;
@@ -40,7 +40,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 		
 		public TaskService getRebuildTaskService( );
 		
-		public void selectShots( Set<Shot> newSelected , boolean add , boolean toggle );
+		public void selectShots( Set<Shot3d> newSelected , boolean add , boolean toggle );
 	}
 	
 	public WindowSelectionMouseHandler( Context context )
@@ -81,7 +81,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 		context.getRebuildTaskService( ).submit( task -> {
 			task.setStatus( "Finding lassoed shots..." );
 			task.setIndeterminate( true );
-			RBranch<float[ ], Shot> root = model3d.getTree( ).getRoot( );
+			RBranch<float[ ], Shot3d> root = model3d.getTree( ).getRoot( );
 			RfStarTree<float[ ]> edgeTree = new RfStarTree<>( 2 , 4 , 1 , 2 );
 			
 			StreamUtils.forEachPairLooped( points.stream( ) , ( p1 , p2 ) -> {
@@ -107,7 +107,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 			float[ ] pv = Vecmath.newMat4f( );
 			Vecmath.mmul( scene.projXform( ) , scene.viewXform( ) , pv );
 			
-			Set<Shot> newSelected = new HashSet<>( );
+			Set<Shot3d> newSelected = new HashSet<>( );
 			
 			RTraversal.traverse( root ,
 					node -> inFrustumTester.intersectsBox( node.mbr( ) ) ,

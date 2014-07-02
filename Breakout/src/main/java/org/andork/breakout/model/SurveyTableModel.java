@@ -22,7 +22,7 @@ import org.andork.swing.table.QObjectRowFormat;
 public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Row>>
 {
 	private Map<Integer, Integer>	shotNumberToRowIndexMap	= CollectionUtils.newHashMap( );
-	private final List<SurveyShot>	shots					= new ArrayList<SurveyShot>( );
+	private final List<Shot>	shots					= new ArrayList<Shot>( );
 	
 	public SurveyTableModel( )
 	{
@@ -41,12 +41,12 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		public static final Attribute<String>			bsAzm			= newAttribute( String.class , "bsAzm" );
 		public static final Attribute<String>			bsInc			= newAttribute( String.class , "bsInc" );
 		public static final Attribute<CrossSectionType>	xSectionType	= newAttribute( CrossSectionType.class , "xSectionType" );
-		public static final Attribute<SurveyShotSide>	xSectionSide	= newAttribute( SurveyShotSide.class , "xSectionSide" );
+		public static final Attribute<ShotSide>	xSectionSide	= newAttribute( ShotSide.class , "xSectionSide" );
 		public static final Attribute<String>			left			= newAttribute( String.class , "left" );
 		public static final Attribute<String>			right			= newAttribute( String.class , "right" );
 		public static final Attribute<String>			up				= newAttribute( String.class , "up" );
 		public static final Attribute<String>			down			= newAttribute( String.class , "down" );
-		public static final Attribute<SurveyShotSide>	positionSide	= newAttribute( SurveyShotSide.class , "positionSide" );
+		public static final Attribute<ShotSide>	positionSide	= newAttribute( ShotSide.class , "positionSide" );
 		public static final Attribute<String>			north			= newAttribute( String.class , "north" );
 		public static final Attribute<String>			east			= newAttribute( String.class , "east" );
 		public static final Attribute<String>			elev			= newAttribute( String.class , "elev" );
@@ -63,7 +63,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		}
 	}
 	
-	public SurveyShot getShotAtRow( int row )
+	public Shot getShotAtRow( int row )
 	{
 		return row >= shots.size( ) ? null : shots.get( row );
 	}
@@ -130,7 +130,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 
 	public void clear( )
 	{
-		setShots( Collections.<SurveyShot>emptyList( ) );
+		setShots( Collections.<Shot>emptyList( ) );
 		setRows( Collections.singletonList( Row.instance.newObject( ) ) );
 	}
 	
@@ -141,25 +141,25 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		fixEndRows( );
 	}
 	
-	public List<SurveyShot> createShots( Subtask subtask )
+	public List<Shot> createShots( Subtask subtask )
 	{
 		if( subtask != null )
 		{
 			subtask.setTotal( getRowCount( ) );
 		}
 		
-		Map<String, SurveyStation> stations = new LinkedHashMap<String, SurveyStation>( );
-		Map<String, SurveyShot> shots = new LinkedHashMap<String, SurveyShot>( );
+		Map<String, Station> stations = new LinkedHashMap<String, Station>( );
+		Map<String, Shot> shots = new LinkedHashMap<String, Shot>( );
 		
 		SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
 		
-		List<SurveyShot> shotList = new ArrayList<SurveyShot>( );
+		List<Shot> shotList = new ArrayList<Shot>( );
 		
 		for( int i = 0 ; i < getRowCount( ) ; i++ )
 		{
 			QObject<Row> row = getRow( i );
 			
-			SurveyShot shot = null;
+			Shot shot = null;
 			
 			try
 			{
@@ -176,10 +176,10 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				{
 					xSectionType = CrossSectionType.LRUD;
 				}
-				SurveyShotSide xSectionSide = row.get( Row.xSectionSide );
+				ShotSide xSectionSide = row.get( Row.xSectionSide );
 				if( xSectionSide == null )
 				{
-					xSectionSide = SurveyShotSide.AT_FROM;
+					xSectionSide = ShotSide.AT_FROM;
 				}
 				
 				float left = parseFloat( row.get( Row.left ) );
@@ -187,10 +187,10 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				float up = parseFloat( row.get( Row.up ) );
 				float down = parseFloat( row.get( Row.down ) );
 				
-				SurveyShotSide positionSide = row.get( Row.positionSide );
+				ShotSide positionSide = row.get( Row.positionSide );
 				if( positionSide == null )
 				{
-					positionSide = SurveyShotSide.AT_FROM;
+					positionSide = ShotSide.AT_FROM;
 				}
 				
 				if( fromName == null || toName == null )
@@ -198,13 +198,13 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 					continue;
 				}
 				
-				shot = shots.get( SurveyShot.getName( fromName , toName ) );
+				shot = shots.get( Shot.getName( fromName , toName ) );
 				if( shot == null )
 				{
-					shot = shots.get( SurveyShot.getName( toName , fromName ) );
+					shot = shots.get( Shot.getName( toName , fromName ) );
 					if( shot != null )
 					{
-						shot = new SurveyShot( );
+						shot = new Shot( );
 						String s = fromName;
 						fromName = toName;
 						toName = s;
@@ -233,13 +233,13 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				double east = parse( row.get( Row.east ) );
 				double elev = parse( row.get( Row.elev ) );
 				
-				SurveyStation from = getStation( stations , fromName );
-				SurveyStation to = getStation( stations , toName );
+				Station from = getStation( stations , fromName );
+				Station to = getStation( stations , toName );
 				
-				Vecmath.setdNoNaNOrInf( positionSide == SurveyShotSide.AT_FROM ?
+				Vecmath.setdNoNaNOrInf( positionSide == ShotSide.AT_FROM ?
 						from.position : to.position , east , elev , -north );
 				
-				shot = new SurveyShot( );
+				shot = new Shot( );
 				shot.from = from;
 				shot.to = to;
 				shot.dist = dist;
@@ -257,7 +257,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 					
 				}
 				
-				CrossSection xSection = xSectionSide == SurveyShotSide.AT_FROM ? shot.fromXsection : shot.toXsection;
+				CrossSection xSection = xSectionSide == ShotSide.AT_FROM ? shot.fromXsection : shot.toXsection;
 				xSection.type = xSectionType;
 				xSection.dist[ 0 ] = coalesceNaNOrInf( left , xSection.dist[ 0 ] );
 				xSection.dist[ 1 ] = coalesceNaNOrInf( right , xSection.dist[ 1 ] );
@@ -288,14 +288,14 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 			}
 		}
 		
-		for( SurveyShot shot : shots.values( ) )
+		for( Shot shot : shots.values( ) )
 		{
 			shot.from.frontsights.add( shot );
 			shot.to.backsights.add( shot );
 		}
 		
 		int number = 0;
-		for( SurveyShot shot : shotList )
+		for( Shot shot : shotList )
 		{
 			if( shot != null )
 			{
@@ -306,12 +306,12 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		return shotList;
 	}
 	
-	private static SurveyStation getStation( Map<String, SurveyStation> stations , String name )
+	private static Station getStation( Map<String, Station> stations , String name )
 	{
-		SurveyStation station = stations.get( name );
+		Station station = stations.get( name );
 		if( station == null )
 		{
-			station = new SurveyStation( );
+			station = new Station( );
 			station.name = name;
 			stations.put( name , station );
 		}
@@ -323,12 +323,12 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		return Float.isNaN( a ) || Float.isInfinite( a ) ? b : a;
 	}
 	
-	protected String shotName( SurveyShot shot )
+	protected String shotName( Shot shot )
 	{
 		return shot.from.name + " - " + shot.to.name;
 	}
 	
-	public SurveyShot shotAtRow( int rowIndex )
+	public Shot shotAtRow( int rowIndex )
 	{
 		if( rowIndex < 0 )
 		{
@@ -341,7 +341,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		return rowIndex < shots.size( ) ? shots.get( rowIndex ) : null;
 	}
 	
-	public void setShots( List<SurveyShot> shotList )
+	public void setShots( List<Shot> shotList )
 	{
 		this.shots.clear( );
 		this.shots.addAll( shotList );
@@ -354,7 +354,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		
 		for( int i = 0 ; i < shots.size( ) ; i++ )
 		{
-			SurveyShot shot = shots.get( i );
+			Shot shot = shots.get( i );
 			if( shot != null )
 			{
 				shotNumberToRowIndexMap.put( shot.number , i );

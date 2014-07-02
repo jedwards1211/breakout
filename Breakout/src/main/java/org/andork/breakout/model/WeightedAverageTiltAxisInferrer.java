@@ -11,7 +11,7 @@ public class WeightedAverageTiltAxisInferrer implements TiltAxisInferrer
 {
 	
 	@Override
-	public float[ ] inferTiltAxis( Collection<? extends SurveyShot> shots )
+	public float[ ] inferTiltAxis( Collection<? extends Shot> shots )
 	{
 		if( shots.isEmpty( ) )
 		{
@@ -24,7 +24,7 @@ public class WeightedAverageTiltAxisInferrer implements TiltAxisInferrer
 		double totalXyWeight = 0.0;
 		double totalZyWeight = 0.0;
 		
-		for( SurveyShot shot : shots )
+		for( Shot shot : shots )
 		{
 			double x = shot.to.position[ 0 ] - shot.from.position[ 0 ];
 			double y = shot.to.position[ 1 ] - shot.from.position[ 1 ];
