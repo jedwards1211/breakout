@@ -17,10 +17,17 @@
 
 	<target name="init">
 		<!-- Create the time stamp -->
-		<tstamp />
+		<tstamp>
+			<format property="time.start" pattern="yyyy-MM-dd HH:mm" />
+		</tstamp>
 		<!-- Create the build directory structure used by compile -->
 		<mkdir dir="${build.main}" />
 		<mkdir dir="${build.update}" />
+	</target>
+	
+	<target name="buildstamp" depends="init">
+		<filter token="timestamp" value="${time.start}" />
+		<copy file="src/main/java/org/andork/breakout/version.properties.in" tofile="src/main/java/org/andork/breakout/version.properties" overwrite="true" filtering="true" preservelastmodified="true" />
 	</target>
 
 	<target name="compile-deps">

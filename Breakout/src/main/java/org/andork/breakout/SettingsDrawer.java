@@ -13,6 +13,7 @@ import java.awt.Insets;
 import java.awt.LinearGradientPaint;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Properties;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
@@ -120,6 +121,8 @@ public class SettingsDrawer extends Drawer
 	JSlider												numSamplesSlider;
 	
 	DefaultSelector<FilterType>							filterTypeSelector;
+	
+	JLabel												versionLabel;
 	
 	JPanel												mainPanel;
 	JScrollPane											mainPanelScrollPane;
@@ -307,6 +310,28 @@ public class SettingsDrawer extends Drawer
 		recalcColorByDistanceButton.setPreferredSize( iconButtonSize );
 		inferDepthAxisTiltButton.setPreferredSize( iconButtonSize );
 		resetDepthAxisTiltButton.setPreferredSize( iconButtonSize );
+		
+		versionLabel = new JLabel( );
+		versionLabel.setHorizontalAlignment( JLabel.CENTER );
+		Properties versionProperties = loadVersionProperties( );
+		String version = versionProperties.getProperty( "version" , "unknown" );
+		String buildDate = versionProperties.getProperty( "build.date" , "unknown" );
+		
+		localizer.setFormattedText( versionLabel , "versionLabel.text" , version , buildDate );
+	}
+	
+	private Properties loadVersionProperties( )
+	{
+		Properties props = new Properties( );
+		try
+		{
+			props.load( getClass( ).getResourceAsStream( "version.properties" ) );
+		}
+		catch( Exception ex )
+		{
+			
+		}
+		return props;
 	}
 	
 	private void createLayout( )
@@ -377,9 +402,7 @@ public class SettingsDrawer extends Drawer
 		w.put( filterTypeLabel ).belowLast( ).west( ).insets( 40 , 0 , 0 , 0 );
 		w.put( filterTypeSelector.getComboBox( ) ).belowLast( ).fillx( );
 		
-		JPanel paddingPanel = new JPanel( );
-		paddingPanel.setOpaque( false );
-		w.put( paddingPanel ).belowLast( ).fillboth( 1.0 , 1.0 );
+		w.put( versionLabel ).belowLast( ).south( ).weighty( 1.0 ).fillx( );
 		
 		w.put( debugButton ).belowLast( ).southwest( );
 		
