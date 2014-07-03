@@ -150,6 +150,20 @@ public class DefaultNavigator extends MouseAdapter
 			return;
 		}
 		
+		int button = pressEvent.getButton( );
+		
+		if( e.isAltDown( ) )
+		{
+			if( button == MouseEvent.BUTTON1 )
+			{
+				button = MouseEvent.BUTTON3;
+			}
+			else if( button == MouseEvent.BUTTON3 )
+			{
+				button = MouseEvent.BUTTON1;
+			}
+		}
+		
 		float dx = e.getX( ) - lastEvent.getX( );
 		float dy = e.getY( ) - lastEvent.getY( );
 		if( e.isControlDown( ) )
@@ -174,7 +188,7 @@ public class DefaultNavigator extends MouseAdapter
 		Component canvas = ( Component ) e.getSource( );
 		
 		float scaledMoveFactor = moveFactor * sensitivity;
-		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
+		if( button == MouseEvent.BUTTON1 )
 		{
 			if( e.isShiftDown( ) )
 			{
@@ -192,7 +206,7 @@ public class DefaultNavigator extends MouseAdapter
 				scene.setViewXform( cam );
 			}
 		}
-		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
+		else if( button == MouseEvent.BUTTON2 )
 		{
 			if( e.isShiftDown( ) && !Vecmath.hasNaNsOrInfinites( center ) )
 			{
@@ -213,7 +227,7 @@ public class DefaultNavigator extends MouseAdapter
 			Vecmath.invAffine( cam );
 			scene.setViewXform( cam );
 		}
-		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
+		else if( button == MouseEvent.BUTTON3 )
 		{
 			if( e.isShiftDown( ) )
 			{

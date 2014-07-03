@@ -8,6 +8,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/swingx-1.6.4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/snakeyaml-1.11"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jogl-util-graph"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jchronic"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-utils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-plot"/>
