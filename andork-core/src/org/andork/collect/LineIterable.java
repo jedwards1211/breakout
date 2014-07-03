@@ -3,6 +3,10 @@ package org.andork.collect;
 import java.io.File;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Absolutely the easiest way to read a file or URL line-by-line:

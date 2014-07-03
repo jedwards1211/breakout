@@ -20,17 +20,32 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
+import org.andork.bind.Binder;
+import org.andork.util.Java7.Objects;
+
 public class I18n
 {
-	private static final Logger				logger		= Logger.getLogger( I18n.class.getName( ) );
+	private static final Logger				logger					= Logger.getLogger( I18n.class.getName( ) );
 	
 	private Locale							locale;
 	
-	private final Map<String, Localizer>	localizers	= new HashMap<String, Localizer>( );
+	private final Map<String, Localizer>	localizers				= new HashMap<String, Localizer>( );
+	
+	private boolean							disableBundleLoading	= System.getProperties( ).containsKey( "disableBundleLoading" );
 	
 	public I18n( )
 	{
 		locale = Locale.getDefault( );
+	}
+	
+	public boolean isDisableBundleLoading( )
+	{
+		return disableBundleLoading;
+	}
+	
+	public void setDisableBundleLoading( boolean disableBundleLoading )
+	{
+		this.disableBundleLoading = disableBundleLoading;
 	}
 	
 	public Localizer forName( String name )
@@ -102,6 +117,11 @@ public class I18n
 		
 		private void updateBundle( )
 		{
+			if( disableBundleLoading )
+			{
+				return;
+			}
+			
 			try
 			{
 				bundle = ResourceBundle.getBundle( name , locale );
@@ -198,11 +218,123 @@ public class I18n
 			checkEDT( );
 			register( frame , new FrameTitleI18nUpdater( key ) );
 		}
+		
+		public Binder<String> bindString( String key )
+		{
+			return new LocalizedStringBinder( this , key );
+		}
+		
+		public Binder<String> bindFormattedString( String key , Binder<?> ... argBinders )
+		{
+			return new LocalizedFormattedStringBinder( this , key , argBinders );
+		}
 	}
 	
 	public static interface I18nUpdater<T>
 	{
 		public void updateI18n( Localizer localizer , T localizedObject );
+	}
+	
+	public static class LocalizedStringBinder extends Binder<String> implements I18nUpdater<String>
+	{
+		Localizer	localizer;
+		String		key;
+		String		value;
+		
+		public LocalizedStringBinder( Localizer localizer , String key )
+		{
+			this.localizer = localizer;
+			this.key = key;
+			
+			localizer.register( key , this );
+		}
+		
+		@Override
+		public void updateI18n( Localizer localizer , String localizedObject )
+		{
+			update( true );
+		}
+		
+		@Override
+		public String get( )
+		{
+			return value;
+		}
+		
+		@Override
+		public void set( String newValue )
+		{
+			throw new UnsupportedOperationException( );
+		}
+		
+		@Override
+		public void update( boolean force )
+		{
+			String newText = localizer.getString( key );
+			if( !Objects.equals( newText , value ) || force )
+			{
+				value = newText;
+				updateDownstream( force );
+			}
+		}
+	}
+	
+	public static class LocalizedFormattedStringBinder extends Binder<String> implements I18nUpdater<String>
+	{
+		Localizer		localizer;
+		String			key;
+		Binder<?>[ ]	argBinders;
+		Object[ ]		args;
+		String			value;
+		
+		public LocalizedFormattedStringBinder( Localizer localizer , String key , Binder<?> ... argBinders )
+		{
+			this.localizer = localizer;
+			this.key = key;
+			this.argBinders = argBinders;
+			
+			localizer.register( key , this );
+		}
+		
+		@Override
+		public void updateI18n( Localizer localizer , String localizedObject )
+		{
+			update( true );
+		}
+		
+		@Override
+		public String get( )
+		{
+			return value;
+		}
+		
+		@Override
+		public void set( String newValue )
+		{
+			throw new UnsupportedOperationException( );
+		}
+		
+		@Override
+		public void update( boolean force )
+		{
+			boolean updateNeeded = force;
+			
+			for( int i = 0 ; i < argBinders.length ; i++ )
+			{
+				Object paramValue = argBinders[ i ].get( );
+				if( !Objects.equals( args[ i ] , paramValue ) )
+				{
+					args[ i ] = value;
+					updateNeeded = true;
+				}
+			}
+			
+			if( updateNeeded )
+			{
+				value = localizer.getFormattedString( key , args );
+				updateDownstream( force );
+			}
+		}
 	}
 	
 	private static class ActionNameUpdater implements I18nUpdater<Action>

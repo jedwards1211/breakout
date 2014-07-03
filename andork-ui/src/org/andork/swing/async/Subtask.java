@@ -19,6 +19,12 @@ public class Subtask
 		this.proportion = 1;
 	}
 	
+	public Subtask( )
+	{
+		this.parent = null;
+		this.proportion = 1;
+	}
+	
 	private Subtask( Subtask parent , int proportion )
 	{
 		this.parent = parent;

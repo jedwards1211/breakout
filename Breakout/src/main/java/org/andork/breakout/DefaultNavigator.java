@@ -33,6 +33,8 @@ public class DefaultNavigator extends MouseAdapter
 	
 	float			sensitivity	= 1f;
 	
+	final float[ ]	center		= { Float.NaN , Float.NaN , Float.NaN };
+	
 	public DefaultNavigator( BasicJoglSetup setup )
 	{
 		super( );
@@ -110,6 +112,17 @@ public class DefaultNavigator extends MouseAdapter
 		this.sensitivity = sensitivity;
 	}
 	
+	public float[ ] getCenter( float[ ] result )
+	{
+		Vecmath.setf( result , this.center );
+		return result;
+	}
+	
+	public void setCenter( float[ ] center )
+	{
+		Vecmath.setf( this.center , center );
+	}
+	
 	@Override
 	public void mouseReleased( MouseEvent e )
 	{
@@ -181,9 +194,22 @@ public class DefaultNavigator extends MouseAdapter
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
-			cam[ 12 ] += cam[ 8 ] * dy * scaledMoveFactor;
-			cam[ 13 ] += cam[ 9 ] * dy * scaledMoveFactor;
-			cam[ 14 ] += cam[ 10 ] * dy * scaledMoveFactor;
+			if( e.isShiftDown( ) && !Vecmath.hasNaNsOrInfinites( center ) )
+			{
+				Vecmath.sub3( center , 0 , cam , 12 , v , 0 );
+				float dist = Vecmath.length3( v );
+				Vecmath.scale3( v , 1f / dist );
+				double motion = Math.min( Math.max( 0 , dist - 1 ) , -dy * scaledMoveFactor );
+				cam[ 12 ] += v[ 0 ] * motion;
+				cam[ 13 ] += v[ 1 ] * motion;
+				cam[ 14 ] += v[ 2 ] * motion;
+			}
+			else
+			{
+				cam[ 12 ] += cam[ 8 ] * dy * scaledMoveFactor;
+				cam[ 13 ] += cam[ 9 ] * dy * scaledMoveFactor;
+				cam[ 14 ] += cam[ 10 ] * dy * scaledMoveFactor;
+			}
 			Vecmath.invAffine( cam );
 			scene.setViewXform( cam );
 		}
@@ -235,9 +261,22 @@ public class DefaultNavigator extends MouseAdapter
 			distance /= 10f;
 		}
 		
-		cam[ 12 ] += cam[ 8 ] * distance;
-		cam[ 13 ] += cam[ 9 ] * distance;
-		cam[ 14 ] += cam[ 10 ] * distance;
+		if( e.isShiftDown( ) && !Vecmath.hasNaNsOrInfinites( center ) )
+		{
+			Vecmath.sub3( center , 0 , cam , 12 , v , 0 );
+			float dist = Vecmath.length3( v );
+			Vecmath.scale3( v , 1f / dist );
+			double motion = Math.min( Math.max( 0 , dist - 1 ) , -distance );
+			cam[ 12 ] += v[ 0 ] * motion;
+			cam[ 13 ] += v[ 1 ] * motion;
+			cam[ 14 ] += v[ 2 ] * motion;
+		}
+		else
+		{
+			cam[ 12 ] += cam[ 8 ] * distance;
+			cam[ 13 ] += cam[ 9 ] * distance;
+			cam[ 14 ] += cam[ 10 ] * distance;
+		}
 		
 		Vecmath.invAffine( cam );
 		scene.setViewXform( cam );

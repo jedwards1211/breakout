@@ -4,8 +4,8 @@ import java.awt.Color;
 import java.io.File;
 
 import org.andork.awt.layout.DrawerModel;
-import org.andork.breakout.SettingsDrawer.CameraView;
-import org.andork.breakout.SettingsDrawer.FilterType;
+import org.andork.breakout.CameraView;
+import org.andork.breakout.FilterType;
 import org.andork.func.Bimapper;
 import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;

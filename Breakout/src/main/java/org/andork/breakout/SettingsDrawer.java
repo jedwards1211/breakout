@@ -85,10 +85,15 @@ public class SettingsDrawer extends Drawer
 	JButton												projectFileMenuButton;
 	
 	ViewButtonsPanel									viewButtonsPanel;
+	JLabel												mouseSensitivityLabel;
 	JSlider												mouseSensitivitySlider;
+	JLabel												mouseWheelSensitivityLabel;
 	JSlider												mouseWheelSensitivitySlider;
+	JLabel												bgColorLabel;
 	JXColorSelectionButton								bgColorButton;
+	JLabel												ambientLightLabel;
 	JSlider												ambientLightSlider;
+	JLabel												distColorationLabel;
 	PlotAxis											distColorationAxis;
 	PaintablePanel										distColorationAxisPanel;
 	
@@ -110,6 +115,7 @@ public class SettingsDrawer extends Drawer
 	JPanel												colorByDistanceButtonsPanel;
 	JButton												recalcColorByDistanceButton;
 	
+	JLabel												glowDistLabel;
 	PlotAxis											glowDistAxis;
 	PaintablePanel										glowDistAxisPanel;
 	JButton												fitViewToEverythingButton;
@@ -120,6 +126,7 @@ public class SettingsDrawer extends Drawer
 	JLabel												numSamplesLabel;
 	JSlider												numSamplesSlider;
 	
+	JLabel												filterTypeLabel;
 	DefaultSelector<FilterType>							filterTypeSelector;
 	
 	JLabel												versionLabel;
@@ -204,12 +211,21 @@ public class SettingsDrawer extends Drawer
 		viewButtonsPanel = new ViewButtonsPanel( );
 		
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
+
+		bgColorLabel = new JLabel( );
+		localizer.setText( bgColorLabel , "bgColorLabel.text" );
 		
 		bgColorButton = new JXColorSelectionButton( );
+
+		ambientLightLabel = new JLabel( );
+		localizer.setText( ambientLightLabel , "ambientLightLabel.text" );
 		
 		ambientLightSlider = new JSlider( 0 , 100 , 50 );
 		ambientLightSlider.setOpaque( false );
 		
+		distColorationLabel = new JLabel( );
+		localizer.setText( distColorationLabel , "distColorationLabel.text" );
+
 		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		distColorationAxisPanel = PaintablePanel.wrap( distColorationAxis );
 		distColorationAxisPanel.setUnderpaintBorder(
@@ -235,7 +251,7 @@ public class SettingsDrawer extends Drawer
 		localizer.setToolTipText( flipParamColorationAxisButton , "flipParamColorationAxisButton.tooltip" );
 		colorParamDetailsPanel = new JPanel( );
 		colorParamDetailsPanel.setOpaque( false );
-		
+
 		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		paramColorationAxisPanel = PaintablePanel.wrap( paramColorationAxis );
 		paramColorationAxisPanel.setUnderpaintBorder(
@@ -262,6 +278,9 @@ public class SettingsDrawer extends Drawer
 		recalcColorByDistanceButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
 		localizer.setToolTipText( recalcColorByDistanceButton , "recalcColorByDistanceButton.tooltip" );
 		
+		glowDistLabel = new JLabel( );
+		localizer.setText( glowDistLabel , "highlightRangeLabel.text" );
+		
 		glowDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		glowDistAxisPanel = PaintablePanel.wrap( glowDistAxis );
 		glowDistAxisPanel.setUnderpaintBorder(
@@ -272,10 +291,16 @@ public class SettingsDrawer extends Drawer
 		glowDistAxis.setMajorTickColor( Color.BLACK );
 		glowDistAxis.setMinorTickColor( Color.BLACK );
 		
+		mouseSensitivityLabel = new JLabel( );
+		localizer.setText( mouseSensitivityLabel , "mouseSensitivityLabel.text" );
+
 		mouseSensitivitySlider = new JSlider( );
 		mouseSensitivitySlider.setValue( 20 );
 		mouseSensitivitySlider.setOpaque( false );
 		
+		mouseWheelSensitivityLabel = new JLabel( );
+		localizer.setText( mouseWheelSensitivityLabel , "mouseWheelSensitivityLabel.text" );
+
 		mouseWheelSensitivitySlider = new JSlider( 1 , 2000 , 200 );
 		mouseWheelSensitivitySlider.setOpaque( false );
 		
@@ -283,10 +308,14 @@ public class SettingsDrawer extends Drawer
 		fitViewToEverythingButton = new JButton( "Fit View to Everything" );
 		orbitToPlanButton = new JButton( "Orbit to Plan" );
 		
+		filterTypeLabel = new JLabel( );
+		localizer.setText( filterTypeLabel , "filterTypeLabel.text" );
+
 		filterTypeSelector = new DefaultSelector<FilterType>( );
 		filterTypeSelector.setAvailableValues( Arrays.asList( FilterType.values( ) ) );
 		
-		numSamplesLabel = new JLabel( "Multisampling: Off" );
+		numSamplesLabel = new JLabel( );
+		localizer.setText( numSamplesLabel , "numSamplesLabel.text.off" );
 		numSamplesSlider = new JSlider( 1 , 1 , 1 );
 		numSamplesSlider.setOpaque( false );
 		numSamplesSlider.setEnabled( false );
@@ -350,24 +379,21 @@ public class SettingsDrawer extends Drawer
 		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
 		w.put( fitViewToEverythingButton ).belowLast( ).fillx( 1.0 );
 		w.put( orbitToPlanButton ).belowLast( ).fillx( 1.0 );
-		JLabel sensLabel = new JLabel( "Mouse Sensitivity:" );
-		w.put( sensLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
+		w.put( mouseSensitivityLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( mouseSensitivitySlider ).belowLast( ).fillx( ).north( );
 		
-		JLabel wheelSensLabel = new JLabel( "Mouse Wheel Sensitivity:" );
-		w.put( wheelSensLabel ).belowLast( ).west( ).addToInsets( 0 , 0 , 0 , 0 );
+		w.put( mouseWheelSensitivityLabel ).belowLast( ).west( ).addToInsets( 0 , 0 , 0 , 0 );
 		w.put( mouseWheelSensitivitySlider ).belowLast( ).fillx( ).north( );
 		
 		GridBagWizard bgPanel = GridBagWizard.quickPanel( );
-		bgPanel.put( new JLabel( "Background Color: " ) ).xy( 0 , 0 ).west( );
+		bgPanel.put( bgColorLabel ).xy( 0 , 0 ).west( );
 		bgPanel.put( bgColorButton ).rightOfLast( ).west( ).weightx( 1.0 );
 		w.put( bgPanel.getTarget( ) ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
 		
 		w.put( new JLabel( "Ambient Light:" ) ).belowLast( ).west( );
 		w.put( ambientLightSlider ).belowLast( ).fillx( );
 		
-		JLabel distLabel = new JLabel( "Distance coloration:" );
-		w.put( distLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
+		w.put( distColorationLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( distColorationAxisPanel ).belowLast( ).fillx( );
 		
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel( );
@@ -393,12 +419,11 @@ public class SettingsDrawer extends Drawer
 		colorByDistanceButtonsPanel.add( recalcColorByDistanceButton );
 		colorParamButtonsPanel.add( colorByDistanceButtonsPanel , ColorParam.DISTANCE_ALONG_SHOTS );
 		
-		JLabel highlightRangeLabel = new JLabel( "Highlight range:" );
-		w.put( highlightRangeLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
+		w.put( glowDistLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( glowDistAxisPanel ).belowLast( ).fillx( );
 		w.put( numSamplesLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( numSamplesSlider ).belowLast( ).fillx( );
-		JLabel filterTypeLabel = new JLabel( "Filter type:" );
+		
 		w.put( filterTypeLabel ).belowLast( ).west( ).insets( 40 , 0 , 0 , 0 );
 		w.put( filterTypeSelector.getComboBox( ) ).belowLast( ).fillx( );
 		
@@ -475,7 +500,15 @@ public class SettingsDrawer extends Drawer
 	
 	private void updateNumSamplesLabel( )
 	{
-		numSamplesLabel.setText( "<html>Multisampling: <b>" + ( numSamplesSlider.getValue( ) < 2 ? "Off" : numSamplesSlider.getValue( ) + "X" ) + "</b></html>" );
+		localizer.unregister( numSamplesLabel );
+		if( numSamplesSlider.getValue( ) < 2 )
+		{
+			localizer.setText( numSamplesLabel , "numSamplesLabel.text.off" );
+		}
+		else
+		{
+			localizer.setFormattedText( numSamplesLabel , "numSamplesLabel.text.on" , numSamplesSlider.getValue( ) );
+		}
 	}
 	
 	public JButton getProjectFileMenuButton( )
@@ -523,48 +556,6 @@ public class SettingsDrawer extends Drawer
 	public PlotAxis getGlowDistAxis( )
 	{
 		return glowDistAxis;
-	}
-	
-	public static enum CameraView
-	{
-		PERSPECTIVE( "Perspective" ) ,
-		PLAN( "Plan" ) ,
-		NORTH_FACING_PROFILE( "North-Facing Profile" ) ,
-		SOUTH_FACING_PROFILE( "South-Facing Profile" ) ,
-		EAST_FACING_PROFILE( "East-Facing Profile" ) ,
-		WEST_FACING_PROFILE( "West-Facing Profile" );
-		
-		private String	displayText;
-		
-		CameraView( String displayText )
-		{
-			this.displayText = displayText;
-		}
-		
-		public String toString( )
-		{
-			return displayText;
-		}
-	}
-	
-	public static enum FilterType
-	{
-		ALPHA_DESIGNATION( "Alphabetic Designation" ) ,
-		REGEXP( "Regular Expression" ) ,
-		SURVEYORS( "Surveyors" ) ,
-		DESCRIPTION( "Description" );
-		
-		private String	displayText;
-		
-		private FilterType( String displayText )
-		{
-			this.displayText = displayText;
-		}
-		
-		public String toString( )
-		{
-			return displayText;
-		}
 	}
 	
 	public JButton getInferDepthAxisTiltButton( )

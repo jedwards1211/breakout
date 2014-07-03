@@ -2005,7 +2005,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	
 	public float[ ] calcAutofitParamRange( Subtask subtask )
 	{
-		if( selectedShots.isEmpty( ) )
+		if( selectedShots.size( ) < 2 || colorParam == ColorParam.DISTANCE_ALONG_SHOTS )
 		{
 			return calcAutofitAllParamRange( subtask );
 		}

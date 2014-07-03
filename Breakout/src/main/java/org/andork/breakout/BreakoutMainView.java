@@ -68,8 +68,6 @@ import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
-import org.andork.breakout.SettingsDrawer.CameraView;
-import org.andork.breakout.SettingsDrawer.FilterType;
 import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectArchiveModel;
 import org.andork.breakout.model.ProjectModel;
@@ -195,7 +193,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	int													debugMbrCount				= 0;
 	List<BasicJOGLObject>								debugMbrs					= new ArrayList<BasicJOGLObject>( );
 	
-	Shot3dPickContext										spc							= new Shot3dPickContext( );
+	Shot3dPickContext									spc							= new Shot3dPickContext( );
 	
 	final LinePlaneIntersection3f						lpx							= new LinePlaneIntersection3f( );
 	final float[ ]										p0							= new float[ 3 ];
@@ -1573,7 +1571,10 @@ public class BreakoutMainView extends BasicJoglSetup
 					p[ 1 ] = ( float ) ( bounds[ 1 ] + bounds[ 4 ] ) * 0.5f;
 					p[ 2 ] = ( float ) ( bounds[ 2 ] + bounds[ 5 ] ) * 0.5f;
 					
-					SwingUtilities.invokeLater( ( ) -> orbiter.setCenter( p ) );
+					SwingUtilities.invokeLater( ( ) -> {
+						orbiter.setCenter( p );
+						navigator.setCenter( p );
+					} );
 				}
 				
 				canvas.display( );
@@ -1909,6 +1910,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						float[ ] center = new float[ 3 ];
 						Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
 						orbiter.setCenter( center );
+						navigator.setCenter( center );
 						
 						getCanvas( ).invoke( false , drawable -> {
 							scene.add( model );
