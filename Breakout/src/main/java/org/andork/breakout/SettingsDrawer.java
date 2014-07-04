@@ -279,7 +279,7 @@ public class SettingsDrawer extends Drawer
 		localizer.setToolTipText( recalcColorByDistanceButton , "recalcColorByDistanceButton.tooltip" );
 		
 		glowDistLabel = new JLabel( );
-		localizer.setText( glowDistLabel , "highlightRangeLabel.text" );
+		localizer.setText( glowDistLabel , "glowDistLabel.text" );
 		
 		glowDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		glowDistAxisPanel = PaintablePanel.wrap( glowDistAxis );
