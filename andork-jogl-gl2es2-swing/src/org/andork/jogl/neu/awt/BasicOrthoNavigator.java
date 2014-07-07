@@ -1,0 +1,277 @@
+package org.andork.jogl.neu.awt;
+
+import static org.andork.math3d.Vecmath.*;
+
+import java.awt.Component;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+
+import org.andork.jogl.AutoClipOrthoProjectionCalculator;
+import org.andork.jogl.neu.JoglScene;
+import org.andork.math3d.Vecmath;
+
+public class BasicOrthoNavigator extends MouseAdapter
+{
+	final Component	canvas;
+	final JoglScene	scene;
+	
+	MouseEvent		lastEvent	= null;
+	MouseEvent		pressEvent	= null;
+	
+	final float[ ]	vi			= Vecmath.newMat4f( );
+	final float[ ]	v			= Vecmath.newMat4f( );
+	
+	boolean			active		= true;
+	boolean			callDisplay	= true;
+	
+	float			moveFactor	= 0.05f;
+	float			panFactor	= ( float ) Math.PI;
+	float			tiltFactor	= ( float ) Math.PI;
+	float			wheelFactor	= 1f;
+	
+	float			sensitivity	= 1f;
+	
+	final float[ ]	p0			= new float[ 3 ];
+	final float[ ]	p1			= new float[ 3 ];
+	final float[ ]	p2			= new float[ 3 ];
+	
+	public BasicOrthoNavigator( BasicJoglSetup setup )
+	{
+		super( );
+		this.canvas = setup.canvas;
+		this.scene = setup.scene;
+	}
+	
+	public boolean isActive( )
+	{
+		return active;
+	}
+	
+	public void setActive( boolean active )
+	{
+		this.active = active;
+	}
+	
+	public boolean isCallDisplay( )
+	{
+		return callDisplay;
+	}
+	
+	public void setCallDisplay( boolean callDisplay )
+	{
+		this.callDisplay = callDisplay;
+	}
+	
+	public float getMoveFactor( )
+	{
+		return moveFactor;
+	}
+	
+	public void setMoveFactor( float moveFactor )
+	{
+		this.moveFactor = moveFactor;
+	}
+	
+	public float getPanFactor( )
+	{
+		return panFactor;
+	}
+	
+	public void setPanFactor( float panFactor )
+	{
+		this.panFactor = panFactor;
+	}
+	
+	public float getTiltFactor( )
+	{
+		return tiltFactor;
+	}
+	
+	public void setTiltFactor( float tiltFactor )
+	{
+		this.tiltFactor = tiltFactor;
+	}
+	
+	public float getWheelFactor( )
+	{
+		return wheelFactor;
+	}
+	
+	public void setWheelFactor( float wheelFactor )
+	{
+		this.wheelFactor = wheelFactor;
+	}
+	
+	public float getSensitivity( )
+	{
+		return sensitivity;
+	}
+	
+	public void setSensitivity( float sensitivity )
+	{
+		this.sensitivity = sensitivity;
+	}
+	
+	@Override
+	public void mouseReleased( MouseEvent e )
+	{
+		if( pressEvent != null && e.getButton( ) == pressEvent.getButton( ) )
+		{
+			pressEvent = null;
+		}
+	}
+	
+	@Override
+	public void mousePressed( MouseEvent e )
+	{
+		if( pressEvent == null )
+		{
+			pressEvent = e;
+			lastEvent = e;
+		}
+	}
+	
+	@Override
+	public void mouseDragged( MouseEvent e )
+	{
+		if( !active || pressEvent == null )
+		{
+			return;
+		}
+		
+		scene.pickXform( ).xform( lastEvent , -1 , p0 );
+		scene.pickXform( ).xform( e , -1 , p1 );
+		
+		mpmulAffine( scene.viewXform( ) , p0 );
+		mpmulAffine( scene.viewXform( ) , p1 );
+		
+		float dx = p1[ 0 ] - p0[ 0 ];
+		float dy = p1[ 1 ] - p0[ 1 ];
+		if( e.isControlDown( ) )
+		{
+			dx /= 10f;
+			dy /= 10f;
+		}
+		lastEvent = e;
+		
+		scene.getViewXform( v );
+		Vecmath.invAffine( v , vi );
+		
+		Component canvas = ( Component ) e.getSource( );
+		
+		//		float scaledMoveFactor = moveFactor * sensitivity;
+		//		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
+		//		{
+		//			if( pressEvent.isShiftDown( ) )
+		//			{
+		//				float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
+		//				float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
+		//				
+		//				Vecmath.rotY( temp , dpan );
+		//				Vecmath.mmulRotational( temp , cam , cam );
+		//				
+		//				Vecmath.mvmulAffine( cam , 1 , 0 , 0 , v );
+		//				Vecmath.setRotation( temp , v , dtilt );
+		//				Vecmath.mmulRotational( temp , cam , cam );
+		//				
+		//				Vecmath.invAffine( cam );
+		//				scene.setViewXform( cam );
+		//			}
+		//		}
+		if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
+		{
+			if( e.isShiftDown( ) )
+			{
+				vi[ 12 ] += vi[ 8 ] * dy;
+				vi[ 13 ] += vi[ 9 ] * dy;
+				vi[ 14 ] += vi[ 10 ] * dy;
+				Vecmath.invAffine( vi , v );
+				scene.setViewXform( v );
+			}
+			else
+			{
+				calcZoom( e , ( float ) Math.pow( 1.1f , dy ) );
+			}
+		}
+		else
+		{
+			vi[ 12 ] += vi[ 0 ] * -dx - vi[ 4 ] * dy;
+			vi[ 13 ] += vi[ 1 ] * -dx - vi[ 5 ] * dy;
+			vi[ 14 ] += vi[ 2 ] * -dx - vi[ 6 ] * dy;
+			Vecmath.invAffine( vi , v );
+			scene.setViewXform( v );
+		}
+		
+		if( callDisplay )
+		{
+			this.canvas.repaint( );
+		}
+	}
+	
+	private void calcZoom( MouseEvent e , float factor )
+	{
+		scene.pickXform( ).xform( -1 , -1 , -1 , p0 );
+		scene.pickXform( ).xform( 1 , 1 , -1 , p1 );
+		scene.pickXform( ).xform( e , -1 , p2 );
+		
+		sub3( p0 , p2 , p0 );
+		sub3( p1 , p2 , p1 );
+		
+		scaleAdd3( factor , p0 , p2 , p0 );
+		scaleAdd3( factor , p1 , p2 , p1 );
+		
+		AutoClipOrthoProjectionCalculator orthoCalc = ( AutoClipOrthoProjectionCalculator ) scene.getProjectionCalculator( );
+		orthoCalc.hSpan = Math.abs( dot3( p0 , 0 , vi , 0 ) - dot3( p1 , 0 , vi , 0 ) );
+		orthoCalc.vSpan = Math.abs( dot3( p0 , 0 , vi , 4 ) - dot3( p1 , 0 , vi , 4 ) );
+		
+		interp3( p0 , p1 , 0.5f , p2 );
+		
+		float dx = subDot3( p2 , 0 , vi , 12 , vi , 0 );
+		float dy = subDot3( p2 , 0 , vi , 12 , vi , 4 );
+		
+		vi[ 12 ] += vi[ 0 ] * dx + vi[ 4 ] * dy;
+		vi[ 13 ] += vi[ 1 ] * dx + vi[ 5 ] * dy;
+		vi[ 14 ] += vi[ 2 ] * dx + vi[ 6 ] * dy;
+		
+		invAffine( vi , v );
+		scene.setViewXform( v );
+	}
+	
+	@Override
+	public void mouseWheelMoved( MouseWheelEvent e )
+	{
+		if( !active )
+		{
+			return;
+		}
+		
+		scene.getViewXform( v );
+		Vecmath.invAffine( v , vi );
+		
+		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
+		
+		if( e.isControlDown( ) )
+		{
+			distance /= 10;
+		}
+		
+		if( e.isShiftDown( ) )
+		{
+			vi[ 12 ] += vi[ 8 ] * distance;
+			vi[ 13 ] += vi[ 9 ] * distance;
+			vi[ 14 ] += vi[ 10 ] * distance;
+			Vecmath.invAffine( vi , v );
+			scene.setViewXform( v );
+		}
+		else
+		{
+			calcZoom( e , ( float ) Math.pow( 1.1f , distance ) );
+		}
+		
+		if( callDisplay )
+		{
+			this.canvas.repaint( );
+		}
+	}
+}

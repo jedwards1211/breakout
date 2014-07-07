@@ -8,10 +8,10 @@ import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.Vecmath;
 import org.andork.util.AnimationUtils;
 
-public class SpringTranslation implements Animation
+public class SpringViewTranslationAnimation implements Animation
 {
 	
-	public SpringTranslation( BasicJoglSetup setup , float[ ] target , float factor , float extra , int period )
+	public SpringViewTranslationAnimation( BasicJoglSetup setup , float[ ] target , float factor , float extra , int period )
 	{
 		if( period <= 0 )
 		{

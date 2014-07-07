@@ -7,7 +7,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -27,7 +26,10 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.WeakHashMap;
 
+import javax.media.opengl.GL;
+import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -72,28 +74,37 @@ import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectArchiveModel;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
+import org.andork.breakout.model.Shot;
+import org.andork.breakout.model.Station;
 import org.andork.breakout.model.Survey3dModel;
 import org.andork.breakout.model.Survey3dModel.SelectionEditor;
 import org.andork.breakout.model.Survey3dModel.Shot3d;
 import org.andork.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.andork.breakout.model.Survey3dModel.Shot3dPickResult;
-import org.andork.breakout.model.Shot;
-import org.andork.breakout.model.Station;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.event.BasicPropertyChangeListener;
+import org.andork.func.FloatUnaryOperator;
+import org.andork.jogl.AutoClipOrthoProjectionCalculator;
 import org.andork.jogl.BasicJOGLObject;
-import org.andork.jogl.OnJogl;
-import org.andork.jogl.OrthoProjectionCalculator;
+import org.andork.jogl.BasicJOGLObject.BasicVertexShader;
+import org.andork.jogl.BasicJOGLObject.FlatFragmentShader;
+import org.andork.jogl.BufferHelper;
+import org.andork.jogl.InterpolationProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
-import org.andork.jogl.awt.anim.RandomOrbit;
-import org.andork.jogl.awt.anim.SinusoidalTranslation;
-import org.andork.jogl.awt.anim.SpringOrbit;
+import org.andork.jogl.ProjectionCalculator;
+import org.andork.jogl.awt.anim.GeneralViewXformOrbitAnimation;
+import org.andork.jogl.awt.anim.ProjXformAnimation;
+import org.andork.jogl.awt.anim.RandomViewOrbitAnimation;
+import org.andork.jogl.awt.anim.SinusoidalViewTranslationAnimation;
+import org.andork.jogl.awt.anim.SpringViewOrbitAnimation;
+import org.andork.jogl.awt.anim.ViewXformAnimation;
 import org.andork.jogl.neu.JoglScene;
 import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
+import org.andork.math3d.NewPlanarHull3f;
 import org.andork.math3d.Vecmath;
 import org.andork.q.QArrayList;
 import org.andork.q.QLinkedHashMap;
@@ -118,31 +129,21 @@ import org.andork.swing.async.TaskService;
 import org.andork.swing.async.TaskServiceBatcher;
 import org.andork.swing.async.TaskServiceFilePersister;
 import org.andork.swing.async.TaskServiceSubtaskFilePersister;
-import org.andork.swing.border.InnerGradientBorder;
-import org.andork.swing.border.LayeredBorder;
-import org.andork.swing.border.OverrideInsetsBorder;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 import org.andork.swing.table.RowFilterFactory;
 
-import com.andork.plot.AxisLinkButton;
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
-import com.andork.plot.Plot;
 import com.andork.plot.PlotAxis;
-import com.andork.plot.PlotAxis.LabelPosition;
-import com.andork.plot.PlotAxis.Orientation;
-import com.andork.plot.PlotAxisController;
 import com.andork.plot.PlotController;
-import com.andork.plot.PlotPanelLayout;
 
 public class BreakoutMainView extends BasicJoglSetup
 {
 	I18n												i18n						= new I18n( );
 	
 	PerspectiveProjectionCalculator						perspCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
-	OrthoProjectionCalculator							orthoCalculator				= new OrthoProjectionCalculator( -1 , 1 , -1 , 1 , -10000 , 10000 );
 	DefaultNavigator									navigator;
 	
 	TaskService											rebuildTaskService;
@@ -158,11 +159,6 @@ public class BreakoutMainView extends BasicJoglSetup
 	final double[ ]										leftAtTo2					= new double[ 3 ];
 	final double[ ]										leftAtFrom					= new double[ 3 ];
 	
-	PlotAxis											xaxis;
-	PlotAxis											yaxis;
-	AxisLinkButton										axisLinkButton;
-	Plot												plot;
-	JPanel												plotPanel;
 	JPanel												mainPanel;
 	JLayeredPane										layeredPane;
 	
@@ -171,7 +167,6 @@ public class BreakoutMainView extends BasicJoglSetup
 	// normal mouse mode
 	MouseLooper											mouseLooper;
 	MouseAdapterChain									mouseAdapterChain;
-	PlotController										plotController;
 	MousePickHandler									pickHandler;
 	DrawerAutoshowController							autoshowController;
 	OtherMouseHandler									otherMouseHandler;
@@ -220,6 +215,8 @@ public class BreakoutMainView extends BasicJoglSetup
 	ExportProjectArchiveAction							exportProjectArchiveAction	= new ExportProjectArchiveAction( this );
 	ExportImageAction									exportImageAction			= new ExportImageAction( this );
 	
+	final WeakHashMap<Animation, Object>				protectedAnimations			= new WeakHashMap<>( );
+	
 	public BreakoutMainView( )
 	{
 		super( createCanvas( ) );
@@ -264,57 +261,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		};
 		
-		plot = new Plot( );
-		plot.setLayout( new BorderLayout( ) );
-		plot.add( canvas , BorderLayout.CENTER );
-		
-		xaxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
-		xaxis.setBorder( new InnerGradientBorder( new Insets( 0 , 0 , 4 , 0 ) , Color.GRAY ) );
-		LayeredBorder.addOnTop( new InnerGradientBorder( new Insets( 0 , 20 , 0 , 20 ) , new Color( 240 , 240 , 240 ) ) , xaxis );
-		OverrideInsetsBorder.override( xaxis , new Insets( 0 , 0 , 0 , 0 ) );
-		
-		yaxis = new PlotAxis( Orientation.VERTICAL , LabelPosition.LEFT );
-		yaxis.setBorder( new InnerGradientBorder( new Insets( 0 , 0 , 0 , 4 ) , Color.GRAY ) );
-		LayeredBorder.addOnTop( new InnerGradientBorder( new Insets( 20 , 0 , 20 , 0 ) , new Color( 240 , 240 , 240 ) ) , yaxis );
-		OverrideInsetsBorder.override( yaxis , new Insets( 0 , 0 , 0 , 0 ) );
-		
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
-		
-		yaxis.getAxisConversion( ).set( 50 , 0 , -50 , 400 );
-		
-		xaxis.addPlot( plot );
-		yaxis.addPlot( plot );
-		
-		PlotAxisController xAxisController = new PlotAxisController( xaxis )
-		{
-			@Override
-			protected void setAxisRange( double start , double end )
-			{
-				super.setAxisRange( start , end );
-				OrthoProjectionCalculator calc = ( OrthoProjectionCalculator ) scene.getProjectionCalculator( );
-				orthoCalculator.orthoFrame[ 0 ] = ( float ) xaxis.getAxisConversion( ).invert( 0 );
-				orthoCalculator.orthoFrame[ 1 ] = ( float ) xaxis.getAxisConversion( ).invert( plot.getWidth( ) );
-				scene.recalculateProjection( );
-				canvas.repaint( );
-			}
-		};
-		PlotAxisController yAxisController = new PlotAxisController( yaxis )
-		{
-			@Override
-			protected void setAxisRange( double start , double end )
-			{
-				super.setAxisRange( start , end );
-				orthoCalculator.orthoFrame[ 2 ] = ( float ) yaxis.getAxisConversion( ).invert( plot.getHeight( ) );
-				orthoCalculator.orthoFrame[ 3 ] = ( float ) yaxis.getAxisConversion( ).invert( 0 );
-				scene.recalculateProjection( );
-				canvas.repaint( );
-			}
-		};
-		
-		axisLinkButton = new AxisLinkButton( xAxisController , yAxisController );
-		axisLinkButton.setSelected( true );
-		
-		plotController = new PlotController( plot , xAxisController , yAxisController );
 		
 		pickHandler = new MousePickHandler( );
 		
@@ -392,16 +339,9 @@ public class BreakoutMainView extends BasicJoglSetup
 		otherMouseHandler = new OtherMouseHandler( );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
-		mouseAdapterChain.addMouseAdapter( plotController );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
 		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
-		
-		plotPanel = new JPanel( new PlotPanelLayout( ) );
-		plotPanel.add( plot );
-		plotPanel.add( xaxis );
-		plotPanel.add( yaxis );
-		plotPanel.add( axisLinkButton , Corner.TOP_LEFT );
 		
 		canvas.removeMouseListener( super.navigator );
 		canvas.removeMouseMotionListener( super.navigator );
@@ -410,8 +350,6 @@ public class BreakoutMainView extends BasicJoglSetup
 		canvas.removeMouseListener( orbiter );
 		canvas.removeMouseMotionListener( orbiter );
 		canvas.removeMouseWheelListener( orbiter );
-		
-		perspectiveMode( );
 		
 		layeredPane = new JLayeredPane( );
 		layeredPane.setLayout( new DelegatingLayoutManager( )
@@ -441,7 +379,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		surveyTableChangeHandler = new SurveyTableChangeHandler( rebuildTaskService );
 		surveyDrawer.table( ).getModel( ).addTableModelListener( surveyTableChangeHandler );
 		
-		layeredPane.add( plotPanel );
+		layeredPane.add( canvas );
 		surveyDrawer.addTo( layeredPane , 5 );
 		
 		mainPanel = new JPanel( new BorderLayout( ) );
@@ -834,6 +772,11 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
+		settingsDrawer.getResetViewButton( ).addActionListener( e -> {
+			scene.setViewXform( newMat4f( ) );
+			canvas.repaint( );
+		} );
+		
 		settingsDrawer.getOrbitToPlanButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -852,8 +795,11 @@ public class BreakoutMainView extends BasicJoglSetup
 					model3d.getCenter( center );
 				}
 				
-				cameraAnimationQueue.clear( );
-				cameraAnimationQueue.add( new SpringOrbit( BreakoutMainView.this , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
+				float[ ] v = newMat4f( );
+				scene.getViewXform( v );
+				
+				removeUnprotectedCameraAnimations( );
+				cameraAnimationQueue.add( new SpringViewOrbitAnimation( BreakoutMainView.this , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
 				cameraAnimationQueue.add( new AnimationViewSaver( ) );
 			}
 		} );
@@ -1053,8 +999,8 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		frustum.calculateOrigin( coord );
 		
-		cameraAnimationQueue.clear( );
-		cameraAnimationQueue.add( new SinusoidalTranslation( this , coord , 30 , 1000 ) );
+		removeUnprotectedCameraAnimations( );
+		cameraAnimationQueue.add( new SinusoidalViewTranslationAnimation( this , coord , 30 , 1000 ) );
 		cameraAnimationQueue.add( new AnimationViewSaver( ) );
 	}
 	
@@ -1094,8 +1040,8 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		frustum.calculateOrigin( coord );
 		
-		cameraAnimationQueue.clear( );
-		cameraAnimationQueue.add( new SinusoidalTranslation( this , coord , 30 , 1000 ) );
+		removeUnprotectedCameraAnimations( );
+		cameraAnimationQueue.add( new SinusoidalViewTranslationAnimation( this , coord , 30 , 1000 ) );
 		cameraAnimationQueue.add( new AnimationViewSaver( ) );
 	}
 	
@@ -1116,8 +1062,8 @@ public class BreakoutMainView extends BasicJoglSetup
 			model3d.getCenter( center );
 		}
 		
-		cameraAnimationQueue.clear( );
-		cameraAnimationQueue.add( new SpringOrbit( this , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
+		removeUnprotectedCameraAnimations( );
+		cameraAnimationQueue.add( new SpringViewOrbitAnimation( this , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
 		cameraAnimationQueue.add( new AnimationViewSaver( ) );
 		cameraAnimationQueue.add( new Animation( )
 		{
@@ -1140,7 +1086,7 @@ public class BreakoutMainView extends BasicJoglSetup
 								model3d.getCenter( center );
 							}
 							
-							cameraAnimationQueue.add( new RandomOrbit( BreakoutMainView.this , center , 0.0005f ,
+							cameraAnimationQueue.add( new RandomViewOrbitAnimation( BreakoutMainView.this , center , 0.0005f ,
 									( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 60000 ) );
 						} ) );
 				return 0;
@@ -1192,86 +1138,177 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	public void planMode( )
 	{
-		orthoMode( );
+		orthoMode( new float[ ] { 0 , -1 , 0 } , new float[ ] { 1 , 0 , 0 } );
 		
-		scene.getViewXform( v );
-		Vecmath.setRow4( v , 0 , 1 , 0 , 0 , 0 );
-		Vecmath.setRow4( v , 1 , 0 , 0 , -1 , 0 );
-		Vecmath.setRow4( v , 2 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
-		scene.setViewXform( v );
+		// scene.getViewXform( v );
+		// Vecmath.setRow4( v , 0 , 1 , 0 , 0 , 0 );
+		// Vecmath.setRow4( v , 1 , 0 , 0 , -1 , 0 );
+		// Vecmath.setRow4( v , 2 , 0 , 1 , 0 , 0 );
+		// Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
+		// scene.setViewXform( v );
 	}
 	
 	public void northFacingProfileMode( )
 	{
-		orthoMode( );
-		
-		scene.getViewXform( v );
-		Vecmath.setRow4( v , 0 , 1 , 0 , 0 , 0 );
-		Vecmath.setRow4( v , 1 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( v , 2 , 0 , 0 , 1 , 0 );
-		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
-		scene.setViewXform( v );
+		orthoMode( new float[ ] { 0 , 0 , -1 } , new float[ ] { 1 , 0 , 0 } );
 	}
 	
 	public void southFacingProfileMode( )
 	{
-		orthoMode( );
-		
-		scene.getViewXform( v );
-		Vecmath.setRow4( v , 0 , -1 , 0 , 0 , 0 );
-		Vecmath.setRow4( v , 1 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( v , 2 , 0 , 0 , -1 , 0 );
-		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
-		scene.setViewXform( v );
+		orthoMode( new float[ ] { 0 , 0 , 1 } , new float[ ] { -1 , 0 , 0 } );
 	}
 	
 	public void eastFacingProfileMode( )
 	{
-		orthoMode( );
-		
-		scene.getViewXform( v );
-		Vecmath.setRow4( v , 0 , 0 , 0 , 1 , 0 );
-		Vecmath.setRow4( v , 1 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( v , 2 , -1 , 0 , 0 , 0 );
-		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
-		scene.setViewXform( v );
+		orthoMode( new float[ ] { 1 , 0 , 0 } , new float[ ] { 0 , 0 , 1 } );
 	}
 	
 	public void westFacingProfileMode( )
 	{
-		orthoMode( );
-		
-		scene.getViewXform( v );
-		Vecmath.setRow4( v , 0 , 0 , 0 , -1 , 0 );
-		Vecmath.setRow4( v , 1 , 0 , 1 , 0 , 0 );
-		Vecmath.setRow4( v , 2 , 1 , 0 , 0 , 0 );
-		Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
-		scene.setViewXform( v );
+		orthoMode( new float[ ] { -1 , 0 , 0 } , new float[ ] { 0 , 0 , -1 } );
 	}
 	
-	private void orthoMode( )
+	private void orthoMode( float[ ] orthoForward , float[ ] orthoRight )
 	{
-		xaxis.setVisible( true );
-		yaxis.setVisible( true );
-		
 		mouseLooper.removeMouseAdapter( mouseAdapterChain );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
-		mouseAdapterChain.addMouseAdapter( plotController );
+		mouseAdapterChain.addMouseAdapter( orthoNavigator );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
 		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
-		scene.setProjectionCalculator( orthoCalculator );
+		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( this , 1000 , 30 );
+		float[ ] viewXform = newMat4f( );
+		
+		float[ ] orthoUp = new float[ 3 ];
+		Vecmath.cross( orthoRight , orthoForward , orthoUp );
+		
+		NewPlanarHull3f hull = new NewPlanarHull3f( );
+		scene.pickXform( ).exportViewVolume( hull , canvas.getWidth( ) , canvas.getHeight( ) );
+		
+		AutoClipOrthoProjectionCalculator orthoCalculator = new AutoClipOrthoProjectionCalculator( );
+		orbiter.getCenter( orthoCalculator.center );
+		
+		//		BasicJOGLObject bounds = new BasicJOGLObject( );
+		//		BufferHelper bufferHelper = new BufferHelper( );
+		//		for( float[ ] vertex : hull.vertices )
+		//		{
+		//			bufferHelper.put( vertex );
+		//		}
+		//		bounds.addVertexBuffer( bufferHelper.toByteBuffer( ) );
+		//		BufferHelper indexBufferHelper = new BufferHelper( );
+		//		indexBufferHelper.put( 0 , 1 , 0 , 2 , 1 , 3 , 2 , 3 , 4 , 5 , 4 , 6 , 5 , 7 , 6 , 7 , 0 , 4 , 1 , 5 , 2 , 6 , 3 , 7 );
+		//		bounds.indexBuffer( indexBufferHelper.toByteBuffer( ) );
+		//		bounds.vertexCount( 8 );
+		//		bounds.indexCount( 24 );
+		//		bounds.indexType( GL.GL_UNSIGNED_INT );
+		//		bounds.drawMode( GL.GL_LINES );
+		//		bounds.vertexShaderCode( new BasicVertexShader( ).toString( ) ).add( bounds.new Attribute3fv( ).name( "a_pos" ) );
+		//		bounds.fragmentShaderCode( new FlatFragmentShader( ).color( 0 , 1 , 0 , 1 ).toString( ) );
+		//		
+		//		BasicJOGLObject normals = new BasicJOGLObject( );
+		//		bufferHelper = new BufferHelper( );
+		//		for( int side = 0 ; side < hull.origins.length ; side++ )
+		//		{
+		//			bufferHelper.put( hull.origins[ side ] );
+		//			bufferHelper.put( hull.origins[ side ][ 0 ] + hull.normals[ side ][ 0 ] * 50 );
+		//			bufferHelper.put( hull.origins[ side ][ 1 ] + hull.normals[ side ][ 1 ] * 50 );
+		//			bufferHelper.put( hull.origins[ side ][ 2 ] + hull.normals[ side ][ 2 ] * 50 );
+		//		}
+		//		normals.addVertexBuffer( bufferHelper.toByteBuffer( ) );
+		//		normals.vertexCount( 12 );
+		//		normals.drawMode( GL.GL_LINES );
+		//		normals.vertexShaderCode( new BasicVertexShader( ).toString( ) ).add( normals.new Attribute3fv( ).name( "a_pos" ) );
+		//		normals.fragmentShaderCode( new FlatFragmentShader( ).color( 1 , 1 , 0 , 1 ).toString( ) );
+		//		
+		//		canvas.invoke( false , drawable -> {
+		//			bounds.init( ( GL2ES2 ) drawable.getGL( ) );
+		//			scene.add( bounds );
+		//			normals.init( ( GL2ES2 ) drawable.getGL( ) );
+		//			scene.add( normals );
+		//			return false;
+		//		} );
+		
+		if( model3d != null )
+		{
+			orthoCalculator.radius = Rectmath.radius3( model3d.getTree( ).getRoot( ).mbr( ) );
+			Set<Shot3d> shotsToFit = model3d.getSelectedShots( );
+			if( shotsToFit.size( ) < 2 )
+			{
+				shotsToFit = model3d.getShotsIn( hull );
+			}
+			float[ ] orthoBounds = model3d.getOrthoBounds( shotsToFit , orthoRight , orthoUp , orthoForward );
+			
+			float[ ] endOrthoLocation = new float[ 3 ];
+			Rectmath.center( orthoBounds , endOrthoLocation );
+			
+			float[ ] endLocation = new float[ 3 ];
+			Vecmath.combine( endLocation , endOrthoLocation , orthoRight , orthoUp , orthoForward );
+			
+			float dist = Vecmath.distance3( scene.inverseViewXform( ) , 12 , endLocation , 0 );
+			endOrthoLocation[ 2 ] -= dist;
+			Vecmath.combine( endLocation , endOrthoLocation , orthoRight , orthoUp , orthoForward );
+			
+			Rectmath.center( orthoBounds , endOrthoLocation );
+			endOrthoLocation[ 2 ] = orthoBounds[ 2 ];
+			Vecmath.combine( orthoCalculator.nearClipPoint , endOrthoLocation , orthoRight , orthoUp , orthoForward );
+			endOrthoLocation[ 2 ] = orthoBounds[ 5 ];
+			Vecmath.combine( orthoCalculator.farClipPoint , endOrthoLocation , orthoRight , orthoUp , orthoForward );
+			
+			orthoCalculator.hSpan = ( orthoBounds[ 3 ] - orthoBounds[ 0 ] );
+			orthoCalculator.vSpan = ( orthoBounds[ 4 ] - orthoBounds[ 1 ] );
+			viewAnimation.setUpWithEndLocation( scene.viewXform( ) , endLocation , orthoForward , orthoRight );
+		}
+		
+		ProjectionCalculator currentProjCalculator = scene.getProjectionCalculator( );
+		
+		InterpolationProjectionCalculator calc = new InterpolationProjectionCalculator(
+				scene.getProjectionCalculator( ) , orthoCalculator , 0f );
+		
+		FloatUnaryOperator viewReparam = f -> 1 - ( 1 - f ) * ( 1 - f );
+		FloatUnaryOperator projReparam;
+		if( currentProjCalculator instanceof AutoClipOrthoProjectionCalculator )
+		{
+			AutoClipOrthoProjectionCalculator currentOrthoCalc = ( AutoClipOrthoProjectionCalculator ) currentProjCalculator;
+			currentOrthoCalc.useNearClipPoint = currentOrthoCalc.useFarClipPoint = false;
+			projReparam = viewReparam;
+		}
+		else
+		{
+			float b = 10f;
+			float a = 1 / b;
+			float ra = 1 / a / a;
+			float rb = 1 / b / b;
+			projReparam = f -> {
+				float ff = a + f * ( b - a );
+				float rf = 1 / ff / ff;
+				return viewReparam.applyAsFloat( ( rf - ra ) / ( rb - ra ) );
+			};
+		}
+		
+		removeUnprotectedCameraAnimations( );
+		cameraAnimationQueue.add( new ProjXformAnimation( this , 1000 , false , f -> {
+			calc.f = projReparam.applyAsFloat( f );
+			return calc;
+		} ).also( new ViewXformAnimation( this , 1000 , true , f -> {
+			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
+			return viewXform;
+		} ) ) );
+		Animation finisher = l -> {
+			orthoCalculator.useNearClipPoint = orthoCalculator.useFarClipPoint = true;
+			scene.setProjectionCalculator( orthoCalculator );
+			canvas.display( );
+			return 0;
+		};
+		finisher = finisher.also( new AnimationViewSaver( ) );
+		protectedAnimations.put( finisher , null );
+		cameraAnimationQueue.add( finisher );
 	}
 	
 	public void perspectiveMode( )
 	{
-		xaxis.setVisible( false );
-		yaxis.setVisible( false );
-		
 		mouseLooper.removeMouseAdapter( mouseAdapterChain );
 		
 		mouseAdapterChain = new MouseAdapterChain( );
@@ -1282,7 +1319,28 @@ public class BreakoutMainView extends BasicJoglSetup
 		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 		
-		scene.setProjectionCalculator( perspCalculator );
+		InterpolationProjectionCalculator calc = new InterpolationProjectionCalculator( scene.getProjectionCalculator( ) , perspCalculator , 0f );
+		
+		float b = 10f;
+		float a = 1 / b;
+		float ra = 1 / a / a;
+		float rb = 1 / b / b;
+		
+		removeUnprotectedCameraAnimations( );
+		cameraAnimationQueue.add( new ProjXformAnimation( this , 1000 , true , f -> {
+			float ff = b + f * ( a - b );
+			float rf = 1 / ff / ff;
+			calc.f = ( rf - rb ) / ( ra - rb );
+			return calc;
+		} ) );
+		Animation finisher = l -> {
+			scene.setProjectionCalculator( perspCalculator );
+			canvas.display( );
+			return 0;
+		};
+		finisher = finisher.also( new AnimationViewSaver( ) );
+		protectedAnimations.put( finisher , null );
+		cameraAnimationQueue.add( finisher );
 	}
 	
 	public JPanel getMainPanel( )
@@ -1368,7 +1426,8 @@ public class BreakoutMainView extends BasicJoglSetup
 	{
 		float[ ] origin = new float[ 3 ];
 		float[ ] direction = new float[ 3 ];
-		scene.pickXform( ).xform( e.getX( ) , e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
+		scene.pickXform( ).xform( e.getX( ) , e.getComponent( ).getHeight( ) - e.getY( ) ,
+				e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
 		
 		if( model3d != null )
 		{
@@ -2205,6 +2264,11 @@ public class BreakoutMainView extends BasicJoglSetup
 	public void openSurveyFile( File newSurveyFile )
 	{
 		ioTaskService.submit( new OpenSurveyTask( newSurveyFile ) );
+	}
+	
+	protected void removeUnprotectedCameraAnimations( )
+	{
+		cameraAnimationQueue.removeAll( anim -> !protectedAnimations.containsKey( anim ) );
 	}
 	
 	private class OpenSurveyTask extends SelfReportingTask

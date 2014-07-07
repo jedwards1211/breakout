@@ -1,20 +1,43 @@
 package org.andork.jogl;
 
+import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.math3d.Vecmath;
 
 public class OrthoProjectionCalculator implements ProjectionCalculator
 {
-	public final float[ ]	orthoFrame	= new float[ 6 ];
+	public float	zNear;
+	public float	zFar;
 	
-	public OrthoProjectionCalculator( float ... orthoFrame )
+	public float	hSpan;
+	public float	vSpan;
+	
+	public OrthoProjectionCalculator( float hSpan , float zNear , float zFar )
 	{
-		System.arraycopy( orthoFrame , 0 , this.orthoFrame , 0 , 6 );
+		this.hSpan = hSpan;
+		this.zNear = zNear;
+		this.zFar = zFar;
 	}
 	
 	@Override
-	public void calculate( float width , float height , float[ ] pOut )
+	public void calculate( JoglDrawContext dc , float[ ] pOut )
 	{
-		Vecmath.ortho( pOut , orthoFrame[ 0 ] , orthoFrame[ 1 ] , orthoFrame[ 2 ] , orthoFrame[ 3 ] , orthoFrame[ 4 ] , orthoFrame[ 5 ] );
+		float width = dc.getWidth( );
+		float height = dc.getHeight( );
+		float left, right, bottom, top;
+		if( vSpan / hSpan > height / width )
+		{
+			top = vSpan / 2;
+			bottom = -top;
+			right = top * width / height;
+			left = -right;
+		}
+		else
+		{
+			right = hSpan / 2;
+			left = -right;
+			top = right * height / width;
+			bottom = -top;
+		}
+		Vecmath.ortho( pOut , left , right , bottom , top , zNear , zFar );
 	}
-	
 }

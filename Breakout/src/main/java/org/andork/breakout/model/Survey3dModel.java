@@ -1,6 +1,22 @@
 package org.andork.breakout.model;
 
-import static javax.media.opengl.GL.*;
+import static javax.media.opengl.GL.GL_ARRAY_BUFFER;
+import static javax.media.opengl.GL.GL_CLAMP_TO_EDGE;
+import static javax.media.opengl.GL.GL_DEPTH_TEST;
+import static javax.media.opengl.GL.GL_ELEMENT_ARRAY_BUFFER;
+import static javax.media.opengl.GL.GL_FLOAT;
+import static javax.media.opengl.GL.GL_LINEAR;
+import static javax.media.opengl.GL.GL_LINES;
+import static javax.media.opengl.GL.GL_RGBA;
+import static javax.media.opengl.GL.GL_TEXTURE0;
+import static javax.media.opengl.GL.GL_TEXTURE_2D;
+import static javax.media.opengl.GL.GL_TEXTURE_MAG_FILTER;
+import static javax.media.opengl.GL.GL_TEXTURE_MIN_FILTER;
+import static javax.media.opengl.GL.GL_TEXTURE_WRAP_S;
+import static javax.media.opengl.GL.GL_TEXTURE_WRAP_T;
+import static javax.media.opengl.GL.GL_TRIANGLE_STRIP;
+import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
+import static javax.media.opengl.GL.GL_UNSIGNED_INT;
 import static org.andork.math3d.Vecmath.setf;
 import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
@@ -33,18 +49,17 @@ import java.util.stream.Stream;
 
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GL3;
-import javax.media.opengl.GL4;
 
 import org.andork.breakout.PickResult;
 import org.andork.breakout.awt.ParamGradientMapPaint;
 import org.andork.collect.HashSetMultiMap;
 import org.andork.collect.MultiMap;
+import org.andork.func.FloatBinaryOperator;
 import org.andork.graph.Graphs;
 import org.andork.jogl.BasicJOGLObject.Uniform1fv;
 import org.andork.jogl.BasicJOGLObject.Uniform3fv;
 import org.andork.jogl.BasicJOGLObject.Uniform4fv;
 import org.andork.jogl.BufferHelper;
-import org.andork.jogl.FromJogl;
 import org.andork.jogl.SharedBuffer;
 import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.neu.JoglDrawable;
@@ -52,10 +67,13 @@ import org.andork.jogl.neu.JoglResource;
 import org.andork.jogl.util.JOGLUtils;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
+import org.andork.math3d.NewPlanarHull3f;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.RBranch;
 import org.andork.spatial.RLeaf;
 import org.andork.spatial.RNode;
+import org.andork.spatial.RTraversal;
+import org.andork.spatial.Rectmath;
 import org.andork.spatial.RfStarTree;
 import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
@@ -63,6 +81,7 @@ import org.andork.spatial.RfStarTree.Node;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.Task;
 import org.andork.util.IterableUtils;
+import org.omg.CORBA.FloatHolder;
 
 import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
@@ -368,9 +387,9 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				mbr[ 5 ] = nmax( mbr[ 5 ] , z );
 			}
 			
-			RfStarTree.Leaf<Shot3d> leaf = tree.createLeaf( mbr , shot3ds.get( s ) );
-			
-			tree.insert( leaf );
+			Shot3d shot = shot3ds.get( s );
+			shot.leaf = tree.createLeaf( mbr , shot );
+			tree.insert( shot.leaf );
 			
 			if( ( s % 100 ) == 0 && task.isCanceling( ) )
 			{
@@ -927,10 +946,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	
 	public static class Shot3d
 	{
-		int			number;
+		int						number;
 		
-		Segment3d	segment3d;
-		int			indexInSegment;
+		Segment3d				segment3d;
+		int						indexInSegment;
+		
+		RfStarTree.Leaf<Shot3d>	leaf;
 		
 		Shot3d( int number )
 		{
@@ -1295,6 +1316,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 					i++ ;
 				}
 			}
+		}
+		
+		public void unionMbrInto( float[ ] mbr )
+		{
+			Rectmath.union3( mbr , leaf.mbr( ) , mbr );
 		}
 	}
 	
@@ -2297,5 +2323,88 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				segment3d.stationAttrsNeedRebuffering.set( true );
 			}
 		}
+	}
+	
+	public Set<Shot3d> getShotsIn( NewPlanarHull3f hull )
+	{
+		Set<Shot3d> result = new HashSet<Shot3d>( );
+		
+		RTraversal.traverse( getTree( ).getRoot( ) , node -> {
+			if( hull.containsBox( node.mbr( ) ) )
+			{
+				RTraversal.traverse( node , node2 -> true , leaf -> result.add( leaf.object( ) ) );
+				return false;
+			}
+			return hull.intersectsBox( node.mbr( ) );
+		} , leaf -> {
+			for( float[ ] coord : leaf.object( ).coordIterable( ) )
+			{
+				if( !hull.containsPoint( coord ) )
+				{
+					return true;
+				}
+			}
+			result.add( leaf.object( ) );
+			return true;
+		} );
+		
+		return result;
+	}
+	
+	public float[ ] getOrthoBounds( Set<Shot3d> shotsInView , float[ ] orthoRight , float[ ] orthoUp , float[ ] orthoForward )
+	{
+		float[ ] result = new float[ 6 ];
+		
+		float[ ] shotsInViewMbr = Rectmath.voidRectf( 3 );
+		
+		for( Shot3d shot : shotsInView )
+		{
+			shot.unionMbrInto( shotsInViewMbr );
+		}
+		
+		FloatBinaryOperator minFunc = ( a , b ) -> Float.isNaN( a ) || b < a ? b : a;
+		FloatBinaryOperator maxFunc = ( a , b ) -> Float.isNaN( a ) || b > a ? b : a;
+		
+		result[ 0 ] = getFarthestExtent( shotsInView , shotsInViewMbr , orthoRight , minFunc );
+		result[ 1 ] = getFarthestExtent( shotsInView , shotsInViewMbr , orthoUp , minFunc );
+		result[ 2 ] = getFarthestExtent( shotsInView , shotsInViewMbr , orthoForward , minFunc );
+		result[ 3 ] = getFarthestExtent( shotsInView , shotsInViewMbr , orthoRight , maxFunc );
+		result[ 4 ] = getFarthestExtent( shotsInView , shotsInViewMbr , orthoUp , maxFunc );
+		result[ 5 ] = getFarthestExtent( shotsInView , shotsInViewMbr , orthoForward , maxFunc );
+		
+		return result;
+	}
+	
+	private float getFarthestExtent( Set<Shot3d> shotsInView , float[ ] shotsInViewMbr , float[ ] direction , FloatBinaryOperator extentFunction )
+	{
+		FloatHolder farthest = new FloatHolder( Float.NaN );
+		
+		float[ ] testPoint = new float[ 3 ];
+		
+		RTraversal.traverse( getTree( ).getRoot( ) ,
+				node -> {
+					if( !Rectmath.intersects3( shotsInViewMbr , node.mbr( ) ) )
+					{
+						return false;
+					}
+					//					return Rectmath.findCorner3( node.mbr( ) , testPoint , corner -> {
+					//						float dist = Vecmath.dot3( corner , direction );
+					//						return farthest.value != extentFunction.applyAsFloat( farthest.value , dist ) ? true : null;
+					//					} ) != null;
+					return true;
+				} ,
+				leaf -> {
+					if( shotsInView.contains( leaf.object( ) ) )
+					{
+						for( float[ ] coord : leaf.object( ).coordIterable( ) )
+						{
+							float dist = Vecmath.dot3( coord , direction );
+							farthest.value = extentFunction.applyAsFloat( farthest.value , dist );
+						}
+					}
+					return true;
+				} );
+		
+		return farthest.value;
 	}
 }

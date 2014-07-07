@@ -9,4 +9,22 @@ public abstract interface Animation
 	 *         {@link #animate()} again in that many milliseconds.
 	 */
 	public abstract long animate( long animTime );
+	
+	public default Animation also( Animation simultaneous )
+	{
+		return animTime -> {
+			long myResult = animate( animTime );
+			long simultaneousResult = simultaneous.animate( animTime );
+			
+			if( myResult > 0 )
+			{
+				if( simultaneousResult > 0 )
+				{
+					return Math.min( myResult , simultaneousResult );
+				}
+				return myResult;
+			}
+			return simultaneousResult;
+		};
+	}
 }

@@ -1,6 +1,8 @@
 package org.andork.spatial;
 
 import java.util.Arrays;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class Rectmath
 {
@@ -77,7 +79,7 @@ public class Rectmath
 		ppunion( p1 , p2 , rout );
 		return rout;
 	}
-
+	
 	public static void ppunion( double[ ] p1 , double[ ] p2 , double[ ] rout )
 	{
 		for( int d = 0 ; d < p1.length ; d++ )
@@ -508,5 +510,60 @@ public class Rectmath
 		{
 			out[ i ] = ( r[ i ] + r[ i + out.length ] ) * 0.5f;
 		}
+	}
+	
+	public static void forEachCorner3( float[ ] r , float[ ] cornerHolder , Predicate<float[ ]> consumeAndContinue )
+	{
+		for( int x = 0 ; x < 3 ; x += 3 )
+		{
+			cornerHolder[ 0 ] = r[ x ];
+			for( int y = 1 ; y < 4 ; y += 3 )
+			{
+				cornerHolder[ 1 ] = r[ y ];
+				for( int z = 2 ; z < 5 ; z += 3 )
+				{
+					cornerHolder[ 2 ] = r[ z ];
+					if( !consumeAndContinue.test( cornerHolder ) )
+					{
+						return;
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * @return the first non-null result of applying {@code function} on each corner, or null if no non-null
+	 *         results were found.
+	 */
+	public static <T> T findCorner3( float[ ] r , float[ ] cornerHolder , Function<float[ ], T> function )
+	{
+		for( int x = 0 ; x < 3 ; x += 3 )
+		{
+			cornerHolder[ 0 ] = r[ x ];
+			for( int y = 1 ; y < 4 ; y += 3 )
+			{
+				cornerHolder[ 1 ] = r[ y ];
+				for( int z = 2 ; z < 5 ; z += 3 )
+				{
+					cornerHolder[ 2 ] = r[ z ];
+					T result = function.apply( cornerHolder );
+					if( result != null )
+					{
+						return result;
+					}
+				}
+			}
+		}
+		return null;
+	}
+	
+	public static float radius3( float[ ] mbr )
+	{
+		float dx = mbr[ 3 ] - mbr[ 0 ];
+		float dy = mbr[ 4 ] - mbr[ 1 ];
+		float dz = mbr[ 5 ] - mbr[ 2 ];
+		
+		return ( float ) Math.sqrt( dx * dx + dy * dy + dz + dz ) / 2f;
 	}
 }

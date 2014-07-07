@@ -955,15 +955,15 @@ public class MatrixUtils
 	 *            <pre>
 	 * [  0,  0, a3, a0,
 	 *    0,  0, b3, b0,
-	 *    0,  0,  1, c0 ]
+	 *    0,  0,  1,  0 ]
 	 * </pre>
 	 * 
 	 *            Represents the solutions
 	 * 
 	 *            <pre>
-	 * x1 = (0 * x1) + (0 * x2) + a3 * x3 + a0
-	 * x2 = (0 * x1) + (0 * x2) + b3 * x3 + b0
-	 * x3 = (0 * x1) + (0 * x2) +  1 * x3 + c0
+	 * x1 = 0 * x1 + 0 * x2 + a3 * x3 + a0
+	 * x2 = 0 * x1 + 0 * x2 + b3 * x3 + b0
+	 * x3 = 0 * x1 + 0 * x2 +  1 * x3 +  0
 	 * </pre>
 	 * 
 	 *            Only the free variables will have nonzero coefficients for themselves. For a 3 variable homogeneous matrix, the output would lack the

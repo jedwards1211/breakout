@@ -23,9 +23,9 @@ public class CollectionUtils
 	 * Finds the closest element to a given value in a list.
 	 * 
 	 * @param list
-	 *            the list to search through, sorted in ascending order.
+	 *        the list to search through, sorted in ascending order.
 	 * @param value
-	 *            the target value.
+	 *        the target value.
 	 * @return the element of {@code list} closest to {@code value}, or {@code null} if {@code list} is empty.
 	 */
 	public static int findClosestIndex( List<Double> list , Double value )
@@ -54,9 +54,9 @@ public class CollectionUtils
 	 * Finds the index of the first element in the given list of the given type.
 	 * 
 	 * @param list
-	 *            the list to search through.
+	 *        the list to search through.
 	 * @param type
-	 *            the type to find.
+	 *        the type to find.
 	 * @return the index of the first element in {@code list} that is an instance of {@code type}, or -1 if no such element is in {@code list}.
 	 */
 	public static <T> int indexOfInstance( List<T> list , Class<? extends T> type )
@@ -77,9 +77,9 @@ public class CollectionUtils
 	 * Gets the index of the first element in the given list of the given type.
 	 * 
 	 * @param list
-	 *            the list to search through.
+	 *        the list to search through.
 	 * @param type
-	 *            the type to find.
+	 *        the type to find.
 	 * @return the first element in {@code list} that is an instance of {@code type}, or {@code null} if no such element is in {@code list}.
 	 */
 	@SuppressWarnings( "unchecked" )
@@ -152,6 +152,18 @@ public class CollectionUtils
 		}
 	}
 	
+	public static <E> void removeAll( Iterable<E> c , java.util.function.Predicate<E> p )
+	{
+		Iterator<E> i = c.iterator( );
+		while( i.hasNext( ) )
+		{
+			if( p.test( i.next( ) ) )
+			{
+				i.remove( );
+			}
+		}
+	}
+	
 	public static <T> void addAll( Collection<T> c , Iterable<? extends T> i )
 	{
 		for( T t : i )
@@ -192,11 +204,11 @@ public class CollectionUtils
 	 * Adds the first {@code count} elements of an {@link Iterable} to a {@link Collection}, or all of the elements if there are fewer than {@code count}.
 	 * 
 	 * @param count
-	 *            the maximum number of elements to take.
+	 *        the maximum number of elements to take.
 	 * @param i
-	 *            the {@link Iterable} to take elements from.
+	 *        the {@link Iterable} to take elements from.
 	 * @param collection
-	 *            the {@link Collection} to add the taken elements to.
+	 *        the {@link Collection} to add the taken elements to.
 	 */
 	public static <T> void take( int count , Iterable<? extends T> i , Collection<T> collection )
 	{

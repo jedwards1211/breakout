@@ -1,11 +1,12 @@
 package org.andork.jogl.neu;
 
 import static javax.media.opengl.GL.GL_COLOR_ATTACHMENT0;
+
 import static javax.media.opengl.GL.GL_DEPTH_ATTACHMENT;
 import static javax.media.opengl.GL.GL_DEPTH_COMPONENT32;
 import static javax.media.opengl.GL.GL_FRAMEBUFFER;
 import static javax.media.opengl.GL.GL_RENDERBUFFER;
-import static org.andork.math3d.Vecmath.invAffineToTranspose3x3;
+import static org.andork.math3d.Vecmath.*;
 import static org.andork.math3d.Vecmath.newMat4f;
 import static org.andork.math3d.Vecmath.ortho;
 import static org.andork.math3d.Vecmath.setf;
@@ -48,6 +49,11 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 	 * The view matrix.
 	 */
 	protected final float[ ]					v						= newMat4f( );
+	
+	/**
+	 * The inverse of the view matrix.
+	 */
+	protected final float[ ]					vi						= newMat4f( );
 	
 	/**
 	 * The projection matrix;
@@ -398,7 +404,7 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 	
 	public void recalculateProjection( )
 	{
-		pCalculator.calculate( width , height , p );
+		pCalculator.calculate( this , p );
 	}
 	
 	public void getModelXform( float[ ] out )
@@ -429,6 +435,8 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 		}
 		
 		System.arraycopy( v , 0 , this.v , 0 , 16 );
+		invAffine( v , vi );
+		recalculateProjection( );
 	}
 	
 	public PickXform pickXform( )
@@ -448,16 +456,19 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 	
 	public void setProjectionCalculator( ProjectionCalculator calculator )
 	{
-		if( pCalculator != calculator )
-		{
-			pCalculator = calculator;
-			recalculateProjection( );
-		}
+		pCalculator = calculator;
+		recalculateProjection( );
 	}
 	
 	public ProjectionCalculator getProjectionCalculator( )
 	{
 		return pCalculator;
+	}
+	
+	@Override
+	public float[ ] inverseViewXform( )
+	{
+		return vi;
 	}
 	
 	@Override

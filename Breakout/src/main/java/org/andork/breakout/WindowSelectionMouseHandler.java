@@ -9,13 +9,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.media.opengl.GL;
+import javax.media.opengl.GL2ES2;
 import javax.media.opengl.awt.GLCanvas;
 
 import org.andork.breakout.model.Survey3dModel;
 import org.andork.breakout.model.Survey3dModel.Shot3d;
 import org.andork.func.StreamUtils;
+import org.andork.jogl.BasicJOGLObject;
+import org.andork.jogl.BasicJOGLObject.Attribute3fv;
+import org.andork.jogl.BasicJOGLObject.BasicVertexShader;
+import org.andork.jogl.BasicJOGLObject.FlatFragmentShader;
+import org.andork.jogl.BufferHelper;
 import org.andork.jogl.neu.JoglScene;
-import org.andork.math3d.InFrustumTester3f;
+import org.andork.math3d.NewPlanarHull3f;
 import org.andork.math3d.PickXform;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.EdgeTrees;
@@ -52,7 +59,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 	private final List<float[ ]>	points				= new ArrayList<float[ ]>( );
 	SelectionPolygon				selectionPolygon	= new SelectionPolygon( );
 	
-	private InFrustumTester3f		inFrustumTester		= new InFrustumTester3f( );
+	private NewPlanarHull3f			hull				= new NewPlanarHull3f( );
 	
 	final float[ ]					pointOnScreen		= new float[ 3 ];
 	
@@ -96,11 +103,47 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 			int cw = canvas.getWidth( );
 			int ch = canvas.getHeight( );
 			
-			pickXform.xform( mbr[ 0 ] , ch - mbr[ 1 ] , cw , ch , inFrustumTester.origin , inFrustumTester.rays[ 0 ] );
-			pickXform.xform( mbr[ 2 ] , ch - mbr[ 1 ] , cw , ch , inFrustumTester.origin , inFrustumTester.rays[ 1 ] );
-			pickXform.xform( mbr[ 2 ] , ch - mbr[ 3 ] , cw , ch , inFrustumTester.origin , inFrustumTester.rays[ 2 ] );
-			pickXform.xform( mbr[ 0 ] , ch - mbr[ 3 ] , cw , ch , inFrustumTester.origin , inFrustumTester.rays[ 3 ] );
-			inFrustumTester.computeNormals( );
+			pickXform.exportViewVolume( hull , mbr , cw , ch );
+
+			//			BasicJOGLObject bounds = new BasicJOGLObject( );
+			//			BufferHelper bufferHelper = new BufferHelper( );
+			//			for( float[ ] vertex : hull.vertices )
+			//			{
+			//				bufferHelper.put( vertex );
+			//			}
+			//			bounds.addVertexBuffer( bufferHelper.toByteBuffer( ) );
+			//			BufferHelper indexBufferHelper = new BufferHelper( );
+			//			indexBufferHelper.put( 0 , 1 , 0 , 2 , 1 , 3 , 2 , 3 , 4 , 5 , 4 , 6 , 5 , 7 , 6 , 7 , 0 , 4 , 1 , 5 , 2 , 6 , 3 , 7 );
+			//			bounds.indexBuffer( indexBufferHelper.toByteBuffer( ) );
+			//			bounds.vertexCount( 8 );
+			//			bounds.indexCount( 24 );
+			//			bounds.indexType( GL.GL_UNSIGNED_INT );
+			//			bounds.drawMode( GL.GL_LINES );
+			//			bounds.vertexShaderCode( new BasicVertexShader( ).toString( ) ).add( bounds.new Attribute3fv( ).name( "a_pos" ) );
+			//			bounds.fragmentShaderCode( new FlatFragmentShader( ).color( 0 , 1 , 0 , 1 ).toString( ) );
+			//			
+			//			BasicJOGLObject normals = new BasicJOGLObject( );
+			//			bufferHelper = new BufferHelper( );
+			//			for( int side = 0 ; side < hull.origins.length ; side++ )
+			//			{
+			//				bufferHelper.put( hull.origins[ side ] );
+			//				bufferHelper.put( hull.origins[ side ][ 0 ] + hull.normals[ side ][ 0 ] * 50 );
+			//				bufferHelper.put( hull.origins[ side ][ 1 ] + hull.normals[ side ][ 1 ] * 50 );
+			//				bufferHelper.put( hull.origins[ side ][ 2 ] + hull.normals[ side ][ 2 ] * 50 );
+			//			}
+			//			normals.addVertexBuffer( bufferHelper.toByteBuffer( ) );
+			//			normals.vertexCount( 12 );
+			//			normals.drawMode( GL.GL_LINES );
+			//			normals.vertexShaderCode( new BasicVertexShader( ).toString( ) ).add( normals.new Attribute3fv( ).name( "a_pos" ) );
+			//			normals.fragmentShaderCode( new FlatFragmentShader( ).color( 1 , 1 , 0 , 1 ).toString( ) );
+			//			
+			//			context.getCanvas( ).invoke( false , drawable -> {
+			//				bounds.init( ( GL2ES2 ) drawable.getGL( ) );
+			//				context.getScene( ).add( bounds );
+			//				normals.init( ( GL2ES2 ) drawable.getGL( ) );
+			//				context.getScene( ).add( normals );
+			//				return false;
+			//			} );
 			
 			JoglScene scene = context.getScene( );
 			
@@ -110,7 +153,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 			Set<Shot3d> newSelected = new HashSet<>( );
 			
 			RTraversal.traverse( root ,
-					node -> inFrustumTester.intersectsBox( node.mbr( ) ) ,
+					node -> hull.intersectsBox( node.mbr( ) ) ,
 					leaf -> {
 						for( float[ ] point : leaf.object( ).coordIterable( ) )
 						{

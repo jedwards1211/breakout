@@ -22,10 +22,10 @@ import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.Vecmath;
 import org.andork.util.AnimationUtils;
 
-public class SpringOrbit implements Animation
+public class SpringViewOrbitAnimation implements Animation
 {
 	
-	public SpringOrbit( BasicJoglSetup setup , float[ ] center , float targetPan , float targetTilt , float factor , float extra , int period )
+	public SpringViewOrbitAnimation( BasicJoglSetup setup , float[ ] center , float targetPan , float targetTilt , float factor , float extra , int period )
 	{
 		if( period <= 0 )
 		{

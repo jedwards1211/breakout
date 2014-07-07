@@ -8,11 +8,12 @@ import org.andork.jogl.neu.JoglScene;
 
 public class BasicJoglSetup
 {
-	protected GLCanvas			canvas;
-	protected JoglScene			scene;
+	protected GLCanvas				canvas;
+	protected JoglScene				scene;
 	
-	protected BasicNavigator	navigator;
-	protected BasicOrbiter		orbiter;
+	protected BasicNavigator		navigator;
+	protected BasicOrbiter			orbiter;
+	protected BasicOrthoNavigator	orthoNavigator;
 	
 	public BasicJoglSetup( )
 	{
@@ -60,6 +61,8 @@ public class BasicJoglSetup
 		canvas.addMouseListener( orbiter );
 		canvas.addMouseMotionListener( orbiter );
 		canvas.addMouseWheelListener( orbiter );
+		
+		orthoNavigator = new BasicOrthoNavigator( this );
 	}
 	
 	protected void initKeyboardInput( )

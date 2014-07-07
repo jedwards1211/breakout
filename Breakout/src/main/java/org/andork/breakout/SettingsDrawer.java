@@ -118,6 +118,7 @@ public class SettingsDrawer extends Drawer
 	JLabel												glowDistLabel;
 	PlotAxis											glowDistAxis;
 	PaintablePanel										glowDistAxisPanel;
+	JButton												resetViewButton;
 	JButton												fitViewToEverythingButton;
 	JButton												fitViewToSelectedButton;
 	JButton												orbitToPlanButton;
@@ -211,12 +212,12 @@ public class SettingsDrawer extends Drawer
 		viewButtonsPanel = new ViewButtonsPanel( );
 		
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
-
+		
 		bgColorLabel = new JLabel( );
 		localizer.setText( bgColorLabel , "bgColorLabel.text" );
 		
 		bgColorButton = new JXColorSelectionButton( );
-
+		
 		ambientLightLabel = new JLabel( );
 		localizer.setText( ambientLightLabel , "ambientLightLabel.text" );
 		
@@ -225,7 +226,7 @@ public class SettingsDrawer extends Drawer
 		
 		distColorationLabel = new JLabel( );
 		localizer.setText( distColorationLabel , "distColorationLabel.text" );
-
+		
 		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		distColorationAxisPanel = PaintablePanel.wrap( distColorationAxis );
 		distColorationAxisPanel.setUnderpaintBorder(
@@ -251,7 +252,7 @@ public class SettingsDrawer extends Drawer
 		localizer.setToolTipText( flipParamColorationAxisButton , "flipParamColorationAxisButton.tooltip" );
 		colorParamDetailsPanel = new JPanel( );
 		colorParamDetailsPanel.setOpaque( false );
-
+		
 		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		paramColorationAxisPanel = PaintablePanel.wrap( paramColorationAxis );
 		paramColorationAxisPanel.setUnderpaintBorder(
@@ -293,16 +294,18 @@ public class SettingsDrawer extends Drawer
 		
 		mouseSensitivityLabel = new JLabel( );
 		localizer.setText( mouseSensitivityLabel , "mouseSensitivityLabel.text" );
-
+		
 		mouseSensitivitySlider = new JSlider( );
 		mouseSensitivitySlider.setValue( 20 );
 		mouseSensitivitySlider.setOpaque( false );
 		
 		mouseWheelSensitivityLabel = new JLabel( );
 		localizer.setText( mouseWheelSensitivityLabel , "mouseWheelSensitivityLabel.text" );
-
+		
 		mouseWheelSensitivitySlider = new JSlider( 1 , 2000 , 200 );
 		mouseWheelSensitivitySlider.setOpaque( false );
+		
+		resetViewButton = new JButton( "Reset View" );
 		
 		fitViewToSelectedButton = new JButton( "Fit View to Selected" );
 		fitViewToEverythingButton = new JButton( "Fit View to Everything" );
@@ -310,7 +313,7 @@ public class SettingsDrawer extends Drawer
 		
 		filterTypeLabel = new JLabel( );
 		localizer.setText( filterTypeLabel , "filterTypeLabel.text" );
-
+		
 		filterTypeSelector = new DefaultSelector<FilterType>( );
 		filterTypeSelector.setAvailableValues( Arrays.asList( FilterType.values( ) ) );
 		
@@ -376,6 +379,7 @@ public class SettingsDrawer extends Drawer
 		w.put( projectFilePanel.getTarget( ) ).belowLast( ).fillx( );
 		
 		w.put( viewButtonsPanel ).belowLast( ).addToInsets( 10 , 0 , 0 , 0 );
+		w.put( resetViewButton ).belowLast( ).fillx( 1.0 );
 		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
 		w.put( fitViewToEverythingButton ).belowLast( ).fillx( 1.0 );
 		w.put( orbitToPlanButton ).belowLast( ).fillx( 1.0 );
@@ -390,7 +394,7 @@ public class SettingsDrawer extends Drawer
 		bgPanel.put( bgColorButton ).rightOfLast( ).west( ).weightx( 1.0 );
 		w.put( bgPanel.getTarget( ) ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
 		
-		w.put( new JLabel( "Ambient Light:" ) ).belowLast( ).west( );
+		w.put( ambientLightLabel ).belowLast( ).west( );
 		w.put( ambientLightSlider ).belowLast( ).fillx( );
 		
 		w.put( distColorationLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
@@ -514,6 +518,11 @@ public class SettingsDrawer extends Drawer
 	public JButton getProjectFileMenuButton( )
 	{
 		return projectFileMenuButton;
+	}
+	
+	public JButton getResetViewButton( )
+	{
+		return resetViewButton;
 	}
 	
 	public JButton getFitViewToSelectedButton( )

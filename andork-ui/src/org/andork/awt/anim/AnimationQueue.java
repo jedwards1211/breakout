@@ -3,9 +3,12 @@ package org.andork.awt.anim;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.LinkedList;
+import java.util.function.Predicate;
 
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+
+import org.andork.awt.CheckEDT;
+import org.andork.collect.CollectionUtils;
 
 public class AnimationQueue
 {
@@ -24,10 +27,7 @@ public class AnimationQueue
 	
 	public void add( Animation animation )
 	{
-		if( !SwingUtilities.isEventDispatchThread( ) )
-		{
-			throw new RuntimeException( "must be called on EDT" );
-		}
+		CheckEDT.checkEDT( );
 		if( animating )
 		{
 			pendingAdd.add( animation );
@@ -45,13 +45,23 @@ public class AnimationQueue
 	
 	public void clear( )
 	{
-		if( !SwingUtilities.isEventDispatchThread( ) )
-		{
-			throw new RuntimeException( "must be called on EDT" );
-		}
+		CheckEDT.checkEDT( );
 		timer.stop( );
+		pendingAdd.clear( );
 		queue.clear( );
 		lastAnimTime = 0;
+	}
+	
+	public void removeAll( Predicate<Animation> p )
+	{
+		CheckEDT.checkEDT( );
+		CollectionUtils.removeAll( queue , p );
+		CollectionUtils.removeAll( pendingAdd , p );
+		if( queue.isEmpty( ) && pendingAdd.isEmpty( ) )
+		{
+			timer.stop( );
+			lastAnimTime = 0;
+		}
 	}
 	
 	private class TimerHandler implements ActionListener

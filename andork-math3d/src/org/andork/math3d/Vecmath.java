@@ -1,11 +1,22 @@
 package org.andork.math3d;
 
+import java.util.Arrays;
+
 public class Vecmath
 {
 	private static final double	EPSILON_ABSOLUTE	= 1.0e-5f;
 	private static final double	FEPS				= 1.110223024E-8f;
 	
 	public static double distance3( double[ ] a , double[ ] b )
+	{
+		double dx = a[ 0 ] - b[ 0 ];
+		double dy = a[ 1 ] - b[ 1 ];
+		double dz = a[ 2 ] - b[ 2 ];
+		
+		return ( double ) Math.sqrt( dx * dx + dy * dy + dz * dz );
+	}
+	
+	public static double distance3( double[ ] a , float[ ] b )
 	{
 		double dx = a[ 0 ] - b[ 0 ];
 		double dy = a[ 1 ] - b[ 1 ];
@@ -27,6 +38,14 @@ public class Vecmath
 	 * Computes (a - b) dot c.
 	 */
 	public static double subDot3( double[ ] a , double[ ] b , double[ ] c )
+	{
+		return ( a[ 0 ] - b[ 0 ] ) * c[ 0 ] + ( a[ 1 ] - b[ 1 ] ) * c[ 1 ] + ( a[ 2 ] - b[ 2 ] ) * c[ 2 ];
+	}
+	
+	/**
+	 * Computes (a - b) dot c.
+	 */
+	public static double subDot3( double[ ] a , float[ ] b , double[ ] c )
 	{
 		return ( a[ 0 ] - b[ 0 ] ) * c[ 0 ] + ( a[ 1 ] - b[ 1 ] ) * c[ 1 ] + ( a[ 2 ] - b[ 2 ] ) * c[ 2 ];
 	}
@@ -241,6 +260,13 @@ public class Vecmath
 	}
 	
 	public static void mvmulAffine( double[ ] m , double x , double y , double z , double[ ] out )
+	{
+		out[ 0 ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z;
+		out[ 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z;
+		out[ 2 ] = m[ 2 ] * x + m[ 6 ] * y + m[ 10 ] * z;
+	}
+	
+	public static void mvmulAffine( float[ ] m , double x , double y , double z , double[ ] out )
 	{
 		out[ 0 ] = m[ 0 ] * x + m[ 4 ] * y + m[ 8 ] * z;
 		out[ 1 ] = m[ 1 ] * x + m[ 5 ] * y + m[ 9 ] * z;
@@ -566,6 +592,14 @@ public class Vecmath
 		v[ 2 ] = m[ colIndex + 2 ];
 	}
 	
+	public static void getColumn3( float[ ] m , int colIndex , double[ ] v )
+	{
+		colIndex *= 4;
+		v[ 0 ] = m[ colIndex ];
+		v[ 1 ] = m[ colIndex + 1 ];
+		v[ 2 ] = m[ colIndex + 2 ];
+	}
+	
 	public static void setColumn3( double[ ] m , int colIndex , double[ ] v )
 	{
 		colIndex *= 4;
@@ -634,7 +668,7 @@ public class Vecmath
 	 * identity matrix.
 	 * 
 	 * @param angle
-	 *            the angle to rotate about the X axis in radians
+	 *        the angle to rotate about the X axis in radians
 	 */
 	public static void rotX( double[ ] mat , double angle )
 	{
@@ -667,7 +701,7 @@ public class Vecmath
 	 * identity matrix.
 	 * 
 	 * @param angle
-	 *            the angle to rotate about the Y axis in radians
+	 *        the angle to rotate about the Y axis in radians
 	 */
 	public static void rotY( double[ ] mat , double angle )
 	{
@@ -700,7 +734,7 @@ public class Vecmath
 	 * identity matrix.
 	 * 
 	 * @param angle
-	 *            the angle to rotate about the Z axis in radians
+	 *        the angle to rotate about the Z axis in radians
 	 */
 	public static void rotZ( double[ ] mat , double angle )
 	{
@@ -784,9 +818,9 @@ public class Vecmath
 	 * Transposes the upper left 3x3 portion of {@code mat} to {@code out}.
 	 * 
 	 * @param mat
-	 *            a 16-element double array.
+	 *        a 16-element double array.
 	 * @param out
-	 *            a 9-element double array.
+	 *        a 9-element double array.
 	 */
 	public static void transposeTo3x3( double[ ] mat , double[ ] out )
 	{
@@ -1196,11 +1230,11 @@ public class Vecmath
 	 * object within the scene graph.
 	 * 
 	 * @param eye
-	 *            the location of the eye
+	 *        the location of the eye
 	 * @param center
-	 *            a point in the virtual world where the eye is looking
+	 *        a point in the virtual world where the eye is looking
 	 * @param up
-	 *            an up vector specifying the frustum's up direction
+	 *        an up vector specifying the frustum's up direction
 	 */
 	public static void lookAt( double[ ] mat , double eyex , double eyey , double eyez , double centerx , double centery , double centerz , double upx , double upy , double upz )
 	{
@@ -1264,13 +1298,13 @@ public class Vecmath
 	 * right-handed coordinate system (as are all other coordinate systems in Java 3D). Also note that the field of view is specified in radians.
 	 * 
 	 * @param fovx
-	 *            specifies the field of view in the x direction, in radians
+	 *        specifies the field of view in the x direction, in radians
 	 * @param aspect
-	 *            specifies the aspect ratio and thus the field of view in the x direction. The aspect ratio is the ratio of x to y, or width to height.
+	 *        specifies the aspect ratio and thus the field of view in the x direction. The aspect ratio is the ratio of x to y, or width to height.
 	 * @param zNear
-	 *            the distance to the frustum's near clipping plane. This value must be positive, (the value -zNear is the location of the near clip plane).
+	 *        the distance to the frustum's near clipping plane. This value must be positive, (the value -zNear is the location of the near clip plane).
 	 * @param zFar
-	 *            the distance to the frustum's far clipping plane
+	 *        the distance to the frustum's far clipping plane
 	 */
 	public static void perspective( double[ ] mat , double fovx , double aspect ,
 			double zNear , double zFar )
@@ -1304,11 +1338,11 @@ public class Vecmath
 	public static void ortho( double[ ] mat , double left , double right , double bottom , double top , double zNear , double zFar )
 	{
 		mat[ 0 ] = 2 / ( right - left );
-		mat[ 12 ] = 1 - mat[ 0 ] * right;
+		mat[ 12 ] = -( right + left ) / ( right - left );
 		mat[ 5 ] = 2 / ( top - bottom );
-		mat[ 13 ] = 1 - mat[ 5 ] * top;
+		mat[ 13 ] = -( top + bottom ) / ( top - bottom );
 		mat[ 10 ] = -2 / ( zFar - zNear );
-		mat[ 14 ] = mat[ 10 ] * zFar - 1;
+		mat[ 14 ] = -( zFar + zNear ) / ( zFar - zNear );
 		
 		mat[ 15 ] = 1;
 		mat[ 4 ] = mat[ 8 ] = mat[ 1 ] = mat[ 9 ] = mat[ 2 ] = mat[ 6 ] = mat[ 7 ] = mat[ 11 ] = 0;
@@ -1324,7 +1358,7 @@ public class Vecmath
 	 * transform are unchanged; any pre-existing scale in the transform is preserved.
 	 * 
 	 * @param a1
-	 *            the axis-angle to be converted (x, y, z, angle)
+	 *        the axis-angle to be converted (x, y, z, angle)
 	 */
 	public static void setRotation( double[ ] mat , double x , double y , double z , double angle )
 	{
@@ -1416,6 +1450,14 @@ public class Vecmath
 		out[ 2 ] = ( double ) ( v[ 2 ] * factor );
 	}
 	
+	public static void normalize3( float[ ] v , double[ ] out )
+	{
+		double factor = 1.0 / Math.sqrt( v[ 0 ] * v[ 0 ] + v[ 1 ] * v[ 1 ] + v[ 2 ] * v[ 2 ] );
+		out[ 0 ] = ( double ) ( v[ 0 ] * factor );
+		out[ 1 ] = ( double ) ( v[ 1 ] * factor );
+		out[ 2 ] = ( double ) ( v[ 2 ] * factor );
+	}
+	
 	/**
 	 * Projects 3-dimensional vector {@code a} onto vector {@code b}, storing the result in {@code out}.
 	 */
@@ -1487,6 +1529,13 @@ public class Vecmath
 	}
 	
 	public static void scaleAdd3( double a , double[ ] b , double[ ] c , double[ ] out )
+	{
+		out[ 0 ] = a * b[ 0 ] + c[ 0 ];
+		out[ 1 ] = a * b[ 1 ] + c[ 1 ];
+		out[ 2 ] = a * b[ 2 ] + c[ 2 ];
+	}
+	
+	public static void scaleAdd3( double a , double[ ] b , float[ ] c , double[ ] out )
 	{
 		out[ 0 ] = a * b[ 0 ] + c[ 0 ];
 		out[ 1 ] = a * b[ 1 ] + c[ 1 ];
@@ -1568,6 +1617,32 @@ public class Vecmath
 		return ( float ) Math.sqrt( dx * dx + dy * dy + dz * dz );
 	}
 	
+	public static float partDist( float[ ] a , float[ ] b , int ... dims )
+	{
+		float total = 0f;
+		
+		for( int dim : dims )
+		{
+			float dimDist = a[ dim ] - b[ dim ];
+			total += dimDist * dimDist;
+		}
+		
+		return ( float ) Math.sqrt( total );
+	}
+	
+	public static double partDist( double[ ] a , double[ ] b , int ... dims )
+	{
+		double total = 0f;
+		
+		for( int dim : dims )
+		{
+			double dimDist = a[ dim ] - b[ dim ];
+			total += dimDist * dimDist;
+		}
+		
+		return Math.sqrt( total );
+	}
+	
 	public static float distance3( float[ ] a , int ai , float[ ] b , int bi )
 	{
 		float dx = a[ ai ] - b[ bi ];
@@ -1578,11 +1653,29 @@ public class Vecmath
 	}
 	
 	/**
+	 * Computes ((x,y,z) - b) dot c.
+	 */
+	public static float subDot3( float x , float y , float z , float[ ] b , float[ ] c )
+	{
+		return ( x - b[ 0 ] ) * c[ 0 ] + ( y - b[ 1 ] ) * c[ 1 ] + ( z - b[ 2 ] ) * c[ 2 ];
+	}
+	
+	/**
 	 * Computes (a - b) dot c.
 	 */
 	public static float subDot3( float[ ] a , float[ ] b , float[ ] c )
 	{
 		return ( a[ 0 ] - b[ 0 ] ) * c[ 0 ] + ( a[ 1 ] - b[ 1 ] ) * c[ 1 ] + ( a[ 2 ] - b[ 2 ] ) * c[ 2 ];
+	}
+	
+	/**
+	 * Computes (a - b) dot c.
+	 */
+	public static float subDot3( float[ ] a , int ai , float[ ] b , int bi , float[ ] c , int ci )
+	{
+		return ( a[ ai + 0 ] - b[ bi + 0 ] ) * c[ ci + 0 ] +
+				( a[ ai + 1 ] - b[ bi + 1 ] ) * c[ ci + 1 ] +
+				( a[ ai + 2 ] - b[ bi + 2 ] ) * c[ ci + 2 ];
 	}
 	
 	public static float dot3( float[ ] a , float[ ] b )
@@ -1611,6 +1704,34 @@ public class Vecmath
 			out[ 1 ] = y;
 			out[ 0 ] = x;
 		}
+	}
+	
+	/**
+	 * Computes (b - a) x (c - a).
+	 */
+	public static void threePointNormal( float[ ] a , float[ ] b , float[ ] c , float[ ] out )
+	{
+		float b0 = b[ 0 ] - a[ 0 ];
+		float b1 = b[ 1 ] - a[ 1 ];
+		float b2 = b[ 2 ] - a[ 2 ];
+		float c0 = c[ 0 ] - a[ 0 ];
+		float c1 = c[ 1 ] - a[ 1 ];
+		float c2 = c[ 2 ] - a[ 2 ];
+		
+		float x = b1 * c2 - b2 * c1;
+		float y = b2 * c0 - b0 * c2;
+		float z = b0 * c1 - b1 * c0;
+		
+		out[ 0 ] = x;
+		out[ 1 ] = y;
+		out[ 2 ] = z;
+	}
+	
+	public static void cross( float[ ] a , float[ ] b , double[ ] out )
+	{
+		out[ 0 ] = a[ 1 ] * b[ 2 ] - a[ 2 ] * b[ 1 ];
+		out[ 1 ] = a[ 2 ] * b[ 0 ] - a[ 0 ] * b[ 2 ];
+		out[ 2 ] = a[ 0 ] * b[ 1 ] - a[ 1 ] * b[ 0 ];
 	}
 	
 	public static void cross( float[ ] a , float x , float y , float z , float[ ] out )
@@ -1646,6 +1767,32 @@ public class Vecmath
 			out[ 2 ] = x * b[ 1 ] - y * b[ 0 ];
 			out[ 1 ] = cy;
 			out[ 0 ] = cx;
+		}
+	}
+	
+	/**
+	 * Computes out = (a - b) x c.
+	 */
+	public static void subCross( float[ ] a , float[ ] b , float[ ] c , float[ ] out )
+	{
+		cross( a[ 0 ] - b[ 0 ] , a[ 1 ] - b[ 1 ] , a[ 2 ] - b[ 2 ] , c , out );
+	}
+	
+	public static void cross( float x , float y , float z , float[ ] b , int bi , float[ ] out , int outi )
+	{
+		if( out != b )
+		{
+			out[ outi + 0 ] = y * b[ bi + 2 ] - z * b[ bi + 1 ];
+			out[ outi + 1 ] = z * b[ bi + 0 ] - x * b[ bi + 2 ];
+			out[ outi + 2 ] = x * b[ bi + 1 ] - y * b[ bi + 0 ];
+		}
+		else
+		{
+			float cx = y * b[ bi + 2 ] - z * b[ bi + 1 ];
+			float cy = z * b[ bi + 0 ] - x * b[ bi + 2 ];
+			out[ outi + 2 ] = x * b[ bi + 1 ] - y * b[ bi + 0 ];
+			out[ outi + 1 ] = cy;
+			out[ outi + 0 ] = cx;
 		}
 	}
 	
@@ -2196,7 +2343,7 @@ public class Vecmath
 	 * identity matrix.
 	 * 
 	 * @param angle
-	 *            the angle to rotate about the X axis in radians
+	 *        the angle to rotate about the X axis in radians
 	 */
 	public static void rotX( float[ ] mat , float angle )
 	{
@@ -2229,7 +2376,7 @@ public class Vecmath
 	 * identity matrix.
 	 * 
 	 * @param angle
-	 *            the angle to rotate about the Y axis in radians
+	 *        the angle to rotate about the Y axis in radians
 	 */
 	public static void rotY( float[ ] mat , float angle )
 	{
@@ -2262,7 +2409,7 @@ public class Vecmath
 	 * identity matrix.
 	 * 
 	 * @param angle
-	 *            the angle to rotate about the Z axis in radians
+	 *        the angle to rotate about the Z axis in radians
 	 */
 	public static void rotZ( float[ ] mat , float angle )
 	{
@@ -2346,9 +2493,9 @@ public class Vecmath
 	 * Transposes the upper left 3x3 portion of {@code mat} to {@code out}.
 	 * 
 	 * @param mat
-	 *            a 16-element float array.
+	 *        a 16-element float array.
 	 * @param out
-	 *            a 9-element float array.
+	 *        a 9-element float array.
 	 */
 	public static void transposeTo3x3( float[ ] mat , float[ ] out )
 	{
@@ -2763,11 +2910,11 @@ public class Vecmath
 	 * object within the scene graph.
 	 * 
 	 * @param eye
-	 *            the location of the eye
+	 *        the location of the eye
 	 * @param center
-	 *            a point in the virtual world where the eye is looking
+	 *        a point in the virtual world where the eye is looking
 	 * @param up
-	 *            an up vector specifying the frustum's up direction
+	 *        an up vector specifying the frustum's up direction
 	 */
 	public static void lookAt( float[ ] mat , float eyex , float eyey , float eyez , float centerx , float centery , float centerz , float upx , float upy , float upz )
 	{
@@ -2827,17 +2974,16 @@ public class Vecmath
 	
 	/**
 	 * Creates a perspective projection transform that mimics a standard, camera-based, view-model. This transform maps coordinates from Eye Coordinates (EC) to
-	 * Clipping Coordinates (CC). Note that unlike the similar function in OpenGL, the clipping coordinates generated by the resulting transform are in a
-	 * right-handed coordinate system (as are all other coordinate systems in Java 3D). Also note that the field of view is specified in radians.
+	 * Clipping Coordinates (CC). Note that the field of view is specified in radians.
 	 * 
 	 * @param fovx
-	 *            specifies the field of view in the x direction, in radians
+	 *        specifies the field of view in the x direction, in radians
 	 * @param aspect
-	 *            specifies the aspect ratio and thus the field of view in the x direction. The aspect ratio is the ratio of x to y, or width to height.
+	 *        specifies the aspect ratio and thus the field of view in the x direction. The aspect ratio is the ratio of x to y, or width to height.
 	 * @param zNear
-	 *            the distance to the frustum's near clipping plane. This value must be positive, (the value -zNear is the location of the near clip plane).
+	 *        the distance to the frustum's near clipping plane. This value must be positive, (the value -zNear is the location of the near clip plane).
 	 * @param zFar
-	 *            the distance to the frustum's far clipping plane
+	 *        the distance to the frustum's far clipping plane
 	 */
 	public static void perspective( float[ ] mat , float fovx , float aspect ,
 			float zNear , float zFar )
@@ -2871,11 +3017,11 @@ public class Vecmath
 	public static void ortho( float[ ] mat , float left , float right , float bottom , float top , float zNear , float zFar )
 	{
 		mat[ 0 ] = 2 / ( right - left );
-		mat[ 12 ] = 1 - mat[ 0 ] * right;
+		mat[ 12 ] = -( right + left ) / ( right - left );
 		mat[ 5 ] = 2 / ( top - bottom );
-		mat[ 13 ] = 1 - mat[ 5 ] * top;
+		mat[ 13 ] = -( top + bottom ) / ( top - bottom );
 		mat[ 10 ] = -2 / ( zFar - zNear );
-		mat[ 14 ] = -1 - mat[ 10 ] * zFar;
+		mat[ 14 ] = -( zFar + zNear ) / ( zFar - zNear );
 		
 		mat[ 15 ] = 1;
 		mat[ 4 ] = mat[ 8 ] = mat[ 1 ] = mat[ 9 ] = mat[ 2 ] = mat[ 6 ] = mat[ 7 ] = mat[ 11 ] = 0;
@@ -2886,12 +3032,29 @@ public class Vecmath
 		return( ( a < EPSILON_ABSOLUTE ) && ( a > -EPSILON_ABSOLUTE ) );
 	}
 	
+	public static boolean isZero( float[ ] v )
+	{
+		for( float f : v )
+		{
+			if( f != 0f )
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public static boolean isZero3( float[ ] v )
+	{
+		return v[ 0 ] == 0f && v[ 1 ] == 0f && v[ 2 ] == 0f;
+	}
+	
 	/**
 	 * Sets the rotational component (upper 3x3) of this transform to the matrix equivalent values of the axis-angle argument; the other elements of this
 	 * transform are unchanged; any pre-existing scale in the transform is preserved.
 	 * 
 	 * @param a1
-	 *            the axis-angle to be converted (x, y, z, angle)
+	 *        the axis-angle to be converted (x, y, z, angle)
 	 */
 	public static void setRotation( float[ ] mat , float x , float y , float z , float angle )
 	{
@@ -3014,6 +3177,26 @@ public class Vecmath
 	}
 	
 	/**
+	 * Projects the vector from an {@code origin} to a {@code point} onto another vector, storing the result in {@code out}.
+	 * 
+	 * @param point
+	 * @param origin
+	 * @param vector
+	 * @param out
+	 */
+	public static void projPointOntoVector3( float[ ] point , float[ ] origin , float[ ] vector , float[ ] out )
+	{
+		float aDotB = subDot3( point , origin , vector );
+		float bDotB = dot3( vector , vector );
+		float x = vector[ 0 ] * aDotB / bDotB;
+		float y = vector[ 1 ] * aDotB / bDotB;
+		float z = vector[ 2 ] * aDotB / bDotB;
+		out[ 0 ] = x;
+		out[ 1 ] = y;
+		out[ 2 ] = z;
+	}
+	
+	/**
 	 * Projects 3-dimensional vector {@code a} onto a plane with normal {@code n}, storing the result in {@code out}.
 	 */
 	public static void vpproj3( float[ ] a , float[ ] n , float[ ] out )
@@ -3068,6 +3251,9 @@ public class Vecmath
 		out[ 2 ] = a[ 2 ] * f;
 	}
 	
+	/**
+	 * Computes out = a * b + c
+	 */
 	public static void scaleAdd3( float a , float[ ] b , float[ ] c , float[ ] out )
 	{
 		out[ 0 ] = a * b[ 0 ] + c[ 0 ];
@@ -3075,7 +3261,32 @@ public class Vecmath
 		out[ 2 ] = a * b[ 2 ] + c[ 2 ];
 	}
 	
+	/**
+	 * Computes out = a * b + c
+	 */
+	public static void scaleAdd3( float a , float[ ] b , int bi , float[ ] c , int ci , float[ ] out , int outi )
+	{
+		out[ outi + 0 ] = a * b[ bi + 0 ] + c[ ci + 0 ];
+		out[ outi + 1 ] = a * b[ bi + 1 ] + c[ ci + 1 ];
+		out[ outi + 2 ] = a * b[ bi + 2 ] + c[ ci + 2 ];
+	}
+	
+	public static void interp( float[ ] a , float[ ] b , float f , float[ ] out )
+	{
+		for( int i = 0 ; i < a.length ; i++ )
+		{
+			out[ i ] = ( 1 - f ) * a[ i ] + f * b[ i ];
+		}
+	}
+	
 	public static void interp3( float[ ] a , float[ ] b , float f , float[ ] out )
+	{
+		out[ 0 ] = ( 1 - f ) * a[ 0 ] + f * b[ 0 ];
+		out[ 1 ] = ( 1 - f ) * a[ 1 ] + f * b[ 1 ];
+		out[ 2 ] = ( 1 - f ) * a[ 2 ] + f * b[ 2 ];
+	}
+	
+	public static void interp3( double[ ] a , double[ ] b , double f , double[ ] out )
 	{
 		out[ 0 ] = ( 1 - f ) * a[ 0 ] + f * b[ 0 ];
 		out[ 1 ] = ( 1 - f ) * a[ 1 ] + f * b[ 1 ];
@@ -3092,9 +3303,39 @@ public class Vecmath
 		return ( float ) Math.sqrt( total );
 	}
 	
+	public static float partLength( float[ ] v , int ... dims )
+	{
+		float total = 0;
+		for( int dim : dims )
+		{
+			total += v[ dim ] * v[ dim ];
+		}
+		return ( float ) Math.sqrt( total );
+	}
+	
+	public static double partLength( double[ ] v , int ... dims )
+	{
+		double total = 0;
+		for( int dim : dims )
+		{
+			total += v[ dim ] * v[ dim ];
+		}
+		return Math.sqrt( total );
+	}
+	
 	public static float length3( float[ ] v )
 	{
 		return ( float ) Math.sqrt( dot3( v , v ) );
+	}
+	
+	/**
+	 * Computes out = -v.
+	 */
+	public static void negate3( float[ ] v , float[ ] out )
+	{
+		out[ 0 ] = -v[ 0 ];
+		out[ 1 ] = -v[ 1 ];
+		out[ 2 ] = -v[ 2 ];
 	}
 	
 	public static void negate3( float[ ] v )
@@ -3263,5 +3504,186 @@ public class Vecmath
 			}
 		}
 		return false;
+	}
+	
+	/**
+	 * Performs gaussian elimination on the m by n matrix A. This method is faster than {@link #gauss(float[], int, int)} because it doesn't actually swap
+	 * rows. Instead of exchanging rows, row_perms is used to mark the positions of the rows in the reduced matrix. Row <code>i</code> of the reduced matrix is
+	 * row <code>row_perms[ i ]</code> of A.
+	 */
+	public static void gauss( float[ ] A , int m , int n , int[ ] row_perms )
+	{
+		int i = 0;
+		int j = 0;
+		
+		for( int k = 0 ; k < row_perms.length ; k++ )
+		{
+			row_perms[ k ] = k;
+		}
+		
+		while( i < m && j < n )
+		{
+			int maxi = i;
+			float maxpivot = A[ row_perms[ i ] + j * m ];
+			
+			// find the largest pivot in column j
+			for( int k = i + 1 ; k < m ; k++ )
+			{
+				float newpivot = A[ row_perms[ k ] + j * m ];
+				if( Math.abs( newpivot ) > Math.abs( maxpivot ) )
+				{
+					maxpivot = newpivot;
+					maxi = k;
+				}
+			}
+			if( maxpivot != 0 )
+			{
+				// swap the row with the largest pivot with row i
+				if( i != maxi )
+				{
+					int temp = row_perms[ i ];
+					row_perms[ i ] = row_perms[ maxi ];
+					row_perms[ maxi ] = temp;
+				}
+				
+				// divide row i by the pivot value
+				for( int k = j ; k < n ; k++ )
+				{
+					A[ row_perms[ i ] + k * m ] /= maxpivot;
+				}
+				
+				// subtract row i from the rows below
+				for( int u = i + 1 ; u < m ; u++ )
+				{
+					float multiplier = A[ row_perms[ u ] + j * m ];
+					
+					for( int k = j ; k < n ; k++ )
+					{
+						A[ row_perms[ u ] + k * m ] -= multiplier * A[ row_perms[ i ] + k * m ];
+					}
+				}
+				i += 1;
+			}
+			j += 1;
+		}
+	}
+	
+	public static String prettyPrint( float[ ] a , int columns )
+	{
+		int intDigits = 0;
+		int fracDigits = 0;
+		
+		for( float f : a )
+		{
+			if( f == 0f )
+			{
+				continue;
+			}
+			int log = ( int ) Math.floor( Math.log10( Math.abs( f ) ) );
+			intDigits = Math.max( intDigits , log + 1 );
+			fracDigits = Math.max( fracDigits , -log );
+		}
+		
+		String elemFormat = String.format( "%%%d.%df" , intDigits + fracDigits + 2 , fracDigits );
+		
+		StringBuilder sb = new StringBuilder( );
+		
+		int nrows = a.length / columns;
+		
+		for( int row = 0 ; row < nrows ; row++ )
+		{
+			sb.append( row == 0 ? "[ " : "  " );
+			for( int column = 0 ; column < columns ; column++ )
+			{
+				if( column > 0 )
+				{
+					sb.append( ' ' );
+				}
+				sb.append( String.format( elemFormat , a[ row + column * nrows ] ) );
+			}
+			sb.append( row == nrows - 1 ? " ]" : "  \n" );
+		}
+		
+		return sb.toString( );
+	}
+	
+	public static String prettyPrint( float[ ] a , int columns , int[ ] row_perms )
+	{
+		int intDigits = 0;
+		int fracDigits = 0;
+		
+		for( float f : a )
+		{
+			if( f == 0f )
+			{
+				continue;
+			}
+			int log = ( int ) Math.floor( Math.log10( Math.abs( f ) ) );
+			intDigits = Math.max( intDigits , log + 1 );
+			fracDigits = Math.max( fracDigits , -log );
+		}
+		
+		String elemFormat = String.format( "%%%d.%df" , intDigits + fracDigits + 2 , fracDigits );
+		
+		StringBuilder sb = new StringBuilder( );
+		
+		int nrows = a.length / columns;
+		
+		for( int row = 0 ; row < nrows ; row++ )
+		{
+			sb.append( row == 0 ? "[ " : "  " );
+			for( int column = 0 ; column < columns ; column++ )
+			{
+				if( column > 0 )
+				{
+					sb.append( ' ' );
+				}
+				sb.append( String.format( elemFormat , a[ row_perms[ row ] + column * nrows ] ) );
+			}
+			sb.append( row == nrows - 1 ? " ]" : "  \n" );
+		}
+		
+		return sb.toString( );
+	}
+	
+	public static double rotation( double startAngle , double endAngle )
+	{
+		if( startAngle < endAngle )
+		{
+			double result = endAngle - startAngle;
+			return result < Math.PI ? result : result - Math.PI * 2;
+		}
+		else
+		{
+			double result = endAngle - startAngle;
+			return result > -Math.PI ? result : result + Math.PI * 2;
+		}
+	}
+	
+	public static float rotation( float startAngle , float endAngle )
+	{
+		if( startAngle < endAngle )
+		{
+			float result = endAngle - startAngle;
+			return result < Math.PI ? result : ( float ) ( result - Math.PI * 2 );
+		}
+		else
+		{
+			float result = endAngle - startAngle;
+			return result > -Math.PI ? result : ( float ) ( result + Math.PI * 2 );
+		}
+	}
+	
+	/**
+	 * Computes out = vector[0] * basis[0] + vector[1] * basis[1] + ...
+	 * out must != vector!
+	 */
+	public static void combine( float[ ] out , float[ ] vector , float[ ] ... basis )
+	{
+		Arrays.fill( out , 0f );
+		for( int i = 0 ; i < vector.length ; i++ )
+		{
+			scaleAdd3( vector[ i ] , basis[ i ] , out , out );
+		}
 	}
 }

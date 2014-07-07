@@ -242,6 +242,26 @@ public class ArrayUtils
 		return sb.toString( );
 	}
 	
+	public static String prettyPrint( float[ ] a , int columns )
+	{
+		int intDigits = 0;
+		int fracDigits = 0;
+		
+		for( float f : a )
+		{
+			if( f == 0f )
+			{
+				continue;
+			}
+			int log = ( int ) Math.floor( Math.log10( Math.abs( f ) ) );
+			intDigits = Math.max( intDigits , log + 1 );
+			fracDigits = Math.max( fracDigits , -log );
+		}
+		
+		String elemFormat = String.format( "%%%d.%df" , intDigits + fracDigits + 2 , fracDigits );
+		return prettyPrint( a , columns , 0 , a.length , 0 , elemFormat );
+	}
+	
 	public static String prettyPrint( double[ ] a , int columns , int start , int end , int newlineInterval , String elemFormat )
 	{
 		StringBuffer sb = new StringBuffer( );
@@ -341,9 +361,9 @@ public class ArrayUtils
 	 * Finds the index of an equivalent {@link Object} in an arbitrary-order {@code Object} array.
 	 * 
 	 * @param values
-	 *            an array of {@code Object}s with arbitrary order.
+	 *        an array of {@code Object}s with arbitrary order.
 	 * @param a
-	 *            the equivalent {@code Object} to search for. May be {@code null}.
+	 *        the equivalent {@code Object} to search for. May be {@code null}.
 	 * @return the lowest index of any element in {@code values} such that {@code Java7.equals(a, values[i])}, or {@code -1} otherwise.
 	 */
 	public static int indexOf( Object[ ] values , Object a )
@@ -367,9 +387,9 @@ public class ArrayUtils
 	 * Finds the first index of {@link Object} in an arbitrary-order {@code Object} array.
 	 * 
 	 * @param values
-	 *            an array of {@code Object}s with arbitrary order.
+	 *        an array of {@code Object}s with arbitrary order.
 	 * @param a
-	 *            the {@code Object} to search for. May be {@code null}.
+	 *        the {@code Object} to search for. May be {@code null}.
 	 * @return the lowest index of {@code a} in {@code values}, or {@code -1} if it is not present.
 	 */
 	public static int strictIndexOf( Object[ ] values , Object a )
@@ -388,9 +408,9 @@ public class ArrayUtils
 	 * Finds the index of a double in an arbitrary-order double array.
 	 * 
 	 * @param values
-	 *            an array of doubles with arbitrary order.
+	 *        an array of doubles with arbitrary order.
 	 * @param a
-	 *            the value to search for. This method always returns {@code -1} if {@code NaN} is given.
+	 *        the value to search for. This method always returns {@code -1} if {@code NaN} is given.
 	 * @return the lowest index of any non-{@code NaN} element in {@code values} that {@code == a}, or {@code -1} otherwise.
 	 */
 	public static int indexOf( double[ ] values , double a )
@@ -409,11 +429,11 @@ public class ArrayUtils
 	 * Swaps two elements in an array.
 	 * 
 	 * @param a
-	 *            the array to swap elements of.
+	 *        the array to swap elements of.
 	 * @param i0
-	 *            the index of the first element.
+	 *        the index of the first element.
 	 * @param i1
-	 *            the index of the second element.
+	 *        the index of the second element.
 	 */
 	public static void swap( double[ ] a , int i0 , int i1 )
 	{
@@ -426,9 +446,9 @@ public class ArrayUtils
 	 * Finds the index of a int in an arbitrary-order int array.
 	 * 
 	 * @param values
-	 *            an array of ints with arbitrary order.
+	 *        an array of ints with arbitrary order.
 	 * @param a
-	 *            the value to search for.
+	 *        the value to search for.
 	 * @return the lowest index of any element in {@code values} that {@code == a}, or {@code -1} otherwise.
 	 */
 	public static int indexOf( int[ ] values , int a )

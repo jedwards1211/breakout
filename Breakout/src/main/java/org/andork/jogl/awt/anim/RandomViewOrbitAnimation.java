@@ -9,10 +9,10 @@ import org.andork.math3d.Orbiter;
 import org.andork.math3d.Vecmath;
 import org.andork.util.Reparam;
 
-public class RandomOrbit implements Animation
+public class RandomViewOrbitAnimation implements Animation
 {
 	
-	public RandomOrbit( BasicJoglSetup setup , float[ ] center , float panRate , float minTilt , float maxTilt , int period , int tiltPeriod )
+	public RandomViewOrbitAnimation( BasicJoglSetup setup , float[ ] center , float panRate , float minTilt , float maxTilt , int period , int tiltPeriod )
 	{
 		if( period <= 0 )
 		{

@@ -7,10 +7,10 @@ import org.andork.jogl.neu.JoglScene;
 import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.Vecmath;
 
-public class SinusoidalTranslation implements Animation
+public class SinusoidalViewTranslationAnimation implements Animation
 {
 	
-	public SinusoidalTranslation( BasicJoglSetup setup , float[ ] end , long period , long duration )
+	public SinusoidalViewTranslationAnimation( BasicJoglSetup setup , float[ ] end , long period , long duration )
 	{
 		if( period <= 0 )
 		{
