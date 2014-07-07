@@ -1,6 +1,6 @@
 package org.andork.jogl.awt.anim;
 
-import static org.andork.math3d.Vecmath.cross;
+import static org.andork.math3d.Vecmath.*;
 import static org.andork.math3d.Vecmath.distance3;
 import static org.andork.math3d.Vecmath.dot3;
 import static org.andork.math3d.Vecmath.getColumn3;
@@ -65,6 +65,8 @@ public class GeneralViewXformOrbitAnimation implements Animation
 	double							endPan;
 	double							endTilt;
 	double							endOffset;
+	
+	boolean							linear;
 	
 	double							totalPan;
 	double							totalTilt;
@@ -169,6 +171,15 @@ public class GeneralViewXformOrbitAnimation implements Animation
 	
 	private void restOfSetUp( )
 	{
+		if( Math.abs( dot3( startRight , endRight ) - 1f ) < 1e-6f ||
+				Math.abs( dot3( startForward , endForward ) - 1f ) < 1e-6f )
+		{
+			linear = true;
+			return;
+		}
+		
+		linear = false;
+		
 		cross( 0 , 1 , 0 , startRight , startHorizontal );
 		cross( 0 , 1 , 0 , endRight , endHorizontal );
 		
@@ -271,34 +282,44 @@ public class GeneralViewXformOrbitAnimation implements Animation
 	
 	public void calcViewXform( double progress , float[ ] outXform )
 	{
-		double pan = startPan + totalPan * progress;
-		double tilt = startTilt + totalTilt * progress;
-		double offset = startOffset * ( 1 - progress ) + endOffset * progress;
-		
-		interp3( alignedStartTiltOrigin , alignedEndTiltOrigin , progress , alignedTiltOrigin );
-		alignedForward[ 0 ] = ( double ) Math.cos( tilt );
-		alignedForward[ 1 ] = ( double ) Math.sin( tilt );
-		scaleAdd3( offset , alignedForward , alignedTiltOrigin , alignedLocation );
-		
-		horizontal[ 0 ] = ( double ) Math.cos( pan );
-		horizontal[ 2 ] = ( double ) Math.sin( pan );
-		
-		interp3( startOrigin , endOrigin , progress , origin );
-		
-		// new location
-		outXform[ 12 ] = ( float ) ( origin[ 0 ] + horizontal[ 0 ] * alignedLocation[ 0 ] );
-		outXform[ 13 ] = ( float ) ( alignedLocation[ 1 ] );
-		outXform[ 14 ] = ( float ) ( origin[ 2 ] + horizontal[ 2 ] * alignedLocation[ 0 ] );
-		
-		// new backward
-		outXform[ 8 ] = ( float ) ( horizontal[ 0 ] * -alignedForward[ 0 ] );
-		outXform[ 9 ] = ( float ) ( -alignedForward[ 1 ] );
-		outXform[ 10 ] = ( float ) ( horizontal[ 2 ] * -alignedForward[ 0 ] );
-		
-		// new right
-		outXform[ 0 ] = ( float ) ( -horizontal[ 2 ] );
-		outXform[ 1 ] = ( float ) ( 0 );
-		outXform[ 2 ] = ( float ) ( horizontal[ 0 ] );
+		if( linear )
+		{
+			interp3( startLocation , endLocation , progress , outXform , 12 );
+			interp3( startRight , endRight , progress , outXform , 0 );
+			interp3( startForward , endForward , progress , outXform , 8 );
+			negate3( outXform , 8 );
+		}
+		else
+		{
+			double pan = startPan + totalPan * progress;
+			double tilt = startTilt + totalTilt * progress;
+			double offset = startOffset * ( 1 - progress ) + endOffset * progress;
+			
+			interp3( alignedStartTiltOrigin , alignedEndTiltOrigin , progress , alignedTiltOrigin );
+			alignedForward[ 0 ] = ( double ) Math.cos( tilt );
+			alignedForward[ 1 ] = ( double ) Math.sin( tilt );
+			scaleAdd3( offset , alignedForward , alignedTiltOrigin , alignedLocation );
+			
+			horizontal[ 0 ] = ( double ) Math.cos( pan );
+			horizontal[ 2 ] = ( double ) Math.sin( pan );
+			
+			interp3( startOrigin , endOrigin , progress , origin );
+			
+			// new location
+			outXform[ 12 ] = ( float ) ( origin[ 0 ] + horizontal[ 0 ] * alignedLocation[ 0 ] );
+			outXform[ 13 ] = ( float ) ( alignedLocation[ 1 ] );
+			outXform[ 14 ] = ( float ) ( origin[ 2 ] + horizontal[ 2 ] * alignedLocation[ 0 ] );
+			
+			// new backward
+			outXform[ 8 ] = ( float ) ( horizontal[ 0 ] * -alignedForward[ 0 ] );
+			outXform[ 9 ] = ( float ) ( -alignedForward[ 1 ] );
+			outXform[ 10 ] = ( float ) ( horizontal[ 2 ] * -alignedForward[ 0 ] );
+			
+			// new right
+			outXform[ 0 ] = ( float ) ( -horizontal[ 2 ] );
+			outXform[ 1 ] = ( float ) ( 0 );
+			outXform[ 2 ] = ( float ) ( horizontal[ 0 ] );
+		}
 		
 		// new up = backward X right
 		cross( outXform , 8 , outXform , 0 , outXform , 4 );

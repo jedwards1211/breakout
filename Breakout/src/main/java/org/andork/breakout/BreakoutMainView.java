@@ -21,15 +21,18 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
@@ -84,13 +87,11 @@ import org.andork.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
+import org.andork.collect.CollectionUtils;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.jogl.AutoClipOrthoProjectionCalculator;
 import org.andork.jogl.BasicJOGLObject;
-import org.andork.jogl.BasicJOGLObject.BasicVertexShader;
-import org.andork.jogl.BasicJOGLObject.FlatFragmentShader;
-import org.andork.jogl.BufferHelper;
 import org.andork.jogl.InterpolationProjectionCalculator;
 import org.andork.jogl.PerspectiveProjectionCalculator;
 import org.andork.jogl.ProjectionCalculator;
@@ -104,6 +105,7 @@ import org.andork.jogl.neu.JoglScene;
 import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
+import org.andork.math3d.PickXform;
 import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.Vecmath;
 import org.andork.q.QArrayList;
@@ -137,7 +139,6 @@ import org.andork.swing.table.RowFilterFactory;
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
-import com.andork.plot.PlotController;
 
 public class BreakoutMainView extends BasicJoglSetup
 {
@@ -954,95 +955,22 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	protected void fitViewToSelected( )
 	{
-		if( getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
+		if( model3d == null )
 		{
 			return;
 		}
 		
-		ListSelectionModel selectionModel = surveyDrawer.table( ).getModelSelectionModel( );
-		
-		if( selectionModel.getMinSelectionIndex( ) < 0 )
-		{
-			return;
-		}
-		
-		FittingFrustum frustum = new FittingFrustum( );
-		
-		frustum.init( scene.pickXform( ) , .8f );
-		
-		for( int i = selectionModel.getMinSelectionIndex( ) ; i <= selectionModel.getMaxSelectionIndex( ) ; i++ )
-		{
-			if( !selectionModel.isSelectedIndex( i ) )
-			{
-				continue;
-			}
-			Shot shot = ( Shot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
-			if( shot == null )
-			{
-				continue;
-			}
-			
-			frustum.addPoint(
-					( float ) shot.from.position[ 0 ] ,
-					( float ) shot.from.position[ 1 ] ,
-					( float ) shot.from.position[ 2 ]
-					);
-			frustum.addPoint(
-					( float ) shot.to.position[ 0 ] ,
-					( float ) shot.to.position[ 1 ] ,
-					( float ) shot.to.position[ 2 ]
-					);
-			
-		}
-		
-		float[ ] coord = new float[ 3 ];
-		
-		frustum.calculateOrigin( coord );
-		
-		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new SinusoidalViewTranslationAnimation( this , coord , 30 , 1000 ) );
-		cameraAnimationQueue.add( new AnimationViewSaver( ) );
+		changeView( CollectionUtils.toHashSet( getSelectedShotsFromTable( ).map( shot -> model3d.getShot( shot.number ) ) ) );
 	}
 	
 	protected void fitViewToEverything( )
 	{
-		if( getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
+		if( model3d == null )
 		{
 			return;
 		}
 		
-		FittingFrustum frustum = new FittingFrustum( );
-		
-		frustum.init( scene.pickXform( ) , .8f );
-		
-		for( int i = 0 ; i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
-		{
-			Shot shot = ( Shot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
-			if( shot == null )
-			{
-				continue;
-			}
-			
-			frustum.addPoint(
-					( float ) shot.from.position[ 0 ] ,
-					( float ) shot.from.position[ 1 ] ,
-					( float ) shot.from.position[ 2 ]
-					);
-			frustum.addPoint(
-					( float ) shot.to.position[ 0 ] ,
-					( float ) shot.to.position[ 1 ] ,
-					( float ) shot.to.position[ 2 ]
-					);
-			
-		}
-		
-		float[ ] coord = new float[ 3 ];
-		
-		frustum.calculateOrigin( coord );
-		
-		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new SinusoidalViewTranslationAnimation( this , coord , 30 , 1000 ) );
-		cameraAnimationQueue.add( new AnimationViewSaver( ) );
+		changeView( CollectionUtils.toHashSet( getShotsFromTable( ).map( shot -> model3d.getShot( shot.number ) ) ) );
 	}
 	
 	protected void flyToFiltered( final AnnotatingJTable<?, ?> table )
@@ -1052,19 +980,20 @@ public class BreakoutMainView extends BasicJoglSetup
 			return;
 		}
 		
-		final Survey3dModel model3d = BreakoutMainView.this.model3d;
-		
-		float[ ] center = new float[ 3 ];
-		orbiter.getCenter( center );
-		
-		if( Vecmath.hasNaNsOrInfinites( center ) )
-		{
-			model3d.getCenter( center );
-		}
-		
 		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new SpringViewOrbitAnimation( this , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
-		cameraAnimationQueue.add( new AnimationViewSaver( ) );
+		
+		if( getProjectModel( ).get( ProjectModel.cameraView ) == CameraView.PERSPECTIVE )
+		{
+			float[ ] center = new float[ 3 ];
+			orbiter.getCenter( center );
+			
+			if( Vecmath.hasNaNsOrInfinites( center ) )
+			{
+				model3d.getCenter( center );
+			}
+			cameraAnimationQueue.add( new SpringViewOrbitAnimation( this , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
+			cameraAnimationQueue.add( new AnimationViewSaver( ) );
+		}
 		cameraAnimationQueue.add( new Animation( )
 		{
 			@Override
@@ -1075,6 +1004,10 @@ public class BreakoutMainView extends BasicJoglSetup
 				
 				fitViewToSelected( );
 				
+				if( getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
+				{
+					return 0;
+				}
 				rebuildTaskService.submit( task ->
 						SwingUtilities.invokeLater( ( ) -> {
 							
@@ -1136,9 +1069,53 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
+	public void perspectiveMode( )
+	{
+		//		mouseLooper.removeMouseAdapter( mouseAdapterChain );
+		//		
+		//		mouseAdapterChain = new MouseAdapterChain( );
+		//		mouseAdapterChain.addMouseAdapter( navigator );
+		//		mouseAdapterChain.addMouseAdapter( orbiter );
+		//		mouseAdapterChain.addMouseAdapter( pickHandler );
+		//		mouseAdapterChain.addMouseAdapter( autoshowController );
+		//		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
+		//		mouseLooper.addMouseAdapter( mouseAdapterChain );
+		//		
+		//		InterpolationProjectionCalculator calc = new InterpolationProjectionCalculator( scene.getProjectionCalculator( ) , perspCalculator , 0f );
+		//		
+		//		float b = 10f;
+		//		float a = 1 / b;
+		//		float ra = 1 / a / a;
+		//		float rb = 1 / b / b;
+		//		
+		//		removeUnprotectedCameraAnimations( );
+		//		cameraAnimationQueue.add( new ProjXformAnimation( this , 1000 , true , f -> {
+		//			float ff = b + f * ( a - b );
+		//			float rf = 1 / ff / ff;
+		//			calc.f = ( rf - rb ) / ( ra - rb );
+		//			return calc;
+		//		} ) );
+		//		Animation finisher = l -> {
+		//			scene.setProjectionCalculator( perspCalculator );
+		//			canvas.display( );
+		//			return 0;
+		//		};
+		//		finisher = finisher.also( new AnimationViewSaver( ) );
+		//		protectedAnimations.put( finisher , null );
+		//		cameraAnimationQueue.add( finisher );
+		
+		float[ ] forward = new float[ 3 ];
+		float[ ] right = new float[ 3 ];
+		
+		Vecmath.negate3( scene.inverseViewXform( ) , 8 , forward , 0 );
+		Vecmath.getColumn3( scene.inverseViewXform( ) , 0 , right );
+		
+		changeView( forward , right , false , getDefaultShotsToFitForChangeView( ) );
+	}
+	
 	public void planMode( )
 	{
-		orthoMode( new float[ ] { 0 , -1 , 0 } , new float[ ] { 1 , 0 , 0 } );
+		changeView( new float[ ] { 0 , -1 , 0 } , new float[ ] { 1 , 0 , 0 } , true , getDefaultShotsToFitForChangeView( ) );
 		
 		// scene.getViewXform( v );
 		// Vecmath.setRow4( v , 0 , 1 , 0 , 0 , 0 );
@@ -1150,122 +1127,182 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	public void northFacingProfileMode( )
 	{
-		orthoMode( new float[ ] { 0 , 0 , -1 } , new float[ ] { 1 , 0 , 0 } );
+		changeView( new float[ ] { 0 , 0 , -1 } , new float[ ] { 1 , 0 , 0 } , true , getDefaultShotsToFitForChangeView( ) );
 	}
 	
 	public void southFacingProfileMode( )
 	{
-		orthoMode( new float[ ] { 0 , 0 , 1 } , new float[ ] { -1 , 0 , 0 } );
+		changeView( new float[ ] { 0 , 0 , 1 } , new float[ ] { -1 , 0 , 0 } , true , getDefaultShotsToFitForChangeView( ) );
 	}
 	
 	public void eastFacingProfileMode( )
 	{
-		orthoMode( new float[ ] { 1 , 0 , 0 } , new float[ ] { 0 , 0 , 1 } );
+		changeView( new float[ ] { 1 , 0 , 0 } , new float[ ] { 0 , 0 , 1 } , true , getDefaultShotsToFitForChangeView( ) );
 	}
 	
 	public void westFacingProfileMode( )
 	{
-		orthoMode( new float[ ] { -1 , 0 , 0 } , new float[ ] { 0 , 0 , -1 } );
+		changeView( new float[ ] { -1 , 0 , 0 } , new float[ ] { 0 , 0 , -1 } , true , getDefaultShotsToFitForChangeView( ) );
 	}
 	
-	private void orthoMode( float[ ] orthoForward , float[ ] orthoRight )
+	protected Stream<Shot> getShotsFromTable( )
+	{
+		SurveyTableModel model = surveyDrawer.table( ).getModel( );
+		return IntStream.range( 0 , model.getRowCount( ) ).mapToObj( i -> model.shotAtRow( i ) ).filter( o -> o != null );
+	}
+	
+	protected Stream<Shot> getSelectedShotsFromTable( )
+	{
+		SurveyTableModel model = surveyDrawer.table( ).getModel( );
+		ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
+		return IntStream.range( 0 , model.getRowCount( ) ).filter( i -> selModel.isSelectedIndex( i ) )
+				.mapToObj( i -> model.shotAtRow( i ) ).filter( o -> o != null );
+	}
+	
+	protected Set<Shot3d> getDefaultShotsToFitForChangeView( )
+	{
+		if( model3d == null )
+		{
+			return Collections.emptySet( );
+		}
+		Set<Shot3d> result = new HashSet<Shot3d>( );
+		getSelectedShotsFromTable( ).forEach( shot -> result.add( model3d.getShot( shot.number ) ) );
+		if( result.size( ) < 2 )
+		{
+			result.clear( );
+			PlanarHull3f hull = new PlanarHull3f( );
+			scene.pickXform( ).exportViewVolume( hull , canvas.getWidth( ) , canvas.getHeight( ) );
+			model3d.getShotsIn( hull , result );
+			if( result.isEmpty( ) )
+			{
+				result.addAll( model3d.getShots( ) );
+			}
+		}
+		
+		return result;
+	}
+	
+	protected void changeView( Set<Shot3d> shotsToFit )
+	{
+		float[ ] forward = new float[ 3 ];
+		float[ ] right = new float[ 3 ];
+		
+		float[ ] vi = scene.inverseViewXform( );
+		
+		Vecmath.negate3( vi , 8 , forward , 0 );
+		Vecmath.getColumn3( vi , 0 , right );
+		
+		changeView( forward , right , getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE ,
+				shotsToFit );
+	}
+	
+	private void changeView( float[ ] forward , float[ ] right , boolean ortho , Set<Shot3d> shotsToFit )
 	{
 		mouseLooper.removeMouseAdapter( mouseAdapterChain );
 		
-		mouseAdapterChain = new MouseAdapterChain( );
-		mouseAdapterChain.addMouseAdapter( orthoNavigator );
-		mouseAdapterChain.addMouseAdapter( pickHandler );
-		mouseAdapterChain.addMouseAdapter( autoshowController );
-		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
-		mouseLooper.addMouseAdapter( mouseAdapterChain );
+		float[ ] up = new float[ 3 ];
+		Vecmath.cross( right , forward , up );
+		
+		ProjectionCalculator newProjCalculator;
+		float[ ] vi = scene.inverseViewXform( );
+		float[ ] endLocation = { vi[ 12 ] , vi[ 13 ] , vi[ 14 ] };
+		
+		Animation finisher;
+		
+		if( ortho )
+		{
+			AutoClipOrthoProjectionCalculator orthoCalculator = new AutoClipOrthoProjectionCalculator( );
+			newProjCalculator = orthoCalculator;
+			orbiter.getCenter( orthoCalculator.center );
+			
+			if( model3d != null )
+			{
+				orthoCalculator.radius = Rectmath.radius3( model3d.getTree( ).getRoot( ).mbr( ) );
+				float[ ] orthoBounds = model3d.getOrthoBounds( shotsToFit , right , up , forward );
+				Rectmath.scaleFromCenter3( orthoBounds , 1 / 0.9f , 1 / 0.9f , 1f , orthoBounds );
+				
+				float[ ] endOrthoLocation = new float[ 3 ];
+				Rectmath.center( orthoBounds , endOrthoLocation );
+				
+				Vecmath.combine( endLocation , endOrthoLocation , right , up , forward );
+				
+				float dist = Vecmath.distance3( scene.inverseViewXform( ) , 12 , endLocation , 0 );
+				endOrthoLocation[ 2 ] -= dist;
+				Vecmath.combine( endLocation , endOrthoLocation , right , up , forward );
+				
+				Rectmath.center( orthoBounds , endOrthoLocation );
+				endOrthoLocation[ 2 ] = orthoBounds[ 2 ];
+				Vecmath.combine( orthoCalculator.nearClipPoint , endOrthoLocation , right , up , forward );
+				endOrthoLocation[ 2 ] = orthoBounds[ 5 ];
+				Vecmath.combine( orthoCalculator.farClipPoint , endOrthoLocation , right , up , forward );
+				
+				orthoCalculator.hSpan = ( orthoBounds[ 3 ] - orthoBounds[ 0 ] );
+				orthoCalculator.vSpan = ( orthoBounds[ 4 ] - orthoBounds[ 1 ] );
+			}
+			
+			finisher = l -> {
+				orthoCalculator.useNearClipPoint = orthoCalculator.useFarClipPoint = true;
+				scene.setProjectionCalculator( orthoCalculator );
+				
+				mouseAdapterChain = new MouseAdapterChain( );
+				mouseAdapterChain.addMouseAdapter( orthoNavigator );
+				mouseAdapterChain.addMouseAdapter( pickHandler );
+				mouseAdapterChain.addMouseAdapter( autoshowController );
+				mouseAdapterChain.addMouseAdapter( otherMouseHandler );
+				mouseLooper.addMouseAdapter( mouseAdapterChain );
+				
+				canvas.display( );
+				return 0;
+			};
+		}
+		else
+		{
+			newProjCalculator = perspCalculator;
+			
+			if( model3d != null )
+			{
+				FittingFrustum frustum = new FittingFrustum( );
+				float[ ] projXform = newMat4f( );
+				perspCalculator.calculate( scene , projXform );
+				PickXform pickXform = new PickXform( );
+				pickXform.calculate( projXform , scene.viewXform( ) );
+				frustum.init( pickXform , 0.9f );
+				
+				for( Shot3d shot : shotsToFit )
+				{
+					for( float[ ] coord : shot.coordIterable( endLocation ) )
+					{
+						frustum.addPoint( coord );
+					}
+				}
+				
+				frustum.calculateOrigin( endLocation );
+			}
+			
+			finisher = l -> {
+				scene.setProjectionCalculator( perspCalculator );
+				
+				mouseAdapterChain = new MouseAdapterChain( );
+				mouseAdapterChain.addMouseAdapter( navigator );
+				mouseAdapterChain.addMouseAdapter( orbiter );
+				mouseAdapterChain.addMouseAdapter( pickHandler );
+				mouseAdapterChain.addMouseAdapter( autoshowController );
+				mouseAdapterChain.addMouseAdapter( otherMouseHandler );
+				mouseLooper.addMouseAdapter( mouseAdapterChain );
+				
+				canvas.display( );
+				return 0;
+			};
+		}
 		
 		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( this , 1000 , 30 );
 		float[ ] viewXform = newMat4f( );
-		
-		float[ ] orthoUp = new float[ 3 ];
-		Vecmath.cross( orthoRight , orthoForward , orthoUp );
-		
-		PlanarHull3f hull = new PlanarHull3f( );
-		scene.pickXform( ).exportViewVolume( hull , canvas.getWidth( ) , canvas.getHeight( ) );
-		
-		AutoClipOrthoProjectionCalculator orthoCalculator = new AutoClipOrthoProjectionCalculator( );
-		orbiter.getCenter( orthoCalculator.center );
-		
-		//		BasicJOGLObject bounds = new BasicJOGLObject( );
-		//		BufferHelper bufferHelper = new BufferHelper( );
-		//		for( float[ ] vertex : hull.vertices )
-		//		{
-		//			bufferHelper.put( vertex );
-		//		}
-		//		bounds.addVertexBuffer( bufferHelper.toByteBuffer( ) );
-		//		BufferHelper indexBufferHelper = new BufferHelper( );
-		//		indexBufferHelper.put( 0 , 1 , 0 , 2 , 1 , 3 , 2 , 3 , 4 , 5 , 4 , 6 , 5 , 7 , 6 , 7 , 0 , 4 , 1 , 5 , 2 , 6 , 3 , 7 );
-		//		bounds.indexBuffer( indexBufferHelper.toByteBuffer( ) );
-		//		bounds.vertexCount( 8 );
-		//		bounds.indexCount( 24 );
-		//		bounds.indexType( GL.GL_UNSIGNED_INT );
-		//		bounds.drawMode( GL.GL_LINES );
-		//		bounds.vertexShaderCode( new BasicVertexShader( ).toString( ) ).add( bounds.new Attribute3fv( ).name( "a_pos" ) );
-		//		bounds.fragmentShaderCode( new FlatFragmentShader( ).color( 0 , 1 , 0 , 1 ).toString( ) );
-		//		
-		//		BasicJOGLObject normals = new BasicJOGLObject( );
-		//		bufferHelper = new BufferHelper( );
-		//		for( int side = 0 ; side < hull.origins.length ; side++ )
-		//		{
-		//			bufferHelper.put( hull.origins[ side ] );
-		//			bufferHelper.put( hull.origins[ side ][ 0 ] + hull.normals[ side ][ 0 ] * 50 );
-		//			bufferHelper.put( hull.origins[ side ][ 1 ] + hull.normals[ side ][ 1 ] * 50 );
-		//			bufferHelper.put( hull.origins[ side ][ 2 ] + hull.normals[ side ][ 2 ] * 50 );
-		//		}
-		//		normals.addVertexBuffer( bufferHelper.toByteBuffer( ) );
-		//		normals.vertexCount( 12 );
-		//		normals.drawMode( GL.GL_LINES );
-		//		normals.vertexShaderCode( new BasicVertexShader( ).toString( ) ).add( normals.new Attribute3fv( ).name( "a_pos" ) );
-		//		normals.fragmentShaderCode( new FlatFragmentShader( ).color( 1 , 1 , 0 , 1 ).toString( ) );
-		//		
-		//		canvas.invoke( false , drawable -> {
-		//			bounds.init( ( GL2ES2 ) drawable.getGL( ) );
-		//			scene.add( bounds );
-		//			normals.init( ( GL2ES2 ) drawable.getGL( ) );
-		//			scene.add( normals );
-		//			return false;
-		//		} );
-		
-		if( model3d != null )
-		{
-			orthoCalculator.radius = Rectmath.radius3( model3d.getTree( ).getRoot( ).mbr( ) );
-			Set<Shot3d> shotsToFit = model3d.getSelectedShots( );
-			if( shotsToFit.size( ) < 2 )
-			{
-				shotsToFit = model3d.getShotsIn( hull );
-			}
-			float[ ] orthoBounds = model3d.getOrthoBounds( shotsToFit , orthoRight , orthoUp , orthoForward );
-			
-			float[ ] endOrthoLocation = new float[ 3 ];
-			Rectmath.center( orthoBounds , endOrthoLocation );
-			
-			float[ ] endLocation = new float[ 3 ];
-			Vecmath.combine( endLocation , endOrthoLocation , orthoRight , orthoUp , orthoForward );
-			
-			float dist = Vecmath.distance3( scene.inverseViewXform( ) , 12 , endLocation , 0 );
-			endOrthoLocation[ 2 ] -= dist;
-			Vecmath.combine( endLocation , endOrthoLocation , orthoRight , orthoUp , orthoForward );
-			
-			Rectmath.center( orthoBounds , endOrthoLocation );
-			endOrthoLocation[ 2 ] = orthoBounds[ 2 ];
-			Vecmath.combine( orthoCalculator.nearClipPoint , endOrthoLocation , orthoRight , orthoUp , orthoForward );
-			endOrthoLocation[ 2 ] = orthoBounds[ 5 ];
-			Vecmath.combine( orthoCalculator.farClipPoint , endOrthoLocation , orthoRight , orthoUp , orthoForward );
-			
-			orthoCalculator.hSpan = ( orthoBounds[ 3 ] - orthoBounds[ 0 ] );
-			orthoCalculator.vSpan = ( orthoBounds[ 4 ] - orthoBounds[ 1 ] );
-			viewAnimation.setUpWithEndLocation( scene.viewXform( ) , endLocation , orthoForward , orthoRight );
-		}
+		viewAnimation.setUpWithEndLocation( scene.viewXform( ) , endLocation , forward , right );
 		
 		ProjectionCalculator currentProjCalculator = scene.getProjectionCalculator( );
 		
 		InterpolationProjectionCalculator calc = new InterpolationProjectionCalculator(
-				scene.getProjectionCalculator( ) , orthoCalculator , 0f );
+				scene.getProjectionCalculator( ) , newProjCalculator , 0f );
 		
 		FloatUnaryOperator viewReparam = f -> 1 - ( 1 - f ) * ( 1 - f );
 		FloatUnaryOperator projReparam;
@@ -1273,19 +1310,41 @@ public class BreakoutMainView extends BasicJoglSetup
 		{
 			AutoClipOrthoProjectionCalculator currentOrthoCalc = ( AutoClipOrthoProjectionCalculator ) currentProjCalculator;
 			currentOrthoCalc.useNearClipPoint = currentOrthoCalc.useFarClipPoint = false;
-			projReparam = viewReparam;
+			if( ortho )
+			{
+				projReparam = viewReparam;
+			}
+			else
+			{
+				float b = 10f;
+				float a = 1 / b;
+				float ra = 1 / a / a;
+				float rb = 1 / b / b;
+				projReparam = f -> {
+					float ff = b + f * ( a - b );
+					float rf = 1 / ff / ff;
+					return viewReparam.applyAsFloat( ( rf - rb ) / ( ra - rb ) );
+				};
+			}
 		}
 		else
 		{
-			float b = 10f;
-			float a = 1 / b;
-			float ra = 1 / a / a;
-			float rb = 1 / b / b;
-			projReparam = f -> {
-				float ff = a + f * ( b - a );
-				float rf = 1 / ff / ff;
-				return viewReparam.applyAsFloat( ( rf - ra ) / ( rb - ra ) );
-			};
+			if( ortho )
+			{
+				float b = 10f;
+				float a = 1 / b;
+				float ra = 1 / a / a;
+				float rb = 1 / b / b;
+				projReparam = f -> {
+					float ff = a + viewReparam.applyAsFloat( f ) * ( b - a );
+					float rf = 1 / ff / ff;
+					return ( rf - ra ) / ( rb - ra );
+				};
+			}
+			else
+			{
+				projReparam = viewReparam;
+			}
 		}
 		
 		removeUnprotectedCameraAnimations( );
@@ -1296,48 +1355,6 @@ public class BreakoutMainView extends BasicJoglSetup
 			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
 			return viewXform;
 		} ) ) );
-		Animation finisher = l -> {
-			orthoCalculator.useNearClipPoint = orthoCalculator.useFarClipPoint = true;
-			scene.setProjectionCalculator( orthoCalculator );
-			canvas.display( );
-			return 0;
-		};
-		finisher = finisher.also( new AnimationViewSaver( ) );
-		protectedAnimations.put( finisher , null );
-		cameraAnimationQueue.add( finisher );
-	}
-	
-	public void perspectiveMode( )
-	{
-		mouseLooper.removeMouseAdapter( mouseAdapterChain );
-		
-		mouseAdapterChain = new MouseAdapterChain( );
-		mouseAdapterChain.addMouseAdapter( navigator );
-		mouseAdapterChain.addMouseAdapter( orbiter );
-		mouseAdapterChain.addMouseAdapter( pickHandler );
-		mouseAdapterChain.addMouseAdapter( autoshowController );
-		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
-		mouseLooper.addMouseAdapter( mouseAdapterChain );
-		
-		InterpolationProjectionCalculator calc = new InterpolationProjectionCalculator( scene.getProjectionCalculator( ) , perspCalculator , 0f );
-		
-		float b = 10f;
-		float a = 1 / b;
-		float ra = 1 / a / a;
-		float rb = 1 / b / b;
-		
-		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new ProjXformAnimation( this , 1000 , true , f -> {
-			float ff = b + f * ( a - b );
-			float rf = 1 / ff / ff;
-			calc.f = ( rf - rb ) / ( ra - rb );
-			return calc;
-		} ) );
-		Animation finisher = l -> {
-			scene.setProjectionCalculator( perspCalculator );
-			canvas.display( );
-			return 0;
-		};
 		finisher = finisher.also( new AnimationViewSaver( ) );
 		protectedAnimations.put( finisher , null );
 		cameraAnimationQueue.add( finisher );

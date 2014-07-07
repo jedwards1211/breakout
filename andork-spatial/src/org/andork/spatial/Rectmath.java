@@ -566,4 +566,18 @@ public class Rectmath
 		
 		return ( float ) Math.sqrt( dx * dx + dy * dy + dz + dz ) / 2f;
 	}
+	
+	public static void scaleFromCenter3( float[ ] mbr , float xScale , float yScale , float zScale , float[ ] out )
+	{
+		float dx = mbr[ 3 ] - mbr[ 0 ];
+		float dy = mbr[ 4 ] - mbr[ 1 ];
+		float dz = mbr[ 5 ] - mbr[ 2 ];
+		
+		out[ 0 ] = mbr[ 0 ] + dx * ( 1 - xScale ) / 2;
+		out[ 1 ] = mbr[ 1 ] + dy * ( 1 - yScale ) / 2;
+		out[ 2 ] = mbr[ 2 ] + dz * ( 1 - zScale ) / 2;
+		out[ 3 ] = mbr[ 0 ] + dx * xScale;
+		out[ 4 ] = mbr[ 1 ] + dy * yScale;
+		mbr[ 5 ] = mbr[ 2 ] + dz * zScale;
+	}
 }

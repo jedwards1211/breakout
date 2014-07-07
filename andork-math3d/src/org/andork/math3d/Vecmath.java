@@ -3293,6 +3293,13 @@ public class Vecmath
 		out[ 2 ] = ( 1 - f ) * a[ 2 ] + f * b[ 2 ];
 	}
 	
+	public static void interp3( double[ ] a , double[ ] b , double f , float[ ] out , int outi )
+	{
+		out[ outi + 0 ] = ( float ) ( ( 1 - f ) * a[ 0 ] + f * b[ 0 ] );
+		out[ outi + 1 ] = ( float ) ( ( 1 - f ) * a[ 1 ] + f * b[ 1 ] );
+		out[ outi + 2 ] = ( float ) ( ( 1 - f ) * a[ 2 ] + f * b[ 2 ] );
+	}
+	
 	public static float length( float[ ] v , int start , int count )
 	{
 		float total = 0;
@@ -3338,11 +3345,28 @@ public class Vecmath
 		out[ 2 ] = -v[ 2 ];
 	}
 	
+	/**
+	 * Computes out = -v.
+	 */
+	public static void negate3( float[ ] v , int vi , float[ ] out , int outi )
+	{
+		out[ outi + 0 ] = -v[ vi + 0 ];
+		out[ outi + 1 ] = -v[ vi + 1 ];
+		out[ outi + 2 ] = -v[ vi + 2 ];
+	}
+	
 	public static void negate3( float[ ] v )
 	{
 		v[ 0 ] = -v[ 0 ];
 		v[ 1 ] = -v[ 1 ];
 		v[ 2 ] = -v[ 2 ];
+	}
+	
+	public static void negate3( float[ ] v , int vi )
+	{
+		v[ vi + 0 ] = -v[ vi + 0 ];
+		v[ vi + 1 ] = -v[ vi + 1 ];
+		v[ vi + 2 ] = -v[ vi + 2 ];
 	}
 	
 	public static boolean epsilonEquals( float[ ] a , float[ ] b , float epsilon )

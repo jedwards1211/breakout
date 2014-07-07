@@ -101,6 +101,11 @@ public class FittingFrustum
 		setf( vertical2 , vertical );
 	}
 	
+	public void addPoint( float[ ] coord )
+	{
+		addPoint( coord[ 0 ] , coord[ 1 ] , coord[ 2 ] );
+	}
+	
 	public void addPoint( float x , float y , float z )
 	{
 		float dl = x * left[ 0 ] + y * left[ 1 ] + z * left[ 2 ];
@@ -170,7 +175,7 @@ public class FittingFrustum
 	 * reduced matrix. Row <code>i</code> of the reduced matrix is row <code>row_perms[ i ]</code> of A.
 	 * 
 	 * @param maxNumToReduce
-	 *            only the topmost {@code maxNumToReduce} rows will be fully reduced
+	 *        only the topmost {@code maxNumToReduce} rows will be fully reduced
 	 */
 	static void reduce( float[ ][ ] A , int maxNumToReduce , int[ ] row_perms , int[ ] pivot_cols )
 	{

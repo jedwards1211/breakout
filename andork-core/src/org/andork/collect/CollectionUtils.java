@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.RandomAccess;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.andork.func.Mapper;
 import org.andork.func.Predicate;
@@ -242,6 +243,20 @@ public class CollectionUtils
 		{
 			result.add( elem );
 		}
+		return result;
+	}
+	
+	public static <T> ArrayList<T> toArrayList( Stream<T> stream )
+	{
+		ArrayList<T> result = new ArrayList<T>( );
+		stream.forEach( t -> result.add( t ) );
+		return result;
+	}
+	
+	public static <T> HashSet<T> toHashSet( Stream<T> stream )
+	{
+		HashSet<T> result = new HashSet<T>( );
+		stream.forEach( t -> result.add( t ) );
 		return result;
 	}
 	

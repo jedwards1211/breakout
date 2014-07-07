@@ -699,6 +699,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		dest.addAll( originalShots );
 	}
 	
+	public Shot3d getShot( int number )
+	{
+		return shot3ds.get( number );
+	}
+	
 	public List<Shot3d> getShots( )
 	{
 		return Collections.unmodifiableList( shot3ds );
@@ -2328,7 +2333,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 	public Set<Shot3d> getShotsIn( PlanarHull3f hull )
 	{
 		Set<Shot3d> result = new HashSet<Shot3d>( );
-		
+		getShotsIn( hull , result );
+		return result;
+	}
+	
+	public void getShotsIn( PlanarHull3f hull , Set<Shot3d> result )
+	{
 		RTraversal.traverse( getTree( ).getRoot( ) , node -> {
 			if( hull.containsBox( node.mbr( ) ) )
 			{
@@ -2347,8 +2357,6 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			result.add( leaf.object( ) );
 			return true;
 		} );
-		
-		return result;
 	}
 	
 	public float[ ] getOrthoBounds( Set<Shot3d> shotsInView , float[ ] orthoRight , float[ ] orthoUp , float[ ] orthoForward )
