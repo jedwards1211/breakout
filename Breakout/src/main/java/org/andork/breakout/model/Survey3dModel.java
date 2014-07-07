@@ -67,7 +67,7 @@ import org.andork.jogl.neu.JoglResource;
 import org.andork.jogl.util.JOGLUtils;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
-import org.andork.math3d.NewPlanarHull3f;
+import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.RBranch;
 import org.andork.spatial.RLeaf;
@@ -2325,7 +2325,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
-	public Set<Shot3d> getShotsIn( NewPlanarHull3f hull )
+	public Set<Shot3d> getShotsIn( PlanarHull3f hull )
 	{
 		Set<Shot3d> result = new HashSet<Shot3d>( );
 		

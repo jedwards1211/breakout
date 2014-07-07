@@ -123,96 +123,17 @@ public class PickXform
 		}
 	}
 	
-	public void exportViewVolume( PlanarHull3f hull , float[ ] viewBounds , float viewWidth , float viewHeight )
-	{
-		if( hull.sides != 6 )
-		{
-			throw new IllegalArgumentException( "tester must have exactly 6 sides" );
-		}
-		xform( viewBounds[ 0 ] , viewBounds[ 1 ] , viewWidth , viewHeight , hull.origins[ 0 ] , hull.rays[ 0 ] );
-		xform( viewBounds[ 2 ] , viewBounds[ 1 ] , viewWidth , viewHeight , hull.origins[ 1 ] , hull.rays[ 1 ] );
-		xform( viewBounds[ 2 ] , viewBounds[ 3 ] , viewWidth , viewHeight , hull.origins[ 2 ] , hull.rays[ 2 ] );
-		xform( viewBounds[ 0 ] , viewBounds[ 3 ] , viewWidth , viewHeight , hull.origins[ 3 ] , hull.rays[ 3 ] );
-		
-		if( perspective )
-		{
-			cross( hull.rays[ 1 ] , hull.rays[ 0 ] , hull.normals[ 0 ] );
-			cross( hull.rays[ 2 ] , hull.rays[ 1 ] , hull.normals[ 1 ] );
-			cross( hull.rays[ 3 ] , hull.rays[ 2 ] , hull.normals[ 2 ] );
-			cross( hull.rays[ 0 ] , hull.rays[ 3 ] , hull.normals[ 3 ] );
-			
-			mpmulAffine( vi , 0 , 0 , -btlrnf[ 4 ] , hull.origins[ 4 ] );
-			mpmulAffine( vi , 0 , 0 , -btlrnf[ 5 ] , hull.origins[ 5 ] );
-		}
-		else
-		{
-			mvmulAffine( vi , 0 , 1 , 0 , hull.normals[ 0 ] );
-			mvmulAffine( vi , -1 , 0 , 0 , hull.normals[ 1 ] );
-			mvmulAffine( vi , 0 , -1 , 0 , hull.normals[ 2 ] );
-			mvmulAffine( vi , 1 , 0 , 0 , hull.normals[ 3 ] );
-			
-			mpmulAffine( vipi , 0 , 0 , -1 , hull.origins[ 4 ] );
-			mpmulAffine( vipi , 0 , 0 , 1 , hull.origins[ 5 ] );
-		}
-		mvmulAffine( vi , 0 , 0 , -1 , hull.normals[ 4 ] );
-		mvmulAffine( vi , 0 , 0 , 1 , hull.normals[ 5 ] );
-		setf( hull.rays[ 4 ] , hull.normals[ 4 ] );
-		setf( hull.rays[ 5 ] , hull.normals[ 5 ] );
-	}
-	
 	public void exportViewVolume( PlanarHull3f hull , float viewWidth , float viewHeight )
 	{
 		exportViewVolume( hull , 0 , 0 , viewWidth , viewHeight , viewWidth , viewHeight );
 	}
 	
-	public void exportViewVolume( PlanarHull3f hull , float minX , float minY , float maxX , float maxY , float viewWidth , float viewHeight )
-	{
-		if( hull.sides != 6 )
-		{
-			throw new IllegalArgumentException( "hull must have exactly 6 sides" );
-		}
-		xform( minX , minY , viewWidth , viewHeight , hull.origins[ 0 ] , hull.rays[ 0 ] );
-		xform( maxX , minY , viewWidth , viewHeight , hull.origins[ 1 ] , hull.rays[ 1 ] );
-		xform( maxX , maxY , viewWidth , viewHeight , hull.origins[ 2 ] , hull.rays[ 2 ] );
-		xform( minX , maxY , viewWidth , viewHeight , hull.origins[ 3 ] , hull.rays[ 3 ] );
-		
-		if( perspective )
-		{
-			cross( hull.rays[ 1 ] , hull.rays[ 0 ] , hull.normals[ 0 ] );
-			cross( hull.rays[ 2 ] , hull.rays[ 1 ] , hull.normals[ 1 ] );
-			cross( hull.rays[ 3 ] , hull.rays[ 2 ] , hull.normals[ 2 ] );
-			cross( hull.rays[ 0 ] , hull.rays[ 3 ] , hull.normals[ 3 ] );
-			
-			mpmulAffine( vi , 0 , 0 , -btlrnf[ 4 ] , hull.origins[ 4 ] );
-			mpmulAffine( vi , 0 , 0 , -btlrnf[ 5 ] , hull.origins[ 5 ] );
-		}
-		else
-		{
-			mvmulAffine( vi , 0 , 1 , 0 , hull.normals[ 0 ] );
-			mvmulAffine( vi , -1 , 0 , 0 , hull.normals[ 1 ] );
-			mvmulAffine( vi , 0 , -1 , 0 , hull.normals[ 2 ] );
-			mvmulAffine( vi , 1 , 0 , 0 , hull.normals[ 3 ] );
-			
-			mpmulAffine( vipi , 0 , 0 , -1 , hull.origins[ 4 ] );
-			mpmulAffine( vipi , 0 , 0 , 1 , hull.origins[ 5 ] );
-		}
-		mvmulAffine( vi , 0 , 0 , -1 , hull.normals[ 4 ] );
-		mvmulAffine( vi , 0 , 0 , 1 , hull.normals[ 5 ] );
-		setf( hull.rays[ 4 ] , hull.normals[ 4 ] );
-		setf( hull.rays[ 5 ] , hull.normals[ 5 ] );
-	}
-	
-	public void exportViewVolume( NewPlanarHull3f hull , float viewWidth , float viewHeight )
-	{
-		exportViewVolume( hull , 0 , 0 , viewWidth , viewHeight , viewWidth , viewHeight );
-	}
-	
-	public void exportViewVolume( NewPlanarHull3f hull , float[ ] viewBounds , float viewWidth , float viewHeight )
+	public void exportViewVolume( PlanarHull3f hull , float[ ] viewBounds , float viewWidth , float viewHeight )
 	{
 		exportViewVolume( hull , viewBounds[ 0 ] , viewBounds[ 1 ] , viewBounds[ 2 ] , viewBounds[ 3 ] , viewWidth , viewHeight );
 	}
 	
-	public void exportViewVolume( NewPlanarHull3f hull , float minX , float minY , float maxX , float maxY , float viewWidth , float viewHeight )
+	public void exportViewVolume( PlanarHull3f hull , float minX , float minY , float maxX , float maxY , float viewWidth , float viewHeight )
 	{
 		if( hull.origins.length != 6 )
 		{

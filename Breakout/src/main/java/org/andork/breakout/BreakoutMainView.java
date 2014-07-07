@@ -104,7 +104,7 @@ import org.andork.jogl.neu.JoglScene;
 import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
-import org.andork.math3d.NewPlanarHull3f;
+import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.Vecmath;
 import org.andork.q.QArrayList;
 import org.andork.q.QLinkedHashMap;
@@ -1185,7 +1185,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		float[ ] orthoUp = new float[ 3 ];
 		Vecmath.cross( orthoRight , orthoForward , orthoUp );
 		
-		NewPlanarHull3f hull = new NewPlanarHull3f( );
+		PlanarHull3f hull = new PlanarHull3f( );
 		scene.pickXform( ).exportViewVolume( hull , canvas.getWidth( ) , canvas.getHeight( ) );
 		
 		AutoClipOrthoProjectionCalculator orthoCalculator = new AutoClipOrthoProjectionCalculator( );

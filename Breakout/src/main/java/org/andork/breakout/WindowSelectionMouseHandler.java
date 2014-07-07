@@ -22,7 +22,7 @@ import org.andork.jogl.BasicJOGLObject.BasicVertexShader;
 import org.andork.jogl.BasicJOGLObject.FlatFragmentShader;
 import org.andork.jogl.BufferHelper;
 import org.andork.jogl.neu.JoglScene;
-import org.andork.math3d.NewPlanarHull3f;
+import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.PickXform;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.EdgeTrees;
@@ -59,7 +59,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 	private final List<float[ ]>	points				= new ArrayList<float[ ]>( );
 	SelectionPolygon				selectionPolygon	= new SelectionPolygon( );
 	
-	private NewPlanarHull3f			hull				= new NewPlanarHull3f( );
+	private PlanarHull3f			hull				= new PlanarHull3f( );
 	
 	final float[ ]					pointOnScreen		= new float[ 3 ];
 	
