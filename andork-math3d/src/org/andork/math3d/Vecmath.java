@@ -78,7 +78,7 @@ public class Vecmath
 		}
 	}
 	
-	public static void cross( double[ ] a , double x , double y , double z , double[ ] out )
+	public static void cross( double[ ] out , double[ ] a , double x , double y , double z )
 	{
 		if( out != a )
 		{
@@ -183,13 +183,13 @@ public class Vecmath
 		p[ 0 ] = x;
 	}
 	
-	public static void mpmulAffine( double[ ] m , double[ ] p , int vi )
+	public static void mpmulAffine( double[ ] m , double[ ] p , int pi )
 	{
-		double x = m[ 0 ] * p[ vi ] + m[ 4 ] * p[ vi + 1 ] + m[ 8 ] * p[ vi + 2 ] + m[ 12 ];
-		double y = m[ 1 ] * p[ vi ] + m[ 5 ] * p[ vi + 1 ] + m[ 9 ] * p[ vi + 2 ] + m[ 13 ];
-		p[ vi + 2 ] = m[ 2 ] * p[ vi ] + m[ 6 ] * p[ vi + 1 ] + m[ 10 ] * p[ vi + 2 ] + m[ 14 ];
-		p[ vi + 1 ] = y;
-		p[ vi ] = x;
+		double x = m[ 0 ] * p[ pi ] + m[ 4 ] * p[ pi + 1 ] + m[ 8 ] * p[ pi + 2 ] + m[ 12 ];
+		double y = m[ 1 ] * p[ pi ] + m[ 5 ] * p[ pi + 1 ] + m[ 9 ] * p[ pi + 2 ] + m[ 13 ];
+		p[ pi + 2 ] = m[ 2 ] * p[ pi ] + m[ 6 ] * p[ pi + 1 ] + m[ 10 ] * p[ pi + 2 ] + m[ 14 ];
+		p[ pi + 1 ] = y;
+		p[ pi ] = x;
 	}
 	
 	public static void mpmulAffine( double[ ] m , double[ ] p , double[ ] out )
@@ -1617,6 +1617,31 @@ public class Vecmath
 		return ( float ) Math.sqrt( dx * dx + dy * dy + dz * dz );
 	}
 	
+	public static float distance3sq( float[ ] a , float[ ] b )
+	{
+		float dx = a[ 0 ] - b[ 0 ];
+		float dy = a[ 1 ] - b[ 1 ];
+		float dz = a[ 2 ] - b[ 2 ];
+		
+		return dx * dx + dy * dy + dz * dz;
+	}
+	
+	/**
+	 * @param p
+	 *        a 3-dimensional point.
+	 * @param origin
+	 *        the origin of a 3-dimensional ray.
+	 * @param unitDirection
+	 *        the 3-dimensional direction of the ray - must be a unit vector
+	 * @return the squared distance from {@code p} to the nearest point along the ray.
+	 */
+	public static float distanceFromLine3sq( float[ ] p , float[ ] origin , float[ ] unitDirection )
+	{
+		float adjacent = subDot3( p , origin , unitDirection );
+		float hypoteneuseSq = distance3sq( p , origin );
+		return hypoteneuseSq - adjacent * adjacent;
+	}
+	
 	public static float partDist( float[ ] a , float[ ] b , int ... dims )
 	{
 		float total = 0f;
@@ -2184,6 +2209,11 @@ public class Vecmath
 	public static void setf( float[ ] array , float ... values )
 	{
 		System.arraycopy( values , 0 , array , 0 , Math.min( array.length , values.length ) );
+	}
+	
+	public static void set3( float[ ] array , int arrayi , float[ ] values , int valuesi )
+	{
+		System.arraycopy( values , valuesi , array , arrayi , 3 );
 	}
 	
 	public static void setIdentity( float[ ] m )
@@ -3592,6 +3622,132 @@ public class Vecmath
 		}
 	}
 	
+	/**
+	 * Performs gaussian elimination on the m by n matrix A. This method is faster than {@link #gauss(float[], int, int)} because it doesn't actually swap
+	 * rows. Instead of exchanging rows, row_perms is used to mark the positions of the rows in the reduced matrix. Row <code>i</code> of the reduced matrix is
+	 * row <code>row_perms[ i ]</code> of A.
+	 */
+	public static void fullGauss( float[ ] A , int m , int n , int[ ] row_perms )
+	{
+		int i = 0;
+		int j = 0;
+		
+		for( int k = 0 ; k < row_perms.length ; k++ )
+		{
+			row_perms[ k ] = k;
+		}
+		
+		while( i < m && j < n )
+		{
+			int maxi = i;
+			float maxpivot = A[ row_perms[ i ] + j * m ];
+			
+			// find the largest pivot in column j
+			for( int k = i + 1 ; k < m ; k++ )
+			{
+				float newpivot = A[ row_perms[ k ] + j * m ];
+				if( Math.abs( newpivot ) > Math.abs( maxpivot ) )
+				{
+					maxpivot = newpivot;
+					maxi = k;
+				}
+			}
+			if( maxpivot != 0 )
+			{
+				// swap the row with the largest pivot with row i
+				if( i != maxi )
+				{
+					int temp = row_perms[ i ];
+					row_perms[ i ] = row_perms[ maxi ];
+					row_perms[ maxi ] = temp;
+				}
+				
+				// divide row i by the pivot value
+				for( int k = j ; k < n ; k++ )
+				{
+					A[ row_perms[ i ] + k * m ] /= maxpivot;
+				}
+				
+				// subtract row i from the other rows
+				for( int u = 0 ; u < m ; u++ )
+				{
+					if( u == i )
+					{
+						continue;
+					}
+					float multiplier = A[ row_perms[ u ] + j * m ];
+					
+					for( int k = j ; k < n ; k++ )
+					{
+						A[ row_perms[ u ] + k * m ] -= multiplier * A[ row_perms[ i ] + k * m ];
+					}
+				}
+				i += 1;
+			}
+			j += 1;
+		}
+	}
+	
+	public static void fullGauss( float[ ] A , int m , int n )
+	{
+		int i = 0;
+		int j = 0;
+		
+		while( i < m && j < n )
+		{
+			int maxi = i;
+			float maxpivot = A[ i + j * m ];
+			
+			// find the largest pivot in column j
+			for( int k = i + 1 ; k < m ; k++ )
+			{
+				float newpivot = A[ k + j * m ];
+				if( Math.abs( newpivot ) > Math.abs( maxpivot ) )
+				{
+					maxpivot = newpivot;
+					maxi = k;
+				}
+			}
+			if( maxpivot != 0 )
+			{
+				// swap the row with the largest pivot with row i
+				if( i != maxi )
+				{
+					for( int k = j ; k < n ; k++ )
+					{
+						int km = k * m;
+						float temp = A[ i + km ];
+						A[ i + km ] = A[ maxi + km ];
+						A[ maxi + km ] = temp;
+					}
+				}
+				
+				// divide row i by the pivot value
+				for( int k = j ; k < n ; k++ )
+				{
+					A[ i + k * m ] /= maxpivot;
+				}
+				
+				// subtract row i from the other rows
+				for( int u = 0 ; u < m ; u++ )
+				{
+					if( u == i )
+					{
+						continue;
+					}
+					float multiplier = A[ u + j * m ];
+					
+					for( int k = j ; k < n ; k++ )
+					{
+						A[ u + k * m ] -= multiplier * A[ i + k * m ];
+					}
+				}
+				i += 1;
+			}
+			j += 1;
+		}
+	}
+	
 	public static String prettyPrint( float[ ] a , int columns )
 	{
 		int intDigits = 0;
@@ -3606,6 +3762,12 @@ public class Vecmath
 			int log = ( int ) Math.floor( Math.log10( Math.abs( f ) ) );
 			intDigits = Math.max( intDigits , log + 1 );
 			fracDigits = Math.max( fracDigits , -log );
+		}
+		
+		int totalChars = intDigits + fracDigits + 2;
+		if( totalChars < 7 )
+		{
+			fracDigits += 7 - totalChars;
 		}
 		
 		String elemFormat = String.format( "%%%d.%df" , intDigits + fracDigits + 2 , fracDigits );
@@ -3645,6 +3807,12 @@ public class Vecmath
 			int log = ( int ) Math.floor( Math.log10( Math.abs( f ) ) );
 			intDigits = Math.max( intDigits , log + 1 );
 			fracDigits = Math.max( fracDigits , -log );
+		}
+		
+		int totalChars = intDigits + fracDigits + 2;
+		if( totalChars < 7 )
+		{
+			fracDigits += 7 - totalChars;
 		}
 		
 		String elemFormat = String.format( "%%%d.%df" , intDigits + fracDigits + 2 , fracDigits );
@@ -3709,5 +3877,198 @@ public class Vecmath
 		{
 			scaleAdd3( vector[ i ] , basis[ i ] , out , out );
 		}
+	}
+	
+	/**
+	 * Computes the general solution of a linear system. An original algorithm by Andy Edwards!
+	 * 
+	 * @param A
+	 *        a matrix that has been row-reduced by {@link #gauss(double[], int, int, int[])}
+	 * @param m
+	 *        the number of rows in A
+	 * @param n
+	 *        the number of columns in A
+	 * @param row_perms
+	 *        the row permuations of A from {@link #gauss(double[], int, int, int[])}
+	 * @param aug
+	 *        <code>true</code> if A is an augmented matrix
+	 * @param soln
+	 *        output parameter: coefficients for each variable in the system (and constants for non-homogeneous systems). E.g. for a 3 variable augmented
+	 *        matrix with x3 free, the output will be of the form
+	 * 
+	 *        <pre>
+	 * [  0,  0, a3, a0,
+	 *    0,  0, b3, b0,
+	 *    0,  0,  1,  0 ]
+	 * </pre>
+	 * 
+	 *        Represents the solutions
+	 * 
+	 *        <pre>
+	 * x1 = 0 * x1 + 0 * x2 + a3 * x3 + a0
+	 * x2 = 0 * x1 + 0 * x2 + b3 * x3 + b0
+	 * x3 = 0 * x1 + 0 * x2 +  1 * x3 +  0
+	 * </pre>
+	 * 
+	 *        Only the free variables will have nonzero coefficients for themselves. For a 3 variable homogeneous matrix, the output would lack the
+	 *        constants a0, b0, and c0.<br>
+	 * 
+	 *        The basis for the solution space will be the set of all nonzero "columns" of this output, excluding the last for augmented matrices which is
+	 *        the offset from the origin.
+	 * @param free
+	 *        Output parameter: an array of booleans identifying which variables are free.
+	 * @return <code>true</code> if the system was successfully solved, <code>false</code> if the system is inconsistent.
+	 */
+	public static boolean generalSolution( double[ ] A , int m , int n , int[ ] row_perms , boolean aug , double[ ] soln , boolean[ ] free )
+	{
+		int nvars = aug ? n - 1 : n;
+		
+		Arrays.fill( soln , 0 );
+		Arrays.fill( free , true );
+		
+		// for all rows...
+		for( int i = 0 ; i < m ; i++ )
+		{
+			int rowstart = row_perms != null ? row_perms[ i ] * n : i * n;
+			
+			// find pivot column/variable no. in row
+			int j;
+			for( j = i ; j < nvars ; j++ )
+			{
+				if( A[ rowstart + j ] != 0 )
+				{
+					break;
+				}
+			}
+			
+			if( j == nvars )
+			{
+				// check for inconsistent system
+				if( aug && A[ rowstart + j ] != 0 )
+				{
+					return false;
+				}
+			}
+			else
+			{
+				free[ j ] = false;
+				
+				// set the coefficents for the solution equation of the current pivot variable
+				double pivot = A[ rowstart + j ];
+				for( int k = j + 1 ; k < nvars ; k++ )
+				{
+					soln[ n * j + k ] = -A[ rowstart + k ] / pivot;
+				}
+				if( aug )
+				{
+					soln[ n * j + n - 1 ] = A[ rowstart + n - 1 ] / pivot;
+				}
+			}
+		}
+		
+		double[ ] temp = new double[ n ];
+		
+		// for free variables, mark a coefficient of 1 for the variable itself in its
+		// solution equation
+		int var = 0;
+		for( var = 0 ; var < nvars ; var++ )
+		{
+			if( free[ var ] )
+			{
+				int rowstart = var * n;
+				soln[ rowstart + var ] = 1;
+			}
+		}
+		
+		for( var = nvars - 1 ; var >= 0 ; var-- )
+		{
+			if( !free[ var ] )
+			{
+				int rowstart = var * n;
+				
+				// substitute free variable equations into pivot variable equation
+				
+				Arrays.fill( temp , 0 );
+				
+				for( int j = var ; j < nvars ; j++ )
+				{
+					double coef = soln[ rowstart + j ];
+					if( coef != 0 )
+					{
+						int rowstart2 = j * n;
+						
+						for( int k = j ; k < n ; k++ )
+						{
+							temp[ k ] += soln[ rowstart2 + k ] * coef;
+						}
+					}
+				}
+				
+				System.arraycopy( temp , 0 , soln , rowstart , nvars );
+				
+				// handle constant coefficient
+				if( aug )
+				{
+					soln[ rowstart + n - 1 ] += temp[ n - 1 ];
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Computes the outer product of a 3D vector with itself
+	 * 
+	 * @param a
+	 *        a 3-coordinate vector
+	 * @param out
+	 *        a 3x3 matrix as a column-major array
+	 */
+	public static void selfOuterProduct3( float[ ] a , float[ ] out )
+	{
+		out[ 0 ] = a[ 0 ] * a[ 0 ];
+		out[ 1 ] = a[ 1 ] * a[ 0 ];
+		out[ 2 ] = a[ 2 ] * a[ 0 ];
+		out[ 3 ] = out[ 1 ];
+		out[ 4 ] = a[ 1 ] * a[ 1 ];
+		out[ 5 ] = a[ 2 ] * a[ 1 ];
+		out[ 6 ] = out[ 2 ];
+		out[ 7 ] = out[ 5 ];
+		out[ 8 ] = a[ 2 ] * a[ 2 ];
+	}
+	
+	/**
+	 * Multiples a 3x3 matrix by a column vector, outputting a column vector.
+	 * 
+	 * @param m
+	 *        a 3x3 matrix as a column-major array
+	 * @param v
+	 *        a 3-coordinate vector
+	 * @param out
+	 *        the output, a 3-coordinate vector
+	 */
+	public static void mvmul3x3( float[ ] m , float[ ] v , float[ ] out )
+	{
+		out[ 0 ] = m[ 0 ] * v[ 0 ] + m[ 3 ] * v[ 1 ] + m[ 6 ] * v[ 2 ];
+		out[ 1 ] = m[ 1 ] * v[ 0 ] + m[ 4 ] * v[ 1 ] + m[ 7 ] * v[ 2 ];
+		out[ 2 ] = m[ 2 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 8 ] * v[ 2 ];
+	}
+	
+	/**
+	 * Computes v transpose * m * v, where m is a 3x3 matrix and v is a column vector.
+	 * 
+	 * @param m
+	 *        a 3x3 matrix as a column-major array
+	 * @param v
+	 *        a 3-coordinate vector
+	 */
+	public static float conjugate3( float[ ] m , float[ ] v )
+	{
+		float x = m[ 0 ] * v[ 0 ] + m[ 3 ] * v[ 1 ] + m[ 6 ] * v[ 2 ];
+		float y = m[ 1 ] * v[ 0 ] + m[ 4 ] * v[ 1 ] + m[ 7 ] * v[ 2 ];
+		float z = m[ 2 ] * v[ 0 ] + m[ 5 ] * v[ 1 ] + m[ 8 ] * v[ 2 ];
+		
+		return v[ 0 ] * x + v[ 1 ] * y + v[ 2 ] * z;
 	}
 }

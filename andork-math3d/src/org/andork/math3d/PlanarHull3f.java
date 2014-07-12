@@ -1,9 +1,55 @@
 package org.andork.math3d;
 
+import static org.andork.math3d.Vecmath.dot3;
 import static org.andork.math3d.Vecmath.subDot3;
 
 /**
  * Represents a planar hull and provides methods to test if it contains or intersects bounding boxes and points.
+ * For view volume hulls, there are canonical orders and properties:<br>
+ * <br>
+ * <b>origins</b> and <b>normals</b> (and <b>planeDists</b>):
+ * 
+ * <pre>
+ * [0] left side
+ * [1] right side
+ * [2] bottom side
+ * [3] top side
+ * [4] near side (origin must be in the center of the side)
+ * [5] far side (origin must be in the center of the side)
+ * </pre>
+ * 
+ * <b>vertices</b>:
+ * 
+ * <pre>
+ * [0] left bottom near corner
+ * [1] right bottom near corner
+ * [2] left top near corner
+ * [3] right top near corner
+ * [4] left bottom far corner
+ * [5] right bottom far corner
+ * [6] left top far corner
+ * [7] right top far corner
+ * </pre>
+ * 
+ * <b>triangleIndices / triangleSides</b> (use {@link #setCanonicalTriangleIndicesAndPlanes()}):
+ * 
+ * <pre>
+ * [0] { 0, 6, 4 } / 0
+ * [1] { 6, 0, 2 } / 0
+ * [2] { 7, 1, 5 } / 1
+ * [3] { 1, 7, 3 } / 1
+ * [4] { 0, 5, 1 } / 2
+ * [5] { 5, 0, 4 } / 2
+ * [6] { 7, 2, 3 } / 3
+ * [7] { 2, 7, 6 } / 3
+ * [8] { 0, 3, 2 } / 4
+ * [9] { 3, 0, 1 } / 4
+ * [10] { 7, 4, 6 } / 5
+ * [11] { 4, 7, 5 } / 5
+ * </pre>
+ * 
+ * The triangle planes should always be in ascending order, and the triangle indices should always be in counterclockwise
+ * order when viewed from outside the hull (in case the hull needs to be rendered for debugging purposes).
  * 
  * @author Andy
  */
@@ -12,17 +58,59 @@ public class PlanarHull3f
 	public final float[ ][ ]	vertices;
 	public final float[ ][ ]	origins;
 	public final float[ ][ ]	normals;
+	public final float[ ]		planeDists;
+	public final int[ ][ ]		triangleIndices;
+	public final int[ ]			triangleSides;
 	
 	public PlanarHull3f( )
 	{
-		this( 6 , 8 );
+		this( 6 , 8 , 12 );
 	}
 	
-	public PlanarHull3f( int numSides , int numVertices )
+	public PlanarHull3f( int numSides , int numVertices , int numTriangles )
 	{
 		vertices = new float[ numVertices ][ 3 ];
 		origins = new float[ numSides ][ 3 ];
 		normals = new float[ numSides ][ 3 ];
+		planeDists = new float[ numSides ];
+		triangleIndices = new int[ numTriangles ][ 3 ];
+		triangleSides = new int[ numTriangles ];
+	}
+	
+	public void setCanonicalTriangleIndicesAndPlanes( )
+	{
+		set( triangleIndices[ 0 ] , 0 , 6 , 4 );
+		set( triangleIndices[ 1 ] , 6 , 0 , 2 );
+		set( triangleIndices[ 2 ] , 7 , 1 , 5 );
+		set( triangleIndices[ 3 ] , 1 , 7 , 3 );
+		set( triangleIndices[ 4 ] , 0 , 5 , 1 );
+		set( triangleIndices[ 5 ] , 5 , 0 , 4 );
+		set( triangleIndices[ 6 ] , 7 , 2 , 3 );
+		set( triangleIndices[ 7 ] , 2 , 7 , 6 );
+		set( triangleIndices[ 8 ] , 0 , 3 , 2 );
+		set( triangleIndices[ 9 ] , 3 , 0 , 1 );
+		set( triangleIndices[ 10 ] , 7 , 4 , 6 );
+		set( triangleIndices[ 11 ] , 4 , 7 , 5 );
+		
+		for( int i = 0 ; i < 12 ; i++ )
+		{
+			triangleSides[ i ] = i / 2;
+		}
+	}
+	
+	private static void set( int[ ] array , int a , int b , int c )
+	{
+		array[ 0 ] = a;
+		array[ 1 ] = b;
+		array[ 2 ] = c;
+	}
+	
+	public void calcPlaneDs( )
+	{
+		for( int side = 0 ; side < origins.length ; side++ )
+		{
+			planeDists[ side ] = -dot3( normals[ side ] , origins[ side ] );
+		}
 	}
 	
 	public boolean containsPoint( float[ ] p )

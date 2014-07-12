@@ -133,6 +133,14 @@ public class PickXform
 		exportViewVolume( hull , viewBounds[ 0 ] , viewBounds[ 1 ] , viewBounds[ 2 ] , viewBounds[ 3 ] , viewWidth , viewHeight );
 	}
 	
+	public void exportViewVolume( PlanarHull3f hull , MouseEvent e , float radius )
+	{
+		Component c = e.getComponent( );
+		int y = c.getHeight( ) - e.getY( );
+		exportViewVolume( hull , e.getX( ) - radius , y - radius , e.getX( ) + radius , y + radius ,
+				c.getWidth( ) , c.getHeight( ) );
+	}
+	
 	public void exportViewVolume( PlanarHull3f hull , float minX , float minY , float maxX , float maxY , float viewWidth , float viewHeight )
 	{
 		if( hull.origins.length != 6 )
@@ -154,11 +162,11 @@ public class PickXform
 		xform( maxX , maxY , 1 , viewWidth , viewHeight , hull.vertices[ 7 ] );
 		
 		setf( hull.origins[ 0 ] , hull.vertices[ 0 ] );
-		setf( hull.origins[ 2 ] , hull.vertices[ 0 ] );
-		setf( hull.origins[ 4 ] , hull.vertices[ 0 ] );
 		setf( hull.origins[ 1 ] , hull.vertices[ 3 ] );
+		setf( hull.origins[ 2 ] , hull.vertices[ 0 ] );
 		setf( hull.origins[ 3 ] , hull.vertices[ 3 ] );
-		setf( hull.origins[ 5 ] , hull.vertices[ 7 ] );
+		xform( (minX + maxX) * 0.5f , (minY + maxY) * 0.5f , -1 , viewWidth , viewHeight , hull.origins[ 4 ] );
+		xform( (minX + maxX) * 0.5f , (minY + maxY) * 0.5f , 1 , viewWidth , viewHeight , hull.origins[ 5 ] );
 		
 		threePointNormal( hull.vertices[ 0 ] , hull.vertices[ 4 ] , hull.vertices[ 2 ] , hull.normals[ 0 ] );
 		threePointNormal( hull.vertices[ 1 ] , hull.vertices[ 3 ] , hull.vertices[ 5 ] , hull.normals[ 1 ] );

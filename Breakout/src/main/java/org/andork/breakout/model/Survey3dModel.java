@@ -68,7 +68,9 @@ import org.andork.jogl.util.JOGLUtils;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PlanarHull3f;
+import org.andork.math3d.TwoPlaneIntersection3f;
 import org.andork.math3d.Vecmath;
+import org.andork.math3d.TwoPlaneIntersection3f.ResultType;
 import org.andork.spatial.RBranch;
 import org.andork.spatial.RLeaf;
 import org.andork.spatial.RNode;
@@ -662,6 +664,16 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
+	public void pickShots( PlanarHull3f pickHull , Shot3dPickContext spc , List<PickResult<Shot3d>> pickResults )
+	{
+		RTraversal.traverse( tree.getRoot( ) ,
+				node -> pickHull.intersectsBox( node.mbr( ) ) ,
+				leaf -> {
+					leaf.object( ).pick( pickHull , spc , pickResults );
+					return true;
+				} );
+	}
+	
 	public void pickShots( float[ ] coneOrigin , float[ ] coneDirection , float coneAngle ,
 			Shot3dPickContext spc , List<PickResult<Shot3d>> pickResults )
 	{
@@ -949,6 +961,15 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 	}
 	
+	private static final int[ ][ ]	hullTriangleIndices	= {
+														{ 0 , 6 , 4 } , { 6 , 0 , 2 } ,
+														{ 2 , 7 , 6 } , { 7 , 2 , 3 } ,
+														{ 3 , 5 , 7 } , { 5 , 3 , 1 } ,
+														{ 1 , 4 , 5 } , { 4 , 1 , 0 } ,
+														{ 0 , 3 , 2 } , { 3 , 0 , 1 } ,
+														{ 4 , 7 , 6 } , { 7 , 4 , 5 }
+														};
+	
 	public static class Shot3d
 	{
 		int						number;
@@ -1134,6 +1155,163 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				i++ ;
 			}
 			
+			if( result != null )
+			{
+				pickResults.add( result );
+			}
+			
+			vertBuffer.position( 0 );
+			indexBuffer.position( 0 );
+		}
+		
+		public void pick( PlanarHull3f hull , Shot3dPickContext c , List<PickResult<Shot3d>> pickResults )
+		{
+			Shot3dPickResult result = null;
+			
+			ByteBuffer indexBuffer = segment3d.fillIndices.buffer( );
+			ByteBuffer vertBuffer = segment3d.geometry.buffer( );
+			
+			int k = segment3d.shotIndicesInFillIndices[ indexInSegment ];
+			indexBuffer.position( k );
+			int i = 0;
+			
+			int i0 = 0;
+			int i1 = 0;
+			int i2;
+			
+			boolean last = indexInSegment == segment3d.shot3ds.size( ) - 1;
+			int maxIndex = last ? indexBuffer.capacity( ) : segment3d.shotIndicesInFillIndices[ indexInSegment + 1 ];
+			while( k < maxIndex )
+			{
+				i2 = indexBuffer.getInt( );
+				k += 4;
+				if( i2 == RESTART_INDEX )
+				{
+					i = 0;
+					continue;
+				}
+				
+				if( i >= 2 )
+				{
+					boolean even = i % 2 == 0;
+					
+					vertBuffer.position( ( even ? i0 : i2 ) * GEOM_BPV );
+					c.p0[ 0 ] = vertBuffer.getFloat( );
+					c.p0[ 1 ] = vertBuffer.getFloat( );
+					c.p0[ 2 ] = vertBuffer.getFloat( );
+					
+					vertBuffer.position( i1 * GEOM_BPV );
+					c.p1[ 0 ] = vertBuffer.getFloat( );
+					c.p1[ 1 ] = vertBuffer.getFloat( );
+					c.p1[ 2 ] = vertBuffer.getFloat( );
+					
+					vertBuffer.position( ( even ? i2 : i0 ) * GEOM_BPV );
+					c.p2[ 0 ] = vertBuffer.getFloat( );
+					c.p2[ 1 ] = vertBuffer.getFloat( );
+					c.p2[ 2 ] = vertBuffer.getFloat( );
+					
+					try
+					{
+						c.lpx.lineFromPoints( hull.origins[ 4 ] , hull.origins[ 5 ] );
+						c.lpx.planeFromPoints( c.p0 , c.p1 , c.p2 );
+						c.lpx.findIntersection( );
+						if( c.lpx.isPointIntersection( ) && c.lpx.isOnRay( ) && c.lpx.isInTriangle( ) && hull.containsPoint( c.lpx.result ) )
+						{
+							if( result == null || result.lateralDistance > 0 || c.lpx.t < result.distance )
+							{
+								if( result == null )
+								{
+									result = new Shot3dPickResult( );
+								}
+								result.picked = this;
+								result.distance = c.lpx.t;
+								result.locationAlongShot = even ? c.lpx.u : 1 - c.lpx.u;
+								result.lateralDistance = 0;
+								setf( result.location , c.lpx.result );
+							}
+						}
+						else if( result == null || result.lateralDistance > 0 )
+						{
+							for( int[ ] triangle : hullTriangleIndices )
+							{
+								c.tpx.plane1FromPoints( c.p0 , c.p1 , c.p2 );
+								c.tpx.plane2FromPoints(
+										hull.vertices[ triangle[ 0 ] ] ,
+										hull.vertices[ triangle[ 1 ] ] ,
+										hull.vertices[ triangle[ 2 ] ] );
+								
+								c.tpx.twoTriangleIntersection( );
+								
+								if( c.tpx.intersectionType == ResultType.LINEAR_INTERSECTION )
+								{
+									c.tpx.calcIntersectionPoint( c.tpx.t2[ 0 ] , c.x0 );
+									c.tpx.calcIntersectionPoint( c.tpx.t2[ 1 ] , c.x1 );
+									
+									float distance0 = Vecmath.subDot3( c.x0 , hull.origins[ 4 ] , hull.normals[ 4 ] );
+									float distance1 = Vecmath.subDot3( c.x1 , hull.origins[ 4 ] , hull.normals[ 4 ] );
+									
+									if( distance1 < distance0 )
+									{
+										distance0 = distance1;
+										setf( c.x0 , c.x1 );
+									}
+									float diagonal = Vecmath.distance3sq( hull.origins[ 4 ] , c.x0 );
+									float lateralDistance = ( float ) Math.sqrt( diagonal - distance0 * distance0 );
+									
+									if( result == null || lateralDistance * result.distance <
+											result.lateralDistance * distance0 )
+									{
+										if( result == null )
+										{
+											result = new Shot3dPickResult( );
+										}
+										result.picked = this;
+										result.distance = distance0;
+										result.lateralDistance = lateralDistance;
+										result.locationAlongShot = k >= 4 ? 1 : 0;
+										setf( result.location , c.x0 );
+									}
+								}
+							}
+						}
+					}
+					catch( Exception ex )
+					{
+					}
+				}
+				
+				i0 = i1;
+				i1 = i2;
+				
+				i++ ;
+			}
+			if( result == null )
+			{
+				k = 0;
+				for( float[ ] coord : coordIterable( ) )
+				{
+					if( hull.containsPoint( coord ) )
+					{
+						float distance = Vecmath.subDot3( coord , hull.origins[ 4 ] , hull.normals[ 4 ] );
+						float diagonal = Vecmath.distance3sq( hull.origins[ 4 ] , coord );
+						float lateralDistance = ( float ) Math.sqrt( diagonal - distance * distance );
+						if( result == null || lateralDistance * result.distance <
+								result.lateralDistance * distance )
+						{
+							if( result == null )
+							{
+								result = new Shot3dPickResult( );
+							}
+							result.picked = this;
+							result.distance = distance;
+							result.lateralDistance = lateralDistance;
+							result.locationAlongShot = k >= 4 ? 1 : 0;
+							setf( result.location , coord );
+						}
+					}
+					k++ ;
+				}
+			}
 			if( result != null )
 			{
 				pickResults.add( result );
@@ -1335,9 +1513,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		final float[ ]					p0				= new float[ 3 ];
 		final float[ ]					p1				= new float[ 3 ];
 		final float[ ]					p2				= new float[ 3 ];
+		final float[ ]					x0				= new float[ 3 ];
+		final float[ ]					x1				= new float[ 3 ];
 		final float[ ]					adjacent		= new float[ 3 ];
 		final float[ ]					opposite		= new float[ 3 ];
 		final InConeTester3f			inConeTester	= new InConeTester3f( );
+		final TwoPlaneIntersection3f	tpx				= new TwoPlaneIntersection3f( );
 	}
 	
 	public static class Shot3dPickResult extends PickResult<Shot3d>

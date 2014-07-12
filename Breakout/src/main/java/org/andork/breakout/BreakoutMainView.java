@@ -21,7 +21,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -29,7 +28,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.WeakHashMap;
-import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -98,7 +96,6 @@ import org.andork.jogl.ProjectionCalculator;
 import org.andork.jogl.awt.anim.GeneralViewXformOrbitAnimation;
 import org.andork.jogl.awt.anim.ProjXformAnimation;
 import org.andork.jogl.awt.anim.RandomViewOrbitAnimation;
-import org.andork.jogl.awt.anim.SinusoidalViewTranslationAnimation;
 import org.andork.jogl.awt.anim.SpringViewOrbitAnimation;
 import org.andork.jogl.awt.anim.ViewXformAnimation;
 import org.andork.jogl.neu.JoglScene;
@@ -1439,17 +1436,22 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
+	private final PlanarHull3f	hull	= new PlanarHull3f( );
+	
 	private Shot3dPickResult pick( Survey3dModel model3d , MouseEvent e , Shot3dPickContext spc )
 	{
+		PlanarHull3f hull = new PlanarHull3f( );
 		float[ ] origin = new float[ 3 ];
 		float[ ] direction = new float[ 3 ];
 		scene.pickXform( ).xform( e.getX( ) , e.getComponent( ).getHeight( ) - e.getY( ) ,
 				e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
+		scene.pickXform( ).exportViewVolume( hull , e , 10 );
 		
 		if( model3d != null )
 		{
 			List<PickResult<Shot3d>> pickResults = new ArrayList<PickResult<Shot3d>>( );
-			model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
+//			model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
+						model3d.pickShots( hull , spc , pickResults );
 			
 			PickResult<Shot3d> best = null;
 			
