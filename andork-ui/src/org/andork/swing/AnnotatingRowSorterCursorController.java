@@ -10,9 +10,9 @@ import javax.swing.event.RowSorterListener;
 
 public class AnnotatingRowSorterCursorController implements RowSorterListener
 {
-	Component							target;
+	Component						target;
 	
-	Set<AnnotatingRowSorter<?, ?, ?>>	busySorters	= new HashSet<AnnotatingRowSorter<?, ?, ?>>( );
+	Set<AnnotatingRowSorter<?, ?>>	busySorters	= new HashSet<AnnotatingRowSorter<?, ?>>( );
 	
 	public AnnotatingRowSorterCursorController( Component target )
 	{
@@ -25,7 +25,7 @@ public class AnnotatingRowSorterCursorController implements RowSorterListener
 	{
 		if( e.getSource( ) instanceof AnnotatingRowSorter )
 		{
-			AnnotatingRowSorter<?, ?, ?> sorter = (org.andork.swing.AnnotatingRowSorter<?, ?, ?> ) e.getSource( );
+			AnnotatingRowSorter<?, ?> sorter = ( org.andork.swing.AnnotatingRowSorter<?, ?> ) e.getSource( );
 			if( sorter.isSortingInBackground( ) )
 			{
 				busySorters.add( sorter );

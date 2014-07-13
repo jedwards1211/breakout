@@ -6,12 +6,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.RowFilter;
+import javax.swing.table.TableModel;
 
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.q.QObject;
 
-public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer>
+public class SurveyDesignationFilter extends RowFilter<TableModel, Integer>
 {
 	Segment[ ]						segments;
 	
@@ -118,9 +119,9 @@ public class SurveyDesignationFilter extends RowFilter<SurveyTableModel, Integer
 	}
 	
 	@Override
-	public boolean include( javax.swing.RowFilter.Entry<? extends SurveyTableModel, ? extends Integer> entry )
+	public boolean include( javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry )
 	{
-		QObject<Row> row = entry.getModel( ).getRow( entry.getIdentifier( ) );
+		QObject<Row> row = ( ( SurveyTableModel ) entry.getModel( ) ).getRow( entry.getIdentifier( ) );
 		if( row == null )
 		{
 			return false;

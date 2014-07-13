@@ -52,6 +52,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
@@ -130,6 +131,7 @@ import org.andork.swing.async.TaskServiceFilePersister;
 import org.andork.swing.async.TaskServiceSubtaskFilePersister;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
+import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 import org.andork.swing.table.RowFilterFactory;
 
@@ -409,16 +411,16 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		}.result( );
 		
-		DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> quickTableSetup =
-				new DoSwingR2<DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>>( )
+		DefaultAnnotatingJTableSetup quickTableSetup =
+				new DoSwingR2<DefaultAnnotatingJTableSetup>( )
 				{
 					@Override
-					protected DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> doRun( )
+					protected DefaultAnnotatingJTableSetup doRun( )
 					{
-						DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> quickTableSetup =
-								new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>(
-										quickTable , sortRunner );
-						quickTableSetup.table.getAnnotatingRowSorter( ).setModelCopier( new SurveyTableModelCopier( ) );
+						DefaultAnnotatingJTableSetup quickTableSetup =
+								new DefaultAnnotatingJTableSetup( quickTable , sortRunner );
+						( ( AnnotatingTableRowSorter<SurveyTableModel> ) quickTableSetup.table.getAnnotatingRowSorter( ) )
+								.setModelCopier( new SurveyTableModelCopier( ) );
 						return quickTableSetup;
 					}
 				}.result( );
@@ -459,8 +461,8 @@ public class BreakoutMainView extends BasicJoglSetup
 			@Override
 			public void propertyChange( PropertyChangeEvent evt )
 			{
-				AnnotatingRowSorter<SurveyTableModel, Integer, RowFilter<SurveyTableModel, Integer>> sorter =
-						( AnnotatingRowSorter<SurveyTableModel, Integer, RowFilter<SurveyTableModel, Integer>> ) quickTable.getRowSorter( );
+				AnnotatingRowSorter<TableModel, Integer> sorter =
+						( AnnotatingRowSorter<TableModel, Integer> ) quickTable.getRowSorter( );
 				
 				SurveyTableModel newModel = ( SurveyTableModel ) evt.getNewValue( );
 				
@@ -824,8 +826,10 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
-		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
-		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
+		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener(
+				new FitToFilteredHandler( surveyDrawer.table( ) ) );
+		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener(
+				new FitToFilteredHandler( quickTable ) );
 		
 		new BinderWrapper<Integer>( )
 		{
@@ -970,7 +974,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		changeView( CollectionUtils.toHashSet( getShotsFromTable( ).map( shot -> model3d.getShot( shot.number ) ) ) );
 	}
 	
-	protected void flyToFiltered( final AnnotatingJTable<?, ?> table )
+	protected void flyToFiltered( final AnnotatingJTable table )
 	{
 		if( model3d == null )
 		{
@@ -1450,8 +1454,8 @@ public class BreakoutMainView extends BasicJoglSetup
 		if( model3d != null )
 		{
 			List<PickResult<Shot3d>> pickResults = new ArrayList<PickResult<Shot3d>>( );
-//			model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
-						model3d.pickShots( hull , spc , pickResults );
+			//			model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
+			model3d.pickShots( hull , spc , pickResults );
 			
 			PickResult<Shot3d> best = null;
 			
@@ -1662,10 +1666,10 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	class FitToFilteredHandler implements ActionListener
 	{
-		AnnotatingJTable<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>	table;
-		long																		lastAction	= 0;
+		AnnotatingJTable	table;
+		long				lastAction	= 0;
 		
-		public FitToFilteredHandler( AnnotatingJTable<SurveyTableModel, RowFilter<SurveyTableModel, Integer>> table )
+		public FitToFilteredHandler( AnnotatingJTable table )
 		{
 			super( );
 			this.table = table;
@@ -1788,10 +1792,10 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
-	class SurveyFilterFactory implements RowFilterFactory<String, SurveyTableModel, Integer>
+	class SurveyFilterFactory implements RowFilterFactory<String, TableModel, Integer>
 	{
 		@Override
-		public RowFilter<SurveyTableModel, Integer> createFilter( String input )
+		public RowFilter<TableModel, Integer> createFilter( String input )
 		{
 			switch( getProjectModel( ).get( ProjectModel.filterType ) )
 			{

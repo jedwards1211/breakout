@@ -3,7 +3,6 @@ package org.andork.breakout;
 import java.awt.Dimension;
 
 import javax.swing.JLabel;
-import javax.swing.RowFilter;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
@@ -13,18 +12,19 @@ import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.TextComponentWithHintAndClear;
+import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 
 @SuppressWarnings( "serial" )
 public class SurveyDrawer extends Drawer
 {
-	JLabel																							highlightLabel;
-	TextComponentWithHintAndClear																	highlightField;
-	JLabel																							filterLabel;
-	TextComponentWithHintAndClear																	filterField;
+	JLabel							highlightLabel;
+	TextComponentWithHintAndClear	highlightField;
+	JLabel							filterLabel;
+	TextComponentWithHintAndClear	filterField;
 	
-	SurveyTable																						surveyTable;
-	DefaultAnnotatingJTableSetup<SurveyTableModel, ? super RowFilter<SurveyTableModel, Integer>>	surveyTableSetup;
+	SurveyTable						surveyTable;
+	DefaultAnnotatingJTableSetup	surveyTableSetup;
 	
 	public SurveyDrawer( SortRunner sortRunner )
 	{
@@ -37,9 +37,9 @@ public class SurveyDrawer extends Drawer
 		filterField = new TextComponentWithHintAndClear( "Enter regular expression" );
 		
 		surveyTable = new SurveyTable( );
-		surveyTableSetup = new DefaultAnnotatingJTableSetup<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>(
-				surveyTable , sortRunner );
-		surveyTableSetup.table.getAnnotatingRowSorter( ).setModelCopier( new SurveyTableModelCopier( ) );
+		surveyTableSetup = new DefaultAnnotatingJTableSetup( surveyTable , sortRunner );
+		( ( AnnotatingTableRowSorter<SurveyTableModel> ) surveyTableSetup.table.getAnnotatingRowSorter( ) )
+				.setModelCopier( new SurveyTableModelCopier( ) );
 		
 		delegate( ).dockingSide( Side.BOTTOM );
 		mainResizeHandle( );

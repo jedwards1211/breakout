@@ -2,9 +2,9 @@ package org.andork.swing.table;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import java.util.function.Function;
 
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableCellRenderer;
@@ -22,9 +22,9 @@ import org.andork.swing.AnnotatingRowSorter;
  * @author Andy
  */
 @SuppressWarnings( "serial" )
-public class AnnotatingJTable<M extends TableModel, A> extends BetterJTable
+public class AnnotatingJTable extends BetterJTable
 {
-	protected final Map<A, Color>	annotationColors	= new HashMap<A, Color>( );
+	protected Function<Object, Color>	colorer;
 	
 	public AnnotatingJTable( )
 	{
@@ -102,12 +102,12 @@ public class AnnotatingJTable<M extends TableModel, A> extends BetterJTable
 		comp.setBackground( getBackground( ) );
 		comp = super.prepareRenderer( renderer , row , column );
 		
-		if( !annotationColors.isEmpty( ) && !isSelected )
+		if( colorer != null && !isSelected )
 		{
 			Object annotation = getAnnotation( row );
 			if( annotation != null )
 			{
-				Color color = annotationColors.get( annotation );
+				Color color = colorer.apply( annotation );
 				if( color != null )
 				{
 					comp.setBackground( color );
@@ -118,26 +118,30 @@ public class AnnotatingJTable<M extends TableModel, A> extends BetterJTable
 		return comp;
 	}
 	
-	public void setAnnotationColors( Map<? extends A, Color> annotationColors )
+	public void setAnnotationColors( Map<?, Color> annotationColors )
 	{
-		this.annotationColors.clear( );
-		this.annotationColors.putAll( annotationColors );
+		colorer = annotationColors == null ? null : a -> annotationColors.get( a );
+	}
+	
+	public void setColorer( Function<Object, Color> colorer )
+	{
+		this.colorer = colorer;
 	}
 	
 	public Object getAnnotation( int row )
 	{
 		if( getRowSorter( ) instanceof AnnotatingRowSorter )
 		{
-			return ( ( AnnotatingRowSorter<?, ?, ?> ) getRowSorter( ) ).getAnnotation( row );
+			return ( ( AnnotatingRowSorter<? extends TableModel, Integer> ) getRowSorter( ) ).getAnnotation( row );
 		}
 		return null;
 	}
 	
-	public AnnotatingRowSorter<M, Integer, A> getAnnotatingRowSorter( )
+	public AnnotatingRowSorter<? extends TableModel, Integer> getAnnotatingRowSorter( )
 	{
 		if( getRowSorter( ) instanceof AnnotatingRowSorter )
 		{
-			return ( AnnotatingRowSorter<M, Integer, A> ) getRowSorter( );
+			return ( AnnotatingRowSorter<? extends TableModel, Integer> ) getRowSorter( );
 		}
 		return null;
 	}

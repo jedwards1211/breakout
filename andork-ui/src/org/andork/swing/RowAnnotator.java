@@ -6,8 +6,6 @@
  */
 package org.andork.swing;
 
-import java.util.Arrays;
-
 import javax.swing.RowFilter;
 import javax.swing.RowFilter.Entry;
 
@@ -41,14 +39,14 @@ import javax.swing.RowFilter.Entry;
  * </pre>
  * 
  * @param <M>
- *            the type of the model; for example <code>PersonModel</code>
+ *        the type of the model; for example <code>PersonModel</code>
  * @param <I>
- *            the type of the identifier; when using <code>AnnotatingTableRowSorter</code> this will be <code>Integer</code>
+ *        the type of the identifier; when using <code>AnnotatingTableRowSorter</code> this will be <code>Integer</code>
  * @param <A>
- *            the type of the annotation
+ *        the type of the annotation
  * @see AnnotatingRowSorter
  */
-public abstract class RowAnnotator<M, I, A>
+public abstract class RowAnnotator<M, I>
 {
 	/**
 	 * Returns a non-null {@code A} if the specified entry should be annotated; returns {@code null} if the entry should not be annotated.
@@ -57,17 +55,17 @@ public abstract class RowAnnotator<M, I, A>
 	 * behavior.
 	 * 
 	 * @param entry
-	 *            a non-<code>null</code> object that wraps the underlying object from the model
+	 *        a non-<code>null</code> object that wraps the underlying object from the model
 	 * @return a non-null {@code A} if the entry should be annotated
 	 */
-	public abstract A annotate( Entry<? extends M, ? extends I> entry );
+	public abstract Object annotate( Entry<? extends M, ? extends I> entry );
 	
-	public static <M, I> RowAnnotator<M, I, RowFilter<M, I>> filterAnnotator( RowFilter<M, I> ... filters )
+	public static <M, I> RowAnnotator<M, I> filterAnnotator( RowFilter<M, I> ... filters )
 	{
 		return new FilterAnnotator<M, I>( filters );
 	}
 	
-	private static class FilterAnnotator<M, I> extends RowAnnotator<M, I, RowFilter<M, I>>
+	private static class FilterAnnotator<M, I> extends RowAnnotator<M, I>
 	{
 		private final RowFilter<M, I>[ ]	filters;
 		
@@ -79,7 +77,7 @@ public abstract class RowAnnotator<M, I, A>
 		}
 		
 		@Override
-		public RowFilter<M, I>  annotate( Entry<? extends M, ? extends I> entry )
+		public RowFilter<M, I> annotate( Entry<? extends M, ? extends I> entry )
 		{
 			int resultCount = 0;
 			

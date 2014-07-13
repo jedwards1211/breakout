@@ -3,11 +3,12 @@ package org.andork.breakout;
 import java.util.regex.Pattern;
 
 import javax.swing.RowFilter;
+import javax.swing.table.TableModel;
 
 import org.andork.breakout.model.Shot;
 import org.andork.breakout.model.SurveyTableModel;
 
-public class SurveyRegexFilter extends RowFilter<SurveyTableModel, Integer>
+public class SurveyRegexFilter extends RowFilter<TableModel, Integer>
 {
 	Pattern	pattern;
 	
@@ -17,9 +18,9 @@ public class SurveyRegexFilter extends RowFilter<SurveyTableModel, Integer>
 	}
 	
 	@Override
-	public boolean include( javax.swing.RowFilter.Entry<? extends SurveyTableModel, ? extends Integer> entry )
+	public boolean include( javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry )
 	{
-		Shot shot = entry.getModel( ).getShotAtRow( entry.getIdentifier( ) );
+		Shot shot = ( ( SurveyTableModel ) entry.getModel( ) ).getShotAtRow( entry.getIdentifier( ) );
 		if( shot == null )
 		{
 			return false;

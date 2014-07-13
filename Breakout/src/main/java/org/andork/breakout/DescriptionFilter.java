@@ -1,12 +1,13 @@
 package org.andork.breakout;
 
 import javax.swing.RowFilter;
+import javax.swing.table.TableModel;
 
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.q.QObject;
 
-public class DescriptionFilter extends RowFilter<SurveyTableModel, Integer>
+public class DescriptionFilter extends RowFilter<TableModel, Integer>
 {
 	String[ ]	descriptions;
 	
@@ -16,14 +17,14 @@ public class DescriptionFilter extends RowFilter<SurveyTableModel, Integer>
 	}
 	
 	@Override
-	public boolean include( javax.swing.RowFilter.Entry<? extends SurveyTableModel, ? extends Integer> entry )
+	public boolean include( javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry )
 	{
 		if( descriptions.length == 0 )
 		{
 			return true;
 		}
 		
-		QObject<Row> row = entry.getModel( ).getRow( entry.getIdentifier( ) );
+		QObject<Row> row = ( ( SurveyTableModel ) entry.getModel( ) ).getRow( entry.getIdentifier( ) );
 		if( row == null || row.get( Row.desc ) == null )
 		{
 			return false;

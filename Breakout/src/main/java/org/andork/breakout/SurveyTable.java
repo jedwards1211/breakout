@@ -1,6 +1,5 @@
 package org.andork.breakout;
 
-import javax.swing.RowFilter;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
@@ -11,7 +10,7 @@ import org.andork.swing.table.AnnotatingJTable;
 import org.jdesktop.swingx.table.TableColumnExt;
 
 @SuppressWarnings( "serial" )
-public class SurveyTable extends AnnotatingJTable<SurveyTableModel, RowFilter<SurveyTableModel, Integer>>
+public class SurveyTable extends AnnotatingJTable
 {
 	public void createDefaultColumnsFromModel( )
 	{

@@ -1,32 +1,25 @@
 package org.andork.swing.table;
 
 import java.awt.Color;
-import java.util.Collections;
 import java.util.Map;
 
-import javax.swing.RowFilter;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.TableModel;
-import javax.swing.text.JTextComponent;
 
 import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.AnnotatingRowSorterCursorController;
-import org.andork.swing.RowAnnotator;
-import org.andork.swing.event.EasyDocumentListener;
 import org.andork.swing.jump.JScrollAndJumpPane;
 import org.andork.swing.jump.JTableJumpSupport;
 
-public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
+public class DefaultAnnotatingJTableSetup
 {
 	public final JScrollAndJumpPane						scrollPane;
-	public final AnnotatingJTable<M, A>					table;
+	public final AnnotatingJTable						table;
 	public final AnnotatingRowSorterCursorController	cursorController;
 	
-	public DefaultAnnotatingJTableSetup( AnnotatingJTable<M, A> table , SortRunner sortRunner )
+	public DefaultAnnotatingJTableSetup( AnnotatingJTable table , SortRunner sortRunner )
 	{
 		this.table = table;
-		AnnotatingTableRowSorter<M, A> sorter = new AnnotatingTableRowSorter<M, A>( table , sortRunner );
+		AnnotatingTableRowSorter sorter = new AnnotatingTableRowSorter( table , sortRunner );
 		table.setRowSorter( sorter );
 		
 		scrollPane = new JScrollAndJumpPane( table );
@@ -37,12 +30,12 @@ public class DefaultAnnotatingJTableSetup<M extends TableModel, A>
 		sorter.addRowSorterListener( cursorController );
 	}
 	
-	protected AnnotatingJTable<M, A> createTable( M model )
+	protected AnnotatingJTable createTable( TableModel model )
 	{
-		return new AnnotatingJTable<M, A>( model );
+		return new AnnotatingJTable( model );
 	}
 	
-	public void setAnnotationColors( Map<? extends A, Color> colors )
+	public void setAnnotationColors( Map<?, Color> colors )
 	{
 		table.setAnnotationColors( colors );
 		scrollPane.getJumpBar( ).setColorMap( colors );

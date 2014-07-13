@@ -14,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
@@ -38,19 +39,19 @@ import org.andork.awt.layout.Axis;
 @SuppressWarnings( "serial" )
 public class JumpBar extends JComponent
 {
-	JScrollBar					scrollBar;
+	JScrollBar				scrollBar;
 	
-	ListModel					model;
+	ListModel				model;
 	
-	JumpSupport					jumpSupport;
+	JumpSupport				jumpSupport;
 	
-	int							markSize			= 5;
+	int						markSize		= 5;
 	
-	MouseHandler				mouseHandler		= new MouseHandler( );
+	MouseHandler			mouseHandler	= new MouseHandler( );
 	
-	ChangeHandler				changeHandler		= new ChangeHandler( );
+	ChangeHandler			changeHandler	= new ChangeHandler( );
 	
-	Map<Object, Color>			colorMap			= null;
+	Function<Object, Color>	colorer;
 	
 	public JumpBar( JScrollBar scrollBar )
 	{
@@ -105,21 +106,9 @@ public class JumpBar extends JComponent
 		this.jumpSupport = jumpSupport;
 	}
 	
-	public Map<Object, Color> getColorMap( )
-	{
-		return colorMap;
-	}
-	
 	public void setColorMap( Map<?, Color> colorMap )
 	{
-		if( colorMap == null )
-		{
-			this.colorMap = null;
-		}
-		else
-		{
-			this.colorMap = Collections.unmodifiableMap( new HashMap<Object, Color>( colorMap ) );
-		}
+		colorer = colorMap == null ? null : o -> colorMap.get( o );
 	}
 	
 	public Rectangle getScrollBarTrackBounds( )
@@ -183,9 +172,9 @@ public class JumpBar extends JComponent
 		{
 			return ( Color ) o;
 		}
-		if( colorMap != null )
+		if( colorer != null )
 		{
-			return colorMap.get( o );
+			return colorer.apply( o );
 		}
 		return null;
 	}
@@ -292,7 +281,7 @@ public class JumpBar extends JComponent
 		 * {@link JumpBar} will call this method to scroll a given element of the content to visible.
 		 * 
 		 * @param index
-		 *            the index of the element to scroll to visible.
+		 *        the index of the element to scroll to visible.
 		 */
 		public void scrollElementToVisible( int index );
 	}

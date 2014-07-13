@@ -110,7 +110,7 @@ import org.andork.swing.async.Subtask;
  * override <code>getColumnClass</code> and return the appropriate <code>Class</code>. This will dramatically increase the performance of this class.
  * 
  * @param <M>
- *            the type of the model, which must be an implementation of <code>TableModel</code>
+ *        the type of the model, which must be an implementation of <code>TableModel</code>
  * @see javax.swing.JTable
  * @see javax.swing.RowFilter
  * @see javax.swing.table.DefaultTableModel
@@ -118,7 +118,7 @@ import org.andork.swing.async.Subtask;
  * @see java.util.Comparator
  * @since 1.6
  */
-public class AnnotatingTableRowSorter<M extends TableModel, A> extends AnnotatingRowSorter<M, Integer, A>
+public class AnnotatingTableRowSorter<M extends TableModel> extends AnnotatingRowSorter<M, Integer>
 {
 	/**
 	 * Comparator that uses compareTo on the contents.
@@ -142,7 +142,7 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	 * Creates a <code>AnnotatingTableRowSorter</code> using <code>model</code> as the underlying <code>TableModel</code>.
 	 * 
 	 * @param model
-	 *            the underlying <code>TableModel</code> to use, <code>null</code> is treated as an empty model
+	 *        the underlying <code>TableModel</code> to use, <code>null</code> is treated as an empty model
 	 */
 	public AnnotatingTableRowSorter( JTable table , M model , SortRunner sortRunner )
 	{
@@ -155,7 +155,7 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	 * not have a registered <code>Comparator</code>, to strings.
 	 * 
 	 * @param stringConverter
-	 *            the object responsible for converting values from the model to strings
+	 *        the object responsible for converting values from the model to strings
 	 */
 	public void setStringConverter( TableStringConverter stringConverter )
 	{
@@ -179,7 +179,7 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	 * <code>Comparator</code> is returned that invokes the <code>compareTo</code> method. Otherwise <code>Collator.getInstance</code> is returned.
 	 * 
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 */
 	public Comparator<?> getComparator( int column )
 	{
@@ -204,7 +204,7 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	 * {@inheritDoc}
 	 * 
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 */
 	protected boolean useToString( int column )
 	{
@@ -234,7 +234,7 @@ public class AnnotatingTableRowSorter<M extends TableModel, A> extends Annotatin
 	/**
 	 * Implementation of AnnotatingRowSorter.ModelWrapper that delegates to a TableModel.
 	 */
-	private class TableRowSorterModelWrapper<M extends TableModel> extends ModelWrapper<M, Integer>
+	private class TableRowSorterModelWrapper extends ModelWrapper<M, Integer>
 	{
 		M	tableModel;
 		

@@ -17,9 +17,9 @@ import org.andork.swing.jump.JScrollAndJumpPane;
 
 public class AnnotatingJTables
 {
-	public static <M extends TableModel> DocumentListener createHighlightFieldListener(
-			final AnnotatingJTable<M, ? super RowFilter<M, Integer>> table ,
-			final JTextComponent highlightField , final RowFilterFactory<String, M, Integer> filterFactory , final Color highlightColor )
+	public static DocumentListener createHighlightFieldListener(
+			final AnnotatingJTable table ,
+			final JTextComponent highlightField , final RowFilterFactory<String, TableModel, Integer> filterFactory , final Color highlightColor )
 	{
 		return new EasyDocumentListener( )
 		{
@@ -33,7 +33,7 @@ public class AnnotatingJTables
 					}
 				}
 				
-				RowFilter<M, Integer> filter = null;
+				RowFilter<TableModel, Integer> filter = null;
 				
 				if( highlightField.getText( ) != null && highlightField.getText( ).length( ) > 0 )
 				{
@@ -55,14 +55,14 @@ public class AnnotatingJTables
 				else
 				{
 					highlightField.setForeground( Color.BLACK );
-					setAnnotationColors( table , Collections.<RowFilter<M, Integer>,Color>emptyMap( ) );
+					setAnnotationColors( table , Collections.<RowFilter<TableModel, Integer>,Color>emptyMap( ) );
 				}
 				
 			}
 		};
 	}
 	
-	private static <M extends TableModel, A> void setAnnotationColors( AnnotatingJTable<M, A> table , Map<? extends A, Color> colors )
+	private static void setAnnotationColors( AnnotatingJTable table , Map<?, Color> colors )
 	{
 		table.setAnnotationColors( colors );
 		JScrollAndJumpPane scrollPane = AWTUtil.getAncestorOfClass( JScrollAndJumpPane.class , table );
@@ -72,9 +72,9 @@ public class AnnotatingJTables
 		}
 	}
 	
-	public static <M extends TableModel> DocumentListener createFilterFieldListener(
-			final AnnotatingJTable<M, ? super RowFilter<M, Integer>> table , final JTextComponent filterField ,
-			final RowFilterFactory<String, M, Integer> filterFactory )
+	public static DocumentListener createFilterFieldListener(
+			final AnnotatingJTable table , final JTextComponent filterField ,
+			final RowFilterFactory<String, TableModel, Integer> filterFactory )
 	{
 		return new EasyDocumentListener( )
 		{
@@ -87,7 +87,7 @@ public class AnnotatingJTables
 				}
 				if( filterField.getText( ) != null && filterField.getText( ).length( ) > 0 )
 				{
-					RowFilter<M, Integer> filter = null;
+					RowFilter<TableModel, Integer> filter = null;
 					try
 					{
 						filter = filterFactory.createFilter( filterField.getText( ) );

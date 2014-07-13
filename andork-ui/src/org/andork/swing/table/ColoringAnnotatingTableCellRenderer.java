@@ -2,24 +2,23 @@ package org.andork.swing.table;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.image.renderable.RenderableImage;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
 @SuppressWarnings( "serial" )
-public class ColorMapAnnotatingTableCellRenderer extends DefaultTableCellRenderer implements AnnotatingTableCellRenderer
+public class ColoringAnnotatingTableCellRenderer extends DefaultTableCellRenderer implements AnnotatingTableCellRenderer
 {
-	final Map<Object, Color>	annotationColors	= new HashMap<Object, Color>( );
+	Function<Object, Color>	colorer;
 	
-	public ColorMapAnnotatingTableCellRenderer( )
+	public ColoringAnnotatingTableCellRenderer( )
 	{
 		
 	}
 	
-	public ColorMapAnnotatingTableCellRenderer( Map<?, Color> annotationColors )
+	public ColoringAnnotatingTableCellRenderer( Map<?, Color> annotationColors )
 	{
 		this( );
 		setAnnotationColors( annotationColors );
@@ -27,8 +26,12 @@ public class ColorMapAnnotatingTableCellRenderer extends DefaultTableCellRendere
 	
 	public void setAnnotationColors( Map<?, Color> annotationColors )
 	{
-		this.annotationColors.clear( );
-		this.annotationColors.putAll( annotationColors );
+		colorer = annotationColors == null ? null : o -> annotationColors.get( o );
+	}
+	
+	public void setColorer( Function<Object, Color> colorer )
+	{
+		this.colorer = colorer;
 	}
 	
 	@Override
@@ -38,9 +41,9 @@ public class ColorMapAnnotatingTableCellRenderer extends DefaultTableCellRendere
 		if( !isSelected )
 		{
 			renderer.setBackground( table.getBackground( ) );
-			if( annotation != null )
+			if( annotation != null && colorer != null )
 			{
-				Color bg = annotationColors.get( annotation );
+				Color bg = colorer.apply( annotation );
 				if( bg != null )
 				{
 					renderer.setBackground( bg );

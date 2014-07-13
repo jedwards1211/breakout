@@ -36,11 +36,11 @@ import org.andork.swing.table.AnnotatingTableRowSorter;
  * </ul>
  * 
  * @param <M>
- *            the type of the model
+ *        the type of the model
  * @param <I>
- *            the type of the identifier passed to the <code>RowFilter</code>
- * @param <A>
- *            the row annotation type
+ *        the type of the identifier passed to the <code>RowFilter</code>
+ * @param the
+ *        row annotation type
  * @version %I% %G%
  * @see #getAnnotation(int)
  * @see #sortLater()
@@ -51,106 +51,106 @@ import org.andork.swing.table.AnnotatingTableRowSorter;
  * @see java.text.Collator
  * @since 1.6
  */
-public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
+public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 {
 	/**
 	 * Whether or not we resort on TableModelEvent.UPDATEs.
 	 */
-	private boolean											sortsOnUpdates;
+	private boolean								sortsOnUpdates;
 	
-	private M												model;
+	private M									model;
 	
 	/**
 	 * View (JTable) -> model.
 	 */
-	private Row<A>[ ]										viewToModel;
+	private Row[ ]								viewToModel;
 	
 	/**
 	 * model -> view (JTable)
 	 */
-	private int[ ]											modelToView;
+	private int[ ]								modelToView;
 	
 	/**
 	 * Comparators specified by column.
 	 */
-	private Comparator[ ]									comparators;
+	private Comparator[ ]						comparators;
 	
 	/**
 	 * Whether or not the specified column is sortable, by column.
 	 */
-	private boolean[ ]										isSortable;
+	private boolean[ ]							isSortable;
 	
 	/**
 	 * Cached SortKeys for the current sort.
 	 */
-	private SortKey[ ]										cachedSortKeys;
+	private SortKey[ ]							cachedSortKeys;
 	
 	/**
 	 * Cached comparators for the current sort
 	 */
-	private Comparator[ ]									sortComparators;
+	private Comparator[ ]						sortComparators;
 	
 	/**
 	 * Developer supplied Annotator.
 	 */
-	private RowAnnotator<? super M, ? super I, ? extends A>	annotator;
+	private RowAnnotator<? super M, ? super I>	annotator;
 	
 	/**
 	 * Developer supplied Filter.
 	 */
-	private RowFilter<? super M, ? super I>					filter;
+	private RowFilter<? super M, ? super I>		filter;
 	
 	/**
 	 * Value passed to the filter. The same instance is passed to the filter for different rows.
 	 */
-	private FilterEntry<M, I>								filterEntry;
+	private FilterEntry<M, I>					filterEntry;
 	
 	/**
 	 * The sort keys.
 	 */
-	private List<SortKey>									sortKeys;
+	private List<SortKey>						sortKeys;
 	
 	/**
 	 * Whether or not to use getStringValueAt. This is indexed by column.
 	 */
-	private boolean[ ]										useToString;
+	private boolean[ ]							useToString;
 	
 	/**
 	 * Indicates the contents are sorted. This is used if getSortsOnUpdates is false and an update event is received.
 	 */
-	private boolean											sorted;
+	private boolean								sorted;
 	
 	/**
 	 * Maximum number of sort keys.
 	 */
-	private int												maxSortKeys;
+	private int									maxSortKeys;
 	
 	/**
 	 * Provides access to the data we're sorting/filtering.
 	 */
-	private ModelWrapper<M, I>								modelWrapper;
+	private ModelWrapper<M, I>					modelWrapper;
 	
 	/**
 	 * Copies the model for the background sorter.
 	 */
-	private ModelCopier<M>									modelCopier;
+	private ModelCopier<M>						modelCopier;
 	
 	/**
 	 * Size of the model. This is used to enforce error checking within the table changed notification methods (such as rowsInserted).
 	 */
-	private int												modelRowCount;
+	private int									modelRowCount;
 	
-	private boolean											isSorting;
+	private boolean								isSorting;
 	
-	private boolean											sortRequested;
+	private boolean								sortRequested;
 	
-	private boolean											sortExistingDataRequested;
+	private boolean								sortExistingDataRequested;
 	
-	private SortRunner										sortRunner;
+	private SortRunner							sortRunner;
 	
-	private BackgroundSortTask<M, I, A>						sortTask;
+	private BackgroundSortTask<M, I>			sortTask;
 	
-	private final Queue<Runnable>							invokeWhenDoneSortingQueue	= new LinkedList<Runnable>( );
+	private final Queue<Runnable>				invokeWhenDoneSortingQueue	= new LinkedList<Runnable>( );
 	
 	/**
 	 * Creates an empty <code>DefaultRowSorter</code>.
@@ -168,9 +168,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * Sets the model wrapper providing the data that is being sorted and filtered.
 	 * 
 	 * @param modelWrapper
-	 *            the model wrapper responsible for providing the data that gets sorted and filtered
+	 *        the model wrapper responsible for providing the data that gets sorted and filtered
 	 * @throws IllegalArgumentException
-	 *             if {@code modelWrapper} is {@code null}
+	 *         if {@code modelWrapper} is {@code null}
 	 */
 	protected final void setModelWrapper( ModelWrapper<M, I> modelWrapper )
 	{
@@ -238,7 +238,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * to set an empty model.
 	 * 
 	 * @param model
-	 *            the underlying model to use, or <code>null</code>
+	 *        the underlying model to use, or <code>null</code>
 	 */
 	public void setModel( M model )
 	{
@@ -251,11 +251,11 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * possible to sort on a column that has been marked as unsortable by directly setting the sort keys. The default is true.
 	 * 
 	 * @param column
-	 *            the column to enable or disable sorting on, in terms of the underlying model
+	 *        the column to enable or disable sorting on, in terms of the underlying model
 	 * @param sortable
-	 *            whether or not the specified column is sortable
+	 *        whether or not the specified column is sortable
 	 * @throws IndexOutOfBoundsException
-	 *             if <code>column</code> is outside the range of the model
+	 *         if <code>column</code> is outside the range of the model
 	 * @see #toggleSortOrder
 	 * @see #setSortKeys
 	 */
@@ -277,10 +277,10 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * Returns true if the specified column is sortable; otherwise, false.
 	 * 
 	 * @param column
-	 *            the column to check sorting for, in terms of the underlying model
+	 *        the column to check sorting for, in terms of the underlying model
 	 * @return true if the column is sortable
 	 * @throws IndexOutOfBoundsException
-	 *             if column is outside the range of the underlying model
+	 *         if column is outside the range of the underlying model
 	 */
 	public boolean isSortable( int column )
 	{
@@ -293,9 +293,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * {@code DefaultRowSorter}. If the sort keys have changed this triggers a sort.
 	 * 
 	 * @param sortKeys
-	 *            the new <code>SortKeys</code>; <code>null</code> is a shorthand for specifying an empty list, indicating that the view should be unsorted
+	 *        the new <code>SortKeys</code>; <code>null</code> is a shorthand for specifying an empty list, indicating that the view should be unsorted
 	 * @throws IllegalArgumentException
-	 *             if any of the values in <code>sortKeys</code> are null or have a column index outside the range of the model
+	 *         if any of the values in <code>sortKeys</code> are null or have a column index outside the range of the model
 	 */
 	public void setSortKeys( List<? extends SortKey> sortKeys )
 	{
@@ -359,9 +359,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * default value is 3.
 	 * 
 	 * @param max
-	 *            the maximum number of sort keys
+	 *        the maximum number of sort keys
 	 * @throws IllegalArgumentException
-	 *             if <code>max</code> &lt; 1
+	 *         if <code>max</code> &lt; 1
 	 */
 	public void setMaxSortKeys( int max )
 	{
@@ -387,7 +387,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * the user edits an entry the location of that item in the view may change. The default is false.
 	 * 
 	 * @param sortsOnUpdates
-	 *            whether or not to sort on update events
+	 *        whether or not to sort on update events
 	 */
 	public void setSortsOnUpdates( boolean sortsOnUpdates )
 	{
@@ -415,9 +415,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * This method triggers a sort.
 	 * 
 	 * @param annotator
-	 *            the annotator used to annotate rows
+	 *        the annotator used to annotate rows
 	 */
-	public void setRowAnnotator( RowAnnotator<? super M, ? super I, ? extends A> annotator )
+	public void setRowAnnotator( RowAnnotator<? super M, ? super I> annotator )
 	{
 		this.annotator = annotator;
 		sortExistingDataLater( );
@@ -428,7 +428,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * 
 	 * @return the annotator
 	 */
-	public RowAnnotator<? super M, ? super I, ? extends A> getRowAnnotator( )
+	public RowAnnotator<? super M, ? super I> getRowAnnotator( )
 	{
 		return annotator;
 	}
@@ -444,7 +444,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * This method triggers a sort.
 	 * 
 	 * @param filter
-	 *            the filter used to determine what entries should be included
+	 *        the filter used to determine what entries should be included
 	 */
 	public void setRowFilter( RowFilter<? super M, ? super I> filter )
 	{
@@ -485,9 +485,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * no effect.
 	 * 
 	 * @param column
-	 *            index of the column to make the primary sorted column, in terms of the underlying model
+	 *        index of the column to make the primary sorted column, in terms of the underlying model
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 * @see #setSortable(int,boolean)
 	 * @see #setMaxSortKeys(int)
 	 */
@@ -565,7 +565,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * {@inheritDoc}
 	 * 
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 */
 	public int convertRowIndexToView( int index )
 	{
@@ -588,7 +588,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * {@inheritDoc}
 	 * 
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 */
 	public int convertRowIndexToModel( int index )
 	{
@@ -607,10 +607,10 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * Gets the annotation of the row at the given index in the view.
 	 * 
 	 * @param viewIndex
-	 *            the view index of a row.
+	 *        the view index of a row.
 	 * @return the row's annotation, or {@code null} if it has none
 	 */
-	public A getAnnotation( int viewIndex )
+	public Object getAnnotation( int viewIndex )
 	{
 		if( viewToModel == null )
 		{
@@ -636,7 +636,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		sortExistingDataRequested = true;
 		if( sortTask == null )
 		{
-			sortTask = new BackgroundSortTask<M, I, A>( this );
+			sortTask = new BackgroundSortTask<M, I>( this );
 			sortRunner.submit( sortTask );
 		}
 		// else
@@ -658,7 +658,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		CheckEDT.checkEDT( );
 		
 		sortExistingDataRequested = true;
-		new BackgroundSortTask<M, I, A>( this ).run( );
+		new BackgroundSortTask<M, I>( this ).run( );
 		
 		// Careful! If the model changes and this method is run
 		// while a background sort is running, it could cause the
@@ -678,7 +678,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		sortRequested = true;
 		if( sortTask == null )
 		{
-			sortTask = new BackgroundSortTask<M, I, A>( this );
+			sortTask = new BackgroundSortTask<M, I>( this );
 			sortRunner.submit( sortTask );
 		}
 		// else
@@ -700,7 +700,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		CheckEDT.checkEDT( );
 		
 		sortRequested = true;
-		new BackgroundSortTask<M, I, A>( this ).run( );
+		new BackgroundSortTask<M, I>( this ).run( );
 		
 		// Careful! If the model changes and this method is run
 		// while a background sort is running, it could cause the
@@ -836,9 +836,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * value in their <code>ModelWrapper</code> implementation.
 	 * 
 	 * @param column
-	 *            the index of the column to test, in terms of the underlying model
+	 *        the index of the column to test, in terms of the underlying model
 	 * @throws IndexOutOfBoundsException
-	 *             if <code>column</code> is not valid
+	 *         if <code>column</code> is not valid
 	 */
 	protected boolean useToString( int column )
 	{
@@ -883,11 +883,11 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * you need to explicitly invoke <code>sort</code>.
 	 * 
 	 * @param column
-	 *            the index of the column the <code>Comparator</code> is to be used for, in terms of the underlying model
+	 *        the index of the column the <code>Comparator</code> is to be used for, in terms of the underlying model
 	 * @param comparator
-	 *            the <code>Comparator</code> to use
+	 *        the <code>Comparator</code> to use
 	 * @throws IndexOutOfBoundsException
-	 *             if <code>column</code> is outside the range of the underlying model
+	 *         if <code>column</code> is outside the range of the underlying model
 	 */
 	public void setComparator( int column , Comparator<?> comparator )
 	{
@@ -904,10 +904,10 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * the column.
 	 * 
 	 * @param column
-	 *            the column to fetch the <code>Comparator</code> for, in terms of the underlying model
+	 *        the column to fetch the <code>Comparator</code> for, in terms of the underlying model
 	 * @return the <code>Comparator</code> for the specified column
 	 * @throws IndexOutOfBoundsException
-	 *             if column is outside the range of the underlying model
+	 *         if column is outside the range of the underlying model
 	 */
 	public Comparator<?> getComparator( int column )
 	{
@@ -1005,7 +1005,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * {@inheritDoc}
 	 * 
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 */
 	public void rowsInserted( int firstRow , int endRow )
 	{
@@ -1026,7 +1026,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * {@inheritDoc}
 	 * 
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 */
 	public void rowsDeleted( int firstRow , int endRow )
 	{
@@ -1046,7 +1046,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * {@inheritDoc}
 	 * 
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 */
 	public void rowsUpdated( int firstRow , int endRow )
 	{
@@ -1072,7 +1072,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * {@inheritDoc}
 	 * 
 	 * @throws IndexOutOfBoundsException
-	 *             {@inheritDoc}
+	 *         {@inheritDoc}
 	 */
 	public void rowsUpdated( int firstRow , int endRow , int column )
 	{
@@ -1106,9 +1106,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	/**
 	 * Returns true if the specified row should be included.
 	 */
-	private A annotate( int row )
+	private Object annotate( int row )
 	{
-		RowAnnotator<? super M, ? super I, ? extends A> annotator = getRowAnnotator( );
+		RowAnnotator<? super M, ? super I> annotator = getRowAnnotator( );
 		if( annotator != null )
 		{
 			return annotator.annotate( getFilterEntry( row ) );
@@ -1191,11 +1191,11 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * Insets new set of entries.
 	 * 
 	 * @param toAdd
-	 *            the Rows to add, sorted
+	 *        the Rows to add, sorted
 	 * @param current
-	 *            the array to insert the items into
+	 *        the array to insert the items into
 	 */
-	private void insertInOrder( List<Row<A>> toAdd , Row<A>[ ] current )
+	private void insertInOrder( List<Row> toAdd , Row[ ] current )
 	{
 		int last = 0;
 		int index;
@@ -1241,14 +1241,14 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		int[ ] oldViewToModel = getViewToModelAsInts( viewToModel );
 		int i;
 		int delta = ( lastRow - firstRow ) + 1;
-		List<Row<A>> added = new ArrayList<Row<A>>( delta );
+		List<Row> added = new ArrayList<Row>( delta );
 		
 		// Build the list of Rows to add into added
 		for( i = firstRow ; i <= lastRow ; i++ )
 		{
 			if( include( i ) )
 			{
-				added.add( new Row<A>( this , i , annotate( i ) ) );
+				added.add( new Row( this , i , annotate( i ) ) );
 			}
 		}
 		
@@ -1268,7 +1268,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		if( added.size( ) > 0 )
 		{
 			Collections.sort( added );
-			Row<A>[ ] lastViewToModel = viewToModel;
+			Row[ ] lastViewToModel = viewToModel;
 			viewToModel = new Row[ viewToModel.length + added.size( ) ];
 			insertInOrder( added , lastViewToModel );
 		}
@@ -1355,7 +1355,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 			// Sorting only:
 			
 			// Remove the effected rows
-			Row<A>[ ] updated = new Row[ delta ];
+			Row[ ] updated = new Row[ delta ];
 			for( j = 0 , i = firstRow ; i <= lastRow ; i++ , j++ )
 			{
 				updated[ j ] = viewToModel[ modelToView[ i ] ];
@@ -1367,7 +1367,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 			
 			// Build the intermediary array: the array of
 			// viewToModel without the effected rows.
-			Row<A>[ ] intermediary = new Row[ viewToModel.length - delta ];
+			Row[ ] intermediary = new Row[ viewToModel.length - delta ];
 			for( i = 0 , j = 0 ; i < viewToModel.length ; i++ )
 			{
 				modelIndex = viewToModel[ i ].modelIndex;
@@ -1389,7 +1389,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 			
 			// Remove the effected rows, adding them to updated and setting
 			// modelToView to -2 for any rows that were not filtered out
-			List<Row<A>> updated = new ArrayList<Row<A>>( delta );
+			List<Row> updated = new ArrayList<Row>( delta );
 			int newlyVisible = 0;
 			int newlyHidden = 0;
 			int effected = 0;
@@ -1401,7 +1401,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 					if( include( i ) )
 					{
 						// No longer filtered
-						updated.add( new Row<A>( this , i , annotate( i ) ) );
+						updated.add( new Row( this , i , annotate( i ) ) );
 						newlyVisible++ ;
 					}
 				}
@@ -1427,7 +1427,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 			
 			// Build the intermediary array: the array of
 			// viewToModel without the updated rows.
-			Row<A>[ ] intermediary = new Row[ viewToModel.length - effected ];
+			Row[ ] intermediary = new Row[ viewToModel.length - effected ];
 			for( i = 0 , j = 0 ; i < viewToModel.length ; i++ )
 			{
 				modelIndex = viewToModel[ i ].modelIndex;
@@ -1472,9 +1472,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * custom string converter to be used instead of invoking <code>toString</code> on the object.
 	 * 
 	 * @param <M>
-	 *            the type of the underlying model
+	 *        the type of the underlying model
 	 * @param <I>
-	 *            the identifier supplied to the filter
+	 *        the identifier supplied to the filter
 	 * @since 1.6
 	 * @see RowFilter
 	 * @see RowFilter.Entry
@@ -1513,12 +1513,12 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		 * Returns the value at the specified index.
 		 * 
 		 * @param row
-		 *            the row index
+		 *        the row index
 		 * @param column
-		 *            the column index
+		 *        the column index
 		 * @return the value at the specified index
 		 * @throws IndexOutOfBoundsException
-		 *             if the indices are outside the range of the model
+		 *         if the indices are outside the range of the model
 		 */
 		public abstract Object getValueAt( int row , int column );
 		
@@ -1527,12 +1527,12 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		 * <code>getValueAt</code> (making sure to return an empty string for null values). Subclasses that override this method should never return null.
 		 * 
 		 * @param row
-		 *            the row index
+		 *        the row index
 		 * @param column
-		 *            the column index
+		 *        the column index
 		 * @return the value at the specified index as a <code>String</code>
 		 * @throws IndexOutOfBoundsException
-		 *             if the indices are outside the range of the model
+		 *         if the indices are outside the range of the model
 		 */
 		public String getStringValueAt( int row , int column )
 		{
@@ -1554,7 +1554,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		 * to the <code>RowFilter</code>.
 		 * 
 		 * @param row
-		 *            the row to return the identifier for, in terms of the underlying model
+		 *        the row to return the identifier for, in terms of the underlying model
 		 * @return the identifier
 		 * @see RowFilter.Entry#getIdentifier
 		 */
@@ -1616,20 +1616,20 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 	 * Row is used to handle the actual sorting by way of Comparable. It will use the sortKeys to do the actual comparison.
 	 */
 	// NOTE: this class is static so that it can be placed in an array
-	private static class Row<A> implements Comparable<Row<A>>
+	private static class Row implements Comparable<Row>
 	{
-		private AnnotatingRowSorter<?, ?, A>	sorter;
-		int										modelIndex;
-		A										annotation;
+		private AnnotatingRowSorter<?, ?>	sorter;
+		int									modelIndex;
+		Object								annotation;
 		
-		public Row( AnnotatingRowSorter<?, ?, A> sorter , int index , A annotation )
+		public Row( AnnotatingRowSorter<?, ?> sorter , int index , Object annotation )
 		{
 			this.sorter = sorter;
 			modelIndex = index;
 			this.annotation = annotation;
 		}
 		
-		public int compareTo( Row<A> o )
+		public int compareTo( Row o )
 		{
 			return sorter.compare( modelIndex , o.modelIndex );
 		}
@@ -1657,84 +1657,84 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		}
 	}
 	
-	private static class BackgroundSortTask<M, I, A> implements Runnable
+	private static class BackgroundSortTask<M, I> implements Runnable
 	{
-		private final AnnotatingRowSorter<M, I, A>				sorter;
+		private final AnnotatingRowSorter<M, I>		sorter;
 		
-		private ModelCopier<M>									modelCopier;
+		private ModelCopier<M>						modelCopier;
 		
-		private M												modelCopy;
+		private M									modelCopy;
 		
 		/**
 		 * View (JTable) -> model.
 		 */
-		private Row<A>[ ]										viewToModel;
+		private Row[ ]								viewToModel;
 		
 		/**
 		 * model -> view (JTable)
 		 */
-		private int[ ]											modelToView;
+		private int[ ]								modelToView;
 		
 		/**
 		 * Comparators specified by column.
 		 */
-		private Comparator[ ]									comparators;
+		private Comparator[ ]						comparators;
 		
 		/**
 		 * Cached SortKeys for the current sort.
 		 */
-		private SortKey[ ]										cachedSortKeys;
+		private SortKey[ ]							cachedSortKeys;
 		
 		/**
 		 * Cached comparators for the current sort
 		 */
-		private Comparator[ ]									sortComparators;
+		private Comparator[ ]						sortComparators;
 		
 		/**
 		 * Developer supplied Annotator.
 		 */
-		private RowAnnotator<? super M, ? super I, ? extends A>	annotator;
+		private RowAnnotator<? super M, ? super I>	annotator;
 		
 		/**
 		 * Developer supplied Filter.
 		 */
-		private RowFilter<? super M, ? super I>					filter;
+		private RowFilter<? super M, ? super I>		filter;
 		
 		/**
 		 * Value passed to the filter. The same instance is passed to the filter for different rows.
 		 */
-		private FilterEntry<M, I>								filterEntry;
+		private FilterEntry<M, I>					filterEntry;
 		
 		/**
 		 * The sort keys.
 		 */
-		private List<SortKey>									sortKeys;
+		private List<SortKey>						sortKeys;
 		
 		/**
 		 * Whether or not to use getStringValueAt. This is indexed by column.
 		 */
-		private boolean[ ]										useToString;
+		private boolean[ ]							useToString;
 		
 		/**
 		 * Indicates the contents are sorted. This is used if getSortsOnUpdates is false and an update event is received.
 		 */
-		private boolean											sorted;
+		private boolean								sorted;
 		
 		/**
 		 * Provides access to the data we're sorting/filtering.
 		 */
-		private ModelWrapper<M, I>								modelWrapper;
+		private ModelWrapper<M, I>					modelWrapper;
 		
-		private Comparator<Row<A>>								rowComparator	= new Comparator<AnnotatingRowSorter.Row<A>>( )
-																				{
-																					@Override
-																					public int compare( Row<A> o1 , Row<A> o2 )
-																					{
-																						return BackgroundSortTask.this.compare( o1.modelIndex , o2.modelIndex );
-																					}
-																				};
+		private Comparator<Row>						rowComparator	= new Comparator<AnnotatingRowSorter.Row>( )
+																	{
+																		@Override
+																		public int compare( Row o1 , Row o2 )
+																		{
+																			return BackgroundSortTask.this.compare( o1.modelIndex , o2.modelIndex );
+																		}
+																	};
 		
-		public BackgroundSortTask( AnnotatingRowSorter<M, I, A> sorter )
+		public BackgroundSortTask( AnnotatingRowSorter<M, I> sorter )
 		{
 			this.sorter = sorter;
 			this.viewToModel = sorter.viewToModel;
@@ -2004,9 +2004,9 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		 * honor this value in their <code>ModelWrapper</code> implementation.
 		 * 
 		 * @param column
-		 *            the index of the column to test, in terms of the underlying model
+		 *        the index of the column to test, in terms of the underlying model
 		 * @throws IndexOutOfBoundsException
-		 *             if <code>column</code> is not valid
+		 *         if <code>column</code> is not valid
 		 */
 		protected boolean useToString( int column )
 		{
@@ -2046,10 +2046,10 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		 * for the column.
 		 * 
 		 * @param column
-		 *            the column to fetch the <code>Comparator</code> for, in terms of the underlying model
+		 *        the column to fetch the <code>Comparator</code> for, in terms of the underlying model
 		 * @return the <code>Comparator</code> for the specified column
 		 * @throws IndexOutOfBoundsException
-		 *             if column is outside the range of the underlying model
+		 *         if column is outside the range of the underlying model
 		 */
 		public Comparator<?> getComparator( int column )
 		{
@@ -2152,7 +2152,7 @@ public abstract class AnnotatingRowSorter<M, I, A> extends RowSorter<M>
 		/**
 		 * Returns true if the specified row should be included.
 		 */
-		private A annotate( int row )
+		private Object annotate( int row )
 		{
 			if( annotator != null )
 			{

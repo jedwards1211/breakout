@@ -22,7 +22,7 @@ import org.andork.swing.table.QObjectRowFormat;
 public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Row>>
 {
 	private Map<Integer, Integer>	shotNumberToRowIndexMap	= CollectionUtils.newHashMap( );
-	private final List<Shot>	shots					= new ArrayList<Shot>( );
+	private final List<Shot>		shots					= new ArrayList<Shot>( );
 	
 	public SurveyTableModel( )
 	{
@@ -41,12 +41,12 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		public static final Attribute<String>			bsAzm			= newAttribute( String.class , "bsAzm" );
 		public static final Attribute<String>			bsInc			= newAttribute( String.class , "bsInc" );
 		public static final Attribute<CrossSectionType>	xSectionType	= newAttribute( CrossSectionType.class , "xSectionType" );
-		public static final Attribute<ShotSide>	xSectionSide	= newAttribute( ShotSide.class , "xSectionSide" );
+		public static final Attribute<ShotSide>			xSectionSide	= newAttribute( ShotSide.class , "xSectionSide" );
 		public static final Attribute<String>			left			= newAttribute( String.class , "left" );
 		public static final Attribute<String>			right			= newAttribute( String.class , "right" );
 		public static final Attribute<String>			up				= newAttribute( String.class , "up" );
 		public static final Attribute<String>			down			= newAttribute( String.class , "down" );
-		public static final Attribute<ShotSide>	positionSide	= newAttribute( ShotSide.class , "positionSide" );
+		public static final Attribute<ShotSide>			positionSide	= newAttribute( ShotSide.class , "positionSide" );
 		public static final Attribute<String>			north			= newAttribute( String.class , "north" );
 		public static final Attribute<String>			east			= newAttribute( String.class , "east" );
 		public static final Attribute<String>			elev			= newAttribute( String.class , "elev" );
@@ -112,7 +112,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 			fixEndRows( );
 		}
 	}
-
+	
 	@Override
 	public void setValueAt( Object aValue , int row , int column , boolean fireEvent )
 	{
@@ -127,7 +127,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 			fixEndRows( );
 		}
 	}
-
+	
 	public void clear( )
 	{
 		setShots( Collections.<Shot>emptyList( ) );
