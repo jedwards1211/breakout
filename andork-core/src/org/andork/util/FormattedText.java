@@ -1,19 +1,18 @@
 package org.andork.util;
 
-
-public class FormattedValue
+public class FormattedText
 {
 	String		text;
 	Object		value;
 	Format		format;
 	Exception	formatException;
 	
-	public FormattedValue( )
+	public FormattedText( )
 	{
 		
 	}
 	
-	public FormattedValue( Format format )
+	public FormattedText( Format format )
 	{
 		this.format = format;
 		format( );
@@ -51,9 +50,16 @@ public class FormattedValue
 			try
 			{
 				value = format.parse( text );
+				formatException = null;
+			}
+			catch( FormatWarning warning )
+			{
+				value = warning.getFormattedValue( );
+				formatException = warning;
 			}
 			catch( Exception ex )
 			{
+				value = null;
 				formatException = ex;
 			}
 		}

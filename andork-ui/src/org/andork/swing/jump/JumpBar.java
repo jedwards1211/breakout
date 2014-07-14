@@ -111,6 +111,11 @@ public class JumpBar extends JComponent
 		colorer = colorMap == null ? null : o -> colorMap.get( o );
 	}
 	
+	public void setColorer( Function<Object, Color> colorer )
+	{
+		this.colorer = colorer;
+	}
+	
 	public Rectangle getScrollBarTrackBounds( )
 	{
 		Axis axis = getAxis( );

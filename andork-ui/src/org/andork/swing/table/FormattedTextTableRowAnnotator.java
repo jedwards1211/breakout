@@ -1,23 +1,27 @@
 package org.andork.swing.table;
 
+import java.util.function.BinaryOperator;
+
 import javax.swing.RowFilter.Entry;
 import javax.swing.table.TableModel;
 
 import org.andork.swing.RowAnnotator;
-import org.andork.util.FormattedValue;
+import org.andork.util.FormattedText;
 
-public class FormattedValueTableRowAnnotator extends RowAnnotator<TableModel, Integer>
+public class FormattedTextTableRowAnnotator extends RowAnnotator<TableModel, Integer>
 {
 	RowAnnotator<TableModel, Integer>	wrapped;
 	
-	public static final Object	FORMAT_EXCEPTION_ANNOTATION	= new Object( );
+	private BinaryOperator<Exception>	combiner					= ( e1 , e2 ) -> e1;
 	
-	public FormattedValueTableRowAnnotator( )
+	public static final Object			FORMAT_EXCEPTION_ANNOTATION	= new Object( );
+	
+	public FormattedTextTableRowAnnotator( )
 	{
 		this( null );
 	}
 	
-	public FormattedValueTableRowAnnotator( RowAnnotator<TableModel, Integer> wrapped )
+	public FormattedTextTableRowAnnotator( RowAnnotator<TableModel, Integer> wrapped )
 	{
 		super( );
 		this.wrapped = wrapped;
@@ -28,9 +32,19 @@ public class FormattedValueTableRowAnnotator extends RowAnnotator<TableModel, In
 		this.wrapped = wrapped;
 	}
 	
+	public BinaryOperator<Exception> getCombiner( )
+	{
+		return combiner;
+	}
+	
+	public void setCombiner( BinaryOperator<Exception> combiner )
+	{
+		this.combiner = combiner;
+	}
+	
 	/**
 	 * @return if the wrapped annotator is not null and returns an annotation, returns that annotation. Otherwise, returns {@link #FORMAT_EXCEPTION_ANNOTATION}
-	 *         if any {@link FormattedValue}s in the row have format exceptions,
+	 *         if any {@link FormattedText}s in the row have format exceptions,
 	 *         or null if none do.
 	 */
 	@Override
@@ -44,19 +58,28 @@ public class FormattedValueTableRowAnnotator extends RowAnnotator<TableModel, In
 		
 		TableModel model = entry.getModel( );
 		
+		Exception result = null;
+		
 		for( int column = 0 ; column < model.getColumnCount( ) ; column++ )
 		{
 			Object value = model.getValueAt( entry.getIdentifier( ) , column );
-			if( value instanceof FormattedValue )
+			if( value instanceof FormattedText )
 			{
-				Exception ex = ( ( FormattedValue ) value ).getFormatException( );
+				Exception ex = ( ( FormattedText ) value ).getFormatException( );
 				if( ex != null )
 				{
-					return FORMAT_EXCEPTION_ANNOTATION;
+					if( result == null )
+					{
+						result = ex;
+					}
+					else
+					{
+						result = combiner.apply( result , ex );
+					}
 				}
 			}
 		}
 		
-		return null;
+		return result;
 	}
 }

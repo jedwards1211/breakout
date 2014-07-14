@@ -79,4 +79,9 @@ public class StringUtils
 		}
 		return sb.toString( );
 	}
+	
+	public static boolean isNullOrEmpty( Object aValue )
+	{
+		return aValue == null || "".equals( aValue.toString( ) );
+	}
 }

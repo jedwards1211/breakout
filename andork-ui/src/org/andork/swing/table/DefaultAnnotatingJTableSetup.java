@@ -2,6 +2,7 @@ package org.andork.swing.table;
 
 import java.awt.Color;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.swing.table.TableModel;
 
@@ -19,8 +20,16 @@ public class DefaultAnnotatingJTableSetup
 	public DefaultAnnotatingJTableSetup( AnnotatingJTable table , SortRunner sortRunner )
 	{
 		this.table = table;
-		AnnotatingTableRowSorter sorter = new AnnotatingTableRowSorter( table , sortRunner );
-		table.setRowSorter( sorter );
+		AnnotatingTableRowSorter sorter;
+		if( table.getRowSorter( ) instanceof AnnotatingTableRowSorter )
+		{
+			sorter = ( AnnotatingTableRowSorter ) table.getRowSorter( );
+		}
+		else
+		{
+			sorter = new AnnotatingTableRowSorter( table , sortRunner );
+			table.setRowSorter( sorter );
+		}
 		
 		scrollPane = new JScrollAndJumpPane( table );
 		scrollPane.getJumpBar( ).setModel( new AnnotatingJTableJumpBarModel( table ) );
@@ -39,5 +48,11 @@ public class DefaultAnnotatingJTableSetup
 	{
 		table.setAnnotationColors( colors );
 		scrollPane.getJumpBar( ).setColorMap( colors );
+	}
+	
+	public void setColorer( Function<Object, Color> colorer )
+	{
+		table.setColorer( colorer );
+		scrollPane.getJumpBar( ).setColorer( colorer );
 	}
 }

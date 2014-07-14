@@ -1233,6 +1233,7 @@ public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 			sortLater( );
 			return false;
 		}
+		cacheSortKeys( getSortKeys( ) );
 		return true;
 	}
 	

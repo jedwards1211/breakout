@@ -4,6 +4,12 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import org.andork.func.ThrowingDoubleFunction;
+import org.andork.func.ThrowingFunction;
+import org.andork.func.ThrowingToDoubleFunction;
 
 public class ArrayUtils
 {
@@ -538,5 +544,53 @@ public class ArrayUtils
 			result[ k++ ] = t;
 		}
 		return result;
+	}
+	
+	public static <I, O> O[ ] map( I[ ] in , O[ ] out , Function<I, O> function )
+	{
+		for( int i = 0 ; i < out.length ; i++ )
+		{
+			out[ i ] = function.apply( in[ i ] );
+		}
+		return out;
+	}
+	
+	public static <I, O, T extends Throwable> O[ ] throwableMap( I[ ] in , O[ ] out , ThrowingFunction<I, O, T> function ) throws T
+	{
+		for( int i = 0 ; i < out.length ; i++ )
+		{
+			out[ i ] = function.apply( in[ i ] );
+		}
+		return out;
+	}
+	
+	public static <O, T extends Throwable> O[ ] throwableMap( double[ ] in , O[ ] out , ThrowingDoubleFunction<O, T> function ) throws T
+	{
+		for( int i = 0 ; i < out.length ; i++ )
+		{
+			out[ i ] = function.apply( in[ i ] );
+		}
+		return out;
+	}
+	
+	public static <I, T extends Throwable> double[ ] throwableMap( I[ ] in , double[ ] out , ThrowingToDoubleFunction<I, T> function ) throws T
+	{
+		for( int i = 0 ; i < out.length ; i++ )
+		{
+			out[ i ] = function.applyAsDouble( in[ i ] );
+		}
+		return out;
+	}
+	
+	public static <T> int indexOf( T[ ] array , Predicate<T> predicate )
+	{
+		for( int i = 0 ; i < array.length ; i++ )
+		{
+			if( predicate.test( array[ i ] ) )
+			{
+				return i;
+			}
+		}
+		return -1;
 	}
 }
