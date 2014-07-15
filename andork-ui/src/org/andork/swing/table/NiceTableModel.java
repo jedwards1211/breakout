@@ -169,6 +169,7 @@ public class NiceTableModel<R> extends AbstractTableModel
 		public final Column<R>			wrapped;
 		public final Class<?>			valueClass;
 		private Supplier<FormattedText>	formattedTextSupplier;
+		private boolean					sortable	= true;
 		
 		public FormattedTextColumn( Column<R> wrapped , Class<?> valueClass , Supplier<FormattedText> formattedTextSupplier )
 		{
@@ -245,7 +246,13 @@ public class NiceTableModel<R> extends AbstractTableModel
 		@Override
 		public boolean isSortable( )
 		{
-			return true;
+			return sortable;
+		}
+		
+		public FormattedTextColumn<R> sortable( boolean sortable )
+		{
+			this.sortable = sortable;
+			return this;
 		}
 	}
 	

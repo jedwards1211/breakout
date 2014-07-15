@@ -1,13 +1,15 @@
 package org.andork.breakout.table;
 
 import java.awt.Color;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.andork.breakout.model.SurveyTableModel;
-import org.andork.breakout.table.NewSurveyTableModel.CustomColumn;
+import org.andork.breakout.table.NewSurveyTableModel.ColumnModel;
 import org.andork.breakout.table.NewSurveyTableModel.CustomColumnType;
 import org.andork.breakout.table.NewSurveyTableModel.NewSurveyTableModelCopier;
+import org.andork.q.QObject;
 import org.andork.swing.OnEDT;
 import org.andork.swing.QuickTestFrame;
 import org.andork.swing.table.AnnotatingTableRowSorter;
@@ -21,7 +23,12 @@ public class NewSurveyTableTest
 	{
 		OnEDT.onEDT( ( ) -> {
 			NewSurveyTableModel model = new NewSurveyTableModel( );
-			model.addCustomColumn( new CustomColumn( "Date" , CustomColumnType.DATE , null ) );
+			QObject<ColumnModel> dateColModel = ColumnModel.instance.newObject( );
+			dateColModel.set( ColumnModel.name , "Date" );
+			dateColModel.set( ColumnModel.type , CustomColumnType.DATE );
+			dateColModel.set( ColumnModel.defaultFormat , null );
+			model.setColumnModels( Collections.singletonList( dateColModel ) );
+			
 			NewSurveyTable table = new NewSurveyTable( model );
 			ExecutorService executor = Executors.newSingleThreadExecutor( );
 			DefaultAnnotatingJTableSetup setup = new DefaultAnnotatingJTableSetup( table , r -> executor.submit( r ) );
@@ -42,6 +49,9 @@ public class NewSurveyTableTest
 					}
 					return null;
 				} );
+			
+			NewSurveyTableMenuButton menuButton = new NewSurveyTableMenuButton( table );
+			setup.scrollPane.setTopRightCornerComp( menuButton );
 			
 			QuickTestFrame.frame( setup.scrollPane ).setVisible( true );
 		} );

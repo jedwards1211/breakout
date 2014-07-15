@@ -4,6 +4,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -23,7 +24,7 @@ import org.andork.util.Java7;
  * 
  * @author james.a.edwards
  * @param <T>
- *            the selection type.
+ *        the selection type.
  */
 public class DefaultSelector<T> implements ISelector<T>
 {
@@ -74,6 +75,8 @@ public class DefaultSelector<T> implements ISelector<T>
 				}
 			}
 		} );
+		
+		updateComboBoxAvailableItems( );
 	}
 	
 	/**
@@ -293,9 +296,9 @@ public class DefaultSelector<T> implements ISelector<T>
 	 * Sets the list of values available for user selection. If the selected value is not in the list, the selection will be cleared.
 	 * 
 	 * @param newAvailableValues
-	 *            the new list of available values.
+	 *        the new list of available values.
 	 */
-	public void setAvailableValues( List<? extends T> newAvailableValues )
+	public void setAvailableValues( Collection<? extends T> newAvailableValues )
 	{
 		if( !availableValues.equals( newAvailableValues ) )
 		{
@@ -325,6 +328,12 @@ public class DefaultSelector<T> implements ISelector<T>
 		updateComboBoxAvailableItems( );
 	}
 	
+	public void addAvailableValue( T value )
+	{
+		availableValues.add( value );
+		updateComboBoxAvailableItems( );
+	}
+	
 	public T removeAvailableValue( int index )
 	{
 		T result = availableValues.remove( index );
@@ -336,7 +345,7 @@ public class DefaultSelector<T> implements ISelector<T>
 	 * Sets the selected value.
 	 * 
 	 * @param newSelection
-	 *            the new desired selection. Has no effect if it is not in the list of available value.
+	 *        the new desired selection. Has no effect if it is not in the list of available value.
 	 */
 	public void setSelection( T newSelection )
 	{

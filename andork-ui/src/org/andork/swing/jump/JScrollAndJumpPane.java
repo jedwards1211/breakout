@@ -21,82 +21,130 @@ import javax.swing.event.ChangeListener;
  * 
  * @author andy.edwards
  */
-@SuppressWarnings("serial")
-public class JScrollAndJumpPane extends JPanel implements LayoutManager {
+@SuppressWarnings( "serial" )
+public class JScrollAndJumpPane extends JPanel implements LayoutManager
+{
 	JScrollPane	scrollPane;
 	JumpBar		jumpBar;
-
-	public JScrollAndJumpPane() {
-		this(null);
+	Component	topRightCornerComp;
+	
+	public JScrollAndJumpPane( )
+	{
+		this( null );
 	}
-
-	public JScrollAndJumpPane(Component view) {
-		if (view != null) {
-			scrollPane = new JScrollPane(view);
-		} else {
-			scrollPane = new JScrollPane();
+	
+	public JScrollAndJumpPane( Component view )
+	{
+		if( view != null )
+		{
+			scrollPane = new JScrollPane( view );
 		}
-		jumpBar = createJumpBar(scrollPane.getVerticalScrollBar());
-		scrollPane.getViewport().addChangeListener(new ChangeListener() {
+		else
+		{
+			scrollPane = new JScrollPane( );
+		}
+		scrollPane.setVerticalScrollBarPolicy( JScrollPane.VERTICAL_SCROLLBAR_ALWAYS );
+		jumpBar = createJumpBar( scrollPane.getVerticalScrollBar( ) );
+		scrollPane.getViewport( ).addChangeListener( new ChangeListener( )
+		{
 			@Override
-			public void stateChanged(ChangeEvent e) {
-				revalidate();
+			public void stateChanged( ChangeEvent e )
+			{
+				revalidate( );
 			}
-		});
-		add(scrollPane);
-		add(jumpBar);
-		setBorder(scrollPane.getBorder());
-		scrollPane.setBorder(new MatteBorder(0, 0, 0, 1, new Color(224, 224, 224)));
-		setLayout(this);
+		} );
+		add( scrollPane );
+		add( jumpBar );
+		setBorder( scrollPane.getBorder( ) );
+		scrollPane.setBorder( new MatteBorder( 0 , 0 , 0 , 1 , new Color( 224 , 224 , 224 ) ) );
+		setLayout( this );
 	}
-
-	public JumpBar getJumpBar() {
+	
+	public JumpBar getJumpBar( )
+	{
 		return jumpBar;
 	}
-
-	public JScrollPane getScrollPane() {
+	
+	public JScrollPane getScrollPane( )
+	{
 		return scrollPane;
 	}
-
-	protected JumpBar createJumpBar(JScrollBar scrollBar) {
-		return new JumpBar(scrollBar);
+	
+	public Component getTopRightCornerComp( )
+	{
+		return topRightCornerComp;
 	}
-
-	@Override
-	public void addLayoutComponent(String name, Component comp) {
-
-	}
-
-	@Override
-	public void removeLayoutComponent(Component comp) {
-
-	}
-
-	@Override
-	public Dimension preferredLayoutSize(Container parent) {
-		Dimension size = scrollPane.getPreferredSize();
-		size.width += jumpBar.getPreferredSize().width;
-		return size;
-	}
-
-	@Override
-	public Dimension minimumLayoutSize(Container parent) {
-		Dimension size = scrollPane.getMinimumSize();
-		size.width += jumpBar.getMinimumSize().width;
-		return size;
-	}
-
-	@Override
-	public void layoutContainer(Container parent) {
-		Rectangle b = SwingUtilities.calculateInnerArea(this, null);
-		scrollPane.setBounds(b.x, b.y, b.width, b.height);
-		boolean scroll = scrollPane.getVerticalScrollBar().isVisible();
-		int highlightBarWidth = scroll ? jumpBar.getPreferredSize().width : 0;
-		scrollPane.setBounds(b.x, b.y, b.width - highlightBarWidth - 1, b.height);
-		if (scroll) {
-			jumpBar.setBounds(b.width - highlightBarWidth, b.y + scrollPane.getVerticalScrollBar().getY(),
-					highlightBarWidth, scrollPane.getVerticalScrollBar().getHeight());
+	
+	public void setTopRightCornerComp( Component topRightCornerComp )
+	{
+		if( this.topRightCornerComp != topRightCornerComp )
+		{
+			if( this.topRightCornerComp != null )
+			{
+				remove( this.topRightCornerComp );
+			}
+			this.topRightCornerComp = topRightCornerComp;
+			if( this.topRightCornerComp != null )
+			{
+				add( this.topRightCornerComp );
+			}
 		}
-		jumpBar.setVisible(scroll);
+	}
+	
+	protected JumpBar createJumpBar( JScrollBar scrollBar )
+	{
+		return new JumpBar( scrollBar );
+	}
+	
+	@Override
+	public void addLayoutComponent( String name , Component comp )
+	{
+		
+	}
+	
+	@Override
+	public void removeLayoutComponent( Component comp )
+	{
+		
+	}
+	
+	@Override
+	public Dimension preferredLayoutSize( Container parent )
+	{
+		Dimension size = scrollPane.getPreferredSize( );
+		size.width += jumpBar.getPreferredSize( ).width;
+		return size;
+	}
+	
+	@Override
+	public Dimension minimumLayoutSize( Container parent )
+	{
+		Dimension size = scrollPane.getMinimumSize( );
+		size.width += jumpBar.getMinimumSize( ).width;
+		return size;
+	}
+	
+	@Override
+	public void layoutContainer( Container parent )
+	{
+		Rectangle b = SwingUtilities.calculateInnerArea( this , null );
+		scrollPane.setBounds( b.x , b.y , b.width , b.height );
+		boolean scroll = scrollPane.getVerticalScrollBar( ).isVisible( );
+		int highlightBarWidth = scroll ? jumpBar.getPreferredSize( ).width : 0;
+		scrollPane.setBounds( b.x , b.y , b.width - highlightBarWidth - 1 , b.height );
+		if( scroll )
+		{
+			jumpBar.setBounds( b.width - highlightBarWidth , b.y + scrollPane.getVerticalScrollBar( ).getY( ) ,
+					highlightBarWidth , scrollPane.getVerticalScrollBar( ).getHeight( ) );
+			if( topRightCornerComp != null )
+			{
+				topRightCornerComp.setBounds( jumpBar.getX( ) , b.y , jumpBar.getWidth( ) , jumpBar.getY( ) - b.y );
+			}
+		}
+		jumpBar.setVisible( scroll );
+		if( topRightCornerComp != null )
+		{
+			topRightCornerComp.setVisible( scroll );
+		}
 	}
 }

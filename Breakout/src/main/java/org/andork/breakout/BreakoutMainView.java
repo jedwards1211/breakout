@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.stream.IntStream;
@@ -79,6 +80,7 @@ import org.andork.breakout.model.RootModel;
 import org.andork.breakout.model.Shot;
 import org.andork.breakout.model.Station;
 import org.andork.breakout.model.Survey3dModel;
+import org.andork.breakout.model.TransparentTerrain;
 import org.andork.breakout.model.Survey3dModel.SelectionEditor;
 import org.andork.breakout.model.Survey3dModel.Shot3d;
 import org.andork.breakout.model.Survey3dModel.Shot3dPickContext;
@@ -1971,6 +1973,19 @@ public class BreakoutMainView extends BasicJoglSetup
 					
 					setStatus( "Updating view: installing new model..." );
 					
+					float[ ] bounds = Arrays.copyOf( model.getTree( ).getRoot( ).mbr( ) , 6 );
+					
+					bounds[ 1 ] = bounds[ 4 ] + 100;
+					bounds[ 4 ] = bounds[ 1 ] + 100;
+					
+					float[ ][ ][ ] vertices = new float[ 100 ][ 100 ][ 3 ];
+					
+					Random rand = new Random( 2 );
+					
+					TransparentTerrain.randomVerts( vertices , bounds , rand );
+					
+					TransparentTerrain terrain = new TransparentTerrain( vertices );
+					
 					SwingUtilities.invokeLater( ( ) -> {
 						BreakoutMainView.this.model3d = model;
 						model.setParamPaint( settingsDrawer.getParamColorationAxisPaint( ) );
@@ -1997,6 +2012,8 @@ public class BreakoutMainView extends BasicJoglSetup
 						getCanvas( ).invoke( false , drawable -> {
 							scene.add( model );
 							scene.initLater( model );
+							scene.add( terrain );
+							scene.initLater( terrain );
 							return false;
 						} );
 					} );
