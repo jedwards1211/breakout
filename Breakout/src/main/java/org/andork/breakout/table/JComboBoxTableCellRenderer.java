@@ -29,6 +29,7 @@ public class JComboBoxTableCellRenderer implements TableCellRenderer
 		{
 			comboBox.addItem( value );
 		}
+		comboBox.setEnabled( table.isCellEditable( row , column ) );
 		return comboBox;
 	}
 }

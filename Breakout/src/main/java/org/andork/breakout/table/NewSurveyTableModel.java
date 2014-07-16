@@ -3,6 +3,7 @@ package org.andork.breakout.table;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -10,16 +11,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.andork.collect.CollectionUtils;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q.QObject;
 import org.andork.q.QSpec;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.FormatAndDisplayInfo;
 import org.andork.swing.table.NiceTableModel;
-import org.andork.util.DoubleFormat;
 import org.andork.util.Format;
 import org.andork.util.FormattedText;
-import org.andork.util.IntegerFormat;
 import org.andork.util.StringUtils;
 
 @SuppressWarnings( "serial" )
@@ -43,7 +43,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	
 	public static enum CustomColumnType
 	{
-		STRING
+		STRING( "Text" , String.class )
 		{
 			Column<QObject<Row>> createColumn( String name )
 			{
@@ -53,81 +53,66 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 						String.class ,
 						( ) -> QLinkedHashMap.newInstance( ) );
 			}
-			
-			@Override
-			public Class<?> valueClass( )
-			{
-				return String.class;
-			}
 		} ,
-		INTEGER
-		{
-			Column<QObject<Row>> createColumn( String name )
-			{
-				return FormattedTextColumn.newInstance( MapColumn.newInstance(
-						QObjectColumn.newInstance( Row.spec , Row.customAttrs ) ,
-						name ,
-						FormattedText.class ,
-						( ) -> QLinkedHashMap.newInstance( ) ) ,
-						Integer.class ,
-						( ) -> new FormattedText( IntegerFormat.instance ) );
-			}
-			
-			@Override
-			public Class<?> valueClass( )
-			{
-				return Integer.class;
-			}
-		} ,
-		REAL_NUMBER
-		{
-			Column<QObject<Row>> createColumn( String name )
-			{
-				return FormattedTextColumn.newInstance( MapColumn.newInstance(
-						QObjectColumn.newInstance( Row.spec , Row.customAttrs ) ,
-						name ,
-						FormattedText.class ,
-						( ) -> QLinkedHashMap.newInstance( ) ) ,
-						Double.class ,
-						( ) -> new FormattedText( DoubleFormat.instance ) );
-			}
-			
-			@Override
-			public Class<?> valueClass( )
-			{
-				return Double.class;
-			}
-		} ,
-		DATE
-		{
-			Column<QObject<Row>> createColumn( String name )
-			{
-				return FormattedTextColumn.newInstance( MapColumn.newInstance(
-						QObjectColumn.newInstance( Row.spec , Row.customAttrs ) ,
-						name ,
-						FormattedText.class ,
-						( ) -> QLinkedHashMap.newInstance( ) ) , Date.class );
-			}
-			
-			@Override
-			public Class<?> valueClass( )
-			{
-				return Date.class;
-			}
-		};
+		INTEGER( "Integer" , Integer.class ) ,
+		REAL_NUMBER( "Real Number" , Double.class ) ,
+		DATE( "Date" , Date.class ) ,
+		SHOT_MEASUREMENT( "Shot Measurement" , ShotMeasurement.class ) ,
+		CROSS_SECTION( "Cross Section" , CrossSection.class );
 		
-		abstract Column<QObject<Row>> createColumn( String name );
+		Column<QObject<Row>> createColumn( String name )
+		{
+			return createColumn( MapColumn.newInstance(
+					QObjectColumn.newInstance( Row.spec , Row.customAttrs ) ,
+					name ,
+					FormattedText.class ,
+					( ) -> QLinkedHashMap.newInstance( ) ) );
+		}
 		
-		public abstract Class<?> valueClass( );
+		Column<QObject<Row>> createColumn( Column<QObject<Row>> wrapped )
+		{
+			return FormattedTextColumn.newInstance(
+					wrapped ,
+					valueClass ,
+					( ) -> new FormattedText( NewSurveyTable.getDefaultFormat( valueClass ) ) );
+		}
+		
+		public final String										displayName;
+		public final Class<?>									valueClass;
+		
+		private static final Map<Class<?>, CustomColumnType>	valueClassMap;
+		
+		static
+		{
+			valueClassMap = Collections.unmodifiableMap( CollectionUtils.keyify( Arrays.asList( values( ) ).stream( ) ,
+					type -> type.valueClass ) );
+		}
+		
+		public static CustomColumnType fromValueClass( Class<?> valueClass )
+		{
+			return valueClassMap.get( valueClass );
+		}
+		
+		private CustomColumnType( String displayName , Class<?> valueClass )
+		{
+			this.displayName = displayName;
+			this.valueClass = valueClass;
+		}
+		
+		public String toString( )
+		{
+			return displayName;
+		}
 	}
 	
-	public final Column<QObject<Row>>		fromColumn;
-	public final Column<QObject<Row>>		toColumn;
-	public final Column<QObject<Row>>		shotMeasurementColumn;
-	public final Column<QObject<Row>>		fromCrossSectionColumn;
-	public final Column<QObject<Row>>		toCrossSectionColumn;
+	public final SurveyColumn						fromColumn;
+	public final SurveyColumn						toColumn;
+	public final SurveyColumn						shotMeasurementColumn;
+	public final SurveyColumn						fromCrossSectionColumn;
+	public final SurveyColumn						toCrossSectionColumn;
 	
-	private final Map<String, CustomColumn>	customColumns	= new LinkedHashMap<>( );
+	private final Map<String, SurveyColumn>			fixedColumns	= new LinkedHashMap<>( );
+	private final Map<String, QObject<ColumnModel>>	columnModels	= new LinkedHashMap<>( );
 	
 	public static class ColumnModel extends QSpec<ColumnModel>
 	{
@@ -145,13 +130,21 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		}
 	}
 	
-	public static final class CustomColumn implements Column<QObject<Row>>
+	public static final class SurveyColumn implements Column<QObject<Row>>
 	{
 		public final Column<QObject<Row>>	wrapped;
 		public final CustomColumnType		type;
 		Format<?>							defaultFormat;
 		
-		public CustomColumn( String name , CustomColumnType type , Format<?> defaultFormat )
+		private SurveyColumn( CustomColumnType type , Column<QObject<Row>> wrapped )
+		{
+			super( );
+			this.wrapped = type.createColumn( wrapped );
+			this.type = type;
+			setDefaultFormat( NewSurveyTable.getDefaultFormat( type.valueClass ) );
+		}
+		
+		public SurveyColumn( String name , CustomColumnType type , Format<?> defaultFormat )
 		{
 			super( );
 			this.wrapped = type.createColumn( name );
@@ -207,26 +200,33 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	
 	public NewSurveyTableModel( )
 	{
+		fromColumn = new SurveyColumn( CustomColumnType.STRING , QObjectColumn.newInstance( Row.spec , Row.from ) );
+		toColumn = new SurveyColumn( CustomColumnType.STRING , QObjectColumn.newInstance( Row.spec , Row.to ) );
+		shotMeasurementColumn = new SurveyColumn( CustomColumnType.SHOT_MEASUREMENT , QObjectColumn.newInstance( Row.spec , Row.shotMeasurement ) );
+		fromCrossSectionColumn = new SurveyColumn( CustomColumnType.CROSS_SECTION , QObjectColumn.newInstance( Row.spec , Row.fromCrossSection ) );
+		toCrossSectionColumn = new SurveyColumn( CustomColumnType.CROSS_SECTION , QObjectColumn.newInstance( Row.spec , Row.toCrossSection ) );
+		
 		setColumns( Arrays.asList(
-				fromColumn = QObjectColumn.newInstance( Row.spec , Row.from ) ,
-				
-				toColumn = QObjectColumn.newInstance( Row.spec , Row.to ) ,
-				
-				shotMeasurementColumn = FormattedTextColumn.newInstance(
-						QObjectColumn.newInstance( Row.spec , Row.shotMeasurement ) ,
-						ShotMeasurement.class ,
-						( ) -> new FormattedText( ) ).sortable( false ) ,
-				
-				fromCrossSectionColumn = FormattedTextColumn.newInstance(
-						QObjectColumn.newInstance( Row.spec , Row.fromCrossSection ) ,
-						CrossSection.class ,
-						( ) -> new FormattedText( ) ).sortable( false ) ,
-				
-				toCrossSectionColumn = FormattedTextColumn.newInstance(
-						QObjectColumn.newInstance( Row.spec , Row.toCrossSection ) ,
-						CrossSection.class ,
-						( ) -> new FormattedText( ) ).sortable( false )
+				fromColumn ,
+				toColumn ,
+				shotMeasurementColumn ,
+				fromCrossSectionColumn ,
+				toCrossSectionColumn
 				) );
+		
+		for( Column<QObject<Row>> column : getColumns( ) )
+		{
+			SurveyColumn col = ( SurveyColumn ) column;
+			fixedColumns.put( col.getColumnName( ) , col );
+			QObject<ColumnModel> colModel = ColumnModel.instance.newObject( );
+			colModel.set( ColumnModel.name , col.getColumnName( ) );
+			colModel.set( ColumnModel.visible , true );
+			colModel.set( ColumnModel.fixed , true );
+			colModel.set( ColumnModel.type , col.type );
+			colModel.set( ColumnModel.defaultFormat , col.defaultFormat );
+			
+			columnModels.put( column.getColumnName( ) , colModel );
+		}
 		
 		addRow( Row.spec.newObject( ) );
 	}
@@ -319,59 +319,34 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	
 	public List<QObject<ColumnModel>> getColumnModels( )
 	{
-		List<QObject<ColumnModel>> result = new ArrayList<>( );
-		
-		for( CustomColumn column : customColumns.values( ) )
-		{
-			QObject<ColumnModel> model = ColumnModel.instance.newObject( );
-			model.set( ColumnModel.name , column.getColumnName( ) );
-			model.set( ColumnModel.type , column.type );
-			model.set( ColumnModel.defaultFormat , column.defaultFormat );
-			result.add( model );
-		}
-		
-		return result;
+		return new ArrayList<>( columnModels.values( ) );
 	}
 	
-	public void setColumnModels( Collection<? extends QObject<ColumnModel>> newCustomColumns )
+	public void setColumnModels( Collection<? extends QObject<ColumnModel>> newColumnModels )
 	{
-		List<Column<QObject<Row>>> newList = new ArrayList<>( getColumns( ) );
-		Set<CustomColumn> toKeep = new HashSet<>( );
-		for( QObject<ColumnModel> colModel : newCustomColumns )
+		List<SurveyColumn> newColumns = new ArrayList<>( );
+		
+		columnModels.clear( );
+		
+		for( QObject<ColumnModel> colModel : newColumnModels )
 		{
-			String name = colModel.get( ColumnModel.name );
-			CustomColumnType type = colModel.get( ColumnModel.type );
-			FormatAndDisplayInfo<?> defaultFormat = colModel.get( ColumnModel.defaultFormat );
-			
-			CustomColumn existing = customColumns.get( name );
-			if( existing != null && existing.type == type )
+			columnModels.put( colModel.get( ColumnModel.name ) , colModel );
+			if( !Boolean.TRUE.equals( colModel.get( ColumnModel.visible ) ) )
 			{
-				toKeep.add( existing );
+				continue;
 			}
-			else
+			SurveyColumn column = fixedColumns.get( colModel.get( ColumnModel.name ) );
+			if( column == null )
 			{
-				newList.add( new CustomColumn( name , type , defaultFormat ) );
+				column = new SurveyColumn(
+						colModel.get( ColumnModel.name ) ,
+						colModel.get( ColumnModel.type ) ,
+						colModel.get( ColumnModel.defaultFormat ) );
 			}
+			newColumns.add( column );
 		}
 		
-		for( CustomColumn column : customColumns.values( ) )
-		{
-			if( !toKeep.contains( column ) )
-			{
-				newList.remove( column );
-			}
-		}
-		
-		setColumns( newList );
-		
-		customColumns.clear( );
-		for( Column<QObject<Row>> column : newList )
-		{
-			if( column instanceof CustomColumn )
-			{
-				customColumns.put( column.getColumnName( ) , ( CustomColumn ) column );
-			}
-		}
+		setColumns( newColumns );
 	}
 	
 	public static class NewSurveyTableModelCopier extends AbstractTableModelCopier<NewSurveyTableModel>

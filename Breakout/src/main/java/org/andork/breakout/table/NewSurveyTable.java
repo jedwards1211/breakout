@@ -18,7 +18,7 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import org.andork.breakout.model.SurveyTableModel;
-import org.andork.breakout.table.NewSurveyTableModel.CustomColumn;
+import org.andork.breakout.table.NewSurveyTableModel.SurveyColumn;
 import org.andork.breakout.table.NewSurveyTableModel.Row;
 import org.andork.q.QObject;
 import org.andork.swing.table.AnnotatingJTable;
@@ -172,9 +172,9 @@ public class NewSurveyTable extends AnnotatingJTable
 			{
 				TableColumn tc = getColumnModel( ).getColumn( viewIndex );
 				
-				if( column instanceof CustomColumn )
+				if( column instanceof SurveyColumn )
 				{
-					column = ( ( CustomColumn ) column ).wrapped;
+					column = ( ( SurveyColumn ) column ).wrapped;
 				}
 				
 				if( column instanceof FormattedTextColumn )

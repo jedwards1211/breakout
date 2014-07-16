@@ -26,6 +26,7 @@ public class DefaultSelectorTableCellRenderer implements TableCellRenderer
 	@Override
 	public Component getTableCellRendererComponent( JTable table , Object value , boolean isSelected , boolean hasFocus , int row , int column )
 	{
+		selector.setEnabled( table.isCellEditable( row , column ) );
 		selector.setAvailableValues( value == null ? Collections.emptyList( ) : Collections.singletonList( value ) );
 		selector.setSelection( value );
 		return selector.getComboBox( );

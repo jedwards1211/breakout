@@ -31,6 +31,7 @@ import org.andork.swing.selector.DefaultSelector;
 import org.andork.swing.selector.FormatAndDisplayInfoListCellRenderer;
 import org.andork.swing.table.FormatAndDisplayInfo;
 import org.andork.swing.table.NiceTableModel;
+import org.andork.swing.table.NiceTableModel.Column;
 import org.andork.util.Java7.Objects;
 
 public class NewSurveyTableCustomizer extends JPanel
@@ -89,7 +90,7 @@ public class NewSurveyTableCustomizer extends JPanel
 					public Component getTableCellRendererComponent( JTable table , Object value , boolean isSelected , boolean hasFocus , int row , int column )
 					{
 						CustomColumnType type = ( CustomColumnType ) tableModel.getValueAt( row , CustomizationTableModel.TYPE_INDEX );
-						selector.setAvailableValues( NewSurveyTable.getAvailableFormats( type == null ? null : type.valueClass( ) ) );
+						selector.setAvailableValues( NewSurveyTable.getAvailableFormats( type == null ? null : type.valueClass ) );
 						return super.getTableCellRendererComponent( table , value , isSelected , hasFocus , row , column );
 					}
 				} );
@@ -111,7 +112,7 @@ public class NewSurveyTableCustomizer extends JPanel
 			public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row , int column )
 			{
 				CustomColumnType type = ( CustomColumnType ) tableModel.getValueAt( row , CustomizationTableModel.TYPE_INDEX );
-				formatSelector.setAvailableValues( NewSurveyTable.getAvailableFormats( type == null ? null : type.valueClass( ) ) );
+				formatSelector.setAvailableValues( NewSurveyTable.getAvailableFormats( type == null ? null : type.valueClass ) );
 				return super.getTableCellEditorComponent( table , value , isSelected , row , column );
 			}
 		} );
@@ -143,7 +144,9 @@ public class NewSurveyTableCustomizer extends JPanel
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				tableModel.addRow( ColumnModel.instance.newObject( ) );
+				QObject<ColumnModel> newColumn = ColumnModel.instance.newObject( );
+				newColumn.set( ColumnModel.visible , true );
+				tableModel.addRow( newColumn );
 			}
 		} );
 		
@@ -156,7 +159,12 @@ public class NewSurveyTableCustomizer extends JPanel
 				
 				for( int i = selRows.length - 1 ; i >= 0 ; i-- )
 				{
-					tableModel.removeRow( selRows[ i ] );
+					int modelIndex = table.convertRowIndexToModel( selRows[ i ] );
+					QObject<ColumnModel> colModel = tableModel.getRow( modelIndex );
+					if( !Boolean.TRUE.equals( colModel.get( ColumnModel.fixed ) ) )
+					{
+						tableModel.removeRow( modelIndex );
+					}
 				}
 			}
 		} );
@@ -235,6 +243,17 @@ public class NewSurveyTableCustomizer extends JPanel
 		}
 		
 		@Override
+		public boolean isCellEditable( int rowIndex , int columnIndex )
+		{
+			QObject<ColumnModel> colModel = getRow( rowIndex );
+			if( Boolean.TRUE.equals( colModel.get( ColumnModel.fixed ) ) )
+			{
+				return columnIndex == VISIBLE_INDEX || columnIndex == DEFAULT_FORMAT_INDEX;
+			}
+			return super.isCellEditable( rowIndex , columnIndex );
+		}
+		
+		@Override
 		public void setValueAt( Object aValue , int rowIndex , int columnIndex )
 		{
 			if( columnIndex == TYPE_INDEX )
@@ -246,7 +265,7 @@ public class NewSurveyTableCustomizer extends JPanel
 					if( aValue instanceof CustomColumnType )
 					{
 						CustomColumnType type = ( CustomColumnType ) aValue;
-						defaultFormat = NewSurveyTable.getDefaultFormat( type.valueClass( ) );
+						defaultFormat = NewSurveyTable.getDefaultFormat( type.valueClass );
 					}
 					
 					setValueAt( defaultFormat , rowIndex , DEFAULT_FORMAT_INDEX );
@@ -256,6 +275,13 @@ public class NewSurveyTableCustomizer extends JPanel
 			{
 				super.setValueAt( aValue , rowIndex , columnIndex );
 			}
+		}
+		
+		@Override
+		protected QObject<ColumnModel> getRow( int rowIndex )
+		{
+			// TODO Auto-generated method stub
+			return super.getRow( rowIndex );
 		}
 		
 		@Override

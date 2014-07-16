@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.RandomAccess;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.andork.func.Mapper;
@@ -430,5 +431,12 @@ public class CollectionUtils
 			out[ i ] = mapper.map( in[ i ] );
 		}
 		return out;
+	}
+	
+	public static <K, V> Map<K, V> keyify( Stream<? extends V> stream , Function<? super V, K> keyAssigner )
+	{
+		Map<K, V> result = new LinkedHashMap<>( );
+		stream.forEach( v -> result.put( keyAssigner.apply( v ) , v ) );
+		return result;
 	}
 }

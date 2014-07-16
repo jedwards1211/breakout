@@ -23,11 +23,6 @@ public class NewSurveyTableTest
 	{
 		OnEDT.onEDT( ( ) -> {
 			NewSurveyTableModel model = new NewSurveyTableModel( );
-			QObject<ColumnModel> dateColModel = ColumnModel.instance.newObject( );
-			dateColModel.set( ColumnModel.name , "Date" );
-			dateColModel.set( ColumnModel.type , CustomColumnType.DATE );
-			dateColModel.set( ColumnModel.defaultFormat , null );
-			model.setColumnModels( Collections.singletonList( dateColModel ) );
 			
 			NewSurveyTable table = new NewSurveyTable( model );
 			ExecutorService executor = Executors.newSingleThreadExecutor( );

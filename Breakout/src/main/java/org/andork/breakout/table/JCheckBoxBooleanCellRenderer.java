@@ -29,6 +29,7 @@ public class JCheckBoxBooleanCellRenderer implements TableCellRenderer
 	public Component getTableCellRendererComponent( JTable table , Object value , boolean isSelected , boolean hasFocus , int row , int column )
 	{
 		Component hintComp = hintRenderer.getTableCellRendererComponent( table , value , isSelected , hasFocus , row , column );
+		checkBox.setEnabled( table.isCellEditable( row , column ) );
 		checkBox.setSelected( Boolean.TRUE.equals( value ) );
 		checkBox.setBackground( hintComp.getBackground( ) );
 		checkBox.setBorder( ( ( JComponent ) hintComp ).getBorder( ) );
