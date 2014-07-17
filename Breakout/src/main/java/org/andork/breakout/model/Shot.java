@@ -372,6 +372,8 @@ public class Shot
 				throw new IllegalStateException( "inc is NaN or infinite" );
 			}
 			
+			from.calcedFrom = to;
+			
 			from.position[ 0 ] = to.position[ 0 ] - Math.sin( azm ) * Math.cos( inc ) * dist;
 			from.position[ 1 ] = to.position[ 1 ] - Math.sin( inc ) * dist;
 			from.position[ 2 ] = to.position[ 2 ] + Math.cos( azm ) * Math.cos( inc ) * dist;
@@ -399,6 +401,8 @@ public class Shot
 			{
 				throw new IllegalStateException( "inc is NaN or infinite" );
 			}
+			
+			to.calcedFrom = from;
 			
 			to.position[ 0 ] = from.position[ 0 ] + Math.sin( azm ) * Math.cos( inc ) * dist;
 			to.position[ 1 ] = from.position[ 1 ] + Math.sin( inc ) * dist;
@@ -547,6 +551,7 @@ public class Shot
 			Station station = null;
 			
 			Shot shot = heap.poll( ).shot;
+			
 			if( visited.add( shot.from ) )
 			{
 				try
@@ -574,6 +579,16 @@ public class Shot
 			
 			if( station != null )
 			{
+				if( station.toString( ).equals( "BH80" ) )
+				{
+					Station temp = station;
+					while( temp != null )
+					{
+						System.out.println( temp );
+						temp = temp.calcedFrom;
+					}
+				}
+				
 				for( Shot nextShot : station.shots )
 				{
 					if( nextShot == shot )

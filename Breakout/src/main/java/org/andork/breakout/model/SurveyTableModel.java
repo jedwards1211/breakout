@@ -340,19 +340,16 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				}
 			}
 		}
-		else
+		for( Shot shot : station.shots )
 		{
-			for( Shot shot : station.shots )
+			CrossSection sect1 = shot.crossSectionAt( station );
+			CrossSection sect2 = shot.crossSectionAt( shot.otherStation( station ) );
+			
+			for( int i = 0 ; i < Math.min( sect1.dist.length , sect2.dist.length ) ; i++ )
 			{
-				CrossSection sect1 = shot.crossSectionAt( station );
-				CrossSection sect2 = shot.crossSectionAt( shot.otherStation( station ) );
-				
-				for( int i = 0 ; i < Math.min( sect1.dist.length , sect2.dist.length ) ; i++ )
+				if( Double.isNaN( sect1.dist[ i ] ) )
 				{
-					if( Double.isNaN( sect1.dist[ i ] ) )
-					{
-						sect1.dist[ i ] = sect2.dist[ i ];
-					}
+					sect1.dist[ i ] = sect2.dist[ i ];
 				}
 			}
 		}

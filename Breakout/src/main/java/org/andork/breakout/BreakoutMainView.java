@@ -829,6 +829,17 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		} );
 		
+		settingsDrawer.getCameraToDepthAxisTiltButton( ).addActionListener( new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				float[ ] axis = new float[ 3 ];
+				Vecmath.negate3( scene.inverseViewXform( ) , 8 , axis , 0 );
+				getProjectModel( ).set( ProjectModel.depthAxis , axis );
+			}
+		} );
+		
 		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener(
 				new FitToFilteredHandler( surveyDrawer.table( ) ) );
 		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener(

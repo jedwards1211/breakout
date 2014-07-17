@@ -7,11 +7,11 @@ import java.util.List;
 import org.andork.collect.CollectionUtils;
 import org.andork.math.misc.AngleUtils;
 import org.andork.math3d.LineLineIntersection2d;
-import org.andork.math3d.LineLineIntersection2f;
 import org.andork.math3d.Vecmath;
 
 public class Station
 {
+	public Station			calcedFrom;
 	public String			name;
 	public final List<Shot>	shots		= new ArrayList<>( );
 	
@@ -172,12 +172,29 @@ public class Station
 			
 			double angle = AngleUtils.clockwiseRotation( shot1azm , shot2azm );
 			
-			if( "NTY5".equals( toString( ) ) )
+			if( verticalIndex == 1 )
 			{
-				Thread.dumpStack( );
+				double xv1 = Math.sin( shot1azm );
+				double zv1 = -Math.cos( shot1azm );
+				
+				leftSplayPoint1[ 0 ] = ( float ) ( position[ 0 ] - zv1 * left1 );
+				leftSplayPoint1[ 1 ] = ( float ) position[ 1 ];
+				leftSplayPoint1[ 2 ] = ( float ) ( position[ 2 ] + xv1 * left1 );
+				leftSplayNorm1[ 0 ] = ( float ) -zv1;
+				leftSplayNorm1[ 1 ] = 0;
+				leftSplayNorm1[ 2 ] = ( float ) xv1;
+				
+				rightSplayPoint2 = new float[ 3 ];
+				rightSplayNorm2 = new float[ 3 ];
+				
+				rightSplayPoint2[ 0 ] = ( float ) ( position[ 0 ] + zv1 * right2 );
+				rightSplayPoint2[ 1 ] = ( float ) position[ 1 ];
+				rightSplayPoint2[ 2 ] = ( float ) ( position[ 2 ] - xv1 * right2 );
+				rightSplayNorm2[ 0 ] = ( float ) zv1;
+				rightSplayNorm2[ 1 ] = 0;
+				rightSplayNorm2[ 2 ] = ( float ) -xv1;
 			}
-			
-			if( verticalIndex == 2 )
+			else if( verticalIndex == 2 )
 			{
 				double bisectorAzm = shot1azm + angle * 0.5;
 				
@@ -218,7 +235,7 @@ public class Station
 					offset1 = -right2 * Math.sin( 2 * Math.PI - angle ) - offset2 * Math.cos( 2 * Math.PI - angle );
 				}
 				
-				if( shot1 == shot2 || Math.abs( offset2 ) > shot2.dist || Math.abs( offset1 ) > shot1.dist )
+				if( Math.abs( offset2 ) > shot2.dist || Math.abs( offset1 ) > shot1.dist )
 				{
 					leftSplayPoint1[ 0 ] = ( float ) ( position[ 0 ] - zv1 * left1 );
 					leftSplayPoint1[ 1 ] = ( float ) position[ 1 ];
@@ -226,6 +243,9 @@ public class Station
 					leftSplayNorm1[ 0 ] = ( float ) -zv1;
 					leftSplayNorm1[ 1 ] = 0;
 					leftSplayNorm1[ 2 ] = ( float ) xv1;
+					
+					rightSplayPoint2 = new float[ 3 ];
+					rightSplayNorm2 = new float[ 3 ];
 					
 					rightSplayPoint2[ 0 ] = ( float ) ( position[ 0 ] + zv2 * right2 );
 					rightSplayPoint2[ 1 ] = ( float ) position[ 1 ];

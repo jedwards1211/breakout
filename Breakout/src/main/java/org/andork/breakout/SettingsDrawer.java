@@ -111,6 +111,7 @@ public class SettingsDrawer extends Drawer
 	JPanel												colorByDepthButtonsPanel;
 	JButton												inferDepthAxisTiltButton;
 	JButton												resetDepthAxisTiltButton;
+	JButton												cameraToDepthAxisTiltButton;
 	
 	JPanel												colorByDistanceButtonsPanel;
 	JButton												recalcColorByDistanceButton;
@@ -266,12 +267,15 @@ public class SettingsDrawer extends Drawer
 		
 		colorByDepthButtonsPanel = new JPanel( );
 		colorByDepthButtonsPanel.setOpaque( false );
-		inferDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "tilted.png" ) ) );
+		inferDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "tilted-depth-axis.png" ) ) );
 		inferDepthAxisTiltButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
 		localizer.setToolTipText( inferDepthAxisTiltButton , "inferDepthAxisTiltButton.tooltip" );
-		resetDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "straight-down.png" ) ) );
+		resetDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "vertical-depth-axis.png" ) ) );
 		resetDepthAxisTiltButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
 		localizer.setToolTipText( resetDepthAxisTiltButton , "resetDepthAxisTiltButton.tooltip" );
+		cameraToDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "forward-depth-axis.png" ) ) );
+		cameraToDepthAxisTiltButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
+		localizer.setToolTipText( cameraToDepthAxisTiltButton , "cameraToDepthAxisTiltButton.tooltip" );
 		
 		colorByDistanceButtonsPanel = new JPanel( );
 		colorByDistanceButtonsPanel.setOpaque( false );
@@ -417,6 +421,7 @@ public class SettingsDrawer extends Drawer
 		colorByDepthButtonsPanel.setLayout( new FlowLayout( FlowLayout.RIGHT , 0 , 0 ) );
 		colorByDepthButtonsPanel.add( inferDepthAxisTiltButton );
 		colorByDepthButtonsPanel.add( resetDepthAxisTiltButton );
+		colorByDepthButtonsPanel.add( cameraToDepthAxisTiltButton );
 		colorParamButtonsPanel.add( colorByDepthButtonsPanel , ColorParam.DEPTH );
 		
 		colorByDistanceButtonsPanel.setLayout( new FlowLayout( FlowLayout.RIGHT , 0 , 0 ) );
@@ -576,7 +581,12 @@ public class SettingsDrawer extends Drawer
 	{
 		return resetDepthAxisTiltButton;
 	}
-	
+
+	public JButton getCameraToDepthAxisTiltButton( )
+	{
+		return cameraToDepthAxisTiltButton;
+	}
+
 	public AbstractButton getFitParamColorationAxisButton( )
 	{
 		return fitParamColorationAxisButton;
