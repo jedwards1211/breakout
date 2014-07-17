@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import org.andork.math.misc.AngleUtils;
 import org.andork.math3d.Vecmath;
 
 public class Shot
@@ -14,15 +15,289 @@ public class Shot
 	public Station		from;
 	public Station		to;
 	public double		dist			= Double.NaN;
-	public double		fsAzm			= Double.NaN;
-	public double		bsAzm			= Double.NaN;
-	public double		fsInc			= Double.NaN;
-	public double		bsInc			= Double.NaN;
+	public double		azm				= Double.NaN;
+	public double		inc				= Double.NaN;
 	public CrossSection	fromXsection	= new CrossSection( );
 	public CrossSection	toXsection		= new CrossSection( );
+	public float[ ][ ]	fromSplayPoints;
+	public float[ ][ ]	fromSplayNormals;
+	public float[ ][ ]	toSplayPoints;
+	public float[ ][ ]	toSplayNormals;
 	public Date			date;
 	
 	PriorityEntry		priorityEntry;
+	
+	public float[ ][ ] splayPointsAt( Station station )
+	{
+		if( station == from )
+		{
+			return fromSplayPoints;
+		}
+		else if( station == to )
+		{
+			return toSplayPoints;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public float[ ] leftSplayPointAt( Station station )
+	{
+		if( station == from )
+		{
+			return fromSplayPoints[ 0 ];
+		}
+		else if( station == to )
+		{
+			return toSplayPoints[ 1 ];
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public void setLeftSplayPointAt( Station station , float[ ] splayPoint )
+	{
+		if( station == from )
+		{
+			fromSplayPoints[ 0 ] = splayPoint;
+		}
+		else if( station == to )
+		{
+			toSplayPoints[ 1 ] = splayPoint;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public float[ ] rightSplayPointAt( Station station )
+	{
+		if( station == from )
+		{
+			return fromSplayPoints[ 1 ];
+		}
+		else if( station == to )
+		{
+			return toSplayPoints[ 0 ];
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public void setRightSplayPointAt( Station station , float[ ] splayPoint )
+	{
+		if( station == from )
+		{
+			fromSplayPoints[ 1 ] = splayPoint;
+		}
+		else if( station == to )
+		{
+			toSplayPoints[ 0 ] = splayPoint;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public void setSplayPointsAt( Station station , float[ ][ ] splayPoints )
+	{
+		if( station == from )
+		{
+			fromSplayPoints = splayPoints;
+		}
+		else if( station == to )
+		{
+			toSplayPoints = splayPoints;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public float[ ][ ] splayNormalsAt( Station station )
+	{
+		if( station == from )
+		{
+			return fromSplayNormals;
+		}
+		else if( station == to )
+		{
+			return toSplayNormals;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public void setSplayNormalsAt( Station station , float[ ][ ] splayNormals )
+	{
+		if( station == from )
+		{
+			fromSplayNormals = splayNormals;
+		}
+		else if( station == to )
+		{
+			toSplayNormals = splayNormals;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public float[ ] leftSplayNormalAt( Station station )
+	{
+		if( station == from )
+		{
+			return fromSplayNormals[ 0 ];
+		}
+		else if( station == to )
+		{
+			return toSplayNormals[ 1 ];
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public void setLeftSplayNormalAt( Station station , float[ ] splayNormal )
+	{
+		if( station == from )
+		{
+			fromSplayNormals[ 0 ] = splayNormal;
+		}
+		else if( station == to )
+		{
+			toSplayNormals[ 1 ] = splayNormal;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public float[ ] rightSplayNormalAt( Station station )
+	{
+		if( station == from )
+		{
+			return fromSplayNormals[ 1 ];
+		}
+		else if( station == to )
+		{
+			return toSplayNormals[ 0 ];
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public void setRightSplayNormalAt( Station station , float[ ] splayNormal )
+	{
+		if( station == from )
+		{
+			fromSplayNormals[ 1 ] = splayNormal;
+		}
+		else if( station == to )
+		{
+			toSplayNormals[ 0 ] = splayNormal;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public double leftAt( Station station )
+	{
+		if( station == from )
+		{
+			if( fromXsection.type != CrossSectionType.LRUD )
+			{
+				throw new IllegalArgumentException( "Invalid cross section type" );
+			}
+			return fromXsection.dist[ 0 ];
+		}
+		else if( station == to )
+		{
+			if( toXsection.type != CrossSectionType.LRUD )
+			{
+				throw new IllegalArgumentException( "Invalid cross section type" );
+			}
+			return toXsection.dist[ 1 ];
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public double rightAt( Station station )
+	{
+		if( station == from )
+		{
+			if( fromXsection.type != CrossSectionType.LRUD )
+			{
+				throw new IllegalArgumentException( "Invalid cross section type" );
+			}
+			return fromXsection.dist[ 1 ];
+		}
+		else if( station == to )
+		{
+			if( toXsection.type != CrossSectionType.LRUD )
+			{
+				throw new IllegalArgumentException( "Invalid cross section type" );
+			}
+			return toXsection.dist[ 0 ];
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public CrossSection crossSectionAt( Station station )
+	{
+		if( station == from )
+		{
+			return fromXsection;
+		}
+		else if( station == to )
+		{
+			return toXsection;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
+	
+	public void setCrossSectionAt( Station station , CrossSection xSection )
+	{
+		if( station == from )
+		{
+			fromXsection = xSection;
+		}
+		else if( station == to )
+		{
+			toXsection = xSection;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "the given station is not one of this shot's stations" );
+		}
+	}
 	
 	private static class PriorityEntry implements Comparable<PriorityEntry>
 	{
@@ -43,6 +318,38 @@ public class Shot
 		}
 	}
 	
+	public Station otherStation( Station station )
+	{
+		if( station == from )
+		{
+			return to;
+		}
+		else if( station == to )
+		{
+			return from;
+		}
+		else
+		{
+			throw new IllegalArgumentException( "not one of this shot's stations" );
+		}
+	}
+	
+	public double azimuthAt( Station station )
+	{
+		if( station == from )
+		{
+			return azm;
+		}
+		if( station == to )
+		{
+			return AngleUtils.oppositeAngle( azm );
+		}
+		else
+		{
+			throw new IllegalArgumentException( "not one of this shot's stations" );
+		}
+	}
+	
 	public void computeFrom( )
 	{
 		if( Vecmath.hasNaNsOrInfinites( to.position ) )
@@ -56,17 +363,13 @@ public class Shot
 		}
 		else
 		{
-			double incDeg = averageInc( fsInc , bsInc );
-			double azm = Math.toRadians( averageAzm( incDeg , fsAzm , bsAzm ) );
-			double inc = Math.toRadians( incDeg );
-			
-			if( Double.isNaN( azm ) )
+			if( Double.isNaN( azm ) || Double.isInfinite( azm ) )
 			{
-				throw new IllegalStateException( "average azm is NaN" );
+				throw new IllegalStateException( "azm is NaN or infinite" );
 			}
 			if( Double.isNaN( inc ) || Double.isInfinite( inc ) )
 			{
-				throw new IllegalStateException( "average inc is NaN or infinite" );
+				throw new IllegalStateException( "inc is NaN or infinite" );
 			}
 			
 			from.position[ 0 ] = to.position[ 0 ] - Math.sin( azm ) * Math.cos( inc ) * dist;
@@ -88,17 +391,13 @@ public class Shot
 		}
 		else
 		{
-			double incDeg = averageInc( fsInc , bsInc );
-			double azm = Math.toRadians( averageAzm( incDeg , fsAzm , bsAzm ) );
-			double inc = Math.toRadians( incDeg );
-			
-			if( Double.isNaN( azm ) )
+			if( Double.isNaN( azm ) || Double.isInfinite( azm ) )
 			{
-				throw new IllegalStateException( "average azm is NaN" );
+				throw new IllegalStateException( "azm is NaN or infinite" );
 			}
 			if( Double.isNaN( inc ) || Double.isInfinite( inc ) )
 			{
-				throw new IllegalStateException( "average inc is NaN or infinite" );
+				throw new IllegalStateException( "inc is NaN or infinite" );
 			}
 			
 			to.position[ 0 ] = from.position[ 0 ] + Math.sin( azm ) * Math.cos( inc ) * dist;
@@ -119,26 +418,18 @@ public class Shot
 		double dz = to.position[ 2 ] - from.position[ 2 ];
 		double dxz = Math.sqrt( dx * dx + dz * dz );
 		
-		if( Double.isNaN( fsAzm ) )
+		if( Double.isNaN( azm ) )
 		{
-			fsAzm = Math.atan2( dx , -dz );
-		}
-		if( Double.isNaN( bsAzm ) )
-		{
-			fsAzm = Math.atan2( dx , -dz );
+			azm = Math.atan2( dx , -dz );
 		}
 		
-		if( Double.isNaN( fsInc ) )
+		if( Double.isNaN( inc ) )
 		{
-			fsInc = Math.atan2( dy , dxz );
-		}
-		if( Double.isNaN( bsInc ) )
-		{
-			bsInc = Math.atan2( dy , dxz );
+			inc = Math.atan2( dy , dxz );
 		}
 	}
 	
-	private static double averageInc( double fsInc , double bsInc )
+	public static double averageInc( double fsInc , double bsInc )
 	{
 		if( Double.isNaN( fsInc ) )
 		{
@@ -153,33 +444,18 @@ public class Shot
 			if( Math.signum( fsInc ) != Math.signum( bsInc ) )
 			{
 				double angle = Math.abs( fsInc ) + Math.abs( bsInc );
-				if( angle > 4.0 )
+				if( angle > Math.toRadians( 4.0 ) )
 				{
 					bsInc = -bsInc;
 				}
 			}
-			// if( Math.abs( fsInc + bsInc ) < Math.abs( fsInc - bsInc ) )
-			// {
-			// return ( fsInc - bsInc ) * 0.5;
-			// }
-			// else
-			// {
 			return ( fsInc + bsInc ) * 0.5;
-			// }
 		}
 	}
 	
-	private static double angle( double a , double b )
+	public static double averageAzm( double avgIncDegrees , double fsAzm , double bsAzm )
 	{
-		double a1 = b - a;
-		double a2 = b - a - 360.0;
-		
-		return Math.abs( a1 ) < Math.abs( a2 ) ? a1 : a2;
-	}
-	
-	private static double averageAzm( double avgIncDegrees , double fsAzm , double bsAzm )
-	{
-		if( Math.abs( avgIncDegrees ) == 90.0 )
+		if( Math.abs( avgIncDegrees ) == Math.toRadians( 90.0 ) )
 		{
 			return 0.0;
 		}
@@ -197,23 +473,31 @@ public class Shot
 			return fsAzm;
 		}
 		
-		fsAzm %= 360.0;
+		fsAzm %= Math.PI * 2.0;
 		if( fsAzm < 0 )
 		{
-			fsAzm += 360.0;
+			fsAzm += Math.PI * 2.0;
 		}
-		bsAzm %= 360.0;
+		bsAzm %= Math.PI * 2.0;
 		if( bsAzm < 0 )
 		{
-			bsAzm += 360.0;
+			bsAzm += Math.PI * 2.0;
 		}
-		double bsAzm180 = ( bsAzm + 180.0 ) % 360.0;
+		double bsAzm180 = ( bsAzm + Math.PI ) % Math.PI * 2.0;
 		if( Math.abs( angle( fsAzm , bsAzm180 ) ) < Math.abs( angle( fsAzm , bsAzm ) ) )
 		{
 			bsAzm = bsAzm180;
 		}
 		
 		return fsAzm + angle( fsAzm , bsAzm ) * 0.5;
+	}
+	
+	private static double angle( double a , double b )
+	{
+		double a1 = b - a;
+		double a2 = b - a - Math.PI * 2.0;
+		
+		return Math.abs( a1 ) < Math.abs( a2 ) ? a1 : a2;
 	}
 	
 	public static void computeConnected( Collection<Station> stations )
@@ -241,25 +525,11 @@ public class Shot
 		
 		PriorityQueue<PriorityEntry> heap = new PriorityQueue<Shot.PriorityEntry>( 10 );
 		
-		for( Shot shot : start.frontsights )
+		for( Shot shot : start.shots )
 		{
 			if( Double.isNaN( shot.dist ) )
 			{
-				if( Vecmath.hasNaNsOrInfinites( shot.to.position ) )
-				{
-					continue;
-				}
-				shot.dist = Vecmath.distance3( shot.from.position , shot.to.position );
-			}
-			
-			shot.priorityEntry = new PriorityEntry( shot , shot.dist );
-			heap.add( shot.priorityEntry );
-		}
-		for( Shot shot : start.backsights )
-		{
-			if( Double.isNaN( shot.dist ) )
-			{
-				if( Vecmath.hasNaNsOrInfinites( shot.from.position ) )
+				if( Vecmath.hasNaNsOrInfinites( shot.otherStation( start ).position ) )
 				{
 					continue;
 				}
@@ -289,7 +559,7 @@ public class Shot
 				}
 				station = shot.from;
 			}
-			if( visited.add( shot.to ) )
+			else if( visited.add( shot.to ) )
 			{
 				try
 				{
@@ -304,7 +574,7 @@ public class Shot
 			
 			if( station != null )
 			{
-				for( Shot nextShot : station.frontsights )
+				for( Shot nextShot : station.shots )
 				{
 					if( nextShot == shot )
 					{
@@ -312,37 +582,7 @@ public class Shot
 					}
 					if( Double.isNaN( nextShot.dist ) )
 					{
-						if( Vecmath.hasNaNsOrInfinites( nextShot.to.position ) )
-						{
-							continue;
-						}
-						nextShot.dist = Vecmath.distance3( nextShot.from.position , shot.to.position );
-					}
-					double dist = shot.priorityEntry.priority + nextShot.dist;
-					if( nextShot.priorityEntry != null )
-					{
-						if( dist < nextShot.priorityEntry.priority )
-						{
-							heap.remove( nextShot.priorityEntry );
-							nextShot.priorityEntry = new PriorityEntry( nextShot , dist );
-							heap.add( nextShot.priorityEntry );
-						}
-					}
-					else
-					{
-						nextShot.priorityEntry = new PriorityEntry( nextShot , dist );
-						heap.add( nextShot.priorityEntry );
-					}
-				}
-				for( Shot nextShot : station.backsights )
-				{
-					if( nextShot == shot )
-					{
-						continue;
-					}
-					if( Double.isNaN( nextShot.dist ) )
-					{
-						if( Vecmath.hasNaNsOrInfinites( nextShot.from.position ) )
+						if( Vecmath.hasNaNsOrInfinites( nextShot.otherStation( station ).position ) )
 						{
 							continue;
 						}

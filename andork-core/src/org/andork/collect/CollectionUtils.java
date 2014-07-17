@@ -279,6 +279,20 @@ public class CollectionUtils
 		return -1;
 	}
 	
+	public static <T> int indexOf( List<T> list , Predicate<? super T> p )
+	{
+		int i = 0;
+		for( T t : list )
+		{
+			if( p.eval( t ) )
+			{
+				return i;
+			}
+			i++ ;
+		}
+		return -1;
+	}
+	
 	public static <T, O extends Comparable<O>> int binarySearch( List<? extends T> l , Mapper<T, ? extends O> mapper , O key )
 	{
 		if( l instanceof RandomAccess )

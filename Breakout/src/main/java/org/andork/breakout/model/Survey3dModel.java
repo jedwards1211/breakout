@@ -65,6 +65,7 @@ import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.neu.JoglDrawable;
 import org.andork.jogl.neu.JoglResource;
 import org.andork.jogl.util.JOGLUtils;
+import org.andork.math.misc.AngleUtils;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PlanarHull3f;
@@ -404,134 +405,125 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		return tree;
 	}
 	
+	private static void putValues( BufferHelper geomHelper , float[ ][ ] splayPoints , float[ ][ ] splayNormals )
+	{
+		for( int i = 0 ; i < 4 ; i++ )
+		{
+			if( splayPoints == null || splayPoints[ i ] == null )
+			{
+				geomHelper.put( Float.NaN , Float.NaN , Float.NaN );
+			}
+			else
+			{
+				geomHelper.put( splayPoints[ i ] );
+			}
+			if( splayNormals == null || splayNormals[ i ] == null )
+			{
+				geomHelper.put( Float.NaN , Float.NaN , Float.NaN );
+			}
+			else
+			{
+				geomHelper.put( splayNormals[ i ] );
+			}
+		}
+	}
+	
 	private static ByteBuffer createInitialGeometry( List<Shot> originalShots , Subtask task )
 	{
 		task.setStatus( "creating geometry" );
 		task.setTotal( originalShots.size( ) );
 		
-		final double[ ] fromLoc = new double[ 3 ];
-		final double[ ] toLoc = new double[ 3 ];
-		final double[ ] toToLoc = new double[ 3 ];
-		final double[ ] leftAtTo = new double[ 3 ];
-		final double[ ] leftAtTo2 = new double[ 3 ];
-		final double[ ] leftAtFrom = new double[ 3 ];
+		final double[ ] left = new double[ 3 ];
 		
 		BufferHelper geomHelper = new BufferHelper( );
 		
 		int count = 0;
 		for( Shot shot : originalShots )
 		{
-			fromLoc[ 0 ] = shot.from.position[ 0 ];
-			fromLoc[ 2 ] = shot.from.position[ 1 ];
-			
-			toLoc[ 0 ] = shot.to.position[ 0 ];
-			toLoc[ 1 ] = shot.to.position[ 1 ];
-			
 			if( Vecmath.distance3( shot.from.position , shot.to.position ) > 200 )
 			{
 				System.err.println( shot.from.name + ": " + Arrays.toString( shot.from.position ) + " - " + shot.to.name + ": " + Arrays.toString( shot.to.position ) );
 			}
 			
-			leftAtFrom[ 0 ] = shot.from.position[ 2 ] - shot.to.position[ 2 ];
-			leftAtFrom[ 1 ] = 0;
-			leftAtFrom[ 2 ] = shot.to.position[ 0 ] - shot.from.position[ 0 ];
+			putValues( geomHelper , shot.fromSplayPoints , shot.fromSplayNormals );
+			putValues( geomHelper , shot.toSplayPoints , shot.toSplayNormals );
 			
-			if( leftAtFrom[ 0 ] != 0 || leftAtFrom[ 2 ] != 0 )
-			{
-				Vecmath.normalize3( leftAtFrom );
-			}
-			
-			for( int i = 0 ; i < 3 ; i++ )
-			{
-				geomHelper.putAsFloats( shot.from.position[ i ] + leftAtFrom[ i ] * shot.fromXsection.dist[ 0 ] );
-			}
-			geomHelper.putAsFloats( leftAtFrom );
-			for( int i = 0 ; i < 3 ; i++ )
-			{
-				geomHelper.putAsFloats( shot.from.position[ i ] - leftAtFrom[ i ] * shot.fromXsection.dist[ 1 ] );
-			}
-			geomHelper.putAsFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
-			for( int i = 0 ; i < 3 ; i++ )
-			{
-				geomHelper.putAsFloats( shot.from.position[ i ] + ( i == 1 ? shot.fromXsection.dist[ 2 ] : 0.0 ) );
-			}
-			geomHelper.putAsFloats( 0 , 1 , 0 );
-			for( int i = 0 ; i < 3 ; i++ )
-			{
-				geomHelper.putAsFloats( shot.from.position[ i ] - ( i == 1 ? shot.fromXsection.dist[ 3 ] : 0.0 ) );
-			}
-			geomHelper.putAsFloats( 0 , -1 , 0 );
-			
-			Shot nextNonVertical = nextNonVerticalShot( shot );
-			
-			boolean foundNext = false;
-			
-			if( nextNonVertical != null )
-			{
-				double bestWidth = -1.0;
-				Shot bestShot = null;
-				
-				for( Shot nextShot : nextNonVertical.from.frontsights )
-				{
-					toToLoc[ 0 ] = nextShot.to.position[ 0 ];
-					toToLoc[ 2 ] = nextShot.to.position[ 2 ];
-					
-					leftAtTo2[ 0 ] = shot.to.position[ 2 ] - nextShot.to.position[ 2 ];
-					leftAtTo2[ 1 ] = 0;
-					leftAtTo2[ 2 ] = nextShot.to.position[ 0 ] - shot.to.position[ 0 ];
-					
-					if( leftAtTo2[ 0 ] != 0 || leftAtTo2[ 2 ] != 0 )
-					{
-						Vecmath.normalize3( leftAtTo2 );
-					}
-					
-					double dot = Vecmath.dot3( leftAtFrom , leftAtTo2 );
-					double width = Math.abs( dot );
-					if( width > bestWidth )
-					{
-						bestShot = nextShot;
-						bestWidth = width;
-						leftAtTo[ 0 ] = leftAtTo2[ 0 ];
-						leftAtTo[ 2 ] = leftAtTo2[ 2 ];
-					}
-				}
-				
-				if( bestShot != null )
-				{
-					foundNext = true;
-					for( int i = 0 ; i < 3 ; i++ )
-					{
-						geomHelper.putAsFloats( shot.to.position[ i ] + leftAtTo[ i ] * bestShot.fromXsection.dist[ 0 ] );
-					}
-					geomHelper.putAsFloats( leftAtTo );
-					for( int i = 0 ; i < 3 ; i++ )
-					{
-						geomHelper.putAsFloats( shot.to.position[ i ] - leftAtTo[ i ] * bestShot.fromXsection.dist[ 1 ] );
-					}
-					geomHelper.putAsFloats( -leftAtTo[ 0 ] , -leftAtTo[ 1 ] , -leftAtTo[ 2 ] );
-					for( int i = 0 ; i < 3 ; i++ )
-					{
-						geomHelper.putAsFloats( shot.to.position[ i ] + ( i == 1 ? bestShot.fromXsection.dist[ 2 ] : 0.0 ) );
-					}
-					geomHelper.putAsFloats( 0 , 1 , 0 );
-					for( int i = 0 ; i < 3 ; i++ )
-					{
-						geomHelper.putAsFloats( shot.to.position[ i ] - ( i == 1 ? bestShot.fromXsection.dist[ 3 ] : 0.0 ) );
-					}
-					geomHelper.putAsFloats( 0 , -1 , 0 );
-				}
-			}
-			if( !foundNext )
-			{
-				geomHelper.putAsFloats( shot.to.position );
-				geomHelper.putAsFloats( leftAtFrom );
-				geomHelper.putAsFloats( shot.to.position );
-				geomHelper.putAsFloats( -leftAtFrom[ 0 ] , -leftAtFrom[ 1 ] , -leftAtFrom[ 2 ] );
-				geomHelper.putAsFloats( shot.to.position );
-				geomHelper.putAsFloats( 0 , 1 , 0 );
-				geomHelper.putAsFloats( shot.to.position );
-				geomHelper.putAsFloats( 0 , -1 , 0 );
-			}
+			//			double shotAzimuth = shot.azimuthAt( shot.from );
+			//			
+			//			double fromAzimuth = shotAzimuth - Math.PI * 0.5;
+			//			
+			//			if( shot.from.shots.size( ) == 2 )
+			//			{
+			//				Shot otherShot = otherShot( shot.from , shot );
+			//				double otherAzimuth = otherShot.azimuthAt( shot.from );
+			//				if( !Double.isNaN( otherAzimuth ) )
+			//				{
+			//					fromAzimuth = otherAzimuth + AngleUtils.clockwiseRotation( otherAzimuth , shotAzimuth ) * 0.5;
+			//				}
+			//			}
+			//			
+			//			left[ 0 ] = Math.sin( fromAzimuth );
+			//			left[ 1 ] = 0;
+			//			left[ 2 ] = -Math.cos( fromAzimuth );
+			//			
+			//			for( int i = 0 ; i < 3 ; i++ )
+			//			{
+			//				geomHelper.putAsFloats( shot.from.position[ i ] + left[ i ] * shot.fromXsection.dist[ 0 ] );
+			//			}
+			//			geomHelper.putAsFloats( left );
+			//			for( int i = 0 ; i < 3 ; i++ )
+			//			{
+			//				geomHelper.putAsFloats( shot.from.position[ i ] - left[ i ] * shot.fromXsection.dist[ 1 ] );
+			//			}
+			//			geomHelper.putAsFloats( -left[ 0 ] , -left[ 1 ] , -left[ 2 ] );
+			//			for( int i = 0 ; i < 3 ; i++ )
+			//			{
+			//				geomHelper.putAsFloats( shot.from.position[ i ] + ( i == 1 ? shot.fromXsection.dist[ 2 ] : 0.0 ) );
+			//			}
+			//			geomHelper.putAsFloats( 0 , 1 , 0 );
+			//			for( int i = 0 ; i < 3 ; i++ )
+			//			{
+			//				geomHelper.putAsFloats( shot.from.position[ i ] - ( i == 1 ? shot.fromXsection.dist[ 3 ] : 0.0 ) );
+			//			}
+			//			geomHelper.putAsFloats( 0 , -1 , 0 );
+			//			
+			//			double toAzimuth = shotAzimuth - Math.PI * 0.5;
+			//			
+			//			if( shot.to.shots.size( ) == 2 )
+			//			{
+			//				Shot otherShot = otherShot( shot.to , shot );
+			//				double otherAzimuth = otherShot.azimuthAt( shot.to );
+			//				if( !Double.isNaN( otherAzimuth ) )
+			//				{
+			//					toAzimuth = otherAzimuth - AngleUtils.counterclockwiseRotation( otherAzimuth ,
+			//							shot.azimuthAt( shot.to ) ) * 0.5;
+			//				}
+			//			}
+			//			
+			//			left[ 0 ] = Math.sin( toAzimuth );
+			//			left[ 1 ] = 0;
+			//			left[ 2 ] = -Math.cos( toAzimuth );
+			//			
+			//			for( int i = 0 ; i < 3 ; i++ )
+			//			{
+			//				geomHelper.putAsFloats( shot.to.position[ i ] + left[ i ] * shot.toXsection.dist[ 0 ] );
+			//			}
+			//			geomHelper.putAsFloats( left );
+			//			for( int i = 0 ; i < 3 ; i++ )
+			//			{
+			//				geomHelper.putAsFloats( shot.to.position[ i ] - left[ i ] * shot.toXsection.dist[ 1 ] );
+			//			}
+			//			geomHelper.putAsFloats( -left[ 0 ] , -left[ 1 ] , -left[ 2 ] );
+			//			for( int i = 0 ; i < 3 ; i++ )
+			//			{
+			//				geomHelper.putAsFloats( shot.to.position[ i ] + ( i == 1 ? shot.toXsection.dist[ 2 ] : 0.0 ) );
+			//			}
+			//			geomHelper.putAsFloats( 0 , 1 , 0 );
+			//			for( int i = 0 ; i < 3 ; i++ )
+			//			{
+			//				geomHelper.putAsFloats( shot.to.position[ i ] - ( i == 1 ? shot.toXsection.dist[ 3 ] : 0.0 ) );
+			//			}
+			//			geomHelper.putAsFloats( 0 , -1 , 0 );
 			
 			if( ( count++ % 100 ) == 0 && task != null )
 			{
@@ -547,36 +539,16 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		return geomHelper.toByteBuffer( );
 	}
 	
-	private static Shot nextNonVerticalShot( Shot shot )
+	private static Shot otherShot( Station station , Shot shot )
 	{
-		if( shot.to.frontsights.isEmpty( ) )
+		for( Shot other : station.shots )
 		{
-			return null;
-		}
-		for( Shot next : shot.to.frontsights )
-		{
-			if( !isVertical( next ) )
+			if( other != shot )
 			{
-				return next;
-			}
-		}
-		for( Shot next : shot.to.frontsights )
-		{
-			Shot nextNext = nextNonVerticalShot( next );
-			if( nextNext != null )
-			{
-				return nextNext;
+				return other;
 			}
 		}
 		return null;
-	}
-	
-	private static boolean isVertical( Shot shot )
-	{
-		double inc = ( shot.fsInc + shot.bsInc ) * 0.5;
-		inc = Math.floor( inc * 1000.0 ) / 1000.0;
-		inc %= 360.0;
-		return inc == 90.0 || inc == -90.0;
 	}
 	
 	private static int[ ] offset( int offset , int ... in )
@@ -1671,7 +1643,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				
 				copyBytes( allGeomBuffer , geometry.buffer( ) , shot3d.number , GEOM_BPS );
 				
-				for( int index : offset( shot3d.indexInSegment * GEOM_VPS , 0 , 4 , 2 , 6 , 1 , 5 , 3 , 7 ) )
+				for( int index : offset( shot3d.indexInSegment * GEOM_VPS , 0 , 4 , 2 , 6 , 1 , 5 , 3 , 7 , 0 , 4 ) )
 				{
 					fillIndicesList.add( index );
 					lineIndicesList.add( index );
@@ -2392,22 +2364,14 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		while( !queue.isEmpty( ) )
 		{
 			PEntry next = queue.poll( );
-			for( Shot shot : next.station.frontsights )
+			for( Shot shot : next.station.shots )
 			{
-				if( !distances.containsKey( shot.to ) )
+				Station nextStation = shot.otherStation( next.station );
+				if( !distances.containsKey( nextStation ) )
 				{
 					double distance = next.priority + colorParam.calcTraversalDistance( shot );
-					distances.put( shot.to , distance );
-					queue.add( new PEntry( distance , shot.to ) );
-				}
-			}
-			for( Shot shot : next.station.backsights )
-			{
-				if( !distances.containsKey( shot.from ) )
-				{
-					double distance = next.priority + colorParam.calcTraversalDistance( shot );
-					distances.put( shot.from , distance );
-					queue.add( new PEntry( distance , shot.from ) );
+					distances.put( nextStation , distance );
+					queue.add( new PEntry( distance , nextStation ) );
 				}
 			}
 		}
@@ -2452,8 +2416,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			Shot origShot = originalShots.get( hoveredShot.number );
 			
-			final Function<Station, Stream<Shot>> connected =
-					station -> Stream.concat( station.frontsights.stream( ) , station.backsights.stream( ) );
+			final Function<Station, Stream<Shot>> connected = station -> station.shots.stream( );
 			
 			Graphs.traverse2( Stream.<Station>builder( ).add( origShot.from ).add( origShot.to ).build( ) ,
 					station -> ( station == origShot.from ? hoverLocation : 1 - hoverLocation ) * origShot.dist ,

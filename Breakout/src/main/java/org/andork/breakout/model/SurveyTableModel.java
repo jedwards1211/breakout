@@ -5,9 +5,13 @@ import static org.andork.util.StringUtils.toStringOrNull;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
+
+import javax.xml.transform.stream.StreamSource;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.math3d.Vecmath;
@@ -17,6 +21,7 @@ import org.andork.swing.async.Subtask;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.EasyTableModel;
 import org.andork.swing.table.QObjectRowFormat;
+import org.andork.util.ArrayUtils;
 
 @SuppressWarnings( "serial" )
 public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Row>>
@@ -166,10 +171,10 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				String fromName = toStringOrNull( row.get( Row.from ) );
 				String toName = toStringOrNull( row.get( Row.to ) );
 				double dist = parse( row.get( Row.distance ) );
-				double fsAzm = parse( row.get( Row.fsAzm ) );
-				double bsAzm = parse( row.get( Row.bsAzm ) );
-				double fsInc = parse( row.get( Row.fsInc ) );
-				double bsInc = parse( row.get( Row.bsInc ) );
+				double fsAzm = Math.toRadians( parse( row.get( Row.fsAzm ) ) );
+				double bsAzm = Math.toRadians( parse( row.get( Row.bsAzm ) ) );
+				double fsInc = Math.toRadians( parse( row.get( Row.fsInc ) ) );
+				double bsInc = Math.toRadians( parse( row.get( Row.bsInc ) ) );
 				
 				CrossSectionType xSectionType = row.get( Row.xSectionType );
 				if( xSectionType == null )
@@ -179,7 +184,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				ShotSide xSectionSide = row.get( Row.xSectionSide );
 				if( xSectionSide == null )
 				{
-					xSectionSide = ShotSide.AT_FROM;
+					xSectionSide = ShotSide.AT_TO;
 				}
 				
 				float left = parseFloat( row.get( Row.left ) );
@@ -243,10 +248,8 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				shot.from = from;
 				shot.to = to;
 				shot.dist = dist;
-				shot.fsAzm = fsAzm;
-				shot.bsAzm = bsAzm;
-				shot.fsInc = fsInc;
-				shot.bsInc = bsInc;
+				shot.inc = Shot.averageInc( fsInc , bsInc );
+				shot.azm = Shot.averageAzm( shot.inc , fsAzm , bsAzm );
 				
 				try
 				{
@@ -290,8 +293,13 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		
 		for( Shot shot : shots.values( ) )
 		{
-			shot.from.frontsights.add( shot );
-			shot.to.backsights.add( shot );
+			shot.from.shots.add( shot );
+			shot.to.shots.add( shot );
+		}
+		
+		for( Station station : stations.values( ) )
+		{
+			updateCrossSections( station );
 		}
 		
 		int number = 0;
@@ -304,6 +312,50 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		}
 		
 		return shotList;
+	}
+	
+	private static void updateCrossSections( Station station )
+	{
+		if( station.shots.size( ) == 2 )
+		{
+			Iterator<Shot> shotIter = station.shots.iterator( );
+			Shot shot1 = shotIter.next( );
+			Shot shot2 = shotIter.next( );
+			CrossSection sect1 = shot1.crossSectionAt( station );
+			CrossSection sect2 = shot2.crossSectionAt( station );
+			
+			boolean opposite = ( station == shot1.from ) == ( station == shot2.from );
+			
+			for( int i = 0 ; i < Math.min( sect1.dist.length , sect2.dist.length ) ; i++ )
+			{
+				int oi = i > 1 ? i : opposite ? 1 - i : i;
+				
+				if( Double.isNaN( sect1.dist[ i ] ) )
+				{
+					sect1.dist[ i ] = sect2.dist[ oi ];
+				}
+				if( Double.isNaN( sect2.dist[ i ] ) )
+				{
+					sect2.dist[ i ] = sect1.dist[ oi ];
+				}
+			}
+		}
+		else
+		{
+			for( Shot shot : station.shots )
+			{
+				CrossSection sect1 = shot.crossSectionAt( station );
+				CrossSection sect2 = shot.crossSectionAt( shot.otherStation( station ) );
+				
+				for( int i = 0 ; i < Math.min( sect1.dist.length , sect2.dist.length ) ; i++ )
+				{
+					if( Double.isNaN( sect1.dist[ i ] ) )
+					{
+						sect1.dist[ i ] = sect2.dist[ i ];
+					}
+				}
+			}
+		}
 	}
 	
 	private static Station getStation( Map<String, Station> stations , String name )

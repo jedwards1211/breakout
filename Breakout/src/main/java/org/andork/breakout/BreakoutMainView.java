@@ -104,6 +104,7 @@ import org.andork.jogl.awt.anim.ViewXformAnimation;
 import org.andork.jogl.neu.JoglScene;
 import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math3d.FittingFrustum;
+import org.andork.math3d.LineLineIntersection2d;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PickXform;
 import org.andork.math3d.PlanarHull3f;
@@ -1934,6 +1935,13 @@ public class BreakoutMainView extends BasicJoglSetup
 						
 						Shot.computeConnected( stations );
 						
+						LineLineIntersection2d llx = new LineLineIntersection2d( );
+						
+						for( Station station : stations )
+						{
+							station.calcSplayPoints( llx );
+						}
+						
 						calculatingSubtask.end( );
 					}
 					
@@ -2012,8 +2020,8 @@ public class BreakoutMainView extends BasicJoglSetup
 						getCanvas( ).invoke( false , drawable -> {
 							scene.add( model );
 							scene.initLater( model );
-							scene.add( terrain );
-							scene.initLater( terrain );
+							//							scene.add( terrain );
+							//							scene.initLater( terrain );
 							return false;
 						} );
 					} );
