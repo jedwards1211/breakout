@@ -5,8 +5,9 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
-import org.andork.breakout.model.Shot;
 import org.andork.breakout.model.SurveyTableModel;
+import org.andork.breakout.model.SurveyTableModel.Row;
+import org.andork.q.QObject;
 
 public class SurveyRegexFilter extends RowFilter<TableModel, Integer>
 {
@@ -20,12 +21,9 @@ public class SurveyRegexFilter extends RowFilter<TableModel, Integer>
 	@Override
 	public boolean include( javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry )
 	{
-		Shot shot = ( ( SurveyTableModel ) entry.getModel( ) ).getShotAtRow( entry.getIdentifier( ) );
-		if( shot == null )
-		{
-			return false;
-		}
+		SurveyTableModel model = ( SurveyTableModel ) entry.getModel( );
+		QObject<Row> row = model.getRow( entry.getIdentifier( ) );
 		
-		return pattern.matcher( shot.from.name ).find( ) && pattern.matcher( shot.to.name ).find( );
+		return pattern.matcher( row.get( Row.from ) ).find( ) && pattern.matcher( row.get( Row.to ) ).find( );
 	}
 }

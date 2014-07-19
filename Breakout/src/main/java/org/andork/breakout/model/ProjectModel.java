@@ -10,7 +10,7 @@ import org.andork.func.Bimapper;
 import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
-import org.andork.func.StringBimapper;
+import org.andork.jogl.ProjectionCalculator;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.q.QMap;
 import org.andork.q.QMapBimapper;
@@ -23,6 +23,7 @@ import com.andork.plot.LinearAxisConversion;
 public final class ProjectModel extends QSpec<ProjectModel>
 {
 	public static final Attribute<CameraView>									cameraView					= newAttribute( CameraView.class , "cameraView" );
+	public static final Attribute<ProjectionCalculator>							projCalculator				= newAttribute( ProjectionCalculator.class , "projCalculator" );
 	public static final Attribute<float[ ]>										viewXform					= newAttribute( float[ ].class , "viewXform" );
 	public static final Attribute<LinearAxisConversion>							distRange					= newAttribute( LinearAxisConversion.class , "distRange" );
 	public static final Attribute<ColorParam>									colorParam					= newAttribute( ColorParam.class , "colorParam" );
@@ -46,6 +47,7 @@ public final class ProjectModel extends QSpec<ProjectModel>
 	static
 	{
 		defaultMapper = new QObjectMapBimapper<ProjectModel>( instance )
+				.map( projCalculator , ProjectionCalculatorBimapper.instance )
 				.map( distRange , LinearAxisConversionMapBimapper.instance )
 				.map( paramRanges , QMapBimapper.newInstance( EnumBimapper.newInstance( ColorParam.class ) , LinearAxisConversionMapBimapper.instance ) )
 				.map( highlightRange , LinearAxisConversionMapBimapper.instance )

@@ -1,8 +1,9 @@
 package org.andork.breakout;
 
 import java.awt.Insets;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -11,22 +12,24 @@ import javax.swing.JToggleButton;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.plaf.basic.BasicOptionPaneUI.ButtonActionListener;
 
 import org.andork.awt.GridBagWizard;
 
 @SuppressWarnings( "serial" )
 public class ViewButtonsPanel extends JPanel
 {
-	JToggleButton		planButton;
-	JToggleButton		perspectiveButton;
-	JToggleButton		northButton;
-	JToggleButton		southButton;
-	JToggleButton		eastButton;
-	JToggleButton		westButton;
+	JToggleButton					planButton;
+	JToggleButton					perspectiveButton;
+	JToggleButton					northButton;
+	JToggleButton					southButton;
+	JToggleButton					eastButton;
+	JToggleButton					westButton;
+	JToggleButton					autoProfileButton;
 	
-	JToggleButton[ ]	buttons;
+	Map<CameraView, JToggleButton>	buttonMap;
 	
-	JLabel				hintLabel;
+	JLabel							hintLabel;
 	
 	public ViewButtonsPanel( )
 	{
@@ -68,10 +71,23 @@ public class ViewButtonsPanel extends JPanel
 		westButton.setSelectedIcon( new ImageIcon( getClass( ).getResource( "west-facing-profile-selected.png" ) ) );
 		westButton.setName( "West-Facing Profile" );
 		
-		buttons = new JToggleButton[ ] { planButton , perspectiveButton , northButton , southButton , eastButton , westButton };
+		autoProfileButton = new JToggleButton( );
+		autoProfileButton.setIcon( new ImageIcon( getClass( ).getResource( "wand-normal.png" ) ) );
+		autoProfileButton.setRolloverIcon( new ImageIcon( getClass( ).getResource( "wand-rollover.png" ) ) );
+		autoProfileButton.setSelectedIcon( new ImageIcon( getClass( ).getResource( "wand-selected.png" ) ) );
+		autoProfileButton.setName( "Auto Profile" );
+		
+		buttonMap = new HashMap<>( );
+		buttonMap.put( CameraView.PERSPECTIVE , perspectiveButton );
+		buttonMap.put( CameraView.PLAN , planButton );
+		buttonMap.put( CameraView.NORTH_FACING_PROFILE , northButton );
+		buttonMap.put( CameraView.SOUTH_FACING_PROFILE , southButton );
+		buttonMap.put( CameraView.EAST_FACING_PROFILE , eastButton );
+		buttonMap.put( CameraView.WEST_FACING_PROFILE , westButton );
+		buttonMap.put( CameraView.AUTO_PROFILE , autoProfileButton );
 		
 		ButtonGroup group = new ButtonGroup( );
-		for( JToggleButton button : buttons )
+		for( JToggleButton button : buttonMap.values( ) )
 		{
 			button.setUI( new BasicButtonUI( ) );
 			button.setBorderPainted( false );
@@ -92,6 +108,7 @@ public class ViewButtonsPanel extends JPanel
 		w.put( eastButton ).rightOf( planButton );
 		w.put( westButton ).leftOf( planButton );
 		w.put( perspectiveButton ).rightOf( northButton );
+		w.put( autoProfileButton ).rightOf( southButton );
 		w.put( hintLabel ).below( westButton , southButton , eastButton ).fillx( 1.0 );
 		
 		ChangeListener changeHandler = new ChangeListener( )
@@ -103,7 +120,7 @@ public class ViewButtonsPanel extends JPanel
 			}
 		};
 		
-		for( JToggleButton button : buttons )
+		for( JToggleButton button : buttonMap.values( ) )
 		{
 			button.getModel( ).addChangeListener( changeHandler );
 		}
@@ -111,7 +128,7 @@ public class ViewButtonsPanel extends JPanel
 	
 	private void updateHintLabel( )
 	{
-		for( JToggleButton button : buttons )
+		for( JToggleButton button : buttonMap.values( ) )
 		{
 			if( button.getModel( ).isRollover( ) )
 			{
@@ -120,7 +137,7 @@ public class ViewButtonsPanel extends JPanel
 			}
 		}
 		
-		for( JToggleButton button : buttons )
+		for( JToggleButton button : buttonMap.values( ) )
 		{
 			if( button.isSelected( ) )
 			{
@@ -160,5 +177,15 @@ public class ViewButtonsPanel extends JPanel
 	public JToggleButton getWestButton( )
 	{
 		return westButton;
+	}
+	
+	public JToggleButton getAutoProfileButton( )
+	{
+		return autoProfileButton;
+	}
+	
+	public JToggleButton getButton( CameraView view )
+	{
+		return buttonMap.get( view );
 	}
 }

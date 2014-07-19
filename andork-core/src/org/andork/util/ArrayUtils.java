@@ -505,6 +505,28 @@ public class ArrayUtils
 		return result;
 	}
 	
+	public static float[ ] toFloatArray( Collection<Float> floats )
+	{
+		float[ ] result = new float[ floats.size( ) ];
+		int k = 0;
+		for( Float d : floats )
+		{
+			result[ k++ ] = d;
+		}
+		return result;
+	}
+	
+	public static float[ ] toFloatArray2( Collection<Number> numbers )
+	{
+		float[ ] result = new float[ numbers.size( ) ];
+		int k = 0;
+		for( Number d : numbers )
+		{
+			result[ k++ ] = d.floatValue( );
+		}
+		return result;
+	}
+	
 	public static double[ ] toSortedDoubleArray( Collection<Double> doubles )
 	{
 		double[ ] result = toDoubleArray( doubles );

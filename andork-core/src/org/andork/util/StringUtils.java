@@ -1,6 +1,7 @@
 package org.andork.util;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class StringUtils
@@ -80,8 +81,68 @@ public class StringUtils
 		return sb.toString( );
 	}
 	
+	public static String join( String separator , List<String> strings )
+	{
+		StringBuilder sb = new StringBuilder( );
+		if( strings.size( ) > 0 )
+		{
+			sb.append( strings.get( 0 ) );
+		}
+		for( int i = 1 ; i < strings.size( ) ; i++ )
+		{
+			sb.append( separator ).append( strings.get( i ) );
+		}
+		return sb.toString( );
+	}
+	
 	public static boolean isNullOrEmpty( Object aValue )
 	{
 		return aValue == null || "".equals( aValue.toString( ) );
+	}
+	
+	public static String escape( String s , char escape )
+	{
+		StringBuilder sb = new StringBuilder( );
+		
+		boolean inEscape = false;
+		for( int i = 0 ; i < s.length( ) ; i++ )
+		{
+			char ic = s.charAt( i );
+			if( inEscape || ic != escape )
+			{
+				sb.append( ic );
+				inEscape = false;
+			}
+			else
+			{
+				inEscape = true;
+			}
+		}
+		return sb.toString( );
+	}
+	
+	public static int unescapedIndexOf( String s , char c , char escape )
+	{
+		boolean inEscape = false;
+		for( int i = 0 ; i < s.length( ) ; i++ )
+		{
+			char ic = s.charAt( i );
+			if( inEscape )
+			{
+				inEscape = false;
+			}
+			else
+			{
+				if( ic == escape )
+				{
+					inEscape = true;
+				}
+				else if( ic == c )
+				{
+					return i;
+				}
+			}
+		}
+		return -1;
 	}
 }

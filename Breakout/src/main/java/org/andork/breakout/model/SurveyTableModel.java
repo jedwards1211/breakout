@@ -14,6 +14,7 @@ import java.util.stream.StreamSupport;
 import javax.xml.transform.stream.StreamSource;
 
 import org.andork.collect.CollectionUtils;
+import org.andork.math.misc.AngleUtils;
 import org.andork.math3d.Vecmath;
 import org.andork.q.QObject;
 import org.andork.q.QSpec;
@@ -59,6 +60,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		public static final Attribute<String>			date			= newAttribute( String.class , "date" );
 		public static final Attribute<String>			surveyors		= newAttribute( String.class , "surveyors" );
 		public static final Attribute<String>			comment			= newAttribute( String.class , "comment" );
+		public static final Attribute<String>			scannedNotes	= newAttribute( String.class , "scannedNotes" );
 		
 		public static final Row							instance		= new Row( );
 		
@@ -66,11 +68,6 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		{
 			super( );
 		}
-	}
-	
-	public Shot getShotAtRow( int row )
-	{
-		return row >= shots.size( ) ? null : shots.get( row );
 	}
 	
 	private boolean isEmpty( int row )
@@ -250,6 +247,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				shot.dist = dist;
 				shot.inc = Shot.averageInc( fsInc , bsInc );
 				shot.azm = Shot.averageAzm( shot.inc , fsAzm , bsAzm );
+				shot.desc = row.get( Row.desc );
 				
 				try
 				{
@@ -340,6 +338,53 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				}
 			}
 		}
+		
+		int populatedCount = CollectionUtils.moveToFront( station.shots , shot -> {
+			CrossSection section = shot.crossSectionAt( station );
+			return section.type == CrossSectionType.LRUD && !Double.isNaN( section.dist[ 0 ] ) && !Double.isNaN( section.dist[ 1 ] );
+		} );
+		
+		for( int i = populatedCount ; i < station.shots.size( ) ; i++ )
+		{
+			Shot shot = station.shots.get( i );
+			CrossSection section = shot.crossSectionAt( station );
+			if( section.type == CrossSectionType.LRUD )
+			{
+				double leftAzm = shot.azm - Math.PI * 0.5;
+				double rightAzm = shot.azm + Math.PI * 0.5;
+				
+				boolean populateLeft = Double.isNaN( section.dist[ 0 ] );
+				boolean populateRight = Double.isNaN( section.dist[ 0 ] );
+				
+				for( int i2 = 0 ; i2 < populatedCount ; i2++ )
+				{
+					Shot populated = station.shots.get( i2 );
+					CrossSection popCrossSection = populated.crossSectionAt( station );
+					
+					double popLeftAzm = populated.azm - Math.PI * 0.5;
+					double popRightAzm = populated.azm + Math.PI * 0.5;
+					
+					if( populateLeft )
+					{
+						double candidateLeft;
+						candidateLeft = popCrossSection.dist[ 0 ] * Math.cos( AngleUtils.angle( leftAzm , popLeftAzm ) );
+						section.dist[ 0 ] = ( float ) Vecmath.nmax( section.dist[ 0 ] , candidateLeft );
+						candidateLeft = popCrossSection.dist[ 1 ] * Math.cos( AngleUtils.angle( leftAzm , popRightAzm ) );
+						section.dist[ 0 ] = ( float ) Vecmath.nmax( section.dist[ 0 ] , candidateLeft );
+					}
+					
+					if( populateRight )
+					{
+						double candidateRight;
+						candidateRight = popCrossSection.dist[ 0 ] * Math.cos( AngleUtils.angle( rightAzm , popLeftAzm ) );
+						section.dist[ 1 ] = ( float ) Vecmath.nmax( section.dist[ 1 ] , candidateRight );
+						candidateRight = popCrossSection.dist[ 1 ] * Math.cos( AngleUtils.angle( rightAzm , popRightAzm ) );
+						section.dist[ 1 ] = ( float ) Vecmath.nmax( section.dist[ 1 ] , candidateRight );
+					}
+				}
+			}
+		}
+		
 		for( Shot shot : station.shots )
 		{
 			CrossSection sect1 = shot.crossSectionAt( station );

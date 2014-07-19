@@ -1,8 +1,13 @@
 package org.andork.breakout;
 
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.IOException;
+
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
+import org.andork.awt.event.MouseAdapterWrapper;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.Row;
 import org.andork.q.QSpec.Attribute;
@@ -25,9 +30,9 @@ public class SurveyTable extends AnnotatingJTable
 			}
 			
 			Attribute<?>[ ] attrs = new Attribute<?>[ ] { Row.from , Row.to , Row.distance , Row.fsAzm , Row.fsInc , Row.bsAzm , Row.bsInc ,
-					Row.left , Row.right , Row.up , Row.down , Row.north, Row.east, Row.elev, Row.desc , Row.date , Row.surveyors , Row.comment };
-			String[ ] names = new String[ ] { "From" , "To" , "Distance" , "Front Azimuth" , "Front Inclination" , "Back Azimuth" , "Back Inclination" , 
-					"Left" , "Right" , "Up" , "Down" , "Northing", "Easting", "Elevation", "Description" , "Date" , "Surveyors" , "Comment" };
+					Row.left , Row.right , Row.up , Row.down , Row.north , Row.east , Row.elev , Row.desc , Row.date , Row.surveyors , Row.comment , Row.scannedNotes };
+			String[ ] names = new String[ ] { "From" , "To" , "Distance" , "Front Azimuth" , "Front Inclination" , "Back Azimuth" , "Back Inclination" ,
+					"Left" , "Right" , "Up" , "Down" , "Northing" , "Easting" , "Elevation" , "Description" , "Date" , "Surveyors" , "Comment" , "Scanned Notes" };
 			
 			for( int i = 0 ; i < attrs.length ; i++ )
 			{
@@ -37,6 +42,39 @@ public class SurveyTable extends AnnotatingJTable
 				addColumn( column );
 			}
 		}
+		
+		addMouseListener( new MouseAdapter( )
+		{
+			@Override
+			public void mouseClicked( MouseEvent e )
+			{
+				if( !e.isControlDown( ) )
+				{
+					return;
+				}
+				
+				int column = columnAtPoint( e.getPoint( ) );
+				int row = rowAtPoint( e.getPoint( ) );
+				
+				int modelColumn = convertColumnIndexToModel( column );
+				
+				if( modelColumn == SurveyTableModel.Row.scannedNotes.getIndex( ) )
+				{
+					Object o = getValueAt( row , column );
+					if( o != null )
+					{
+						try
+						{
+							Runtime.getRuntime( ).exec( "explorer " + o.toString( ) );
+						}
+						catch( IOException e1 )
+						{
+							e1.printStackTrace( );
+						}
+					}
+				}
+			}
+		} );
 	}
 	
 	public SurveyTable( )

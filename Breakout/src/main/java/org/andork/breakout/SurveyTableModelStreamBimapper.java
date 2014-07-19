@@ -47,7 +47,8 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 				.addColumn( "Description" , Row.desc )
 				.addColumn( "Date" , Row.date )
 				.addColumn( "Surveyors" , Row.surveyors )
-				.addColumn( "Comment" , Row.comment );
+				.addColumn( "Comment" , Row.comment )
+				.addColumn( "Scanned Notes" , Row.scannedNotes );
 	}
 	
 	public SurveyTableModelStreamBimapper closeStreams( boolean closeStreams )

@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -52,7 +53,7 @@ import javax.media.opengl.GL3;
 
 import org.andork.breakout.PickResult;
 import org.andork.breakout.awt.ParamGradientMapPaint;
-import org.andork.collect.HashSetMultiMap;
+import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.func.FloatBinaryOperator;
 import org.andork.graph.Graphs;
@@ -65,13 +66,12 @@ import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.jogl.neu.JoglDrawable;
 import org.andork.jogl.neu.JoglResource;
 import org.andork.jogl.util.JOGLUtils;
-import org.andork.math.misc.AngleUtils;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.TwoPlaneIntersection3f;
-import org.andork.math3d.Vecmath;
 import org.andork.math3d.TwoPlaneIntersection3f.ResultType;
+import org.andork.math3d.Vecmath;
 import org.andork.spatial.RBranch;
 import org.andork.spatial.RLeaf;
 import org.andork.spatial.RNode;
@@ -93,61 +93,61 @@ import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 public class Survey3dModel implements JoglDrawable , JoglResource
 {
 	
-	private static final int				GEOM_BPV				= 24;
+	private static final int								GEOM_BPV				= 24;
 	
-	private static final int				GEOM_VPS				= 8;
+	private static final int								GEOM_VPS				= 8;
 	
-	private static final int				GEOM_BPS				= GEOM_BPV * GEOM_VPS;
+	private static final int								GEOM_BPS				= GEOM_BPV * GEOM_VPS;
 	
-	private static final int				STATION_ATTR_BPV		= 12;
+	private static final int								STATION_ATTR_BPV		= 12;
 	
-	private static final int				STATION_ATTR_VPS		= GEOM_VPS;
+	private static final int								STATION_ATTR_VPS		= GEOM_VPS;
 	
-	private static final int				STATION_ATTR_BPS		= STATION_ATTR_BPV * STATION_ATTR_VPS;
+	private static final int								STATION_ATTR_BPS		= STATION_ATTR_BPV * STATION_ATTR_VPS;
 	
-	private static final int				BPI						= 4;
+	private static final int								BPI						= 4;
 	
-	private static final int				RESTART_INDEX			= 0xffffffff;
+	private static final int								RESTART_INDEX			= 0xffffffff;
 	
-	List<Shot>								originalShots;
-	List<Shot3d>							shot3ds;
+	List<Shot>												originalShots;
+	List<Shot3d>											shot3ds;
 	
-	RfStarTree<Shot3d>						tree;
+	RfStarTree<Shot3d>										tree;
 	
-	Set<Segment3d>							segment3ds;
+	Set<Segment3d>											segment3ds;
 	
-	ColorParam								colorParam				= ColorParam.DEPTH;
+	ColorParam												colorParam				= ColorParam.DEPTH;
 	
-	AxialSegment3dDrawer					axialSegment3dDrawer	= new AxialSegment3dDrawer( );
-	Param0Segment3dDrawer					param0Segment3dDrawer	= new Param0Segment3dDrawer( );
+	AxialSegment3dDrawer									axialSegment3dDrawer	= new AxialSegment3dDrawer( );
+	Param0Segment3dDrawer									param0Segment3dDrawer	= new Param0Segment3dDrawer( );
 	
-	MultiMap<Segment3dDrawer, Segment3d>	drawers					= HashSetMultiMap.newInstance( );
+	AtomicReference<MultiMap<Segment3dDrawer, Segment3d>>	drawers					= new AtomicReference<>( );
 	
-	final Set<Shot3d>						selectedShots			= new HashSet<Shot3d>( );
-	Shot3d									hoveredShot;
-	Float									hoverLocation;
-	LinearAxisConversion					glowExtentConversion;
-	final Set<Segment3d>					segmentsWithGlow		= new HashSet<Segment3d>( );
+	final Set<Shot3d>										selectedShots			= new HashSet<Shot3d>( );
+	Shot3d													hoveredShot;
+	Float													hoverLocation;
+	LinearAxisConversion									glowExtentConversion;
+	final Set<Segment3d>									segmentsWithGlow		= new HashSet<Segment3d>( );
 	
-	LinearGradientPaint						paramPaint;
-	int										paramTexture;
-	BufferedImageInt						paramTextureImage;
-	boolean									paramTextureNeedsUpdate;
+	LinearGradientPaint										paramPaint;
+	int														paramTexture;
+	BufferedImageInt										paramTextureImage;
+	boolean													paramTextureNeedsUpdate;
 	
-	Uniform4fv								highlightColors;
+	Uniform4fv												highlightColors;
 	
-	Uniform3fv								depthAxis;
-	Uniform3fv								depthOrigin;
+	Uniform3fv												depthAxis;
+	Uniform3fv												depthOrigin;
 	
-	Uniform1fv								ambient;
+	Uniform1fv												ambient;
 	
-	Uniform1fv								nearDist;
-	Uniform1fv								farDist;
+	Uniform1fv												nearDist;
+	Uniform1fv												farDist;
 	
-	Uniform1fv								loParam;
-	Uniform1fv								hiParam;
+	Uniform1fv												loParam;
+	Uniform1fv												hiParam;
 	
-	Uniform4fv								glowColor;
+	Uniform4fv												glowColor;
 	
 	private Survey3dModel( List<Shot> originalShots , List<Shot3d> shot3ds , RfStarTree<Shot3d> tree , Set<Segment3d> segment3ds , Subtask renderSubtask )
 	{
@@ -182,7 +182,10 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			segment3d.drawers.add( axialSegment3dDrawer );
 		}
 		
+		MultiMap<Segment3dDrawer, Segment3d> drawers = LinkedHashSetMultiMap.newInstance( );
 		drawers.putAll( axialSegment3dDrawer , segment3ds );
+		
+		this.drawers.set( drawers );
 	}
 	
 	public static Survey3dModel create( List<Shot> originalShots , int maxChildrenPerBranch , int minSplitSize , int numToReinsert , Task task )
@@ -2165,6 +2168,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			segment3d.dispose( gl );
 		}
 		
+		MultiMap<Segment3dDrawer, Segment3d> drawers = this.drawers.get( );
+		
 		for( Segment3dDrawer drawer : drawers.keySet( ) )
 		{
 			drawer.dispose( gl );
@@ -2181,6 +2186,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			updateParamTexture( gl );
 			paramTextureNeedsUpdate = false;
 		}
+		MultiMap<Segment3dDrawer, Segment3d> drawers = this.drawers.get( );
+		
 		for( Segment3dDrawer drawer : drawers.keySet( ) )
 		{
 			drawer.draw( drawers.get( drawer ) , context , gl , m , n );
@@ -2197,6 +2204,38 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		{
 			return calcAutofitSelectedParamRange( subtask );
 		}
+	}
+	
+	public float[ ] calcAutofitParamRange( Collection<Shot3d> shots , Subtask subtask )
+	{
+		if( subtask != null )
+		{
+			subtask.setTotal( segment3ds.size( ) );
+			subtask.setCompleted( 0 );
+			subtask.setIndeterminate( false );
+		}
+		
+		final float[ ] range = { Float.MAX_VALUE , -Float.MAX_VALUE };
+		
+		int completed = 0;
+		for( Shot3d shot3d : shots )
+		{
+			shot3d.calcParamRange( Survey3dModel.this , colorParam , range );
+			
+			if( completed++ % 100 == 0 )
+			{
+				if( subtask != null )
+				{
+					if( subtask.isCanceling( ) )
+					{
+						return null;
+					}
+					subtask.setCompleted( completed );
+				}
+			}
+		}
+		
+		return range;
 	}
 	
 	public float[ ] calcAutofitSelectedParamRange( Subtask subtask )
@@ -2279,14 +2318,12 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		}
 		final Iterator<Segment3d> segmentIterator = segment3ds.iterator( );
 		
+		MultiMap<Segment3dDrawer, Segment3d> newDrawers = LinkedHashSetMultiMap.newInstance( );
+		
 		int completed = 0;
 		while( segmentIterator.hasNext( ) )
 		{
 			Segment3d segment3d = segmentIterator.next( );
-			for( Segment3dDrawer drawer : segment3d.drawers )
-			{
-				drawers.remove( drawer , segment3d );
-			}
 			
 			segment3d.drawers.clear( );
 			
@@ -2305,7 +2342,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			
 			for( Segment3dDrawer drawer : segment3d.drawers )
 			{
-				drawers.put( drawer , segment3d );
+				newDrawers.put( drawer , segment3d );
 			}
 			
 			if( completed++ % 100 == 0 )
@@ -2321,9 +2358,88 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			}
 		}
 		
+		drawers.set( newDrawers );
+		
 		if( colorParam.isTraversalMetric( ) )
 		{
 			calcDistFromSelected( subtask );
+		}
+	}
+	
+	public void calcDistFromShots( Set<Shot3d> shots , Subtask subtask )
+	{
+		final Map<Station, Double> distances = new HashMap<Station, Double>( );
+		
+		class PEntry implements Comparable<PEntry>
+		{
+			public final double		priority;
+			public final Station	station;
+			
+			public PEntry( double priority , Station station )
+			{
+				super( );
+				this.priority = priority;
+				this.station = station;
+			}
+			
+			@Override
+			public int compareTo( PEntry o )
+			{
+				return Double.compare( priority , o.priority );
+			}
+		}
+		
+		PriorityQueue<PEntry> queue = new PriorityQueue<PEntry>( );
+		
+		for( Shot3d shot3d : shots )
+		{
+			Shot origShot = originalShots.get( shot3d.number );
+			distances.put( origShot.from , 0.0 );
+			distances.put( origShot.to , 0.0 );
+			queue.add( new PEntry( 0.0 , origShot.from ) );
+			queue.add( new PEntry( 0.0 , origShot.to ) );
+		}
+		
+		while( !queue.isEmpty( ) )
+		{
+			PEntry next = queue.poll( );
+			for( Shot shot : next.station.shots )
+			{
+				Station nextStation = shot.otherStation( next.station );
+				if( !distances.containsKey( nextStation ) )
+				{
+					double distance = next.priority + colorParam.calcTraversalDistance( shot );
+					distances.put( nextStation , distance );
+					queue.add( new PEntry( distance , nextStation ) );
+				}
+			}
+		}
+		
+		if( subtask != null )
+		{
+			subtask.setTotal( segment3ds.size( ) );
+			subtask.setCompleted( 0 );
+			subtask.setIndeterminate( false );
+		}
+		final Iterator<Segment3d> segmentIterator = segment3ds.iterator( );
+		
+		int processed = 0;
+		while( segmentIterator.hasNext( ) )
+		{
+			Segment3d segment3d = segmentIterator.next( );
+			segment3d.calcParam0( Survey3dModel.this , distances );
+			
+			if( processed++ % 100 == 0 )
+			{
+				if( subtask != null )
+				{
+					if( subtask.isCanceling( ) )
+					{
+						return;
+					}
+					subtask.setCompleted( processed );
+				}
+			}
 		}
 	}
 	

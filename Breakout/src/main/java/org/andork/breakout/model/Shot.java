@@ -26,6 +26,7 @@ public class Shot
 	public Date			date;
 	
 	PriorityEntry		priorityEntry;
+	public String		desc;
 	
 	public float[ ][ ] splayPointsAt( Station station )
 	{

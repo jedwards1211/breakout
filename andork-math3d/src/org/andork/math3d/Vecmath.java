@@ -4071,4 +4071,14 @@ public class Vecmath
 		
 		return v[ 0 ] * x + v[ 1 ] * y + v[ 2 ] * z;
 	}
+	
+	public static double nmin( double a , double b )
+	{
+		return a < b || Double.isNaN( b ) ? a : b;
+	}
+	
+	public static double nmax( double a , double b )
+	{
+		return a > b || Double.isNaN( b ) ? a : b;
+	}
 }

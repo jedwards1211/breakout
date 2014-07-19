@@ -7,7 +7,8 @@ public enum CameraView
 	NORTH_FACING_PROFILE( "North-Facing Profile" ) ,
 	SOUTH_FACING_PROFILE( "South-Facing Profile" ) ,
 	EAST_FACING_PROFILE( "East-Facing Profile" ) ,
-	WEST_FACING_PROFILE( "West-Facing Profile" );
+	WEST_FACING_PROFILE( "West-Facing Profile" ) ,
+	AUTO_PROFILE( "Auto Profile" );
 	
 	private String	displayText;
 	

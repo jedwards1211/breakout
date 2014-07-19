@@ -37,4 +37,10 @@ public class AngleUtils
 		}
 		return result;
 	}
+	
+	public static double angle( double a , double b )
+	{
+		double result = Math.abs( a - b ) % ( Math.PI * 2.0 );
+		return result > Math.PI ? Math.PI * 2.0 - result : result;
+	}
 }

@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.RandomAccess;
 import java.util.Set;
@@ -452,5 +453,34 @@ public class CollectionUtils
 		Map<K, V> result = new LinkedHashMap<>( );
 		stream.forEach( v -> result.put( keyAssigner.apply( v ) , v ) );
 		return result;
+	}
+	
+	/**
+	 * Moves elements matching the given predicate to the front of the list, and returns the number of elements
+	 * that matched the predicate.
+	 * 
+	 * @param list
+	 * @param p
+	 * @return the number of elements that matched the predicate.
+	 */
+	public static <T> int moveToFront( List<T> list , Predicate<? super T> p )
+	{
+		int count = 0;
+		ListIterator<T> frontIter = list.listIterator( );
+		ListIterator<T> allIter = list.listIterator( );
+		
+		while( allIter.hasNext( ) )
+		{
+			T next = allIter.next( );
+			if( p.eval( next ) )
+			{
+				count++ ;
+				T front = frontIter.next( );
+				frontIter.set( next );
+				allIter.set( front );
+			}
+		}
+		
+		return count;
 	}
 }

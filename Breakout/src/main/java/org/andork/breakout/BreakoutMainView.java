@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -44,9 +45,10 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
-import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
@@ -73,6 +75,7 @@ import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
+import org.andork.breakout.StatsModel.MinAvgMax;
 import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectArchiveModel;
 import org.andork.breakout.model.ProjectModel;
@@ -80,13 +83,13 @@ import org.andork.breakout.model.RootModel;
 import org.andork.breakout.model.Shot;
 import org.andork.breakout.model.Station;
 import org.andork.breakout.model.Survey3dModel;
-import org.andork.breakout.model.TransparentTerrain;
 import org.andork.breakout.model.Survey3dModel.SelectionEditor;
 import org.andork.breakout.model.Survey3dModel.Shot3d;
 import org.andork.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.andork.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
+import org.andork.breakout.model.TransparentTerrain;
 import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.collect.CollectionUtils;
 import org.andork.event.BasicPropertyChangeListener;
@@ -103,6 +106,7 @@ import org.andork.jogl.awt.anim.SpringViewOrbitAnimation;
 import org.andork.jogl.awt.anim.ViewXformAnimation;
 import org.andork.jogl.neu.JoglScene;
 import org.andork.jogl.neu.awt.BasicJoglSetup;
+import org.andork.math.misc.Fitting;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LineLineIntersection2d;
 import org.andork.math3d.LinePlaneIntersection3f;
@@ -178,7 +182,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	TableSelectionHandler								selectionHandler;
 	
-	SurveyFilterFactory									surveyFilterFactory			= new SurveyFilterFactory( );
+	RowFilterFactory<String, TableModel, Integer>		rowFilterFactory;
 	
 	SurveyDrawer										surveyDrawer;
 	Drawer												quickTableDrawer;
@@ -220,6 +224,11 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	final WeakHashMap<Animation, Object>				protectedAnimations			= new WeakHashMap<>( );
 	
+	JLabel												hintLabel;
+	
+	DefaultBinder<QObject<StatsModel>>					statsBinder					= new DefaultBinder<>( );
+	StatsPanel											statsPanel					= new StatsPanel( statsBinder );
+	
 	public BreakoutMainView( )
 	{
 		super( createCanvas( ) );
@@ -230,6 +239,13 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		JLabel highlightLabel = new JLabel( "Highlight: " );
 		JLabel filterLabel = new JLabel( "Filter: " );
+		
+		hintLabel = new JLabel( " " );
+		hintLabel.setForeground( Color.WHITE );
+		hintLabel.setBackground( Color.BLACK );
+		hintLabel.setOpaque( true );
+		Font hintFont = hintLabel.getFont( );
+		hintLabel.setFont( hintFont.deriveFont( Font.PLAIN ).deriveFont( hintFont.getSize2D( ) + 3f ) );
 		
 		final SortRunner sortRunner = new SortRunner( )
 		{
@@ -255,12 +271,16 @@ public class BreakoutMainView extends BasicJoglSetup
 			public void run( )
 			{
 				surveyDrawer = new SurveyDrawer( sortRunner );
+				
+				rowFilterFactory = new MultiRowFilterFactory(
+						new SurveyTableFilterMap( surveyDrawer.table( ) ) );
+				
 				surveyDrawer.filterField( ).textComponent.getDocument( ).addDocumentListener(
 						AnnotatingJTables.createFilterFieldListener( surveyDrawer.table( ) ,
-								surveyDrawer.filterField( ).textComponent , surveyFilterFactory ) );
+								surveyDrawer.filterField( ).textComponent , rowFilterFactory ) );
 				surveyDrawer.highlightField( ).textComponent.getDocument( ).addDocumentListener(
 						AnnotatingJTables.createHighlightFieldListener( surveyDrawer.table( ) ,
-								surveyDrawer.highlightField( ).textComponent , surveyFilterFactory , Color.YELLOW ) );
+								surveyDrawer.highlightField( ).textComponent , rowFilterFactory , Color.YELLOW ) );
 			}
 		};
 		
@@ -388,6 +408,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		mainPanel = new JPanel( new BorderLayout( ) );
 		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
 		mainPanel.add( layeredPane , BorderLayout.CENTER );
+		mainPanel.add( hintLabel , BorderLayout.SOUTH );
 		
 		selectionHandler = new TableSelectionHandler( );
 		surveyDrawer.table( ).getModelSelectionModel( ).addListSelectionListener( selectionHandler );
@@ -432,13 +453,13 @@ public class BreakoutMainView extends BasicJoglSetup
 		TextComponentWithHintAndClear quickTableFilterField = new TextComponentWithHintAndClear( "Enter Filter Regexp" );
 		quickTableFilterField.textComponent.getDocument( ).addDocumentListener(
 				AnnotatingJTables.createFilterFieldListener( quickTableSetup.table ,
-						quickTableFilterField.textComponent , surveyFilterFactory ) );
+						quickTableFilterField.textComponent , rowFilterFactory ) );
 		
 		JLabel quickTableHighlightLabel = new JLabel( "Highlight: " );
 		TextComponentWithHintAndClear quickTableHighlightField = new TextComponentWithHintAndClear( "Enter Highlight Regexp" );
 		quickTableHighlightField.textComponent.getDocument( ).addDocumentListener(
 				AnnotatingJTables.createHighlightFieldListener( quickTableSetup.table ,
-						quickTableHighlightField.textComponent , surveyFilterFactory , Color.YELLOW ) );
+						quickTableHighlightField.textComponent , rowFilterFactory , Color.YELLOW ) );
 		
 		JPanel quickTablePanel = new JPanel( );
 		quickTablePanel.setPreferredSize( new Dimension( 150 , 500 ) );
@@ -449,6 +470,9 @@ public class BreakoutMainView extends BasicJoglSetup
 		gbw.put( quickTableHighlightField ).rightOf( quickTableHighlightLabel ).fillx( 1.0 ).insets( 2 , 2 , 2 , 0 );
 		
 		gbw.put( quickTableSetup.scrollPane ).below( quickTableHighlightLabel , quickTableHighlightField ).fillboth( 1.0 , 1.0 );
+		gbw.put( statsPanel ).below( quickTableSetup.scrollPane ).fillx( 1.0 );
+		
+		statsPanel.setBorder( new EmptyBorder( 5 , 5 , 5 , 0 ) );
 		
 		quickTableDrawer = new Drawer( quickTablePanel );
 		quickTableDrawer.delegate( ).dockingSide( Side.LEFT );
@@ -479,28 +503,6 @@ public class BreakoutMainView extends BasicJoglSetup
 		surveyDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.surveyDrawer , projectModelBinder ) );
 		settingsDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.settingsDrawer , projectModelBinder ) );
 		taskListDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.taskListDrawer , projectModelBinder ) );
-		
-		new BinderWrapper<float[ ]>( )
-		{
-			protected void onValueChanged( float[ ] newValue )
-			{
-				if( newValue != null )
-				{
-					scene.setViewXform( newValue );
-				}
-			}
-		}.bind( QObjectAttributeBinder.bind( ProjectModel.viewXform , projectModelBinder ) );
-		
-		new BinderWrapper<CameraView>( )
-		{
-			protected void onValueChanged( CameraView newValue )
-			{
-				if( newValue != null )
-				{
-					setCameraView( newValue );
-				}
-			}
-		}.bind( QObjectAttributeBinder.bind( ProjectModel.cameraView , projectModelBinder ) );
 		
 		new BinderWrapper<Color>( )
 		{
@@ -709,7 +711,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						Subtask rootSubtask = new Subtask( this );
 						rootSubtask.setTotal( 1 );
 						Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
-						float[ ] range = model3d.calcAutofitParamRange( calcSubtask );
+						float[ ] range = model3d.calcAutofitParamRange( getDefaultShotsForOperations( ) , calcSubtask );
 						rootSubtask.setCompleted( 1 );
 						calcSubtask.end( );
 						
@@ -765,7 +767,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						Subtask rootSubtask = new Subtask( this );
 						rootSubtask.setTotal( 1 );
 						Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
-						model3d.calcDistFromSelected( calcSubtask );
+						model3d.calcDistFromShots( getDefaultShotsForOperations( ) , calcSubtask );
 						getCanvas( ).display( );
 						
 						rootSubtask.setCompleted( 1 );
@@ -806,6 +808,23 @@ public class BreakoutMainView extends BasicJoglSetup
 				cameraAnimationQueue.add( new AnimationViewSaver( ) );
 			}
 		} );
+		
+		ViewButtonsPanel viewButtonsPanel = settingsDrawer.getViewButtonsPanel( );
+		for( CameraView view : CameraView.values( ) )
+		{
+			JToggleButton button = viewButtonsPanel.getButton( view );
+			if( button != null )
+			{
+				button.addActionListener( new ActionListener( )
+				{
+					@Override
+					public void actionPerformed( ActionEvent e )
+					{
+						setCameraView( view );
+					}
+				} );
+			}
+		}
 		
 		settingsDrawer.getInferDepthAxisTiltButton( ).addActionListener( new ActionListener( )
 		{
@@ -1080,84 +1099,75 @@ public class BreakoutMainView extends BasicJoglSetup
 				case WEST_FACING_PROFILE:
 					westFacingProfileMode( );
 					break;
+				case AUTO_PROFILE:
+					autoProfileMode( );
+					break;
 			}
 		}
 	}
 	
 	public void perspectiveMode( )
 	{
-		//		mouseLooper.removeMouseAdapter( mouseAdapterChain );
-		//		
-		//		mouseAdapterChain = new MouseAdapterChain( );
-		//		mouseAdapterChain.addMouseAdapter( navigator );
-		//		mouseAdapterChain.addMouseAdapter( orbiter );
-		//		mouseAdapterChain.addMouseAdapter( pickHandler );
-		//		mouseAdapterChain.addMouseAdapter( autoshowController );
-		//		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
-		//		mouseLooper.addMouseAdapter( mouseAdapterChain );
-		//		
-		//		InterpolationProjectionCalculator calc = new InterpolationProjectionCalculator( scene.getProjectionCalculator( ) , perspCalculator , 0f );
-		//		
-		//		float b = 10f;
-		//		float a = 1 / b;
-		//		float ra = 1 / a / a;
-		//		float rb = 1 / b / b;
-		//		
-		//		removeUnprotectedCameraAnimations( );
-		//		cameraAnimationQueue.add( new ProjXformAnimation( this , 1000 , true , f -> {
-		//			float ff = b + f * ( a - b );
-		//			float rf = 1 / ff / ff;
-		//			calc.f = ( rf - rb ) / ( ra - rb );
-		//			return calc;
-		//		} ) );
-		//		Animation finisher = l -> {
-		//			scene.setProjectionCalculator( perspCalculator );
-		//			canvas.display( );
-		//			return 0;
-		//		};
-		//		finisher = finisher.also( new AnimationViewSaver( ) );
-		//		protectedAnimations.put( finisher , null );
-		//		cameraAnimationQueue.add( finisher );
-		
 		float[ ] forward = new float[ 3 ];
 		float[ ] right = new float[ 3 ];
 		
 		Vecmath.negate3( scene.inverseViewXform( ) , 8 , forward , 0 );
 		Vecmath.getColumn3( scene.inverseViewXform( ) , 0 , right );
 		
-		changeView( forward , right , false , getDefaultShotsToFitForChangeView( ) );
+		changeView( forward , right , false , getDefaultShotsForOperations( ) );
 	}
 	
 	public void planMode( )
 	{
-		changeView( new float[ ] { 0 , -1 , 0 } , new float[ ] { 1 , 0 , 0 } , true , getDefaultShotsToFitForChangeView( ) );
-		
-		// scene.getViewXform( v );
-		// Vecmath.setRow4( v , 0 , 1 , 0 , 0 , 0 );
-		// Vecmath.setRow4( v , 1 , 0 , 0 , -1 , 0 );
-		// Vecmath.setRow4( v , 2 , 0 , 1 , 0 , 0 );
-		// Vecmath.setRow4( v , 3 , 0 , 0 , 0 , 1 );
-		// scene.setViewXform( v );
+		changeView( new float[ ] { 0 , -1 , 0 } , new float[ ] { 1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
 	}
 	
 	public void northFacingProfileMode( )
 	{
-		changeView( new float[ ] { 0 , 0 , -1 } , new float[ ] { 1 , 0 , 0 } , true , getDefaultShotsToFitForChangeView( ) );
+		changeView( new float[ ] { 0 , 0 , -1 } , new float[ ] { 1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
 	}
 	
 	public void southFacingProfileMode( )
 	{
-		changeView( new float[ ] { 0 , 0 , 1 } , new float[ ] { -1 , 0 , 0 } , true , getDefaultShotsToFitForChangeView( ) );
+		changeView( new float[ ] { 0 , 0 , 1 } , new float[ ] { -1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
 	}
 	
 	public void eastFacingProfileMode( )
 	{
-		changeView( new float[ ] { 1 , 0 , 0 } , new float[ ] { 0 , 0 , 1 } , true , getDefaultShotsToFitForChangeView( ) );
+		changeView( new float[ ] { 1 , 0 , 0 } , new float[ ] { 0 , 0 , 1 } , true , getDefaultShotsForOperations( ) );
 	}
 	
 	public void westFacingProfileMode( )
 	{
-		changeView( new float[ ] { -1 , 0 , 0 } , new float[ ] { 0 , 0 , -1 } , true , getDefaultShotsToFitForChangeView( ) );
+		changeView( new float[ ] { -1 , 0 , 0 } , new float[ ] { 0 , 0 , -1 } , true , getDefaultShotsForOperations( ) );
+	}
+	
+	public void autoProfileMode( )
+	{
+		Set<Shot3d> shots = getDefaultShotsForOperations( );
+		List<float[ ]> forFitting = new ArrayList<>( );
+		SurveyTableModel tableModel = surveyDrawer.table( ).getModel( );
+		for( Shot3d shot : shots )
+		{
+			Shot origShot = tableModel.shotAtRow( tableModel.rowOfShot( shot.getNumber( ) ) );
+			forFitting.add( new float[ ] { ( float ) origShot.from.position[ 0 ] , ( float ) origShot.from.position[ 2 ] } );
+			forFitting.add( new float[ ] { ( float ) origShot.to.position[ 0 ] , ( float ) origShot.to.position[ 2 ] } );
+		}
+		
+		float[ ] fit = Fitting.theilSen( forFitting );
+		
+		double azimuth = Math.atan2( 1 , -fit[ 0 ] );
+		
+		float[ ] right = new float[ ] { ( float ) Math.sin( azimuth ) , 0 , ( float ) -Math.cos( azimuth ) };
+		float[ ] forward = new float[ ] { ( float ) Math.sin( azimuth - Math.PI * 0.5 ) , 0 , ( float ) -Math.cos( azimuth - Math.PI * 0.5 ) };
+		
+		if( Vecmath.dot3( scene.inverseViewXform( ) , 8 , forward , 0 ) > 0 )
+		{
+			Vecmath.negate3( right );
+			Vecmath.negate3( forward );
+		}
+		
+		changeView( forward , right , true , shots );
 	}
 	
 	protected Stream<Shot> getShotsFromTable( )
@@ -1174,7 +1184,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				.mapToObj( i -> model.shotAtRow( i ) ).filter( o -> o != null );
 	}
 	
-	protected Set<Shot3d> getDefaultShotsToFitForChangeView( )
+	protected Set<Shot3d> getDefaultShotsForOperations( )
 	{
 		if( model3d == null )
 		{
@@ -1258,13 +1268,9 @@ public class BreakoutMainView extends BasicJoglSetup
 			finisher = l -> {
 				orthoCalculator.useNearClipPoint = orthoCalculator.useFarClipPoint = true;
 				scene.setProjectionCalculator( orthoCalculator );
+				saveProjectionCalculator( );
 				
-				mouseAdapterChain = new MouseAdapterChain( );
-				mouseAdapterChain.addMouseAdapter( orthoNavigator );
-				mouseAdapterChain.addMouseAdapter( pickHandler );
-				mouseAdapterChain.addMouseAdapter( autoshowController );
-				mouseAdapterChain.addMouseAdapter( otherMouseHandler );
-				mouseLooper.addMouseAdapter( mouseAdapterChain );
+				installOrthoMouseAdapters( );
 				
 				canvas.display( );
 				return 0;
@@ -1296,21 +1302,16 @@ public class BreakoutMainView extends BasicJoglSetup
 			
 			finisher = l -> {
 				scene.setProjectionCalculator( perspCalculator );
+				saveProjectionCalculator( );
 				
-				mouseAdapterChain = new MouseAdapterChain( );
-				mouseAdapterChain.addMouseAdapter( navigator );
-				mouseAdapterChain.addMouseAdapter( orbiter );
-				mouseAdapterChain.addMouseAdapter( pickHandler );
-				mouseAdapterChain.addMouseAdapter( autoshowController );
-				mouseAdapterChain.addMouseAdapter( otherMouseHandler );
-				mouseLooper.addMouseAdapter( mouseAdapterChain );
+				installPerspectiveMouseAdapters( );
 				
 				canvas.display( );
 				return 0;
 			};
 		}
 		
-		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( this , 1000 , 30 );
+		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( this , 1750 , 30 );
 		float[ ] viewXform = newMat4f( );
 		viewAnimation.setUpWithEndLocation( scene.viewXform( ) , endLocation , forward , right );
 		
@@ -1363,16 +1364,45 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 		
 		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new ProjXformAnimation( this , 1000 , false , f -> {
+		cameraAnimationQueue.add( new ProjXformAnimation( this , 1750 , false , f -> {
 			calc.f = projReparam.applyAsFloat( f );
 			return calc;
-		} ).also( new ViewXformAnimation( this , 1000 , true , f -> {
+		} ).also( new ViewXformAnimation( this , 1750 , true , f -> {
 			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
 			return viewXform;
 		} ) ) );
 		finisher = finisher.also( new AnimationViewSaver( ) );
 		protectedAnimations.put( finisher , null );
 		cameraAnimationQueue.add( finisher );
+	}
+	
+	private void installPerspectiveMouseAdapters( )
+	{
+		if( mouseAdapterChain != null )
+		{
+			mouseLooper.removeMouseAdapter( mouseAdapterChain );
+		}
+		mouseAdapterChain = new MouseAdapterChain( );
+		mouseAdapterChain.addMouseAdapter( navigator );
+		mouseAdapterChain.addMouseAdapter( orbiter );
+		mouseAdapterChain.addMouseAdapter( pickHandler );
+		mouseAdapterChain.addMouseAdapter( autoshowController );
+		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
+		mouseLooper.addMouseAdapter( mouseAdapterChain );
+	}
+	
+	private void installOrthoMouseAdapters( )
+	{
+		if( mouseAdapterChain != null )
+		{
+			mouseLooper.removeMouseAdapter( mouseAdapterChain );
+		}
+		mouseAdapterChain = new MouseAdapterChain( );
+		mouseAdapterChain.addMouseAdapter( orthoNavigator );
+		mouseAdapterChain.addMouseAdapter( pickHandler );
+		mouseAdapterChain.addMouseAdapter( autoshowController );
+		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
+		mouseLooper.addMouseAdapter( mouseAdapterChain );
 	}
 	
 	public JPanel getMainPanel( )
@@ -1435,6 +1465,11 @@ public class BreakoutMainView extends BasicJoglSetup
 					@Override
 					public LinearAxisConversion run( ) throws Throwable
 					{
+						Shot shot = model3d.getOriginalShots( ).get( picked.picked.getNumber( ) );
+						hintLabel.setText( String.format( "<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%.2f</b>&emsp;Azm: <b>%.2f</b>"
+								+ "&emsp;Inc: <b>%.2f</b>&emsp;<i>%s</i></html>" ,
+								shot.from.name , shot.to.name , shot.dist , shot.azm , shot.inc , shot.desc ) );
+						
 						LinearAxisConversion conversion = getProjectModel( ).get( ProjectModel.highlightRange );
 						LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getGlowDistAxis( ).getViewSpan( ) ) , 0.0 );
 						return conversion2;
@@ -1445,6 +1480,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 			else
 			{
+				OnEDT.onEDT( ( ) -> hintLabel.setText( " " ) );
 				model3d.updateGlow( null , null , null , glowSubtask );
 			}
 			if( !isCanceling( ) )
@@ -1591,6 +1627,36 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
+	private class MinAvgMaxCalc
+	{
+		int		count	= 0;
+		double	total	= 0.0;
+		double	min		= Double.NaN;
+		double	max		= Double.NaN;
+		
+		public void add( double value )
+		{
+			min = Vecmath.nmin( min , value );
+			max = Vecmath.nmax( max , value );
+			total += value;
+			count++ ;
+		}
+		
+		public double getAvg( )
+		{
+			return total / count;
+		}
+		
+		public QObject<MinAvgMax> toModel( )
+		{
+			QObject<MinAvgMax> result = MinAvgMax.spec.newObject( );
+			result.set( MinAvgMax.min , min );
+			result.set( MinAvgMax.avg , getAvg( ) );
+			result.set( MinAvgMax.max , max );
+			return result;
+		}
+	}
+	
 	private class TableSelectionHandler implements ListSelectionListener
 	{
 		@Override
@@ -1615,9 +1681,18 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					editor.deselect( shot3d );
 				}
+				
+				statsBinder.set( StatsModel.spec.newObject( ) );
 			}
 			else
 			{
+				MinAvgMaxCalc distCalc = new MinAvgMaxCalc( );
+				MinAvgMaxCalc northCalc = new MinAvgMaxCalc( );
+				MinAvgMaxCalc eastCalc = new MinAvgMaxCalc( );
+				MinAvgMaxCalc depthCalc = new MinAvgMaxCalc( );
+				
+				QObject<StatsModel> statsModel = StatsModel.spec.newObject( );
+				
 				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) && i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
 				{
 					Shot shot = ( Shot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
@@ -1625,15 +1700,41 @@ public class BreakoutMainView extends BasicJoglSetup
 					{
 						continue;
 					}
+					
 					if( selModel.isSelectedIndex( i ) )
 					{
 						editor.select( shot3ds.get( shot.number ) );
+						if( !Double.isNaN( shot.dist ) )
+						{
+							distCalc.add( shot.dist );
+						}
+						if( !Vecmath.hasNaNsOrInfinites( shot.from.position ) )
+						{
+							northCalc.add( -shot.from.position[ 2 ] );
+							eastCalc.add( shot.from.position[ 0 ] );
+							depthCalc.add( -shot.from.position[ 1 ] );
+						}
+						if( !Vecmath.hasNaNsOrInfinites( shot.to.position ) )
+						{
+							northCalc.add( -shot.to.position[ 2 ] );
+							eastCalc.add( shot.to.position[ 0 ] );
+							depthCalc.add( -shot.to.position[ 1 ] );
+						}
 					}
 					else
 					{
 						editor.deselect( shot3ds.get( shot.number ) );
 					}
 				}
+				
+				statsModel.set( StatsModel.numSelected , distCalc.count );
+				statsModel.set( StatsModel.totalDistance , distCalc.total );
+				statsModel.set( StatsModel.distStats , distCalc.toModel( ) );
+				statsModel.set( StatsModel.northStats , northCalc.toModel( ) );
+				statsModel.set( StatsModel.eastStats , eastCalc.toModel( ) );
+				statsModel.set( StatsModel.depthStats , depthCalc.toModel( ) );
+				
+				statsBinder.set( statsModel );
 			}
 			
 			rebuildTaskService.submit( task -> {
@@ -1721,6 +1822,11 @@ public class BreakoutMainView extends BasicJoglSetup
 		getProjectModel( ).set( ProjectModel.viewXform , viewXform );
 	}
 	
+	private void saveProjectionCalculator( )
+	{
+		getProjectModel( ).set( ProjectModel.projCalculator , scene.getProjectionCalculator( ) );
+	}
+	
 	private void replaceNulls( QObject<ProjectModel> projectModel , File projectFile )
 	{
 		if( projectModel.get( ProjectModel.cameraView ) == null )
@@ -1806,26 +1912,26 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 	}
 	
-	class SurveyFilterFactory implements RowFilterFactory<String, TableModel, Integer>
-	{
-		@Override
-		public RowFilter<TableModel, Integer> createFilter( String input )
-		{
-			switch( getProjectModel( ).get( ProjectModel.filterType ) )
-			{
-				case ALPHA_DESIGNATION:
-					return new SurveyDesignationFilter( input );
-				case REGEXP:
-					return new SurveyRegexFilter( input );
-				case SURVEYORS:
-					return new SurveyorFilter( input );
-				case DESCRIPTION:
-					return new DescriptionFilter( input );
-				default:
-					return null;
-			}
-		}
-	}
+	//	class SurveyFilterFactory implements RowFilterFactory<String, TableModel, Integer>
+	//	{
+	//		@Override
+	//		public RowFilter<TableModel, Integer> createFilter( String input )
+	//		{
+	//			switch( getProjectModel( ).get( ProjectModel.filterType ) )
+	//			{
+	//				case ALPHA_DESIGNATION:
+	//					return new SurveyDesignationFilter( input );
+	//				case REGEXP:
+	//					return new SurveyRegexFilter( input );
+	//				case SURVEYORS:
+	//					return new SurveyorFilter( input );
+	//				case DESCRIPTION:
+	//					return new DescriptionFilter( input );
+	//				default:
+	//					return null;
+	//			}
+	//		}
+	//	}
 	
 	class SurveyTableChangeHandler extends TaskServiceBatcher<TableModelEvent> implements TableModelListener
 	{
@@ -2313,6 +2419,27 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					finalProjectModel.changeSupport( ).addPropertyChangeListener( projectPersister );
 					projectModelBinder.set( finalProjectModel );
+					
+					float[ ] viewXform = finalProjectModel.get( ProjectModel.viewXform );
+					if( viewXform != null )
+					{
+						scene.setViewXform( viewXform );
+					}
+					
+					ProjectionCalculator projCalculator = finalProjectModel.get( ProjectModel.projCalculator );
+					if( projCalculator != null )
+					{
+						scene.setProjectionCalculator( projCalculator );
+					}
+					
+					if( finalProjectModel.get( ProjectModel.cameraView ) == CameraView.PERSPECTIVE )
+					{
+						installPerspectiveMouseAdapters( );
+					}
+					else
+					{
+						installOrthoMouseAdapters( );
+					}
 				}
 			};
 			

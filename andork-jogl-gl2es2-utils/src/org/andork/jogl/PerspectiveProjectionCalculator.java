@@ -17,7 +17,7 @@ public class PerspectiveProjectionCalculator implements ProjectionCalculator
 		this.zNear = zNear;
 		this.zFar = zFar;
 	}
-	
+
 	@Override
 	public void calculate( JoglDrawContext dc , float[ ] pOut )
 	{

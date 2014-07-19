@@ -474,6 +474,7 @@ public class SettingsDrawer extends Drawer
 		ButtonSelectedBinder.bind( viewButtonsPanel.getSouthButton( ) , bindEquals( CameraView.SOUTH_FACING_PROFILE , cameraViewBinder ) );
 		ButtonSelectedBinder.bind( viewButtonsPanel.getEastButton( ) , bindEquals( CameraView.EAST_FACING_PROFILE , cameraViewBinder ) );
 		ButtonSelectedBinder.bind( viewButtonsPanel.getWestButton( ) , bindEquals( CameraView.WEST_FACING_PROFILE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getAutoProfileButton( ) , bindEquals( CameraView.AUTO_PROFILE , cameraViewBinder ) );
 		JSliderValueBinder.bind( mouseSensitivitySlider , mouseSensitivityBinder );
 		JSliderValueBinder.bind( mouseWheelSensitivitySlider , mouseWheelSensitivityBinder );
 		PlotAxisConversionBinder.bind( distColorationAxis , distRangeBinder );
@@ -518,6 +519,11 @@ public class SettingsDrawer extends Drawer
 		{
 			localizer.setFormattedText( numSamplesLabel , "numSamplesLabel.text.on" , numSamplesSlider.getValue( ) );
 		}
+	}
+	
+	public ViewButtonsPanel getViewButtonsPanel( )
+	{
+		return viewButtonsPanel;
 	}
 	
 	public JButton getProjectFileMenuButton( )
@@ -581,12 +587,12 @@ public class SettingsDrawer extends Drawer
 	{
 		return resetDepthAxisTiltButton;
 	}
-
+	
 	public JButton getCameraToDepthAxisTiltButton( )
 	{
 		return cameraToDepthAxisTiltButton;
 	}
-
+	
 	public AbstractButton getFitParamColorationAxisButton( )
 	{
 		return fitParamColorationAxisButton;
