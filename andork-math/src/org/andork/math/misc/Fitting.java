@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.andork.vecmath.VecmathUtils;
+
 public class Fitting
 {
 	/**
@@ -65,6 +67,11 @@ public class Fitting
 		
 		for( float[ ] point : points )
 		{
+			if (Float.isNaN( point[0] ) || Float.isNaN( point[1] ) ||
+					Float.isInfinite( point[0] ) || Float.isNaN( point[1] )) {
+				continue;
+			}
+
 			B0 += 2f * point[ 1 ];
 			B1 += 2f * point[ 1 ] * point[ 0 ];
 			

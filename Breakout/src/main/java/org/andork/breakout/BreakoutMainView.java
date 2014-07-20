@@ -1156,6 +1156,11 @@ public class BreakoutMainView extends BasicJoglSetup
 		
 		float[ ] fit = Fitting.linearLeastSquares2f( forFitting );
 		
+		if( Vecmath.hasNaNsOrInfinites( fit ) )
+		{
+			return;
+		}
+		
 		double azimuth = Math.atan2( 1 , -fit[ 0 ] );
 		
 		float[ ] right = new float[ ] { ( float ) Math.sin( azimuth ) , 0 , ( float ) -Math.cos( azimuth ) };
@@ -1223,6 +1228,11 @@ public class BreakoutMainView extends BasicJoglSetup
 	
 	private void changeView( float[ ] forward , float[ ] right , boolean ortho , Set<Shot3d> shotsToFit )
 	{
+		if( Vecmath.hasNaNsOrInfinites( forward ) || Vecmath.hasNaNsOrInfinites( right ) )
+		{
+			throw new IllegalArgumentException( "forward and right must not contain NaN or infinite values" );
+		}
+		
 		mouseLooper.removeMouseAdapter( mouseAdapterChain );
 		
 		float[ ] up = new float[ 3 ];

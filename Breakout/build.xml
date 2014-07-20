@@ -240,7 +240,7 @@
 		<jar jarfile="${dist}/${ant.project.name}.jar" basedir="${build.update}" manifest="MANIFEST-update.MF" />
 	</target>
 
-	<target name="compile-main" depends="init,compile-deps,copy-deps-shared" description="compile the main source">
+	<target name="compile-main" depends="init,buildstamp,compile-deps,copy-deps-shared" description="compile the main source">
 		<!-- Compile the java code from ${src.main} into ${build} -->
 		<path id="master-classpath">
 			<fileset dir="${dist}/lib">
