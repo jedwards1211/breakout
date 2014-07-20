@@ -51,4 +51,40 @@ public class Fitting
 		
 		return result;
 	}
+	
+	/**
+	 * Performs a linear least-squares fit.
+	 * @param points
+	 *        a list of 2-dimensional points (x, y)
+	 * @return [m, b] such that the least-fit line is y = m*x + b
+	 */
+	public static float[ ] linearLeastSquares2f( List<float[ ]> points )
+	{
+		float A0 = 0, A1 = 0, A2 = 0, A3 = 0;
+		float B0 = 0, B1 = 0;
+		
+		for( float[ ] point : points )
+		{
+			B0 += 2f * point[ 1 ];
+			B1 += 2f * point[ 1 ] * point[ 0 ];
+			
+			A0 += 2f;
+			A1 += 2f * point[ 0 ];
+			A2 += 2f * point[ 0 ];
+			A3 += 2f * point[ 0 ] * point[ 0 ];
+		}
+		
+		float det = A0 * A3 - A1 * A2;
+		if( det == 0f )
+		{
+			return new float[ ] { Float.NaN , Float.NaN };
+		}
+		
+		float rdet = 1f / det;
+		
+		float b = rdet * ( A3 * B0 - A2 * B1 );
+		float m = rdet * ( -A1 * B0 + A0 * B1 );
+		
+		return new float[ ] { m , b };
+	}
 }

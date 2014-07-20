@@ -200,7 +200,6 @@ public class BasicOrthoNavigator extends MouseAdapter
 			vi[ 13 ] += vi[ 1 ] * -dx - vi[ 5 ] * dy;
 			vi[ 14 ] += vi[ 2 ] * -dx - vi[ 6 ] * dy;
 			Vecmath.invAffine( vi , v );
-			System.out.println( Vecmath.prettyPrint( v , 4 ) );
 			scene.setViewXform( v );
 		}
 		

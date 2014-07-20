@@ -1154,7 +1154,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			forFitting.add( new float[ ] { ( float ) origShot.to.position[ 0 ] , ( float ) origShot.to.position[ 2 ] } );
 		}
 		
-		float[ ] fit = Fitting.theilSen( forFitting );
+		float[ ] fit = Fitting.linearLeastSquares2f( forFitting );
 		
 		double azimuth = Math.atan2( 1 , -fit[ 0 ] );
 		
