@@ -24,7 +24,7 @@
 		<mkdir dir="${build.main}" />
 		<mkdir dir="${build.update}" />
 	</target>
-	
+
 	<target name="buildstamp" depends="init">
 		<filter token="timestamp" value="${time.start}" />
 		<copy file="src/main/java/org/andork/breakout/version.properties.in" tofile="src/main/java/org/andork/breakout/version.properties" overwrite="true" filtering="true" preservelastmodified="true" />
@@ -115,12 +115,12 @@
 	</target>
 
 	<target name="copy-resources">
-		<copy todir="${build.main}">
+		<copy todir="${build.main}" overwrite="true">
 			<fileset dir="${src.main}">
 				<exclude name="**/*.java" />
 			</fileset>
 		</copy>
-		<copy todir="${build.update}">
+		<copy todir="${build.update}" overwrite="true">
 			<fileset dir="${src.update}">
 				<exclude name="**/*.java" />
 			</fileset>
