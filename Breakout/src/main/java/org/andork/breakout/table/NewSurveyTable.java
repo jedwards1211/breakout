@@ -9,16 +9,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
 import org.andork.breakout.model.SurveyTableModel;
-import org.andork.breakout.table.NewSurveyTableModel.SurveyColumn;
 import org.andork.breakout.table.NewSurveyTableModel.Row;
 import org.andork.q.QObject;
 import org.andork.swing.table.AnnotatingJTable;
@@ -26,10 +24,7 @@ import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.FormatAndDisplayInfo;
 import org.andork.swing.table.FormattedTextTableCellEditor;
 import org.andork.swing.table.FormattedTextTableCellRenderer;
-import org.andork.swing.table.MultiFormattedTextTableCellEditor;
-import org.andork.swing.table.MultiFormattedTextTableCellEditor2;
 import org.andork.swing.table.NiceTableModel.Column;
-import org.andork.swing.table.NiceTableModel.FormattedTextColumn;
 import org.andork.util.DateFormatWrapper;
 import org.andork.util.FormatWarning;
 import org.andork.util.FormattedText;
@@ -37,8 +32,7 @@ import org.andork.util.FormattedText;
 @SuppressWarnings( "serial" )
 public class NewSurveyTable extends AnnotatingJTable
 {
-	public static final Map<Class<?>, List<FormatAndDisplayInfo<?>>>		formatMap;
-	private static final Map<Class<?>, MultiFormattedTextTableCellEditor2>	editorMap;
+	public static final Map<Class<?>, List<FormatAndDisplayInfo<?>>>	formatMap;
 	
 	public static List<FormatAndDisplayInfo<?>> getAvailableFormats( Class<?> type )
 	{
@@ -64,12 +58,20 @@ public class NewSurveyTable extends AnnotatingJTable
 				"<html><b>Distance/Azimuth/Inclination (Corrected)</b><br>Examples:<br>\"15 183 -9\"<br>\"6.0 183/184.5 -9/-10\"<br>\"15 -90\"</html>" ,
 				null ) );
 		l.add( new FormatAndDisplayInfo<>( new NorthEastElevVectorMeasurementFormat( ) ,
-				"NEEv" ,
+				"NEV" ,
 				"<html><b>North/East/Elevation Offset</b><br><i>Positive elevation is up.</i><br>Example: \"150.0 -23.5 -5.0\"</html>" ,
 				null ) );
 		l.add( new FormatAndDisplayInfo<>( new NorthEastDepthVectorMeasurementFormat( ) ,
-				"NEDp" ,
+				"NED" ,
 				"<html><b>North/East/Depth Offset</b><br><i>Positive depth is down.</i><br>Example: \"150.0 -23.5 5.0\"</html>" ,
+				null ) );
+		l.add( new FormatAndDisplayInfo<>( new NorthEastElevFixedToStationShotMeasurementFormat( ) ,
+				"ToNEV" ,
+				"<html><b>North/East/Elevation of To Station</b><br><i>Positive elevation is up.</i><br>Example: \"150.0 -23.5 -5.0\"</html>" ,
+				null ) );
+		l.add( new FormatAndDisplayInfo<>( new NorthEastDepthFixedToStationShotMeasurementFormat( ) ,
+				"ToNED" ,
+				"<html><b>North/East/Depth of To Station</b><br><i>Positive depth is down.</i><br>Example: \"150.0 -23.5 5.0\"</html>" ,
 				null ) );
 		m.put( ShotMeasurement.class , Collections.unmodifiableList( l ) );
 		
@@ -116,13 +118,6 @@ public class NewSurveyTable extends AnnotatingJTable
 		m.put( Date.class , Collections.unmodifiableList( l ) );
 		
 		formatMap = Collections.unmodifiableMap( m );
-		
-		editorMap = new HashMap<>( );
-		
-		for( Map.Entry<Class<?>, List<FormatAndDisplayInfo<?>>> entry : formatMap.entrySet( ) )
-		{
-			editorMap.put( entry.getKey( ) , new MultiFormattedTextTableCellEditor2( entry.getValue( ) ) );
-		}
 	}
 	
 	public NewSurveyTable( )
@@ -144,52 +139,28 @@ public class NewSurveyTable extends AnnotatingJTable
 					return Color.RED;
 				} ) );
 		setAutoCreateColumnsFromModel( true );
-	}
-	
-	@Override
-	public void setCellEditor( TableCellEditor anEditor )
-	{
-		super.setCellEditor( anEditor );
-		if( anEditor instanceof MultiFormattedTextTableCellEditor )
-		{
-			( ( MultiFormattedTextTableCellEditor ) anEditor ).requestTextFieldFocus( );
-		}
+		setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
 	}
 	
 	@Override
 	public void createDefaultColumnsFromModel( )
 	{
-		super.createDefaultColumnsFromModel( );
-		
-		NewSurveyTableModel model = getModel( );
-		
-		int modelIndex = 0;
-		for( Column<QObject<Row>> column : model.getColumns( ) )
+		SurveyTableColumnModel columnModel;
+		if( getColumnModel( ) instanceof SurveyTableColumnModel )
 		{
-			int viewIndex = convertColumnIndexToView( modelIndex );
-			
-			if( viewIndex >= 0 )
-			{
-				TableColumn tc = getColumnModel( ).getColumn( viewIndex );
-				
-				if( column instanceof SurveyColumn )
-				{
-					column = ( ( SurveyColumn ) column ).wrapped;
-				}
-				
-				if( column instanceof FormattedTextColumn )
-				{
-					Class<?> valueClass = ( ( FormattedTextColumn ) column ).valueClass;
-					
-					TableCellEditor editor = editorMap.get( valueClass );
-					if( editor != null )
-					{
-						tc.setCellEditor( editor );
-					}
-				}
-			}
-			modelIndex++ ;
+			columnModel = ( SurveyTableColumnModel ) getColumnModel( );
 		}
+		else
+		{
+			columnModel = new SurveyTableColumnModel( );
+		}
+		
+		if( getModel( ) instanceof NewSurveyTableModel )
+		{
+			columnModel.setColumnModels( ( ( NewSurveyTableModel ) getModel( ) ).getColumnModels( ) );
+		}
+		
+		setColumnModel( columnModel );
 	}
 	
 	public void setRowSorter( RowSorter<? extends TableModel> sorter )

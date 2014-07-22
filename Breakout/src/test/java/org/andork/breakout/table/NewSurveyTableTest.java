@@ -1,15 +1,13 @@
 package org.andork.breakout.table;
 
 import java.awt.Color;
-import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.swing.JButton;
+
 import org.andork.breakout.model.SurveyTableModel;
-import org.andork.breakout.table.NewSurveyTableModel.ColumnModel;
-import org.andork.breakout.table.NewSurveyTableModel.CustomColumnType;
 import org.andork.breakout.table.NewSurveyTableModel.NewSurveyTableModelCopier;
-import org.andork.q.QObject;
 import org.andork.swing.OnEDT;
 import org.andork.swing.QuickTestFrame;
 import org.andork.swing.table.AnnotatingTableRowSorter;
@@ -45,8 +43,7 @@ public class NewSurveyTableTest
 					return null;
 				} );
 			
-			NewSurveyTableMenuButton menuButton = new NewSurveyTableMenuButton( table );
-			setup.scrollPane.setTopRightCornerComp( menuButton );
+			setup.scrollPane.setTopRightCornerComp( new JButton( new CustomizeNewSurveyTableAction( table ) ) );
 			
 			QuickTestFrame.frame( setup.scrollPane ).setVisible( true );
 		} );

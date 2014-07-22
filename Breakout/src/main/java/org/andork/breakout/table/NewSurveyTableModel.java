@@ -41,7 +41,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		}
 	}
 	
-	public static enum CustomColumnType
+	public static enum SurveyColumnType
 	{
 		STRING( "Text" , String.class )
 		{
@@ -80,7 +80,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		public final String										displayName;
 		public final Class<?>									valueClass;
 		
-		private static final Map<Class<?>, CustomColumnType>	valueClassMap;
+		private static final Map<Class<?>, SurveyColumnType>	valueClassMap;
 		
 		static
 		{
@@ -88,12 +88,12 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 					type -> type.valueClass ) );
 		}
 		
-		public static CustomColumnType fromValueClass( Class<?> valueClass )
+		public static SurveyColumnType fromValueClass( Class<?> valueClass )
 		{
 			return valueClassMap.get( valueClass );
 		}
 		
-		private CustomColumnType( String displayName , Class<?> valueClass )
+		private SurveyColumnType( String displayName , Class<?> valueClass )
 		{
 			this.displayName = displayName;
 			this.valueClass = valueClass;
@@ -105,38 +105,22 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		}
 	}
 	
-	public final SurveyColumn						fromColumn;
-	public final SurveyColumn						toColumn;
-	public final SurveyColumn						shotMeasurementColumn;
-	public final SurveyColumn						fromCrossSectionColumn;
-	public final SurveyColumn						toCrossSectionColumn;
+	public final SurveyColumn								fromColumn;
+	public final SurveyColumn								toColumn;
+	public final SurveyColumn								shotMeasurementColumn;
+	public final SurveyColumn								fromCrossSectionColumn;
+	public final SurveyColumn								toCrossSectionColumn;
 	
-	private final Map<String, SurveyColumn>			fixedColumns	= new LinkedHashMap<>( );
-	private final Map<String, QObject<ColumnModel>>	columnModels	= new LinkedHashMap<>( );
-	
-	public static class ColumnModel extends QSpec<ColumnModel>
-	{
-		public static final Attribute<Boolean>					fixed			= newAttribute( Boolean.class , "Fixed" );
-		public static final Attribute<Boolean>					visible			= newAttribute( Boolean.class , "Show" );
-		public static final Attribute<String>					name			= newAttribute( String.class , "Name" );
-		public static final Attribute<CustomColumnType>			type			= newAttribute( CustomColumnType.class , "Type" );
-		public static final Attribute<FormatAndDisplayInfo<?>>	defaultFormat	= newAttribute( FormatAndDisplayInfo.class , "Default Format" );
-		
-		public static final ColumnModel							instance		= new ColumnModel( );
-		
-		private ColumnModel( )
-		{
-			
-		}
-	}
+	private final Map<String, SurveyColumn>					fixedColumns		= new LinkedHashMap<>( );
+	private final Map<String, QObject<SurveyColumnModel>>	surveyColumnModels	= new LinkedHashMap<>( );
 	
 	public static final class SurveyColumn implements Column<QObject<Row>>
 	{
 		public final Column<QObject<Row>>	wrapped;
-		public final CustomColumnType		type;
-		Format<?>							defaultFormat;
+		public final SurveyColumnType		type;
+		FormatAndDisplayInfo<?>				defaultFormat;
 		
-		private SurveyColumn( CustomColumnType type , Column<QObject<Row>> wrapped )
+		private SurveyColumn( SurveyColumnType type , Column<QObject<Row>> wrapped )
 		{
 			super( );
 			this.wrapped = type.createColumn( wrapped );
@@ -144,7 +128,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 			setDefaultFormat( NewSurveyTable.getDefaultFormat( type.valueClass ) );
 		}
 		
-		public SurveyColumn( String name , CustomColumnType type , Format<?> defaultFormat )
+		public SurveyColumn( String name , SurveyColumnType type , FormatAndDisplayInfo<?> defaultFormat )
 		{
 			super( );
 			this.wrapped = type.createColumn( name );
@@ -152,13 +136,18 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 			setDefaultFormat( defaultFormat );
 		}
 		
-		private void setDefaultFormat( Format<?> defaultFormat )
+		private void setDefaultFormat( FormatAndDisplayInfo<?> defaultFormat )
 		{
 			this.defaultFormat = defaultFormat;
 			if( wrapped instanceof FormattedTextColumn )
 			{
 				( ( FormattedTextColumn ) wrapped ).setFormattedTextSupplier( ( ) -> new FormattedText( defaultFormat ) );
 			}
+		}
+		
+		public FormatAndDisplayInfo<?> getDefaultFormat( )
+		{
+			return defaultFormat;
 		}
 		
 		@Override
@@ -200,11 +189,11 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	
 	public NewSurveyTableModel( )
 	{
-		fromColumn = new SurveyColumn( CustomColumnType.STRING , QObjectColumn.newInstance( Row.spec , Row.from ) );
-		toColumn = new SurveyColumn( CustomColumnType.STRING , QObjectColumn.newInstance( Row.spec , Row.to ) );
-		shotMeasurementColumn = new SurveyColumn( CustomColumnType.SHOT_MEASUREMENT , QObjectColumn.newInstance( Row.spec , Row.shotMeasurement ) );
-		fromCrossSectionColumn = new SurveyColumn( CustomColumnType.CROSS_SECTION , QObjectColumn.newInstance( Row.spec , Row.fromCrossSection ) );
-		toCrossSectionColumn = new SurveyColumn( CustomColumnType.CROSS_SECTION , QObjectColumn.newInstance( Row.spec , Row.toCrossSection ) );
+		fromColumn = new SurveyColumn( SurveyColumnType.STRING , QObjectColumn.newInstance( Row.spec , Row.from ) );
+		toColumn = new SurveyColumn( SurveyColumnType.STRING , QObjectColumn.newInstance( Row.spec , Row.to ) );
+		shotMeasurementColumn = new SurveyColumn( SurveyColumnType.SHOT_MEASUREMENT , QObjectColumn.newInstance( Row.spec , Row.shotMeasurement ) );
+		fromCrossSectionColumn = new SurveyColumn( SurveyColumnType.CROSS_SECTION , QObjectColumn.newInstance( Row.spec , Row.fromCrossSection ) );
+		toCrossSectionColumn = new SurveyColumn( SurveyColumnType.CROSS_SECTION , QObjectColumn.newInstance( Row.spec , Row.toCrossSection ) );
 		
 		setColumns( Arrays.asList(
 				fromColumn ,
@@ -218,14 +207,14 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		{
 			SurveyColumn col = ( SurveyColumn ) column;
 			fixedColumns.put( col.getColumnName( ) , col );
-			QObject<ColumnModel> colModel = ColumnModel.instance.newObject( );
-			colModel.set( ColumnModel.name , col.getColumnName( ) );
-			colModel.set( ColumnModel.visible , true );
-			colModel.set( ColumnModel.fixed , true );
-			colModel.set( ColumnModel.type , col.type );
-			colModel.set( ColumnModel.defaultFormat , col.defaultFormat );
+			QObject<SurveyColumnModel> colModel = SurveyColumnModel.instance.newObject( );
+			colModel.set( SurveyColumnModel.name , col.getColumnName( ) );
+			colModel.set( SurveyColumnModel.visible , true );
+			colModel.set( SurveyColumnModel.fixed , true );
+			colModel.set( SurveyColumnModel.type , col.type );
+			colModel.set( SurveyColumnModel.defaultFormat , col.defaultFormat );
 			
-			columnModels.put( column.getColumnName( ) , colModel );
+			surveyColumnModels.put( column.getColumnName( ) , colModel );
 		}
 		
 		addRow( Row.spec.newObject( ) );
@@ -317,31 +306,31 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		updateEndRows( );
 	}
 	
-	public List<QObject<ColumnModel>> getColumnModels( )
+	public List<QObject<SurveyColumnModel>> getColumnModels( )
 	{
-		return new ArrayList<>( columnModels.values( ) );
+		return new ArrayList<>( surveyColumnModels.values( ) );
 	}
 	
-	public void setColumnModels( Collection<? extends QObject<ColumnModel>> newColumnModels )
+	public void setColumnModels( Collection<? extends QObject<SurveyColumnModel>> newColumnModels )
 	{
 		List<SurveyColumn> newColumns = new ArrayList<>( );
 		
-		columnModels.clear( );
+		surveyColumnModels.clear( );
 		
-		for( QObject<ColumnModel> colModel : newColumnModels )
+		for( QObject<SurveyColumnModel> colModel : newColumnModels )
 		{
-			columnModels.put( colModel.get( ColumnModel.name ) , colModel );
-			if( !Boolean.TRUE.equals( colModel.get( ColumnModel.visible ) ) )
-			{
-				continue;
-			}
-			SurveyColumn column = fixedColumns.get( colModel.get( ColumnModel.name ) );
+			surveyColumnModels.put( colModel.get( SurveyColumnModel.name ) , colModel );
+			//			if( !Boolean.TRUE.equals( colModel.get( SurveyColumnModel.visible ) ) )
+			//			{
+			//				continue;
+			//			}
+			SurveyColumn column = fixedColumns.get( colModel.get( SurveyColumnModel.name ) );
 			if( column == null )
 			{
 				column = new SurveyColumn(
-						colModel.get( ColumnModel.name ) ,
-						colModel.get( ColumnModel.type ) ,
-						colModel.get( ColumnModel.defaultFormat ) );
+						colModel.get( SurveyColumnModel.name ) ,
+						colModel.get( SurveyColumnModel.type ) ,
+						colModel.get( SurveyColumnModel.defaultFormat ) );
 			}
 			newColumns.add( column );
 		}

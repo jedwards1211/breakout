@@ -2,105 +2,65 @@ package org.andork.swing.table;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Font;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.awt.Rectangle;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.DefaultCellEditor;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 
-import org.andork.util.Format;
+import org.andork.swing.selector.DefaultSelector;
+import org.andork.swing.selector.FormatAndDisplayInfoListCellRenderer;
 import org.andork.util.FormattedText;
 import org.andork.util.StringUtils;
 
+@SuppressWarnings( "serial" )
 public class MultiFormattedTextTableCellEditor extends DefaultCellEditor
 {
-	final List<Format>			availableFormats	= new ArrayList<Format>( );
-	final Map<Format, Icon>		icons				= new HashMap<>( );
-	final Map<Format, String>	abbrevs				= new HashMap<>( );
-	final Map<Format, String>	descriptions		= new HashMap<>( );
+	final DefaultSelector<FormatAndDisplayInfo<?>>	formatSelector;
+	FormatAndDisplayInfo<?>							defaultFormat;
 	
-	JPanel						rootPanel;
-	JButton						formatButton		= new JButton( );
+	Border											compoundBorder;
+	Border											outerBorder;
 	
-	Format						currentFormat;
+	public MultiFormattedTextTableCellEditor( )
+	{
+		this( new JTextField( ) , new DefaultSelector<>( ) );
+		FormatAndDisplayInfoListCellRenderer.setUpComboBox( formatSelector.getComboBox( ) );
+	}
 	
-	private static final Icon	dropdownIcon		= new ImageIcon( MultiFormattedTextTableCellEditor.class.getResource( "dropdown.png" ) );
+	public MultiFormattedTextTableCellEditor( Collection<? extends FormatAndDisplayInfo<?>> formats )
+	{
+		this( );
+		formatSelector.setAvailableValues( formats );
+		defaultFormat = formats.isEmpty( ) ? null : formats.iterator( ).next( );
+	}
 	
-	public MultiFormattedTextTableCellEditor( JTextField textField )
+	public MultiFormattedTextTableCellEditor( JTextField textField , DefaultSelector<FormatAndDisplayInfo<?>> formatSelector )
 	{
 		super( textField );
-		textField.setBorder( null );
-		textField.setRequestFocusEnabled( true );
-		rootPanel = new JPanel( );
-		rootPanel.setLayout( new BorderLayout( 0 , 0 ) );
-		rootPanel.setFocusable( false );
-		formatButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
-		formatButton.setFocusable( false );
-		formatButton.addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				JPopupMenu popup = new JPopupMenu( );
-				for( Format format : availableFormats )
-				{
-					JMenuItem item = new JMenuItem( descriptions.get( format ) , icons.get( format ) );
-					item.setFont( item.getFont( ).deriveFont( Font.PLAIN ) );
-					popup.add( item );
-					
-					item.addActionListener( new ActionListener( )
-					{
-						@Override
-						public void actionPerformed( ActionEvent e )
-						{
-							setCurrentFormat( format );
-						}
-					} );
-				}
-				
-				popup.show( formatButton , 0 , formatButton.getHeight( ) );
-			}
-		} );
-		rootPanel.add( textField , BorderLayout.CENTER );
-		rootPanel.add( formatButton , BorderLayout.EAST );
+		this.formatSelector = formatSelector;
+		outerBorder = textField.getBorder( );
+		textField.setBorder( compoundBorder = new CompoundBorder( outerBorder , new InnerBorder( ) ) );
+		textField.setLayout( new Layout( ) );
+		textField.add( formatSelector.getComboBox( ) , BorderLayout.EAST );
 	}
 	
-	public void requestTextFieldFocus( )
+	public FormatAndDisplayInfo<?> getDefaultFormat( )
 	{
-		getComponent( ).requestFocus( );
+		return defaultFormat;
 	}
 	
-	public void addFormat( Format format , String description , String abbrev , Icon icon )
+	public void setDefaultFormat( FormatAndDisplayInfo<?> defaultFormat )
 	{
-		availableFormats.add( format );
-		icons.put( format , icon );
-		abbrevs.put( format , abbrev );
-		descriptions.put( format , description );
-	}
-	
-	private void setCurrentFormat( Format format )
-	{
-		currentFormat = format;
-		Icon icon = currentFormat == null ? null : icons.get( currentFormat );
-		if( icon == null )
-		{
-			icon = dropdownIcon;
-		}
-		formatButton.setIcon( icon );
-		formatButton.setText( currentFormat == null ? null : abbrevs.get( currentFormat ) );
+		this.defaultFormat = defaultFormat;
 	}
 	
 	@Override
@@ -111,7 +71,7 @@ public class MultiFormattedTextTableCellEditor extends DefaultCellEditor
 		{
 			return null;
 		}
-		FormattedText result = new FormattedText( currentFormat );
+		FormattedText result = new FormattedText( formatSelector.getSelection( ) );
 		result.setText( value.toString( ) );
 		return result;
 	}
@@ -119,19 +79,67 @@ public class MultiFormattedTextTableCellEditor extends DefaultCellEditor
 	@Override
 	public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row , int column )
 	{
-		Format format = null;
+		FormatAndDisplayInfo<?> format = null;
 		if( value instanceof FormattedText )
 		{
 			FormattedText currentFormattedText = ( FormattedText ) value;
 			value = currentFormattedText.getText( );
-			format = currentFormattedText.getFormat( );
+			if( currentFormattedText.getFormat( ) instanceof FormatAndDisplayInfo )
+			{
+				format = ( FormatAndDisplayInfo<?> ) currentFormattedText.getFormat( );
+			}
 		}
 		if( format == null )
 		{
-			format = availableFormats.get( 0 );
+			format = defaultFormat;
 		}
-		setCurrentFormat( format );
-		super.getTableCellEditorComponent( table , value , isSelected , row , column );
-		return rootPanel;
+		formatSelector.setSelection( format );
+		JTextField textField = ( JTextField ) super.getTableCellEditorComponent( table , value , isSelected , row , column );
+		textField.setBorder( compoundBorder );
+		textField.setLayout( new Layout( ) );
+		textField.add( formatSelector.getComboBox( ) , BorderLayout.EAST );
+		return textField;
+	}
+	
+	private class Layout extends BorderLayout
+	{
+		@Override
+		public void layoutContainer( Container target )
+		{
+			Dimension targetSize = target.getSize( );
+			Insets insets = outerBorder.getBorderInsets( target );
+			Rectangle bounds = new Rectangle( formatSelector.getComboBox( ).getPreferredSize( ) );
+			bounds.width = Math.min( bounds.width , targetSize.width - insets.left - insets.right );
+			bounds.height = Math.min( bounds.height , targetSize.height - insets.top - insets.bottom );
+			bounds.y = insets.top;
+			bounds.x = targetSize.width - insets.right - bounds.width;
+			
+			formatSelector.getComboBox( ).setBounds( bounds );
+		}
+	}
+	
+	private class InnerBorder implements Border
+	{
+		@Override
+		public void paintBorder( Component c , Graphics g , int x , int y , int width , int height )
+		{
+		}
+		
+		@Override
+		public Insets getBorderInsets( Component c )
+		{
+			return new Insets( 0 , 0 , 0 , formatSelector.getComboBox( ).getPreferredSize( ).width );
+		}
+		
+		@Override
+		public boolean isBorderOpaque( )
+		{
+			return false;
+		}
+	}
+	
+	public void setAvailableFormats( Collection<? extends FormatAndDisplayInfo<?>> formats )
+	{
+		formatSelector.setAvailableValues( formats );
 	}
 }
