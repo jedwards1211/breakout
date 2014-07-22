@@ -5,7 +5,6 @@ import java.io.File;
 
 import org.andork.awt.layout.DrawerModel;
 import org.andork.breakout.CameraView;
-import org.andork.breakout.FilterType;
 import org.andork.func.Bimapper;
 import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;
@@ -29,7 +28,6 @@ public final class ProjectModel extends QSpec<ProjectModel>
 	public static final Attribute<ColorParam>									colorParam					= newAttribute( ColorParam.class , "colorParam" );
 	public static final Attribute<QMap<ColorParam, LinearAxisConversion, ?>>	paramRanges					= newAttribute( QMap.class , "savedParamRanges" );
 	public static final Attribute<LinearAxisConversion>							highlightRange				= newAttribute( LinearAxisConversion.class , "highlightRange" );
-	public static final Attribute<FilterType>									filterType					= newAttribute( FilterType.class , "filterType" );
 	public static final Attribute<File>											surveyFile					= newAttribute( File.class , "surveyFile" );
 	public static final Attribute<QObject<DrawerModel>>							settingsDrawer				= newAttribute( DrawerModel.instance , "settingsDrawer" );
 	public static final Attribute<QObject<DrawerModel>>							surveyDrawer				= newAttribute( DrawerModel.instance , "surveyDrawer" );

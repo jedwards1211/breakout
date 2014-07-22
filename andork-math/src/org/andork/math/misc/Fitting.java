@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.andork.vecmath.VecmathUtils;
 
@@ -56,6 +57,7 @@ public class Fitting
 	
 	/**
 	 * Performs a linear least-squares fit.
+	 * 
 	 * @param points
 	 *        a list of 2-dimensional points (x, y)
 	 * @return [m, b] such that the least-fit line is y = m*x + b
@@ -67,11 +69,12 @@ public class Fitting
 		
 		for( float[ ] point : points )
 		{
-			if (Float.isNaN( point[0] ) || Float.isNaN( point[1] ) ||
-					Float.isInfinite( point[0] ) || Float.isNaN( point[1] )) {
+			if( Float.isNaN( point[ 0 ] ) || Float.isNaN( point[ 1 ] ) ||
+					Float.isInfinite( point[ 0 ] ) || Float.isNaN( point[ 1 ] ) )
+			{
 				continue;
 			}
-
+			
 			B0 += 2f * point[ 1 ];
 			B1 += 2f * point[ 1 ] * point[ 0 ];
 			
@@ -94,4 +97,5 @@ public class Fitting
 		
 		return new float[ ] { m , b };
 	}
+	
 }

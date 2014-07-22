@@ -107,6 +107,7 @@ import org.andork.jogl.awt.anim.ViewXformAnimation;
 import org.andork.jogl.neu.JoglScene;
 import org.andork.jogl.neu.awt.BasicJoglSetup;
 import org.andork.math.misc.Fitting;
+import org.andork.math3d.Fitting3d;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LineLineIntersection2d;
 import org.andork.math3d.LinePlaneIntersection3f;
@@ -240,12 +241,15 @@ public class BreakoutMainView extends BasicJoglSetup
 		JLabel highlightLabel = new JLabel( "Highlight: " );
 		JLabel filterLabel = new JLabel( "Filter: " );
 		
-		hintLabel = new JLabel( " " );
+		hintLabel = new JLabel( "A" );
 		hintLabel.setForeground( Color.WHITE );
 		hintLabel.setBackground( Color.BLACK );
 		hintLabel.setOpaque( true );
 		Font hintFont = hintLabel.getFont( );
 		hintLabel.setFont( hintFont.deriveFont( Font.PLAIN ).deriveFont( hintFont.getSize2D( ) + 3f ) );
+		hintLabel.setPreferredSize( new Dimension( 200 , hintLabel.getPreferredSize( ).height ) );
+		hintLabel.setText( " " );
+		hintLabel.setVerticalAlignment( JLabel.TOP );
 		
 		final SortRunner sortRunner = new SortRunner( )
 		{
@@ -835,7 +839,28 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					return;
 				}
-				getProjectModel( ).set( ProjectModel.depthAxis , new WeightedAverageTiltAxisInferrer( ).inferTiltAxis( model3d.getOriginalShots( ) ) );
+				List<float[ ]> vectors = new ArrayList<>( );
+				for( Shot3d shot3d : getDefaultShotsForOperations( ) )
+				{
+					SurveyTableModel tableModel = surveyDrawer.table( ).getModel( );
+					Shot shot = tableModel.shotAtRow( tableModel.rowOfShot( shot3d.getNumber( ) ) );
+					float[ ] vector = new float[ 3 ];
+					Vecmath.sub3( shot.to.position , shot.from.position , vector );
+					
+					if( !Vecmath.hasNaNsOrInfinites( vector ) )
+					{
+						vectors.add( vector );
+					}
+				}
+				float[ ] normal = Fitting3d.planeNormalLeastSquares2f( vectors.stream( ) );
+				Vecmath.normalize3( normal );
+				
+				if( normal[ 1 ] > 0 )
+				{
+					Vecmath.negate3( normal );
+				}
+				
+				getProjectModel( ).set( ProjectModel.depthAxis , normal );
 			}
 		} );
 		
@@ -1842,10 +1867,6 @@ public class BreakoutMainView extends BasicJoglSetup
 		if( projectModel.get( ProjectModel.cameraView ) == null )
 		{
 			projectModel.set( ProjectModel.cameraView , CameraView.PERSPECTIVE );
-		}
-		if( projectModel.get( ProjectModel.filterType ) == null )
-		{
-			projectModel.set( ProjectModel.filterType , FilterType.ALPHA_DESIGNATION );
 		}
 		if( projectModel.get( ProjectModel.backgroundColor ) == null )
 		{

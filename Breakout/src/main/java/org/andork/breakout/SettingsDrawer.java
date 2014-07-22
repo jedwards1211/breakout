@@ -128,9 +128,6 @@ public class SettingsDrawer extends Drawer
 	JLabel												numSamplesLabel;
 	JSlider												numSamplesSlider;
 	
-	JLabel												filterTypeLabel;
-	DefaultSelector<FilterType>							filterTypeSelector;
-	
 	JLabel												versionLabel;
 	
 	JPanel												mainPanel;
@@ -151,7 +148,6 @@ public class SettingsDrawer extends Drawer
 	Binder<LinearAxisConversion>						paramRangeBinder			= QMapKeyedBinder.bindKeyed( colorParamBinder , paramRangesBinder );
 	Binder<LinearAxisConversion>						highlightRangeBinder		= QObjectAttributeBinder.bind( ProjectModel.highlightRange , projectBinder );
 	Binder<Float>										ambientLightBinder			= QObjectAttributeBinder.bind( ProjectModel.ambientLight , projectBinder );
-	Binder<FilterType>									filterTypeBinder			= QObjectAttributeBinder.bind( ProjectModel.filterType , projectBinder );
 	
 	public SettingsDrawer( final I18n i18n , Binder<QObject<RootModel>> rootBinder , Binder<QObject<ProjectModel>> projectBinder )
 	{
@@ -315,12 +311,6 @@ public class SettingsDrawer extends Drawer
 		fitViewToEverythingButton = new JButton( "Fit View to Everything" );
 		orbitToPlanButton = new JButton( "Orbit to Plan" );
 		
-		filterTypeLabel = new JLabel( );
-		localizer.setText( filterTypeLabel , "filterTypeLabel.text" );
-		
-		filterTypeSelector = new DefaultSelector<FilterType>( );
-		filterTypeSelector.setAvailableValues( Arrays.asList( FilterType.values( ) ) );
-		
 		numSamplesLabel = new JLabel( );
 		localizer.setText( numSamplesLabel , "numSamplesLabel.text.off" );
 		numSamplesSlider = new JSlider( 1 , 1 , 1 );
@@ -433,9 +423,6 @@ public class SettingsDrawer extends Drawer
 		w.put( numSamplesLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( numSamplesSlider ).belowLast( ).fillx( );
 		
-		w.put( filterTypeLabel ).belowLast( ).west( ).insets( 40 , 0 , 0 , 0 );
-		w.put( filterTypeSelector.getComboBox( ) ).belowLast( ).fillx( );
-		
 		w.put( versionLabel ).belowLast( ).south( ).weighty( 1.0 ).fillx( );
 		
 		w.put( debugButton ).belowLast( ).southwest( );
@@ -483,7 +470,6 @@ public class SettingsDrawer extends Drawer
 		BetterCardLayoutBinder.bind( colorParamButtonsPanel , colorParamButtonsLayout , colorParamBinder );
 		PlotAxisConversionBinder.bind( paramColorationAxis , paramRangeBinder );
 		PlotAxisConversionBinder.bind( glowDistAxis , highlightRangeBinder );
-		ISelectorSelectionBinder.bind( filterTypeSelector , filterTypeBinder );
 		JSliderValueBinder.bind( ambientLightSlider ,
 				BimapperBinder.bind( compose( new LinearFloatBimapper( 0f , 0f , 1f , ambientLightSlider.getMaximum( ) ) ,
 						RoundingFloat2IntegerBimapper.instance ) , ambientLightBinder ) );
