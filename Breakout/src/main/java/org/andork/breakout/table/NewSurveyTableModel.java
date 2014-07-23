@@ -379,6 +379,10 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 						colModel.get( SurveyColumnModel.type ) ,
 						colModel.get( SurveyColumnModel.defaultFormat ) );
 			}
+			else
+			{
+				column.setDefaultFormat( colModel.get( SurveyColumnModel.defaultFormat ) );
+			}
 			newColumns.add( column );
 		}
 		
