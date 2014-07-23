@@ -211,7 +211,7 @@ public class NewSurveyTable extends AnnotatingJTable
 	@Override
 	protected boolean processKeyBinding( KeyStroke ks , KeyEvent e , int condition , boolean pressed )
 	{
-		if( e.getKeyCode( ) == KeyEvent.VK_DELETE )
+		if( e.getKeyCode( ) == KeyEvent.VK_DELETE && e.getID( ) == KeyEvent.KEY_RELEASED )
 		{
 			getModel( ).removeRows( getSelectedRows( getModelSelectionModel( ) ) );
 			

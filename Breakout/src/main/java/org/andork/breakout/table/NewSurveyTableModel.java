@@ -26,11 +26,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.function.IntUnaryOperator;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.q.QLinkedHashMap;
@@ -39,7 +39,6 @@ import org.andork.q.QSpec;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.FormatAndDisplayInfo;
 import org.andork.swing.table.NiceTableModel;
-import org.andork.util.Format;
 import org.andork.util.FormattedText;
 import org.andork.util.StringUtils;
 
@@ -256,40 +255,60 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		}
 	}
 	
-	protected void blockSetValues( QObject<Row> srcRow , int rowIndex , int firstColumn , int lastColumn , boolean fireUpdate )
+	public void blockSetValues( List<Object[ ]> srcRows , IntUnaryOperator convertRowToDest , IntUnaryOperator convertColumnToDest )
 	{
-		QObject<Row> row = getRow( rowIndex );
-		
-		for( int columnIndex = firstColumn ; columnIndex <= lastColumn ; columnIndex++ )
-		{
-			Column<QObject<Row>> column = getColumn( columnIndex );
-			column.setValueAt( column.getValueAt( srcRow ) , row );
-		}
-		if( fireUpdate )
-		{
-			fireTableRowsUpdated( rowIndex , rowIndex );
-		}
-	}
-	
-	public void blockSetValues( List<QObject<Row>> srcRows , int rowIndex , int firstColumn , int lastColumn )
-	{
-		if( srcRows.isEmpty( ) || firstColumn > lastColumn )
+		if( srcRows.isEmpty( ) )
 		{
 			return;
 		}
+		int minDestRowIndex = Integer.MAX_VALUE;
+		int maxDestRowIndex = Integer.MIN_VALUE;
 		
-		List<QObject<Row>> rowsToAdd = new ArrayList<QObject<Row>>( );
-		for( int k = getRowCount( ) ; k < rowIndex + srcRows.size( ) ; k++ )
+		for( int srcRowIndex = 0 ; srcRowIndex < srcRows.size( ) ; srcRowIndex++ )
+		{
+			int destRowIndex = convertRowToDest.applyAsInt( srcRowIndex );
+			if( destRowIndex >= 0 )
+			{
+				minDestRowIndex = Math.min( minDestRowIndex , destRowIndex );
+				maxDestRowIndex = Math.max( maxDestRowIndex , destRowIndex );
+			}
+		}
+		
+		List<QObject<Row>> rowsToAdd = new LinkedList<>( );
+		for( int i = getRowCount( ) ; i <= maxDestRowIndex ; i++ )
 		{
 			rowsToAdd.add( Row.spec.newObject( ) );
 		}
 		addRows( rowsToAdd );
 		
-		for( QObject<Row> srcRow : srcRows )
+		int srcRowIndex = 0;
+		for( Object[ ] srcRow : srcRows )
 		{
-			blockSetValues( srcRow , rowIndex++ , firstColumn , lastColumn , false );
+			int destRowIndex = convertRowToDest.applyAsInt( srcRowIndex );
+			
+			if( destRowIndex < 0 )
+			{
+				continue;
+			}
+			
+			QObject<Row> destRow = getRow( destRowIndex );
+			
+			for( int srcColumnIndex = 0 ; srcColumnIndex < srcRow.length ; srcColumnIndex++ )
+			{
+				int destColumnIndex = convertColumnToDest.applyAsInt( srcColumnIndex );
+				
+				if( destColumnIndex < 0 || destColumnIndex >= getColumnCount( ) )
+				{
+					continue;
+				}
+				
+				Column<QObject<Row>> destColumn = getColumn( destColumnIndex );
+				destColumn.setValueAt( srcRow[ srcColumnIndex ] , destRow );
+			}
+			
+			srcRowIndex++ ;
 		}
-		fireTableRowsUpdated( rowIndex - srcRows.size( ) , rowIndex - 1 );
+		fireTableRowsUpdated( minDestRowIndex , maxDestRowIndex );
 		updateEndRows( );
 	}
 	
@@ -320,9 +339,16 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	
 	public void removeRows( int[ ] rows )
 	{
-		for( int i = rows.length - 1 ; i >= 0 ; i-- )
+		if( rows.length <= 10 )
 		{
-			removeRow( rows[ i ] );
+			for( int i = rows.length - 1 ; i >= 0 ; i-- )
+			{
+				removeRow( rows[ i ] );
+			}
+		}
+		else
+		{
+			super.removeRows( rows );
 		}
 		updateEndRows( );
 	}

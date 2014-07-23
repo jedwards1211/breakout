@@ -153,8 +153,15 @@ public class BetterJTable extends JTable
 		{
 			return;
 		}
+		
 		switch( e.getType( ) )
 		{
+			case TableModelEvent.UPDATE:
+				if( e.getFirstRow( ) == 0 && e.getLastRow( ) == Integer.MAX_VALUE && e.getColumn( ) == TableModelEvent.ALL_COLUMNS )
+				{
+					modelSelectionModel.clearSelection( );
+				}
+				break;
 			case TableModelEvent.INSERT:
 				modelSelectionModel.insertIndexInterval( e.getFirstRow( ) , e.getLastRow( ) , true );
 				break;

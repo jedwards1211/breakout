@@ -66,6 +66,8 @@ public class NewSurveyTableTest
 			
 			setup.scrollPane.setTopRightCornerComp( new JButton( new CustomizeNewSurveyTableAction( table ) ) );
 			
+			table.setTransferHandler( new NewSurveyTableTransferHandler( r -> executor.submit( r ) ) );
+			
 			QuickTestFrame.frame( setup.scrollPane ).setVisible( true );
 		} );
 	}

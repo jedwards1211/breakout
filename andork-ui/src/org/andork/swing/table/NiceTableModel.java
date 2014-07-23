@@ -313,6 +313,15 @@ public class NiceTableModel<R> extends AbstractTableModel
 		fireTableRowsDeleted( index , index );
 	}
 	
+	protected void removeRows( int ... rows )
+	{
+		for( int i = rows.length - 1 ; i >= 0 ; i-- )
+		{
+			this.rows.remove( rows[ i ] );
+		}
+		fireTableDataChanged( );
+	}
+	
 	protected void removeRows( int firstIndex , int lastIndex )
 	{
 		rows.subList( firstIndex , lastIndex + 1 ).clear( );
