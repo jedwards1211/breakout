@@ -29,12 +29,12 @@ import javax.swing.JButton;
 
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.table.NewSurveyTableModel.NewSurveyTableModelCopier;
+import org.andork.format.FormatWarning;
 import org.andork.swing.OnEDT;
 import org.andork.swing.QuickTestFrame;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 import org.andork.swing.table.FormattedTextTableRowAnnotator;
-import org.andork.util.FormatWarning;
 
 public class NewSurveyTableTest
 {

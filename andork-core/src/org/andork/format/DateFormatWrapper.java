@@ -19,21 +19,53 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.util;
+package org.andork.format;
 
-public class DoubleFormat implements Format<Double>
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import org.andork.util.StringUtils;
+
+public class DateFormatWrapper implements Format<Date>
 {
-	public static final DoubleFormat	instance	= new DoubleFormat( );
+	DateFormat	wrapped;
 	
-	@Override
-	public String format( Double t )
+	public DateFormatWrapper( DateFormat wrapped )
 	{
-		return StringUtils.toStringOrNull( t );
+		super( );
+		this.wrapped = wrapped;
+	}
+	
+	public DateFormatWrapper( String format )
+	{
+		this( new SimpleDateFormat( format ) );
 	}
 	
 	@Override
-	public Double parse( String s ) throws Exception
+	public String format( Date t )
 	{
-		return StringUtils.isNullOrEmpty( s ) ? null : Double.parseDouble( s );
+		if( t == null )
+		{
+			return null;
+		}
+		return wrapped.format( t );
+	}
+	
+	@Override
+	public Date parse( String s ) throws Exception
+	{
+		if( StringUtils.isNullOrEmpty( s ) )
+		{
+			return null;
+		}
+		try
+		{
+			return wrapped.parse( s );
+		}
+		catch( Exception e )
+		{
+			throw new IllegalArgumentException( "Invalid format" , e );
+		}
 	}
 }

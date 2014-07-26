@@ -24,7 +24,7 @@ package org.andork.breakout.table;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
-import org.andork.util.Format;
+import org.andork.format.Format;
 import org.andork.util.StringUtils;
 
 public class DefaultDistanceFormat implements Format<Double>

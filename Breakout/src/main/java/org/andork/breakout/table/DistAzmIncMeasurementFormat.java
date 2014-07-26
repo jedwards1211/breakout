@@ -24,10 +24,10 @@ package org.andork.breakout.table;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.andork.format.Format;
+import org.andork.format.FormatWarning;
 import org.andork.math.misc.AngleUtils;
 import org.andork.util.ArrayUtils;
-import org.andork.util.Format;
-import org.andork.util.FormatWarning;
 import org.andork.util.StringUtils;
 
 public class DistAzmIncMeasurementFormat implements Format<DistAzmIncMeasurement>

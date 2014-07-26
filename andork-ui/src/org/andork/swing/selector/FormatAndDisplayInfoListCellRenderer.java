@@ -29,7 +29,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 
-import org.andork.swing.table.FormatAndDisplayInfo;
+import org.andork.swing.FormatAndDisplayInfo;
 
 @SuppressWarnings( "serial" )
 public class FormatAndDisplayInfoListCellRenderer extends DefaultListCellRenderer
@@ -43,7 +43,7 @@ public class FormatAndDisplayInfoListCellRenderer extends DefaultListCellRendere
 	{
 		if( value instanceof FormatAndDisplayInfo )
 		{
-			FormatAndDisplayInfo<?> info = ( FormatAndDisplayInfo<?> ) value;
+			FormatAndDisplayInfo<?> info = (org.andork.swing.FormatAndDisplayInfo<?> ) value;
 			value = index < 0 ? info.name( ) : info.description( );
 			Component comp = super.getListCellRendererComponent( list , value , index , isSelected , cellHasFocus );
 			( ( JLabel ) comp ).setIcon( info.icon( ) );

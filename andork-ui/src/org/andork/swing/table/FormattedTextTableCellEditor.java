@@ -27,7 +27,7 @@ import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 
-import org.andork.util.FormattedText;
+import org.andork.format.FormattedText;
 
 public class FormattedTextTableCellEditor extends DefaultCellEditor
 {

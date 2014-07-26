@@ -28,22 +28,28 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.EventObject;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.TableCellEditor;
 
+import org.andork.format.FormattedText;
+import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.selector.DefaultSelector;
 import org.andork.swing.selector.FormatAndDisplayInfoListCellRenderer;
-import org.andork.util.FormattedText;
 import org.andork.util.StringUtils;
 
 @SuppressWarnings( "serial" )
-public class MultiFormattedTextTableCellEditor extends DefaultCellEditor
+public class FormattedTextWithSelectorTableCellEditor extends DefaultCellEditor
 {
 	final DefaultSelector<FormatAndDisplayInfo<?>>	formatSelector;
 	FormatAndDisplayInfo<?>							defaultFormat;
@@ -51,27 +57,56 @@ public class MultiFormattedTextTableCellEditor extends DefaultCellEditor
 	Border											compoundBorder;
 	Border											outerBorder;
 	
-	public MultiFormattedTextTableCellEditor( )
+	public FormattedTextWithSelectorTableCellEditor( )
 	{
 		this( new JTextField( ) , new DefaultSelector<>( ) );
 		FormatAndDisplayInfoListCellRenderer.setUpComboBox( formatSelector.getComboBox( ) );
 	}
 	
-	public MultiFormattedTextTableCellEditor( Collection<? extends FormatAndDisplayInfo<?>> formats )
+	public FormattedTextWithSelectorTableCellEditor( Collection<? extends FormatAndDisplayInfo<?>> formats )
 	{
 		this( );
 		formatSelector.setAvailableValues( formats );
 		defaultFormat = formats.isEmpty( ) ? null : formats.iterator( ).next( );
 	}
 	
-	public MultiFormattedTextTableCellEditor( JTextField textField , DefaultSelector<FormatAndDisplayInfo<?>> formatSelector )
+	public FormattedTextWithSelectorTableCellEditor( JTextField textField , DefaultSelector<FormatAndDisplayInfo<?>> formatSelector )
 	{
 		super( textField );
 		this.formatSelector = formatSelector;
-		outerBorder = textField.getBorder( );
+		outerBorder = new EmptyBorder( 0 , 0 , 0 , 0 );
 		textField.setBorder( compoundBorder = new CompoundBorder( outerBorder , new InnerBorder( ) ) );
 		textField.setLayout( new Layout( ) );
 		textField.add( formatSelector.getComboBox( ) , BorderLayout.EAST );
+	}
+	
+	@Override
+	public boolean isCellEditable( EventObject anEvent )
+	{
+		if( anEvent instanceof MouseEvent )
+		{
+			MouseEvent me = ( MouseEvent ) anEvent;
+			JTable table = ( JTable ) me.getComponent( );
+			int row = table.rowAtPoint( me.getPoint( ) );
+			int column = table.columnAtPoint( me.getPoint( ) );
+			if( row >= 0 && column >= 0 )
+			{
+				TableCellEditor editor = table.getCellEditor( table.rowAtPoint( me.getPoint( ) ) , table.columnAtPoint( me.getPoint( ) ) );
+				if( editor == this )
+				{
+					Rectangle cellRect = table.getCellRect( row , column , true );
+					Component editorComp = table.prepareEditor( editor , row , column );
+					editorComp.setBounds( cellRect );
+					editorComp.doLayout( );
+					Component deepest = SwingUtilities.getDeepestComponentAt( editorComp , me.getX( ) - cellRect.x , me.getY( ) - cellRect.y );
+					if( deepest == formatSelector.getComboBox( ) )
+					{
+						return true;
+					}
+				}
+			}
+		}
+		return super.isCellEditable( anEvent );
 	}
 	
 	public FormatAndDisplayInfo<?> getDefaultFormat( )
@@ -107,7 +142,7 @@ public class MultiFormattedTextTableCellEditor extends DefaultCellEditor
 			value = currentFormattedText.getText( );
 			if( currentFormattedText.getFormat( ) instanceof FormatAndDisplayInfo )
 			{
-				format = ( FormatAndDisplayInfo<?> ) currentFormattedText.getFormat( );
+				format = ( org.andork.swing.FormatAndDisplayInfo<?> ) currentFormattedText.getFormat( );
 			}
 		}
 		if( format == null )

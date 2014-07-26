@@ -26,8 +26,8 @@ import java.util.regex.Pattern;
 import javax.swing.JSpinner;
 import javax.swing.text.PlainDocument;
 
+import org.andork.format.Format;
 import org.andork.swing.BetterSpinnerNumberModel;
-import org.andork.util.Format;
 
 public class Spinners
 {

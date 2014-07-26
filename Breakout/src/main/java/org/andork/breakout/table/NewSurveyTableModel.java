@@ -33,13 +33,13 @@ import java.util.Map;
 import java.util.function.IntUnaryOperator;
 
 import org.andork.collect.CollectionUtils;
+import org.andork.format.FormattedText;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q.QObject;
 import org.andork.q.QSpec;
+import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
-import org.andork.swing.table.FormatAndDisplayInfo;
 import org.andork.swing.table.NiceTableModel;
-import org.andork.util.FormattedText;
 import org.andork.util.StringUtils;
 
 @SuppressWarnings( "serial" )
@@ -63,7 +63,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	
 	public static enum SurveyColumnType
 	{
-		STRING( "Text" , String.class )
+		STRING( "Text" , String.class , StringUtils.multiply( "m" , 20 ) )
 		{
 			Column<QObject<Row>> createColumn( String name )
 			{
@@ -74,11 +74,17 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 						( ) -> QLinkedHashMap.newInstance( ) );
 			}
 		} ,
-		INTEGER( "Integer" , Integer.class ) ,
-		REAL_NUMBER( "Real Number" , Double.class ) ,
-		DATE( "Date" , Date.class ) ,
-		SHOT_MEASUREMENT( "Shot Measurement" , ShotMeasurement.class ) ,
-		CROSS_SECTION( "Cross Section" , CrossSection.class );
+		INTEGER( "Integer" , Integer.class , Integer.MAX_VALUE ) ,
+		REAL_NUMBER( "Real Number" , Double.class , Double.MAX_VALUE ) ,
+		DATE( "Date" , Date.class , new FormattedText( "2011/11/30" , NewSurveyTable.getAvailableFormats( Date.class )
+				.stream( ).filter( f -> f.name( ).equals( "yyyy/MM/dd" ) ).findAny( ).get( ) ) ) ,
+		SHOT_MEASUREMENT( "Shot Measurement" , ShotMeasurement.class ,
+				new FormattedText( "100.25 359.25/359.25 -89.25/-89.25" ,
+						NewSurveyTable.getAvailableFormats( ShotMeasurement.class ).stream( )
+								.filter( f -> f.format( ) instanceof DistAzmIncMeasurementFormat ).findAny( ).get( ) ) ) ,
+		CROSS_SECTION( "Cross Section" , CrossSection.class ,
+				new FormattedText( "100.25 100.25 100.25 100.25 100.25 100.25" , NewSurveyTable.formatMap.get( CrossSection.class )
+						.stream( ).filter( f -> f.format( ) instanceof LlrrudCrossSectionFormat ).findAny( ).get( ) ) );
 		
 		Column<QObject<Row>> createColumn( String name )
 		{
@@ -99,6 +105,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		
 		public final String										displayName;
 		public final Class<?>									valueClass;
+		public final Object										prototypeValue;
 		
 		private static final Map<Class<?>, SurveyColumnType>	valueClassMap;
 		
@@ -113,10 +120,11 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 			return valueClassMap.get( valueClass );
 		}
 		
-		private SurveyColumnType( String displayName , Class<?> valueClass )
+		private SurveyColumnType( String displayName , Class<?> valueClass , Object prototypeValue )
 		{
 			this.displayName = displayName;
 			this.valueClass = valueClass;
+			this.prototypeValue = prototypeValue;
 		}
 		
 		public String toString( )
@@ -125,14 +133,16 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		}
 	}
 	
-	public final SurveyColumn								fromColumn;
-	public final SurveyColumn								toColumn;
-	public final SurveyColumn								shotMeasurementColumn;
-	public final SurveyColumn								fromCrossSectionColumn;
-	public final SurveyColumn								toCrossSectionColumn;
+	public final SurveyColumn						fromColumn;
+	public final SurveyColumn						toColumn;
+	public final SurveyColumn						shotMeasurementColumn;
+	public final SurveyColumn						fromCrossSectionColumn;
+	public final SurveyColumn						toCrossSectionColumn;
 	
-	private final Map<String, SurveyColumn>					fixedColumns		= new LinkedHashMap<>( );
-	private final Map<String, QObject<SurveyColumnModel>>	surveyColumnModels	= new LinkedHashMap<>( );
+	private boolean									autoResize			= true;
+	
+	private final Map<String, SurveyColumn>			fixedColumns		= new LinkedHashMap<>( );
+	private final List<QObject<SurveyColumnModel>>	surveyColumnModels	= new ArrayList<>( );
 	
 	public static final class SurveyColumn implements Column<QObject<Row>>
 	{
@@ -234,7 +244,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 			colModel.set( SurveyColumnModel.type , col.type );
 			colModel.set( SurveyColumnModel.defaultFormat , col.defaultFormat );
 			
-			surveyColumnModels.put( column.getColumnName( ) , colModel );
+			surveyColumnModels.add( colModel );
 		}
 		
 		addRow( Row.spec.newObject( ) );
@@ -314,6 +324,11 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	
 	protected void updateEndRows( )
 	{
+		if( !autoResize )
+		{
+			return;
+		}
+		
 		int lastRowWithData;
 		rowLoop: for( lastRowWithData = getRowCount( ) - 1 ; lastRowWithData >= 0 ; lastRowWithData-- )
 		{
@@ -355,7 +370,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	
 	public List<QObject<SurveyColumnModel>> getColumnModels( )
 	{
-		return new ArrayList<>( surveyColumnModels.values( ) );
+		return new ArrayList<>( surveyColumnModels );
 	}
 	
 	public void setColumnModels( Collection<? extends QObject<SurveyColumnModel>> newColumnModels )
@@ -366,7 +381,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		
 		for( QObject<SurveyColumnModel> colModel : newColumnModels )
 		{
-			surveyColumnModels.put( colModel.get( SurveyColumnModel.name ) , colModel );
+			surveyColumnModels.add( colModel );
 			//			if( !Boolean.TRUE.equals( colModel.get( SurveyColumnModel.visible ) ) )
 			//			{
 			//				continue;
@@ -412,5 +427,10 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 			}
 			return dest;
 		}
+	}
+	
+	public QObject<SurveyColumnModel> getColumnModel( int columnIndex )
+	{
+		return surveyColumnModels.get( columnIndex );
 	}
 }

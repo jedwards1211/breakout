@@ -29,8 +29,8 @@ import java.beans.PropertyChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
 
+import org.andork.format.Format;
 import org.andork.swing.event.EasyDocumentListener;
-import org.andork.util.Format;
 
 public class SimpleFormatter {
 	JTextComponent	textComp;

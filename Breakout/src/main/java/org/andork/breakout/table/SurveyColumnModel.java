@@ -23,7 +23,7 @@ package org.andork.breakout.table;
 
 import org.andork.breakout.table.NewSurveyTableModel.SurveyColumnType;
 import org.andork.q.QSpec;
-import org.andork.swing.table.FormatAndDisplayInfo;
+import org.andork.swing.FormatAndDisplayInfo;
 
 public class SurveyColumnModel extends QSpec<SurveyColumnModel>
 {

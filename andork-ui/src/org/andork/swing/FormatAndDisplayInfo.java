@@ -19,21 +19,57 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.util;
+package org.andork.swing;
 
-@SuppressWarnings( "serial" )
-public class FormatWarning extends Exception
+import javax.swing.Icon;
+
+import org.andork.format.Format;
+
+public class FormatAndDisplayInfo<T> implements Format<T>
 {
-	final Object	formattedValue;
+	private final Format<T>	wrapped;
+	private final String	description;
+	private final String	name;
+	private final Icon		icon;
 	
-	public FormatWarning( String message , Object formattedValue )
+	public FormatAndDisplayInfo( Format<T> wrapped  , String name  , String description  , Icon icon  )
 	{
-		super( message );
-		this.formattedValue = formattedValue;
+		super( );
+		this.wrapped = wrapped;
+		this.description = description;
+		this.name = name;
+		this.icon = icon;
 	}
 	
-	public Object getFormattedValue( )
+	public Format<T> format( )
 	{
-		return formattedValue;
+		return wrapped;
+	}
+	
+	public String description( )
+	{
+		return description;
+	}
+	
+	public String name( )
+	{
+		return name;
+	}
+	
+	public Icon icon( )
+	{
+		return icon;
+	}
+	
+	@Override
+	public String format( T t )
+	{
+		return wrapped.format( t );
+	}
+	
+	@Override
+	public T parse( String s ) throws Exception
+	{
+		return wrapped.parse( s );
 	}
 }

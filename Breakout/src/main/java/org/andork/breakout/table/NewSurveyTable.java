@@ -23,6 +23,8 @@ package org.andork.breakout.table;
 
 import java.awt.Color;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -35,20 +37,24 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter;
+import javax.swing.event.TableColumnModelEvent;
+import javax.swing.event.TableColumnModelListener;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
+import org.andork.awt.event.MouseAdapterChain;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.table.NewSurveyTableModel.Row;
+import org.andork.format.DateFormatWrapper;
+import org.andork.format.FormatWarning;
+import org.andork.format.FormattedText;
 import org.andork.q.QObject;
+import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingTableRowSorter;
-import org.andork.swing.table.FormatAndDisplayInfo;
 import org.andork.swing.table.FormattedTextTableCellEditor;
 import org.andork.swing.table.FormattedTextTableCellRenderer;
 import org.andork.swing.table.NiceTableModel.Column;
-import org.andork.util.DateFormatWrapper;
-import org.andork.util.FormatWarning;
-import org.andork.util.FormattedText;
 
 @SuppressWarnings( "serial" )
 public class NewSurveyTable extends AnnotatingJTable
@@ -148,7 +154,8 @@ public class NewSurveyTable extends AnnotatingJTable
 	
 	public NewSurveyTable( NewSurveyTableModel model )
 	{
-		super( model );
+		super( model , new SurveyTableColumnModel( ) );
+		getColumnModel( ).setColumnModels( this , model.getColumnModels( ) );
 		setRowHeight( 25 );
 		setDefaultEditor( FormattedText.class , new FormattedTextTableCellEditor( new JTextField( ) ) );
 		setDefaultRenderer( FormattedText.class , new FormattedTextTableCellRenderer(
@@ -161,6 +168,18 @@ public class NewSurveyTable extends AnnotatingJTable
 				} ) );
 		setAutoCreateColumnsFromModel( true );
 		setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
+		
+		addMouseListener( new MouseAdapter( )
+		{
+			public void mouseClicked( MouseEvent e )
+			{
+				if( e.getButton( ) == MouseEvent.BUTTON3 )
+				{
+					new NewSurveyTableContextMenu( NewSurveyTable.this , e.getPoint( ) )
+							.show( NewSurveyTable.this , e.getX( ) , e.getY( ) );
+				}
+			}
+		} );
 	}
 	
 	@Override
@@ -178,7 +197,7 @@ public class NewSurveyTable extends AnnotatingJTable
 		
 		if( getModel( ) instanceof NewSurveyTableModel )
 		{
-			columnModel.setColumnModels( ( ( NewSurveyTableModel ) getModel( ) ).getColumnModels( ) );
+			columnModel.setColumnModels( this , ( ( NewSurveyTableModel ) getModel( ) ).getColumnModels( ) );
 		}
 		
 		setColumnModel( columnModel );
@@ -201,6 +220,11 @@ public class NewSurveyTable extends AnnotatingJTable
 				modelIndex++ ;
 			}
 		}
+	}
+	
+	public SurveyTableColumnModel getColumnModel( )
+	{
+		return ( SurveyTableColumnModel ) super.getColumnModel( );
 	}
 	
 	public NewSurveyTableModel getModel( )

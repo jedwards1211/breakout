@@ -21,7 +21,7 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
-import org.andork.util.Format;
+import org.andork.format.Format;
 
 public abstract class CrossSectionFormat implements Format<CrossSection>
 {

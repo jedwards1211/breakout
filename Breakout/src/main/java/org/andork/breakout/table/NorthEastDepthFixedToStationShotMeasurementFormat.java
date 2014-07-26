@@ -24,7 +24,7 @@ package org.andork.breakout.table;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.andork.util.Format;
+import org.andork.format.Format;
 import org.andork.util.StringUtils;
 
 public class NorthEastDepthFixedToStationShotMeasurementFormat implements Format<FixedToStationShotMeasurement>
