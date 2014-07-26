@@ -32,10 +32,10 @@ import javax.swing.JTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 
+import org.andork.format.FormattedText;
 import org.andork.q.QObject;
 import org.andork.q.QSpec;
 import org.andork.q.QSpec.Attribute;
-import org.andork.util.FormattedText;
 import org.andork.util.StringUtils;
 
 @SuppressWarnings( "serial" )

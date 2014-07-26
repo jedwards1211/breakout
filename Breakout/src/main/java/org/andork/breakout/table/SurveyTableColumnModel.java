@@ -21,46 +21,77 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.DefaultCellEditor;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import org.andork.collect.CollectionUtils;
+import org.andork.format.FormatWarning;
 import org.andork.q.QObject;
-import org.andork.swing.table.FormatAndDisplayInfo;
-import org.andork.swing.table.MultiFormattedTextTableCellEditor;
+import org.andork.swing.FormatAndDisplayInfo;
+import org.andork.swing.table.FormattedTextTableCellRenderer;
+import org.andork.swing.table.FormattedTextWithSelectorTableCellEditor;
+import org.andork.swing.table.FormattedTextWithSelectorTableCellRenderer;
 
 @SuppressWarnings( "serial" )
 public class SurveyTableColumnModel extends DefaultTableColumnModel
 {
-	private final Map<String, TableColumn>	columnMap	= new HashMap<>( );
+	private final Map<String, SurveyTableColumn>	columnMap		= new HashMap<>( );
 	
-	public void setColumnModels( Collection<QObject<SurveyColumnModel>> columnModels )
+	private final List<QObject<SurveyColumnModel>>	columnModels	= new ArrayList<>( );
+	
+	private final TableCellRenderer					formattedTextCellRenderer;
+	
+	public SurveyTableColumnModel( )
 	{
-		List<TableColumn> newColumns = new ArrayList<>( );
-		columnMap.keySet( ).retainAll( CollectionUtils.toHashSet( columnModels.stream( ) ) );
+		formattedTextCellRenderer = new FormattedTextTableCellRenderer(
+				new DefaultTableCellRenderer( ) , f -> null , e -> {
+					if( e instanceof FormatWarning )
+					{
+						return Color.YELLOW;
+					}
+					return Color.RED;
+				} );
+	}
+	
+	public void setColumnModels( JTable parentTable , Collection<QObject<SurveyColumnModel>> columnModels )
+	{
+		this.columnModels.clear( );
+		this.columnModels.addAll( columnModels );
+		
+		List<SurveyTableColumn> newColumns = new ArrayList<>( );
+		columnMap.keySet( ).retainAll( CollectionUtils.toHashSet( columnModels.stream( ).map( m -> m.get( SurveyColumnModel.name ) ) ) );
 		
 		int index = 0;
 		for( QObject<SurveyColumnModel> columnModel : columnModels )
 		{
 			String name = columnModel.get( SurveyColumnModel.name );
-			TableColumn column = columnMap.get( name );
+			SurveyTableColumn column = columnMap.get( name );
+			boolean updatePreferredWidth = false;
 			if( column == null )
 			{
-				column = new TableColumn( index );
+				column = new SurveyTableColumn( index , columnModel );
 				column.setHeaderValue( name );
 				columnMap.put( name , column );
+				updatePreferredWidth = true;
 			}
 			
 			TableCellEditor editor = column.getCellEditor( );
+			TableCellRenderer renderer = column.getCellRenderer( );
 			
 			Class<?> valueClass = columnModel.get( SurveyColumnModel.type ).valueClass;
 			
@@ -68,18 +99,34 @@ public class SurveyTableColumnModel extends DefaultTableColumnModel
 			
 			if( formats != null )
 			{
-				if( !( editor instanceof MultiFormattedTextTableCellEditor ) )
+				if( !( editor instanceof FormattedTextWithSelectorTableCellEditor ) )
 				{
-					editor = new MultiFormattedTextTableCellEditor( );
+					editor = new FormattedTextWithSelectorTableCellEditor( );
 					column.setCellEditor( editor );
 				}
-				MultiFormattedTextTableCellEditor multiEditor = ( MultiFormattedTextTableCellEditor ) editor;
+				FormattedTextWithSelectorTableCellEditor multiEditor = ( FormattedTextWithSelectorTableCellEditor ) editor;
 				multiEditor.setAvailableFormats( formats );
 				multiEditor.setDefaultFormat( columnModel.get( SurveyColumnModel.defaultFormat ) );
+				
+				if( !( renderer instanceof FormattedTextWithSelectorTableCellRenderer ) )
+				{
+					renderer = new FormattedTextWithSelectorTableCellRenderer( formattedTextCellRenderer );
+					column.setCellRenderer( renderer );
+				}
+				FormattedTextWithSelectorTableCellRenderer multiRenderer = ( FormattedTextWithSelectorTableCellRenderer ) renderer;
+				multiRenderer.setAvailableFormats( formats );
+				multiRenderer.setDefaultFormat( columnModel.get( SurveyColumnModel.defaultFormat ) );
+				
+				if( updatePreferredWidth )
+				{
+					Component rendComp = multiRenderer.getTableCellRendererComponent( parentTable , columnModel.get( SurveyColumnModel.type )
+							.prototypeValue , false , false , 0 , 0 );
+					column.setPreferredWidth( rendComp.getPreferredSize( ).width );
+				}
 			}
 			else
 			{
-				if( editor instanceof MultiFormattedTextTableCellEditor )
+				if( editor instanceof FormattedTextWithSelectorTableCellEditor )
 				{
 					editor = new DefaultCellEditor( new JTextField( ) );
 					column.setCellEditor( editor );
@@ -100,9 +147,42 @@ public class SurveyTableColumnModel extends DefaultTableColumnModel
 			removeColumn( getColumn( 0 ) );
 		}
 		
-		for( TableColumn newColumn : newColumns )
+		for( SurveyTableColumn newColumn : newColumns )
 		{
 			addColumn( newColumn );
+		}
+	}
+	
+	public List<QObject<SurveyColumnModel>> getColumnModels( )
+	{
+		return Collections.unmodifiableList( columnModels );
+	}
+	
+	@Override
+	public void moveColumn( int columnIndex , int newIndex )
+	{
+		if( columnIndex != newIndex )
+		{
+			SurveyTableColumn fromColumn = ( SurveyTableColumn ) getColumn( columnIndex );
+			SurveyTableColumn toColumn = ( SurveyTableColumn ) getColumn( newIndex );
+			int fromIndex = columnModels.indexOf( fromColumn.model );
+			int toIndex = columnModels.indexOf( toColumn.model );
+			if( fromIndex >= 0 && toIndex >= 0 )
+			{
+				columnModels.add( toIndex , columnModels.remove( fromIndex ) );
+			}
+		}
+		super.moveColumn( columnIndex , newIndex );
+	}
+	
+	private static class SurveyTableColumn extends TableColumn
+	{
+		private final QObject<SurveyColumnModel>	model;
+		
+		public SurveyTableColumn( int modelIndex , QObject<SurveyColumnModel> model )
+		{
+			super( modelIndex );
+			this.model = model;
 		}
 	}
 }

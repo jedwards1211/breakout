@@ -97,6 +97,7 @@ import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ComponentTextBinder;
 import org.andork.bind.ui.ISelectorSelectionBinder;
 import org.andork.bind.ui.JSpinnerValueBinder;
+import org.andork.format.Format;
 import org.andork.jogl.awt.ScreenCaptureDialogModel.ResolutionUnit;
 import org.andork.jogl.neu.JoglScene;
 import org.andork.q.QObject;
@@ -115,7 +116,6 @@ import org.andork.swing.text.PatternDocumentFilter;
 import org.andork.swing.text.Patterns;
 import org.andork.swing.text.SimpleFormatter;
 import org.andork.swing.text.SimpleSpinnerEditor;
-import org.andork.util.Format;
 import org.andork.util.StringUtils;
 
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;

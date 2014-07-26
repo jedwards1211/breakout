@@ -19,7 +19,8 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.util;
+package org.andork.format;
+
 
 public class FormattedText
 {
@@ -35,6 +36,13 @@ public class FormattedText
 	
 	public FormattedText( Format format )
 	{
+		this.format = format;
+		format( );
+	}
+	
+	public FormattedText( String text , Format format )
+	{
+		this.text = text;
 		this.format = format;
 		format( );
 	}

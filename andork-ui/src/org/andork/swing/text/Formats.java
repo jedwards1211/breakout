@@ -25,7 +25,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
-import org.andork.util.Format;
+import org.andork.format.Format;
 
 public class Formats {
 	public static Format<Integer> createIntegerFormat(int maxIntegerDigits) {

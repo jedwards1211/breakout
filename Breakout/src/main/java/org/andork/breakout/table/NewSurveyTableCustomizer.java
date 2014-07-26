@@ -54,9 +54,9 @@ import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.breakout.table.NewSurveyTableModel.SurveyColumnType;
 import org.andork.q.QObject;
+import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.selector.DefaultSelector;
 import org.andork.swing.selector.FormatAndDisplayInfoListCellRenderer;
-import org.andork.swing.table.FormatAndDisplayInfo;
 import org.andork.swing.table.NiceTableModel;
 import org.andork.util.StringUtils;
 import org.andork.util.Java7.Objects;
@@ -396,7 +396,7 @@ public class NewSurveyTableCustomizer extends JPanel
 		
 		public void showCustomizer( )
 		{
-			customizer.setColumnModels( table.getModel( ).getColumnModels( ) );
+			customizer.setColumnModels( table.getColumnModel( ).getColumnModels( ) );
 			
 			Window owner = SwingUtilities.getWindowAncestor( table );
 			if( dialog == null || dialog.getOwner( ) != owner )

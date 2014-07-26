@@ -19,21 +19,21 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.util;
+package org.andork.format;
 
-public class IntegerFormat implements Format<Integer>
+public class StringFormat implements Format<String>
 {
-	public static final IntegerFormat	instance	= new IntegerFormat( );
+	public static final StringFormat	instance	= new StringFormat( );
 	
 	@Override
-	public String format( Integer t )
+	public String format( String t )
 	{
-		return StringUtils.toStringOrNull( t );
+		return t;
 	}
 	
 	@Override
-	public Integer parse( String s ) throws Exception
+	public String parse( String s ) throws Exception
 	{
-		return StringUtils.isNullOrEmpty( s ) ? null : Integer.parseInt( s );
+		return s;
 	}
 }

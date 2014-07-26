@@ -30,8 +30,8 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
-import org.andork.util.Format;
-import org.andork.util.FormattedText;
+import org.andork.format.Format;
+import org.andork.format.FormattedText;
 
 public class FormattedTextTableCellRenderer implements TableCellRenderer
 {
@@ -74,6 +74,12 @@ public class FormattedTextTableCellRenderer implements TableCellRenderer
 			{
 				comp = defaultRenderer.getTableCellRendererComponent( table , fv.getText( ) , isSelected , hasFocus , row , column );
 			}
+			
+			if( !isSelected )
+			{
+				comp.setBackground( null );
+			}
+			
 			if( fv.getFormatException( ) != null )
 			{
 				Color color = exceptionColorFunction.apply( fv.getFormatException( ) );
@@ -91,7 +97,13 @@ public class FormattedTextTableCellRenderer implements TableCellRenderer
 		}
 		else
 		{
-			return defaultRenderer.getTableCellRendererComponent( table , value , isSelected , hasFocus , row , column );
+			
+			Component comp = defaultRenderer.getTableCellRendererComponent( table , value , isSelected , hasFocus , row , column );
+			if( !isSelected )
+			{
+				comp.setBackground( null );
+			}
+			return comp;
 		}
 	}
 }

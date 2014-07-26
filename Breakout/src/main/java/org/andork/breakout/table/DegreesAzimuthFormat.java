@@ -24,7 +24,7 @@ package org.andork.breakout.table;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
-import org.andork.util.Format;
+import org.andork.format.Format;
 
 public class DegreesAzimuthFormat implements Format<Double>
 {

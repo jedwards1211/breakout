@@ -26,8 +26,8 @@ import java.util.function.BinaryOperator;
 import javax.swing.RowFilter.Entry;
 import javax.swing.table.TableModel;
 
+import org.andork.format.FormattedText;
 import org.andork.swing.RowAnnotator;
-import org.andork.util.FormattedText;
 
 public class FormattedTextTableRowAnnotator extends RowAnnotator<TableModel, Integer>
 {

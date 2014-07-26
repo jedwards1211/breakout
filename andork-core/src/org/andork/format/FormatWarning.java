@@ -19,19 +19,21 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.util;
+package org.andork.format;
 
-/**
- * Converts objects of some type value to and from {@link String}s.
- * 
- * @author james.a.edwards
- * 
- * @param <T>
- *            the type of the objects to format.
- */
-public interface Format<T>
+@SuppressWarnings( "serial" )
+public class FormatWarning extends Exception
 {
-	public String format( T t );
+	final Object	formattedValue;
 	
-	public T parse( String s ) throws Exception;
+	public FormatWarning( String message , Object formattedValue )
+	{
+		super( message );
+		this.formattedValue = formattedValue;
+	}
+	
+	public Object getFormattedValue( )
+	{
+		return formattedValue;
+	}
 }

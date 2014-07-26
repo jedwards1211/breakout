@@ -21,8 +21,8 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
+import org.andork.format.FormatWarning;
 import org.andork.util.ArrayUtils;
-import org.andork.util.FormatWarning;
 import org.andork.util.StringUtils;
 
 public class PerpLrudCrossSectionFormat extends CrossSectionFormat

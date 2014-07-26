@@ -19,57 +19,19 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.swing.table;
+package org.andork.format;
 
-import javax.swing.Icon;
-
-import org.andork.util.Format;
-
-public class FormatAndDisplayInfo<T> implements Format<T>
+/**
+ * Converts objects of some type value to and from {@link String}s.
+ * 
+ * @author james.a.edwards
+ * 
+ * @param <T>
+ *            the type of the objects to format.
+ */
+public interface Format<T>
 {
-	private final Format<T>	wrapped;
-	private final String	description;
-	private final String	name;
-	private final Icon		icon;
+	public String format( T t );
 	
-	public FormatAndDisplayInfo( Format<T> wrapped  , String name  , String description  , Icon icon  )
-	{
-		super( );
-		this.wrapped = wrapped;
-		this.description = description;
-		this.name = name;
-		this.icon = icon;
-	}
-	
-	public Format<T> format( )
-	{
-		return wrapped;
-	}
-	
-	public String description( )
-	{
-		return description;
-	}
-	
-	public String name( )
-	{
-		return name;
-	}
-	
-	public Icon icon( )
-	{
-		return icon;
-	}
-	
-	@Override
-	public String format( T t )
-	{
-		return wrapped.format( t );
-	}
-	
-	@Override
-	public T parse( String s ) throws Exception
-	{
-		return wrapped.parse( s );
-	}
+	public T parse( String s ) throws Exception;
 }
