@@ -10,7 +10,8 @@ import org.andork.util.StringUtils;
 
 public class CollectionFormat<T, C extends Collection<T>> implements Format<C>
 {
-	private char		delimiter;
+	private char		parseDelimiter;
+	private String		formatDelimiter;
 	private Format<T>	itemFormat;
 	Supplier<C>			collectionSupplier;
 	
@@ -23,8 +24,14 @@ public class CollectionFormat<T, C extends Collection<T>> implements Format<C>
 	
 	public CollectionFormat( char delimiter , Format<T> itemFormat , Supplier<C> collectionSupplier )
 	{
+		this( delimiter , delimiter + " " , itemFormat , collectionSupplier );
+	}
+	
+	public CollectionFormat( char parseDelimiter , String formatDelimiter , Format<T> itemFormat , Supplier<C> collectionSupplier )
+	{
 		super( );
-		this.delimiter = delimiter;
+		this.parseDelimiter = parseDelimiter;
+		this.formatDelimiter = formatDelimiter;
 		this.itemFormat = itemFormat;
 		this.collectionSupplier = collectionSupplier;
 	}
@@ -32,15 +39,20 @@ public class CollectionFormat<T, C extends Collection<T>> implements Format<C>
 	@Override
 	public String format( C t )
 	{
+		if( t == null )
+		{
+			return null;
+		}
+		
 		StringBuilder sb = new StringBuilder( );
 		for( T item : t )
 		{
 			String s = itemFormat.format( item );
 			if( sb.length( ) > 0 )
 			{
-				sb.append( delimiter ).append( ' ' );
+				sb.append( formatDelimiter );
 			}
-			if( s.indexOf( delimiter ) >= 0 )
+			if( s.indexOf( parseDelimiter ) >= 0 )
 			{
 				sb.append( '"' ).append( s.replaceAll( "\"" , "\"\"" ) ).append( '"' );
 			}
@@ -55,6 +67,14 @@ public class CollectionFormat<T, C extends Collection<T>> implements Format<C>
 	@Override
 	public C parse( String s ) throws Exception
 	{
+		if( s == null )
+		{
+			return collectionSupplier.get( );
+		}
+		if( parseDelimiter == ' ' )
+		{
+			s = s.replaceAll( "\\s+" , " " );
+		}
 		C result = collectionSupplier.get( );
 		StringCharacterIterator i = new StringCharacterIterator( s );
 		
@@ -72,11 +92,7 @@ public class CollectionFormat<T, C extends Collection<T>> implements Format<C>
 		
 		while( i.current( ) != '\uffff' )
 		{
-			if( Character.isWhitespace( i.current( ) ) )
-			{
-				i.next( );
-			}
-			else if( i.current( ) == delimiter )
+			if( i.current( ) == parseDelimiter )
 			{
 				i.next( );
 				break;
@@ -99,7 +115,7 @@ public class CollectionFormat<T, C extends Collection<T>> implements Format<C>
 			}
 		}
 		
-		return StringUtils.toStringOrNull( sb );
+		return sb == null ? null : sb.toString( ).trim( );
 	}
 	
 	private void readUntilEndQuote( StringCharacterIterator i , StringBuilder sb )

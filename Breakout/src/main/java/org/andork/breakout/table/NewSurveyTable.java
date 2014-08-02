@@ -27,7 +27,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,12 +36,8 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter;
-import javax.swing.event.TableColumnModelEvent;
-import javax.swing.event.TableColumnModelListener;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import org.andork.awt.event.MouseAdapterChain;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.table.NewSurveyTableModel.Row;
 import org.andork.format.DateFormatWrapper;
@@ -59,94 +54,6 @@ import org.andork.swing.table.NiceTableModel.Column;
 @SuppressWarnings( "serial" )
 public class NewSurveyTable extends AnnotatingJTable
 {
-	public static final Map<Class<?>, List<FormatAndDisplayInfo<?>>>	formatMap;
-	
-	public static List<FormatAndDisplayInfo<?>> getAvailableFormats( Class<?> type )
-	{
-		return type != null && formatMap.containsKey( type ) ? formatMap.get( type ) : Collections.emptyList( );
-	}
-	
-	public static FormatAndDisplayInfo<?> getDefaultFormat( Class<?> type )
-	{
-		return type != null && formatMap.containsKey( type ) ? formatMap.get( type ).get( 0 ) : null;
-	}
-	
-	static
-	{
-		Map<Class<?>, List<FormatAndDisplayInfo<?>>> m = new HashMap<>( );
-		
-		List<FormatAndDisplayInfo<?>> l = new ArrayList<>( );
-		l.add( new FormatAndDisplayInfo<>( new DistAzmIncMeasurementFormat( true ) ,
-				"DAIu" ,
-				"<html><b>Distance/Azimuth/Inclination (Uncorrected)</b><br>Examples:<br>\"15 183 -9\"<br>\"6.0 183/4.5 -9/10\"<br>\"15 -90\"</html>"
-				, null ) );
-		l.add( new FormatAndDisplayInfo<>( new DistAzmIncMeasurementFormat( false ) ,
-				"DAIc" ,
-				"<html><b>Distance/Azimuth/Inclination (Corrected)</b><br>Examples:<br>\"15 183 -9\"<br>\"6.0 183/184.5 -9/-10\"<br>\"15 -90\"</html>" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>( new NorthEastElevVectorMeasurementFormat( ) ,
-				"NEV" ,
-				"<html><b>North/East/Elevation Offset</b><br><i>Positive elevation is up.</i><br>Example: \"150.0 -23.5 -5.0\"</html>" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>( new NorthEastDepthVectorMeasurementFormat( ) ,
-				"NED" ,
-				"<html><b>North/East/Depth Offset</b><br><i>Positive depth is down.</i><br>Example: \"150.0 -23.5 5.0\"</html>" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>( new NorthEastElevFixedToStationShotMeasurementFormat( ) ,
-				"ToNEV" ,
-				"<html><b>North/East/Elevation of To Station</b><br><i>Positive elevation is up.</i><br>Example: \"150.0 -23.5 -5.0\"</html>" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>( new NorthEastDepthFixedToStationShotMeasurementFormat( ) ,
-				"ToNED" ,
-				"<html><b>North/East/Depth of To Station</b><br><i>Positive depth is down.</i><br>Example: \"150.0 -23.5 5.0\"</html>" ,
-				null ) );
-		m.put( ShotMeasurement.class , Collections.unmodifiableList( l ) );
-		
-		l = new ArrayList<>( );
-		l.add( new FormatAndDisplayInfo<>( new BisectorLrudCrossSectionFormat( ) ,
-				"bLRUD" ,
-				"<html><b>Bisector Left/Right/Up/Down</b><br>Example:<br>\"2 3 0 4\"</html>" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>( new PerpLrudCrossSectionFormat( ) ,
-				"pLRUD" ,
-				"<html><b>Perpendicular Left/Right/Up/Down</b><br>Example:<br>\"2 3 0 4\"</html>" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>( new NsewCrossSectionFormat( ) ,
-				"NSEW" ,
-				"<html><b>North/South/East/West</b><br>Example:<br>\"2 3 0 4\"</html>" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>( new LlrrudCrossSectionFormat( ) ,
-				"LLRRUD" ,
-				"<html><b>Left North/Left East/Right North/Right East/Up/Down</b><br>Example:<br>\"1.8 -2.9 -3.6 4.2 0 4\"</html>" ,
-				null ) );
-		m.put( CrossSection.class , Collections.unmodifiableList( l ) );
-		
-		l = new ArrayList<>( );
-		l.add( new FormatAndDisplayInfo<>(
-				new DateFormatWrapper( "yyyy-MM-dd" ) ,
-				"yyyy-MM-dd" ,
-				"yyyy-MM-dd" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>(
-				new DateFormatWrapper( "MM-dd-yyyy" ) ,
-				"MM-dd-yyyy" ,
-				"MM-dd-yyyy" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>(
-				new DateFormatWrapper( "yyyy/MM/dd" ) ,
-				"yyyy/MM/dd" ,
-				"yyyy/MM/dd" ,
-				null ) );
-		l.add( new FormatAndDisplayInfo<>(
-				new DateFormatWrapper( "MM/dd/yyyy" ) ,
-				"MM/dd/yyyy" ,
-				"MM/dd/yyyy" ,
-				null ) );
-		m.put( Date.class , Collections.unmodifiableList( l ) );
-		
-		formatMap = Collections.unmodifiableMap( m );
-	}
-	
 	public NewSurveyTable( )
 	{
 		this( new NewSurveyTableModel( ) );

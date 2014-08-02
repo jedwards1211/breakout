@@ -21,7 +21,6 @@
  *******************************************************************************/
 package org.andork.format;
 
-
 public class FormattedText
 {
 	String		text;
@@ -88,6 +87,7 @@ public class FormattedText
 			}
 			catch( Exception ex )
 			{
+				ex.printStackTrace( );
 				value = null;
 				formatException = ex;
 			}

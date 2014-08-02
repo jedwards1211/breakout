@@ -74,30 +74,30 @@ public class SurveyTableColumnModel extends DefaultTableColumnModel
 		this.columnModels.addAll( columnModels );
 		
 		List<SurveyTableColumn> newColumns = new ArrayList<>( );
-		columnMap.keySet( ).retainAll( CollectionUtils.toHashSet( columnModels.stream( ).map( m -> m.get( SurveyColumnModel.name ) ) ) );
+		columnMap.keySet( ).retainAll( CollectionUtils.toHashSet( columnModels.stream( ).map( m -> m.get( SurveyColumnModel.id ) ) ) );
 		
 		int index = 0;
 		for( QObject<SurveyColumnModel> columnModel : columnModels )
 		{
-			String name = columnModel.get( SurveyColumnModel.name );
-			SurveyTableColumn column = columnMap.get( name );
+			String id = columnModel.get( SurveyColumnModel.id );
+			SurveyTableColumn column = columnMap.get( id );
 			boolean updatePreferredWidth = false;
 			if( column == null )
 			{
 				column = new SurveyTableColumn( index , columnModel );
-				column.setHeaderValue( name );
-				columnMap.put( name , column );
+				columnMap.put( id , column );
 				updatePreferredWidth = true;
 			}
+			column.setHeaderValue( columnModel.get( SurveyColumnModel.name ) );
 			
 			TableCellEditor editor = column.getCellEditor( );
 			TableCellRenderer renderer = column.getCellRenderer( );
 			
-			Class<?> valueClass = columnModel.get( SurveyColumnModel.type ).valueClass;
+			SurveyColumnType type = columnModel.get( SurveyColumnModel.type );
 			
-			List<FormatAndDisplayInfo<?>> formats = valueClass == null ? null : NewSurveyTable.formatMap.get( valueClass );
+			List<FormatAndDisplayInfo<?>> formats = type.availableFormats;
 			
-			if( formats != null )
+			if( formats != null && !formats.isEmpty( ) )
 			{
 				if( !( editor instanceof FormattedTextWithSelectorTableCellEditor ) )
 				{

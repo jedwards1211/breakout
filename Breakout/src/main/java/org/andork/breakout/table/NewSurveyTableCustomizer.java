@@ -31,6 +31,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
@@ -52,7 +53,6 @@ import javax.swing.table.TableColumnModel;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
-import org.andork.breakout.table.NewSurveyTableModel.SurveyColumnType;
 import org.andork.q.QObject;
 import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.selector.DefaultSelector;
@@ -137,7 +137,7 @@ public class NewSurveyTableCustomizer extends JPanel
 					public Component getTableCellRendererComponent( JTable table , Object value , boolean isSelected , boolean hasFocus , int row , int column )
 					{
 						SurveyColumnType type = ( SurveyColumnType ) tableModel.getValueAt( row , CustomizationTableModel.TYPE_INDEX );
-						selector.setAvailableValues( NewSurveyTable.getAvailableFormats( type == null ? null : type.valueClass ) );
+						selector.setAvailableValues( type == null ? Collections.emptyList( ) : type.availableFormats );
 						return super.getTableCellRendererComponent( table , value , isSelected , hasFocus , row , column );
 					}
 				} );
@@ -159,7 +159,7 @@ public class NewSurveyTableCustomizer extends JPanel
 			public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row , int column )
 			{
 				SurveyColumnType type = ( SurveyColumnType ) tableModel.getValueAt( row , CustomizationTableModel.TYPE_INDEX );
-				formatSelector.setAvailableValues( NewSurveyTable.getAvailableFormats( type == null ? null : type.valueClass ) );
+				formatSelector.setAvailableValues( type == null ? Collections.emptyList( ) : type.availableFormats );
 				return super.getTableCellEditorComponent( table , value , isSelected , row , column );
 			}
 		} );
@@ -342,7 +342,7 @@ public class NewSurveyTableCustomizer extends JPanel
 					if( aValue instanceof SurveyColumnType )
 					{
 						SurveyColumnType type = ( SurveyColumnType ) aValue;
-						defaultFormat = NewSurveyTable.getDefaultFormat( type.valueClass );
+						defaultFormat = type.defaultFormat;
 					}
 					
 					setValueAt( defaultFormat , rowIndex , DEFAULT_FORMAT_INDEX );

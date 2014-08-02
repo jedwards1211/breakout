@@ -21,23 +21,21 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.IntUnaryOperator;
 
-import org.andork.collect.CollectionUtils;
 import org.andork.format.FormattedText;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q.QObject;
 import org.andork.q.QSpec;
-import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.NiceTableModel;
 import org.andork.util.StringUtils;
@@ -61,78 +59,6 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		}
 	}
 	
-	public static enum SurveyColumnType
-	{
-		STRING( "Text" , String.class , StringUtils.multiply( "m" , 20 ) )
-		{
-			Column<QObject<Row>> createColumn( String name )
-			{
-				return MapColumn.newInstance(
-						QObjectColumn.newInstance( Row.spec , Row.customAttrs ) ,
-						name ,
-						String.class ,
-						( ) -> QLinkedHashMap.newInstance( ) );
-			}
-		} ,
-		INTEGER( "Integer" , Integer.class , Integer.MAX_VALUE ) ,
-		REAL_NUMBER( "Real Number" , Double.class , Double.MAX_VALUE ) ,
-		DATE( "Date" , Date.class , new FormattedText( "2011/11/30" , NewSurveyTable.getAvailableFormats( Date.class )
-				.stream( ).filter( f -> f.name( ).equals( "yyyy/MM/dd" ) ).findAny( ).get( ) ) ) ,
-		SHOT_MEASUREMENT( "Shot Measurement" , ShotMeasurement.class ,
-				new FormattedText( "100.25 359.25/359.25 -89.25/-89.25" ,
-						NewSurveyTable.getAvailableFormats( ShotMeasurement.class ).stream( )
-								.filter( f -> f.format( ) instanceof DistAzmIncMeasurementFormat ).findAny( ).get( ) ) ) ,
-		CROSS_SECTION( "Cross Section" , CrossSection.class ,
-				new FormattedText( "100.25 100.25 100.25 100.25 100.25 100.25" , NewSurveyTable.formatMap.get( CrossSection.class )
-						.stream( ).filter( f -> f.format( ) instanceof LlrrudCrossSectionFormat ).findAny( ).get( ) ) );
-		
-		Column<QObject<Row>> createColumn( String name )
-		{
-			return createColumn( MapColumn.newInstance(
-					QObjectColumn.newInstance( Row.spec , Row.customAttrs ) ,
-					name ,
-					FormattedText.class ,
-					( ) -> QLinkedHashMap.newInstance( ) ) );
-		}
-		
-		Column<QObject<Row>> createColumn( Column<QObject<Row>> wrapped )
-		{
-			return FormattedTextColumn.newInstance(
-					wrapped ,
-					valueClass ,
-					( ) -> new FormattedText( NewSurveyTable.getDefaultFormat( valueClass ) ) );
-		}
-		
-		public final String										displayName;
-		public final Class<?>									valueClass;
-		public final Object										prototypeValue;
-		
-		private static final Map<Class<?>, SurveyColumnType>	valueClassMap;
-		
-		static
-		{
-			valueClassMap = Collections.unmodifiableMap( CollectionUtils.keyify( Arrays.asList( values( ) ).stream( ) ,
-					type -> type.valueClass ) );
-		}
-		
-		public static SurveyColumnType fromValueClass( Class<?> valueClass )
-		{
-			return valueClassMap.get( valueClass );
-		}
-		
-		private SurveyColumnType( String displayName , Class<?> valueClass , Object prototypeValue )
-		{
-			this.displayName = displayName;
-			this.valueClass = valueClass;
-			this.prototypeValue = prototypeValue;
-		}
-		
-		public String toString( )
-		{
-			return displayName;
-		}
-	}
-	
 	public final SurveyColumn						fromColumn;
 	public final SurveyColumn						toColumn;
 	public final SurveyColumn						shotMeasurementColumn;
@@ -144,40 +70,25 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	private final Map<String, SurveyColumn>			fixedColumns		= new LinkedHashMap<>( );
 	private final List<QObject<SurveyColumnModel>>	surveyColumnModels	= new ArrayList<>( );
 	
+	private BigInteger								nextId				= BigInteger.ZERO;
+	
 	public static final class SurveyColumn implements Column<QObject<Row>>
 	{
 		public final Column<QObject<Row>>	wrapped;
 		public final SurveyColumnType		type;
-		FormatAndDisplayInfo<?>				defaultFormat;
 		
 		private SurveyColumn( SurveyColumnType type , Column<QObject<Row>> wrapped )
 		{
 			super( );
 			this.wrapped = type.createColumn( wrapped );
 			this.type = type;
-			setDefaultFormat( NewSurveyTable.getDefaultFormat( type.valueClass ) );
 		}
 		
-		public SurveyColumn( String name , SurveyColumnType type , FormatAndDisplayInfo<?> defaultFormat )
+		public SurveyColumn( String id  , String name  , SurveyColumnType type  )
 		{
 			super( );
-			this.wrapped = type.createColumn( name );
+			this.wrapped = type.createCustomColumn( id );
 			this.type = type;
-			setDefaultFormat( defaultFormat );
-		}
-		
-		private void setDefaultFormat( FormatAndDisplayInfo<?> defaultFormat )
-		{
-			this.defaultFormat = defaultFormat;
-			if( wrapped instanceof FormattedTextColumn )
-			{
-				( ( FormattedTextColumn ) wrapped ).setFormattedTextSupplier( ( ) -> new FormattedText( defaultFormat ) );
-			}
-		}
-		
-		public FormatAndDisplayInfo<?> getDefaultFormat( )
-		{
-			return defaultFormat;
 		}
 		
 		@Override
@@ -236,18 +147,27 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		for( Column<QObject<Row>> column : getColumns( ) )
 		{
 			SurveyColumn col = ( SurveyColumn ) column;
-			fixedColumns.put( col.getColumnName( ) , col );
+			String id = getNextId( );
+			fixedColumns.put( id , col );
 			QObject<SurveyColumnModel> colModel = SurveyColumnModel.instance.newObject( );
+			colModel.set( SurveyColumnModel.id , id );
 			colModel.set( SurveyColumnModel.name , col.getColumnName( ) );
 			colModel.set( SurveyColumnModel.visible , true );
 			colModel.set( SurveyColumnModel.fixed , true );
 			colModel.set( SurveyColumnModel.type , col.type );
-			colModel.set( SurveyColumnModel.defaultFormat , col.defaultFormat );
+			colModel.set( SurveyColumnModel.defaultFormat , col.type.defaultFormat );
 			
 			surveyColumnModels.add( colModel );
 		}
 		
 		addRow( Row.spec.newObject( ) );
+	}
+	
+	public String getNextId( )
+	{
+		String result = Base64.getEncoder( ).encodeToString( nextId.toByteArray( ) );
+		nextId = nextId.add( BigInteger.ONE );
+		return result;
 	}
 	
 	public List<Column<QObject<Row>>> getColumns( )
@@ -386,17 +306,13 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 			//			{
 			//				continue;
 			//			}
-			SurveyColumn column = fixedColumns.get( colModel.get( SurveyColumnModel.name ) );
+			SurveyColumn column = fixedColumns.get( colModel.get( SurveyColumnModel.id ) );
 			if( column == null )
 			{
 				column = new SurveyColumn(
+						colModel.get( SurveyColumnModel.id ) ,
 						colModel.get( SurveyColumnModel.name ) ,
-						colModel.get( SurveyColumnModel.type ) ,
-						colModel.get( SurveyColumnModel.defaultFormat ) );
-			}
-			else
-			{
-				column.setDefaultFormat( colModel.get( SurveyColumnModel.defaultFormat ) );
+						colModel.get( SurveyColumnModel.type ) );
 			}
 			newColumns.add( column );
 		}
