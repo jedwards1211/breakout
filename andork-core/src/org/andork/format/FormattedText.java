@@ -87,7 +87,6 @@ public class FormattedText
 			}
 			catch( Exception ex )
 			{
-				ex.printStackTrace( );
 				value = null;
 				formatException = ex;
 			}

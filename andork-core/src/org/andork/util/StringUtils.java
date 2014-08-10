@@ -121,6 +121,11 @@ public class StringUtils
 		return aValue == null || "".equals( aValue.toString( ) );
 	}
 	
+	public static String nullifyIfEmpty( String s )
+	{
+		return "".equals( s ) ? null : s;
+	}
+	
 	public static String escape( String s , char escape )
 	{
 		StringBuilder sb = new StringBuilder( );

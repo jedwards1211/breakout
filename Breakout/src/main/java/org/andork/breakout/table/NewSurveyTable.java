@@ -25,11 +25,6 @@ import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import javax.swing.JTable;
 import javax.swing.JTextField;
@@ -40,11 +35,9 @@ import javax.swing.table.TableModel;
 
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.table.NewSurveyTableModel.Row;
-import org.andork.format.DateFormatWrapper;
 import org.andork.format.FormatWarning;
 import org.andork.format.FormattedText;
 import org.andork.q.QObject;
-import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.FormattedTextTableCellEditor;

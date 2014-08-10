@@ -58,8 +58,8 @@ import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.selector.DefaultSelector;
 import org.andork.swing.selector.FormatAndDisplayInfoListCellRenderer;
 import org.andork.swing.table.NiceTableModel;
-import org.andork.util.StringUtils;
 import org.andork.util.Java7.Objects;
+import org.andork.util.StringUtils;
 
 public class NewSurveyTableCustomizer extends JPanel
 {
@@ -406,7 +406,7 @@ public class NewSurveyTableCustomizer extends JPanel
 				dialog.getContentPane( ).setLayout( new BorderLayout( ) );
 				dialog.getContentPane( ).add( customizer , BorderLayout.CENTER );
 			}
-			Rectangle tableBounds = table.getBounds( );
+			Rectangle tableBounds = table.getVisibleRect( );
 			Point loc = tableBounds.getLocation( );
 			SwingUtilities.convertPointToScreen( loc , table );
 			tableBounds.setLocation( loc );

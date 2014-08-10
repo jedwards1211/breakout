@@ -21,11 +21,10 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,12 +44,13 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 {
 	public static class Row extends QSpec<Row>
 	{
+		public static final Attribute<Integer>							id					= newAttribute( Integer.class , "id" );
 		public static final Attribute<String>							from				= newAttribute( String.class , "From" );
 		public static final Attribute<String>							to					= newAttribute( String.class , "To" );
-		public static final Attribute<FormattedText>					shotMeasurement		= newAttribute( FormattedText.class , "Shot" );
+		public static final Attribute<FormattedText>					shotMeasurement		= newAttribute( FormattedText.class , "Shot Measurement" );
 		public static final Attribute<FormattedText>					fromCrossSection	= newAttribute( FormattedText.class , "Cross Section at From" );
 		public static final Attribute<FormattedText>					toCrossSection		= newAttribute( FormattedText.class , "Cross Section at To" );
-		public static final Attribute<QLinkedHashMap<String, Object>>	customAttrs			= newAttribute( QLinkedHashMap.class , "custom" );
+		public static final Attribute<QLinkedHashMap<Integer, Object>>	customAttrs			= newAttribute( QLinkedHashMap.class , "Custom" );
 		
 		public static final Row											spec				= new Row( );
 		
@@ -59,18 +59,21 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		}
 	}
 	
-	public final SurveyColumn						fromColumn;
-	public final SurveyColumn						toColumn;
-	public final SurveyColumn						shotMeasurementColumn;
-	public final SurveyColumn						fromCrossSectionColumn;
-	public final SurveyColumn						toCrossSectionColumn;
+	private final SurveyColumn								fromColumn;
+	private final SurveyColumn								toColumn;
+	private final SurveyColumn								shotMeasurementColumn;
+	private final SurveyColumn								fromCrossSectionColumn;
+	private final SurveyColumn								toCrossSectionColumn;
 	
-	private boolean									autoResize			= true;
+	private boolean											autoResize		= true;
 	
-	private final Map<String, SurveyColumn>			fixedColumns		= new LinkedHashMap<>( );
-	private final List<QObject<SurveyColumnModel>>	surveyColumnModels	= new ArrayList<>( );
+	private final Map<Integer, SurveyColumn>				fixedColumnMap	= new LinkedHashMap<>( );
+	private final Map<Integer, SurveyColumn>				columnMap		= new LinkedHashMap<>( );
+	private final List<QObject<SurveyColumnModel>>			columnModelList	= new ArrayList<>( );
+	private final Map<Integer, QObject<SurveyColumnModel>>	columnModelMap	= new LinkedHashMap<>( );
 	
-	private BigInteger								nextId				= BigInteger.ZERO;
+	private IdManager										rowIdManager	= new IdManager( );
+	private IdManager										columnIdManager	= new IdManager( );
 	
 	public static final class SurveyColumn implements Column<QObject<Row>>
 	{
@@ -84,7 +87,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 			this.type = type;
 		}
 		
-		public SurveyColumn( String id  , String name  , SurveyColumnType type  )
+		public SurveyColumn( int id , String name , SurveyColumnType type )
 		{
 			super( );
 			this.wrapped = type.createCustomColumn( id );
@@ -147,8 +150,8 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		for( Column<QObject<Row>> column : getColumns( ) )
 		{
 			SurveyColumn col = ( SurveyColumn ) column;
-			String id = getNextId( );
-			fixedColumns.put( id , col );
+			int id = columnIdManager.nextId( );
+			fixedColumnMap.put( id , col );
 			QObject<SurveyColumnModel> colModel = SurveyColumnModel.instance.newObject( );
 			colModel.set( SurveyColumnModel.id , id );
 			colModel.set( SurveyColumnModel.name , col.getColumnName( ) );
@@ -157,17 +160,11 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 			colModel.set( SurveyColumnModel.type , col.type );
 			colModel.set( SurveyColumnModel.defaultFormat , col.type.defaultFormat );
 			
-			surveyColumnModels.add( colModel );
+			columnModelList.add( colModel );
+			columnModelMap.put( colModel.get( SurveyColumnModel.id ) , colModel );
 		}
 		
 		addRow( Row.spec.newObject( ) );
-	}
-	
-	public String getNextId( )
-	{
-		String result = Base64.getEncoder( ).encodeToString( nextId.toByteArray( ) );
-		nextId = nextId.add( BigInteger.ONE );
-		return result;
 	}
 	
 	public List<Column<QObject<Row>>> getColumns( )
@@ -179,6 +176,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 	public void setValueAt( Object aValue , int rowIndex , int columnIndex )
 	{
 		super.setValueAt( aValue , rowIndex , columnIndex );
+		
 		if( ( StringUtils.isNullOrEmpty( aValue ) && rowIndex == getRowCount( ) - 2 ) || ( !StringUtils.isNullOrEmpty( aValue ) && rowIndex == getRowCount( ) - 1 ) )
 		{
 			updateEndRows( );
@@ -212,9 +210,10 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		addRows( rowsToAdd );
 		
 		int srcRowIndex = 0;
+		
 		for( Object[ ] srcRow : srcRows )
 		{
-			int destRowIndex = convertRowToDest.applyAsInt( srcRowIndex );
+			int destRowIndex = convertRowToDest.applyAsInt( srcRowIndex++ );
 			
 			if( destRowIndex < 0 )
 			{
@@ -235,10 +234,9 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 				Column<QObject<Row>> destColumn = getColumn( destColumnIndex );
 				destColumn.setValueAt( srcRow[ srcColumnIndex ] , destRow );
 			}
-			
-			srcRowIndex++ ;
 		}
 		fireTableRowsUpdated( minDestRowIndex , maxDestRowIndex );
+		
 		updateEndRows( );
 	}
 	
@@ -272,8 +270,13 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		}
 	}
 	
-	public void removeRows( int[ ] rows )
+	public void removeRows( int ... rows )
 	{
+		int[ ] removedRowIds = new int[ rows.length ];
+		for( int i = 0 ; i < rows.length ; i++ )
+		{
+			removedRowIds[ i ] = getRow( rows[ i ] ).get( Row.id );
+		}
 		if( rows.length <= 10 )
 		{
 			for( int i = rows.length - 1 ; i >= 0 ; i-- )
@@ -285,28 +288,139 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		{
 			super.removeRows( rows );
 		}
+		
 		updateEndRows( );
+	}
+	
+	@Override
+	protected void addRow( QObject<Row> row )
+	{
+		addRow( getRowCount( ) , row );
+	}
+	
+	@Override
+	protected void addRow( int index , QObject<Row> row )
+	{
+		row.set( Row.id , rowIdManager.nextId( ) );
+		super.addRow( index , row );
+	}
+	
+	@Override
+	protected void addRows( Collection<? extends QObject<Row>> rows )
+	{
+		addRows( getRowCount( ) , rows );
+	}
+	
+	@Override
+	protected void addRows( int index , Collection<? extends QObject<Row>> rows )
+	{
+		for( QObject<Row> row : rows )
+		{
+			row.set( Row.id , rowIdManager.nextId( ) );
+		}
+		super.addRows( index , rows );
+	}
+	
+	@Override
+	protected void removeRow( int index )
+	{
+		rowIdManager.release( getRow( index ).get( Row.id ) );
+		super.removeRow( index );
+	}
+	
+	@Override
+	protected void removeRows( int firstIndex , int lastIndex )
+	{
+		for( int index = firstIndex ; index <= lastIndex ; index++ )
+		{
+			rowIdManager.release( getRow( index ).get( Row.id ) );
+		}
+		super.removeRows( firstIndex , lastIndex );
+	}
+	
+	@Override
+	protected void clearRows( )
+	{
+		rowIdManager.reset( Collections.emptySet( ) );
+		super.clearRows( );
+	}
+	
+	@Override
+	protected void setRows( Collection<? extends QObject<Row>> rows )
+	{
+		rowIdManager.reset( rows.stream( ).map( r -> r.get( Row.id ) ) );
+		for( QObject<Row> row : rows )
+		{
+			if( row.get( Row.id ) == null )
+			{
+				row.set( Row.id , rowIdManager.nextId( ) );
+			}
+		}
+		super.setRows( rows );
+	}
+	
+	@Override
+	protected void setRow( int index , QObject<Row> row )
+	{
+		row.set( Row.id , getRow( index ).get( Row.id ) );
+		super.setRow( index , row );
+	}
+	
+	@Override
+	protected void setRows( int index , Collection<? extends QObject<Row>> rows )
+	{
+		int k = 0;
+		for( QObject<Row> row : rows )
+		{
+			row.set( Row.id , getRow( index + k ).get( Row.id ) );
+			k++ ;
+		}
+		super.setRows( index , rows );
+	}
+	
+	/**
+	 * Returns the internal row object at the given index. If you modify it no events will be fired!
+	 */
+	public QObject<Row> getRow( int rowIndex )
+	{
+		return super.getRow( rowIndex );
+	}
+	
+	public SurveyColumn getColumnWithId( Integer id )
+	{
+		return columnMap.get( id );
+	}
+	
+	public QObject<SurveyColumnModel> getColumnModelWithId( Integer id )
+	{
+		return columnModelMap.get( id );
 	}
 	
 	public List<QObject<SurveyColumnModel>> getColumnModels( )
 	{
-		return new ArrayList<>( surveyColumnModels );
+		return new ArrayList<>( columnModelList );
 	}
 	
 	public void setColumnModels( Collection<? extends QObject<SurveyColumnModel>> newColumnModels )
 	{
 		List<SurveyColumn> newColumns = new ArrayList<>( );
 		
-		surveyColumnModels.clear( );
+		columnMap.clear( );
+		columnModelList.clear( );
+		columnModelMap.clear( );
+		
+		columnIdManager.reset( newColumnModels.stream( ).map( c -> c.get( SurveyColumnModel.id ) ) );
 		
 		for( QObject<SurveyColumnModel> colModel : newColumnModels )
 		{
-			surveyColumnModels.add( colModel );
-			//			if( !Boolean.TRUE.equals( colModel.get( SurveyColumnModel.visible ) ) )
-			//			{
-			//				continue;
-			//			}
-			SurveyColumn column = fixedColumns.get( colModel.get( SurveyColumnModel.id ) );
+			if( colModel.get( SurveyColumnModel.id ) == null )
+			{
+				colModel.set( SurveyColumnModel.id , columnIdManager.nextId( ) );
+			}
+			
+			columnModelList.add( colModel );
+			columnModelMap.put( colModel.get( SurveyColumnModel.id ) , colModel );
+			SurveyColumn column = fixedColumnMap.get( colModel.get( SurveyColumnModel.id ) );
 			if( column == null )
 			{
 				column = new SurveyColumn(
@@ -315,6 +429,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 						colModel.get( SurveyColumnModel.type ) );
 			}
 			newColumns.add( column );
+			columnMap.put( colModel.get( SurveyColumnModel.id ) , column );
 		}
 		
 		setColumns( newColumns );
@@ -326,7 +441,7 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		public NewSurveyTableModel createEmptyCopy( NewSurveyTableModel model )
 		{
 			NewSurveyTableModel copy = new NewSurveyTableModel( );
-			for( int i = 0 ; i < model.getRowCount( ) ; i++ )
+			for( int i = 1 ; i < model.getRowCount( ) ; i++ )
 			{
 				copy.addRow( Row.spec.newObject( ) );
 			}
@@ -337,16 +452,26 @@ public class NewSurveyTableModel extends NiceTableModel<QObject<NewSurveyTableMo
 		public NewSurveyTableModel copy( NewSurveyTableModel src )
 		{
 			NewSurveyTableModel dest = createEmptyCopy( src );
-			for( int row = 0 ; row < src.getRowCount( ) ; row++ )
+			for( int row = 0 ; row < src.getRowCount( ) - 1 ; row++ )
 			{
 				copyRow( src , row , dest );
 			}
 			return dest;
 		}
+		
+		@Override
+		public void copyRow( NewSurveyTableModel src , int row , NewSurveyTableModel dest )
+		{
+			if( row == src.getRowCount( ) - 1 )
+			{
+				return;
+			}
+			super.copyRow( src , row , dest );
+		}
 	}
 	
 	public QObject<SurveyColumnModel> getColumnModel( int columnIndex )
 	{
-		return surveyColumnModels.get( columnIndex );
+		return columnModelList.get( columnIndex );
 	}
 }

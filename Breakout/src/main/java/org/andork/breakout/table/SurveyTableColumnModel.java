@@ -50,7 +50,7 @@ import org.andork.swing.table.FormattedTextWithSelectorTableCellRenderer;
 @SuppressWarnings( "serial" )
 public class SurveyTableColumnModel extends DefaultTableColumnModel
 {
-	private final Map<String, SurveyTableColumn>	columnMap		= new HashMap<>( );
+	private final Map<Integer, SurveyTableColumn>	columnMap		= new HashMap<>( );
 	
 	private final List<QObject<SurveyColumnModel>>	columnModels	= new ArrayList<>( );
 	
@@ -79,7 +79,7 @@ public class SurveyTableColumnModel extends DefaultTableColumnModel
 		int index = 0;
 		for( QObject<SurveyColumnModel> columnModel : columnModels )
 		{
-			String id = columnModel.get( SurveyColumnModel.id );
+			Integer id = columnModel.get( SurveyColumnModel.id );
 			SurveyTableColumn column = columnMap.get( id );
 			boolean updatePreferredWidth = false;
 			if( column == null )

@@ -393,7 +393,6 @@ public class KVLiteChannel
 			}
 			value = new byte[ valueLength ];
 			buffer.get( value );
-			
 		}
 		
 		public Record( Key key , ChangeType changeType , byte[ ] value )
@@ -455,6 +454,11 @@ public class KVLiteChannel
 			super( );
 			this.bytes = bytes;
 			this.hashCode = Arrays.hashCode( bytes );
+		}
+		
+		public Key( String string )
+		{
+			this( string.getBytes( ) );
 		}
 		
 		@Override

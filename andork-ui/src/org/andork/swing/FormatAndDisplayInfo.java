@@ -31,13 +31,15 @@ public class FormatAndDisplayInfo<T> implements Format<T>
 	private final String	description;
 	private final String	name;
 	private final Icon		icon;
+	private final String	id;
 	
-	public FormatAndDisplayInfo( Format<T> wrapped  , String name  , String description  , Icon icon  )
+	public FormatAndDisplayInfo( Format<T> wrapped , String id , String name , String description , Icon icon )
 	{
 		super( );
 		this.wrapped = wrapped;
 		this.description = description;
 		this.name = name;
+		this.id = id;
 		this.icon = icon;
 	}
 	
@@ -71,5 +73,10 @@ public class FormatAndDisplayInfo<T> implements Format<T>
 	public T parse( String s ) throws Exception
 	{
 		return wrapped.parse( s );
+	}
+
+	public String id( )
+	{
+		return id;
 	}
 }

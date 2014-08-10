@@ -21,19 +21,73 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
+import java.util.Map;
+
+import org.andork.breakout.ObjectYamlBimapper;
+import org.andork.func.Bimapper;
+import org.andork.func.CompoundBimapper;
+import org.andork.func.NullBimapper;
+import org.andork.q.QObject;
+import org.andork.q.QObjectMapBimapper;
 import org.andork.q.QSpec;
 import org.andork.swing.FormatAndDisplayInfo;
 
 public class SurveyColumnModel extends QSpec<SurveyColumnModel>
 {
-	public static final Attribute<Boolean>					fixed			= newAttribute( Boolean.class , "fixed" );
-	public static final Attribute<Boolean>					visible			= newAttribute( Boolean.class , "show" );
-	public static final Attribute<String>					id				= newAttribute( String.class , "id" );
-	public static final Attribute<String>					name			= newAttribute( String.class , "name" );
-	public static final Attribute<SurveyColumnType>			type			= newAttribute( SurveyColumnType.class , "type" );
-	public static final Attribute<FormatAndDisplayInfo<?>>	defaultFormat	= newAttribute( FormatAndDisplayInfo.class , "defaultFormat" );
+	public static final Attribute<Boolean>								fixed			= newAttribute( Boolean.class , "fixed" );
+	public static final Attribute<Boolean>								visible			= newAttribute( Boolean.class , "show" );
+	public static final Attribute<Integer>								id				= newAttribute( Integer.class , "id" );
+	public static final Attribute<String>								name			= newAttribute( String.class , "name" );
+	public static final Attribute<SurveyColumnType>						type			= newAttribute( SurveyColumnType.class , "type" );
+	public static final Attribute<FormatAndDisplayInfo<?>>				defaultFormat	= newAttribute( FormatAndDisplayInfo.class , "defaultFormat" );
 	
-	public static final SurveyColumnModel					instance		= new SurveyColumnModel( );
+	public static final SurveyColumnModel								instance		= new SurveyColumnModel( );
+	
+	public static final Bimapper<QObject<SurveyColumnModel>, String>	yamlBimapper;
+	public static final QObjectMapBimapper<SurveyColumnModel>			objectBimapper;
+	
+	static
+	{
+		objectBimapper = new QObjectMapBimapper<SurveyColumnModel>( instance )
+		{
+			
+			@Override
+			public Object map( QObject<SurveyColumnModel> in )
+			{
+				Map<Object, Object> m = ( Map<Object, Object> ) super.map( in );
+				FormatAndDisplayInfo<?> format = in.get( defaultFormat );
+				if( format != null )
+				{
+					m.put( defaultFormat.getName( ) , format.name( ) );
+				}
+				return m;
+			}
+			
+			@Override
+			public QObject<SurveyColumnModel> unmap( Object out )
+			{
+				Map<Object, Object> m = ( Map<Object, Object> ) out;
+				QObject<SurveyColumnModel> q = ( QObject<SurveyColumnModel> ) super.unmap( out );
+				String formatId = ( String ) m.get( defaultFormat.getName( ) );
+				SurveyColumnType t = q.get( type );
+				if( t != null )
+				{
+					q.set( defaultFormat , t.defaultFormat );
+					for( FormatAndDisplayInfo<?> format : t.availableFormats )
+					{
+						if( format.id( ).equals( formatId ) )
+						{
+							q.set( defaultFormat , format );
+							break;
+						}
+					}
+				}
+				return q;
+			}
+		}.map( defaultFormat , new NullBimapper<>( ) );
+		
+		yamlBimapper = CompoundBimapper.compose( objectBimapper , new ObjectYamlBimapper( ) );
+	}
 	
 	private SurveyColumnModel( )
 	{

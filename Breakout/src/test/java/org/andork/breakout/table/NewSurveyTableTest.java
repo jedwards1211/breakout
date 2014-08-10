@@ -22,6 +22,12 @@
 package org.andork.breakout.table;
 
 import java.awt.Color;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,20 +36,85 @@ import javax.swing.JButton;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.table.NewSurveyTableModel.NewSurveyTableModelCopier;
 import org.andork.format.FormatWarning;
+import org.andork.io.KVLiteChannel;
+import org.andork.io.KVLiteChannel.Record;
 import org.andork.swing.OnEDT;
 import org.andork.swing.QuickTestFrame;
+import org.andork.swing.async.SingleThreadedTaskService;
+import org.andork.swing.async.Task;
+import org.andork.swing.async.TaskService;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 import org.andork.swing.table.FormattedTextTableRowAnnotator;
+import org.andork.util.Batcher2;
 
 public class NewSurveyTableTest
 {
-	public static void main( String[ ] args )
+	public static void main( String[ ] args ) throws IOException
 	{
+		FileChannel fileChannel = FileChannel.open( Paths.get( "saved-table.bkv" ) , StandardOpenOption.READ , StandardOpenOption.WRITE , StandardOpenOption.CREATE );
+		TaskService saveTaskService = new SingleThreadedTaskService( );
+		KVLiteChannel channel = null;
+		try
+		{
+			channel = KVLiteChannel.load( fileChannel );
+		}
+		catch( Exception ex )
+		{
+			channel = new KVLiteChannel( fileChannel , 64 );
+		}
+		
+		final KVLiteChannel finalChannel = channel;
+		
+		Batcher2<List<Record>> writeQueue = new Batcher2<>(
+				runnable -> saveTaskService.submit( new Task( )
+				{
+					@Override
+					protected void execute( ) throws Exception
+					{
+						runnable.run( );
+					}
+				} ) ,
+				records -> {
+					List<Record> flatRecords = new LinkedList<Record>( );
+					for( List<Record> list : records )
+					{
+						flatRecords.addAll( list );
+					}
+					try
+					{
+						finalChannel.write( flatRecords );
+					}
+					catch( Exception ex )
+					{
+						throw new RuntimeException( ex );
+					}
+				} );
+		
+		String prefix = "t";
+		
+		NewSurveyTablePersister persister = new NewSurveyTablePersister( "cols" , "firstShot" , "shot" , writeQueue );
+		NewSurveyTableModel model;
+		try
+		{
+			model = persister.load( channel );
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace( );
+			model = new NewSurveyTableModel( );
+		}
+		
+		NewSurveyTableModel finalModel = model;
+		
 		OnEDT.onEDT( ( ) -> {
-			NewSurveyTableModel model = new NewSurveyTableModel( );
+			NewSurveyTable table = new NewSurveyTable( finalModel == null ? new NewSurveyTableModel( ) : finalModel );
+			persister.setTable( table );
+			if( finalModel == null )
+			{
+				persister.rewriteAll( );
+			}
 			
-			NewSurveyTable table = new NewSurveyTable( model );
 			ExecutorService executor = Executors.newSingleThreadExecutor( );
 			DefaultAnnotatingJTableSetup setup = new DefaultAnnotatingJTableSetup( table , r -> executor.submit( r ) );
 			FormattedTextTableRowAnnotator annotator = new FormattedTextTableRowAnnotator( );
