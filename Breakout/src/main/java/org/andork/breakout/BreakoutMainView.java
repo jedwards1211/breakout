@@ -111,7 +111,6 @@ import org.andork.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.TransparentTerrain;
-import org.andork.breakout.model.WeightedAverageTiltAxisInferrer;
 import org.andork.collect.CollectionUtils;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.func.FloatUnaryOperator;
