@@ -1,8 +1,9 @@
 package org.andork.bind2.ui;
 
 import java.awt.Container;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.DateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Locale;
 
@@ -13,8 +14,8 @@ import javax.swing.JLabel;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.bind2.Binder;
 import org.andork.bind2.DefaultBinder;
-import org.andork.bind2.FunctionBinder;
 import org.andork.i18n.I18n;
 import org.andork.i18n.I18n.Localizer;
 import org.andork.swing.CellRenderers;
@@ -43,7 +44,7 @@ public class NewI18nTest
 						return null;
 					}
 					Locale locale = ( Locale ) value;
-					return locale.getDisplayCountry( locale ) + " " + locale.getDisplayLanguage( locale );
+					return locale.getDisplayLanguage( locale ) + " (" + locale.getDisplayCountry( locale ) + ")";
 				} , new DefaultListCellRenderer( ) ) );
 		i18n.setLocaleBinder( new ISelectorSelectionBinder<>( localeSelector ) );
 		
@@ -52,12 +53,24 @@ public class NewI18nTest
 		localeSelector.addAvailableValue( Locale.CANADA );
 		localeSelector.addAvailableValue( Locale.CANADA_FRENCH );
 		localeSelector.addAvailableValue( Locale.GERMANY );
+		localeSelector.addAvailableValue( Locale.CHINA );
+		localeSelector.addAvailableValue( Locale.JAPAN );
+		
+		DefaultBinder<Date> dateBinder = new DefaultBinder<>( new Date( ) );
+		
+		new javax.swing.Timer( 100 , new ActionListener( )
+		{
+			@Override
+			public void actionPerformed( ActionEvent e )
+			{
+				dateBinder.set( new Date( ) );
+			}
+		} ).start( );
 		
 		JLabel dateLabel = new JLabel( );
 		new JLabelTextBinding( dateLabel ).textLink.bind( localizer.formattedStringBinder(
 				new DefaultBinder<String>( "dateLabel.text" ) ,
-				i18n.formattedDateTimeBinder( new DefaultBinder<>( new Date( ) ) ,
-						DateFormat.MEDIUM , DateFormat.MEDIUM ) ) );
+				i18n.formattedDateTimeBinder( dateBinder , DateFormat.MEDIUM , DateFormat.MEDIUM ) ) );
 		
 		JButton testButton = new JButton( );
 		new ButtonTextBinding( testButton ).textLink.bind( localizer.stringBinder( "testButton.text" ) );
