@@ -1027,7 +1027,7 @@ public class BreakoutMainView extends BasicJoglSetup
 	{
 		JoglScene scene = new JoglScene( );
 		scene.setRenderToFbo( true );
-		scene.setDesiredNumSamples( 4 );
+		scene.setDesiredNumSamples( 1 );
 		
 		return scene;
 	}

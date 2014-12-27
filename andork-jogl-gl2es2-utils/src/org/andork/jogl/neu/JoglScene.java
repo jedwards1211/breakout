@@ -320,7 +320,7 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 			{
 				destroyOffscreenBuffers( gl3 );
 				
-				int[ ] temps = new int[ 1 ];
+				int[ ] temps = new int[ 2 ];
 				renderingFboWidth = width;
 				renderingFboHeight = height;
 				
@@ -328,37 +328,41 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 				renderingFbo = temps[ 0 ];
 				gl3.glBindFramebuffer( GL3.GL_FRAMEBUFFER , renderingFbo );
 				
-				gl3.glGenRenderbuffers( 1 , temps , 0 );
-				renderingDepthBuffer = temps[ 0 ];
+				gl3.glGenRenderbuffers( 2 , temps , 0 );
+				renderingColorBuffer = temps[ 0 ];
+				renderingDepthBuffer = temps[ 1 ];
 				
 				currentNumSamples = targetNumSamples;
 				
+				// Color Render Buffer
+				
+				gl3.glBindRenderbuffer( GL_RENDERBUFFER , renderingColorBuffer );
+
 				if( currentNumSamples > 1 )
 				{
-					gl3.glGenTextures( 1 , temps , 0 );
-					renderingFboTex = temps[ 0 ];
-					gl3.glBindTexture( GL3.GL_TEXTURE_2D_MULTISAMPLE , renderingFboTex );
-					
-					gl3.glTexImage2DMultisample( GL3.GL_TEXTURE_2D_MULTISAMPLE , currentNumSamples , GL3.GL_RGBA8 , renderingFboWidth , renderingFboHeight , false );
-					gl3.glFramebufferTexture2D( GL3.GL_FRAMEBUFFER , GL3.GL_COLOR_ATTACHMENT0 , GL3.GL_TEXTURE_2D_MULTISAMPLE , renderingFboTex , 0 );
-					
-					gl3.glBindRenderbuffer( GL_RENDERBUFFER , renderingDepthBuffer );
-					gl3.glRenderbufferStorageMultisample( GL_RENDERBUFFER , currentNumSamples , GL_DEPTH_COMPONENT32 , renderingFboWidth , renderingFboHeight );
-					gl3.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_DEPTH_ATTACHMENT , GL_RENDERBUFFER , renderingDepthBuffer );
+					gl3.glRenderbufferStorageMultisample( GL_RENDERBUFFER , currentNumSamples, GL3.GL_RGBA8 , renderingFboWidth , renderingFboHeight );
 				}
 				else
 				{
-					gl3.glGenRenderbuffers( 1 , temps , 0 );
-					renderingColorBuffer = temps[ 0 ];
-					gl3.glBindRenderbuffer( GL_RENDERBUFFER , renderingColorBuffer );
 					gl3.glRenderbufferStorage( GL_RENDERBUFFER , GL3.GL_RGBA8 , renderingFboWidth , renderingFboHeight );
-					gl3.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_COLOR_ATTACHMENT0 , GL_RENDERBUFFER , renderingColorBuffer );
-					
-					gl3.glBindRenderbuffer( GL_RENDERBUFFER , renderingDepthBuffer );
-					gl3.glRenderbufferStorage( GL_RENDERBUFFER , GL_DEPTH_COMPONENT32 , renderingFboWidth , renderingFboHeight );
-					gl3.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_DEPTH_ATTACHMENT , GL_RENDERBUFFER , renderingDepthBuffer );
 				}
-				
+
+				gl3.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_COLOR_ATTACHMENT0 , GL_RENDERBUFFER , renderingColorBuffer );
+
+				// Depth Render Buffer
+
+				gl3.glBindRenderbuffer( GL_RENDERBUFFER , renderingDepthBuffer );
+
+				if( currentNumSamples > 1 )
+				{
+					gl3.glRenderbufferStorageMultisample( GL_RENDERBUFFER , currentNumSamples , GL_DEPTH_COMPONENT32 , renderingFboWidth , renderingFboHeight );
+				}
+				else
+				{
+					gl3.glRenderbufferStorage( GL_RENDERBUFFER , GL_DEPTH_COMPONENT32 , renderingFboWidth , renderingFboHeight );
+				}
+
+				gl3.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_DEPTH_ATTACHMENT , GL_RENDERBUFFER , renderingDepthBuffer );
 			}
 			
 			gl3.glBindFramebuffer( GL3.GL_DRAW_FRAMEBUFFER , renderingFbo );
