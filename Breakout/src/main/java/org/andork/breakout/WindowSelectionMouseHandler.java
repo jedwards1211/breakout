@@ -30,27 +30,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2ES2;
-import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.breakout.model.Survey3dModel;
 import org.andork.breakout.model.Survey3dModel.Shot3d;
 import org.andork.func.StreamUtils;
-import org.andork.jogl.BasicJOGLObject;
-import org.andork.jogl.BasicJOGLObject.Attribute3fv;
-import org.andork.jogl.BasicJOGLObject.BasicVertexShader;
-import org.andork.jogl.BasicJOGLObject.FlatFragmentShader;
-import org.andork.jogl.BufferHelper;
-import org.andork.jogl.neu.JoglScene;
-import org.andork.math3d.PlanarHull3f;
+import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglScene;
 import org.andork.math3d.PickXform;
+import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.Vecmath;
 import org.andork.spatial.EdgeTrees;
 import org.andork.spatial.RBranch;
 import org.andork.spatial.RTraversal;
 import org.andork.spatial.RfStarTree;
-import org.andork.swing.OnEDT;
 import org.andork.swing.async.TaskService;
 import org.andork.util.Reparam;
 
@@ -59,71 +52,79 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 	public static interface Context
 	{
 		public Survey3dModel getSurvey3dModel( );
-		
+
 		public void endSelection( );
-		
-		public GLCanvas getCanvas( );
-		
+
+		public GLAutoDrawable getDrawable( );
+
+		public JoglCamera getCamera( );
+
 		public JoglScene getScene( );
-		
+
 		public TaskService getRebuildTaskService( );
-		
+
 		public void selectShots( Set<Shot3d> newSelected , boolean add , boolean toggle );
 	}
-	
+
 	public WindowSelectionMouseHandler( Context context )
 	{
 		this.context = context;
 	}
-	
+
 	private final Context			context;
 	private final List<float[ ]>	points				= new ArrayList<float[ ]>( );
 	SelectionPolygon				selectionPolygon	= new SelectionPolygon( );
-	
+
 	private PlanarHull3f			hull				= new PlanarHull3f( );
-	
+
 	final float[ ]					pointOnScreen		= new float[ 3 ];
-	
+
 	public void start( MouseEvent e )
 	{
-		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
-		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
-		context.getCanvas( ).invoke( false , drawable -> {
+		points.add( new float[ ]
+		{ e.getX( ) , context.getDrawable( ).getSurfaceHeight( ) - e.getY( ) } );
+		points.add( new float[ ]
+		{ e.getX( ) , context.getDrawable( ).getSurfaceHeight( ) - e.getY( ) } );
+		context.getDrawable( ).invoke( false , drawable ->
+		{
 			selectionPolygon.setPoints( points );
 			context.getScene( ).add( selectionPolygon );
 			return false;
 		} );
 	}
-	
+
 	protected void selectLoopedShots( boolean add , boolean toggle )
 	{
 		final Survey3dModel model3d = context.getSurvey3dModel( );
-		
+
 		final List<float[ ]> points = new ArrayList<>( this.points );
-		
+
 		if( model3d == null )
 		{
 			return;
 		}
-		
-		context.getRebuildTaskService( ).submit( task -> {
+
+		context.getRebuildTaskService( ).submit( task ->
+		{
 			task.setStatus( "Finding lassoed shots..." );
 			task.setIndeterminate( true );
 			RBranch<float[ ], Shot3d> root = model3d.getTree( ).getRoot( );
 			RfStarTree<float[ ]> edgeTree = new RfStarTree<>( 2 , 4 , 1 , 2 );
-			
-			StreamUtils.forEachPairLooped( points.stream( ) , ( p1 , p2 ) -> {
-				edgeTree.insert( edgeTree.createLeaf( ppunion( p1 , p2 ) , new float[ ] { p1[ 0 ] , p1[ 1 ] , p2[ 0 ] , p2[ 1 ] } ) );
+
+			StreamUtils.forEachPairLooped( points.stream( ) , ( p1 , p2 ) ->
+			{
+				edgeTree.insert( edgeTree.createLeaf( ppunion( p1 , p2 ) , new float[ ]
+				{ p1[ 0 ] , p1[ 1 ] , p2[ 0 ] , p2[ 1 ] } ) );
 			} );
-			
+
 			float[ ] mbr = edgeTree.getRoot( ).mbr( );
-			
-			PickXform pickXform = context.getScene( ).pickXform( );
-			
-			GLCanvas canvas = context.getCanvas( );
-			int cw = canvas.getWidth( );
-			int ch = canvas.getHeight( );
-			
+
+			PickXform pickXform = context.getCamera( ).pickXform( );
+
+			GLAutoDrawable canvas = context.getDrawable( );
+			int cw = canvas.getSurfaceWidth( );
+			int ch = canvas.getSurfaceHeight( );
+
 			pickXform.exportViewVolume( hull , mbr , cw , ch );
 
 			//			BasicJOGLObject bounds = new BasicJOGLObject( );
@@ -165,54 +166,53 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 			//				context.getScene( ).add( normals );
 			//				return false;
 			//			} );
-			
-			JoglScene scene = context.getScene( );
-			
-			float[ ] pv = Vecmath.newMat4f( );
-			Vecmath.mmul( scene.projXform( ) , scene.viewXform( ) , pv );
-			
-			Set<Shot3d> newSelected = new HashSet<>( );
-			
-			RTraversal.traverse( root ,
-					node -> hull.intersectsBox( node.mbr( ) ) ,
-					leaf -> {
-						for( float[ ] point : leaf.object( ).coordIterable( ) )
+
+				JoglCamera camera = context.getCamera( );
+
+				float[ ] pv = Vecmath.newMat4f( );
+				Vecmath.mmul( camera.projXform( ) , camera.viewXform( ) , pv );
+
+				Set<Shot3d> newSelected = new HashSet<>( );
+
+				RTraversal.traverse( root , node -> hull.intersectsBox( node.mbr( ) ) , leaf ->
+				{
+					for( float[ ] point : leaf.object( ).coordIterable( ) )
+					{
+						Vecmath.mpmul( pv , point , pointOnScreen );
+						pointOnScreen[ 0 ] = Reparam.linear( pointOnScreen[ 0 ] , -1 , 1 , 0 , cw );
+						pointOnScreen[ 1 ] = Reparam.linear( pointOnScreen[ 1 ] , -1 , 1 , 0 , ch );
+						if( !EdgeTrees.isInPolygon( pointOnScreen , edgeTree.getRoot( ) ) )
 						{
-							Vecmath.mpmul( pv , point , pointOnScreen );
-							pointOnScreen[ 0 ] = Reparam.linear( pointOnScreen[ 0 ] , -1 , 1 , 0 , cw );
-							pointOnScreen[ 1 ] = Reparam.linear( pointOnScreen[ 1 ] , -1 , 1 , 0 , ch );
-							if( !EdgeTrees.isInPolygon( pointOnScreen , edgeTree.getRoot( ) ) )
-							{
-								return true;
-							}
+							return true;
 						}
-						newSelected.add( leaf.object( ) );
-						return true;
-					} );
-			
-			context.selectShots( newSelected , add , toggle );
-			
-			OnEDT.onEDT( ( ) -> context.getCanvas( ).repaint( ) );
-		} );
+					}
+					newSelected.add( leaf.object( ) );
+					return true;
+				} );
+
+				context.selectShots( newSelected , add , toggle );
+
+				context.getDrawable( ).display( );
+			} );
 	}
-	
+
 	public void end( )
 	{
 		points.clear( );
-		context.getCanvas( ).invoke( true , drawable -> {
+		context.getDrawable( ).invoke( true , drawable ->
+		{
 			context.getScene( ).remove( selectionPolygon );
 			return false;
 		} );
 		context.endSelection( );
 	}
-	
+
 	@Override
 	public void mousePressed( MouseEvent e )
 	{
 		if( e.getButton( ) == MouseEvent.BUTTON3 )
 		{
-			selectLoopedShots( ( e.getModifiersEx( ) & MouseEvent.CTRL_DOWN_MASK ) != 0 ,
-					( e.getModifiersEx( ) & MouseEvent.SHIFT_DOWN_MASK ) != 0 );
+			selectLoopedShots( ( e.getModifiersEx( ) & MouseEvent.CTRL_DOWN_MASK ) != 0 , ( e.getModifiersEx( ) & MouseEvent.SHIFT_DOWN_MASK ) != 0 );
 			end( );
 			return;
 		}
@@ -220,24 +220,26 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 		{
 			return;
 		}
-		points.add( new float[ ] { e.getX( ) , context.getCanvas( ).getHeight( ) - e.getY( ) } );
-		context.getCanvas( ).invoke( false , drawable -> {
+		points.add( new float[ ]
+		{ e.getX( ) , context.getDrawable( ).getSurfaceHeight( ) - e.getY( ) } );
+		context.getDrawable( ).invoke( false , drawable ->
+		{
 			selectionPolygon.setPoints( points );
 			return false;
 		} );
 	}
-	
+
 	@Override
 	public void mouseReleased( MouseEvent e )
 	{
 	}
-	
+
 	@Override
 	public void mouseDragged( MouseEvent e )
 	{
 		mouseMoved( e );
 	}
-	
+
 	@Override
 	public void mouseMoved( MouseEvent e )
 	{
@@ -245,8 +247,9 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 		{
 			float[ ] last = points.get( points.size( ) - 1 );
 			last[ 0 ] = e.getX( );
-			last[ 1 ] = context.getCanvas( ).getHeight( ) - e.getY( );
-			context.getCanvas( ).invoke( true , drawable -> {
+			last[ 1 ] = context.getDrawable( ).getSurfaceHeight( ) - e.getY( );
+			context.getDrawable( ).invoke( true , drawable ->
+			{
 				selectionPolygon.setPoints( points );
 				return false;
 			} );

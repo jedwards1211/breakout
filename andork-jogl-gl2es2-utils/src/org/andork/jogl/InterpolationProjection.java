@@ -21,25 +21,35 @@
  *******************************************************************************/
 package org.andork.jogl;
 
-import static org.andork.math3d.Vecmath.perspective;
+import org.andork.jogl.neu.JoglDrawContext;
+import org.andork.math3d.Vecmath;
 
-public class PerspectiveOldProjectionCalculator implements OldProjectionCalculator
+public class InterpolationProjection implements Projection
 {
-	public float	fovAngle;
-	public float	zNear;
-	public float	zFar;
+	Projection	a;
+	Projection	b;
 	
-	public PerspectiveOldProjectionCalculator( float fov , float zNear , float zFar )
+	public float			f;
+	
+	float[ ]				aOut	= Vecmath.newMat4f( );
+	float[ ]				bOut	= Vecmath.newMat4f( );
+	
+	public final float[ ]	center	= new float[ 3 ];
+	public float			radius	= 1;
+	
+	public InterpolationProjection( Projection a , Projection b , float f )
 	{
 		super( );
-		this.fovAngle = fov;
-		this.zNear = zNear;
-		this.zFar = zFar;
+		this.a = a;
+		this.b = b;
+		this.f = f;
 	}
 	
 	@Override
-	public void calculate( int width , int height , float[ ] pOut )
+	public void calculate( JoglDrawContext dc , float[ ] pOut )
 	{
-		perspective( pOut , fovAngle , ( float ) width / height , zNear , zFar );
+		a.calculate( dc , aOut );
+		b.calculate( dc , bOut );
+		Vecmath.interp( aOut , bOut , f , pOut );
 	}
 }

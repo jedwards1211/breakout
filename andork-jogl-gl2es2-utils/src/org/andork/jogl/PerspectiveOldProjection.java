@@ -21,9 +21,25 @@
  *******************************************************************************/
 package org.andork.jogl;
 
-import org.andork.jogl.neu.JoglDrawContext;
+import static org.andork.math3d.Vecmath.perspective;
 
-public interface ProjectionCalculator
+public class PerspectiveOldProjection implements OldProjection
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	public float	fovAngle;
+	public float	zNear;
+	public float	zFar;
+	
+	public PerspectiveOldProjection( float fov , float zNear , float zFar )
+	{
+		super( );
+		this.fovAngle = fov;
+		this.zNear = zNear;
+		this.zFar = zFar;
+	}
+	
+	@Override
+	public void calculate( int width , int height , float[ ] pOut )
+	{
+		perspective( pOut , fovAngle , ( float ) width / height , zNear , zFar );
+	}
 }

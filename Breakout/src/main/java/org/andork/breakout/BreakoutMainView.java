@@ -54,7 +54,9 @@ import java.util.WeakHashMap;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
@@ -114,18 +116,25 @@ import org.andork.breakout.model.TransparentTerrain;
 import org.andork.collect.CollectionUtils;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.func.FloatUnaryOperator;
-import org.andork.jogl.AutoClipOrthoProjectionCalculator;
+import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.BasicJOGLObject;
-import org.andork.jogl.InterpolationProjectionCalculator;
-import org.andork.jogl.PerspectiveProjectionCalculator;
-import org.andork.jogl.ProjectionCalculator;
+import org.andork.jogl.InterpolationProjection;
+import org.andork.jogl.PerspectiveProjection;
+import org.andork.jogl.Projection;
 import org.andork.jogl.awt.anim.GeneralViewXformOrbitAnimation;
 import org.andork.jogl.awt.anim.ProjXformAnimation;
 import org.andork.jogl.awt.anim.RandomViewOrbitAnimation;
 import org.andork.jogl.awt.anim.SpringViewOrbitAnimation;
 import org.andork.jogl.awt.anim.ViewXformAnimation;
-import org.andork.jogl.neu.JoglScene;
-import org.andork.jogl.neu.awt.BasicJoglSetup;
+import org.andork.jogl.neu2.DefaultGLEventListener;
+import org.andork.jogl.neu2.DefaultJoglCamera;
+import org.andork.jogl.neu2.GL3Framebuffer;
+import org.andork.jogl.neu2.JoglBackgroundColor;
+import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglScene;
+import org.andork.jogl.neu2.awt.JoglNavigator;
+import org.andork.jogl.neu2.awt.JoglOrbiter;
+import org.andork.jogl.neu2.awt.JoglOrthoNavigator;
 import org.andork.math.misc.Fitting;
 import org.andork.math3d.Fitting3d;
 import org.andork.math3d.FittingFrustum;
@@ -166,101 +175,136 @@ import org.andork.swing.table.RowFilterFactory;
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
+import com.jogamp.newt.awt.NewtCanvasAWT;
+import com.jogamp.newt.opengl.GLWindow;
 
-public class BreakoutMainView extends BasicJoglSetup
+public class BreakoutMainView
 {
-	I18n												i18n						= new I18n( );
-	
-	PerspectiveProjectionCalculator						perspCalculator				= new PerspectiveProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
+	GLWindow											glWindow;
+	NewtCanvasAWT										canvas;
+	JoglCamera											camera;
+	JoglScene											scene;
+	JoglBackgroundColor									bgColor;
+	DefaultGLEventListener								glEventListener;
+
 	DefaultNavigator									navigator;
-	
+	JoglOrbiter											orbiter;
+	JoglOrthoNavigator									orthoNavigator;
+
+	I18n												i18n						= new I18n( );
+
+	PerspectiveProjection								perspCalculator				= new PerspectiveProjection( ( float ) Math.PI / 2 , 1f , 1e7f );
+
 	TaskService											rebuildTaskService;
 	TaskService											sortTaskService;
 	TaskService											ioTaskService;
-	
+
 	SurveyTableChangeHandler							surveyTableChangeHandler;
-	
+
 	final double[ ]										fromLoc						= new double[ 3 ];
 	final double[ ]										toLoc						= new double[ 3 ];
 	final double[ ]										toToLoc						= new double[ 3 ];
 	final double[ ]										leftAtTo					= new double[ 3 ];
 	final double[ ]										leftAtTo2					= new double[ 3 ];
 	final double[ ]										leftAtFrom					= new double[ 3 ];
-	
+
 	JPanel												mainPanel;
 	JLayeredPane										layeredPane;
-	
+
 	MouseAdapterWrapper									canvasMouseAdapterWrapper;
-	
+
 	// normal mouse mode
 	MouseLooper											mouseLooper;
 	MouseAdapterChain									mouseAdapterChain;
 	MousePickHandler									pickHandler;
 	DrawerAutoshowController							autoshowController;
 	OtherMouseHandler									otherMouseHandler;
-	
+
 	WindowSelectionMouseHandler							windowSelectionMouseHandler;
-	
+
 	TableSelectionHandler								selectionHandler;
-	
+
 	RowFilterFactory<String, TableModel, Integer>		rowFilterFactory;
-	
+
 	SurveyDrawer										surveyDrawer;
 	Drawer												quickTableDrawer;
 	TaskListDrawer										taskListDrawer;
 	SettingsDrawer										settingsDrawer;
-	
+
 	Survey3dModel										model3d;
 	float[ ]											v							= newMat4f( );
-	
+
 	int													debugMbrCount				= 0;
 	List<BasicJOGLObject>								debugMbrs					= new ArrayList<BasicJOGLObject>( );
-	
+
 	Shot3dPickContext									spc							= new Shot3dPickContext( );
-	
+
 	final LinePlaneIntersection3f						lpx							= new LinePlaneIntersection3f( );
 	final float[ ]										p0							= new float[ 3 ];
 	final float[ ]										p1							= new float[ 3 ];
 	final float[ ]										p2							= new float[ 3 ];
-	
+
 	File												rootFile;
 	TaskServiceFilePersister<QObject<RootModel>>		rootPersister;
 	final Binder<QObject<RootModel>>					rootModelBinder				= new DefaultBinder<QObject<RootModel>>( );
-	
+
 	final Binder<QObject<ProjectModel>>					projectModelBinder			= new DefaultBinder<QObject<ProjectModel>>( );
-	Binder<ColorParam>									colorParamBinder			= QObjectAttributeBinder.bind( ProjectModel.colorParam , projectModelBinder );
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= QObjectAttributeBinder.bind( ProjectModel.paramRanges , projectModelBinder );
+	Binder<ColorParam>									colorParamBinder			= QObjectAttributeBinder
+																							.bind( ProjectModel.colorParam , projectModelBinder );
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= QObjectAttributeBinder.bind( ProjectModel.paramRanges ,
+																							projectModelBinder );
 	Binder<LinearAxisConversion>						paramRangeBinder			= QMapKeyedBinder.bindKeyed( colorParamBinder , paramRangesBinder );
 	TaskServiceFilePersister<QObject<ProjectModel>>		projectPersister;
-	
+
 	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
-	
+
 	final AnimationQueue								cameraAnimationQueue		= new AnimationQueue( );
-	
+
 	NewProjectAction									newProjectAction			= new NewProjectAction( this );
 	OpenProjectAction									openProjectAction			= new OpenProjectAction( this );
 	ImportProjectArchiveAction							importProjectArchiveAction	= new ImportProjectArchiveAction( this );
 	ExportProjectArchiveAction							exportProjectArchiveAction	= new ExportProjectArchiveAction( this );
 	ExportImageAction									exportImageAction			= new ExportImageAction( this );
-	
+
 	final WeakHashMap<Animation, Object>				protectedAnimations			= new WeakHashMap<>( );
-	
+
 	JLabel												hintLabel;
-	
+
 	DefaultBinder<QObject<StatsModel>>					statsBinder					= new DefaultBinder<>( );
 	StatsPanel											statsPanel					= new StatsPanel( statsBinder );
-	
+
 	public BreakoutMainView( )
 	{
-		super( createCanvas( ) );
-		
+		final GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
+		final GLCapabilities caps = new GLCapabilities( glp );
+		glWindow = GLWindow.create( caps );
+		canvas = new NewtCanvasAWT( );
+		canvas.setNEWTChild( glWindow );
+		glWindow.display( );
+
+		scene = new JoglScene( );
+		bgColor = new JoglBackgroundColor( );
+		scene.add( bgColor );
+
+		camera = new DefaultJoglCamera( );
+		glEventListener = new DefaultGLEventListener( camera , scene , new GL3Framebuffer( ) , 1 );
+
+		glWindow.addGLEventListener( glEventListener );
+
+		navigator = new DefaultNavigator( glWindow , camera );
+		navigator.setMoveFactor( 5f );
+		navigator.setWheelFactor( 5f );
+
+		orbiter = new JoglOrbiter( glWindow , camera );
+		orthoNavigator = new JoglOrthoNavigator( glWindow , camera );
+
 		ioTaskService = new SingleThreadedTaskService( );
 		rebuildTaskService = new SingleThreadedTaskService( );
 		sortTaskService = new SingleThreadedTaskService( );
-		
+
 		JLabel highlightLabel = new JLabel( "Highlight: " );
 		JLabel filterLabel = new JLabel( "Filter: " );
-		
+
 		hintLabel = new JLabel( "A" );
 		hintLabel.setForeground( Color.WHITE );
 		hintLabel.setBackground( Color.BLACK );
@@ -270,7 +314,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		hintLabel.setPreferredSize( new Dimension( 200 , hintLabel.getPreferredSize( ).height ) );
 		hintLabel.setText( " " );
 		hintLabel.setVerticalAlignment( JLabel.TOP );
-		
+
 		final SortRunner sortRunner = new SortRunner( )
 		{
 			@Override
@@ -284,120 +328,115 @@ public class BreakoutMainView extends BasicJoglSetup
 						r.run( );
 					}
 				};
-				
+
 				sortTaskService.submit( task );
 			}
 		};
-		
+
 		new DoSwing( )
 		{
 			@Override
 			public void run( )
 			{
 				surveyDrawer = new SurveyDrawer( sortRunner );
-				
-				rowFilterFactory = new MultiRowFilterFactory(
-						new SurveyTableFilterMap( surveyDrawer.table( ) ) );
-				
+
+				rowFilterFactory = new MultiRowFilterFactory( new SurveyTableFilterMap( surveyDrawer.table( ) ) );
+
 				surveyDrawer.filterField( ).textComponent.getDocument( ).addDocumentListener(
-						AnnotatingJTables.createFilterFieldListener( surveyDrawer.table( ) ,
-								surveyDrawer.filterField( ).textComponent , rowFilterFactory ) );
+						AnnotatingJTables.createFilterFieldListener( surveyDrawer.table( ) , surveyDrawer.filterField( ).textComponent , rowFilterFactory ) );
 				surveyDrawer.highlightField( ).textComponent.getDocument( ).addDocumentListener(
-						AnnotatingJTables.createHighlightFieldListener( surveyDrawer.table( ) ,
-								surveyDrawer.highlightField( ).textComponent , rowFilterFactory , Color.YELLOW ) );
+						AnnotatingJTables.createHighlightFieldListener( surveyDrawer.table( ) , surveyDrawer.highlightField( ).textComponent ,
+								rowFilterFactory , Color.YELLOW ) );
 			}
 		};
-		
+
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
-		
+
 		pickHandler = new MousePickHandler( );
-		
+
 		canvasMouseAdapterWrapper = new MouseAdapterWrapper( );
 		canvas.addMouseListener( canvasMouseAdapterWrapper );
 		canvas.addMouseMotionListener( canvasMouseAdapterWrapper );
 		canvas.addMouseWheelListener( canvasMouseAdapterWrapper );
-		
+
 		mouseLooper = new MouseLooper( );
-		windowSelectionMouseHandler = new WindowSelectionMouseHandler(
-				new WindowSelectionMouseHandler.Context( )
+		windowSelectionMouseHandler = new WindowSelectionMouseHandler( new WindowSelectionMouseHandler.Context( )
+		{
+			@Override
+			public Survey3dModel getSurvey3dModel( )
+			{
+				return model3d;
+			}
+
+			@Override
+			public JoglScene getScene( )
+			{
+				return scene;
+			}
+
+			public JoglCamera getCamera( )
+			{
+				return camera;
+			}
+
+			@Override
+			public GLAutoDrawable getDrawable( )
+			{
+				return glWindow;
+			}
+
+			@Override
+			public void endSelection( )
+			{
+				canvasMouseAdapterWrapper.setWrapped( mouseLooper );
+			}
+
+			@Override
+			public TaskService getRebuildTaskService( )
+			{
+				return rebuildTaskService;
+			}
+
+			@Override
+			public void selectShots( Set<Shot3d> newSelected , boolean add , boolean toggle )
+			{
+				OnEDT.onEDT( ( ) ->
 				{
-					@Override
-					public Survey3dModel getSurvey3dModel( )
+					ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
+					SurveyTableModel model = surveyDrawer.table( ).getModel( );
+
+					selModel.setValueIsAdjusting( true );
+					if( !add && !toggle )
 					{
-						return model3d;
+						selModel.clearSelection( );
 					}
-					
-					@Override
-					public JoglScene getScene( )
+					for( Shot3d shot3d : newSelected )
 					{
-						return scene;
+						int row = model.rowOfShot( shot3d.getNumber( ) );
+						if( toggle && selModel.isSelectedIndex( row ) )
+						{
+							selModel.removeSelectionInterval( row , row );
+						}
+						else
+						{
+							selModel.addSelectionInterval( row , row );
+						}
 					}
-					
-					@Override
-					public GLCanvas getCanvas( )
-					{
-						return canvas;
-					}
-					
-					@Override
-					public void endSelection( )
-					{
-						canvasMouseAdapterWrapper.setWrapped( mouseLooper );
-					}
-					
-					@Override
-					public TaskService getRebuildTaskService( )
-					{
-						return rebuildTaskService;
-					}
-					
-					@Override
-					public void selectShots( Set<Shot3d> newSelected , boolean add , boolean toggle )
-					{
-						OnEDT.onEDT( ( ) -> {
-							ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
-							SurveyTableModel model = surveyDrawer.table( ).getModel( );
-							
-							selModel.setValueIsAdjusting( true );
-							if( !add && !toggle )
-							{
-								selModel.clearSelection( );
-							}
-							for( Shot3d shot3d : newSelected )
-							{
-								int row = model.rowOfShot( shot3d.getNumber( ) );
-								if( toggle && selModel.isSelectedIndex( row ) )
-								{
-									selModel.removeSelectionInterval( row , row );
-								}
-								else
-								{
-									selModel.addSelectionInterval( row , row );
-								}
-							}
-							selModel.setValueIsAdjusting( false );
-						} );
-					}
+					selModel.setValueIsAdjusting( false );
 				} );
+			}
+		} );
 		canvasMouseAdapterWrapper.setWrapped( mouseLooper );
-		
+
 		autoshowController = new DrawerAutoshowController( );
-		
+
 		otherMouseHandler = new OtherMouseHandler( );
-		
+
 		mouseAdapterChain = new MouseAdapterChain( );
 		mouseAdapterChain.addMouseAdapter( pickHandler );
 		mouseAdapterChain.addMouseAdapter( autoshowController );
 		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
-		
-		canvas.removeMouseListener( super.navigator );
-		canvas.removeMouseMotionListener( super.navigator );
-		canvas.removeMouseWheelListener( super.navigator );
-		
-		canvas.removeMouseListener( orbiter );
-		canvas.removeMouseMotionListener( orbiter );
-		canvas.removeMouseWheelListener( orbiter );
-		
+
 		layeredPane = new JLayeredPane( );
 		layeredPane.setLayout( new DelegatingLayoutManager( )
 		{
@@ -413,30 +452,30 @@ public class BreakoutMainView extends BasicJoglSetup
 				target.validate( );
 			}
 		} );
-		
+
 		taskListDrawer = new TaskListDrawer( );
 		taskListDrawer.addTaskService( rebuildTaskService );
 		taskListDrawer.addTaskService( sortTaskService );
 		taskListDrawer.addTaskService( ioTaskService );
 		taskListDrawer.addTo( layeredPane , JLayeredPane.DEFAULT_LAYER + 5 );
-		
+
 		settingsDrawer = new SettingsDrawer( i18n , rootModelBinder , projectModelBinder );
 		settingsDrawer.addTo( layeredPane , 1 );
-		
+
 		surveyTableChangeHandler = new SurveyTableChangeHandler( rebuildTaskService );
 		surveyDrawer.table( ).getModel( ).addTableModelListener( surveyTableChangeHandler );
-		
+
 		layeredPane.add( canvas );
 		surveyDrawer.addTo( layeredPane , 5 );
-		
+
 		mainPanel = new JPanel( new BorderLayout( ) );
 		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
 		mainPanel.add( layeredPane , BorderLayout.CENTER );
 		mainPanel.add( hintLabel , BorderLayout.SOUTH );
-		
+
 		selectionHandler = new TableSelectionHandler( );
 		surveyDrawer.table( ).getModelSelectionModel( ).addListSelectionListener( selectionHandler );
-		
+
 		final AnnotatingJTable quickTable = new DoSwingR2<AnnotatingJTable>( )
 		{
 			@Override
@@ -451,40 +490,37 @@ public class BreakoutMainView extends BasicJoglSetup
 				toColumn.setHeaderValue( "To" );
 				quickTableColumnModel.addColumn( fromColumn );
 				quickTableColumnModel.addColumn( toColumn );
-				
+
 				AnnotatingJTable result = new AnnotatingJTable( surveyDrawer.table( ).getModel( ) , quickTableColumnModel );
 				result.setModelSelectionModel( surveyDrawer.table( ).getModelSelectionModel( ) );
-				
+
 				return result;
 			}
 		}.result( );
-		
-		DefaultAnnotatingJTableSetup quickTableSetup =
-				new DoSwingR2<DefaultAnnotatingJTableSetup>( )
-				{
-					@Override
-					protected DefaultAnnotatingJTableSetup doRun( )
-					{
-						DefaultAnnotatingJTableSetup quickTableSetup =
-								new DefaultAnnotatingJTableSetup( quickTable , sortRunner );
-						( ( AnnotatingTableRowSorter<SurveyTableModel> ) quickTableSetup.table.getAnnotatingRowSorter( ) )
-								.setModelCopier( new SurveyTableModelCopier( ) );
-						return quickTableSetup;
-					}
-				}.result( );
-		
+
+		DefaultAnnotatingJTableSetup quickTableSetup = new DoSwingR2<DefaultAnnotatingJTableSetup>( )
+		{
+			@Override
+			protected DefaultAnnotatingJTableSetup doRun( )
+			{
+				DefaultAnnotatingJTableSetup quickTableSetup = new DefaultAnnotatingJTableSetup( quickTable , sortRunner );
+				( ( AnnotatingTableRowSorter<SurveyTableModel> ) quickTableSetup.table.getAnnotatingRowSorter( ) )
+						.setModelCopier( new SurveyTableModelCopier( ) );
+				return quickTableSetup;
+			}
+		}.result( );
+
 		JLabel quickTableFilterLabel = new JLabel( "Filter: " );
 		TextComponentWithHintAndClear quickTableFilterField = new TextComponentWithHintAndClear( "Enter Filter Regexp" );
 		quickTableFilterField.textComponent.getDocument( ).addDocumentListener(
-				AnnotatingJTables.createFilterFieldListener( quickTableSetup.table ,
-						quickTableFilterField.textComponent , rowFilterFactory ) );
-		
+				AnnotatingJTables.createFilterFieldListener( quickTableSetup.table , quickTableFilterField.textComponent , rowFilterFactory ) );
+
 		JLabel quickTableHighlightLabel = new JLabel( "Highlight: " );
 		TextComponentWithHintAndClear quickTableHighlightField = new TextComponentWithHintAndClear( "Enter Highlight Regexp" );
 		quickTableHighlightField.textComponent.getDocument( ).addDocumentListener(
-				AnnotatingJTables.createHighlightFieldListener( quickTableSetup.table ,
-						quickTableHighlightField.textComponent , rowFilterFactory , Color.YELLOW ) );
-		
+				AnnotatingJTables.createHighlightFieldListener( quickTableSetup.table , quickTableHighlightField.textComponent , rowFilterFactory ,
+						Color.YELLOW ) );
+
 		JPanel quickTablePanel = new JPanel( );
 		quickTablePanel.setPreferredSize( new Dimension( 150 , 500 ) );
 		GridBagWizard gbw = GridBagWizard.create( quickTablePanel );
@@ -492,53 +528,52 @@ public class BreakoutMainView extends BasicJoglSetup
 		gbw.put( quickTableFilterField ).rightOf( quickTableFilterLabel ).fillx( 1.0 ).insets( 2 , 2 , 0 , 0 );
 		gbw.put( quickTableHighlightLabel ).below( quickTableFilterLabel ).west( ).insets( 2 , 2 , 2 , 0 );
 		gbw.put( quickTableHighlightField ).rightOf( quickTableHighlightLabel ).fillx( 1.0 ).insets( 2 , 2 , 2 , 0 );
-		
+
 		gbw.put( quickTableSetup.scrollPane ).below( quickTableHighlightLabel , quickTableHighlightField ).fillboth( 1.0 , 1.0 );
 		gbw.put( statsPanel ).below( quickTableSetup.scrollPane ).fillx( 1.0 );
-		
+
 		statsPanel.setBorder( new EmptyBorder( 5 , 5 , 5 , 0 ) );
-		
+
 		quickTableDrawer = new Drawer( quickTablePanel );
 		quickTableDrawer.delegate( ).dockingSide( Side.LEFT );
 		quickTableDrawer.mainResizeHandle( );
 		quickTableDrawer.pinButton( );
 		quickTableDrawer.pinButtonDelegate( ).corner( Corner.TOP_RIGHT ).side( Side.RIGHT );
 		quickTableDrawer.addTo( layeredPane , 3 );
-		
+
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
-		
+
 		surveyDrawer.table( ).addPropertyChangeListener( "model" , new PropertyChangeListener( )
 		{
 			@Override
 			public void propertyChange( PropertyChangeEvent evt )
 			{
-				AnnotatingRowSorter<TableModel, Integer> sorter =
-						( AnnotatingRowSorter<TableModel, Integer> ) quickTable.getRowSorter( );
-				
+				AnnotatingRowSorter<TableModel, Integer> sorter = ( AnnotatingRowSorter<TableModel, Integer> ) quickTable.getRowSorter( );
+
 				SurveyTableModel newModel = ( SurveyTableModel ) evt.getNewValue( );
-				
+
 				quickTable.setRowSorter( null );
 				quickTable.setModel( newModel );
 				sorter.setModel( newModel );
 				quickTable.setRowSorter( sorter );
 			}
 		} );
-		
+
 		surveyDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.surveyDrawer , projectModelBinder ) );
 		settingsDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.settingsDrawer , projectModelBinder ) );
 		taskListDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.taskListDrawer , projectModelBinder ) );
-		
+
 		new BinderWrapper<Color>( )
 		{
 			protected void onValueChanged( Color bgColor )
 			{
 				if( bgColor != null )
 				{
-					scene.setBgColor( bgColor.getRed( ) / 255f , bgColor.getGreen( ) / 255f , bgColor.getBlue( ) / 255f , 1f );
+					BreakoutMainView.this.bgColor.set( bgColor.getRed( ) / 255f , bgColor.getGreen( ) / 255f , bgColor.getBlue( ) / 255f , 1f );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.backgroundColor , projectModelBinder ) );
-		
+
 		new BinderWrapper<Integer>( )
 		{
 			protected void onValueChanged( Integer newValue )
@@ -551,7 +586,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( RootModel.mouseSensitivity , rootModelBinder ) );
-		
+
 		new BinderWrapper<Integer>( )
 		{
 			protected void onValueChanged( Integer newValue )
@@ -563,7 +598,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( RootModel.mouseWheelSensitivity , rootModelBinder ) );
-		
+
 		new BinderWrapper<Float>( )
 		{
 			protected void onValueChanged( final Float newValue )
@@ -571,11 +606,11 @@ public class BreakoutMainView extends BasicJoglSetup
 				if( model3d != null && newValue != null )
 				{
 					model3d.setAmbientLight( newValue );
-					getCanvas( ).repaint( );
+					glWindow.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.ambientLight , projectModelBinder ) );
-		
+
 		new BinderWrapper<LinearAxisConversion>( )
 		{
 			protected void onValueChanged( LinearAxisConversion range )
@@ -587,11 +622,11 @@ public class BreakoutMainView extends BasicJoglSetup
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setNearDist( nearDist );
 					model3d.setFarDist( farDist );
-					getCanvas( ).repaint( );
+					glWindow.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.distRange , projectModelBinder ) );
-		
+
 		new BinderWrapper<LinearAxisConversion>( )
 		{
 			protected void onValueChanged( LinearAxisConversion range )
@@ -603,11 +638,11 @@ public class BreakoutMainView extends BasicJoglSetup
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setLoParam( loParam );
 					model3d.setHiParam( hiParam );
-					getCanvas( ).repaint( );
+					glWindow.display( );
 				}
 			}
 		}.bind( paramRangeBinder );
-		
+
 		new BinderWrapper<float[ ]>( )
 		{
 			protected void onValueChanged( float[ ] depthAxis )
@@ -621,11 +656,11 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setDepthAxis( finalDepthAxis );
-					getCanvas( ).repaint( );
+					glWindow.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.depthAxis , projectModelBinder ) );
-		
+
 		new BinderWrapper<ColorParam>( )
 		{
 			protected void onValueChanged( final ColorParam colorParam )
@@ -641,15 +676,15 @@ public class BreakoutMainView extends BasicJoglSetup
 							Subtask rootSubtask = new Subtask( this );
 							rootSubtask.setTotal( 1 );
 							rootSubtask.setIndeterminate( false );
-							
+
 							Subtask subtask = rootSubtask.beginSubtask( 1 );
 							subtask.setIndeterminate( false );
 							subtask.setStatus( "Recoloring" );
 							model3d.setColorParam( colorParam , subtask );
 							rootSubtask.setCompleted( 1 );
 							subtask.end( );
-							
-							getCanvas( ).display( );
+
+							glWindow.display( );
 						}
 					};
 					task.setTotal( 1000 );
@@ -657,16 +692,16 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.colorParam , projectModelBinder ) );
-		
+
 		settingsDrawer.getProjectFileMenuButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
 				Component source = ( Component ) e.getSource( );
-				
+
 				Localizer localizer = i18n.forClass( BreakoutMainView.class );
-				
+
 				JPopupMenu popupMenu = new JPopupMenu( );
 				popupMenu.setLightWeightPopupEnabled( false );
 				popupMenu.add( new JMenuItem( newProjectAction ) );
@@ -681,7 +716,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				exportMenu.add( new JMenuItem( exportProjectArchiveAction ) );
 				exportMenu.add( new JMenuItem( exportImageAction ) );
 				popupMenu.add( exportMenu );
-				
+
 				QArrayList<File> recentProjectFiles = getRootModel( ).get( RootModel.recentProjectFiles );
 				if( recentProjectFiles != null && !recentProjectFiles.isEmpty( ) )
 				{
@@ -691,11 +726,11 @@ public class BreakoutMainView extends BasicJoglSetup
 						popupMenu.add( new JMenuItem( new OpenRecentProjectAction( BreakoutMainView.this , file ) ) );
 					}
 				}
-				
+
 				popupMenu.show( source , source.getWidth( ) , source.getHeight( ) );
 			}
 		} );
-		
+
 		settingsDrawer.getFitViewToSelectedButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -704,7 +739,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				fitViewToSelected( );
 			}
 		} );
-		
+
 		settingsDrawer.getFitViewToEverythingButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -713,7 +748,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				fitViewToEverything( );
 			}
 		} );
-		
+
 		settingsDrawer.getFitParamColorationAxisButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -723,9 +758,9 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					return;
 				}
-				
+
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
-				
+
 				rebuildTaskService.submit( new Task( )
 				{
 					@Override
@@ -738,7 +773,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						float[ ] range = model3d.calcAutofitParamRange( getDefaultShotsForOperations( ) , calcSubtask );
 						rootSubtask.setCompleted( 1 );
 						calcSubtask.end( );
-						
+
 						if( range != null )
 						{
 							ColorParam colorParam = getProjectModel( ).get( ProjectModel.colorParam );
@@ -748,16 +783,16 @@ public class BreakoutMainView extends BasicJoglSetup
 								range[ 0 ] = range[ 1 ];
 								range[ 1 ] = swap;
 							}
-							LinearAxisConversion conversion = new LinearAxisConversion(
-									range[ 0 ] , 0.0 , range[ 1 ] , settingsDrawer.getParamColorationAxis( ).getViewSpan( ) );
-							
+							LinearAxisConversion conversion = new LinearAxisConversion( range[ 0 ] , 0.0 , range[ 1 ] , settingsDrawer.getParamColorationAxis( )
+									.getViewSpan( ) );
+
 							paramRangeBinder.set( conversion );
 						}
 					}
 				} );
 			}
 		} );
-		
+
 		settingsDrawer.getFlipParamColorationAxisButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -771,7 +806,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				paramRangeBinder.set( newConversion );
 			}
 		} );
-		
+
 		settingsDrawer.getRecalcColorByDistanceButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -792,20 +827,21 @@ public class BreakoutMainView extends BasicJoglSetup
 						rootSubtask.setTotal( 1 );
 						Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
 						model3d.calcDistFromShots( getDefaultShotsForOperations( ) , calcSubtask );
-						getCanvas( ).display( );
-						
+						glWindow.display( );
+
 						rootSubtask.setCompleted( 1 );
 						calcSubtask.end( );
 					}
 				} );
 			}
 		} );
-		
-		settingsDrawer.getResetViewButton( ).addActionListener( e -> {
-			scene.setViewXform( newMat4f( ) );
-			canvas.repaint( );
+
+		settingsDrawer.getResetViewButton( ).addActionListener( e ->
+		{
+			camera.setViewXform( newMat4f( ) );
+			glWindow.display( );
 		} );
-		
+
 		settingsDrawer.getOrbitToPlanButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -815,24 +851,24 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					return;
 				}
-				
+
 				float[ ] center = new float[ 3 ];
 				orbiter.getCenter( center );
-				
+
 				if( Vecmath.hasNaNsOrInfinites( center ) )
 				{
 					model3d.getCenter( center );
 				}
-				
+
 				float[ ] v = newMat4f( );
-				scene.getViewXform( v );
-				
+				camera.getViewXform( v );
+
 				removeUnprotectedCameraAnimations( );
-				cameraAnimationQueue.add( new SpringViewOrbitAnimation( BreakoutMainView.this , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
+				cameraAnimationQueue.add( new SpringViewOrbitAnimation( glWindow , camera , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
 				cameraAnimationQueue.add( new AnimationViewSaver( ) );
 			}
 		} );
-		
+
 		ViewButtonsPanel viewButtonsPanel = settingsDrawer.getViewButtonsPanel( );
 		for( CameraView view : CameraView.values( ) )
 		{
@@ -849,7 +885,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				} );
 			}
 		}
-		
+
 		settingsDrawer.getInferDepthAxisTiltButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
@@ -866,7 +902,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					Shot shot = tableModel.shotAtRow( tableModel.rowOfShot( shot3d.getNumber( ) ) );
 					float[ ] vector = new float[ 3 ];
 					Vecmath.sub3( shot.to.position , shot.from.position , vector );
-					
+
 					if( !Vecmath.hasNaNsOrInfinites( vector ) )
 					{
 						vectors.add( vector );
@@ -874,75 +910,74 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 				float[ ] normal = Fitting3d.planeNormalLeastSquares2f( vectors.stream( ) );
 				Vecmath.normalize3( normal );
-				
+
 				if( normal[ 1 ] > 0 )
 				{
 					Vecmath.negate3( normal );
 				}
-				
+
 				getProjectModel( ).set( ProjectModel.depthAxis , normal );
 			}
 		} );
-		
+
 		settingsDrawer.getResetDepthAxisTiltButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
-				getProjectModel( ).set( ProjectModel.depthAxis , new float[ ] { 0f , -1f , 0f } );
+				getProjectModel( ).set( ProjectModel.depthAxis , new float[ ]
+				{ 0f , -1f , 0f } );
 			}
 		} );
-		
+
 		settingsDrawer.getCameraToDepthAxisTiltButton( ).addActionListener( new ActionListener( )
 		{
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
 				float[ ] axis = new float[ 3 ];
-				Vecmath.negate3( scene.inverseViewXform( ) , 8 , axis , 0 );
+				Vecmath.negate3( camera.inverseViewXform( ) , 8 , axis , 0 );
 				getProjectModel( ).set( ProjectModel.depthAxis , axis );
 			}
 		} );
-		
-		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener(
-				new FitToFilteredHandler( surveyDrawer.table( ) ) );
-		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener(
-				new FitToFilteredHandler( quickTable ) );
-		
+
+		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler( surveyDrawer.table( ) ) );
+		( ( JTextField ) quickTableFilterField.textComponent ).addActionListener( new FitToFilteredHandler( quickTable ) );
+
 		new BinderWrapper<Integer>( )
 		{
 			protected void onValueChanged( Integer desiredNumSamples )
 			{
 				if( desiredNumSamples != null )
 				{
-					scene.setDesiredNumSamples( desiredNumSamples );
-					canvas.display( );
+					glEventListener.setDesiredNumSamples( desiredNumSamples );
+					glWindow.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootModelBinder ) );
-		
-		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
-		{
-			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
-			{
-				if( scene.isInitialized( ) )
-				{
-					SwingUtilities.invokeLater( new Runnable( )
-					{
-						public void run( )
-						{
-							settingsDrawer.setMaxNumSamples( scene.getMaxNumSamples( ) );
-						}
-					} );
-				}
-			}
-		} );
-		
+
+//		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
+//		{
+//			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
+//			{
+//				if( scene.isInitialized( ) )
+//				{
+//					SwingUtilities.invokeLater( new Runnable( )
+//					{
+//						public void run( )
+//						{
+//							settingsDrawer.setMaxNumSamples( scene.getMaxNumSamples( ) );
+//						}
+//					} );
+//				}
+//			}
+//		} );
+
 		rootFile = new File( new File( ".breakout" ) , "settings.yaml" );
 		rootPersister = new TaskServiceFilePersister<QObject<RootModel>>( ioTaskService , "Saving settings..." ,
 				QObjectBimappers.defaultBimapper( RootModel.defaultMapper ) , rootFile );
 		QObject<RootModel> rootModel = null;
-		
+
 		try
 		{
 			rootModel = rootPersister.load( );
@@ -950,38 +985,38 @@ public class BreakoutMainView extends BasicJoglSetup
 		catch( Exception ex )
 		{
 		}
-		
+
 		if( rootModel == null )
 		{
 			rootModel = RootModel.instance.newObject( );
 		}
-		
+
 		if( rootModel.get( RootModel.currentProjectFile ) == null )
 		{
 			rootModel.set( RootModel.currentProjectFile , new File( new File( ".breakout" ) , "defaultProject.bop" ) );
 			rootModel.set( RootModel.desiredNumSamples , 2 );
 		}
-		
+
 		setRootModel( rootModel );
-		
+
 		openProject( getRootModel( ).get( RootModel.currentProjectFile ) );
 	}
-	
+
 	public File getRootFile( )
 	{
 		return rootFile;
 	}
-	
+
 	public Binder<QObject<RootModel>> getRootModelBinder( )
 	{
 		return rootModelBinder;
 	}
-	
+
 	public QObject<RootModel> getRootModel( )
 	{
 		return rootModelBinder.get( );
 	}
-	
+
 	public void setRootModel( QObject<RootModel> rootModel )
 	{
 		QObject<RootModel> currentModel = getRootModel( );
@@ -998,79 +1033,66 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 		}
 	}
-	
+
 	public Binder<QObject<ProjectModel>> getProjectModelBinder( )
 	{
 		return projectModelBinder;
 	}
-	
+
 	public QObject<ProjectModel> getProjectModel( )
 	{
 		return projectModelBinder.get( );
 	}
-	
+
 	public I18n getI18n( )
 	{
 		return i18n;
 	}
-	
-	private static GLCanvas createCanvas( )
+
+	public Component getCanvas( )
 	{
-		GLProfile profile = GLProfile.getMaximum( true );
-		final GLCapabilities caps = new GLCapabilities( profile );
-		GLCanvas canvas = new GLCanvas( caps );
 		return canvas;
 	}
-	
-	@Override
-	protected JoglScene createScene( )
-	{
-		JoglScene scene = new JoglScene( );
-		scene.setRenderToFbo( true );
-		scene.setDesiredNumSamples( 1 );
-		
-		return scene;
-	}
-	
+
 	protected void fitViewToSelected( )
 	{
 		if( model3d == null )
 		{
 			return;
 		}
-		
+
 		changeView( CollectionUtils.toHashSet( getSelectedShotsFromTable( ).map( shot -> model3d.getShot( shot.number ) ) ) );
 	}
-	
+
 	protected void fitViewToEverything( )
 	{
 		if( model3d == null )
 		{
 			return;
 		}
-		
+
 		changeView( CollectionUtils.toHashSet( getShotsFromTable( ).map( shot -> model3d.getShot( shot.number ) ) ) );
 	}
-	
+
 	protected void flyToFiltered( final AnnotatingJTable table )
 	{
 		if( model3d == null )
 		{
 			return;
 		}
-		
+
 		removeUnprotectedCameraAnimations( );
-		
+
 		if( getProjectModel( ).get( ProjectModel.cameraView ) == CameraView.PERSPECTIVE )
 		{
 			float[ ] center = new float[ 3 ];
 			orbiter.getCenter( center );
-			
+
 			if( Vecmath.hasNaNsOrInfinites( center ) )
 			{
 				model3d.getCenter( center );
 			}
-			cameraAnimationQueue.add( new SpringViewOrbitAnimation( this , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
+			cameraAnimationQueue.add( new SpringViewOrbitAnimation( glWindow , camera , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
 			cameraAnimationQueue.add( new AnimationViewSaver( ) );
 		}
 		cameraAnimationQueue.add( new Animation( )
@@ -1080,45 +1102,34 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				table.getModelSelectionModel( ).clearSelection( );
 				table.selectAll( );
-				
+
 				fitViewToSelected( );
-				
+
 				if( getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE )
 				{
 					return 0;
 				}
-				rebuildTaskService.submit( task ->
-						SwingUtilities.invokeLater( ( ) -> {
-							
-							float[ ] center = new float[ 3 ];
-							orbiter.getCenter( center );
-							
-							if( Vecmath.hasNaNsOrInfinites( center ) )
-							{
-								model3d.getCenter( center );
-							}
-							
-							cameraAnimationQueue.add( new RandomViewOrbitAnimation( BreakoutMainView.this , center , 0.0005f ,
-									( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 60000 ) );
-						} ) );
+				rebuildTaskService.submit( task -> SwingUtilities.invokeLater( ( ) ->
+				{
+
+					float[ ] center = new float[ 3 ];
+					orbiter.getCenter( center );
+
+					if( Vecmath.hasNaNsOrInfinites( center ) )
+					{
+						model3d.getCenter( center );
+					}
+
+					cameraAnimationQueue.add( new RandomViewOrbitAnimation( glWindow , camera , center , 0.0005f , ( float ) -Math.PI / 4 ,
+							( float ) -Math.PI / 9 , 30 , 60000 ) );
+				} ) );
 				return 0;
 			}
 		} );
 	}
-	
-	@Override
-	protected void init( )
-	{
-		super.init( );
-		
-		navigator = new DefaultNavigator( this );
-		
-		navigator.setMoveFactor( 5f );
-		navigator.setWheelFactor( 5f );
-	}
-	
+
 	CameraView	currentView;
-	
+
 	public void setCameraView( CameraView view )
 	{
 		if( view != currentView )
@@ -1126,67 +1137,77 @@ public class BreakoutMainView extends BasicJoglSetup
 			currentView = view;
 			switch( view )
 			{
-				case PERSPECTIVE:
-					perspectiveMode( );
-					break;
-				case PLAN:
-					planMode( );
-					break;
-				case NORTH_FACING_PROFILE:
-					northFacingProfileMode( );
-					break;
-				case SOUTH_FACING_PROFILE:
-					southFacingProfileMode( );
-					break;
-				case EAST_FACING_PROFILE:
-					eastFacingProfileMode( );
-					break;
-				case WEST_FACING_PROFILE:
-					westFacingProfileMode( );
-					break;
-				case AUTO_PROFILE:
-					autoProfileMode( );
-					break;
+			case PERSPECTIVE:
+				perspectiveMode( );
+				break;
+			case PLAN:
+				planMode( );
+				break;
+			case NORTH_FACING_PROFILE:
+				northFacingProfileMode( );
+				break;
+			case SOUTH_FACING_PROFILE:
+				southFacingProfileMode( );
+				break;
+			case EAST_FACING_PROFILE:
+				eastFacingProfileMode( );
+				break;
+			case WEST_FACING_PROFILE:
+				westFacingProfileMode( );
+				break;
+			case AUTO_PROFILE:
+				autoProfileMode( );
+				break;
 			}
 		}
 	}
-	
+
 	public void perspectiveMode( )
 	{
 		float[ ] forward = new float[ 3 ];
 		float[ ] right = new float[ 3 ];
-		
-		Vecmath.negate3( scene.inverseViewXform( ) , 8 , forward , 0 );
-		Vecmath.getColumn3( scene.inverseViewXform( ) , 0 , right );
-		
+
+		Vecmath.negate3( camera.inverseViewXform( ) , 8 , forward , 0 );
+		Vecmath.getColumn3( camera.inverseViewXform( ) , 0 , right );
+
 		changeView( forward , right , false , getDefaultShotsForOperations( ) );
 	}
-	
+
 	public void planMode( )
 	{
-		changeView( new float[ ] { 0 , -1 , 0 } , new float[ ] { 1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
+		changeView( new float[ ]
+		{ 0 , -1 , 0 } , new float[ ]
+		{ 1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
 	}
-	
+
 	public void northFacingProfileMode( )
 	{
-		changeView( new float[ ] { 0 , 0 , -1 } , new float[ ] { 1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
+		changeView( new float[ ]
+		{ 0 , 0 , -1 } , new float[ ]
+		{ 1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
 	}
-	
+
 	public void southFacingProfileMode( )
 	{
-		changeView( new float[ ] { 0 , 0 , 1 } , new float[ ] { -1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
+		changeView( new float[ ]
+		{ 0 , 0 , 1 } , new float[ ]
+		{ -1 , 0 , 0 } , true , getDefaultShotsForOperations( ) );
 	}
-	
+
 	public void eastFacingProfileMode( )
 	{
-		changeView( new float[ ] { 1 , 0 , 0 } , new float[ ] { 0 , 0 , 1 } , true , getDefaultShotsForOperations( ) );
+		changeView( new float[ ]
+		{ 1 , 0 , 0 } , new float[ ]
+		{ 0 , 0 , 1 } , true , getDefaultShotsForOperations( ) );
 	}
-	
+
 	public void westFacingProfileMode( )
 	{
-		changeView( new float[ ] { -1 , 0 , 0 } , new float[ ] { 0 , 0 , -1 } , true , getDefaultShotsForOperations( ) );
+		changeView( new float[ ]
+		{ -1 , 0 , 0 } , new float[ ]
+		{ 0 , 0 , -1 } , true , getDefaultShotsForOperations( ) );
 	}
-	
+
 	public void autoProfileMode( )
 	{
 		Set<Shot3d> shots = getDefaultShotsForOperations( );
@@ -1195,45 +1216,49 @@ public class BreakoutMainView extends BasicJoglSetup
 		for( Shot3d shot : shots )
 		{
 			Shot origShot = tableModel.shotAtRow( tableModel.rowOfShot( shot.getNumber( ) ) );
-			forFitting.add( new float[ ] { ( float ) origShot.from.position[ 0 ] , ( float ) origShot.from.position[ 2 ] } );
-			forFitting.add( new float[ ] { ( float ) origShot.to.position[ 0 ] , ( float ) origShot.to.position[ 2 ] } );
+			forFitting.add( new float[ ]
+			{ ( float ) origShot.from.position[ 0 ] , ( float ) origShot.from.position[ 2 ] } );
+			forFitting.add( new float[ ]
+			{ ( float ) origShot.to.position[ 0 ] , ( float ) origShot.to.position[ 2 ] } );
 		}
-		
+
 		float[ ] fit = Fitting.linearLeastSquares2f( forFitting );
-		
+
 		if( Vecmath.hasNaNsOrInfinites( fit ) )
 		{
 			return;
 		}
-		
+
 		double azimuth = Math.atan2( 1 , -fit[ 0 ] );
-		
-		float[ ] right = new float[ ] { ( float ) Math.sin( azimuth ) , 0 , ( float ) -Math.cos( azimuth ) };
-		float[ ] forward = new float[ ] { ( float ) Math.sin( azimuth - Math.PI * 0.5 ) , 0 , ( float ) -Math.cos( azimuth - Math.PI * 0.5 ) };
-		
-		if( Vecmath.dot3( scene.inverseViewXform( ) , 8 , forward , 0 ) > 0 )
+
+		float[ ] right = new float[ ]
+		{ ( float ) Math.sin( azimuth ) , 0 , ( float ) -Math.cos( azimuth ) };
+		float[ ] forward = new float[ ]
+		{ ( float ) Math.sin( azimuth - Math.PI * 0.5 ) , 0 , ( float ) -Math.cos( azimuth - Math.PI * 0.5 ) };
+
+		if( Vecmath.dot3( camera.inverseViewXform( ) , 8 , forward , 0 ) > 0 )
 		{
 			Vecmath.negate3( right );
 			Vecmath.negate3( forward );
 		}
-		
+
 		changeView( forward , right , true , shots );
 	}
-	
+
 	protected Stream<Shot> getShotsFromTable( )
 	{
 		SurveyTableModel model = surveyDrawer.table( ).getModel( );
 		return IntStream.range( 0 , model.getRowCount( ) ).mapToObj( i -> model.shotAtRow( i ) ).filter( o -> o != null );
 	}
-	
+
 	protected Stream<Shot> getSelectedShotsFromTable( )
 	{
 		SurveyTableModel model = surveyDrawer.table( ).getModel( );
 		ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
-		return IntStream.range( 0 , model.getRowCount( ) ).filter( i -> selModel.isSelectedIndex( i ) )
-				.mapToObj( i -> model.shotAtRow( i ) ).filter( o -> o != null );
+		return IntStream.range( 0 , model.getRowCount( ) ).filter( i -> selModel.isSelectedIndex( i ) ).mapToObj( i -> model.shotAtRow( i ) )
+				.filter( o -> o != null );
 	}
-	
+
 	protected Set<Shot3d> getDefaultShotsForOperations( )
 	{
 		if( model3d == null )
@@ -1246,104 +1271,105 @@ public class BreakoutMainView extends BasicJoglSetup
 		{
 			result.clear( );
 			PlanarHull3f hull = new PlanarHull3f( );
-			scene.pickXform( ).exportViewVolume( hull , canvas.getWidth( ) , canvas.getHeight( ) );
+			camera.pickXform( ).exportViewVolume( hull , canvas.getWidth( ) , canvas.getHeight( ) );
 			model3d.getShotsIn( hull , result );
 			if( result.isEmpty( ) )
 			{
 				result.addAll( model3d.getShots( ) );
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 	protected void changeView( Set<Shot3d> shotsToFit )
 	{
 		float[ ] forward = new float[ 3 ];
 		float[ ] right = new float[ 3 ];
-		
-		float[ ] vi = scene.inverseViewXform( );
-		
+
+		float[ ] vi = camera.inverseViewXform( );
+
 		Vecmath.negate3( vi , 8 , forward , 0 );
 		Vecmath.getColumn3( vi , 0 , right );
-		
-		changeView( forward , right , getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE ,
-				shotsToFit );
+
+		changeView( forward , right , getProjectModel( ).get( ProjectModel.cameraView ) != CameraView.PERSPECTIVE , shotsToFit );
 	}
-	
+
 	private void changeView( float[ ] forward , float[ ] right , boolean ortho , Set<Shot3d> shotsToFit )
 	{
 		if( Vecmath.hasNaNsOrInfinites( forward ) || Vecmath.hasNaNsOrInfinites( right ) )
 		{
 			throw new IllegalArgumentException( "forward and right must not contain NaN or infinite values" );
 		}
-		
+
 		mouseLooper.removeMouseAdapter( mouseAdapterChain );
-		
+
 		float[ ] up = new float[ 3 ];
 		Vecmath.cross( right , forward , up );
-		
-		ProjectionCalculator newProjCalculator;
-		float[ ] vi = scene.inverseViewXform( );
-		float[ ] endLocation = { vi[ 12 ] , vi[ 13 ] , vi[ 14 ] };
-		
+
+		Projection newProjCalculator;
+		float[ ] vi = camera.inverseViewXform( );
+		float[ ] endLocation =
+		{ vi[ 12 ] , vi[ 13 ] , vi[ 14 ] };
+
 		Animation finisher;
-		
+
 		if( ortho )
 		{
-			AutoClipOrthoProjectionCalculator orthoCalculator = new AutoClipOrthoProjectionCalculator( );
+			AutoClipOrthoProjection orthoCalculator = new AutoClipOrthoProjection( );
 			newProjCalculator = orthoCalculator;
 			orbiter.getCenter( orthoCalculator.center );
-			
+
 			if( model3d != null )
 			{
 				orthoCalculator.radius = Rectmath.radius3( model3d.getTree( ).getRoot( ).mbr( ) );
 				float[ ] orthoBounds = model3d.getOrthoBounds( shotsToFit , right , up , forward );
 				Rectmath.scaleFromCenter3( orthoBounds , 1 / 0.9f , 1 / 0.9f , 1f , orthoBounds );
-				
+
 				float[ ] endOrthoLocation = new float[ 3 ];
 				Rectmath.center( orthoBounds , endOrthoLocation );
-				
+
 				Vecmath.combine( endLocation , endOrthoLocation , right , up , forward );
-				
-				float dist = Vecmath.distance3( scene.inverseViewXform( ) , 12 , endLocation , 0 );
+
+				float dist = Vecmath.distance3( camera.inverseViewXform( ) , 12 , endLocation , 0 );
 				endOrthoLocation[ 2 ] -= dist;
 				Vecmath.combine( endLocation , endOrthoLocation , right , up , forward );
-				
+
 				Rectmath.center( orthoBounds , endOrthoLocation );
 				endOrthoLocation[ 2 ] = orthoBounds[ 2 ];
 				Vecmath.combine( orthoCalculator.nearClipPoint , endOrthoLocation , right , up , forward );
 				endOrthoLocation[ 2 ] = orthoBounds[ 5 ];
 				Vecmath.combine( orthoCalculator.farClipPoint , endOrthoLocation , right , up , forward );
-				
+
 				orthoCalculator.hSpan = ( orthoBounds[ 3 ] - orthoBounds[ 0 ] );
 				orthoCalculator.vSpan = ( orthoBounds[ 4 ] - orthoBounds[ 1 ] );
 			}
-			
-			finisher = l -> {
+
+			finisher = l ->
+			{
 				orthoCalculator.useNearClipPoint = orthoCalculator.useFarClipPoint = true;
-				scene.setProjectionCalculator( orthoCalculator );
-				saveProjectionCalculator( );
-				
+				camera.setProjection( orthoCalculator );
+				saveProjection( );
+
 				installOrthoMouseAdapters( );
-				
-				canvas.display( );
+
+				glWindow.display( );
 				return 0;
 			};
 		}
 		else
 		{
 			newProjCalculator = perspCalculator;
-			
+
 			if( model3d != null )
 			{
 				FittingFrustum frustum = new FittingFrustum( );
 				float[ ] projXform = newMat4f( );
-				perspCalculator.calculate( scene , projXform );
+				perspCalculator.calculate( camera , projXform );
 				PickXform pickXform = new PickXform( );
-				pickXform.calculate( projXform , scene.viewXform( ) );
+				pickXform.calculate( projXform , camera.viewXform( ) );
 				frustum.init( pickXform , 0.9f );
-				
+
 				for( Shot3d shot : shotsToFit )
 				{
 					for( float[ ] coord : shot.coordIterable( endLocation ) )
@@ -1351,35 +1377,35 @@ public class BreakoutMainView extends BasicJoglSetup
 						frustum.addPoint( coord );
 					}
 				}
-				
+
 				frustum.calculateOrigin( endLocation );
 			}
-			
-			finisher = l -> {
-				scene.setProjectionCalculator( perspCalculator );
-				saveProjectionCalculator( );
-				
+
+			finisher = l ->
+			{
+				camera.setProjection( perspCalculator );
+				saveProjection( );
+
 				installPerspectiveMouseAdapters( );
-				
-				canvas.display( );
+
+				glWindow.display( );
 				return 0;
 			};
 		}
-		
-		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( this , 1750 , 30 );
+
+		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( glWindow , camera , 1750 , 30 );
 		float[ ] viewXform = newMat4f( );
-		viewAnimation.setUpWithEndLocation( scene.viewXform( ) , endLocation , forward , right );
-		
-		ProjectionCalculator currentProjCalculator = scene.getProjectionCalculator( );
-		
-		InterpolationProjectionCalculator calc = new InterpolationProjectionCalculator(
-				scene.getProjectionCalculator( ) , newProjCalculator , 0f );
-		
+		viewAnimation.setUpWithEndLocation( camera.viewXform( ) , endLocation , forward , right );
+
+		Projection currentProjCalculator = camera.getProjection( );
+
+		InterpolationProjection calc = new InterpolationProjection( camera.getProjection( ) , newProjCalculator , 0f );
+
 		FloatUnaryOperator viewReparam = f -> 1 - ( 1 - f ) * ( 1 - f );
 		FloatUnaryOperator projReparam;
-		if( currentProjCalculator instanceof AutoClipOrthoProjectionCalculator )
+		if( currentProjCalculator instanceof AutoClipOrthoProjection )
 		{
-			AutoClipOrthoProjectionCalculator currentOrthoCalc = ( AutoClipOrthoProjectionCalculator ) currentProjCalculator;
+			AutoClipOrthoProjection currentOrthoCalc = ( AutoClipOrthoProjection ) currentProjCalculator;
 			currentOrthoCalc.useNearClipPoint = currentOrthoCalc.useFarClipPoint = false;
 			if( ortho )
 			{
@@ -1391,7 +1417,8 @@ public class BreakoutMainView extends BasicJoglSetup
 				float a = 1 / b;
 				float ra = 1 / a / a;
 				float rb = 1 / b / b;
-				projReparam = f -> {
+				projReparam = f ->
+				{
 					float ff = b + f * ( a - b );
 					float rf = 1 / ff / ff;
 					return viewReparam.applyAsFloat( ( rf - rb ) / ( ra - rb ) );
@@ -1406,7 +1433,8 @@ public class BreakoutMainView extends BasicJoglSetup
 				float a = 1 / b;
 				float ra = 1 / a / a;
 				float rb = 1 / b / b;
-				projReparam = f -> {
+				projReparam = f ->
+				{
 					float ff = a + viewReparam.applyAsFloat( f ) * ( b - a );
 					float rf = 1 / ff / ff;
 					return ( rf - ra ) / ( rb - ra );
@@ -1417,12 +1445,14 @@ public class BreakoutMainView extends BasicJoglSetup
 				projReparam = viewReparam;
 			}
 		}
-		
+
 		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new ProjXformAnimation( this , 1750 , false , f -> {
+		cameraAnimationQueue.add( new ProjXformAnimation( glWindow , camera , 1750 , false , f ->
+		{
 			calc.f = projReparam.applyAsFloat( f );
 			return calc;
-		} ).also( new ViewXformAnimation( this , 1750 , true , f -> {
+		} ).also( new ViewXformAnimation( glWindow , camera , 1750 , true , f ->
+		{
 			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
 			return viewXform;
 		} ) ) );
@@ -1430,7 +1460,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		protectedAnimations.put( finisher , null );
 		cameraAnimationQueue.add( finisher );
 	}
-	
+
 	private void installPerspectiveMouseAdapters( )
 	{
 		if( mouseAdapterChain != null )
@@ -1445,7 +1475,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 	}
-	
+
 	private void installOrthoMouseAdapters( )
 	{
 		if( mouseAdapterChain != null )
@@ -1459,60 +1489,60 @@ public class BreakoutMainView extends BasicJoglSetup
 		mouseAdapterChain.addMouseAdapter( otherMouseHandler );
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 	}
-	
+
 	public JPanel getMainPanel( )
 	{
 		return mainPanel;
 	}
-	
+
 	public NewProjectAction getNewProjectAction( )
 	{
 		return newProjectAction;
 	}
-	
+
 	public void setNewProjectAction( NewProjectAction newProjectAction )
 	{
 		this.newProjectAction = newProjectAction;
 	}
-	
+
 	public OpenProjectAction getOpenProjectAction( )
 	{
 		return openProjectAction;
 	}
-	
+
 	public void setOpenProjectAction( OpenProjectAction openProjectAction )
 	{
 		this.openProjectAction = openProjectAction;
 	}
-	
+
 	private static Shot3dPickContext	hoverUpdaterSpc	= new Shot3dPickContext( );
-	
+
 	private class HoverUpdater extends Task
 	{
 		Survey3dModel	model3d;
 		MouseEvent		e;
-		
+
 		public HoverUpdater( Survey3dModel model3d , MouseEvent e )
 		{
 			super( "Updating mouseover glow..." );
 			this.model3d = model3d;
 			this.e = e;
 		}
-		
+
 		public boolean isCancelable( )
 		{
 			return true;
 		}
-		
+
 		@Override
 		protected void execute( ) throws Exception
 		{
 			final Shot3dPickResult picked = pick( model3d , e , hoverUpdaterSpc );
-			
+
 			Subtask subtask = new Subtask( this );
 			Subtask glowSubtask = subtask.beginSubtask( 1 );
 			glowSubtask.setStatus( "Updating mouseover glow" );
-			
+
 			if( picked != null )
 			{
 				LinearAxisConversion conversion = new FromEDT<LinearAxisConversion>( )
@@ -1521,16 +1551,18 @@ public class BreakoutMainView extends BasicJoglSetup
 					public LinearAxisConversion run( ) throws Throwable
 					{
 						Shot shot = model3d.getOriginalShots( ).get( picked.picked.getNumber( ) );
-						hintLabel.setText( String.format( "<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%.2f</b>&emsp;Azm: <b>%.2f</b>"
-								+ "&emsp;Inc: <b>%.2f</b>&emsp;<i>%s</i></html>" ,
-								shot.from.name , shot.to.name , shot.dist , shot.azm , shot.inc , shot.desc ) );
-						
+						hintLabel
+								.setText( String.format( "<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%.2f</b>&emsp;Azm: <b>%.2f</b>"
+										+ "&emsp;Inc: <b>%.2f</b>&emsp;<i>%s</i></html>" , shot.from.name , shot.to.name , shot.dist , shot.azm , shot.inc ,
+										shot.desc ) );
+
 						LinearAxisConversion conversion = getProjectModel( ).get( ProjectModel.highlightRange );
-						LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer.getGlowDistAxis( ).getViewSpan( ) ) , 0.0 );
+						LinearAxisConversion conversion2 = new LinearAxisConversion( conversion.invert( 0.0 ) , 1.0 , conversion.invert( settingsDrawer
+								.getGlowDistAxis( ).getViewSpan( ) ) , 0.0 );
 						return conversion2;
 					}
 				}.result( );
-				
+
 				model3d.updateGlow( picked.picked , picked.locationAlongShot , conversion , glowSubtask );
 			}
 			else
@@ -1540,45 +1572,45 @@ public class BreakoutMainView extends BasicJoglSetup
 			}
 			if( !isCanceling( ) )
 			{
-				canvas.display( );
+				glWindow.display( );
 			}
 		}
 	}
-	
+
 	private final PlanarHull3f	hull	= new PlanarHull3f( );
-	
+
 	private Shot3dPickResult pick( Survey3dModel model3d , MouseEvent e , Shot3dPickContext spc )
 	{
 		PlanarHull3f hull = new PlanarHull3f( );
 		float[ ] origin = new float[ 3 ];
 		float[ ] direction = new float[ 3 ];
-		scene.pickXform( ).xform( e.getX( ) , e.getComponent( ).getHeight( ) - e.getY( ) ,
-				e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin , direction );
-		scene.pickXform( ).exportViewVolume( hull , e , 10 );
-		
+		camera.pickXform( ).xform( e.getX( ) , e.getComponent( ).getHeight( ) - e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) ,
+				origin , direction );
+		camera.pickXform( ).exportViewVolume( hull , e , 10 );
+
 		if( model3d != null )
 		{
 			List<PickResult<Shot3d>> pickResults = new ArrayList<PickResult<Shot3d>>( );
 			//			model3d.pickShots( origin , direction , ( float ) Math.PI / 64 , spc , pickResults );
 			model3d.pickShots( hull , spc , pickResults );
-			
+
 			PickResult<Shot3d> best = null;
-			
+
 			for( PickResult<Shot3d> result : pickResults )
 			{
-				if( best == null || result.lateralDistance * best.distance < best.lateralDistance * result.distance ||
-						( result.lateralDistance == 0 && best.lateralDistance == 0 && result.distance < best.distance ) )
+				if( best == null || result.lateralDistance * best.distance < best.lateralDistance * result.distance
+						|| ( result.lateralDistance == 0 && best.lateralDistance == 0 && result.distance < best.distance ) )
 				{
 					best = result;
 				}
 			}
-			
+
 			return ( Shot3dPickResult ) best;
 		}
-		
+
 		return null;
 	}
-	
+
 	private class MousePickHandler extends MouseAdapter
 	{
 		@Override
@@ -1597,7 +1629,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				rebuildTaskService.submit( updater );
 			}
 		}
-		
+
 		@Override
 		public void mouseClicked( MouseEvent e )
 		{
@@ -1605,15 +1637,15 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				return;
 			}
-			
+
 			Shot3dPickResult picked = pick( model3d , e , spc );
-			
+
 			if( picked == null )
 			{
 				surveyDrawer.table( ).clearSelection( );
 			}
 		}
-		
+
 		@Override
 		public void mousePressed( MouseEvent e )
 		{
@@ -1621,7 +1653,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				return;
 			}
-			
+
 			if( e.isAltDown( ) )
 			{
 				for( Drawer drawer : Arrays.asList( surveyDrawer , quickTableDrawer , taskListDrawer , settingsDrawer ) )
@@ -1635,20 +1667,20 @@ public class BreakoutMainView extends BasicJoglSetup
 				windowSelectionMouseHandler.start( e );
 				return;
 			}
-			
+
 			Shot3dPickResult picked = pick( model3d , e , spc );
-			
+
 			if( picked == null )
 			{
 				return;
 			}
-			
+
 			ListSelectionModel selModel = surveyDrawer.table( ).getModelSelectionModel( );
-			
+
 			int index = picked.picked.getNumber( );
-			
+
 			int modelRow = surveyDrawer.table( ).getModel( ).rowOfShot( index );
-			
+
 			if( modelRow >= 0 )
 			{
 				if( ( e.getModifiersEx( ) & MouseEvent.CTRL_DOWN_MASK ) != 0 )
@@ -1666,9 +1698,9 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					selModel.setSelectionInterval( modelRow , modelRow );
 				}
-				
+
 				int viewRow = surveyDrawer.table( ).convertRowIndexToView( modelRow );
-				
+
 				if( viewRow >= 0 )
 				{
 					Rectangle visibleRect = surveyDrawer.table( ).getVisibleRect( );
@@ -1677,31 +1709,31 @@ public class BreakoutMainView extends BasicJoglSetup
 					surveyDrawer.table( ).scrollRectToVisible( visibleRect );
 				}
 			}
-			
-			canvas.display( );
+
+			glWindow.display( );
 		}
 	}
-	
+
 	private class MinAvgMaxCalc
 	{
 		int		count	= 0;
 		double	total	= 0.0;
 		double	min		= Double.NaN;
 		double	max		= Double.NaN;
-		
+
 		public void add( double value )
 		{
 			min = Vecmath.nmin( min , value );
 			max = Vecmath.nmax( max , value );
 			total += value;
-			count++ ;
+			count++;
 		}
-		
+
 		public double getAvg( )
 		{
 			return total / count;
 		}
-		
+
 		public QObject<MinAvgMax> toModel( )
 		{
 			QObject<MinAvgMax> result = MinAvgMax.spec.newObject( );
@@ -1711,7 +1743,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			return result;
 		}
 	}
-	
+
 	private class TableSelectionHandler implements ListSelectionListener
 	{
 		@Override
@@ -1721,22 +1753,22 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				return;
 			}
-			
+
 			final Survey3dModel model3d = BreakoutMainView.this.model3d;
-			
+
 			List<Survey3dModel.Shot3d> shot3ds = model3d.getShots( );
-			
+
 			final SelectionEditor editor = model3d.editSelection( );
-			
+
 			ListSelectionModel selModel = ( ListSelectionModel ) e.getSource( );
-			
+
 			if( e.getFirstIndex( ) < 0 )
 			{
 				for( Survey3dModel.Shot3d shot3d : shot3ds )
 				{
 					editor.deselect( shot3d );
 				}
-				
+
 				statsBinder.set( StatsModel.spec.newObject( ) );
 			}
 			else
@@ -1745,9 +1777,9 @@ public class BreakoutMainView extends BasicJoglSetup
 				MinAvgMaxCalc northCalc = new MinAvgMaxCalc( );
 				MinAvgMaxCalc eastCalc = new MinAvgMaxCalc( );
 				MinAvgMaxCalc depthCalc = new MinAvgMaxCalc( );
-				
+
 				QObject<StatsModel> statsModel = StatsModel.spec.newObject( );
-				
+
 				for( int i = e.getFirstIndex( ) ; i <= e.getLastIndex( ) && i < surveyDrawer.table( ).getModel( ).getRowCount( ) ; i++ )
 				{
 					Shot shot = ( Shot ) surveyDrawer.table( ).getModel( ).shotAtRow( i );
@@ -1755,7 +1787,7 @@ public class BreakoutMainView extends BasicJoglSetup
 					{
 						continue;
 					}
-					
+
 					if( selModel.isSelectedIndex( i ) )
 					{
 						editor.select( shot3ds.get( shot.number ) );
@@ -1781,29 +1813,30 @@ public class BreakoutMainView extends BasicJoglSetup
 						editor.deselect( shot3ds.get( shot.number ) );
 					}
 				}
-				
+
 				statsModel.set( StatsModel.numSelected , distCalc.count );
 				statsModel.set( StatsModel.totalDistance , distCalc.total );
 				statsModel.set( StatsModel.distStats , distCalc.toModel( ) );
 				statsModel.set( StatsModel.northStats , northCalc.toModel( ) );
 				statsModel.set( StatsModel.eastStats , eastCalc.toModel( ) );
 				statsModel.set( StatsModel.depthStats , depthCalc.toModel( ) );
-				
+
 				statsBinder.set( statsModel );
 			}
-			
-			rebuildTaskService.submit( task -> {
+
+			rebuildTaskService.submit( task ->
+			{
 				editor.commit( );
-				
+
 				List<Shot> origShots = new ArrayList<>( );
 				Set<Survey3dModel.Shot3d> newSelectedShots = new HashSet<>( );
-				
+
 				model3d.addOriginalShotsTo( origShots );
 				model3d.addSelectedShotsTo( newSelectedShots );
-				
+
 				float[ ] bounds = Rectmath.voidRectf( 3 );
 				float[ ] p = Rectmath.voidRectf( 3 );
-				
+
 				for( Survey3dModel.Shot3d shot3d : newSelectedShots )
 				{
 					Shot origShot = origShots.get( shot3d.getNumber( ) );
@@ -1815,43 +1848,45 @@ public class BreakoutMainView extends BasicJoglSetup
 					p[ 5 ] = ( float ) Math.max( origShot.from.position[ 2 ] , origShot.to.position[ 2 ] );
 					Rectmath.union3( bounds , p , bounds );
 				}
-				
+
 				if( !newSelectedShots.isEmpty( ) )
 				{
 					// scale3( center , 0.5 / newSelectedShots.size( ) );
 					p[ 0 ] = ( float ) ( bounds[ 0 ] + bounds[ 3 ] ) * 0.5f;
 					p[ 1 ] = ( float ) ( bounds[ 1 ] + bounds[ 4 ] ) * 0.5f;
 					p[ 2 ] = ( float ) ( bounds[ 2 ] + bounds[ 5 ] ) * 0.5f;
-					
-					SwingUtilities.invokeLater( ( ) -> {
+
+					SwingUtilities.invokeLater( ( ) ->
+					{
 						orbiter.setCenter( p );
 						navigator.setCenter( p );
 					} );
 				}
-				
-				canvas.display( );
+
+				glWindow.display( );
 			} );
 		}
 	}
-	
+
 	class FitToFilteredHandler implements ActionListener
 	{
 		AnnotatingJTable	table;
 		long				lastAction	= 0;
-		
+
 		public FitToFilteredHandler( AnnotatingJTable table )
 		{
 			super( );
 			this.table = table;
 		}
-		
+
 		@Override
 		public void actionPerformed( ActionEvent e )
 		{
 			final long time = System.currentTimeMillis( );
 			lastAction = time;
-			
-			table.getAnnotatingRowSorter( ).invokeWhenDoneSorting( ( ) -> {
+
+			table.getAnnotatingRowSorter( ).invokeWhenDoneSorting( ( ) ->
+			{
 				if( time >= lastAction )
 				{
 					flyToFiltered( table );
@@ -1859,7 +1894,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			} );
 		}
 	};
-	
+
 	private class AnimationViewSaver implements Animation
 	{
 		@Override
@@ -1869,19 +1904,19 @@ public class BreakoutMainView extends BasicJoglSetup
 			return 0;
 		}
 	}
-	
+
 	private void saveViewXform( )
 	{
 		float[ ] viewXform = Vecmath.newMat4f( );
-		scene.getViewXform( viewXform );
+		camera.getViewXform( viewXform );
 		getProjectModel( ).set( ProjectModel.viewXform , viewXform );
 	}
-	
-	private void saveProjectionCalculator( )
+
+	private void saveProjection( )
 	{
-		getProjectModel( ).set( ProjectModel.projCalculator , scene.getProjectionCalculator( ) );
+		getProjectModel( ).set( ProjectModel.projCalculator , camera.getProjection( ) );
 	}
-	
+
 	private void replaceNulls( QObject<ProjectModel> projectModel , File projectFile )
 	{
 		if( projectModel.get( ProjectModel.cameraView ) == null )
@@ -1906,7 +1941,7 @@ public class BreakoutMainView extends BasicJoglSetup
 		}
 		if( projectModel.get( ProjectModel.paramRanges ) == null )
 		{
-			projectModel.set( ProjectModel.paramRanges , QLinkedHashMap.<ColorParam,LinearAxisConversion>newInstance( ) );
+			projectModel.set( ProjectModel.paramRanges , QLinkedHashMap.<ColorParam, LinearAxisConversion>newInstance( ) );
 		}
 		QMap<ColorParam, LinearAxisConversion, ?> paramRanges = projectModel.get( ProjectModel.paramRanges );
 		for( ColorParam colorParam : ColorParam.values( ) )
@@ -1941,7 +1976,7 @@ public class BreakoutMainView extends BasicJoglSetup
 			projectModel.set( ProjectModel.surveyFile , new File( NewProjectAction.pickDefaultSurveyFile( projectFile ).getName( ) ) );
 		}
 	}
-	
+
 	class OtherMouseHandler extends MouseAdapter
 	{
 		@Override
@@ -1949,20 +1984,20 @@ public class BreakoutMainView extends BasicJoglSetup
 		{
 			cameraAnimationQueue.clear( );
 		}
-		
+
 		@Override
 		public void mouseReleased( MouseEvent e )
 		{
 			saveViewXform( );
 		}
-		
+
 		@Override
 		public void mouseWheelMoved( MouseWheelEvent e )
 		{
 			saveViewXform( );
 		}
 	}
-	
+
 	//	class SurveyFilterFactory implements RowFilterFactory<String, TableModel, Integer>
 	//	{
 	//		@Override
@@ -1983,37 +2018,37 @@ public class BreakoutMainView extends BasicJoglSetup
 	//			}
 	//		}
 	//	}
-	
+
 	class SurveyTableChangeHandler extends TaskServiceBatcher<TableModelEvent> implements TableModelListener
 	{
 		private boolean	persistOnUpdate		= true;
 		private boolean	rebuildViewOnUpdate	= true;
-		
+
 		public SurveyTableChangeHandler( TaskService taskService )
 		{
 			super( taskService , true );
 		}
-		
+
 		public boolean isPersistOnUpdate( )
 		{
 			return persistOnUpdate;
 		}
-		
+
 		public void setPersistOnUpdate( boolean persistOnUpdate )
 		{
 			this.persistOnUpdate = persistOnUpdate;
 		}
-		
+
 		public boolean isRebuildViewOnUpdate( )
 		{
 			return rebuildViewOnUpdate;
 		}
-		
+
 		public void setRebuildViewOnUpdate( boolean rebuildViewOnUpdate )
 		{
 			this.rebuildViewOnUpdate = rebuildViewOnUpdate;
 		}
-		
+
 		@Override
 		public void tableChanged( TableModelEvent e )
 		{
@@ -2026,7 +2061,7 @@ public class BreakoutMainView extends BasicJoglSetup
 				add( e );
 			}
 		}
-		
+
 		@Override
 		public BatcherTask<TableModelEvent> createTask( final LinkedList<TableModelEvent> batch )
 		{
@@ -2039,10 +2074,10 @@ public class BreakoutMainView extends BasicJoglSetup
 					Subtask copySubtask = new Subtask( this );
 					copySubtask.setStatus( "Parsing shot data" );
 					copySubtask.setIndeterminate( false );
-					
+
 					SurveyTableModel copy = new SurveyTableModel( );
 					SurveyTableModelCopier copier = new SurveyTableModelCopier( );
-					
+
 					SurveyTableModel model = new FromEDT<SurveyTableModel>( )
 					{
 						@Override
@@ -2051,27 +2086,27 @@ public class BreakoutMainView extends BasicJoglSetup
 							return surveyDrawer.table( ).getModel( );
 						}
 					}.result( );
-					
+
 					copier.copyInBackground( model , copy , 1000 , copySubtask );
-					
+
 					if( copySubtask.isCanceling( ) )
 					{
 						return;
 					}
-					
+
 					copySubtask.end( );
-					
+
 					Subtask parsingSubtask = new Subtask( this );
 					parsingSubtask.setStatus( "Parsing shot data" );
 					parsingSubtask.setIndeterminate( false );
-					
+
 					final List<Shot> shots = copy.createShots( parsingSubtask );
-					
+
 					if( parsingSubtask.isCanceling( ) )
 					{
 						return;
 					}
-					
+
 					new OnEDT( )
 					{
 						@Override
@@ -2080,17 +2115,17 @@ public class BreakoutMainView extends BasicJoglSetup
 							surveyDrawer.table( ).getModel( ).setShots( shots );
 						}
 					};
-					
+
 					final List<Shot> nonNullShots = new ArrayList<Shot>( );
-					
+
 					if( !shots.isEmpty( ) )
 					{
 						Subtask calculatingSubtask = new Subtask( this );
 						calculatingSubtask.setStatus( "calculating" );
 						calculatingSubtask.setIndeterminate( true );
-						
+
 						LinkedHashSet<Station> stations = new LinkedHashSet<Station>( );
-						
+
 						for( Shot shot : shots )
 						{
 							if( shot != null )
@@ -2100,72 +2135,75 @@ public class BreakoutMainView extends BasicJoglSetup
 								stations.add( shot.to );
 							}
 						}
-						
+
 						Shot.computeConnected( stations );
-						
+
 						LineLineIntersection2d llx = new LineLineIntersection2d( );
-						
+
 						for( Station station : stations )
 						{
 							station.calcSplayPoints( llx );
 						}
-						
+
 						calculatingSubtask.end( );
 					}
-					
+
 					updateModel( nonNullShots );
 				}
-				
+
 				public boolean isCancelable( )
 				{
 					return true;
 				}
-				
+
 				public void updateModel( List<Shot> shots )
 				{
 					setStatus( "Updating view..." );
-					
-					SwingUtilities.invokeLater( ( ) -> {
+
+					SwingUtilities.invokeLater( ( ) ->
+					{
 						if( model3d != null )
 						{
 							final Survey3dModel model3d = BreakoutMainView.this.model3d;
 							BreakoutMainView.this.model3d = null;
-							
-							getCanvas( ).invoke( false , drawable -> {
+
+							glWindow.invoke( false , drawable ->
+							{
 								scene.remove( model3d );
 								scene.disposeLater( model3d );
 								return false;
 							} );
 						}
 					} );
-					
+
 					setStatus( "Updating view: constructing new model..." );
-					
+
 					final Survey3dModel model = Survey3dModel.create( shots , 10 , 3 , 3 , this );
 					if( isCanceling( ) )
 					{
 						return;
 					}
-					
+
 					setStatus( "Updating view: installing new model..." );
-					
+
 					float[ ] bounds = Arrays.copyOf( model.getTree( ).getRoot( ).mbr( ) , 6 );
-					
+
 					bounds[ 1 ] = bounds[ 4 ] + 100;
 					bounds[ 4 ] = bounds[ 1 ] + 100;
-					
+
 					float[ ][ ][ ] vertices = new float[ 100 ][ 100 ][ 3 ];
-					
+
 					Random rand = new Random( 2 );
-					
+
 					TransparentTerrain.randomVerts( vertices , bounds , rand );
-					
+
 					TransparentTerrain terrain = new TransparentTerrain( vertices );
-					
-					SwingUtilities.invokeLater( ( ) -> {
+
+					SwingUtilities.invokeLater( ( ) ->
+					{
 						BreakoutMainView.this.model3d = model;
 						model.setParamPaint( settingsDrawer.getParamColorationAxisPaint( ) );
-						
+
 						// GlyphCache cache = new GlyphCache( scene , new Font( "Arial" , Font.PLAIN , 72 ) , 1024 , 1024 ,
 						// new BufferedImageIntFactory( BufferedImage.TYPE_INT_ARGB ) , new OutlinedGlyphPagePainter(
 						// new BasicStroke( 3f , BasicStroke.CAP_ROUND , BasicStroke.JOIN_ROUND ) ,
@@ -2177,55 +2215,56 @@ public class BreakoutMainView extends BasicJoglSetup
 						//
 						// text.use( );
 						// scene.add( text );
-						
-						projectModelBinder.update( true );
-						
-						float[ ] center = new float[ 3 ];
-						Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
-						orbiter.setCenter( center );
-						navigator.setCenter( center );
-						
-						getCanvas( ).invoke( false , drawable -> {
-							scene.add( model );
-							scene.initLater( model );
-							//							scene.add( terrain );
-							//							scene.initLater( terrain );
-							return false;
+
+							projectModelBinder.update( true );
+
+							float[ ] center = new float[ 3 ];
+							Rectmath.center( model.getTree( ).getRoot( ).mbr( ) , center );
+							orbiter.setCenter( center );
+							navigator.setCenter( center );
+
+							glWindow.invoke( false , drawable ->
+							{
+								scene.add( model );
+								scene.initLater( model );
+								//							scene.add( terrain );
+								//							scene.initLater( terrain );
+									return false;
+								} );
 						} );
-					} );
 				}
 			};
 			return task;
 		}
 	}
-	
+
 	public void importProjectArchive( File newProjectFile )
 	{
 		ioTaskService.submit( new ImportProjectArchiveTask( newProjectFile ) );
 	}
-	
+
 	private class ImportProjectArchiveTask extends SelfReportingTask
 	{
 		boolean	taskListWasOpen;
 		File	newProjectFile;
-		
+
 		private ImportProjectArchiveTask( File newProjectFile )
 		{
 			super( getMainPanel( ) );
 			this.newProjectFile = newProjectFile;
 			setStatus( "Saving project..." );
 			setIndeterminate( true );
-			
+
 			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
 			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
-		
+
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
 			setStatus( "Importing project archive: " + newProjectFile + "..." );
-			
+
 			new OnEDT( )
 			{
 				@Override
@@ -2234,16 +2273,15 @@ public class BreakoutMainView extends BasicJoglSetup
 					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
 				}
 			};
-			
+
 			ProjectArchiveModel projectModel = null;
-			
+
 			Subtask rootSubtask = new Subtask( this );
-			
+
 			try
 			{
-				projectModel = new ProjectArchiveModelStreamBimapper( getI18n( ) , rootSubtask )
-						.read( new FileInputStream( newProjectFile ) );
-				
+				projectModel = new ProjectArchiveModelStreamBimapper( getI18n( ) , rootSubtask ).read( new FileInputStream( newProjectFile ) );
+
 				if( projectModel == null )
 				{
 					return;
@@ -2257,17 +2295,15 @@ public class BreakoutMainView extends BasicJoglSetup
 					@Override
 					public void run( ) throws Throwable
 					{
-						JOptionPane.showMessageDialog( getMainPanel( ) ,
-								ex.getClass( ).getName( ) + ": " + ex.getLocalizedMessage( ) ,
-								"Failed to import project archive" ,
-								JOptionPane.ERROR_MESSAGE );
+						JOptionPane.showMessageDialog( getMainPanel( ) , ex.getClass( ).getName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Failed to import project archive" , JOptionPane.ERROR_MESSAGE );
 					}
 				};
 				return;
 			}
-			
+
 			final ProjectArchiveModel finalProjectModel = projectModel;
-			
+
 			new OnEDT( )
 			{
 				@Override
@@ -2285,48 +2321,48 @@ public class BreakoutMainView extends BasicJoglSetup
 						projectPersister.saveLater( finalProjectModel.getProjectModel( ) );
 					}
 					projectModelBinder.set( finalProjectModel.getProjectModel( ) );
-					
-					surveyDrawer.table( ).getModel( ).copyRowsFrom( finalProjectModel.getSurveyTableModel( ) ,
-							0 , finalProjectModel.getSurveyTableModel( ).getRowCount( ) - 1 , 0 );
+
+					surveyDrawer.table( ).getModel( )
+							.copyRowsFrom( finalProjectModel.getSurveyTableModel( ) , 0 , finalProjectModel.getSurveyTableModel( ).getRowCount( ) - 1 , 0 );
 				}
 			};
 		}
 	}
-	
+
 	public void exportProjectArchive( File newProjectFile )
 	{
 		ioTaskService.submit( new ExportProjectArchiveTask( newProjectFile ) );
 	}
-	
+
 	private class ExportProjectArchiveTask extends SelfReportingTask
 	{
 		boolean	taskListWasOpen;
 		File	newProjectFile;
-		
+
 		private ExportProjectArchiveTask( File newProjectFile )
 		{
 			super( getMainPanel( ) );
 			this.newProjectFile = newProjectFile;
 			setStatus( "Saving project..." );
 			setIndeterminate( true );
-			
+
 			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
 			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
-		
+
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
 			setStatus( "Exporting project archive: " + newProjectFile + "..." );
-			
+
 			setTotal( 1000 );
-			
+
 			Subtask rootSubtask = new Subtask( this );
 			rootSubtask.setTotal( 3 );
 			Subtask prepareSubtask = rootSubtask.beginSubtask( 1 );
 			prepareSubtask.setStatus( "Preparing for export" );
-			
+
 			new OnEDT( )
 			{
 				@Override
@@ -2335,23 +2371,22 @@ public class BreakoutMainView extends BasicJoglSetup
 					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
 				}
 			};
-			
+
 			SurveyTableModel surveyTableModelCopy = new SurveyTableModel( );
 			SurveyTableModelCopier copier = new SurveyTableModelCopier( );
 			copier.copyInBackground( surveyDrawer.table( ).getModel( ) , surveyTableModelCopy , 1000 , prepareSubtask );
-			
+
 			ProjectArchiveModel projectModel = new ProjectArchiveModel( getProjectModel( ) , surveyTableModelCopy );
-			
+
 			prepareSubtask.end( );
 			rootSubtask.setCompleted( prepareSubtask.getProportion( ) );
-			
+
 			Subtask exportSubtask = rootSubtask.beginSubtask( 2 );
 			exportSubtask.setStatus( "Exporting project to " + newProjectFile );
-			
+
 			try
 			{
-				new ProjectArchiveModelStreamBimapper( getI18n( ) , exportSubtask )
-						.write( projectModel , new FileOutputStream( newProjectFile ) );
+				new ProjectArchiveModelStreamBimapper( getI18n( ) , exportSubtask ).write( projectModel , new FileOutputStream( newProjectFile ) );
 				exportSubtask.end( );
 				rootSubtask.setCompleted( rootSubtask.getCompleted( ) + exportSubtask.getProportion( ) );
 			}
@@ -2363,51 +2398,49 @@ public class BreakoutMainView extends BasicJoglSetup
 					@Override
 					public void run( ) throws Throwable
 					{
-						JOptionPane.showMessageDialog( getMainPanel( ) ,
-								ex.getClass( ).getName( ) + ": " + ex.getLocalizedMessage( ) ,
-								"Failed to export project archive" ,
-								JOptionPane.ERROR_MESSAGE );
+						JOptionPane.showMessageDialog( getMainPanel( ) , ex.getClass( ).getName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Failed to export project archive" , JOptionPane.ERROR_MESSAGE );
 					}
 				};
 				return;
 			}
 		}
 	}
-	
+
 	public void openProject( File newProjectFile )
 	{
 		ioTaskService.submit( new OpenProjectTask( newProjectFile ) );
 	}
-	
+
 	private class OpenProjectTask extends SelfReportingTask
 	{
 		boolean	taskListWasOpen;
 		File	newProjectFile;
-		
+
 		private OpenProjectTask( File newProjectFile )
 		{
 			super( getMainPanel( ) );
 			this.newProjectFile = newProjectFile;
 			setStatus( "Saving current project..." );
 			setIndeterminate( true );
-			
+
 			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
 			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
-		
+
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
 			setStatus( "Opening project: " + newProjectFile + "..." );
-			
+
 			new OnEDT( )
 			{
 				@Override
 				public void run( ) throws Throwable
 				{
 					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
-					
+
 					QObject<RootModel> rootModel = getRootModel( );
 					rootModel.set( RootModel.currentProjectFile , newProjectFile );
 					QArrayList<File> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
@@ -2416,14 +2449,14 @@ public class BreakoutMainView extends BasicJoglSetup
 						recentProjectFiles = QArrayList.newInstance( );
 						rootModel.set( RootModel.recentProjectFiles , recentProjectFiles );
 					}
-					
+
 					recentProjectFiles.remove( newProjectFile );
 					while( recentProjectFiles.size( ) > 20 )
 					{
 						recentProjectFiles.remove( recentProjectFiles.size( ) - 1 );
 					}
 					recentProjectFiles.add( 0 , newProjectFile );
-					
+
 					if( getProjectModel( ) != null && projectPersister != null )
 					{
 						getProjectModel( ).changeSupport( ).removePropertyChangeListener( projectPersister );
@@ -2433,11 +2466,11 @@ public class BreakoutMainView extends BasicJoglSetup
 				}
 			};
 			QObject<ProjectModel> projectModel = null;
-			
+
 			try
 			{
 				projectModel = projectPersister.load( );
-				
+
 				if( projectModel == null )
 				{
 					projectModel = ProjectModel.instance.newObject( );
@@ -2452,17 +2485,15 @@ public class BreakoutMainView extends BasicJoglSetup
 					@Override
 					public void run( ) throws Throwable
 					{
-						JOptionPane.showMessageDialog( getMainPanel( ) ,
-								ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
-								"Failed to load project" ,
-								JOptionPane.ERROR_MESSAGE );
+						JOptionPane.showMessageDialog( getMainPanel( ) , ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Failed to load project" , JOptionPane.ERROR_MESSAGE );
 					}
 				};
 				return;
 			}
-			
+
 			final QObject<ProjectModel> finalProjectModel = projectModel;
-			
+
 			new OnEDT( )
 			{
 				@Override
@@ -2470,19 +2501,19 @@ public class BreakoutMainView extends BasicJoglSetup
 				{
 					finalProjectModel.changeSupport( ).addPropertyChangeListener( projectPersister );
 					projectModelBinder.set( finalProjectModel );
-					
+
 					float[ ] viewXform = finalProjectModel.get( ProjectModel.viewXform );
 					if( viewXform != null )
 					{
-						scene.setViewXform( viewXform );
+						camera.setViewXform( viewXform );
 					}
-					
-					ProjectionCalculator projCalculator = finalProjectModel.get( ProjectModel.projCalculator );
+
+					Projection projCalculator = finalProjectModel.get( ProjectModel.projCalculator );
 					if( projCalculator != null )
 					{
-						scene.setProjectionCalculator( projCalculator );
+						camera.setProjection( projCalculator );
 					}
-					
+
 					if( finalProjectModel.get( ProjectModel.cameraView ) == CameraView.PERSPECTIVE )
 					{
 						installPerspectiveMouseAdapters( );
@@ -2493,38 +2524,38 @@ public class BreakoutMainView extends BasicJoglSetup
 					}
 				}
 			};
-			
+
 			openSurveyFile( finalProjectModel.get( ProjectModel.surveyFile ) );
 		}
 	}
-	
+
 	public void openSurveyFile( File newSurveyFile )
 	{
 		ioTaskService.submit( new OpenSurveyTask( newSurveyFile ) );
 	}
-	
+
 	protected void removeUnprotectedCameraAnimations( )
 	{
 		cameraAnimationQueue.removeAll( anim -> !protectedAnimations.containsKey( anim ) );
 	}
-	
+
 	private class OpenSurveyTask extends SelfReportingTask
 	{
 		boolean	taskListWasOpen;
 		File	newSurveyFile;
-		
+
 		private OpenSurveyTask( File newSurveyFile )
 		{
 			super( getMainPanel( ) );
 			this.newSurveyFile = newSurveyFile;
 			setStatus( "Saving current survey..." );
 			setIndeterminate( true );
-			
+
 			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
 			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
-		
+
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
@@ -2537,14 +2568,14 @@ public class BreakoutMainView extends BasicJoglSetup
 			{
 				absoluteSurveyFile = new File( getRootModel( ).get( RootModel.currentProjectFile ).getParentFile( ) , newSurveyFile.getPath( ) );
 			}
-			
+
 			boolean changed = new FromEDT<Boolean>( )
 			{
 				@Override
 				public Boolean run( ) throws Throwable
 				{
 					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
-					
+
 					if( surveyPersister == null || !absoluteSurveyFile.equals( surveyPersister.getFile( ) ) )
 					{
 						surveyPersister = new TaskServiceSubtaskFilePersister<SurveyTableModel>( ioTaskService , "Saving survey..." ,
@@ -2562,7 +2593,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						return false;
 					}
 					getProjectModel( ).set( ProjectModel.surveyFile , newSurveyFile );
-					
+
 					try
 					{
 						surveyTableChangeHandler.setPersistOnUpdate( false );
@@ -2575,16 +2606,16 @@ public class BreakoutMainView extends BasicJoglSetup
 					return true;
 				}
 			}.result( );
-			
+
 			if( !changed )
 			{
 				return;
 			}
-			
+
 			setStatus( "Opening survey: " + absoluteSurveyFile + "..." );
-			
+
 			SurveyTableModel surveyModel;
-			
+
 			try
 			{
 				surveyModel = surveyPersister.load( null );
@@ -2597,18 +2628,16 @@ public class BreakoutMainView extends BasicJoglSetup
 					@Override
 					public void run( ) throws Throwable
 					{
-						JOptionPane.showConfirmDialog( getMainPanel( ) ,
-								ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
-								"Failed to load survey" ,
-								JOptionPane.ERROR_MESSAGE );
+						JOptionPane.showConfirmDialog( getMainPanel( ) , ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Failed to load survey" , JOptionPane.ERROR_MESSAGE );
 					}
 				};
-				
+
 				return;
 			}
-			
+
 			final SurveyTableModel finalSurveyModel = surveyModel;
-			
+
 			new OnEDT( )
 			{
 				@Override
@@ -2619,8 +2648,7 @@ public class BreakoutMainView extends BasicJoglSetup
 						try
 						{
 							surveyTableChangeHandler.setPersistOnUpdate( false );
-							surveyDrawer.table( ).getModel( ).copyRowsFrom( finalSurveyModel , 0 ,
-									finalSurveyModel.getRowCount( ) - 1 , 0 );
+							surveyDrawer.table( ).getModel( ).copyRowsFrom( finalSurveyModel , 0 , finalSurveyModel.getRowCount( ) - 1 , 0 );
 						}
 						finally
 						{

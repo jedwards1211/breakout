@@ -1,0 +1,5 @@
+0.9.18
+--------------------------------------------------------------------------------
+
+-Nothing was showing up on screen after I upgraded my computer to Windows 8.  This is now fixed on my computer, I have yet
+to test on other systems.

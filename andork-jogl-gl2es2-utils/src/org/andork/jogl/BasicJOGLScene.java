@@ -72,7 +72,7 @@ public class BasicJOGLScene implements GLEventListener
 	 */
 	private final float[ ]						p						= newMat4f( );
 	
-	private OldProjectionCalculator				pCalculator				= new PerspectiveOldProjectionCalculator( ( float ) Math.PI / 2 , 1f , 1e7f );
+	private OldProjection				pCalculator				= new PerspectiveOldProjection( ( float ) Math.PI / 2 , 1f , 1e7f );
 	
 	private int									width , height;
 	
@@ -465,7 +465,7 @@ public class BasicJOGLScene implements GLEventListener
 		return height;
 	}
 	
-	public void setProjectionCalculator( OldProjectionCalculator calculator )
+	public void setProjectionCalculator( OldProjection calculator )
 	{
 		if( pCalculator != calculator )
 		{
@@ -474,7 +474,7 @@ public class BasicJOGLScene implements GLEventListener
 		}
 	}
 	
-	public OldProjectionCalculator getProjectionCalculator( )
+	public OldProjection getProjectionCalculator( )
 	{
 		return pCalculator;
 	}

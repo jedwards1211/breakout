@@ -19,7 +19,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl.awt;
+package org.andork.jogl.neu2.awt;
 
 import static org.andork.math3d.Vecmath.invAffine;
 import static org.andork.math3d.Vecmath.mmulAffine;
@@ -34,15 +34,19 @@ import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-import org.andork.jogl.BasicJOGLScene;
+import javax.media.opengl.GLAutoDrawable;
+
+import org.andork.jogl.neu2.JoglCamera;
 import org.andork.math3d.Vecmath;
 
-public class BasicOrbiter extends MouseAdapter
+public class JoglOrbiter extends MouseAdapter
 {
-	final Component			canvas;
-	final BasicJOGLScene	scene;
+	final GLAutoDrawable	drawable;
+	final JoglCamera		camera;
+
 	MouseEvent				lastEvent	= null;
-	final float[ ]			center		= { 0 , 0 , 0 };
+	final float[ ]			center		=
+										{ 0 , 0 , 0 };
 	final float[ ]			axis		= new float[ 3 ];
 	MouseEvent				pressEvent	= null;
 	final float[ ]			v			= Vecmath.newMat4f( );
@@ -53,81 +57,93 @@ public class BasicOrbiter extends MouseAdapter
 	float					panFactor	= ( float ) Math.PI;
 	float					tiltFactor	= ( float ) Math.PI;
 	float					sensitivity	= 1f;
-	
-	public BasicOrbiter( BasicJOGLSetup setup )
+
+	public JoglOrbiter( GLAutoDrawable drawable , JoglCamera camera )
 	{
 		super( );
-		this.canvas = setup.canvas;
-		this.scene = setup.scene;
+		this.drawable = drawable;
+		this.camera = camera;
 	}
-	
+
 	public boolean isActive( )
 	{
 		return active;
 	}
-	
+
 	public void setActive( boolean active )
 	{
 		this.active = active;
 	}
-	
+
 	public boolean isCallDisplay( )
 	{
 		return callDisplay;
 	}
-	
+
 	public void setCallDisplay( boolean callDisplay )
 	{
 		this.callDisplay = callDisplay;
 	}
-	
+
 	public float getPanFactor( )
 	{
 		return panFactor;
 	}
-	
+
 	public void setPanFactor( float panFactor )
 	{
 		this.panFactor = panFactor;
 	}
-	
+
 	public float getTiltFactor( )
 	{
 		return tiltFactor;
 	}
-	
+
 	public float getSensitivity( )
 	{
 		return sensitivity;
 	}
-	
+
 	public void setSensitivity( float sensitivity )
 	{
 		this.sensitivity = sensitivity;
 	}
-	
+
 	public void setTiltFactor( float tiltFactor )
 	{
 		this.tiltFactor = tiltFactor;
 	}
-	
+
 	public void setCenter( float[ ] center )
 	{
 		Vecmath.setf( this.center , center );
 	}
-	
+
 	public void getCenter( float[ ] out )
 	{
 		Vecmath.setf( out , center );
 	}
-	
+
+	@Override
+	public void mouseReleased( MouseEvent e )
+	{
+		if( pressEvent != null && e.getButton( ) == pressEvent.getButton( ) )
+		{
+			pressEvent = null;
+		}
+	}
+
 	@Override
 	public void mousePressed( MouseEvent e )
 	{
-		pressEvent = e;
-		lastEvent = e;
+		if( pressEvent == null && !e.isShiftDown( ) && !e.isAltDown( ) )
+		{
+			pressEvent = e;
+			lastEvent = e;
+		}
 	}
-	
+
 	@Override
 	public void mouseDragged( MouseEvent e )
 	{
@@ -135,7 +151,21 @@ public class BasicOrbiter extends MouseAdapter
 		{
 			return;
 		}
-		
+
+		int button = pressEvent.getButton( );
+
+		if( e.isAltDown( ) )
+		{
+			if( button == MouseEvent.BUTTON1 )
+			{
+				button = MouseEvent.BUTTON3;
+			}
+			else if( button == MouseEvent.BUTTON3 )
+			{
+				button = MouseEvent.BUTTON1;
+			}
+		}
+
 		for( float f : center )
 		{
 			if( Float.isNaN( f ) || Float.isInfinite( f ) )
@@ -150,47 +180,51 @@ public class BasicOrbiter extends MouseAdapter
 				return;
 			}
 		}
-		
-		Component canvas = ( Component ) e.getSource( );
-		
-		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 && pressEvent.isControlDown( ) )
+		float dx = e.getX( ) - lastEvent.getX( );
+		float dy = e.getY( ) - lastEvent.getY( );
+		if( e.isControlDown( ) )
 		{
-			int dx = e.getX( ) - lastEvent.getX( );
-			int dy = e.getY( ) - lastEvent.getY( );
-			lastEvent = e;
-			
-			scene.getViewXform( v );
+			dx /= 10f;
+			dy /= 10f;
+		}
+		lastEvent = e;
+
+		Component canvas = ( Component ) e.getSource( );
+
+		if( button == MouseEvent.BUTTON1 && !e.isShiftDown( ) )
+		{
+			camera.getViewXform( v );
 			invAffine( v , m1 );
 			mvmulAffine( m1 , 1 , 0 , 0 , axis );
 			normalize3( axis );
-			
+
 			setIdentity( m1 );
 			setIdentity( m2 );
-			
+
 			m2[ 12 ] = -center[ 0 ];
 			m2[ 13 ] = -center[ 1 ];
 			m2[ 14 ] = -center[ 2 ];
-			
+
 			float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
 			float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
-			
+
 			rotY( m1 , dpan );
 			mmulAffine( m1 , m2 , m2 );
-			
+
 			setRotation( m1 , axis , dtilt );
 			mmulAffine( m1 , m2 , m2 );
-			
+
 			setIdentity( m1 );
 			setColumn3( m1 , 3 , center );
-			
+
 			mmulAffine( m1 , m2 , m2 );
 			mmulAffine( v , m2 , v );
-			scene.setViewXform( v );
+			camera.setViewXform( v );
 		}
-		
+
 		if( callDisplay )
 		{
-			this.canvas.repaint( );
+			drawable.display( );
 		}
 	}
 }

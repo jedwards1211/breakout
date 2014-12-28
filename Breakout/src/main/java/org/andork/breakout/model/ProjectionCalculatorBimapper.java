@@ -26,14 +26,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.andork.func.Bimapper;
-import org.andork.jogl.AutoClipOrthoProjectionCalculator;
-import org.andork.jogl.PerspectiveProjectionCalculator;
-import org.andork.jogl.ProjectionCalculator;
+import org.andork.jogl.AutoClipOrthoProjection;
+import org.andork.jogl.PerspectiveProjection;
+import org.andork.jogl.Projection;
 import org.andork.math3d.Vecmath;
 import org.andork.util.ArrayUtils;
 import org.andork.util.StringUtils;
 
-public class ProjectionCalculatorBimapper implements Bimapper<ProjectionCalculator, Object>
+public class ProjectionCalculatorBimapper implements Bimapper<Projection, Object>
 {
 	public static final ProjectionCalculatorBimapper	instance	= new ProjectionCalculatorBimapper( );
 	
@@ -42,25 +42,25 @@ public class ProjectionCalculatorBimapper implements Bimapper<ProjectionCalculat
 	}
 	
 	@Override
-	public Object map( ProjectionCalculator in )
+	public Object map( Projection in )
 	{
 		if( in == null )
 		{
 			return null;
 		}
 		
-		if( in instanceof PerspectiveProjectionCalculator )
+		if( in instanceof PerspectiveProjection )
 		{
-			return map( ( PerspectiveProjectionCalculator ) in );
+			return map( ( PerspectiveProjection ) in );
 		}
-		else if( in instanceof AutoClipOrthoProjectionCalculator )
+		else if( in instanceof AutoClipOrthoProjection )
 		{
-			return map( ( AutoClipOrthoProjectionCalculator ) in );
+			return map( ( AutoClipOrthoProjection ) in );
 		}
 		throw new IllegalArgumentException( "Unsupported type: " + in.getClass( ) );
 	}
 	
-	public Map<Object, Object> map( PerspectiveProjectionCalculator in )
+	public Map<Object, Object> map( PerspectiveProjection in )
 	{
 		Map<Object, Object> result = new LinkedHashMap<>( );
 		result.put( "type" , "perspective" );
@@ -70,7 +70,7 @@ public class ProjectionCalculatorBimapper implements Bimapper<ProjectionCalculat
 		return result;
 	}
 	
-	public Map<Object, Object> map( AutoClipOrthoProjectionCalculator in )
+	public Map<Object, Object> map( AutoClipOrthoProjection in )
 	{
 		Map<Object, Object> result = new LinkedHashMap<>( );
 		result.put( "type" , "ortho" );
@@ -90,7 +90,7 @@ public class ProjectionCalculatorBimapper implements Bimapper<ProjectionCalculat
 	}
 	
 	@Override
-	public ProjectionCalculator unmap( Object out )
+	public Projection unmap( Object out )
 	{
 		if( out == null )
 		{
@@ -114,9 +114,9 @@ public class ProjectionCalculatorBimapper implements Bimapper<ProjectionCalculat
 		throw new IllegalArgumentException( "Invalid type: " + out.getClass( ) );
 	}
 	
-	public PerspectiveProjectionCalculator unmapPerspective( Map<Object, Object> map )
+	public PerspectiveProjection unmapPerspective( Map<Object, Object> map )
 	{
-		return new PerspectiveProjectionCalculator(
+		return new PerspectiveProjection(
 				getFloat( map , "fovAngle" ) ,
 				getFloat( map , "zNear" ) ,
 				getFloat( map , "zFar" ) );
@@ -127,9 +127,9 @@ public class ProjectionCalculatorBimapper implements Bimapper<ProjectionCalculat
 		return ( ( Number ) map.get( key ) ).floatValue( );
 	}
 	
-	public AutoClipOrthoProjectionCalculator unmapOrtho( Map<Object, Object> map )
+	public AutoClipOrthoProjection unmapOrtho( Map<Object, Object> map )
 	{
-		AutoClipOrthoProjectionCalculator result = new AutoClipOrthoProjectionCalculator( );
+		AutoClipOrthoProjection result = new AutoClipOrthoProjection( );
 		result.hSpan = getFloat( map , "hSpan" );
 		result.vSpan = getFloat( map , "vSpan" );
 		Vecmath.setf( result.center , ArrayUtils.toFloatArray2( ( List<Number> ) map.get( "center" ) ) );

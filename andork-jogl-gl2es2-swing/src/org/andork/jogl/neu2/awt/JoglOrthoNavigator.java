@@ -19,121 +19,129 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl.neu.awt;
+package org.andork.jogl.neu2.awt;
 
-import static org.andork.math3d.Vecmath.*;
+import static org.andork.math3d.Vecmath.dot3;
+import static org.andork.math3d.Vecmath.interp3;
+import static org.andork.math3d.Vecmath.invAffine;
+import static org.andork.math3d.Vecmath.mpmulAffine;
+import static org.andork.math3d.Vecmath.scaleAdd3;
+import static org.andork.math3d.Vecmath.sub3;
+import static org.andork.math3d.Vecmath.subDot3;
 
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
+import javax.media.opengl.GLAutoDrawable;
+
 import org.andork.jogl.AutoClipOrthoProjection;
-import org.andork.jogl.neu.JoglScene;
+import org.andork.jogl.neu2.JoglCamera;
 import org.andork.math3d.Vecmath;
 
-public class BasicOrthoNavigator extends MouseAdapter
+public class JoglOrthoNavigator extends MouseAdapter
 {
-	final Component	canvas;
-	final JoglScene	scene;
-	
-	MouseEvent		lastEvent	= null;
-	MouseEvent		pressEvent	= null;
-	
-	final float[ ]	vi			= Vecmath.newMat4f( );
-	final float[ ]	v			= Vecmath.newMat4f( );
-	
-	boolean			active		= true;
-	boolean			callDisplay	= true;
-	
-	float			moveFactor	= 0.05f;
-	float			panFactor	= ( float ) Math.PI;
-	float			tiltFactor	= ( float ) Math.PI;
-	float			wheelFactor	= 1f;
-	
-	float			sensitivity	= 1f;
-	
-	final float[ ]	p0			= new float[ 3 ];
-	final float[ ]	p1			= new float[ 3 ];
-	final float[ ]	p2			= new float[ 3 ];
-	
-	public BasicOrthoNavigator( BasicJoglSetup setup )
+	final GLAutoDrawable	drawable;
+	final JoglCamera		camera;
+
+	MouseEvent				lastEvent	= null;
+	MouseEvent				pressEvent	= null;
+
+	final float[ ]			vi			= Vecmath.newMat4f( );
+	final float[ ]			v			= Vecmath.newMat4f( );
+
+	boolean					active		= true;
+	boolean					callDisplay	= true;
+
+	float					moveFactor	= 0.05f;
+	float					panFactor	= ( float ) Math.PI;
+	float					tiltFactor	= ( float ) Math.PI;
+	float					wheelFactor	= 1f;
+
+	float					sensitivity	= 1f;
+
+	final float[ ]			p0			= new float[ 3 ];
+	final float[ ]			p1			= new float[ 3 ];
+	final float[ ]			p2			= new float[ 3 ];
+
+	public JoglOrthoNavigator( GLAutoDrawable drawable , JoglCamera camera )
 	{
 		super( );
-		this.canvas = setup.canvas;
-		this.scene = setup.scene;
+		this.drawable = drawable;
+		this.camera = camera;
 	}
-	
+
 	public boolean isActive( )
 	{
 		return active;
 	}
-	
+
 	public void setActive( boolean active )
 	{
 		this.active = active;
 	}
-	
+
 	public boolean isCallDisplay( )
 	{
 		return callDisplay;
 	}
-	
+
 	public void setCallDisplay( boolean callDisplay )
 	{
 		this.callDisplay = callDisplay;
 	}
-	
+
 	public float getMoveFactor( )
 	{
 		return moveFactor;
 	}
-	
+
 	public void setMoveFactor( float moveFactor )
 	{
 		this.moveFactor = moveFactor;
 	}
-	
+
 	public float getPanFactor( )
 	{
 		return panFactor;
 	}
-	
+
 	public void setPanFactor( float panFactor )
 	{
 		this.panFactor = panFactor;
 	}
-	
+
 	public float getTiltFactor( )
 	{
 		return tiltFactor;
 	}
-	
+
 	public void setTiltFactor( float tiltFactor )
 	{
 		this.tiltFactor = tiltFactor;
 	}
-	
+
 	public float getWheelFactor( )
 	{
 		return wheelFactor;
 	}
-	
+
 	public void setWheelFactor( float wheelFactor )
 	{
 		this.wheelFactor = wheelFactor;
 	}
-	
+
 	public float getSensitivity( )
 	{
 		return sensitivity;
 	}
-	
+
 	public void setSensitivity( float sensitivity )
 	{
 		this.sensitivity = sensitivity;
 	}
-	
+
 	@Override
 	public void mouseReleased( MouseEvent e )
 	{
@@ -142,7 +150,7 @@ public class BasicOrthoNavigator extends MouseAdapter
 			pressEvent = null;
 		}
 	}
-	
+
 	@Override
 	public void mousePressed( MouseEvent e )
 	{
@@ -152,7 +160,7 @@ public class BasicOrthoNavigator extends MouseAdapter
 			lastEvent = e;
 		}
 	}
-	
+
 	@Override
 	public void mouseDragged( MouseEvent e )
 	{
@@ -160,13 +168,13 @@ public class BasicOrthoNavigator extends MouseAdapter
 		{
 			return;
 		}
-		
-		scene.pickXform( ).xform( lastEvent , -1 , p0 );
-		scene.pickXform( ).xform( e , -1 , p1 );
-		
-		mpmulAffine( scene.viewXform( ) , p0 );
-		mpmulAffine( scene.viewXform( ) , p1 );
-		
+
+		camera.pickXform( ).xform( lastEvent , -1 , p0 );
+		camera.pickXform( ).xform( e , -1 , p1 );
+
+		mpmulAffine( camera.viewXform( ) , p0 );
+		mpmulAffine( camera.viewXform( ) , p1 );
+
 		float dx = p1[ 0 ] - p0[ 0 ];
 		float dy = p1[ 1 ] - p0[ 1 ];
 		if( e.isControlDown( ) )
@@ -175,12 +183,10 @@ public class BasicOrthoNavigator extends MouseAdapter
 			dy /= 10f;
 		}
 		lastEvent = e;
-		
-		scene.getViewXform( v );
+
+		camera.getViewXform( v );
 		Vecmath.invAffine( v , vi );
-		
-		Component canvas = ( Component ) e.getSource( );
-		
+
 		//		float scaledMoveFactor = moveFactor * sensitivity;
 		//		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 		//		{
@@ -197,7 +203,7 @@ public class BasicOrthoNavigator extends MouseAdapter
 		//				Vecmath.mmulRotational( temp , cam , cam );
 		//				
 		//				Vecmath.invAffine( cam );
-		//				scene.setViewXform( cam );
+		//				camera.setViewXform( cam );
 		//			}
 		//		}
 		if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
@@ -208,7 +214,7 @@ public class BasicOrthoNavigator extends MouseAdapter
 				vi[ 13 ] += vi[ 9 ] * dy;
 				vi[ 14 ] += vi[ 10 ] * dy;
 				Vecmath.invAffine( vi , v );
-				scene.setViewXform( v );
+				camera.setViewXform( v );
 			}
 			else
 			{
@@ -221,44 +227,44 @@ public class BasicOrthoNavigator extends MouseAdapter
 			vi[ 13 ] += vi[ 1 ] * -dx - vi[ 5 ] * dy;
 			vi[ 14 ] += vi[ 2 ] * -dx - vi[ 6 ] * dy;
 			Vecmath.invAffine( vi , v );
-			scene.setViewXform( v );
+			camera.setViewXform( v );
 		}
-		
+
 		if( callDisplay )
 		{
-			this.canvas.repaint( );
+			drawable.display( );
 		}
 	}
-	
+
 	private void calcZoom( MouseEvent e , float factor )
 	{
-		scene.pickXform( ).xform( -1 , -1 , -1 , p0 );
-		scene.pickXform( ).xform( 1 , 1 , -1 , p1 );
-		scene.pickXform( ).xform( e , -1 , p2 );
-		
+		camera.pickXform( ).xform( -1 , -1 , -1 , p0 );
+		camera.pickXform( ).xform( 1 , 1 , -1 , p1 );
+		camera.pickXform( ).xform( e , -1 , p2 );
+
 		sub3( p0 , p2 , p0 );
 		sub3( p1 , p2 , p1 );
-		
+
 		scaleAdd3( factor , p0 , p2 , p0 );
 		scaleAdd3( factor , p1 , p2 , p1 );
-		
-		AutoClipOrthoProjection orthoCalc = ( AutoClipOrthoProjection ) scene.getProjectionCalculator( );
+
+		AutoClipOrthoProjection orthoCalc = ( AutoClipOrthoProjection ) camera.getProjection( );
 		orthoCalc.hSpan = Math.abs( dot3( p0 , 0 , vi , 0 ) - dot3( p1 , 0 , vi , 0 ) );
 		orthoCalc.vSpan = Math.abs( dot3( p0 , 0 , vi , 4 ) - dot3( p1 , 0 , vi , 4 ) );
-		
+
 		interp3( p0 , p1 , 0.5f , p2 );
-		
+
 		float dx = subDot3( p2 , 0 , vi , 12 , vi , 0 );
 		float dy = subDot3( p2 , 0 , vi , 12 , vi , 4 );
-		
+
 		vi[ 12 ] += vi[ 0 ] * dx + vi[ 4 ] * dy;
 		vi[ 13 ] += vi[ 1 ] * dx + vi[ 5 ] * dy;
 		vi[ 14 ] += vi[ 2 ] * dx + vi[ 6 ] * dy;
-		
+
 		invAffine( vi , v );
-		scene.setViewXform( v );
+		camera.setViewXform( v );
 	}
-	
+
 	@Override
 	public void mouseWheelMoved( MouseWheelEvent e )
 	{
@@ -266,33 +272,33 @@ public class BasicOrthoNavigator extends MouseAdapter
 		{
 			return;
 		}
-		
-		scene.getViewXform( v );
+
+		camera.getViewXform( v );
 		Vecmath.invAffine( v , vi );
-		
+
 		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
-		
+
 		if( e.isControlDown( ) )
 		{
 			distance /= 10;
 		}
-		
+
 		if( e.isShiftDown( ) )
 		{
 			vi[ 12 ] += vi[ 8 ] * distance;
 			vi[ 13 ] += vi[ 9 ] * distance;
 			vi[ 14 ] += vi[ 10 ] * distance;
 			Vecmath.invAffine( vi , v );
-			scene.setViewXform( v );
+			camera.setViewXform( v );
 		}
 		else
 		{
 			calcZoom( e , ( float ) Math.pow( 1.1f , distance ) );
 		}
-		
+
 		if( callDisplay )
 		{
-			this.canvas.repaint( );
+			drawable.display( );
 		}
 	}
 }

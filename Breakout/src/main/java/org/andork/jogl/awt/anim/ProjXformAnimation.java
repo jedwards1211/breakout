@@ -23,12 +23,11 @@ package org.andork.jogl.awt.anim;
 
 import java.util.function.Function;
 
-import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.ProjectionCalculator;
-import org.andork.jogl.neu.JoglScene;
-import org.andork.jogl.neu.awt.BasicJoglSetup;
+import org.andork.jogl.Projection;
+import org.andork.jogl.neu2.JoglCamera;
 
 public class ProjXformAnimation implements Animation
 {
@@ -36,39 +35,41 @@ public class ProjXformAnimation implements Animation
 	 * @param setup
 	 * @param totalTime
 	 * @param function
-	 *        a function that takes the animation progress from 0 to 1 and the inverted view matrix as arguments, and returns the new inverted view matrix.
+	 *            a function that takes the animation progress from 0 to 1 and
+	 *            the inverted view matrix as arguments, and returns the new
+	 *            inverted view matrix.
 	 */
-	public ProjXformAnimation( BasicJoglSetup setup , long totalTime , boolean display , Function<Float, ProjectionCalculator> function )
+	public ProjXformAnimation( GLAutoDrawable drawable , JoglCamera camera , long totalTime , boolean display , Function<Float, Projection> function )
 	{
-		this.scene = setup.getScene( );
-		this.canvas = setup.getCanvas( );
+		this.camera = camera;
+		this.drawable = drawable;
 		this.totalTime = totalTime;
 		this.display = display;
 		this.function = function;
 	}
-	
-	JoglScene								scene;
-	GLCanvas								canvas;
-	
-	long									elapsedTime	= 0;
-	
-	long									totalTime;
-	boolean									display;
-	Function<Float, ProjectionCalculator>	function;
-	
+
+	JoglCamera					camera;
+	GLAutoDrawable				drawable;
+
+	long						elapsedTime	= 0;
+
+	long						totalTime;
+	boolean						display;
+	Function<Float, Projection>	function;
+
 	@Override
 	public long animate( long animTime )
 	{
 		elapsedTime += animTime;
-		
+
 		float f = Math.min( 1f , ( float ) elapsedTime / totalTime );
-		
-		scene.setProjectionCalculator( function.apply( f ) );
+
+		camera.setProjection( function.apply( f ) );
 		if( display )
 		{
-			canvas.display( );
+			drawable.display( );
 		}
-		
+
 		return Math.min( 30 , Math.max( 0 , totalTime - elapsedTime ) );
 	}
 }

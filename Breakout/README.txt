@@ -1,7 +1,7 @@
 ~~~ BREAKOUT pre-release version ~~~
       A cave survey viewer by Andy Edwards
 
-To run, open breakout-<your platform>.jar.
+To run, open breakout-all-desktops.jar.
 Requires Java 8+ (also known as 1.8, it's silly).
 	
 As of 2014-06-30, www.java.com still offers Java 7 by default.  Download Java 8 here:
@@ -52,6 +52,8 @@ Alt + Left Click: lasso shots
 Middle Click + Drag: zoom in/out (move forward/back relative to the current view orientation)
 
 Mouse Wheel: zoom in/out (duh ;)
+
+Holding Shift while zooming makes it zoom toward or away from the centroid of the selected shots.
 	
 Right Click + Drag: move up/down/left/right relative to the current view orientation
 

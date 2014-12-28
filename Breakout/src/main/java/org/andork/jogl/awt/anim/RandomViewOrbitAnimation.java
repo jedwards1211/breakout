@@ -21,26 +21,26 @@
  *******************************************************************************/
 package org.andork.jogl.awt.anim;
 
-import javax.media.opengl.awt.GLCanvas;
+import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.neu.JoglScene;
-import org.andork.jogl.neu.awt.BasicJoglSetup;
+import org.andork.jogl.neu2.JoglCamera;
 import org.andork.math3d.Orbiter;
 import org.andork.math3d.Vecmath;
 import org.andork.util.Reparam;
 
 public class RandomViewOrbitAnimation implements Animation
 {
-	
-	public RandomViewOrbitAnimation( BasicJoglSetup setup , float[ ] center , float panRate , float minTilt , float maxTilt , int period , int tiltPeriod )
+
+	public RandomViewOrbitAnimation( GLAutoDrawable drawable , JoglCamera camera , float[ ] center , float panRate , float minTilt , float maxTilt ,
+			int period , int tiltPeriod )
 	{
 		if( period <= 0 )
 		{
 			throw new IllegalArgumentException( "period must be > 0" );
 		}
-		this.scene = setup.getScene( );
-		this.canvas = setup.getCanvas( );
+		this.camera = camera;
+		this.drawable = drawable;
 		orbiter.setCenter( center );
 		this.panRate = panRate;
 		this.minTilt = minTilt;
@@ -48,33 +48,33 @@ public class RandomViewOrbitAnimation implements Animation
 		this.period = period;
 		this.tiltPeriod = tiltPeriod;
 	}
-	
-	JoglScene	scene;
-	GLCanvas		canvas;
-	
+
+	JoglCamera		camera;
+	GLAutoDrawable	drawable;
+
 	final float[ ]	v			= Vecmath.newMat4f( );
-	
+
 	Orbiter			orbiter		= new Orbiter( );
-	
+
 	int				period;
 	int				tiltPeriod;
-	
+
 	float			panRate;
 	float			minTilt;
 	float			maxTilt;
-	
+
 	float			startTilt	= Float.NaN;
 	float			endTilt		= Float.NaN;
-	
+
 	float			tiltParam;
-	
+
 	@Override
 	public long animate( long animTime )
 	{
 		tiltParam += Math.PI * 2 * animTime / tiltPeriod;
-		
-		scene.getViewXform( v );
-		
+
+		camera.getViewXform( v );
+
 		float currentTilt = orbiter.getTilt( v );
 		if( Float.isNaN( startTilt ) )
 		{
@@ -94,23 +94,23 @@ public class RandomViewOrbitAnimation implements Animation
 				endTilt = maxTilt;
 			}
 		}
-		
+
 		if( tiltParam >= Math.PI )
 		{
 			startTilt = minTilt;
 			endTilt = maxTilt;
 		}
-		
+
 		float nextTilt = Reparam.linear( ( float ) Math.cos( tiltParam ) , 1 , -1 , startTilt , endTilt );
-		
+
 		orbiter.orbit( v , panRate * animTime / period , nextTilt - currentTilt , v );
-		
+
 		orbiter.orbit( v , panRate * animTime / period , 0 , v );
-		
-		scene.setViewXform( v );
-		
-		canvas.display( );
-		
+
+		camera.setViewXform( v );
+
+		drawable.display( );
+
 		return period;
 	}
 }
