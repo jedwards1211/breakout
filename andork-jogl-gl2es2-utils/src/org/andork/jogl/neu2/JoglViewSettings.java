@@ -48,4 +48,10 @@ public class JoglViewSettings
 	{
 		System.arraycopy( vi , 0 , viOut , 0 , 16 );
 	}
+
+	public void copy( JoglViewSettings other )
+	{
+		setProjection( other.projection );
+		setViewXform( other.v );
+	}
 }

@@ -10,20 +10,27 @@ import static org.andork.math3d.Vecmath.*;
 
 public class DefaultJoglRenderer implements GLEventListener
 {
-	JoglViewState		viewState			= new JoglViewState( );
-	JoglViewSettings	viewSettings		= new JoglViewSettings( );
-	JoglScene			scene;
-	GL3Framebuffer		framebuffer;
+	protected JoglViewState		viewState			= new JoglViewState( );
+	protected JoglViewSettings	viewSettings		= new JoglViewSettings( );
+	protected JoglScene			scene;
+	protected GL3Framebuffer	framebuffer;
 
-	int					desiredNumSamples	= 1;
+	protected int				desiredNumSamples	= 1;
 
-	private float[ ]	m					= newMat4f( );
-	private float[ ]	n					= newMat3f( );
+	protected float[ ]			m					= newMat4f( );
+	protected float[ ]			n					= newMat3f( );
 
 	public DefaultJoglRenderer( JoglScene scene )
 	{
 		super( );
 		this.scene = scene;
+	}
+
+	public DefaultJoglRenderer( GL3Framebuffer framebuffer , int desiredNumSamples )
+	{
+		super( );
+		this.framebuffer = framebuffer;
+		this.desiredNumSamples = desiredNumSamples;
 	}
 
 	public DefaultJoglRenderer( JoglScene scene , GL3Framebuffer framebuffer , int desiredNumSamples )
@@ -101,7 +108,8 @@ public class DefaultJoglRenderer implements GLEventListener
 		if( framebuffer != null )
 		{
 			GL3 gl3 = ( GL3 ) gl;
-			renderingFbo = framebuffer.renderingFbo( gl3 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) , desiredNumSamples );
+			renderingFbo = framebuffer.renderingFbo( gl3 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) ,
+				desiredNumSamples );
 			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , renderingFbo );
 		}
 
@@ -119,8 +127,8 @@ public class DefaultJoglRenderer implements GLEventListener
 			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , 0 );
 			gl3.glBindFramebuffer( GL_READ_FRAMEBUFFER , renderingFbo );
 			gl3.glDrawBuffer( GL_BACK );
-			gl3.glBlitFramebuffer( 0 , 0 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) , 0 , 0 , drawable.getSurfaceWidth( ) ,
-					drawable.getSurfaceHeight( ) , GL3.GL_COLOR_BUFFER_BIT , GL_NEAREST );
+			gl3.glBlitFramebuffer( 0 , 0 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) , 0 , 0 ,
+				drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) , GL3.GL_COLOR_BUFFER_BIT , GL_NEAREST );
 		}
 	}
 

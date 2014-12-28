@@ -22,15 +22,10 @@
 package org.andork.jogl.awt;
 
 import static javax.media.opengl.GL.GL_BGRA;
-import static javax.media.opengl.GL.GL_COLOR_ATTACHMENT0;
-import static javax.media.opengl.GL.GL_COLOR_BUFFER_BIT;
-import static javax.media.opengl.GL.GL_DEPTH_ATTACHMENT;
-import static javax.media.opengl.GL.GL_DEPTH_BUFFER_BIT;
-import static javax.media.opengl.GL.GL_DEPTH_COMPONENT32;
-import static javax.media.opengl.GL.GL_FRAMEBUFFER;
-import static javax.media.opengl.GL.GL_RENDERBUFFER;
-import static javax.media.opengl.GL.GL_RGB;
+import static javax.media.opengl.GL.GL_NEAREST;
 import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
+import static javax.media.opengl.GL2ES3.GL_DRAW_FRAMEBUFFER;
+import static javax.media.opengl.GL2ES3.GL_READ_FRAMEBUFFER;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -49,6 +44,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -58,8 +54,9 @@ import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.media.opengl.GL2ES2;
+import javax.media.opengl.GL3;
+import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLContext;
 import javax.media.opengl.GLProfile;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -97,7 +94,10 @@ import org.andork.bind.ui.ISelectorSelectionBinder;
 import org.andork.bind.ui.JSpinnerValueBinder;
 import org.andork.format.Format;
 import org.andork.jogl.awt.ScreenCaptureDialogModel.ResolutionUnit;
+import org.andork.jogl.neu2.DefaultJoglRenderer;
+import org.andork.jogl.neu2.GL3Framebuffer;
 import org.andork.jogl.neu2.JoglScene;
+import org.andork.jogl.neu2.JoglViewSettings;
 import org.andork.q.QObject;
 import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
@@ -125,15 +125,17 @@ import com.jogamp.newt.opengl.GLWindow;
 public class ScreenCaptureDialog extends JDialog
 {
 	private static final BigDecimal								IN_TO_CM				= new BigDecimal( "2.54" );
-	private static final BigDecimal								CM_TO_IN				= new BigDecimal( 1.0 / IN_TO_CM.doubleValue( ) );
+	private static final BigDecimal								CM_TO_IN				= new BigDecimal(
+																							1.0 / IN_TO_CM
+																								.doubleValue( ) );
 
 	Localizer													localizer;
 
+	GLAutoDrawable												sharedAutoDrawable;
 	JPanel														canvasHolder;
 	NewtCanvasAWT												canvas;
-	GLContext													glContext;
 	GLWindow													glWindow;
-	Renderer													renderer				= new Renderer( );
+	NewRenderer													renderer				= new NewRenderer( );
 
 	JFileChooser												outputDirectoryChooser;
 
@@ -150,7 +152,10 @@ public class ScreenCaptureDialog extends JDialog
 	JLabel														outputFormatLabel;
 	DefaultSelector<?>											outputFormatSelector;
 
-	Icon														warningIcon				= IconScaler.rescale( UIManager.getIcon( "OptionPane.warningIcon" ) ,
+	Icon														warningIcon				= IconScaler
+																							.rescale(
+																								UIManager
+																									.getIcon( "OptionPane.warningIcon" ) ,
 																								20 , 20 );
 	JLabel														outputFileOrWarningLabel;
 	JPanel														outputFileOrWarningLabelHolder;
@@ -183,21 +188,45 @@ public class ScreenCaptureDialog extends JDialog
 	boolean														updating;
 
 	BinderWrapper<QObject<ScreenCaptureDialogModel>>			binder					= new BinderWrapper<QObject<ScreenCaptureDialogModel>>( );
-	QObjectAttributeBinder<String>								outputDirectoryBinder	= QObjectAttributeBinder.bind(
-																								ScreenCaptureDialogModel.outputDirectory , binder );
-	QObjectAttributeBinder<String>								fileNamePrefixBinder	= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.fileNamePrefix ,
+
+	QObjectAttributeBinder<String>								outputDirectoryBinder	= QObjectAttributeBinder
+																							.bind(
+																								ScreenCaptureDialogModel.outputDirectory ,
 																								binder );
-	QObjectAttributeBinder<Integer>								fileNumberBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.fileNumber ,
+
+	QObjectAttributeBinder<String>								fileNamePrefixBinder	= QObjectAttributeBinder
+																							.bind(
+																								ScreenCaptureDialogModel.fileNamePrefix ,
 																								binder );
-	QObjectAttributeBinder<Integer>								pixelWidthBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.pixelWidth ,
+
+	QObjectAttributeBinder<Integer>								fileNumberBinder		= QObjectAttributeBinder
+																							.bind(
+																								ScreenCaptureDialogModel.fileNumber ,
 																								binder );
-	QObjectAttributeBinder<Integer>								pixelHeightBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.pixelHeight ,
+
+	QObjectAttributeBinder<Integer>								pixelWidthBinder		= QObjectAttributeBinder
+																							.bind(
+																								ScreenCaptureDialogModel.pixelWidth ,
 																								binder );
-	QObjectAttributeBinder<BigDecimal>							resolutionBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.resolution ,
+
+	QObjectAttributeBinder<Integer>								pixelHeightBinder		= QObjectAttributeBinder
+																							.bind(
+																								ScreenCaptureDialogModel.pixelHeight ,
 																								binder );
-	QObjectAttributeBinder<ResolutionUnit>						resolutionUnitBinder	= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.resolutionUnit ,
+
+	QObjectAttributeBinder<BigDecimal>							resolutionBinder		= QObjectAttributeBinder
+																							.bind(
+																								ScreenCaptureDialogModel.resolution ,
 																								binder );
-	QObjectAttributeBinder<Integer>								numSamplesBinder		= QObjectAttributeBinder.bind( ScreenCaptureDialogModel.numSamples ,
+
+	QObjectAttributeBinder<ResolutionUnit>						resolutionUnitBinder	= QObjectAttributeBinder
+																							.bind(
+																								ScreenCaptureDialogModel.resolutionUnit ,
+																								binder );
+
+	QObjectAttributeBinder<Integer>								numSamplesBinder		= QObjectAttributeBinder
+																							.bind(
+																								ScreenCaptureDialogModel.numSamples ,
 																								binder );
 
 	JoglScene													scene;
@@ -206,8 +235,7 @@ public class ScreenCaptureDialog extends JDialog
 
 	public static void main( String[ ] args )
 	{
-		new OnEDT( )
-		{
+		new OnEDT( ) {
 			@Override
 			public void run( ) throws Throwable
 			{
@@ -224,7 +252,8 @@ public class ScreenCaptureDialog extends JDialog
 				model.set( ScreenCaptureDialogModel.pixelWidth , 600 );
 				model.set( ScreenCaptureDialogModel.pixelHeight , 400 );
 				model.set( ScreenCaptureDialogModel.resolution , new BigDecimal( 300 ) );
-				model.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
+				model.set( ScreenCaptureDialogModel.resolutionUnit ,
+					ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
 
 				dialog.setBinder( binder );
 				binder.set( model );
@@ -236,35 +265,47 @@ public class ScreenCaptureDialog extends JDialog
 		};
 	}
 
-	public ScreenCaptureDialog( GLContext shareWith , I18n i18n )
+	public ScreenCaptureDialog( GLAutoDrawable sharedAutoDrawable , I18n i18n )
 	{
 		super( );
-		init( shareWith , i18n );
+		this.sharedAutoDrawable = sharedAutoDrawable;
+		init( i18n );
 	}
 
-	public ScreenCaptureDialog( Frame owner , GLContext shareWith , I18n i18n )
+	public ScreenCaptureDialog( GLAutoDrawable sharedAutoDrawable , Frame owner , I18n i18n )
 	{
 		super( owner );
-		init( shareWith , i18n );
+		this.sharedAutoDrawable = sharedAutoDrawable;
+		init( i18n );
 	}
 
-	public ScreenCaptureDialog( Dialog owner , GLContext shareWith , I18n i18n )
+	public ScreenCaptureDialog( GLAutoDrawable sharedAutoDrawable , Dialog owner , I18n i18n )
 	{
 		super( owner );
-		init( shareWith , i18n );
+		this.sharedAutoDrawable = sharedAutoDrawable;
+		init( i18n );
 	}
 
-	public ScreenCaptureDialog( Window owner , GLContext shareWith , I18n i18n )
+	public ScreenCaptureDialog( GLAutoDrawable sharedAutoDrawable , Window owner , I18n i18n )
 	{
 		super( owner );
-		init( shareWith , i18n );
+		this.sharedAutoDrawable = sharedAutoDrawable;
+		init( i18n );
 	}
 
-	protected void init( GLContext shareWith , final I18n i18n )
+	public void setScene( JoglScene scene )
 	{
-		this.glContext = shareWith;
-		new OnEDT( )
-		{
+		renderer.setScene( scene );
+	}
+
+	public void setViewSettings( JoglViewSettings viewSettings )
+	{
+		renderer.getViewSettings( ).copy( viewSettings );
+	}
+
+	protected void init( final I18n i18n )
+	{
+		new OnEDT( ) {
 			@Override
 			public void run( ) throws Throwable
 			{
@@ -284,20 +325,6 @@ public class ScreenCaptureDialog extends JDialog
 	public void setBinder( Binder<QObject<ScreenCaptureDialogModel>> binder )
 	{
 		this.binder.bind( binder );
-	}
-
-	public void setScene( JoglScene scene )
-	{
-		this.scene = scene;
-		renderer.setBgColor( scene.getBgColor( ) );
-		renderer.setDesiredNumSamples( scene.getDesiredNumSamples( ) );
-		renderer.setProjectionCalculator( scene.getProjectionCalculator( ) );
-		renderer.setViewXform( scene.viewXform( ) );
-
-		if( glWindow != null )
-		{
-			glWindow.display( );
-		}
 	}
 
 	protected void createComponents( )
@@ -361,8 +388,7 @@ public class ScreenCaptureDialog extends JDialog
 		printUnitLabel = new JLabel( );
 		localizer.setText( printUnitLabel , "inches" );
 
-		localizer.register( new Object( ) , new I18nUpdater<Object>( )
-		{
+		localizer.register( new Object( ) , new I18nUpdater<Object>( ) {
 			@Override
 			public void updateI18n( Localizer localizer , Object localizedObject )
 			{
@@ -381,9 +407,6 @@ public class ScreenCaptureDialog extends JDialog
 		localizer.setText( numSamplesLabel , "numSamplesLabel.text.off" );
 		numSamplesSlider = new JSlider( 1 , 20 , 1 );
 		numSamplesSlider.setPreferredSize( new Dimension( 150 , numSamplesSlider.getPreferredSize( ).height ) );
-
-		numSamplesLabel.setVisible( false );
-		numSamplesSlider.setVisible( false );
 
 		exportButton = new JButton( );
 		localizer.setText( exportButton , "exportButton.text" );
@@ -415,7 +438,8 @@ public class ScreenCaptureDialog extends JDialog
 		namePanel.put( fileNumberLabel ).rightOf( fileNamePrefixLabel );
 		namePanel.put( fileNamePrefixField ).below( fileNamePrefixLabel ).fillboth( 1.0 , 0.0 );
 		namePanel.put( fileNumberSpinner ).below( fileNumberLabel ).fillboth( );
-		namePanel.put( outputFileOrWarningLabelHolder ).below( fileNamePrefixField , fileNumberSpinner ).addToInsets( 10 , 0 , 0 , 0 );
+		namePanel.put( outputFileOrWarningLabelHolder ).below( fileNamePrefixField , fileNumberSpinner )
+			.addToInsets( 10 , 0 , 0 , 0 );
 
 		gbw.put( namePanel.getTarget( ) ).below( dirPanel.getTarget( ) );
 
@@ -466,11 +490,12 @@ public class ScreenCaptureDialog extends JDialog
 		buttonPanel.defaults( ).defaultAutoinsets( 2 , 2 );
 		buttonPanel.put( exportButton , cancelButton ).intoRow( ).fillx( 1.0 );
 
-		gbw.put( buttonPanel.getTarget( ) ).belowLast( ).south( ).fillx( 1.0 ).weighty( 1.0 ).addToInsets( 10 , 0 , 0 , 0 );
+		gbw.put( buttonPanel.getTarget( ) ).belowLast( ).south( ).fillx( 1.0 ).weighty( 1.0 )
+			.addToInsets( 10 , 0 , 0 , 0 );
 
 		JPanel leftPanel = ( JPanel ) gbw.getTarget( );
-		leftPanel.setBorder( new CompoundBorder( new InnerGradientBorder( new Insets( 0 , 0 , 0 , 8 ) , new Color( 164 , 164 , 164 ) ) , new EmptyBorder( 5 ,
-				5 , 5 , 2 ) ) );
+		leftPanel.setBorder( new CompoundBorder( new InnerGradientBorder( new Insets( 0 , 0 , 0 , 8 ) , new Color( 164 ,
+			164 , 164 ) ) , new EmptyBorder( 5 , 5 , 5 , 2 ) ) );
 
 		outputFileOrWarningLabelHolder.setPreferredSize( new Dimension( leftPanel.getPreferredSize( ).width , 40 ) );
 		outputFileOrWarningLabelHolder.setMinimumSize( outputFileOrWarningLabelHolder.getPreferredSize( ) );
@@ -488,11 +513,11 @@ public class ScreenCaptureDialog extends JDialog
 
 	protected void createListeners( )
 	{
-		resolutionUnitSelector.addSelectorListener( new ISelectorListener<ScreenCaptureDialogModel.ResolutionUnit>( )
-		{
+		resolutionUnitSelector.addSelectorListener( new ISelectorListener<ScreenCaptureDialogModel.ResolutionUnit>( ) {
 			@Override
-			public void selectionChanged( ISelector<ScreenCaptureDialogModel.ResolutionUnit> selector , ScreenCaptureDialogModel.ResolutionUnit oldSelection ,
-					ScreenCaptureDialogModel.ResolutionUnit newSelection )
+			public void selectionChanged( ISelector<ScreenCaptureDialogModel.ResolutionUnit> selector ,
+				ScreenCaptureDialogModel.ResolutionUnit oldSelection ,
+				ScreenCaptureDialogModel.ResolutionUnit newSelection )
 			{
 				if( updating || newSelection == null )
 				{
@@ -528,11 +553,11 @@ public class ScreenCaptureDialog extends JDialog
 			}
 		} );
 
-		printUnitSelector.addSelectorListener( new ISelectorListener<ScreenCaptureDialogModel.PrintSizeUnit>( )
-		{
+		printUnitSelector.addSelectorListener( new ISelectorListener<ScreenCaptureDialogModel.PrintSizeUnit>( ) {
 			@Override
-			public void selectionChanged( ISelector<ScreenCaptureDialogModel.PrintSizeUnit> selector , ScreenCaptureDialogModel.PrintSizeUnit oldSelection ,
-					ScreenCaptureDialogModel.PrintSizeUnit newSelection )
+			public void selectionChanged( ISelector<ScreenCaptureDialogModel.PrintSizeUnit> selector ,
+				ScreenCaptureDialogModel.PrintSizeUnit oldSelection ,
+				ScreenCaptureDialogModel.PrintSizeUnit newSelection )
 			{
 				if( updating || newSelection == null )
 				{
@@ -569,8 +594,7 @@ public class ScreenCaptureDialog extends JDialog
 			}
 		} );
 
-		ChangeListener sizeChangeListener = new ChangeListener( )
-		{
+		ChangeListener sizeChangeListener = new ChangeListener( ) {
 			@Override
 			public void stateChanged( ChangeEvent e )
 			{
@@ -581,7 +605,8 @@ public class ScreenCaptureDialog extends JDialog
 				updating = true;
 				try
 				{
-					if( e.getSource( ) == pixelWidthSpinner || e.getSource( ) == pixelHeightSpinner || e.getSource( ) == resolutionSpinner )
+					if( e.getSource( ) == pixelWidthSpinner || e.getSource( ) == pixelHeightSpinner
+						|| e.getSource( ) == resolutionSpinner )
 					{
 						updatePrintSize( );
 					}
@@ -605,8 +630,7 @@ public class ScreenCaptureDialog extends JDialog
 		printWidthSpinner.addChangeListener( sizeChangeListener );
 		printHeightSpinner.addChangeListener( sizeChangeListener );
 
-		chooseOutputDirectoryButton.addActionListener( new ActionListener( )
-		{
+		chooseOutputDirectoryButton.addActionListener( new ActionListener( ) {
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
@@ -634,8 +658,7 @@ public class ScreenCaptureDialog extends JDialog
 		outputDirectoryField.getDocument( ).addDocumentListener( fileNameListener );
 		fileNamePrefixField.getDocument( ).addDocumentListener( fileNameListener );
 
-		cancelButton.addActionListener( new ActionListener( )
-		{
+		cancelButton.addActionListener( new ActionListener( ) {
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
@@ -643,8 +666,7 @@ public class ScreenCaptureDialog extends JDialog
 			}
 		} );
 
-		exportButton.addActionListener( new ActionListener( )
-		{
+		exportButton.addActionListener( new ActionListener( ) {
 			@Override
 			public void actionPerformed( ActionEvent e )
 			{
@@ -652,12 +674,13 @@ public class ScreenCaptureDialog extends JDialog
 			}
 		} );
 
-		numSamplesSlider.addChangeListener( new ChangeListener( )
-		{
+		numSamplesSlider.addChangeListener( new ChangeListener( ) {
 			@Override
 			public void stateChanged( ChangeEvent e )
 			{
 				updateNumSamplesLabel( );
+				renderer.setDesiredNumSamples( numSamplesSlider.getValue( ) );
+				glWindow.display( );
 			}
 		} );
 	}
@@ -733,7 +756,8 @@ public class ScreenCaptureDialog extends JDialog
 		}
 		catch( Exception ex )
 		{
-			throw new LocalizedException( "createOutputFile.exception.invalidDirectory" , outputDirectoryField.getText( ) , ex.getLocalizedMessage( ) );
+			throw new LocalizedException( "createOutputFile.exception.invalidDirectory" ,
+				outputDirectoryField.getText( ) , ex.getLocalizedMessage( ) );
 		}
 
 		if( fileNamePrefixField.getText( ) == null || "".equals( fileNamePrefixField.getText( ) ) )
@@ -755,7 +779,8 @@ public class ScreenCaptureDialog extends JDialog
 		}
 		catch( Exception ex )
 		{
-			throw new LocalizedException( "createOutputFile.exception.invalidFileNamePrefix" , fileNamePrefixField.getText( ) , ex.getLocalizedMessage( ) );
+			throw new LocalizedException( "createOutputFile.exception.invalidFileNamePrefix" ,
+				fileNamePrefixField.getText( ) , ex.getLocalizedMessage( ) );
 		}
 	}
 
@@ -847,7 +872,8 @@ public class ScreenCaptureDialog extends JDialog
 		Integer pixelWidth = ( Integer ) pixelWidthSpinner.getValue( );
 		if( pixelWidth != null && pixelWidth != 0 )
 		{
-			printWidthSpinner.setValue( new BigDecimal( pixelWidth ).divide( resolution , 2 , BigDecimal.ROUND_HALF_EVEN ) );
+			printWidthSpinner.setValue( new BigDecimal( pixelWidth ).divide( resolution , 2 ,
+				BigDecimal.ROUND_HALF_EVEN ) );
 		}
 		else
 		{
@@ -857,7 +883,8 @@ public class ScreenCaptureDialog extends JDialog
 		Integer pixelHeight = ( Integer ) pixelHeightSpinner.getValue( );
 		if( pixelHeight != null && pixelHeight != 0 )
 		{
-			printHeightSpinner.setValue( new BigDecimal( pixelHeight ).divide( resolution , 2 , BigDecimal.ROUND_HALF_EVEN ) );
+			printHeightSpinner.setValue( new BigDecimal( pixelHeight ).divide( resolution , 2 ,
+				BigDecimal.ROUND_HALF_EVEN ) );
 		}
 		else
 		{
@@ -867,7 +894,8 @@ public class ScreenCaptureDialog extends JDialog
 
 	private JSpinner createIntegerSpinner( int maxDigits , int step )
 	{
-		BetterSpinnerNumberModel<Integer> model = BetterSpinnerNumberModel.newInstance( 1 , 1 , ( int ) Math.floor( Math.pow( 10 , maxDigits ) ) - 1 , step );
+		BetterSpinnerNumberModel<Integer> model = BetterSpinnerNumberModel.newInstance( 1 , 1 ,
+			( int ) Math.floor( Math.pow( 10 , maxDigits ) ) - 1 , step );
 		JSpinner spinner = new JSpinner( model );
 		SimpleSpinnerEditor editor = new SimpleSpinnerEditor( spinner );
 		editor.getTextField( ).setColumns( maxDigits );
@@ -888,7 +916,7 @@ public class ScreenCaptureDialog extends JDialog
 		BigDecimal minFraction = new BigDecimal( StringUtils.multiply( "0" , fractionDigits - 1 ) + "1" );
 
 		BetterSpinnerNumberModel<BigDecimal> model = BetterSpinnerNumberModel.newInstance( minFraction , minFraction ,
-				new BigDecimal( 10 ).pow( maxIntegerDigits ).subtract( minFraction ) , step );
+			new BigDecimal( 10 ).pow( maxIntegerDigits ).subtract( minFraction ) , step );
 		JSpinner spinner = new JSpinner( model );
 		SimpleSpinnerEditor editor = new SimpleSpinnerEditor( spinner );
 		editor.getTextField( ).setColumns( maxIntegerDigits + fractionDigits + 1 );
@@ -962,149 +990,142 @@ public class ScreenCaptureDialog extends JDialog
 		}
 	}
 
-	private class Renderer extends JoglScene
+	private class NewRenderer extends DefaultJoglRenderer
 	{
+		public NewRenderer( )
+		{
+			super( new GL3Framebuffer( ) , 1 );
+		}
+
 		volatile CaptureTask	captureTask;
 
-		final Object			lock	= new Object( );
-		boolean					captureFinished;
 		BufferedImage			capturedImage;
 
+		int						bufferWidth;
+		int						bufferHeight;
+		int						totalWidth;
+		int						totalHeight;
+
+		GL3Framebuffer			blitFramebuffer	= new GL3Framebuffer( );
+
+		public void startCapture( CaptureTask captureTask )
+		{
+			this.captureTask = captureTask;
+
+			bufferWidth = max( captureTask.tileWidths );
+			bufferHeight = max( captureTask.tileHeights );
+			totalWidth = total( captureTask.tileWidths );
+			totalHeight = total( captureTask.tileHeights );
+
+			capturedImage = new BufferedImage( totalWidth , totalHeight , BufferedImage.TYPE_INT_ARGB );
+
+		}
+
 		@Override
-		public void drawObjects( GL2ES2 gl )
+		public void display( GLAutoDrawable drawable )
 		{
-			super.drawObjects( gl );
+			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
 
-			if( captureTask != null )
+			int tileX = 0 , tileY = 0;
+			int viewportX = 0 , viewportY = 0;
+
+			CaptureTask captureTask = this.captureTask;
+
+			if( captureTask == null )
 			{
-				setCaptureFinished( false );
-
-				int[ ] tileWidths = captureTask.tileWidths;
-				int[ ] tileHeights = captureTask.tileHeights;
-
-				captureTask.setStatus( "Rendering image..." );
-				captureTask.setIndeterminate( false );
-				captureTask.setCompleted( 0 );
-				captureTask.setTotal( tileWidths.length * tileHeights.length );
-
-				int[ ] i = new int[ 3 ];
-				gl.glGenFramebuffers( 1 , i , 0 );
-				gl.glGenRenderbuffers( 2 , i , 1 );
-				int fbo = i[ 0 ];
-				int colorBuf = i[ 1 ];
-				int depthBuf = i[ 2 ];
-
-				int bufferWidth = max( tileWidths ) , bufferHeight = max( tileHeights );
-				int totalWidth = total( tileWidths ) , totalHeight = total( tileHeights );
-
-				BufferedImage capturedImage = new BufferedImage( totalWidth , totalHeight , BufferedImage.TYPE_INT_ARGB );
-
-				try
-				{
-					gl.glBindFramebuffer( GL_FRAMEBUFFER , fbo );
-					gl.glBindRenderbuffer( GL_RENDERBUFFER , colorBuf );
-					gl.glRenderbufferStorage( GL_RENDERBUFFER , GL_RGB , bufferWidth , bufferHeight );
-					gl.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_COLOR_ATTACHMENT0 , GL_RENDERBUFFER , colorBuf );
-					gl.glBindRenderbuffer( GL_RENDERBUFFER , depthBuf );
-					gl.glRenderbufferStorage( GL_RENDERBUFFER , GL_DEPTH_COMPONENT32 , bufferWidth , bufferHeight );
-					gl.glFramebufferRenderbuffer( GL_FRAMEBUFFER , GL_DEPTH_ATTACHMENT , GL_RENDERBUFFER , depthBuf );
-
-					Graphics2D g2 = ( Graphics2D ) capturedImage.createGraphics( );
-
-					int viewportX = 0;
-					for( int tileX = 0 ; tileX < tileWidths.length ; tileX++ )
-					{
-						int viewportY = 0;
-						for( int tileY = 0 ; tileY < tileHeights.length ; tileY++ )
-						{
-							if( captureTask.isCanceling( ) )
-							{
-								return;
-							}
-
-							gl.glViewport( viewportX , viewportY , totalWidth , totalHeight );
-
-							gl.glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-
-							super.drawObjects( gl );
-
-							BufferedImageInt tile = DirectDataBufferInt.createBufferedImage( tileWidths[ tileX ] , tileHeights[ tileY ] ,
-									BufferedImage.TYPE_INT_ARGB , new Point( 0 , 0 ) , new Hashtable<Object, Object>( ) );
-							DirectDataBufferInt tileBuffer = ( DirectDataBufferInt ) tile.getRaster( ).getDataBuffer( );
-
-							gl.glReadPixels( 0 , 0 , tileWidths[ tileX ] , tileHeights[ tileY ] , GL_BGRA , GL_UNSIGNED_BYTE , tileBuffer.getData( ) );
-
-							if( captureTask.isCanceling( ) )
-							{
-								return;
-							}
-
-							AffineTransform prevXform = g2.getTransform( );
-							g2.translate( -viewportX , totalHeight - 1 + viewportY );
-							g2.scale( 1.0 , -1.0 );
-							g2.drawImage( tile , 0 , 0 , null );
-							g2.setTransform( prevXform );
-
-							captureTask.setCompleted( captureTask.getCompleted( ) + 1 );
-
-							viewportY -= tileHeights[ tileY ];
-						}
-						viewportX -= tileWidths[ tileX ];
-					}
-
-					setCapturedImage( capturedImage );
-				}
-				finally
-				{
-					captureTask = null;
-					try
-					{
-						gl.glBindFramebuffer( GL_FRAMEBUFFER , 0 );
-
-						gl.glDeleteFramebuffers( 1 , i , 0 );
-						gl.glDeleteRenderbuffers( 1 , i , 1 );
-						gl.glDeleteRenderbuffers( 1 , i , 2 );
-
-						gl.glViewport( 0 , 0 , scene.width( ) , scene.height( ) );
-					}
-					finally
-					{
-						setCaptureFinished( true );
-					}
-				}
+				gl.glViewport( 0 , 0 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) );
 			}
-		}
-
-		private void setCapturedImage( BufferedImage capturedImage )
-		{
-			synchronized( lock )
+			else
 			{
-				this.capturedImage = capturedImage;
-			}
-		}
+				tileX = captureTask.getCompleted( ) / captureTask.tileWidths.length;
+				tileY = captureTask.getCompleted( ) % captureTask.tileHeights.length;
 
-		private void setCaptureFinished( boolean newValue )
-		{
-			synchronized( lock )
-			{
-				captureFinished = newValue;
-				lock.notifyAll( );
-			}
-		}
-
-		public BufferedImage takeCapturedImage( ) throws InterruptedException
-		{
-			synchronized( lock )
-			{
-				while( !captureFinished )
+				for( int x = 0 ; x < tileX ; x++ )
 				{
-					lock.wait( );
+					viewportX -= captureTask.tileWidths[ x ];
 				}
 
-				BufferedImage capturedImage = this.capturedImage;
-				this.capturedImage = null;
-				return capturedImage;
+				for( int y = 0 ; y < tileY ; y++ )
+				{
+					viewportY -= captureTask.tileHeights[ y ];
+				}
+
+				gl.glViewport( viewportX , viewportY , totalWidth , totalHeight );
 			}
+
+			super.display( drawable );
+
+			if( captureTask == null )
+			{
+				return;
+			}
+
+			int tileWidth = captureTask.tileWidths[ tileX ];
+			int tileHeight = captureTask.tileHeights[ tileY ];
+
+			viewState.update( viewSettings , totalWidth , totalHeight );
+
+			GL3 gl3 = ( GL3 ) gl;
+			int renderingFbo = framebuffer.renderingFbo( gl3 , bufferWidth , bufferHeight , desiredNumSamples );
+			int blitFbo = blitFramebuffer.renderingFbo( gl3 , bufferWidth , bufferHeight , 1 );
+
+			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , renderingFbo );
+
+			if( scene != null )
+			{
+				scene.draw( viewState , gl , m , n );
+			}
+
+			gl3.glBindFramebuffer( GL_READ_FRAMEBUFFER , renderingFbo );
+			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , blitFbo );
+			gl3.glBlitFramebuffer( 0 , 0 , tileWidth , tileHeight , 0 , 0 , tileWidth , tileHeight ,
+				GL3.GL_COLOR_BUFFER_BIT , GL_NEAREST );
+
+			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , 0 );
+			gl3.glBindFramebuffer( GL_READ_FRAMEBUFFER , blitFbo );
+
+			BufferedImageInt tile = DirectDataBufferInt.createBufferedImage( tileWidth , tileHeight , BufferedImage.TYPE_INT_ARGB ,
+				new Point( 0 , 0 ) , new Hashtable<Object, Object>( ) );
+			DirectDataBufferInt tileBuffer = ( DirectDataBufferInt ) tile.getRaster( ).getDataBuffer( );
+
+			gl.glReadPixels( 0 , 0 , tileWidth , tileHeight , GL_BGRA , GL_UNSIGNED_BYTE , tileBuffer.getData( ) );
+
+			gl3.glBindFramebuffer( GL_READ_FRAMEBUFFER , 0 );
+
+			if( captureTask.isCanceling( ) )
+			{
+				return;
+			}
+
+			Graphics2D g2 = ( Graphics2D ) capturedImage.createGraphics( );
+
+			for( int x = 0 ; x < tileWidth ; x++ )
+			{
+				for( int y = 0 ; y < tileHeight ; y++ )
+				{
+					int rgb = tile.getRGB( x , y );
+					if( ( rgb & 0xff000000 ) != 0 )
+					{
+						System.out.println( "tile: " + x + ", " + y + ": " + rgb );
+					}
+					rgb |= 0xff000000;
+					tile.setRGB( x , y , rgb );
+				}
+			}
+
+			AffineTransform prevXform = g2.getTransform( );
+			g2.translate( -viewportX , totalHeight - 1 + viewportY );
+			g2.scale( 1.0 , -1.0 );
+			g2.drawImage( tile , 0 , 0 , null );
+			g2.setTransform( prevXform );
+
+			g2.dispose( );
+		}
+
+		public BufferedImage endCapture( )
+		{
+			captureTask = null;
+			return capturedImage;
 		}
 	}
 
@@ -1131,8 +1152,7 @@ public class ScreenCaptureDialog extends JDialog
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
-			new OnEDT( )
-			{
+			new OnEDT( ) {
 				@Override
 				public void run( ) throws Throwable
 				{
@@ -1151,16 +1171,17 @@ public class ScreenCaptureDialog extends JDialog
 					{
 						if( outputFile.isDirectory( ) )
 						{
-							JOptionPane.showMessageDialog( dialog , "Weird...output file " + outputFile + " is a directory" , "Can't Export" ,
-									JOptionPane.ERROR_MESSAGE );
+							JOptionPane.showMessageDialog( dialog , "Weird...output file " + outputFile
+								+ " is a directory" , "Can't Export" , JOptionPane.ERROR_MESSAGE );
 
 							outputFile = null;
 							return;
 						}
 						else
 						{
-							int option = JOptionPane.showConfirmDialog( dialog , "Output file " + outputFile + " already exists.  Overwrite?" , "Export Image" ,
-									JOptionPane.OK_CANCEL_OPTION , JOptionPane.WARNING_MESSAGE );
+							int option = JOptionPane.showConfirmDialog( dialog , "Output file " + outputFile
+								+ " already exists.  Overwrite?" , "Export Image" , JOptionPane.OK_CANCEL_OPTION ,
+								JOptionPane.WARNING_MESSAGE );
 
 							if( option != JOptionPane.OK_OPTION )
 							{
@@ -1174,8 +1195,9 @@ public class ScreenCaptureDialog extends JDialog
 
 					if( !outputDir.exists( ) )
 					{
-						int option = JOptionPane.showConfirmDialog( dialog , "Output directory " + outputDir + " does not exist.  Create it?" , "Export Image" ,
-								JOptionPane.OK_CANCEL_OPTION , JOptionPane.INFORMATION_MESSAGE );
+						int option = JOptionPane.showConfirmDialog( dialog , "Output directory " + outputDir
+							+ " does not exist.  Create it?" , "Export Image" , JOptionPane.OK_CANCEL_OPTION ,
+							JOptionPane.INFORMATION_MESSAGE );
 
 						if( option == JOptionPane.OK_OPTION )
 						{
@@ -1186,8 +1208,9 @@ public class ScreenCaptureDialog extends JDialog
 							catch( Exception ex )
 							{
 								ex.printStackTrace( );
-								JOptionPane.showMessageDialog( dialog , "Failed to create directory " + outputDir + "; " + ex.getClass( ).getSimpleName( )
-										+ ": " + ex.getLocalizedMessage( ) , "Export Failed" , JOptionPane.ERROR_MESSAGE );
+								JOptionPane.showMessageDialog( dialog , "Failed to create directory " + outputDir
+									+ "; " + ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
+									"Export Failed" , JOptionPane.ERROR_MESSAGE );
 								outputFile = null;
 								return;
 							}
@@ -1222,52 +1245,72 @@ public class ScreenCaptureDialog extends JDialog
 				return;
 			}
 
-			renderer.captureTask = this;
-			glWindow.display( );
-			BufferedImage capturedImage = renderer.takeCapturedImage( );
+			setStatus( "Rendering image..." );
+			setIndeterminate( false );
+			setCompleted( 0 );
+			setTotal( tileWidths.length * tileHeights.length );
 
-			if( capturedImage != null )
+			renderer.startCapture( this );
+
+			while( getCompleted( ) < getTotal( ) )
 			{
-				setStatus( "Saving image to " + outputFile + "..." );
-				setIndeterminate( true );
-
-				if( !isCanceling( ) )
+				if( isCanceling( ) )
 				{
-					try
-					{
-						ImageIO.write( capturedImage , "png" , outputFile );
+					return;
+				}
 
-						new OnEDT( )
+				glWindow.invoke( true , gl ->
+				{
+					return true;
+				} );
+				setCompleted( getCompleted( ) + 1 );
+			}
+
+			if( isCanceling( ) )
+			{
+				return;
+			}
+
+			BufferedImage capturedImage = renderer.endCapture( );
+
+			setStatus( "Saving image to " + outputFile + "..." );
+			setIndeterminate( true );
+
+			if( !isCanceling( ) )
+			{
+				try
+				{
+					ImageIO.write( capturedImage , "png" , outputFile );
+
+					new OnEDT( ) {
+						@Override
+						public void run( ) throws Throwable
 						{
-							@Override
-							public void run( ) throws Throwable
+							Integer value = ( Integer ) fileNumberSpinner.getValue( );
+							if( value == null )
 							{
-								Integer value = ( Integer ) fileNumberSpinner.getValue( );
-								if( value == null )
-								{
-									fileNumberSpinner.setValue( 1 );
-								}
-								else
-								{
-									fileNumberSpinner.setValue( value + 1 );
-								}
-								ScreenCaptureDialog.this.dispose( );
+								fileNumberSpinner.setValue( 1 );
 							}
-						};
-					}
-					catch( final Exception ex )
-					{
-						ex.printStackTrace( );
-						new OnEDT( )
+							else
+							{
+								fileNumberSpinner.setValue( value + 1 );
+							}
+							ScreenCaptureDialog.this.dispose( );
+						}
+					};
+				}
+				catch( final Exception ex )
+				{
+					ex.printStackTrace( );
+					new OnEDT( ) {
+						@Override
+						public void run( ) throws Throwable
 						{
-							@Override
-							public void run( ) throws Throwable
-							{
-								JOptionPane.showMessageDialog( dialog , ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) , "Export Failed" ,
-										JOptionPane.ERROR_MESSAGE );
-							}
-						};
-					}
+							JOptionPane.showMessageDialog( dialog ,
+								ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) , "Export Failed" ,
+								JOptionPane.ERROR_MESSAGE );
+						}
+					};
 				}
 			}
 		}
@@ -1301,19 +1344,15 @@ public class ScreenCaptureDialog extends JDialog
 		}
 		if( glWindow != null )
 		{
-			SwingUtilities.invokeLater( new Runnable( )
+			SwingUtilities.invokeLater( ( ) ->
 			{
-				@Override
-				public void run( )
+				if( canvas.getNEWTChild( ) != glWindow )
 				{
-					if( canvas.getNEWTChild( ) != glWindow )
-					{
-						canvas.setNEWTChild( glWindow );
-					}
-					canvasHolder.revalidate( );
-					canvas.repaint( );
-					glWindow.display( );
+					canvas.setNEWTChild( glWindow );
 				}
+				canvasHolder.revalidate( );
+				canvas.repaint( );
+				glWindow.display( );
 			} );
 		}
 		super.setVisible( visible );
@@ -1334,11 +1373,11 @@ public class ScreenCaptureDialog extends JDialog
 			if( glWindow == null )
 			{
 				glWindow = GLWindow.create( caps );
-				if( glContext != null )
+				if( sharedAutoDrawable != null )
 				{
-					glWindow.setSharedContext( glContext );
-					glWindow.addGLEventListener( renderer );
+					glWindow.setSharedAutoDrawable( sharedAutoDrawable );
 				}
+				glWindow.addGLEventListener( renderer );
 			}
 			canvas.setNEWTChild( glWindow );
 			glWindow.display( );

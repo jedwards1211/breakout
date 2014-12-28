@@ -35,6 +35,7 @@ import javax.swing.SwingUtilities;
 import org.andork.awt.I18n.Localizer;
 import org.andork.bind.Binder;
 import org.andork.breakout.model.ProjectModel;
+import org.andork.breakout.model.RootModel;
 import org.andork.jogl.awt.ScreenCaptureDialog;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.q.QObject;
@@ -48,8 +49,7 @@ public class ExportImageAction extends AbstractAction
 	public ExportImageAction( BreakoutMainView breakoutMainView )
 	{
 		this.mainView = breakoutMainView;
-		new OnEDT( )
-		{
+		new OnEDT( ) {
 
 			@Override
 			public void run( ) throws Throwable
@@ -62,19 +62,16 @@ public class ExportImageAction extends AbstractAction
 
 	public void actionPerformed( ActionEvent e )
 	{
-		// // scene.doLater( new ScreenshotHandler( scene ) );
-		// scene.doLater( new HiResScreenshotHandler( scene ,
-		// new int[ ] { 500 , 500 , 500 } , new int[ ] { 500 , 500 , 500 } , Fit.BOTH ) );
-		// canvas.display( );
-
 		JPanel mainPanel = mainView.getMainPanel( );
 		Component canvas = mainView.getCanvas( );
 
 		if( screenCaptureDialog == null )
 		{
-			screenCaptureDialog = new ScreenCaptureDialog( SwingUtilities.getWindowAncestor( mainPanel ) , canvas.getContext( ) , mainView.getI18n( ) );
+			screenCaptureDialog = new ScreenCaptureDialog( mainView.getAutoDrawable( ) ,
+				SwingUtilities.getWindowAncestor( mainPanel ) , mainView.getI18n( ) );
 			screenCaptureDialog.setTitle( "Export Image" );
-			QObject<ScreenCaptureDialogModel> screenCaptureDialogModel = mainView.getProjectModel( ).get( ProjectModel.screenCaptureDialogModel );
+			QObject<ScreenCaptureDialogModel> screenCaptureDialogModel = mainView.getProjectModel( ).get(
+				ProjectModel.screenCaptureDialogModel );
 			if( screenCaptureDialogModel == null )
 			{
 				screenCaptureDialogModel = ScreenCaptureDialogModel.instance.newObject( );
@@ -84,10 +81,13 @@ public class ExportImageAction extends AbstractAction
 				screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelWidth , canvas.getWidth( ) );
 				screenCaptureDialogModel.set( ScreenCaptureDialogModel.pixelHeight , canvas.getHeight( ) );
 				screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolution , new BigDecimal( 300 ) );
-				screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit , ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
+				screenCaptureDialogModel.set( ScreenCaptureDialogModel.resolutionUnit ,
+					ScreenCaptureDialogModel.ResolutionUnit.PIXELS_PER_IN );
 				mainView.getProjectModel( ).set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
 			}
-			Binder<QObject<ScreenCaptureDialogModel>> screenCaptureBinder = bind( ProjectModel.screenCaptureDialogModel , mainView.getProjectModelBinder( ) );
+
+			Binder<QObject<ScreenCaptureDialogModel>> screenCaptureBinder = bind(
+				ProjectModel.screenCaptureDialogModel , mainView.getProjectModelBinder( ) );
 			screenCaptureDialog.setBinder( screenCaptureBinder );
 
 			Dimension size = mainPanel.getSize( );
@@ -97,9 +97,9 @@ public class ExportImageAction extends AbstractAction
 			screenCaptureDialog.setLocationRelativeTo( mainPanel );
 		}
 
+		screenCaptureDialog.setViewSettings( mainView.getViewSettings( ) );
 		screenCaptureDialog.setScene( mainView.getScene( ) );
 
 		screenCaptureDialog.setVisible( true );
 	}
-
 }
