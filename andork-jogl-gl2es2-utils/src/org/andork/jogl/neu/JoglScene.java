@@ -467,12 +467,12 @@ public class JoglScene implements JoglResourceManager , JoglDrawContext , GLEven
 		return pickXform;
 	}
 
-	public int getWidth( )
+	public int width( )
 	{
 		return width;
 	}
 
-	public int getHeight( )
+	public int height( )
 	{
 		return height;
 	}

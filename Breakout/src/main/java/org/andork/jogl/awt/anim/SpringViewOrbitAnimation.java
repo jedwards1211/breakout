@@ -35,27 +35,25 @@ import static org.andork.math3d.Vecmath.setColumn3;
 import static org.andork.math3d.Vecmath.setIdentity;
 import static org.andork.math3d.Vecmath.setRotation;
 
-import java.awt.Component;
-
 import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewSettings;
 import org.andork.math3d.Vecmath;
 import org.andork.util.AnimationUtils;
 
 public class SpringViewOrbitAnimation implements Animation
 {
 
-	public SpringViewOrbitAnimation( GLAutoDrawable drawable , JoglCamera camera , float[ ] center , float targetPan , float targetTilt , float factor ,
-			float extra , int period )
+	public SpringViewOrbitAnimation( GLAutoDrawable drawable , JoglViewSettings viewSettings , float[ ] center , float targetPan , float targetTilt ,
+			float factor , float extra , int period )
 	{
 		if( period <= 0 )
 		{
 			throw new IllegalArgumentException( "period must be > 0" );
 		}
 		this.drawable = drawable;
-		this.camera = camera;
+		this.viewSettings = viewSettings;
 		Vecmath.setf( this.center , center );
 		this.targetPan = targetPan;
 		this.targetTilt = targetTilt;
@@ -64,32 +62,32 @@ public class SpringViewOrbitAnimation implements Animation
 		this.period = period;
 	}
 
-	GLAutoDrawable	drawable;
-	JoglCamera		camera;
+	GLAutoDrawable		drawable;
+	JoglViewSettings	viewSettings;
 
-	final float[ ]	right			= new float[ 3 ];
-	final float[ ]	forward			= new float[ 3 ];
+	final float[ ]		right			= new float[ 3 ];
+	final float[ ]		forward			= new float[ 3 ];
 
-	final float[ ]	targetRight		= new float[ 3 ];
-	final float[ ]	targetForward	= new float[ 3 ];
-	final float[ ]	targetUp		= new float[ 3 ];
+	final float[ ]		targetRight		= new float[ 3 ];
+	final float[ ]		targetForward	= new float[ 3 ];
+	final float[ ]		targetUp		= new float[ 3 ];
 
-	final float[ ]	center			= new float[ 3 ];
-	float			targetPan;
-	float			targetTilt;
+	final float[ ]		center			= new float[ 3 ];
+	float				targetPan;
+	float				targetTilt;
 
-	final float[ ]	v				= Vecmath.newMat4f( );
-	final float[ ]	m1				= Vecmath.newMat4f( );
-	final float[ ]	m2				= Vecmath.newMat4f( );
+	final float[ ]		v				= Vecmath.newMat4f( );
+	final float[ ]		m1				= Vecmath.newMat4f( );
+	final float[ ]		m2				= Vecmath.newMat4f( );
 
-	int				period;
-	float			factor;
-	float			extra;
+	int					period;
+	float				factor;
+	float				extra;
 
 	@Override
 	public long animate( long animTime )
 	{
-		camera.getViewXform( v );
+		viewSettings.getViewXform( v );
 		invAffine( v , m1 );
 		mvmulAffine( m1 , 0 , 0 , -1 , forward );
 		normalize3( forward );
@@ -159,7 +157,7 @@ public class SpringViewOrbitAnimation implements Animation
 
 		mmulAffine( m1 , m2 , m2 );
 		mmulAffine( v , m2 , v );
-		camera.setViewXform( v );
+		viewSettings.setViewXform( v );
 
 		drawable.display( );
 

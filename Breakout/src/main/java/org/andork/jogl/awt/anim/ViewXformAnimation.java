@@ -24,11 +24,9 @@ package org.andork.jogl.awt.anim;
 import java.util.function.Function;
 
 import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.awt.GLCanvas;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.neu.awt.BasicJoglSetup;
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewSettings;
 
 public class ViewXformAnimation implements Animation
 {
@@ -39,16 +37,16 @@ public class ViewXformAnimation implements Animation
 	 *            a function that takes the animation progress from 0 to 1, and
 	 *            returns the new inverted view matrix.
 	 */
-	public ViewXformAnimation( GLAutoDrawable drawable , JoglCamera camera , long totalTime , boolean display , Function<Float, float[ ]> function )
+	public ViewXformAnimation( GLAutoDrawable drawable , JoglViewSettings viewSettings , long totalTime , boolean display , Function<Float, float[ ]> function )
 	{
-		this.camera = camera;
+		this.viewSettings = viewSettings;
 		this.drawable = drawable;
 		this.totalTime = totalTime;
 		this.display = display;
 		this.function = function;
 	}
 
-	JoglCamera					camera;
+	JoglViewSettings					viewSettings;
 	GLAutoDrawable				drawable;
 
 	long						elapsedTime	= 0;
@@ -64,7 +62,7 @@ public class ViewXformAnimation implements Animation
 
 		float f = Math.min( 1f , ( float ) elapsedTime / totalTime );
 
-		camera.setViewXform( function.apply( f ) );
+		viewSettings.setViewXform( function.apply( f ) );
 		if( display )
 		{
 			drawable.display( );

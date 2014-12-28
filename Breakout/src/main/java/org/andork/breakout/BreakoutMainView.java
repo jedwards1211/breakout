@@ -56,9 +56,7 @@ import java.util.stream.Stream;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLEventListener;
 import javax.media.opengl.GLProfile;
-import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
@@ -114,7 +112,6 @@ import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.TransparentTerrain;
 import org.andork.collect.CollectionUtils;
-import org.andork.event.BasicPropertyChangeListener;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.BasicJOGLObject;
@@ -126,13 +123,11 @@ import org.andork.jogl.awt.anim.ProjXformAnimation;
 import org.andork.jogl.awt.anim.RandomViewOrbitAnimation;
 import org.andork.jogl.awt.anim.SpringViewOrbitAnimation;
 import org.andork.jogl.awt.anim.ViewXformAnimation;
-import org.andork.jogl.neu2.DefaultGLEventListener;
-import org.andork.jogl.neu2.DefaultJoglCamera;
+import org.andork.jogl.neu2.DefaultJoglRenderer;
 import org.andork.jogl.neu2.GL3Framebuffer;
 import org.andork.jogl.neu2.JoglBackgroundColor;
-import org.andork.jogl.neu2.JoglCamera;
 import org.andork.jogl.neu2.JoglScene;
-import org.andork.jogl.neu2.awt.JoglNavigator;
+import org.andork.jogl.neu2.JoglViewState;
 import org.andork.jogl.neu2.awt.JoglOrbiter;
 import org.andork.jogl.neu2.awt.JoglOrthoNavigator;
 import org.andork.math.misc.Fitting;
@@ -182,10 +177,9 @@ public class BreakoutMainView
 {
 	GLWindow											glWindow;
 	NewtCanvasAWT										canvas;
-	JoglCamera											camera;
 	JoglScene											scene;
 	JoglBackgroundColor									bgColor;
-	DefaultGLEventListener								glEventListener;
+	DefaultJoglRenderer									renderer;
 
 	DefaultNavigator									navigator;
 	JoglOrbiter											orbiter;
@@ -286,17 +280,16 @@ public class BreakoutMainView
 		bgColor = new JoglBackgroundColor( );
 		scene.add( bgColor );
 
-		camera = new DefaultJoglCamera( );
-		glEventListener = new DefaultGLEventListener( camera , scene , new GL3Framebuffer( ) , 1 );
+		renderer = new DefaultJoglRenderer( scene , new GL3Framebuffer( ) , 1 );
 
-		glWindow.addGLEventListener( glEventListener );
+		glWindow.addGLEventListener( renderer );
 
-		navigator = new DefaultNavigator( glWindow , camera );
+		navigator = new DefaultNavigator( glWindow , renderer.getViewSettings( ) );
 		navigator.setMoveFactor( 5f );
 		navigator.setWheelFactor( 5f );
 
-		orbiter = new JoglOrbiter( glWindow , camera );
-		orthoNavigator = new JoglOrthoNavigator( glWindow , camera );
+		orbiter = new JoglOrbiter( glWindow , renderer.getViewSettings( ) );
+		orthoNavigator = new JoglOrthoNavigator( glWindow , renderer.getViewState( ) , renderer.getViewSettings( ) );
 
 		ioTaskService = new SingleThreadedTaskService( );
 		rebuildTaskService = new SingleThreadedTaskService( );
@@ -374,9 +367,9 @@ public class BreakoutMainView
 				return scene;
 			}
 
-			public JoglCamera getCamera( )
+			public JoglViewState getViewState( )
 			{
-				return camera;
+				return renderer.getViewState( );
 			}
 
 			@Override
@@ -838,7 +831,7 @@ public class BreakoutMainView
 
 		settingsDrawer.getResetViewButton( ).addActionListener( e ->
 		{
-			camera.setViewXform( newMat4f( ) );
+			renderer.getViewSettings( ).setViewXform( newMat4f( ) );
 			glWindow.display( );
 		} );
 
@@ -861,10 +854,11 @@ public class BreakoutMainView
 				}
 
 				float[ ] v = newMat4f( );
-				camera.getViewXform( v );
+				renderer.getViewSettings( ).getViewXform( v );
 
 				removeUnprotectedCameraAnimations( );
-				cameraAnimationQueue.add( new SpringViewOrbitAnimation( glWindow , camera , center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
+				cameraAnimationQueue.add( new SpringViewOrbitAnimation( glWindow , renderer.getViewSettings( ) , center , 0f , ( float ) -Math.PI * .5f , .1f ,
+						.05f , 30 ) );
 				cameraAnimationQueue.add( new AnimationViewSaver( ) );
 			}
 		} );
@@ -936,7 +930,7 @@ public class BreakoutMainView
 			public void actionPerformed( ActionEvent e )
 			{
 				float[ ] axis = new float[ 3 ];
-				Vecmath.negate3( camera.inverseViewXform( ) , 8 , axis , 0 );
+				Vecmath.negate3( renderer.getViewState( ).inverseViewXform( ) , 8 , axis , 0 );
 				getProjectModel( ).set( ProjectModel.depthAxis , axis );
 			}
 		} );
@@ -950,28 +944,28 @@ public class BreakoutMainView
 			{
 				if( desiredNumSamples != null )
 				{
-					glEventListener.setDesiredNumSamples( desiredNumSamples );
+					renderer.setDesiredNumSamples( desiredNumSamples );
 					glWindow.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootModelBinder ) );
 
-//		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
-//		{
-//			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
-//			{
-//				if( scene.isInitialized( ) )
-//				{
-//					SwingUtilities.invokeLater( new Runnable( )
-//					{
-//						public void run( )
-//						{
-//							settingsDrawer.setMaxNumSamples( scene.getMaxNumSamples( ) );
-//						}
-//					} );
-//				}
-//			}
-//		} );
+		//		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
+		//		{
+		//			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
+		//			{
+		//				if( scene.isInitialized( ) )
+		//				{
+		//					SwingUtilities.invokeLater( new Runnable( )
+		//					{
+		//						public void run( )
+		//						{
+		//							settingsDrawer.setMaxNumSamples( scene.getMaxNumSamples( ) );
+		//						}
+		//					} );
+		//				}
+		//			}
+		//		} );
 
 		rootFile = new File( new File( ".breakout" ) , "settings.yaml" );
 		rootPersister = new TaskServiceFilePersister<QObject<RootModel>>( ioTaskService , "Saving settings..." ,
@@ -1092,7 +1086,8 @@ public class BreakoutMainView
 			{
 				model3d.getCenter( center );
 			}
-			cameraAnimationQueue.add( new SpringViewOrbitAnimation( glWindow , camera , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
+			cameraAnimationQueue.add( new SpringViewOrbitAnimation( glWindow , renderer.getViewSettings( ) , center , 0f , ( float ) -Math.PI / 4 , .1f , .05f ,
+					30 ) );
 			cameraAnimationQueue.add( new AnimationViewSaver( ) );
 		}
 		cameraAnimationQueue.add( new Animation( )
@@ -1120,7 +1115,7 @@ public class BreakoutMainView
 						model3d.getCenter( center );
 					}
 
-					cameraAnimationQueue.add( new RandomViewOrbitAnimation( glWindow , camera , center , 0.0005f , ( float ) -Math.PI / 4 ,
+					cameraAnimationQueue.add( new RandomViewOrbitAnimation( glWindow , renderer.getViewSettings( ) , center , 0.0005f , ( float ) -Math.PI / 4 ,
 							( float ) -Math.PI / 9 , 30 , 60000 ) );
 				} ) );
 				return 0;
@@ -1167,8 +1162,8 @@ public class BreakoutMainView
 		float[ ] forward = new float[ 3 ];
 		float[ ] right = new float[ 3 ];
 
-		Vecmath.negate3( camera.inverseViewXform( ) , 8 , forward , 0 );
-		Vecmath.getColumn3( camera.inverseViewXform( ) , 0 , right );
+		Vecmath.negate3( renderer.getViewState( ).inverseViewXform( ) , 8 , forward , 0 );
+		Vecmath.getColumn3( renderer.getViewState( ).inverseViewXform( ) , 0 , right );
 
 		changeView( forward , right , false , getDefaultShotsForOperations( ) );
 	}
@@ -1236,7 +1231,7 @@ public class BreakoutMainView
 		float[ ] forward = new float[ ]
 		{ ( float ) Math.sin( azimuth - Math.PI * 0.5 ) , 0 , ( float ) -Math.cos( azimuth - Math.PI * 0.5 ) };
 
-		if( Vecmath.dot3( camera.inverseViewXform( ) , 8 , forward , 0 ) > 0 )
+		if( Vecmath.dot3( renderer.getViewState( ).inverseViewXform( ) , 8 , forward , 0 ) > 0 )
 		{
 			Vecmath.negate3( right );
 			Vecmath.negate3( forward );
@@ -1271,7 +1266,7 @@ public class BreakoutMainView
 		{
 			result.clear( );
 			PlanarHull3f hull = new PlanarHull3f( );
-			camera.pickXform( ).exportViewVolume( hull , canvas.getWidth( ) , canvas.getHeight( ) );
+			renderer.getViewState( ).pickXform( ).exportViewVolume( hull , canvas.getWidth( ) , canvas.getHeight( ) );
 			model3d.getShotsIn( hull , result );
 			if( result.isEmpty( ) )
 			{
@@ -1287,7 +1282,7 @@ public class BreakoutMainView
 		float[ ] forward = new float[ 3 ];
 		float[ ] right = new float[ 3 ];
 
-		float[ ] vi = camera.inverseViewXform( );
+		float[ ] vi = renderer.getViewState( ).inverseViewXform( );
 
 		Vecmath.negate3( vi , 8 , forward , 0 );
 		Vecmath.getColumn3( vi , 0 , right );
@@ -1308,7 +1303,7 @@ public class BreakoutMainView
 		Vecmath.cross( right , forward , up );
 
 		Projection newProjCalculator;
-		float[ ] vi = camera.inverseViewXform( );
+		float[ ] vi = renderer.getViewState( ).inverseViewXform( );
 		float[ ] endLocation =
 		{ vi[ 12 ] , vi[ 13 ] , vi[ 14 ] };
 
@@ -1331,7 +1326,7 @@ public class BreakoutMainView
 
 				Vecmath.combine( endLocation , endOrthoLocation , right , up , forward );
 
-				float dist = Vecmath.distance3( camera.inverseViewXform( ) , 12 , endLocation , 0 );
+				float dist = Vecmath.distance3( vi , 12 , endLocation , 0 );
 				endOrthoLocation[ 2 ] -= dist;
 				Vecmath.combine( endLocation , endOrthoLocation , right , up , forward );
 
@@ -1348,7 +1343,7 @@ public class BreakoutMainView
 			finisher = l ->
 			{
 				orthoCalculator.useNearClipPoint = orthoCalculator.useFarClipPoint = true;
-				camera.setProjection( orthoCalculator );
+				renderer.getViewSettings( ).setProjection( orthoCalculator );
 				saveProjection( );
 
 				installOrthoMouseAdapters( );
@@ -1365,9 +1360,9 @@ public class BreakoutMainView
 			{
 				FittingFrustum frustum = new FittingFrustum( );
 				float[ ] projXform = newMat4f( );
-				perspCalculator.calculate( camera , projXform );
+				perspCalculator.calculate( renderer.getViewState( ) , projXform );
 				PickXform pickXform = new PickXform( );
-				pickXform.calculate( projXform , camera.viewXform( ) );
+				pickXform.calculate( projXform , renderer.getViewState( ).viewXform( ) );
 				frustum.init( pickXform , 0.9f );
 
 				for( Shot3d shot : shotsToFit )
@@ -1383,7 +1378,7 @@ public class BreakoutMainView
 
 			finisher = l ->
 			{
-				camera.setProjection( perspCalculator );
+				renderer.getViewSettings( ).setProjection( perspCalculator );
 				saveProjection( );
 
 				installPerspectiveMouseAdapters( );
@@ -1393,13 +1388,13 @@ public class BreakoutMainView
 			};
 		}
 
-		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( glWindow , camera , 1750 , 30 );
+		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( glWindow , renderer.getViewSettings( ) , 1750 , 30 );
 		float[ ] viewXform = newMat4f( );
-		viewAnimation.setUpWithEndLocation( camera.viewXform( ) , endLocation , forward , right );
+		viewAnimation.setUpWithEndLocation( renderer.getViewState( ).viewXform( ) , endLocation , forward , right );
 
-		Projection currentProjCalculator = camera.getProjection( );
+		Projection currentProjCalculator = renderer.getViewSettings( ).getProjection( );
 
-		InterpolationProjection calc = new InterpolationProjection( camera.getProjection( ) , newProjCalculator , 0f );
+		InterpolationProjection calc = new InterpolationProjection( renderer.getViewSettings( ).getProjection( ) , newProjCalculator , 0f );
 
 		FloatUnaryOperator viewReparam = f -> 1 - ( 1 - f ) * ( 1 - f );
 		FloatUnaryOperator projReparam;
@@ -1447,11 +1442,11 @@ public class BreakoutMainView
 		}
 
 		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new ProjXformAnimation( glWindow , camera , 1750 , false , f ->
+		cameraAnimationQueue.add( new ProjXformAnimation( glWindow , renderer.getViewSettings( ) , 1750 , false , f ->
 		{
 			calc.f = projReparam.applyAsFloat( f );
 			return calc;
-		} ).also( new ViewXformAnimation( glWindow , camera , 1750 , true , f ->
+		} ).also( new ViewXformAnimation( glWindow , renderer.getViewSettings( ) , 1750 , true , f ->
 		{
 			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
 			return viewXform;
@@ -1584,9 +1579,11 @@ public class BreakoutMainView
 		PlanarHull3f hull = new PlanarHull3f( );
 		float[ ] origin = new float[ 3 ];
 		float[ ] direction = new float[ 3 ];
-		camera.pickXform( ).xform( e.getX( ) , e.getComponent( ).getHeight( ) - e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) ,
-				origin , direction );
-		camera.pickXform( ).exportViewVolume( hull , e , 10 );
+		renderer.getViewState( )
+				.pickXform( )
+				.xform( e.getX( ) , e.getComponent( ).getHeight( ) - e.getY( ) , e.getComponent( ).getWidth( ) , e.getComponent( ).getHeight( ) , origin ,
+						direction );
+		renderer.getViewState( ).pickXform( ).exportViewVolume( hull , e , 10 );
 
 		if( model3d != null )
 		{
@@ -1908,13 +1905,13 @@ public class BreakoutMainView
 	private void saveViewXform( )
 	{
 		float[ ] viewXform = Vecmath.newMat4f( );
-		camera.getViewXform( viewXform );
+		renderer.getViewSettings( ).getViewXform( viewXform );
 		getProjectModel( ).set( ProjectModel.viewXform , viewXform );
 	}
 
 	private void saveProjection( )
 	{
-		getProjectModel( ).set( ProjectModel.projCalculator , camera.getProjection( ) );
+		getProjectModel( ).set( ProjectModel.projCalculator , renderer.getViewSettings( ).getProjection( ) );
 	}
 
 	private void replaceNulls( QObject<ProjectModel> projectModel , File projectFile )
@@ -2505,13 +2502,13 @@ public class BreakoutMainView
 					float[ ] viewXform = finalProjectModel.get( ProjectModel.viewXform );
 					if( viewXform != null )
 					{
-						camera.setViewXform( viewXform );
+						renderer.getViewSettings( ).setViewXform( viewXform );
 					}
 
 					Projection projCalculator = finalProjectModel.get( ProjectModel.projCalculator );
 					if( projCalculator != null )
 					{
-						camera.setProjection( projCalculator );
+						renderer.getViewSettings( ).setProjection( projCalculator );
 					}
 
 					if( finalProjectModel.get( ProjectModel.cameraView ) == CameraView.PERSPECTIVE )

@@ -36,13 +36,13 @@ import java.awt.event.MouseEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewSettings;
 import org.andork.math3d.Vecmath;
 
 public class JoglOrbiter extends MouseAdapter
 {
 	final GLAutoDrawable	drawable;
-	final JoglCamera		camera;
+	final JoglViewSettings	viewSettings;
 
 	MouseEvent				lastEvent	= null;
 	final float[ ]			center		=
@@ -58,11 +58,11 @@ public class JoglOrbiter extends MouseAdapter
 	float					tiltFactor	= ( float ) Math.PI;
 	float					sensitivity	= 1f;
 
-	public JoglOrbiter( GLAutoDrawable drawable , JoglCamera camera )
+	public JoglOrbiter( GLAutoDrawable drawable , JoglViewSettings viewSettings )
 	{
 		super( );
 		this.drawable = drawable;
-		this.camera = camera;
+		this.viewSettings = viewSettings;
 	}
 
 	public boolean isActive( )
@@ -193,7 +193,7 @@ public class JoglOrbiter extends MouseAdapter
 
 		if( button == MouseEvent.BUTTON1 && !e.isShiftDown( ) )
 		{
-			camera.getViewXform( v );
+			viewSettings.getViewXform( v );
 			invAffine( v , m1 );
 			mvmulAffine( m1 , 1 , 0 , 0 , axis );
 			normalize3( axis );
@@ -219,7 +219,7 @@ public class JoglOrbiter extends MouseAdapter
 
 			mmulAffine( m1 , m2 , m2 );
 			mmulAffine( v , m2 , v );
-			camera.setViewXform( v );
+			viewSettings.setViewXform( v );
 		}
 
 		if( callDisplay )

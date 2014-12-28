@@ -28,15 +28,13 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 
-import org.andork.jogl.neu.awt.BasicJoglSetup;
-import org.andork.jogl.neu2.JoglCamera;
-import org.andork.jogl.neu2.JoglScene;
+import org.andork.jogl.neu2.JoglViewSettings;
 import org.andork.math3d.Vecmath;
 
 public class DefaultNavigator extends MouseAdapter
 {
 	final GLAutoDrawable	drawable;
-	final JoglCamera		camera;
+	final JoglViewSettings	viewSettings;
 
 	MouseEvent				lastEvent	= null;
 	float[ ]				v			= new float[ 3 ];
@@ -60,11 +58,11 @@ public class DefaultNavigator extends MouseAdapter
 	final float[ ]			center		=
 										{ Float.NaN , Float.NaN , Float.NaN };
 
-	public DefaultNavigator( GLAutoDrawable drawable , JoglCamera camera )
+	public DefaultNavigator( GLAutoDrawable drawable , JoglViewSettings viewSettings )
 	{
 		super( );
 		this.drawable = drawable;
-		this.camera = camera;
+		this.viewSettings = viewSettings;
 	}
 
 	public boolean isActive( )
@@ -198,7 +196,7 @@ public class DefaultNavigator extends MouseAdapter
 		}
 		lastEvent = e;
 
-		camera.getViewXform( cam );
+		viewSettings.getViewXform( cam );
 		Vecmath.invAffine( cam );
 
 		Vecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
@@ -228,7 +226,7 @@ public class DefaultNavigator extends MouseAdapter
 				Vecmath.mmulRotational( temp , cam , cam );
 
 				Vecmath.invAffine( cam );
-				camera.setViewXform( cam );
+				viewSettings.setViewXform( cam );
 			}
 		}
 		else if( button == MouseEvent.BUTTON2 )
@@ -250,7 +248,7 @@ public class DefaultNavigator extends MouseAdapter
 				cam[ 14 ] += cam[ 10 ] * dy * scaledMoveFactor;
 			}
 			Vecmath.invAffine( cam );
-			camera.setViewXform( cam );
+			viewSettings.setViewXform( cam );
 		}
 		else if( button == MouseEvent.BUTTON3 )
 		{
@@ -265,7 +263,7 @@ public class DefaultNavigator extends MouseAdapter
 				cam[ 14 ] -= cam[ 10 ] / xz * dy * scaledMoveFactor;
 
 				Vecmath.invAffine( cam );
-				camera.setViewXform( cam );
+				viewSettings.setViewXform( cam );
 			}
 			else
 			{
@@ -273,7 +271,7 @@ public class DefaultNavigator extends MouseAdapter
 				cam[ 13 ] += cam[ 1 ] * -dx * scaledMoveFactor + cam[ 5 ] * dy * scaledMoveFactor;
 				cam[ 14 ] += cam[ 2 ] * -dx * scaledMoveFactor + cam[ 6 ] * dy * scaledMoveFactor;
 				Vecmath.invAffine( cam );
-				camera.setViewXform( cam );
+				viewSettings.setViewXform( cam );
 			}
 		}
 
@@ -291,7 +289,7 @@ public class DefaultNavigator extends MouseAdapter
 			return;
 		}
 
-		camera.getViewXform( cam );
+		viewSettings.getViewXform( cam );
 		Vecmath.invAffine( cam );
 
 		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
@@ -318,7 +316,7 @@ public class DefaultNavigator extends MouseAdapter
 		}
 
 		Vecmath.invAffine( cam );
-		camera.setViewXform( cam );
+		viewSettings.setViewXform( cam );
 
 		if( callDisplay )
 		{

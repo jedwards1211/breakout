@@ -8,9 +8,10 @@ import javax.media.opengl.GLEventListener;
 import static javax.media.opengl.GL3.*;
 import static org.andork.math3d.Vecmath.*;
 
-public class DefaultGLEventListener implements GLEventListener
+public class DefaultJoglRenderer implements GLEventListener
 {
-	JoglCamera			camera;
+	JoglViewState		viewState			= new JoglViewState( );
+	JoglViewSettings	viewSettings		= new JoglViewSettings( );
 	JoglScene			scene;
 	GL3Framebuffer		framebuffer;
 
@@ -19,30 +20,33 @@ public class DefaultGLEventListener implements GLEventListener
 	private float[ ]	m					= newMat4f( );
 	private float[ ]	n					= newMat3f( );
 
-	public DefaultGLEventListener( JoglCamera camera , JoglScene scene )
+	public DefaultJoglRenderer( JoglScene scene )
 	{
 		super( );
-		this.camera = camera;
 		this.scene = scene;
 	}
 
-	public DefaultGLEventListener( JoglCamera camera , JoglScene scene , GL3Framebuffer framebuffer , int desiredNumSamples )
+	public DefaultJoglRenderer( JoglScene scene , GL3Framebuffer framebuffer , int desiredNumSamples )
 	{
 		super( );
-		this.camera = camera;
 		this.scene = scene;
 		this.framebuffer = framebuffer;
 		this.desiredNumSamples = desiredNumSamples;
 	}
 
-	public JoglCamera getCamera( )
+	public JoglViewState getViewState( )
 	{
-		return camera;
+		return viewState;
 	}
 
-	public void setCamera( JoglCamera camera )
+	public JoglViewSettings getViewSettings( )
 	{
-		this.camera = camera;
+		return viewSettings;
+	}
+
+	public void setViewSettings( JoglViewSettings viewSettings )
+	{
+		this.viewSettings = viewSettings;
 	}
 
 	public JoglScene getScene( )
@@ -101,9 +105,12 @@ public class DefaultGLEventListener implements GLEventListener
 			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , renderingFbo );
 		}
 
-		camera.update( drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) );
+		viewState.update( viewSettings , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) );
 
-		scene.draw( camera , gl , m , n );
+		if( scene != null )
+		{
+			scene.draw( viewState , gl , m , n );
+		}
 
 		if( framebuffer != null )
 		{

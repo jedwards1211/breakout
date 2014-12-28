@@ -42,8 +42,8 @@ public class OrthoProjection implements Projection
 	@Override
 	public void calculate( JoglDrawContext dc , float[ ] pOut )
 	{
-		float width = dc.getWidth( );
-		float height = dc.getHeight( );
+		float width = dc.width( );
+		float height = dc.height( );
 		float left, right, bottom, top;
 		if( vSpan / hSpan > height / width )
 		{

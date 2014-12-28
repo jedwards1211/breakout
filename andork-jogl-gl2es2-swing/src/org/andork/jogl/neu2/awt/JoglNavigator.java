@@ -28,13 +28,13 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.media.opengl.GLAutoDrawable;
 
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewSettings;
 import org.andork.math3d.Vecmath;
 
 public class JoglNavigator extends MouseAdapter
 {
 	final GLAutoDrawable	drawable;
-	final JoglCamera		camera;
+	final JoglViewSettings	viewSettings;
 
 	MouseEvent				lastEvent	= null;
 	float[ ]				v			= new float[ 3 ];
@@ -55,11 +55,11 @@ public class JoglNavigator extends MouseAdapter
 
 	float					sensitivity	= 1f;
 
-	public JoglNavigator( GLAutoDrawable drawable , JoglCamera camera )
+	public JoglNavigator( GLAutoDrawable drawable , JoglViewSettings viewSettings )
 	{
 		super( );
 		this.drawable = drawable;
-		this.camera = camera;
+		this.viewSettings = viewSettings;
 	}
 
 	public boolean isActive( )
@@ -168,7 +168,7 @@ public class JoglNavigator extends MouseAdapter
 		}
 		lastEvent = e;
 
-		camera.getViewXform( cam );
+		viewSettings.getViewXform( cam );
 		Vecmath.invAffine( cam );
 
 		Vecmath.mvmulAffine( cam , 0 , 0 , 1 , v );
@@ -198,7 +198,7 @@ public class JoglNavigator extends MouseAdapter
 				Vecmath.mmulRotational( temp , cam , cam );
 
 				Vecmath.invAffine( cam );
-				camera.setViewXform( cam );
+				viewSettings.setViewXform( cam );
 			}
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
@@ -207,7 +207,7 @@ public class JoglNavigator extends MouseAdapter
 			cam[ 13 ] += cam[ 9 ] * dy * scaledMoveFactor;
 			cam[ 14 ] += cam[ 10 ] * dy * scaledMoveFactor;
 			Vecmath.invAffine( cam );
-			camera.setViewXform( cam );
+			viewSettings.setViewXform( cam );
 		}
 		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
 		{
@@ -215,7 +215,7 @@ public class JoglNavigator extends MouseAdapter
 			cam[ 13 ] += cam[ 1 ] * -dx * scaledMoveFactor + cam[ 5 ] * dy * scaledMoveFactor;
 			cam[ 14 ] += cam[ 2 ] * -dx * scaledMoveFactor + cam[ 6 ] * dy * scaledMoveFactor;
 			Vecmath.invAffine( cam );
-			camera.setViewXform( cam );
+			viewSettings.setViewXform( cam );
 		}
 
 		if( callDisplay )
@@ -232,7 +232,7 @@ public class JoglNavigator extends MouseAdapter
 			return;
 		}
 
-		camera.getViewXform( cam );
+		viewSettings.getViewXform( cam );
 		Vecmath.invAffine( cam );
 
 		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
@@ -242,7 +242,7 @@ public class JoglNavigator extends MouseAdapter
 		cam[ 14 ] += cam[ 10 ] * distance;
 
 		Vecmath.invAffine( cam );
-		camera.setViewXform( cam );
+		viewSettings.setViewXform( cam );
 
 		if( callDisplay )
 		{

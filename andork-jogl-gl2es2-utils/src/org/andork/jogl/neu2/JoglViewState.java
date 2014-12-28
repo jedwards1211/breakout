@@ -21,52 +21,60 @@
  *******************************************************************************/
 package org.andork.jogl.neu2;
 
-import static org.andork.math3d.Vecmath.invAffine;
 import static org.andork.math3d.Vecmath.newMat4f;
 import static org.andork.math3d.Vecmath.ortho;
+import static org.andork.math3d.Vecmath.setIdentity;
 
-import org.andork.jogl.PerspectiveProjection;
-import org.andork.jogl.Projection;
+import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.math3d.PickXform;
-import org.andork.math3d.Vecmath;
 
-public class DefaultJoglCamera implements JoglCamera
+public class JoglViewState implements JoglDrawContext
 {
+	private int				width;
+
+	private int				height;
+
 	/**
 	 * The view matrix.
 	 */
-	protected final float[ ]	v			= newMat4f( );
+	private final float[ ]	v			= newMat4f( );
 
 	/**
 	 * The inverse of the view matrix.
 	 */
-	protected final float[ ]	vi			= newMat4f( );
+	private final float[ ]	vi			= newMat4f( );
 
 	/**
 	 * The projection matrix.
 	 */
-	protected final float[ ]	p			= newMat4f( );
+	private final float[ ]	p			= newMat4f( );
 
 	/**
 	 * Transforms from pixel space coordinates to clipping coordinates.
 	 */
-	protected final float[ ]	screenXform	= newMat4f( );
+	private final float[ ]	screenXform	= newMat4f( );
 
-	protected final float[ ]	pixelScale	= new float[ 2 ];
+	/**
+	 * The size of a pixel in clipping coordinates.
+	 */
+	private final float[ ]	pixelScale	= new float[ 2 ];
 
-	private Projection			projection	= new PerspectiveProjection( ( float ) Math.PI / 2 , 1f , 1e7f );
+	/**
+	 * Transforms from screen coordinates to a ray in virtual world coordinates.
+	 */
+	private final PickXform	pickXform	= new PickXform( );
 
-	private int					width , height;
-
-	private PickXform			pickXform	= new PickXform( );
+	public JoglViewState( )
+	{
+		update( new JoglViewSettings( ) , 100 , 100 );
+	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see org.andork.jogl.neu2.JoglCamera#updatePickXform()
 	 */
-	@Override
-	public void update( int width , int height )
+	public void update( JoglViewSettings settings , int width , int height )
 	{
 		this.width = width;
 		this.height = height;
@@ -75,7 +83,18 @@ public class DefaultJoglCamera implements JoglCamera
 		pixelScale[ 0 ] = screenXform[ 0 ];
 		pixelScale[ 1 ] = screenXform[ 5 ];
 
-		projection.calculate( this , p );
+		if( settings != null )
+		{
+			settings.getViewXform( this.v );
+			settings.getInvViewXform( this.vi );
+			settings.getProjection( ).calculate( this , p );
+		}
+		else
+		{
+			setIdentity( v );
+			setIdentity( vi );
+			setIdentity( p );
+		}
 
 		pickXform.calculate( p , v );
 	}
@@ -83,74 +102,21 @@ public class DefaultJoglCamera implements JoglCamera
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see org.andork.jogl.neu2.JoglCamera#getViewXform(float[])
-	 */
-	@Override
-	public void getViewXform( float[ ] out )
-	{
-		System.arraycopy( v , 0 , out , 0 , 16 );
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.andork.jogl.neu2.JoglCamera#setViewXform(float[])
-	 */
-	@Override
-	public void setViewXform( float[ ] v )
-	{
-		if( Vecmath.hasNaNsOrInfinites( v ) )
-		{
-			throw new IllegalArgumentException( "v must not contain NaN or Infinite values" );
-		}
-
-		System.arraycopy( v , 0 , this.v , 0 , 16 );
-		invAffine( v , vi );
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
 	 * @see org.andork.jogl.neu2.JoglCamera#pickXform()
 	 */
-	@Override
 	public PickXform pickXform( )
 	{
 		return pickXform;
 	}
 
-	public int getWidth( )
+	public int width( )
 	{
 		return width;
 	}
 
-	public int getHeight( )
+	public int height( )
 	{
 		return height;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.andork.jogl.neu2.JoglCamera#setProjectionCalculator(org.andork.jogl
-	 * .ProjectionCalculator)
-	 */
-	@Override
-	public void setProjection( Projection projection )
-	{
-		this.projection = projection;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.andork.jogl.neu2.JoglCamera#getProjectionCalculator()
-	 */
-	@Override
-	public Projection getProjection( )
-	{
-		return projection;
 	}
 
 	@Override

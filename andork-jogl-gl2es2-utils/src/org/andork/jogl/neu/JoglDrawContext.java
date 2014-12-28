@@ -23,9 +23,9 @@ package org.andork.jogl.neu;
 
 public interface JoglDrawContext
 {
-	public int getWidth( );
+	public int width( );
 
-	public int getHeight( );
+	public int height( );
 
 	public float[ ] viewXform( );
 

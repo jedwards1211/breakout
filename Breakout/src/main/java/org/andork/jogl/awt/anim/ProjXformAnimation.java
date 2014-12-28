@@ -27,7 +27,7 @@ import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
 import org.andork.jogl.Projection;
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewSettings;
 
 public class ProjXformAnimation implements Animation
 {
@@ -39,16 +39,16 @@ public class ProjXformAnimation implements Animation
 	 *            the inverted view matrix as arguments, and returns the new
 	 *            inverted view matrix.
 	 */
-	public ProjXformAnimation( GLAutoDrawable drawable , JoglCamera camera , long totalTime , boolean display , Function<Float, Projection> function )
+	public ProjXformAnimation( GLAutoDrawable drawable , JoglViewSettings viewSettings , long totalTime , boolean display , Function<Float, Projection> function )
 	{
-		this.camera = camera;
+		this.viewSettings = viewSettings;
 		this.drawable = drawable;
 		this.totalTime = totalTime;
 		this.display = display;
 		this.function = function;
 	}
 
-	JoglCamera					camera;
+	JoglViewSettings					viewSettings;
 	GLAutoDrawable				drawable;
 
 	long						elapsedTime	= 0;
@@ -64,7 +64,7 @@ public class ProjXformAnimation implements Animation
 
 		float f = Math.min( 1f , ( float ) elapsedTime / totalTime );
 
-		camera.setProjection( function.apply( f ) );
+		viewSettings.setProjection( function.apply( f ) );
 		if( display )
 		{
 			drawable.display( );

@@ -41,8 +41,7 @@ import static org.andork.math3d.Vecmath.subDot3;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.neu.awt.BasicJoglSetup;
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewSettings;
 import org.andork.math3d.LineLineIntersection2d;
 import org.andork.math3d.LinePlaneIntersection3d;
 
@@ -51,7 +50,7 @@ public class GeneralViewXformOrbitAnimation implements Animation
 	final float[ ]					startXform				= newMat4f( );
 	final float[ ]					endXform				= newMat4f( );
 
-	JoglCamera						camera;
+	JoglViewSettings						viewSettings;
 	GLAutoDrawable					drawable;
 
 	long							elapsedTime;
@@ -104,9 +103,9 @@ public class GeneralViewXformOrbitAnimation implements Animation
 	final LineLineIntersection2d	llx						= new LineLineIntersection2d( );
 	final LinePlaneIntersection3d	lpx						= new LinePlaneIntersection3d( );
 
-	public GeneralViewXformOrbitAnimation( GLAutoDrawable drawable , JoglCamera camera , long totalTime , long period )
+	public GeneralViewXformOrbitAnimation( GLAutoDrawable drawable , JoglViewSettings viewSettings , long totalTime , long period )
 	{
-		this.camera = camera;
+		this.viewSettings = viewSettings;
 		this.drawable = drawable;
 		this.totalTime = totalTime;
 		this.period = period;
@@ -355,7 +354,7 @@ public class GeneralViewXformOrbitAnimation implements Animation
 
 		calcViewXform( Math.min( 1f , ( double ) elapsedTime / totalTime ) , viewXform );
 
-		camera.setViewXform( viewXform );
+		viewSettings.setViewXform( viewXform );
 
 		drawable.display( );
 

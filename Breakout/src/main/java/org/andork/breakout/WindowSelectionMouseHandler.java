@@ -35,7 +35,7 @@ import javax.media.opengl.GLAutoDrawable;
 import org.andork.breakout.model.Survey3dModel;
 import org.andork.breakout.model.Survey3dModel.Shot3d;
 import org.andork.func.StreamUtils;
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewState;
 import org.andork.jogl.neu2.JoglScene;
 import org.andork.math3d.PickXform;
 import org.andork.math3d.PlanarHull3f;
@@ -57,7 +57,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 
 		public GLAutoDrawable getDrawable( );
 
-		public JoglCamera getCamera( );
+		public JoglViewState getViewState( );
 
 		public JoglScene getScene( );
 
@@ -119,7 +119,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 
 			float[ ] mbr = edgeTree.getRoot( ).mbr( );
 
-			PickXform pickXform = context.getCamera( ).pickXform( );
+			PickXform pickXform = context.getViewState( ).pickXform( );
 
 			GLAutoDrawable canvas = context.getDrawable( );
 			int cw = canvas.getSurfaceWidth( );
@@ -167,10 +167,10 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 			//				return false;
 			//			} );
 
-				JoglCamera camera = context.getCamera( );
+				JoglViewState viewState = context.getViewState( );
 
 				float[ ] pv = Vecmath.newMat4f( );
-				Vecmath.mmul( camera.projXform( ) , camera.viewXform( ) , pv );
+				Vecmath.mmul( viewState.projXform( ) , viewState.viewXform( ) , pv );
 
 				Set<Shot3d> newSelected = new HashSet<>( );
 

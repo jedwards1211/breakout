@@ -29,7 +29,6 @@ import static org.andork.math3d.Vecmath.scaleAdd3;
 import static org.andork.math3d.Vecmath.sub3;
 import static org.andork.math3d.Vecmath.subDot3;
 
-import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -37,13 +36,15 @@ import java.awt.event.MouseWheelEvent;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.jogl.AutoClipOrthoProjection;
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewSettings;
+import org.andork.jogl.neu2.JoglViewState;
 import org.andork.math3d.Vecmath;
 
 public class JoglOrthoNavigator extends MouseAdapter
 {
 	final GLAutoDrawable	drawable;
-	final JoglCamera		camera;
+	final JoglViewState		viewState;
+	final JoglViewSettings	viewSettings;
 
 	MouseEvent				lastEvent	= null;
 	MouseEvent				pressEvent	= null;
@@ -65,11 +66,12 @@ public class JoglOrthoNavigator extends MouseAdapter
 	final float[ ]			p1			= new float[ 3 ];
 	final float[ ]			p2			= new float[ 3 ];
 
-	public JoglOrthoNavigator( GLAutoDrawable drawable , JoglCamera camera )
+	public JoglOrthoNavigator( GLAutoDrawable drawable , JoglViewState viewState , JoglViewSettings viewSettings )
 	{
 		super( );
 		this.drawable = drawable;
-		this.camera = camera;
+		this.viewState = viewState;
+		this.viewSettings = viewSettings;
 	}
 
 	public boolean isActive( )
@@ -169,11 +171,11 @@ public class JoglOrthoNavigator extends MouseAdapter
 			return;
 		}
 
-		camera.pickXform( ).xform( lastEvent , -1 , p0 );
-		camera.pickXform( ).xform( e , -1 , p1 );
+		viewState.pickXform( ).xform( lastEvent , -1 , p0 );
+		viewState.pickXform( ).xform( e , -1 , p1 );
 
-		mpmulAffine( camera.viewXform( ) , p0 );
-		mpmulAffine( camera.viewXform( ) , p1 );
+		mpmulAffine( viewState.viewXform( ) , p0 );
+		mpmulAffine( viewState.viewXform( ) , p1 );
 
 		float dx = p1[ 0 ] - p0[ 0 ];
 		float dy = p1[ 1 ] - p0[ 1 ];
@@ -184,7 +186,7 @@ public class JoglOrthoNavigator extends MouseAdapter
 		}
 		lastEvent = e;
 
-		camera.getViewXform( v );
+		viewSettings.getViewXform( v );
 		Vecmath.invAffine( v , vi );
 
 		//		float scaledMoveFactor = moveFactor * sensitivity;
@@ -203,7 +205,7 @@ public class JoglOrthoNavigator extends MouseAdapter
 		//				Vecmath.mmulRotational( temp , cam , cam );
 		//				
 		//				Vecmath.invAffine( cam );
-		//				camera.setViewXform( cam );
+		//				viewSettings.setViewXform( cam );
 		//			}
 		//		}
 		if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
@@ -214,7 +216,7 @@ public class JoglOrthoNavigator extends MouseAdapter
 				vi[ 13 ] += vi[ 9 ] * dy;
 				vi[ 14 ] += vi[ 10 ] * dy;
 				Vecmath.invAffine( vi , v );
-				camera.setViewXform( v );
+				viewSettings.setViewXform( v );
 			}
 			else
 			{
@@ -227,7 +229,7 @@ public class JoglOrthoNavigator extends MouseAdapter
 			vi[ 13 ] += vi[ 1 ] * -dx - vi[ 5 ] * dy;
 			vi[ 14 ] += vi[ 2 ] * -dx - vi[ 6 ] * dy;
 			Vecmath.invAffine( vi , v );
-			camera.setViewXform( v );
+			viewSettings.setViewXform( v );
 		}
 
 		if( callDisplay )
@@ -238,9 +240,9 @@ public class JoglOrthoNavigator extends MouseAdapter
 
 	private void calcZoom( MouseEvent e , float factor )
 	{
-		camera.pickXform( ).xform( -1 , -1 , -1 , p0 );
-		camera.pickXform( ).xform( 1 , 1 , -1 , p1 );
-		camera.pickXform( ).xform( e , -1 , p2 );
+		viewState.pickXform( ).xform( -1 , -1 , -1 , p0 );
+		viewState.pickXform( ).xform( 1 , 1 , -1 , p1 );
+		viewState.pickXform( ).xform( e , -1 , p2 );
 
 		sub3( p0 , p2 , p0 );
 		sub3( p1 , p2 , p1 );
@@ -248,7 +250,7 @@ public class JoglOrthoNavigator extends MouseAdapter
 		scaleAdd3( factor , p0 , p2 , p0 );
 		scaleAdd3( factor , p1 , p2 , p1 );
 
-		AutoClipOrthoProjection orthoCalc = ( AutoClipOrthoProjection ) camera.getProjection( );
+		AutoClipOrthoProjection orthoCalc = ( AutoClipOrthoProjection ) viewSettings.getProjection( );
 		orthoCalc.hSpan = Math.abs( dot3( p0 , 0 , vi , 0 ) - dot3( p1 , 0 , vi , 0 ) );
 		orthoCalc.vSpan = Math.abs( dot3( p0 , 0 , vi , 4 ) - dot3( p1 , 0 , vi , 4 ) );
 
@@ -262,7 +264,7 @@ public class JoglOrthoNavigator extends MouseAdapter
 		vi[ 14 ] += vi[ 2 ] * dx + vi[ 6 ] * dy;
 
 		invAffine( vi , v );
-		camera.setViewXform( v );
+		viewSettings.setViewXform( v );
 	}
 
 	@Override
@@ -273,7 +275,7 @@ public class JoglOrthoNavigator extends MouseAdapter
 			return;
 		}
 
-		camera.getViewXform( v );
+		viewSettings.getViewXform( v );
 		Vecmath.invAffine( v , vi );
 
 		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
@@ -289,7 +291,7 @@ public class JoglOrthoNavigator extends MouseAdapter
 			vi[ 13 ] += vi[ 9 ] * distance;
 			vi[ 14 ] += vi[ 10 ] * distance;
 			Vecmath.invAffine( vi , v );
-			camera.setViewXform( v );
+			viewSettings.setViewXform( v );
 		}
 		else
 		{

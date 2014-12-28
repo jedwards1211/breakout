@@ -24,7 +24,7 @@ package org.andork.jogl.awt.anim;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.neu2.JoglCamera;
+import org.andork.jogl.neu2.JoglViewSettings;
 import org.andork.math3d.Orbiter;
 import org.andork.math3d.Vecmath;
 import org.andork.util.Reparam;
@@ -32,14 +32,14 @@ import org.andork.util.Reparam;
 public class RandomViewOrbitAnimation implements Animation
 {
 
-	public RandomViewOrbitAnimation( GLAutoDrawable drawable , JoglCamera camera , float[ ] center , float panRate , float minTilt , float maxTilt ,
+	public RandomViewOrbitAnimation( GLAutoDrawable drawable , JoglViewSettings viewSettings , float[ ] center , float panRate , float minTilt , float maxTilt ,
 			int period , int tiltPeriod )
 	{
 		if( period <= 0 )
 		{
 			throw new IllegalArgumentException( "period must be > 0" );
 		}
-		this.camera = camera;
+		this.viewSettings = viewSettings;
 		this.drawable = drawable;
 		orbiter.setCenter( center );
 		this.panRate = panRate;
@@ -49,7 +49,7 @@ public class RandomViewOrbitAnimation implements Animation
 		this.tiltPeriod = tiltPeriod;
 	}
 
-	JoglCamera		camera;
+	JoglViewSettings		viewSettings;
 	GLAutoDrawable	drawable;
 
 	final float[ ]	v			= Vecmath.newMat4f( );
@@ -73,7 +73,7 @@ public class RandomViewOrbitAnimation implements Animation
 	{
 		tiltParam += Math.PI * 2 * animTime / tiltPeriod;
 
-		camera.getViewXform( v );
+		viewSettings.getViewXform( v );
 
 		float currentTilt = orbiter.getTilt( v );
 		if( Float.isNaN( startTilt ) )
@@ -107,7 +107,7 @@ public class RandomViewOrbitAnimation implements Animation
 
 		orbiter.orbit( v , panRate * animTime / period , 0 , v );
 
-		camera.setViewXform( v );
+		viewSettings.setViewXform( v );
 
 		drawable.display( );
 
