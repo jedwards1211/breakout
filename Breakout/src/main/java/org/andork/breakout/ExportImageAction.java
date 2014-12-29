@@ -35,8 +35,8 @@ import javax.swing.SwingUtilities;
 import org.andork.awt.I18n.Localizer;
 import org.andork.bind.Binder;
 import org.andork.breakout.model.ProjectModel;
-import org.andork.jogl.awt.JoglImageExportDialog;
-import org.andork.jogl.awt.JoglImageExportDialogModel;
+import org.andork.jogl.awt.JoglExportImageDialog;
+import org.andork.jogl.awt.JoglExportImageDialogModel;
 import org.andork.q.QObject;
 import org.andork.swing.OnEDT;
 
@@ -44,7 +44,7 @@ import org.andork.swing.OnEDT;
 public class ExportImageAction extends AbstractAction
 {
 	BreakoutMainView	mainView;
-	JoglImageExportDialog	screenCaptureDialog;
+	JoglExportImageDialog	screenCaptureDialog;
 
 	public ExportImageAction( BreakoutMainView breakoutMainView )
 	{
@@ -67,27 +67,27 @@ public class ExportImageAction extends AbstractAction
 
 		if( screenCaptureDialog == null )
 		{
-			screenCaptureDialog = new JoglImageExportDialog( mainView.getAutoDrawable( ) ,
+			screenCaptureDialog = new JoglExportImageDialog( mainView.getAutoDrawable( ) ,
 				SwingUtilities.getWindowAncestor( mainPanel ) , mainView.getI18n( ) );
 			screenCaptureDialog.setTitle( "Export Image" );
-			QObject<JoglImageExportDialogModel> screenCaptureDialogModel = mainView.getProjectModel( ).get(
-				ProjectModel.screenCaptureDialogModel );
-			if( screenCaptureDialogModel == null )
+			QObject<JoglExportImageDialogModel> exportImageDialogModel = mainView.getProjectModel( ).get(
+				ProjectModel.exportImageDialogModel );
+			if( exportImageDialogModel == null )
 			{
-				screenCaptureDialogModel = JoglImageExportDialogModel.instance.newObject( );
-				screenCaptureDialogModel.set( JoglImageExportDialogModel.outputDirectory , "screenshots" );
-				screenCaptureDialogModel.set( JoglImageExportDialogModel.fileNamePrefix , "breakout-screenshot" );
-				screenCaptureDialogModel.set( JoglImageExportDialogModel.fileNumber , 1 );
-				screenCaptureDialogModel.set( JoglImageExportDialogModel.pixelWidth , canvas.getWidth( ) );
-				screenCaptureDialogModel.set( JoglImageExportDialogModel.pixelHeight , canvas.getHeight( ) );
-				screenCaptureDialogModel.set( JoglImageExportDialogModel.resolution , new BigDecimal( 300 ) );
-				screenCaptureDialogModel.set( JoglImageExportDialogModel.resolutionUnit ,
-					JoglImageExportDialogModel.ResolutionUnit.PIXELS_PER_IN );
-				mainView.getProjectModel( ).set( ProjectModel.screenCaptureDialogModel , screenCaptureDialogModel );
+				exportImageDialogModel = JoglExportImageDialogModel.instance.newObject( );
+				exportImageDialogModel.set( JoglExportImageDialogModel.outputDirectory , "screenshots" );
+				exportImageDialogModel.set( JoglExportImageDialogModel.fileNamePrefix , "breakout-screenshot" );
+				exportImageDialogModel.set( JoglExportImageDialogModel.fileNumber , 1 );
+				exportImageDialogModel.set( JoglExportImageDialogModel.pixelWidth , canvas.getWidth( ) );
+				exportImageDialogModel.set( JoglExportImageDialogModel.pixelHeight , canvas.getHeight( ) );
+				exportImageDialogModel.set( JoglExportImageDialogModel.resolution , new BigDecimal( 300 ) );
+				exportImageDialogModel.set( JoglExportImageDialogModel.resolutionUnit ,
+					JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN );
+				mainView.getProjectModel( ).set( ProjectModel.exportImageDialogModel , exportImageDialogModel );
 			}
 
-			Binder<QObject<JoglImageExportDialogModel>> screenCaptureBinder = bind(
-				ProjectModel.screenCaptureDialogModel , mainView.getProjectModelBinder( ) );
+			Binder<QObject<JoglExportImageDialogModel>> screenCaptureBinder = bind(
+				ProjectModel.exportImageDialogModel , mainView.getProjectModelBinder( ) );
 			screenCaptureDialog.setBinder( screenCaptureBinder );
 
 			Dimension size = mainPanel.getSize( );

@@ -68,7 +68,7 @@ public class BetterSpinnerNumberModel<N> extends AbstractSpinnerModel
 	 *             if stepSize or value is <code>null</code> or if the following expression is false: <code>minimum &lt;= value &lt;= maximum</code>
 	 */
 	public BetterSpinnerNumberModel(Class<N> numberClass, N value, Comparable<N> minimum, Comparable<N> maximum, N stepSize, Arithmetic<N> arithmetic) {
-		if (!(((minimum == null) || (minimum.compareTo(value) <= 0)) && ((maximum == null) || (maximum.compareTo(value) >= 0)))) {
+		if (value != null && !(((minimum == null) || (minimum.compareTo(value) <= 0)) && ((maximum == null) || (maximum.compareTo(value) >= 0)))) {
 			throw new IllegalArgumentException("(minimum <= value <= maximum) is false");
 		}
 		this.numberClass = numberClass;

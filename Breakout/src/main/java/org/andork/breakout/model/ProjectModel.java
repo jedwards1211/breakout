@@ -31,7 +31,7 @@ import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
 import org.andork.jogl.Projection;
-import org.andork.jogl.awt.JoglImageExportDialogModel;
+import org.andork.jogl.awt.JoglExportImageDialogModel;
 import org.andork.q.QMap;
 import org.andork.q.QMapBimapper;
 import org.andork.q.QObject;
@@ -42,43 +42,78 @@ import com.andork.plot.LinearAxisConversion;
 
 public final class ProjectModel extends QSpec<ProjectModel>
 {
-	public static final Attribute<CameraView>									cameraView					= newAttribute( CameraView.class , "cameraView" );
-	public static final Attribute<Projection>							projCalculator				= newAttribute( Projection.class , "projCalculator" );
-	public static final Attribute<float[ ]>										viewXform					= newAttribute( float[ ].class , "viewXform" );
-	public static final Attribute<LinearAxisConversion>							distRange					= newAttribute( LinearAxisConversion.class , "distRange" );
-	public static final Attribute<ColorParam>									colorParam					= newAttribute( ColorParam.class , "colorParam" );
-	public static final Attribute<QMap<ColorParam, LinearAxisConversion, ?>>	paramRanges					= newAttribute( QMap.class , "savedParamRanges" );
-	public static final Attribute<LinearAxisConversion>							highlightRange				= newAttribute( LinearAxisConversion.class , "highlightRange" );
-	public static final Attribute<File>											surveyFile					= newAttribute( File.class , "surveyFile" );
-	public static final Attribute<QObject<DrawerModel>>							settingsDrawer				= newAttribute( DrawerModel.instance , "settingsDrawer" );
-	public static final Attribute<QObject<DrawerModel>>							surveyDrawer				= newAttribute( DrawerModel.instance , "surveyDrawer" );
-	public static final Attribute<QObject<DrawerModel>>							miniSurveyDrawer			= newAttribute( DrawerModel.instance , "miniSurveyDrawer" );
-	public static final Attribute<QObject<DrawerModel>>							taskListDrawer				= newAttribute( DrawerModel.instance , "taskListDrawer" );
-	public static final Attribute<QObject<JoglImageExportDialogModel>>			screenCaptureDialogModel	= newAttribute( JoglImageExportDialogModel.instance , "screenCaptureDialogModel" );
-	public static final Attribute<Color>										backgroundColor				= newAttribute( Color.class , "backgroundColor" );
-	public static final Attribute<Float>										ambientLight				= newAttribute( Float.class , "ambientLight" );
-	public static final Attribute<float[ ]>										depthAxis					= newAttribute( float[ ].class , "depthAxis" );
-	
-	public static final ProjectModel											instance					= new ProjectModel( );
-	
+	public static final Attribute<CameraView>									cameraView				= newAttribute(
+																											CameraView.class ,
+																											"cameraView" );
+	public static final Attribute<Projection>									projCalculator			= newAttribute(
+																											Projection.class ,
+																											"projCalculator" );
+	public static final Attribute<float[ ]>										viewXform				= newAttribute(
+																											float[ ].class ,
+																											"viewXform" );
+	public static final Attribute<LinearAxisConversion>							distRange				= newAttribute(
+																											LinearAxisConversion.class ,
+																											"distRange" );
+	public static final Attribute<ColorParam>									colorParam				= newAttribute(
+																											ColorParam.class ,
+																											"colorParam" );
+	public static final Attribute<QMap<ColorParam, LinearAxisConversion, ?>>	paramRanges				= newAttribute(
+																											QMap.class ,
+																											"savedParamRanges" );
+	public static final Attribute<LinearAxisConversion>							highlightRange			= newAttribute(
+																											LinearAxisConversion.class ,
+																											"highlightRange" );
+	public static final Attribute<File>											surveyFile				= newAttribute(
+																											File.class ,
+																											"surveyFile" );
+	public static final Attribute<QObject<DrawerModel>>							settingsDrawer			= newAttribute(
+																											DrawerModel.instance ,
+																											"settingsDrawer" );
+	public static final Attribute<QObject<DrawerModel>>							surveyDrawer			= newAttribute(
+																											DrawerModel.instance ,
+																											"surveyDrawer" );
+	public static final Attribute<QObject<DrawerModel>>							miniSurveyDrawer		= newAttribute(
+																											DrawerModel.instance ,
+																											"miniSurveyDrawer" );
+	public static final Attribute<QObject<DrawerModel>>							taskListDrawer			= newAttribute(
+																											DrawerModel.instance ,
+																											"taskListDrawer" );
+	public static final Attribute<QObject<JoglExportImageDialogModel>>			exportImageDialogModel	= newAttribute(
+																											JoglExportImageDialogModel.instance ,
+																											"exportImageDialogModel" );
+	public static final Attribute<Color>										backgroundColor			= newAttribute(
+																											Color.class ,
+																											"backgroundColor" );
+	public static final Attribute<Float>										ambientLight			= newAttribute(
+																											Float.class ,
+																											"ambientLight" );
+	public static final Attribute<float[ ]>										depthAxis				= newAttribute(
+																											float[ ].class ,
+																											"depthAxis" );
+
+	public static final ProjectModel											instance				= new ProjectModel( );
+
 	public static final Bimapper<QObject<ProjectModel>, Object>					defaultMapper;
-	
+
 	static
 	{
 		defaultMapper = new QObjectMapBimapper<ProjectModel>( instance )
-				.map( projCalculator , ProjectionCalculatorBimapper.instance )
-				.map( distRange , LinearAxisConversionMapBimapper.instance )
-				.map( paramRanges , QMapBimapper.newInstance( EnumBimapper.newInstance( ColorParam.class ) , LinearAxisConversionMapBimapper.instance ) )
-				.map( highlightRange , LinearAxisConversionMapBimapper.instance )
-				.map( surveyFile , FileStringBimapper.instance )
-				.map( settingsDrawer , DrawerModel.defaultMapper )
-				.map( surveyDrawer , DrawerModel.defaultMapper )
-				.map( miniSurveyDrawer , DrawerModel.defaultMapper )
-				.map( taskListDrawer , DrawerModel.defaultMapper )
-				.map( screenCaptureDialogModel , JoglImageExportDialogModel.defaultMapper )
-				.map( backgroundColor , Color2HexStringBimapper.instance );
+			.map( projCalculator , ProjectionCalculatorBimapper.instance )
+			.map( distRange , LinearAxisConversionMapBimapper.instance )
+			.map(
+				paramRanges ,
+				QMapBimapper.newInstance( EnumBimapper.newInstance( ColorParam.class ) ,
+					LinearAxisConversionMapBimapper.instance ) )
+			.map( highlightRange , LinearAxisConversionMapBimapper.instance )
+			.map( surveyFile , FileStringBimapper.instance )
+			.map( settingsDrawer , DrawerModel.defaultMapper )
+			.map( surveyDrawer , DrawerModel.defaultMapper )
+			.map( miniSurveyDrawer , DrawerModel.defaultMapper )
+			.map( taskListDrawer , DrawerModel.defaultMapper )
+			.map( exportImageDialogModel , JoglExportImageDialogModel.defaultMapper )
+			.map( backgroundColor , Color2HexStringBimapper.instance );
 	}
-	
+
 	private ProjectModel( )
 	{
 		super( );

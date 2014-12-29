@@ -28,7 +28,7 @@ import org.andork.q.QObject;
 import org.andork.q.QObjectMapBimapper;
 import org.andork.q.QSpec;
 
-public class JoglImageExportDialogModel extends QSpec<JoglImageExportDialogModel>
+public class JoglExportImageDialogModel extends QSpec<JoglExportImageDialogModel>
 {
 	public static enum PrintSizeUnit
 	{
@@ -60,20 +60,20 @@ public class JoglImageExportDialogModel extends QSpec<JoglImageExportDialogModel
 	public static final Attribute<Integer>									pixelWidth		= newAttribute( Integer.class , "pixelWidth" );
 	public static final Attribute<Integer>									pixelHeight		= newAttribute( Integer.class , "pixelHeight" );
 	public static final Attribute<BigDecimal>								resolution		= newAttribute( BigDecimal.class , "resolution" );
-	public static final Attribute<JoglImageExportDialogModel.ResolutionUnit>	resolutionUnit	= newAttribute( JoglImageExportDialogModel.ResolutionUnit.class , "resolutionUnit" );
+	public static final Attribute<JoglExportImageDialogModel.ResolutionUnit>	resolutionUnit	= newAttribute( JoglExportImageDialogModel.ResolutionUnit.class , "resolutionUnit" );
 	public static final Attribute<Integer>									numSamples		= newAttribute( Integer.class , "numSamples" );
 	
-	private JoglImageExportDialogModel( )
+	private JoglExportImageDialogModel( )
 	{
 		
 	}
 	
-	public static final JoglImageExportDialogModel							instance	= new JoglImageExportDialogModel( );
+	public static final JoglExportImageDialogModel							instance	= new JoglExportImageDialogModel( );
 	
-	public static final Bimapper<QObject<JoglImageExportDialogModel>, Object>	defaultMapper;
+	public static final Bimapper<QObject<JoglExportImageDialogModel>, Object>	defaultMapper;
 	
 	static
 	{
-		defaultMapper = new QObjectMapBimapper<JoglImageExportDialogModel>( instance );
+		defaultMapper = new QObjectMapBimapper<JoglExportImageDialogModel>( instance );
 	}
 }

@@ -93,6 +93,7 @@ import org.andork.bind.DefaultBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ComponentTextBinder;
 import org.andork.bind.ui.ISelectorSelectionBinder;
+import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.bind.ui.JSpinnerValueBinder;
 import org.andork.format.Format;
 import org.andork.jogl.DefaultJoglRenderer;
@@ -100,7 +101,7 @@ import org.andork.jogl.GL3Framebuffer;
 import org.andork.jogl.JoglScene;
 import org.andork.jogl.JoglScreenPolygon;
 import org.andork.jogl.JoglViewSettings;
-import org.andork.jogl.awt.JoglImageExportDialogModel.ResolutionUnit;
+import org.andork.jogl.awt.JoglExportImageDialogModel.ResolutionUnit;
 import org.andork.q.QObject;
 import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
@@ -125,7 +126,7 @@ import com.jogamp.newt.awt.NewtCanvasAWT;
 import com.jogamp.newt.opengl.GLWindow;
 
 @SuppressWarnings( "serial" )
-public class JoglImageExportDialog extends JDialog
+public class JoglExportImageDialog extends JDialog
 {
 	private static final BigDecimal								IN_TO_CM				= new BigDecimal( "2.54" );
 	private static final BigDecimal								CM_TO_IN				= new BigDecimal(
@@ -172,7 +173,7 @@ public class JoglImageExportDialog extends JDialog
 	JLabel														pixelHeightUnitLabel;
 	JLabel														resolutionLabel;
 	JSpinner													resolutionSpinner;
-	DefaultSelector<JoglImageExportDialogModel.ResolutionUnit>	resolutionUnitSelector;
+	DefaultSelector<JoglExportImageDialogModel.ResolutionUnit>	resolutionUnitSelector;
 
 	JLabel														printSizeHeaderLabel;
 	JLabel														printWidthLabel;
@@ -180,7 +181,7 @@ public class JoglImageExportDialog extends JDialog
 	JLabel														printHeightLabel;
 	JSpinner													printHeightSpinner;
 	JLabel														printUnitLabel;
-	DefaultSelector<JoglImageExportDialogModel.PrintSizeUnit>		printUnitSelector;
+	DefaultSelector<JoglExportImageDialogModel.PrintSizeUnit>	printUnitSelector;
 
 	JLabel														numSamplesLabel;
 	JSlider														numSamplesSlider;
@@ -190,46 +191,46 @@ public class JoglImageExportDialog extends JDialog
 
 	boolean														updating;
 
-	BinderWrapper<QObject<JoglImageExportDialogModel>>			binder					= new BinderWrapper<QObject<JoglImageExportDialogModel>>( );
+	BinderWrapper<QObject<JoglExportImageDialogModel>>			binder					= new BinderWrapper<QObject<JoglExportImageDialogModel>>( );
 
 	QObjectAttributeBinder<String>								outputDirectoryBinder	= QObjectAttributeBinder
 																							.bind(
-																								JoglImageExportDialogModel.outputDirectory ,
+																								JoglExportImageDialogModel.outputDirectory ,
 																								binder );
 
 	QObjectAttributeBinder<String>								fileNamePrefixBinder	= QObjectAttributeBinder
 																							.bind(
-																								JoglImageExportDialogModel.fileNamePrefix ,
+																								JoglExportImageDialogModel.fileNamePrefix ,
 																								binder );
 
 	QObjectAttributeBinder<Integer>								fileNumberBinder		= QObjectAttributeBinder
 																							.bind(
-																								JoglImageExportDialogModel.fileNumber ,
+																								JoglExportImageDialogModel.fileNumber ,
 																								binder );
 
 	QObjectAttributeBinder<Integer>								pixelWidthBinder		= QObjectAttributeBinder
 																							.bind(
-																								JoglImageExportDialogModel.pixelWidth ,
+																								JoglExportImageDialogModel.pixelWidth ,
 																								binder );
 
 	QObjectAttributeBinder<Integer>								pixelHeightBinder		= QObjectAttributeBinder
 																							.bind(
-																								JoglImageExportDialogModel.pixelHeight ,
+																								JoglExportImageDialogModel.pixelHeight ,
 																								binder );
 
 	QObjectAttributeBinder<BigDecimal>							resolutionBinder		= QObjectAttributeBinder
 																							.bind(
-																								JoglImageExportDialogModel.resolution ,
+																								JoglExportImageDialogModel.resolution ,
 																								binder );
 
 	QObjectAttributeBinder<ResolutionUnit>						resolutionUnitBinder	= QObjectAttributeBinder
 																							.bind(
-																								JoglImageExportDialogModel.resolutionUnit ,
+																								JoglExportImageDialogModel.resolutionUnit ,
 																								binder );
 
 	QObjectAttributeBinder<Integer>								numSamplesBinder		= QObjectAttributeBinder
 																							.bind(
-																								JoglImageExportDialogModel.numSamples ,
+																								JoglExportImageDialogModel.numSamples ,
 																								binder );
 
 	JoglScene													scene;
@@ -244,19 +245,19 @@ public class JoglImageExportDialog extends JDialog
 			{
 				UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName( ) );
 
-				JoglImageExportDialog dialog = new JoglImageExportDialog( null , new I18n( ) );
+				JoglExportImageDialog dialog = new JoglExportImageDialog( null , new I18n( ) );
 
-				Binder<QObject<JoglImageExportDialogModel>> binder = new DefaultBinder<QObject<JoglImageExportDialogModel>>( );
-				QObject<JoglImageExportDialogModel> model = JoglImageExportDialogModel.instance.newObject( );
+				Binder<QObject<JoglExportImageDialogModel>> binder = new DefaultBinder<QObject<JoglExportImageDialogModel>>( );
+				QObject<JoglExportImageDialogModel> model = JoglExportImageDialogModel.instance.newObject( );
 
-				model.set( JoglImageExportDialogModel.outputDirectory , "screenshots" );
-				model.set( JoglImageExportDialogModel.fileNamePrefix , "breakout-screenshot" );
-				model.set( JoglImageExportDialogModel.fileNumber , 1 );
-				model.set( JoglImageExportDialogModel.pixelWidth , 600 );
-				model.set( JoglImageExportDialogModel.pixelHeight , 400 );
-				model.set( JoglImageExportDialogModel.resolution , new BigDecimal( 300 ) );
-				model.set( JoglImageExportDialogModel.resolutionUnit ,
-					JoglImageExportDialogModel.ResolutionUnit.PIXELS_PER_IN );
+				model.set( JoglExportImageDialogModel.outputDirectory , "screenshots" );
+				model.set( JoglExportImageDialogModel.fileNamePrefix , "breakout-screenshot" );
+				model.set( JoglExportImageDialogModel.fileNumber , 1 );
+				model.set( JoglExportImageDialogModel.pixelWidth , 600 );
+				model.set( JoglExportImageDialogModel.pixelHeight , 400 );
+				model.set( JoglExportImageDialogModel.resolution , new BigDecimal( 300 ) );
+				model.set( JoglExportImageDialogModel.resolutionUnit ,
+					JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN );
 
 				dialog.setBinder( binder );
 				binder.set( model );
@@ -268,28 +269,28 @@ public class JoglImageExportDialog extends JDialog
 		};
 	}
 
-	public JoglImageExportDialog( GLAutoDrawable sharedAutoDrawable , I18n i18n )
+	public JoglExportImageDialog( GLAutoDrawable sharedAutoDrawable , I18n i18n )
 	{
 		super( );
 		this.sharedAutoDrawable = sharedAutoDrawable;
 		init( i18n );
 	}
 
-	public JoglImageExportDialog( GLAutoDrawable sharedAutoDrawable , Frame owner , I18n i18n )
+	public JoglExportImageDialog( GLAutoDrawable sharedAutoDrawable , Frame owner , I18n i18n )
 	{
 		super( owner );
 		this.sharedAutoDrawable = sharedAutoDrawable;
 		init( i18n );
 	}
 
-	public JoglImageExportDialog( GLAutoDrawable sharedAutoDrawable , Dialog owner , I18n i18n )
+	public JoglExportImageDialog( GLAutoDrawable sharedAutoDrawable , Dialog owner , I18n i18n )
 	{
 		super( owner );
 		this.sharedAutoDrawable = sharedAutoDrawable;
 		init( i18n );
 	}
 
-	public JoglImageExportDialog( GLAutoDrawable sharedAutoDrawable , Window owner , I18n i18n )
+	public JoglExportImageDialog( GLAutoDrawable sharedAutoDrawable , Window owner , I18n i18n )
 	{
 		super( owner );
 		this.sharedAutoDrawable = sharedAutoDrawable;
@@ -313,7 +314,7 @@ public class JoglImageExportDialog extends JDialog
 			public void run( ) throws Throwable
 			{
 				setDefaultCloseOperation( JDialog.DISPOSE_ON_CLOSE );
-				localizer = i18n.forClass( JoglImageExportDialog.class );
+				localizer = i18n.forClass( JoglExportImageDialog.class );
 				setModalityType( ModalityType.DOCUMENT_MODAL );
 				createComponents( );
 				createLayout( );
@@ -325,7 +326,7 @@ public class JoglImageExportDialog extends JDialog
 		taskService = new SingleThreadedTaskService( );
 	}
 
-	public void setBinder( Binder<QObject<JoglImageExportDialogModel>> binder )
+	public void setBinder( Binder<QObject<JoglExportImageDialogModel>> binder )
 	{
 		this.binder.bind( binder );
 	}
@@ -373,8 +374,8 @@ public class JoglImageExportDialog extends JDialog
 		resolutionLabel = new JLabel( );
 		localizer.setText( resolutionLabel , "resolutionLabel.text" );
 		resolutionSpinner = createBigDecimalSpinner( 4 , 2 , new BigDecimal( 50 ) );
-		resolutionUnitSelector = new DefaultSelector<JoglImageExportDialogModel.ResolutionUnit>( );
-		resolutionUnitSelector.setAvailableValues( JoglImageExportDialogModel.ResolutionUnit.values( ) );
+		resolutionUnitSelector = new DefaultSelector<JoglExportImageDialogModel.ResolutionUnit>( );
+		resolutionUnitSelector.setAvailableValues( JoglExportImageDialogModel.ResolutionUnit.values( ) );
 
 		printSizeHeaderLabel = new JLabel( );
 		localizer.setText( printSizeHeaderLabel , "printSizeHeaderLabel.text" );
@@ -382,8 +383,8 @@ public class JoglImageExportDialog extends JDialog
 		printWidthLabel = new JLabel( );
 		localizer.setText( printWidthLabel , "widthLabel.text" );
 		printWidthSpinner = createBigDecimalSpinner( 4 , 2 , new BigDecimal( 1 ) );
-		printUnitSelector = new DefaultSelector<JoglImageExportDialogModel.PrintSizeUnit>( );
-		printUnitSelector.setAvailableValues( JoglImageExportDialogModel.PrintSizeUnit.values( ) );
+		printUnitSelector = new DefaultSelector<JoglExportImageDialogModel.PrintSizeUnit>( );
+		printUnitSelector.setAvailableValues( JoglExportImageDialogModel.PrintSizeUnit.values( ) );
 
 		printHeightLabel = new JLabel( );
 		localizer.setText( printHeightLabel , "heightLabel.text" );
@@ -395,11 +396,13 @@ public class JoglImageExportDialog extends JDialog
 			@Override
 			public void updateI18n( Localizer localizer , Object localizedObject )
 			{
-				JoglImageExportDialogModel.PrintSizeUnit.INCHES.displayName = localizer.getString( "inches" );
-				JoglImageExportDialogModel.PrintSizeUnit.CENTIMETERS.displayName = localizer.getString( "centimeters" );
+				JoglExportImageDialogModel.PrintSizeUnit.INCHES.displayName = localizer.getString( "inches" );
+				JoglExportImageDialogModel.PrintSizeUnit.CENTIMETERS.displayName = localizer.getString( "centimeters" );
 
-				JoglImageExportDialogModel.ResolutionUnit.PIXELS_PER_CM.displayName = localizer.getString( "pixelsPerCm" );
-				JoglImageExportDialogModel.ResolutionUnit.PIXELS_PER_IN.displayName = localizer.getString( "pixelsPerIn" );
+				JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_CM.displayName = localizer
+					.getString( "pixelsPerCm" );
+				JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN.displayName = localizer
+					.getString( "pixelsPerIn" );
 
 				printUnitSelector.getComboBox( ).repaint( );
 				resolutionUnitSelector.getComboBox( ).repaint( );
@@ -516,11 +519,12 @@ public class JoglImageExportDialog extends JDialog
 
 	protected void createListeners( )
 	{
-		resolutionUnitSelector.addSelectorListener( new ISelectorListener<JoglImageExportDialogModel.ResolutionUnit>( ) {
+		resolutionUnitSelector.addSelectorListener( new ISelectorListener<JoglExportImageDialogModel.ResolutionUnit>( )
+		{
 			@Override
-			public void selectionChanged( ISelector<JoglImageExportDialogModel.ResolutionUnit> selector ,
-				JoglImageExportDialogModel.ResolutionUnit oldSelection ,
-				JoglImageExportDialogModel.ResolutionUnit newSelection )
+			public void selectionChanged( ISelector<JoglExportImageDialogModel.ResolutionUnit> selector ,
+				JoglExportImageDialogModel.ResolutionUnit oldSelection ,
+				JoglExportImageDialogModel.ResolutionUnit newSelection )
 			{
 				if( updating || newSelection == null )
 				{
@@ -532,15 +536,15 @@ public class JoglImageExportDialog extends JDialog
 					switch( newSelection )
 					{
 					case PIXELS_PER_IN:
-						printUnitSelector.setSelection( JoglImageExportDialogModel.PrintSizeUnit.INCHES );
-						if( oldSelection == JoglImageExportDialogModel.ResolutionUnit.PIXELS_PER_CM )
+						printUnitSelector.setSelection( JoglExportImageDialogModel.PrintSizeUnit.INCHES );
+						if( oldSelection == JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_CM )
 						{
 							scaleUnits( CM_TO_IN );
 						}
 						break;
 					case PIXELS_PER_CM:
-						printUnitSelector.setSelection( JoglImageExportDialogModel.PrintSizeUnit.CENTIMETERS );
-						if( oldSelection == JoglImageExportDialogModel.ResolutionUnit.PIXELS_PER_IN )
+						printUnitSelector.setSelection( JoglExportImageDialogModel.PrintSizeUnit.CENTIMETERS );
+						if( oldSelection == JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN )
 						{
 							scaleUnits( IN_TO_CM );
 						}
@@ -556,11 +560,11 @@ public class JoglImageExportDialog extends JDialog
 			}
 		} );
 
-		printUnitSelector.addSelectorListener( new ISelectorListener<JoglImageExportDialogModel.PrintSizeUnit>( ) {
+		printUnitSelector.addSelectorListener( new ISelectorListener<JoglExportImageDialogModel.PrintSizeUnit>( ) {
 			@Override
-			public void selectionChanged( ISelector<JoglImageExportDialogModel.PrintSizeUnit> selector ,
-				JoglImageExportDialogModel.PrintSizeUnit oldSelection ,
-				JoglImageExportDialogModel.PrintSizeUnit newSelection )
+			public void selectionChanged( ISelector<JoglExportImageDialogModel.PrintSizeUnit> selector ,
+				JoglExportImageDialogModel.PrintSizeUnit oldSelection ,
+				JoglExportImageDialogModel.PrintSizeUnit newSelection )
 			{
 				if( updating || newSelection == null )
 				{
@@ -572,15 +576,15 @@ public class JoglImageExportDialog extends JDialog
 					switch( newSelection )
 					{
 					case INCHES:
-						resolutionUnitSelector.setSelection( JoglImageExportDialogModel.ResolutionUnit.PIXELS_PER_IN );
-						if( oldSelection == JoglImageExportDialogModel.PrintSizeUnit.CENTIMETERS )
+						resolutionUnitSelector.setSelection( JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN );
+						if( oldSelection == JoglExportImageDialogModel.PrintSizeUnit.CENTIMETERS )
 						{
 							scaleUnits( CM_TO_IN );
 						}
 						break;
 					case CENTIMETERS:
-						resolutionUnitSelector.setSelection( JoglImageExportDialogModel.ResolutionUnit.PIXELS_PER_CM );
-						if( oldSelection == JoglImageExportDialogModel.PrintSizeUnit.INCHES )
+						resolutionUnitSelector.setSelection( JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_CM );
+						if( oldSelection == JoglExportImageDialogModel.PrintSizeUnit.INCHES )
 						{
 							scaleUnits( IN_TO_CM );
 						}
@@ -683,7 +687,10 @@ public class JoglImageExportDialog extends JDialog
 			{
 				updateNumSamplesLabel( );
 				renderer.setDesiredNumSamples( numSamplesSlider.getValue( ) );
-				glWindow.display( );
+				if( glWindow != null )
+				{
+					glWindow.display( );
+				}
 			}
 		} );
 	}
@@ -697,6 +704,7 @@ public class JoglImageExportDialog extends JDialog
 		JSpinnerValueBinder.bind( pixelHeightSpinner , Integer.class , pixelHeightBinder );
 		JSpinnerValueBinder.bind( resolutionSpinner , BigDecimal.class , resolutionBinder );
 		ISelectorSelectionBinder.bind( resolutionUnitSelector , resolutionUnitBinder );
+		JSliderValueBinder.bind( numSamplesSlider , numSamplesBinder );
 	}
 
 	private void updateNumSamplesLabel( )
@@ -897,7 +905,7 @@ public class JoglImageExportDialog extends JDialog
 
 	private JSpinner createIntegerSpinner( int maxDigits , int step )
 	{
-		BetterSpinnerNumberModel<Integer> model = BetterSpinnerNumberModel.newInstance( 1 , 1 ,
+		BetterSpinnerNumberModel<Integer> model = BetterSpinnerNumberModel.newInstance( null , 1 ,
 			( int ) Math.floor( Math.pow( 10 , maxDigits ) ) - 1 , step );
 		JSpinner spinner = new JSpinner( model );
 		SimpleSpinnerEditor editor = new SimpleSpinnerEditor( spinner );
@@ -1176,7 +1184,7 @@ public class JoglImageExportDialog extends JDialog
 
 		public CaptureTask( )
 		{
-			super( "Rendering image..." , JoglImageExportDialog.this );
+			super( "Rendering image..." , JoglExportImageDialog.this );
 		}
 
 		public boolean isCancelable( )
@@ -1330,7 +1338,7 @@ public class JoglImageExportDialog extends JDialog
 							{
 								fileNumberSpinner.setValue( value + 1 );
 							}
-							JoglImageExportDialog.this.dispose( );
+							JoglExportImageDialog.this.dispose( );
 						}
 					};
 				}
@@ -1397,7 +1405,7 @@ public class JoglImageExportDialog extends JDialog
 	{
 		public NEWTInitializer( )
 		{
-			super( "Initializing preview..." , JoglImageExportDialog.this );
+			super( "Initializing preview..." , JoglExportImageDialog.this );
 		}
 
 		@Override
