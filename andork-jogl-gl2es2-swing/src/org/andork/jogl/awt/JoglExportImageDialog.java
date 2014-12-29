@@ -139,7 +139,7 @@ public class JoglExportImageDialog extends JDialog
 	JPanel														canvasHolder;
 	NewtCanvasAWT												canvas;
 	GLWindow													glWindow;
-	NewRenderer													renderer				= new NewRenderer( );
+	Renderer													renderer				= new Renderer( );
 
 	JFileChooser												outputDirectoryChooser;
 
@@ -1001,9 +1001,9 @@ public class JoglExportImageDialog extends JDialog
 		}
 	}
 
-	private class NewRenderer extends DefaultJoglRenderer
+	private class Renderer extends DefaultJoglRenderer
 	{
-		public NewRenderer( )
+		public Renderer( )
 		{
 			super( new GL3Framebuffer( ) , 1 );
 
@@ -1195,93 +1195,90 @@ public class JoglExportImageDialog extends JDialog
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
-			new OnEDT( ) {
-				@Override
-				public void run( ) throws Throwable
-				{
-					dialog.setTitle( "Exporting..." );
+			OnEDT.onEDT( ( ) ->
+			{
+				dialog.setTitle( "Exporting..." );
 
-					try
+				try
+				{
+					outputFile = createOutputFile( );
+				}
+				catch( Exception ex )
+				{
+					return;
+				}
+
+				if( outputFile.exists( ) )
+				{
+					if( outputFile.isDirectory( ) )
 					{
-						outputFile = createOutputFile( );
-					}
-					catch( Exception ex )
-					{
+						JOptionPane.showMessageDialog( dialog , "Weird...output file " + outputFile
+							+ " is a directory" , "Can't Export" , JOptionPane.ERROR_MESSAGE );
+
+						outputFile = null;
 						return;
 					}
-
-					if( outputFile.exists( ) )
+					else
 					{
-						if( outputFile.isDirectory( ) )
-						{
-							JOptionPane.showMessageDialog( dialog , "Weird...output file " + outputFile
-								+ " is a directory" , "Can't Export" , JOptionPane.ERROR_MESSAGE );
+						int option = JOptionPane.showConfirmDialog( dialog , "Output file " + outputFile
+							+ " already exists.  Overwrite?" , "Export Image" , JOptionPane.OK_CANCEL_OPTION ,
+							JOptionPane.WARNING_MESSAGE );
 
-							outputFile = null;
-							return;
-						}
-						else
-						{
-							int option = JOptionPane.showConfirmDialog( dialog , "Output file " + outputFile
-								+ " already exists.  Overwrite?" , "Export Image" , JOptionPane.OK_CANCEL_OPTION ,
-								JOptionPane.WARNING_MESSAGE );
-
-							if( option != JOptionPane.OK_OPTION )
-							{
-								outputFile = null;
-								return;
-							}
-						}
-					}
-
-					File outputDir = outputFile.getParentFile( );
-
-					if( !outputDir.exists( ) )
-					{
-						int option = JOptionPane.showConfirmDialog( dialog , "Output directory " + outputDir
-							+ " does not exist.  Create it?" , "Export Image" , JOptionPane.OK_CANCEL_OPTION ,
-							JOptionPane.INFORMATION_MESSAGE );
-
-						if( option == JOptionPane.OK_OPTION )
-						{
-							try
-							{
-								outputDir.mkdirs( );
-							}
-							catch( Exception ex )
-							{
-								ex.printStackTrace( );
-								JOptionPane.showMessageDialog( dialog , "Failed to create directory " + outputDir
-									+ "; " + ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
-									"Export Failed" , JOptionPane.ERROR_MESSAGE );
-								outputFile = null;
-								return;
-							}
-						}
-						else
+						if( option != JOptionPane.OK_OPTION )
 						{
 							outputFile = null;
 							return;
 						}
-					}
-
-					Integer totalWidth = ( Integer ) pixelWidthSpinner.getValue( );
-					Integer totalHeight = ( Integer ) pixelHeightSpinner.getValue( );
-
-					if( totalWidth != null && totalHeight != null )
-					{
-						int xTiles = ( totalWidth + MAX_TILE_WIDTH - 1 ) / MAX_TILE_WIDTH;
-						tileWidths = new int[ xTiles ];
-						Arrays.fill( tileWidths , MAX_TILE_WIDTH );
-						tileWidths[ xTiles - 1 ] = totalWidth % MAX_TILE_WIDTH;
-
-						int yTiles = ( totalHeight + MAX_TILE_HEIGHT - 1 ) / MAX_TILE_HEIGHT;
-						tileHeights = new int[ yTiles ];
-						Arrays.fill( tileHeights , MAX_TILE_HEIGHT );
-						tileHeights[ yTiles - 1 ] = totalHeight % MAX_TILE_HEIGHT;
 					}
 				}
-			};
+
+				File outputDir = outputFile.getParentFile( );
+
+				if( !outputDir.exists( ) )
+				{
+					int option = JOptionPane.showConfirmDialog( dialog , "Output directory " + outputDir
+						+ " does not exist.  Create it?" , "Export Image" , JOptionPane.OK_CANCEL_OPTION ,
+						JOptionPane.INFORMATION_MESSAGE );
+
+					if( option == JOptionPane.OK_OPTION )
+					{
+						try
+						{
+							outputDir.mkdirs( );
+						}
+						catch( Exception ex )
+						{
+							ex.printStackTrace( );
+							JOptionPane.showMessageDialog( dialog , "Failed to create directory " + outputDir
+								+ "; " + ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) ,
+								"Export Failed" , JOptionPane.ERROR_MESSAGE );
+							outputFile = null;
+							return;
+						}
+					}
+					else
+					{
+						outputFile = null;
+						return;
+					}
+				}
+
+				Integer totalWidth = ( Integer ) pixelWidthSpinner.getValue( );
+				Integer totalHeight = ( Integer ) pixelHeightSpinner.getValue( );
+
+				if( totalWidth != null && totalHeight != null )
+				{
+					int xTiles = ( totalWidth + MAX_TILE_WIDTH - 1 ) / MAX_TILE_WIDTH;
+					tileWidths = new int[ xTiles ];
+					Arrays.fill( tileWidths , MAX_TILE_WIDTH );
+					tileWidths[ xTiles - 1 ] = totalWidth % MAX_TILE_WIDTH;
+
+					int yTiles = ( totalHeight + MAX_TILE_HEIGHT - 1 ) / MAX_TILE_HEIGHT;
+					tileHeights = new int[ yTiles ];
+					Arrays.fill( tileHeights , MAX_TILE_HEIGHT );
+					tileHeights[ yTiles - 1 ] = totalHeight % MAX_TILE_HEIGHT;
+				}
+			} );
 
 			if( outputFile == null || tileWidths == null || tileHeights == null || isCanceling( ) )
 			{
@@ -1293,28 +1290,45 @@ public class JoglExportImageDialog extends JDialog
 			setCompleted( 0 );
 			setTotal( tileWidths.length * tileHeights.length );
 
-			renderer.startCapture( this );
+			BufferedImage capturedImage;
 
-			while( getCompleted( ) < getTotal( ) )
+			try
 			{
+				renderer.startCapture( this );
+				while( getCompleted( ) < getTotal( ) )
+				{
+					if( isCanceling( ) )
+					{
+						return;
+					}
+
+					glWindow.invoke( true , gl ->
+					{
+						return true;
+					} );
+					setCompleted( getCompleted( ) + 1 );
+				}
+
 				if( isCanceling( ) )
 				{
 					return;
 				}
-
-				glWindow.invoke( true , gl ->
-				{
-					return true;
-				} );
-				setCompleted( getCompleted( ) + 1 );
 			}
-
-			if( isCanceling( ) )
+			catch( OutOfMemoryError e )
 			{
+				e.printStackTrace( );
+				OnEDT.onEDT( ( ) ->
+				{
+					JOptionPane.showMessageDialog( dialog ,
+						e.getClass( ).getSimpleName( ) + ": " + e.getLocalizedMessage( ) , "Export Failed" ,
+						JOptionPane.ERROR_MESSAGE );
+				} );
 				return;
 			}
-
-			BufferedImage capturedImage = renderer.endCapture( );
+			finally
+			{
+				capturedImage = renderer.endCapture( );
+			}
 
 			setStatus( "Saving image to " + outputFile + "..." );
 			setIndeterminate( true );
@@ -1325,35 +1339,29 @@ public class JoglExportImageDialog extends JDialog
 				{
 					ImageIO.write( capturedImage , "png" , outputFile );
 
-					new OnEDT( ) {
-						@Override
-						public void run( ) throws Throwable
+					OnEDT.onEDT( ( ) ->
+					{
+						Integer value = ( Integer ) fileNumberSpinner.getValue( );
+						if( value == null )
 						{
-							Integer value = ( Integer ) fileNumberSpinner.getValue( );
-							if( value == null )
-							{
-								fileNumberSpinner.setValue( 1 );
-							}
-							else
-							{
-								fileNumberSpinner.setValue( value + 1 );
-							}
-							JoglExportImageDialog.this.dispose( );
+							fileNumberSpinner.setValue( 1 );
 						}
-					};
+						else
+						{
+							fileNumberSpinner.setValue( value + 1 );
+						}
+						JoglExportImageDialog.this.dispose( );
+					} );
 				}
 				catch( final Exception ex )
 				{
 					ex.printStackTrace( );
-					new OnEDT( ) {
-						@Override
-						public void run( ) throws Throwable
-						{
-							JOptionPane.showMessageDialog( dialog ,
-								ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) , "Export Failed" ,
-								JOptionPane.ERROR_MESSAGE );
-						}
-					};
+					OnEDT.onEDT( ( ) ->
+					{
+						JOptionPane.showMessageDialog( dialog ,
+							ex.getClass( ).getSimpleName( ) + ": " + ex.getLocalizedMessage( ) , "Export Failed" ,
+							JOptionPane.ERROR_MESSAGE );
+					} );
 				}
 			}
 		}
