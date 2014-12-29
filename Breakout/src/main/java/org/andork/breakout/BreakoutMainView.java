@@ -57,6 +57,7 @@ import java.util.stream.Stream;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
+import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
@@ -171,13 +172,11 @@ import org.andork.swing.table.RowFilterFactory;
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
-import com.jogamp.newt.awt.NewtCanvasAWT;
-import com.jogamp.newt.opengl.GLWindow;
 
 public class BreakoutMainView
 {
-	GLWindow											glWindow;
-	NewtCanvasAWT										canvas;
+	GLAutoDrawable										autoDrawable;
+	GLCanvas											canvas;
 	JoglScene											scene;
 	JoglBackgroundColor									bgColor;
 	DefaultJoglRenderer									renderer;
@@ -280,10 +279,8 @@ public class BreakoutMainView
 	{
 		final GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
 		final GLCapabilities caps = new GLCapabilities( glp );
-		glWindow = GLWindow.create( caps );
-		canvas = new NewtCanvasAWT( );
-		canvas.setNEWTChild( glWindow );
-		glWindow.display( );
+		autoDrawable = canvas = new GLCanvas( caps );
+		autoDrawable.display( );
 
 		scene = new JoglScene( );
 		bgColor = new JoglBackgroundColor( );
@@ -291,14 +288,14 @@ public class BreakoutMainView
 
 		renderer = new DefaultJoglRenderer( scene , new GL3Framebuffer( ) , 1 );
 
-		glWindow.addGLEventListener( renderer );
+		autoDrawable.addGLEventListener( renderer );
 
-		navigator = new DefaultNavigator( glWindow , renderer.getViewSettings( ) );
+		navigator = new DefaultNavigator( autoDrawable , renderer.getViewSettings( ) );
 		navigator.setMoveFactor( 5f );
 		navigator.setWheelFactor( 5f );
 
-		orbiter = new JoglOrbiter( glWindow , renderer.getViewSettings( ) );
-		orthoNavigator = new JoglOrthoNavigator( glWindow , renderer.getViewState( ) , renderer.getViewSettings( ) );
+		orbiter = new JoglOrbiter( autoDrawable , renderer.getViewSettings( ) );
+		orthoNavigator = new JoglOrthoNavigator( autoDrawable , renderer.getViewState( ) , renderer.getViewSettings( ) );
 
 		ioTaskService = new SingleThreadedTaskService( );
 		rebuildTaskService = new SingleThreadedTaskService( );
@@ -381,7 +378,7 @@ public class BreakoutMainView
 			@Override
 			public GLAutoDrawable getDrawable( )
 			{
-				return glWindow;
+				return autoDrawable;
 			}
 
 			@Override
@@ -426,6 +423,8 @@ public class BreakoutMainView
 			}
 		} );
 		canvasMouseAdapterWrapper.setWrapped( mouseLooper );
+
+//		glWindow.addMouseListener( new NEWT2AWTMouseEventConverter( canvas , canvasMouseAdapterWrapper ) );
 
 		autoshowController = new DrawerAutoshowController( );
 
@@ -571,7 +570,7 @@ public class BreakoutMainView
 				{
 					BreakoutMainView.this.bgColor.set( bgColor.getRed( ) / 255f , bgColor.getGreen( ) / 255f ,
 						bgColor.getBlue( ) / 255f , 1f );
-					glWindow.display( );
+					autoDrawable.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.backgroundColor , projectModelBinder ) );
@@ -605,7 +604,7 @@ public class BreakoutMainView
 				if( model3d != null && newValue != null )
 				{
 					model3d.setAmbientLight( newValue );
-					glWindow.display( );
+					autoDrawable.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.ambientLight , projectModelBinder ) );
@@ -621,7 +620,7 @@ public class BreakoutMainView
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setNearDist( nearDist );
 					model3d.setFarDist( farDist );
-					glWindow.display( );
+					autoDrawable.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.distRange , projectModelBinder ) );
@@ -637,7 +636,7 @@ public class BreakoutMainView
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setLoParam( loParam );
 					model3d.setHiParam( hiParam );
-					glWindow.display( );
+					autoDrawable.display( );
 				}
 			}
 		}.bind( paramRangeBinder );
@@ -654,7 +653,7 @@ public class BreakoutMainView
 				{
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setDepthAxis( finalDepthAxis );
-					glWindow.display( );
+					autoDrawable.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.depthAxis , projectModelBinder ) );
@@ -680,7 +679,7 @@ public class BreakoutMainView
 							rootSubtask.setCompleted( 1 );
 							subtask.end( );
 
-							glWindow.display( );
+							autoDrawable.display( );
 						}
 					};
 					task.setTotal( 1000 );
@@ -815,7 +814,7 @@ public class BreakoutMainView
 						rootSubtask.setTotal( 1 );
 						Subtask calcSubtask = rootSubtask.beginSubtask( 1 );
 						model3d.calcDistFromShots( getDefaultShotsForOperations( ) , calcSubtask );
-						glWindow.display( );
+						autoDrawable.display( );
 
 						rootSubtask.setCompleted( 1 );
 						calcSubtask.end( );
@@ -827,7 +826,7 @@ public class BreakoutMainView
 		settingsDrawer.getResetViewButton( ).addActionListener( e ->
 		{
 			renderer.getViewSettings( ).setViewXform( newMat4f( ) );
-			glWindow.display( );
+			autoDrawable.display( );
 		} );
 
 		settingsDrawer.getOrbitToPlanButton( ).addActionListener( new ActionListener( ) {
@@ -851,7 +850,7 @@ public class BreakoutMainView
 				renderer.getViewSettings( ).getViewXform( v );
 
 				removeUnprotectedCameraAnimations( );
-				cameraAnimationQueue.add( new SpringViewOrbitAnimation( glWindow , renderer.getViewSettings( ) ,
+				cameraAnimationQueue.add( new SpringViewOrbitAnimation( autoDrawable , renderer.getViewSettings( ) ,
 					center , 0f , ( float ) -Math.PI * .5f , .1f , .05f , 30 ) );
 				cameraAnimationQueue.add( new AnimationViewSaver( ) );
 			}
@@ -935,7 +934,7 @@ public class BreakoutMainView
 				if( desiredNumSamples != null )
 				{
 					renderer.setDesiredNumSamples( desiredNumSamples );
-					glWindow.display( );
+					autoDrawable.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootModelBinder ) );
@@ -1045,7 +1044,7 @@ public class BreakoutMainView
 
 	public GLAutoDrawable getAutoDrawable( )
 	{
-		return glWindow;
+		return autoDrawable;
 	}
 
 	public Component getCanvas( )
@@ -1092,7 +1091,7 @@ public class BreakoutMainView
 			{
 				model3d.getCenter( center );
 			}
-			cameraAnimationQueue.add( new SpringViewOrbitAnimation( glWindow , renderer.getViewSettings( ) , center ,
+			cameraAnimationQueue.add( new SpringViewOrbitAnimation( autoDrawable , renderer.getViewSettings( ) , center ,
 				0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
 			cameraAnimationQueue.add( new AnimationViewSaver( ) );
 		}
@@ -1120,7 +1119,7 @@ public class BreakoutMainView
 						model3d.getCenter( center );
 					}
 
-					cameraAnimationQueue.add( new RandomViewOrbitAnimation( glWindow , renderer.getViewSettings( ) ,
+					cameraAnimationQueue.add( new RandomViewOrbitAnimation( autoDrawable , renderer.getViewSettings( ) ,
 						center , 0.0005f , ( float ) -Math.PI / 4 , ( float ) -Math.PI / 9 , 30 , 60000 ) );
 				} ) );
 				return 0;
@@ -1342,7 +1341,7 @@ public class BreakoutMainView
 
 				installOrthoMouseAdapters( );
 
-				glWindow.display( );
+				autoDrawable.display( );
 				return 0;
 			};
 		}
@@ -1377,12 +1376,12 @@ public class BreakoutMainView
 
 				installPerspectiveMouseAdapters( );
 
-				glWindow.display( );
+				autoDrawable.display( );
 				return 0;
 			};
 		}
 
-		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( glWindow ,
+		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation( autoDrawable ,
 			renderer.getViewSettings( ) , 1750 , 30 );
 		float[ ] viewXform = newMat4f( );
 		viewAnimation.setUpWithEndLocation( renderer.getViewState( ).viewXform( ) , endLocation , forward , right );
@@ -1438,11 +1437,11 @@ public class BreakoutMainView
 		}
 
 		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new ProjXformAnimation( glWindow , renderer.getViewSettings( ) , 1750 , false , f ->
+		cameraAnimationQueue.add( new ProjXformAnimation( autoDrawable , renderer.getViewSettings( ) , 1750 , false , f ->
 		{
 			calc.f = projReparam.applyAsFloat( f );
 			return calc;
-		} ).also( new ViewXformAnimation( glWindow , renderer.getViewSettings( ) , 1750 , true , f ->
+		} ).also( new ViewXformAnimation( autoDrawable , renderer.getViewSettings( ) , 1750 , true , f ->
 		{
 			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
 			return viewXform;
@@ -1562,7 +1561,7 @@ public class BreakoutMainView
 			}
 			if( !isCanceling( ) )
 			{
-				glWindow.display( );
+				autoDrawable.display( );
 			}
 		}
 	}
@@ -1703,7 +1702,7 @@ public class BreakoutMainView
 				}
 			}
 
-			glWindow.display( );
+			autoDrawable.display( );
 		}
 	}
 
@@ -1857,7 +1856,7 @@ public class BreakoutMainView
 				} );
 			}
 
-			glWindow.display( );
+			autoDrawable.display( );
 		} )	;
 		}
 	}
@@ -2160,7 +2159,7 @@ public class BreakoutMainView
 							final Survey3dModel model3d = BreakoutMainView.this.model3d;
 							BreakoutMainView.this.model3d = null;
 
-							glWindow.invoke( false , drawable ->
+							autoDrawable.invoke( false , drawable ->
 							{
 								scene.remove( model3d );
 								scene.disposeLater( model3d );
@@ -2216,7 +2215,7 @@ public class BreakoutMainView
 						orbiter.setCenter( center );
 						navigator.setCenter( center );
 
-						glWindow.invoke( false , drawable ->
+						autoDrawable.invoke( false , drawable ->
 						{
 							scene.add( model );
 							scene.initLater( model );
