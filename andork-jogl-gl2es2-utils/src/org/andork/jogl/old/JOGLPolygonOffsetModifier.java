@@ -19,10 +19,38 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl;
+package org.andork.jogl.old;
 
+import javax.media.opengl.GL2ES2;
 
-public interface Projection
+public class JOGLPolygonOffsetModifier implements JOGLModifier
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	private boolean	prevEnabled;
+	
+	private float	factor , units;
+	
+	public JOGLPolygonOffsetModifier( float factor , float units )
+	{
+		super( );
+		this.factor = factor;
+		this.units = units;
+	}
+
+	@Override
+	public void beforeDraw( GL2ES2 gl , JOGLObject object )
+	{
+		prevEnabled = gl.glIsEnabled( GL2ES2.GL_POLYGON_OFFSET_FILL );
+		gl.glEnable( GL2ES2.GL_POLYGON_OFFSET_FILL );
+		gl.glPolygonOffset( factor , units );
+	}
+	
+	@Override
+	public void afterDraw( GL2ES2 gl , JOGLObject object )
+	{
+		if( !prevEnabled )
+		{
+			gl.glDisable( GL2ES2.GL_POLYGON_OFFSET_FILL );
+		}
+	}
+	
 }

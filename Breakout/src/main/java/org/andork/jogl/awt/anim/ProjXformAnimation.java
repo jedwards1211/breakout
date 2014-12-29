@@ -26,8 +26,8 @@ import java.util.function.Function;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
+import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.Projection;
-import org.andork.jogl.neu2.JoglViewSettings;
 
 public class ProjXformAnimation implements Animation
 {

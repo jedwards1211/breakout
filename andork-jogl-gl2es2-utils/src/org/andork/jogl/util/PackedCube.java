@@ -21,7 +21,7 @@
  *******************************************************************************/
 package org.andork.jogl.util;
 
-import static org.andork.jogl.util.JOGLUtils.checkGLError;
+import static org.andork.jogl.util.JoglUtils.checkGLError;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -140,8 +140,8 @@ public class PackedCube
 	
 	public void init( GL2ES2 gl )
 	{
-		int vertexShader = JOGLUtils.loadShader( gl , GL2ES2.GL_VERTEX_SHADER , vertexShaderCode );
-		int fragmentShader = JOGLUtils.loadShader( gl , GL2ES2.GL_FRAGMENT_SHADER , fragmentShaderCode );
+		int vertexShader = JoglUtils.loadShader( gl , GL2ES2.GL_VERTEX_SHADER , vertexShaderCode );
+		int fragmentShader = JoglUtils.loadShader( gl , GL2ES2.GL_FRAGMENT_SHADER , fragmentShaderCode );
 		
 		mProgram = gl.glCreateProgram( ); // create empty OpenGL ES Program
 		checkGLError( gl , "glCreateProgram" );

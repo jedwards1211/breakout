@@ -27,7 +27,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.WeakHashMap;
 
-import org.andork.jogl.neu.JoglResourceManager;
+import org.andork.jogl.JoglResourceManager;
 
 public class GlyphCache
 {

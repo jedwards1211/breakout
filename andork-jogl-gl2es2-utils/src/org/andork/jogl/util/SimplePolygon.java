@@ -23,7 +23,7 @@ package org.andork.jogl.util;
 
 import java.nio.Buffer;
 
-import static org.andork.jogl.util.JOGLUtils.*;
+import static org.andork.jogl.util.JoglUtils.*;
 
 import javax.media.opengl.GL2ES2;
 
@@ -56,8 +56,8 @@ public class SimplePolygon
 	
 	public static void globalInit( GL2ES2 gl )
 	{
-		vertexShader = JOGLUtils.loadShader( gl , GL2ES2.GL_VERTEX_SHADER , vertexShaderCode );
-		fragmentShader = JOGLUtils.loadShader( gl , GL2ES2.GL_FRAGMENT_SHADER , fragmentShaderCode );
+		vertexShader = JoglUtils.loadShader( gl , GL2ES2.GL_VERTEX_SHADER , vertexShaderCode );
+		fragmentShader = JoglUtils.loadShader( gl , GL2ES2.GL_FRAGMENT_SHADER , fragmentShaderCode );
 		
 		program = gl.glCreateProgram( );
 		gl.glAttachShader( program , vertexShader );

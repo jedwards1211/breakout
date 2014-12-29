@@ -39,10 +39,7 @@ import java.util.List;
 
 import javax.media.opengl.GL2ES2;
 
-import org.andork.jogl.neu.JoglDrawContext;
-import org.andork.jogl.neu.JoglDrawable;
-import org.andork.jogl.neu.JoglResource;
-import org.andork.jogl.util.JOGLUtils;
+import org.andork.jogl.util.JoglUtils;
 
 public class JoglScreenPolygon implements JoglDrawable , JoglResource
 {
@@ -175,7 +172,7 @@ public class JoglScreenPolygon implements JoglDrawable , JoglResource
 		String fragmentShaderCode = "#version 120\n" + "uniform vec4 u_outlineColor;" + "void main() {"
 			+ "  gl_FragColor = u_outlineColor;" + "}";
 
-		program = JOGLUtils.loadProgram( gl , vertexShaderCode , fragmentShaderCode );
+		program = JoglUtils.loadProgram( gl , vertexShaderCode , fragmentShaderCode );
 		screenXform_location = gl.glGetUniformLocation( program , "screenXform" );
 		a_pos_location = gl.glGetAttribLocation( program , "a_pos" );
 		u_outlineColor_location = gl.glGetUniformLocation( program , "u_outlineColor" );

@@ -22,14 +22,6 @@
 package org.andork.jogl.awt;
 
 import static javax.media.opengl.GL.*;
-import static javax.media.opengl.GL.GL_BLEND;
-import static javax.media.opengl.GL.GL_FLOAT;
-import static javax.media.opengl.GL.GL_ONE_MINUS_SRC_ALPHA;
-import static javax.media.opengl.GL.GL_SRC_ALPHA;
-import static javax.media.opengl.GL.GL_STATIC_DRAW;
-import static javax.media.opengl.GL.GL_TEXTURE0;
-import static javax.media.opengl.GL.GL_TEXTURE_2D;
-import static javax.media.opengl.GL.GL_TRIANGLES;
 import static javax.media.opengl.GL2ES2.*;
 
 import java.nio.FloatBuffer;
@@ -43,11 +35,11 @@ import javax.media.opengl.GL2ES2;
 
 import org.andork.jogl.BufferHelper;
 import org.andork.jogl.Dumps;
-import org.andork.jogl.neu.JoglDrawContext;
-import org.andork.jogl.neu.JoglDrawable;
-import org.andork.jogl.neu.JoglManagedResource;
-import org.andork.jogl.neu.JoglResourceManager;
-import org.andork.jogl.util.JOGLUtils;
+import org.andork.jogl.JoglDrawContext;
+import org.andork.jogl.JoglDrawable;
+import org.andork.jogl.JoglManagedResource;
+import org.andork.jogl.JoglResourceManager;
+import org.andork.jogl.util.JoglUtils;
 
 public class JoglText extends JoglManagedResource implements JoglDrawable
 {
@@ -244,7 +236,7 @@ public class JoglText extends JoglManagedResource implements JoglDrawable
 							"  }" +
 							"}";
 			
-			BILLBOARD_PROGRAM = JOGLUtils.loadProgram( gl , vertexShaderCode , fragmentShaderCode );
+			BILLBOARD_PROGRAM = JoglUtils.loadProgram( gl , vertexShaderCode , fragmentShaderCode );
 		}
 		
 		program = BILLBOARD_PROGRAM;

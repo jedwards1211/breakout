@@ -21,8 +21,13 @@
  *******************************************************************************/
 package org.andork.jogl;
 
+import javax.media.opengl.GL3;
 
-public interface Projection
+public interface GL3Resource
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	
+	public abstract void init( GL3 gl );
+	
+	public abstract void dispose( GL3 gl );
+	
 }

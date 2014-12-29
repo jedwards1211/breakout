@@ -21,7 +21,6 @@
  *******************************************************************************/
 package org.andork.jogl;
 
-import org.andork.jogl.neu.JoglDrawContext;
 import org.andork.math3d.Vecmath;
 
 public class OrthoProjection implements Projection

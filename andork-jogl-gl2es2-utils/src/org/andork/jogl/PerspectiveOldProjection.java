@@ -23,6 +23,8 @@ package org.andork.jogl;
 
 import static org.andork.math3d.Vecmath.perspective;
 
+import org.andork.jogl.old.OldProjection;
+
 public class PerspectiveOldProjection implements OldProjection
 {
 	public float	fovAngle;

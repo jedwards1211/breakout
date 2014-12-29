@@ -79,15 +79,15 @@ import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.func.FloatBinaryOperator;
 import org.andork.graph.Graphs;
-import org.andork.jogl.BasicJOGLObject.Uniform1fv;
-import org.andork.jogl.BasicJOGLObject.Uniform3fv;
-import org.andork.jogl.BasicJOGLObject.Uniform4fv;
 import org.andork.jogl.BufferHelper;
-import org.andork.jogl.SharedBuffer;
-import org.andork.jogl.neu.JoglDrawContext;
-import org.andork.jogl.neu.JoglDrawable;
-import org.andork.jogl.neu.JoglResource;
-import org.andork.jogl.util.JOGLUtils;
+import org.andork.jogl.JoglDrawContext;
+import org.andork.jogl.JoglDrawable;
+import org.andork.jogl.JoglResource;
+import org.andork.jogl.JoglBuffer;
+import org.andork.jogl.old.BasicJOGLObject.Uniform1fv;
+import org.andork.jogl.old.BasicJOGLObject.Uniform3fv;
+import org.andork.jogl.old.BasicJOGLObject.Uniform4fv;
+import org.andork.jogl.util.JoglUtils;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PlanarHull3f;
@@ -1545,13 +1545,13 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 
 		final LinkedList<Segment3dDrawer>	drawers						= new LinkedList<Segment3dDrawer>( );
 
-		SharedBuffer						geometry;
-		SharedBuffer						stationAttrs;
+		JoglBuffer						geometry;
+		JoglBuffer						stationAttrs;
 		final AtomicBoolean					stationAttrsNeedRebuffering	= new AtomicBoolean( );
-		SharedBuffer						param0;
+		JoglBuffer						param0;
 		final AtomicBoolean					param0NeedsRebuffering		= new AtomicBoolean( );
-		SharedBuffer						fillIndices;
-		SharedBuffer						lineIndices;
+		JoglBuffer						fillIndices;
+		JoglBuffer						lineIndices;
 
 		int[ ]								shotIndicesInVertexArrays;
 		int[ ]								shotIndicesInFillIndices;
@@ -1604,7 +1604,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 
 		void calcParam0( Survey3dModel model , Map<Station, Double> stationValues )
 		{
-			param0 = new SharedBuffer( ).buffer( createBuffer( shot3ds.size( ) * GEOM_VPS * 4 ) );
+			param0 = new JoglBuffer( ).buffer( createBuffer( shot3ds.size( ) * GEOM_VPS * 4 ) );
 			param0.buffer( ).position( 0 );
 			for( Shot3d shot3d : shot3ds )
 			{
@@ -1633,7 +1633,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 
 		void calcParam0( Survey3dModel model , ColorParam param )
 		{
-			param0 = new SharedBuffer( ).buffer( createBuffer( shot3ds.size( ) * GEOM_VPS * 4 ) );
+			param0 = new JoglBuffer( ).buffer( createBuffer( shot3ds.size( ) * GEOM_VPS * 4 ) );
 			param0.buffer( ).position( 0 );
 			for( Shot3d shot3d : shot3ds )
 			{
@@ -1669,8 +1669,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 
 		void populateData( ByteBuffer allGeomBuffer )
 		{
-			geometry = new SharedBuffer( ).buffer( createBuffer( shot3ds.size( ) * GEOM_BPS ) );
-			stationAttrs = new SharedBuffer( ).buffer( createBuffer( shot3ds.size( ) * STATION_ATTR_BPS ) );
+			geometry = new JoglBuffer( ).buffer( createBuffer( shot3ds.size( ) * GEOM_BPS ) );
+			stationAttrs = new JoglBuffer( ).buffer( createBuffer( shot3ds.size( ) * STATION_ATTR_BPS ) );
 
 			shotIndicesInVertexArrays = new int[ shot3ds.size( ) ];
 			shotIndicesInFillIndices = new int[ shot3ds.size( ) ];
@@ -1694,13 +1694,13 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			}
 
 			ByteBuffer fillIndicesBuffer = createBuffer( fillIndicesList.size( ) * BPI );
-			fillIndices = new SharedBuffer( ).buffer( fillIndicesBuffer );
+			fillIndices = new JoglBuffer( ).buffer( fillIndicesBuffer );
 			for( Integer i : fillIndicesList )
 			{
 				fillIndicesBuffer.putInt( i );
 			}
 			ByteBuffer lineIndicesBuffer = createBuffer( lineIndicesList.size( ) * BPI );
-			lineIndices = new SharedBuffer( ).buffer( lineIndicesBuffer );
+			lineIndices = new JoglBuffer( ).buffer( lineIndicesBuffer );
 			for( Integer i : lineIndicesList )
 			{
 				lineIndicesBuffer.putInt( i );
@@ -1886,7 +1886,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				vertShader = createVertexShader( );
 				fragShader = createFragmentShader( );
 
-				program = JOGLUtils.loadProgram( gl , vertShader , fragShader );
+				program = JoglUtils.loadProgram( gl , vertShader , fragShader );
 
 				m_location = gl.glGetUniformLocation( program , "m" );
 				v_location = gl.glGetUniformLocation( program , "v" );

@@ -19,10 +19,9 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl;
+package org.andork.jogl.old;
 
-
-public interface Projection
+public interface OldProjection
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	public void calculate( int width , int height , float[ ] pOut );
 }

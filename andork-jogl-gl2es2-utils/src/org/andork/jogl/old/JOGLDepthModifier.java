@@ -19,10 +19,29 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl;
+package org.andork.jogl.old;
 
+import javax.media.opengl.GL2ES2;
 
-public interface Projection
+public class JOGLDepthModifier implements JOGLModifier
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	private boolean	prevDepthTestEnabled;
+	
+	@Override
+	public void beforeDraw( GL2ES2 gl , JOGLObject object )
+	{
+		prevDepthTestEnabled = gl.glIsEnabled( GL2ES2.GL_DEPTH_TEST );
+		
+		gl.glEnable( GL2ES2.GL_DEPTH_TEST );
+	}
+	
+	@Override
+	public void afterDraw( GL2ES2 gl , JOGLObject object )
+	{
+		if( !prevDepthTestEnabled )
+		{
+			gl.glDisable( GL2ES2.GL_DEPTH_TEST );
+		}
+	}
+	
 }

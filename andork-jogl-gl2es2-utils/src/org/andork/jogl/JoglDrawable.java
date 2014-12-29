@@ -21,8 +21,9 @@
  *******************************************************************************/
 package org.andork.jogl;
 
+import javax.media.opengl.GL2ES2;
 
-public interface Projection
+public interface JoglDrawable
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	public void draw( JoglDrawContext context , GL2ES2 gl , float[ ] m, float[ ] n );
 }

@@ -22,7 +22,9 @@
 package org.andork.jogl;
 
 
-public interface Projection
+public interface JoglResourceManager
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	void initLater( JoglResource resource );
+	
+	void disposeLater( JoglResource resource );
 }

@@ -19,10 +19,13 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl;
+package org.andork.jogl.old;
 
+import javax.media.opengl.GL2ES2;
 
-public interface Projection
+public interface JOGLModifier
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	public void beforeDraw( GL2ES2 gl , JOGLObject object );
+	
+	public void afterDraw( GL2ES2 gl , JOGLObject object );
 }

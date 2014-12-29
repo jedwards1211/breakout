@@ -31,7 +31,7 @@ import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
 import org.andork.jogl.Projection;
-import org.andork.jogl.awt.ScreenCaptureDialogModel;
+import org.andork.jogl.awt.JoglImageExportDialogModel;
 import org.andork.q.QMap;
 import org.andork.q.QMapBimapper;
 import org.andork.q.QObject;
@@ -54,7 +54,7 @@ public final class ProjectModel extends QSpec<ProjectModel>
 	public static final Attribute<QObject<DrawerModel>>							surveyDrawer				= newAttribute( DrawerModel.instance , "surveyDrawer" );
 	public static final Attribute<QObject<DrawerModel>>							miniSurveyDrawer			= newAttribute( DrawerModel.instance , "miniSurveyDrawer" );
 	public static final Attribute<QObject<DrawerModel>>							taskListDrawer				= newAttribute( DrawerModel.instance , "taskListDrawer" );
-	public static final Attribute<QObject<ScreenCaptureDialogModel>>			screenCaptureDialogModel	= newAttribute( ScreenCaptureDialogModel.instance , "screenCaptureDialogModel" );
+	public static final Attribute<QObject<JoglImageExportDialogModel>>			screenCaptureDialogModel	= newAttribute( JoglImageExportDialogModel.instance , "screenCaptureDialogModel" );
 	public static final Attribute<Color>										backgroundColor				= newAttribute( Color.class , "backgroundColor" );
 	public static final Attribute<Float>										ambientLight				= newAttribute( Float.class , "ambientLight" );
 	public static final Attribute<float[ ]>										depthAxis					= newAttribute( float[ ].class , "depthAxis" );
@@ -75,7 +75,7 @@ public final class ProjectModel extends QSpec<ProjectModel>
 				.map( surveyDrawer , DrawerModel.defaultMapper )
 				.map( miniSurveyDrawer , DrawerModel.defaultMapper )
 				.map( taskListDrawer , DrawerModel.defaultMapper )
-				.map( screenCaptureDialogModel , ScreenCaptureDialogModel.defaultMapper )
+				.map( screenCaptureDialogModel , JoglImageExportDialogModel.defaultMapper )
 				.map( backgroundColor , Color2HexStringBimapper.instance );
 	}
 	

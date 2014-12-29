@@ -26,7 +26,7 @@ import java.util.function.Function;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.neu2.JoglViewSettings;
+import org.andork.jogl.JoglViewSettings;
 
 public class ViewXformAnimation implements Animation
 {

@@ -38,7 +38,7 @@ import static org.andork.math3d.Vecmath.setRotation;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.neu2.JoglViewSettings;
+import org.andork.jogl.JoglViewSettings;
 import org.andork.math3d.Vecmath;
 import org.andork.util.AnimationUtils;
 

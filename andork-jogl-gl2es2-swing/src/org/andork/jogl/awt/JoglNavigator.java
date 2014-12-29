@@ -19,7 +19,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.breakout;
+package org.andork.jogl.awt;
 
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
@@ -31,7 +31,7 @@ import javax.media.opengl.GLAutoDrawable;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.math3d.Vecmath;
 
-public class DefaultNavigator extends MouseAdapter
+public class JoglNavigator extends MouseAdapter
 {
 	final GLAutoDrawable	drawable;
 	final JoglViewSettings	viewSettings;
@@ -55,10 +55,7 @@ public class DefaultNavigator extends MouseAdapter
 
 	float					sensitivity	= 1f;
 
-	final float[ ]			center		=
-										{ Float.NaN , Float.NaN , Float.NaN };
-
-	public DefaultNavigator( GLAutoDrawable drawable , JoglViewSettings viewSettings )
+	public JoglNavigator( GLAutoDrawable drawable , JoglViewSettings viewSettings )
 	{
 		super( );
 		this.drawable = drawable;
@@ -135,17 +132,6 @@ public class DefaultNavigator extends MouseAdapter
 		this.sensitivity = sensitivity;
 	}
 
-	public float[ ] getCenter( float[ ] result )
-	{
-		Vecmath.setf( result , this.center );
-		return result;
-	}
-
-	public void setCenter( float[ ] center )
-	{
-		Vecmath.setf( this.center , center );
-	}
-
 	@Override
 	public void mouseReleased( MouseEvent e )
 	{
@@ -158,7 +144,7 @@ public class DefaultNavigator extends MouseAdapter
 	@Override
 	public void mousePressed( MouseEvent e )
 	{
-		if( pressEvent == null && !e.isAltDown( ) )
+		if( pressEvent == null )
 		{
 			pressEvent = e;
 			lastEvent = e;
@@ -171,20 +157,6 @@ public class DefaultNavigator extends MouseAdapter
 		if( !active || pressEvent == null )
 		{
 			return;
-		}
-
-		int button = pressEvent.getButton( );
-
-		if( e.isAltDown( ) )
-		{
-			if( button == MouseEvent.BUTTON1 )
-			{
-				button = MouseEvent.BUTTON3;
-			}
-			else if( button == MouseEvent.BUTTON3 )
-			{
-				button = MouseEvent.BUTTON1;
-			}
 		}
 
 		float dx = e.getX( ) - lastEvent.getX( );
@@ -211,16 +183,16 @@ public class DefaultNavigator extends MouseAdapter
 		Component canvas = ( Component ) e.getSource( );
 
 		float scaledMoveFactor = moveFactor * sensitivity;
-		if( button == MouseEvent.BUTTON1 )
+		if( pressEvent.getButton( ) == MouseEvent.BUTTON1 )
 		{
-			if( e.isShiftDown( ) )
+			if( pressEvent.isShiftDown( ) )
 			{
 				float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
+				float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
 
 				Vecmath.rotY( temp , dpan );
 				Vecmath.mmulRotational( temp , cam , cam );
 
-				float dtilt = ( float ) ( dy * tiltFactor * sensitivity / canvas.getHeight( ) );
 				Vecmath.mvmulAffine( cam , 1 , 0 , 0 , v );
 				Vecmath.setRotation( temp , v , dtilt );
 				Vecmath.mmulRotational( temp , cam , cam );
@@ -229,50 +201,21 @@ public class DefaultNavigator extends MouseAdapter
 				viewSettings.setViewXform( cam );
 			}
 		}
-		else if( button == MouseEvent.BUTTON2 )
+		else if( pressEvent.getButton( ) == MouseEvent.BUTTON2 )
 		{
-			if( e.isShiftDown( ) && !Vecmath.hasNaNsOrInfinites( center ) )
-			{
-				Vecmath.sub3( center , 0 , cam , 12 , v , 0 );
-				float dist = Vecmath.length3( v );
-				Vecmath.scale3( v , 1f / dist );
-				double motion = Math.min( Math.max( 0 , dist - 1 ) , -dy * scaledMoveFactor );
-				cam[ 12 ] += v[ 0 ] * motion;
-				cam[ 13 ] += v[ 1 ] * motion;
-				cam[ 14 ] += v[ 2 ] * motion;
-			}
-			else
-			{
-				cam[ 12 ] += cam[ 8 ] * dy * scaledMoveFactor;
-				cam[ 13 ] += cam[ 9 ] * dy * scaledMoveFactor;
-				cam[ 14 ] += cam[ 10 ] * dy * scaledMoveFactor;
-			}
+			cam[ 12 ] += cam[ 8 ] * dy * scaledMoveFactor;
+			cam[ 13 ] += cam[ 9 ] * dy * scaledMoveFactor;
+			cam[ 14 ] += cam[ 10 ] * dy * scaledMoveFactor;
 			Vecmath.invAffine( cam );
 			viewSettings.setViewXform( cam );
 		}
-		else if( button == MouseEvent.BUTTON3 )
+		else if( pressEvent.getButton( ) == MouseEvent.BUTTON3 )
 		{
-			if( e.isShiftDown( ) )
-			{
-				float dpan = ( float ) ( dx * panFactor * sensitivity / canvas.getWidth( ) );
-
-				Vecmath.rotY( temp , dpan );
-				Vecmath.mmulRotational( temp , cam , cam );
-
-				cam[ 12 ] -= cam[ 8 ] / xz * dy * scaledMoveFactor;
-				cam[ 14 ] -= cam[ 10 ] / xz * dy * scaledMoveFactor;
-
-				Vecmath.invAffine( cam );
-				viewSettings.setViewXform( cam );
-			}
-			else
-			{
-				cam[ 12 ] += cam[ 0 ] * -dx * scaledMoveFactor + cam[ 4 ] * dy * scaledMoveFactor;
-				cam[ 13 ] += cam[ 1 ] * -dx * scaledMoveFactor + cam[ 5 ] * dy * scaledMoveFactor;
-				cam[ 14 ] += cam[ 2 ] * -dx * scaledMoveFactor + cam[ 6 ] * dy * scaledMoveFactor;
-				Vecmath.invAffine( cam );
-				viewSettings.setViewXform( cam );
-			}
+			cam[ 12 ] += cam[ 0 ] * -dx * scaledMoveFactor + cam[ 4 ] * dy * scaledMoveFactor;
+			cam[ 13 ] += cam[ 1 ] * -dx * scaledMoveFactor + cam[ 5 ] * dy * scaledMoveFactor;
+			cam[ 14 ] += cam[ 2 ] * -dx * scaledMoveFactor + cam[ 6 ] * dy * scaledMoveFactor;
+			Vecmath.invAffine( cam );
+			viewSettings.setViewXform( cam );
 		}
 
 		if( callDisplay )
@@ -284,7 +227,7 @@ public class DefaultNavigator extends MouseAdapter
 	@Override
 	public void mouseWheelMoved( MouseWheelEvent e )
 	{
-		if( !active )
+		if( !active || e.isControlDown( ) )
 		{
 			return;
 		}
@@ -293,27 +236,10 @@ public class DefaultNavigator extends MouseAdapter
 		Vecmath.invAffine( cam );
 
 		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
-		if( e.isControlDown( ) )
-		{
-			distance /= 10f;
-		}
 
-		if( e.isShiftDown( ) && !Vecmath.hasNaNsOrInfinites( center ) )
-		{
-			Vecmath.sub3( center , 0 , cam , 12 , v , 0 );
-			float dist = Vecmath.length3( v );
-			Vecmath.scale3( v , 1f / dist );
-			double motion = Math.min( Math.max( 0 , dist - 1 ) , -distance );
-			cam[ 12 ] += v[ 0 ] * motion;
-			cam[ 13 ] += v[ 1 ] * motion;
-			cam[ 14 ] += v[ 2 ] * motion;
-		}
-		else
-		{
-			cam[ 12 ] += cam[ 8 ] * distance;
-			cam[ 13 ] += cam[ 9 ] * distance;
-			cam[ 14 ] += cam[ 10 ] * distance;
-		}
+		cam[ 12 ] += cam[ 8 ] * distance;
+		cam[ 13 ] += cam[ 9 ] * distance;
+		cam[ 14 ] += cam[ 10 ] * distance;
 
 		Vecmath.invAffine( cam );
 		viewSettings.setViewXform( cam );

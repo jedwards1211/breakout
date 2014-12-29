@@ -21,8 +21,19 @@
  *******************************************************************************/
 package org.andork.jogl;
 
-
-public interface Projection
+public interface JoglDrawContext
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	public int width( );
+
+	public int height( );
+
+	public float[ ] viewXform( );
+
+	public float[ ] inverseViewXform( );
+
+	public float[ ] projXform( );
+
+	public float[ ] screenXform( );
+
+	public float[ ] pixelScale( );
 }

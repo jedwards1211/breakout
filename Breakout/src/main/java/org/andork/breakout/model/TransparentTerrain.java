@@ -41,10 +41,10 @@ import java.util.Random;
 import javax.media.opengl.GL2ES2;
 import javax.media.opengl.GL3;
 
-import org.andork.jogl.neu.JoglDrawContext;
-import org.andork.jogl.neu.JoglDrawable;
-import org.andork.jogl.neu.JoglResource;
-import org.andork.jogl.util.JOGLUtils;
+import org.andork.jogl.JoglDrawContext;
+import org.andork.jogl.JoglDrawable;
+import org.andork.jogl.JoglResource;
+import org.andork.jogl.util.JoglUtils;
 
 import com.jogamp.common.nio.PointerBuffer;
 
@@ -205,7 +205,7 @@ public class TransparentTerrain implements JoglDrawable , JoglResource
 				"  gl_FragColor = u_color;" +
 				"}";
 		
-		program = JOGLUtils.loadProgram( gl , vertexShader , fragmentShader );
+		program = JoglUtils.loadProgram( gl , vertexShader , fragmentShader );
 		
 		ByteBuffer b;
 		b = ByteBuffer.allocateDirect( numVertexRows * numVertexCols * 16 );

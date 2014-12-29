@@ -23,8 +23,6 @@ package org.andork.jogl;
 
 import static org.andork.math3d.Vecmath.*;
 
-import org.andork.jogl.neu.JoglDrawContext;
-
 public class AutoClipOrthoProjection implements Projection
 {
 	public final float[ ]	center			= new float[ 3 ];

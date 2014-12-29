@@ -19,10 +19,24 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl;
+package org.andork.jogl.old;
 
+import javax.media.opengl.GL2ES2;
 
-public interface Projection
+import org.andork.jogl.JoglDrawable;
+
+public interface JOGLObject extends JOGLResource, JoglDrawable
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	/**
+	 * @param gl
+	 * @param m
+	 *            the model matrix
+	 * @param n
+	 *            the normal matrix (transpose inverse of the upper-left 3x3 of {@code m})
+	 * @param v
+	 *            the view matrix
+	 * @param p
+	 *            the projection matrix
+	 */
+	public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p );
 }

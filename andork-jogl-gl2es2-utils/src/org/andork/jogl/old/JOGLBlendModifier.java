@@ -19,10 +19,45 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl;
+package org.andork.jogl.old;
 
+import javax.media.opengl.GL2ES2;
 
-public interface Projection
+public class JOGLBlendModifier implements JOGLModifier
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	private boolean	prevEnabled;
+	
+	private int		sfactor	= GL2ES2.GL_SRC_ALPHA;
+	private int		dfactor	= GL2ES2.GL_ONE_MINUS_SRC_ALPHA;
+	
+	public JOGLBlendModifier sfactor( int sfactor )
+	{
+		this.sfactor = sfactor;
+		return this;
+	}
+	
+	public JOGLBlendModifier dfactor( int dfactor )
+	{
+		this.dfactor = dfactor;
+		return this;
+	}
+	
+	@Override
+	public void beforeDraw( GL2ES2 gl , JOGLObject object )
+	{
+		prevEnabled = gl.glIsEnabled( GL2ES2.GL_BLEND );
+		
+		gl.glEnable( GL2ES2.GL_BLEND );
+		gl.glBlendFunc( sfactor , dfactor );
+	}
+	
+	@Override
+	public void afterDraw( GL2ES2 gl , JOGLObject object )
+	{
+		if( !prevEnabled )
+		{
+			gl.glDisable( GL2ES2.GL_BLEND );
+		}
+	}
+	
 }

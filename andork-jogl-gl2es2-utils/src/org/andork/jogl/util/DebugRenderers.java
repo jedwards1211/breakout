@@ -23,11 +23,11 @@ package org.andork.jogl.util;
 
 import javax.media.opengl.GL;
 
-import org.andork.jogl.BasicJOGLObject;
-import org.andork.jogl.BasicJOGLObject.BasicVertexShader;
-import org.andork.jogl.BasicJOGLObject.FlatFragmentShader;
+import org.andork.jogl.old.BasicJOGLObject;
+import org.andork.jogl.old.JOGLGroup;
+import org.andork.jogl.old.BasicJOGLObject.BasicVertexShader;
+import org.andork.jogl.old.BasicJOGLObject.FlatFragmentShader;
 import org.andork.jogl.BufferHelper;
-import org.andork.jogl.JOGLGroup;
 import org.andork.math3d.PlanarHull3f;
 
 public class DebugRenderers

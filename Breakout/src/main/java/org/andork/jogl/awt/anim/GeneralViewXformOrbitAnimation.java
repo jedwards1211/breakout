@@ -41,7 +41,7 @@ import static org.andork.math3d.Vecmath.subDot3;
 import javax.media.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
-import org.andork.jogl.neu2.JoglViewSettings;
+import org.andork.jogl.JoglViewSettings;
 import org.andork.math3d.LineLineIntersection2d;
 import org.andork.math3d.LinePlaneIntersection3d;
 

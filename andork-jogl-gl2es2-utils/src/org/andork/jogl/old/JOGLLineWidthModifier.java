@@ -19,10 +19,33 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.jogl;
+package org.andork.jogl.old;
 
+import javax.media.opengl.GL2ES2;
 
-public interface Projection
+public class JOGLLineWidthModifier implements JOGLModifier
 {
-	public void calculate( JoglDrawContext drawContext , float[ ] pOut );
+	private float[ ]	prevLineWidth	= new float[ 1 ];
+	
+	private float		lineWidth;
+	
+	public JOGLLineWidthModifier( float lineWidth )
+	{
+		super( );
+		this.lineWidth = lineWidth;
+	}
+	
+	@Override
+	public void beforeDraw( GL2ES2 gl , JOGLObject object )
+	{
+		gl.glGetFloatv( GL2ES2.GL_LINE_WIDTH , prevLineWidth , 0 );
+		gl.glLineWidth( lineWidth );
+	}
+	
+	@Override
+	public void afterDraw( GL2ES2 gl , JOGLObject object )
+	{
+		gl.glLineWidth( prevLineWidth[ 0 ] );
+	}
+	
 }

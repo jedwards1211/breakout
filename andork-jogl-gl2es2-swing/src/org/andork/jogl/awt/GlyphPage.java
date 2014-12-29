@@ -45,8 +45,8 @@ import java.nio.IntBuffer;
 
 import javax.media.opengl.GL2ES2;
 
-import org.andork.jogl.neu.JoglManagedResource;
-import org.andork.jogl.neu.JoglResourceManager;
+import org.andork.jogl.JoglManagedResource;
+import org.andork.jogl.JoglResourceManager;
 
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
 
