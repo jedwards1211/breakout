@@ -1402,8 +1402,6 @@ public class JoglExportImageDialog extends JDialog
 					canvas.setNEWTChild( glWindow );
 				}
 				canvasHolder.revalidate( );
-				canvas.repaint( );
-				glWindow.display( );
 			} );
 		}
 		super.setVisible( visible );
@@ -1429,9 +1427,18 @@ public class JoglExportImageDialog extends JDialog
 					glWindow.setSharedAutoDrawable( sharedAutoDrawable );
 				}
 				glWindow.addGLEventListener( renderer );
+
+				glWindow.invoke( false , drawable ->
+				{
+					GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+					int[ ] temp = new int[ 1 ];
+					( ( GL3 ) gl ).glGetIntegerv( GL3.GL_MAX_SAMPLES , temp , 0 );
+					SwingUtilities.invokeLater( ( ) -> numSamplesSlider.setMaximum( temp[ 0 ] ) );
+					return false;
+				} );
 			}
 			canvas.setNEWTChild( glWindow );
-			glWindow.display( );
+			canvas.revalidate( );
 		}
 	}
 }

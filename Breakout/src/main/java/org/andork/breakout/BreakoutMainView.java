@@ -54,6 +54,8 @@ import java.util.WeakHashMap;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.media.opengl.GL2ES2;
+import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLProfile;
@@ -938,6 +940,15 @@ public class BreakoutMainView
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootModelBinder ) );
+		
+		autoDrawable.invoke( false , drawable ->
+		{
+			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+			int[ ] temp = new int[ 1 ];
+			( ( GL3 ) gl ).glGetIntegerv( GL3.GL_MAX_SAMPLES , temp , 0 );
+			SwingUtilities.invokeLater( ( ) -> settingsDrawer.setMaxNumSamples( temp[ 0 ] ) );
+			return true;
+		} );
 
 		//		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
 		//		{
@@ -1091,7 +1102,8 @@ public class BreakoutMainView
 			{
 				model3d.getCenter( center );
 			}
-			cameraAnimationQueue.add( new SpringViewOrbitAnimation( autoDrawable , renderer.getViewSettings( ) , center ,
+			cameraAnimationQueue.add( new SpringViewOrbitAnimation( autoDrawable , renderer.getViewSettings( ) ,
+				center ,
 				0f , ( float ) -Math.PI / 4 , .1f , .05f , 30 ) );
 			cameraAnimationQueue.add( new AnimationViewSaver( ) );
 		}
@@ -1437,11 +1449,12 @@ public class BreakoutMainView
 		}
 
 		removeUnprotectedCameraAnimations( );
-		cameraAnimationQueue.add( new ProjXformAnimation( autoDrawable , renderer.getViewSettings( ) , 1750 , false , f ->
-		{
-			calc.f = projReparam.applyAsFloat( f );
-			return calc;
-		} ).also( new ViewXformAnimation( autoDrawable , renderer.getViewSettings( ) , 1750 , true , f ->
+		cameraAnimationQueue.add( new ProjXformAnimation( autoDrawable , renderer.getViewSettings( ) , 1750 , false ,
+			f ->
+			{
+				calc.f = projReparam.applyAsFloat( f );
+				return calc;
+			} ).also( new ViewXformAnimation( autoDrawable , renderer.getViewSettings( ) , 1750 , true , f ->
 		{
 			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
 			return viewXform;
