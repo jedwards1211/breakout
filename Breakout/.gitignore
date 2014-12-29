@@ -2,6 +2,6 @@
 /build
 /dist
 .settings
-.breakout
+/.breakout
 /screenshots
 /_.breakout

@@ -41,6 +41,8 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -243,6 +245,7 @@ public class BreakoutMainView
 	final float[ ]										p2							= new float[ 3 ];
 
 	File												rootFile;
+	Path												rootDirectory;
 	TaskServiceFilePersister<QObject<RootModel>>		rootPersister;
 	final Binder<QObject<RootModel>>					rootModelBinder				= new DefaultBinder<QObject<RootModel>>( );
 
@@ -713,11 +716,11 @@ public class BreakoutMainView
 				exportMenu.add( new JMenuItem( exportImageAction ) );
 				popupMenu.add( exportMenu );
 
-				QArrayList<File> recentProjectFiles = getRootModel( ).get( RootModel.recentProjectFiles );
+				QArrayList<Path> recentProjectFiles = getRootModel( ).get( RootModel.recentProjectFiles );
 				if( recentProjectFiles != null && !recentProjectFiles.isEmpty( ) )
 				{
 					popupMenu.add( new JSeparator( ) );
-					for( File file : recentProjectFiles )
+					for( Path file : recentProjectFiles )
 					{
 						popupMenu.add( new JMenuItem( new OpenRecentProjectAction( BreakoutMainView.this , file ) ) );
 					}
@@ -940,7 +943,7 @@ public class BreakoutMainView
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootModelBinder ) );
-		
+
 		autoDrawable.invoke( false , drawable ->
 		{
 			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
@@ -950,24 +953,20 @@ public class BreakoutMainView
 			return true;
 		} );
 
-		//		scene.changeSupport( ).addPropertyChangeListener( JoglScene.INITIALIZED , new BasicPropertyChangeListener( )
-		//		{
-		//			public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
-		//			{
-		//				if( scene.isInitialized( ) )
-		//				{
-		//					SwingUtilities.invokeLater( new Runnable( )
-		//					{
-		//						public void run( )
-		//						{
-		//							settingsDrawer.setMaxNumSamples( scene.getMaxNumSamples( ) );
-		//						}
-		//					} );
-		//				}
-		//			}
-		//		} );
+		File rootFile;
+		String rootFilePath = System.getProperty( "rootFile" );
 
-		rootFile = new File( new File( ".breakout" ) , "settings.yaml" );
+		if( rootFilePath == null )
+		{
+			rootFile = new File( new File( ".breakout" ) , "settings.yaml" );
+		}
+		else
+		{
+			rootFile = new File( rootFilePath );
+		}
+
+		rootDirectory = rootFile.toPath( ).getParent( );
+
 		rootPersister = new TaskServiceFilePersister<QObject<RootModel>>( ioTaskService , "Saving settings..." ,
 			QObjectBimappers.defaultBimapper( RootModel.defaultMapper ) , rootFile );
 		QObject<RootModel> rootModel = null;
@@ -987,18 +986,26 @@ public class BreakoutMainView
 
 		if( rootModel.get( RootModel.currentProjectFile ) == null )
 		{
-			rootModel.set( RootModel.currentProjectFile , new File( new File( ".breakout" ) , "defaultProject.bop" ) );
+			rootModel.set( RootModel.currentProjectFile , Paths.get( "defaultProject.bop" ) );
 			rootModel.set( RootModel.desiredNumSamples , 2 );
 		}
 
 		setRootModel( rootModel );
 
-		openProject( getRootModel( ).get( RootModel.currentProjectFile ) );
+		Path projectFile = rootDirectory.resolve( rootModel.get( RootModel.currentProjectFile ) )
+			.normalize( );
+
+		openProject( projectFile );
 	}
 
 	public File getRootFile( )
 	{
 		return rootFile;
+	}
+
+	public Path getRootDirectory( )
+	{
+		return rootDirectory;
 	}
 
 	public Binder<QObject<RootModel>> getRootModelBinder( )
@@ -1923,7 +1930,7 @@ public class BreakoutMainView
 		getProjectModel( ).set( ProjectModel.projCalculator , renderer.getViewSettings( ).getProjection( ) );
 	}
 
-	private void replaceNulls( QObject<ProjectModel> projectModel , File projectFile )
+	private void replaceNulls( QObject<ProjectModel> projectModel , Path projectFile )
 	{
 		if( projectModel.get( ProjectModel.cameraView ) == null )
 		{
@@ -1980,8 +1987,9 @@ public class BreakoutMainView
 		}
 		if( projectModel.get( ProjectModel.surveyFile ) == null )
 		{
-			projectModel.set( ProjectModel.surveyFile , new File( NewProjectAction.pickDefaultSurveyFile( projectFile )
-				.getName( ) ) );
+			Path surveyFile = projectFile.relativize(
+				NewProjectAction.pickDefaultSurveyFile( projectFile.toFile( ) ).toPath( ) );
+			projectModel.set( ProjectModel.surveyFile , surveyFile );
 		}
 	}
 
@@ -2417,7 +2425,13 @@ public class BreakoutMainView
 		}
 	}
 
-	public void openProject( File newProjectFile )
+	/**
+	 * Opens the given project file.
+	 * 
+	 * @param newProjectFile
+	 *            the path to the project file to open; must be absolute or relative to the working directory.
+	 */
+	public void openProject( Path newProjectFile )
 	{
 		ioTaskService.submit( new OpenProjectTask( newProjectFile ) );
 	}
@@ -2425,12 +2439,15 @@ public class BreakoutMainView
 	private class OpenProjectTask extends SelfReportingTask
 	{
 		boolean	taskListWasOpen;
-		File	newProjectFile;
+		Path	newProjectFile;
+		Path	relativizedNewProjectFile;
 
-		private OpenProjectTask( File newProjectFile )
+		private OpenProjectTask( Path newProjectFile )
 		{
 			super( getMainPanel( ) );
 			this.newProjectFile = newProjectFile;
+			this.relativizedNewProjectFile = rootDirectory.toAbsolutePath( ).relativize(
+				newProjectFile.toAbsolutePath( ) );
 			setStatus( "Saving current project..." );
 			setIndeterminate( true );
 
@@ -2451,20 +2468,20 @@ public class BreakoutMainView
 					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
 
 					QObject<RootModel> rootModel = getRootModel( );
-					rootModel.set( RootModel.currentProjectFile , newProjectFile );
-					QArrayList<File> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
+					rootModel.set( RootModel.currentProjectFile , relativizedNewProjectFile );
+					QArrayList<Path> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
 					if( recentProjectFiles == null )
 					{
 						recentProjectFiles = QArrayList.newInstance( );
 						rootModel.set( RootModel.recentProjectFiles , recentProjectFiles );
 					}
 
-					recentProjectFiles.remove( newProjectFile );
+					recentProjectFiles.remove( relativizedNewProjectFile );
 					while( recentProjectFiles.size( ) > 20 )
 					{
 						recentProjectFiles.remove( recentProjectFiles.size( ) - 1 );
 					}
-					recentProjectFiles.add( 0 , newProjectFile );
+					recentProjectFiles.add( 0 , relativizedNewProjectFile );
 
 					if( getProjectModel( ) != null && projectPersister != null )
 					{
@@ -2472,7 +2489,7 @@ public class BreakoutMainView
 					}
 					projectPersister = new TaskServiceFilePersister<QObject<ProjectModel>>( ioTaskService ,
 						"Saving project..." , QObjectBimappers.defaultBimapper( ProjectModel.defaultMapper ) ,
-						newProjectFile );
+						newProjectFile.toFile( ) );
 				}
 			};
 			QObject<ProjectModel> projectModel = null;
@@ -2534,11 +2551,14 @@ public class BreakoutMainView
 				}
 			};
 
-			openSurveyFile( finalProjectModel.get( ProjectModel.surveyFile ) );
+			Path surveyFile = newProjectFile.toAbsolutePath( ).getParent( ).resolve(
+				projectModel.get( ProjectModel.surveyFile ) ).normalize( );
+
+			openSurveyFile( surveyFile );
 		}
 	}
 
-	public void openSurveyFile( File newSurveyFile )
+	public void openSurveyFile( Path newSurveyFile )
 	{
 		ioTaskService.submit( new OpenSurveyTask( newSurveyFile ) );
 	}
@@ -2551,12 +2571,17 @@ public class BreakoutMainView
 	private class OpenSurveyTask extends SelfReportingTask
 	{
 		boolean	taskListWasOpen;
-		File	newSurveyFile;
+		Path	newSurveyFile;
+		Path	relativizedNewSurveyFile;
 
-		private OpenSurveyTask( File newSurveyFile )
+		private OpenSurveyTask( Path newSurveyFile )
 		{
 			super( getMainPanel( ) );
 			this.newSurveyFile = newSurveyFile;
+			Path projectPath = rootDirectory.toAbsolutePath( )
+				.resolve( getRootModel( ).get( RootModel.currentProjectFile ) ).normalize( );
+			this.relativizedNewSurveyFile = projectPath.toAbsolutePath( ).getParent( )
+				.relativize( newSurveyFile.toAbsolutePath( ) );
 			setStatus( "Saving current survey..." );
 			setIndeterminate( true );
 
@@ -2568,22 +2593,13 @@ public class BreakoutMainView
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
-			final File absoluteSurveyFile;
-			if( newSurveyFile.isAbsolute( ) )
-			{
-				absoluteSurveyFile = newSurveyFile;
-			}
-			else
-			{
-				absoluteSurveyFile = new File( getRootModel( ).get( RootModel.currentProjectFile ).getParentFile( ) ,
-					newSurveyFile.getPath( ) );
-			}
-
 			boolean changed = new FromEDT<Boolean>( ) {
 				@Override
 				public Boolean run( ) throws Throwable
 				{
 					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
+
+					File absoluteSurveyFile = newSurveyFile.toAbsolutePath( ).toFile( );
 
 					if( surveyPersister == null || !absoluteSurveyFile.equals( surveyPersister.getFile( ) ) )
 					{
@@ -2604,7 +2620,7 @@ public class BreakoutMainView
 					{
 						return false;
 					}
-					getProjectModel( ).set( ProjectModel.surveyFile , newSurveyFile );
+					getProjectModel( ).set( ProjectModel.surveyFile , relativizedNewSurveyFile );
 
 					try
 					{
@@ -2624,7 +2640,7 @@ public class BreakoutMainView
 				return;
 			}
 
-			setStatus( "Opening survey: " + absoluteSurveyFile + "..." );
+			setStatus( "Opening survey: " + newSurveyFile + "..." );
 
 			SurveyTableModel surveyModel;
 

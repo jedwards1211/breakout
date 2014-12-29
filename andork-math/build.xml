@@ -3,7 +3,7 @@
 	<property name="src" location="src" />
 	<property name="build" location="build" />
 	<property name="dist" location="dist" />
-	<property name="j3d-home" location="C:/Program Files/Java/Java3D" />
+	<property name="j3d-home" location="C:/Program Files/Java/j3d-1.5.2" />
 
 	<target name="init">
 		<!-- Create the time stamp -->

@@ -23,6 +23,8 @@ package org.andork.breakout;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -40,14 +42,14 @@ import org.andork.swing.OnEDT;
 public class NewProjectAction extends AbstractAction
 {
 	BreakoutMainView	mainView;
-	
+
 	JFileChooser		projectFileChooser;
-	
+
 	public NewProjectAction( final BreakoutMainView mainView )
 	{
 		super( );
 		this.mainView = mainView;
-		
+
 		new OnEDT( )
 		{
 			@Override
@@ -55,55 +57,56 @@ public class NewProjectAction extends AbstractAction
 			{
 				Localizer localizer = mainView.getI18n( ).forClass( NewProjectAction.this.getClass( ) );
 				localizer.setName( NewProjectAction.this , "name" );
-				
+
 				projectFileChooser = new JFileChooser( );
 				projectFileChooser.setAcceptAllFileFilterUsed( false );
-				projectFileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project File (*.bop)" , "bop" ) );
+				projectFileChooser.addChoosableFileFilter( new FileNameExtensionFilter(
+					"Breakout Project File (*.bop)" , "bop" ) );
 			}
 		};
 	}
-	
+
 	@Override
 	public void actionPerformed( ActionEvent e )
 	{
 		I18n i18n = mainView.getI18n( );
 		Localizer localizer = i18n.forClass( getClass( ) );
-		
+
 		File directory = mainView.getRootModel( ).get( RootModel.currentProjectFileChooserDirectory );
 		if( directory == null )
 		{
-			File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
+			Path currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
 			if( currentProjectFile != null )
 			{
-				directory = currentProjectFile.getParentFile( );
+				directory = currentProjectFile.getParent( ).toFile( );
 			}
 		}
 		if( directory != null )
 		{
 			projectFileChooser.setCurrentDirectory( directory );
 		}
-		
+
 		projectFileChooser.setDialogTitle( "Save New Project As" );
-		
+
 		File projectFile;
-		
+
 		do
 		{
 			int choice = projectFileChooser.showSaveDialog( mainView.getMainPanel( ) );
 			projectFile = JFileChooserUtils.correctSelectedFileExtension( projectFileChooser );
-			
+
 			if( choice != JFileChooser.APPROVE_OPTION || projectFile == null )
 			{
 				return;
 			}
-			
+
 			if( projectFile.exists( ) )
 			{
 				choice = JOptionPane.showConfirmDialog( mainView.getMainPanel( ) ,
-						new MultilineLabelHolder( localizer.getFormattedString( "projectFileAlreadyExistsDialog.message" ,
-								projectFile.getName( ) ) ).setWidth( 600 ) ,
-						localizer.getString( "projectFileAlreadyExistsDialog.title" ) ,
-						JOptionPane.YES_NO_CANCEL_OPTION );
+					new MultilineLabelHolder( localizer.getFormattedString( "projectFileAlreadyExistsDialog.message" ,
+						projectFile.getName( ) ) ).setWidth( 600 ) ,
+					localizer.getString( "projectFileAlreadyExistsDialog.title" ) ,
+					JOptionPane.YES_NO_CANCEL_OPTION );
 				if( choice == JOptionPane.YES_OPTION )
 				{
 					break;
@@ -116,14 +119,16 @@ public class NewProjectAction extends AbstractAction
 			else
 			{
 				File surveyFile = pickDefaultSurveyFile( projectFile );
-				
+
 				if( surveyFile.exists( ) )
 				{
-					choice = JOptionPane.showConfirmDialog( mainView.getMainPanel( ) ,
-							new MultilineLabelHolder( localizer.getFormattedString( "surveyFileAlreadyExistsDialog.message" ,
-									surveyFile.getName( ) ) ).setWidth( 600 ) ,
-							localizer.getString( "surveyFileAlreadyExistsDialog.title" ) ,
-							JOptionPane.YES_NO_CANCEL_OPTION );
+					choice = JOptionPane.showConfirmDialog(
+						mainView.getMainPanel( ) ,
+						new MultilineLabelHolder( localizer.getFormattedString(
+							"surveyFileAlreadyExistsDialog.message" ,
+							surveyFile.getName( ) ) ).setWidth( 600 ) ,
+						localizer.getString( "surveyFileAlreadyExistsDialog.title" ) ,
+						JOptionPane.YES_NO_CANCEL_OPTION );
 					if( choice == JOptionPane.YES_OPTION )
 					{
 						break;
@@ -133,13 +138,14 @@ public class NewProjectAction extends AbstractAction
 						return;
 					}
 				}
-				
+
 				break;
 			}
 		} while( true );
-		
-		mainView.getRootModel( ).set( RootModel.currentProjectFileChooserDirectory , projectFileChooser.getCurrentDirectory( ) );
-		
+
+		mainView.getRootModel( ).set( RootModel.currentProjectFileChooserDirectory ,
+			projectFileChooser.getCurrentDirectory( ) );
+
 		try
 		{
 			projectFile.createNewFile( );
@@ -147,18 +153,21 @@ public class NewProjectAction extends AbstractAction
 		catch( Exception ex )
 		{
 			ex.printStackTrace( );
-			JOptionPane.showMessageDialog( mainView.getMainPanel( ) ,
-					new MultilineLabelHolder( localizer.getFormattedString( "failedToCreateProjectFileDialog.message" ,
-							projectFile.toString( ) + "<br><b>" + ex.getClass( ).getName( ) + "</b>: " + ex.getLocalizedMessage( ) ) )
-							.setWidth( 600 ) ,
-					localizer.getString( "failedToCreateProjectFileDialog.title" ) ,
-					JOptionPane.ERROR_MESSAGE );
+			JOptionPane.showMessageDialog(
+				mainView.getMainPanel( ) ,
+				new MultilineLabelHolder( localizer.getFormattedString(
+					"failedToCreateProjectFileDialog.message" ,
+					projectFile.toString( ) + "<br><b>" + ex.getClass( ).getName( ) + "</b>: "
+						+ ex.getLocalizedMessage( ) ) )
+					.setWidth( 600 ) ,
+				localizer.getString( "failedToCreateProjectFileDialog.title" ) ,
+				JOptionPane.ERROR_MESSAGE );
 			return;
 		}
-		
-		mainView.openProject( projectFile );
+
+		mainView.openProject( projectFile.toPath( ) );
 	}
-	
+
 	public static final File pickDefaultSurveyFile( File projectFile )
 	{
 		String surveyFileName = projectFile.getName( );

@@ -27,12 +27,12 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,30 +47,31 @@ import org.andork.bind2.OpaqueBinderHolder;
 public class I18n
 {
 	private static final Logger				logger						= Logger.getLogger( I18n.class.getName( ) );
-	
+
 	private BinderHolder<Locale>			localeBinderHolder			= new BinderHolder<>( );
-	
+
 	private OpaqueBinderHolder<Locale>		opaqueLocaleBinderHolder	= new OpaqueBinderHolder<>( localeBinderHolder );
-	
+
 	private final Map<String, Localizer>	localizers					= new HashMap<String, Localizer>( );
-	
-	private boolean							disableBundleLoading		= System.getProperties( ).containsKey( "disableBundleLoading" );
-	
+
+	private boolean							disableBundleLoading		= System.getProperties( ).containsKey(
+																			"disableBundleLoading" );
+
 	public I18n( )
 	{
 		setLocale( Locale.getDefault( ) );
 	}
-	
+
 	public boolean isDisableBundleLoading( )
 	{
 		return disableBundleLoading;
 	}
-	
+
 	public void setDisableBundleLoading( boolean disableBundleLoading )
 	{
 		this.disableBundleLoading = disableBundleLoading;
 	}
-	
+
 	public Localizer forName( String name )
 	{
 		Localizer result = localizers.get( name );
@@ -81,60 +82,61 @@ public class I18n
 		}
 		return result;
 	}
-	
+
 	public Localizer forClass( Class<?> cls )
 	{
 		return forName( cls.getName( ) );
 	}
-	
+
 	public Locale getLocale( )
 	{
 		return localeBinderHolder.get( );
 	}
-	
+
 	public void setLocale( Locale locale )
 	{
 		localeBinderHolder.binderLink.bind( new DefaultBinder<>( locale ) );
 	}
-	
+
 	public void setLocaleBinder( Binder<? extends Locale> binder )
 	{
 		localeBinderHolder.binderLink.bind( binder );
 	}
-	
+
 	public Binder<Locale> getLocaleBinder( )
 	{
 		return opaqueLocaleBinderHolder;
 	}
-	
+
 	public Binder<String> formattedDateTimeBinder( Binder<Date> dateBinder , int dateStyle , int timeStyle )
 	{
 		Binder<DateFormat> formatBinder = new FunctionBinder<>( localeBinderHolder ,
-				locale -> locale == null ? DateFormat.getDateTimeInstance( dateStyle , timeStyle ) :
-						DateFormat.getDateTimeInstance( dateStyle , timeStyle , locale ) );
-		
+			locale -> locale == null ? DateFormat.getDateTimeInstance( dateStyle , timeStyle ) :
+				DateFormat.getDateTimeInstance( dateStyle , timeStyle , locale ) );
+
 		return new BiFunctionBinder<>( dateBinder , formatBinder ,
-				( date , format ) -> date == null || format == null ? null : format.format( date ) );
+			( date , format ) -> date == null || format == null ? null : format.format( date ) );
 	}
-	
+
 	public class Localizer
 	{
 		public final String				name;
-		
+
 		private Binder<ResourceBundle>	bundleBinder;
-		
+
 		private final Set<String>		missingKeys	= new HashSet<String>( );
-		
+
 		private Localizer( String name , Binder<Locale> localeBinder )
 		{
 			super( );
 			this.name = name;
-			bundleBinder = new FunctionBinder<>( localeBinder , locale -> {
+			bundleBinder = new FunctionBinder<>( localeBinder , locale ->
+			{
 				if( disableBundleLoading || locale == null )
 				{
 					return null;
 				}
-				
+
 				try
 				{
 					return ResourceBundle.getBundle( name , locale );
@@ -146,17 +148,17 @@ public class I18n
 				return null;
 			} ).convertToWeakReferencing( );
 		}
-		
+
 		public ResourceBundle getBundle( )
 		{
 			return bundleBinder.get( );
 		}
-		
+
 		public String getString( String key )
 		{
 			return getString( bundleBinder.get( ) , key );
 		}
-		
+
 		private String getString( ResourceBundle bundle , String key )
 		{
 			try
@@ -172,45 +174,46 @@ public class I18n
 				return key;
 			}
 		}
-		
+
 		public String getFormattedString( String key , Object ... args )
 		{
 			return MessageFormat.format( getString( key ) , args );
 		}
-		
+
 		public Binder<String> stringBinder( String key )
 		{
 			return new FunctionBinder<ResourceBundle, String>(
-					bundleBinder ,
-					bundle -> getString( bundle , key ) )
-					.convertToWeakReferencing( );
+				bundleBinder ,
+				bundle -> getString( bundle , key ) )
+				.convertToWeakReferencing( );
 		}
-		
+
 		public Binder<String> stringBinder( Binder<String> keyBinder )
 		{
 			return new BiFunctionBinder<ResourceBundle, String, String>(
-					bundleBinder ,
-					keyBinder ,
-					( bundle , key ) -> getString( bundle , key ) )
-					.convertToWeakReferencing( );
+				bundleBinder ,
+				keyBinder ,
+				( bundle , key ) -> getString( bundle , key ) )
+				.convertToWeakReferencing( );
 		}
-		
+
 		public Binder<String> formattedStringBinder( String key , Object ... args )
 		{
 			return new FunctionBinder<ResourceBundle, String>(
-					bundleBinder ,
-					bundle ->
-					MessageFormat.format( getString( bundle , key ) , args ) )
-					.convertToWeakReferencing( );
+				bundleBinder ,
+				bundle ->
+				MessageFormat.format( getString( bundle , key ) , args ) )
+				.convertToWeakReferencing( );
 		}
-		
+
 		public Binder<String> formattedStringBinder( Binder<String> keyBinder , Binder<?> ... argBinders )
 		{
-			return new BiFunctionBinder<>(
-					stringBinder( keyBinder ) ,
-					new ListBinder<>( Arrays.asList( argBinders ) ) ,
-					( pattern , args ) -> pattern == null || args == null ? null : MessageFormat.format( pattern , args.toArray( ) ) )
-					.convertToWeakReferencing( );
+			return new BiFunctionBinder<String, List<Object>, String>(
+				stringBinder( keyBinder ) ,
+				new ListBinder<Object>( Arrays.asList( argBinders ) ) ,
+				( pattern , args ) -> pattern == null || args == null ? null : MessageFormat.format( pattern ,
+					args.toArray( ) ) )
+				.convertToWeakReferencing( );
 		}
 	}
 }

@@ -22,14 +22,14 @@
 package org.andork.breakout.model;
 
 import java.awt.Color;
-import java.io.File;
+import java.nio.file.Path;
 
 import org.andork.awt.layout.DrawerModel;
 import org.andork.breakout.CameraView;
 import org.andork.func.Bimapper;
 import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;
-import org.andork.func.FileStringBimapper;
+import org.andork.func.PathStringBimapper;
 import org.andork.jogl.Projection;
 import org.andork.jogl.awt.JoglExportImageDialogModel;
 import org.andork.q.QMap;
@@ -63,8 +63,11 @@ public final class ProjectModel extends QSpec<ProjectModel>
 	public static final Attribute<LinearAxisConversion>							highlightRange			= newAttribute(
 																											LinearAxisConversion.class ,
 																											"highlightRange" );
-	public static final Attribute<File>											surveyFile				= newAttribute(
-																											File.class ,
+	/**
+	 * The path to the survey file, relative to the project file's directory.
+	 */
+	public static final Attribute<Path>											surveyFile				= newAttribute(
+																											Path.class ,
 																											"surveyFile" );
 	public static final Attribute<QObject<DrawerModel>>							settingsDrawer			= newAttribute(
 																											DrawerModel.instance ,
@@ -105,7 +108,7 @@ public final class ProjectModel extends QSpec<ProjectModel>
 				QMapBimapper.newInstance( EnumBimapper.newInstance( ColorParam.class ) ,
 					LinearAxisConversionMapBimapper.instance ) )
 			.map( highlightRange , LinearAxisConversionMapBimapper.instance )
-			.map( surveyFile , FileStringBimapper.instance )
+			.map( surveyFile , PathStringBimapper.instance )
 			.map( settingsDrawer , DrawerModel.defaultMapper )
 			.map( surveyDrawer , DrawerModel.defaultMapper )
 			.map( miniSurveyDrawer , DrawerModel.defaultMapper )

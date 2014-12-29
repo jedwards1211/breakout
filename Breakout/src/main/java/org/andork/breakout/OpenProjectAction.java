@@ -23,6 +23,7 @@ package org.andork.breakout;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.nio.file.Path;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -36,14 +37,14 @@ import org.andork.swing.OnEDT;
 public class OpenProjectAction extends AbstractAction
 {
 	BreakoutMainView	mainView;
-	
+
 	JFileChooser		fileChooser;
-	
+
 	public OpenProjectAction( final BreakoutMainView mainView )
 	{
 		super( );
 		this.mainView = mainView;
-		
+
 		new OnEDT( )
 		{
 			@Override
@@ -51,42 +52,44 @@ public class OpenProjectAction extends AbstractAction
 			{
 				Localizer localizer = mainView.getI18n( ).forClass( OpenProjectAction.this.getClass( ) );
 				localizer.setName( OpenProjectAction.this , "name" );
-				
+
 				fileChooser = new JFileChooser( );
 				fileChooser.setAcceptAllFileFilterUsed( false );
-				fileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project File (*.bop)" , "bop" ) );
+				fileChooser.addChoosableFileFilter( new FileNameExtensionFilter( "Breakout Project File (*.bop)" ,
+					"bop" ) );
 			}
 		};
 	}
-	
+
 	@Override
 	public void actionPerformed( ActionEvent e )
 	{
-		
+
 		File directory = mainView.getRootModel( ).get( RootModel.currentProjectFileChooserDirectory );
 		if( directory == null )
 		{
-			File currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
+			Path currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
 			if( currentProjectFile != null )
 			{
-				directory = currentProjectFile.getParentFile( );
+				directory = currentProjectFile.getParent( ).toFile( );
 			}
 		}
 		if( directory != null )
 		{
 			fileChooser.setCurrentDirectory( directory );
 		}
-		
+
 		int choice = fileChooser.showOpenDialog( mainView.getMainPanel( ) );
-		
+
 		if( choice != JFileChooser.APPROVE_OPTION )
 		{
 			return;
 		}
-		
-		mainView.getRootModel( ).set( RootModel.currentProjectFileChooserDirectory , fileChooser.getCurrentDirectory( ) );
-		
+
+		mainView.getRootModel( )
+			.set( RootModel.currentProjectFileChooserDirectory , fileChooser.getCurrentDirectory( ) );
+
 		File file = fileChooser.getSelectedFile( );
-		mainView.openProject( file );
+		mainView.openProject( file.toPath( ) );
 	}
 }

@@ -50,11 +50,11 @@
 
 			<fileset dir="${jogl-libs}/atomic">
 				<include name="jogl-awt.jar" />
-				<include name="jogl-core.jar" />
+				<include name="jogl.jar" />
 				<include name="jogl-gldesktop.jar" />
-				<include name="nativewindow-core.jar" />
+				<include name="nativewindow.jar" />
 				<include name="nativewindow-awt.jar" />
-				<include name="newt-core.jar" />
+				<include name="newt.jar" />
 				<include name="newt-event.jar" />
 				<include name="newt-awt.jar" />
 				<include name="newt-ogl.jar" />
@@ -102,10 +102,6 @@
 
 			<fileset dir="${swingx-lib}">
 				<include name="swingx-all-1.6.4.jar" />
-			</fileset>
-
-			<fileset dir="${commons-io-lib}">
-				<include name="commons-io-2.4.jar" />
 			</fileset>
 
 			<fileset dir="${snakeyaml-lib}">
@@ -311,16 +307,16 @@
 				<include name="lib/andork-jogl-gl2es2-utils.jar" />
 				<include name="lib/andork-jogl-gl2es2-swing.jar" />
 				<include name="lib/jogl-awt.jar" />
-				<include name="lib/jogl-core.jar" />
+				<include name="lib/jogl.jar" />
 				<include name="lib/jogl-gldesktop.jar" />
-				<include name="lib/nativewindow-core.jar" />
+				<include name="lib/nativewindow.jar" />
 				<include name="lib/nativewindow-awt.jar" />
 				<include name="lib/jogl-os-win.jar" />
 				<include name="lib/nativewindow-os-win.jar" />
 				<include name="lib/gluegen-rt-natives-windows-i586.jar" />
 				<include name="lib/jogl-natives-windows-i586.jar" />
 				<include name="lib/nativewindow-natives-windows-i586.jar" />
-				<include name="lib/newt-core.jar" />
+				<include name="lib/newt.jar" />
 				<include name="lib/newt-event.jar" />
 				<include name="lib/newt-awt.jar" />
 				<include name="lib/newt-ogl.jar" />
@@ -345,8 +341,11 @@
 		<zip destfile="${dist}/${ant.project.name}-all-desktops.zip">
 			<fileset dir="${basedir}">
 				<include name="README.txt" />
-				<!-- <include name="lastUpdate" /> -->
-				<!-- <include name="update.properties" /> -->
+			</fileset>
+			<fileset dir="demo">
+				<include name=".breakout/settings.yaml" />
+				<include name=".breakout/demo.bop" />
+				<include name=".breakout/demo-survey.txt" />
 			</fileset>
 			<fileset dir="${dist}">
 				<include name="${ant.project.name}-base.jar" />
@@ -369,7 +368,7 @@
 				<include name="lib/gluegen-rt-natives-linux-amd64.jar" />
 				<include name="lib/gluegen-rt-natives-macosx-universal.jar" />
 				<include name="lib/jogl-awt.jar" />
-				<include name="lib/jogl-core.jar" />
+				<include name="lib/jogl.jar" />
 				<include name="lib/jogl-gldesktop.jar" />
 				<include name="lib/jogl-os-win.jar" />
 				<include name="lib/jogl-os-x11.jar" />
@@ -379,7 +378,7 @@
 				<include name="lib/jogl-natives-linux-i586.jar" />
 				<include name="lib/jogl-natives-linux-amd64.jar" />
 				<include name="lib/jogl-natives-macosx-universal.jar" />
-				<include name="lib/nativewindow-core.jar" />
+				<include name="lib/nativewindow.jar" />
 				<include name="lib/nativewindow-awt.jar" />
 				<include name="lib/nativewindow-os-win.jar" />
 				<include name="lib/nativewindow-os-x11.jar" />
@@ -389,7 +388,7 @@
 				<include name="lib/nativewindow-natives-linux-i586.jar" />
 				<include name="lib/nativewindow-natives-linux-amd64.jar" />
 				<include name="lib/nativewindow-natives-macosx-universal.jar" />
-				<include name="lib/newt-core.jar" />
+				<include name="lib/newt.jar" />
 				<include name="lib/newt-ogl.jar" />
 				<include name="lib/newt-awt.jar" />
 				<include name="lib/newt-event.jar" />

@@ -22,7 +22,7 @@
 package org.andork.breakout;
 
 import java.awt.event.ActionEvent;
-import java.io.File;
+import java.nio.file.Path;
 
 import javax.swing.AbstractAction;
 
@@ -30,20 +30,33 @@ import javax.swing.AbstractAction;
 public class OpenRecentProjectAction extends AbstractAction
 {
 	BreakoutMainView	mainView;
-	File				recentProjectFile;
-	
-	public OpenRecentProjectAction( final BreakoutMainView mainView , File recentProjectFile )
+	/**
+	 * the path to the recent project file, relative to the current {@linkplain BreakoutMainView#getRootDirectory()
+	 * root settings directory}.
+	 */
+	Path				recentProjectFile;
+
+	/**
+	 * @param mainView
+	 * @param recentProjectFile
+	 *            the path to the recent project file, relative to the current
+	 *            {@linkplain BreakoutMainView#getRootDirectory()
+	 *            root settings directory}.
+	 */
+	public OpenRecentProjectAction( final BreakoutMainView mainView , Path recentProjectFile )
 	{
 		super( );
 		this.mainView = mainView;
 		this.recentProjectFile = recentProjectFile;
-		
+
 		putValue( NAME , recentProjectFile.toString( ) );
 	}
-	
+
 	@Override
 	public void actionPerformed( ActionEvent e )
 	{
-		mainView.openProject( recentProjectFile );
+		Path resolvedProjectFile = mainView.getRootDirectory( ).toAbsolutePath( ).resolve( recentProjectFile )
+			.normalize( );
+		mainView.openProject( resolvedProjectFile );
 	}
 }

@@ -32,8 +32,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.LinearGradientPaint;
-import java.io.File;
-import java.util.Arrays;
+import java.nio.file.Path;
 import java.util.Properties;
 
 import javax.swing.AbstractButton;
@@ -74,8 +73,8 @@ import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
 import org.andork.collect.Visitor;
-import org.andork.func.FileStringBimapper;
 import org.andork.func.LinearFloatBimapper;
+import org.andork.func.PathStringBimapper;
 import org.andork.func.RoundingFloat2IntegerBimapper;
 import org.andork.plot.PlotAxisConversionBinder;
 import org.andork.q.QMap;
@@ -155,7 +154,7 @@ public class SettingsDrawer extends Drawer
 	JScrollPane											mainPanelScrollPane;
 	
 	BinderWrapper<QObject<RootModel>>					rootBinder					= new BinderWrapper<QObject<RootModel>>( );
-	Binder<File>										currentProjectFileBinder	= QObjectAttributeBinder.bind( RootModel.currentProjectFile , rootBinder );
+	Binder<Path>										currentProjectFileBinder	= QObjectAttributeBinder.bind( RootModel.currentProjectFile , rootBinder );
 	Binder<Integer>										desiredNumSamplesBinder		= QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootBinder );
 	Binder<Integer>										mouseSensitivityBinder		= QObjectAttributeBinder.bind( RootModel.mouseSensitivity , rootBinder );
 	Binder<Integer>										mouseWheelSensitivityBinder	= QObjectAttributeBinder.bind( RootModel.mouseWheelSensitivity , rootBinder );
@@ -472,7 +471,7 @@ public class SettingsDrawer extends Drawer
 	
 	private void createBindings( )
 	{
-		ComponentTextBinder.bind( projectFileField , BimapperBinder.bind( FileStringBimapper.instance , currentProjectFileBinder ) );
+		ComponentTextBinder.bind( projectFileField , BimapperBinder.bind( PathStringBimapper.instance , currentProjectFileBinder ) );
 		
 		ComponentBackgroundBinder.bind( bgColorButton , backgroundColorBinder );
 		

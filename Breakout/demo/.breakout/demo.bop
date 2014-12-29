@@ -1,0 +1,65 @@
+cameraView: PERSPECTIVE
+projCalculator:
+  type: perspective
+  fovAngle: 1.5707964
+  zNear: 1.0
+  zFar: 1.0E7
+viewXform:
+- 0.99052763
+- 0.1354584
+- -0.0225001
+- 0.0
+- -2.025253E-6
+- 0.16385089
+- 0.9864851
+- 0.0
+- 0.13731386
+- -0.9771407
+- 0.16229866
+- 0.0
+- 3839.3088
+- -2278.6833
+- -5484.2085
+- 1.0
+distRange:
+  offset: 0.0
+  scale: 0.01
+colorParam: DEPTH
+savedParamRanges:
+  DEPTH:
+    offset: 68.83000183105466
+    scale: 1.3349307664721581
+  DISTANCE_ALONG_SHOTS:
+    offset: 0.0
+    scale: 1.0
+  PASSAGE_WIDTH:
+    offset: 0.0
+    scale: 1.0
+  PASSAGE_HEIGHT:
+    offset: 0.0
+    scale: 1.0
+  PASSAGE_MIN:
+    offset: 0.0
+    scale: 1.0
+  PASSAGE_AREA:
+    offset: 0.0
+    scale: 1.0
+  SHOT_LENGTH:
+    offset: 0.0
+    scale: 1.0
+  DATE:
+    offset: 0.0
+    scale: 1.0
+highlightRange:
+  offset: 0.0
+  scale: 0.2
+surveyFile: demo-survey.txt
+settingsDrawer: {}
+surveyDrawer: {}
+miniSurveyDrawer: {}
+taskListDrawer: {}
+backgroundColor: '#000000'
+depthAxis:
+- 0.0
+- -1.0
+- 0.0
