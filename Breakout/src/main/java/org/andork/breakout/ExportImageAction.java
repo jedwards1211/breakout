@@ -35,12 +35,12 @@ import javax.swing.SwingUtilities;
 import org.andork.awt.I18n.Localizer;
 import org.andork.bind.Binder;
 import org.andork.breakout.model.ProjectModel;
-import org.andork.breakout.model.RootModel;
 import org.andork.jogl.awt.ScreenCaptureDialog;
 import org.andork.jogl.awt.ScreenCaptureDialogModel;
 import org.andork.q.QObject;
 import org.andork.swing.OnEDT;
 
+@SuppressWarnings( "serial" )
 public class ExportImageAction extends AbstractAction
 {
 	BreakoutMainView	mainView;

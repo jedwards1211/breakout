@@ -22,6 +22,8 @@
 package org.andork.jogl.awt;
 
 import static javax.media.opengl.GL.GL_BGRA;
+import static javax.media.opengl.GL.GL_COLOR_BUFFER_BIT;
+import static javax.media.opengl.GL.GL_DEPTH_BUFFER_BIT;
 import static javax.media.opengl.GL.GL_NEAREST;
 import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
 import static javax.media.opengl.GL2ES3.GL_DRAW_FRAMEBUFFER;
@@ -44,12 +46,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
 import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
@@ -93,6 +95,7 @@ import org.andork.bind.ui.ComponentTextBinder;
 import org.andork.bind.ui.ISelectorSelectionBinder;
 import org.andork.bind.ui.JSpinnerValueBinder;
 import org.andork.format.Format;
+import org.andork.jogl.JoglScreenPolygon;
 import org.andork.jogl.awt.ScreenCaptureDialogModel.ResolutionUnit;
 import org.andork.jogl.neu2.DefaultJoglRenderer;
 import org.andork.jogl.neu2.GL3Framebuffer;
@@ -995,6 +998,9 @@ public class ScreenCaptureDialog extends JDialog
 		public NewRenderer( )
 		{
 			super( new GL3Framebuffer( ) , 1 );
+
+			screenPolygon = new JoglScreenPolygon( );
+			screenPolygon.setColor( 1f , 1f , 1f , 1f );
 		}
 
 		volatile CaptureTask	captureTask;
@@ -1008,6 +1014,8 @@ public class ScreenCaptureDialog extends JDialog
 
 		GL3Framebuffer			blitFramebuffer	= new GL3Framebuffer( );
 
+		JoglScreenPolygon		screenPolygon;
+
 		public void startCapture( CaptureTask captureTask )
 		{
 			this.captureTask = captureTask;
@@ -1018,7 +1026,38 @@ public class ScreenCaptureDialog extends JDialog
 			totalHeight = total( captureTask.tileHeights );
 
 			capturedImage = new BufferedImage( totalWidth , totalHeight , BufferedImage.TYPE_INT_ARGB );
+		}
 
+		@Override
+		protected void drawScene( GLAutoDrawable drawable )
+		{
+			super.drawScene( drawable );
+
+			if( captureTask != null )
+			{
+				int tileX = captureTask.getCompleted( ) / captureTask.tileWidths.length;
+				int tileY = captureTask.getCompleted( ) % captureTask.tileHeights.length;
+
+				int tileWidth = captureTask.tileWidths[ tileX ];
+				int tileHeight = captureTask.tileHeights[ tileY ];
+
+				int previewWidth = drawable.getSurfaceWidth( );
+				int previewHeight = drawable.getSurfaceHeight( );
+
+				GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+
+				int x1 = tileX * bufferWidth * previewWidth / totalWidth;
+				int y1 = tileY * bufferHeight * previewHeight / totalHeight;
+				int x2 = x1 + tileWidth * previewWidth / totalWidth;
+				int y2 = y1 + tileHeight * previewHeight / totalHeight;
+
+				screenPolygon.setPoints( 2 ,
+					x1 , y1 , x1 , y2 ,
+					x2 , y2 , x2 , y1 ,
+					x1 , y1 );
+
+				screenPolygon.draw( viewState , gl , m , n );
+			}
 		}
 
 		@Override
@@ -1026,33 +1065,9 @@ public class ScreenCaptureDialog extends JDialog
 		{
 			GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
 
-			int tileX = 0 , tileY = 0;
-			int viewportX = 0 , viewportY = 0;
-
 			CaptureTask captureTask = this.captureTask;
 
-			if( captureTask == null )
-			{
-				gl.glViewport( 0 , 0 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) );
-			}
-			else
-			{
-				tileX = captureTask.getCompleted( ) / captureTask.tileWidths.length;
-				tileY = captureTask.getCompleted( ) % captureTask.tileHeights.length;
-
-				for( int x = 0 ; x < tileX ; x++ )
-				{
-					viewportX -= captureTask.tileWidths[ x ];
-				}
-
-				for( int y = 0 ; y < tileY ; y++ )
-				{
-					viewportY -= captureTask.tileHeights[ y ];
-				}
-
-				gl.glViewport( viewportX , viewportY , totalWidth , totalHeight );
-			}
-
+			gl.glViewport( 0 , 0 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) );
 			super.display( drawable );
 
 			if( captureTask == null )
@@ -1060,8 +1075,26 @@ public class ScreenCaptureDialog extends JDialog
 				return;
 			}
 
+			int tileX = captureTask.getCompleted( ) / captureTask.tileHeights.length;
+			int tileY = captureTask.getCompleted( ) % captureTask.tileHeights.length;
+
 			int tileWidth = captureTask.tileWidths[ tileX ];
 			int tileHeight = captureTask.tileHeights[ tileY ];
+
+			int viewportX = 0;
+			int viewportY = 0;
+
+			for( int x = 0 ; x < tileX ; x++ )
+			{
+				viewportX -= captureTask.tileWidths[ x ];
+			}
+
+			for( int y = 0 ; y < tileY ; y++ )
+			{
+				viewportY -= captureTask.tileHeights[ y ];
+			}
+
+			gl.glViewport( viewportX , viewportY , totalWidth , totalHeight );
 
 			viewState.update( viewSettings , totalWidth , totalHeight );
 
@@ -1084,8 +1117,8 @@ public class ScreenCaptureDialog extends JDialog
 			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , 0 );
 			gl3.glBindFramebuffer( GL_READ_FRAMEBUFFER , blitFbo );
 
-			BufferedImageInt tile = DirectDataBufferInt.createBufferedImage( tileWidth , tileHeight , BufferedImage.TYPE_INT_ARGB ,
-				new Point( 0 , 0 ) , new Hashtable<Object, Object>( ) );
+			BufferedImageInt tile = DirectDataBufferInt.createBufferedImage( tileWidth , tileHeight ,
+				BufferedImage.TYPE_INT_ARGB , new Point( 0 , 0 ) , new Hashtable<Object, Object>( ) );
 			DirectDataBufferInt tileBuffer = ( DirectDataBufferInt ) tile.getRaster( ).getDataBuffer( );
 
 			gl.glReadPixels( 0 , 0 , tileWidth , tileHeight , GL_BGRA , GL_UNSIGNED_BYTE , tileBuffer.getData( ) );
@@ -1099,19 +1132,21 @@ public class ScreenCaptureDialog extends JDialog
 
 			Graphics2D g2 = ( Graphics2D ) capturedImage.createGraphics( );
 
-			for( int x = 0 ; x < tileWidth ; x++ )
-			{
-				for( int y = 0 ; y < tileHeight ; y++ )
-				{
-					int rgb = tile.getRGB( x , y );
-					if( ( rgb & 0xff000000 ) != 0 )
-					{
-						System.out.println( "tile: " + x + ", " + y + ": " + rgb );
-					}
-					rgb |= 0xff000000;
-					tile.setRGB( x , y , rgb );
-				}
-			}
+//			for( int x = 0 ; x < tileWidth ; x++ )
+//			{
+//				for( int y = 0 ; y < tileHeight ; y++ )
+//				{
+//					// TODO: glReadPixels is not getting alpha values.  This hack is a workaround,
+//					// but I have to figure out why glReadPixels is not working properly.
+//					int rgb = tile.getRGB( x , y );
+//					if( ( rgb & 0xff000000 ) != 0 )
+//					{
+//						System.out.println( "tile: " + x + ", " + y + ": " + rgb );
+//					}
+//					rgb |= 0xff000000;
+//					tile.setRGB( x , y , rgb );
+//				}
+//			}
 
 			AffineTransform prevXform = g2.getTransform( );
 			g2.translate( -viewportX , totalHeight - 1 + viewportY );

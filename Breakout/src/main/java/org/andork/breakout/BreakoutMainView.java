@@ -571,6 +571,7 @@ public class BreakoutMainView
 				{
 					BreakoutMainView.this.bgColor.set( bgColor.getRed( ) / 255f , bgColor.getGreen( ) / 255f ,
 						bgColor.getBlue( ) / 255f , 1f );
+					glWindow.display( );
 				}
 			}
 		}.bind( QObjectAttributeBinder.bind( ProjectModel.backgroundColor , projectModelBinder ) );

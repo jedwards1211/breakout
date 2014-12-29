@@ -35,6 +35,7 @@ import javax.media.opengl.GLAutoDrawable;
 import org.andork.breakout.model.Survey3dModel;
 import org.andork.breakout.model.Survey3dModel.Shot3d;
 import org.andork.func.StreamUtils;
+import org.andork.jogl.JoglScreenPolygon;
 import org.andork.jogl.neu2.JoglViewState;
 import org.andork.jogl.neu2.JoglScene;
 import org.andork.math3d.PickXform;
@@ -73,7 +74,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter
 
 	private final Context			context;
 	private final List<float[ ]>	points				= new ArrayList<float[ ]>( );
-	SelectionPolygon				selectionPolygon	= new SelectionPolygon( );
+	JoglScreenPolygon				selectionPolygon	= new JoglScreenPolygon( );
 
 	private PlanarHull3f			hull				= new PlanarHull3f( );
 

@@ -115,10 +115,7 @@ public class DefaultJoglRenderer implements GLEventListener
 
 		viewState.update( viewSettings , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) );
 
-		if( scene != null )
-		{
-			scene.draw( viewState , gl , m , n );
-		}
+		drawScene( drawable );
 
 		if( framebuffer != null )
 		{
@@ -129,6 +126,14 @@ public class DefaultJoglRenderer implements GLEventListener
 			gl3.glDrawBuffer( GL_BACK );
 			gl3.glBlitFramebuffer( 0 , 0 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) , 0 , 0 ,
 				drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) , GL3.GL_COLOR_BUFFER_BIT , GL_NEAREST );
+		}
+	}
+
+	protected void drawScene( GLAutoDrawable drawable )
+	{
+		if( scene != null )
+		{
+			scene.draw( viewState , (GL2ES2) drawable.getGL( ) , m , n );
 		}
 	}
 
