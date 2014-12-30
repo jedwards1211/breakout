@@ -26,7 +26,6 @@ import static org.andork.func.CompoundBimapper.compose;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -39,6 +38,7 @@ import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
@@ -49,13 +49,13 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.andork.awt.AWTUtil;
 import org.andork.awt.ColorUtils;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.awt.I18n;
 import org.andork.awt.I18n.Localizer;
 import org.andork.awt.layout.BetterCardLayout;
-import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
 import org.andork.bind.BimapperBinder;
@@ -72,7 +72,7 @@ import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.breakout.model.ColorParam;
 import org.andork.breakout.model.ProjectModel;
 import org.andork.breakout.model.RootModel;
-import org.andork.collect.Visitor;
+import org.andork.breakout.update.UpdateStatusPanel;
 import org.andork.func.LinearFloatBimapper;
 import org.andork.func.PathStringBimapper;
 import org.andork.func.RoundingFloat2IntegerBimapper;
@@ -194,6 +194,10 @@ public class SettingsDrawer extends Drawer
 																						ProjectModel.ambientLight ,
 																						projectBinder );
 
+	UpdateStatusPanel									updateStatusPanel;
+
+	private String										loadedVersion;
+
 	public SettingsDrawer( final I18n i18n , Binder<QObject<RootModel>> rootBinder ,
 		Binder<QObject<ProjectModel>> projectBinder )
 	{
@@ -208,8 +212,6 @@ public class SettingsDrawer extends Drawer
 				localizer = i18n.forClass( SettingsDrawer.this.getClass( ) );
 
 				delegate( ).dockingSide( Side.RIGHT );
-//				pinButton( );
-//				pinButtonDelegate( ).corner( Corner.TOP_LEFT ).side( Side.LEFT );
 
 				setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors(
 					ColorUtils.darkerColor( getBackground( ) , 0.05 ) ,
@@ -218,29 +220,24 @@ public class SettingsDrawer extends Drawer
 					new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
 					new Insets( 0 , 8 , 0 , 0 ) ) );
 
-				createComponents( );
+				createComponents( i18n );
 				createLayout( );
 				createListeners( );
 				createBindings( );
 
-				org.andork.awt.AWTUtil.traverse( SettingsDrawer.this , new Visitor<Component>( )
+				org.andork.awt.AWTUtil.traverse( SettingsDrawer.this , comp ->
 				{
-					@Override
-					public boolean visit( Component t )
+					if( comp instanceof AbstractButton )
 					{
-						if( t instanceof AbstractButton )
-						{
-							AbstractButton button = ( AbstractButton ) t;
-							button.setOpaque( false );
-						}
-						return true;
+						AbstractButton button = ( AbstractButton ) comp;
+						button.setOpaque( false );
 					}
 				} );
 			}
 		};
 	}
 
-	private void createComponents( )
+	private void createComponents( I18n i18n )
 	{
 		projectFileLabel = new JLabel( );
 		projectFileLabel.setFont( projectFileLabel.getFont( ).deriveFont( Font.BOLD ).deriveFont( 14f ) );
@@ -390,10 +387,21 @@ public class SettingsDrawer extends Drawer
 		versionLabel = new JLabel( );
 		versionLabel.setHorizontalAlignment( JLabel.CENTER );
 		Properties versionProperties = loadVersionProperties( );
-		String version = versionProperties.getProperty( "version" , "unknown" );
+		loadedVersion = versionProperties.getProperty( "version" , "unknown" );
 		String buildDate = versionProperties.getProperty( "build.date" , "unknown" );
 
-		localizer.setFormattedText( versionLabel , "versionLabel.text" , version , buildDate );
+		localizer.setFormattedText( versionLabel , "versionLabel.text" , loadedVersion , buildDate );
+
+		updateStatusPanel = new UpdateStatusPanel( i18n );
+
+		AWTUtil.traverse( updateStatusPanel , comp ->
+		{
+			comp.setBackground( null );
+			if( comp instanceof JComponent )
+			{
+				( ( JComponent ) comp ).setOpaque( false );
+			}
+		} );
 	}
 
 	private Properties loadVersionProperties( )
@@ -421,7 +429,7 @@ public class SettingsDrawer extends Drawer
 		projectFilePanel.put( projectFileField ).xy( 0 , 0 ).fillx( 1.0 );
 		projectFilePanel.put( projectFileMenuButton ).rightOfLast( );
 
-		w.put( projectFilePanel.getTarget( ) ).below(pinButton( ), projectFileLabel ).fillx( );
+		w.put( projectFilePanel.getTarget( ) ).below( pinButton( ) , projectFileLabel ).fillx( );
 
 		w.put( viewButtonsPanel ).belowLast( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( resetViewButton ).belowLast( ).fillx( 1.0 );
@@ -476,6 +484,8 @@ public class SettingsDrawer extends Drawer
 		w.put( numSamplesSlider ).belowLast( ).fillx( );
 
 		w.put( versionLabel ).belowLast( ).south( ).weighty( 1.0 ).fillx( );
+
+		w.put( updateStatusPanel ).belowLast( ).south( ).fillx( );
 
 		w.put( debugButton ).belowLast( ).southwest( );
 
@@ -652,5 +662,15 @@ public class SettingsDrawer extends Drawer
 	public AbstractButton getRecalcColorByDistanceButton( )
 	{
 		return recalcColorByDistanceButton;
+	}
+
+	public UpdateStatusPanel getUpdateStatusPanel( )
+	{
+		return updateStatusPanel;
+	}
+
+	public String getLoadedVersion( )
+	{
+		return loadedVersion;
 	}
 }

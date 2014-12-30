@@ -19,14 +19,14 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.frf.update;
+package org.andork.breakout.update;
 
-import static org.andork.frf.update.UpdateStatus.CHECKING;
-import static org.andork.frf.update.UpdateStatus.STARTING_DOWNLOAD;
-import static org.andork.frf.update.UpdateStatus.UNCHECKED;
-import static org.andork.frf.update.UpdateStatus.UPDATE_AVAILABLE;
-import static org.andork.frf.update.UpdateStatus.UPDATE_DOWNLOADED;
-import static org.andork.frf.update.UpdateStatus.UP_TO_DATE;
+import static org.andork.breakout.update.UpdateStatus.CHECKING;
+import static org.andork.breakout.update.UpdateStatus.STARTING_DOWNLOAD;
+import static org.andork.breakout.update.UpdateStatus.UNCHECKED;
+import static org.andork.breakout.update.UpdateStatus.UPDATE_AVAILABLE;
+import static org.andork.breakout.update.UpdateStatus.UPDATE_DOWNLOADED;
+import static org.andork.breakout.update.UpdateStatus.UP_TO_DATE;
 
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -46,29 +46,32 @@ import org.andork.awt.I18n;
 import org.andork.awt.IconScaler;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.awt.I18n.Localizer;
-import org.andork.frf.update.UpdateStatus.CheckFailed;
-import org.andork.frf.update.UpdateStatus.DownloadFailed;
-import org.andork.frf.update.UpdateStatus.Downloading;
-import org.andork.frf.update.UpdateStatus.UpdateFailed;
+import org.andork.breakout.update.UpdateStatus.CheckFailed;
+import org.andork.breakout.update.UpdateStatus.DownloadFailed;
+import org.andork.breakout.update.UpdateStatus.Downloading;
+import org.andork.breakout.update.UpdateStatus.UpdateFailed;
+import org.andork.util.Java7.Objects;
 import org.jdesktop.swingx.JXHyperlink;
 
 @SuppressWarnings( "serial" )
 public class UpdateStatusPanel extends JPanel
 {
 	private UpdateStatus	status;
-	
+	private String			latestVersion;
+
 	private JLabel			messageLabel;
 	private JProgressBar	downloadProgressBar;
 	private JXHyperlink		downloadHyperlink;
-	private JXHyperlink		checkForUpdatesHyperlink;
+	private JXHyperlink		checkForUpdateHyperlink;
 	private JXHyperlink		detailsHyperlink;
 	private JXHyperlink		cancelDownloadHyperlink;
-	
+	private JXHyperlink		installHyperlink;
+
 	private Localizer		localizer;
-	
+
 	private Icon			infoIcon;
 	private Icon			errorIcon;
-	
+
 	public UpdateStatusPanel( I18n i18n )
 	{
 		if( i18n == null )
@@ -79,7 +82,7 @@ public class UpdateStatusPanel extends JPanel
 		init( );
 		modelToView( );
 	}
-	
+
 	private void init( )
 	{
 		messageLabel = new JLabel( );
@@ -87,28 +90,31 @@ public class UpdateStatusPanel extends JPanel
 		downloadProgressBar.setPreferredSize( new Dimension( 75 , 15 ) );
 		downloadProgressBar.setMinimumSize( downloadProgressBar.getPreferredSize( ) );
 		downloadHyperlink = new JXHyperlink( );
-		checkForUpdatesHyperlink = new JXHyperlink( );
-		localizer.setText( checkForUpdatesHyperlink , "Check for update..." );
+		checkForUpdateHyperlink = new JXHyperlink( );
+		localizer.setText( checkForUpdateHyperlink , "checkForUpdateHyperlink.text" );
 		detailsHyperlink = new JXHyperlink( );
 		detailsHyperlink.setAction( new DetailsAction( ) );
-		localizer.setText( detailsHyperlink , "Details" );
+		localizer.setText( detailsHyperlink , "detailsHyperlink.text" );
 		cancelDownloadHyperlink = new JXHyperlink( );
-		localizer.setText( cancelDownloadHyperlink , "Cancel" );
-		
+		localizer.setText( cancelDownloadHyperlink , "cancelDownloadHyperlink.text" );
+		installHyperlink = new JXHyperlink( );
+		localizer.setText( installHyperlink , "installHyperlink.text" );
+
 		GridBagWizard g = GridBagWizard.create( this );
 		g.defaults( ).autoinsets( new DefaultAutoInsets( 5 , 2 ) );
-		g.put( messageLabel , downloadHyperlink , detailsHyperlink , checkForUpdatesHyperlink , cancelDownloadHyperlink , downloadProgressBar ).intoRow( );
+		g.put( messageLabel , downloadHyperlink , detailsHyperlink , checkForUpdateHyperlink ,
+			cancelDownloadHyperlink , installHyperlink , downloadProgressBar ).intoRow( );
 		g.put( downloadProgressBar ).fillx( 1.0 );
-		
+
 		infoIcon = IconScaler.rescale( UIManager.getIcon( "OptionPane.informationIcon" ) , 1000 , 20 );
 		errorIcon = IconScaler.rescale( UIManager.getIcon( "OptionPane.errorIcon" ) , 1000 , 20 );
 	}
-	
+
 	public UpdateStatus getStatus( )
 	{
 		return status;
 	}
-	
+
 	public void setStatus( UpdateStatus newStatus )
 	{
 		if( status != newStatus )
@@ -117,37 +123,72 @@ public class UpdateStatusPanel extends JPanel
 			modelToView( );
 		}
 	}
-	
+
+	public String getLatestVersion( )
+	{
+		return latestVersion;
+	}
+
+	public void setLatestVersion( String latestVersion )
+	{
+		if( !Objects.equals( this.latestVersion , latestVersion ) )
+		{
+			this.latestVersion = latestVersion;
+			modelToView( );
+		}
+	}
+
 	public void setDownloadAction( Action action )
 	{
 		String text = downloadHyperlink.getText( );
 		downloadHyperlink.setAction( action );
 		downloadHyperlink.setText( text );
 	}
-	
+
 	public void setCheckForUpdatesAction( Action action )
 	{
-		String text = checkForUpdatesHyperlink.getText( );
-		checkForUpdatesHyperlink.setAction( action );
-		checkForUpdatesHyperlink.setText( text );
+		String text = checkForUpdateHyperlink.getText( );
+		checkForUpdateHyperlink.setAction( action );
+		checkForUpdateHyperlink.setText( text );
 	}
-	
+
 	public void setCancelDownloadAction( Action action )
 	{
 		String text = cancelDownloadHyperlink.getText( );
 		cancelDownloadHyperlink.setAction( action );
 		cancelDownloadHyperlink.setText( text );
 	}
-	
+
+	public void setInstallAction( Action action )
+	{
+		String text = installHyperlink.getText( );
+		installHyperlink.setAction( action );
+		installHyperlink.setText( text );
+	}
+
+	public void showInstallInstructionsDialog( )
+	{
+		JOptionPane
+			.showMessageDialog(
+				SwingUtilities.getWindowAncestor( this ) ,
+				localizer.getFormattedString( "installInstructionsDialog.message" , getLatestVersion( ) ) ,
+				localizer.getString( "installInstructionsDialog.title" ) ,
+				JOptionPane.INFORMATION_MESSAGE );
+	}
+
 	private void modelToView( )
 	{
-		downloadProgressBar.setVisible( status == CHECKING || status == STARTING_DOWNLOAD || status instanceof Downloading );
+		downloadProgressBar.setVisible( status == CHECKING || status == STARTING_DOWNLOAD
+			|| status instanceof Downloading );
 		downloadProgressBar.setIndeterminate( status == CHECKING || status == STARTING_DOWNLOAD );
-		detailsHyperlink.setVisible( status instanceof UpdateFailed || status instanceof CheckFailed || status instanceof DownloadFailed );
+		detailsHyperlink.setVisible( status instanceof UpdateFailed || status instanceof CheckFailed
+			|| status instanceof DownloadFailed );
 		downloadHyperlink.setVisible( status == UPDATE_AVAILABLE || status instanceof DownloadFailed );
-		checkForUpdatesHyperlink.setVisible( status == null || status == UNCHECKED || status instanceof CheckFailed || status == UP_TO_DATE || status instanceof UpdateFailed );
+		checkForUpdateHyperlink.setVisible( status == null || status == UNCHECKED || status instanceof CheckFailed
+			|| status == UP_TO_DATE || status instanceof UpdateFailed );
 		cancelDownloadHyperlink.setVisible( status instanceof Downloading || status == STARTING_DOWNLOAD );
-		
+		installHyperlink.setVisible( status == UPDATE_DOWNLOADED );
+
 		if( status == null || status == UNCHECKED )
 		{
 			messageLabel.setText( null );
@@ -155,74 +196,77 @@ public class UpdateStatusPanel extends JPanel
 		}
 		else if( status == CHECKING )
 		{
-			localizer.setText( messageLabel , "Checking for update..." );
+			localizer.setText( messageLabel , "messageLabel.text.checking" );
 			messageLabel.setIcon( null );
 		}
 		else if( status == UPDATE_AVAILABLE )
 		{
-			localizer.setText( messageLabel , "An update is available." );
-			localizer.setText( downloadHyperlink , "Download Now" );
+			localizer.setFormattedText( messageLabel , "messageLabel.text.updateAvailable" , latestVersion );
+			localizer.setText( downloadHyperlink , "downloadHyperlink.text.downloadNow" );
 			messageLabel.setIcon( infoIcon );
 		}
 		else if( status == UP_TO_DATE )
 		{
-			localizer.setText( messageLabel , "Software up-to-date." );
+			localizer.setText( messageLabel , "messageLabel.text.upToDate" );
 			messageLabel.setIcon( null );
 		}
 		else if( status == UPDATE_DOWNLOADED )
 		{
-			localizer.setText( messageLabel , "Update will be installed when you restart." );
+			localizer.setFormattedText( messageLabel , "messageLabel.text.updateDownloaded" , latestVersion );
 			messageLabel.setIcon( infoIcon );
 		}
 		else if( status instanceof Downloading )
 		{
-			localizer.setText( messageLabel , "Downloading update..." );
+			localizer.setFormattedText( messageLabel , "messageLabel.text.downloading" , latestVersion );
 			messageLabel.setIcon( null );
 			downloadProgressBar.setMaximum( ( int ) ( ( Downloading ) status ).totalNumBytes );
 			downloadProgressBar.setValue( ( int ) ( ( Downloading ) status ).numBytesDownloaded );
 		}
 		else if( status instanceof CheckFailed )
 		{
-			localizer.setText( messageLabel , "Update check failed." );
+			localizer.setText( messageLabel , "messageLabel.text.checkFailed" );
 			messageLabel.setIcon( errorIcon );
 		}
 		else if( status instanceof DownloadFailed )
 		{
-			localizer.setText( messageLabel , "Download failed." );
+			localizer.setText( messageLabel , "messageLabel.text.downloadFailed" );
 			messageLabel.setIcon( errorIcon );
-			localizer.setText( downloadHyperlink , "Retry" );
+			localizer.setText( downloadHyperlink , "downloadHyperlink.text.retry" );
 		}
 		else if( status instanceof UpdateFailed )
 		{
-			localizer.setText( messageLabel , "Update failed." );
+			localizer.setText( messageLabel , "messageLabel.text.updateFailed" );
 			messageLabel.setIcon( errorIcon );
 		}
 	}
-	
+
 	private class DetailsAction extends AbstractAction
 	{
 		public DetailsAction( )
 		{
 			super( "Details..." );
 		}
-		
+
 		@Override
 		public void actionPerformed( ActionEvent e )
 		{
 			if( status instanceof DownloadFailed )
 			{
 				JOptionPane.showMessageDialog( SwingUtilities.getWindowAncestor( UpdateStatusPanel.this ) ,
-						( ( DownloadFailed ) status ).message , localizer.getString( "Download failed" ) , JOptionPane.ERROR_MESSAGE );
+					( ( DownloadFailed ) status ).message , localizer.getString( "downloadFailedDialog.title" ) ,
+					JOptionPane.ERROR_MESSAGE );
 			}
 			else if( status instanceof UpdateFailed )
 			{
 				JOptionPane.showMessageDialog( SwingUtilities.getWindowAncestor( UpdateStatusPanel.this ) ,
-						( ( UpdateFailed ) status ).message , localizer.getString( "Update failed" ) , JOptionPane.ERROR_MESSAGE );
+					( ( UpdateFailed ) status ).message , localizer.getString( "updateFailedDialog.title" ) ,
+					JOptionPane.ERROR_MESSAGE );
 			}
 			else if( status instanceof CheckFailed )
 			{
 				JOptionPane.showMessageDialog( SwingUtilities.getWindowAncestor( UpdateStatusPanel.this ) ,
-						( ( CheckFailed ) status ).message , localizer.getString( "Update check failed" ) , JOptionPane.ERROR_MESSAGE );
+					( ( CheckFailed ) status ).message , localizer.getString( "checkFailedDialog.title" ) ,
+					JOptionPane.ERROR_MESSAGE );
 			}
 		}
 	}

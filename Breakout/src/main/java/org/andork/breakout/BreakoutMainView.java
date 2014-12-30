@@ -41,6 +41,8 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -50,6 +52,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -90,7 +93,6 @@ import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
 import org.andork.awt.event.MouseAdapterChain;
 import org.andork.awt.event.MouseAdapterWrapper;
-import org.andork.awt.layout.Corner;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
@@ -118,6 +120,7 @@ import org.andork.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.andork.breakout.model.TransparentTerrain;
+import org.andork.breakout.update.UpdateStatusPanelController;
 import org.andork.collect.CollectionUtils;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.jogl.AutoClipOrthoProjection;
@@ -1027,6 +1030,25 @@ public class BreakoutMainView
 			.normalize( );
 
 		openProject( projectFile );
+
+		try( FileInputStream updateIn = new FileInputStream( "update.properties" ) )
+		{
+			Properties updateProps = new Properties( );
+			updateProps.load( updateIn );
+			updateIn.close( );
+
+			UpdateStatusPanelController updateStatusPanelController = new UpdateStatusPanelController(
+				settingsDrawer.getUpdateStatusPanel( ) ,
+				settingsDrawer.getLoadedVersion( ) ,
+				new URL( updateProps.get( "latestVersionInfoUrl" ).toString( ) ) ,
+				new File( updateProps.get( "updateDir" ).toString( ) ) );
+
+			updateStatusPanelController.checkForUpdate( );
+		}
+		catch( Exception e )
+		{
+			e.printStackTrace( );
+		}
 	}
 
 	public File getRootFile( )

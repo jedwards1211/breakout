@@ -25,8 +25,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.util.Arrays;
 import java.util.LinkedList;
-
-import org.andork.collect.Visitor;
+import java.util.function.Consumer;
 
 public class AWTUtil
 {
@@ -45,7 +44,7 @@ public class AWTUtil
 		return c.cast( parent );
 	}
 	
-	public static void traverse( Component root , Visitor<Component> visitor )
+	public static void traverse( Component root , Consumer<Component> consumer )
 	{
 		LinkedList<Component> queue = new LinkedList<Component>( );
 		queue.add( root );
@@ -53,10 +52,7 @@ public class AWTUtil
 		while( !queue.isEmpty( ) )
 		{
 			Component c = queue.poll( );
-			if( !visitor.visit( c ) )
-			{
-				return;
-			}
+			consumer.accept( c );
 			if( c instanceof Container )
 			{
 				queue.addAll( Arrays.asList( ( ( Container ) c ).getComponents( ) ) );

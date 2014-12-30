@@ -26,7 +26,8 @@ import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
 
 /**
- * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)} calls. Upon construction the {@link #run()} method will be called on the EDT,
+ * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)} calls. Upon construction the
+ * {@link #run()} method will be called on the EDT,
  * and it may throw any exception, unlike {@link Runnable#run()}.
  * 
  * @author andy.edwards
@@ -41,7 +42,8 @@ public abstract class OnEDT
 	 * @throws RuntimeInvocationTargetException
 	 *             wrapping the exception thrown by {@link #doRun()}, if any
 	 * @throws RuntimeInterruptedException
-	 *             if the calling thread was interrupted while waiting for {@link SwingUtilities#invokeAndWait(Runnable)} to return.
+	 *             if the calling thread was interrupted while waiting for
+	 *             {@link SwingUtilities#invokeAndWait(Runnable)} to return.
 	 */
 	public OnEDT( )
 	{
@@ -77,7 +79,7 @@ public abstract class OnEDT
 			}
 		}
 	}
-	
+
 	private void callRun( )
 	{
 		try
@@ -89,11 +91,23 @@ public abstract class OnEDT
 			throw new RuntimeInvocationTargetException( t );
 		}
 	}
-	
+
 	public abstract void run( ) throws Throwable;
-	
+
 	public static void onEDT( ExceptionRunnable r )
 	{
+		if( SwingUtilities.isEventDispatchThread( ) )
+		{
+			try
+			{
+				r.run( );
+			}
+			catch( Exception ex )
+			{
+				throw new RuntimeInvocationTargetException( ex );
+			}
+			return;
+		}
 		try
 		{
 			SwingUtilities.invokeAndWait( ( ) ->

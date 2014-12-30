@@ -30,7 +30,8 @@ import org.andork.generic.Ref;
 import org.omg.CORBA.ObjectHolder;
 
 /**
- * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)} calls. Upon construction {@link #run()} method will be called on the EDT, and it
+ * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)} calls. Upon construction {@link #run()}
+ * method will be called on the EDT, and it
  * may return a value or throw any exception, unlike {@link Runnable#run()}.
  * 
  * @author andy.edwards
@@ -40,14 +41,15 @@ import org.omg.CORBA.ObjectHolder;
 public abstract class FromEDT<R>
 {
 	private R	result;
-	
+
 	/**
 	 * This constructor calls {@link #run()} on the EDT immediately so that you can save a few keystrokes.
 	 * 
 	 * @throws RuntimeInvocationTargetException
 	 *             wrapping the exception thrown by {@link #run()}, if any
 	 * @throws RuntimeInterruptedException
-	 *             if the calling thread was interrupted while waiting for {@link SwingUtilities#invokeAndWait(Runnable)} to return.
+	 *             if the calling thread was interrupted while waiting for
+	 *             {@link SwingUtilities#invokeAndWait(Runnable)} to return.
 	 */
 	public FromEDT( )
 	{
@@ -83,7 +85,7 @@ public abstract class FromEDT<R>
 			}
 		}
 	}
-	
+
 	private void callRun( )
 	{
 		try
@@ -95,12 +97,13 @@ public abstract class FromEDT<R>
 			throw new RuntimeInvocationTargetException( t );
 		}
 	}
-	
+
 	/**
-	 * You must implement this method; {@link #run()} will call it. This is a separate method so that it can have a return value and throws clause.
+	 * You must implement this method; {@link #run()} will call it. This is a separate method so that it can have a
+	 * return value and throws clause.
 	 */
 	public abstract R run( ) throws Throwable;
-	
+
 	/**
 	 * @return the value returned by {@link #run()}.
 	 */
@@ -108,9 +111,21 @@ public abstract class FromEDT<R>
 	{
 		return result;
 	}
-	
+
 	public static <R> R fromEDT( Callable<R> c )
 	{
+		if( SwingUtilities.isEventDispatchThread( ) )
+		{
+			try
+			{
+				return c.call( );
+			}
+			catch( Exception ex )
+			{
+				throw new RuntimeInvocationTargetException( ex );
+			}
+		}
+
 		Ref<R> result = new Ref<>( );
 		try
 		{
@@ -118,7 +133,7 @@ public abstract class FromEDT<R>
 		}
 		catch( Exception ex )
 		{
-			
+
 		}
 		return result.value;
 	}
