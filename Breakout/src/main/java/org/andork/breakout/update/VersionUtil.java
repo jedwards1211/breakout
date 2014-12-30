@@ -9,10 +9,11 @@ public class VersionUtil
 
 		for( int i = 0 ; i < Math.min( aParts.length , bParts.length ) ; i++ )
 		{
-			int c = aParts[ i ].compareTo( bParts[ i ] );
-			if( c != 0 )
+			int aNum = Integer.parseInt( aParts[ i ] );
+			int bNum = Integer.parseInt( bParts[ i ] );
+			if( aNum != bNum )
 			{
-				return c;
+				return aNum - bNum;
 			}
 		}
 
