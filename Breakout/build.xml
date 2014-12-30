@@ -3,6 +3,7 @@
 	<property name="src" location="src" />
 	<property name="src.main" location="src/main/java" />
 	<property name="src.tools" location="src/tools/java" />
+	<property name="build" location="build" />
 	<property name="build.main" location="build/main" />
 	<property name="build.tools" location="build/tools" />
 	<property name="demo" location="demo" />
@@ -255,15 +256,14 @@
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/${ant.project.name}-win-i586.jar" basedir="${build.main}" manifest="MANIFEST-win-i586.MF" />
 
-		<delete file="${dist}/update.properties" />
-		<copy file="${basedir}/update-win-i586.properties" tofile="${dist}/update.properties" />
-
 		<zip destfile="${dist}/${ant.project.name}-win-i586.zip">
 			<fileset dir="${basedir}">
+				<include name="LICENSE" />
 				<include name="README.txt" />
+				<include name="CHANGELOG.txt" />
+				<include name="update.properties" />
 			</fileset>
 			<fileset dir="${dist}">
-				<include name="update.properties" />
 				<include name="${ant.project.name}-base.jar" />
 				<include name="${ant.project.name}-win-i586.jar" />
 				<include name="lib/swingx-all-1.6.4.jar" />
@@ -305,12 +305,12 @@
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/${ant.project.name}-all-desktops.jar" basedir="${build.main}" manifest="MANIFEST-all-desktops.MF" />
 
-		<delete file="${dist}/update.properties" />
-		<copy file="${basedir}/update.properties" tofile="${dist}/update.properties" />
-
 		<zip destfile="${dist}/${ant.project.name}-all-desktops.zip">
 			<fileset dir="${basedir}">
+				<include name="LICENSE" />
 				<include name="README.txt" />
+				<include name="CHANGELOG.txt" />
+				<include name="update.properties" />
 			</fileset>
 			<fileset dir="demo">
 				<include name=".breakout/settings.yaml" />
@@ -318,7 +318,6 @@
 				<include name=".breakout/demo-survey.txt" />
 			</fileset>
 			<fileset dir="${dist}">
-				<include name="update.properties" />
 				<include name="${ant.project.name}-base.jar" />
 				<include name="${ant.project.name}-all-desktops.jar" />
 				<include name="lib/swingx-all-1.6.4.jar" />
@@ -397,7 +396,7 @@
 
 	<target name="clean" description="clean up">
 		<!-- Delete the ${build} and ${dist} directory trees -->
-		<delete dir="${build.main}" />
+		<delete dir="${build}" />
 		<delete dir="${dist}" />
 	</target>
 
