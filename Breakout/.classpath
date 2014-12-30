@@ -3,7 +3,6 @@
 	<classpathentry kind="src" path="src/main/java"/>
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="src" path="src/tools/java"/>
-	<classpathentry kind="src" path="src/update/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/swingx-all-1.6.4"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/snakeyaml-1.11"/>

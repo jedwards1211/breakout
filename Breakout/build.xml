@@ -3,10 +3,8 @@
 	<property name="src" location="src" />
 	<property name="src.main" location="src/main/java" />
 	<property name="src.tools" location="src/tools/java" />
-	<property name="src.update" location="src/update/java" />
 	<property name="build.main" location="build/main" />
 	<property name="build.tools" location="build/tools" />
-	<property name="build.update" location="build/update" />
 	<property name="demo" location="demo" />
 	<property name="dist" location="dist" />
 	<property name="tools.jar" value="breakout-tools.jar" />
@@ -22,7 +20,6 @@
 		</tstamp>
 		<!-- Create the build directory structure used by compile -->
 		<mkdir dir="${build.main}" />
-		<mkdir dir="${build.update}" />
 	</target>
 
 	<target name="buildstamp" depends="init">
@@ -113,11 +110,6 @@
 	<target name="copy-resources">
 		<copy todir="${build.main}" overwrite="true">
 			<fileset dir="${src.main}">
-				<exclude name="**/*.java" />
-			</fileset>
-		</copy>
-		<copy todir="${build.update}" overwrite="true">
-			<fileset dir="${src.update}">
 				<exclude name="**/*.java" />
 			</fileset>
 		</copy>
@@ -219,23 +211,6 @@
 		</copy>
 	</target>
 
-	<target name="compile-updater" depends="init,compile-deps,copy-deps-shared" description="compile the updater">
-		<!-- Compile the java code from ${src.main} into ${build} -->
-		<path id="master-classpath">
-			<fileset dir="${dist}/lib">
-				<include name="*.jar" />
-			</fileset>
-		</path>
-		<javac debug="on" destdir="${build.update}">
-			<src path="${src.update}" />
-			<classpath refid="master-classpath" />
-		</javac>
-	</target>
-
-	<target name="jar-updater" depends="compile-updater,copy-resources">
-		<jar jarfile="${dist}/${ant.project.name}.jar" basedir="${build.update}" manifest="MANIFEST-update.MF" />
-	</target>
-
 	<target name="compile-main" depends="init,buildstamp,compile-deps,copy-deps-shared" description="compile the main source">
 		<!-- Compile the java code from ${src.main} into ${build} -->
 		<path id="master-classpath">
@@ -280,18 +255,15 @@
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/${ant.project.name}-win-i586.jar" basedir="${build.main}" manifest="MANIFEST-win-i586.MF" />
 
-		<!-- <delete file="${dist}/update.properties" /> -->
-		<!-- <copy file="${basedir}/update-win-i586.properties" tofile="${dist}/update.properties" /> -->
-
-		<!-- <touch file="lastUpdate" /> -->
+		<delete file="${dist}/update.properties" />
+		<copy file="${basedir}/update-win-i586.properties" tofile="${dist}/update.properties" />
 
 		<zip destfile="${dist}/${ant.project.name}-win-i586.zip">
 			<fileset dir="${basedir}">
 				<include name="README.txt" />
-				<!-- <include name="lastUpdate" /> -->
-				<!-- <include name="update.properties" /> -->
 			</fileset>
 			<fileset dir="${dist}">
+				<include name="update.properties" />
 				<include name="${ant.project.name}-base.jar" />
 				<include name="${ant.project.name}-win-i586.jar" />
 				<include name="lib/swingx-all-1.6.4.jar" />
@@ -333,10 +305,8 @@
 		<!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
 		<jar jarfile="${dist}/${ant.project.name}-all-desktops.jar" basedir="${build.main}" manifest="MANIFEST-all-desktops.MF" />
 
-		<!-- <delete file="${dist}/update.properties" /> -->
-		<!-- <copy file="${basedir}/update-win-i586.properties" tofile="${dist}/update.properties" /> -->
-
-		<!-- <touch file="lastUpdate" /> -->
+		<delete file="${dist}/update.properties" />
+		<copy file="${basedir}/update.properties" tofile="${dist}/update.properties" />
 
 		<zip destfile="${dist}/${ant.project.name}-all-desktops.zip">
 			<fileset dir="${basedir}">
@@ -348,6 +318,7 @@
 				<include name=".breakout/demo-survey.txt" />
 			</fileset>
 			<fileset dir="${dist}">
+				<include name="update.properties" />
 				<include name="${ant.project.name}-base.jar" />
 				<include name="${ant.project.name}-all-desktops.jar" />
 				<include name="lib/swingx-all-1.6.4.jar" />
@@ -427,7 +398,6 @@
 	<target name="clean" description="clean up">
 		<!-- Delete the ${build} and ${dist} directory trees -->
 		<delete dir="${build.main}" />
-		<delete dir="${build.update}" />
 		<delete dir="${dist}" />
 	</target>
 
