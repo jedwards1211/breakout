@@ -24,12 +24,17 @@ package org.andork.awt.layout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import org.andork.awt.layout.DelegatingLayoutManager.LayoutDelegate;
@@ -37,44 +42,46 @@ import org.andork.event.BasicPropertyChangeSupport;
 
 public class DrawerLayoutDelegate implements LayoutDelegate
 {
-	boolean								open			= false;
-	boolean								pinned			= false;
-	boolean								maximized		= false;
-	boolean								animating		= false;
-	
+	boolean								open				= false;
+	boolean								pinned				= false;
+	boolean								maximized			= false;
+	boolean								animating			= false;
+
 	Corner								dockingCorner;
 	Side								dockingSide;
-	float								animFactor		= .2f;
-	int									animSpeed		= 10;
-	
+	float								animFactor			= .2f;
+	int									animSpeed			= 10;
+
 	private long						lastAnimTime;
 	private Timer						animTimer;
-	
-	Component							drawer;
-	
-	boolean								fill			= false;
-	
-	public static final String			OPEN			= "open";
-	public static final String			PINNED			= "pinned";
-	public static final String			MAXIMIZED		= "maximized";
 
-	private BasicPropertyChangeSupport	changeSupport	= new BasicPropertyChangeSupport( );
-	
+	Component							drawer;
+
+	boolean								fill				= false;
+
+	public static final String			OPEN				= "open";
+	public static final String			PINNED				= "pinned";
+	public static final String			MAXIMIZED			= "maximized";
+
+	private Map<Side, SideConstraint>	extraConstraints	= new HashMap<>( );
+
+	private BasicPropertyChangeSupport	changeSupport		= new BasicPropertyChangeSupport( );
+
 	public DrawerLayoutDelegate( Component drawer , Side dockingSide )
 	{
 		this( drawer , null , dockingSide , true );
 	}
-	
+
 	public DrawerLayoutDelegate( Component drawer , Side dockingSide , boolean fill )
 	{
 		this( drawer , null , dockingSide , fill );
 	}
-	
+
 	public DrawerLayoutDelegate( Component drawer , Corner dockingCorner , Side dockingSide )
 	{
 		this( drawer , dockingCorner , dockingSide , false );
 	}
-	
+
 	private DrawerLayoutDelegate( Component drawer , Corner dockingCorner , Side dockingSide , boolean fill )
 	{
 		super( );
@@ -87,75 +94,86 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		this.dockingSide = dockingSide;
 		this.fill = fill;
 	}
-	
+
 	public DrawerLayoutDelegate dockingSide( Side dockingSide )
 	{
 		this.dockingSide = dockingSide;
 		return this;
 	}
-	
+
 	public Side dockingSide( )
 	{
 		return dockingSide;
 	}
-	
+
 	public DrawerLayoutDelegate dockingCorner( Corner dockingCorner )
 	{
 		this.dockingCorner = dockingCorner;
 		return this;
 	}
-	
+
 	public Corner dockingCorner( )
 	{
 		return dockingCorner;
 	}
-	
+
+	public DrawerLayoutDelegate putExtraConstraint( Side side , SideConstraint constraint )
+	{
+		extraConstraints.put( side , constraint );
+		return this;
+	}
+
+	public SideConstraint extraConstraint( Side side )
+	{
+		return extraConstraints.get( side );
+	}
+
 	public DrawerLayoutDelegate fill( boolean fill )
 	{
 		this.fill = fill;
 		return this;
 	}
-	
+
 	public boolean fill( )
 	{
 		return fill;
 	}
-	
+
 	public Component getDrawer( )
 	{
 		return drawer;
 	}
-	
+
 	public boolean isOpen( )
 	{
 		return open;
 	}
-	
+
 	public void close( )
 	{
 		setOpen( false , true );
 	}
-	
+
 	public void close( boolean animate )
 	{
 		setOpen( false , animate );
 	}
-	
+
 	public void open( )
 	{
 		setOpen( true , true );
 	}
-	
+
 	public void open( boolean animate )
 	{
 		setOpen( true , animate );
 	}
-	
+
 	public void toggleOpen( )
 	{
 		toggleOpen( true );
 	}
-	
+
 	public void toggleOpen( boolean animate )
 	{
 		if( !open || !pinned )
@@ -170,12 +188,12 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			changeSupport.firePropertyChange( this , OPEN , !open , open );
 		}
 	}
-	
+
 	public void setOpen( boolean open )
 	{
 		setOpen( open , true );
 	}
-	
+
 	public void setOpen( boolean open , boolean animate )
 	{
 		if( this.open != open )
@@ -183,58 +201,58 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			toggleOpen( animate );
 		}
 	}
-	
+
 	public boolean isPinned( )
 	{
 		return pinned;
 	}
-	
+
 	public void setPinned( boolean pinned )
 	{
 		setPinned( pinned , true );
 	}
-	
+
 	public void setPinned( boolean pinned , boolean animate )
 	{
 		if( this.pinned != pinned )
 		{
 			this.pinned = pinned;
-			
+
 			setOpen( pinned , animate );
 			changeSupport.firePropertyChange( this , PINNED , !pinned , pinned );
 		}
 	}
-	
+
 	public boolean isMaximized( )
 	{
 		return maximized;
 	}
-	
+
 	public void restore( )
 	{
 		setMaximized( false , true );
 	}
-	
+
 	public void restore( boolean animate )
 	{
 		setMaximized( false , animate );
 	}
-	
+
 	public void maximize( )
 	{
 		setMaximized( true , true );
 	}
-	
+
 	public void maximize( boolean animate )
 	{
 		setMaximized( true , animate );
 	}
-	
+
 	public void toggleMaximized( )
 	{
 		toggleMaximized( true );
 	}
-	
+
 	public void toggleMaximized( boolean animate )
 	{
 		maximized = !maximized;
@@ -246,12 +264,12 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		}
 		changeSupport.firePropertyChange( this , MAXIMIZED , !maximized , maximized );
 	}
-	
+
 	public void setMaximized( boolean maximized )
 	{
 		setMaximized( maximized , true );
 	}
-	
+
 	public void setMaximized( boolean maximized , boolean animate )
 	{
 		if( this.maximized != maximized )
@@ -259,18 +277,19 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			toggleMaximized( animate );
 		}
 	}
-	
-	private Rectangle getBounds( Container parent , Component target , LayoutSize layoutSize , boolean open , boolean maximized )
+
+	private Rectangle getBounds( Container parent , Component target , LayoutSize layoutSize , boolean open ,
+		boolean maximized )
 	{
 		Rectangle bounds = new Rectangle( );
 		bounds.setSize( layoutSize.get( target ) );
-		
+
 		if( dockingCorner != null )
 		{
 			Insets insets = parent.getInsets( );
 			Side otherSide = dockingCorner.xSide( ) == dockingSide ? dockingCorner.ySide( ) : dockingCorner.xSide( );
 			otherSide.setLocation( bounds , otherSide.insetLocalLocation( parent ) );
-			
+
 			if( maximized )
 			{
 				bounds.width = parent.getWidth( ) - insets.left - insets.right;
@@ -281,7 +300,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 				bounds.width = Math.min( bounds.width , parent.getWidth( ) - insets.left - insets.right );
 				bounds.height = Math.min( bounds.height , parent.getHeight( ) - insets.top - insets.bottom );
 			}
-			
+
 			if( open )
 			{
 				dockingSide.setLocation( bounds , dockingSide.insetLocalLocation( parent ) );
@@ -296,7 +315,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			Side invSide = dockingSide.inverse( );
 			Axis axis = dockingSide.axis( );
 			Axis invAxis = invSide.axis( );
-			
+
 			if( fill || maximized )
 			{
 				invAxis.setSize( bounds , invAxis.insetSize( parent ) );
@@ -306,7 +325,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			{
 				invAxis.setLower( bounds , invAxis.insetLocalCenter( parent ) - invAxis.size( bounds ) / 2 );
 			}
-			
+
 			if( maximized )
 			{
 				axis.setSize( bounds , axis.insetSize( parent ) );
@@ -315,7 +334,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			{
 				axis.setSize( bounds , Math.min( axis.size( bounds ) , axis.insetSize( parent ) ) );
 			}
-			
+
 			if( open )
 			{
 				dockingSide.setLocation( bounds , dockingSide.insetLocalLocation( parent ) );
@@ -325,18 +344,42 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 				dockingSide.opposite( ).setLocation( bounds , dockingSide.localLocation( parent ) );
 			}
 		}
-		
+
 		return bounds;
 	}
-	
+
 	@Override
 	public Rectangle desiredBounds( Container parent , Component target , LayoutSize layoutSize )
 	{
 		return getBounds( parent , target , layoutSize , true , maximized );
 	}
-	
+
 	boolean	bypass	= false;
-	
+
+	private void applyConstraints( final Component target , Rectangle targetBounds )
+	{
+		for( Map.Entry<Side, SideConstraint> entry : extraConstraints.entrySet( ) )
+		{
+			Side side = entry.getKey( );
+			SideConstraint constraint = entry.getValue( );
+
+			if( dockingSide != null && side.axis( ) == dockingSide.axis( ) )
+			{
+				continue;
+			}
+			if( dockingCorner != null && dockingCorner.side( side.axis( ) ) == side )
+			{
+				continue;
+			}
+
+			Point p = new Point( );
+			side.axis( ).set( p , constraint.location( ) );
+			p = SwingUtilities.convertPoint( constraint.targetComponent.getParent( ) , p , target.getParent( ) );
+
+			side.stretch( targetBounds , side.axis( ).get( p ) );
+		}
+	}
+
 	@Override
 	public void layoutComponent( final Container parent , final Component target )
 	{
@@ -344,10 +387,15 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		{
 			return;
 		}
-		
+
 		Rectangle targetBounds = getBounds( parent , target , LayoutSize.PREFERRED , open , maximized );
+
+		applyConstraints( target , targetBounds );
+
 		Rectangle bounds = target.getBounds( );
-		
+
+		applyConstraints( target , bounds );
+
 		if( animating )
 		{
 			if( targetBounds.equals( bounds ) )
@@ -368,12 +416,14 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 				{
 					elapsed = animSpeed;
 				}
-				
+
 				RectangleUtils.animate( bounds , targetBounds , elapsed , animFactor , 10 ,
-						animSpeed , bounds );
-				
+					animSpeed , bounds );
+
+				applyConstraints( target , bounds );
+
 				target.setBounds( bounds );
-				
+
 				bypass = true;
 				try
 				{
@@ -383,7 +433,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 				{
 					bypass = false;
 				}
-				
+
 				if( animTimer == null )
 				{
 					animTimer = new Timer( animSpeed , new ActionListener( )
@@ -404,7 +454,7 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			target.setBounds( targetBounds );
 		}
 	}
-	
+
 	protected void onLayoutAnimated( Container parent , Component target )
 	{
 		if( parent != null && parent.getLayout( ) instanceof DelegatingLayoutManager )
@@ -417,13 +467,22 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 			parent.validate( );
 		}
 	}
-	
+
 	@Override
 	public List<Component> getDependencies( )
 	{
-		return Collections.emptyList( );
+		if( extraConstraints.isEmpty( ) )
+		{
+			return Collections.emptyList( );
+		}
+		List<Component> result = new ArrayList<Component>( extraConstraints.size( ) );
+		for( SideConstraint constraint : extraConstraints.values( ) )
+		{
+			result.add( constraint.targetComponent );
+		}
+		return result;
 	}
-	
+
 	public BasicPropertyChangeSupport.External changeSupport( )
 	{
 		return changeSupport.external( );

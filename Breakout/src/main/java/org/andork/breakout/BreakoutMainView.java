@@ -96,6 +96,7 @@ import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
 import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
+import org.andork.awt.layout.SideConstraint;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
@@ -545,6 +546,16 @@ public class BreakoutMainView
 		quickTableDrawer.pinButton( );
 		quickTableDrawer.pinButtonDelegate( ).corner( Corner.TOP_RIGHT ).side( Side.RIGHT );
 		quickTableDrawer.addTo( layeredPane , 3 );
+
+		quickTableDrawer.delegate( )
+			.putExtraConstraint( Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ) );
+
+		settingsDrawer.delegate( ).putExtraConstraint( Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ) );
+
+		taskListDrawer.delegate( ).putExtraConstraint( Side.LEFT ,
+			new SideConstraint( quickTableDrawer , Side.RIGHT , 0 ) );
+		taskListDrawer.delegate( ).putExtraConstraint( Side.RIGHT ,
+			new SideConstraint( settingsDrawer , Side.LEFT , 0 ) );
 
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
 
