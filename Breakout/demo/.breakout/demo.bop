@@ -5,21 +5,21 @@ projCalculator:
   zNear: 1.0
   zFar: 1.0E7
 viewXform:
-- -0.47177985
-- 0.32278627
-- -0.8205143
+- 1.0
+- 9.313226E-10
+- -8.9093015E-7
 - 0.0
-- -4.714122E-6
-- 0.9305805
-- 0.36607683
+- -2.0254042E-6
+- -4.33065E-8
+- 1.0
 - 0.0
-- 0.88172036
-- 0.1727118
-- -0.43903112
+- 9.314103E-10
+- -1.0
+- -4.33065E-8
 - 0.0
-- 1799.5747
-- 2536.713
-- -10477.879
+- 3493.2322
+- -3117.8362
+- -6409.341
 - 1.0
 distRange:
   offset: 0.0
@@ -56,9 +56,12 @@ highlightRange:
 surveyFile: demo-survey.txt
 settingsDrawer:
   pinned: false
-surveyDrawer: {}
+surveyDrawer:
+  pinned: false
+  maximized: false
 miniSurveyDrawer: {}
-taskListDrawer: {}
+taskListDrawer:
+  pinned: false
 backgroundColor: '#000000'
 depthAxis:
 - 0.0

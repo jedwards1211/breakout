@@ -97,6 +97,7 @@ import org.andork.awt.layout.DrawerAutoshowController;
 import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.SideConstraint;
+import org.andork.awt.layout.SideConstraintLayoutDelegate;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
@@ -474,7 +475,7 @@ public class BreakoutMainView
 		mainPanel = new JPanel( new BorderLayout( ) );
 		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
 		mainPanel.add( layeredPane , BorderLayout.CENTER );
-		mainPanel.add( hintLabel , BorderLayout.SOUTH );
+//		mainPanel.add( hintLabel , BorderLayout.SOUTH );
 
 		selectionHandler = new TableSelectionHandler( );
 		surveyDrawer.table( ).getModelSelectionModel( ).addListSelectionListener( selectionHandler );
@@ -514,25 +515,28 @@ public class BreakoutMainView
 		}.result( );
 
 		JLabel quickTableFilterLabel = new JLabel( "Filter: " );
-		TextComponentWithHintAndClear quickTableFilterField = new TextComponentWithHintAndClear( "Enter Filter Regexp" );
+		TextComponentWithHintAndClear quickTableFilterField = new TextComponentWithHintAndClear( "Enter search terms" );
 		quickTableFilterField.textComponent.getDocument( ).addDocumentListener(
 			AnnotatingJTables.createFilterFieldListener( quickTableSetup.table , quickTableFilterField.textComponent ,
 				rowFilterFactory ) );
 
 		JLabel quickTableHighlightLabel = new JLabel( "Highlight: " );
 		TextComponentWithHintAndClear quickTableHighlightField = new TextComponentWithHintAndClear(
-			"Enter Highlight Regexp" );
+			"Enter search terms" );
 		quickTableHighlightField.textComponent.getDocument( ).addDocumentListener(
 			AnnotatingJTables.createHighlightFieldListener( quickTableSetup.table ,
 				quickTableHighlightField.textComponent , rowFilterFactory , Color.YELLOW ) );
 
 		JPanel quickTablePanel = new JPanel( );
-		quickTablePanel.setPreferredSize( new Dimension( 150 , 500 ) );
+		quickTableDrawer = new Drawer( quickTablePanel );
+		quickTablePanel.setPreferredSize( new Dimension( 250 , 500 ) );
 		GridBagWizard gbw = GridBagWizard.create( quickTablePanel );
 		gbw.put( quickTableFilterLabel ).xy( 0 , 0 ).west( ).insets( 2 , 2 , 0 , 0 );
 		gbw.put( quickTableFilterField ).rightOf( quickTableFilterLabel ).fillx( 1.0 ).insets( 2 , 2 , 0 , 0 );
+		gbw.put( quickTableDrawer.pinButton( ) ).rightOf( quickTableFilterField ).filly( ).insets( 2 , 0 , 0 , 0 );
 		gbw.put( quickTableHighlightLabel ).below( quickTableFilterLabel ).west( ).insets( 2 , 2 , 2 , 0 );
-		gbw.put( quickTableHighlightField ).rightOf( quickTableHighlightLabel ).fillx( 1.0 ).insets( 2 , 2 , 2 , 0 );
+		gbw.put( quickTableHighlightField ).below( quickTableFilterField , quickTableDrawer.pinButton( ) ).fillx( 1.0 )
+			.insets( 2 , 2 , 2 , 0 );
 
 		gbw.put( quickTableSetup.scrollPane ).below( quickTableHighlightLabel , quickTableHighlightField )
 			.fillboth( 1.0 , 1.0 );
@@ -540,11 +544,8 @@ public class BreakoutMainView
 
 		statsPanel.setBorder( new EmptyBorder( 5 , 5 , 5 , 0 ) );
 
-		quickTableDrawer = new Drawer( quickTablePanel );
 		quickTableDrawer.delegate( ).dockingSide( Side.LEFT );
 		quickTableDrawer.mainResizeHandle( );
-		quickTableDrawer.pinButton( );
-		quickTableDrawer.pinButtonDelegate( ).corner( Corner.TOP_RIGHT ).side( Side.RIGHT );
 		quickTableDrawer.addTo( layeredPane , 3 );
 
 		quickTableDrawer.delegate( )
@@ -556,6 +557,25 @@ public class BreakoutMainView
 			new SideConstraint( quickTableDrawer , Side.RIGHT , 0 ) );
 		taskListDrawer.delegate( ).putExtraConstraint( Side.RIGHT ,
 			new SideConstraint( settingsDrawer , Side.LEFT , 0 ) );
+
+		SideConstraintLayoutDelegate spinnerDelegate = new SideConstraintLayoutDelegate( );
+		spinnerDelegate.putExtraConstraint(
+			Side.LEFT , new SideConstraint( quickTableDrawer , Side.RIGHT , 0 ) );
+		spinnerDelegate.putExtraConstraint(
+			Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ) );
+
+		SideConstraintLayoutDelegate hintLabelDelegate = new SideConstraintLayoutDelegate( );
+		hintLabelDelegate.putExtraConstraint(
+			Side.LEFT , new SideConstraint( taskListDrawer.pinButton( ) , Side.RIGHT , 0 ) );
+		hintLabelDelegate.putExtraConstraint(
+			Side.RIGHT , new SideConstraint( settingsDrawer , Side.LEFT , 0 ) );
+		hintLabelDelegate.putExtraConstraint(
+			Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ) );
+
+		layeredPane.add( taskListDrawer.pinButton( ) , spinnerDelegate );
+		layeredPane.setLayer( taskListDrawer.pinButton( ) , JLayeredPane.getLayer( settingsDrawer ) );
+		layeredPane.add( hintLabel , hintLabelDelegate );
+		layeredPane.setLayer( hintLabel , JLayeredPane.getLayer( settingsDrawer ) );
 
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
 

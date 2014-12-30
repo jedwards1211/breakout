@@ -99,11 +99,11 @@ import com.andork.plot.PlotAxisController;
 public class SettingsDrawer extends Drawer
 {
 	Localizer											localizer;
-	
+
 	JLabel												projectFileLabel;
 	JTextField											projectFileField;
 	JButton												projectFileMenuButton;
-	
+
 	ViewButtonsPanel									viewButtonsPanel;
 	JLabel												mouseSensitivityLabel;
 	JSlider												mouseSensitivitySlider;
@@ -116,7 +116,7 @@ public class SettingsDrawer extends Drawer
 	JLabel												distColorationLabel;
 	PlotAxis											distColorationAxis;
 	PaintablePanel										distColorationAxisPanel;
-	
+
 	JLabel												colorParamLabel;
 	DefaultSelector<ColorParam>							colorParamSelector;
 	JPanel												colorParamButtonsPanel;
@@ -127,15 +127,15 @@ public class SettingsDrawer extends Drawer
 	BetterCardLayout									colorParamDetailsLayout;
 	PlotAxis											paramColorationAxis;
 	PaintablePanel										paramColorationAxisPanel;
-	
+
 	JPanel												colorByDepthButtonsPanel;
 	JButton												inferDepthAxisTiltButton;
 	JButton												resetDepthAxisTiltButton;
 	JButton												cameraToDepthAxisTiltButton;
-	
+
 	JPanel												colorByDistanceButtonsPanel;
 	JButton												recalcColorByDistanceButton;
-	
+
 	JLabel												glowDistLabel;
 	PlotAxis											glowDistAxis;
 	PaintablePanel										glowDistAxisPanel;
@@ -144,59 +144,85 @@ public class SettingsDrawer extends Drawer
 	JButton												fitViewToSelectedButton;
 	JButton												orbitToPlanButton;
 	JButton												debugButton;
-	
+
 	JLabel												numSamplesLabel;
 	JSlider												numSamplesSlider;
-	
+
 	JLabel												versionLabel;
-	
+
 	JPanel												mainPanel;
 	JScrollPane											mainPanelScrollPane;
-	
+
 	BinderWrapper<QObject<RootModel>>					rootBinder					= new BinderWrapper<QObject<RootModel>>( );
-	Binder<Path>										currentProjectFileBinder	= QObjectAttributeBinder.bind( RootModel.currentProjectFile , rootBinder );
-	Binder<Integer>										desiredNumSamplesBinder		= QObjectAttributeBinder.bind( RootModel.desiredNumSamples , rootBinder );
-	Binder<Integer>										mouseSensitivityBinder		= QObjectAttributeBinder.bind( RootModel.mouseSensitivity , rootBinder );
-	Binder<Integer>										mouseWheelSensitivityBinder	= QObjectAttributeBinder.bind( RootModel.mouseWheelSensitivity , rootBinder );
-	
+	Binder<Path>										currentProjectFileBinder	= QObjectAttributeBinder.bind(
+																						RootModel.currentProjectFile ,
+																						rootBinder );
+	Binder<Integer>										desiredNumSamplesBinder		= QObjectAttributeBinder.bind(
+																						RootModel.desiredNumSamples ,
+																						rootBinder );
+	Binder<Integer>										mouseSensitivityBinder		= QObjectAttributeBinder.bind(
+																						RootModel.mouseSensitivity ,
+																						rootBinder );
+	Binder<Integer>										mouseWheelSensitivityBinder	= QObjectAttributeBinder
+																						.bind(
+																							RootModel.mouseWheelSensitivity ,
+																							rootBinder );
+
 	BinderWrapper<QObject<ProjectModel>>				projectBinder				= new BinderWrapper<QObject<ProjectModel>>( );
-	Binder<CameraView>									cameraViewBinder			= QObjectAttributeBinder.bind( ProjectModel.cameraView , projectBinder );
-	Binder<Color>										backgroundColorBinder		= QObjectAttributeBinder.bind( ProjectModel.backgroundColor , projectBinder );
-	Binder<LinearAxisConversion>						distRangeBinder				= QObjectAttributeBinder.bind( ProjectModel.distRange , projectBinder );
-	Binder<ColorParam>									colorParamBinder			= QObjectAttributeBinder.bind( ProjectModel.colorParam , projectBinder );
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= QObjectAttributeBinder.bind( ProjectModel.paramRanges , projectBinder );
-	Binder<LinearAxisConversion>						paramRangeBinder			= QMapKeyedBinder.bindKeyed( colorParamBinder , paramRangesBinder );
-	Binder<LinearAxisConversion>						highlightRangeBinder		= QObjectAttributeBinder.bind( ProjectModel.highlightRange , projectBinder );
-	Binder<Float>										ambientLightBinder			= QObjectAttributeBinder.bind( ProjectModel.ambientLight , projectBinder );
-	
-	public SettingsDrawer( final I18n i18n , Binder<QObject<RootModel>> rootBinder , Binder<QObject<ProjectModel>> projectBinder )
+	Binder<CameraView>									cameraViewBinder			= QObjectAttributeBinder.bind(
+																						ProjectModel.cameraView ,
+																						projectBinder );
+	Binder<Color>										backgroundColorBinder		= QObjectAttributeBinder.bind(
+																						ProjectModel.backgroundColor ,
+																						projectBinder );
+	Binder<LinearAxisConversion>						distRangeBinder				= QObjectAttributeBinder.bind(
+																						ProjectModel.distRange ,
+																						projectBinder );
+	Binder<ColorParam>									colorParamBinder			= QObjectAttributeBinder.bind(
+																						ProjectModel.colorParam ,
+																						projectBinder );
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= QObjectAttributeBinder.bind(
+																						ProjectModel.paramRanges ,
+																						projectBinder );
+	Binder<LinearAxisConversion>						paramRangeBinder			= QMapKeyedBinder.bindKeyed(
+																						colorParamBinder ,
+																						paramRangesBinder );
+	Binder<LinearAxisConversion>						highlightRangeBinder		= QObjectAttributeBinder.bind(
+																						ProjectModel.highlightRange ,
+																						projectBinder );
+	Binder<Float>										ambientLightBinder			= QObjectAttributeBinder.bind(
+																						ProjectModel.ambientLight ,
+																						projectBinder );
+
+	public SettingsDrawer( final I18n i18n , Binder<QObject<RootModel>> rootBinder ,
+		Binder<QObject<ProjectModel>> projectBinder )
 	{
 		this.rootBinder.bind( rootBinder );
 		this.projectBinder.bind( projectBinder );
-		
+
 		new OnEDT( )
 		{
 			@Override
 			public void run( ) throws Throwable
 			{
 				localizer = i18n.forClass( SettingsDrawer.this.getClass( ) );
-				
+
 				delegate( ).dockingSide( Side.RIGHT );
-				pinButton( );
-				pinButtonDelegate( ).corner( Corner.TOP_LEFT ).side( Side.LEFT );
-				
+//				pinButton( );
+//				pinButtonDelegate( ).corner( Corner.TOP_LEFT ).side( Side.LEFT );
+
 				setUnderpaintBorder( GradientFillBorder.from( Side.TOP ).to( Side.BOTTOM ).colors(
-						ColorUtils.darkerColor( getBackground( ) , 0.05 ) ,
-						ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
+					ColorUtils.darkerColor( getBackground( ) , 0.05 ) ,
+					ColorUtils.darkerColor( Color.LIGHT_GRAY , 0.05 ) ) );
 				setBorder( new OverrideInsetsBorder(
-						new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
-						new Insets( 0 , 8 , 0 , 0 ) ) );
-				
+					new InnerGradientBorder( new Insets( 0 , 5 , 0 , 0 ) , Color.GRAY ) ,
+					new Insets( 0 , 8 , 0 , 0 ) ) );
+
 				createComponents( );
 				createLayout( );
 				createListeners( );
 				createBindings( );
-				
+
 				org.andork.awt.AWTUtil.traverse( SettingsDrawer.this , new Visitor<Component>( )
 				{
 					@Override
@@ -213,7 +239,7 @@ public class SettingsDrawer extends Drawer
 			}
 		};
 	}
-	
+
 	private void createComponents( )
 	{
 		projectFileLabel = new JLabel( );
@@ -225,36 +251,36 @@ public class SettingsDrawer extends Drawer
 		ImageIcon dropdownIcon = new ImageIcon( getClass( ).getResource( "dropdown.png" ) );
 		projectFileMenuButton = new JButton( dropdownIcon );
 		projectFileMenuButton.setMargin( new Insets( 2 , 4 , 2 , 4 ) );
-		
+
 		viewButtonsPanel = new ViewButtonsPanel( );
-		
+
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
-		
+
 		bgColorLabel = new JLabel( );
 		localizer.setText( bgColorLabel , "bgColorLabel.text" );
-		
+
 		bgColorButton = new JXColorSelectionButton( );
-		
+
 		ambientLightLabel = new JLabel( );
 		localizer.setText( ambientLightLabel , "ambientLightLabel.text" );
-		
+
 		ambientLightSlider = new JSlider( 0 , 100 , 50 );
 		ambientLightSlider.setOpaque( false );
-		
+
 		distColorationLabel = new JLabel( );
 		localizer.setText( distColorationLabel , "distColorationLabel.text" );
-		
+
 		distColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		distColorationAxisPanel = PaintablePanel.wrap( distColorationAxis );
 		distColorationAxisPanel.setUnderpaintBorder(
-				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
-						new float[ ] { 0f , 1f } , new Color[ ] { ColorUtils.alphaColor( darkColor , 0 ) , darkColor } ) );
-		
+			MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
+				new float[ ] { 0f , 1f } , new Color[ ] { ColorUtils.alphaColor( darkColor , 0 ) , darkColor } ) );
+
 		distColorationAxis.getAxisConversion( ).set( 0 , 0 , 10000 , 200 );
 		distColorationAxis.setForeground( Color.WHITE );
 		distColorationAxis.setMajorTickColor( Color.WHITE );
 		distColorationAxis.setMinorTickColor( Color.WHITE );
-		
+
 		colorParamLabel = new JLabel( );
 		localizer.setText( colorParamLabel , "colorParamLabel.text" );
 		colorParamSelector = new DefaultSelector<ColorParam>( );
@@ -269,18 +295,22 @@ public class SettingsDrawer extends Drawer
 		localizer.setToolTipText( flipParamColorationAxisButton , "flipParamColorationAxisButton.tooltip" );
 		colorParamDetailsPanel = new JPanel( );
 		colorParamDetailsPanel.setOpaque( false );
-		
+
 		paramColorationAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		paramColorationAxisPanel = PaintablePanel.wrap( paramColorationAxis );
 		paramColorationAxisPanel.setUnderpaintBorder(
-				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
-						new float[ ] { 0f , 0.24f , 0.64f , 1f } ,
-						new Color[ ] { new Color( 255 , 249 , 204 ) , new Color( 255 , 195 , 0 ) , new Color( 214 , 6 , 127 ) , new Color( 34 , 19 , 150 ) } ) );
-		
+			MultipleGradientFillBorder
+				.from( Side.LEFT )
+				.to( Side.RIGHT )
+				.linear(
+					new float[ ] { 0f , 0.24f , 0.64f , 1f } ,
+					new Color[ ] { new Color( 255 , 249 , 204 ) , new Color( 255 , 195 , 0 ) ,
+						new Color( 214 , 6 , 127 ) , new Color( 34 , 19 , 150 ) } ) );
+
 		paramColorationAxis.setForeground( Color.WHITE );
 		paramColorationAxis.setMajorTickColor( Color.WHITE );
 		paramColorationAxis.setMinorTickColor( Color.WHITE );
-		
+
 		colorByDepthButtonsPanel = new JPanel( );
 		colorByDepthButtonsPanel.setOpaque( false );
 		inferDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "tilted-depth-axis.png" ) ) );
@@ -292,53 +322,53 @@ public class SettingsDrawer extends Drawer
 		cameraToDepthAxisTiltButton = new JButton( new ImageIcon( getClass( ).getResource( "forward-depth-axis.png" ) ) );
 		cameraToDepthAxisTiltButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
 		localizer.setToolTipText( cameraToDepthAxisTiltButton , "cameraToDepthAxisTiltButton.tooltip" );
-		
+
 		colorByDistanceButtonsPanel = new JPanel( );
 		colorByDistanceButtonsPanel.setOpaque( false );
 		recalcColorByDistanceButton = new JButton( new ImageIcon( getClass( ).getResource( "refresh.png" ) ) );
 		recalcColorByDistanceButton.setMargin( new Insets( 2 , 2 , 2 , 2 ) );
 		localizer.setToolTipText( recalcColorByDistanceButton , "recalcColorByDistanceButton.tooltip" );
-		
+
 		glowDistLabel = new JLabel( );
 		localizer.setText( glowDistLabel , "glowDistLabel.text" );
-		
+
 		glowDistAxis = new PlotAxis( Orientation.HORIZONTAL , LabelPosition.TOP );
 		glowDistAxisPanel = PaintablePanel.wrap( glowDistAxis );
 		glowDistAxisPanel.setUnderpaintBorder(
-				MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
-						new float[ ] { 0f , 1f } , new Color[ ] { Color.CYAN , ColorUtils.alphaColor( Color.CYAN , 0 ) } ) );
-		
+			MultipleGradientFillBorder.from( Side.LEFT ).to( Side.RIGHT ).linear(
+				new float[ ] { 0f , 1f } , new Color[ ] { Color.CYAN , ColorUtils.alphaColor( Color.CYAN , 0 ) } ) );
+
 		glowDistAxis.setForeground( Color.BLACK );
 		glowDistAxis.setMajorTickColor( Color.BLACK );
 		glowDistAxis.setMinorTickColor( Color.BLACK );
-		
+
 		mouseSensitivityLabel = new JLabel( );
 		localizer.setText( mouseSensitivityLabel , "mouseSensitivityLabel.text" );
-		
+
 		mouseSensitivitySlider = new JSlider( );
 		mouseSensitivitySlider.setValue( 20 );
 		mouseSensitivitySlider.setOpaque( false );
-		
+
 		mouseWheelSensitivityLabel = new JLabel( );
 		localizer.setText( mouseWheelSensitivityLabel , "mouseWheelSensitivityLabel.text" );
-		
+
 		mouseWheelSensitivitySlider = new JSlider( 1 , 2000 , 200 );
 		mouseWheelSensitivitySlider.setOpaque( false );
-		
+
 		resetViewButton = new JButton( "Reset View" );
-		
+
 		fitViewToSelectedButton = new JButton( "Fit View to Selected" );
 		fitViewToEverythingButton = new JButton( "Fit View to Everything" );
 		orbitToPlanButton = new JButton( "Orbit to Plan" );
-		
+
 		numSamplesLabel = new JLabel( );
 		localizer.setText( numSamplesLabel , "numSamplesLabel.text.off" );
 		numSamplesSlider = new JSlider( 1 , 1 , 1 );
 		numSamplesSlider.setOpaque( false );
 		numSamplesSlider.setEnabled( false );
-		
+
 		debugButton = new JButton( "Debug" );
-		
+
 		mainPanel = new JPanel( );
 		mainPanel.setBorder( new EmptyBorder( 5 , 0 , 5 , 5 ) );
 		mainPanel.setOpaque( false );
@@ -349,23 +379,23 @@ public class SettingsDrawer extends Drawer
 		mainPanelScrollPane.getViewport( ).setOpaque( false );
 		JScrollBar verticalScrollBar = mainPanelScrollPane.getVerticalScrollBar( );
 		verticalScrollBar.setUnitIncrement( 5 );
-		
+
 		Dimension iconButtonSize = flipParamColorationAxisButton.getPreferredSize( );
 		iconButtonSize.height = colorParamSelector.getComboBox( ).getPreferredSize( ).height;
 		fitParamColorationAxisButton.setPreferredSize( iconButtonSize );
 		recalcColorByDistanceButton.setPreferredSize( iconButtonSize );
 		inferDepthAxisTiltButton.setPreferredSize( iconButtonSize );
 		resetDepthAxisTiltButton.setPreferredSize( iconButtonSize );
-		
+
 		versionLabel = new JLabel( );
 		versionLabel.setHorizontalAlignment( JLabel.CENTER );
 		Properties versionProperties = loadVersionProperties( );
 		String version = versionProperties.getProperty( "version" , "unknown" );
 		String buildDate = versionProperties.getProperty( "build.date" , "unknown" );
-		
+
 		localizer.setFormattedText( versionLabel , "versionLabel.text" , version , buildDate );
 	}
-	
+
 	private Properties loadVersionProperties( )
 	{
 		Properties props = new Properties( );
@@ -375,23 +405,24 @@ public class SettingsDrawer extends Drawer
 		}
 		catch( Exception ex )
 		{
-			
+
 		}
 		return props;
 	}
-	
+
 	private void createLayout( )
 	{
 		GridBagWizard w = GridBagWizard.create( mainPanel );
 		w.defaults( ).autoinsets( new DefaultAutoInsets( 3 , 3 ) );
-		w.put( projectFileLabel ).xy( 0 , 0 ).west( );
+		w.put( pinButton( ) ).xy( 0 , 0 ).northwest( );
+		w.put( projectFileLabel ).rightOf( pinButton( ) ).west( );
 		GridBagWizard projectFilePanel = GridBagWizard.quickPanel( );
 		projectFilePanel.defaults( ).filly( );
 		projectFilePanel.put( projectFileField ).xy( 0 , 0 ).fillx( 1.0 );
 		projectFilePanel.put( projectFileMenuButton ).rightOfLast( );
-		
-		w.put( projectFilePanel.getTarget( ) ).belowLast( ).fillx( );
-		
+
+		w.put( projectFilePanel.getTarget( ) ).below(pinButton( ), projectFileLabel ).fillx( );
+
 		w.put( viewButtonsPanel ).belowLast( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( resetViewButton ).belowLast( ).fillx( 1.0 );
 		w.put( fitViewToSelectedButton ).belowLast( ).fillx( 1.0 );
@@ -399,24 +430,25 @@ public class SettingsDrawer extends Drawer
 		w.put( orbitToPlanButton ).belowLast( ).fillx( 1.0 );
 		w.put( mouseSensitivityLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( mouseSensitivitySlider ).belowLast( ).fillx( ).north( );
-		
+
 		w.put( mouseWheelSensitivityLabel ).belowLast( ).west( ).addToInsets( 0 , 0 , 0 , 0 );
 		w.put( mouseWheelSensitivitySlider ).belowLast( ).fillx( ).north( );
-		
+
 		GridBagWizard bgPanel = GridBagWizard.quickPanel( );
 		bgPanel.put( bgColorLabel ).xy( 0 , 0 ).west( );
 		bgPanel.put( bgColorButton ).rightOfLast( ).west( ).weightx( 1.0 );
 		w.put( bgPanel.getTarget( ) ).belowLast( ).fillx( ).addToInsets( 10 , 0 , 0 , 0 );
-		
+
 		w.put( ambientLightLabel ).belowLast( ).west( );
 		w.put( ambientLightSlider ).belowLast( ).fillx( );
-		
+
 		w.put( distColorationLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( distColorationAxisPanel ).belowLast( ).fillx( );
-		
+
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel( );
 		colorParamPanel.put( colorParamLabel ).xy( 0 , 0 ).filly( ).west( );
-		colorParamPanel.put( colorParamSelector.getComboBox( ) ).rightOfLast( ).fillboth( 1.0 , 0.0 ).addToInsets( 0 , 5 , 0 , 0 );
+		colorParamPanel.put( colorParamSelector.getComboBox( ) ).rightOfLast( ).fillboth( 1.0 , 0.0 )
+			.addToInsets( 0 , 5 , 0 , 0 );
 		colorParamButtonsPanel.setLayout( colorParamButtonsLayout = new BetterCardLayout( ) );
 		colorParamButtonsLayout.setSizeHidden( false );
 		colorParamPanel.put( colorParamButtonsPanel ).rightOfLast( ).filly( 1.0 );
@@ -427,38 +459,38 @@ public class SettingsDrawer extends Drawer
 		colorParamDetailsLayout.setSizeHidden( false );
 		w.put( colorParamDetailsPanel ).belowLast( ).fillx( );
 		w.put( paramColorationAxisPanel ).belowLast( ).fillx( );
-		
+
 		colorByDepthButtonsPanel.setLayout( new FlowLayout( FlowLayout.RIGHT , 0 , 0 ) );
 		colorByDepthButtonsPanel.add( inferDepthAxisTiltButton );
 		colorByDepthButtonsPanel.add( resetDepthAxisTiltButton );
 		colorByDepthButtonsPanel.add( cameraToDepthAxisTiltButton );
 		colorParamButtonsPanel.add( colorByDepthButtonsPanel , ColorParam.DEPTH );
-		
+
 		colorByDistanceButtonsPanel.setLayout( new FlowLayout( FlowLayout.RIGHT , 0 , 0 ) );
 		colorByDistanceButtonsPanel.add( recalcColorByDistanceButton );
 		colorParamButtonsPanel.add( colorByDistanceButtonsPanel , ColorParam.DISTANCE_ALONG_SHOTS );
-		
+
 		w.put( glowDistLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( glowDistAxisPanel ).belowLast( ).fillx( );
 		w.put( numSamplesLabel ).belowLast( ).west( ).addToInsets( 10 , 0 , 0 , 0 );
 		w.put( numSamplesSlider ).belowLast( ).fillx( );
-		
+
 		w.put( versionLabel ).belowLast( ).south( ).weighty( 1.0 ).fillx( );
-		
+
 		w.put( debugButton ).belowLast( ).southwest( );
-		
+
 		debugButton.setVisible( false );
-		
+
 		setLayout( new BorderLayout( ) );
 		add( mainPanelScrollPane , BorderLayout.CENTER );
 	}
-	
+
 	private void createListeners( )
 	{
 		new PlotAxisController( distColorationAxis ).removeMouseWheelListener( );
 		new PlotAxisController( paramColorationAxis ).removeMouseWheelListener( );
 		new PlotAxisController( glowDistAxis ).removeMouseWheelListener( );
-		
+
 		numSamplesSlider.addChangeListener( new ChangeListener( )
 		{
 			@Override
@@ -468,20 +500,28 @@ public class SettingsDrawer extends Drawer
 			}
 		} );
 	}
-	
+
 	private void createBindings( )
 	{
-		ComponentTextBinder.bind( projectFileField , BimapperBinder.bind( PathStringBimapper.instance , currentProjectFileBinder ) );
-		
+		ComponentTextBinder.bind( projectFileField ,
+			BimapperBinder.bind( PathStringBimapper.instance , currentProjectFileBinder ) );
+
 		ComponentBackgroundBinder.bind( bgColorButton , backgroundColorBinder );
-		
-		ButtonSelectedBinder.bind( viewButtonsPanel.getPlanButton( ) , bindEquals( CameraView.PLAN , cameraViewBinder ) );
-		ButtonSelectedBinder.bind( viewButtonsPanel.getPerspectiveButton( ) , bindEquals( CameraView.PERSPECTIVE , cameraViewBinder ) );
-		ButtonSelectedBinder.bind( viewButtonsPanel.getNorthButton( ) , bindEquals( CameraView.NORTH_FACING_PROFILE , cameraViewBinder ) );
-		ButtonSelectedBinder.bind( viewButtonsPanel.getSouthButton( ) , bindEquals( CameraView.SOUTH_FACING_PROFILE , cameraViewBinder ) );
-		ButtonSelectedBinder.bind( viewButtonsPanel.getEastButton( ) , bindEquals( CameraView.EAST_FACING_PROFILE , cameraViewBinder ) );
-		ButtonSelectedBinder.bind( viewButtonsPanel.getWestButton( ) , bindEquals( CameraView.WEST_FACING_PROFILE , cameraViewBinder ) );
-		ButtonSelectedBinder.bind( viewButtonsPanel.getAutoProfileButton( ) , bindEquals( CameraView.AUTO_PROFILE , cameraViewBinder ) );
+
+		ButtonSelectedBinder
+			.bind( viewButtonsPanel.getPlanButton( ) , bindEquals( CameraView.PLAN , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getPerspectiveButton( ) ,
+			bindEquals( CameraView.PERSPECTIVE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getNorthButton( ) ,
+			bindEquals( CameraView.NORTH_FACING_PROFILE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getSouthButton( ) ,
+			bindEquals( CameraView.SOUTH_FACING_PROFILE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getEastButton( ) ,
+			bindEquals( CameraView.EAST_FACING_PROFILE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getWestButton( ) ,
+			bindEquals( CameraView.WEST_FACING_PROFILE , cameraViewBinder ) );
+		ButtonSelectedBinder.bind( viewButtonsPanel.getAutoProfileButton( ) ,
+			bindEquals( CameraView.AUTO_PROFILE , cameraViewBinder ) );
 		JSliderValueBinder.bind( mouseSensitivitySlider , mouseSensitivityBinder );
 		JSliderValueBinder.bind( mouseWheelSensitivitySlider , mouseWheelSensitivityBinder );
 		PlotAxisConversionBinder.bind( distColorationAxis , distRangeBinder );
@@ -491,12 +531,12 @@ public class SettingsDrawer extends Drawer
 		PlotAxisConversionBinder.bind( paramColorationAxis , paramRangeBinder );
 		PlotAxisConversionBinder.bind( glowDistAxis , highlightRangeBinder );
 		JSliderValueBinder.bind( ambientLightSlider ,
-				BimapperBinder.bind( compose( new LinearFloatBimapper( 0f , 0f , 1f , ambientLightSlider.getMaximum( ) ) ,
-						RoundingFloat2IntegerBimapper.instance ) , ambientLightBinder ) );
-		
+			BimapperBinder.bind( compose( new LinearFloatBimapper( 0f , 0f , 1f , ambientLightSlider.getMaximum( ) ) ,
+				RoundingFloat2IntegerBimapper.instance ) , ambientLightBinder ) );
+
 		JSliderValueBinder.bind( numSamplesSlider , desiredNumSamplesBinder );
 	}
-	
+
 	public void setMaxNumSamples( int maxNumSamples )
 	{
 		if( maxNumSamples != numSamplesSlider.getMaximum( ) )
@@ -513,7 +553,7 @@ public class SettingsDrawer extends Drawer
 			updateNumSamplesLabel( );
 		}
 	}
-	
+
 	private void updateNumSamplesLabel( )
 	{
 		localizer.unregister( numSamplesLabel );
@@ -526,89 +566,89 @@ public class SettingsDrawer extends Drawer
 			localizer.setFormattedText( numSamplesLabel , "numSamplesLabel.text.on" , numSamplesSlider.getValue( ) );
 		}
 	}
-	
+
 	public ViewButtonsPanel getViewButtonsPanel( )
 	{
 		return viewButtonsPanel;
 	}
-	
+
 	public JButton getProjectFileMenuButton( )
 	{
 		return projectFileMenuButton;
 	}
-	
+
 	public JButton getResetViewButton( )
 	{
 		return resetViewButton;
 	}
-	
+
 	public JButton getFitViewToSelectedButton( )
 	{
 		return fitViewToSelectedButton;
 	}
-	
+
 	public JButton getFitViewToEverythingButton( )
 	{
 		return fitViewToEverythingButton;
 	}
-	
+
 	public JButton getOrbitToPlanButton( )
 	{
 		return orbitToPlanButton;
 	}
-	
+
 	public PlotAxis getDistColorationAxis( )
 	{
 		return distColorationAxis;
 	}
-	
+
 	public PlotAxis getParamColorationAxis( )
 	{
 		return paramColorationAxis;
 	}
-	
+
 	public PaintablePanel getParamColorationAxisPanel( )
 	{
 		return paramColorationAxisPanel;
 	}
-	
+
 	public LinearGradientPaint getParamColorationAxisPaint( )
 	{
 		return ( LinearGradientPaint ) ( ( FillBorder ) paramColorationAxisPanel.getUnderpaintBorder( ) )
-				.getPaint( paramColorationAxisPanel , null ,
-						0 , 0 , paramColorationAxisPanel.getWidth( ) , paramColorationAxisPanel.getHeight( ) );
+			.getPaint( paramColorationAxisPanel , null ,
+				0 , 0 , paramColorationAxisPanel.getWidth( ) , paramColorationAxisPanel.getHeight( ) );
 	}
-	
+
 	public PlotAxis getGlowDistAxis( )
 	{
 		return glowDistAxis;
 	}
-	
+
 	public JButton getInferDepthAxisTiltButton( )
 	{
 		return inferDepthAxisTiltButton;
 	}
-	
+
 	public JButton getResetDepthAxisTiltButton( )
 	{
 		return resetDepthAxisTiltButton;
 	}
-	
+
 	public JButton getCameraToDepthAxisTiltButton( )
 	{
 		return cameraToDepthAxisTiltButton;
 	}
-	
+
 	public AbstractButton getFitParamColorationAxisButton( )
 	{
 		return fitParamColorationAxisButton;
 	}
-	
+
 	public AbstractButton getFlipParamColorationAxisButton( )
 	{
 		return flipParamColorationAxisButton;
 	}
-	
+
 	public AbstractButton getRecalcColorByDistanceButton( )
 	{
 		return recalcColorByDistanceButton;

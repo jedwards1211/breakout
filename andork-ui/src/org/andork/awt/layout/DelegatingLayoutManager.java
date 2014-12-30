@@ -106,7 +106,6 @@ public class DelegatingLayoutManager implements LayoutManager2
 	@Override
 	public void layoutContainer( Container parent )
 	{
-		System.out.println();
 		Set<Component> laidOut = new HashSet<Component>( );
 
 		for( Component comp : parent.getComponents( ) )
@@ -131,7 +130,6 @@ public class DelegatingLayoutManager implements LayoutManager2
 					layoutComponent( parent , dep , laidOut );
 				}
 			}
-			System.out.println( "laying out " + comp );
 			layoutDelegate.layoutComponent( parent , comp );
 		}
 		else
