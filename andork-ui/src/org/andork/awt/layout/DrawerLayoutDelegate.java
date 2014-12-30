@@ -43,7 +43,6 @@ import org.andork.event.BasicPropertyChangeSupport;
 public class DrawerLayoutDelegate implements LayoutDelegate
 {
 	boolean								open				= false;
-	boolean								pinned				= false;
 	boolean								maximized			= false;
 	boolean								animating			= false;
 
@@ -60,7 +59,6 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 	boolean								fill				= false;
 
 	public static final String			OPEN				= "open";
-	public static final String			PINNED				= "pinned";
 	public static final String			MAXIMIZED			= "maximized";
 
 	private Map<Side, SideConstraint>	extraConstraints	= new HashMap<>( );
@@ -176,17 +174,14 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 
 	public void toggleOpen( boolean animate )
 	{
-		if( !open || !pinned )
+		open = !open;
+		animating = animate;
+		if( drawer.getParent( ) != null )
 		{
-			open = !open;
-			animating = animate;
-			if( drawer.getParent( ) != null )
-			{
-				drawer.getParent( ).invalidate( );
-				drawer.getParent( ).validate( );
-			}
-			changeSupport.firePropertyChange( this , OPEN , !open , open );
+			drawer.getParent( ).invalidate( );
+			drawer.getParent( ).validate( );
 		}
+		changeSupport.firePropertyChange( this , OPEN , !open , open );
 	}
 
 	public void setOpen( boolean open )
@@ -199,27 +194,6 @@ public class DrawerLayoutDelegate implements LayoutDelegate
 		if( this.open != open )
 		{
 			toggleOpen( animate );
-		}
-	}
-
-	public boolean isPinned( )
-	{
-		return pinned;
-	}
-
-	public void setPinned( boolean pinned )
-	{
-		setPinned( pinned , true );
-	}
-
-	public void setPinned( boolean pinned , boolean animate )
-	{
-		if( this.pinned != pinned )
-		{
-			this.pinned = pinned;
-
-			setOpen( pinned , animate );
-			changeSupport.firePropertyChange( this , PINNED , !pinned , pinned );
 		}
 	}
 

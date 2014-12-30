@@ -1,5 +1,23 @@
+0.9.20
+--------------------------------------------------------------------------------
+
+-Made task list automatically show/hide while/after long running tasks like 
+opening, saving, or creating the 3D model are active.
+
+0.9.19
+--------------------------------------------------------------------------------
+
+-Added update checker and downloader
+-Improved layout:
+  -drawers no longer overlap
+  -pin buttons are now inside their respective drawers
+  -busy spinner is now at bottom left
+  -shot under mouse info label is now remains above the survey drawer
+
 0.9.18
 --------------------------------------------------------------------------------
 
--Nothing was showing up on screen after I upgraded my computer to Windows 8.  This is now fixed on my computer, I have yet
-to test on other systems.
+-Nothing was showing up on screen after I upgraded my computer to Windows 8.
+This is now fixed on my computer, I have yet to test on other systems.
+-Incorporated demo data into downloadable program zip file, and it shows up by 
+default.

@@ -1723,10 +1723,7 @@ public class BreakoutMainView
 			{
 				for( Drawer drawer : Arrays.asList( surveyDrawer , quickTableDrawer , taskListDrawer , settingsDrawer ) )
 				{
-					if( !drawer.delegate( ).isPinned( ) )
-					{
-						drawer.delegate( ).close( );
-					}
+					drawer.holder( ).release( DrawerAutoshowController.autoshowDrawerHolder );
 				}
 				canvasMouseAdapterWrapper.setWrapped( windowSelectionMouseHandler );
 				windowSelectionMouseHandler.start( e );
@@ -2138,6 +2135,19 @@ public class BreakoutMainView
 				@Override
 				protected void execute( )
 				{
+					try
+					{
+						taskListDrawer.holder( ).hold( this );
+						reallyExecute( );
+					}
+					finally
+					{
+						taskListDrawer.holder( ).release( this );
+					}
+				}
+
+				protected void reallyExecute( )
+				{
 					setTotal( 1000 );
 					Subtask copySubtask = new Subtask( this );
 					copySubtask.setStatus( "Parsing shot data" );
@@ -2309,35 +2319,49 @@ public class BreakoutMainView
 		ioTaskService.submit( new ImportProjectArchiveTask( newProjectFile ) );
 	}
 
-	private class ImportProjectArchiveTask extends SelfReportingTask
+	private abstract class TaskListPinningTask extends SelfReportingTask
 	{
-		boolean	taskListWasOpen;
+		public TaskListPinningTask( )
+		{
+			super( getMainPanel( ) );
+		}
+
+		@Override
+		protected final void duringDialog( ) throws Exception
+		{
+			try
+			{
+				taskListDrawer.holder( ).hold( this );
+				reallyDuringDialog( );
+			}
+			finally
+			{
+				taskListDrawer.holder( ).release( this );
+			}
+
+		}
+
+		protected abstract void reallyDuringDialog( ) throws Exception;
+	}
+
+	private class ImportProjectArchiveTask extends TaskListPinningTask
+	{
 		File	newProjectFile;
 
 		private ImportProjectArchiveTask( File newProjectFile )
 		{
-			super( getMainPanel( ) );
+			super( );
 			this.newProjectFile = newProjectFile;
 			setStatus( "Saving project..." );
 			setIndeterminate( true );
 
-			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
-			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
 
 		@Override
-		protected void duringDialog( ) throws Exception
+		protected void reallyDuringDialog( ) throws Exception
 		{
 			setStatus( "Importing project archive: " + newProjectFile + "..." );
-
-			new OnEDT( ) {
-				@Override
-				public void run( ) throws Throwable
-				{
-					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
-				}
-			};
 
 			ProjectArchiveModel projectModel = null;
 
@@ -2405,25 +2429,22 @@ public class BreakoutMainView
 		ioTaskService.submit( new ExportProjectArchiveTask( newProjectFile ) );
 	}
 
-	private class ExportProjectArchiveTask extends SelfReportingTask
+	private class ExportProjectArchiveTask extends TaskListPinningTask
 	{
-		boolean	taskListWasOpen;
 		File	newProjectFile;
 
 		private ExportProjectArchiveTask( File newProjectFile )
 		{
-			super( getMainPanel( ) );
+			super( );
 			this.newProjectFile = newProjectFile;
 			setStatus( "Saving project..." );
 			setIndeterminate( true );
 
-			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
-			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
 
 		@Override
-		protected void duringDialog( ) throws Exception
+		protected void reallyDuringDialog( ) throws Exception
 		{
 			setStatus( "Exporting project archive: " + newProjectFile + "..." );
 
@@ -2433,14 +2454,6 @@ public class BreakoutMainView
 			rootSubtask.setTotal( 3 );
 			Subtask prepareSubtask = rootSubtask.beginSubtask( 1 );
 			prepareSubtask.setStatus( "Preparing for export" );
-
-			new OnEDT( ) {
-				@Override
-				public void run( ) throws Throwable
-				{
-					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
-				}
-			};
 
 			SurveyTableModel surveyTableModelCopy = new SurveyTableModel( );
 			SurveyTableModelCopier copier = new SurveyTableModelCopier( );
@@ -2489,28 +2502,25 @@ public class BreakoutMainView
 		ioTaskService.submit( new OpenProjectTask( newProjectFile ) );
 	}
 
-	private class OpenProjectTask extends SelfReportingTask
+	private class OpenProjectTask extends TaskListPinningTask
 	{
-		boolean	taskListWasOpen;
 		Path	newProjectFile;
 		Path	relativizedNewProjectFile;
 
 		private OpenProjectTask( Path newProjectFile )
 		{
-			super( getMainPanel( ) );
+			super( );
 			this.newProjectFile = newProjectFile;
 			this.relativizedNewProjectFile = rootDirectory.toAbsolutePath( ).relativize(
 				newProjectFile.toAbsolutePath( ) );
 			setStatus( "Saving current project..." );
 			setIndeterminate( true );
 
-			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
-			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
 
 		@Override
-		protected void duringDialog( ) throws Exception
+		protected void reallyDuringDialog( ) throws Exception
 		{
 			setStatus( "Opening project: " + newProjectFile + "..." );
 
@@ -2518,8 +2528,6 @@ public class BreakoutMainView
 				@Override
 				public void run( ) throws Throwable
 				{
-					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
-
 					QObject<RootModel> rootModel = getRootModel( );
 					rootModel.set( RootModel.currentProjectFile , relativizedNewProjectFile );
 					QArrayList<Path> recentProjectFiles = rootModel.get( RootModel.recentProjectFiles );
@@ -2621,15 +2629,14 @@ public class BreakoutMainView
 		cameraAnimationQueue.removeAll( anim -> !protectedAnimations.containsKey( anim ) );
 	}
 
-	private class OpenSurveyTask extends SelfReportingTask
+	private class OpenSurveyTask extends TaskListPinningTask
 	{
-		boolean	taskListWasOpen;
 		Path	newSurveyFile;
 		Path	relativizedNewSurveyFile;
 
 		private OpenSurveyTask( Path newSurveyFile )
 		{
-			super( getMainPanel( ) );
+			super( );
 			this.newSurveyFile = newSurveyFile;
 			Path projectPath = rootDirectory.toAbsolutePath( )
 				.resolve( getRootModel( ).get( RootModel.currentProjectFile ) ).normalize( );
@@ -2638,20 +2645,16 @@ public class BreakoutMainView
 			setStatus( "Saving current survey..." );
 			setIndeterminate( true );
 
-			taskListWasOpen = taskListDrawer.delegate( ).isOpen( );
-			taskListDrawer.delegate( ).open( );
 			showDialogLater( );
 		}
 
 		@Override
-		protected void duringDialog( ) throws Exception
+		protected void reallyDuringDialog( ) throws Exception
 		{
 			boolean changed = new FromEDT<Boolean>( ) {
 				@Override
 				public Boolean run( ) throws Throwable
 				{
-					taskListDrawer.delegate( ).setOpen( taskListWasOpen );
-
 					File absoluteSurveyFile = newSurveyFile.toAbsolutePath( ).toFile( );
 
 					if( surveyPersister == null || !absoluteSurveyFile.equals( surveyPersister.getFile( ) ) )

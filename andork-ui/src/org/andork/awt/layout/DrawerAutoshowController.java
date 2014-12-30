@@ -33,53 +33,70 @@ import org.andork.awt.layout.DelegatingLayoutManager.LayoutDelegate;
 
 public class DrawerAutoshowController extends MouseAdapter
 {
-	int			autoshowDistance	= 30;
-	
+	int	autoshowDistance	= 30;
+
+	private static final class AutoshowDrawerHolder
+	{
+
+	}
+
+	public static final AutoshowDrawerHolder	autoshowDrawerHolder	= new AutoshowDrawerHolder( );
+
 	public int getAutoshowDistance( )
 	{
 		return autoshowDistance;
 	}
-	
+
 	public void setAutoshowDistance( int autoshowDistance )
 	{
 		this.autoshowDistance = autoshowDistance;
 	}
-	
+
 	@Override
 	public void mouseMoved( MouseEvent e )
 	{
 		Component c = e.getComponent( );
-		
-		while( c != null && ( !( c instanceof Container ) ||
-				!( ( ( Container ) c ).getLayout( ) instanceof DelegatingLayoutManager ) ) )
+
+		while( c != null && ( ! ( c instanceof Container ) ||
+			! ( ( ( Container ) c ).getLayout( ) instanceof DelegatingLayoutManager ) ) )
 		{
 			c = c.getParent( );
 		}
-		
+
 		if( c == null )
 		{
 			return;
 		}
-		
+
 		Container parent = ( Container ) c;
-		
+
 		DelegatingLayoutManager layout = ( DelegatingLayoutManager ) ( ( Container ) parent ).getLayout( );
-		
+
 		for( Component comp : parent.getComponents( ) )
 		{
-			LayoutDelegate delegate = layout.getDelegate( comp );
-			if( delegate instanceof DrawerLayoutDelegate )
+			if( comp instanceof Drawer )
 			{
-				DrawerLayoutDelegate drawerDelegate = ( DrawerLayoutDelegate ) delegate;
-				
+				Drawer drawer = ( Drawer ) comp;
 				Point p = SwingUtilities.convertPoint( e.getComponent( ) , e.getPoint( ) , comp );
 				if( RectangleUtils.rectilinearDistance( SwingUtilities.getLocalBounds( comp ) , p ) < autoshowDistance )
 				{
-					drawerDelegate.open( );
+					drawer.holder( ).hold( autoshowDrawerHolder );
 				}
-				else if( !drawerDelegate.isPinned( ) )
+				else
 				{
-					drawerDelegate.close( );
+					drawer.holder( ).release( autoshowDrawerHolder );
+				}
+			}
+			else
+			{
+				LayoutDelegate delegate = layout.getDelegate( comp );
+				if( delegate instanceof DrawerLayoutDelegate )
+				{
+					DrawerLayoutDelegate drawerDelegate = ( DrawerLayoutDelegate ) delegate;
+
+					Point p = SwingUtilities.convertPoint( e.getComponent( ) , e.getPoint( ) , comp );
+					drawerDelegate.setOpen( RectangleUtils.rectilinearDistance(
+						SwingUtilities.getLocalBounds( comp ) , p ) < autoshowDistance );
 				}
 			}
 		}

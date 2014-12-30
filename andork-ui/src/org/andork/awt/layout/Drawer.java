@@ -45,47 +45,54 @@ import org.andork.swing.PaintablePanel;
 public class Drawer extends PaintablePanel
 {
 	DrawerLayoutDelegate				delegate;
+	DrawerHolder						holder;
 	JToggleButton						pinButton;
 	TabLayoutDelegate					pinButtonDelegate;
 	JToggleButton						maxButton;
 	Component							mainResizeHandle;
 	ResizeKnobHandler					mainResizeHandler;
-	
+
 	BinderWrapper<QObject<DrawerModel>>	binder			= new BinderWrapper<QObject<DrawerModel>>( );
 	QObjectAttributeBinder<Boolean>		pinnedBinder	= QObjectAttributeBinder.bind( DrawerModel.pinned , binder );
 	QObjectAttributeBinder<Boolean>		maximizedBinder	= QObjectAttributeBinder.bind( DrawerModel.maximized , binder );
 	ButtonSelectedBinder				pinButtonBinder;
 	ButtonSelectedBinder				maxButtonBinder;
-	
+
 	public Drawer( )
 	{
 		setOpaque( true );
 		setLayout( new BorderLayout( ) );
 		delegate = new DrawerLayoutDelegate( this , Side.TOP );
+		holder = new DrawerHolder( delegate , true );
 	}
-	
+
 	public Drawer( Component content )
 	{
 		this( );
 		add( content , BorderLayout.CENTER );
 	}
-	
+
 	public void setBinder( Binder<QObject<DrawerModel>> modelBinder )
 	{
 		this.binder.bind( modelBinder );
 	}
-	
+
 	public DrawerLayoutDelegate delegate( )
 	{
 		return delegate;
 	}
-	
+
 	public Drawer delegate( DrawerLayoutDelegate delegate )
 	{
 		this.delegate = delegate;
 		return this;
 	}
-	
+
+	public DrawerHolder holder( )
+	{
+		return holder;
+	}
+
 	public JToggleButton pinButton( )
 	{
 		if( pinButton == null )
@@ -99,27 +106,34 @@ public class Drawer extends PaintablePanel
 				@Override
 				public void itemStateChanged( ItemEvent e )
 				{
-					delegate.setPinned( pinButton.isSelected( ) );
+					if( pinButton.isSelected( ) )
+					{
+						holder.hold( pinButton );
+					}
+					else
+					{
+						holder.releaseAll( );
+					}
 				}
 			} );
-			
+
 			pinButtonBinder = ButtonSelectedBinder.bind( pinButton , pinnedBinder );
 		}
 		return pinButton;
 	}
-	
+
 	public TabLayoutDelegate pinButtonDelegate( )
 	{
 		if( pinButtonDelegate == null )
 		{
 			pinButtonDelegate = new TabLayoutDelegate( this ,
-					Corner.fromSides( delegate.dockingSide( ).opposite( ) ,
-							delegate.dockingSide( ).axis( ).opposite( ).lowerSide( ) ) ,
-					delegate.dockingSide( ).opposite( ) );
+				Corner.fromSides( delegate.dockingSide( ).opposite( ) ,
+					delegate.dockingSide( ).axis( ).opposite( ).lowerSide( ) ) ,
+				delegate.dockingSide( ).opposite( ) );
 		}
 		return pinButtonDelegate;
 	}
-	
+
 	public JToggleButton maxButton( )
 	{
 		if( maxButton == null )
@@ -140,7 +154,7 @@ public class Drawer extends PaintablePanel
 		}
 		return maxButton;
 	}
-	
+
 	public Component mainResizeHandle( )
 	{
 		if( mainResizeHandle == null )
@@ -151,23 +165,23 @@ public class Drawer extends PaintablePanel
 			handle.setPreferredSize( new Dimension( 5 , 5 ) );
 			handle.setCursor( delegate.dockingSide( ).opposite( ).resizeCursor( ) );
 			add( handle , delegate.dockingSide( ).opposite( ).borderLayoutAnchor( ) );
-			
+
 			mainResizeHandler = new ResizeKnobHandler( this , delegate.dockingSide( ).opposite( ) );
 			handle.addMouseListener( mainResizeHandler );
 			handle.addMouseMotionListener( mainResizeHandler );
-			
+
 			mainResizeHandle = handle;
 		}
 		return mainResizeHandle;
 	}
-	
+
 	public void addTo( JLayeredPane layeredPane , int layer )
 	{
-		if( !( layeredPane.getLayout( ) instanceof DelegatingLayoutManager ) )
+		if( ! ( layeredPane.getLayout( ) instanceof DelegatingLayoutManager ) )
 		{
 			layeredPane.setLayout( new DelegatingLayoutManager( ) );
 		}
-		
+
 		layeredPane.setLayer( this , layer );
 		layeredPane.add( this , delegate );
 		if( pinButtonDelegate != null )
