@@ -225,18 +225,15 @@
 		</javac>
 	</target>
 
-	<target name="jar-base" depends="compile-main,copy-resources">
-		<jar jarfile="${dist}/${ant.project.name}-base.jar" basedir="${build.main}" />
-		<jar jarfile="${dist}/${ant.project.name}-base-sources.jar" basedir="${src.main}" />
-	</target>
-
-	<target name="dist-sources" depends="jar-base,copy-deps-shared" description="generate the source distribution">
+	<target name="dist-sources" depends="copy-deps-shared" description="generate the source distribution">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist}" />
 
+		<jar jarfile="${dist}/${ant.project.name}-sources.jar" basedir="${src.main}" />
+
 		<zip destfile="${dist}/${ant.project.name}-sources.zip">
 			<fileset dir="${dist}">
-				<include name="${ant.project.name}-base-sources.jar" />
+				<include name="${ant.project.name}-sources.jar" />
 				<include name="lib/andork-core-sources.jar" />
 				<include name="lib/andork-ui-sources.jar" />
 				<include name="lib/andork-math-sources.jar" />
@@ -249,7 +246,7 @@
 		</zip>
 	</target>
 
-	<target name="dist-win-i586" depends="jar-base,copy-deps-win-i586" description="generate the distribution">
+	<target name="dist-win-i586" depends="copy-deps-win-i586" description="generate the distribution">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist}" />
 
@@ -298,7 +295,7 @@
 		</zip>
 	</target>
 
-	<target name="dist-all-desktops" depends="jar-base,copy-deps-win-i586,copy-deps-win-amd64,copy-deps-linux-i586,copy-deps-linux-amd64,copy-deps-macosx-universal" description="generate the distribution">
+	<target name="dist-all-desktops" depends="copy-deps-win-i586,copy-deps-win-amd64,copy-deps-linux-i586,copy-deps-linux-amd64,copy-deps-macosx-universal" description="generate the distribution">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist}" />
 
@@ -318,7 +315,6 @@
 				<include name=".breakout/demo-survey.txt" />
 			</fileset>
 			<fileset dir="${dist}">
-				<include name="${ant.project.name}-base.jar" />
 				<include name="${ant.project.name}-all-desktops.jar" />
 				<include name="lib/swingx-all-1.6.4.jar" />
 				<include name="lib/commons-io-2.4.jar" />
