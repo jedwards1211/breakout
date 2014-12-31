@@ -3,11 +3,13 @@
 
 -Made task list automatically show/hide while/after long running tasks like 
 opening, saving, or creating the 3D model are active.
+-Made the auto-update checker verify the checksum of new versions it downloads
 
 0.9.19
 --------------------------------------------------------------------------------
 
--Added update checker and downloader
+-Added automatic update checker.  It shows in the bottom right corner of the
+settings drawer, and allows you to download the latest version from the server.
 -Improved layout:
   -drawers no longer overlap
   -pin buttons are now inside their respective drawers
