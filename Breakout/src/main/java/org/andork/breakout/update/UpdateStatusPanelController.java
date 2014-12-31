@@ -38,6 +38,8 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -46,16 +48,19 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 
 import org.andork.breakout.update.UpdateStatus.CheckFailed;
+import org.andork.breakout.update.UpdateStatus.ChecksumFailed;
 import org.andork.breakout.update.UpdateStatus.DownloadFailed;
 import org.andork.breakout.update.UpdateStatus.Downloading;
+import org.andork.breakout.update.UpdateStatus.Failure;
 import org.andork.io.Downloader;
+import org.andork.io.FileDigest;
 import org.andork.io.Downloader.State;
+import org.andork.io.FileUtils;
 import org.andork.swing.FromEDT;
 import org.andork.swing.OnEDT;
+import org.andork.util.VersionUtil;
 import org.andork.util.Java7.Objects;
 
 public class UpdateStatusPanelController
@@ -65,11 +70,13 @@ public class UpdateStatusPanelController
 	private String				currentVersion;
 	private URL					latestVersionInfoUrl;
 	private URL					latestVersionDownloadUrl;
+	private URL					latestVersionChecksumUrl;
 	private File				downloadDir;
 	private File				downloadPropsFile;
 
 	private ExecutorService		executor;
 
+	private Downloader			checksumDownloader;
 	private Downloader			downloader;
 
 	public UpdateStatusPanelController( UpdateStatusPanel panel , String currentVersion , URL latestVersionInfoUrl ,
@@ -118,7 +125,16 @@ public class UpdateStatusPanelController
 		@Override
 		public void actionPerformed( ActionEvent e )
 		{
-			downloadUpdateIfAvailable( );
+			UpdateStatus status = panel.getStatus( );
+			if( status instanceof Failure && ! ( status instanceof CheckFailed ) )
+			{
+				panel.setStatus( UPDATE_AVAILABLE );
+			}
+
+			if( panel.getStatus( ) == UPDATE_AVAILABLE )
+			{
+				downloadUpdate( );
+			}
 		}
 	}
 
@@ -143,6 +159,17 @@ public class UpdateStatusPanelController
 		@Override
 		public void actionPerformed( ActionEvent e )
 		{
+			if( checksumDownloader != null )
+			{
+				try
+				{
+					checksumDownloader.cancel( );
+				}
+				catch( Exception ex )
+				{
+					ex.printStackTrace( );
+				}
+			}
 			if( downloader != null )
 			{
 				try
@@ -179,10 +206,10 @@ public class UpdateStatusPanelController
 
 	public void checkForUpdate( )
 	{
-		OnEDT.onEDT( ( ) -> panel.setStatus( CHECKING ) );
-
 		executor.submit( ( ) ->
 		{
+			OnEDT.onEDT( ( ) -> panel.setStatus( CHECKING ) );
+
 			UpdateStatus newStatus = null;
 			String latestVersion = null;
 			URLConnection connection = null;
@@ -195,7 +222,46 @@ public class UpdateStatusPanelController
 				connection.getInputStream( ).close( );
 
 				latestVersion = props.getProperty( "version" );
-				latestVersionDownloadUrl = new URL( props.getProperty( "url" ) );
+				if( latestVersion == null )
+				{
+					throw new Exception( panel.getLocalizer( ).getString(
+						"checkForUpdate.exception.missingVersionNumber" ) );
+				}
+				if( !latestVersion.matches( "(\\d+)(\\.\\d+)*" ) )
+				{
+					throw new Exception( panel.getLocalizer( ).getFormattedString(
+						"checkForUpdate.exception.invalidVersionNumber" , latestVersion ) );
+				}
+
+				String downloadUrlString = props.getProperty( "url" );
+				if( downloadUrlString == null )
+				{
+					throw new Exception( panel.getLocalizer( ).getString(
+						"checkForUpdate.exception.missingDownloadUrl" ) );
+				}
+				try
+				{
+					latestVersionDownloadUrl = new URL( downloadUrlString );
+				}
+				catch( Exception ex )
+				{
+					throw new Exception( panel.getLocalizer( ).getFormattedString(
+						"checkForUpdate.exception.invalidUrl" , downloadUrlString ) );
+				}
+
+				String checksumUrlString = props.getProperty( "checksum" );
+				if( checksumUrlString != null )
+				{
+					try
+					{
+						latestVersionChecksumUrl = new URL( checksumUrlString );
+					}
+					catch( Exception ex )
+					{
+						throw new Exception( panel.getLocalizer( ).getFormattedString(
+							"checkForUpdate.exception.invalidUrl" , checksumUrlString ) );
+					}
+				}
 
 				if( VersionUtil.compareVersions( currentVersion , latestVersion ) < 0 )
 				{
@@ -212,18 +278,25 @@ public class UpdateStatusPanelController
 							String downloadedVersion = props.getProperty( "version" );
 							if( Objects.equals( downloadedVersion , latestVersion ) )
 							{
-								newStatus = UPDATE_DOWNLOADED;
+								File destFile = downloadDir.toPath( )
+									.resolve( Paths.get( props.getProperty( "file" ) ) ).toFile( );
+								File checksumFile = new File( destFile.getPath( ) + ".md5" );
+
+								try
+								{
+									checkChecksum( destFile , checksumFile );
+									newStatus = UPDATE_DOWNLOADED;
+								}
+								catch( Exception ex )
+								{
+									newStatus = new ChecksumFailed( ex.getLocalizedMessage( ) );
+								}
 							}
 						}
 						catch( Exception ex )
 						{
 						}
 					}
-				}
-				else if( latestVersion == null )
-				{
-					throw new Exception(
-						"Breakout couldn't recognize the format of the latest version info file from the server." );
 				}
 				else
 				{
@@ -258,24 +331,23 @@ public class UpdateStatusPanelController
 		} );
 	}
 
-	public void downloadUpdateIfAvailable( )
+	private void downloadUpdate( )
 	{
-		checkForUpdate( );
-		downloadUpdate( true );
-	}
+		OnEDT.onEDT( ( ) -> panel.setStatus( STARTING_DOWNLOAD ) );
 
-	private void downloadUpdate( final boolean checkStatus )
-	{
-		try
+		if( downloadDir.exists( ) )
 		{
-			for( File file : downloadDir.listFiles( ) )
+			try
 			{
-				file.delete( );
+				for( File file : downloadDir.listFiles( ) )
+				{
+					file.delete( );
+				}
 			}
-		}
-		catch( Exception ex )
-		{
-			ex.printStackTrace( );
+			catch( Exception ex )
+			{
+				ex.printStackTrace( );
+			}
 		}
 
 		final UpdateStatus prevStatus = panel.getStatus( );
@@ -288,6 +360,32 @@ public class UpdateStatusPanelController
 			i = 0;
 		}
 		File destFile = new File( downloadDir , file.substring( i ) );
+		File checksumFile = new File( destFile.getPath( ) + ".md5" );
+
+		if( latestVersionChecksumUrl != null )
+		{
+			checksumDownloader = new Downloader( ).url( latestVersionChecksumUrl ).destFile( checksumFile )
+				.blockSize( 1024 );
+			checksumDownloader.addPropertyChangeListener( evt ->
+			{
+				OnEDT.onEDT( ( ) ->
+				{
+					if( downloader.getState( ) == State.DOWNLOADING )
+					{
+						panel.setStatus( new Downloading( 0 , downloader
+							.getTotalSize( ) ) );
+					}
+					else if( downloader.getState( ) == State.FAILED )
+					{
+						panel.setStatus( new DownloadFailed( formatException( downloader.getException( ) ) ) );
+					}
+					else if( downloader.getState( ) == State.CANCELED )
+					{
+						panel.setStatus( prevStatus );
+					}
+				} );
+			} );
+		}
 
 		downloader = new Downloader( ).url( latestVersionDownloadUrl ).destFile( destFile ).blockSize( 1024 );
 		downloader.addPropertyChangeListener( new PropertyChangeListener( )
@@ -302,19 +400,6 @@ public class UpdateStatusPanelController
 						panel.setStatus( new Downloading( downloader.getNumBytesDownloaded( ) , downloader
 							.getTotalSize( ) ) );
 					}
-					else if( downloader.getState( ) == State.COMPLETE )
-					{
-						try( PrintStream ps = new PrintStream( new FileOutputStream( downloadPropsFile ) ) )
-						{
-							ps.print( "version=" + panel.getLatestVersion( ) );
-							ps.close( );
-						}
-						catch( Exception ex )
-						{
-							ex.printStackTrace( );
-						}
-						panel.setStatus( UPDATE_DOWNLOADED );
-					}
 					else if( downloader.getState( ) == State.FAILED )
 					{
 						panel.setStatus( new DownloadFailed( formatException( downloader.getException( ) ) ) );
@@ -327,26 +412,85 @@ public class UpdateStatusPanelController
 			}
 		} );
 
+		final File finalChecksumFile = checksumFile;
+
 		executor.submit( ( ) ->
 		{
-			if( checkStatus )
-			{
-				UpdateStatus status = FromEDT.fromEDT( ( ) -> panel.getStatus( ) );
-
-				if( status != UPDATE_AVAILABLE )
-				{
-					return;
-				}
-			}
-
-			OnEDT.onEDT( ( ) -> panel.setStatus( STARTING_DOWNLOAD ) );
-
 			if( !downloadDir.exists( ) )
 			{
 				downloadDir.mkdirs( );
 			}
 
+			if( checksumDownloader != null )
+			{
+				checksumDownloader.download( );
+				if( checksumDownloader.getState( ) == State.CANCELED )
+				{
+					return;
+				}
+				if( checksumDownloader.getState( ) == State.FAILED )
+				{
+					OnEDT.onEDT( ( ) -> panel.setStatus( new DownloadFailed( checksumDownloader.getException( )
+						.getLocalizedMessage( ) ) ) );
+					return;
+				}
+			}
+
 			downloader.download( );
+
+			if( downloader.getState( ) == State.CANCELED )
+			{
+				return;
+			}
+			if( downloader.getState( ) == State.FAILED )
+			{
+				OnEDT.onEDT( ( ) -> panel.setStatus( new DownloadFailed( checksumDownloader.getException( )
+					.getLocalizedMessage( ) ) ) );
+				return;
+			}
+
+			if( finalChecksumFile != null )
+			{
+				try
+				{
+					checkChecksum( destFile , finalChecksumFile );
+				}
+				catch( Exception ex )
+				{
+					ex.printStackTrace( );
+					OnEDT.onEDT( ( ) -> panel.setStatus( new ChecksumFailed( ex.getLocalizedMessage( ) ) ) );
+					return;
+				}
+			}
+
+			try( PrintStream ps = new PrintStream( new FileOutputStream( downloadPropsFile ) ) )
+			{
+				ps.println( "version=" + panel.getLatestVersion( ) );
+				ps.println( "file=" + downloadDir.toPath( ).relativize( destFile.toPath( ) ) );
+				ps.close( );
+			}
+			catch( Exception ex )
+			{
+				ex.printStackTrace( );
+			}
+			OnEDT.onEDT( ( ) -> panel.setStatus( UPDATE_DOWNLOADED ) );
 		} );
+	}
+
+	protected void checkChecksum( final File fileToCheck , final File expectedChecksumFile ) throws Exception
+	{
+		String actualChecksum = null;
+		actualChecksum = FileDigest.format( FileDigest.checksum( fileToCheck.toPath( ) , "md5" ) );
+
+		String expectedChecksum = null;
+		expectedChecksum = FileUtils.slurpAsString( expectedChecksumFile.toPath( ) );
+		expectedChecksum = expectedChecksum.substring( 0 , Math.min( expectedChecksum.length( ) , 32 ) );
+
+		if( !Objects.equals( actualChecksum , expectedChecksum ) )
+		{
+			throw new Exception( panel.getLocalizer( )
+				.getFormattedString( "downloadUpdate.exception.checksumMismatch" ,
+					expectedChecksum , actualChecksum ) );
+		}
 	}
 }

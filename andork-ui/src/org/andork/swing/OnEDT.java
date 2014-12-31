@@ -25,6 +25,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import javax.swing.SwingUtilities;
 
+import org.andork.func.ExceptionRunnable;
+
 /**
  * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)} calls. Upon construction the
  * {@link #run()} method will be called on the EDT,

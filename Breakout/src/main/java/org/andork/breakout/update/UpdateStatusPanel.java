@@ -47,6 +47,7 @@ import org.andork.awt.IconScaler;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.awt.I18n.Localizer;
 import org.andork.breakout.update.UpdateStatus.CheckFailed;
+import org.andork.breakout.update.UpdateStatus.ChecksumFailed;
 import org.andork.breakout.update.UpdateStatus.DownloadFailed;
 import org.andork.breakout.update.UpdateStatus.Downloading;
 import org.andork.breakout.update.UpdateStatus.UpdateFailed;
@@ -108,6 +109,11 @@ public class UpdateStatusPanel extends JPanel
 
 		infoIcon = IconScaler.rescale( UIManager.getIcon( "OptionPane.informationIcon" ) , 1000 , 20 );
 		errorIcon = IconScaler.rescale( UIManager.getIcon( "OptionPane.errorIcon" ) , 1000 , 20 );
+	}
+
+	public Localizer getLocalizer( )
+	{
+		return localizer;
 	}
 
 	public UpdateStatus getStatus( )
@@ -182,8 +188,9 @@ public class UpdateStatusPanel extends JPanel
 			|| status instanceof Downloading );
 		downloadProgressBar.setIndeterminate( status == CHECKING || status == STARTING_DOWNLOAD );
 		detailsHyperlink.setVisible( status instanceof UpdateFailed || status instanceof CheckFailed
-			|| status instanceof DownloadFailed );
-		downloadHyperlink.setVisible( status == UPDATE_AVAILABLE || status instanceof DownloadFailed );
+			|| status instanceof DownloadFailed || status instanceof ChecksumFailed );
+		downloadHyperlink.setVisible( status == UPDATE_AVAILABLE || status instanceof DownloadFailed
+			|| status instanceof ChecksumFailed );
 		checkForUpdateHyperlink.setVisible( status == null || status == UNCHECKED || status instanceof CheckFailed
 			|| status == UP_TO_DATE || status instanceof UpdateFailed );
 		cancelDownloadHyperlink.setVisible( status instanceof Downloading || status == STARTING_DOWNLOAD );
@@ -192,6 +199,11 @@ public class UpdateStatusPanel extends JPanel
 		if( status == null || status == UNCHECKED )
 		{
 			messageLabel.setText( null );
+			messageLabel.setIcon( null );
+		}
+		else if( status == STARTING_DOWNLOAD )
+		{
+			localizer.setText( messageLabel , "messageLabel.text.startingDownload" );
 			messageLabel.setIcon( null );
 		}
 		else if( status == CHECKING )
@@ -233,6 +245,12 @@ public class UpdateStatusPanel extends JPanel
 			messageLabel.setIcon( errorIcon );
 			localizer.setText( downloadHyperlink , "downloadHyperlink.text.retry" );
 		}
+		else if( status instanceof ChecksumFailed )
+		{
+			localizer.setText( messageLabel , "messageLabel.text.checksumFailed" );
+			messageLabel.setIcon( errorIcon );
+			localizer.setText( downloadHyperlink , "downloadHyperlink.text.retry" );
+		}
 		else if( status instanceof UpdateFailed )
 		{
 			localizer.setText( messageLabel , "messageLabel.text.updateFailed" );
@@ -266,6 +284,12 @@ public class UpdateStatusPanel extends JPanel
 			{
 				JOptionPane.showMessageDialog( SwingUtilities.getWindowAncestor( UpdateStatusPanel.this ) ,
 					( ( CheckFailed ) status ).message , localizer.getString( "checkFailedDialog.title" ) ,
+					JOptionPane.ERROR_MESSAGE );
+			}
+			else if( status instanceof ChecksumFailed )
+			{
+				JOptionPane.showMessageDialog( SwingUtilities.getWindowAncestor( UpdateStatusPanel.this ) ,
+					( ( ChecksumFailed ) status ).message , localizer.getString( "checksumFailedDialog.title" ) ,
 					JOptionPane.ERROR_MESSAGE );
 			}
 		}

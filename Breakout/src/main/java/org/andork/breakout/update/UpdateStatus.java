@@ -73,6 +73,14 @@ public class UpdateStatus
 		}
 	}
 	
+	public static final class ChecksumFailed extends Failure
+	{
+		public ChecksumFailed( String message )
+		{
+			super( message );
+		}
+	}
+	
 	public static final UpdateStatus	UPDATE_DOWNLOADED	= new UpdateStatus( );
 	
 	public static final class UpdateFailed extends Failure

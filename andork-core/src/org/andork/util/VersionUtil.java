@@ -1,4 +1,4 @@
-package org.andork.breakout.update;
+package org.andork.util;
 
 public class VersionUtil
 {
