@@ -41,7 +41,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,6 +55,7 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -155,13 +155,12 @@ import org.andork.q.QMap;
 import org.andork.q.QObject;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
-import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.DoSwing;
 import org.andork.swing.DoSwingR2;
 import org.andork.swing.FromEDT;
 import org.andork.swing.OnEDT;
 import org.andork.swing.TextComponentWithHintAndClear;
-import org.andork.swing.async.SelfReportingTask;
+import org.andork.swing.async.DrawerPinningTask;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.SubtaskFilePersister;
@@ -232,7 +231,7 @@ public class BreakoutMainView
 	RowFilterFactory<String, TableModel, Integer>		rowFilterFactory;
 
 	SurveyDrawer										surveyDrawer;
-	Drawer												quickTableDrawer;
+	MiniSurveyDrawer									miniSurveyDrawer;
 	TaskListDrawer										taskListDrawer;
 	SettingsDrawer										settingsDrawer;
 
@@ -282,9 +281,6 @@ public class BreakoutMainView
 
 	JLabel												hintLabel;
 
-	DefaultBinder<QObject<StatsModel>>					statsBinder					= new DefaultBinder<>( );
-	StatsPanel											statsPanel					= new StatsPanel( statsBinder );
-
 	public BreakoutMainView( )
 	{
 		final GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
@@ -324,20 +320,17 @@ public class BreakoutMainView
 		hintLabel.setText( " " );
 		hintLabel.setVerticalAlignment( JLabel.TOP );
 
-		final SortRunner sortRunner = new SortRunner( ) {
-			@Override
-			public void submit( final Runnable r )
-			{
-				Task task = new Task( "Sorting survey table..." ) {
-					@Override
-					protected void execute( )
-					{
-						r.run( );
-					}
-				};
+		final Consumer<Runnable> sortRunner = r ->
+		{
+			Task task = new Task( "Sorting survey table..." ) {
+				@Override
+				protected void execute( )
+				{
+					r.run( );
+				}
+			};
 
-				sortTaskService.submit( task );
-			}
+			sortTaskService.submit( task );
 		};
 
 		new DoSwing( ) {
@@ -476,94 +469,43 @@ public class BreakoutMainView
 		surveyDrawer.addTo( layeredPane , 5 );
 
 		mainPanel = new JPanel( new BorderLayout( ) );
-		// mainPanel.add( modeComboBox , BorderLayout.NORTH );
 		mainPanel.add( layeredPane , BorderLayout.CENTER );
-//		mainPanel.add( hintLabel , BorderLayout.SOUTH );
 
 		selectionHandler = new TableSelectionHandler( );
 		surveyDrawer.table( ).getModelSelectionModel( ).addListSelectionListener( selectionHandler );
 
-		final AnnotatingJTable quickTable = new DoSwingR2<AnnotatingJTable>( ) {
-			@Override
-			public AnnotatingJTable doRun( )
-			{
-				DefaultTableColumnModel quickTableColumnModel = new DefaultTableColumnModel( );
-				TableColumn fromColumn = new TableColumn( SurveyTableModel.Row.from.getIndex( ) );
-				fromColumn.setIdentifier( "From" );
-				fromColumn.setHeaderValue( "From" );
-				TableColumn toColumn = new TableColumn( SurveyTableModel.Row.to.getIndex( ) );
-				toColumn.setIdentifier( "To" );
-				toColumn.setHeaderValue( "To" );
-				quickTableColumnModel.addColumn( fromColumn );
-				quickTableColumnModel.addColumn( toColumn );
+		OnEDT.onEDT( ( ) ->
+		{
+			miniSurveyDrawer = new MiniSurveyDrawer( i18n , sortRunner );
 
-				AnnotatingJTable result = new AnnotatingJTable( surveyDrawer.table( ).getModel( ) ,
-					quickTableColumnModel );
-				result.setModelSelectionModel( surveyDrawer.table( ).getModelSelectionModel( ) );
+			miniSurveyDrawer.table( ).setModel( surveyDrawer.table( ).getModel( ) );
+			miniSurveyDrawer.table( ).setModelSelectionModel( surveyDrawer.table( ).getModelSelectionModel( ) );
 
-				return result;
-			}
-		}.result( );
+			miniSurveyDrawer.filterField( ).textComponent.getDocument( ).addDocumentListener(
+				AnnotatingJTables.createFilterFieldListener( miniSurveyDrawer.table( ) ,
+					miniSurveyDrawer.filterField( ).textComponent , rowFilterFactory ) );
+			miniSurveyDrawer.highlightField( ).textComponent.getDocument( ).addDocumentListener(
+				AnnotatingJTables.createHighlightFieldListener( miniSurveyDrawer.table( ) ,
+					miniSurveyDrawer.highlightField( ).textComponent , rowFilterFactory , Color.YELLOW ) );
 
-		DefaultAnnotatingJTableSetup quickTableSetup = new DoSwingR2<DefaultAnnotatingJTableSetup>( ) {
-			@Override
-			protected DefaultAnnotatingJTableSetup doRun( )
-			{
-				DefaultAnnotatingJTableSetup quickTableSetup = new DefaultAnnotatingJTableSetup( quickTable ,
-					sortRunner );
-				( ( AnnotatingTableRowSorter<SurveyTableModel> ) quickTableSetup.table.getAnnotatingRowSorter( ) )
-					.setModelCopier( new SurveyTableModelCopier( ) );
-				return quickTableSetup;
-			}
-		}.result( );
+			miniSurveyDrawer.delegate( ).dockingSide( Side.LEFT );
+			miniSurveyDrawer.mainResizeHandle( );
+			miniSurveyDrawer.addTo( layeredPane , 3 );
 
-		JLabel quickTableFilterLabel = new JLabel( "Filter: " );
-		TextComponentWithHintAndClear quickTableFilterField = new TextComponentWithHintAndClear( "Enter search terms" );
-		quickTableFilterField.textComponent.getDocument( ).addDocumentListener(
-			AnnotatingJTables.createFilterFieldListener( quickTableSetup.table , quickTableFilterField.textComponent ,
-				rowFilterFactory ) );
-
-		JLabel quickTableHighlightLabel = new JLabel( "Highlight: " );
-		TextComponentWithHintAndClear quickTableHighlightField = new TextComponentWithHintAndClear(
-			"Enter search terms" );
-		quickTableHighlightField.textComponent.getDocument( ).addDocumentListener(
-			AnnotatingJTables.createHighlightFieldListener( quickTableSetup.table ,
-				quickTableHighlightField.textComponent , rowFilterFactory , Color.YELLOW ) );
-
-		JPanel quickTablePanel = new JPanel( );
-		quickTableDrawer = new Drawer( quickTablePanel );
-		quickTablePanel.setPreferredSize( new Dimension( 250 , 500 ) );
-		GridBagWizard gbw = GridBagWizard.create( quickTablePanel );
-		gbw.put( quickTableFilterLabel ).xy( 0 , 0 ).west( ).insets( 2 , 2 , 0 , 0 );
-		gbw.put( quickTableFilterField ).rightOf( quickTableFilterLabel ).fillx( 1.0 ).insets( 2 , 2 , 0 , 0 );
-		gbw.put( quickTableDrawer.pinButton( ) ).rightOf( quickTableFilterField ).filly( ).insets( 2 , 0 , 0 , 0 );
-		gbw.put( quickTableHighlightLabel ).below( quickTableFilterLabel ).west( ).insets( 2 , 2 , 2 , 0 );
-		gbw.put( quickTableHighlightField ).below( quickTableFilterField , quickTableDrawer.pinButton( ) ).fillx( 1.0 )
-			.insets( 2 , 2 , 2 , 0 );
-
-		gbw.put( quickTableSetup.scrollPane ).below( quickTableHighlightLabel , quickTableHighlightField )
-			.fillboth( 1.0 , 1.0 );
-		gbw.put( statsPanel ).below( quickTableSetup.scrollPane ).fillx( 1.0 );
-
-		statsPanel.setBorder( new EmptyBorder( 5 , 5 , 5 , 0 ) );
-
-		quickTableDrawer.delegate( ).dockingSide( Side.LEFT );
-		quickTableDrawer.mainResizeHandle( );
-		quickTableDrawer.addTo( layeredPane , 3 );
-
-		quickTableDrawer.delegate( )
-			.putExtraConstraint( Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ) );
+			miniSurveyDrawer.delegate( )
+				.putExtraConstraint( Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ) );
+		} );
 
 		settingsDrawer.delegate( ).putExtraConstraint( Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ) );
 
 		taskListDrawer.delegate( ).putExtraConstraint( Side.LEFT ,
-			new SideConstraint( quickTableDrawer , Side.RIGHT , 0 ) );
+			new SideConstraint( miniSurveyDrawer , Side.RIGHT , 0 ) );
 		taskListDrawer.delegate( ).putExtraConstraint( Side.RIGHT ,
 			new SideConstraint( settingsDrawer , Side.LEFT , 0 ) );
 
 		SideConstraintLayoutDelegate spinnerDelegate = new SideConstraintLayoutDelegate( );
 		spinnerDelegate.putExtraConstraint(
-			Side.LEFT , new SideConstraint( quickTableDrawer , Side.RIGHT , 0 ) );
+			Side.LEFT , new SideConstraint( miniSurveyDrawer , Side.RIGHT , 0 ) );
 		spinnerDelegate.putExtraConstraint(
 			Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ) );
 
@@ -586,15 +528,15 @@ public class BreakoutMainView
 			@Override
 			public void propertyChange( PropertyChangeEvent evt )
 			{
-				AnnotatingRowSorter<TableModel, Integer> sorter = ( AnnotatingRowSorter<TableModel, Integer> ) quickTable
-					.getRowSorter( );
+				AnnotatingRowSorter<TableModel, Integer> sorter = ( AnnotatingRowSorter<TableModel, Integer> )
+					miniSurveyDrawer.table( ).getRowSorter( );
 
 				SurveyTableModel newModel = ( SurveyTableModel ) evt.getNewValue( );
 
-				quickTable.setRowSorter( null );
-				quickTable.setModel( newModel );
+				miniSurveyDrawer.table( ).setRowSorter( null );
+				miniSurveyDrawer.table( ).setModel( newModel );
 				sorter.setModel( newModel );
-				quickTable.setRowSorter( sorter );
+				miniSurveyDrawer.table( ).setRowSorter( sorter );
 			}
 		} );
 
@@ -964,8 +906,8 @@ public class BreakoutMainView
 
 		( ( JTextField ) surveyDrawer.filterField( ).textComponent ).addActionListener( new FitToFilteredHandler(
 			surveyDrawer.table( ) ) );
-		( ( JTextField ) quickTableFilterField.textComponent )
-			.addActionListener( new FitToFilteredHandler( quickTable ) );
+		( ( JTextField ) miniSurveyDrawer.filterField( ).textComponent )
+			.addActionListener( new FitToFilteredHandler( miniSurveyDrawer.table( ) ) );
 
 		new BinderWrapper<Integer>( ) {
 			protected void onValueChanged( Integer desiredNumSamples )
@@ -1553,6 +1495,11 @@ public class BreakoutMainView
 		mouseLooper.addMouseAdapter( mouseAdapterChain );
 	}
 
+	protected void removeUnprotectedCameraAnimations( )
+	{
+		cameraAnimationQueue.removeAll( anim -> !protectedAnimations.containsKey( anim ) );
+	}
+
 	public JPanel getMainPanel( )
 	{
 		return mainPanel;
@@ -1721,7 +1668,7 @@ public class BreakoutMainView
 
 			if( e.isAltDown( ) )
 			{
-				for( Drawer drawer : Arrays.asList( surveyDrawer , quickTableDrawer , taskListDrawer , settingsDrawer ) )
+				for( Drawer drawer : Arrays.asList( surveyDrawer , miniSurveyDrawer , taskListDrawer , settingsDrawer ) )
 				{
 					drawer.holder( ).release( DrawerAutoshowController.autoshowDrawerHolder );
 				}
@@ -1831,7 +1778,7 @@ public class BreakoutMainView
 					editor.deselect( shot3d );
 				}
 
-				statsBinder.set( StatsModel.spec.newObject( ) );
+				miniSurveyDrawer.statsPanel( ).getModelBinder( ).set( StatsModel.spec.newObject( ) );
 			}
 			else
 			{
@@ -1884,7 +1831,7 @@ public class BreakoutMainView
 				statsModel.set( StatsModel.eastStats , eastCalc.toModel( ) );
 				statsModel.set( StatsModel.depthStats , depthCalc.toModel( ) );
 
-				statsBinder.set( statsModel );
+				miniSurveyDrawer.statsPanel( ).getModelBinder( ).set( statsModel );
 			}
 
 			rebuildTaskService.submit( task ->
@@ -2319,38 +2266,18 @@ public class BreakoutMainView
 		ioTaskService.submit( new ImportProjectArchiveTask( newProjectFile ) );
 	}
 
-	private abstract class TaskListPinningTask extends SelfReportingTask
+	public TaskListDrawer getTaskListDrawer( )
 	{
-		public TaskListPinningTask( )
-		{
-			super( getMainPanel( ) );
-		}
-
-		@Override
-		protected final void duringDialog( ) throws Exception
-		{
-			try
-			{
-				taskListDrawer.holder( ).hold( this );
-				reallyDuringDialog( );
-			}
-			finally
-			{
-				taskListDrawer.holder( ).release( this );
-			}
-
-		}
-
-		protected abstract void reallyDuringDialog( ) throws Exception;
+		return taskListDrawer;
 	}
 
-	private class ImportProjectArchiveTask extends TaskListPinningTask
+	private class ImportProjectArchiveTask extends DrawerPinningTask
 	{
 		File	newProjectFile;
 
 		private ImportProjectArchiveTask( File newProjectFile )
 		{
-			super( );
+			super( getMainPanel( ) , taskListDrawer.holder( ) );
 			this.newProjectFile = newProjectFile;
 			setStatus( "Saving project..." );
 			setIndeterminate( true );
@@ -2429,13 +2356,13 @@ public class BreakoutMainView
 		ioTaskService.submit( new ExportProjectArchiveTask( newProjectFile ) );
 	}
 
-	private class ExportProjectArchiveTask extends TaskListPinningTask
+	private class ExportProjectArchiveTask extends DrawerPinningTask
 	{
 		File	newProjectFile;
 
 		private ExportProjectArchiveTask( File newProjectFile )
 		{
-			super( );
+			super( getMainPanel( ) , taskListDrawer.holder( ) );
 			this.newProjectFile = newProjectFile;
 			setStatus( "Saving project..." );
 			setIndeterminate( true );
@@ -2502,14 +2429,14 @@ public class BreakoutMainView
 		ioTaskService.submit( new OpenProjectTask( newProjectFile ) );
 	}
 
-	private class OpenProjectTask extends TaskListPinningTask
+	private class OpenProjectTask extends DrawerPinningTask
 	{
 		Path	newProjectFile;
 		Path	relativizedNewProjectFile;
 
 		private OpenProjectTask( Path newProjectFile )
 		{
-			super( );
+			super( getMainPanel( ) , taskListDrawer.holder( ) );
 			this.newProjectFile = newProjectFile;
 			this.relativizedNewProjectFile = rootDirectory.toAbsolutePath( ).relativize(
 				newProjectFile.toAbsolutePath( ) );
@@ -2624,19 +2551,14 @@ public class BreakoutMainView
 		ioTaskService.submit( new OpenSurveyTask( newSurveyFile ) );
 	}
 
-	protected void removeUnprotectedCameraAnimations( )
-	{
-		cameraAnimationQueue.removeAll( anim -> !protectedAnimations.containsKey( anim ) );
-	}
-
-	private class OpenSurveyTask extends TaskListPinningTask
+	private class OpenSurveyTask extends DrawerPinningTask
 	{
 		Path	newSurveyFile;
 		Path	relativizedNewSurveyFile;
 
 		private OpenSurveyTask( Path newSurveyFile )
 		{
-			super( );
+			super( getMainPanel( ) , taskListDrawer.holder( ) );
 			this.newSurveyFile = newSurveyFile;
 			Path projectPath = rootDirectory.toAbsolutePath( )
 				.resolve( getRootModel( ).get( RootModel.currentProjectFile ) ).normalize( );

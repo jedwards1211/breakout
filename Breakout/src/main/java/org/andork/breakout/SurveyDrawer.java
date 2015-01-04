@@ -22,6 +22,7 @@
 package org.andork.breakout;
 
 import java.awt.Dimension;
+import java.util.function.Consumer;
 
 import javax.swing.JLabel;
 
@@ -31,7 +32,6 @@ import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
 import org.andork.breakout.model.SurveyTableModel;
 import org.andork.breakout.model.SurveyTableModel.SurveyTableModelCopier;
-import org.andork.swing.AnnotatingRowSorter.SortRunner;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
@@ -47,7 +47,7 @@ public class SurveyDrawer extends Drawer
 	SurveyTable						surveyTable;
 	DefaultAnnotatingJTableSetup	surveyTableSetup;
 
-	public SurveyDrawer( SortRunner sortRunner )
+	public SurveyDrawer( Consumer<Runnable> sortRunner )
 	{
 		setPreferredSize( new Dimension( 800 , 250 ) );
 
