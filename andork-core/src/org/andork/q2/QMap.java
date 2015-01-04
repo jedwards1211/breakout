@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.andork.model.Model;
 import org.andork.util.Java7;
 
 public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implements Map<K, V>
@@ -284,8 +283,8 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 		{
 			if( ! ( o instanceof Map.Entry ) )
 				return false;
-			Map.Entry<K, V> e = ( Map.Entry<K, V> ) o;
-			V value = QMap.this.get( e.getKey( ) );
+			Map.Entry<?, ?> e = ( Map.Entry<?, ?> ) o;
+			Object value = QMap.this.get( e.getKey( ) );
 			return Java7.Objects.equals( value , e.getValue( ) );
 		}
 
@@ -295,7 +294,7 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 			{
 				if( contains( o ) )
 				{
-					QMap.this.remove( ( ( Map.Entry ) o ).getKey( ) );
+					QMap.this.remove( ( ( Map.Entry<?, ?> ) o ).getKey( ) );
 					return true;
 				}
 			}

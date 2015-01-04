@@ -32,30 +32,31 @@ public class QArrayList<E> extends QList<E, ArrayList<E>>
 	{
 		return new QArrayList<E>( );
 	}
-	
+
 	public static <E> QArrayList<E> newInstance( Collection<? extends E> c )
 	{
 		QArrayList<E> result = newInstance( );
 		result.addAll( c );
 		return result;
 	}
-	
+
 	@Override
 	protected ArrayList<E> createCollection( )
 	{
 		return new ArrayList<E>( );
 	}
-	
+
 	public void trimToSize( )
 	{
 		collection.trimToSize( );
 	}
-	
+
 	public void ensureCapacity( int minCapacity )
 	{
 		collection.ensureCapacity( minCapacity );
 	}
-	
+
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public QArrayList<E> deepClone( Mapper<Object, Object> childMapper )
 	{

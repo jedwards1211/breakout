@@ -144,7 +144,7 @@ public class QSpec
 	 * @param superspec
 	 * @param properties
 	 */
-	protected QSpec( QSpec superspec , Property<?> ... properties )
+	public QSpec( QSpec superspec , Property<?> ... properties )
 	{
 		this.superspec = superspec;
 		this.properties = new Property[ superspec.properties.length + properties.length ];
@@ -164,7 +164,7 @@ public class QSpec
 		propertyList = Collections.unmodifiableList( Arrays.asList( properties ) );
 	}
 
-	protected QSpec( Property<?> ... properties )
+	public QSpec( Property<?> ... properties )
 	{
 		this.superspec = null;
 		this.properties = new Property[ properties.length ];
@@ -182,17 +182,17 @@ public class QSpec
 		propertyList = Collections.unmodifiableList( Arrays.asList( properties ) );
 	}
 
-	protected static <T> Property<T> property( String name , Class<? super T> type )
+	public static <T> Property<T> property( String name , Class<? super T> type )
 	{
 		return new Property<T>( name , type );
 	}
 
-	protected static <T> Property<T> property( String name , Class<? super T> type , T initValue )
+	public static <T> Property<T> property( String name , Class<? super T> type , T initValue )
 	{
 		return new Property<T>( name , type , initValue );
 	}
 
-	protected static <T> NonNullProperty<T> nonNullProperty( String name , Class<? super T> type , T initValue )
+	public static <T> NonNullProperty<T> nonNullProperty( String name , Class<? super T> type , T initValue )
 	{
 		return new NonNullProperty<T>( name , type , initValue );
 	}

@@ -39,6 +39,7 @@ public class QHashMap<K, V> extends QMap<K, V, HashMap<K, V>>
 		return new HashMap<K, V>( );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public QElement deepClone( Mapper<Object, Object> childMapper )
 	{

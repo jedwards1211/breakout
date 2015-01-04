@@ -39,6 +39,7 @@ public class QLinkedHashMap<K, V> extends QMap<K, V, LinkedHashMap<K, V>>
 		return new LinkedHashMap<K, V>( );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public QElement deepClone( Mapper<Object, Object> childMapper )
 	{

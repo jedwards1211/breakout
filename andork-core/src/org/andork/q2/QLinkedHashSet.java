@@ -38,6 +38,7 @@ public class QLinkedHashSet<E> extends QSet<E, LinkedHashSet<E>>
 		return new LinkedHashSet<E>( );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public QLinkedHashSet<E> deepClone( Mapper<Object, Object> childMapper )
 	{

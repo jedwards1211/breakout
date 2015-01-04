@@ -21,20 +21,7 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
-import org.andork.format.Format;
-
-public abstract class CrossSectionFormat implements Format<CrossSection>
+public interface ShotVector
 {
-	protected Format<Double>	distanceFormat;
-	
-	public CrossSectionFormat( )
-	{
-		this( new DefaultDistanceFormat( ) );
-	}
-	
-	public CrossSectionFormat( DefaultDistanceFormat distanceFormat )
-	{
-		this.distanceFormat = distanceFormat;
-	}
 	
 }

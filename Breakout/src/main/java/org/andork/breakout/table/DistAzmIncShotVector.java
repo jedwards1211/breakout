@@ -21,38 +21,22 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
-import javax.swing.JButton;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JPopupMenu;
-
-public class NewSurveyTableMenuButton extends JButton
+public class DistAzmIncShotVector implements ShotVector
 {
-	NewSurveyTable	table;
-	
-	public NewSurveyTableMenuButton( NewSurveyTable table )
+	public final ParsedText<Double>	dist;
+	public final ParsedText<Double>	fsAzm;
+	public final ParsedText<Double>	bsAzm;
+	public final ParsedText<Double>	fsInc;
+	public final ParsedText<Double>	bsInc;
+
+	public DistAzmIncShotVector( ParsedText<Double> dist , ParsedText<Double> fsAzm , ParsedText<Double> bsAzm ,
+		ParsedText<Double> fsInc , ParsedText<Double> bsInc )
 	{
-		super( "V" );
-		this.table = table;
-		init( );
-	}
-	
-	private void init( )
-	{
-		addActionListener( new ActionListener( )
-		{
-			@Override
-			public void actionPerformed( ActionEvent e )
-			{
-				JPopupMenu menu = new JPopupMenu( );
-				menu.add( new JMenuItem( new CustomizeNewSurveyTableAction( table ) ) );
-				
-				menu.show( NewSurveyTableMenuButton.this , 0 , getHeight( ) );
-			}
-		} );
+		super( );
+		this.dist = dist;
+		this.fsAzm = fsAzm;
+		this.bsAzm = bsAzm;
+		this.fsInc = fsInc;
+		this.bsInc = bsInc;
 	}
 }

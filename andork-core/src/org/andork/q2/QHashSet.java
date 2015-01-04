@@ -38,6 +38,7 @@ public class QHashSet<E> extends QSet<E, HashSet<E>>
 		return new HashSet<E>( );
 	}
 	
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public QHashSet<E> deepClone( Mapper<Object, Object> childMapper )
 	{
