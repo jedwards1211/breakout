@@ -1,6 +1,6 @@
 package org.andork.q2;
 
-import org.andork.event.HierarchicalBasicPropertyChangeSupport;
+import org.andork.func.Mapper;
 import org.andork.q2.QSpec.Property;
 
 /**
@@ -16,39 +16,50 @@ import org.andork.q2.QSpec.Property;
  * @param <S>
  *            the type of {@link QSpec} for this object.
  */
-public final class QObject<S extends QSpec> {
-	S										spec;
+public final class QObject<S extends QSpec> extends QElement
+{
+	S			spec;
 
-	Object[]								values;
+	Object[ ]	values;
 
-	HierarchicalBasicPropertyChangeSupport	changeSupport;
-
-	public QObject(S spec) {
+	public QObject( S spec )
+	{
 		this.spec = spec;
-		values = new Object[spec.properties.length];
-		for (int i = 0; i < values.length; i++) {
-			values[i] = spec.properties[i].initValue();
+		values = new Object[ spec.properties.length ];
+		for( int i = 0 ; i < values.length ; i++ )
+		{
+			values[ i ] = spec.properties[ i ].initValue( );
 		}
-		changeSupport = new HierarchicalBasicPropertyChangeSupport();
 	}
 
-	public static <S extends QSpec> QObject<S> create(S spec) {
-		return new QObject<S>(spec);
+	public static <S extends QSpec> QObject<S> create( S spec )
+	{
+		return new QObject<S>( spec );
 	}
 
-	public S spec() {
+	public S spec( )
+	{
 		return spec;
 	}
 
-	public HierarchicalBasicPropertyChangeSupport.External changeSupport() {
-		return changeSupport.external();
+	public <T> T get( Property<T> property )
+	{
+		return property.get( this );
 	}
 
-	public <T> T get(Property<T> property) {
-		return property.get(this);
+	public <T> T set( Property<T> property , T newValue )
+	{
+		return property.set( this , newValue );
 	}
 
-	public <T> T set(Property<T> property, T newValue) {
-		return property.set(this, newValue);
+	@Override
+	public QObject<S> deepClone( Mapper<Object, Object> childMapper )
+	{
+		QObject<S> result = new QObject<S>( spec );
+		for( int i = 0 ; i < values.length ; i++ )
+		{
+			result.values[ i ] = childMapper.map( values[ i ] );
+		}
+		return result;
 	}
 }
