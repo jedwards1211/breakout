@@ -23,12 +23,11 @@ package org.andork.breakout.table;
 
 public class OffsetShotVector implements ShotVector
 {
-	public final ParsedText<Double>[ ]	vector;
+	public final Double[ ]	vector;
 
-	@SuppressWarnings( "unchecked" )
-	public OffsetShotVector( ParsedText<Double> x , ParsedText<Double> y , ParsedText<Double> z )
+	public OffsetShotVector( Double x , Double y , Double z )
 	{
 		super( );
-		vector = ( ParsedText<Double>[ ] ) new ParsedText[ ] { x , y , z };
+		vector = new Double[ ] { x , y , z };
 	}
 }

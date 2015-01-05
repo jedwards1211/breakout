@@ -8,9 +8,9 @@ import org.andork.q2.QSpec.Property;
 
 public class QObjectPropertyBinder<T> extends CachingBinder<T> implements Binding , BasicPropertyChangeListener
 {
-	public final Link<QObject<?>>	objLink	= new Link<QObject<?>>( this );
+	public final Link<QArrayObject<?>>	objLink	= new Link<QArrayObject<?>>( this );
 	public final Property<T>		property;
-	private QObject<?>				curObject;
+	private QArrayObject<?>				curObject;
 
 	public QObjectPropertyBinder( Property<T> property )
 	{
@@ -24,7 +24,7 @@ public class QObjectPropertyBinder<T> extends CachingBinder<T> implements Bindin
 
 	public void update( boolean force )
 	{
-		QObject<?> newObject = objLink.get( );
+		QArrayObject<?> newObject = objLink.get( );
 		if( curObject != newObject )
 		{
 			if( curObject != null )

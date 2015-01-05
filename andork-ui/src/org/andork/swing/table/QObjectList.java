@@ -9,7 +9,6 @@ import org.andork.event.BasicPropertyChangeListener;
 import org.andork.q2.QObject;
 import org.andork.q2.QSpec;
 import org.andork.q2.QSpec.Property;
-import org.andork.util.Java7.Objects;
 
 /**
  * A list of {@link QObject}s designed specifically to back a {@link QObjectListTableModel}.

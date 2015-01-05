@@ -3,15 +3,13 @@ package org.andork.q2;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiPredicate;
-import java.util.function.ToIntBiFunction;
-import java.util.function.ToIntFunction;
 
 import org.andork.util.Java7;
 
 /**
- * Defines a set of properties that any {@link QObject} constructed with this
+ * Defines a set of properties that any {@link QArrayObject} constructed with this
  * spec will have.<br>
  * <br>
  * To use this, create a class that extends {@code QSpec}, give it {@code public static final Property<?>} fields, and
@@ -75,18 +73,25 @@ public class QSpec
 		}
 
 		@SuppressWarnings( "unchecked" )
-		public T get( QObject<?> object )
+		public T get( QArrayObject<?> object )
 		{
 			requirePropertyOf( object );
 			return ( T ) object.values[ index ];
 		}
 
 		@SuppressWarnings( "unchecked" )
-		public T set( QObject<?> object , T newValue )
+		public T get( QMapObject<?> object )
+		{
+			requirePropertyOf( object );
+			return ( T ) object.values.get( this );
+		}
+
+		@SuppressWarnings( "unchecked" )
+		public T set( QArrayObject<?> object , T newValue )
 		{
 			requirePropertyOf( object );
 			T oldValue = ( T ) object.values[ index ];
-			if( !Java7.Objects.equals( oldValue , newValue ) )
+			if( !equals( oldValue , newValue ) )
 			{
 				if( oldValue instanceof QElement )
 				{
@@ -94,6 +99,29 @@ public class QSpec
 					object.fireChildrenRemoved( object , oldValue );
 				}
 				object.values[ index ] = newValue;
+				object.firePropertyChange( object , this , oldValue , newValue );
+				if( newValue instanceof QElement )
+				{
+					( ( QElement ) newValue ).addPropertyChangeListener( object );
+					object.fireChildrenAdded( object , newValue );
+				}
+			}
+			return oldValue;
+		}
+
+		@SuppressWarnings( "unchecked" )
+		public T set( QMapObject<?> object , T newValue )
+		{
+			requirePropertyOf( object );
+			T oldValue = newValue == null ? ( T ) object.values.remove( this ) :
+				( T ) object.values.put( this , newValue );
+			if( !equals( oldValue , newValue ) )
+			{
+				if( oldValue instanceof QElement )
+				{
+					( ( QElement ) oldValue ).removePropertyChangeListener( object );
+					object.fireChildrenRemoved( object , oldValue );
+				}
 				object.firePropertyChange( object , this , oldValue , newValue );
 				if( newValue instanceof QElement )
 				{
@@ -149,7 +177,13 @@ public class QSpec
 		}
 
 		@Override
-		public T set( QObject<?> object , T newValue )
+		public T set( QArrayObject<?> object , T newValue )
+		{
+			return super.set( object , Objects.requireNonNull( newValue ) );
+		}
+
+		@Override
+		public T set( QMapObject<?> object , T newValue )
 		{
 			return super.set( object , Objects.requireNonNull( newValue ) );
 		}
@@ -243,7 +277,7 @@ public class QSpec
 			QObject bq = ( QObject ) b;
 			for( int i = 0 ; i < properties.length ; i++ )
 			{
-				if( ! ( ( Property ) properties[ i ] ).equals( a.values[ i ] , bq.values[ i ] ) )
+				if( ! ( ( Property ) properties[ i ] ).equals( a.get( properties[ i ] ) , bq.get( properties[ i ] ) ) )
 				{
 					return false;
 				}
@@ -278,7 +312,7 @@ public class QSpec
 		for( int i = 0 ; i < properties.length ; i++ )
 		{
 			hashCode = ( hashCode * primes[ i % primes.length ] )
-				^ ( ( Property ) properties[ i ] ).hashCode( o.values[ i ] );
+				^ ( ( Property ) properties[ i ] ).hashCode( o.get( properties[ i ] ) );
 		}
 
 		return hashCode;

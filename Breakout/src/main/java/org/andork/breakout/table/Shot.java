@@ -8,16 +8,14 @@ import org.andork.unit.Unit;
 
 public class Shot extends QSpec
 {
-	public static final Property<Integer>		index		= new ShotProperty<>( "index" , ShotPropertyType.INTEGER );
-	public static final Property<String>		from		= new ShotProperty<>( "from" , ShotPropertyType.STRING );
-	public static final Property<String>		to			= new ShotProperty<>( "to" , ShotPropertyType.STRING );
-	public static final Property<ShotVector>	vector		= new ShotProperty<>( "vector" , ShotPropertyType.VECTOR );
-	public static final Property<CrossSection>	fromXsect	= new ShotProperty<>( "fromXsect" ,
-																ShotPropertyType.CROSS_SECTION );
-	public static final Property<CrossSection>	toXsect		= new ShotProperty<>( "toXsect" ,
-																ShotPropertyType.CROSS_SECTION );
-	public static final Property<Unit<Length>>	distUnit	= new ShotProperty<>( "distUnit" , ShotPropertyType.UNIT );
-	public static final Property<Unit<Angle>>	angleUnit	= new ShotProperty<>( "angleUnit" , ShotPropertyType.UNIT );
+	public static final Property<Integer>		index		= property( "index" , Integer.class );
+	public static final Property<String>		from		= property( "from" , String.class );
+	public static final Property<String>		to			= property( "to" , String.class );
+	public static final Property<ShotVector>	vector		= property( "vector" , ShotVector.class );
+	public static final Property<CrossSection>	fromXsect	= property( "fromXsect" , CrossSection.class );
+	public static final Property<CrossSection>	toXsect		= property( "toXsect" , CrossSection.class );
+	public static final Property<Unit<Length>>	distUnit	= property( "distUnit" , Unit.class );
+	public static final Property<Unit<Angle>>	angleUnit	= property( "angleUnit" , Unit.class );
 
 	public static final Shot					spec		= new Shot( );
 

@@ -180,14 +180,14 @@ public class QObjectListTableModel<S extends QSpec> extends AbstractTableModel i
 		@Override
 		public Object getValueAt( QObject<? extends S> row )
 		{
-			return property.get( row );
+			return row.get( property );
 		}
 
 		@SuppressWarnings( "unchecked" )
 		@Override
 		public boolean setValueAt( Object aValue , QObject<? extends S> row )
 		{
-			Object oldValue = property.set( row , aValue );
+			Object oldValue = row.set( property , aValue );
 			return !property.equals( oldValue , aValue );
 		}
 	}
