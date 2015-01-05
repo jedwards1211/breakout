@@ -23,4 +23,9 @@ public class ParsedText
 		}
 		return false;
 	}
+
+	public String toString( )
+	{
+		return String.valueOf( text );
+	}
 }

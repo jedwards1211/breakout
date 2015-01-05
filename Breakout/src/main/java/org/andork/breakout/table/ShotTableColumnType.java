@@ -1,6 +1,6 @@
 package org.andork.breakout.table;
 
-public enum ShotTextColumnType
+public enum ShotTableColumnType
 {
 	STRING,
 	INTEGER,

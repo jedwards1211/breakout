@@ -24,18 +24,17 @@ package org.andork.breakout.table;
 public class DistAzmIncShotVector implements ShotVector
 {
 	public final Double	dist;
-	public final Double	fsAzm;
-	public final Double	bsAzm;
-	public final Double	fsInc;
-	public final Double	bsInc;
+	public final Double	azmFs;
+	public final Double	azmBs;
+	public final Double	incFs;
+	public final Double	incBs;
 
-	public DistAzmIncShotVector( String text , Object note , Double dist , Double fsAzm ,
-		Double bsAzm , Double fsInc , Double bsInc )
+	public DistAzmIncShotVector( Double dist , Double azmFs , Double azmBs , Double incFs , Double incBs )
 	{
 		this.dist = dist;
-		this.fsAzm = fsAzm;
-		this.bsAzm = bsAzm;
-		this.fsInc = fsInc;
-		this.bsInc = bsInc;
+		this.azmFs = azmFs;
+		this.azmBs = azmBs;
+		this.incFs = incFs;
+		this.incBs = incBs;
 	}
 }
