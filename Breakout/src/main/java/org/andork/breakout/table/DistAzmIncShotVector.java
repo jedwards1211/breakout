@@ -23,16 +23,20 @@ package org.andork.breakout.table;
 
 public class DistAzmIncShotVector implements ShotVector
 {
+	public final String				text;
+	public final Object				note;
 	public final ParsedText<Double>	dist;
 	public final ParsedText<Double>	fsAzm;
 	public final ParsedText<Double>	bsAzm;
 	public final ParsedText<Double>	fsInc;
 	public final ParsedText<Double>	bsInc;
 
-	public DistAzmIncShotVector( ParsedText<Double> dist , ParsedText<Double> fsAzm , ParsedText<Double> bsAzm ,
-		ParsedText<Double> fsInc , ParsedText<Double> bsInc )
+	public DistAzmIncShotVector( String text , Object note , ParsedText<Double> dist , ParsedText<Double> fsAzm ,
+		ParsedText<Double> bsAzm , ParsedText<Double> fsInc , ParsedText<Double> bsInc )
 	{
 		super( );
+		this.text = text;
+		this.note = note;
 		this.dist = dist;
 		this.fsAzm = fsAzm;
 		this.bsAzm = bsAzm;

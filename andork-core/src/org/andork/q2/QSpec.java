@@ -4,6 +4,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiPredicate;
+import java.util.function.ToIntBiFunction;
+import java.util.function.ToIntFunction;
 
 import org.andork.util.Java7;
 
@@ -53,12 +56,22 @@ public class QSpec
 			return spec.properties[ index ] == this;
 		}
 
-		public final void requirePropertyOf( QObject<?> object )
+		public final Property<T> requirePropertyOf( QSpec spec )
+		{
+			if( !isPropertyOf( spec ) )
+			{
+				throw new IllegalArgumentException( this + " is not a property of the given spec" );
+			}
+			return this;
+		}
+
+		public final Property<T> requirePropertyOf( QObject<?> object )
 		{
 			if( !isPropertyOf( object ) )
 			{
 				throw new IllegalArgumentException( this + " is not a property of the given object" );
 			}
+			return this;
 		}
 
 		@SuppressWarnings( "unchecked" )
@@ -114,6 +127,16 @@ public class QSpec
 		public String toString( )
 		{
 			return name;
+		}
+
+		public boolean equals( T a , T b )
+		{
+			return Objects.equals( a , b );
+		}
+
+		public int hashCode( T t )
+		{
+			return t == null ? 0 : t.hashCode( );
 		}
 	}
 
@@ -210,5 +233,54 @@ public class QSpec
 	public final int propertyCount( )
 	{
 		return properties.length;
+	}
+
+	@SuppressWarnings( { "unchecked" , "rawtypes" } )
+	public boolean equals( QObject a , Object b )
+	{
+		if( b instanceof QObject && a.spec == ( ( QObject ) b ).spec )
+		{
+			QObject bq = ( QObject ) b;
+			for( int i = 0 ; i < properties.length ; i++ )
+			{
+				if( ! ( ( Property ) properties[ i ] ).equals( a.values[ i ] , bq.values[ i ] ) )
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
+	private static final int[ ]	primes	=
+										{
+										13 , 17 , 19 , 23 , 29 , 31 , 37 , 41 , 43 , 47 , 53 , 59 ,
+										61 , 67 , 71 ,
+										73 , 79 , 83 , 89 , 97 , 101 , 103 , 107 , 109 , 113 , 127 , 131 , 137 , 139 ,
+										149 , 151 , 157 , 163 , 167 ,
+										173 ,
+										179 , 181 , 191 , 193 , 197 , 199 , 211 , 223 , 227 , 229 , 233 , 239 , 241 ,
+										251 , 257 , 263 , 269 , 271 ,
+										277 , 281 ,
+										283 , 293 , 307 , 311 , 313 , 317 , 331 , 337 , 347 , 349 , 353 , 359 , 367 ,
+										373 , 379 , 383 , 389 , 397 ,
+										401 , 409 ,
+										419 , 421 , 431 , 433 , 439 , 443 , 449 , 457 , 461 , 463 , 467 , 479 , 487 ,
+										491 , 499 , 503 , 509 , 521 ,
+										523 , 541 };
+
+	@SuppressWarnings( { "unchecked" , "rawtypes" } )
+	public int hashCode( QObject o )
+	{
+		int hashCode = 0;
+
+		for( int i = 0 ; i < properties.length ; i++ )
+		{
+			hashCode = ( hashCode * primes[ i % primes.length ] )
+				^ ( ( Property ) properties[ i ] ).hashCode( o.values[ i ] );
+		}
+
+		return hashCode;
 	}
 }

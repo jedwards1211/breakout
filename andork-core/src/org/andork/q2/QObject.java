@@ -62,4 +62,14 @@ public final class QObject<S extends QSpec> extends QElement
 		}
 		return result;
 	}
+
+	public boolean equals( Object other )
+	{
+		return spec.equals( this , other );
+	}
+
+	public int hashCode( )
+	{
+		return spec.hashCode( this );
+	}
 }

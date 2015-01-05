@@ -40,9 +40,13 @@ public abstract class QElement implements HierarchicalBasicPropertyChangeListene
 	{
 		if( listeners instanceof List )
 		{
-			( ( List<BasicPropertyChangeListener> ) listeners ).add( listener );
+			List<BasicPropertyChangeListener> casted = ( List<BasicPropertyChangeListener> ) listeners;
+			if( !casted.contains( listener ) )
+			{
+				casted.add( listener );
+			}
 		}
-		else if( listeners instanceof BasicPropertyChangeListener )
+		else if( listeners instanceof BasicPropertyChangeListener && !listeners.equals( listener ) )
 		{
 			ArrayList<BasicPropertyChangeListener> newList = new ArrayList<>( 2 );
 			newList.add( ( BasicPropertyChangeListener ) listeners );

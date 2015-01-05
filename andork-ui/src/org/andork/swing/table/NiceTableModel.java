@@ -33,10 +33,8 @@ import javax.swing.table.TableColumn;
 @SuppressWarnings( "serial" )
 public class NiceTableModel<R> extends AbstractTableModel
 {
-	public static abstract class Column<R>
+	public static interface Column<R>
 	{
-		private int	columnIndex;
-
 		public abstract String getColumnName( );
 
 		public abstract Class<?> getColumnClass( );
