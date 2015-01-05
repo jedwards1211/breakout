@@ -23,11 +23,15 @@ package org.andork.breakout.table;
 
 public class CrossSection
 {
+	public final String					text;
+	public final Object					note;
 	public final CrossSectionType		type;
 	public final ParsedText<Double>[ ]	values;
 
-	public CrossSection( CrossSectionType type , ParsedText<Double>[ ] values )
+	public CrossSection( String text , Object note , CrossSectionType type , ParsedText<Double>[ ] values )
 	{
+		this.text = text;
+		this.note = note;
 		this.type = type;
 		this.values = values;
 	}
