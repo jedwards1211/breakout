@@ -19,9 +19,21 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.breakout.table2;
+package org.andork.breakout.table;
 
-public abstract class ShotVector
+public class DaiShotVector extends ShotVector
 {
-	public ParsedText	combinedText;
+	public Double		dist;
+	public Double		azmFs;
+	public Double		azmBs;
+	public Double		incFs;
+	public Double		incBs;
+
+	public ParsedText	distText;
+	public ParsedText	azmFsBsText;
+	public ParsedText	azmFsText;
+	public ParsedText	azmBsText;
+	public ParsedText	incFsBsText;
+	public ParsedText	incFsText;
+	public ParsedText	incBsText;
 }

@@ -21,7 +21,7 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
-public interface ShotVector
+public abstract class ShotVector
 {
-	
+	public ParsedText	combinedText;
 }

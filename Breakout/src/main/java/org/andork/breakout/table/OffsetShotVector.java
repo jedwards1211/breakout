@@ -21,13 +21,13 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
-public class OffsetShotVector implements ShotVector
+public class OffsetShotVector extends ShotVector
 {
-	public final Double[ ]	vector;
+	public Double		n;
+	public Double		e;
+	public Double		d;
 
-	public OffsetShotVector( Double x , Double y , Double z )
-	{
-		super( );
-		vector = new Double[ ] { x , y , z };
-	}
+	public ParsedText	nText;
+	public ParsedText	eText;
+	public ParsedText	dText;
 }

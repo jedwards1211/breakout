@@ -1,4 +1,4 @@
-package org.andork.breakout.table2;
+package org.andork.breakout.table;
 
 public abstract class LrudXSect extends UdXSect
 {

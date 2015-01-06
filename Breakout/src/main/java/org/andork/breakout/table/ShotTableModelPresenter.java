@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
@@ -19,15 +20,13 @@ import javax.swing.table.TableModel;
 
 import org.andork.bind2.Binder;
 import org.andork.breakout.model.NewProjectModel;
-import org.andork.q2.QHashMap;
-import org.andork.q2.QMap;
-import org.andork.q2.QMapListener;
 import org.andork.q2.QObject;
 import org.andork.q2.QObjectBinder;
 import org.andork.q2.QSpec;
 import org.andork.q2.QSpec.Property;
 import org.andork.swing.table.NiceTableModel.Column;
 import org.andork.swing.table.QObjectList;
+import org.andork.swing.table.TableModelList;
 
 /**
  * A {@link TableModel} backed by a {@link QObjectList} (every row is a {@link QObject}). You specify the columns which
@@ -41,111 +40,82 @@ import org.andork.swing.table.QObjectList;
 @SuppressWarnings( "serial" )
 public class ShotTableModelPresenter extends AbstractTableModel
 {
-	private QObjectBinder<NewProjectModel>					projectModelBinder;
+	private QObjectBinder<NewProjectModel>		projectModelBinder;
 
-	private Binder<Character>								decimalSeparatorBinder;
-	private Binder<QObjectList<Shot>>						shotListBinder;
-	private Binder<QObjectList<ShotText>>					shotTextListBinder;
-	private Binder<QHashMap<Integer, ShotTableColumnDef>>	columnDefsBinder;
+	private Binder<Character>					decimalSeparatorBinder;
+	private ShotList							shotList;
 
-	private QObjectList<Shot>								shotList;
-	private QObjectList<ShotText>							shotTextList;
-	private QHashMap<Integer, ShotTableColumnDef>			columnDefs;
+	private ShotListListener					shotListListener	= new ShotListListener( );
 
-	private ShotListener									shotListener		= new ShotListener( );
-	private ShotTextListener								shotTextListener	= new ShotTextListener( );
-	private ColumnDefsListener								columnDefsListener	= new ColumnDefsListener( );
+	private final List<Column<Integer>>			columns				= new ArrayList<>( );
 
-	private final List<Column<Integer>>						columns				= new ArrayList<>( );
+	private IntFunction<String>					intFormatter		= Integer::toString;
+	private DoubleFunction<String>				doubleFormatter		= Double::toString;
+	private Function<Double[ ], String>			twoDoubleFormatter	= new DefaultTwoElemFormatter<>(
+																		d -> doubleFormatter
+																			.apply( d ) );
 
-	private IntFunction<String>								intFormatter		= Integer::toString;
-	private DoubleFunction<String>							doubleFormatter		= Double::toString;
-	private Function<Double[ ], String>						twoDoubleFormatter	= new DefaultTwoElemFormatter<>(
-																					d -> doubleFormatter
-																						.apply( d ) );
+	public final StringColumn					fromColumn;
+	public final StringColumn					toColumn;
+	public final ParsedTextColumn				distColumn;
+	public final ParsedTextColumn				azmFsBsColumn;
+	public final ParsedTextColumn				azmFsColumn;
+	public final ParsedTextColumn				azmBsColumn;
+	public final ParsedTextColumn				incFsBsColumn;
+	public final ParsedTextColumn				incFsColumn;
+	public final ParsedTextColumn				incBsColumn;
 
-	public final UncheckedStringColumn						fromColumn;
-	public final UncheckedStringColumn						toColumn;
-	public final SubVectorColumn<ShotVector, Double>		distColumn;
-	public final SubVectorColumn<ShotVector, Double[ ]>		azmFsBsColumn;
-	public final SubVectorColumn<ShotVector, Double>		azmFsColumn;
-	public final SubVectorColumn<ShotVector, Double>		azmBsColumn;
-	public final SubVectorColumn<ShotVector, Double[ ]>		incFsBsColumn;
-	public final SubVectorColumn<ShotVector, Double>		incFsColumn;
-	public final SubVectorColumn<ShotVector, Double>		incBsColumn;
+	private final Map<String, Column<Integer>>	builtInColumns;
 
-	private final Map<String, Column<Integer>>				builtInColumns;
+	private class DaiShotVectorProperty<V> implements Function<Shot, V>
+	{
+		Function<DaiShotVector, V>	wrapped;
+
+		public DaiShotVectorProperty( Function<DaiShotVector, V> wrapped )
+		{
+			super( );
+			this.wrapped = wrapped;
+		}
+
+		@Override
+		public V apply( Shot t )
+		{
+			if( t.vector instanceof DaiShotVector )
+			{
+				return wrapped.apply( ( DaiShotVector ) t.vector );
+			}
+			return null;
+		}
+	}
 
 	public ShotTableModelPresenter( Binder<QObject<NewProjectModel>> projectModelBinder )
 	{
-		fromColumn = new UncheckedStringColumn( Shot.from );
-		toColumn = new UncheckedStringColumn( Shot.to );
+		fromColumn = new StringColumn( ShotTableColumnNames.from , s -> s.from );
+		toColumn = new StringColumn( ShotTableColumnNames.to , s -> s.to );
 
-		distColumn = new SubVectorColumn<>( Shot.vector , ShotText.dist ,
-			v ->
-			{
-				if( v instanceof DistAzmIncShotVector )
-				{
-					return ( ( DistAzmIncShotVector ) v ).dist;
-				}
-				return null;
-			} , d -> doubleFormatter.apply( d ) );
-		azmFsBsColumn = new SubVectorColumn<>( Shot.vector , ShotText.azmFsBs ,
-			v ->
-			{
-				if( v instanceof DistAzmIncShotVector )
-				{
-					DistAzmIncShotVector vector = ( DistAzmIncShotVector ) v;
-					return new Double[ ] { vector.azmFs , vector.azmBs };
-				}
-				return null;
-			} , d -> twoDoubleFormatter.apply( d ) );
-		azmFsColumn = new SubVectorColumn<>( Shot.vector , ShotText.azmFs ,
-			v ->
-			{
-				if( v instanceof DistAzmIncShotVector )
-				{
-					return ( ( DistAzmIncShotVector ) v ).azmFs;
-				}
-				return null;
-			} , d -> doubleFormatter.apply( d ) );
-		azmBsColumn = new SubVectorColumn<>( Shot.vector , ShotText.azmBs ,
-			v ->
-			{
-				if( v instanceof DistAzmIncShotVector )
-				{
-					return ( ( DistAzmIncShotVector ) v ).azmBs;
-				}
-				return null;
-			} , d -> doubleFormatter.apply( d ) );
-		incFsBsColumn = new SubVectorColumn<>( Shot.vector , ShotText.incFsBs ,
-			v ->
-			{
-				if( v instanceof DistAzmIncShotVector )
-				{
-					DistAzmIncShotVector vector = ( DistAzmIncShotVector ) v;
-					return new Double[ ] { vector.incFs , vector.incBs };
-				}
-				return null;
-			} , d -> twoDoubleFormatter.apply( d ) );
-		incFsColumn = new SubVectorColumn<>( Shot.vector , ShotText.incFs ,
-			v ->
-			{
-				if( v instanceof DistAzmIncShotVector )
-				{
-					return ( ( DistAzmIncShotVector ) v ).incFs;
-				}
-				return null;
-			} , d -> doubleFormatter.apply( d ) );
-		incBsColumn = new SubVectorColumn<>( Shot.vector , ShotText.incBs ,
-			v ->
-			{
-				if( v instanceof DistAzmIncShotVector )
-				{
-					return ( ( DistAzmIncShotVector ) v ).incBs;
-				}
-				return null;
-			} , d -> doubleFormatter.apply( d ) );
+		distColumn = new ParsedTextColumn( ShotTableColumnNames.dist ,
+			new DaiShotVectorProperty<>( v -> v.dist == null ? null : doubleFormatter.apply( v.dist ) ) ,
+			new DaiShotVectorProperty<>( v -> v.distText ) );
+		azmFsBsColumn = new ParsedTextColumn( ShotTableColumnNames.azmFsBs ,
+			new DaiShotVectorProperty<>( v -> v.azmFs == null && v.azmBs == null ? null :
+				twoDoubleFormatter.apply( new Double[ ] { v.azmFs , v.azmBs } ) ) ,
+			new DaiShotVectorProperty<>( v -> v.azmFsBsText ) );
+		azmFsColumn = new ParsedTextColumn( ShotTableColumnNames.azmFs ,
+			new DaiShotVectorProperty<>( v -> v.azmFs == null ? null : doubleFormatter.apply( v.azmFs ) ) ,
+			new DaiShotVectorProperty<>( v -> v.azmFsText ) );
+		azmBsColumn = new ParsedTextColumn( ShotTableColumnNames.azmBs ,
+			new DaiShotVectorProperty<>( v -> v.azmBs == null ? null : doubleFormatter.apply( v.azmBs ) ) ,
+			new DaiShotVectorProperty<>( v -> v.azmBsText ) );
+		incFsBsColumn = new ParsedTextColumn( ShotTableColumnNames.incFsBs ,
+			new DaiShotVectorProperty<>( v -> v.incFs == null && v.incBs == null ? null :
+				twoDoubleFormatter.apply( new Double[ ] { v.incFs , v.incBs } ) ) ,
+			new DaiShotVectorProperty<>( v -> v.incFsBsText ) );
+		incFsColumn = new ParsedTextColumn( ShotTableColumnNames.incFs ,
+			new DaiShotVectorProperty<>( v -> v.incFs == null ? null : doubleFormatter.apply( v.incFs ) ) ,
+			new DaiShotVectorProperty<>( v -> v.incFsText ) );
+		incBsColumn = new ParsedTextColumn( ShotTableColumnNames.incBs ,
+			new DaiShotVectorProperty<>( v -> v.incBs == null ? null : doubleFormatter.apply( v.incBs ) ) ,
+			new DaiShotVectorProperty<>( v -> v.incBsText ) );
 
 		builtInColumns = new HashMap<>( );
 		builtInColumns.put( ShotTableColumnNames.from , fromColumn );
@@ -161,9 +131,6 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		this.projectModelBinder = QObjectBinder.create( NewProjectModel.spec );
 		this.projectModelBinder.objLink.bind( projectModelBinder );
 		decimalSeparatorBinder = this.projectModelBinder.property( NewProjectModel.decimalSep );
-		shotListBinder = this.projectModelBinder.property( NewProjectModel.shotList );
-		shotTextListBinder = this.projectModelBinder.property( NewProjectModel.shotTextList );
-		columnDefsBinder = this.projectModelBinder.property( NewProjectModel.shotColDefs );
 
 		decimalSeparatorBinder.addBinding( force ->
 		{
@@ -176,10 +143,7 @@ public class ShotTableModelPresenter extends AbstractTableModel
 
 			doubleFormatter = format::format;
 		} );
-		shotListBinder.addBinding( force -> setShotList( shotListBinder.get( ) ) );
-		shotTextListBinder.addBinding( force -> setShotTextList( shotTextListBinder.get( ) ) );
-		columnDefsBinder.addBinding( force -> setColumnDefs( columnDefsBinder.get( ) ) );
-		
+
 		this.projectModelBinder.update( true );
 	}
 
@@ -193,52 +157,18 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		this.twoDoubleFormatter = Objects.requireNonNull( twoDoubleFormatter );
 	}
 
-	private void setShotList( QObjectList<Shot> newList )
+	public void setShotList( ShotList newList )
 	{
 		if( shotList != newList )
 		{
 			if( shotList != null )
 			{
-				shotList.removeListener( shotListener );
+				shotList.removeListener( shotListListener );
 			}
 			shotList = newList;
 			if( newList != null )
 			{
-				newList.addListener( shotListener );
-			}
-			setColumns( createColumns( ) );
-		}
-	}
-
-	private void setShotTextList( QObjectList<ShotText> newList )
-	{
-		if( shotTextList != newList )
-		{
-			if( shotTextList != null )
-			{
-				shotTextList.removeListener( shotTextListener );
-			}
-			shotTextList = newList;
-			if( newList != null )
-			{
-				newList.addListener( shotTextListener );
-			}
-			setColumns( createColumns( ) );
-		}
-	}
-
-	private void setColumnDefs( QHashMap<Integer, ShotTableColumnDef> columnDefs )
-	{
-		if( this.columnDefs != columnDefs )
-		{
-			if( this.columnDefs != null )
-			{
-				this.columnDefs.removeListener( columnDefsListener );
-			}
-			this.columnDefs = columnDefs;
-			if( columnDefs != null )
-			{
-				columnDefs.addListener( columnDefsListener );
+				newList.addListener( shotListListener );
 			}
 			setColumns( createColumns( ) );
 		}
@@ -253,27 +183,32 @@ public class ShotTableModelPresenter extends AbstractTableModel
 
 	private List<Column<Integer>> createColumns( )
 	{
-		if( shotList == null || shotTextList == null || columnDefs == null )
+		if( shotList == null )
 		{
 			return Collections.emptyList( );
 		}
 
 		TreeMap<Integer, Column<Integer>> result = new TreeMap<>( );
 
-		for( Map.Entry<Integer, ShotTableColumnDef> entry : columnDefs.entrySet( ) )
+		ListIterator<ShotColumnDef> i = shotList.getColumnDefs( ).listIterator( );
+
+		int custCols = 0;
+
+		while( i.hasNext( ) )
 		{
-			int index = entry.getKey( );
-			ShotTableColumnType type = entry.getValue( ).type;
+			int index = i.nextIndex( );
+			ShotColumnDef def = i.next( );
+			ShotColumnType type = def.type;
 
 			Column<Integer> col = null;
 
-			if( type == ShotTableColumnType.BUILTIN )
+			if( type == ShotColumnType.BUILTIN )
 			{
-				col = builtInColumns.get( entry.getValue( ).name );
+				col = builtInColumns.get( def.name );
 			}
 			else
 			{
-				col = createCustomColumn( index , entry.getValue( ) );
+				col = createCustomColumn( custCols++ , def );
 			}
 
 			if( col != null )
@@ -285,34 +220,39 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		return new ArrayList<>( result.values( ) );
 	}
 
-	private Column<Integer> createCustomColumn( int index , ShotTableColumnDef def )
+	private class CustomProperty<V> implements Function<Shot, V>
 	{
-		String name = ShotTableColumnNames.custom( index );
-		Property<?> shotProperty = shotList.spec( ).propertyNamed( name );
-		Property<?> shotTextProperty = shotTextList.spec( ).propertyNamed( name );
+		int									index;
+		Function<ParsedTextWithValue, V>	wrapped;
 
-		if( shotProperty == null )
+		public CustomProperty( int index , Function<ParsedTextWithValue, V> wrapped )
 		{
-			return null;
+			super( );
+			this.index = index;
+			this.wrapped = wrapped;
 		}
 
-		if( def.type != ShotTableColumnType.STRING && shotTextProperty == null )
+		@Override
+		public V apply( Shot t )
 		{
-			return null;
+			return t.custom[ index ] == null ? null : wrapped.apply( ( ParsedTextWithValue ) t.custom[ index ] );
 		}
+	}
 
+	private Column<Integer> createCustomColumn( int index , ShotColumnDef def )
+	{
 		switch( def.type )
 		{
 		case STRING:
-			return new UncheckedStringColumn( shotProperty.cast( String.class ) );
+			return new StringColumn( def.name , s -> ( String ) s.custom[ index ] );
 		case INTEGER:
-			return new CheckedColumn<Integer>( shotProperty.cast( Integer.class ) ,
-				shotTextProperty.cast( ParsedText.class ) ,
-				i -> intFormatter.apply( i ) );
+			return new ParsedTextColumn( def.name ,
+				new CustomProperty<>( index , t -> intFormatter.apply( ( Integer ) t.value ) ) ,
+				new CustomProperty<>( index , t -> t ) );
 		case DOUBLE:
-			return new CheckedColumn<Double>( shotProperty.cast( Double.class ) ,
-				shotTextProperty.cast( ParsedText.class ) ,
-				d -> doubleFormatter.apply( d ) );
+			return new ParsedTextColumn( def.name ,
+				new CustomProperty<>( index , t -> doubleFormatter.apply( ( Double ) t.value ) ) ,
+				new CustomProperty<>( index , t -> t ) );
 		}
 
 		return null;
@@ -321,7 +261,7 @@ public class ShotTableModelPresenter extends AbstractTableModel
 	@Override
 	public int getRowCount( )
 	{
-		return shotList == null || shotTextList == null ? 0 : Math.min( shotList.size( ) , shotTextList.size( ) );
+		return shotList != null ? shotList.size( ) : 0;
 	}
 
 	@Override
@@ -360,78 +300,37 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		return columns.get( columnIndex ).getValueAt( rowIndex );
 	}
 
-	private class ShotListener implements QObjectList.Listener<Shot>
+	private class ShotListListener implements TableModelList.Listener<Shot>
 	{
 		@Override
-		public void elementsInserted( QObjectList<? extends Shot> list , int fromIndex , int toIndex )
+		public void elementsInserted( TableModelList<Shot> list , int fromIndex , int toIndex )
 		{
 			fireTableChanged( new TableModelEvent( ShotTableModelPresenter.this , fromIndex , toIndex ,
 				TableModelEvent.ALL_COLUMNS , TableModelEvent.INSERT ) );
 		}
 
 		@Override
-		public void elementsDeleted( QObjectList<? extends Shot> list , int fromIndex , int toIndex )
+		public void elementsDeleted( TableModelList<Shot> list , int fromIndex , int toIndex )
 		{
 			fireTableChanged( new TableModelEvent( ShotTableModelPresenter.this , fromIndex , toIndex ,
 				TableModelEvent.ALL_COLUMNS , TableModelEvent.DELETE ) );
 		}
 
 		@Override
-		public void elementsUpdated( QObjectList<? extends Shot> list , int fromIndex , int toIndex )
+		public void elementsUpdated( TableModelList<Shot> list , int fromIndex , int toIndex )
 		{
 			fireTableChanged( new TableModelEvent( ShotTableModelPresenter.this , fromIndex , toIndex ,
 				TableModelEvent.ALL_COLUMNS , TableModelEvent.UPDATE ) );
 		}
 
 		@Override
-		public void
-			elementsUpdated( QObjectList<? extends Shot> list , int fromIndex , int toIndex , Property<?> property )
+		public void dataChanged( TableModelList<Shot> list )
 		{
-			fireTableChanged( new TableModelEvent( ShotTableModelPresenter.this , fromIndex , toIndex ,
-				TableModelEvent.ALL_COLUMNS , TableModelEvent.UPDATE ) );
-		}
-	}
-
-	private class ShotTextListener implements QObjectList.Listener<ShotText>
-	{
-		@Override
-		public void elementsInserted( QObjectList<? extends ShotText> list , int fromIndex , int toIndex )
-		{
+			fireTableDataChanged( );
 		}
 
 		@Override
-		public void elementsDeleted( QObjectList<? extends ShotText> list , int fromIndex , int toIndex )
-		{
-		}
-
-		@Override
-		public void elementsUpdated( QObjectList<? extends ShotText> list , int fromIndex , int toIndex )
-		{
-			fireTableChanged( new TableModelEvent( ShotTableModelPresenter.this , fromIndex , toIndex ,
-				TableModelEvent.ALL_COLUMNS , TableModelEvent.UPDATE ) );
-		}
-
-		@Override
-		public void
-			elementsUpdated( QObjectList<? extends ShotText> list , int fromIndex , int toIndex , Property<?> property )
-		{
-			fireTableChanged( new TableModelEvent( ShotTableModelPresenter.this , fromIndex , toIndex ,
-				TableModelEvent.ALL_COLUMNS , TableModelEvent.UPDATE ) );
-		}
-	}
-
-	private class ColumnDefsListener implements QMapListener
-	{
-		@Override
-		public void mapChanged( QMap<?, ?, ?> source , Object key , Object oldValue , boolean removed ,
-			Object newValue )
-		{
-			setColumns( createColumns( ) );
-		}
-
-		@Override
-		public void mapChanged( QMap<?, ?, ?> source , List<Object> keys , List<Object> oldValues ,
-			List<Boolean> removed , List<Object> newValues )
+		public void structureChanged( TableModelList<Shot> list )
 		{
 			setColumns( createColumns( ) );
 		}
@@ -484,20 +383,23 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		}
 	}
 
-	public class UncheckedStringColumn implements Column<Integer>
+	public class StringColumn implements Column<Integer>
 	{
-		public UncheckedStringColumn( Property<? extends String> valueProperty )
+		public StringColumn( String name , Function<Shot, String> valueProperty )
 		{
 			super( );
+			this.name = name;
 			this.valueProperty = valueProperty;
 		}
 
-		Property<? extends String>	valueProperty;
+		String					name;
+
+		Function<Shot, String>	valueProperty;
 
 		@Override
 		public String getColumnName( )
 		{
-			return valueProperty.name( );
+			return name;
 		}
 
 		@Override
@@ -515,7 +417,7 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		@Override
 		public Object getValueAt( Integer row )
 		{
-			return shotList.get( row ).get( valueProperty );
+			return valueProperty.apply( shotList.get( row ) );
 		}
 
 		@Override
@@ -525,23 +427,26 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		}
 	}
 
-	public class CheckedStringColumn implements Column<Integer>
+	public class ParsedTextColumn implements Column<Integer>
 	{
-		public CheckedStringColumn( Property<? extends String> valueProperty ,
-			Property<? extends ParsedText> textProperty )
+		String						name;
+
+		Function<Shot, String>		valueProperty;
+		Function<Shot, ParsedText>	textProperty;
+
+		public ParsedTextColumn( String name , Function<Shot, String> valueProperty ,
+			Function<Shot, ParsedText> textProperty )
 		{
 			super( );
+			this.name = name;
 			this.valueProperty = valueProperty;
 			this.textProperty = textProperty;
 		}
 
-		Property<? extends String>		valueProperty;
-		Property<? extends ParsedText>	textProperty;
-
 		@Override
 		public String getColumnName( )
 		{
-			return valueProperty.name( );
+			return name;
 		}
 
 		@Override
@@ -559,115 +464,11 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		@Override
 		public Object getValueAt( Integer row )
 		{
-			String value = shotList.get( row ).get( valueProperty );
-			ParsedText text = shotTextList.get( row ).get( textProperty );
+			Shot shot = shotList.get( row );
+			String value = valueProperty.apply( shot );
+			ParsedText text = textProperty.apply( shot );
 
 			return value == null ? text : new ParsedText( value , text == null ? null : text.note );
-		}
-
-		@Override
-		public boolean setValueAt( Object aValue , Integer row )
-		{
-			return false;
-		}
-	}
-
-	public class CheckedColumn<V> implements Column<Integer>
-	{
-		public CheckedColumn( Property<? extends V> valueProperty , Property<? extends ParsedText> textProperty ,
-			Function<V, String> valueFormatter )
-		{
-			super( );
-			this.valueProperty = valueProperty;
-			this.textProperty = textProperty;
-			this.valueFormatter = valueFormatter;
-		}
-
-		Property<? extends V>			valueProperty;
-		Property<? extends ParsedText>	textProperty;
-
-		Function<V, String>				valueFormatter;
-
-		@Override
-		public String getColumnName( )
-		{
-			return textProperty.name( );
-		}
-
-		@Override
-		public Class<?> getColumnClass( )
-		{
-			return ParsedText.class;
-		}
-
-		@Override
-		public boolean isCellEditable( Integer row )
-		{
-			return true;
-		}
-
-		@Override
-		public Object getValueAt( Integer row )
-		{
-			V value = shotList.get( row ).get( valueProperty );
-			ParsedText text = shotTextList.get( row ).get( textProperty );
-
-			return value == null ? text : new ParsedText( valueFormatter.apply( value ) , text == null ? null
-				: text.note );
-		}
-
-		@Override
-		public boolean setValueAt( Object aValue , Integer row )
-		{
-			return false;
-		}
-	}
-
-	public class SubVectorColumn<V, E> implements Column<Integer>
-	{
-		public SubVectorColumn( Property<? extends V> valueProperty , Property<? extends ParsedText> textProperty ,
-			Function<V, E> elemFn ,
-			Function<E, String> elemFormatter )
-		{
-			super( );
-			this.valueProperty = valueProperty;
-			this.textProperty = textProperty;
-			this.elemFn = elemFn;
-			this.elemFormatter = elemFormatter;
-		}
-
-		Property<? extends V>			valueProperty;
-		Property<? extends ParsedText>	textProperty;
-
-		Function<V, E>					elemFn;
-		Function<E, String>				elemFormatter;
-
-		@Override
-		public String getColumnName( )
-		{
-			return textProperty.name( );
-		}
-
-		@Override
-		public Class<?> getColumnClass( )
-		{
-			return ParsedText.class;
-		}
-
-		@Override
-		public boolean isCellEditable( Integer row )
-		{
-			return true;
-		}
-
-		@Override
-		public Object getValueAt( Integer row )
-		{
-			E elem = elemFn.apply( shotList.get( row ).get( valueProperty ) );
-			ParsedText text = shotTextList.get( row ).get( textProperty );
-
-			return elem == null ? text : new ParsedText( elemFormatter.apply( elem ) , text == null ? null
-				: text.note );
 		}
 
 		@Override

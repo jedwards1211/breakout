@@ -1,4 +1,4 @@
-package org.andork.breakout.table2;
+package org.andork.breakout.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;

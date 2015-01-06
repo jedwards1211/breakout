@@ -1,79 +1,68 @@
 package org.andork.breakout.table;
 
+import java.util.Arrays;
+
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
 import org.andork.bind2.DefaultBinder;
 import org.andork.breakout.model.NewProjectModel;
+import org.andork.breakout.table.DaiShotVector;
+import org.andork.breakout.table.ParsedText;
+import org.andork.breakout.table.ParsedTextWithValue;
+import org.andork.breakout.table.Shot;
+import org.andork.breakout.table.ShotColumnDef;
+import org.andork.breakout.table.ShotColumnType;
+import org.andork.breakout.table.ShotList;
+import org.andork.breakout.table.ShotTableColumnNames;
+import org.andork.breakout.table.ShotTableModelPresenter;
 import org.andork.q2.QArrayObject;
-import org.andork.q2.QHashMap;
-import org.andork.q2.QHashMapObject;
 import org.andork.q2.QObject;
-import org.andork.q2.QSpec.Property;
 import org.andork.swing.QuickTestFrame;
-import org.andork.swing.table.QObjectList;
 
 public class ShotTableTest
 {
 	public static void main( String[ ] args )
 	{
-		class CustShot extends Shot
-		{
-			private CustShot( )
-			{
-				super( property( "cust9" , Double.class ) );
-			}
-		}
+		Shot shot0 = new Shot( );
 
-		CustShot shotSpec = new CustShot( );
+		DaiShotVector vector = new DaiShotVector( );
 
-		class CustShotText extends ShotText
-		{
-			private CustShotText( )
-			{
-				super( property( "cust9" , ParsedText.class ) );
-			}
-		}
+		vector.dist = 5.0;
+		vector.distText = new ParsedText( "5.00" , null );
+		vector.azmFs = 10.0;
+		vector.azmFsText = new ParsedText( "10.00" , null );
+		vector.incFs = 23.5;
+		vector.incBs = 26.0;
+		vector.incFsBsText = new ParsedText( "23.5  /26.0" , null );
 
-		CustShotText shotTextSpec = new CustShotText( );
+		shot0.vector = vector;
+		shot0.from = "A1";
+		shot0.custom = new Object[ 1 ];
+		shot0.custom[ 0 ] = new ParsedTextWithValue( "3.502" , null , 3.502 );
 
-		QObjectList<Shot> shotList = new QObjectList<Shot>( shotSpec , Shot.index );
-		QObjectList<ShotText> shotTextList = new QObjectList<ShotText>( shotTextSpec , ShotText.index );
+		ShotList shotList = new ShotList( );
 
-		QObject<Shot> shot0 = QArrayObject.create( shotSpec );
-		QObject<ShotText> shotText0 = QHashMapObject.create( shotTextSpec );
-
-		shot0.set( Shot.vector , new DistAzmIncShotVector( 5.0 , 10.0 , null , 23.5 , 26.0 ) );
-		shot0.set( Shot.from , "A1" );
-		shot0.set( shotSpec.propertyNamed( "cust9" ).cast( Double.class ) , 3.5 );
-		shotText0.set( ShotText.dist , new ParsedText( "5.0" , null ) );
-		shotText0.set( ShotText.azmFs , new ParsedText( "10.00" , null ) );
-		shotText0.set( ShotText.incFsBs , new ParsedText( "23.5  /26.0" , null ) );
-		shotText0.set( shotTextSpec.propertyNamed( "cust9" ).cast( ParsedText.class ) , new ParsedText( "3.52" ,
-			null ) );
-
+		shotList.setColumnDefs( Arrays.asList(
+			new ShotColumnDef( ShotTableColumnNames.from , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.to , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.dist , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.azmFs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.azmBs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.azmFsBs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.incFs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.incBs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.incFsBs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
+			) );
 		shotList.add( shot0 );
-		shotTextList.add( shotText0 );
 
 		QObject<NewProjectModel> model = QArrayObject.create( NewProjectModel.spec );
 
 		ShotTableModelPresenter presenter = new ShotTableModelPresenter( new DefaultBinder<>( model ) );
 		model.set( NewProjectModel.decimalSep , ',' );
-		model.set( NewProjectModel.shotList , shotList );
-		model.set( NewProjectModel.shotTextList , shotTextList );
 
-		QHashMap<Integer, ShotTableColumnDef> shotCols = QHashMap.newInstance( );
-		model.set( NewProjectModel.shotColDefs , shotCols );
-		shotCols.put( 0 , new ShotTableColumnDef( ShotTableColumnNames.from , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 1 , new ShotTableColumnDef( ShotTableColumnNames.to , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 2 , new ShotTableColumnDef( ShotTableColumnNames.dist , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 3 , new ShotTableColumnDef( ShotTableColumnNames.azmFs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 4 , new ShotTableColumnDef( ShotTableColumnNames.azmBs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 5 , new ShotTableColumnDef( ShotTableColumnNames.azmFsBs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 6 , new ShotTableColumnDef( ShotTableColumnNames.incFs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 7 , new ShotTableColumnDef( ShotTableColumnNames.incBs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 8 , new ShotTableColumnDef( ShotTableColumnNames.incFsBs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 9 , new ShotTableColumnDef( "Water Level" , ShotTableColumnType.DOUBLE ) );
+		presenter.setShotList( shotList );
 
 		JTable table = new JTable( presenter );
 		JScrollPane scrollPane = new JScrollPane( table );
