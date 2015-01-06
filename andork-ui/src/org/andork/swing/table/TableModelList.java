@@ -2,13 +2,12 @@ package org.andork.swing.table;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import org.andork.q2.QObject;
-import org.andork.q2.QObjectListener;
 import org.andork.q2.QSpec;
-import org.andork.q2.QSpec.Property;
 
 /**
  * A list of {@link QObject}s designed specifically to back a {@link QObjectListTableModel}.
@@ -18,7 +17,7 @@ import org.andork.q2.QSpec.Property;
  * @param <E>
  *            the {@link QSpec} for the {@link QObject}s in the list.
  */
-public class TableModelList<E>
+public class TableModelList<E> implements Iterable<E>
 {
 	private final List<E>			elements	= new ArrayList<E>( );
 
@@ -98,6 +97,42 @@ public class TableModelList<E>
 		fireElementsDeleted( 0 , size - 1 );
 	}
 
+	@Override
+	public Iterator<E> iterator( )
+	{
+		return new Iter( );
+	}
+
+	private class Iter implements Iterator<E>
+	{
+		ListIterator<E>	wrapped;
+		int				lastIndex;
+
+		public Iter( )
+		{
+			wrapped = elements.listIterator( );
+		}
+
+		@Override
+		public boolean hasNext( )
+		{
+			return wrapped.hasNext( );
+		}
+
+		@Override
+		public E next( )
+		{
+			lastIndex = wrapped.nextIndex( );
+			return wrapped.next( );
+		}
+
+		public void remove( )
+		{
+			wrapped.remove( );
+			fireElementsDeleted( lastIndex , lastIndex );
+		}
+	}
+
 	public void addListener( Listener<E> listener )
 	{
 		if( !listeners.contains( listener ) )
@@ -116,6 +151,22 @@ public class TableModelList<E>
 		for( Listener<E> listener : listeners )
 		{
 			listener.elementsUpdated( this , fromIndex , toIndex );
+		}
+	}
+
+	public void fireDataChanged( )
+	{
+		for( Listener<E> listener : listeners )
+		{
+			listener.dataChanged( this );
+		}
+	}
+
+	public void fireStructureChanged( )
+	{
+		for( Listener<E> listener : listeners )
+		{
+			listener.structureChanged( this );
 		}
 	}
 
@@ -142,5 +193,9 @@ public class TableModelList<E>
 		public void elementsDeleted( TableModelList<E> list , int fromIndex , int toIndex );
 
 		public void elementsUpdated( TableModelList<E> list , int fromIndex , int toIndex );
+
+		public void dataChanged( TableModelList<E> list );
+
+		public void structureChanged( TableModelList<E> list );
 	}
 }
