@@ -161,25 +161,25 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 	protected void fireElemAdded( E elem )
 	{
 		forEachListener( QCollectionListener.class ,
-			l -> l.collectionChanged( this , CollectionChange.ADDED , elem ) );
+			l -> l.collectionChanged( this , QCollectionChange.ADDED , elem ) );
 	}
 
 	protected void fireElemRemoved( Object elem )
 	{
 		forEachListener( QCollectionListener.class ,
-			l -> l.collectionChanged( this , CollectionChange.REMOVED , elem ) );
+			l -> l.collectionChanged( this , QCollectionChange.REMOVED , elem ) );
 	}
 
 	protected void fireElemsAdded( Collection<?> elems )
 	{
 		forEachListener( QCollectionListener.class ,
-			l -> l.collectionChanged( this , CollectionChange.ADDED , elems ) );
+			l -> l.collectionChanged( this , QCollectionChange.ADDED , elems ) );
 	}
 
 	protected void fireElemsRemoved( Collection<?> elems )
 	{
 		forEachListener( QCollectionListener.class ,
-			l -> l.collectionChanged( this , CollectionChange.REMOVED , elems ) );
+			l -> l.collectionChanged( this , QCollectionChange.REMOVED , elems ) );
 	}
 
 	protected class Iter implements Iterator<E>

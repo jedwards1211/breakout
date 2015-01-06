@@ -23,7 +23,7 @@ import org.andork.q2.QHashMap;
 import org.andork.q2.QMap;
 import org.andork.q2.QMapListener;
 import org.andork.q2.QObject;
-import org.andork.q2.QObjectPropertyBinder;
+import org.andork.q2.QObjectBinder;
 import org.andork.q2.QSpec;
 import org.andork.q2.QSpec.Property;
 import org.andork.swing.table.NiceTableModel.Column;
@@ -41,40 +41,40 @@ import org.andork.swing.table.QObjectList;
 @SuppressWarnings( "serial" )
 public class ShotTableModelPresenter extends AbstractTableModel
 {
-	private Binder<QObject<NewProjectModel>>								projectModelBinder;
+	private QObjectBinder<NewProjectModel>					projectModelBinder;
 
-	private QObjectPropertyBinder<Character>								decimalSeparatorBinder;
-	private QObjectPropertyBinder<QObjectList<Shot>>						shotListBinder;
-	private QObjectPropertyBinder<QObjectList<ShotText>>					shotTextListBinder;
-	private QObjectPropertyBinder<QHashMap<Integer, ShotTableColumnDef>>	columnDefsBinder;
+	private Binder<Character>								decimalSeparatorBinder;
+	private Binder<QObjectList<Shot>>						shotListBinder;
+	private Binder<QObjectList<ShotText>>					shotTextListBinder;
+	private Binder<QHashMap<Integer, ShotTableColumnDef>>	columnDefsBinder;
 
-	private QObjectList<Shot>												shotList;
-	private QObjectList<ShotText>											shotTextList;
-	private QHashMap<Integer, ShotTableColumnDef>							columnDefs;
+	private QObjectList<Shot>								shotList;
+	private QObjectList<ShotText>							shotTextList;
+	private QHashMap<Integer, ShotTableColumnDef>			columnDefs;
 
-	private ShotListener													shotListener		= new ShotListener( );
-	private ShotTextListener												shotTextListener	= new ShotTextListener( );
-	private ColumnDefsListener												columnDefsListener	= new ColumnDefsListener( );
+	private ShotListener									shotListener		= new ShotListener( );
+	private ShotTextListener								shotTextListener	= new ShotTextListener( );
+	private ColumnDefsListener								columnDefsListener	= new ColumnDefsListener( );
 
-	private final List<Column<Integer>>										columns				= new ArrayList<>( );
+	private final List<Column<Integer>>						columns				= new ArrayList<>( );
 
-	private IntFunction<String>												intFormatter		= Integer::toString;
-	private DoubleFunction<String>											doubleFormatter		= Double::toString;
-	private Function<Double[ ], String>										twoDoubleFormatter	= new DefaultTwoElemFormatter<>(
-																									d -> doubleFormatter
-																										.apply( d ) );
+	private IntFunction<String>								intFormatter		= Integer::toString;
+	private DoubleFunction<String>							doubleFormatter		= Double::toString;
+	private Function<Double[ ], String>						twoDoubleFormatter	= new DefaultTwoElemFormatter<>(
+																					d -> doubleFormatter
+																						.apply( d ) );
 
-	public final UncheckedStringColumn										fromColumn;
-	public final UncheckedStringColumn										toColumn;
-	public final SubVectorColumn<ShotVector, Double>						distColumn;
-	public final SubVectorColumn<ShotVector, Double[ ]>						azmFsBsColumn;
-	public final SubVectorColumn<ShotVector, Double>						azmFsColumn;
-	public final SubVectorColumn<ShotVector, Double>						azmBsColumn;
-	public final SubVectorColumn<ShotVector, Double[ ]>						incFsBsColumn;
-	public final SubVectorColumn<ShotVector, Double>						incFsColumn;
-	public final SubVectorColumn<ShotVector, Double>						incBsColumn;
+	public final UncheckedStringColumn						fromColumn;
+	public final UncheckedStringColumn						toColumn;
+	public final SubVectorColumn<ShotVector, Double>		distColumn;
+	public final SubVectorColumn<ShotVector, Double[ ]>		azmFsBsColumn;
+	public final SubVectorColumn<ShotVector, Double>		azmFsColumn;
+	public final SubVectorColumn<ShotVector, Double>		azmBsColumn;
+	public final SubVectorColumn<ShotVector, Double[ ]>		incFsBsColumn;
+	public final SubVectorColumn<ShotVector, Double>		incFsColumn;
+	public final SubVectorColumn<ShotVector, Double>		incBsColumn;
 
-	private final Map<String, Column<Integer>>								builtInColumns;
+	private final Map<String, Column<Integer>>				builtInColumns;
 
 	public ShotTableModelPresenter( Binder<QObject<NewProjectModel>> projectModelBinder )
 	{
@@ -158,16 +158,13 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		builtInColumns.put( ShotTableColumnNames.incFs , incFsColumn );
 		builtInColumns.put( ShotTableColumnNames.incBs , incBsColumn );
 
-		this.projectModelBinder = projectModelBinder;
+		this.projectModelBinder = QObjectBinder.create( NewProjectModel.spec );
+		this.projectModelBinder.objLink.bind( projectModelBinder );
+		decimalSeparatorBinder = this.projectModelBinder.property( NewProjectModel.decimalSep );
+		shotListBinder = this.projectModelBinder.property( NewProjectModel.shotList );
+		shotTextListBinder = this.projectModelBinder.property( NewProjectModel.shotTextList );
+		columnDefsBinder = this.projectModelBinder.property( NewProjectModel.shotColDefs );
 
-		decimalSeparatorBinder = new QObjectPropertyBinder<>( NewProjectModel.decimalSep );
-		decimalSeparatorBinder.objLink.bind( projectModelBinder );
-		shotListBinder = new QObjectPropertyBinder<>( NewProjectModel.shotList );
-		shotListBinder.objLink.bind( projectModelBinder );
-		shotTextListBinder = new QObjectPropertyBinder<>( NewProjectModel.shotTextList );
-		shotTextListBinder.objLink.bind( projectModelBinder );
-		columnDefsBinder = new QObjectPropertyBinder<>( NewProjectModel.shotColDefs );
-		columnDefsBinder.objLink.bind( projectModelBinder );
 		decimalSeparatorBinder.addBinding( force ->
 		{
 			DecimalFormat format = ( DecimalFormat ) DecimalFormat.getInstance( );
@@ -182,11 +179,8 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		shotListBinder.addBinding( force -> setShotList( shotListBinder.get( ) ) );
 		shotTextListBinder.addBinding( force -> setShotTextList( shotTextListBinder.get( ) ) );
 		columnDefsBinder.addBinding( force -> setColumnDefs( columnDefsBinder.get( ) ) );
-
-		decimalSeparatorBinder.update( true );
-		shotListBinder.update( true );
-		shotTextListBinder.update( true );
-		columnDefsBinder.update( true );
+		
+		this.projectModelBinder.update( true );
 	}
 
 	public Function<Double[ ], String> getTwoDoubleFormatter( )
