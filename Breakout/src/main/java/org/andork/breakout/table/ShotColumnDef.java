@@ -21,4 +21,29 @@ public class ShotColumnDef
 		}
 		return false;
 	}
+
+	public int hashCode( )
+	{
+		return ( name.hashCode( ) * 23 ) ^ type.hashCode( );
+	}
+
+	public String toString( )
+	{
+		return name;
+	}
+
+	public static final ShotColumnDef	from	= new ShotColumnDef( "from" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	to		= new ShotColumnDef( "to" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	vector	= new ShotColumnDef( "vector" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	dist	= new ShotColumnDef( "dist" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	azmFsBs	= new ShotColumnDef( "azmFsBs" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	azmFs	= new ShotColumnDef( "azmFs" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	azmBs	= new ShotColumnDef( "azmBs" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	incFsBs	= new ShotColumnDef( "incFsBs" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	incFs	= new ShotColumnDef( "incFs" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	incBs	= new ShotColumnDef( "incBs" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	offsN	= new ShotColumnDef( "offsN" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	offsE	= new ShotColumnDef( "offsE" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	offsD	= new ShotColumnDef( "offsD" , ShotColumnType.BUILTIN );
+
 }

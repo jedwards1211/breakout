@@ -54,6 +54,11 @@ public class ParsedTextWithTypeTableCellRenderer extends JPanel implements Table
 		return wrappedComp;
 	}
 
+	public DefaultSelector<Object> typeSelector( )
+	{
+		return typeSelector;
+	}
+
 	public void setAvailableTypes( List<Object> types )
 	{
 		typeSelector.setAvailableValues( types );

@@ -1,5 +1,6 @@
 package org.andork.breakout.table;
 
+import java.awt.Font;
 import java.util.Arrays;
 
 import javax.swing.JScrollPane;
@@ -7,15 +8,6 @@ import javax.swing.JTable;
 
 import org.andork.bind2.DefaultBinder;
 import org.andork.breakout.model.NewProjectModel;
-import org.andork.breakout.table.DaiShotVector;
-import org.andork.breakout.table.ParsedText;
-import org.andork.breakout.table.ParsedTextWithValue;
-import org.andork.breakout.table.Shot;
-import org.andork.breakout.table.ShotColumnDef;
-import org.andork.breakout.table.ShotColumnType;
-import org.andork.breakout.table.ShotList;
-import org.andork.breakout.table.ShotTableColumnNames;
-import org.andork.breakout.table.ShotTableModelPresenter;
 import org.andork.q2.QArrayObject;
 import org.andork.q2.QObject;
 import org.andork.swing.QuickTestFrame;
@@ -41,32 +33,25 @@ public class ShotTableTest
 		shot0.custom = new Object[ 1 ];
 		shot0.custom[ 0 ] = new ParsedTextWithValue( "3.502" , null , 3.502 );
 
+		Shot shot1 = new Shot( );
+
+		OffsetShotVector vect1 = new OffsetShotVector( );
+		vect1.n = 100.0;
+		vect1.d = 205.0;
+		vect1.nText = new ParsedText( "100" , null );
+		vect1.dText = new ParsedText( "205" , null );
+
+		shot1.vector = vect1;
+		shot1.custom = new Object[ 2 ];
+
 		ShotList shotList = new ShotList( );
 
-		shotList.setColumnDefs( Arrays.asList(
-			new ShotColumnDef( ShotTableColumnNames.from , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.to , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.dist , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.azmFs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.azmBs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.azmFsBs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.incFs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.incBs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.incFsBs , ShotColumnType.BUILTIN ) ,
+		shotList.setCustomColumnDefs( Arrays.asList(
 			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
 			) );
 		shotList.add( shot0 );
 
-		shotList.setColumnDefs( Arrays.asList(
-			new ShotColumnDef( ShotTableColumnNames.from , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.to , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.dist , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.azmFs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.azmBs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.azmFsBs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.incFs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.incBs , ShotColumnType.BUILTIN ) ,
-			new ShotColumnDef( ShotTableColumnNames.incFsBs , ShotColumnType.BUILTIN ) ,
+		shotList.setCustomColumnDefs( Arrays.asList(
 			new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
 			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
 			) );
@@ -81,7 +66,28 @@ public class ShotTableTest
 		presenter.setShotList( shotList );
 
 		JTable table = new JTable( presenter );
+		table.setFont( new Font( "Monospaced" , Font.PLAIN , 11 ) );
 		JScrollPane scrollPane = new JScrollPane( table );
+
+		shotList.add( shot1 );
+
+		ShotTableColumnModelPresenter columnModel = new ShotTableColumnModelPresenter( );
+		columnModel.update( presenter , Arrays.asList(
+			ShotColumnDef.from ,
+			ShotColumnDef.to ,
+			ShotColumnDef.vector ,
+			ShotColumnDef.dist ,
+			ShotColumnDef.azmFsBs ,
+			ShotColumnDef.azmFs ,
+			ShotColumnDef.azmBs ,
+			ShotColumnDef.incFsBs ,
+			ShotColumnDef.incFs ,
+			ShotColumnDef.incBs ,
+			ShotColumnDef.offsN ,
+			ShotColumnDef.offsE ,
+			ShotColumnDef.offsD ) );
+
+		table.setColumnModel( columnModel );
 
 		QuickTestFrame.frame( scrollPane ).setVisible( true );
 	}

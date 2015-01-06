@@ -11,42 +11,25 @@ import org.andork.swing.table.TableModelList;
 
 public class ShotList extends TableModelList<Shot>
 {
-	private List<ShotColumnDef>	columnDefs			= Collections.emptyList( );
-	private List<ShotColumnDef>	builtinColumnDefs	= Collections.emptyList( );
 	private List<ShotColumnDef>	customColumnDefs	= Collections.emptyList( );
-
-	public List<ShotColumnDef> getColumnDefs( )
-	{
-		return columnDefs;
-	}
-
-	public List<ShotColumnDef> getBuiltinColumnDefs( )
-	{
-		return builtinColumnDefs;
-	}
 
 	public List<ShotColumnDef> getCustomColumnDefs( )
 	{
 		return customColumnDefs;
 	}
 
-	public void setColumnDefs( List<ShotColumnDef> newColumnDefs )
+	public void setCustomColumnDefs( List<ShotColumnDef> newCustomColumnDefs )
 	{
-		newColumnDefs = Collections.unmodifiableList( new ArrayList<>( newColumnDefs ) );
-		int newFirstCustomIndex = CollectionUtils.indexOf( newColumnDefs , d -> d.type != ShotColumnType.BUILTIN );
-		if( newFirstCustomIndex < 0 )
-		{
-			newFirstCustomIndex = newColumnDefs.size( );
-		}
-		List<ShotColumnDef> newBuiltinColumnDefs = newColumnDefs.subList( 0 , newFirstCustomIndex );
-		List<ShotColumnDef> newCustomColumnDefs = newColumnDefs.subList( newFirstCustomIndex , newColumnDefs.size( ) );
-
-		if( newCustomColumnDefs.stream( ).anyMatch( d -> d.type == ShotColumnType.BUILTIN ) )
-		{
-			throw new IllegalArgumentException( "all custom columns must be at the end of newColumnDefs" );
-		}
+		newCustomColumnDefs = Collections.unmodifiableList( new ArrayList<>( newCustomColumnDefs ) );
 
 		List<ShotColumnDef> oldCustomColumnDefs = customColumnDefs;
+
+		// We may need to resize each Shot.custom array to correspond to the new columns.
+		// For each new column that matches the name and type of an old column, we need to copy the value from
+		// the old array (from the old column's position) to the new array (in the new column's position).
+
+		// the index into copyMap will represent the index of the new column, and the value at that index 
+		// will represent the index of the corresponding old column, or -1 if there is no corresponding old column.
 
 		int[ ] copyMap = new int[ newCustomColumnDefs.size( ) ];
 		Arrays.fill( copyMap , -1 );
@@ -61,6 +44,9 @@ public class ShotList extends TableModelList<Shot>
 			copyMap[ index ] = CollectionUtils.indexOf( oldCustomColumnDefs , d -> newCustomColumnDef.equals( d ) );
 			customValuesChanged |= copyMap[ index ] != index;
 		}
+
+		// Now if necessary, resize each Shot.custom array and copy the values from the old array to the new array,
+		// according to the mapping in copyMap.
 
 		if( customValuesChanged )
 		{
@@ -78,8 +64,6 @@ public class ShotList extends TableModelList<Shot>
 			}
 		}
 
-		columnDefs = newColumnDefs;
-		builtinColumnDefs = newBuiltinColumnDefs;
 		customColumnDefs = newCustomColumnDefs;
 
 		fireStructureChanged( );
