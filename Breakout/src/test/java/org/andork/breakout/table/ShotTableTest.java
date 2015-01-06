@@ -57,6 +57,22 @@ public class ShotTableTest
 			) );
 		shotList.add( shot0 );
 
+		shotList.setColumnDefs( Arrays.asList(
+			new ShotColumnDef( ShotTableColumnNames.from , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.to , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.dist , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.azmFs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.azmBs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.azmFsBs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.incFs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.incBs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( ShotTableColumnNames.incFsBs , ShotColumnType.BUILTIN ) ,
+			new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
+			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
+			) );
+
+		shot0.custom[ 0 ] = new ParsedTextWithValue( "123" , null , 123 );
+
 		QObject<NewProjectModel> model = QArrayObject.create( NewProjectModel.spec );
 
 		ShotTableModelPresenter presenter = new ShotTableModelPresenter( new DefaultBinder<>( model ) );

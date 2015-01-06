@@ -188,36 +188,28 @@ public class ShotTableModelPresenter extends AbstractTableModel
 			return Collections.emptyList( );
 		}
 
-		TreeMap<Integer, Column<Integer>> result = new TreeMap<>( );
+		List<Column<Integer>> result = new ArrayList<>( );
 
-		ListIterator<ShotColumnDef> i = shotList.getColumnDefs( ).listIterator( );
-
-		int custCols = 0;
-
-		while( i.hasNext( ) )
+		for( ShotColumnDef def : shotList.getBuiltinColumnDefs( ) )
 		{
-			int index = i.nextIndex( );
-			ShotColumnDef def = i.next( );
-			ShotColumnType type = def.type;
-
-			Column<Integer> col = null;
-
-			if( type == ShotColumnType.BUILTIN )
-			{
-				col = builtInColumns.get( def.name );
-			}
-			else
-			{
-				col = createCustomColumn( custCols++ , def );
-			}
-
+			Column<Integer> col = builtInColumns.get( def.name );
 			if( col != null )
 			{
-				result.put( index , col );
+				result.add( col );
 			}
 		}
 
-		return new ArrayList<>( result.values( ) );
+		int custCols = 0;
+		for( ShotColumnDef def : shotList.getCustomColumnDefs( ) )
+		{
+			Column<Integer> col = createCustomColumn( custCols++ , def );
+			if( col != null )
+			{
+				result.add( col );
+			}
+		}
+
+		return result;
 	}
 
 	private class CustomProperty<V> implements Function<Shot, V>

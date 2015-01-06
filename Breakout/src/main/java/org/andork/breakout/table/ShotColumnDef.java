@@ -11,4 +11,14 @@ public class ShotColumnDef
 		this.name = name;
 		this.type = type;
 	}
+
+	public boolean equals( Object o )
+	{
+		if( o instanceof ShotColumnDef )
+		{
+			ShotColumnDef od = ( ShotColumnDef ) o;
+			return name.equals( od.name ) && type.equals( od.type );
+		}
+		return false;
+	}
 }

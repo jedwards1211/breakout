@@ -3,76 +3,63 @@ package org.andork.breakout.table;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 
+import org.andork.collect.CollectionUtils;
 import org.andork.swing.table.TableModelList;
 
 public class ShotList extends TableModelList<Shot>
 {
-	private final List<ShotColumnDef>	columnDefs				= new ArrayList<ShotColumnDef>( );
-	private final List<ShotColumnDef>	columnDefsUnmodifiable	= Collections.unmodifiableList( columnDefs );
-
-	/**
-	 * The indices of all custom columns in {@link #columnDefs}. This list should correspond exactly to all
-	 * {@link Shot#custom} in this {@code ShotList}.
-	 */
-	private final List<Integer>			customColumnDefIndices	= new ArrayList<Integer>( );
+	private List<ShotColumnDef>	columnDefs			= Collections.emptyList( );
+	private List<ShotColumnDef>	builtinColumnDefs	= Collections.emptyList( );
+	private List<ShotColumnDef>	customColumnDefs	= Collections.emptyList( );
 
 	public List<ShotColumnDef> getColumnDefs( )
 	{
-		return columnDefsUnmodifiable;
+		return columnDefs;
+	}
+
+	public List<ShotColumnDef> getBuiltinColumnDefs( )
+	{
+		return builtinColumnDefs;
+	}
+
+	public List<ShotColumnDef> getCustomColumnDefs( )
+	{
+		return customColumnDefs;
 	}
 
 	public void setColumnDefs( List<ShotColumnDef> newColumnDefs )
 	{
-		List<ShotColumnDef> oldColumnDefs = columnDefs;
-		List<Integer> oldCustomColumnDefIndices = customColumnDefIndices;
-
-		List<Integer> newCustomColumnDefIndices = new ArrayList<Integer>( );
-
-		ListIterator<ShotColumnDef> defIter = newColumnDefs.listIterator( );
-		while( defIter.hasNext( ) )
+		newColumnDefs = Collections.unmodifiableList( new ArrayList<>( newColumnDefs ) );
+		int newFirstCustomIndex = CollectionUtils.indexOf( newColumnDefs , d -> d.type != ShotColumnType.BUILTIN );
+		if( newFirstCustomIndex < 0 )
 		{
-			int index = defIter.nextIndex( );
-			ShotColumnDef def = defIter.next( );
-			if( def.type != ShotColumnType.BUILTIN )
-			{
-				newCustomColumnDefIndices.add( index );
-			}
+			newFirstCustomIndex = newColumnDefs.size( );
+		}
+		List<ShotColumnDef> newBuiltinColumnDefs = newColumnDefs.subList( 0 , newFirstCustomIndex );
+		List<ShotColumnDef> newCustomColumnDefs = newColumnDefs.subList( newFirstCustomIndex , newColumnDefs.size( ) );
+
+		if( newCustomColumnDefs.stream( ).anyMatch( d -> d.type == ShotColumnType.BUILTIN ) )
+		{
+			throw new IllegalArgumentException( "all custom columns must be at the end of newColumnDefs" );
 		}
 
-		Map<String, Integer> oldValueIndices = new HashMap<>( );
+		List<ShotColumnDef> oldCustomColumnDefs = customColumnDefs;
 
-		int k = 0;
-		for( int oldDefIndex : oldCustomColumnDefIndices )
-		{
-			oldValueIndices.put( oldColumnDefs.get( oldDefIndex ).name , k++ );
-		}
-
-		int[ ] copyMap = new int[ newCustomColumnDefIndices.size( ) ];
+		int[ ] copyMap = new int[ newCustomColumnDefs.size( ) ];
 		Arrays.fill( copyMap , -1 );
 
-		boolean customValuesChanged = oldCustomColumnDefIndices.size( ) != newCustomColumnDefIndices.size( );
+		boolean customValuesChanged = newCustomColumnDefs.size( ) != oldCustomColumnDefs.size( );
 
-		k = 0;
-		for( int newDefIndex : newCustomColumnDefIndices )
+		ListIterator<ShotColumnDef> i = newCustomColumnDefs.listIterator( );
+		while( i.hasNext( ) )
 		{
-			ShotColumnDef newDef = newColumnDefs.get( newDefIndex );
-
-			Integer oldValueIndex = oldValueIndices.get( newDef.name );
-			Integer oldDefIndex = oldValueIndex == null ? null : oldCustomColumnDefIndices.get( oldValueIndex );
-			ShotColumnDef oldDef = oldDefIndex == null ? null : oldColumnDefs.get( oldDefIndex );
-
-			if( oldDef != null && newDef.type == oldDef.type )
-			{
-				copyMap[ k ] = oldValueIndex;
-			}
-			customValuesChanged |= copyMap[ k ] != k;
-
-			k++;
+			int index = i.nextIndex( );
+			ShotColumnDef newCustomColumnDef = i.next( );
+			copyMap[ index ] = CollectionUtils.indexOf( oldCustomColumnDefs , d -> newCustomColumnDef.equals( d ) );
+			customValuesChanged |= copyMap[ index ] != index;
 		}
 
 		if( customValuesChanged )
@@ -80,7 +67,7 @@ public class ShotList extends TableModelList<Shot>
 			for( Shot shot : this )
 			{
 				Object[ ] newCustom = new Object[ copyMap.length ];
-				for( k = 0 ; k < copyMap.length ; k++ )
+				for( int k = 0 ; k < copyMap.length ; k++ )
 				{
 					if( copyMap[ k ] >= 0 )
 					{
@@ -91,11 +78,9 @@ public class ShotList extends TableModelList<Shot>
 			}
 		}
 
-		columnDefs.clear( );
-		columnDefs.addAll( newColumnDefs );
-
-		customColumnDefIndices.clear( );
-		customColumnDefIndices.addAll( newCustomColumnDefIndices );
+		columnDefs = newColumnDefs;
+		builtinColumnDefs = newBuiltinColumnDefs;
+		customColumnDefs = newCustomColumnDefs;
 
 		fireStructureChanged( );
 	}
