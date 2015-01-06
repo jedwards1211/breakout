@@ -3,10 +3,7 @@ package org.andork.q2;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-
-import org.andork.util.Java7;
 
 /**
  * Defines a set of properties that any {@link QArrayObject} constructed with this
@@ -93,18 +90,8 @@ public class QSpec
 			T oldValue = ( T ) object.values[ index ];
 			if( !equals( oldValue , newValue ) )
 			{
-				if( oldValue instanceof QElement )
-				{
-					( ( QElement ) oldValue ).removePropertyChangeListener( object );
-					object.fireChildrenRemoved( object , oldValue );
-				}
 				object.values[ index ] = newValue;
-				object.firePropertyChange( object , this , oldValue , newValue );
-				if( newValue instanceof QElement )
-				{
-					( ( QElement ) newValue ).addPropertyChangeListener( object );
-					object.fireChildrenAdded( object , newValue );
-				}
+				object.fireObjectChanged( this , oldValue , newValue );
 			}
 			return oldValue;
 		}
@@ -117,17 +104,7 @@ public class QSpec
 				( T ) object.values.put( this , newValue );
 			if( !equals( oldValue , newValue ) )
 			{
-				if( oldValue instanceof QElement )
-				{
-					( ( QElement ) oldValue ).removePropertyChangeListener( object );
-					object.fireChildrenRemoved( object , oldValue );
-				}
-				object.firePropertyChange( object , this , oldValue , newValue );
-				if( newValue instanceof QElement )
-				{
-					( ( QElement ) newValue ).addPropertyChangeListener( object );
-					object.fireChildrenAdded( object , newValue );
-				}
+				object.fireObjectChanged( this , oldValue , newValue );
 			}
 			return oldValue;
 		}

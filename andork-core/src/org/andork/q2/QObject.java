@@ -42,4 +42,25 @@ public abstract class QObject<S extends QSpec> extends QElement
 	{
 		return spec.hashCode( this );
 	}
+
+	public void addListener( QObjectListener listener )
+	{
+		super.addListener( listener );
+	}
+
+	public void removeListener( QObjectListener listener )
+	{
+		super.removeListener( listener );
+	}
+
+	protected void fireObjectChanged( Property<?> property , Object oldValue , Object newValue , int index )
+	{
+		forEachListener( QObjectListener.class ,
+			l -> l.objectChanged( this , property , oldValue , newValue ) );
+	}
+
+	protected void fireObjectChanged( Property<?> property , Object oldValue , Object newValue )
+	{
+		fireObjectChanged( property , oldValue , newValue , -1 );
+	}
 }

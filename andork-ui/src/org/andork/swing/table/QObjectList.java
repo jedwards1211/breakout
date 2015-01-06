@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.andork.event.BasicPropertyChangeListener;
 import org.andork.q2.QObject;
+import org.andork.q2.QObjectListener;
 import org.andork.q2.QSpec;
 import org.andork.q2.QSpec.Property;
 
@@ -60,8 +60,8 @@ public class QObjectList<S extends QSpec>
 		updateIndices( index );
 		if( !previous.equals( element ) )
 		{
-			previous.removePropertyChangeListener( elementListener );
-			element.addPropertyChangeListener( elementListener );
+			previous.removeListener( elementListener );
+			element.addListener( elementListener );
 			fireElementsUpdated( index , index );
 		}
 	}
@@ -75,7 +75,7 @@ public class QObjectList<S extends QSpec>
 	{
 		elements.add( index , element );
 		updateIndices( index );
-		element.addPropertyChangeListener( elementListener );
+		element.addListener( elementListener );
 		fireElementsInserted( index , index );
 	}
 
@@ -90,7 +90,7 @@ public class QObjectList<S extends QSpec>
 		updateIndices( index );
 		for( QObject<? extends S> element : elements )
 		{
-			element.addPropertyChangeListener( elementListener );
+			element.addListener( elementListener );
 		}
 		fireElementsInserted( index , index + elements.size( ) - 1 );
 	}
@@ -98,7 +98,7 @@ public class QObjectList<S extends QSpec>
 	public void remove( int index )
 	{
 		QObject<? extends S> removed = elements.remove( index );
-		removed.removePropertyChangeListener( elementListener );
+		removed.removeListener( elementListener );
 		updateIndices( index );
 		fireElementsDeleted( index , index );
 	}
@@ -117,7 +117,7 @@ public class QObjectList<S extends QSpec>
 		for( int i = fromIndex ; i < toIndex ; i++ )
 		{
 			QObject<? extends S> removed = elements.remove( fromIndex );
-			removed.removePropertyChangeListener( elementListener );
+			removed.removeListener( elementListener );
 		}
 		updateIndices( fromIndex );
 		fireElementsDeleted( fromIndex , toIndex - 1 );
@@ -128,7 +128,7 @@ public class QObjectList<S extends QSpec>
 		int size = elements.size( );
 		for( QObject<? extends S> element : elements )
 		{
-			element.removePropertyChangeListener( elementListener );
+			element.removeListener( elementListener );
 		}
 		elements.clear( );
 		fireElementsDeleted( 0 , size - 1 );
@@ -188,7 +188,7 @@ public class QObjectList<S extends QSpec>
 	}
 
 	protected void handlePropertyChange( QObject<? extends S> source , Property<?> property , Object oldValue ,
-		Object newValue , int index )
+		Object newValue )
 	{
 		if( property != indexProperty )
 		{
@@ -209,14 +209,14 @@ public class QObjectList<S extends QSpec>
 			elementsUpdated( QObjectList<? extends S> list , int fromIndex , int toIndex , Property<?> property );
 	}
 
-	private class ElementListener implements BasicPropertyChangeListener
+	private class ElementListener implements QObjectListener
 	{
 		@SuppressWarnings( "unchecked" )
 		@Override
-		public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
+		public void objectChanged( QObject<?> source , Property<?> property , Object oldValue , Object newValue )
 		{
 			handlePropertyChange( ( QObject<? extends S> ) source ,
-				( Property<?> ) property , oldValue , newValue , index );
+				property , oldValue , newValue );
 		}
 	}
 }

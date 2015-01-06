@@ -2,7 +2,6 @@ package org.andork.q2;
 
 import java.util.Map;
 
-import org.andork.func.Mapper;
 import org.andork.q2.QSpec.Property;
 
 /**

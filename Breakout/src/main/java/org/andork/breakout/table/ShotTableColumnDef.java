@@ -1,11 +1,11 @@
 package org.andork.breakout.table;
 
-public class ShotTableColumn
+public class ShotTableColumnDef
 {
 	public final String					name;
 	public final ShotTableColumnType	type;
 
-	public ShotTableColumn( String name , ShotTableColumnType type )
+	public ShotTableColumnDef( String name , ShotTableColumnType type )
 	{
 		super( );
 		this.name = name;

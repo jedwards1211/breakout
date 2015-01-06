@@ -19,8 +19,9 @@ import javax.swing.table.TableModel;
 
 import org.andork.bind2.Binder;
 import org.andork.breakout.model.NewProjectModel;
-import org.andork.event.BasicPropertyChangeListener;
 import org.andork.q2.QHashMap;
+import org.andork.q2.QMap;
+import org.andork.q2.QMapListener;
 import org.andork.q2.QObject;
 import org.andork.q2.QObjectPropertyBinder;
 import org.andork.q2.QSpec;
@@ -40,42 +41,40 @@ import org.andork.swing.table.QObjectList;
 @SuppressWarnings( "serial" )
 public class ShotTableModelPresenter extends AbstractTableModel
 {
-	private Binder<QObject<NewProjectModel>>							projectModelBinder;
+	private Binder<QObject<NewProjectModel>>								projectModelBinder;
 
-	private QObjectPropertyBinder<Character>							decimalSeparatorBinder;
-	private QObjectPropertyBinder<QObjectList<Shot>>					shotListBinder;
-	private QObjectPropertyBinder<QObjectList<ShotText>>				shotTextListBinder;
-	private QObjectPropertyBinder<QHashMap<Integer, ShotTableColumn>>	columnDefsBinder;
+	private QObjectPropertyBinder<Character>								decimalSeparatorBinder;
+	private QObjectPropertyBinder<QObjectList<Shot>>						shotListBinder;
+	private QObjectPropertyBinder<QObjectList<ShotText>>					shotTextListBinder;
+	private QObjectPropertyBinder<QHashMap<Integer, ShotTableColumnDef>>	columnDefsBinder;
 
-	private QObjectList<Shot>											shotList;
-	private QObjectList<ShotText>										shotTextList;
-	private QHashMap<Integer, ShotTableColumn>							columnDefs;
+	private QObjectList<Shot>												shotList;
+	private QObjectList<ShotText>											shotTextList;
+	private QHashMap<Integer, ShotTableColumnDef>							columnDefs;
 
-	private ShotListener												shotListener		= new ShotListener( );
-	private ShotTextListener											shotTextListener	= new ShotTextListener( );
-	private ColumnDefsListener											columnDefsListener	= new ColumnDefsListener( );
+	private ShotListener													shotListener		= new ShotListener( );
+	private ShotTextListener												shotTextListener	= new ShotTextListener( );
+	private ColumnDefsListener												columnDefsListener	= new ColumnDefsListener( );
 
-	private final List<Column<Integer>>									columns				= new ArrayList<>( );
-	private final List<Column<Integer>>									unmodifiableColumns	= Collections
-																								.unmodifiableList( columns );
+	private final List<Column<Integer>>										columns				= new ArrayList<>( );
 
-	private IntFunction<String>											intFormatter		= Integer::toString;
-	private DoubleFunction<String>										doubleFormatter		= Double::toString;
-	private Function<Double[ ], String>									twoDoubleFormatter	= new DefaultTwoElemFormatter<>(
-																								d -> doubleFormatter
-																									.apply( d ) );
+	private IntFunction<String>												intFormatter		= Integer::toString;
+	private DoubleFunction<String>											doubleFormatter		= Double::toString;
+	private Function<Double[ ], String>										twoDoubleFormatter	= new DefaultTwoElemFormatter<>(
+																									d -> doubleFormatter
+																										.apply( d ) );
 
-	public final UncheckedStringColumn									fromColumn;
-	public final UncheckedStringColumn									toColumn;
-	public final SubVectorColumn<ShotVector, Double>					distColumn;
-	public final SubVectorColumn<ShotVector, Double[ ]>					azmFsBsColumn;
-	public final SubVectorColumn<ShotVector, Double>					azmFsColumn;
-	public final SubVectorColumn<ShotVector, Double>					azmBsColumn;
-	public final SubVectorColumn<ShotVector, Double[ ]>					incFsBsColumn;
-	public final SubVectorColumn<ShotVector, Double>					incFsColumn;
-	public final SubVectorColumn<ShotVector, Double>					incBsColumn;
+	public final UncheckedStringColumn										fromColumn;
+	public final UncheckedStringColumn										toColumn;
+	public final SubVectorColumn<ShotVector, Double>						distColumn;
+	public final SubVectorColumn<ShotVector, Double[ ]>						azmFsBsColumn;
+	public final SubVectorColumn<ShotVector, Double>						azmFsColumn;
+	public final SubVectorColumn<ShotVector, Double>						azmBsColumn;
+	public final SubVectorColumn<ShotVector, Double[ ]>						incFsBsColumn;
+	public final SubVectorColumn<ShotVector, Double>						incFsColumn;
+	public final SubVectorColumn<ShotVector, Double>						incBsColumn;
 
-	private final Map<String, Column<Integer>>							builtInColumns;
+	private final Map<String, Column<Integer>>								builtInColumns;
 
 	public ShotTableModelPresenter( Binder<QObject<NewProjectModel>> projectModelBinder )
 	{
@@ -167,7 +166,7 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		shotListBinder.objLink.bind( projectModelBinder );
 		shotTextListBinder = new QObjectPropertyBinder<>( NewProjectModel.shotTextList );
 		shotTextListBinder.objLink.bind( projectModelBinder );
-		columnDefsBinder = new QObjectPropertyBinder<>( NewProjectModel.shotCols );
+		columnDefsBinder = new QObjectPropertyBinder<>( NewProjectModel.shotColDefs );
 		columnDefsBinder.objLink.bind( projectModelBinder );
 		decimalSeparatorBinder.addBinding( force ->
 		{
@@ -234,26 +233,21 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		}
 	}
 
-	private void setColumnDefs( QHashMap<Integer, ShotTableColumn> columnDefs )
+	private void setColumnDefs( QHashMap<Integer, ShotTableColumnDef> columnDefs )
 	{
 		if( this.columnDefs != columnDefs )
 		{
 			if( this.columnDefs != null )
 			{
-				this.columnDefs.removePropertyChangeListener( columnDefsListener );
+				this.columnDefs.removeListener( columnDefsListener );
 			}
 			this.columnDefs = columnDefs;
 			if( columnDefs != null )
 			{
-				columnDefs.addPropertyChangeListener( columnDefsListener );
+				columnDefs.addListener( columnDefsListener );
 			}
 			setColumns( createColumns( ) );
 		}
-	}
-
-	public List<Column<Integer>> getColumns( )
-	{
-		return unmodifiableColumns;
 	}
 
 	private void setColumns( List<Column<Integer>> newColumns )
@@ -261,6 +255,73 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		columns.clear( );
 		columns.addAll( newColumns );
 		fireTableStructureChanged( );
+	}
+
+	private List<Column<Integer>> createColumns( )
+	{
+		if( shotList == null || shotTextList == null || columnDefs == null )
+		{
+			return Collections.emptyList( );
+		}
+
+		TreeMap<Integer, Column<Integer>> result = new TreeMap<>( );
+
+		for( Map.Entry<Integer, ShotTableColumnDef> entry : columnDefs.entrySet( ) )
+		{
+			int index = entry.getKey( );
+			ShotTableColumnType type = entry.getValue( ).type;
+
+			Column<Integer> col = null;
+
+			if( type == ShotTableColumnType.BUILTIN )
+			{
+				col = builtInColumns.get( entry.getValue( ).name );
+			}
+			else
+			{
+				col = createCustomColumn( index , entry.getValue( ) );
+			}
+
+			if( col != null )
+			{
+				result.put( index , col );
+			}
+		}
+
+		return new ArrayList<>( result.values( ) );
+	}
+
+	private Column<Integer> createCustomColumn( int index , ShotTableColumnDef def )
+	{
+		String name = ShotTableColumnNames.custom( index );
+		Property<?> shotProperty = shotList.spec( ).propertyNamed( name );
+		Property<?> shotTextProperty = shotTextList.spec( ).propertyNamed( name );
+
+		if( shotProperty == null )
+		{
+			return null;
+		}
+
+		if( def.type != ShotTableColumnType.STRING && shotTextProperty == null )
+		{
+			return null;
+		}
+
+		switch( def.type )
+		{
+		case STRING:
+			return new UncheckedStringColumn( shotProperty.cast( String.class ) );
+		case INTEGER:
+			return new CheckedColumn<Integer>( shotProperty.cast( Integer.class ) ,
+				shotTextProperty.cast( ParsedText.class ) ,
+				i -> intFormatter.apply( i ) );
+		case DOUBLE:
+			return new CheckedColumn<Double>( shotProperty.cast( Double.class ) ,
+				shotTextProperty.cast( ParsedText.class ) ,
+				d -> doubleFormatter.apply( d ) );
+		}
+
+		return null;
 	}
 
 	@Override
@@ -303,68 +364,6 @@ public class ShotTableModelPresenter extends AbstractTableModel
 	public Object getValueAt( int rowIndex , int columnIndex )
 	{
 		return columns.get( columnIndex ).getValueAt( rowIndex );
-	}
-
-	private List<Column<Integer>> createColumns( )
-	{
-		if( shotList == null || shotTextList == null || columnDefs == null )
-		{
-			return Collections.emptyList( );
-		}
-
-		TreeMap<Integer, Column<Integer>> result = new TreeMap<>( );
-
-		for( Map.Entry<Integer, ShotTableColumn> entry : columnDefs.entrySet( ) )
-		{
-			int index = entry.getKey( );
-			ShotTableColumnType type = entry.getValue( ).type;
-
-			Column<Integer> col = null;
-
-			if( type == ShotTableColumnType.BUILTIN )
-			{
-				String name = entry.getValue( ).name;
-				col = builtInColumns.get( name );
-			}
-			else
-			{
-				String name = ShotTableColumnNames.custom( index );
-				Property<?> shotProperty = shotList.spec( ).propertyNamed( name );
-				Property<?> shotTextProperty = shotTextList.spec( ).propertyNamed( name );
-
-				if( shotProperty != null && shotTextProperty != null )
-				{
-					col = createDefaultColumn( type , shotProperty , shotTextProperty );
-				}
-			}
-
-			if( col != null )
-			{
-				result.put( index , col );
-			}
-		}
-
-		return new ArrayList<>( result.values( ) );
-	}
-
-	private Column<Integer> createDefaultColumn( ShotTableColumnType type , Property<?> shotProperty ,
-		Property<?> shotTextProperty )
-	{
-		switch( type )
-		{
-		case STRING:
-			return new UncheckedStringColumn( shotProperty.cast( String.class ) );
-		case INTEGER:
-			return new CheckedColumn<Integer>( shotProperty.cast( Integer.class ) ,
-				shotTextProperty.cast( ParsedText.class ) ,
-				i -> intFormatter.apply( i ) );
-		case DOUBLE:
-			return new CheckedColumn<Double>( shotProperty.cast( Double.class ) ,
-				shotTextProperty.cast( ParsedText.class ) ,
-				d -> doubleFormatter.apply( d ) );
-		}
-
-		return null;
 	}
 
 	private class ShotListener implements QObjectList.Listener<Shot>
@@ -427,10 +426,18 @@ public class ShotTableModelPresenter extends AbstractTableModel
 		}
 	}
 
-	private class ColumnDefsListener implements BasicPropertyChangeListener
+	private class ColumnDefsListener implements QMapListener
 	{
 		@Override
-		public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
+		public void mapChanged( QMap<?, ?, ?> source , Object key , Object oldValue , boolean removed ,
+			Object newValue )
+		{
+			setColumns( createColumns( ) );
+		}
+
+		@Override
+		public void mapChanged( QMap<?, ?, ?> source , List<Object> keys , List<Object> oldValues ,
+			List<Boolean> removed , List<Object> newValues )
 		{
 			setColumns( createColumns( ) );
 		}

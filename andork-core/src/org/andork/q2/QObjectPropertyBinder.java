@@ -3,10 +3,9 @@ package org.andork.q2;
 import org.andork.bind2.Binding;
 import org.andork.bind2.CachingBinder;
 import org.andork.bind2.Link;
-import org.andork.event.BasicPropertyChangeListener;
 import org.andork.q2.QSpec.Property;
 
-public class QObjectPropertyBinder<T> extends CachingBinder<T> implements Binding , BasicPropertyChangeListener
+public class QObjectPropertyBinder<T> extends CachingBinder<T> implements Binding , QObjectListener
 {
 	public final Link<QObject<?>>	objLink	= new Link<QObject<?>>( this );
 	public final Property<T>		property;
@@ -29,12 +28,12 @@ public class QObjectPropertyBinder<T> extends CachingBinder<T> implements Bindin
 		{
 			if( curObject != null )
 			{
-				curObject.removePropertyChangeListener( this );
+				curObject.removeListener( this );
 			}
 			curObject = newObject;
 			if( newObject != null )
 			{
-				newObject.addPropertyChangeListener( this );
+				newObject.addListener( this );
 			}
 		}
 
@@ -43,7 +42,8 @@ public class QObjectPropertyBinder<T> extends CachingBinder<T> implements Bindin
 		set( newValue , force );
 	}
 
-	public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
+	public void
+		objectChanged( QObject<?> source  , Property<?> property  , Object oldValue  , Object newValue  )
 	{
 		update( false );
 	}

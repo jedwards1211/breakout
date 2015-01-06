@@ -62,18 +62,18 @@ public class ShotTableTest
 		model.set( NewProjectModel.shotList , shotList );
 		model.set( NewProjectModel.shotTextList , shotTextList );
 
-		QHashMap<Integer, ShotTableColumn> shotCols = QHashMap.newInstance( );
-		model.set( NewProjectModel.shotCols , shotCols );
-		shotCols.put( 0 , new ShotTableColumn( ShotTableColumnNames.from , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 1 , new ShotTableColumn( ShotTableColumnNames.to , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 2 , new ShotTableColumn( ShotTableColumnNames.dist , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 3 , new ShotTableColumn( ShotTableColumnNames.azmFs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 4 , new ShotTableColumn( ShotTableColumnNames.azmBs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 5 , new ShotTableColumn( ShotTableColumnNames.azmFsBs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 6 , new ShotTableColumn( ShotTableColumnNames.incFs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 7 , new ShotTableColumn( ShotTableColumnNames.incBs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 8 , new ShotTableColumn( ShotTableColumnNames.incFsBs , ShotTableColumnType.BUILTIN ) );
-		shotCols.put( 9 , new ShotTableColumn( "Water Level" , ShotTableColumnType.DOUBLE ) );
+		QHashMap<Integer, ShotTableColumnDef> shotCols = QHashMap.newInstance( );
+		model.set( NewProjectModel.shotColDefs , shotCols );
+		shotCols.put( 0 , new ShotTableColumnDef( ShotTableColumnNames.from , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 1 , new ShotTableColumnDef( ShotTableColumnNames.to , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 2 , new ShotTableColumnDef( ShotTableColumnNames.dist , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 3 , new ShotTableColumnDef( ShotTableColumnNames.azmFs , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 4 , new ShotTableColumnDef( ShotTableColumnNames.azmBs , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 5 , new ShotTableColumnDef( ShotTableColumnNames.azmFsBs , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 6 , new ShotTableColumnDef( ShotTableColumnNames.incFs , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 7 , new ShotTableColumnDef( ShotTableColumnNames.incBs , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 8 , new ShotTableColumnDef( ShotTableColumnNames.incFsBs , ShotTableColumnType.BUILTIN ) );
+		shotCols.put( 9 , new ShotTableColumnDef( "Water Level" , ShotTableColumnType.DOUBLE ) );
 
 		JTable table = new JTable( presenter );
 		JScrollPane scrollPane = new JScrollPane( table );

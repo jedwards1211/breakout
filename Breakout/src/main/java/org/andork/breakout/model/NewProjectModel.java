@@ -2,7 +2,7 @@ package org.andork.breakout.model;
 
 import java.text.DecimalFormat;
 
-import org.andork.breakout.table.ShotTableColumn;
+import org.andork.breakout.table.ShotTableColumnDef;
 import org.andork.breakout.table.ShotText;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q2.QArrayList;
@@ -32,7 +32,7 @@ public class NewProjectModel extends QSpec
 	public static Property<QObjectList<ShotText>>						shotTextList	= property( "shotTextList" ,
 																							QObjectList.class );
 
-	public static Property<QHashMap<Integer, ShotTableColumn>>			shotCols		= property( "shotCols" ,
+	public static Property<QHashMap<Integer, ShotTableColumnDef>>		shotColDefs		= property( "shotColDefs" ,
 																							QHashMap.class );
 	public static Property<QLinkedHashMap<String, QArrayList<Integer>>>	shotColGroups	= property( "shotColGroups" ,
 																							QLinkedHashMap.class );
@@ -43,7 +43,7 @@ public class NewProjectModel extends QSpec
 
 	private NewProjectModel( )
 	{
-		super( decimalSep , defLenUnit , defAngleUnit , shotList , shotTextList , shotCols , shotColGroups ,
+		super( decimalSep , defLenUnit , defAngleUnit , shotList , shotTextList , shotColDefs , shotColGroups ,
 			curShotColGroup );
 	}
 }

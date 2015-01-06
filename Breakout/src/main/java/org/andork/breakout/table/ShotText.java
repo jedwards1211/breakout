@@ -2,7 +2,6 @@ package org.andork.breakout.table;
 
 import org.andork.q2.QObject;
 import org.andork.q2.QSpec;
-import org.andork.q2.QSpec.Property;
 
 public class ShotText extends QSpec
 {

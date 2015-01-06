@@ -26,7 +26,6 @@ import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,15 +77,7 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 		V prev = map.put( key , value );
 		if( prev != value )
 		{
-			if( prev != null )
-			{
-				handleChildRemoved( prev );
-			}
-			if( value != null )
-			{
-				handleChildAdded( value );
-			}
-			firePropertyChange( this , key , prev , value );
+			fireMapChanged( key , prev , false , value );
 		}
 		return prev;
 	}
@@ -97,8 +88,7 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 		V prev = map.remove( key );
 		if( prev != null )
 		{
-			handleChildRemoved( prev );
-			firePropertyChange( this , key , prev , null );
+			fireMapChanged( key , prev , true , null );
 		}
 		return prev;
 	}
@@ -106,46 +96,38 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 	@Override
 	public void putAll( Map<? extends K, ? extends V> m )
 	{
-		List<Object> added = new ArrayList<Object>( );
-		List<Object> removed = new ArrayList<Object>( );
+		List<Object> keys = new ArrayList<Object>( );
+		List<Object> oldValues = new ArrayList<Object>( );
+		List<Boolean> removed = new ArrayList<Boolean>( );
+		List<Object> newValues = new ArrayList<Object>( );
 
 		for( Map.Entry<? extends K, ? extends V> entry : m.entrySet( ) )
 		{
 			K key = entry.getKey( );
-			V value = entry.getValue( );
-			V prev = map.put( key , value );
-			if( prev != null )
+			V newValue = entry.getValue( );
+			V oldValue = map.put( key , newValue );
+
+			if( oldValue != newValue )
 			{
-				removed.add( prev );
-			}
-			if( value != null )
-			{
-				added.add( prev );
-			}
-			if( prev != value )
-			{
-				firePropertyChange( this , key , prev , value );
+				keys.add( key );
+				oldValues.add( oldValue );
+				removed.add( false );
+				newValues.add( newValue );
 			}
 		}
 
-		handleChildrenRemoved( removed );
-		handleChildrenAdded( added );
+		fireMapChanged( keys , oldValues , removed , newValues );
 	}
 
 	@Override
 	public void clear( )
 	{
-		Map<K, V> clone = new LinkedHashMap<K, V>( map );
+		List<Object> oldKeys = new ArrayList<Object>( keySet( ) );
+		List<Object> oldValues = new ArrayList<Object>( values( ) );
+		List<Boolean> removed = multiply( size( ) , true );
+		List<Object> newValues = multiply( size( ) , null );
 		map.clear( );
-		Object[ ] oldValues = values( ).toArray( );
-		for( Map.Entry<K, V> entry : clone.entrySet( ) )
-		{
-			if( entry.getValue( ) != null )
-			{
-				firePropertyChange( this , entry.getKey( ) , entry.getValue( ) , null );
-			}
-		}
-		handleChildrenRemoved( oldValues );
+		fireMapChanged( oldKeys , oldValues , removed , newValues );
 	}
 
 	@Override
@@ -167,6 +149,37 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 	{
 		Set<java.util.Map.Entry<K, V>> es = entrySet;
 		return ( es != null ? es : ( entrySet = new EntrySet( ) ) );
+	}
+
+	public void addListener( QMapListener listener )
+	{
+		super.addListener( listener );
+	}
+
+	public void removeListener( QMapListener listener )
+	{
+		super.removeListener( listener );
+	}
+
+	private static <T> List<T> multiply( int times , T elem )
+	{
+		List<T> result = new ArrayList<T>( times );
+		for( int i = 0 ; i < times ; i++ )
+		{
+			result.add( elem );
+		}
+		return result;
+	}
+
+	protected void fireMapChanged( Object key , Object oldValue , boolean removed , Object newValue )
+	{
+		forEachListener( QMapListener.class , l -> l.mapChanged( this , key , oldValue , removed , newValue ) );
+	}
+
+	protected void fireMapChanged( List<Object> keys , List<Object> oldValues , List<Boolean> removed ,
+		List<Object> newValues )
+	{
+		forEachListener( QMapListener.class , l -> l.mapChanged( this , keys , oldValues , removed , newValues ) );
 	}
 
 	private abstract class HashIterator<E> implements Iterator<E>

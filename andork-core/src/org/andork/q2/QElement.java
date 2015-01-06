@@ -23,33 +23,31 @@ package org.andork.q2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-import org.andork.event.BasicPropertyChangeListener;
-import org.andork.event.HierarchicalBasicPropertyChangeListener;
-import org.andork.event.SourcePath;
 import org.andork.func.Mapper;
 
-public abstract class QElement implements HierarchicalBasicPropertyChangeListener
+public abstract class QElement
 {
 	private Object	listeners;
 
 	public abstract QElement deepClone( Mapper<Object, Object> childMapper );
 
 	@SuppressWarnings( "unchecked" )
-	public void addPropertyChangeListener( BasicPropertyChangeListener listener )
+	protected void addListener( QListener listener )
 	{
 		if( listeners instanceof List )
 		{
-			List<BasicPropertyChangeListener> casted = ( List<BasicPropertyChangeListener> ) listeners;
+			List<QListener> casted = ( List<QListener> ) listeners;
 			if( !casted.contains( listener ) )
 			{
 				casted.add( listener );
 			}
 		}
-		else if( listeners instanceof BasicPropertyChangeListener && !listeners.equals( listener ) )
+		else if( listeners instanceof QListener && !listeners.equals( listener ) )
 		{
-			ArrayList<BasicPropertyChangeListener> newList = new ArrayList<>( 2 );
-			newList.add( ( BasicPropertyChangeListener ) listeners );
+			ArrayList<QListener> newList = new ArrayList<>( 2 );
+			newList.add( ( QListener ) listeners );
 			newList.add( listener );
 			listeners = newList;
 		}
@@ -60,11 +58,11 @@ public abstract class QElement implements HierarchicalBasicPropertyChangeListene
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public void removePropertyChangeListener( BasicPropertyChangeListener listener )
+	protected void removeListener( QListener listener )
 	{
 		if( listeners instanceof List )
 		{
-			List<BasicPropertyChangeListener> casted = ( List<BasicPropertyChangeListener> ) listeners;
+			List<QListener> casted = ( List<QListener> ) listeners;
 			casted.remove( listener );
 			if( casted.size( ) == 1 )
 			{
@@ -75,7 +73,7 @@ public abstract class QElement implements HierarchicalBasicPropertyChangeListene
 				listeners = null;
 			}
 		}
-		else if( listeners instanceof BasicPropertyChangeListener )
+		else if( listeners instanceof QListener )
 		{
 			if( listeners.equals( listener ) )
 			{
@@ -85,133 +83,29 @@ public abstract class QElement implements HierarchicalBasicPropertyChangeListene
 	}
 
 	@SuppressWarnings( "unchecked" )
-	protected void firePropertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
+	protected void forEachListener( Consumer<QListener> consumer )
 	{
 		if( listeners instanceof List )
 		{
-			for( BasicPropertyChangeListener listener : ( List<BasicPropertyChangeListener> ) listeners )
+			for( QListener listener : ( List<QListener> ) listeners )
 			{
-				listener.propertyChange( source , property , oldValue , newValue , index );
+				consumer.accept( listener );
 			}
 		}
-		else if( listeners instanceof BasicPropertyChangeListener )
+		else if( listeners instanceof QListener )
 		{
-			( ( BasicPropertyChangeListener ) listeners ).propertyChange( source , property , oldValue ,
-				newValue , index );
+			consumer.accept( ( QListener ) listeners );
 		}
 	}
 
-	protected void firePropertyChange( Object source , Object property , Object oldValue , Object newValue )
+	protected <L extends QListener> void forEachListener( Class<? extends L> type , Consumer<L> consumer )
 	{
-		firePropertyChange( source , property , oldValue , newValue , -1 );
-	}
-
-	protected void firePropertyChange( Object property , Object oldValue , Object newValue )
-	{
-		firePropertyChange( this , property , oldValue , newValue , -1 );
-	}
-
-	protected void firePropertyChange( Object property , Object oldValue , Object newValue , int index )
-	{
-		firePropertyChange( this , property , oldValue , newValue , index );
-	}
-
-	protected void fireChildrenChanged( ChangeType changeType , Object ... children )
-	{
-		fireChildrenChanged( this , changeType , children );
-	}
-
-	@SuppressWarnings( "unchecked" )
-	protected void fireChildrenChanged( Object source , ChangeType changeType , Object ... children )
-	{
-		if( listeners instanceof List )
+		forEachListener( l ->
 		{
-			for( BasicPropertyChangeListener listener : ( List<BasicPropertyChangeListener> ) listeners )
+			if( type.isInstance( l ) )
 			{
-				if( listener instanceof HierarchicalBasicPropertyChangeListener )
-				{
-					( ( HierarchicalBasicPropertyChangeListener ) listener ).childrenChanged( source , changeType ,
-						children );
-				}
+				consumer.accept( type.cast( l ) );
 			}
-		}
-		else if( listeners instanceof HierarchicalBasicPropertyChangeListener )
-		{
-			( ( HierarchicalBasicPropertyChangeListener ) listeners ).childrenChanged( source , changeType , children );
-		}
-	}
-
-	protected void fireChildrenAdded( Object source , Object ... children )
-	{
-		fireChildrenChanged( source , ChangeType.CHILDREN_ADDED , children );
-	}
-
-	protected void fireChildrenRemoved( Object source , Object ... children )
-	{
-		fireChildrenChanged( source , ChangeType.CHILDREN_REMOVED , children );
-	}
-
-	protected void fireChildrenChanged( )
-	{
-		fireChildrenChanged( ChangeType.ALL_CHILDREN_CHANGED );
-	}
-
-	protected void fireChildrenChanged( Object source )
-	{
-		fireChildrenChanged( source , ChangeType.ALL_CHILDREN_CHANGED );
-	}
-
-	protected void handleChildAdded( Object child )
-	{
-		if( child instanceof QElement )
-		{
-			( ( QElement ) child ).addPropertyChangeListener( this );
-		}
-		fireChildrenAdded( this , child );
-	}
-
-	protected void handleChildRemoved( Object child )
-	{
-		if( child instanceof QElement )
-		{
-			( ( QElement ) child ).removePropertyChangeListener( this );
-		}
-		fireChildrenRemoved( this , child );
-	}
-
-	protected void handleChildrenAdded( Object ... children )
-	{
-		for( Object child : children )
-		{
-			if( child instanceof QElement )
-			{
-				( ( QElement ) child ).addPropertyChangeListener( this );
-			}
-		}
-		fireChildrenAdded( this , children );
-	}
-
-	protected void handleChildrenRemoved( Object ... children )
-	{
-		for( Object child : children )
-		{
-			if( child instanceof QElement )
-			{
-				( ( QElement ) child ).removePropertyChangeListener( this );
-			}
-		}
-		fireChildrenRemoved( this , children );
-	}
-
-	@Override
-	public final void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
-	{
-		firePropertyChange( new SourcePath( this , source ) , property , oldValue , newValue , index );
-	}
-
-	@Override
-	public final void childrenChanged( Object source , ChangeType changeType , Object ... children )
-	{
-		fireChildrenChanged( new SourcePath( this , source ) , changeType , children );
+		} );
 	}
 }

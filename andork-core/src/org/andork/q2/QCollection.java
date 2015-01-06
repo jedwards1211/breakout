@@ -36,7 +36,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 	{
 		if( collection.add( element ) )
 		{
-			handleChildAdded( element );
+			fireElemAdded( element );
 			return true;
 		}
 		return false;
@@ -45,7 +45,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 	@Override
 	public boolean addAll( Collection<? extends E> c )
 	{
-		List<E> added = new ArrayList<E>( );
+		Collection<E> added = new ArrayList<E>( );
 		for( E e : c )
 		{
 			if( collection.add( e ) )
@@ -55,7 +55,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		}
 		if( !added.isEmpty( ) )
 		{
-			handleChildrenAdded( this , added.toArray( ) );
+			fireElemsAdded( added );
 		}
 		return !added.isEmpty( );
 	}
@@ -64,9 +64,9 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 	{
 		if( !isEmpty( ) )
 		{
-			Object[ ] oldChildren = toArray( );
+			Collection<E> oldChildren = new ArrayList<E>( this );
 			collection.clear( );
-			handleChildrenRemoved( oldChildren );
+			fireElemsRemoved( oldChildren );
 		}
 	}
 
@@ -96,7 +96,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 	{
 		if( collection.remove( element ) )
 		{
-			handleChildRemoved( element );
+			fireElemRemoved( element );
 			return true;
 		}
 		return false;
@@ -105,7 +105,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 	@Override
 	public boolean removeAll( Collection<?> c )
 	{
-		List<Object> removed = new ArrayList<Object>( );
+		Collection<Object> removed = new ArrayList<Object>( );
 		for( Object e : c )
 		{
 			if( collection.remove( e ) )
@@ -115,7 +115,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		}
 		if( !removed.isEmpty( ) )
 		{
-			handleChildrenRemoved( this , removed.toArray( ) );
+			fireElemsRemoved( removed );
 		}
 		return !removed.isEmpty( );
 	}
@@ -136,7 +136,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		}
 		if( !removed.isEmpty( ) )
 		{
-			handleChildrenRemoved( this , removed.toArray( ) );
+			fireElemsRemoved( removed );
 		}
 		return !removed.isEmpty( );
 	}
@@ -156,6 +156,30 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 	public <T> T[ ] toArray( T[ ] a )
 	{
 		return collection.toArray( a );
+	}
+
+	protected void fireElemAdded( E elem )
+	{
+		forEachListener( QCollectionListener.class ,
+			l -> l.collectionChanged( this , CollectionChange.ADDED , elem ) );
+	}
+
+	protected void fireElemRemoved( Object elem )
+	{
+		forEachListener( QCollectionListener.class ,
+			l -> l.collectionChanged( this , CollectionChange.REMOVED , elem ) );
+	}
+
+	protected void fireElemsAdded( Collection<?> elems )
+	{
+		forEachListener( QCollectionListener.class ,
+			l -> l.collectionChanged( this , CollectionChange.ADDED , elems ) );
+	}
+
+	protected void fireElemsRemoved( Collection<?> elems )
+	{
+		forEachListener( QCollectionListener.class ,
+			l -> l.collectionChanged( this , CollectionChange.REMOVED , elems ) );
 	}
 
 	protected class Iter implements Iterator<E>
@@ -184,8 +208,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		public void remove( )
 		{
 			wrapped.remove( );
-
-			handleChildRemoved( last );
+			fireElemRemoved( last );
 		}
 
 		void removeWithoutSideEffects( )
