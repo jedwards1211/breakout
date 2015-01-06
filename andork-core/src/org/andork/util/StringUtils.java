@@ -29,14 +29,14 @@ public class StringUtils
 {
 	private StringUtils( )
 	{
-		
+
 	}
-	
+
 	public static String toStringOrNull( Object o )
 	{
 		return o == null ? null : o.toString( );
 	}
-	
+
 	public static String multiply( String s , int count )
 	{
 		StringBuffer sb = new StringBuffer( );
@@ -46,18 +46,19 @@ public class StringUtils
 		}
 		return sb.toString( );
 	}
-	
+
 	public static String formatThrowableForHTML( Throwable t )
 	{
 		return formatThrowableForHTML( "" , t , new HashSet<Throwable>( ) , 10 );
 	}
-	
+
 	public static String formatThrowableForHTML( Throwable t , int maxStackTraceLines )
 	{
 		return formatThrowableForHTML( "" , t , new HashSet<Throwable>( ) , maxStackTraceLines );
 	}
-	
-	private static String formatThrowableForHTML( String prefix , Throwable t , Set<Throwable> visited , int maxStackTraceLines )
+
+	private static String formatThrowableForHTML( String prefix , Throwable t , Set<Throwable> visited ,
+		int maxStackTraceLines )
 	{
 		if( !visited.add( t ) )
 		{
@@ -67,9 +68,9 @@ public class StringUtils
 		sb.append( "<code>" ).append( prefix );
 		sb.append( "<b>" ).append( t.getClass( ).getSimpleName( ) ).append( "</b>" );
 		sb.append( ": " ).append( t.getLocalizedMessage( ) ).append( "<br />" );
-		
+
 		StackTraceElement[ ] stackTrace = t.getStackTrace( );
-		
+
 		for( int line = 0 ; line < maxStackTraceLines && line < stackTrace.length ; line++ )
 		{
 			sb.append( "&emsp;at " ).append( stackTrace[ line ] ).append( "<br />" );
@@ -78,16 +79,16 @@ public class StringUtils
 		{
 			sb.append( "&emsp;..." ).append( stackTrace.length - maxStackTraceLines ).append( " more<br />" );
 		}
-		
+
 		sb.append( "</code>" );
-		
+
 		if( t.getCause( ) != null )
 		{
 			sb.append( formatThrowableForHTML( "Caused by: " , t.getCause( ) , visited , maxStackTraceLines ) );
 		}
 		return sb.toString( );
 	}
-	
+
 	public static String join( String separator , String ... strings )
 	{
 		StringBuilder sb = new StringBuilder( );
@@ -101,7 +102,7 @@ public class StringUtils
 		}
 		return sb.toString( );
 	}
-	
+
 	public static String join( String separator , List<String> strings )
 	{
 		StringBuilder sb = new StringBuilder( );
@@ -115,21 +116,21 @@ public class StringUtils
 		}
 		return sb.toString( );
 	}
-	
+
 	public static boolean isNullOrEmpty( Object aValue )
 	{
 		return aValue == null || "".equals( aValue.toString( ) );
 	}
-	
+
 	public static String nullifyIfEmpty( String s )
 	{
 		return "".equals( s ) ? null : s;
 	}
-	
+
 	public static String escape( String s , char escape )
 	{
 		StringBuilder sb = new StringBuilder( );
-		
+
 		boolean inEscape = false;
 		for( int i = 0 ; i < s.length( ) ; i++ )
 		{
@@ -146,7 +147,7 @@ public class StringUtils
 		}
 		return sb.toString( );
 	}
-	
+
 	public static int unescapedIndexOf( String s , char c , char escape )
 	{
 		boolean inEscape = false;

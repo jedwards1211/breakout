@@ -24,6 +24,11 @@ public class Shot extends QSpec
 		super( index , from , to , vector , fromXsect , toXsect , distUnit , angleUnit );
 	}
 
+	protected Shot( Property<?> ... properties )
+	{
+		super( spec , properties );
+	}
+
 	@SuppressWarnings( "rawtypes" )
 	@Override
 	public boolean equals( QObject a , Object b )

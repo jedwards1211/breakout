@@ -19,38 +19,52 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.swing.table;
+package org.andork.breakout.table;
 
+import java.awt.Color;
 import java.awt.Component;
+import java.util.function.Function;
 
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
 
 @SuppressWarnings( "serial" )
-public class CheckboxTableCellRenderer extends DefaultTableCellRenderer implements TableCellRenderer
+public class ParsedTextTableCellRenderer extends DefaultTableCellRenderer
 {
-	JCheckBox	checkBox;
-	
-	public CheckboxTableCellRenderer( JCheckBox checkBox )
+	private Function<Object, Color>		noteColor;
+	private Function<Object, String>	noteMessage;
+
+	public ParsedTextTableCellRenderer( Function<Object, Color> noteColor , Function<Object, String> noteMessage )
 	{
 		super( );
-		this.checkBox = checkBox;
+		this.noteColor = noteColor;
+		this.noteMessage = noteMessage;
 	}
-	
+
 	@Override
-	public Component getTableCellRendererComponent( JTable table , Object value , boolean isSelected , boolean hasFocus , int row , int column )
+	public Component getTableCellRendererComponent( JTable table , Object value , boolean isSelected ,
+		boolean hasFocus , int row , int column )
 	{
-		JComponent superRenderer = ( JComponent ) super.getTableCellRendererComponent( table , value , isSelected , hasFocus , row , column );
-		checkBox.setSelected( value == Boolean.TRUE );
-		checkBox.setEnabled( table.isCellEditable( row , column ) );
-		checkBox.setBackground( superRenderer.getBackground( ) );
-		checkBox.setForeground( superRenderer.getForeground( ) );
-		checkBox.setFont( superRenderer.getFont( ) );
-		checkBox.setBorder( superRenderer.getBorder( ) );
-		return checkBox;
+		JComponent renderer = ( JComponent ) super.getTableCellRendererComponent( table , value , isSelected ,
+			hasFocus , row , column );
+
+		if( !isSelected )
+		{
+			renderer.setBackground( null );
+		}
+
+		if( value instanceof ParsedText )
+		{
+			ParsedText pt = ( ParsedText ) value;
+			Color color = pt.note == null ? null : noteColor.apply( pt.note );
+			if( color != null )
+			{
+				renderer.setBackground( color );
+			}
+			renderer.setToolTipText( pt.note == null ? null : noteMessage.apply( pt.note ) );
+		}
+
+		return renderer;
 	}
-	
 }

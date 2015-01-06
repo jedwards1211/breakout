@@ -132,6 +132,17 @@ public class QSpec
 			return oldValue;
 		}
 
+		@SuppressWarnings( "unchecked" )
+		public <C> Property<C> cast( Class<C> type )
+		{
+			if( !this.type.isAssignableFrom( type ) )
+			{
+				throw new IllegalArgumentException( "property type (" + this.type.getName( )
+					+ ") is not assignable from " + type.getName( ) );
+			}
+			return ( Property<C> ) this;
+		}
+
 		public final int index( )
 		{
 			return index;
@@ -262,6 +273,18 @@ public class QSpec
 	public final List<Property<?>> properties( )
 	{
 		return propertyList;
+	}
+
+	public final Property<?> propertyNamed( String name )
+	{
+		for( int i = 0 ; i < properties.length ; i++ )
+		{
+			if( name.equals( properties[ i ].name ) )
+			{
+				return properties[ i ];
+			}
+		}
+		return null;
 	}
 
 	public final int propertyCount( )
