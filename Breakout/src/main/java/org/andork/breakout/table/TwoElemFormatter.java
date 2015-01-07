@@ -1,12 +1,11 @@
 package org.andork.breakout.table;
 
 import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import org.andork.util.StringUtils;
 
-public class TwoElemFormatter<E> implements BiFunction<E, E, String>
+public class TwoElemFormatter<E> implements Function<E[ ], String>
 {
 	public Function<E, String>	elemFormatter;
 	int							elemWidth	= 5;
@@ -32,16 +31,16 @@ public class TwoElemFormatter<E> implements BiFunction<E, E, String>
 	}
 
 	@Override
-	public String apply( E a , E b )
+	public String apply( E[ ] e )
 	{
-		if( a == null && b == null )
+		if( e[ 0 ] == null && e[ 1 ] == null )
 		{
 			return null;
 		}
 		StringBuilder sb = new StringBuilder( );
-		sb.append( StringUtils.pad( a == null ? "-" : elemFormatter.apply( a ) , ' ' , elemWidth , false ) );
+		sb.append( StringUtils.pad( e[ 0 ] == null ? "-" : elemFormatter.apply( e[ 0 ] ) , ' ' , elemWidth , false ) );
 		sb.append( '/' );
-		sb.append( StringUtils.pad( b == null ? "-" : elemFormatter.apply( b ) , ' ' , elemWidth , false ) );
+		sb.append( StringUtils.pad( e[ 1 ] == null ? "-" : elemFormatter.apply( e[ 1 ] ) , ' ' , elemWidth , false ) );
 		return sb.toString( );
 	}
 }

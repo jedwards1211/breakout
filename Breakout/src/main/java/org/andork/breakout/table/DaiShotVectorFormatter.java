@@ -1,33 +1,37 @@
 package org.andork.breakout.table;
 
+import java.text.MessageFormat;
 import java.util.function.DoubleFunction;
 import java.util.function.Function;
 
+import org.andork.bind2.Binder;
 import org.andork.util.StringUtils;
 
 public class DaiShotVectorFormatter implements Function<DaiShotVector, String>
 {
-	DoubleFunction<String>		doubleFormatter;
-	TwoElemFormatter<Double>	twoElemFormatter;
-	int							distWidth	= 9;
+	DoubleFunction<String>	doubleFormatter;
+	Binder<String>			messageFormatBinder;
 
-	public DaiShotVectorFormatter( DoubleFunction<String> doubleFormatter )
+	int						distWidth	= 9;
+	int						azmWidth	= 5;
+	int						incWidth	= 5;
+
+	public DaiShotVectorFormatter( DoubleFunction<String> doubleFormatter , Binder<String> messageFormatBinder )
 	{
 		super( );
 		this.doubleFormatter = doubleFormatter;
-		this.twoElemFormatter = new TwoElemFormatter<>( d -> doubleFormatter.apply( d ) );
+		this.messageFormatBinder = messageFormatBinder;
 	}
 
 	@Override
 	public String apply( DaiShotVector t )
 	{
-		StringBuilder sb = new StringBuilder( );
-		sb.append( "Dist: " );
-		sb.append( StringUtils.pad( t.dist == null ? "--" : doubleFormatter.apply( t.dist ) , ' ' , distWidth , false ) );
-		sb.append( "  Azm: " );
-		sb.append( twoElemFormatter.apply( t.azmFs , t.azmBs ) );
-		sb.append( "  Inc: " );
-		sb.append( twoElemFormatter.apply( t.incFs , t.incBs ) );
-		return sb.toString( );
+		return MessageFormat.format( messageFormatBinder.get( ) ,
+			StringUtils.pad( t.dist == null ? "--" : doubleFormatter.apply( t.dist ) , ' ' , distWidth , false ) ,
+			StringUtils.pad( t.azmFs == null ? "-" : doubleFormatter.apply( t.azmFs ) , ' ' , azmWidth , false ) ,
+			StringUtils.pad( t.azmBs == null ? "-" : doubleFormatter.apply( t.azmBs ) , ' ' , azmWidth , false ) ,
+			StringUtils.pad( t.incFs == null ? "-" : doubleFormatter.apply( t.incFs ) , ' ' , incWidth , false ) ,
+			StringUtils.pad( t.incBs == null ? "-" : doubleFormatter.apply( t.incBs ) , ' ' , incWidth , false )
+			);
 	}
 }

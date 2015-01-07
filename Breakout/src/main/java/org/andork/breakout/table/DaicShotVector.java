@@ -21,13 +21,6 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
-public class OffsetShotVector extends ShotVector
+public class DaicShotVector extends DaiShotVector
 {
-	public Double		n;
-	public Double		e;
-	public Double		d;
-
-	public ParsedText	nText;
-	public ParsedText	eText;
-	public ParsedText	dText;
 }

@@ -3,6 +3,7 @@ package org.andork.breakout.table;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.List;
+import java.util.function.Function;
 
 import javax.swing.JPanel;
 import javax.swing.JTable;
@@ -11,21 +12,24 @@ import javax.swing.table.TableCellRenderer;
 import org.andork.swing.selector.DefaultSelector;
 
 @SuppressWarnings( "serial" )
-public class ParsedTextWithTypeTableCellRenderer extends JPanel implements TableCellRenderer
+public class TypeTableCellRenderer extends JPanel implements TableCellRenderer
 {
-	TableCellRenderer		wrapped;
-	DefaultSelector<Object>	typeSelector;
+	TableCellRenderer			wrapped;
+	Function<Object, Object>	typeFunction;
+	DefaultSelector<Object>		typeSelector;
 
-	public ParsedTextWithTypeTableCellRenderer( TableCellRenderer wrapped )
+	public TypeTableCellRenderer( TableCellRenderer wrapped , Function<Object, Object> typeFunction )
 	{
-		this( wrapped , createDefaultSelector( ) );
+		this( wrapped , typeFunction , createDefaultSelector( ) );
 	}
 
-	public ParsedTextWithTypeTableCellRenderer( TableCellRenderer wrapped , DefaultSelector<Object> typeSelector )
+	public TypeTableCellRenderer( TableCellRenderer wrapped , Function<Object, Object> typeFunction ,
+		DefaultSelector<Object> typeSelector )
 	{
 		super( );
 		this.wrapped = wrapped;
 		this.typeSelector = typeSelector;
+		this.typeFunction = typeFunction;
 		setLayout( new BorderLayout( ) );
 	}
 
@@ -43,15 +47,12 @@ public class ParsedTextWithTypeTableCellRenderer extends JPanel implements Table
 		Component wrappedComp = wrapped.getTableCellRendererComponent( table , value , isSelected , hasFocus , row ,
 			column );
 		removeAll( );
-		if( value == null || value instanceof ParsedTextWithType )
-		{
-			ParsedTextWithType pt = ( ParsedTextWithType ) value;
-			typeSelector.setSelection( pt == null ? null : pt.type );
-			add( wrappedComp , BorderLayout.CENTER );
-			add( typeSelector.getComboBox( ) , BorderLayout.EAST );
-			return this;
-		}
-		return wrappedComp;
+
+		Object type = value == null ? null : typeFunction.apply( value );
+		typeSelector.setSelection( type );
+		add( wrappedComp , BorderLayout.CENTER );
+		add( typeSelector.getComboBox( ) , BorderLayout.EAST );
+		return this;
 	}
 
 	public DefaultSelector<Object> typeSelector( )

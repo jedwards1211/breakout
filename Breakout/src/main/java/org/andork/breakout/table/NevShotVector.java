@@ -21,19 +21,13 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
-public abstract class DaiShotVector extends ShotVector
+public abstract class NevShotVector extends ShotVector
 {
-	public Double		dist;
-	public Double		azmFs;
-	public Double		azmBs;
-	public Double		incFs;
-	public Double		incBs;
+	public Double		n;
+	public Double		e;
+	public Double		v;
 
-	public ParsedText	distText;
-	public ParsedText	azmFsBsText;
-	public ParsedText	azmFsText;
-	public ParsedText	azmBsText;
-	public ParsedText	incFsBsText;
-	public ParsedText	incFsText;
-	public ParsedText	incBsText;
+	public ParsedText	nText;
+	public ParsedText	eText;
+	public ParsedText	vText;
 }

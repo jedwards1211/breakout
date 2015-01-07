@@ -8,6 +8,7 @@ import javax.swing.JTable;
 
 import org.andork.bind2.DefaultBinder;
 import org.andork.breakout.model.NewProjectModel;
+import org.andork.i18n.I18n;
 import org.andork.q2.QArrayObject;
 import org.andork.q2.QObject;
 import org.andork.swing.QuickTestFrame;
@@ -16,12 +17,13 @@ public class ShotTableTest
 {
 	public static void main( String[ ] args )
 	{
+		I18n i18n = new I18n( );
+
 		Shot shot0 = new Shot( );
 
-		DaiShotVector vector = new DaiShotVector( );
+		DaicShotVector vector = new DaicShotVector( );
 
-		vector.dist = 5.0;
-		vector.distText = new ParsedText( "5.00" , null );
+		vector.distText = new ParsedText( "a5.00" , null );
 		vector.azmFs = 10.0;
 		vector.azmFsText = new ParsedText( "10.00" , null );
 		vector.incFs = 23.5;
@@ -35,11 +37,11 @@ public class ShotTableTest
 
 		Shot shot1 = new Shot( );
 
-		OffsetShotVector vect1 = new OffsetShotVector( );
+		NedShotVector vect1 = new NedShotVector( );
 		vect1.n = 100.0;
-		vect1.d = 205.0;
+		vect1.v = 205.0;
 		vect1.nText = new ParsedText( "100" , null );
-		vect1.dText = new ParsedText( "205" , null );
+		vect1.vText = new ParsedText( "205" , null );
 
 		shot1.vector = vect1;
 		shot1.custom = new Object[ 2 ];
@@ -60,7 +62,7 @@ public class ShotTableTest
 
 		QObject<NewProjectModel> model = QArrayObject.create( NewProjectModel.spec );
 
-		ShotTableModelPresenter presenter = new ShotTableModelPresenter( new DefaultBinder<>( model ) );
+		ShotTableModel presenter = new ShotTableModel( i18n , new DefaultBinder<>( model ) );
 		model.set( NewProjectModel.decimalSep , ',' );
 
 		presenter.setShotList( shotList );
@@ -71,7 +73,7 @@ public class ShotTableTest
 
 		shotList.add( shot1 );
 
-		ShotTableColumnModelPresenter columnModel = new ShotTableColumnModelPresenter( );
+		ShotTableColumnModel columnModel = new ShotTableColumnModel( i18n );
 		columnModel.update( presenter , Arrays.asList(
 			ShotColumnDef.from ,
 			ShotColumnDef.to ,
@@ -85,7 +87,10 @@ public class ShotTableTest
 			ShotColumnDef.incBs ,
 			ShotColumnDef.offsN ,
 			ShotColumnDef.offsE ,
-			ShotColumnDef.offsD ) );
+			ShotColumnDef.offsD ,
+			new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
+			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
+			) );
 
 		table.setColumnModel( columnModel );
 
