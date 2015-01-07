@@ -23,11 +23,18 @@ package org.andork.breakout.table;
 
 public abstract class NevShotVector extends ShotVector
 {
-	public Double		n;
-	public Double		e;
-	public Double		v;
+	public Double	n;
+	public Double	e;
+	public Double	v;
 
-	public ParsedText	nText;
-	public ParsedText	eText;
-	public ParsedText	vText;
+	public void copyApplicableProps( ShotVector other )
+	{
+		if( other instanceof NevShotVector )
+		{
+			NevShotVector o = ( NevShotVector ) other;
+			n = o.n;
+			e = o.e;
+			v = o.v;
+		}
+	}
 }

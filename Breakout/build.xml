@@ -13,6 +13,7 @@
 	<property name="swingx-lib" location="C:/Program Files/Java/swingx-1.6.4" />
 	<property name="commons-io-lib" location="C:/Program Files/Java/commons-io-2.4" />
 	<property name="snakeyaml-lib" location="C:/Program Files/Java/snakeyaml-1.11" />
+	<property name="deploy-dir" location="C:/Users/James/html/breakout" />
 
 	<target name="init">
 		<!-- Create the time stamp -->
@@ -373,6 +374,12 @@
 	<target name="dist-all">
 		<antcall target="dist-all-desktops" />
 		<antcall target="dist-sources" />
+	</target>
+
+	<target name="deploy-all">
+		<script language="javascript">
+			print("Deploy dir: " + breakout.getProperty("deploy-dir"));
+		</script>
 	</target>
 
 	<target name="dist-tools">

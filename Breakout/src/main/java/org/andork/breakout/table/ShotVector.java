@@ -23,5 +23,7 @@ package org.andork.breakout.table;
 
 public abstract class ShotVector
 {
-	public ParsedText	combinedText;
+	public void copyApplicableProps( ShotVector other )
+	{
+	}
 }

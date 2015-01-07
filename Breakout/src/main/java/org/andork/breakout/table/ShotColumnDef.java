@@ -44,6 +44,6 @@ public class ShotColumnDef
 	public static final ShotColumnDef	incBs	= new ShotColumnDef( "incBs" , ShotColumnType.BUILTIN );
 	public static final ShotColumnDef	offsN	= new ShotColumnDef( "offsN" , ShotColumnType.BUILTIN );
 	public static final ShotColumnDef	offsE	= new ShotColumnDef( "offsE" , ShotColumnType.BUILTIN );
-	public static final ShotColumnDef	offsD	= new ShotColumnDef( "offsD" , ShotColumnType.BUILTIN );
+	public static final ShotColumnDef	offsV	= new ShotColumnDef( "offsV" , ShotColumnType.BUILTIN );
 
 }

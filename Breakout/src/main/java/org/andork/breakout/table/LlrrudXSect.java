@@ -6,9 +6,4 @@ public class LlrrudXSect extends UdXSect
 	public Double		le;
 	public Double		rn;
 	public Double		re;
-
-	public ParsedText	lnText;
-	public ParsedText	leText;
-	public ParsedText	rnText;
-	public ParsedText	reText;
 }

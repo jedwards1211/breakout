@@ -23,13 +23,15 @@ public class ShotTableTest
 
 		DaicShotVector vector = new DaicShotVector( );
 
-		vector.distText = new ParsedText( "a5.00" , new ParseNote( "Value contains invalid characters" ,
-			ParseStatus.ERROR ) );
+		shot0.text.put( ShotColumnDef.dist , new ParsedText( "a5.00" , new ParseNote(
+			"Value contains invalid characters" ,
+			ParseStatus.ERROR ) ) );
 		vector.azmFs = -30.0;
-		vector.azmFsText = new ParsedText( "-30.00" , new ParseNote( "Azimuth < 0" , ParseStatus.WARNING ) );
+		shot0.text.put( ShotColumnDef.azmFs , new ParsedText( "-30.00" , new ParseNote( "Azimuth < 0" ,
+			ParseStatus.WARNING ) ) );
 		vector.incFs = 23.5;
 		vector.incBs = 26.0;
-		vector.incFsBsText = new ParsedText( "23.5  /26.0" , null );
+		shot0.text.put( ShotColumnDef.incFsBs , new ParsedText( "23.5  /26.0" , null ) );
 
 		shot0.vector = vector;
 		shot0.from = "A1";
@@ -41,8 +43,8 @@ public class ShotTableTest
 		NedShotVector vect1 = new NedShotVector( );
 		vect1.n = 100.0;
 		vect1.v = 205.0;
-		vect1.nText = new ParsedText( "100" , null );
-		vect1.vText = new ParsedText( "205" , null );
+		shot1.text.put( ShotColumnDef.offsN , new ParsedText( "100" , null ) );
+		shot1.text.put( ShotColumnDef.offsV , new ParsedText( "205" , null ) );
 
 		shot1.vector = vect1;
 		shot1.custom = new Object[ 2 ];
@@ -88,7 +90,7 @@ public class ShotTableTest
 			ShotColumnDef.incBs ,
 			ShotColumnDef.offsN ,
 			ShotColumnDef.offsE ,
-			ShotColumnDef.offsD ,
+			ShotColumnDef.offsV ,
 			new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
 			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
 			) );

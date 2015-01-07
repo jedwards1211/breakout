@@ -11,6 +11,7 @@ import java.util.function.IntFunction;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
@@ -44,6 +45,9 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 	private Function<Double[ ], String>				twoDoubleFormatter	= new TwoElemFormatter<>(
 																			d -> doubleFormatter
 																				.apply( d ) );
+
+	private Function<String, ParsedTextWithValue>	doubleParser;
+
 	private Function<DaiShotVector, String>			daiShotVectorFormatter;
 	private Function<NevShotVector, String>			nedShotVectorFormatter;
 	private Function<NevShotVector, String>			neelShotVectorFormatter;
@@ -55,6 +59,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 
 	private TableCellRenderer						intRenderer;
 	private TableCellRenderer						doubleRenderer;
+	private TableCellEditor							doubleEditor;
 	private TableCellRenderer						twoDoubleRenderer;
 	private TableCellRenderer						vectorValueRender;
 	private TypeTableCellRenderer					vectorRenderer;
@@ -126,6 +131,8 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 			new ParsedTextWithValueTableCellRenderer(
 				v -> v instanceof Double ? doubleFormatter.apply( ( Double ) v ) : null ,
 				noteColor , noteMessage );
+		doubleParser = new DefaultParser( Double::parseDouble );
+		doubleEditor = new ParsedTextWithValueCellEditor( doubleParser );
 
 		twoDoubleRenderer =
 			new ParsedTextWithValueTableCellRenderer(
@@ -152,6 +159,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		distColumn = new TableColumn( );
 		distColumn.setIdentifier( ShotColumnDef.dist );
 		distColumn.setCellRenderer( doubleRenderer );
+		distColumn.setCellEditor( doubleEditor );
 
 		azmFsBsColumn = new TableColumn( );
 		azmFsBsColumn.setIdentifier( ShotColumnDef.azmFsBs );
@@ -160,10 +168,12 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		azmFsColumn = new TableColumn( );
 		azmFsColumn.setIdentifier( ShotColumnDef.azmFs );
 		azmFsColumn.setCellRenderer( doubleRenderer );
+		azmFsColumn.setCellEditor( doubleEditor );
 
 		azmBsColumn = new TableColumn( );
 		azmBsColumn.setIdentifier( ShotColumnDef.azmBs );
 		azmBsColumn.setCellRenderer( doubleRenderer );
+		azmBsColumn.setCellEditor( doubleEditor );
 
 		incFsBsColumn = new TableColumn( );
 		incFsBsColumn.setIdentifier( ShotColumnDef.incFsBs );
@@ -172,22 +182,27 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		incFsColumn = new TableColumn( );
 		incFsColumn.setIdentifier( ShotColumnDef.incFs );
 		incFsColumn.setCellRenderer( doubleRenderer );
+		incFsColumn.setCellEditor( doubleEditor );
 
 		incBsColumn = new TableColumn( );
 		incBsColumn.setIdentifier( ShotColumnDef.incBs );
 		incBsColumn.setCellRenderer( doubleRenderer );
+		incBsColumn.setCellEditor( doubleEditor );
 
 		offsNColumn = new TableColumn( );
 		offsNColumn.setIdentifier( ShotColumnDef.offsN );
 		offsNColumn.setCellRenderer( doubleRenderer );
+		offsNColumn.setCellEditor( doubleEditor );
 
 		offsEColumn = new TableColumn( );
 		offsEColumn.setIdentifier( ShotColumnDef.offsE );
 		offsEColumn.setCellRenderer( doubleRenderer );
+		offsEColumn.setCellEditor( doubleEditor );
 
 		offsDColumn = new TableColumn( );
-		offsDColumn.setIdentifier( ShotColumnDef.offsD );
+		offsDColumn.setIdentifier( ShotColumnDef.offsV );
 		offsDColumn.setCellRenderer( doubleRenderer );
+		offsDColumn.setCellEditor( doubleEditor );
 
 		for( TableColumn column : Arrays.asList(
 			fromColumn ,
