@@ -23,9 +23,10 @@ public class ShotTableTest
 
 		DaicShotVector vector = new DaicShotVector( );
 
-		vector.distText = new ParsedText( "a5.00" , null );
-		vector.azmFs = 10.0;
-		vector.azmFsText = new ParsedText( "10.00" , null );
+		vector.distText = new ParsedText( "a5.00" , new ParseNote( "Value contains invalid characters" ,
+			ParseStatus.ERROR ) );
+		vector.azmFs = -30.0;
+		vector.azmFsText = new ParsedText( "-30.00" , new ParseNote( "Azimuth < 0" , ParseStatus.WARNING ) );
 		vector.incFs = 23.5;
 		vector.incBs = 26.0;
 		vector.incFsBsText = new ParsedText( "23.5  /26.0" , null );

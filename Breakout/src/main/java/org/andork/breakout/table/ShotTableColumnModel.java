@@ -93,8 +93,23 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 
 		Function<Object, Color> noteColor =
 			n -> n instanceof ParseNote ? noteColors.get( ( ( ParseNote ) n ).status ) : null;
-		Function<Object, String> noteMessage =
-			n -> n instanceof ParseNote ? ( ( ParseNote ) n ).messageKey : null;
+		Function<Object, String> noteMessage = n ->
+		{
+			if( n instanceof ParseNote )
+			{
+				ParseNote note = ( ParseNote ) n;
+				if( note.messageKey != null )
+				{
+					String message = localizer.getString( note.messageKey );
+					if( note.status == ParseStatus.WARNING || note.status == ParseStatus.ERROR )
+					{
+						message = localizer.getFormattedString( note.status.toString( ) , message );
+					}
+					return message;
+				}
+			}
+			return null;
+		};
 
 		fromColumn = new TableColumn( );
 		fromColumn.setIdentifier( ShotColumnDef.from );
