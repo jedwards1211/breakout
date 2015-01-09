@@ -27,7 +27,7 @@ public abstract class QMapObject<S extends QSpec> extends QObject<S>
 		values = createValuesMap( );
 		for( Property<?> property : spec.propertyList )
 		{
-			Object initValue = property.initValue( );
+			Object initValue = property.initValue( ).get( );
 			if( initValue != null )
 			{
 				values.put( property , initValue );

@@ -14,18 +14,22 @@ import org.andork.util.StringUtils;
 public class ParsedTextWithValueCellEditor extends DefaultCellEditor
 {
 	Function<String, ParsedTextWithValue>	parser;
+	Function<Object, String>				valueFormatter;
 
-	public ParsedTextWithValueCellEditor( Function<String, ParsedTextWithValue> parser )
+	public ParsedTextWithValueCellEditor( Function<String, ParsedTextWithValue> parser ,
+		Function<Object, String> valueFormatter )
 	{
 		super( new JTextField( ) );
 		this.parser = parser;
+		this.valueFormatter = valueFormatter;
 	}
 
-	private static String textOf( Object value )
+	private String textOf( Object value )
 	{
-		if( value instanceof ParsedText )
+		if( value instanceof ParsedTextWithValue )
 		{
-			return ( ( ParsedText ) value ).text;
+			ParsedTextWithValue pt = ( ParsedTextWithValue ) value;
+			return pt.text != null ? pt.text : pt.value != null ? valueFormatter.apply( pt.value ) : null;
 		}
 		return null;
 	}

@@ -24,6 +24,7 @@ package org.andork.breakout.table;
 import java.awt.Color;
 import java.awt.Component;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -32,17 +33,20 @@ import javax.swing.table.DefaultTableCellRenderer;
 @SuppressWarnings( "serial" )
 public class ParsedTextWithValueTableCellRenderer extends DefaultTableCellRenderer
 {
-	private Function<Object, Object>	valueRenderer;
+	private Function<Object, ?>			valueFormatter;
+	private Predicate<Object>			isError;
 	private Function<Object, Color>		noteColor;
 	private Function<Object, String>	noteMessage;
 
 	public ParsedTextWithValueTableCellRenderer(
-		Function<Object, Object> valueRenderer ,
+		Function<Object, ?> valueFormatter ,
+		Predicate<Object> isError ,
 		Function<Object, Color> noteColor ,
 		Function<Object, String> noteMessage )
 	{
 		super( );
-		this.valueRenderer = valueRenderer;
+		this.valueFormatter = valueFormatter;
+		this.isError = isError;
 		this.noteColor = noteColor;
 		this.noteMessage = noteMessage;
 	}
@@ -56,9 +60,9 @@ public class ParsedTextWithValueTableCellRenderer extends DefaultTableCellRender
 		if( value instanceof ParsedTextWithValue )
 		{
 			ParsedTextWithValue p = ( ParsedTextWithValue ) value;
-			if( p.value != null )
+			if( p.value != null && ( p.note == null || !isError.test( p.note ) ) )
 			{
-				superValue = valueRenderer.apply( p.value );
+				superValue = valueFormatter.apply( p.value );
 			}
 			else
 			{

@@ -21,9 +21,77 @@
  *******************************************************************************/
 package org.andork.breakout.table;
 
+/**
+ * Measurements that define the vector from one survey station to another. There are different types.
+ * 
+ * @author James
+ */
 public abstract class ShotVector
 {
 	public void copyApplicableProps( ShotVector other )
 	{
+	}
+
+	/**
+	 * A distance, azimuth, and inclination (DAI) measurement.
+	 * 
+	 * @author James
+	 */
+	public static abstract class Dai extends ShotVector
+	{
+		public Double	dist;
+		public Double	azmFs;
+		public Double	azmBs;
+		public Double	incFs;
+		public Double	incBs;
+
+		public void copyApplicableProps( ShotVector other )
+		{
+			if( other instanceof Dai )
+			{
+				Dai o = ( Dai ) other;
+				dist = o.dist;
+				azmFs = o.azmFs;
+				azmBs = o.azmBs;
+				incFs = o.incFs;
+				incBs = o.incBs;
+			}
+		}
+
+		public static class c extends Dai
+		{
+		}
+
+		public static class u extends Dai
+		{
+		}
+	}
+
+	public static abstract class Nev extends ShotVector
+	{
+		public Double	n;
+		public Double	e;
+		public Double	v;
+
+		public void copyApplicableProps( ShotVector other )
+		{
+			if( other instanceof Nev )
+			{
+				Nev o = ( Nev ) other;
+				n = o.n;
+				e = o.e;
+				v = o.v;
+			}
+		}
+
+		public static class d extends Nev
+		{
+
+		}
+
+		public static class el extends Nev
+		{
+
+		}
 	}
 }

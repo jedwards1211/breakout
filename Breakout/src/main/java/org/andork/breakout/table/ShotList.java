@@ -5,123 +5,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Objects;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.swing.table.TableModelList;
-import org.andork.unit.Angle;
-import org.andork.unit.Length;
-import org.andork.unit.Unit;
 
 public class ShotList extends TableModelList<Shot>
 {
-	private Class<? extends ShotVector>		defaultVectorType		= DaicShotVector.class;
-	private Class<? extends DaiShotVector>	defaultDaiVectorType	= DaicShotVector.class;
-	private Class<? extends NevShotVector>	defaultNevVectorType	= NedShotVector.class;
-	private Class<? extends XSect>			defaultXSectType		= BisectorLrudXSect.class;
-	private Unit<Length>					defaultLengthUnit		= Length.meters;
-	private Unit<Angle>						defaultAngleUnit		= Angle.degrees;
-
-	private List<ShotColumnDef>				customColumnDefs		= Collections.emptyList( );
-
-	public ShotVector newDefaultVector( )
-	{
-		try
-		{
-			return defaultVectorType.newInstance( );
-		}
-		catch( Exception e )
-		{
-			e.printStackTrace( );
-			return null;
-		}
-	}
-
-	public Class<? extends ShotVector> getDefaultVectorType( )
-	{
-		return defaultVectorType;
-	}
-
-	public void setDefaultVectorType( Class<? extends ShotVector> defaultVectorType )
-	{
-		this.defaultVectorType = Objects.requireNonNull( defaultVectorType );
-	}
-
-	public DaiShotVector newDefaultDaiVector( )
-	{
-		try
-		{
-			return defaultDaiVectorType.newInstance( );
-		}
-		catch( Exception e )
-		{
-			e.printStackTrace( );
-			return null;
-		}
-	}
-
-	public Class<? extends DaiShotVector> getDefaultDaiVectorType( )
-	{
-		return defaultDaiVectorType;
-	}
-
-	public void setDefaultDaiVectorType( Class<? extends DaiShotVector> defaultDaiVectorType )
-	{
-		this.defaultDaiVectorType = Objects.requireNonNull( defaultDaiVectorType );
-	}
-
-	public NevShotVector newDefaultNevVector( )
-	{
-		try
-		{
-			return defaultNevVectorType.newInstance( );
-		}
-		catch( Exception e )
-		{
-			e.printStackTrace( );
-			return null;
-		}
-	}
-
-	public Class<? extends NevShotVector> getDefaultNevVectorType( )
-	{
-		return defaultNevVectorType;
-	}
-
-	public void setDefaultNevVectorType( Class<? extends NevShotVector> defaultNevVectorType )
-	{
-		this.defaultNevVectorType = Objects.requireNonNull( defaultNevVectorType );
-	}
-
-	public Class<? extends XSect> getDefaultXSectType( )
-	{
-		return defaultXSectType;
-	}
-
-	public void setDefaultXSectType( Class<? extends XSect> defaultXSectType )
-	{
-		this.defaultXSectType = Objects.requireNonNull( defaultXSectType );
-	}
-
-	public Unit<Length> getDefaultLengthUnit( )
-	{
-		return defaultLengthUnit;
-	}
-
-	public void setDefaultLengthUnit( Unit<Length> defaultLengthUnit )
-	{
-		this.defaultLengthUnit = Objects.requireNonNull( defaultLengthUnit );
-	}
-
-	public Unit<Angle> getDefaultAngleUnit( )
-	{
-		return defaultAngleUnit;
-	}
-
-	public void setDefaultAngleUnit( Unit<Angle> defaultAngleUnit )
-	{
-		this.defaultAngleUnit = Objects.requireNonNull( defaultAngleUnit );
-	}
+	private List<ShotColumnDef>	customColumnDefs	= Collections.emptyList( );
 
 	public List<ShotColumnDef> getCustomColumnDefs( )
 	{

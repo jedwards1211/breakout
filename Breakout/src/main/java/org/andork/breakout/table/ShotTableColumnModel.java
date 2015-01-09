@@ -5,11 +5,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.DoubleFunction;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.JLabel;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -17,6 +19,10 @@ import javax.swing.table.TableColumn;
 
 import org.andork.bind2.Binder;
 import org.andork.bind2.Binding;
+import org.andork.breakout.table.ShotVector.Dai.c;
+import org.andork.breakout.table.ShotVector.Dai.u;
+import org.andork.breakout.table.ShotVector.Nev.d;
+import org.andork.breakout.table.ShotVector.Nev.el;
 import org.andork.i18n.I18n;
 import org.andork.i18n.I18n.Localizer;
 import org.andork.swing.list.FunctionListCellRenderer;
@@ -24,97 +30,66 @@ import org.andork.swing.list.FunctionListCellRenderer;
 @SuppressWarnings( "serial" )
 public class ShotTableColumnModel extends DefaultTableColumnModel
 {
-	public final TableColumn						fromColumn;
-	public final TableColumn						toColumn;
-	public final TableColumn						vectorColumn;
-	public final TableColumn						distColumn;
-	public final TableColumn						azmFsBsColumn;
-	public final TableColumn						azmFsColumn;
-	public final TableColumn						azmBsColumn;
-	public final TableColumn						incFsBsColumn;
-	public final TableColumn						incFsColumn;
-	public final TableColumn						incBsColumn;
-	public final TableColumn						offsNColumn;
-	public final TableColumn						offsEColumn;
-	public final TableColumn						offsDColumn;
+	public final TableColumn								fromColumn;
+	public final TableColumn								toColumn;
+	public final TableColumn								vectorColumn;
+	public final TableColumn								distColumn;
+	public final TableColumn								azmFsBsColumn;
+	public final TableColumn								azmFsColumn;
+	public final TableColumn								azmBsColumn;
+	public final TableColumn								incFsBsColumn;
+	public final TableColumn								incFsColumn;
+	public final TableColumn								incBsColumn;
+	public final TableColumn								offsNColumn;
+	public final TableColumn								offsEColumn;
+	public final TableColumn								offsDColumn;
 
-	private final Map<ShotColumnDef, TableColumn>	builtInColumns		= new HashMap<>( );
+	private final Map<ShotColumnDef, TableColumn>			builtInColumns	= new HashMap<>( );
 
-	private IntFunction<String>						intFormatter		= Integer::toString;
-	private DoubleFunction<String>					doubleFormatter		= Double::toString;
-	private Function<Double[ ], String>				twoDoubleFormatter	= new TwoElemFormatter<>(
-																			d -> doubleFormatter
-																				.apply( d ) );
+	private ShotTableFormats								formats;
 
-	private Function<String, ParsedTextWithValue>	doubleParser;
+	private IntFunction<String>								intFormatter	= Integer::toString;
 
-	private Function<DaiShotVector, String>			daiShotVectorFormatter;
-	private Function<NevShotVector, String>			nedShotVectorFormatter;
-	private Function<NevShotVector, String>			neelShotVectorFormatter;
-	private Function<ShotVector, String>			shotVectorFormatter;
+	private final Map<ParseStatus, Color>					noteColors;
 
-	private final Map<ParseStatus, Color>			noteColors;
+	private final Localizer									localizer;
 
-	private final Localizer							localizer;
+	private TableCellRenderer								intRenderer;
 
-	private TableCellRenderer						intRenderer;
-	private TableCellRenderer						doubleRenderer;
-	private TableCellEditor							doubleEditor;
-	private TableCellRenderer						twoDoubleRenderer;
-	private TableCellRenderer						vectorValueRender;
-	private TypeTableCellRenderer					vectorRenderer;
+	private Function<String, ParsedTextWithValue>			doubleParser;
+	private TableCellRenderer								doubleRenderer;
+	private TableCellEditor									doubleEditor;
 
-	public ShotTableColumnModel( I18n i18n )
+	private TableCellRenderer								twoDoubleRenderer;
+	private TableCellRenderer								lengthRenderer;
+	private TableCellEditor									lengthEditor;
+	private TableCellRenderer								angleRenderer;
+	private TableCellEditor									angleEditor;
+	private TableCellRenderer								azmPairRenderer;
+	private TableCellRenderer								incPairRenderer;
+
+	private Function<Object, Object>						vectorTypeGetter;
+	private BiFunction<Object, String, ParsedTextWithValue>	vectorParser;
+	private TableCellRenderer								vectorValueRender;
+	private TypeTableCellRenderer							vectorRenderer;
+	private TypedParsedTextWithValueCellEditor				vectorEditor;
+
+	public ShotTableColumnModel( I18n i18n , ShotTableFormats formats )
 	{
 		localizer = i18n.forClass( ShotTableColumnModel.class );
 
-		daiShotVectorFormatter = new DaiShotVectorFormatter( d -> doubleFormatter.apply( d ) ,
-			localizer.stringBinder( DaiShotVector.class.getName( ) + ".format" ) );
-		nedShotVectorFormatter = new NevShotVectorFormatter( d -> doubleFormatter.apply( d ) ,
-			localizer.stringBinder( NedShotVector.class.getName( ) + ".format" ) );
-		neelShotVectorFormatter = new NevShotVectorFormatter( d -> doubleFormatter.apply( d ) ,
-			localizer.stringBinder( NeelShotVector.class.getName( ) + ".format" ) );
-
-		shotVectorFormatter = v ->
-		{
-			if( v instanceof DaiShotVector )
-			{
-				return daiShotVectorFormatter.apply( ( DaiShotVector ) v );
-			}
-			else if( v instanceof NedShotVector )
-			{
-				return nedShotVectorFormatter.apply( ( NedShotVector ) v );
-			}
-			else if( v instanceof NeelShotVector )
-			{
-				return neelShotVectorFormatter.apply( ( NeelShotVector ) v );
-			}
-			return v.toString( );
-		};
+		this.formats = formats;
 
 		noteColors = new HashMap<>( );
 		noteColors.put( ParseStatus.WARNING , Color.YELLOW );
 		noteColors.put( ParseStatus.ERROR , Color.RED );
 
+		Predicate<Object> isError =
+			n -> n instanceof ParseNote && ( ( ParseNote ) n ).status == ParseStatus.ERROR;
 		Function<Object, Color> noteColor =
 			n -> n instanceof ParseNote ? noteColors.get( ( ( ParseNote ) n ).status ) : null;
-		Function<Object, String> noteMessage = n ->
-		{
-			if( n instanceof ParseNote )
-			{
-				ParseNote note = ( ParseNote ) n;
-				if( note.messageKey != null )
-				{
-					String message = localizer.getString( note.messageKey );
-					if( note.status == ParseStatus.WARNING || note.status == ParseStatus.ERROR )
-					{
-						message = localizer.getFormattedString( note.status.toString( ) , message );
-					}
-					return message;
-				}
-			}
-			return null;
-		};
+		Function<Object, String> noteMessage =
+			n -> n instanceof ParseNote ? ( ( ParseNote ) n ).apply( i18n ) : null;
 
 		fromColumn = new TableColumn( );
 		fromColumn.setIdentifier( ShotColumnDef.from );
@@ -125,29 +100,104 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		intRenderer =
 			new ParsedTextWithValueTableCellRenderer(
 				v -> v instanceof Integer ? intFormatter.apply( ( Integer ) v ) : null ,
-				noteColor , noteMessage );
+				isError , noteColor , noteMessage );
+		( ( JLabel ) intRenderer ).setHorizontalAlignment( JLabel.RIGHT );
 
 		doubleRenderer =
 			new ParsedTextWithValueTableCellRenderer(
-				v -> v instanceof Double ? doubleFormatter.apply( ( Double ) v ) : null ,
-				noteColor , noteMessage );
-		doubleParser = new DefaultParser( Double::parseDouble );
-		doubleEditor = new ParsedTextWithValueCellEditor( doubleParser );
+				v -> v instanceof Double ? formats.formatDouble( ( Double ) v ) : null ,
+				isError , noteColor , noteMessage );
+		( ( JLabel ) doubleRenderer ).setHorizontalAlignment( JLabel.RIGHT );
+		doubleParser = new DefaultParser( s -> formats.parseDouble( s ) );
+		doubleEditor = new ParsedTextWithValueCellEditor( doubleParser , d -> formats.formatDouble( ( Double ) d ) );
 
-		twoDoubleRenderer =
+		lengthRenderer =
 			new ParsedTextWithValueTableCellRenderer(
-				v -> v instanceof Double[ ] ? twoDoubleFormatter.apply( ( Double[ ] ) v ) : null ,
-				noteColor , noteMessage );
+				v -> v instanceof Double ? formats.formatLength( ( Double ) v ) : null ,
+				isError , noteColor , noteMessage );
+		( ( JLabel ) lengthRenderer ).setHorizontalAlignment( JLabel.RIGHT );
+
+		lengthEditor = new ParsedTextWithValueCellEditor(
+			new DefaultParser( s -> formats.parseDouble( s ) ) ,
+			l -> formats.formatLength( ( Double ) l ) );
+
+		angleRenderer =
+			new ParsedTextWithValueTableCellRenderer(
+				v -> v instanceof Double ? formats.formatAngle( ( Double ) v ) : null ,
+				isError , noteColor , noteMessage );
+		( ( JLabel ) angleRenderer ).setHorizontalAlignment( JLabel.RIGHT );
+		angleEditor = new ParsedTextWithValueCellEditor(
+			new DefaultParser( s -> formats.parseDouble( s ) ) ,
+			l -> formats.formatLength( ( Double ) l ) );
+
+		azmPairRenderer =
+			new ParsedTextWithValueTableCellRenderer(
+				v -> v instanceof Double[ ] ? formats.formatAzmPair( ( Double[ ] ) v ) : null ,
+				isError , noteColor , noteMessage );
+		( ( JLabel ) azmPairRenderer ).setHorizontalAlignment( JLabel.RIGHT );
+
+		incPairRenderer =
+			new ParsedTextWithValueTableCellRenderer(
+				v -> v instanceof Double[ ] ? formats.formatIncPair( ( Double[ ] ) v ) : null ,
+				isError , noteColor , noteMessage );
+		( ( JLabel ) incPairRenderer ).setHorizontalAlignment( JLabel.RIGHT );
+
+		Function<Object, String> vectorValueFormatter =
+			v -> v instanceof ShotVector ? formats.format( ( ShotVector ) v ) : null;
+		Function<Object, String> vectorValueRawFormatter =
+			v -> v instanceof ShotVector ? formats.formatRaw( ( ShotVector ) v ) : null;
 
 		vectorValueRender =
-			new ParsedTextWithValueTableCellRenderer(
-				v -> v instanceof ShotVector ? shotVectorFormatter.apply( ( ShotVector ) v ) : null ,
-				noteColor , noteMessage );
+			new ParsedTextWithValueTableCellRenderer( vectorValueFormatter , isError , noteColor , noteMessage );
+		vectorTypeGetter = p ->
+		{
+			if( p instanceof ParsedTextWithValue )
+			{
+				Object value = ( ( ParsedTextWithValue ) p ).value;
+				return value != null ? value.getClass( ) : null;
+			}
+			return null;
+		};
+
+		vectorParser = ( type , text ) ->
+		{
+			ShotVector vector;
+			try
+			{
+				vector = ( ( Class<? extends ShotVector> ) type ).newInstance( );
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace( );
+				return new ParsedTextWithValue( text , ParseNote.forMessageKey( ParseStatus.ERROR , "unexpected" ) ,
+					null );
+			}
+			try
+			{
+				formats.parseVector( text , vector );
+				return new ParsedTextWithValue( text , null , vector );
+			}
+			catch( ParseNote note )
+			{
+				return new ParsedTextWithValue( text , note , vector );
+			}
+		};
+
 		vectorRenderer =
-			new TypeTableCellRenderer( vectorValueRender , p -> ( ( ParsedTextWithValue ) p ).value.getClass( ) );
+			new TypeTableCellRenderer( vectorValueRender , vectorTypeGetter );
 		vectorRenderer.setAvailableTypes( Arrays.asList(
-			DaicShotVector.class , DaiuShotVector.class , NedShotVector.class , NeelShotVector.class ) );
+			c.class , u.class , d.class , el.class ) );
 		vectorRenderer.typeSelector( ).getComboBox( ).setRenderer(
+			new FunctionListCellRenderer(
+				c -> c == null ? null : localizer.getString( ( ( Class<?> ) c ).getName( ) + ".abbrev" ) ,
+				new DefaultListCellRenderer( ) ) );
+		vectorEditor = new TypedParsedTextWithValueCellEditor(
+			vectorValueRawFormatter ,
+			vectorTypeGetter ,
+			vectorParser );
+		vectorEditor.setAvailableTypes( Arrays.asList(
+			c.class , u.class , d.class , el.class ) );
+		vectorEditor.typeSelector( ).getComboBox( ).setRenderer(
 			new FunctionListCellRenderer(
 				c -> c == null ? null : localizer.getString( ( ( Class<?> ) c ).getName( ) + ".abbrev" ) ,
 				new DefaultListCellRenderer( ) ) );
@@ -155,54 +205,55 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		vectorColumn = new TableColumn( );
 		vectorColumn.setIdentifier( ShotColumnDef.vector );
 		vectorColumn.setCellRenderer( vectorRenderer );
+		vectorColumn.setCellEditor( vectorEditor );
 
 		distColumn = new TableColumn( );
 		distColumn.setIdentifier( ShotColumnDef.dist );
-		distColumn.setCellRenderer( doubleRenderer );
-		distColumn.setCellEditor( doubleEditor );
+		distColumn.setCellRenderer( lengthRenderer );
+		distColumn.setCellEditor( lengthEditor );
 
 		azmFsBsColumn = new TableColumn( );
 		azmFsBsColumn.setIdentifier( ShotColumnDef.azmFsBs );
-		azmFsBsColumn.setCellRenderer( twoDoubleRenderer );
+		azmFsBsColumn.setCellRenderer( azmPairRenderer );
 
 		azmFsColumn = new TableColumn( );
 		azmFsColumn.setIdentifier( ShotColumnDef.azmFs );
-		azmFsColumn.setCellRenderer( doubleRenderer );
-		azmFsColumn.setCellEditor( doubleEditor );
+		azmFsColumn.setCellRenderer( angleRenderer );
+		azmFsColumn.setCellEditor( angleEditor );
 
 		azmBsColumn = new TableColumn( );
 		azmBsColumn.setIdentifier( ShotColumnDef.azmBs );
-		azmBsColumn.setCellRenderer( doubleRenderer );
-		azmBsColumn.setCellEditor( doubleEditor );
+		azmBsColumn.setCellRenderer( angleRenderer );
+		azmBsColumn.setCellEditor( angleEditor );
 
 		incFsBsColumn = new TableColumn( );
 		incFsBsColumn.setIdentifier( ShotColumnDef.incFsBs );
-		incFsBsColumn.setCellRenderer( twoDoubleRenderer );
+		incFsBsColumn.setCellRenderer( incPairRenderer );
 
 		incFsColumn = new TableColumn( );
 		incFsColumn.setIdentifier( ShotColumnDef.incFs );
-		incFsColumn.setCellRenderer( doubleRenderer );
-		incFsColumn.setCellEditor( doubleEditor );
+		incFsColumn.setCellRenderer( angleRenderer );
+		incFsColumn.setCellEditor( angleEditor );
 
 		incBsColumn = new TableColumn( );
 		incBsColumn.setIdentifier( ShotColumnDef.incBs );
-		incBsColumn.setCellRenderer( doubleRenderer );
-		incBsColumn.setCellEditor( doubleEditor );
+		incBsColumn.setCellRenderer( angleRenderer );
+		incBsColumn.setCellEditor( angleEditor );
 
 		offsNColumn = new TableColumn( );
 		offsNColumn.setIdentifier( ShotColumnDef.offsN );
-		offsNColumn.setCellRenderer( doubleRenderer );
-		offsNColumn.setCellEditor( doubleEditor );
+		offsNColumn.setCellRenderer( lengthRenderer );
+		offsNColumn.setCellEditor( lengthEditor );
 
 		offsEColumn = new TableColumn( );
 		offsEColumn.setIdentifier( ShotColumnDef.offsE );
-		offsEColumn.setCellRenderer( doubleRenderer );
-		offsEColumn.setCellEditor( doubleEditor );
+		offsEColumn.setCellRenderer( lengthRenderer );
+		offsEColumn.setCellEditor( lengthEditor );
 
 		offsDColumn = new TableColumn( );
 		offsDColumn.setIdentifier( ShotColumnDef.offsV );
-		offsDColumn.setCellRenderer( doubleRenderer );
-		offsDColumn.setCellEditor( doubleEditor );
+		offsDColumn.setCellRenderer( lengthRenderer );
+		offsDColumn.setCellEditor( lengthEditor );
 
 		for( TableColumn column : Arrays.asList(
 			fromColumn ,

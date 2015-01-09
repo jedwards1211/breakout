@@ -5,18 +5,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
-import org.andork.bind2.Binder;
-import org.andork.breakout.model.NewProjectModel;
+import org.andork.bind2.BinderHolder;
+import org.andork.bind2.Link;
+import org.andork.breakout.table.ShotVector.Nev;
 import org.andork.i18n.I18n;
 import org.andork.q2.QObject;
-import org.andork.q2.QObjectBinder;
 import org.andork.q2.QSpec;
 import org.andork.swing.table.NiceTableModel.Column;
 import org.andork.swing.table.QObjectList;
@@ -34,7 +33,10 @@ import org.andork.swing.table.TableModelList;
 @SuppressWarnings( "serial" )
 public class ShotTableModel extends AbstractTableModel
 {
-	private QObjectBinder<NewProjectModel>		projectModelBinder;
+	private BinderHolder<QObject<DataDefaults>>	dataDefaultsHolder	= new BinderHolder<>( );
+	private BinderHolder<ShotList>				shotListHolder		= new BinderHolder<>( );
+
+	private ShotTableLogic						logic;
 
 	private ShotList							shotList;
 
@@ -57,123 +59,76 @@ public class ShotTableModel extends AbstractTableModel
 	public final ShotModelColumn				offsEColumn;
 	public final ShotModelColumn				offsDColumn;
 
-	public ShotTableModel( I18n i18n , Binder<QObject<NewProjectModel>> projectModelBinder )
+	public ShotTableModel( I18n i18n , ShotTableLogic logic )
 	{
+		this.logic = logic;
+
 		fromColumn = new FunctionColumn( ShotColumnDef.from , s -> s.from );
 		toColumn = new FunctionColumn( ShotColumnDef.to , s -> s.to );
 
-		vectorColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.vector , s -> s.vector );
+		vectorColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.vector ,
+			s -> s.vector ,
+			castField( s -> s.vectorText , ShotVectorText.Joint.class , v -> v.text ) );
 
 		distColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.dist ,
-			new DaiShotVectorProperty<>( v -> v.dist ) ,
-			( shot , parsedText ) ->
-			{
-				if( parsedText != null )
-				{
-					if( ! ( shot.vector instanceof DaiShotVector ) )
-					{
-						shot.vector = shotList.newDefaultVector( );
-					}
-					DaiShotVector vector = ( DaiShotVector ) shot.vector;
-					vector.dist = ( Double ) parsedText.value;
-					shot.text.remove( ShotColumnDef.vector );
-					return true;
-				}
-				else
-				{
-					if( shot.vector instanceof DaiShotVector )
-					{
-						( ( DaiShotVector ) shot.vector ).dist = null;
-						return true;
-					}
-					return false;
-				}
-			} );
+			castField( s -> s.vector , ShotVector.Dai.class , v -> v.dist ) ,
+			castField( s -> s.vectorText , ShotVectorText.Dai.class , v -> v.distText ) );
 
 		azmFsBsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.azmFsBs ,
-			new DaiShotVectorProperty<>( v -> v.azmFs == null && v.azmBs == null ? null :
-				new Double[ ] { v.azmFs , v.azmBs } ) );
+			castField( s -> s.vector , ShotVector.Dai.class ,
+				v -> v.azmFs == null && v.azmBs == null ? null : new Double[ ] { v.azmFs , v.azmBs } ) ,
+			castField( s -> s.vectorText , ShotVectorText.Dai.PairedAngles.class , v -> v.azmFsBsText ) );
 
 		azmFsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.azmFs ,
-			new DaiShotVectorProperty<>( v -> v.azmFs ) ,
-			( shot , parsedText ) ->
-			{
-				if( parsedText != null )
-				{
-					if( ! ( shot.vector instanceof DaiShotVector ) )
-					{
-						shot.vector = shotList.newDefaultVector( );
-					}
-					DaiShotVector vector = ( DaiShotVector ) shot.vector;
-					vector.azmFs = ( Double ) parsedText.value;
-					shot.text.remove( ShotColumnDef.azmFsBs );
-					shot.text.remove( ShotColumnDef.vector );
-					return true;
-				}
-				else
-				{
-					if( shot.vector instanceof DaiShotVector )
-					{
-						( ( DaiShotVector ) shot.vector ).azmFs = null;
-						return true;
-					}
-					return false;
-				}
-			} );
+			castField( s -> s.vector , ShotVector.Dai.class , v -> v.azmFs ) ,
+			castField( s -> s.vectorText , ShotVectorText.Dai.SplitAngles.class , v -> v.azmFsText ) );
 
 		azmBsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.azmBs ,
-			new DaiShotVectorProperty<>( v -> v.azmBs ) ,
-			( shot , parsedText ) ->
-			{
-				if( parsedText != null )
-				{
-					if( ! ( shot.vector instanceof DaiShotVector ) )
-					{
-						shot.vector = shotList.newDefaultVector( );
-					}
-					DaiShotVector vector = ( DaiShotVector ) shot.vector;
-					vector.azmBs = ( Double ) parsedText.value;
-					shot.text.remove( ShotColumnDef.azmFsBs );
-					shot.text.remove( ShotColumnDef.vector );
-					return true;
-				}
-				else
-				{
-					if( shot.vector instanceof DaiShotVector )
-					{
-						( ( DaiShotVector ) shot.vector ).azmBs = null;
-						return true;
-					}
-					return false;
-				}
-			} );
+			castField( s -> s.vector , ShotVector.Dai.class , v -> v.azmBs ) ,
+			castField( s -> s.vectorText , ShotVectorText.Dai.SplitAngles.class , v -> v.azmBsText ) );
 
 		incFsBsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.incFsBs ,
-			new DaiShotVectorProperty<>( v -> v.incFs == null && v.incBs == null ? null :
-				new Double[ ] { v.incFs , v.incBs } ) );
+			castField( s -> s.vector , ShotVector.Dai.class ,
+				v -> v.incFs == null && v.incBs == null ? null : new Double[ ] { v.incFs , v.incBs } ) ,
+			castField( s -> s.vectorText , ShotVectorText.Dai.PairedAngles.class , v -> v.incFsBsText ) );
 
 		incFsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.incFs ,
-			new DaiShotVectorProperty<>( v -> v.incFs ) );
+			castField( s -> s.vector , ShotVector.Dai.class , v -> v.incFs ) ,
+			castField( s -> s.vectorText , ShotVectorText.Dai.SplitAngles.class , v -> v.incFsText ) );
 
 		incBsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.incBs ,
-			new DaiShotVectorProperty<>( v -> v.incBs ) );
+			castField( s -> s.vector , ShotVector.Dai.class , v -> v.incBs ) ,
+			castField( s -> s.vectorText , ShotVectorText.Dai.SplitAngles.class , v -> v.incBsText ) );
 
 		offsNColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.offsN ,
-			new NevShotVectorProperty<>( v -> v.n ) );
+			castField( s -> s.vector , ShotVector.Nev.class , v -> v.n ) ,
+			castField( s -> s.vectorText , ShotVectorText.Nev.class , v -> v.nText ) );
 
 		offsEColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.offsE ,
-			new NevShotVectorProperty<>( v -> v.e ) );
+			castField( s -> s.vector , ShotVector.Nev.class , v -> v.e ) ,
+			castField( s -> s.vectorText , ShotVectorText.Nev.class , v -> v.eText ) );
 
 		offsDColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.offsV ,
-			new NevShotVectorProperty<>( v -> v.v ) );
+			castField( s -> s.vector , ShotVector.Nev.class , v -> v.v ) ,
+			castField( s -> s.vectorText , ShotVectorText.Nev.class , v -> v.vText ) );
 
-		this.projectModelBinder = QObjectBinder.create( NewProjectModel.spec );
-		this.projectModelBinder.objLink.bind( projectModelBinder );
-
-		this.projectModelBinder.update( true );
+		shotListHolder.addBinding( force ->
+		{
+			setShotList( shotListHolder.get( ) );
+		} );
 	}
 
-	public void setShotList( ShotList newList )
+	public Link<QObject<DataDefaults>> dataDefaultsLink( )
+	{
+		return dataDefaultsHolder.binderLink;
+	}
+
+	public Link<ShotList> shotListLink( )
+	{
+		return shotListHolder.binderLink;
+	}
+
+	private void setShotList( ShotList newList )
 	{
 		if( shotList != newList )
 		{
@@ -357,43 +312,34 @@ public class ShotTableModel extends AbstractTableModel
 		}
 	}
 
-	private class DaiShotVectorProperty<V> implements Function<Shot, V>
+	private static <F, T extends F, V> CastFieldProperty<F, T, V> castField( Function<Shot, F> fieldGetter ,
+		Class<T> requiredType ,
+		Function<T, V> valueGetter )
 	{
-		Function<DaiShotVector, V>	wrapped;
-
-		public DaiShotVectorProperty( Function<DaiShotVector, V> wrapped )
-		{
-			super( );
-			this.wrapped = wrapped;
-		}
-
-		@Override
-		public V apply( Shot t )
-		{
-			if( t.vector instanceof DaiShotVector )
-			{
-				return wrapped.apply( ( DaiShotVector ) t.vector );
-			}
-			return null;
-		}
+		return new CastFieldProperty<>( fieldGetter , requiredType , valueGetter );
 	}
 
-	private class NevShotVectorProperty<V> implements Function<Shot, V>
+	private static class CastFieldProperty<F, T extends F, V> implements Function<Shot, V>
 	{
-		Function<NevShotVector, V>	wrapped;
+		Function<Shot, F>	fieldGetter;
+		Class<T>			requiredType;
+		Function<T, V>		valueGetter;
 
-		public NevShotVectorProperty( Function<NevShotVector, V> wrapped )
+		public CastFieldProperty( Function<Shot, F> fieldGetter , Class<T> requiredType , Function<T, V> valueGetter )
 		{
 			super( );
-			this.wrapped = wrapped;
+			this.fieldGetter = fieldGetter;
+			this.requiredType = requiredType;
+			this.valueGetter = valueGetter;
 		}
 
 		@Override
-		public V apply( Shot t )
+		public V apply( Shot shot )
 		{
-			if( t.vector instanceof NevShotVector )
+			F field = fieldGetter.apply( shot );
+			if( field != null && requiredType.isAssignableFrom( field.getClass( ) ) )
 			{
-				return wrapped.apply( ( NevShotVector ) t.vector );
+				return valueGetter.apply( requiredType.cast( field ) );
 			}
 			return null;
 		}
@@ -436,20 +382,15 @@ public class ShotTableModel extends AbstractTableModel
 
 	private class SynthParsedTextWithValueColumn extends ShotModelColumn
 	{
-		Function<Shot, Object>					valueProperty;
-		BiPredicate<Shot, ParsedTextWithValue>	setter;
+		Function<Shot, ?>			valueGetter;
+		Function<Shot, ParsedText>	textGetter;
 
-		public SynthParsedTextWithValueColumn( ShotColumnDef def , Function<Shot, Object> valueProperty )
-		{
-			this( def , valueProperty , null );
-		}
-
-		public SynthParsedTextWithValueColumn( ShotColumnDef def , Function<Shot, Object> valueProperty ,
-			BiPredicate<Shot, ParsedTextWithValue> setter )
+		public SynthParsedTextWithValueColumn( ShotColumnDef def , Function<Shot, ?> valueProperty ,
+			Function<Shot, ParsedText> textGetter )
 		{
 			super( def );
-			this.valueProperty = valueProperty;
-			this.setter = setter;
+			this.valueGetter = valueProperty;
+			this.textGetter = textGetter;
 		}
 
 		@Override
@@ -468,8 +409,8 @@ public class ShotTableModel extends AbstractTableModel
 		public Object getValueAt( Integer row )
 		{
 			Shot shot = shotList.get( row );
-			Object value = valueProperty.apply( shot );
-			ParsedText text = shot.text.get( def );
+			Object value = valueGetter.apply( shot );
+			ParsedText text = textGetter.apply( shot );
 
 			return new ParsedTextWithValue(
 				text == null ? null : text.text ,
@@ -481,7 +422,7 @@ public class ShotTableModel extends AbstractTableModel
 		public boolean setValueAt( Object aValue , Integer row )
 		{
 			Shot shot = shotList.get( row );
-			return ShotTableLogic.set( shotList , shot , def , ( ParsedTextWithValue ) aValue );
+			return logic.set( shot , def , ( ParsedTextWithValue ) aValue );
 		}
 	}
 }

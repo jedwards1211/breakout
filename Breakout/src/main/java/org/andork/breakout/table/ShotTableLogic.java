@@ -1,185 +1,242 @@
 package org.andork.breakout.table;
 
-import java.util.Arrays;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 
-import org.andork.collect.HashSetMultiMap;
-import org.andork.collect.MultiMap;
-import org.andork.collect.MultiMaps;
+import org.andork.bind2.Link;
+import org.andork.q2.QObject;
+import org.andork.q2.QObjectBinder;
 
 public class ShotTableLogic
 {
-	private static final MultiMap<ShotColumnDef, ShotColumnDef>					textColumnsToClear;
+	private final QObjectBinder<DataDefaults>		dataDefaultsBinder	= new QObjectBinder<>(
+																			DataDefaults.spec );
 
-	private static final List<ShotColumnDef>									daiShotVectorDefs;
+	private final Map<ShotColumnDef, FieldSetter>	setters;
 
-	private static final List<ShotColumnDef>									nevShotVectorDefs;
-
-	private static final Map<ShotColumnDef, BiFunction<Shot, Object, Object>>	setters;
-
-	static
+	public ShotTableLogic( )
 	{
-		MultiMap<ShotColumnDef, ShotColumnDef> textColumnsToClearMod = HashSetMultiMap.newInstance( );
+		Map<ShotColumnDef, FieldSetter> settersMod = new HashMap<>( );
 
-		daiShotVectorDefs = Arrays.asList(
-			ShotColumnDef.dist ,
-			ShotColumnDef.azmFsBs ,
-			ShotColumnDef.azmFs ,
-			ShotColumnDef.azmBs ,
-			ShotColumnDef.incFsBs ,
-			ShotColumnDef.incFs ,
-			ShotColumnDef.incBs
-			);
-
-		nevShotVectorDefs = Arrays.asList(
-			ShotColumnDef.offsN ,
-			ShotColumnDef.offsE ,
-			ShotColumnDef.offsV
-			);
-
-		textColumnsToClear = MultiMaps.unmodifiableMultiMap( textColumnsToClearMod );
-
-		textColumnsToClearMod.putAll( ShotColumnDef.vector , daiShotVectorDefs );
-		textColumnsToClearMod.putAll( ShotColumnDef.vector , nevShotVectorDefs );
-
-		for( ShotColumnDef def : daiShotVectorDefs )
+		settersMod.put( ShotColumnDef.vector , ( shot , newValue , pt ) ->
 		{
-			textColumnsToClearMod.put( def , ShotColumnDef.vector );
-			textColumnsToClearMod.putAll( def , nevShotVectorDefs );
-		}
-
-		for( ShotColumnDef def : nevShotVectorDefs )
-		{
-			textColumnsToClearMod.put( def , ShotColumnDef.vector );
-			textColumnsToClearMod.putAll( def , daiShotVectorDefs );
-		}
-
-		textColumnsToClearMod.put( ShotColumnDef.azmFsBs , ShotColumnDef.azmFs );
-		textColumnsToClearMod.put( ShotColumnDef.azmFsBs , ShotColumnDef.azmBs );
-		textColumnsToClearMod.put( ShotColumnDef.azmFs , ShotColumnDef.azmFsBs );
-		textColumnsToClearMod.put( ShotColumnDef.azmBs , ShotColumnDef.azmFsBs );
-
-		textColumnsToClearMod.put( ShotColumnDef.incFsBs , ShotColumnDef.incFs );
-		textColumnsToClearMod.put( ShotColumnDef.incFsBs , ShotColumnDef.incBs );
-		textColumnsToClearMod.put( ShotColumnDef.incFs , ShotColumnDef.incFsBs );
-		textColumnsToClearMod.put( ShotColumnDef.incBs , ShotColumnDef.incFsBs );
-
-		Map<ShotColumnDef, BiFunction<Shot, Object, Object>> settersMod = new HashMap<>( );
-
-		settersMod.put( ShotColumnDef.vector , ( shot , newValue ) ->
-		{
-			Object rv = shot.vector;
 			shot.vector = ( ShotVector ) newValue;
-			return rv;
+			ensureVectorTextType( shot , ShotVectorText.Joint.class ).text = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.dist , ( shot , newValue ) ->
-		{
-			Object rv = ( ( DaiShotVector ) shot.vector ).dist;
-			( ( DaiShotVector ) shot.vector ).dist = ( Double ) newValue;
-			return rv;
+		settersMod.put(
+			ShotColumnDef.dist ,
+			( shot , newValue , pt ) ->
+			{
+//			ensureVectorType( shot , ShotVector.Dai.class ).dist = ( Double ) newValue;
+			setVectorField( shot , ShotVector.Dai.class , newValue ,
+				( v , value ) -> v.dist = ( Double ) value );
+			ensureVectorTextType( shot , ShotVectorText.Dai.class ).distText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.azmFsBs , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.azmFsBs , ( shot , newValue , pt ) ->
 		{
-			DaiShotVector vector = ( DaiShotVector ) shot.vector;
-			Object rv = new Double[ ] { vector.azmFs , vector.azmBs };
+			ShotVector.Dai vector = ensureVectorType( shot , ShotVector.Dai.class );
 			vector.azmFs = ( ( Double[ ] ) newValue )[ 0 ];
 			vector.azmBs = ( ( Double[ ] ) newValue )[ 1 ];
-			return rv;
+			ensureVectorTextType( shot , ShotVectorText.Dai.PairedAngles.class ).azmFsBsText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.azmFs , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.azmFs , ( shot , newValue , pt ) ->
 		{
-			Object rv = ( ( DaiShotVector ) shot.vector ).azmFs;
-			( ( DaiShotVector ) shot.vector ).azmFs = ( Double ) newValue;
-			return rv;
+			ensureVectorType( shot , ShotVector.Dai.class ).azmFs = ( Double ) newValue;
+			ensureVectorTextType( shot , ShotVectorText.Dai.SplitAngles.class ).azmFsText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.azmBs , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.azmBs , ( shot , newValue , pt ) ->
 		{
-			Object rv = ( ( DaiShotVector ) shot.vector ).azmBs;
-			( ( DaiShotVector ) shot.vector ).azmBs = ( Double ) newValue;
-			return rv;
+			ensureVectorType( shot , ShotVector.Dai.class ).azmBs = ( Double ) newValue;
+			ensureVectorTextType( shot , ShotVectorText.Dai.SplitAngles.class ).azmBsText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.incFsBs , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.incFsBs , ( shot , newValue , pt ) ->
 		{
-			DaiShotVector vector = ( DaiShotVector ) shot.vector;
-			Object rv = new Double[ ] { vector.incFs , vector.incBs };
+			ShotVector.Dai vector = ensureVectorType( shot , ShotVector.Dai.class );
 			vector.incFs = ( ( Double[ ] ) newValue )[ 0 ];
 			vector.incBs = ( ( Double[ ] ) newValue )[ 1 ];
-			return rv;
+			ensureVectorTextType( shot , ShotVectorText.Dai.PairedAngles.class ).incFsBsText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.incFs , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.incFs , ( shot , newValue , pt ) ->
 		{
-			Object rv = ( ( DaiShotVector ) shot.vector ).incFs;
-			( ( DaiShotVector ) shot.vector ).incFs = ( Double ) newValue;
-			return rv;
+			ensureVectorType( shot , ShotVector.Dai.class ).incFs = ( Double ) newValue;
+			ensureVectorTextType( shot , ShotVectorText.Dai.SplitAngles.class ).incFsText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.incBs , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.incBs , ( shot , newValue , pt ) ->
 		{
-			Object rv = ( ( DaiShotVector ) shot.vector ).incBs;
-			( ( DaiShotVector ) shot.vector ).incBs = ( Double ) newValue;
-			return rv;
+			ensureVectorType( shot , ShotVector.Dai.class ).incBs = ( Double ) newValue;
+			ensureVectorTextType( shot , ShotVectorText.Dai.SplitAngles.class ).incBsText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.offsN , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.offsN , ( shot , newValue , pt ) ->
 		{
-			Object rv = ( ( NevShotVector ) shot.vector ).n;
-			( ( NevShotVector ) shot.vector ).n = ( Double ) newValue;
-			return rv;
+			ensureVectorType( shot , ShotVector.Nev.class ).n = ( Double ) newValue;
+			ensureVectorTextType( shot , ShotVectorText.Nev.class ).nText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.offsE , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.offsE , ( shot , newValue , pt ) ->
 		{
-			Object rv = ( ( NevShotVector ) shot.vector ).e;
-			( ( NevShotVector ) shot.vector ).e = ( Double ) newValue;
-			return rv;
+			ensureVectorType( shot , ShotVector.Nev.class ).e = ( Double ) newValue;
+			ensureVectorTextType( shot , ShotVectorText.Nev.class ).eText = pt;
+			return true;
 		} );
-		settersMod.put( ShotColumnDef.offsV , ( shot , newValue ) ->
+		settersMod.put( ShotColumnDef.offsV , ( shot , newValue , pt ) ->
 		{
-			Object rv = ( ( NevShotVector ) shot.vector ).v;
-			( ( NevShotVector ) shot.vector ).v = ( Double ) newValue;
-			return rv;
+			ensureVectorType( shot , ShotVector.Nev.class ).v = ( Double ) newValue;
+			ensureVectorTextType( shot , ShotVectorText.Nev.class ).vText = pt;
+			return true;
 		} );
 
 		setters = Collections.unmodifiableMap( settersMod );
 	}
 
-	public static boolean set( ShotList list , Shot shot , ShotColumnDef def , ParsedTextWithValue pt )
+	public Link<QObject<DataDefaults>> dataDefaultsLink( )
+	{
+		return dataDefaultsBinder.objLink;
+	}
+
+	private <T extends ShotVector> T ensureVectorType( Shot shot , Class<? extends T> cls )
+	{
+		if( shot.vector == null || !cls.isInstance( shot.vector ) )
+		{
+			try
+			{
+				if( Modifier.isAbstract( cls.getModifiers( ) ) )
+				{
+					if( cls.isAssignableFrom( ShotVector.Dai.class ) )
+					{
+						shot.vector = dataDefaultsBinder.get( ).get( DataDefaults.daiShotVector ).newInstance( );
+					}
+					else if( cls.isAssignableFrom( ShotVector.Nev.class ) )
+					{
+						shot.vector = dataDefaultsBinder.get( ).get( DataDefaults.nevShotVector ).newInstance( );
+					}
+				}
+				else
+				{
+					shot.vector = cls.newInstance( );
+				}
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace( );
+				throw new RuntimeException( e );
+			}
+		}
+		return cls.cast( shot.vector );
+	}
+
+	/**
+	 * Sets a field of the given {@code Shot}'s {@linkplain ShotVector vector} to {@code newValue}. If {@code newValue}
+	 * is not {@code null} and the {@code shot}'s vector is not an instance of {@code vectorType}, it will be
+	 * replaced with a new instance of {@code vectorType}.
+	 * 
+	 * This is necessary because the vector type should be changed only if the user has entered a valid (non-null)
+	 * value.
+	 * 
+	 * @param shot
+	 *            the {@link Shot} whose vector to change.
+	 * @param vectorType
+	 *            the type of {@link ShotVector} containing the field to set.
+	 * @param newValue
+	 *            the new value to set the vector's field to.
+	 * @param setter
+	 *            lambda that takes {@code shot.vector} and {@code newValue} and sets the vector's field to
+	 *            {@code newValue}.
+	 */
+	private <T extends ShotVector> void setVectorField( Shot shot , Class<? extends T> vectorType , Object newValue ,
+		BiConsumer<T, Object> setter )
+	{
+		if( shot.vector == null || !vectorType.isInstance( shot.vector ) )
+		{
+			if( newValue != null )
+			{
+				try
+				{
+					if( Modifier.isAbstract( vectorType.getModifiers( ) ) )
+					{
+						if( vectorType.isAssignableFrom( ShotVector.Dai.class ) )
+						{
+							shot.vector = dataDefaultsBinder.get( ).get( DataDefaults.daiShotVector ).newInstance( );
+						}
+						else if( vectorType.isAssignableFrom( ShotVector.Nev.class ) )
+						{
+							shot.vector = dataDefaultsBinder.get( ).get( DataDefaults.nevShotVector ).newInstance( );
+						}
+					}
+					else
+					{
+						shot.vector = vectorType.newInstance( );
+					}
+				}
+				catch( Exception e )
+				{
+					e.printStackTrace( );
+					throw new RuntimeException( e );
+				}
+			}
+			else
+			{
+				return;
+			}
+		}
+		setter.accept( vectorType.cast( shot.vector ) , newValue );
+	}
+
+	private <T extends ShotVectorText> T ensureVectorTextType( Shot shot , Class<T> cls )
+	{
+		if( shot.vectorText == null || !cls.isInstance( shot.vectorText ) )
+		{
+			try
+			{
+				if( Modifier.isAbstract( cls.getModifiers( ) ) )
+				{
+					if( cls.isAssignableFrom( ShotVectorText.Dai.class ) )
+					{
+						shot.vectorText = new ShotVectorText.Dai.SplitAngles( );
+					}
+				}
+				else
+				{
+					shot.vectorText = cls.newInstance( );
+				}
+			}
+			catch( Exception e )
+			{
+				e.printStackTrace( );
+				throw new RuntimeException( e );
+			}
+		}
+		return cls.cast( shot.vectorText );
+	}
+
+	@FunctionalInterface
+	private interface FieldSetter
+	{
+		public boolean set( Shot shot , Object value , ParsedText pt );
+	}
+
+	public boolean set( Shot shot , ShotColumnDef def , ParsedTextWithValue pt )
 	{
 		ParsedText text = pt == null || ( pt.text == null && pt.note == null ) ? null :
 			new ParsedText( pt.text , pt.note );
-		boolean changed = !Objects.equals( shot.text.put( def , text ) , text );
-		changed |= shot.text.keySet( ).removeAll( textColumnsToClear.get( def ) );
 
 		Object newValue = pt == null ? null : pt.value;
 
-		if( daiShotVectorDefs.contains( def ) )
-		{
-			if( newValue != null && ! ( shot.vector instanceof DaiShotVector ) )
-			{
-				changed = true;
-				ShotVector oldVector = shot.vector;
-				shot.vector = list.newDefaultDaiVector( );
-				shot.vector.copyApplicableProps( oldVector );
-			}
-		}
-		else if( nevShotVectorDefs.contains( def ) )
-		{
-			if( newValue != null && ! ( shot.vector instanceof NevShotVector ) )
-			{
-				changed = true;
-				ShotVector oldVector = shot.vector;
-				shot.vector = list.newDefaultNevVector( );
-				shot.vector.copyApplicableProps( oldVector );
-			}
-		}
-
-		BiFunction<Shot, Object, Object> setter = setters.get( def );
+		FieldSetter setter = setters.get( def );
 		if( setter != null )
 		{
-			return !Objects.equals( setter.apply( shot , newValue ) , newValue ) || changed;
+			return setter.set( shot , newValue , text );
 		}
-		return changed;
+		return false;
 	}
 }

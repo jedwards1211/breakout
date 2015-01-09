@@ -1,5 +1,7 @@
 package org.andork.q2;
 
+import java.util.function.Supplier;
+
 import org.andork.func.Mapper;
 import org.andork.q2.QSpec.Property;
 
@@ -26,7 +28,8 @@ public final class QArrayObject<S extends QSpec> extends QObject<S>
 		values = new Object[ spec.properties.length ];
 		for( int i = 0 ; i < values.length ; i++ )
 		{
-			values[ i ] = spec.properties[ i ].initValue( );
+			Supplier<?> supplier = spec.properties[ i ].initValue( );
+			values[ i ] = supplier == null ? null : supplier.get( );
 		}
 	}
 

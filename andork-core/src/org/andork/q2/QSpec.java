@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * Defines a set of properties that any {@link QArrayObject} constructed with this
@@ -23,11 +24,11 @@ public class QSpec
 {
 	public static class Property<T>
 	{
-		int					index;
-		QSpec				spec;
-		String				name;
-		Class<? super T>	type;
-		T					initValue;
+		int						index;
+		QSpec					spec;
+		String					name;
+		Class<? super T>		type;
+		Supplier<? extends T>	initValue;
 
 		public Property( String name , Class<? super T> type )
 		{
@@ -35,7 +36,7 @@ public class QSpec
 			this.type = type;
 		}
 
-		public Property( String name , Class<? super T> type , T initValue )
+		public Property( String name , Class<? super T> type , Supplier<? extends T> initValue )
 		{
 			this( name , type );
 			this.initValue = initValue;
@@ -135,7 +136,7 @@ public class QSpec
 			return type;
 		}
 
-		public T initValue( )
+		public Supplier<? extends T> initValue( )
 		{
 			return initValue;
 		}
@@ -159,7 +160,7 @@ public class QSpec
 	public static class NonNullProperty<T> extends Property<T>
 	{
 
-		public NonNullProperty( String name , Class<? super T> type , T initValue )
+		public NonNullProperty( String name , Class<? super T> type , Supplier<? extends T> initValue )
 		{
 			super( name , type , Objects.requireNonNull( initValue ) );
 		}
@@ -234,10 +235,21 @@ public class QSpec
 
 	public static <T> Property<T> property( String name , Class<? super T> type , T initValue )
 	{
+		return new Property<T>( name , type , ( ) -> initValue );
+	}
+
+	public static <T> Property<T> property( String name , Class<? super T> type , Supplier<? extends T> initValue )
+	{
 		return new Property<T>( name , type , initValue );
 	}
 
 	public static <T> NonNullProperty<T> nonNullProperty( String name , Class<? super T> type , T initValue )
+	{
+		return new NonNullProperty<T>( name , type , ( ) -> initValue );
+	}
+
+	public static <T> NonNullProperty<T> nonNullProperty( String name , Class<? super T> type ,
+		Supplier<? extends T> initValue )
 	{
 		return new NonNullProperty<T>( name , type , initValue );
 	}

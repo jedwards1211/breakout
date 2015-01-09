@@ -32,6 +32,11 @@ public class QObjectBinder<S extends QSpec> extends CachingBinder<QObject<S>> im
 		if( binder == null )
 		{
 			binder = new PropertyBinder<>( );
+			QObject<S> curObject = get( );
+			if( curObject != null )
+			{
+				binder.set( curObject.get( property ) , false );
+			}
 			properties.put( property , binder );
 		}
 		return binder;
@@ -53,20 +58,26 @@ public class QObjectBinder<S extends QSpec> extends CachingBinder<QObject<S>> im
 			{
 				newObject.addListener( this );
 			}
-		}
 
-		for( Map.Entry<Property<?>, PropertyBinder<?>> entry : properties.entrySet( ) )
-		{
-			Property<?> property = entry.getKey( );
-			PropertyBinder binder = entry.getValue( );
-			binder.set( curObject.get( property ) , force );
+			updateBindings( force );
+
+			for( Map.Entry<Property<?>, PropertyBinder<?>> entry : properties.entrySet( ) )
+			{
+				Property<?> property = entry.getKey( );
+				PropertyBinder binder = entry.getValue( );
+				binder.set( newObject == null ? null : newObject.get( property ) , force );
+			}
 		}
 	}
 
 	public void
 		objectChanged( QObject<?> source , Property<?> property , Object oldValue , Object newValue )
 	{
-		update( false );
+		PropertyBinder binder = properties.get( property );
+		if( binder != null )
+		{
+			binder.set( newValue , false );
+		}
 	}
 
 	public static class PropertyBinder<T> extends CachingBinder<T>
