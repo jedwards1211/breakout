@@ -81,7 +81,7 @@ public class BinderTest2 {
 
 		JFrame frame = new JFrame();
 		frame.getContentPane().setLayout(new FlowLayout());
-		frame.getContentPane().add(selector.getComboBox());
+		frame.getContentPane().add(selector.comboBox());
 		frame.getContentPane().add(textField);
 		frame.getContentPane().add(slider);
 		frame.pack();

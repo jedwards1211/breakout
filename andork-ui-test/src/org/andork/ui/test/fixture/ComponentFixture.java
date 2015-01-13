@@ -26,14 +26,14 @@ import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.text.JTextComponent;
 
-import org.andork.swing.DoSwingR2;
+import org.andork.ui.test.DoSwingR;
 
 public interface ComponentFixture {
 	public void click(Component comp);
 
 	public static class Common {
 		public static String readText(final Component comp) {
-			return new DoSwingR2<String>() {
+			return new DoSwingR<String>() {
 				@Override
 				protected String doRun() {
 					if (comp instanceof JLabel) {

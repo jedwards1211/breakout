@@ -21,8 +21,6 @@
  *******************************************************************************/
 package org.andork.swing;
 
-import static org.andork.swing.DoSwing.doSwing;
-
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +39,7 @@ import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 
 import org.andork.awt.CheckEDT;
+import org.andork.func.ExceptionRunnable;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 
 /**
@@ -2244,7 +2243,7 @@ public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 					// local variable) on the EDT.
 
 					PreSort preSort = new PreSort( );
-					doSwing( preSort );
+					OnEDT.onEDT( preSort );
 
 					sortRequested = preSort.sortRequested;
 					sortExistingDataRequested = preSort.sortExistingDataRequested;
@@ -2256,7 +2255,7 @@ public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 					RowCopier rowCopier = new RowCopier( );
 					while( !rowCopier.complete && !rowCopier.sortRequested && !rowCopier.sortExistingDataRequested )
 					{
-						doSwing( rowCopier );
+						OnEDT.onEDT( rowCopier );
 					}
 					if( rowCopier.sortRequested || rowCopier.sortExistingDataRequested )
 					{
@@ -2282,7 +2281,7 @@ public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 					// model has been changed again.
 
 					PostSort postSort = new PostSort( lastRowIndexToModel );
-					doSwing( postSort );
+					OnEDT.onEDT( postSort );
 
 					sortRequested = postSort.sortRequested;
 					sortExistingDataRequested = postSort.sortExistingDataRequested;
@@ -2298,18 +2297,11 @@ public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 			}
 			finally
 			{
-				new DoSwing( )
-				{
-					@Override
-					public void run( )
-					{
-						sorter.sortTask = null;
-					}
-				};
+				OnEDT.onEDT( ( ) -> sorter.sortTask = null );
 			}
 		}
 
-		private class PreSort implements Runnable
+		private class PreSort implements ExceptionRunnable
 		{
 			boolean	sortRequested;
 			boolean	sortExistingDataRequested;
@@ -2341,7 +2333,7 @@ public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 			}
 		}
 
-		private class RowCopier implements Runnable
+		private class RowCopier implements ExceptionRunnable
 		{
 			int		nextRow;
 			int		stepSize	= 100;
@@ -2369,7 +2361,7 @@ public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 			}
 		}
 
-		private class PostSort implements Runnable
+		private class PostSort implements ExceptionRunnable
 		{
 			boolean	sortRequested;
 			boolean	sortExistingDataRequested;
@@ -2383,7 +2375,7 @@ public abstract class AnnotatingRowSorter<M, I> extends RowSorter<M>
 			}
 
 			@Override
-			public void run( )
+			public void run( ) 
 			{
 				sortRequested = sorter.sortRequested;
 				sortExistingDataRequested = sorter.sortExistingDataRequested;

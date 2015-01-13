@@ -19,7 +19,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.swing.table;
+package org.andork.breakout.table;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -31,7 +31,8 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.EventObject;
-import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
@@ -42,47 +43,56 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellEditor;
 
-import org.andork.format.FormattedText;
-import org.andork.swing.FormatAndDisplayInfo;
 import org.andork.swing.selector.DefaultSelector;
-import org.andork.swing.selector.FormatAndDisplayInfoListCellRenderer;
-import org.andork.util.StringUtils;
 
 @SuppressWarnings( "serial" )
-public class FormattedTextWithSelectorTableCellEditor extends DefaultCellEditor
+public class ParsedTextWithTypeCellEditor<V> extends DefaultCellEditor
 {
-	final DefaultSelector<FormatAndDisplayInfo<?>>	formatSelector;
-	FormatAndDisplayInfo<?>							defaultFormat;
-	
-	Border											compoundBorder;
-	Border											outerBorder;
-	
-	public FormattedTextWithSelectorTableCellEditor( )
+	final DefaultSelector<Object>						typeSelector;
+
+	BiFunction<String, Object, ParsedTextWithType<V>>	parser;
+	Function<V, String>									valueFormatter;
+	Function<Object, ?>									typeGetter;
+
+	Border												compoundBorder;
+	Border												outerBorder;
+
+	public ParsedTextWithTypeCellEditor(
+		Function<V, String> valueFormatter ,
+		Function<Object, ?> typeGetter ,
+		BiFunction<String, Object, ParsedTextWithType<V>> parser )
 	{
-		this( new JTextField( ) , new DefaultSelector<>( ) );
-		FormatAndDisplayInfoListCellRenderer.setUpComboBox( formatSelector.getComboBox( ) );
+		this( new JTextField( ) , new DefaultSelector<>( ) , valueFormatter , typeGetter , parser );
 	}
-	
-	public FormattedTextWithSelectorTableCellEditor( Collection<? extends FormatAndDisplayInfo<?>> formats )
-	{
-		this( );
-		formatSelector.setAvailableValues( formats );
-		defaultFormat = formats.isEmpty( ) ? null : formats.iterator( ).next( );
-	}
-	
-	public FormattedTextWithSelectorTableCellEditor( JTextField textField , DefaultSelector<FormatAndDisplayInfo<?>> formatSelector )
+
+	public ParsedTextWithTypeCellEditor(
+		JTextField textField ,
+		DefaultSelector<Object> typeSelector ,
+		Function<V, String> valueFormatter ,
+		Function<Object, ?> typeGetter ,
+		BiFunction<String, Object, ParsedTextWithType<V>> parser )
 	{
 		super( textField );
-		this.formatSelector = formatSelector;
+		this.typeSelector = typeSelector;
+		this.valueFormatter = valueFormatter;
+		this.typeGetter = typeGetter;
+		this.parser = parser;
 		outerBorder = new EmptyBorder( 0 , 0 , 0 , 0 );
 		textField.setBorder( compoundBorder = new CompoundBorder( outerBorder , new InnerBorder( ) ) );
 		textField.setLayout( new Layout( ) );
-		textField.add( formatSelector.getComboBox( ) , BorderLayout.EAST );
+		textField.add( typeSelector.comboBox( ) , BorderLayout.EAST );
 	}
-	
+
+	/**
+	 * This method is overridden to return {@code true} the first time the user clicks on the {@link #typeSelector()}.
+	 * When the user clicks anywhere else the super behavior will be used (usually two clicks).<br>
+	 * <br>
+	 * {@inheritDoc}
+	 */
 	@Override
 	public boolean isCellEditable( EventObject anEvent )
 	{
+		// this is a lot of code, but it's actually just determining if the user clicked on the type selector.
 		if( anEvent instanceof MouseEvent )
 		{
 			MouseEvent me = ( MouseEvent ) anEvent;
@@ -91,15 +101,17 @@ public class FormattedTextWithSelectorTableCellEditor extends DefaultCellEditor
 			int column = table.columnAtPoint( me.getPoint( ) );
 			if( row >= 0 && column >= 0 )
 			{
-				TableCellEditor editor = table.getCellEditor( table.rowAtPoint( me.getPoint( ) ) , table.columnAtPoint( me.getPoint( ) ) );
+				TableCellEditor editor = table.getCellEditor( table.rowAtPoint( me.getPoint( ) ) ,
+					table.columnAtPoint( me.getPoint( ) ) );
 				if( editor == this )
 				{
 					Rectangle cellRect = table.getCellRect( row , column , true );
 					Component editorComp = table.prepareEditor( editor , row , column );
 					editorComp.setBounds( cellRect );
 					editorComp.doLayout( );
-					Component deepest = SwingUtilities.getDeepestComponentAt( editorComp , me.getX( ) - cellRect.x , me.getY( ) - cellRect.y );
-					if( deepest == formatSelector.getComboBox( ) )
+					Component deepest = SwingUtilities.getDeepestComponentAt( editorComp , me.getX( ) - cellRect.x ,
+						me.getY( ) - cellRect.y );
+					if( deepest == typeSelector.comboBox( ) )
 					{
 						return true;
 					}
@@ -108,55 +120,34 @@ public class FormattedTextWithSelectorTableCellEditor extends DefaultCellEditor
 		}
 		return super.isCellEditable( anEvent );
 	}
-	
-	public FormatAndDisplayInfo<?> getDefaultFormat( )
-	{
-		return defaultFormat;
-	}
-	
-	public void setDefaultFormat( FormatAndDisplayInfo<?> defaultFormat )
-	{
-		this.defaultFormat = defaultFormat;
-	}
-	
+
 	@Override
 	public Object getCellEditorValue( )
 	{
-		Object value = super.getCellEditorValue( );
-		if( StringUtils.isNullOrEmpty( value ) )
-		{
-			return null;
-		}
-		FormattedText result = new FormattedText( formatSelector.getSelection( ) );
-		result.setText( value.toString( ) );
-		return result;
+		Object o = super.getCellEditorValue( );
+		return parser.apply( o.toString( ) , typeSelector.getSelection( ) );
 	}
-	
+
+	@SuppressWarnings( "rawtypes" )
 	@Override
-	public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row , int column )
+	public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row ,
+		int column )
 	{
-		FormatAndDisplayInfo<?> format = null;
-		if( value instanceof FormattedText )
-		{
-			FormattedText currentFormattedText = ( FormattedText ) value;
-			value = currentFormattedText.getText( );
-			if( currentFormattedText.getFormat( ) instanceof FormatAndDisplayInfo )
-			{
-				format = ( org.andork.swing.FormatAndDisplayInfo<?> ) currentFormattedText.getFormat( );
-			}
-		}
-		if( format == null )
-		{
-			format = defaultFormat;
-		}
-		formatSelector.setSelection( format );
-		JTextField textField = ( JTextField ) super.getTableCellEditorComponent( table , value , isSelected , row , column );
+		ParsedText<? extends V> pt = ( ParsedText<? extends V> ) value;
+		String text = pt == null ? null : pt.getText( );
+		V val = pt == null ? null : pt.getValue( );
+		Object superValue = text != null ? text :
+			val != null ? valueFormatter.apply( val ) : null;
+		typeSelector.setSelection( typeGetter.apply( pt ) );
+		JTextField textField = ( JTextField ) super.getTableCellEditorComponent( table , superValue , isSelected , row ,
+			column );
+		textField.setFont( table.getFont( ) );
 		textField.setBorder( compoundBorder );
 		textField.setLayout( new Layout( ) );
-		textField.add( formatSelector.getComboBox( ) , BorderLayout.EAST );
+		textField.add( typeSelector.comboBox( ) , BorderLayout.EAST );
 		return textField;
 	}
-	
+
 	private class Layout extends BorderLayout
 	{
 		@Override
@@ -164,38 +155,43 @@ public class FormattedTextWithSelectorTableCellEditor extends DefaultCellEditor
 		{
 			Dimension targetSize = target.getSize( );
 			Insets insets = outerBorder.getBorderInsets( target );
-			Rectangle bounds = new Rectangle( formatSelector.getComboBox( ).getPreferredSize( ) );
+			Rectangle bounds = new Rectangle( typeSelector.comboBox( ).getPreferredSize( ) );
 			bounds.width = Math.min( bounds.width , targetSize.width - insets.left - insets.right );
 			bounds.height = Math.min( bounds.height , targetSize.height - insets.top - insets.bottom );
 			bounds.y = insets.top;
 			bounds.x = targetSize.width - insets.right - bounds.width;
-			
-			formatSelector.getComboBox( ).setBounds( bounds );
+
+			typeSelector.comboBox( ).setBounds( bounds );
 		}
 	}
-	
+
 	private class InnerBorder implements Border
 	{
 		@Override
 		public void paintBorder( Component c , Graphics g , int x , int y , int width , int height )
 		{
 		}
-		
+
 		@Override
 		public Insets getBorderInsets( Component c )
 		{
-			return new Insets( 0 , 0 , 0 , formatSelector.getComboBox( ).getPreferredSize( ).width );
+			return new Insets( 0 , 0 , 0 , typeSelector.comboBox( ).getPreferredSize( ).width );
 		}
-		
+
 		@Override
 		public boolean isBorderOpaque( )
 		{
 			return false;
 		}
 	}
-	
-	public void setAvailableFormats( Collection<? extends FormatAndDisplayInfo<?>> formats )
+
+	public DefaultSelector<Object> typeSelector( )
 	{
-		formatSelector.setAvailableValues( formats );
+		return typeSelector;
+	}
+
+	public void setAvailableTypes( Collection<?> types )
+	{
+		typeSelector.setAvailableValues( types );
 	}
 }

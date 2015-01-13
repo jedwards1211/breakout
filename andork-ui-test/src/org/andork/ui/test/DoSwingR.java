@@ -19,13 +19,23 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.swing;
-
+package org.andork.ui.test;
 
 public abstract class DoSwingR<R> implements Runnable {
-	public R	result;
+	private R	result;
 
 	public DoSwingR() {
 		DoSwing.doSwing(this);
+	}
+
+	@Override
+	public void run() {
+		result = doRun();
+	}
+
+	protected abstract R doRun();
+
+	public R result() {
+		return result;
 	}
 }

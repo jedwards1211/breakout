@@ -404,8 +404,8 @@ public class JoglExportImageDialog extends JDialog
 				JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN.displayName = localizer
 					.getString( "pixelsPerIn" );
 
-				printUnitSelector.getComboBox( ).repaint( );
-				resolutionUnitSelector.getComboBox( ).repaint( );
+				printUnitSelector.comboBox( ).repaint( );
+				resolutionUnitSelector.comboBox( ).repaint( );
 			}
 		} );
 
@@ -462,24 +462,24 @@ public class JoglExportImageDialog extends JDialog
 		sizePanel.put( pixelHeightUnitLabel ).below( pixelWidthUnitLabel );
 		sizePanel.put( resolutionLabel ).below( pixelHeightLabel );
 		sizePanel.put( resolutionSpinner ).below( pixelHeightSpinner );
-		sizePanel.put( resolutionUnitSelector.getComboBox( ) ).below( pixelHeightUnitLabel );
+		sizePanel.put( resolutionUnitSelector.comboBox( ) ).below( pixelHeightUnitLabel );
 
 		sizePanel.put( pixelWidthLabel , pixelHeightLabel , resolutionLabel ).addToInsets( 0 , 10 , 0 , 0 );
 		sizePanel.put( pixelWidthSpinner , pixelHeightSpinner , resolutionSpinner ).fillboth( 1.0 , 0.0 );
-		sizePanel.put( resolutionUnitSelector.getComboBox( ) ).fillboth( );
+		sizePanel.put( resolutionUnitSelector.comboBox( ) ).fillboth( );
 
 		sizePanel.put( printSizeHeaderLabel ).below( resolutionLabel ).width( 3 ).addToInsets( 10 , 0 , 0 , 0 );
 		sizePanel.put( new JSeparator( ) ).below( printSizeHeaderLabel ).fillx( ).ipady( 3 );
 		sizePanel.put( printWidthLabel ).belowLast( ).x( 0 ).width( 1 );
 		sizePanel.put( printWidthSpinner ).rightOf( printWidthLabel );
-		sizePanel.put( printUnitSelector.getComboBox( ) ).rightOf( printWidthSpinner );
+		sizePanel.put( printUnitSelector.comboBox( ) ).rightOf( printWidthSpinner );
 		sizePanel.put( printHeightLabel ).below( printWidthLabel );
 		sizePanel.put( printHeightSpinner ).below( printWidthSpinner );
-		sizePanel.put( printUnitLabel ).below( printUnitSelector.getComboBox( ) );
+		sizePanel.put( printUnitLabel ).below( printUnitSelector.comboBox( ) );
 
 		sizePanel.put( printWidthLabel , printHeightLabel ).addToInsets( 0 , 10 , 0 , 0 );
 		sizePanel.put( printWidthSpinner , printHeightSpinner ).fillboth( 1.0 , 0.0 );
-		sizePanel.put( printUnitSelector.getComboBox( ) ).fillboth( );
+		sizePanel.put( printUnitSelector.comboBox( ) ).fillboth( );
 
 		sizePanel.put( pixelWidthUnitLabel , pixelHeightUnitLabel , printUnitLabel ).addToInsets( 0 , 4 , 0 , 0 );
 

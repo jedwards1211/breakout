@@ -23,7 +23,7 @@ package org.andork.ui.test.fixture;
 
 import javax.swing.JTable;
 
-import org.andork.swing.DoSwing;
+import org.andork.ui.test.DoSwing;
 
 public class HardJTableFixture extends HardComponentFixture implements JTableFixture {
 

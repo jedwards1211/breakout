@@ -4,7 +4,7 @@ import java.util.IdentityHashMap;
 import java.util.function.Function;
 
 /**
- * A general-purpose replacement to the cruftlike {@link Object#clone()} method.
+ * A general-purpose replacement to the cruftastic {@link Cloneable} design.
  * 
  * @author James
  */
@@ -16,9 +16,8 @@ public interface PowerCloneable
 	 * 
 	 * @param subcloner
 	 *            a function that clones fields or other "elements" of this object. Being able to choose the function
-	 *            allows you to perform different styles of cloning, from a basic
-	 *            "return clone() if it's a PowerCloneable, otherwise return the same object"
-	 *            to a {@link Function} using an {@link IdentityHashMap} to preserve graph structure.
+	 *            allows you to perform different styles of cloning, like deep or shallow copying, or even a graph
+	 *            structure-preserving clone using an {@link IdentityHashMap}.
 	 * @return A clone of this object.
 	 */
 	public PowerCloneable clone( Function<Object, Object> subcloner );

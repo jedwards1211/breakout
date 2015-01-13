@@ -24,7 +24,7 @@ package org.andork.ui.test.fixture;
 import javax.swing.JComboBox;
 
 import org.andork.func.Predicate;
-import org.andork.swing.DoSwing;
+import org.andork.ui.test.DoSwing;
 import org.andork.util.Java7;
 import org.junit.Assert;
 

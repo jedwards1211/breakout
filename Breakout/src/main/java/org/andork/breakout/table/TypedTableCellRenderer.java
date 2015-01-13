@@ -52,7 +52,7 @@ public class TypedTableCellRenderer extends JPanel implements TableCellRenderer
 		Object type = typeGetter.apply( value );
 		typeSelector.setSelection( type );
 		add( wrappedComp , BorderLayout.CENTER );
-		add( typeSelector.getComboBox( ) , BorderLayout.EAST );
+		add( typeSelector.comboBox( ) , BorderLayout.EAST );
 		if( wrappedComp instanceof JComponent )
 		{
 			setToolTipText( ( ( JComponent ) wrappedComp ).getToolTipText( ) );

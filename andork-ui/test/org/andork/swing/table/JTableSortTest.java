@@ -22,7 +22,6 @@
 package org.andork.swing.table;
 
 import java.awt.Color;
-import java.util.Collections;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -44,9 +43,8 @@ import javax.swing.table.TableRowSorter;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.swing.AnnotatingRowSorterCursorController;
-import org.andork.swing.DoSwing;
+import org.andork.swing.OnEDT;
 import org.andork.swing.QuickTestFrame;
-import org.andork.swing.RowAnnotator;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.event.EasyDocumentListener;
 
@@ -54,24 +52,20 @@ public class JTableSortTest
 {
 	public static void main( String[ ] args )
 	{
-		new DoSwing( )
+		OnEDT.onEDT( ( ) ->
 		{
-			@Override
-			public void run( )
+			try
 			{
-				try
-				{
-					UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName( ) );
-				}
-				catch( Exception ex )
-				{
-					ex.printStackTrace( );
-				}
+				UIManager.setLookAndFeel( UIManager.getSystemLookAndFeelClassName( ) );
 			}
-		};
-		
+			catch( Exception ex )
+			{
+				ex.printStackTrace( );
+			}
+		} );
+
 		DefaultTableModel model = new DefaultTableModel( 100000 , 10 );
-		
+
 		for( int row = 0 ; row < model.getRowCount( ) ; row++ )
 		{
 			for( int column = 0 ; column < model.getColumnCount( ) ; column++ )
@@ -79,9 +73,9 @@ public class JTableSortTest
 				model.setValueAt( String.valueOf( row + ", " + column ) , row , column );
 			}
 		}
-		
+
 		final JTable table = new JTable( model );
-		
+
 		table.getSelectionModel( ).addListSelectionListener( new ListSelectionListener( )
 		{
 			@Override
@@ -90,13 +84,13 @@ public class JTableSortTest
 				System.out.println( e );
 			}
 		} );
-		
+
 		final TableRowSorter<DefaultTableModel> rowSorter = new TableRowSorter<DefaultTableModel>( model );
 		rowSorter.setSortsOnUpdates( true );
-		
+
 		table.setRowSorter( rowSorter );
 		// rowSorter.sortLater( );
-		
+
 		rowSorter.addRowSorterListener( new RowSorterListener( )
 		{
 			@Override
@@ -105,22 +99,22 @@ public class JTableSortTest
 				System.out.println( e + " " + e.getType( ) );
 			}
 		} );
-		
+
 		final JTextField filterField = new JTextField( );
 		final JTextField highlightField = new JTextField( );
-		
+
 		final JScrollPane tableScrollPane = new JScrollPane( table );
-		
+
 		AnnotatingRowSorterCursorController cursorController = new AnnotatingRowSorterCursorController( tableScrollPane );
 		rowSorter.addRowSorterListener( cursorController );
-		
+
 		DocumentListener docListener = new EasyDocumentListener( )
 		{
 			@Override
 			public void documentChanged( DocumentEvent e )
 			{
 				JTextField field = e.getDocument( ) == highlightField.getDocument( ) ? highlightField : filterField;
-				
+
 				if( field.getText( ) != null && field.getText( ).length( ) > 0 )
 				{
 					RowFilter<DefaultTableModel, Integer> filter = null;
@@ -141,26 +135,27 @@ public class JTableSortTest
 				else
 				{
 					field.setForeground( Color.BLACK );
-					
+
 					if( field == filterField )
 					{
 						rowSorter.setRowFilter( null );
 					}
 				}
-				
+
 			}
 		};
-		
+
 		highlightField.getDocument( ).addDocumentListener( docListener );
 		filterField.getDocument( ).addDocumentListener( docListener );
-		
+
 		// TextComponentWithHintAndClear highlightFieldWrapper = new TextComponentWithHintAndClear( highlightField , "Enter Regular Expression" );
-		TextComponentWithHintAndClear filterFieldWrapper = new TextComponentWithHintAndClear( filterField , "Enter Regular Expression" );
-		
+		TextComponentWithHintAndClear filterFieldWrapper = new TextComponentWithHintAndClear( filterField ,
+			"Enter Regular Expression" );
+
 		JPanel panel = new JPanel( );
 		panel.setBorder( new EmptyBorder( 2 , 2 , 2 , 2 ) );
 		GridBagWizard gbw = GridBagWizard.create( panel );
-		
+
 		gbw.defaults( ).autoinsets( new DefaultAutoInsets( 2 , 2 ) );
 		// JLabel highlightLabel = new JLabel( "Highlight: " );
 		// gbw.put( highlightLabel ).xy( 0 , 0 ).west( );
@@ -169,7 +164,7 @@ public class JTableSortTest
 		gbw.put( filterLabel ).xy( 0 , 0 ).west( );
 		gbw.put( filterFieldWrapper ).rightOf( filterLabel ).fillx( 1.0 );
 		gbw.put( tableScrollPane ).below( filterLabel , filterFieldWrapper ).fillboth( 1.0 , 1.0 );
-		
+
 		QuickTestFrame.frame( panel ).setVisible( true );
 	}
 }

@@ -32,7 +32,7 @@ import javax.swing.plaf.basic.ComboPopup;
 
 import org.andork.func.Predicate;
 import org.andork.reflect.ReflectionUtils;
-import org.andork.swing.DoSwingR2;
+import org.andork.ui.test.DoSwingR;
 
 public interface JComboBoxFixture extends ComponentFixture {
 	public void selectItemAtIndex(JComboBox cb, int index);
@@ -45,7 +45,7 @@ public interface JComboBoxFixture extends ComponentFixture {
 
 	public static class Common {
 		public static String readText(final JComboBox cb, final int index) {
-			return new DoSwingR2<String>() {
+			return new DoSwingR<String>() {
 				@Override
 				protected String doRun() {
 					Object value = cb.getItemAt(index);

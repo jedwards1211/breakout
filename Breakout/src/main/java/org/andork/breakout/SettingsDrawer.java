@@ -378,7 +378,7 @@ public class SettingsDrawer extends Drawer
 		verticalScrollBar.setUnitIncrement( 5 );
 
 		Dimension iconButtonSize = flipParamColorationAxisButton.getPreferredSize( );
-		iconButtonSize.height = colorParamSelector.getComboBox( ).getPreferredSize( ).height;
+		iconButtonSize.height = colorParamSelector.comboBox( ).getPreferredSize( ).height;
 		fitParamColorationAxisButton.setPreferredSize( iconButtonSize );
 		recalcColorByDistanceButton.setPreferredSize( iconButtonSize );
 		inferDepthAxisTiltButton.setPreferredSize( iconButtonSize );
@@ -455,7 +455,7 @@ public class SettingsDrawer extends Drawer
 
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel( );
 		colorParamPanel.put( colorParamLabel ).xy( 0 , 0 ).filly( ).west( );
-		colorParamPanel.put( colorParamSelector.getComboBox( ) ).rightOfLast( ).fillboth( 1.0 , 0.0 )
+		colorParamPanel.put( colorParamSelector.comboBox( ) ).rightOfLast( ).fillboth( 1.0 , 0.0 )
 			.addToInsets( 0 , 5 , 0 , 0 );
 		colorParamButtonsPanel.setLayout( colorParamButtonsLayout = new BetterCardLayout( ) );
 		colorParamButtonsLayout.setSizeHidden( false );

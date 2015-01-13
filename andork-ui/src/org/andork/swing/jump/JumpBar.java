@@ -129,7 +129,7 @@ public class JumpBar extends JComponent
 	
 	public void setColorMap( Map<?, Color> colorMap )
 	{
-		colorer = colorMap == null ? null : o -> colorMap.get( o );
+		colorer = colorMap == null ? null : colorMap::get;
 	}
 	
 	public void setColorer( Function<Object, Color> colorer )

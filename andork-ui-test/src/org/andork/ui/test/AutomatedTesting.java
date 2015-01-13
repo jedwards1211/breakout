@@ -21,7 +21,6 @@
  *******************************************************************************/
 package org.andork.ui.test;
 
-import org.andork.swing.DoSwing;
 
 
 public class AutomatedTesting {

@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
+import javax.swing.event.TableModelEvent;
 import javax.swing.table.TableModel;
 
 /**
@@ -89,6 +90,16 @@ public class TableModelList<E> implements Iterable<E>
 		}
 	}
 
+	/**
+	 * Removes a sublist of elements from this list and fires an
+	 * {@link Listener#elementsDeleted(TableModelList, int, int) elementsDeleted} event.
+	 * 
+	 * @param fromIndex
+	 *            low endpoint (inclusive) of the sublist to remove
+	 * @param toIndex
+	 *            high endpoint (exclusive) of the sublist to remove (note that the event will use an <i>inclusive</i>
+	 *            toIndex to conform to {@link TableModelEvent} semantics!)
+	 */
 	public void removeSublist( int fromIndex , int toIndex )
 	{
 		elements.subList( fromIndex , toIndex ).clear( );
@@ -197,16 +208,40 @@ public class TableModelList<E> implements Iterable<E>
 		}
 	}
 
+	/**
+	 * A listener for a {@link TableModelList}.
+	 * 
+	 * @author James
+	 *
+	 * @param <E>
+	 *            the {@link TableModelList}'s row element type.
+	 */
 	public static interface Listener<E>
 	{
+		/**
+		 * Indicates row elements were inserted into {@code list} at {@code fromIndex} to {@code toIndex} (inclusive).
+		 */
 		public void elementsInserted( TableModelList<E> list , int fromIndex , int toIndex );
 
+		/**
+		 * Indicates row elements were deleted from {@code list} at {@code fromIndex} to {@code toIndex} (inclusive).
+		 */
 		public void elementsDeleted( TableModelList<E> list , int fromIndex , int toIndex );
 
+		/**
+		 * Indicates row elements were in {@code list} at {@code fromIndex} to {@code toIndex} (inclusive) were updated.
+		 */
 		public void elementsUpdated( TableModelList<E> list , int fromIndex , int toIndex );
 
+		/**
+		 * Indicates the row elements present in {@code list} and their internal values have drastically changed.
+		 */
 		public void dataChanged( TableModelList<E> list );
 
+		/**
+		 * Indicates the structure of row elements in {@code list} (e.g. that would determine which columns to show) has
+		 * changed, as well which row elements are present.
+		 */
 		public void structureChanged( TableModelList<E> list );
 	}
 }

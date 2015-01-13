@@ -46,8 +46,6 @@ import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
 import org.andork.awt.CheckEDT;
@@ -57,17 +55,16 @@ import org.andork.collect.CompoundComparator;
 import org.andork.collect.EasyIterator;
 import org.andork.collect.FilteringIterator;
 import org.andork.collect.InverseComparator;
-import org.andork.swing.DoSwing;
-import org.andork.swing.DoSwingR;
-import org.andork.swing.DoSwingR2;
 import org.andork.ui.test.ConfigurableStringComparator.Option;
 import org.andork.util.Java7;
 
 /**
- * Helps you find components easily (and legibly) for automated GUI testing. ComponentFinder is like a nested iterator chain; it iterates over components, and
+ * Helps you find components easily (and legibly) for automated GUI testing. ComponentFinder is like a nested iterator
+ * chain; it iterates over components, and
  * fluent methods wrap it in other ComponentFinders that filter out undesired results.<br>
  * <br>
- * To get a ComponentFinder, use {@link #only(Component)} or {@link #windows()}. Then chain filter methods (e.g. {@link #ofType(Class)}) onto that call, and
+ * To get a ComponentFinder, use {@link #only(Component)} or {@link #windows()}. Then chain filter methods (e.g.
+ * {@link #ofType(Class)}) onto that call, and
  * finally get the results with {@link #next()}.
  * 
  * @author andy.edwards
@@ -80,9 +77,10 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	protected ComponentFinder( )
 	{
 	}
-	
+
 	/**
-	 * Gets the first component found. If no component was found an exception will be thrown. NOTE: This method blocks waiting for the AWT event dispatch
+	 * Gets the first component found. If no component was found an exception will be thrown. NOTE: This method blocks
+	 * waiting for the AWT event dispatch
 	 * thread.
 	 * 
 	 * @return the first component found.
@@ -93,15 +91,16 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		return new DoSwingR<C>( )
 		{
-			public void run( )
+			public C doRun( )
 			{
-				result = iterator( ).next( );
+				return iterator( ).next( );
 			}
-		}.result;
+		}.result( );
 	}
-	
+
 	/**
-	 * Gets the first component found, or {@code null} if no components were found.NOTE: This method blocks waiting for the AWT event dispatch thread.
+	 * Gets the first component found, or {@code null} if no components were found.NOTE: This method blocks waiting for
+	 * the AWT event dispatch thread.
 	 * 
 	 * @return the first component found, or {@code null} if no components were found.
 	 */
@@ -109,19 +108,21 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		return new DoSwingR<C>( )
 		{
-			public void run( )
+			public C doRun( )
 			{
 				Iterator<C> i = iterator( );
 				if( i.hasNext( ) )
 				{
-					result = i.next( );
+					return i.next( );
 				}
+				return null;
 			}
-		}.result;
+		}.result( );
 	}
-	
+
 	/**
-	 * Gets the only component found. If there are more or less than one components an exception will be thrown. NOTE: This method blocks waiting for the AWT
+	 * Gets the only component found. If there are more or less than one components an exception will be thrown. NOTE:
+	 * This method blocks waiting for the AWT
 	 * event dispatch thread.
 	 * 
 	 * @return the only component found.
@@ -134,18 +135,19 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		return new DoSwingR<C>( )
 		{
-			public void run( )
+			public C doRun( )
 			{
 				Iterator<C> i = iterator( );
-				result = i.next( );
+				C result = i.next( );
 				if( i.hasNext( ) )
 				{
 					throw new IllegalStateException( "More than one component was found" );
 				}
+				return result;
 			}
-		}.result;
+		}.result( );
 	}
-	
+
 	/**
 	 * Gets the <b>i</b>th component found. NOTE: This method blocks waiting for the AWT event dispatch thread.
 	 * 
@@ -157,7 +159,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	 */
 	public C get( final int i )
 	{
-		return new DoSwingR2<C>( )
+		return new DoSwingR<C>( )
 		{
 			public C doRun( )
 			{
@@ -173,9 +175,10 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		}.result( );
 	}
-	
+
 	/**
-	 * Adds all components found to the given {@link Collection}. NOTE: this method blocks waiting for the AWT event dispatch thread.
+	 * Adds all components found to the given {@link Collection}. NOTE: this method blocks waiting for the AWT event
+	 * dispatch thread.
 	 * 
 	 * @param collection
 	 *            the collection to add the found components to.
@@ -190,7 +193,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * Gets a list of all components found. NOTE: this method blocks waiting for the AWT event dispatch thread.
 	 * 
@@ -205,9 +208,10 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		addAllTo( result );
 		return result;
 	}
-	
+
 	/**
-	 * Blocks the current thread (which must not be the AWT event dispatch thread) until at least one component is found. However, the component may cease to
+	 * Blocks the current thread (which must not be the AWT event dispatch thread) until at least one component is
+	 * found. However, the component may cease to
 	 * exist before/after this method returns.
 	 * 
 	 * @return this {@link ComponentFinder}, for chaining.
@@ -225,9 +229,10 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		}
 		return this;
 	}
-	
+
 	/**
-	 * Blocks the current thread (which must not be the AWT event dispatch thread) until no components are found. However, new components that would be found
+	 * Blocks the current thread (which must not be the AWT event dispatch thread) until no components are found.
+	 * However, new components that would be found
 	 * may come into existence before/after this method returns.
 	 * 
 	 * @return this {@link ComponentFinder}, for chaining.
@@ -245,7 +250,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		}
 		return this;
 	}
-	
+
 	/**
 	 * Determines if any components are found. NOTE: this method blocks waiting for the AWT event dispatch thread.
 	 * 
@@ -255,13 +260,13 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		return new DoSwingR<Boolean>( )
 		{
-			public void run( )
+			public Boolean doRun( )
 			{
-				result = iterator( ).hasNext( );
+				return iterator( ).hasNext( );
 			}
-		}.result;
+		}.result( );
 	}
-	
+
 	/**
 	 * Prints all components found to {@link System#out}.
 	 */
@@ -269,7 +274,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		printAll( System.out );
 	}
-	
+
 	/**
 	 * Prints all components found to the given {@link PrintStream} on successive lines.
 	 * 
@@ -289,9 +294,10 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
-	 * A {@code ComponentFinder} that finds one component (or none). It provides a {@link #get()} method to get the component.
+	 * A {@code ComponentFinder} that finds one component (or none). It provides a {@link #get()} method to get the
+	 * component.
 	 * 
 	 * @author andy.edwards
 	 * @param <C>
@@ -300,23 +306,23 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	public static class SingletonComponentFinder<C extends Component> extends ComponentFinder<C>
 	{
 		private C	comp;
-		
+
 		protected SingletonComponentFinder( C comp )
 		{
 			this.comp = comp;
 		}
-		
+
 		public C get( )
 		{
 			return comp;
 		}
-		
+
 		public Iterator<C> iterator( )
 		{
 			return new EasyIterator<C>( )
 			{
 				C	next	= comp;
-				
+
 				@Override
 				protected C nextOrNull( )
 				{
@@ -327,24 +333,24 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			};
 		}
 	}
-	
+
 	private static class AncestorFinder extends ComponentFinder<Component>
 	{
 		private ComponentFinder<?>	wrapped;
-		
+
 		public AncestorFinder( ComponentFinder<?> wrapped )
 		{
 			super( );
 			this.wrapped = wrapped;
 		}
-		
+
 		public Iterator<Component> iterator( )
 		{
 			return new EasyIterator<Component>( )
 			{
 				private Component						next		= null;
 				private Iterator<? extends Component>	wrappedIter	= wrapped.iterator( );
-				
+
 				@Override
 				protected Component nextOrNull( )
 				{
@@ -352,39 +358,39 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 					{
 						next = wrappedIter.next( ).getParent( );
 					}
-					
+
 					Component result = next;
-					
+
 					if( next != null )
 					{
 						next = next.getParent( );
 					}
-					
+
 					return result;
 				}
 			};
 		}
 	}
-	
+
 	private static class DescendantFinder extends ComponentFinder<Component>
 	{
 		private ComponentFinder<?>	wrapped;
-		
+
 		public DescendantFinder( ComponentFinder<?> wrapped )
 		{
 			super( );
 			this.wrapped = wrapped;
 		}
-		
+
 		public Iterator<Component> iterator( )
 		{
 			return new EasyIterator<Component>( )
 			{
 				private final Set<Component>			visited		= new HashSet<Component>( );
 				private final Queue<Component>			queue		= new LinkedList<Component>( );
-				
+
 				private Iterator<? extends Component>	wrappedIter	= wrapped.iterator( );
-				
+
 				@Override
 				protected Component nextOrNull( )
 				{
@@ -402,9 +408,9 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 							}
 						}
 					}
-					
+
 					Component result = queue.poll( );
-					
+
 					if( result instanceof Container )
 					{
 						for( Component comp : ( ( Container ) result ).getComponents( ) )
@@ -415,25 +421,25 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 							}
 						}
 					}
-					
+
 					return result;
 				}
 			};
 		}
 	}
-	
+
 	public static abstract class FilteringComponentFinder<C extends Component> extends ComponentFinder<C>
 	{
 		private final ComponentFinder<C>	wrapped;
-		
+
 		protected FilteringComponentFinder( ComponentFinder<C> wrapped )
 		{
 			super( );
 			this.wrapped = wrapped;
 		}
-		
+
 		public abstract boolean matches( C comp );
-		
+
 		public Iterator<C> iterator( )
 		{
 			return new FilteringIterator<C>( wrapped.iterator( ) )
@@ -446,9 +452,10 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			};
 		}
 	}
-	
+
 	/**
-	 * A {@code ComponentFinder} that finds {@link Window}s. It provides some additional methods to filter out certain windows.
+	 * A {@code ComponentFinder} that finds {@link Window}s. It provides some additional methods to filter out certain
+	 * windows.
 	 * 
 	 * @author andy.edwards
 	 * 
@@ -459,11 +466,12 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		protected WindowFinder( )
 		{
-			
+
 		}
-		
+
 		/**
-		 * Wraps the given {@code ComponentFinder} with a new {@code WindowFinder}, enabling you to use {@code WindowFinder}'s filtering methods.
+		 * Wraps the given {@code ComponentFinder} with a new {@code WindowFinder}, enabling you to use
+		 * {@code WindowFinder}'s filtering methods.
 		 * 
 		 * @param componentFinder
 		 *            the {@code ComponentFinder} to wrap.
@@ -479,7 +487,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 				}
 			};
 		}
-		
+
 		/**
 		 * @return a {@code WindowFinder} that narrows the results down to owned windows.
 		 */
@@ -494,7 +502,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 				}
 			} );
 		}
-		
+
 		/**
 		 * @return a {@code WindowFinder} that narrows the results down to ownerless windows.
 		 */
@@ -509,7 +517,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 				}
 			} );
 		}
-		
+
 		@Override
 		public WindowFinder<W> waitUntilFound( ) throws InterruptedException
 		{
@@ -517,33 +525,33 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			return this;
 		}
 	}
-	
+
 	private static class OwnedWindowFinder extends WindowFinder<Window>
 	{
 		private final Window	target;
-		
+
 		private OwnedWindowFinder( Window target )
 		{
 			super( );
 			this.target = target;
 		}
-		
+
 		public Iterator<Window> iterator( )
 		{
 			return new ArrayIterator<Window>( target.getOwnedWindows( ) );
 		}
 	}
-	
+
 	public static WindowFinder<Window> windowsOwnedBy( Window window )
 	{
 		return new OwnedWindowFinder( window );
 	}
-	
+
 	public static <C extends Component> SingletonComponentFinder<C> only( final C comp )
 	{
 		return new SingletonComponentFinder<C>( comp );
 	}
-	
+
 	/**
 	 * @param comp
 	 *            the component to find ancestors of.
@@ -553,7 +561,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		return only( comp ).ancestors( );
 	}
-	
+
 	/**
 	 * @return a {@code ComponentFinder} that finds all of this {@code ComponentFinder}'s components' ancestors.
 	 */
@@ -561,7 +569,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		return new AncestorFinder( this );
 	}
-	
+
 	/**
 	 * @param comp
 	 *            the component to find descendants of.
@@ -571,7 +579,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		return only( comp ).descendants( );
 	}
-	
+
 	/**
 	 * @return a {@code ComponentFinder} that finds all of this {@code ComponentFinder}'s components' descendants.
 	 */
@@ -579,7 +587,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	{
 		return new DescendantFinder( this );
 	}
-	
+
 	/**
 	 * @param cls
 	 *            the type to match.
@@ -597,7 +605,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	public ComponentFinder<C> ofType2( final Class<?> cls )
 	{
 		return new FilteringComponentFinder<C>( this )
@@ -609,47 +617,47 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	public static ComponentFinder<JLabel> jlabelsIn( Component parent )
 	{
 		return descendantsOf( parent ).ofType( JLabel.class );
 	}
-	
+
 	public static ComponentFinder<JTextComponent> textComponentsIn( Component parent )
 	{
 		return descendantsOf( parent ).ofType( JTextComponent.class );
 	}
-	
+
 	public static ComponentFinder<AbstractButton> buttonsIn( Component parent )
 	{
 		return descendantsOf( parent ).ofType( AbstractButton.class );
 	}
-	
+
 	public static ComponentFinder<JRadioButton> radioButtonsIn( Component parent )
 	{
 		return descendantsOf( parent ).ofType( JRadioButton.class );
 	}
-	
+
 	public static ComponentFinder<JCheckBox> checkBoxesIn( Component parent )
 	{
 		return descendantsOf( parent ).ofType( JCheckBox.class );
 	}
-	
+
 	public static ComponentFinder<JComboBox> comboBoxesIn( Component parent )
 	{
 		return descendantsOf( parent ).ofType( JComboBox.class );
 	}
-	
+
 	public static TableFinder<JTable> tablesIn( Component parent )
 	{
 		return descendantsOf( parent ).tables( );
 	}
-	
+
 	public TableFinder<JTable> tables( )
 	{
 		return TableFinder.cast( ofType( JTable.class ) );
 	}
-	
+
 	/**
 	 * Excludes the given component from the results.
 	 * 
@@ -668,7 +676,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * Excludes given components from the results.
 	 * 
@@ -687,7 +695,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @return a {@code ComponentFinder} that narrows the results to {@link Component#isEnabled() enabled} components.
 	 */
@@ -702,7 +710,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @return a {@code ComponentFinder} that narrows the results to {@link Component#isEnabled() disabled} components.
 	 */
@@ -717,7 +725,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @return a {@code ComponentFinder} that narrows the results to {@link Component#isShowing() showing} components.
 	 */
@@ -732,9 +740,10 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
-	 * @return a {@code ComponentFinder} that narrows the results to the {@link Component#isShowing() focused} component.
+	 * @return a {@code ComponentFinder} that narrows the results to the {@link Component#isShowing() focused}
+	 *         component.
 	 */
 	public ComponentFinder<C> withFocus( )
 	{
@@ -747,7 +756,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @param name
 	 *            the name to match (may be null).
@@ -764,11 +773,12 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @param regex
 	 *            a regular expression to match component names.
-	 * @return a {@code ComponentFinder} that narrows the results to components that have a non-null {@link Component#getName() name} matching the given regular
+	 * @return a {@code ComponentFinder} that narrows the results to components that have a non-null
+	 *         {@link Component#getName() name} matching the given regular
 	 *         expression.
 	 */
 	public ComponentFinder<C> withNameMatching( final String regex )
@@ -776,7 +786,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		return new FilteringComponentFinder<C>( this )
 		{
 			Pattern	pattern	= Pattern.compile( regex );
-			
+
 			@Override
 			public boolean matches( C comp )
 			{
@@ -784,13 +794,14 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	};
-	
+
 	/**
 	 * @param regex
 	 *            a regular expression to match component names.
 	 * @param flags
 	 *            flags for {@link Pattern#compile(String, int)}.
-	 * @return a {@code ComponentFinder} that narrows the results to components that have a non-null {@link Component#getName() name} matching the given regular
+	 * @return a {@code ComponentFinder} that narrows the results to components that have a non-null
+	 *         {@link Component#getName() name} matching the given regular
 	 *         expression.
 	 */
 	public ComponentFinder<C> withNameMatching( final String regex , final int flags )
@@ -798,7 +809,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		return new FilteringComponentFinder<C>( this )
 		{
 			Pattern	pattern	= Pattern.compile( regex , flags );
-			
+
 			@Override
 			public boolean matches( C comp )
 			{
@@ -806,12 +817,12 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	};
-	
+
 	private static boolean hasText( Component comp )
 	{
 		return comp instanceof AbstractButton || comp instanceof JLabel || comp instanceof JTextComponent;
 	}
-	
+
 	private static String getText( Component comp )
 	{
 		if( comp instanceof AbstractButton )
@@ -828,7 +839,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		}
 		throw new IllegalArgumentException( comp.getClass( ) + " components don't have text" );
 	}
-	
+
 	/**
 	 * @param text
 	 *            a text to match (may be null).
@@ -845,7 +856,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @param text
 	 *            a text to match (may be null).
@@ -865,7 +876,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @param text
 	 *            a text to match (may be null).
@@ -890,7 +901,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @param text
 	 *            a text to match (may be null).
@@ -918,18 +929,19 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	/**
 	 * @param regex
 	 *            a regular expression to match component text.
-	 * @return a {@code ComponentFinder} that narrows the results to components that have a non-null text matching the given regular expression.
+	 * @return a {@code ComponentFinder} that narrows the results to components that have a non-null text matching the
+	 *         given regular expression.
 	 */
 	public ComponentFinder<C> withTextMatching( final String regex )
 	{
 		return new FilteringComponentFinder<C>( this )
 		{
 			Pattern	pattern	= Pattern.compile( regex );
-			
+
 			@Override
 			public boolean matches( C comp )
 			{
@@ -937,7 +949,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	public ComponentFinder<C> above( final Component c1 )
 	{
 		final Rectangle r1 = c1.getBounds( );
@@ -948,12 +960,12 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			{
 				Rectangle r2 = c2.getBounds( );
 				r2 = SwingUtilities.convertRectangle( c2 , r2 , c1 );
-				
+
 				return r2.getMaxY( ) < r1.y;
 			}
 		};
 	}
-	
+
 	public ComponentFinder<C> below( final Component c1 )
 	{
 		final Rectangle r1 = c1.getBounds( );
@@ -964,12 +976,12 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			{
 				Rectangle r2 = c2.getBounds( );
 				r2 = SwingUtilities.convertRectangle( c2 , r2 , c1 );
-				
+
 				return r2.y > r1.getMaxY( );
 			}
 		};
 	}
-	
+
 	public ComponentFinder<C> leftOf( final Component c1 )
 	{
 		final Rectangle r1 = c1.getBounds( );
@@ -980,12 +992,12 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			{
 				Rectangle r2 = c2.getBounds( );
 				r2 = SwingUtilities.convertRectangle( c2 , r2 , c1 );
-				
+
 				return r2.getMaxX( ) < r1.x;
 			}
 		};
 	}
-	
+
 	public ComponentFinder<C> rightOf( final Component c1 )
 	{
 		final Rectangle r1 = c1.getBounds( );
@@ -996,25 +1008,26 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			{
 				Rectangle r2 = c2.getBounds( );
 				r2 = SwingUtilities.convertRectangle( c2 , r2 , c1 );
-				
+
 				return r2.x > r1.getMaxX( );
 			}
 		};
 	}
-	
+
 	/**
 	 * @param regex
 	 *            a regular expression to match component text.
 	 * @param flags
 	 *            flags for {@link Pattern#compile(String, int)}.
-	 * @return a {@code ComponentFinder} that narrows the results to components that have a non-null text matching the given regular expression.
+	 * @return a {@code ComponentFinder} that narrows the results to components that have a non-null text matching the
+	 *         given regular expression.
 	 */
 	public ComponentFinder<C> withTextMatching( final String regex , final int flags )
 	{
 		return new FilteringComponentFinder<C>( this )
 		{
 			Pattern	pattern	= Pattern.compile( regex , flags );
-			
+
 			@Override
 			public boolean matches( C comp )
 			{
@@ -1022,31 +1035,32 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			}
 		};
 	}
-	
+
 	public static class SortingComponentFinder<C extends Component> extends ComponentFinder<C>
 	{
 		ComponentFinder<C>		parent;
 		Comparator<? super C>	comparator;
-		
+
 		public SortingComponentFinder( ComponentFinder<C> parent , Comparator<? super C> comparator )
 		{
 			super( );
 			this.parent = parent;
 			this.comparator = comparator;
 		}
-		
+
 		@Override
 		public Iterator<C> iterator( )
 		{
 			return CollectionUtils.toSortedArrayList( parent , comparator ).iterator( );
 		}
 	}
-	
+
 	/**
 	 * @param comparator
 	 *            the comparator to sort with.
-	 * @return a {@code ComponentFinder} that sorts the results to using {@code comparator}. If this {@code ComponentFinder} is also a
-	 *         {@code SortingComponentFinder}, the result will sub-sort the results of this sort.
+	 * @return a {@code ComponentFinder} that sorts the results to using {@code comparator}. If this
+	 *         {@code ComponentFinder} is also a {@code SortingComponentFinder}, the result will sub-sort the results of
+	 *         this sort.
 	 */
 	public SortingComponentFinder<C> sort( Comparator<? super C> comparator )
 	{
@@ -1054,19 +1068,19 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		{
 			SortingComponentFinder<C> thisSorting = ( SortingComponentFinder<C> ) this;
 			return new SortingComponentFinder<C>( thisSorting.parent , new CompoundComparator(
-					thisSorting.comparator , comparator ) );
+				thisSorting.comparator , comparator ) );
 		}
 		else
 		{
 			return new SortingComponentFinder<C>( this , comparator );
 		}
 	}
-	
+
 	public static class ComponentCenterDistanceComparator implements Comparator<Component>
 	{
 		Component	referenceComp;
 		int			x , y;
-		
+
 		protected ComponentCenterDistanceComparator( Component referenceComp , int x , int y )
 		{
 			super( );
@@ -1074,13 +1088,13 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			this.x = x;
 			this.y = y;
 		}
-		
+
 		public int compare( Component o1 , Component o2 )
 		{
 			Rectangle r1 = o1 instanceof JComponent ?
-					( ( JComponent ) o1 ).getVisibleRect( ) : SwingUtilities.getLocalBounds( o1 );
+				( ( JComponent ) o1 ).getVisibleRect( ) : SwingUtilities.getLocalBounds( o1 );
 			Rectangle r2 = o2 instanceof JComponent ?
-					( ( JComponent ) o2 ).getVisibleRect( ) : SwingUtilities.getLocalBounds( o2 );
+				( ( JComponent ) o2 ).getVisibleRect( ) : SwingUtilities.getLocalBounds( o2 );
 			r1 = SwingUtilities.convertRectangle( o1 , r1 , referenceComp );
 			r2 = SwingUtilities.convertRectangle( o2 , r2 , referenceComp );
 			int dx1 = r1.x + r1.width / 2 - x;
@@ -1101,45 +1115,45 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			return result;
 		}
 	}
-	
+
 	/**
 	 * @param referenceComp
 	 *            the component to find the component closest to.
-	 * @return a {@code SingletonComponentFinder} that narrows the results to the component that whose center is closest to {@code comp}'s center, or
-	 *         {@code null} if this {@code ComponentFinder} has no results.
+	 * @return a {@code SingletonComponentFinder} that narrows the results to the component that whose center is closest
+	 *         to {@code comp}'s center, or {@code null} if this {@code ComponentFinder} has no results.
 	 */
 	private ComponentFinder<C> closestTo( final Component referenceComp , final int x , final int y )
 	{
 		return sort( new ComponentCenterDistanceComparator( referenceComp , x , y ) );
 	}
-	
+
 	public ComponentFinder<C> closestTo( Component center )
 	{
 		return exclude( center ).closestTo( center , center.getWidth( ) / 2 , center.getHeight( ) / 2 );
 	}
-	
+
 	private ComponentFinder<C> closestToX( final Component referenceComp , final int x )
 	{
 		return sort( new ComponentCenterXDistanceComparator( referenceComp , x ) );
 	}
-	
+
 	public ComponentFinder<C> closestToX( Component center )
 	{
 		return exclude( center ).closestToX( center , center.getWidth( ) / 2 );
 	}
-	
+
 	public static class ComponentCenterXDistanceComparator implements Comparator<Component>
 	{
 		Component	referenceComp;
 		int			x;
-		
+
 		protected ComponentCenterXDistanceComparator( Component comp , int x )
 		{
 			super( );
 			this.referenceComp = comp;
 			this.x = x;
 		}
-		
+
 		public int compare( Component o1 , Component o2 )
 		{
 			Rectangle r1 = SwingUtilities.getLocalBounds( o1 );
@@ -1150,29 +1164,29 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			return result == 0 ? r1.y - r2.y : result;
 		}
 	}
-	
+
 	private ComponentFinder<C> closestToY( final Component referenceComp , final int y )
 	{
 		return sort( new ComponentCenterYDistanceComparator( referenceComp , y ) );
 	}
-	
+
 	public ComponentFinder<C> closestToY( Component center )
 	{
 		return exclude( center ).closestToY( center , center.getHeight( ) / 2 );
 	}
-	
+
 	public static class ComponentCenterYDistanceComparator implements Comparator<Component>
 	{
 		Component	referenceComp;
 		int			y;
-		
+
 		protected ComponentCenterYDistanceComparator( Component comp , int y )
 		{
 			super( );
 			this.referenceComp = comp;
 			this.y = y;
 		}
-		
+
 		public int compare( Component o1 , Component o2 )
 		{
 			Rectangle r1 = SwingUtilities.getLocalBounds( o1 );
@@ -1183,24 +1197,24 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			return result == 0 ? r1.y - r2.y : result;
 		}
 	}
-	
+
 	public ComponentFinder<C> leftmost( )
 	{
 		return sort( new ComponentCenterXComparator( ) );
 	}
-	
+
 	public ComponentFinder<C> rightmost( )
 	{
 		return sort( new InverseComparator<C>( new ComponentCenterXComparator( ) ) );
 	}
-	
+
 	public static class ComponentCenterXComparator implements Comparator<Component>
 	{
 		protected ComponentCenterXComparator( )
 		{
 			super( );
 		}
-		
+
 		public int compare( Component o1 , Component o2 )
 		{
 			Rectangle r1 = SwingUtilities.getLocalBounds( o1 );
@@ -1209,24 +1223,24 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 			return r1.x - r2.x;
 		}
 	}
-	
+
 	public ComponentFinder<C> topmost( )
 	{
 		return sort( new ComponentCenterYComparator( ) );
 	}
-	
+
 	public ComponentFinder<C> bottommost( )
 	{
 		return sort( new InverseComparator<C>( new ComponentCenterYComparator( ) ) );
 	}
-	
+
 	public static class ComponentCenterYComparator implements Comparator<Component>
 	{
 		protected ComponentCenterYComparator( )
 		{
 			super( );
 		}
-		
+
 		public int compare( Component o1 , Component o2 )
 		{
 			Rectangle r1 = SwingUtilities.getLocalBounds( o1 );

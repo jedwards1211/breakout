@@ -37,7 +37,7 @@ public class NewI18nTest
 		new JLabelTextBinding( localeLabel ).textLink.bind( localizer.stringBinder( "localeLabel.text" ) );
 		
 		DefaultSelector<Locale> localeSelector = new DefaultSelector<>( );
-		localeSelector.getComboBox( ).setRenderer(
+		localeSelector.comboBox( ).setRenderer(
 				CellRenderers.map( value -> {
 					if( value == null )
 					{
@@ -78,8 +78,8 @@ public class NewI18nTest
 		GridBagWizard gbw = GridBagWizard.create( content );
 		
 		gbw.defaults( ).autoinsets( new DefaultAutoInsets( 5 , 5 ) );
-		gbw.put( localeLabel , localeSelector.getComboBox( ) ).y( 0 ).intoRow( );
-		gbw.put( dateLabel ).below( localeLabel , localeSelector.getComboBox( ) ).fillx( );
+		gbw.put( localeLabel , localeSelector.comboBox( ) ).y( 0 ).intoRow( );
+		gbw.put( dateLabel ).below( localeLabel , localeSelector.comboBox( ) ).fillx( );
 		gbw.put( testButton ).below( dateLabel ).fillx( );
 		
 		frame.setDefaultCloseOperation( JFrame.EXIT_ON_CLOSE );

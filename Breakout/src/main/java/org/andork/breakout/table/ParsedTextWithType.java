@@ -2,8 +2,6 @@ package org.andork.breakout.table;
 
 import java.util.function.Function;
 
-import org.andork.util.PowerCloneable;
-
 /**
  * Like {@link ParsedText}, this represents the contents of a table cell. <br>
  * <br>

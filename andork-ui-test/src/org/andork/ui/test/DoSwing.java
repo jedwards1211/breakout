@@ -19,30 +19,28 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.swing.table;
+package org.andork.ui.test;
 
-import java.awt.Component;
+import java.lang.reflect.InvocationTargetException;
 
-import javax.swing.DefaultCellEditor;
-import javax.swing.JTable;
-import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
-import org.andork.format.FormattedText;
-
-public class FormattedTextTableCellEditor extends DefaultCellEditor
-{
-	public FormattedTextTableCellEditor( JTextField textField )
-	{
-		super( textField );
+public abstract class DoSwing implements Runnable {
+	public DoSwing() {
+		doSwing(this);
 	}
-	
-	@Override
-	public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row , int column )
-	{
-		if( value instanceof FormattedText )
-		{
-			value = ( ( FormattedText ) value ).getText( );
+
+	public static void doSwing(Runnable r) {
+		if (SwingUtilities.isEventDispatchThread()) {
+			r.run();
+		} else {
+			try {
+				SwingUtilities.invokeAndWait(r);
+			} catch (InvocationTargetException e) {
+				throw new RuntimeException(e.getCause());
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
 		}
-		return super.getTableCellEditorComponent( table , value , isSelected , row , column );
 	}
 }

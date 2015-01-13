@@ -571,23 +571,23 @@ public class ObjectTreeTable extends JXTreeTable {
 		if (node.getValue() instanceof Enum) {
 			DefaultSelector<Object> selector = new DefaultSelector<Object>();
 			selector.setAvailableValues(Arrays.asList(valueClass.getEnumConstants()));
-			selector.getComboBox().setRenderer(new ComboBoxCellRenderer());
-			return new DefaultCellEditor(selector.getComboBox());
+			selector.comboBox().setRenderer(new ComboBoxCellRenderer());
+			return new DefaultCellEditor(selector.comboBox());
 		} else if (storageClass.isEnum()) {
 			DefaultSelector<Object> selector = new DefaultSelector<Object>();
 			selector.setAvailableValues(Arrays.asList(storageClass.getEnumConstants()));
-			selector.getComboBox().setRenderer(new ComboBoxCellRenderer());
-			return new DefaultCellEditor(selector.getComboBox());
+			selector.comboBox().setRenderer(new ComboBoxCellRenderer());
+			return new DefaultCellEditor(selector.comboBox());
 		} else if (enumlikeTypes.containsKey(valueClass)) {
 			DefaultSelector<Object> selector = new DefaultSelector<Object>();
 			selector.setAvailableValues(enumlikeTypes.get(valueClass));
-			selector.getComboBox().setRenderer(new ComboBoxCellRenderer());
-			return new DefaultCellEditor(selector.getComboBox());
+			selector.comboBox().setRenderer(new ComboBoxCellRenderer());
+			return new DefaultCellEditor(selector.comboBox());
 		} else if (enumlikeTypes.containsKey(storageClass)) {
 			DefaultSelector<Object> selector = new DefaultSelector<Object>();
 			selector.setAvailableValues(enumlikeTypes.get(storageClass));
-			selector.getComboBox().setRenderer(new ComboBoxCellRenderer());
-			return new DefaultCellEditor(selector.getComboBox());
+			selector.comboBox().setRenderer(new ComboBoxCellRenderer());
+			return new DefaultCellEditor(selector.comboBox());
 		} else if (valueClass == boolean.class || valueClass == Boolean.class ||
 				storageClass == boolean.class || storageClass == Boolean.class) {
 			return new DefaultCellEditor(new JCheckBox());

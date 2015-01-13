@@ -26,8 +26,8 @@ import java.awt.event.MouseEvent;
 
 import javax.swing.AbstractButton;
 
-import org.andork.swing.DoSwing;
 import org.andork.ui.test.DefaultGhost;
+import org.andork.ui.test.DoSwing;
 import org.andork.ui.test.Ghost;
 
 public class HardComponentFixture implements ComponentFixture {

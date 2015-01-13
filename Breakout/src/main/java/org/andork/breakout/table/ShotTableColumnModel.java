@@ -49,14 +49,14 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 	private BiFunction<String, Object, ParsedTextWithType<ShotVector>>	vectorParser;
 	private TableCellRenderer											vectorValueRender;
 	private TypedTableCellRenderer										vectorRenderer;
-	private TypedParsedTextCellEditor<ShotVector>						vectorEditor;
+	private ParsedTextWithTypeCellEditor<ShotVector>						vectorEditor;
 
 	private Function<Object, XSectionType>								xSectionTypeGetter;
 	private ListCellRenderer<Object>									xSectionTypeRenderer;
 	private BiFunction<String, Object, ParsedTextWithType<XSection>>	xSectionParser;
 	private TableCellRenderer											xSectionValueRender;
 	private TypedTableCellRenderer										xSectionRenderer;
-	private TypedParsedTextCellEditor<XSection>							xSectionEditor;
+	private ParsedTextWithTypeCellEditor<XSection>							xSectionEditor;
 
 	public ShotTableColumnModel( I18n i18n , ShotDataFormatter formats )
 	{
@@ -121,12 +121,12 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 			c -> c == null ? null : localizer.getString( c.toString( ) ) ,
 			new DefaultListCellRenderer( ) );
 
-		vectorRenderer.typeSelector( ).getComboBox( ).setRenderer( vectorTypeRenderer );
+		vectorRenderer.typeSelector( ).comboBox( ).setRenderer( vectorTypeRenderer );
 
-		vectorEditor = new TypedParsedTextCellEditor<ShotVector>(
+		vectorEditor = new ParsedTextWithTypeCellEditor<ShotVector>(
 			vectorValueRawFormatter , vectorTypeGetter , vectorParser );
 		vectorEditor.setAvailableTypes( Arrays.asList( ShotVectorType.values( ) ) );
-		vectorEditor.typeSelector( ).getComboBox( ).setRenderer( vectorTypeRenderer );
+		vectorEditor.typeSelector( ).comboBox( ).setRenderer( vectorTypeRenderer );
 
 		vectorColumn = new TableColumn( );
 		vectorColumn.setIdentifier( ShotColumnDef.vector );

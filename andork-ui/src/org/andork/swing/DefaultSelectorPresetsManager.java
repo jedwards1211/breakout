@@ -65,14 +65,14 @@ public abstract class DefaultSelectorPresetsManager<T> {
 		selector = new DefaultSelector<T>();
 		selector.addAvailableValue(0, getDefaultPreset());
 		selector.addAvailableValue(1, getUntitledPreset());
-		selector.getComboBox().setEditable(true);
+		selector.comboBox().setEditable(true);
 
 		selector.setSelection(getDefaultPreset());
 
 //		selector.getComboBox().setUI(new SpecialComboBoxUI());
 
 		changeHandler = new ChangeHandler();
-		selector.getComboBox().addItemListener(changeHandler);
+		selector.comboBox().addItemListener(changeHandler);
 	}
 
 	public DefaultSelector<T> getSelector() {
@@ -164,7 +164,7 @@ public abstract class DefaultSelectorPresetsManager<T> {
 				return;
 			}
 
-			Object item = selector.getComboBox().getSelectedItem();
+			Object item = selector.comboBox().getSelectedItem();
 			if (item != null) {
 				T preset = null;
 

@@ -23,7 +23,7 @@ package org.andork.ui.test.fixture;
 
 import javax.swing.JCheckBox;
 
-import org.andork.swing.DoSwing;
+import org.andork.ui.test.DoSwing;
 
 public class HardJCheckBoxFixture extends HardComponentFixture implements JCheckBoxFixture {
 	@Override

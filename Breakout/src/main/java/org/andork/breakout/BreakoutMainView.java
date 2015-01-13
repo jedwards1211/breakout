@@ -77,16 +77,12 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
-import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
 import org.andork.awt.I18n.Localizer;
 import org.andork.awt.anim.Animation;
@@ -155,11 +151,8 @@ import org.andork.q.QMap;
 import org.andork.q.QObject;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
-import org.andork.swing.DoSwing;
-import org.andork.swing.DoSwingR2;
 import org.andork.swing.FromEDT;
 import org.andork.swing.OnEDT;
-import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.async.DrawerPinningTask;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Subtask;
@@ -173,8 +166,6 @@ import org.andork.swing.async.TaskServiceFilePersister;
 import org.andork.swing.async.TaskServiceSubtaskFilePersister;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
-import org.andork.swing.table.AnnotatingTableRowSorter;
-import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 import org.andork.swing.table.RowFilterFactory;
 
 import com.andork.plot.LinearAxisConversion;
@@ -333,22 +324,19 @@ public class BreakoutMainView
 			sortTaskService.submit( task );
 		};
 
-		new DoSwing( ) {
-			@Override
-			public void run( )
-			{
-				surveyDrawer = new SurveyDrawer( sortRunner );
+		OnEDT.onEDT( ( ) ->
+		{
+			surveyDrawer = new SurveyDrawer( sortRunner );
 
-				rowFilterFactory = new MultiRowFilterFactory( new SurveyTableFilterMap( surveyDrawer.table( ) ) );
+			rowFilterFactory = new MultiRowFilterFactory( new SurveyTableFilterMap( surveyDrawer.table( ) ) );
 
-				surveyDrawer.filterField( ).textComponent.getDocument( ).addDocumentListener(
-					AnnotatingJTables.createFilterFieldListener( surveyDrawer.table( ) ,
-						surveyDrawer.filterField( ).textComponent , rowFilterFactory ) );
-				surveyDrawer.highlightField( ).textComponent.getDocument( ).addDocumentListener(
-					AnnotatingJTables.createHighlightFieldListener( surveyDrawer.table( ) ,
-						surveyDrawer.highlightField( ).textComponent , rowFilterFactory , Color.YELLOW ) );
-			}
-		};
+			surveyDrawer.filterField( ).textComponent.getDocument( ).addDocumentListener(
+				AnnotatingJTables.createFilterFieldListener( surveyDrawer.table( ) ,
+					surveyDrawer.filterField( ).textComponent , rowFilterFactory ) );
+			surveyDrawer.highlightField( ).textComponent.getDocument( ).addDocumentListener(
+				AnnotatingJTables.createHighlightFieldListener( surveyDrawer.table( ) ,
+					surveyDrawer.highlightField( ).textComponent , rowFilterFactory , Color.YELLOW ) );
+		} );
 
 		Color darkColor = new Color( 255 * 3 / 10 , 255 * 3 / 10 , 255 * 3 / 10 );
 

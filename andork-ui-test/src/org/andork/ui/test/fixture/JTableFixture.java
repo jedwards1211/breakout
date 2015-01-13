@@ -27,7 +27,7 @@ import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
 import org.andork.func.Predicate;
-import org.andork.swing.DoSwingR2;
+import org.andork.ui.test.DoSwingR;
 
 public interface JTableFixture extends ComponentFixture {
 	public void selectCell(JTable table, Cell cell);
@@ -49,7 +49,7 @@ public interface JTableFixture extends ComponentFixture {
 
 	public static class Common {
 		public static Cell findCellInColumnByText(final JTable table, final int col, final Predicate<String> p) {
-			return new DoSwingR2<Cell>() {
+			return new DoSwingR<Cell>() {
 				@Override
 				protected Cell doRun() {
 					for (int row = 0; row < table.getRowCount(); row++) {
@@ -63,7 +63,7 @@ public interface JTableFixture extends ComponentFixture {
 		}
 
 		public static String readText(final JTable table, final int row, final int col) {
-			return new DoSwingR2<String>() {
+			return new DoSwingR<String>() {
 				@Override
 				protected String doRun() {
 					TableCellRenderer renderer = table.getCellRenderer(row, col);

@@ -138,6 +138,7 @@ public class Shot implements PowerCloneable
 		return true;
 	}
 
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public Shot clone( Function<Object, Object> subcloner )
 	{
