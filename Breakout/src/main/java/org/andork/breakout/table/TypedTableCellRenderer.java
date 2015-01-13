@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.util.List;
 import java.util.function.Function;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
@@ -12,24 +13,24 @@ import javax.swing.table.TableCellRenderer;
 import org.andork.swing.selector.DefaultSelector;
 
 @SuppressWarnings( "serial" )
-public class TypeTableCellRenderer extends JPanel implements TableCellRenderer
+public class TypedTableCellRenderer extends JPanel implements TableCellRenderer
 {
-	TableCellRenderer			wrapped;
-	Function<Object, Object>	typeFunction;
-	DefaultSelector<Object>		typeSelector;
+	TableCellRenderer		wrapped;
+	Function<Object, ?>		typeGetter;
+	DefaultSelector<Object>	typeSelector;
 
-	public TypeTableCellRenderer( TableCellRenderer wrapped , Function<Object, Object> typeFunction )
+	public TypedTableCellRenderer( TableCellRenderer wrapped , Function<Object, ?> typeGetter )
 	{
-		this( wrapped , typeFunction , createDefaultSelector( ) );
+		this( wrapped , typeGetter , createDefaultSelector( ) );
 	}
 
-	public TypeTableCellRenderer( TableCellRenderer wrapped , Function<Object, Object> typeFunction ,
+	public TypedTableCellRenderer( TableCellRenderer wrapped , Function<Object, ?> typeGetter ,
 		DefaultSelector<Object> typeSelector )
 	{
 		super( );
 		this.wrapped = wrapped;
 		this.typeSelector = typeSelector;
-		this.typeFunction = typeFunction;
+		this.typeGetter = typeGetter;
 		setLayout( new BorderLayout( ) );
 	}
 
@@ -48,10 +49,14 @@ public class TypeTableCellRenderer extends JPanel implements TableCellRenderer
 			column );
 		removeAll( );
 
-		Object type = value == null ? null : typeFunction.apply( value );
+		Object type = typeGetter.apply( value );
 		typeSelector.setSelection( type );
 		add( wrappedComp , BorderLayout.CENTER );
 		add( typeSelector.getComboBox( ) , BorderLayout.EAST );
+		if( wrappedComp instanceof JComponent )
+		{
+			setToolTipText( ( ( JComponent ) wrappedComp ).getToolTipText( ) );
+		}
 		return this;
 	}
 
@@ -60,7 +65,7 @@ public class TypeTableCellRenderer extends JPanel implements TableCellRenderer
 		return typeSelector;
 	}
 
-	public void setAvailableTypes( List<Object> types )
+	public void setAvailableTypes( List<?> types )
 	{
 		typeSelector.setAvailableValues( types );
 	}

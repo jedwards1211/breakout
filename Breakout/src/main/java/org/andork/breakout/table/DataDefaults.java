@@ -9,48 +9,38 @@ import org.andork.unit.Unit;
 
 public class DataDefaults extends QSpec
 {
-	public static NonNullProperty<Character>						decimalSep			= nonNullProperty(
-																							"decimalSep" ,
-																							Character.class ,
-																							createDefaultDecimalSeparator( ) );
-	public static NonNullProperty<Integer>							doubleDecimalPlaces	= nonNullProperty(
-																							"doubleDecimalPlaces" ,
-																							Integer.class , 2 );
-	public static NonNullProperty<Unit<Length>>						lenUnit				= nonNullProperty( "lenUnit" ,
-																							Unit.class ,
-																							Length.meters );
-	public static NonNullProperty<Integer>							lenDecimalPlaces	= nonNullProperty(
-																							"lenDecimalPlaces" ,
-																							Integer.class , 2 );
-	public static NonNullProperty<Unit<Angle>>						angleUnit			= nonNullProperty( "angleUnit" ,
-																							Unit.class ,
-																							Angle.degrees );
-	public static NonNullProperty<Integer>							angleDecimalPlaces	= nonNullProperty(
-																							"angleDecimalPlaces" ,
-																							Integer.class , 1 );
-	public static NonNullProperty<Class<? extends ShotVector>>		shotVector			= nonNullProperty(
-																							"shotVector" ,
-																							Class.class ,
-																							ShotVector.Dai.c.class );
-	public static NonNullProperty<Class<? extends ShotVector.Dai>>	daiShotVector		= nonNullProperty(
-																							"daiShotVector" ,
-																							Class.class ,
-																							ShotVector.Dai.c.class );
-	public static NonNullProperty<Class<? extends ShotVector.Nev>>	nevShotVector		= nonNullProperty(
-																							"nevShotVector" ,
-																							Class.class ,
-																							ShotVector.Nev.d.class );
-	public static NonNullProperty<Class<? extends XSect>>			xSect				= nonNullProperty( "xSect" ,
-																							Class.class ,
-																							BisectorLrudXSect.class );
-	public static NonNullProperty<Class<? extends UdXSect>>			udXSect				= nonNullProperty( "udXSect" ,
-																							Class.class ,
-																							BisectorLrudXSect.class );
-	public static NonNullProperty<Class<? extends LrudXSect>>		lrudXSect			= nonNullProperty( "lrudXSect" ,
-																							Class.class ,
-																							BisectorLrudXSect.class );
+	public static NonNullProperty<Character>		decimalSeparator		= nonNullProperty(
+																				"decimalSeparator" ,
+																				Character.class ,
+																				createDefaultDecimalSeparator( ) );
+	public static NonNullProperty<Integer>			doubleDecimalPlaces		= nonNullProperty(
+																				"doubleDecimalPlaces" ,
+																				Integer.class , 2 );
+	public static NonNullProperty<Unit<Length>>		lengthUnit				= nonNullProperty(
+																				"lengthUnit" ,
+																				Unit.class ,
+																				Length.meters );
+	public static NonNullProperty<Integer>			lengthDecimalPlaces		= nonNullProperty(
+																				"lengthDecimalPlaces" ,
+																				Integer.class , 2 );
+	public static NonNullProperty<Unit<Angle>>		angleUnit				= nonNullProperty( "angleUnit" ,
+																				Unit.class ,
+																				Angle.degrees );
+	public static NonNullProperty<Integer>			angleDecimalPlaces		= nonNullProperty(
+																				"angleDecimalPlaces" ,
+																				Integer.class , 1 );
+	public static NonNullProperty<ShotVectorType>	shotVectorType			= nonNullProperty(
+																				"shotVectorType" ,
+																				ShotVectorType.class ,
+																				ShotVectorType.DAIc );
+	public static NonNullProperty<Boolean>			backsightsAreCorrected	= nonNullProperty(
+																				"backsightsAreCorrected" ,
+																				Boolean.class , false );
+	public static NonNullProperty<Boolean>			downwardIsPositive		= nonNullProperty(
+																				"downwardIsPositive" ,
+																				Boolean.class , false );
 
-	public static final DataDefaults								spec				= new DataDefaults( );
+	public static final DataDefaults				spec					= new DataDefaults( );
 
 	private static char createDefaultDecimalSeparator( )
 	{
@@ -62,17 +52,14 @@ public class DataDefaults extends QSpec
 
 	private DataDefaults( )
 	{
-		super( decimalSep ,
+		super( decimalSeparator ,
 			doubleDecimalPlaces ,
-			lenUnit ,
-			lenDecimalPlaces ,
+			lengthUnit ,
+			lengthDecimalPlaces ,
 			angleUnit ,
 			angleDecimalPlaces ,
-			shotVector ,
-			daiShotVector ,
-			nevShotVector ,
-			xSect ,
-			udXSect ,
-			lrudXSect );
+			shotVectorType ,
+			backsightsAreCorrected ,
+			downwardIsPositive );
 	}
 }

@@ -1,124 +1,125 @@
 package org.andork.breakout.table;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
+import javax.swing.RowFilter.Entry;
 
 import org.andork.bind2.DefaultBinder;
 import org.andork.i18n.I18n;
 import org.andork.q2.QArrayObject;
 import org.andork.q2.QObject;
 import org.andork.q2.QObjectBinder;
+import org.andork.swing.OnEDT;
 import org.andork.swing.QuickTestFrame;
+import org.andork.swing.RowAnnotator;
+import org.andork.swing.jump.JScrollAndJumpPane;
+import org.andork.swing.jump.JTableJumpSupport;
+import org.andork.swing.table.AnnotatingJTableJumpBarModel;
+import org.andork.swing.table.AnnotatingTableRowSorter;
 
 public class ShotTableTest
 {
 	public static void main( String[ ] args )
 	{
-		I18n i18n = new I18n( );
+		OnEDT.onEDT( ( ) ->
+		{
+			I18n i18n = new I18n( );
 
-		Shot shot0 = new Shot( );
+			ShotList shotList = new ShotList( );
 
-		ShotVector.Dai.c vector0 = new ShotVector.Dai.c( );
-		ShotVectorText.Dai.SplitAngles vectorText0 = new ShotVectorText.Dai.SplitAngles( );
+			shotList.setCustomColumnDefs( Arrays.asList(
+				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
+				) );
 
-		vectorText0.distText = new ParsedText( "a5.00" ,
-			new ParseNote( ParseStatus.ERROR ) {
+			shotList.setCustomColumnDefs( Arrays.asList(
+				new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
+				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
+				) );
+
+			QObject<ProjectModel> projModel = QArrayObject.create( ProjectModel.spec );
+			QObjectBinder<ProjectModel> projModelBinder = new QObjectBinder<ProjectModel>( ProjectModel.spec );
+			projModelBinder.objLink.bind( new DefaultBinder<>( projModel ) );
+
+			ShotTableModel tableModel = new ShotTableModel( );
+			tableModel.setShotList( shotList );
+
+			projModel.get( ProjectModel.defaults ).set( DataDefaults.decimalSeparator , ',' );
+			projModel.set( ProjectModel.shotList , shotList );
+
+			ExecutorService executor = Executors.newSingleThreadExecutor( );
+
+			ShotTable table = new ShotTable( tableModel );
+			AnnotatingTableRowSorter<ShotTableModel> rowSorter = new AnnotatingTableRowSorter<>( table ,
+				r -> executor.submit( r ) );
+			rowSorter.setModelCopier( new ShotTableModelCopier( ) );
+			rowSorter.setRowAnnotator( new RowAnnotator<ShotTableModel, Integer>( ) {
 				@Override
-				public String apply( I18n t )
+				public Object annotate( Entry<? extends ShotTableModel, ? extends Integer> entry )
 				{
-					return t.forClass( ParseNote.class ).getFormattedString( "invalidChar" , "a" );
+					ShotTableModel model = entry.getModel( );
+					return model.getNotesInRow( entry.getIdentifier( ) );
 				}
 			} );
-		vector0.azmFs = -30.0;
-		vectorText0.azmFsText = new ParsedText( "-30.00" ,
-			ParseNote.forMessageKey( ParseStatus.WARNING , "negativeAzm" ) );
-		vector0.incFs = 23.5;
-		vector0.incBs = 26.0;
-		vectorText0.incFsText = new ParsedText( "23.50" , null );
-		vectorText0.incBsText = new ParsedText( "26.00" , null );
+			rowSorter.setSortsOnUpdates( true );
+			table.setRowSorter( rowSorter );
+			table.setFont( new Font( "Monospaced" , Font.PLAIN , 11 ) );
 
-		shot0.vector = vector0;
-		shot0.vectorText = vectorText0;
-		shot0.from = "A1";
-		shot0.custom = new Object[ 1 ];
-		shot0.custom[ 0 ] = new ParsedTextWithValue( "3.502" , null , 3.502 );
+			ShotDataFormatter formats = new ShotDataFormatter( i18n );
 
-		Shot shot1 = new Shot( );
+			ShotTableColumnModel columnModel = new ShotTableColumnModel( i18n , formats );
+			columnModel.update( tableModel , Arrays.asList(
+				ShotColumnDef.fromStationName ,
+				ShotColumnDef.toStationName ,
+				ShotColumnDef.vector
+				) );
 
-		ShotVector.Nev.d vector1 = new ShotVector.Nev.d( );
-		vector1.n = 100.0;
-		vector1.v = 205.0;
+			projModelBinder.property( ProjectModel.defaults ).addBinding( force -> columnModel.setDataDefaults(
+				projModelBinder.property( ProjectModel.defaults ).get( ) ) );
 
-		ShotVectorText.Nev vectorText1 = new ShotVectorText.Nev( );
-		vectorText1.nText = new ParsedText( "100" , null );
-		vectorText1.eText = new ParsedText( "205" , null );
+			table.setColumnModel( columnModel );
+			table.setRowHeight( 20 );
 
-		shot1.vector = vector1;
-		shot1.vectorText = vectorText1;
-		shot1.custom = new Object[ 2 ];
+			JScrollAndJumpPane scrollPane = new JScrollAndJumpPane( table );
+			scrollPane.getJumpBar( ).setModel( new AnnotatingJTableJumpBarModel( table ) );
+			scrollPane.getJumpBar( ).setJumpSupport( new JTableJumpSupport( table ) );
+			scrollPane.getJumpBar( ).setColorer( o ->
+			{
+				if( o instanceof Color )
+				{
+					return ( Color ) o;
+				}
+				if( o instanceof List )
+				{
+					List<?> list = ( List<?> ) o;
+					Color color = null;
 
-		ShotList shotList = new ShotList( );
+					for( Object elem : list )
+					{
+						if( elem instanceof ParseNote )
+						{
+							ParseStatus status = ( ( ParseNote ) elem ).getStatus( );
+							switch( status )
+							{
+							case ERROR:
+								return Color.RED;
+							case WARNING:
+								color = Color.YELLOW;
+								break;
+							}
+						}
+					}
 
-		shotList.setCustomColumnDefs( Arrays.asList(
-			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
-			) );
-		shotList.add( shot0 );
+					return color;
+				}
+				return null;
+			} );
 
-		shotList.setCustomColumnDefs( Arrays.asList(
-			new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
-			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
-			) );
-
-		shot0.custom[ 0 ] = new ParsedTextWithValue( "123" , null , 123 );
-
-		QObject<ProjectModel> projModel = QArrayObject.create( ProjectModel.spec );
-		QObjectBinder<ProjectModel> projModelBinder = new QObjectBinder<ProjectModel>( ProjectModel.spec );
-		projModelBinder.objLink.bind( new DefaultBinder<>( projModel ) );
-
-		ShotTableLogic logic = new ShotTableLogic( );
-		logic.dataDefaultsLink( ).bind( projModelBinder.property( ProjectModel.defaults ) );
-
-		ShotTableModel tableModel = new ShotTableModel( i18n , logic );
-		tableModel.dataDefaultsLink( ).bind( projModelBinder.property( ProjectModel.defaults ) );
-		tableModel.shotListLink( ).bind( projModelBinder.property( ProjectModel.shotList ) );
-
-		projModel.get( ProjectModel.defaults ).set( DataDefaults.decimalSep , ',' );
-		projModel.set( ProjectModel.shotList , shotList );
-
-		JTable table = new JTable( tableModel );
-		table.setFont( new Font( "Monospaced" , Font.PLAIN , 11 ) );
-		JScrollPane scrollPane = new JScrollPane( table );
-
-		shotList.add( shot1 );
-
-		ShotTableFormats formats = new ShotTableFormats( i18n );
-		formats.defaultsLink( ).bind( projModelBinder.property( ProjectModel.defaults ) );
-
-		ShotTableColumnModel columnModel = new ShotTableColumnModel( i18n , formats );
-		columnModel.update( tableModel , Arrays.asList(
-			ShotColumnDef.from ,
-			ShotColumnDef.to ,
-			ShotColumnDef.vector ,
-			ShotColumnDef.dist ,
-			ShotColumnDef.azmFsBs ,
-			ShotColumnDef.azmFs ,
-			ShotColumnDef.azmBs ,
-			ShotColumnDef.incFsBs ,
-			ShotColumnDef.incFs ,
-			ShotColumnDef.incBs ,
-			ShotColumnDef.offsN ,
-			ShotColumnDef.offsE ,
-			ShotColumnDef.offsV ,
-			new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
-			new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
-			) );
-
-		table.setColumnModel( columnModel );
-		table.setRowHeight( 20 );
-
-		QuickTestFrame.frame( scrollPane ).setVisible( true );
+			QuickTestFrame.frame( scrollPane ).setVisible( true );
+		} );
 	}
 }

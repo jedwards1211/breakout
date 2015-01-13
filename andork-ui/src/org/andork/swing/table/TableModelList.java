@@ -6,16 +6,21 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.andork.q2.QObject;
-import org.andork.q2.QSpec;
+import javax.swing.table.TableModel;
 
 /**
- * A list of {@link QObject}s designed specifically to back a {@link QObjectListTableModel}.
+ * A list of row objects designed specifically to back a {@link TableModel}. <br>
+ * <br>
+ * The difference from {@link java.util.List} is
+ * that the available modification methods have been reduced to a subset that are convenient for a table to handle, and
+ * modifications fire events to registered {@link TableModelList.Listener Listener}s. (However, since there is no
+ * uniform way to listen for changes in the row element objects, when you change a row you should call
+ * {@link #fireElementsUpdated(int, int)} manually.)
  * 
  * @author James
  *
  * @param <E>
- *            the {@link QSpec} for the {@link QObject}s in the list.
+ *            the type of elements used for the rows.
  */
 public class TableModelList<E> implements Iterable<E>
 {
@@ -87,14 +92,20 @@ public class TableModelList<E> implements Iterable<E>
 	public void removeSublist( int fromIndex , int toIndex )
 	{
 		elements.subList( fromIndex , toIndex ).clear( );
-		fireElementsDeleted( fromIndex , toIndex - 1 );
+		if( fromIndex < toIndex )
+		{
+			fireElementsDeleted( fromIndex , toIndex - 1 );
+		}
 	}
 
 	public void clear( )
 	{
-		int size = elements.size( );
-		elements.clear( );
-		fireElementsDeleted( 0 , size - 1 );
+		if( !isEmpty( ) )
+		{
+			int size = elements.size( );
+			elements.clear( );
+			fireElementsDeleted( 0 , size - 1 );
+		}
 	}
 
 	@Override

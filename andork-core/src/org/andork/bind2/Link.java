@@ -34,7 +34,6 @@ public class Link<T> {
 			if (binder != null) {
 				binder.addBinding(binding);
 			}
-			binding.update(false);
 		}
 		return binder;
 	}

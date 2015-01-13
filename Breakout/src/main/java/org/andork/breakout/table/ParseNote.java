@@ -5,13 +5,18 @@ import java.util.function.Function;
 import org.andork.i18n.I18n;
 
 @SuppressWarnings( "serial" )
-public abstract class ParseNote extends RuntimeException implements Function<I18n, String>
+public abstract class ParseNote implements Function<I18n, String>
 {
-	ParseStatus	status;
+	private ParseStatus	status;
 
 	public ParseNote( ParseStatus status )
 	{
 		this.status = status;
+	}
+
+	public ParseStatus getStatus( )
+	{
+		return status;
 	}
 
 	public static ParseNote forMessageKey( ParseStatus status , String messageKey )

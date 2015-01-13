@@ -31,42 +31,43 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
 @SuppressWarnings( "serial" )
-public class ParsedTextWithValueTableCellRenderer extends DefaultTableCellRenderer
+public class ParsedTextTableCellRenderer<V> extends DefaultTableCellRenderer
 {
-	private Function<Object, ?>			valueFormatter;
-	private Predicate<Object>			isError;
-	private Function<Object, Color>		noteColor;
-	private Function<Object, String>	noteMessage;
+	private Function<? super V, ?>		valueFormatter;
+	private Predicate<Object>			parseErrorTest;
+	private Function<Object, Color>		noteColorGetter;
+	private Function<Object, String>	noteMessageGetter;
 
-	public ParsedTextWithValueTableCellRenderer(
-		Function<Object, ?> valueFormatter ,
-		Predicate<Object> isError ,
-		Function<Object, Color> noteColor ,
-		Function<Object, String> noteMessage )
+	public ParsedTextTableCellRenderer(
+		Function<? super V, ?> valueFormatter ,
+		Predicate<Object> parseErrorTest ,
+		Function<Object, Color> noteColorGetter ,
+		Function<Object, String> noteMessageGetter )
 	{
 		super( );
 		this.valueFormatter = valueFormatter;
-		this.isError = isError;
-		this.noteColor = noteColor;
-		this.noteMessage = noteMessage;
+		this.parseErrorTest = parseErrorTest;
+		this.noteColorGetter = noteColorGetter;
+		this.noteMessageGetter = noteMessageGetter;
 	}
 
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public Component getTableCellRendererComponent( JTable table , Object value , boolean isSelected ,
 		boolean hasFocus , int row , int column )
 	{
 		Object superValue = value;
 
-		if( value instanceof ParsedTextWithValue )
+		if( value instanceof ParsedText )
 		{
-			ParsedTextWithValue p = ( ParsedTextWithValue ) value;
-			if( p.value != null && ( p.note == null || !isError.test( p.note ) ) )
+			ParsedText<V> p = ( ParsedText<V> ) value;
+			if( p.getValue( ) != null && ( p.getNote( ) == null || !parseErrorTest.test( p.getNote( ) ) ) )
 			{
-				superValue = valueFormatter.apply( p.value );
+				superValue = valueFormatter.apply( p.getValue( ) );
 			}
 			else
 			{
-				superValue = p.text;
+				superValue = p.getText( );
 			}
 		}
 
@@ -78,15 +79,15 @@ public class ParsedTextWithValueTableCellRenderer extends DefaultTableCellRender
 			renderer.setBackground( null );
 		}
 
-		if( value instanceof ParsedTextWithValue )
+		if( value instanceof ParsedText )
 		{
-			ParsedTextWithValue p = ( ParsedTextWithValue ) value;
-			Color color = p.note == null ? null : noteColor.apply( p.note );
+			ParsedText<V> p = ( ParsedText<V> ) value;
+			Color color = p.getNote( ) == null ? null : noteColorGetter.apply( p.getNote( ) );
 			if( color != null )
 			{
 				renderer.setBackground( color );
 			}
-			renderer.setToolTipText( p.note == null ? null : noteMessage.apply( p.note ) );
+			renderer.setToolTipText( p.getNote( ) == null ? null : noteMessageGetter.apply( p.getNote( ) ) );
 		}
 
 		return renderer;

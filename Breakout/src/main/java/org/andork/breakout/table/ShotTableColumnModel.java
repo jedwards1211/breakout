@@ -12,69 +12,53 @@ import java.util.function.Predicate;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JLabel;
+import javax.swing.ListCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import org.andork.bind2.Binder;
 import org.andork.bind2.Binding;
-import org.andork.breakout.table.ShotVector.Dai.c;
-import org.andork.breakout.table.ShotVector.Dai.u;
-import org.andork.breakout.table.ShotVector.Nev.d;
-import org.andork.breakout.table.ShotVector.Nev.el;
 import org.andork.i18n.I18n;
 import org.andork.i18n.I18n.Localizer;
+import org.andork.q2.QObject;
 import org.andork.swing.list.FunctionListCellRenderer;
 
 @SuppressWarnings( "serial" )
 public class ShotTableColumnModel extends DefaultTableColumnModel
 {
-	public final TableColumn								fromColumn;
-	public final TableColumn								toColumn;
-	public final TableColumn								vectorColumn;
-	public final TableColumn								distColumn;
-	public final TableColumn								azmFsBsColumn;
-	public final TableColumn								azmFsColumn;
-	public final TableColumn								azmBsColumn;
-	public final TableColumn								incFsBsColumn;
-	public final TableColumn								incFsColumn;
-	public final TableColumn								incBsColumn;
-	public final TableColumn								offsNColumn;
-	public final TableColumn								offsEColumn;
-	public final TableColumn								offsDColumn;
+	public final TableColumn											fromColumn;
+	public final TableColumn											toColumn;
+	public final TableColumn											vectorColumn;
+	private final Map<ShotColumnDef, TableColumn>						builtInColumns	= new HashMap<>( );
 
-	private final Map<ShotColumnDef, TableColumn>			builtInColumns	= new HashMap<>( );
+	private QObject<DataDefaults>										dataDefaults;
 
-	private ShotTableFormats								formats;
+	private ShotDataFormatter											formats;
 
-	private IntFunction<String>								intFormatter	= Integer::toString;
+	private IntFunction<String>											intFormatter	= Integer::toString;
 
-	private final Map<ParseStatus, Color>					noteColors;
+	private final Map<ParseStatus, Color>								noteColors;
 
-	private final Localizer									localizer;
+	private final Localizer												localizer;
 
-	private TableCellRenderer								intRenderer;
+	private TableCellRenderer											intRenderer;
 
-	private Function<String, ParsedTextWithValue>			doubleParser;
-	private TableCellRenderer								doubleRenderer;
-	private TableCellEditor									doubleEditor;
+	private Function<Object, ShotVectorType>							vectorTypeGetter;
+	private ListCellRenderer<Object>									vectorTypeRenderer;
+	private BiFunction<String, Object, ParsedTextWithType<ShotVector>>	vectorParser;
+	private TableCellRenderer											vectorValueRender;
+	private TypedTableCellRenderer										vectorRenderer;
+	private TypedParsedTextCellEditor<ShotVector>						vectorEditor;
 
-	private TableCellRenderer								twoDoubleRenderer;
-	private TableCellRenderer								lengthRenderer;
-	private TableCellEditor									lengthEditor;
-	private TableCellRenderer								angleRenderer;
-	private TableCellEditor									angleEditor;
-	private TableCellRenderer								azmPairRenderer;
-	private TableCellRenderer								incPairRenderer;
+	private Function<Object, XSectionType>								xSectionTypeGetter;
+	private ListCellRenderer<Object>									xSectionTypeRenderer;
+	private BiFunction<String, Object, ParsedTextWithType<XSection>>	xSectionParser;
+	private TableCellRenderer											xSectionValueRender;
+	private TypedTableCellRenderer										xSectionRenderer;
+	private TypedParsedTextCellEditor<XSection>							xSectionEditor;
 
-	private Function<Object, Object>						vectorTypeGetter;
-	private BiFunction<Object, String, ParsedTextWithValue>	vectorParser;
-	private TableCellRenderer								vectorValueRender;
-	private TypeTableCellRenderer							vectorRenderer;
-	private TypedParsedTextWithValueCellEditor				vectorEditor;
-
-	public ShotTableColumnModel( I18n i18n , ShotTableFormats formats )
+	public ShotTableColumnModel( I18n i18n , ShotDataFormatter formats )
 	{
 		localizer = i18n.forClass( ShotTableColumnModel.class );
 
@@ -84,191 +68,121 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		noteColors.put( ParseStatus.WARNING , Color.YELLOW );
 		noteColors.put( ParseStatus.ERROR , Color.RED );
 
-		Predicate<Object> isError =
-			n -> n instanceof ParseNote && ( ( ParseNote ) n ).status == ParseStatus.ERROR;
-		Function<Object, Color> noteColor =
-			n -> n instanceof ParseNote ? noteColors.get( ( ( ParseNote ) n ).status ) : null;
-		Function<Object, String> noteMessage =
+		Predicate<Object> parseErrorTest =
+			n -> n instanceof ParseNote && ( ( ParseNote ) n ).getStatus( ) == ParseStatus.ERROR;
+		Function<Object, Color> noteColorGetter =
+			n -> n instanceof ParseNote ? noteColors.get( ( ( ParseNote ) n ).getStatus( ) ) : null;
+		Function<Object, String> noteMessageGetter =
 			n -> n instanceof ParseNote ? ( ( ParseNote ) n ).apply( i18n ) : null;
 
 		fromColumn = new TableColumn( );
-		fromColumn.setIdentifier( ShotColumnDef.from );
+		fromColumn.setIdentifier( ShotColumnDef.fromStationName );
 
 		toColumn = new TableColumn( );
-		toColumn.setIdentifier( ShotColumnDef.to );
+		toColumn.setIdentifier( ShotColumnDef.toStationName );
 
 		intRenderer =
-			new ParsedTextWithValueTableCellRenderer(
+			new ParsedTextTableCellRenderer(
 				v -> v instanceof Integer ? intFormatter.apply( ( Integer ) v ) : null ,
-				isError , noteColor , noteMessage );
+				parseErrorTest , noteColorGetter , noteMessageGetter );
 		( ( JLabel ) intRenderer ).setHorizontalAlignment( JLabel.RIGHT );
 
-		doubleRenderer =
-			new ParsedTextWithValueTableCellRenderer(
-				v -> v instanceof Double ? formats.formatDouble( ( Double ) v ) : null ,
-				isError , noteColor , noteMessage );
-		( ( JLabel ) doubleRenderer ).setHorizontalAlignment( JLabel.RIGHT );
-		doubleParser = new DefaultParser( s -> formats.parseDouble( s ) );
-		doubleEditor = new ParsedTextWithValueCellEditor( doubleParser , d -> formats.formatDouble( ( Double ) d ) );
-
-		lengthRenderer =
-			new ParsedTextWithValueTableCellRenderer(
-				v -> v instanceof Double ? formats.formatLength( ( Double ) v ) : null ,
-				isError , noteColor , noteMessage );
-		( ( JLabel ) lengthRenderer ).setHorizontalAlignment( JLabel.RIGHT );
-
-		lengthEditor = new ParsedTextWithValueCellEditor(
-			new DefaultParser( s -> formats.parseDouble( s ) ) ,
-			l -> formats.formatLength( ( Double ) l ) );
-
-		angleRenderer =
-			new ParsedTextWithValueTableCellRenderer(
-				v -> v instanceof Double ? formats.formatAngle( ( Double ) v ) : null ,
-				isError , noteColor , noteMessage );
-		( ( JLabel ) angleRenderer ).setHorizontalAlignment( JLabel.RIGHT );
-		angleEditor = new ParsedTextWithValueCellEditor(
-			new DefaultParser( s -> formats.parseDouble( s ) ) ,
-			l -> formats.formatLength( ( Double ) l ) );
-
-		azmPairRenderer =
-			new ParsedTextWithValueTableCellRenderer(
-				v -> v instanceof Double[ ] ? formats.formatAzmPair( ( Double[ ] ) v ) : null ,
-				isError , noteColor , noteMessage );
-		( ( JLabel ) azmPairRenderer ).setHorizontalAlignment( JLabel.RIGHT );
-
-		incPairRenderer =
-			new ParsedTextWithValueTableCellRenderer(
-				v -> v instanceof Double[ ] ? formats.formatIncPair( ( Double[ ] ) v ) : null ,
-				isError , noteColor , noteMessage );
-		( ( JLabel ) incPairRenderer ).setHorizontalAlignment( JLabel.RIGHT );
-
-		Function<Object, String> vectorValueFormatter =
-			v -> v instanceof ShotVector ? formats.format( ( ShotVector ) v ) : null;
-		Function<Object, String> vectorValueRawFormatter =
-			v -> v instanceof ShotVector ? formats.formatRaw( ( ShotVector ) v ) : null;
+		Function<ShotVector, String> vectorValueFormatter =
+			v -> v != null ? formats.format( v ) : null;
+		Function<ShotVector, String> vectorValueRawFormatter =
+			v -> v != null ? formats.formatRaw( v ) : null;
 
 		vectorValueRender =
-			new ParsedTextWithValueTableCellRenderer( vectorValueFormatter , isError , noteColor , noteMessage );
+			new ParsedTextTableCellRenderer<ShotVector>( vectorValueFormatter , parseErrorTest , noteColorGetter ,
+				noteMessageGetter );
+
 		vectorTypeGetter = p ->
 		{
-			if( p instanceof ParsedTextWithValue )
+			if( p instanceof ParsedTextWithType )
 			{
-				Object value = ( ( ParsedTextWithValue ) p ).value;
-				return value != null ? value.getClass( ) : null;
+				return ( ShotVectorType ) ( ( ParsedTextWithType<?> ) p ).getType( );
+			}
+			if( dataDefaults != null )
+			{
+				return dataDefaults.get( DataDefaults.shotVectorType );
 			}
 			return null;
 		};
 
-		vectorParser = ( type , text ) ->
+		vectorParser = ( text , type ) ->
 		{
-			ShotVector vector;
-			try
-			{
-				vector = ( ( Class<? extends ShotVector> ) type ).newInstance( );
-			}
-			catch( Exception e )
-			{
-				e.printStackTrace( );
-				return new ParsedTextWithValue( text , ParseNote.forMessageKey( ParseStatus.ERROR , "unexpected" ) ,
-					null );
-			}
-			try
-			{
-				formats.parseVector( text , vector );
-				return new ParsedTextWithValue( text , null , vector );
-			}
-			catch( ParseNote note )
-			{
-				return new ParsedTextWithValue( text , note , vector );
-			}
+			return formats.parseShotVector( text , ( ShotVectorType ) type );
 		};
 
-		vectorRenderer =
-			new TypeTableCellRenderer( vectorValueRender , vectorTypeGetter );
-		vectorRenderer.setAvailableTypes( Arrays.asList(
-			c.class , u.class , d.class , el.class ) );
-		vectorRenderer.typeSelector( ).getComboBox( ).setRenderer(
-			new FunctionListCellRenderer(
-				c -> c == null ? null : localizer.getString( ( ( Class<?> ) c ).getName( ) + ".abbrev" ) ,
-				new DefaultListCellRenderer( ) ) );
-		vectorEditor = new TypedParsedTextWithValueCellEditor(
-			vectorValueRawFormatter ,
-			vectorTypeGetter ,
-			vectorParser );
-		vectorEditor.setAvailableTypes( Arrays.asList(
-			c.class , u.class , d.class , el.class ) );
-		vectorEditor.typeSelector( ).getComboBox( ).setRenderer(
-			new FunctionListCellRenderer(
-				c -> c == null ? null : localizer.getString( ( ( Class<?> ) c ).getName( ) + ".abbrev" ) ,
-				new DefaultListCellRenderer( ) ) );
+		vectorRenderer = new TypedTableCellRenderer( vectorValueRender , vectorTypeGetter );
+		vectorRenderer.setAvailableTypes( Arrays.asList( ShotVectorType.values( ) ) );
+
+		vectorTypeRenderer = new FunctionListCellRenderer(
+			c -> c == null ? null : localizer.getString( c.toString( ) ) ,
+			new DefaultListCellRenderer( ) );
+
+		vectorRenderer.typeSelector( ).getComboBox( ).setRenderer( vectorTypeRenderer );
+
+		vectorEditor = new TypedParsedTextCellEditor<ShotVector>(
+			vectorValueRawFormatter , vectorTypeGetter , vectorParser );
+		vectorEditor.setAvailableTypes( Arrays.asList( ShotVectorType.values( ) ) );
+		vectorEditor.typeSelector( ).getComboBox( ).setRenderer( vectorTypeRenderer );
 
 		vectorColumn = new TableColumn( );
 		vectorColumn.setIdentifier( ShotColumnDef.vector );
 		vectorColumn.setCellRenderer( vectorRenderer );
 		vectorColumn.setCellEditor( vectorEditor );
 
-		distColumn = new TableColumn( );
-		distColumn.setIdentifier( ShotColumnDef.dist );
-		distColumn.setCellRenderer( lengthRenderer );
-		distColumn.setCellEditor( lengthEditor );
-
-		azmFsBsColumn = new TableColumn( );
-		azmFsBsColumn.setIdentifier( ShotColumnDef.azmFsBs );
-		azmFsBsColumn.setCellRenderer( azmPairRenderer );
-
-		azmFsColumn = new TableColumn( );
-		azmFsColumn.setIdentifier( ShotColumnDef.azmFs );
-		azmFsColumn.setCellRenderer( angleRenderer );
-		azmFsColumn.setCellEditor( angleEditor );
-
-		azmBsColumn = new TableColumn( );
-		azmBsColumn.setIdentifier( ShotColumnDef.azmBs );
-		azmBsColumn.setCellRenderer( angleRenderer );
-		azmBsColumn.setCellEditor( angleEditor );
-
-		incFsBsColumn = new TableColumn( );
-		incFsBsColumn.setIdentifier( ShotColumnDef.incFsBs );
-		incFsBsColumn.setCellRenderer( incPairRenderer );
-
-		incFsColumn = new TableColumn( );
-		incFsColumn.setIdentifier( ShotColumnDef.incFs );
-		incFsColumn.setCellRenderer( angleRenderer );
-		incFsColumn.setCellEditor( angleEditor );
-
-		incBsColumn = new TableColumn( );
-		incBsColumn.setIdentifier( ShotColumnDef.incBs );
-		incBsColumn.setCellRenderer( angleRenderer );
-		incBsColumn.setCellEditor( angleEditor );
-
-		offsNColumn = new TableColumn( );
-		offsNColumn.setIdentifier( ShotColumnDef.offsN );
-		offsNColumn.setCellRenderer( lengthRenderer );
-		offsNColumn.setCellEditor( lengthEditor );
-
-		offsEColumn = new TableColumn( );
-		offsEColumn.setIdentifier( ShotColumnDef.offsE );
-		offsEColumn.setCellRenderer( lengthRenderer );
-		offsEColumn.setCellEditor( lengthEditor );
-
-		offsDColumn = new TableColumn( );
-		offsDColumn.setIdentifier( ShotColumnDef.offsV );
-		offsDColumn.setCellRenderer( lengthRenderer );
-		offsDColumn.setCellEditor( lengthEditor );
+//		Function<XSection, String> xSectionValueFormatter =
+//			v -> v != null ? formats.format( v ) : null;
+//		Function<XSection, String> xSectionValueRawFormatter =
+//			v -> v != null ? formats.formatRaw( v ) : null;
+//
+//		xSectionValueRender =
+//			new ParsedTextTableCellRenderer<XSection>( xSectionValueFormatter , parseErrorTest , noteColorGetter ,
+//				noteMessageGetter );
+//
+//		xSectionTypeGetter = p ->
+//		{
+//			if( p instanceof ParsedTextWithType )
+//			{
+//				return ( XSectionType ) ( ( ParsedTextWithType<?> ) p ).getType( );
+//			}
+//			if( dataDefaults != null )
+//			{
+//				return dataDefaults.get( DataDefaults.shotVectorType );
+//			}
+//			return null;
+//		};
+//
+//		xSectionParser = ( text , type ) ->
+//		{
+//			return formats.parseXSection( text , ( XSectionType ) type );
+//		};
+//
+//		xSectionRenderer = new TypedTableCellRenderer( xSectionValueRender , xSectionTypeGetter );
+//		xSectionRenderer.setAvailableTypes( Arrays.asList( XSectionType.values( ) ) );
+//
+//		xSectionTypeRenderer = new FunctionListCellRenderer(
+//			c -> c == null ? null : localizer.getString( c.toString( ) ) ,
+//			new DefaultListCellRenderer( ) );
+//
+//		xSectionRenderer.typeSelector( ).getComboBox( ).setRenderer( xSectionTypeRenderer );
+//
+//		xSectionEditor = new TypedParsedTextCellEditor<XSection>(
+//			xSectionValueRawFormatter , xSectionTypeGetter , xSectionParser );
+//		xSectionEditor.setAvailableTypes( Arrays.asList( XSectionType.values( ) ) );
+//		xSectionEditor.typeSelector( ).getComboBox( ).setRenderer( xSectionTypeRenderer );
+//
+//		xSectionColumn = new TableColumn( );
+//		xSectionColumn.setIdentifier( ShotColumnDef.xSection );
+//		xSectionColumn.setCellRenderer( xSectionRenderer );
+//		xSectionColumn.setCellEditor( xSectionEditor );
 
 		for( TableColumn column : Arrays.asList(
 			fromColumn ,
 			toColumn ,
-			vectorColumn ,
-			distColumn ,
-			azmFsBsColumn ,
-			azmFsColumn ,
-			azmBsColumn ,
-			incFsBsColumn ,
-			incFsColumn ,
-			incBsColumn ,
-			offsNColumn ,
-			offsEColumn ,
-			offsDColumn ) )
+			vectorColumn ) )
 		{
 			ShotColumnDef def = ( ShotColumnDef ) column.getIdentifier( );
 			Binder<String> b = localizer.stringBinder( def.name );
@@ -277,6 +191,16 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 			nameBinding.update( true );
 			builtInColumns.put( def , column );
 		}
+	}
+
+	public QObject<DataDefaults> getDataDefaults( )
+	{
+		return dataDefaults;
+	}
+
+	public void setDataDefaults( QObject<DataDefaults> dataDefaults )
+	{
+		this.dataDefaults = dataDefaults;
 	}
 
 	public void update( ShotTableModel model , List<ShotColumnDef> columnDefs )
@@ -308,9 +232,6 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 				{
 				case INTEGER:
 					column.setCellRenderer( intRenderer );
-					break;
-				case DOUBLE:
-					column.setCellRenderer( doubleRenderer );
 					break;
 				}
 			}

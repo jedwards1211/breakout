@@ -46,31 +46,31 @@ import javax.swing.table.TableCellEditor;
 import org.andork.swing.selector.DefaultSelector;
 
 @SuppressWarnings( "serial" )
-public class TypedParsedTextWithValueCellEditor extends DefaultCellEditor
+public class TypedParsedTextCellEditor<V> extends DefaultCellEditor
 {
-	final DefaultSelector<Object>					typeSelector;
+	final DefaultSelector<Object>						typeSelector;
 
-	BiFunction<Object, String, ParsedTextWithValue>	parser;
-	Function<Object, String>						valueFormatter;
-	Function<Object, Object>						typeGetter;
+	BiFunction<String, Object, ParsedTextWithType<V>>	parser;
+	Function<V, String>									valueFormatter;
+	Function<Object, ?>									typeGetter;
 
-	Border											compoundBorder;
-	Border											outerBorder;
+	Border												compoundBorder;
+	Border												outerBorder;
 
-	public TypedParsedTextWithValueCellEditor(
-		Function<Object, String> valueFormatter ,
-		Function<Object, Object> typeGetter ,
-		BiFunction<Object, String, ParsedTextWithValue> parser )
+	public TypedParsedTextCellEditor(
+		Function<V, String> valueFormatter ,
+		Function<Object, ?> typeGetter ,
+		BiFunction<String, Object, ParsedTextWithType<V>> parser )
 	{
 		this( new JTextField( ) , new DefaultSelector<>( ) , valueFormatter , typeGetter , parser );
 	}
 
-	public TypedParsedTextWithValueCellEditor(
+	public TypedParsedTextCellEditor(
 		JTextField textField ,
 		DefaultSelector<Object> typeSelector ,
-		Function<Object, String> valueFormatter ,
-		Function<Object, Object> typeGetter ,
-		BiFunction<Object, String, ParsedTextWithValue> parser )
+		Function<V, String> valueFormatter ,
+		Function<Object, ?> typeGetter ,
+		BiFunction<String, Object, ParsedTextWithType<V>> parser )
 	{
 		super( textField );
 		this.typeSelector = typeSelector;
@@ -118,19 +118,20 @@ public class TypedParsedTextWithValueCellEditor extends DefaultCellEditor
 	public Object getCellEditorValue( )
 	{
 		Object o = super.getCellEditorValue( );
-		return parser.apply( typeSelector.getSelection( ) , o.toString( ) );
+		return parser.apply( o.toString( ) , typeSelector.getSelection( ) );
 	}
 
+	@SuppressWarnings( "rawtypes" )
 	@Override
 	public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row ,
 		int column )
 	{
-		ParsedTextWithValue pt = ( ParsedTextWithValue ) value;
-		String text = pt == null ? null : pt.text;
-		Object val = pt == null ? null : pt.value;
+		ParsedText<? extends V> pt = ( ParsedText<? extends V> ) value;
+		String text = pt == null ? null : pt.getText( );
+		V val = pt == null ? null : pt.getValue( );
 		Object superValue = text != null ? text :
 			val != null ? valueFormatter.apply( val ) : null;
-		typeSelector.setSelection( value == null ? null : typeGetter.apply( value ) );
+		typeSelector.setSelection( typeGetter.apply( pt ) );
 		JTextField textField = ( JTextField ) super.getTableCellEditorComponent( table , superValue , isSelected , row ,
 			column );
 		textField.setFont( table.getFont( ) );

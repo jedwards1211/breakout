@@ -11,13 +11,13 @@ import javax.swing.JTree;
 import org.andork.util.StringUtils;
 
 @SuppressWarnings( "serial" )
-public class ParsedTextWithValueCellEditor extends DefaultCellEditor
+public class ParsedTextCellEditor<V> extends DefaultCellEditor
 {
-	Function<String, ParsedTextWithValue>	parser;
-	Function<Object, String>				valueFormatter;
+	Function<String, ParsedText<? extends V>>	parser;
+	Function<? super V, String>					valueFormatter;
 
-	public ParsedTextWithValueCellEditor( Function<String, ParsedTextWithValue> parser ,
-		Function<Object, String> valueFormatter )
+	public ParsedTextCellEditor( Function<String, ParsedText<? extends V>> parser ,
+		Function<? super V, String> valueFormatter )
 	{
 		super( new JTextField( ) );
 		this.parser = parser;
@@ -26,10 +26,11 @@ public class ParsedTextWithValueCellEditor extends DefaultCellEditor
 
 	private String textOf( Object value )
 	{
-		if( value instanceof ParsedTextWithValue )
+		if( value instanceof ParsedText )
 		{
-			ParsedTextWithValue pt = ( ParsedTextWithValue ) value;
-			return pt.text != null ? pt.text : pt.value != null ? valueFormatter.apply( pt.value ) : null;
+			ParsedText<? extends V> pt = ( ParsedText<? extends V> ) value;
+			return pt.getText( ) != null ? pt.getText( ) : pt.getValue( ) != null ? valueFormatter
+				.apply( pt.getValue( ) ) : null;
 		}
 		return null;
 	}

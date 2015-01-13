@@ -2,6 +2,7 @@ package org.andork.breakout.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
@@ -12,6 +13,61 @@ import org.andork.swing.table.TableModelList;
 public class ShotList extends TableModelList<Shot>
 {
 	private List<ShotColumnDef>	customColumnDefs	= Collections.emptyList( );
+	private final Shot			prototypeShot		= new Shot( );
+
+	private void requireProperNumCustomFields( Shot shot )
+	{
+		if( shot.getCustom( ).length != customColumnDefs.size( ) )
+		{
+			throw new IllegalArgumentException( "shot does not have the proper number of custom fields: " + shot );
+		}
+	}
+
+	@Override
+	public void set( int index , Shot element )
+	{
+		requireProperNumCustomFields( element );
+		super.set( index , element );
+	}
+
+	@Override
+	public void add( Shot element )
+	{
+		requireProperNumCustomFields( element );
+		super.add( element );
+	}
+
+	@Override
+	public void add( int index , Shot element )
+	{
+		requireProperNumCustomFields( element );
+		super.add( index , element );
+	}
+
+	@Override
+	public void addAll( Collection<? extends Shot> elements )
+	{
+		for( Shot element : elements )
+		{
+			requireProperNumCustomFields( element );
+		}
+		super.addAll( elements );
+	}
+
+	@Override
+	public void addAll( int index , Collection<? extends Shot> elements )
+	{
+		for( Shot element : elements )
+		{
+			requireProperNumCustomFields( element );
+		}
+		super.addAll( index , elements );
+	}
+
+	public Shot getPrototypeShot( )
+	{
+		return prototypeShot;
+	}
 
 	public List<ShotColumnDef> getCustomColumnDefs( )
 	{
@@ -52,20 +108,53 @@ public class ShotList extends TableModelList<Shot>
 		{
 			for( Shot shot : this )
 			{
-				Object[ ] newCustom = new Object[ copyMap.length ];
-				for( int k = 0 ; k < copyMap.length ; k++ )
-				{
-					if( copyMap[ k ] >= 0 )
-					{
-						newCustom[ k ] = shot.custom[ copyMap[ k ] ];
-					}
-				}
-				shot.custom = newCustom;
+				remapCustom( shot , copyMap );
 			}
 		}
+
+		remapCustom( prototypeShot , copyMap );
 
 		customColumnDefs = newCustomColumnDefs;
 
 		fireStructureChanged( );
+	}
+
+	private void remapCustom( Shot shot , int[ ] copyMap )
+	{
+		Object[ ] newCustom = new Object[ copyMap.length ];
+		if( shot.getCustom( ) != null )
+		{
+			for( int k = 0 ; k < copyMap.length ; k++ )
+			{
+				if( copyMap[ k ] >= 0 )
+				{
+					newCustom[ k ] = shot.getCustom( )[ copyMap[ k ] ];
+				}
+			}
+		}
+		shot.setCustom( newCustom );
+	}
+
+	public void trimEmptyRowsAtEnd( )
+	{
+		int lastNonEmptyRow;
+
+		for( lastNonEmptyRow = size( ) - 1 ; lastNonEmptyRow >= 0 ; lastNonEmptyRow-- )
+		{
+			if( !get( lastNonEmptyRow ).isEmpty( ) )
+			{
+				break;
+			}
+		}
+
+		if( lastNonEmptyRow < size( ) )
+		{
+			removeSublist( lastNonEmptyRow + 1 , size( ) );
+		}
+	}
+
+	public int getNumCustomColumns( )
+	{
+		return customColumnDefs.size( );
 	}
 }

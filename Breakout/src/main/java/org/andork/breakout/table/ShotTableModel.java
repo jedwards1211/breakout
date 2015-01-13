@@ -3,132 +3,64 @@ package org.andork.breakout.table;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
 
-import org.andork.bind2.BinderHolder;
-import org.andork.bind2.Link;
-import org.andork.breakout.table.ShotVector.Nev;
-import org.andork.i18n.I18n;
-import org.andork.q2.QObject;
-import org.andork.q2.QSpec;
 import org.andork.swing.table.NiceTableModel.Column;
-import org.andork.swing.table.QObjectList;
 import org.andork.swing.table.TableModelList;
+import org.andork.util.Java7.Objects;
+import org.andork.util.PowerCloneable.Cloners;
 
-/**
- * A {@link TableModel} backed by a {@link QObjectList} (every row is a {@link QObject}). You specify the columns which
- * determine how the properties of the {@link QObject}s get mapped to table cells.
- * 
- * @author James
- *
- * @param <S>
- *            the {@link QSpec} of the {@link QObject}s.
- */
 @SuppressWarnings( "serial" )
 public class ShotTableModel extends AbstractTableModel
 {
-	private BinderHolder<QObject<DataDefaults>>	dataDefaultsHolder	= new BinderHolder<>( );
-	private BinderHolder<ShotList>				shotListHolder		= new BinderHolder<>( );
-
-	private ShotTableLogic						logic;
-
 	private ShotList							shotList;
-
 	private ShotListListener					shotListListener	= new ShotListListener( );
 
 	private final List<ShotModelColumn>			columns				= new ArrayList<>( );
 	private final Map<ShotColumnDef, Integer>	defIndices			= new HashMap<>( );
 
-	public final ShotModelColumn				fromColumn;
-	public final ShotModelColumn				toColumn;
+	public final ShotModelColumn				fromStationNameColumn;
+	public final ShotModelColumn				toStationNameColumn;
 	public final ShotModelColumn				vectorColumn;
-	public final ShotModelColumn				distColumn;
-	public final ShotModelColumn				azmFsBsColumn;
-	public final ShotModelColumn				azmFsColumn;
-	public final ShotModelColumn				azmBsColumn;
-	public final ShotModelColumn				incFsBsColumn;
-	public final ShotModelColumn				incFsColumn;
-	public final ShotModelColumn				incBsColumn;
-	public final ShotModelColumn				offsNColumn;
-	public final ShotModelColumn				offsEColumn;
-	public final ShotModelColumn				offsDColumn;
+	public final ShotModelColumn				xSectionAtFromColumn;
+	public final ShotModelColumn				xSectionAtToColumn;
 
-	public ShotTableModel( I18n i18n , ShotTableLogic logic )
+	public ShotTableModel( )
 	{
-		this.logic = logic;
+		fromStationNameColumn = new DefaultColumn(
+			ShotColumnDef.fromStationName , s -> s.getFromStationName( ) ,
+			( s , v ) -> s.setFromStationName( ( String ) v ) );
 
-		fromColumn = new FunctionColumn( ShotColumnDef.from , s -> s.from );
-		toColumn = new FunctionColumn( ShotColumnDef.to , s -> s.to );
+		toStationNameColumn = new DefaultColumn(
+			ShotColumnDef.toStationName , s -> s.getToStationName( ) ,
+			( s , v ) -> s.setToStationName( ( String ) v ) );
 
-		vectorColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.vector ,
-			s -> s.vector ,
-			castField( s -> s.vectorText , ShotVectorText.Joint.class , v -> v.text ) );
+		vectorColumn = new DefaultColumn(
+			ShotColumnDef.vector , s -> s.getVector( ) ,
+			( s , v ) -> s.setVector( ( ParsedTextWithType<ShotVector> ) v ) );
 
-		distColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.dist ,
-			castField( s -> s.vector , ShotVector.Dai.class , v -> v.dist ) ,
-			castField( s -> s.vectorText , ShotVectorText.Dai.class , v -> v.distText ) );
+		xSectionAtFromColumn = new DefaultColumn(
+			ShotColumnDef.xSectionAtFrom , s -> s.getXSectionAtFrom( ) ,
+			( s , v ) -> s.setXSectionAtFrom( ( ParsedTextWithType<XSection> ) v ) );
 
-		azmFsBsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.azmFsBs ,
-			castField( s -> s.vector , ShotVector.Dai.class ,
-				v -> v.azmFs == null && v.azmBs == null ? null : new Double[ ] { v.azmFs , v.azmBs } ) ,
-			castField( s -> s.vectorText , ShotVectorText.Dai.PairedAngles.class , v -> v.azmFsBsText ) );
-
-		azmFsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.azmFs ,
-			castField( s -> s.vector , ShotVector.Dai.class , v -> v.azmFs ) ,
-			castField( s -> s.vectorText , ShotVectorText.Dai.SplitAngles.class , v -> v.azmFsText ) );
-
-		azmBsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.azmBs ,
-			castField( s -> s.vector , ShotVector.Dai.class , v -> v.azmBs ) ,
-			castField( s -> s.vectorText , ShotVectorText.Dai.SplitAngles.class , v -> v.azmBsText ) );
-
-		incFsBsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.incFsBs ,
-			castField( s -> s.vector , ShotVector.Dai.class ,
-				v -> v.incFs == null && v.incBs == null ? null : new Double[ ] { v.incFs , v.incBs } ) ,
-			castField( s -> s.vectorText , ShotVectorText.Dai.PairedAngles.class , v -> v.incFsBsText ) );
-
-		incFsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.incFs ,
-			castField( s -> s.vector , ShotVector.Dai.class , v -> v.incFs ) ,
-			castField( s -> s.vectorText , ShotVectorText.Dai.SplitAngles.class , v -> v.incFsText ) );
-
-		incBsColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.incBs ,
-			castField( s -> s.vector , ShotVector.Dai.class , v -> v.incBs ) ,
-			castField( s -> s.vectorText , ShotVectorText.Dai.SplitAngles.class , v -> v.incBsText ) );
-
-		offsNColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.offsN ,
-			castField( s -> s.vector , ShotVector.Nev.class , v -> v.n ) ,
-			castField( s -> s.vectorText , ShotVectorText.Nev.class , v -> v.nText ) );
-
-		offsEColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.offsE ,
-			castField( s -> s.vector , ShotVector.Nev.class , v -> v.e ) ,
-			castField( s -> s.vectorText , ShotVectorText.Nev.class , v -> v.eText ) );
-
-		offsDColumn = new SynthParsedTextWithValueColumn( ShotColumnDef.offsV ,
-			castField( s -> s.vector , ShotVector.Nev.class , v -> v.v ) ,
-			castField( s -> s.vectorText , ShotVectorText.Nev.class , v -> v.vText ) );
-
-		shotListHolder.addBinding( force ->
-		{
-			setShotList( shotListHolder.get( ) );
-		} );
+		xSectionAtToColumn = new DefaultColumn(
+			ShotColumnDef.xSectionAtTo , s -> s.getXSectionAtTo( ) ,
+			( s , v ) -> s.setXSectionAtTo( ( ParsedTextWithType<XSection> ) v ) );
 	}
 
-	public Link<QObject<DataDefaults>> dataDefaultsLink( )
+	public ShotList getShotList( )
 	{
-		return dataDefaultsHolder.binderLink;
+		return shotList;
 	}
 
-	public Link<ShotList> shotListLink( )
-	{
-		return shotListHolder.binderLink;
-	}
-
-	private void setShotList( ShotList newList )
+	public void setShotList( ShotList newList )
 	{
 		if( shotList != newList )
 		{
@@ -173,19 +105,11 @@ public class ShotTableModel extends AbstractTableModel
 
 		List<ShotModelColumn> result = new ArrayList<>( );
 
-		result.add( fromColumn );
-		result.add( toColumn );
+		result.add( fromStationNameColumn );
+		result.add( toStationNameColumn );
 		result.add( vectorColumn );
-		result.add( distColumn );
-		result.add( azmFsBsColumn );
-		result.add( azmFsColumn );
-		result.add( azmBsColumn );
-		result.add( incFsBsColumn );
-		result.add( incFsColumn );
-		result.add( incBsColumn );
-		result.add( offsNColumn );
-		result.add( offsEColumn );
-		result.add( offsDColumn );
+		result.add( xSectionAtFromColumn );
+		result.add( xSectionAtToColumn );
 
 		int custCols = 0;
 		for( ShotColumnDef def : shotList.getCustomColumnDefs( ) )
@@ -205,10 +129,14 @@ public class ShotTableModel extends AbstractTableModel
 		switch( def.type )
 		{
 		case STRING:
-			return new FunctionColumn( def , s -> ( String ) s.custom[ index ] );
+			return new DefaultColumn( def , s -> ( String ) s.getCustom( )[ index ] ,
+				( s , v ) -> s.getCustom( )[ index ] = ( String ) v );
 		case INTEGER:
+			return new DefaultColumn( def , s -> ( ParsedText<Integer> ) s.getCustom( )[ index ] ,
+				( s , v ) -> s.getCustom( )[ index ] = ( ParsedText<Integer> ) v );
 		case DOUBLE:
-			return new FunctionColumn( def , s -> ( ParsedTextWithValue ) s.custom[ index ] );
+			return new DefaultColumn( def , s -> ( ParsedText<Double> ) s.getCustom( )[ index ] ,
+				( s , v ) -> s.getCustom( )[ index ] = ( ParsedText<Double> ) v );
 		}
 
 		return null;
@@ -217,7 +145,7 @@ public class ShotTableModel extends AbstractTableModel
 	@Override
 	public int getRowCount( )
 	{
-		return shotList != null ? shotList.size( ) : 0;
+		return shotList != null ? shotList.size( ) + 1 : 0;
 	}
 
 	@Override
@@ -259,21 +187,33 @@ public class ShotTableModel extends AbstractTableModel
 		return columns.get( columnIndex ).getValueAt( rowIndex );
 	}
 
-	public abstract class ShotModelColumn implements Column<Integer>
+	/**
+	 * @param rowIndex
+	 * @return a {@link List} of all {@link ParsedText#getNote() note}s in any cells in the row at {@code rowIndex}, or
+	 *         {@code null} if there are no notes.
+	 */
+	public List<Object> getNotesInRow( int rowIndex )
 	{
-		public final ShotColumnDef	def;
+		List<Object> notes = null;
 
-		public ShotModelColumn( ShotColumnDef def )
+		for( int colIndex = 0 ; colIndex < getColumnCount( ) ; colIndex++ )
 		{
-			super( );
-			this.def = def;
+			Object o = getValueAt( rowIndex , colIndex );
+			if( o instanceof ParsedText )
+			{
+				ParsedText<?> p = ( ParsedText<?> ) o;
+				if( p.getNote( ) != null )
+				{
+					if( notes == null )
+					{
+						notes = new LinkedList<Object>( );
+					}
+					notes.add( p.getNote( ) );
+				}
+			}
 		}
 
-		@Override
-		public String getColumnName( )
-		{
-			return def.name;
-		}
+		return notes;
 	}
 
 	private class ShotListListener implements TableModelList.Listener<Shot>
@@ -312,48 +252,45 @@ public class ShotTableModel extends AbstractTableModel
 		}
 	}
 
-	private static <F, T extends F, V> CastFieldProperty<F, T, V> castField( Function<Shot, F> fieldGetter ,
-		Class<T> requiredType ,
-		Function<T, V> valueGetter )
+	public abstract class ShotModelColumn implements Column<Integer>
 	{
-		return new CastFieldProperty<>( fieldGetter , requiredType , valueGetter );
-	}
+		public final ShotColumnDef	def;
 
-	private static class CastFieldProperty<F, T extends F, V> implements Function<Shot, V>
-	{
-		Function<Shot, F>	fieldGetter;
-		Class<T>			requiredType;
-		Function<T, V>		valueGetter;
-
-		public CastFieldProperty( Function<Shot, F> fieldGetter , Class<T> requiredType , Function<T, V> valueGetter )
+		public ShotModelColumn( ShotColumnDef def )
 		{
 			super( );
-			this.fieldGetter = fieldGetter;
-			this.requiredType = requiredType;
-			this.valueGetter = valueGetter;
+			this.def = def;
 		}
 
 		@Override
-		public V apply( Shot shot )
+		public String getColumnName( )
 		{
-			F field = fieldGetter.apply( shot );
-			if( field != null && requiredType.isAssignableFrom( field.getClass( ) ) )
-			{
-				return valueGetter.apply( requiredType.cast( field ) );
-			}
-			return null;
+			return def.name;
 		}
 	}
 
-	private class FunctionColumn extends ShotModelColumn
+	private class DefaultColumn extends ShotModelColumn
 	{
-		public FunctionColumn( ShotColumnDef def , Function<Shot, ?> valueProperty )
+		/**
+		 * @param def
+		 *            the definition for this column.
+		 * @param valueGetter
+		 *            given a {@link Shot}, gets the value for its property represented by this column.
+		 * @param valueSetter
+		 *            given a {@link Shot} and a new value, sets the shot's property represented by this
+		 *            column to the new value.
+		 */
+		public DefaultColumn( ShotColumnDef def ,
+			Function<Shot, ?> valueGetter ,
+			BiConsumer<Shot, Object> valueSetter )
 		{
 			super( def );
-			this.valueProperty = valueProperty;
+			this.valueGetter = valueGetter;
+			this.valueSetter = valueSetter;
 		}
 
-		Function<Shot, ?>	valueProperty;
+		Function<Shot, ?>			valueGetter;
+		BiConsumer<Shot, Object>	valueSetter;
 
 		@Override
 		public Class<?> getColumnClass( )
@@ -370,59 +307,44 @@ public class ShotTableModel extends AbstractTableModel
 		@Override
 		public Object getValueAt( Integer row )
 		{
-			return valueProperty.apply( shotList.get( row ) );
+			return valueGetter.apply( row == shotList.size( ) ? shotList.getPrototypeShot( ) : shotList.get( row ) );
 		}
 
 		@Override
 		public boolean setValueAt( Object aValue , Integer row )
 		{
-			return false;
-		}
-	}
+			if( row == shotList.size( ) )
+			{
+				// the last row is always an empty placeholder view of the prototype shot, which is not actually part of 
+				// the list.
 
-	private class SynthParsedTextWithValueColumn extends ShotModelColumn
-	{
-		Function<Shot, ?>			valueGetter;
-		Function<Shot, ParsedText>	textGetter;
+				if( aValue instanceof ParsedText<?> )
+				{
+					if( ( ( ParsedText<?> ) aValue ).isEmpty( ) )
+					{
+						// If the user just changed the vector type, but didn't enter any text, we can just update the
+						// prototype shot, because we want the new type to remain showing in the last row.
 
-		public SynthParsedTextWithValueColumn( ShotColumnDef def , Function<Shot, ?> valueProperty ,
-			Function<Shot, ParsedText> textGetter )
-		{
-			super( def );
-			this.valueGetter = valueProperty;
-			this.textGetter = textGetter;
-		}
+						Object oldValue = valueGetter.apply( shotList.getPrototypeShot( ) );
+						valueSetter.accept( shotList.getPrototypeShot( ) , aValue );
+						return !Objects.equals( oldValue , aValue );
+					}
+				}
 
-		@Override
-		public Class<?> getColumnClass( )
-		{
-			return ParsedText.class;
-		}
+				// In this case, the user changed the text, so we add a clone of the prototype shot to the end of the list
+				// and this clone will get updated below.
+				shotList.add( shotList.getPrototypeShot( ).clone( Cloners::defaultClone ) );
+			}
 
-		@Override
-		public boolean isCellEditable( Integer row )
-		{
-			return true;
-		}
+			Object oldValue = valueGetter.apply( shotList.get( row ) );
+			valueSetter.accept( shotList.get( row ) , aValue );
 
-		@Override
-		public Object getValueAt( Integer row )
-		{
-			Shot shot = shotList.get( row );
-			Object value = valueGetter.apply( shot );
-			ParsedText text = textGetter.apply( shot );
+			if( row == shotList.size( ) - 1 )
+			{
+				shotList.trimEmptyRowsAtEnd( );
+			}
 
-			return new ParsedTextWithValue(
-				text == null ? null : text.text ,
-				text == null ? null : text.note ,
-				value );
-		}
-
-		@Override
-		public boolean setValueAt( Object aValue , Integer row )
-		{
-			Shot shot = shotList.get( row );
-			return logic.set( shot , def , ( ParsedTextWithValue ) aValue );
+			return !Objects.equals( oldValue , aValue );
 		}
 	}
 }
