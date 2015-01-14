@@ -39,7 +39,8 @@ public class ShotTableTest
 
 			shotList.setCustomColumnDefs( Arrays.asList(
 				new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
-				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
+				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE ) ,
+				new ShotColumnDef( "Cave" , ShotColumnType.STRING )
 				) );
 
 			QObject<ProjectModel> projModel = QArrayObject.create( ProjectModel.spec );
@@ -68,20 +69,28 @@ public class ShotTableTest
 			} );
 			rowSorter.setSortsOnUpdates( true );
 			table.setRowSorter( rowSorter );
-			table.setFont( new Font( "Monospaced" , Font.PLAIN , 11 ) );
+//			table.setFont( new Font( "Monospaced" , Font.PLAIN , 11 ) );
 
 			ShotDataFormatter formats = new ShotDataFormatter( i18n );
+			formats.setDecimalSeparator( ',' );
 
 			ShotTableColumnModel columnModel = new ShotTableColumnModel( i18n , formats );
 			columnModel.update( tableModel , Arrays.asList(
 				ShotColumnDef.fromStationName ,
 				ShotColumnDef.toStationName ,
 				ShotColumnDef.vector ,
+				ShotColumnDef.xSectionAtFrom ,
+				ShotColumnDef.xSectionAtTo ,
 				ShotColumnDef.lengthUnit ,
-				ShotColumnDef.angleUnit
+				ShotColumnDef.angleUnit ,
+				new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
+				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE ) ,
+				new ShotColumnDef( "Cave" , ShotColumnType.STRING )
 				) );
-			
+
 			columnModel.vectorColumn.setPreferredWidth( 300 );
+			columnModel.xSectionAtFromColumn.setPreferredWidth( 300 );
+			columnModel.xSectionAtToColumn.setPreferredWidth( 300 );
 
 			projModelBinder.property( ProjectModel.defaults ).addBinding( force -> columnModel.setDataDefaults(
 				projModelBinder.property( ProjectModel.defaults ).get( ) ) );
@@ -123,7 +132,7 @@ public class ShotTableTest
 				}
 				return null;
 			} );
-			
+
 			Dimension prefSize = table.getPreferredSize( );
 			prefSize.height = table.getPreferredScrollableViewportSize( ).height;
 			table.setPreferredScrollableViewportSize( prefSize );

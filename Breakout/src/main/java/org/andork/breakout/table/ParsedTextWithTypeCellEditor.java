@@ -141,7 +141,6 @@ public class ParsedTextWithTypeCellEditor<V> extends DefaultCellEditor
 		typeSelector.setSelection( typeGetter.apply( pt ) );
 		JTextField textField = ( JTextField ) super.getTableCellEditorComponent( table , superValue , isSelected , row ,
 			column );
-		textField.setFont( table.getFont( ) );
 		textField.setBorder( compoundBorder );
 		textField.setLayout( new Layout( ) );
 		textField.add( typeSelector.comboBox( ) , BorderLayout.EAST );

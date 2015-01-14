@@ -151,7 +151,7 @@ public class Shot implements PowerCloneable
 		result.xSectionAtTo = ( ParsedTextWithType<XSection> ) subcloner.apply( xSectionAtTo );
 		result.lengthUnit = lengthUnit;
 		result.angleUnit = angleUnit;
-		result.custom = ( Object[ ] ) subcloner.apply( custom );
+		result.custom = Cloners.cloneArray( custom , subcloner );
 		return result;
 	}
 }

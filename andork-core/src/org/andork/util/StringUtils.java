@@ -175,19 +175,28 @@ public class StringUtils
 
 	public static String pad( String s , char padChar , int width , boolean leftJustify )
 	{
-		StringBuilder sb = new StringBuilder( s );
-
-		while( sb.length( ) < width )
+		if( s.length( ) > width )
 		{
-			if( leftJustify )
-			{
-				sb.append( padChar );
-			}
-			else
-			{
-				sb.insert( 0 , padChar );
-			}
+			return s;
 		}
+
+		StringBuilder sb = new StringBuilder( width );
+
+		if( leftJustify )
+		{
+			sb.append( s );
+		}
+
+		for( int i = 0 ; i < width - s.length( ) ; i++ )
+		{
+			sb.append( padChar );
+		}
+
+		if( !leftJustify )
+		{
+			sb.append( s );
+		}
+
 		return sb.toString( );
 	}
 }

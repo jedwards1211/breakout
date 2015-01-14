@@ -1,6 +1,8 @@
 package org.andork.breakout.table;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
 import java.util.regex.Matcher;
@@ -13,75 +15,215 @@ import org.andork.util.StringUtils;
 
 public class ShotDataFormatter
 {
-	private final DecimalFormat	doubleFormat;
-	private final DecimalFormat	lengthFormat;
-	private final DecimalFormat	azimuthFormat;
-	private final DecimalFormat	inclinationFormat;
+	private final NumberFormat		intFormat;
+	private final NumberFormat		parseIntFormat;
 
-	private Localizer			localizer;
+	private final DecimalFormat		parseDoubleFormat;
+	private final DecimalFormat		doubleFormat;
+	private final DecimalFormat		lengthFormat;
+	private final DecimalFormat		azimuthFormat;
+	private final DecimalFormat		inclinationFormat;
 
-	private int					vectorColumn0Width		= 9;
-	private int					vectorColumn1Width		= 11;
-	private int					vectorColumn2Width		= 11;
+	private Localizer				localizer;
 
-	private int					xSectionColumnWidth		= 5;
+	private int						vectorColumn0Width		= 9;
+	private int						vectorColumn1Width		= 11;
+	private int						vectorColumn2Width		= 11;
 
-	private Pattern				daiShotVectorPattern	= Pattern
-															.compile( "\\s*(\\S+)\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s*" );
-	private Pattern				whitespacePattern		= Pattern.compile( "\\s*" );
+	private int						xSectionColumnWidth		= 6;
+
+	private static final Pattern	daiShotVectorPattern	= Pattern
+																.compile( "\\s*(\\S+)\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s*" );
+	private static final Pattern	whitespacePattern		= Pattern.compile( "\\s*" );
 
 	public ShotDataFormatter( I18n i18n )
 	{
 		localizer = i18n.forClass( ShotDataFormatter.class );
 
-		doubleFormat = ( DecimalFormat ) DecimalFormat.getInstance( );
-		lengthFormat = ( DecimalFormat ) DecimalFormat.getInstance( );
-		azimuthFormat = ( DecimalFormat ) DecimalFormat.getInstance( );
-		inclinationFormat = ( DecimalFormat ) DecimalFormat.getInstance( );
+		parseIntFormat = createDefaultIntegerFormat( );
+		intFormat = createDefaultIntegerFormat( );
+
+		parseDoubleFormat = createDefaultDoubleFormat( );
+		doubleFormat = createDefaultDoubleFormat( );
+		lengthFormat = createDefaultDoubleFormat( );
+		azimuthFormat = createDefaultDoubleFormat( );
+		inclinationFormat = createDefaultDoubleFormat( );
 		inclinationFormat.setPositivePrefix( "+" );
+
+		setDoubleFractionDigits( 2 );
+		setLengthFractionDigits( 2 );
+		setAzimuthFractionDigits( 1 );
+		setInclinationFractionDigits( 1 );
+	}
+
+	private static NumberFormat createDefaultIntegerFormat( )
+	{
+		NumberFormat result = ( NumberFormat ) NumberFormat.getInstance( );
+		result.setMinimumFractionDigits( 0 );
+		result.setMaximumFractionDigits( 0 );
+		result.setParseIntegerOnly( true );
+		result.setGroupingUsed( false );
+		return result;
+	}
+
+	private static DecimalFormat createDefaultDoubleFormat( )
+	{
+		DecimalFormat result = ( DecimalFormat ) DecimalFormat.getInstance( );
+		result.setGroupingUsed( false );
+		return result;
+	}
+
+	public int getDoubleFractionDigits( )
+	{
+		return doubleFormat.getMaximumFractionDigits( );
+	}
+
+	public void setDoubleFractionDigits( int digits )
+	{
+		doubleFormat.setMinimumFractionDigits( digits );
+		doubleFormat.setMaximumFractionDigits( digits );
+	}
+
+	public int getLengthFractionDigits( )
+	{
+		return lengthFormat.getMaximumFractionDigits( );
+	}
+
+	public void setLengthFractionDigits( int digits )
+	{
+		lengthFormat.setMinimumFractionDigits( digits );
+		lengthFormat.setMaximumFractionDigits( digits );
+	}
+
+	public int getAzimuthFractionDigits( )
+	{
+		return azimuthFormat.getMaximumFractionDigits( );
+	}
+
+	public void setAzimuthFractionDigits( int digits )
+	{
+		azimuthFormat.setMinimumFractionDigits( digits );
+		azimuthFormat.setMaximumFractionDigits( digits );
+	}
+
+	public int getInclinationFractionDigits( )
+	{
+		return inclinationFormat.getMaximumFractionDigits( );
+	}
+
+	public void setInclinationFractionDigits( int digits )
+	{
+		inclinationFormat.setMinimumFractionDigits( digits );
+		inclinationFormat.setMaximumFractionDigits( digits );
+	}
+
+	public char getDecimalSeparator( )
+	{
+		return doubleFormat.getDecimalFormatSymbols( ).getDecimalSeparator( );
+	}
+
+	public void setDecimalSeparator( char separator )
+	{
+		DecimalFormatSymbols symbols = doubleFormat.getDecimalFormatSymbols( );
+		symbols.setDecimalSeparator( separator );
+
+		parseDoubleFormat.setDecimalFormatSymbols( symbols );
+		doubleFormat.setDecimalFormatSymbols( symbols );
+		lengthFormat.setDecimalFormatSymbols( symbols );
+		azimuthFormat.setDecimalFormatSymbols( symbols );
+		inclinationFormat.setDecimalFormatSymbols( symbols );
+	}
+
+	private static void increment( ParsePosition p )
+	{
+		p.setIndex( p.getIndex( ) + 1 );
+	}
+
+	private static void skipWhitespace( String s , ParsePosition p )
+	{
+		while( p.getIndex( ) < s.length( ) && Character.isWhitespace( s.charAt( p.getIndex( ) ) ) )
+		{
+			increment( p );
+		}
+	}
+
+	private static void requireParsePositionAtEnd( String value , ParsePosition p ) throws ParseException
+	{
+		if( p.getIndex( ) != value.length( ) )
+		{
+			throw new ParseException( "invalid characters after number" , p.getIndex( ) );
+		}
+	}
+
+	public Integer parseInteger( String value ) throws ParseException
+	{
+		ParsePosition p = new ParsePosition( 0 );
+		Integer i = parseIntFormat.parse( value , p ).intValue( );
+		requireParsePositionAtEnd( value , p );
+		return i;
+	}
+
+	public ParsedText<Integer> parseCustomInteger( String text )
+	{
+		ParsePosition p = new ParsePosition( 0 );
+		skipWhitespace( text , p );
+		if( p.getIndex( ) == text.length( ) )
+		{
+			return null;
+		}
+		ParsedText<Integer> result = new ParsedText<>( );
+		result.setText( text );
+		try
+		{
+			result.setValue( parseInteger( text ) );
+		}
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "customColumn.integer.invalidNumber" , text ) );
+		}
+		return result;
 	}
 
 	public Double parseDouble( String value ) throws ParseException
 	{
 		ParsePosition p = new ParsePosition( 0 );
-		Double d = doubleFormat.parse( value , p ).doubleValue( );
-		if( p.getIndex( ) != value.length( ) )
-		{
-			throw new ParseException( "invalid characters after number" , p.getIndex( ) );
-		}
+		Double d = parseDoubleFormat.parse( value , p ).doubleValue( );
+		requireParsePositionAtEnd( value , p );
 		return d;
 	}
 
-	public Double parseLength( String value ) throws ParseException
+	public ParsedText<Double> parseCustomDouble( String text )
 	{
 		ParsePosition p = new ParsePosition( 0 );
-		Double d = lengthFormat.parse( value , p ).doubleValue( );
-		if( p.getIndex( ) != value.length( ) )
+		skipWhitespace( text , p );
+		if( p.getIndex( ) == text.length( ) )
 		{
-			throw new ParseException( "invalid characters after number" , p.getIndex( ) );
+			return null;
 		}
-		return d;
-	}
-
-	public Double parseAzimuth( String value ) throws ParseException
-	{
-		ParsePosition p = new ParsePosition( 0 );
-		Double d = azimuthFormat.parse( value , p ).doubleValue( );
-		if( p.getIndex( ) != value.length( ) )
+		ParsedText<Double> result = new ParsedText<>( );
+		result.setText( text );
+		try
 		{
-			throw new ParseException( "invalid characters after number" , p.getIndex( ) );
+			result.setValue( parseDouble( text ) );
 		}
-		return d;
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "customColumn.double.invalidNumber" , text ) );
+		}
+		return result;
 	}
 
 	public Double parseInclination( String value ) throws ParseException
 	{
 		ParsePosition p = new ParsePosition( 0 );
-		Double d = inclinationFormat.parse( value , p ).doubleValue( );
-		if( p.getIndex( ) != value.length( ) )
+		skipWhitespace( value , p );
+
+		if( p.getIndex( ) < value.length( ) && value.charAt( p.getIndex( ) ) == '+' )
 		{
-			throw new ParseException( "invalid characters after number" , p.getIndex( ) );
+			increment( p );
 		}
+		Double d = parseDoubleFormat.parse( value , p ).doubleValue( );
+		requireParsePositionAtEnd( value , p );
 		return d;
 	}
 
@@ -94,24 +236,6 @@ public class ShotDataFormatter
 		return parseDouble( value );
 	}
 
-	public Double parseOptionalLength( String value ) throws ParseException
-	{
-		if( "-".equals( value ) || "--".equals( value ) )
-		{
-			return null;
-		}
-		return parseLength( value );
-	}
-
-	public Double parseOptionalAzimuth( String value ) throws ParseException
-	{
-		if( "-".equals( value ) || "--".equals( value ) )
-		{
-			return null;
-		}
-		return parseAzimuth( value );
-	}
-
 	public Double parseOptionalInclination( String value ) throws ParseException
 	{
 		if( "-".equals( value ) || "--".equals( value ) )
@@ -119,6 +243,11 @@ public class ShotDataFormatter
 			return null;
 		}
 		return parseInclination( value );
+	}
+
+	public String formatInteger( Integer value )
+	{
+		return intFormat.format( value );
 	}
 
 	public String formatDouble( Double value )
@@ -277,7 +406,7 @@ public class ShotDataFormatter
 		Double dist = null;
 		try
 		{
-			dist = parseLength( distText );
+			dist = parseDouble( distText );
 			if( dist != null && dist < 0.0 )
 			{
 				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.negativeDistance" ) );
@@ -294,7 +423,7 @@ public class ShotDataFormatter
 		Double azmFs = null;
 		try
 		{
-			azmFs = parseOptionalAzimuth( azmFsText );
+			azmFs = parseOptionalDouble( azmFsText );
 		}
 		catch( Exception ex )
 		{
@@ -308,7 +437,7 @@ public class ShotDataFormatter
 		{
 			try
 			{
-				azmBs = parseOptionalAzimuth( azmBsText );
+				azmBs = parseOptionalDouble( azmBsText );
 			}
 			catch( Exception ex )
 			{
@@ -391,7 +520,7 @@ public class ShotDataFormatter
 
 		try
 		{
-			vector.setNorthOffset( parseLength( parts[ 0 ] ) );
+			vector.setNorthOffset( parseDouble( parts[ 0 ] ) );
 		}
 		catch( Exception ex )
 		{
@@ -401,7 +530,7 @@ public class ShotDataFormatter
 
 		try
 		{
-			vector.setEastOffset( parseLength( parts[ 1 ] ) );
+			vector.setEastOffset( parseDouble( parts[ 1 ] ) );
 		}
 		catch( Exception ex )
 		{
@@ -411,7 +540,7 @@ public class ShotDataFormatter
 
 		try
 		{
-			vector.setVerticalOffset( parseLength( parts[ 2 ] ) );
+			vector.setVerticalOffset( parseDouble( parts[ 2 ] ) );
 		}
 		catch( Exception ex )
 		{
@@ -444,7 +573,7 @@ public class ShotDataFormatter
 	{
 		return localizer
 			.getFormattedString(
-				"LrudXSection.format" ,
+				"xSectionFormat.lrud" ,
 				StringUtils.pad( formatOptionalLength( t.getLeft( ) ) , ' ' , xSectionColumnWidth , false ) ,
 				StringUtils.pad( formatOptionalLength( t.getRight( ) ) , ' ' , xSectionColumnWidth , false ) ,
 				StringUtils.pad( formatOptionalLength( t.getUp( ) ) , ' ' , xSectionColumnWidth , false ) ,
@@ -452,9 +581,105 @@ public class ShotDataFormatter
 			);
 	}
 
-	public ParsedText<XSection> parseXSection( String s , XSectionType type )
+	public String format( LlrrudXSection t )
 	{
-		String[ ] parts = s.split( "\\s+" );
+		return localizer
+			.getFormattedString(
+				"xSectionFormat.llrrud" ,
+				StringUtils.pad( formatOptionalLength( t.getLeftNorthing( ) ) , ' ' , xSectionColumnWidth , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getLeftEasting( ) ) , ' ' , xSectionColumnWidth , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getRightNorthing( ) ) , ' ' , xSectionColumnWidth , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getRightEasting( ) ) , ' ' , xSectionColumnWidth , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getUp( ) ) , ' ' , xSectionColumnWidth , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getDown( ) ) , ' ' , xSectionColumnWidth , false )
+			);
+	}
+
+	public String format( NsewXSection t )
+	{
+		return localizer
+			.getFormattedString(
+				"xSectionFormat.nsew" ,
+				StringUtils.pad( formatOptionalLength( t.getNorth( ) ) , ' ' , xSectionColumnWidth , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getSouth( ) ) , ' ' , xSectionColumnWidth , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getEast( ) ) , ' ' , xSectionColumnWidth , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getWest( ) ) , ' ' , xSectionColumnWidth , false )
+			);
+	}
+
+	public String formatRaw( XSection x )
+	{
+		if( x instanceof LrudXSection )
+		{
+			return formatRaw( ( LrudXSection ) x );
+		}
+		else if( x instanceof NsewXSection )
+		{
+			return formatRaw( ( NsewXSection ) x );
+		}
+		else if( x instanceof LlrrudXSection )
+		{
+			return formatRaw( ( LlrrudXSection ) x );
+		}
+		return x.toString( );
+	}
+
+	public String formatRaw( LrudXSection x )
+	{
+		StringBuilder sb = new StringBuilder( );
+		sb.append( formatOptionalLength( x.getLeft( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getRight( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getUp( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getDown( ) ) );
+		return sb.toString( );
+	}
+
+	public String formatRaw( LlrrudXSection x )
+	{
+		StringBuilder sb = new StringBuilder( );
+		sb.append( formatOptionalLength( x.getLeftNorthing( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getLeftEasting( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getRightNorthing( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getRightEasting( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getUp( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getDown( ) ) );
+		return sb.toString( );
+	}
+
+	public String formatRaw( NsewXSection x )
+	{
+		StringBuilder sb = new StringBuilder( );
+		sb.append( formatOptionalLength( x.getNorth( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getSouth( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getEast( ) ) );
+		sb.append( ' ' );
+		sb.append( formatOptionalLength( x.getWest( ) ) );
+		return sb.toString( );
+	}
+
+	public ParsedTextWithType<XSection> parseXSection( String s , XSectionType type )
+	{
+		ParsedTextWithType<XSection> result = new ParsedTextWithType<>( );
+		result.setType( type );
+
+		String trimmed = s.trim( );
+		if( trimmed.isEmpty( ) )
+		{
+			return result;
+		}
+		result.setText( s );
+
+		String[ ] parts = trimmed.split( "\\s+" );
 
 		int reqNumParts = 0;
 
@@ -472,12 +697,11 @@ public class ShotDataFormatter
 			throw new IllegalArgumentException( "Unsupported type: " + type );
 		}
 
-		ParsedText<XSection> result = new ParsedText<>( );
-		result.setText( s );
-
 		if( parts.length != reqNumParts )
 		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "pleaseEnterXNumbers" , reqNumParts ) );
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "xSectionColumn.pleaseEnterXNumbers" ,
+				reqNumParts ) );
+			return result;
 		}
 
 		Double[ ] parsed = new Double[ parts.length ];
@@ -486,7 +710,7 @@ public class ShotDataFormatter
 		{
 			try
 			{
-				parsed[ i ] = parseLength( parts[ i ] );
+				parsed[ i ] = parseDouble( parts[ i ] );
 			}
 			catch( Exception ex )
 			{

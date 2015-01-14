@@ -33,6 +33,10 @@ public class DataDefaults extends QSpec
 																				"shotVectorType" ,
 																				ShotVectorType.class ,
 																				ShotVectorType.DAIc );
+	public static NonNullProperty<XSectionType>		xSectionType			= nonNullProperty(
+																				"xSectionType" ,
+																				XSectionType.class ,
+																				XSectionType.BISECTOR_LRUD );
 	public static NonNullProperty<Boolean>			backsightsAreCorrected	= nonNullProperty(
 																				"backsightsAreCorrected" ,
 																				Boolean.class , false );
@@ -59,6 +63,7 @@ public class DataDefaults extends QSpec
 			angleUnit ,
 			angleDecimalPlaces ,
 			shotVectorType ,
+			xSectionType ,
 			backsightsAreCorrected ,
 			downwardIsPositive );
 	}
