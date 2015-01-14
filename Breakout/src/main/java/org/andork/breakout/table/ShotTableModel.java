@@ -59,11 +59,11 @@ public class ShotTableModel extends AbstractTableModel
 			ShotColumnDef.xSectionAtTo , s -> s.getXSectionAtTo( ) ,
 			( s , v ) -> s.setXSectionAtTo( ( ParsedTextWithType<XSection> ) v ) );
 
-		lengthUnitColumn = new DefaultColumn(
+		lengthUnitColumn = new UnitColumn(
 			ShotColumnDef.lengthUnit , s -> s.getLengthUnit( ) ,
 			( s , u ) -> s.setLengthUnit( ( Unit<Length> ) u ) );
 
-		angleUnitColumn = new DefaultColumn(
+		angleUnitColumn = new UnitColumn(
 			ShotColumnDef.angleUnit , s -> s.getAngleUnit( ) ,
 			( s , u ) -> s.setAngleUnit( ( Unit<Angle> ) u ) );
 	}
@@ -333,8 +333,7 @@ public class ShotTableModel extends AbstractTableModel
 				// the last row is always an empty placeholder view of the prototype shot, which is not actually part of 
 				// the list.
 
-				if( ( aValue instanceof ParsedText<?> && ( ( ParsedText<?> ) aValue ).isEmpty( ) )
-					|| aValue instanceof Unit )
+				if( updatePrototypeShot( aValue ) )
 				{
 					// If the user just changed the vector type, but didn't enter any text, we can just update the
 					// prototype shot, because we want the new type to remain showing in the last row.
@@ -358,6 +357,25 @@ public class ShotTableModel extends AbstractTableModel
 			}
 
 			return !Objects.equals( oldValue , aValue );
+		}
+
+		protected boolean updatePrototypeShot( Object aValue )
+		{
+			return ( aValue instanceof ParsedText<?> && ( ( ParsedText<?> ) aValue ).isEmpty( ) );
+		}
+	}
+	
+	public class UnitColumn extends DefaultColumn {
+
+		public UnitColumn( ShotColumnDef def , Function<Shot, ?> valueGetter , BiConsumer<Shot, Object> valueSetter )
+		{
+			super( def , valueGetter , valueSetter );
+		}
+
+		@Override
+		protected boolean updatePrototypeShot( Object aValue )
+		{
+			return true;
 		}
 	}
 }
