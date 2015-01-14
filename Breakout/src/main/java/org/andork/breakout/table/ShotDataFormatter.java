@@ -27,7 +27,7 @@ public class ShotDataFormatter
 	private int					xSectionColumnWidth		= 5;
 
 	private Pattern				daiShotVectorPattern	= Pattern
-															.compile( "\\s*(\\S+)\\s+([^ \t\n\u000b\f\r/]+)\\s*/\\s*(\\S+)\\s+([^ \t\n\u000b\f\r/]+)\\s*/\\s*(\\S+)\\s*" );
+															.compile( "\\s*(\\S+)\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s*" );
 	private Pattern				whitespacePattern		= Pattern.compile( "\\s*" );
 
 	public ShotDataFormatter( I18n i18n )
@@ -269,7 +269,7 @@ public class ShotDataFormatter
 			{
 				return result;
 			}
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidDaiShotVector" ) );
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDaiShotVector" ) );
 			return result;
 		}
 
@@ -277,11 +277,16 @@ public class ShotDataFormatter
 		Double dist = null;
 		try
 		{
-			dist = parseOptionalLength( distText );
+			dist = parseLength( distText );
+			if( dist != null && dist < 0.0 )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.negativeDistance" ) );
+				return result;
+			}
 		}
 		catch( Exception ex )
 		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidDist" , distText ) );
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDistance" , distText ) );
 			return result;
 		}
 
@@ -293,23 +298,27 @@ public class ShotDataFormatter
 		}
 		catch( Exception ex )
 		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidAzm" , azmFsText ) );
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidAzimuth" , azmFsText ) );
 			return result;
 		}
 
-		String azmBsText = m.group( 3 );
+		String azmBsText = m.group( 4 );
 		Double azmBs = null;
-		try
+		if( azmBsText != null )
 		{
-			azmBs = parseOptionalAzimuth( azmBsText );
-		}
-		catch( Exception ex )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidAzm" , azmBsText ) );
-			return result;
+			try
+			{
+				azmBs = parseOptionalAzimuth( azmBsText );
+			}
+			catch( Exception ex )
+			{
+				result
+					.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidAzimuth" , azmBsText ) );
+				return result;
+			}
 		}
 
-		String incFsText = m.group( 4 );
+		String incFsText = m.group( 5 );
 		Double incFs = null;
 		try
 		{
@@ -317,29 +326,34 @@ public class ShotDataFormatter
 		}
 		catch( Exception ex )
 		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidInc" , incFsText ) );
+			result
+				.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidInclination" , incFsText ) );
 			return result;
 		}
 
-		String incBsText = m.group( 5 );
+		String incBsText = m.group( 7 );
 		Double incBs = null;
-		try
+		if( incBsText != null )
 		{
-			incBs = parseOptionalInclination( incBsText );
-		}
-		catch( Exception ex )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidInc" , incBsText ) );
-			return result;
+			try
+			{
+				incBs = parseOptionalInclination( incBsText );
+			}
+			catch( Exception ex )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidInclination" ,
+					incBsText ) );
+				return result;
+			}
 		}
 
 		if( azmFs == null && azmBs == null )
 		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "missingAzimuth" ) );
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.missingAzimuth" ) );
 		}
 		else if( incFs == null && incBs == null )
 		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "missingInclination" ) );
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.missingInclination" ) );
 		}
 
 		DaiShotVector vector = new DaiShotVector( );

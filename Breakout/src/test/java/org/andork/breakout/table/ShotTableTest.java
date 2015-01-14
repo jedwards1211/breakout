@@ -1,6 +1,7 @@
 package org.andork.breakout.table;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.util.Arrays;
 import java.util.List;
@@ -75,14 +76,18 @@ public class ShotTableTest
 			columnModel.update( tableModel , Arrays.asList(
 				ShotColumnDef.fromStationName ,
 				ShotColumnDef.toStationName ,
-				ShotColumnDef.vector
+				ShotColumnDef.vector ,
+				ShotColumnDef.lengthUnit ,
+				ShotColumnDef.angleUnit
 				) );
+			
+			columnModel.vectorColumn.setPreferredWidth( 300 );
 
 			projModelBinder.property( ProjectModel.defaults ).addBinding( force -> columnModel.setDataDefaults(
 				projModelBinder.property( ProjectModel.defaults ).get( ) ) );
 
 			table.setColumnModel( columnModel );
-			table.setRowHeight( 20 );
+			table.setRowHeight( 21 );
 
 			JScrollAndJumpPane scrollPane = new JScrollAndJumpPane( table );
 			scrollPane.getJumpBar( ).setModel( new AnnotatingJTableJumpBarModel( table ) );
@@ -118,6 +123,10 @@ public class ShotTableTest
 				}
 				return null;
 			} );
+			
+			Dimension prefSize = table.getPreferredSize( );
+			prefSize.height = table.getPreferredScrollableViewportSize( ).height;
+			table.setPreferredScrollableViewportSize( prefSize );
 
 			QuickTestFrame.frame( scrollPane ).setVisible( true );
 		} );

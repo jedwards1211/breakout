@@ -14,6 +14,9 @@ import javax.swing.table.AbstractTableModel;
 
 import org.andork.swing.table.NiceTableModel.Column;
 import org.andork.swing.table.TableModelList;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
 import org.andork.util.Java7.Objects;
 import org.andork.util.PowerCloneable.Cloners;
 
@@ -31,6 +34,8 @@ public class ShotTableModel extends AbstractTableModel
 	public final ShotModelColumn				vectorColumn;
 	public final ShotModelColumn				xSectionAtFromColumn;
 	public final ShotModelColumn				xSectionAtToColumn;
+	public final ShotModelColumn				lengthUnitColumn;
+	public final ShotModelColumn				angleUnitColumn;
 
 	public ShotTableModel( )
 	{
@@ -53,6 +58,14 @@ public class ShotTableModel extends AbstractTableModel
 		xSectionAtToColumn = new DefaultColumn(
 			ShotColumnDef.xSectionAtTo , s -> s.getXSectionAtTo( ) ,
 			( s , v ) -> s.setXSectionAtTo( ( ParsedTextWithType<XSection> ) v ) );
+
+		lengthUnitColumn = new DefaultColumn(
+			ShotColumnDef.lengthUnit , s -> s.getLengthUnit( ) ,
+			( s , u ) -> s.setLengthUnit( ( Unit<Length> ) u ) );
+
+		angleUnitColumn = new DefaultColumn(
+			ShotColumnDef.angleUnit , s -> s.getAngleUnit( ) ,
+			( s , u ) -> s.setAngleUnit( ( Unit<Angle> ) u ) );
 	}
 
 	public ShotList getShotList( )
@@ -110,6 +123,8 @@ public class ShotTableModel extends AbstractTableModel
 		result.add( vectorColumn );
 		result.add( xSectionAtFromColumn );
 		result.add( xSectionAtToColumn );
+		result.add( lengthUnitColumn );
+		result.add( angleUnitColumn );
 
 		int custCols = 0;
 		for( ShotColumnDef def : shotList.getCustomColumnDefs( ) )
@@ -318,17 +333,15 @@ public class ShotTableModel extends AbstractTableModel
 				// the last row is always an empty placeholder view of the prototype shot, which is not actually part of 
 				// the list.
 
-				if( aValue instanceof ParsedText<?> )
+				if( ( aValue instanceof ParsedText<?> && ( ( ParsedText<?> ) aValue ).isEmpty( ) )
+					|| aValue instanceof Unit )
 				{
-					if( ( ( ParsedText<?> ) aValue ).isEmpty( ) )
-					{
-						// If the user just changed the vector type, but didn't enter any text, we can just update the
-						// prototype shot, because we want the new type to remain showing in the last row.
+					// If the user just changed the vector type, but didn't enter any text, we can just update the
+					// prototype shot, because we want the new type to remain showing in the last row.
 
-						Object oldValue = valueGetter.apply( shotList.getPrototypeShot( ) );
-						valueSetter.accept( shotList.getPrototypeShot( ) , aValue );
-						return !Objects.equals( oldValue , aValue );
-					}
+					Object oldValue = valueGetter.apply( shotList.getPrototypeShot( ) );
+					valueSetter.accept( shotList.getPrototypeShot( ) , aValue );
+					return !Objects.equals( oldValue , aValue );
 				}
 
 				// In this case, the user changed the text, so we add a clone of the prototype shot to the end of the list

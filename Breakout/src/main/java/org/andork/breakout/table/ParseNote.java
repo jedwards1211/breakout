@@ -4,7 +4,6 @@ import java.util.function.Function;
 
 import org.andork.i18n.I18n;
 
-@SuppressWarnings( "serial" )
 public abstract class ParseNote implements Function<I18n, String>
 {
 	private ParseStatus	status;
@@ -37,6 +36,17 @@ public abstract class ParseNote implements Function<I18n, String>
 			public String apply( I18n t )
 			{
 				return t.forClass( ParseNote.class ).getFormattedString( messageKey , arg );
+			}
+		};
+	}
+
+	public static ParseNote forMessageKey( ParseStatus status , String messageKey , Object ... args )
+	{
+		return new ParseNote( status ) {
+			@Override
+			public String apply( I18n t )
+			{
+				return t.forClass( ParseNote.class ).getFormattedString( messageKey , args );
 			}
 		};
 	}

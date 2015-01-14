@@ -2,7 +2,6 @@ package org.andork.breakout.table;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.util.List;
 import java.util.function.Function;
 
 import javax.swing.JComponent;
@@ -13,24 +12,24 @@ import javax.swing.table.TableCellRenderer;
 import org.andork.swing.selector.DefaultSelector;
 
 @SuppressWarnings( "serial" )
-public class TypedTableCellRenderer extends JPanel implements TableCellRenderer
+public class CellRendererWithSelector extends JPanel implements TableCellRenderer
 {
-	TableCellRenderer		wrapped;
-	Function<Object, ?>		typeGetter;
-	DefaultSelector<Object>	typeSelector;
+	private TableCellRenderer		wrapped;
+	private Function<Object, ?>		selectionGetter;
+	private DefaultSelector<Object>	selector;
 
-	public TypedTableCellRenderer( TableCellRenderer wrapped , Function<Object, ?> typeGetter )
+	public CellRendererWithSelector( TableCellRenderer wrapped , Function<Object, ?> typeGetter )
 	{
 		this( wrapped , typeGetter , createDefaultSelector( ) );
 	}
 
-	public TypedTableCellRenderer( TableCellRenderer wrapped , Function<Object, ?> typeGetter ,
+	public CellRendererWithSelector( TableCellRenderer wrapped , Function<Object, ?> typeGetter ,
 		DefaultSelector<Object> typeSelector )
 	{
 		super( );
 		this.wrapped = wrapped;
-		this.typeSelector = typeSelector;
-		this.typeGetter = typeGetter;
+		this.selector = typeSelector;
+		this.selectionGetter = typeGetter;
 		setLayout( new BorderLayout( ) );
 	}
 
@@ -49,10 +48,10 @@ public class TypedTableCellRenderer extends JPanel implements TableCellRenderer
 			column );
 		removeAll( );
 
-		Object type = typeGetter.apply( value );
-		typeSelector.setSelection( type );
+		Object type = selectionGetter.apply( value );
+		selector.setSelection( type );
 		add( wrappedComp , BorderLayout.CENTER );
-		add( typeSelector.comboBox( ) , BorderLayout.EAST );
+		add( selector.comboBox( ) , BorderLayout.EAST );
 		if( wrappedComp instanceof JComponent )
 		{
 			setToolTipText( ( ( JComponent ) wrappedComp ).getToolTipText( ) );
@@ -60,13 +59,8 @@ public class TypedTableCellRenderer extends JPanel implements TableCellRenderer
 		return this;
 	}
 
-	public DefaultSelector<Object> typeSelector( )
+	public DefaultSelector<Object> selector( )
 	{
-		return typeSelector;
-	}
-
-	public void setAvailableTypes( List<?> types )
-	{
-		typeSelector.setAvailableValues( types );
+		return selector;
 	}
 }
