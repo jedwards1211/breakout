@@ -26,7 +26,7 @@ import java.util.function.Function;
 import org.andork.util.PowerCloneable;
 
 /**
- * Measurements that define the vector from one survey station to another. There are different types.
+ * Measurements that define the vector from one survey station to another. There are several subtypes.
  * 
  * @author James
  */

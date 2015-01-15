@@ -45,6 +45,15 @@ import javax.swing.table.TableCellEditor;
 
 import org.andork.swing.selector.DefaultSelector;
 
+/**
+ * Editor for {@link ParsedTextWithType} cells. It contains a {@link JTextField} and a {@link DefaultSelector} dropdown
+ * for selecting the desired type. The text and selected type are parsed by a lambda into a {@link ParsedTextWithType}.
+ * 
+ * @author James
+ *
+ * @param <V>
+ *            the value parameter for the {@link ParsedTextWithType} cell values.
+ */
 @SuppressWarnings( "serial" )
 public class ParsedTextWithTypeCellEditor<V> extends DefaultCellEditor
 {
@@ -57,6 +66,19 @@ public class ParsedTextWithTypeCellEditor<V> extends DefaultCellEditor
 	Border												compoundBorder;
 	Border												outerBorder;
 
+	/**
+	 * @param valueFormatter
+	 *            takes the {@link ParsedText#getValue() value} of a cell's {@link ParsedText} and formats it into a
+	 *            string. This is used when the {@link ParsedText} has a {@link ParsedText#getValue() value} but no
+	 *            {@link ParsedText#getText() text}.<br>
+	 *            {@code parser.apply(valueFormatter.apply(value))} must return a {@link ParsedText} with a
+	 *            {@link ParsedText#getValue() value} {@link Object#equals(Object) equal} to {@code value}.
+	 * @param typeGetter
+	 *            takes the cell value and returns the type that should be selected in the dropdown.
+	 * @param parser
+	 *            takes text the user entered and returns a {@link ParsedText} representing the results of the parse.
+	 *            This is used by {@link #getCellEditorValue()}.
+	 */
 	public ParsedTextWithTypeCellEditor(
 		Function<V, String> valueFormatter ,
 		Function<Object, ?> typeGetter ,

@@ -7,6 +7,12 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 
+/**
+ * Model of default values for the display, format and units of cave survey data. Some of these values can be overridden
+ * per {@link Shot}.
+ * 
+ * @author James
+ */
 public class DataDefaults extends QSpec
 {
 	public static NonNullProperty<Character>		decimalSeparator		= nonNullProperty(

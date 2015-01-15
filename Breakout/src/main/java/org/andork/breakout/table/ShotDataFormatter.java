@@ -1,5 +1,7 @@
 package org.andork.breakout.table;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -13,6 +15,12 @@ import org.andork.i18n.I18n;
 import org.andork.i18n.I18n.Localizer;
 import org.andork.util.StringUtils;
 
+/**
+ * Provides methods for formatting all types of data in a {@link Shot}. These are combined into one class so that the
+ * decimal separator, numbers of fraction digits, and other minutiae can be displayed and parsed consistently.
+ * 
+ * @author James
+ */
 public class ShotDataFormatter
 {
 	private final NumberFormat		intFormat;
@@ -750,6 +758,33 @@ public class ShotDataFormatter
 			break;
 		}
 
+		return result;
+	}
+
+	public ParsedText<URL> parseUrl( String text )
+	{
+		if( StringUtils.isNullOrEmpty( text ) )
+		{
+			return null;
+		}
+
+		ParsedText<URL> result = new ParsedText<URL>( );
+		result.setText( text );
+		try
+		{
+			result.setValue( new URL( text ) );
+		}
+		catch( MalformedURLException ex )
+		{
+			try
+			{
+				result.setValue( new URL( "http://" + text ) );
+			}
+			catch( MalformedURLException ex2 )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "customColumn.link.malformedUrl" ) );
+			}
+		}
 		return result;
 	}
 }

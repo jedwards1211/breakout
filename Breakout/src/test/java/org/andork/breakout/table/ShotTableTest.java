@@ -5,9 +5,11 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.swing.JTable;
 import javax.swing.RowFilter.Entry;
 
 import org.andork.bind2.DefaultBinder;
@@ -38,9 +40,11 @@ public class ShotTableTest
 				) );
 
 			shotList.setCustomColumnDefs( Arrays.asList(
+				new ShotColumnDef( "Section" , ShotColumnType.SECTION ) ,
 				new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
 				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE ) ,
-				new ShotColumnDef( "Cave" , ShotColumnType.STRING )
+				new ShotColumnDef( "Surveyors" , ShotColumnType.TAGS ) ,
+				new ShotColumnDef( "Link" , ShotColumnType.LINK )
 				) );
 
 			QObject<ProjectModel> projModel = QArrayObject.create( ProjectModel.spec );
@@ -69,7 +73,7 @@ public class ShotTableTest
 			} );
 			rowSorter.setSortsOnUpdates( true );
 			table.setRowSorter( rowSorter );
-//			table.setFont( new Font( "Monospaced" , Font.PLAIN , 11 ) );
+			table.setAutoResizeMode( JTable.AUTO_RESIZE_OFF );
 
 			ShotDataFormatter formats = new ShotDataFormatter( i18n );
 			formats.setDecimalSeparator( ',' );
@@ -85,7 +89,9 @@ public class ShotTableTest
 				ShotColumnDef.angleUnit ,
 				new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
 				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE ) ,
-				new ShotColumnDef( "Cave" , ShotColumnType.STRING )
+				new ShotColumnDef( "Section" , ShotColumnType.SECTION ) ,
+				new ShotColumnDef( "Surveyors" , ShotColumnType.TAGS ) ,
+				new ShotColumnDef( "Link" , ShotColumnType.LINK )
 				) );
 
 			columnModel.vectorColumn.setPreferredWidth( 300 );

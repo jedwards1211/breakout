@@ -5,7 +5,7 @@ import java.util.function.Function;
 import org.andork.util.PowerCloneable;
 
 /**
- * Measurements of a passage's cross section shape at a given survey station.
+ * Measurements of a passage's cross section shape at a given survey station. There are several subtypes.
  * 
  * @author James
  */

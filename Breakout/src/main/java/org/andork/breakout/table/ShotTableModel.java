@@ -1,8 +1,10 @@
 package org.andork.breakout.table;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +22,24 @@ import org.andork.unit.Unit;
 import org.andork.util.Java7.Objects;
 import org.andork.util.PowerCloneable.Cloners;
 
+/**
+ * The model for {@link ShotTable}. It is backed by a {@link ShotList}, and keeps up-to-date with its columns and rows.
+ * {@link ShotTableColumnModel} and {@link ShotTableModel} form
+ * the
+ * presenter layer of an MVP pattern, where {@link ShotList} is the model and {@link ShotTable} is the view.<br>
+ * <br>
+ * It displays the {@link ShotList#getPrototypeShot() prototypeShot} of the {@code ShotList} as the last row, so it is
+ * always one row longer than {@link ShotList}; when the user enters a value in the last row, {@link ShotTableModel}
+ * will add a new {@link Shot} to the {@link ShotList} and populate it with the new value.<br>
+ * <br>
+ * {@link ShotTableModel} will also shrink the {@code ShotList} as necessary if the user deletes the contents of rows at
+ * the
+ * end so that the last element of the {@code ShotList} is always non-empty, followed in this {@code ShotTableModel} by
+ * the
+ * empty prototype row.
+ * 
+ * @author James
+ */
 @SuppressWarnings( "serial" )
 public class ShotTableModel extends AbstractTableModel
 {
@@ -68,11 +88,20 @@ public class ShotTableModel extends AbstractTableModel
 			( s , u ) -> s.setAngleUnit( ( Unit<Angle> ) u ) );
 	}
 
+	/**
+	 * @return the {@link ShotList} containing the backing data for this model.
+	 */
 	public ShotList getShotList( )
 	{
 		return shotList;
 	}
 
+	/**
+	 * Sets the {@link ShotList} containing the backing data for this model. The appropriate {@link TableModelEvent}s
+	 * will be fired, if the new list is different from the current one.
+	 * 
+	 * @param newList
+	 */
 	public void setShotList( ShotList newList )
 	{
 		if( shotList != newList )
@@ -90,6 +119,11 @@ public class ShotTableModel extends AbstractTableModel
 		}
 	}
 
+	/**
+	 * @param def
+	 *            the {@link ShotColumnDef} to look for.
+	 * @return the column index of {@code def}, or -1 if it is not one of the columns of this model.
+	 */
 	public int indexOfColumn( ShotColumnDef def )
 	{
 		Integer result = defIndices.get( def );
@@ -152,6 +186,15 @@ public class ShotTableModel extends AbstractTableModel
 		case DOUBLE:
 			return new DefaultColumn( def , s -> ( ParsedText<Double> ) s.getCustom( )[ index ] ,
 				( s , v ) -> s.getCustom( )[ index ] = ( ParsedText<Double> ) v );
+		case TAGS:
+			return new DefaultColumn( def , s -> ( LinkedHashSet<String> ) s.getCustom( )[ index ] ,
+				( s , v ) -> s.getCustom( )[ index ] = ( LinkedHashSet<String> ) v );
+		case SECTION:
+			return new DefaultColumn( def , s -> ( List<String> ) s.getCustom( )[ index ] ,
+				( s , v ) -> s.getCustom( )[ index ] = ( List<String> ) v );
+		case LINK:
+			return new DefaultColumn( def , s -> ( ParsedText<URL> ) s.getCustom( )[ index ] ,
+				( s , v ) -> s.getCustom( )[ index ] = ( ParsedText<URL> ) v );
 		}
 
 		return null;
@@ -364,8 +407,9 @@ public class ShotTableModel extends AbstractTableModel
 			return ( aValue instanceof ParsedText<?> && ( ( ParsedText<?> ) aValue ).isEmpty( ) );
 		}
 	}
-	
-	public class UnitColumn extends DefaultColumn {
+
+	private class UnitColumn extends DefaultColumn
+	{
 
 		public UnitColumn( ShotColumnDef def , Function<Shot, ?> valueGetter , BiConsumer<Shot, Object> valueSetter )
 		{

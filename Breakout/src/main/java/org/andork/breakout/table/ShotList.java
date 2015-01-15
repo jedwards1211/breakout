@@ -10,6 +10,19 @@ import java.util.ListIterator;
 import org.andork.collect.CollectionUtils;
 import org.andork.swing.table.TableModelList;
 
+/**
+ * A list of shots that backs a {@link ShotTableModel}. It also contains the {@linkplain #setCustomColumnDefs(List)
+ * definitions} of custom columns for which data is present in the shots, and a {@linkplain #getPrototypeShot()
+ * "prototype" shot} that backs the empty last row of the table, so that it is always ready for more input.<br>
+ * <br>
+ * Whenever you
+ * add {@link Shot}s to the list, an {@link IllegalArgumentException} will be thrown if its
+ * {@linkplain Shot#getCustom() custom field array}'s length does not equal the number of custom columns in this
+ * {@code ShotList}.
+ * 
+ * 
+ * @author James
+ */
 public class ShotList extends TableModelList<Shot>
 {
 	private List<ShotColumnDef>	customColumnDefs	= Collections.emptyList( );
@@ -30,6 +43,16 @@ public class ShotList extends TableModelList<Shot>
 		super.set( index , element );
 	}
 
+	/**
+	 * Adds a {@link Shot} to the list.
+	 * 
+	 * @param element
+	 *            the shot to add.
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if {@code element}'s {@linkplain Shot#getCustom() custom field array}'s length does not equal the
+	 *             number of custom columns in this {@code ShotList}.
+	 */
 	@Override
 	public void add( Shot element )
 	{
@@ -37,6 +60,18 @@ public class ShotList extends TableModelList<Shot>
 		super.add( element );
 	}
 
+	/**
+	 * Inserts a {@link Shot} into the list before the element at the given index.
+	 * 
+	 * @param index
+	 *            the index to insert at.
+	 * @param element
+	 *            the shot to add.
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if {@code element}'s {@linkplain Shot#getCustom() custom field array}'s length does not equal the
+	 *             number of custom columns in this {@code ShotList}.
+	 */
 	@Override
 	public void add( int index , Shot element )
 	{
@@ -44,6 +79,16 @@ public class ShotList extends TableModelList<Shot>
 		super.add( index , element );
 	}
 
+	/**
+	 * Adds zero or more {@link Shot}s to the list.
+	 * 
+	 * @param elements
+	 *            the elements to add.
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if any added element's {@linkplain Shot#getCustom() custom field array}'s length does not equal the
+	 *             number of custom columns in this {@code ShotList}.
+	 */
 	@Override
 	public void addAll( Collection<? extends Shot> elements )
 	{
@@ -54,6 +99,18 @@ public class ShotList extends TableModelList<Shot>
 		super.addAll( elements );
 	}
 
+	/**
+	 * Inserts zero or more {@link Shot}s into the list before the element at the given index.
+	 * 
+	 * @param index
+	 *            the index to insert at.
+	 * @param elements
+	 *            the elements to add.
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if any added element's {@linkplain Shot#getCustom() custom field array}'s length does not equal the
+	 *             number of custom columns in this {@code ShotList}.
+	 */
 	@Override
 	public void addAll( int index , Collection<? extends Shot> elements )
 	{
@@ -64,16 +121,41 @@ public class ShotList extends TableModelList<Shot>
 		super.addAll( index , elements );
 	}
 
+	/**
+	 * @return the "prototype" {@link Shot} that backs the empty last row of {@link ShotTableModel}. If the user changes
+	 *         the
+	 *         type of the vector, cross section, or other fields in the last row, they will be stored in this shot.
+	 */
 	public Shot getPrototypeShot( )
 	{
 		return prototypeShot;
 	}
 
+	/**
+	 * @return the custom column definitions, in an unmodifiable list. The {@linkplain Shot#getCustom() custom value
+	 *         array} of each shot should correspond to these column definitions.
+	 */
 	public List<ShotColumnDef> getCustomColumnDefs( )
 	{
 		return customColumnDefs;
 	}
 
+	/**
+	 * @return the number of custom columns, i.e. {@link #getCustomColumnDefs()}{@code .size()}.
+	 */
+	public int getNumCustomColumns( )
+	{
+		return customColumnDefs.size( );
+	}
+
+	/**
+	 * Sets what custom columns are available, resizes the {@linkplain Shot#getCustom() custom value array} of each
+	 * {@link Shot} in this {@code ShotList} (and rearranges the elements) to correspond to the new custom columns.<br>
+	 * If one of the new column defs has the same name as an old one but a different type, the old values for the column
+	 * in each {@link Shot} will be deleted.
+	 * 
+	 * @param newCustomColumnDefs
+	 */
 	public void setCustomColumnDefs( List<ShotColumnDef> newCustomColumnDefs )
 	{
 		newCustomColumnDefs = Collections.unmodifiableList( new ArrayList<>( newCustomColumnDefs ) );
@@ -135,6 +217,9 @@ public class ShotList extends TableModelList<Shot>
 		shot.setCustom( newCustom );
 	}
 
+	/**
+	 * Removes all "empty" rows (that have no text or values for any fields) after the last non-empty row.
+	 */
 	public void trimEmptyRowsAtEnd( )
 	{
 		int lastNonEmptyRow;
@@ -151,10 +236,5 @@ public class ShotList extends TableModelList<Shot>
 		{
 			removeSublist( lastNonEmptyRow + 1 , size( ) );
 		}
-	}
-
-	public int getNumCustomColumns( )
-	{
-		return customColumnDefs.size( );
 	}
 }

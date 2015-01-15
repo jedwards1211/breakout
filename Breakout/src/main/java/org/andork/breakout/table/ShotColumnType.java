@@ -8,5 +8,7 @@ public enum ShotColumnType
 	DOUBLE,
 	DATE,
 	TAGS,
-	PATH,
+	SECTION,
+	LINK,
+	FILE
 }

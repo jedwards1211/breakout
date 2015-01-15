@@ -1,40 +1,41 @@
-package org.andork.breakout.table;
+package org.andork.swing.table;
 
 import java.awt.Component;
 import java.util.EventObject;
-import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import javax.swing.CellEditor;
 import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 
-public class PostmodCellEditor implements CellEditor , TableCellEditor
+public class FunctionCellEditor implements CellEditor , TableCellEditor
 {
-	CellEditor						wrapped;
-	BiConsumer<JTable, Component>	postModifier;
+	CellEditor	wrapped;
 
-	public PostmodCellEditor( CellEditor wrapped , BiConsumer<JTable, Component> postModifier )
+	Function	valueToEditor;
+	Function	editorToValue;
+
+	public FunctionCellEditor( CellEditor wrapped , Function valueToEditor , Function editorToValue )
 	{
 		super( );
 		this.wrapped = wrapped;
-		this.postModifier = postModifier;
+		this.valueToEditor = valueToEditor;
+		this.editorToValue = editorToValue;
 	}
 
 	@Override
 	public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row ,
 		int column )
 	{
-		Component editor = ( ( TableCellEditor ) wrapped ).getTableCellEditorComponent( table , value , isSelected ,
-			row , column );
-		postModifier.accept( table , editor );
-		return editor;
+		return ( ( TableCellEditor ) wrapped ).getTableCellEditorComponent( table , valueToEditor.apply( value ) ,
+			isSelected , row , column );
 	}
 
 	@Override
 	public Object getCellEditorValue( )
 	{
-		return wrapped.getCellEditorValue( );
+		return editorToValue.apply( wrapped.getCellEditorValue( ) );
 	}
 
 	@Override

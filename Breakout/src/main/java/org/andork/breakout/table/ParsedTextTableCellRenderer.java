@@ -23,6 +23,7 @@ package org.andork.breakout.table;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.net.URL;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -30,25 +31,48 @@ import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 
+/**
+ * Renders {@link ParsedText} cell values.
+ * 
+ * @author James
+ *
+ * @param <V>
+ *            the value parameter for the {@link ParsedText} cell contents.
+ */
 @SuppressWarnings( "serial" )
 public class ParsedTextTableCellRenderer<V> extends DefaultTableCellRenderer
 {
-	private Function<? super V, ?>		valueFormatter;
-	private Predicate<Object>			parseErrorTest;
-	private Function<Object, Color>		noteColorGetter;
-	private Function<Object, String>	noteMessageGetter;
+	private Function<? super V, ?>					valueFormatter;
+	private Predicate<? super ParsedText<?>>		forceShowText;
+	private Function<? super ParsedText<?>, Color>	backgroundColorFn;
+	private Function<? super ParsedText<?>, String>	messageFn;
 
+	/**
+	 * @param valueFormatter
+	 *            a function that takes a {@link URL} and returns an {@link Object} (typically a {@link String}
+	 *            representing the {@code URL} for {@link DefaultTableCellRenderer} code to render
+	 * @param forceShowText
+	 *            a function that takes a cell value and returns {@code true} if and only if there was an error
+	 *            parsing the last text typed into that cell (if so the original text will be displayed, instead of the
+	 *            reformatted value)
+	 * @param backgroundColorFn
+	 *            a function that takes a cell value and returns the background color to use for the cell (this is
+	 *            provided so that parse errors and warnings can be highlighted red and yellow)
+	 * @param tooltipFn
+	 *            a function that takes a cell value and returns the tooltip to display for the cell (this is provided
+	 *            so that parse error and warning messages can be displayed as tooltips)
+	 */
 	public ParsedTextTableCellRenderer(
 		Function<? super V, ?> valueFormatter ,
-		Predicate<Object> parseErrorTest ,
-		Function<Object, Color> noteColorGetter ,
-		Function<Object, String> noteMessageGetter )
+		Predicate<? super ParsedText<?>> forceShowText ,
+		Function<? super ParsedText<?>, Color> backgroundColorFn ,
+		Function<? super ParsedText<?>, String> messageFn )
 	{
 		super( );
 		this.valueFormatter = valueFormatter;
-		this.parseErrorTest = parseErrorTest;
-		this.noteColorGetter = noteColorGetter;
-		this.noteMessageGetter = noteMessageGetter;
+		this.forceShowText = forceShowText;
+		this.backgroundColorFn = backgroundColorFn;
+		this.messageFn = messageFn;
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -61,7 +85,7 @@ public class ParsedTextTableCellRenderer<V> extends DefaultTableCellRenderer
 		if( value instanceof ParsedText )
 		{
 			ParsedText<V> p = ( ParsedText<V> ) value;
-			if( p.getValue( ) != null && ( p.getNote( ) == null || !parseErrorTest.test( p.getNote( ) ) ) )
+			if( p.getValue( ) != null && !forceShowText.test( p ) )
 			{
 				superValue = valueFormatter.apply( p.getValue( ) );
 			}
@@ -82,12 +106,12 @@ public class ParsedTextTableCellRenderer<V> extends DefaultTableCellRenderer
 		if( value instanceof ParsedText )
 		{
 			ParsedText<V> p = ( ParsedText<V> ) value;
-			Color color = p.getNote( ) == null ? null : noteColorGetter.apply( p.getNote( ) );
+			Color color = backgroundColorFn.apply( p );
 			if( color != null )
 			{
 				renderer.setBackground( color );
 			}
-			renderer.setToolTipText( p.getNote( ) == null ? null : noteMessageGetter.apply( p.getNote( ) ) );
+			renderer.setToolTipText( messageFn.apply( p ) );
 		}
 
 		return renderer;

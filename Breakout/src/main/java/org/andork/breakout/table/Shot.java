@@ -8,6 +8,11 @@ import org.andork.unit.Unit;
 import org.andork.util.PowerCloneable;
 import org.andork.util.StringUtils;
 
+/**
+ * Survey data for a segment of cave between two survey stations.
+ * 
+ * @author James
+ */
 public class Shot implements PowerCloneable
 {
 	private String							fromStationName;
@@ -132,6 +137,10 @@ public class Shot implements PowerCloneable
 				{
 					return false;
 				}
+			}
+			else if( custom[ i ] != null )
+			{
+				return false;
 			}
 		}
 
