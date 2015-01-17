@@ -4,13 +4,11 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.EventObject;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -29,8 +27,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import org.andork.bind2.Binder;
-import org.andork.bind2.Binding;
 import org.andork.i18n.I18n;
 import org.andork.i18n.I18n.Localizer;
 import org.andork.io.CSVFormat;
@@ -48,37 +44,37 @@ import org.andork.unit.UnitNames;
 import org.andork.util.StringUtils;
 
 /**
- * The {@link TableColumnModel} for a {@link ShotTable}. {@link SurveyDataTableColumnModel} and {@link ShotTableModel}
- * form
+ * The {@link TableColumnModel} for a {@link SurveyDataTable}. {@link SurveyDataTableColumnModel} and
+ * {@link SurveyDataTableModel} form
  * the
- * presenter layer of an MVP pattern, where {@link ShotList} is the model and {@link ShotTable} is the view.
+ * presenter layer of an MVP pattern, where {@link SurveyDataList} is the model and {@link SurveyDataTable} is the view.
  * 
  * @author James
  */
 @SuppressWarnings( "serial" )
 public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends DefaultTableColumnModel
 {
-	private final Map<SurveyDataColumnDef, TableColumn>	builtInColumns		= new HashMap<>( );
+	protected final Map<SurveyDataColumnDef, TableColumn>	builtInColumns		= new HashMap<>( );
 
-	private QObject<DataDefaults>					dataDefaults;
+	protected QObject<DataDefaults>							dataDefaults;
 
-	private ShotDataFormatter						formats;
+	protected SurveyDataFormatter							formats;
 
-	private final Map<ParseStatus, Color>			noteColors;
+	protected final Map<ParseStatus, Color>					noteColors;
 
-	private final I18n								i18n;
-	private final Localizer							localizer;
+	protected final I18n									i18n;
+	protected final Localizer								localizer;
 
-	private Predicate<? super ParsedText<?>>		forceShowText;
-	private Function<? super ParsedText<?>, Color>	backgroundColorFn;
-	private Function<? super ParsedText<?>, String>	messageFn;
+	protected Predicate<? super ParsedText<?>>				forceShowText;
+	protected Function<? super ParsedText<?>, Color>		backgroundColorFn;
+	protected Function<? super ParsedText<?>, String>		messageFn;
 
-	private final Object							DEFAULT_ITEM		= new Object( );
+	protected final Object									DEFAULT_ITEM		= new Object( );
 
-	private final Function<Object, Object>			nullToDefaultItem	= o -> o == null ? DEFAULT_ITEM : o;
-	private final Function<Object, Object>			defaultItemToNull	= o -> o == DEFAULT_ITEM ? null : o;
+	protected final Function<Object, Object>				nullToDefaultItem	= o -> o == null ? DEFAULT_ITEM : o;
+	protected final Function<Object, Object>				defaultItemToNull	= o -> o == DEFAULT_ITEM ? null : o;
 
-	public SurveyDataTableColumnModel( I18n i18n , ShotDataFormatter formats )
+	public SurveyDataTableColumnModel( I18n i18n , SurveyDataFormatter formats )
 	{
 		this.i18n = i18n;
 		localizer = i18n.forClass( SurveyDataTableColumnModel.class );
@@ -102,7 +98,7 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 	protected TableColumn createLengthUnitColumn( )
 	{
 		TableColumn result = new TableColumn( );
-		result.setIdentifier( SurveyDataColumnDef.lengthUnit );
+		result.setIdentifier( ShotColumnDefs.lengthUnit );
 
 		ListCellRenderer unitRenderer = new FunctionListCellRenderer( o ->
 		{
@@ -134,10 +130,10 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 	}
 
 	@SuppressWarnings( { "rawtypes" , "unchecked" } )
-	protected TableColumn createAngleUnitColumn( )
+	protected TableColumn createAngleUnitColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
-		result.setIdentifier( SurveyDataColumnDef.angleUnit );
+		result.setIdentifier( def );
 
 		ListCellRenderer unitRenderer = new FunctionListCellRenderer( o ->
 		{
@@ -175,23 +171,23 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 		case BUILTIN:
 			throw new IllegalArgumentException( "def must have a custom column type" );
 		case STRING:
-			return createCustomStringColumn( def );
+			return createStringColumn( def );
 		case INTEGER:
-			return createCustomIntegerColumn( def );
+			return createIntegerColumn( def );
 		case DOUBLE:
-			return createCustomDoubleColumn( def );
+			return createDoubleColumn( def );
 		case TAGS:
-			return createCustomTagsColumn( def );
+			return createTagsColumn( def );
 		case SECTION:
-			return createCustomSectionColumn( def );
+			return createSectionColumn( def );
 		case LINK:
-			return createCustomLinkColumn( def );
+			return createLinkColumn( def );
 		default:
 			return null;
 		}
 	}
 
-	protected TableColumn createCustomStringColumn( SurveyDataColumnDef def )
+	protected TableColumn createStringColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -200,7 +196,7 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 		return result;
 	}
 
-	protected TableColumn createCustomIntegerColumn( SurveyDataColumnDef def )
+	protected TableColumn createIntegerColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -221,7 +217,7 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 		return result;
 	}
 
-	protected TableColumn createCustomDoubleColumn( SurveyDataColumnDef def )
+	protected TableColumn createDoubleColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -242,7 +238,7 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 		return result;
 	}
 
-	protected TableColumn createCustomTagsColumn( SurveyDataColumnDef def )
+	protected TableColumn createTagsColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -276,7 +272,7 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 		return result;
 	}
 
-	protected TableColumn createCustomSectionColumn( SurveyDataColumnDef def )
+	protected TableColumn createSectionColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -309,7 +305,7 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 		return result;
 	}
 
-	protected TableColumn createCustomLinkColumn( SurveyDataColumnDef def )
+	protected TableColumn createLinkColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -376,7 +372,7 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 	 * 
 	 * @author James
 	 */
-	private static class MonospaceFontRenderer implements TableCellRenderer
+	protected static class MonospaceFontRenderer implements TableCellRenderer
 	{
 		TableCellRenderer	wrapped;
 
@@ -403,7 +399,7 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 	 * 
 	 * @author James
 	 */
-	private static class MonospaceFontEditor implements CellEditor , TableCellEditor
+	protected static class MonospaceFontEditor implements CellEditor , TableCellEditor
 	{
 		CellEditor	wrapped;
 

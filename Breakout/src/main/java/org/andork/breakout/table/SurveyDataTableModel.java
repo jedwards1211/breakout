@@ -20,10 +20,10 @@ import org.andork.util.Java7.Objects;
 import org.andork.util.PowerCloneable.Cloners;
 
 /**
- * The model for {@link SurveyDataRowTable}. It is backed by a {@link SurveyDataList}, and keeps up-to-date with its
- * columns and rows. {@link SurveyDataRowTableColumnModel} and {@link SurveyDataTableModel} form
+ * The model for {@link SurveyDataTable}. It is backed by a {@link SurveyDataList}, and keeps up-to-date with its
+ * columns and rows. {@link SurveyDataTableColumnModel} and {@link SurveyDataTableModel} form
  * the
- * presenter layer of an MVP pattern, where {@link SurveyDataList} is the model and {@link SurveyDataRowTable} is the
+ * presenter layer of an MVP pattern, where {@link SurveyDataList} is the model and {@link SurveyDataTable} is the
  * view.<br>
  * <br>
  * It displays the {@link SurveyDataList#getPrototypeDataRow() prototypeDataRow} of the {@code SurveyDataList} as
@@ -36,7 +36,7 @@ import org.andork.util.PowerCloneable.Cloners;
  * contents of rows at
  * the
  * end so that the last element of the {@code SurveyDataList} is always non-empty, followed in this
- * {@code SurveyDataRowTableModel} by
+ * {@code SurveyDataTableModel} by
  * the
  * empty prototype row.
  * 
@@ -45,10 +45,10 @@ import org.andork.util.PowerCloneable.Cloners;
 @SuppressWarnings( "serial" )
 public abstract class SurveyDataTableModel<R extends SurveyDataRow> extends AbstractTableModel
 {
-	private SurveyDataList<R>					dataList;
-	private SurveyDataListListener				dataListListener	= new SurveyDataListListener( );
+	private SurveyDataList<R>						dataList;
+	private SurveyDataListListener					dataListListener	= new SurveyDataListListener( );
 
-	private final List<SurveyDataModelColumn>	columns				= new ArrayList<>( );
+	private final List<SurveyDataModelColumn>		columns				= new ArrayList<>( );
 	private final Map<SurveyDataColumnDef, Integer>	defIndices			= new HashMap<>( );
 
 	public SurveyDataTableModel( )
@@ -304,16 +304,16 @@ public abstract class SurveyDataTableModel<R extends SurveyDataRow> extends Abst
 		 *            column to the new value.
 		 */
 		public DefaultColumn( SurveyDataColumnDef def ,
-			Function<SurveyDataRow, ?> valueGetter ,
-			BiConsumer<SurveyDataRow, Object> valueSetter )
+			Function<R, ?> valueGetter ,
+			BiConsumer<R, Object> valueSetter )
 		{
 			super( def );
 			this.valueGetter = valueGetter;
 			this.valueSetter = valueSetter;
 		}
 
-		Function<SurveyDataRow, ?>			valueGetter;
-		BiConsumer<SurveyDataRow, Object>	valueSetter;
+		Function<R, ?>			valueGetter;
+		BiConsumer<R, Object>	valueSetter;
 
 		@Override
 		public Class<?> getColumnClass( )
@@ -377,8 +377,8 @@ public abstract class SurveyDataTableModel<R extends SurveyDataRow> extends Abst
 	protected class UnitColumn extends DefaultColumn
 	{
 
-		public UnitColumn( SurveyDataColumnDef def , Function<SurveyDataRow, ?> valueGetter ,
-			BiConsumer<SurveyDataRow, Object> valueSetter )
+		public UnitColumn( SurveyDataColumnDef def , Function<R, ?> valueGetter ,
+			BiConsumer<R, Object> valueSetter )
 		{
 			super( def , valueGetter , valueSetter );
 		}

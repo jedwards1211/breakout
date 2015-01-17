@@ -12,14 +12,14 @@ import org.andork.util.StringUtils;
  * 
  * @author James
  */
-public class Station implements PowerCloneable
+public class Station extends SurveyDataRow
 {
-	private String						name;
-	private ParsedTextWithType<Double>	north;
-	private ParsedTextWithType<Double>	east;
-	private ParsedTextWithType<Double>	up;
-	private Unit<Length>				lengthUnit;
-	private Object[ ]					custom;
+	private String				name;
+	private ParsedText<Double>	north;
+	private ParsedText<Double>	east;
+	private ParsedText<Double>	up;
+	private Unit<Length>		lengthUnit;
+	private Object[ ]			custom;
 
 	public String getName( )
 	{
@@ -31,32 +31,32 @@ public class Station implements PowerCloneable
 		this.name = stationName;
 	}
 
-	public ParsedTextWithType<Double> getNorth( )
+	public ParsedText<Double> getNorth( )
 	{
 		return north;
 	}
 
-	public void setNorth( ParsedTextWithType<Double> north )
+	public void setNorth( ParsedText<Double> north )
 	{
 		this.north = north;
 	}
 
-	public ParsedTextWithType<Double> getEast( )
+	public ParsedText<Double> getEast( )
 	{
 		return east;
 	}
 
-	public void setEast( ParsedTextWithType<Double> east )
+	public void setEast( ParsedText<Double> east )
 	{
 		this.east = east;
 	}
 
-	public ParsedTextWithType<Double> getUp( )
+	public ParsedText<Double> getUp( )
 	{
 		return up;
 	}
 
-	public void setUp( ParsedTextWithType<Double> up )
+	public void setUp( ParsedText<Double> up )
 	{
 		this.up = up;
 	}
@@ -130,9 +130,9 @@ public class Station implements PowerCloneable
 		Station result = new Station( );
 
 		result.name = name;
-		result.north = ( ParsedTextWithType<Double> ) subcloner.apply( north );
-		result.east = ( ParsedTextWithType<Double> ) subcloner.apply( east );
-		result.up = ( ParsedTextWithType<Double> ) subcloner.apply( up );
+		result.north = ( ParsedText<Double> ) subcloner.apply( north );
+		result.east = ( ParsedText<Double> ) subcloner.apply( east );
+		result.up = ( ParsedText<Double> ) subcloner.apply( up );
 		result.lengthUnit = lengthUnit;
 		result.custom = Cloners.cloneArray( custom , subcloner );
 		return result;

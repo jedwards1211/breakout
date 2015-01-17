@@ -25,7 +25,7 @@ import org.andork.swing.jump.JTableJumpSupport;
 import org.andork.swing.table.AnnotatingJTableJumpBarModel;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 
-public class ShotTableTest
+public class StationTableTest
 {
 	public static void main( String[ ] args )
 	{
@@ -33,13 +33,13 @@ public class ShotTableTest
 		{
 			I18n i18n = new I18n( );
 
-			SurveyDataList<Shot> shotList = new SurveyDataList<>( new Shot( ) );
+			SurveyDataList<Station> stationList = new SurveyDataList<>( new Station( ) );
 
-			shotList.setCustomColumnDefs( Arrays.asList(
+			stationList.setCustomColumnDefs( Arrays.asList(
 				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE )
 				) );
 
-			shotList.setCustomColumnDefs( Arrays.asList(
+			stationList.setCustomColumnDefs( Arrays.asList(
 				new SurveyDataColumnDef( "Section" , SurveyDataColumnType.SECTION ) ,
 				new SurveyDataColumnDef( "Test" , SurveyDataColumnType.INTEGER ) ,
 				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE ) ,
@@ -51,23 +51,22 @@ public class ShotTableTest
 			QObjectBinder<SurveyModel> projModelBinder = new QObjectBinder<SurveyModel>( SurveyModel.spec );
 			projModelBinder.objLink.bind( new DefaultBinder<>( projModel ) );
 
-			ShotTableModel tableModel = new ShotTableModel( );
-			tableModel.setSurveyDataList( shotList );
+			StationTableModel tableModel = new StationTableModel( );
+			tableModel.setSurveyDataList( stationList );
 
 			projModel.get( SurveyModel.defaults ).set( DataDefaults.decimalSeparator , ',' );
-			projModel.set( SurveyModel.shotList , shotList );
 
 			ExecutorService executor = Executors.newSingleThreadExecutor( );
 
 			SurveyDataTable table = new SurveyDataTable( tableModel );
-			AnnotatingTableRowSorter<ShotTableModel> rowSorter = new AnnotatingTableRowSorter<>( table ,
+			AnnotatingTableRowSorter<StationTableModel> rowSorter = new AnnotatingTableRowSorter<>( table ,
 				r -> executor.submit( r ) );
-			rowSorter.setModelCopier( new ShotTableModelCopier( ) );
-			rowSorter.setRowAnnotator( new RowAnnotator<ShotTableModel, Integer>( ) {
+			rowSorter.setModelCopier( new StationTableModelCopier( ) );
+			rowSorter.setRowAnnotator( new RowAnnotator<StationTableModel, Integer>( ) {
 				@Override
-				public Object annotate( Entry<? extends ShotTableModel, ? extends Integer> entry )
+				public Object annotate( Entry<? extends StationTableModel, ? extends Integer> entry )
 				{
-					ShotTableModel model = entry.getModel( );
+					StationTableModel model = entry.getModel( );
 					return model.getNotesInRow( entry.getIdentifier( ) );
 				}
 			} );
@@ -78,16 +77,13 @@ public class ShotTableTest
 			SurveyDataFormatter formats = new SurveyDataFormatter( i18n );
 			formats.setDecimalSeparator( ',' );
 
-			ShotTableColumnModel columnModel = new ShotTableColumnModel( i18n , formats );
+			StationTableColumnModel columnModel = new StationTableColumnModel( i18n , formats );
 			columnModel.update( tableModel , Arrays.asList(
-				ShotColumnDefs.fromStationName ,
-				ShotColumnDefs.toStationName ,
-				ShotColumnDefs.vector ,
-				ShotColumnDefs.xSectionAtFrom ,
-				ShotColumnDefs.xSectionAtTo ,
-				ShotColumnDefs.lengthUnit ,
-				ShotColumnDefs.frontsightUnit ,
-				ShotColumnDefs.backsightUnit ,
+				StationColumnDefs.name ,
+				StationColumnDefs.north ,
+				StationColumnDefs.east ,
+				StationColumnDefs.up ,
+				StationColumnDefs.lengthUnit ,
 				new SurveyDataColumnDef( "Test" , SurveyDataColumnType.INTEGER ) ,
 				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE ) ,
 				new SurveyDataColumnDef( "Section" , SurveyDataColumnType.SECTION ) ,
@@ -95,9 +91,6 @@ public class ShotTableTest
 				new SurveyDataColumnDef( "Link" , SurveyDataColumnType.LINK )
 				) );
 
-			columnModel.vectorColumn.setPreferredWidth( 300 );
-			columnModel.xSectionAtFromColumn.setPreferredWidth( 300 );
-			columnModel.xSectionAtToColumn.setPreferredWidth( 300 );
 
 			projModelBinder.property( SurveyModel.defaults ).addBinding( force -> columnModel.setDataDefaults(
 				projModelBinder.property( SurveyModel.defaults ).get( ) ) );

@@ -6,21 +6,21 @@ import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.MouseInputTableCellRenderer;
 
 /**
- * The view for a {@link ShotTableModel}.
+ * The view for a {@link SurveyDataTableModel}.
  * 
  * @author James
  */
 @SuppressWarnings( "serial" )
-public class ShotTable extends AnnotatingJTable
+public class SurveyDataTable extends AnnotatingJTable
 {
 
-	public ShotTable( )
+	public SurveyDataTable( )
 	{
 		super( );
 		addMouseListener( new MouseInputTableCellRenderer.Controller( ) );
 	}
 
-	public ShotTable( TableModel dm )
+	public SurveyDataTable( TableModel dm )
 	{
 		super( dm );
 		addMouseListener( new MouseInputTableCellRenderer.Controller( ) );

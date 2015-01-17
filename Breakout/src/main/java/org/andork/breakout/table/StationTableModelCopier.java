@@ -2,12 +2,12 @@ package org.andork.breakout.table;
 
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 
-public class ShotTableModelCopier extends AbstractTableModelCopier<ShotTableModel>
+public class StationTableModelCopier extends AbstractTableModelCopier<StationTableModel>
 {
 	@Override
-	public void copyRow( ShotTableModel src , int row , ShotTableModel dest )
+	public void copyRow( StationTableModel src , int row , StationTableModel dest )
 	{
-		// ignore the last row, as it is always blank and not backed by the ShotList
+		// ignore the last row, as it is always blank and not backed by the StationList
 		if( row == src.getRowCount( ) - 1 )
 		{
 			return;
@@ -16,19 +16,19 @@ public class ShotTableModelCopier extends AbstractTableModelCopier<ShotTableMode
 	}
 
 	@Override
-	public ShotTableModel createEmptyCopy( ShotTableModel model )
+	public StationTableModel createEmptyCopy( StationTableModel model )
 	{
-		ShotTableModel result = new ShotTableModel( );
+		StationTableModel result = new StationTableModel( );
 		if( model.getSurveyDataList( ) != null )
 		{
-			SurveyDataList<Shot> list = new SurveyDataList<>( new Shot( ) );
+			SurveyDataList<Station> list = new SurveyDataList<>( new Station( ) );
 			int numCustomColumns = model.getSurveyDataList( ).getCustomColumnDefs( ).size( );
 			list.setCustomColumnDefs( model.getSurveyDataList( ).getCustomColumnDefs( ) );
 			for( int i = 0 ; i < model.getSurveyDataList( ).size( ) ; i++ )
 			{
-				Shot shot = new Shot( );
-				shot.setCustom( new Object[ numCustomColumns ] );
-				list.add( shot );
+				Station Station = new Station( );
+				Station.setCustom( new Object[ numCustomColumns ] );
+				list.add( Station );
 			}
 			result.setSurveyDataList( list );
 		}

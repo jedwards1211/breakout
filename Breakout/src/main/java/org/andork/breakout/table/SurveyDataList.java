@@ -27,7 +27,13 @@ import org.andork.swing.table.TableModelList;
 public class SurveyDataList<R extends SurveyDataRow> extends TableModelList<R>
 {
 	private List<SurveyDataColumnDef>	customColumnDefs	= Collections.emptyList( );
-	private R					prototypeDataRow;
+	private R							prototypeDataRow;
+
+	public SurveyDataList( R prototypeDataRow )
+	{
+		super( );
+		this.prototypeDataRow = prototypeDataRow;
+	}
 
 	private void requireProperNumCustomFields( R dataRow )
 	{

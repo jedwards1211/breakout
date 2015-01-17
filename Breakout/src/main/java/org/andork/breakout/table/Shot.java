@@ -5,7 +5,6 @@ import java.util.function.Function;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
-import org.andork.util.PowerCloneable;
 import org.andork.util.StringUtils;
 
 /**
@@ -13,7 +12,7 @@ import org.andork.util.StringUtils;
  * 
  * @author James
  */
-public class Shot implements PowerCloneable
+public class Shot extends SurveyDataRow
 {
 	private String							fromStationName;
 	private String							toStationName;

@@ -21,7 +21,7 @@ import org.andork.util.StringUtils;
  * 
  * @author James
  */
-public class ShotDataFormatter
+public class SurveyDataFormatter
 {
 	private final NumberFormat		intFormat;
 	private final NumberFormat		parseIntFormat;
@@ -44,9 +44,9 @@ public class ShotDataFormatter
 																.compile( "\\s*(\\S+)\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s*" );
 	private static final Pattern	whitespacePattern		= Pattern.compile( "\\s*" );
 
-	public ShotDataFormatter( I18n i18n )
+	public SurveyDataFormatter( I18n i18n )
 	{
-		localizer = i18n.forClass( ShotDataFormatter.class );
+		localizer = i18n.forClass( SurveyDataFormatter.class );
 
 		parseIntFormat = createDefaultIntegerFormat( );
 		intFormat = createDefaultIntegerFormat( );
