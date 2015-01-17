@@ -35,56 +35,56 @@ public abstract class Task implements HasChangeSupport
 {
 	public static enum Property
 	{
-		STATE , SERVICE , STATUS , INDETERMINATE , COMPLETED , TOTAL;
+		STATE, SERVICE, STATUS, INDETERMINATE, COMPLETED, TOTAL;
 	}
-	
+
 	public static enum State
 	{
-		NOT_SUBMITTED , WAITING , RUNNING , CANCELING , CANCELED , FINISHED , FAILED;
-		
+		NOT_SUBMITTED, WAITING, RUNNING, CANCELING, CANCELED, FINISHED, FAILED;
+
 		public boolean hasEnded( )
 		{
 			return this == CANCELED || this == FINISHED || this == FAILED;
 		}
 	}
-	
+
 	private final long							creationTimestamp;
-	
+
 	private final Object						lock					= new Object( );
 	private State								state					= State.NOT_SUBMITTED;
 	private TaskService							service;
 	private Throwable							throwable;
-	
+
 	private String								status;
-	
+
 	private boolean								indeterminate			= true;
-	
+
 	private int									completed;
-	private int									total;
-	
+	private int									total					= 1000;
+
 	private final BasicPropertyChangeSupport	propertyChangeSupport	= new BasicPropertyChangeSupport( );
-	
+
 	public Task( )
 	{
 		creationTimestamp = System.nanoTime( );
 	}
-	
+
 	public Task( String status )
 	{
 		this( );
 		setStatus( status );
 	}
-	
+
 	public long getCreationTimestamp( )
 	{
 		return creationTimestamp;
 	}
-	
+
 	public HierarchicalBasicPropertyChangeSupport.External changeSupport( )
 	{
 		return propertyChangeSupport.external( );
 	}
-	
+
 	private final void firePropertyChange( final Property property , final Object oldValue , final Object newValue )
 	{
 		SwingUtilities.invokeLater( new Runnable( )
@@ -96,7 +96,7 @@ public abstract class Task implements HasChangeSupport
 			}
 		} );
 	}
-	
+
 	public final State getState( )
 	{
 		synchronized( lock )
@@ -104,7 +104,7 @@ public abstract class Task implements HasChangeSupport
 			return state;
 		}
 	}
-	
+
 	public final void waitUntilHasFinished( ) throws InterruptedException , ExecutionException
 	{
 		waitUntilHasEnded( );
@@ -113,7 +113,7 @@ public abstract class Task implements HasChangeSupport
 			throw new ExecutionException( throwable );
 		}
 	}
-	
+
 	public final void waitUntilHasEnded( ) throws InterruptedException
 	{
 		synchronized( lock )
@@ -124,32 +124,32 @@ public abstract class Task implements HasChangeSupport
 			}
 		}
 	}
-	
+
 	public boolean isCancelable( )
 	{
 		return false;
 	}
-	
+
 	public final boolean isCanceled( )
 	{
 		return getState( ) == State.CANCELED;
 	}
-	
+
 	public final boolean isCanceling( )
 	{
 		return getState( ) == State.CANCELING;
 	}
-	
+
 	public final boolean hasEnded( )
 	{
 		return getState( ).hasEnded( );
 	}
-	
+
 	public String getStatus( )
 	{
 		return status;
 	}
-	
+
 	public void setStatus( String status )
 	{
 		String oldValue = null;
@@ -166,12 +166,12 @@ public abstract class Task implements HasChangeSupport
 			firePropertyChange( Property.STATUS , oldValue , status );
 		}
 	}
-	
+
 	public boolean isIndeterminate( )
 	{
 		return indeterminate;
 	}
-	
+
 	public void setIndeterminate( boolean indefinite )
 	{
 		Boolean oldValue = null;
@@ -188,12 +188,12 @@ public abstract class Task implements HasChangeSupport
 			firePropertyChange( Property.INDETERMINATE , oldValue , indefinite );
 		}
 	}
-	
+
 	public int getCompleted( )
 	{
 		return completed;
 	}
-	
+
 	public void setCompleted( int completed )
 	{
 		if( completed < 0 )
@@ -214,19 +214,19 @@ public abstract class Task implements HasChangeSupport
 			firePropertyChange( Property.COMPLETED , oldValue , completed );
 		}
 	}
-	
+
 	public int getTotal( )
 	{
 		return total;
 	}
-	
+
 	public void setTotal( int total )
 	{
 		if( total < 0 )
 		{
 			throw new IllegalArgumentException( "total must be >= 0" );
 		}
-		
+
 		Integer oldValue = null;
 		synchronized( lock )
 		{
@@ -241,7 +241,7 @@ public abstract class Task implements HasChangeSupport
 			firePropertyChange( Property.TOTAL , oldValue , total );
 		}
 	}
-	
+
 	public Throwable getThrowable( )
 	{
 		synchronized( lock )
@@ -249,36 +249,36 @@ public abstract class Task implements HasChangeSupport
 			return throwable;
 		}
 	}
-	
+
 	public final void setService( TaskService service )
 	{
 		if( service == null )
 		{
 			throw new IllegalArgumentException( "service must be non-null" );
 		}
-		
+
 		synchronized( lock )
 		{
 			if( this.service != null )
 			{
 				throw new IllegalStateException( "Task is still registered with a service" );
 			}
-			
+
 			checkState( State.NOT_SUBMITTED );
 			state = State.WAITING;
 			this.service = service;
-			
+
 			lock.notifyAll( );
 		}
-		
+
 		firePropertyChange( Property.STATE , State.NOT_SUBMITTED , State.WAITING );
 	}
-	
+
 	public boolean canRunInParallelWith( Task other )
 	{
 		return false;
 	}
-	
+
 	public final void run( )
 	{
 		try
@@ -302,9 +302,9 @@ public abstract class Task implements HasChangeSupport
 			}
 		}
 	}
-	
+
 	protected abstract void execute( ) throws Exception;
-	
+
 	public final void cancel( )
 	{
 		if( !isCancelable( ) )
@@ -323,13 +323,13 @@ public abstract class Task implements HasChangeSupport
 			oldState = state;
 			newState = state = state == State.RUNNING ? State.CANCELING : State.CANCELED;
 			service = this.service;
-			
+
 			lock.notifyAll( );
 		}
 		service.cancel( this );
 		firePropertyChange( Property.STATE , oldState , newState );
 	}
-	
+
 	public final void reset( )
 	{
 		State oldState;
@@ -339,45 +339,47 @@ public abstract class Task implements HasChangeSupport
 			oldState = state;
 			state = State.NOT_SUBMITTED;
 			service = null;
-			
+
 			lock.notifyAll( );
 		}
 		firePropertyChange( Property.STATE , oldState , State.NOT_SUBMITTED );
 		afterReset( );
 	}
-	
+
 	private void checkState( State required )
 	{
 		if( state != required )
 		{
-			throw new IllegalStateException( "Operation not allowed unless state is " + required + "; state is currently " + state );
+			throw new IllegalStateException( "Operation not allowed unless state is " + required
+				+ "; state is currently " + state );
 		}
 	}
-	
+
 	private void checkState( State ... required )
 	{
 		if( ArrayUtils.indexOf( required , state ) < 0 )
 		{
-			throw new IllegalStateException( "Operation not allowed unless state is " + ArrayUtils.cat( required , " or " ) + "; state is currently " + state );
+			throw new IllegalStateException( "Operation not allowed unless state is "
+				+ ArrayUtils.cat( required , " or " ) + "; state is currently " + state );
 		}
 	}
-	
+
 	protected void afterReset( )
 	{
 	}
-	
+
 	private void setRunning( )
 	{
 		synchronized( lock )
 		{
 			checkState( State.WAITING );
 			state = State.RUNNING;
-			
+
 			lock.notifyAll( );
 		}
 		firePropertyChange( Property.STATE , State.WAITING , State.RUNNING );
 	}
-	
+
 	private void setFailed( Throwable t )
 	{
 		State oldState;
@@ -386,13 +388,13 @@ public abstract class Task implements HasChangeSupport
 			oldState = state;
 			state = State.FAILED;
 			throwable = t;
-			
+
 			lock.notifyAll( );
 		}
 		t.printStackTrace( );
 		firePropertyChange( Property.STATE , oldState , State.FAILED );
 	}
-	
+
 	private void setCanceledOrFinished( )
 	{
 		State oldState;
@@ -402,27 +404,27 @@ public abstract class Task implements HasChangeSupport
 			oldState = state;
 			switch( state )
 			{
-				case CANCELING:
-					state = State.CANCELED;
-					break;
-				case RUNNING:
-					state = State.FINISHED;
-					break;
-				default:
-					throw new IllegalStateException( "Operation not allowed unless state == CANCELED or FINISHED" );
+			case CANCELING:
+				state = State.CANCELED;
+				break;
+			case RUNNING:
+				state = State.FINISHED;
+				break;
+			default:
+				throw new IllegalStateException( "Operation not allowed unless state == CANCELED or FINISHED" );
 			}
 			newState = state;
-			
+
 			lock.notifyAll( );
 		}
 		firePropertyChange( Property.STATE , oldState , newState );
 	}
-	
+
 	public final int hashCode( )
 	{
 		return super.hashCode( );
 	}
-	
+
 	public final boolean equals( Object o )
 	{
 		return super.equals( o );

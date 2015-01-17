@@ -47,7 +47,7 @@ public class ShotTableModel extends AbstractTableModel
 	private ShotListListener					shotListListener	= new ShotListListener( );
 
 	private final List<ShotModelColumn>			columns				= new ArrayList<>( );
-	private final Map<ShotColumnDef, Integer>	defIndices			= new HashMap<>( );
+	private final Map<SurveyDataColumnDef, Integer>	defIndices			= new HashMap<>( );
 
 	public final ShotModelColumn				fromStationNameColumn;
 	public final ShotModelColumn				toStationNameColumn;
@@ -60,31 +60,31 @@ public class ShotTableModel extends AbstractTableModel
 	public ShotTableModel( )
 	{
 		fromStationNameColumn = new DefaultColumn(
-			ShotColumnDef.fromStationName , s -> s.getFromStationName( ) ,
+			SurveyDataColumnDef.fromStationName , s -> s.getFromStationName( ) ,
 			( s , v ) -> s.setFromStationName( ( String ) v ) );
 
 		toStationNameColumn = new DefaultColumn(
-			ShotColumnDef.toStationName , s -> s.getToStationName( ) ,
+			SurveyDataColumnDef.toStationName , s -> s.getToStationName( ) ,
 			( s , v ) -> s.setToStationName( ( String ) v ) );
 
 		vectorColumn = new DefaultColumn(
-			ShotColumnDef.vector , s -> s.getVector( ) ,
+			SurveyDataColumnDef.vector , s -> s.getVector( ) ,
 			( s , v ) -> s.setVector( ( ParsedTextWithType<ShotVector> ) v ) );
 
 		xSectionAtFromColumn = new DefaultColumn(
-			ShotColumnDef.xSectionAtFrom , s -> s.getXSectionAtFrom( ) ,
+			SurveyDataColumnDef.xSectionAtFrom , s -> s.getXSectionAtFrom( ) ,
 			( s , v ) -> s.setXSectionAtFrom( ( ParsedTextWithType<XSection> ) v ) );
 
 		xSectionAtToColumn = new DefaultColumn(
-			ShotColumnDef.xSectionAtTo , s -> s.getXSectionAtTo( ) ,
+			SurveyDataColumnDef.xSectionAtTo , s -> s.getXSectionAtTo( ) ,
 			( s , v ) -> s.setXSectionAtTo( ( ParsedTextWithType<XSection> ) v ) );
 
 		lengthUnitColumn = new UnitColumn(
-			ShotColumnDef.lengthUnit , s -> s.getLengthUnit( ) ,
+			SurveyDataColumnDef.lengthUnit , s -> s.getLengthUnit( ) ,
 			( s , u ) -> s.setLengthUnit( ( Unit<Length> ) u ) );
 
 		angleUnitColumn = new UnitColumn(
-			ShotColumnDef.angleUnit , s -> s.getAngleUnit( ) ,
+			SurveyDataColumnDef.angleUnit , s -> s.getAngleUnit( ) ,
 			( s , u ) -> s.setAngleUnit( ( Unit<Angle> ) u ) );
 	}
 
@@ -121,10 +121,10 @@ public class ShotTableModel extends AbstractTableModel
 
 	/**
 	 * @param def
-	 *            the {@link ShotColumnDef} to look for.
+	 *            the {@link SurveyDataColumnDef} to look for.
 	 * @return the column index of {@code def}, or -1 if it is not one of the columns of this model.
 	 */
-	public int indexOfColumn( ShotColumnDef def )
+	public int indexOfColumn( SurveyDataColumnDef def )
 	{
 		Integer result = defIndices.get( def );
 		return result == null ? -1 : result;
@@ -161,7 +161,7 @@ public class ShotTableModel extends AbstractTableModel
 		result.add( angleUnitColumn );
 
 		int custCols = 0;
-		for( ShotColumnDef def : shotList.getCustomColumnDefs( ) )
+		for( SurveyDataColumnDef def : shotList.getCustomColumnDefs( ) )
 		{
 			ShotModelColumn col = createCustomColumn( custCols++ , def );
 			if( col != null )
@@ -173,7 +173,7 @@ public class ShotTableModel extends AbstractTableModel
 		return result;
 	}
 
-	private ShotModelColumn createCustomColumn( int index , ShotColumnDef def )
+	private ShotModelColumn createCustomColumn( int index , SurveyDataColumnDef def )
 	{
 		switch( def.type )
 		{
@@ -312,9 +312,9 @@ public class ShotTableModel extends AbstractTableModel
 
 	public abstract class ShotModelColumn implements Column<Integer>
 	{
-		public final ShotColumnDef	def;
+		public final SurveyDataColumnDef	def;
 
-		public ShotModelColumn( ShotColumnDef def )
+		public ShotModelColumn( SurveyDataColumnDef def )
 		{
 			super( );
 			this.def = def;
@@ -338,7 +338,7 @@ public class ShotTableModel extends AbstractTableModel
 		 *            given a {@link Shot} and a new value, sets the shot's property represented by this
 		 *            column to the new value.
 		 */
-		public DefaultColumn( ShotColumnDef def ,
+		public DefaultColumn( SurveyDataColumnDef def ,
 			Function<Shot, ?> valueGetter ,
 			BiConsumer<Shot, Object> valueSetter )
 		{
@@ -411,7 +411,7 @@ public class ShotTableModel extends AbstractTableModel
 	private class UnitColumn extends DefaultColumn
 	{
 
-		public UnitColumn( ShotColumnDef def , Function<Shot, ?> valueGetter , BiConsumer<Shot, Object> valueSetter )
+		public UnitColumn( SurveyDataColumnDef def , Function<Shot, ?> valueGetter , BiConsumer<Shot, Object> valueSetter )
 		{
 			super( def , valueGetter , valueSetter );
 		}

@@ -1,6 +1,6 @@
 package org.andork.breakout.table;
 
-public enum ShotColumnType
+public enum SurveyDataColumnType
 {
 	BUILTIN,
 	STRING,

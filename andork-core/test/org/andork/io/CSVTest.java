@@ -12,7 +12,7 @@ public class CSVTest
 	@Test
 	public void testParseLine( )
 	{
-		CSV csv = new CSV( );
+		CSVFormat csv = new CSVFormat( );
 
 		csv.trimWhitespace( false );
 

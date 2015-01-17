@@ -8,13 +8,13 @@ import java.util.Collection;
  * 
  * @author James
  */
-public class CSV
+public class CSVFormat
 {
 	private char	separator		= ',';
 	private char	quote			= '"';
 	private boolean	trimWhitespace	= true;
 
-	public CSV( )
+	public CSVFormat( )
 	{
 
 	}
@@ -40,11 +40,11 @@ public class CSV
 	 * 
 	 * @param separator
 	 *            the new separator character.
-	 * @return this {@link CSV}, for chaining.
+	 * @return this {@link CSVFormat}, for chaining.
 	 * @throws IllegalArgumentException
 	 *             if {@code separator} is the null terminator or the same as {@link #quote()}.
 	 */
-	public CSV separator( char separator )
+	public CSVFormat separator( char separator )
 	{
 		if( separator == quote )
 		{
@@ -68,11 +68,11 @@ public class CSV
 	 * 
 	 * @param quote
 	 *            the new quote character.
-	 * @return this {@link CSV}, for chaining.
+	 * @return this {@link CSVFormat}, for chaining.
 	 * @throws IllegalArgumentException
 	 *             if {@code quote} is the null terminator or the same as {@link #separator()}.
 	 */
-	public CSV quote( char quote )
+	public CSVFormat quote( char quote )
 	{
 		if( quote == separator )
 		{
@@ -96,9 +96,9 @@ public class CSV
 	 * 
 	 * @param trimWhitespace
 	 *            if {@code true}, leading and trailing whitespace in fields will be trimmed.
-	 * @return this {@link CSV}, for chaining.
+	 * @return this {@link CSVFormat}, for chaining.
 	 */
-	public CSV trimWhitespace( boolean trimWhitespace )
+	public CSVFormat trimWhitespace( boolean trimWhitespace )
 	{
 		this.trimWhitespace = trimWhitespace;
 		return this;
@@ -219,7 +219,7 @@ public class CSV
 	 * 
 	 * @param fields
 	 *            the fields to format.
-	 * @return a line of CSV containing the {@code fields} formatted according to the settings of this {@link CSV}.
+	 * @return a line of CSV containing the {@code fields} formatted according to the settings of this {@link CSVFormat}.
 	 */
 	public String formatLine( Collection<String> fields )
 	{

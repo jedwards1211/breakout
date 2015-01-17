@@ -48,23 +48,16 @@ import org.andork.unit.UnitNames;
 import org.andork.util.StringUtils;
 
 /**
- * The {@link TableColumnModel} for a {@link ShotTable}. {@link ShotTableColumnModel} and {@link ShotTableModel} form
+ * The {@link TableColumnModel} for a {@link ShotTable}. {@link SurveyDataTableColumnModel} and {@link ShotTableModel}
+ * form
  * the
  * presenter layer of an MVP pattern, where {@link ShotList} is the model and {@link ShotTable} is the view.
  * 
  * @author James
  */
 @SuppressWarnings( "serial" )
-public class ShotTableColumnModel extends DefaultTableColumnModel
+public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends DefaultTableColumnModel
 {
-	public final TableColumn						fromColumn;
-	public final TableColumn						toColumn;
-	public final TableColumn						vectorColumn;
-	public final TableColumn						xSectionAtFromColumn;
-	public final TableColumn						xSectionAtToColumn;
-	public final TableColumn						lengthUnitColumn;
-	public final TableColumn						angleUnitColumn;
-
 	private final Map<SurveyDataColumnDef, TableColumn>	builtInColumns		= new HashMap<>( );
 
 	private QObject<DataDefaults>					dataDefaults;
@@ -85,10 +78,10 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 	private final Function<Object, Object>			nullToDefaultItem	= o -> o == null ? DEFAULT_ITEM : o;
 	private final Function<Object, Object>			defaultItemToNull	= o -> o == DEFAULT_ITEM ? null : o;
 
-	public ShotTableColumnModel( I18n i18n , ShotDataFormatter formats )
+	public SurveyDataTableColumnModel( I18n i18n , ShotDataFormatter formats )
 	{
 		this.i18n = i18n;
-		localizer = i18n.forClass( ShotTableColumnModel.class );
+		localizer = i18n.forClass( SurveyDataTableColumnModel.class );
 
 		this.formats = formats;
 
@@ -103,157 +96,10 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 				: null;
 		messageFn =
 			p -> p.getNote( ) instanceof ParseNote ? ( ( ParseNote ) p.getNote( ) ).apply( i18n ) : null;
-
-		fromColumn = createFromColumn( );
-		toColumn = createToColumn( );
-		vectorColumn = createVectorColumn( );
-		xSectionAtFromColumn = createXSectionColumn( SurveyDataColumnDef.xSectionAtFrom );
-		xSectionAtToColumn = createXSectionColumn( SurveyDataColumnDef.xSectionAtTo );
-		lengthUnitColumn = createLengthUnitColumn( );
-		angleUnitColumn = createAngleUnitColumn( );
-
-		for( TableColumn column : Arrays.asList(
-			fromColumn ,
-			toColumn ,
-			vectorColumn ,
-			xSectionAtFromColumn ,
-			xSectionAtToColumn ,
-			lengthUnitColumn ,
-			angleUnitColumn ) )
-		{
-			SurveyDataColumnDef def = ( SurveyDataColumnDef ) column.getIdentifier( );
-			Binder<String> b = localizer.stringBinder( def.name );
-			Binding nameBinding = f -> column.setHeaderValue( b.get( ) );
-			b.addBinding( nameBinding );
-			nameBinding.update( true );
-			builtInColumns.put( def , column );
-		}
 	}
 
-	private TableColumn createFromColumn( )
-	{
-		TableColumn result = new TableColumn( );
-		result.setIdentifier( SurveyDataColumnDef.fromStationName );
-		result
-			.setCellRenderer( new MonospaceFontRenderer( new DefaultTableCellRenderer( ) ) );
-		return result;
-	}
-
-	private TableColumn createToColumn( )
-	{
-		TableColumn result = new TableColumn( );
-		result.setIdentifier( SurveyDataColumnDef.toStationName );
-		result
-			.setCellRenderer( new MonospaceFontRenderer( new DefaultTableCellRenderer( ) ) );
-		result.setCellEditor( new MonospaceFontEditor( new DefaultCellEditor( new JTextField( ) ) ) );
-		return result;
-	}
-
-	private TableColumn createVectorColumn( )
-	{
-		Function<ShotVector, String> vectorValueFormatter =
-			v -> v != null ? formats.format( v ) : null;
-		Function<ShotVector, String> vectorValueRawFormatter =
-			v -> v != null ? formats.formatRaw( v ) : null;
-
-		ParsedTextTableCellRenderer<ShotVector> vectorValueRender =
-			new ParsedTextTableCellRenderer<ShotVector>( vectorValueFormatter , forceShowText , backgroundColorFn ,
-				messageFn );
-
-		Function<Object, Object> vectorTypeGetter = p ->
-		{
-			if( p instanceof ParsedTextWithType )
-			{
-				return ( ShotVectorType ) ( ( ParsedTextWithType<?> ) p ).getType( );
-			}
-			if( dataDefaults != null )
-			{
-				return dataDefaults.get( DataDefaults.shotVectorType );
-			}
-			return null;
-		};
-
-		BiFunction<String, Object, ParsedTextWithType<ShotVector>> vectorParser = ( text , type ) ->
-		{
-			return formats.parseShotVector( text , ( ShotVectorType ) type );
-		};
-
-		TableCellRendererWithSelector vectorRenderer = new TableCellRendererWithSelector(
-			new MonospaceFontRenderer( vectorValueRender ) , vectorTypeGetter );
-		vectorRenderer.selector( ).setAvailableValues( Arrays.asList( ShotVectorType.values( ) ) );
-
-		FunctionListCellRenderer vectorTypeRenderer = new FunctionListCellRenderer(
-			c -> c == null ? null : localizer.getString( c.toString( ) ) ,
-			new DefaultListCellRenderer( ) );
-
-		vectorRenderer.selector( ).comboBox( ).setRenderer( vectorTypeRenderer );
-
-		ParsedTextWithTypeCellEditor<ShotVector> vectorEditor = new ParsedTextWithTypeCellEditor<>(
-			vectorValueRawFormatter , vectorTypeGetter , vectorParser );
-		vectorEditor.setAvailableTypes( Arrays.asList( ShotVectorType.values( ) ) );
-		vectorEditor.typeSelector( ).comboBox( ).setRenderer( vectorTypeRenderer );
-
-		TableColumn vectorColumn = new TableColumn( );
-		vectorColumn.setIdentifier( SurveyDataColumnDef.vector );
-		vectorColumn.setCellRenderer( vectorRenderer );
-		vectorColumn.setCellEditor( new MonospaceFontEditor( vectorEditor ) );
-
-		return vectorColumn;
-	}
-
-	private TableColumn createXSectionColumn( SurveyDataColumnDef def )
-	{
-		Function<XSection, String> xSectionValueFormatter =
-			v -> v != null ? formats.format( v ) : null;
-		Function<XSection, String> xSectionValueRawFormatter =
-			v -> v != null ? formats.formatRaw( v ) : null;
-
-		ParsedTextTableCellRenderer<XSection> xSectionValueRender =
-			new ParsedTextTableCellRenderer<>( xSectionValueFormatter , forceShowText , backgroundColorFn ,
-				messageFn );
-
-		Function<Object, Object> xSectionTypeGetter = p ->
-		{
-			if( p instanceof ParsedTextWithType )
-			{
-				return ( XSectionType ) ( ( ParsedTextWithType<?> ) p ).getType( );
-			}
-			if( dataDefaults != null )
-			{
-				return dataDefaults.get( DataDefaults.xSectionType );
-			}
-			return null;
-		};
-
-		BiFunction<String, Object, ParsedTextWithType<XSection>> xSectionParser = ( text , type ) ->
-		{
-			return formats.parseXSection( text , ( XSectionType ) type );
-		};
-
-		TableCellRendererWithSelector xSectionRenderer = new TableCellRendererWithSelector(
-			new MonospaceFontRenderer( xSectionValueRender ) , xSectionTypeGetter );
-		xSectionRenderer.selector( ).setAvailableValues( Arrays.asList( XSectionType.values( ) ) );
-
-		FunctionListCellRenderer xSectionTypeRenderer = new FunctionListCellRenderer(
-			c -> c == null ? null : localizer.getString( c.toString( ) ) ,
-			new DefaultListCellRenderer( ) );
-
-		xSectionRenderer.selector( ).comboBox( ).setRenderer( xSectionTypeRenderer );
-
-		ParsedTextWithTypeCellEditor<XSection> xSectionEditor = new ParsedTextWithTypeCellEditor<>(
-			xSectionValueRawFormatter , xSectionTypeGetter , xSectionParser );
-		xSectionEditor.setAvailableTypes( Arrays.asList( XSectionType.values( ) ) );
-		xSectionEditor.typeSelector( ).comboBox( ).setRenderer( xSectionTypeRenderer );
-
-		TableColumn xSectionColumn = new TableColumn( );
-		xSectionColumn.setIdentifier( def );
-		xSectionColumn.setCellRenderer( xSectionRenderer );
-		xSectionColumn.setCellEditor( new MonospaceFontEditor( xSectionEditor ) );
-
-		return xSectionColumn;
-	}
-
-	private TableColumn createLengthUnitColumn( )
+	@SuppressWarnings( { "rawtypes" , "unchecked" } )
+	protected TableColumn createLengthUnitColumn( )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( SurveyDataColumnDef.lengthUnit );
@@ -287,7 +133,8 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		return result;
 	}
 
-	private TableColumn createAngleUnitColumn( )
+	@SuppressWarnings( { "rawtypes" , "unchecked" } )
+	protected TableColumn createAngleUnitColumn( )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( SurveyDataColumnDef.angleUnit );
@@ -321,7 +168,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		return result;
 	}
 
-	private TableColumn createCustomColumn( SurveyDataColumnDef def )
+	protected TableColumn createCustomColumn( SurveyDataColumnDef def )
 	{
 		switch( def.type )
 		{
@@ -344,7 +191,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		}
 	}
 
-	private TableColumn createCustomStringColumn( SurveyDataColumnDef def )
+	protected TableColumn createCustomStringColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -353,7 +200,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		return result;
 	}
 
-	private TableColumn createCustomIntegerColumn( SurveyDataColumnDef def )
+	protected TableColumn createCustomIntegerColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -374,7 +221,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		return result;
 	}
 
-	private TableColumn createCustomDoubleColumn( SurveyDataColumnDef def )
+	protected TableColumn createCustomDoubleColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -395,7 +242,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		return result;
 	}
 
-	private TableColumn createCustomTagsColumn( SurveyDataColumnDef def )
+	protected TableColumn createCustomTagsColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -429,7 +276,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		return result;
 	}
 
-	private TableColumn createCustomSectionColumn( SurveyDataColumnDef def )
+	protected TableColumn createCustomSectionColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -462,7 +309,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		return result;
 	}
 
-	private TableColumn createCustomLinkColumn( SurveyDataColumnDef def )
+	protected TableColumn createCustomLinkColumn( SurveyDataColumnDef def )
 	{
 		TableColumn result = new TableColumn( );
 		result.setIdentifier( def );
@@ -489,7 +336,7 @@ public class ShotTableColumnModel extends DefaultTableColumnModel
 		this.dataDefaults = dataDefaults;
 	}
 
-	public void update( ShotTableModel model , List<SurveyDataColumnDef> columnDefs )
+	public void update( SurveyDataTableModel<R> model , List<SurveyDataColumnDef> columnDefs )
 	{
 		while( getColumnCount( ) > 0 )
 		{

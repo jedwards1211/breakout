@@ -36,15 +36,15 @@ public class ShotTableTest
 			ShotList shotList = new ShotList( );
 
 			shotList.setCustomColumnDefs( Arrays.asList(
-				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE )
+				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE )
 				) );
 
 			shotList.setCustomColumnDefs( Arrays.asList(
-				new ShotColumnDef( "Section" , ShotColumnType.SECTION ) ,
-				new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
-				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE ) ,
-				new ShotColumnDef( "Surveyors" , ShotColumnType.TAGS ) ,
-				new ShotColumnDef( "Link" , ShotColumnType.LINK )
+				new SurveyDataColumnDef( "Section" , SurveyDataColumnType.SECTION ) ,
+				new SurveyDataColumnDef( "Test" , SurveyDataColumnType.INTEGER ) ,
+				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE ) ,
+				new SurveyDataColumnDef( "Surveyors" , SurveyDataColumnType.TAGS ) ,
+				new SurveyDataColumnDef( "Link" , SurveyDataColumnType.LINK )
 				) );
 
 			QObject<ProjectModel> projModel = QArrayObject.create( ProjectModel.spec );
@@ -80,18 +80,18 @@ public class ShotTableTest
 
 			ShotTableColumnModel columnModel = new ShotTableColumnModel( i18n , formats );
 			columnModel.update( tableModel , Arrays.asList(
-				ShotColumnDef.fromStationName ,
-				ShotColumnDef.toStationName ,
-				ShotColumnDef.vector ,
-				ShotColumnDef.xSectionAtFrom ,
-				ShotColumnDef.xSectionAtTo ,
-				ShotColumnDef.lengthUnit ,
-				ShotColumnDef.angleUnit ,
-				new ShotColumnDef( "Test" , ShotColumnType.INTEGER ) ,
-				new ShotColumnDef( "Water Level" , ShotColumnType.DOUBLE ) ,
-				new ShotColumnDef( "Section" , ShotColumnType.SECTION ) ,
-				new ShotColumnDef( "Surveyors" , ShotColumnType.TAGS ) ,
-				new ShotColumnDef( "Link" , ShotColumnType.LINK )
+				SurveyDataColumnDef.fromStationName ,
+				SurveyDataColumnDef.toStationName ,
+				SurveyDataColumnDef.vector ,
+				SurveyDataColumnDef.xSectionAtFrom ,
+				SurveyDataColumnDef.xSectionAtTo ,
+				SurveyDataColumnDef.lengthUnit ,
+				SurveyDataColumnDef.angleUnit ,
+				new SurveyDataColumnDef( "Test" , SurveyDataColumnType.INTEGER ) ,
+				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE ) ,
+				new SurveyDataColumnDef( "Section" , SurveyDataColumnType.SECTION ) ,
+				new SurveyDataColumnDef( "Surveyors" , SurveyDataColumnType.TAGS ) ,
+				new SurveyDataColumnDef( "Link" , SurveyDataColumnType.LINK )
 				) );
 
 			columnModel.vectorColumn.setPreferredWidth( 300 );

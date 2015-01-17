@@ -25,7 +25,7 @@ import org.andork.swing.table.TableModelList;
  */
 public class ShotList extends TableModelList<Shot>
 {
-	private List<ShotColumnDef>	customColumnDefs	= Collections.emptyList( );
+	private List<SurveyDataColumnDef>	customColumnDefs	= Collections.emptyList( );
 	private final Shot			prototypeShot		= new Shot( );
 
 	private void requireProperNumCustomFields( Shot shot )
@@ -135,7 +135,7 @@ public class ShotList extends TableModelList<Shot>
 	 * @return the custom column definitions, in an unmodifiable list. The {@linkplain Shot#getCustom() custom value
 	 *         array} of each shot should correspond to these column definitions.
 	 */
-	public List<ShotColumnDef> getCustomColumnDefs( )
+	public List<SurveyDataColumnDef> getCustomColumnDefs( )
 	{
 		return customColumnDefs;
 	}
@@ -156,11 +156,11 @@ public class ShotList extends TableModelList<Shot>
 	 * 
 	 * @param newCustomColumnDefs
 	 */
-	public void setCustomColumnDefs( List<ShotColumnDef> newCustomColumnDefs )
+	public void setCustomColumnDefs( List<SurveyDataColumnDef> newCustomColumnDefs )
 	{
 		newCustomColumnDefs = Collections.unmodifiableList( new ArrayList<>( newCustomColumnDefs ) );
 
-		List<ShotColumnDef> oldCustomColumnDefs = customColumnDefs;
+		List<SurveyDataColumnDef> oldCustomColumnDefs = customColumnDefs;
 
 		// We may need to resize each Shot.custom array to correspond to the new columns.
 		// For each new column that matches the name and type of an old column, we need to copy the value from
@@ -174,11 +174,11 @@ public class ShotList extends TableModelList<Shot>
 
 		boolean customValuesChanged = newCustomColumnDefs.size( ) != oldCustomColumnDefs.size( );
 
-		ListIterator<ShotColumnDef> i = newCustomColumnDefs.listIterator( );
+		ListIterator<SurveyDataColumnDef> i = newCustomColumnDefs.listIterator( );
 		while( i.hasNext( ) )
 		{
 			int index = i.nextIndex( );
-			ShotColumnDef newCustomColumnDef = i.next( );
+			SurveyDataColumnDef newCustomColumnDef = i.next( );
 			copyMap[ index ] = CollectionUtils.indexOf( oldCustomColumnDefs , d -> newCustomColumnDef.equals( d ) );
 			customValuesChanged |= copyMap[ index ] != index;
 		}

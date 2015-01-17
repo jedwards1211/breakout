@@ -19,5 +19,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui-debug"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jogl-util-gldesktop"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/jogl-all-windows-i586"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
