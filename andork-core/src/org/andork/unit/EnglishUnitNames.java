@@ -77,7 +77,19 @@ public class EnglishUnitNames extends UnitNames
 		gradiansEntry.put( UnitNameType.SYMBOL , "gon" , "gon" );
 		map.put( Angle.gradians , gradiansEntry );
 
-		for( Map.Entry<Unit<?>, Entry> entry : map.entrySet( ) )
+		Entry percentGradeEntry = new Entry( );
+		percentGradeEntry.put( UnitNameType.FULL , "percent grade" , "percent grade" );
+		percentGradeEntry.put( UnitNameType.ABBREV , "% grade" , "% grade" );
+		percentGradeEntry.put( UnitNameType.SYMBOL , "%" , "%" );
+		map.put( Angle.percentGrade , percentGradeEntry );
+
+		Entry mils6400Entry = new Entry( );
+		mils6400Entry.put( UnitNameType.FULL , "mil (NATO)" , "mils (NATO)" );
+		mils6400Entry.put( UnitNameType.ABBREV , "mil" , "mils" );
+		mils6400Entry.put( UnitNameType.SYMBOL , "mil" , "mil" );
+		map.put( Angle.milsNATO , mils6400Entry );
+
+			for( Map.Entry<Unit<?>, Entry> entry : map.entrySet( ) )
 		{
 			Map<String, Unit<?>> nameMap = lookupMap.get( entry.getKey( ).type );
 			if( nameMap == null )

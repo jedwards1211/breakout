@@ -1,4 +1,4 @@
-package org.andork.breakout.table.dataimport;
+package org.andork.breakout.tableimport;
 
 import java.util.Vector;
 

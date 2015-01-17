@@ -12,6 +12,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 
+import org.andork.breakout.tableimport.CSVReader;
 import org.andork.io.CSVFormat;
 import org.andork.swing.QuickTestFrame;
 import org.andork.swing.async.SelfReportingTask;

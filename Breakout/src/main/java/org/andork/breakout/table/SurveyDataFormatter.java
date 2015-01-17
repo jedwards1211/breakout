@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.andork.breakout.table.LrudXSection.Angle;
+import org.andork.breakout.table.LrudXSection.FacingAzimuth;
 import org.andork.i18n.I18n;
 import org.andork.i18n.I18n.Localizer;
 import org.andork.util.StringUtils;
@@ -579,6 +580,19 @@ public class SurveyDataFormatter
 
 	public String format( LrudXSection t )
 	{
+		if( t.getAngle( ) instanceof FacingAzimuth )
+		{
+			return localizer
+				.getFormattedString(
+					"xSectionFormat.lruda" ,
+					StringUtils.pad( formatOptionalLength( t.getLeft( ) ) , ' ' , xSectionColumnWidth , false ) ,
+					StringUtils.pad( formatOptionalLength( t.getRight( ) ) , ' ' , xSectionColumnWidth , false ) ,
+					StringUtils.pad( formatOptionalLength( t.getUp( ) ) , ' ' , xSectionColumnWidth , false ) ,
+					StringUtils.pad( formatOptionalLength( t.getDown( ) ) , ' ' , xSectionColumnWidth , false ) ,
+					StringUtils.pad( formatOptionalLength( ( ( FacingAzimuth ) t.getAngle( ) ).getAzimuth( ) ) , ' ' ,
+						xSectionColumnWidth , false )
+				);
+		}
 		return localizer
 			.getFormattedString(
 				"xSectionFormat.lrud" ,
@@ -642,6 +656,11 @@ public class SurveyDataFormatter
 		sb.append( formatOptionalLength( x.getUp( ) ) );
 		sb.append( ' ' );
 		sb.append( formatOptionalLength( x.getDown( ) ) );
+		if( x.getAngle( ) instanceof FacingAzimuth )
+		{
+			sb.append( ' ' );
+			sb.append( formatOptionalAzimuth( ( ( FacingAzimuth ) x.getAngle( ) ).getAzimuth( ) ) );
+		}
 		return sb.toString( );
 	}
 
@@ -698,6 +717,9 @@ public class SurveyDataFormatter
 		case NSEW:
 			reqNumParts = 4;
 			break;
+		case LRUD_WITH_FACING_AZIMUTH:
+			reqNumParts = 5;
+			break;
 		case LLRRUD:
 			reqNumParts = 6;
 			break;
@@ -737,6 +759,15 @@ public class SurveyDataFormatter
 			lrud.setUp( parsed[ 2 ] );
 			lrud.setDown( parsed[ 3 ] );
 			result.setValue( lrud );
+			break;
+		case LRUD_WITH_FACING_AZIMUTH:
+			LrudXSection lruda = new LrudXSection( );
+			lruda.setAngle( new FacingAzimuth( parsed[ 4 ] ) );
+			lruda.setLeft( parsed[ 0 ] );
+			lruda.setRight( parsed[ 1 ] );
+			lruda.setUp( parsed[ 2 ] );
+			lruda.setDown( parsed[ 3 ] );
+			result.setValue( lruda );
 			break;
 		case NSEW:
 			NsewXSection nsew = new NsewXSection( );

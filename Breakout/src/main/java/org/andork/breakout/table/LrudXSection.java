@@ -2,6 +2,8 @@ package org.andork.breakout.table;
 
 import java.util.function.Function;
 
+import org.andork.util.PowerCloneable;
+
 /**
  * A {@link XSection} with distances to the floor, ceiling, left wall, and right wall from a given station.
  * 
@@ -14,16 +16,53 @@ public class LrudXSection extends UdXSection
 	 * 
 	 * @author James
 	 */
-	public static enum Angle
+	public static class Angle
 	{
 		/**
 		 * Indicates an {@link LrudXSection} is perpendicular to its {@link Shot}.
 		 */
-		PERPENDICULAR,
+		public static final Angle	PERPENDICULAR	= new Angle( );
 		/**
 		 * Indicates an {@link LrudXSection} bisects the angle between two {@link Shot}s.
 		 */
-		BISECTOR;
+		public static final Angle	BISECTOR		= new Angle( );
+
+		private Angle( )
+		{
+
+		}
+	}
+
+	public static class FacingAzimuth extends Angle implements PowerCloneable
+	{
+		private Double	azimuth;
+
+		public FacingAzimuth( )
+		{
+
+		}
+
+		public FacingAzimuth( Double azimuth )
+		{
+			super( );
+			this.azimuth = azimuth;
+		}
+
+		public Double getAzimuth( )
+		{
+			return azimuth;
+		}
+
+		public void setAzimuth( Double azimuth )
+		{
+			this.azimuth = azimuth;
+		}
+
+		@Override
+		public PowerCloneable clone( Function<Object, Object> subcloner )
+		{
+			return new FacingAzimuth( azimuth );
+		}
 	}
 
 	private Double				left;
@@ -72,7 +111,7 @@ public class LrudXSection extends UdXSection
 		LrudXSection result = ( LrudXSection ) super.clone( subcloner );
 		result.left = left;
 		result.right = right;
-		result.angle = angle;
+		result.angle = ( Angle ) subcloner.apply( angle );
 		return result;
 	}
 }
