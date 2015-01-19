@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.andork.func.CharPredicate;
+
 public class StringUtils
 {
 	private StringUtils( )
@@ -198,5 +200,53 @@ public class StringUtils
 		}
 
 		return sb.toString( );
+	}
+
+	/**
+	 * Searches a string for a character matching a predicate and returns its index, or {@code -1} if no such character
+	 * was found.
+	 * 
+	 * @param s
+	 *            a string to search.
+	 * @param predicate
+	 *            the search predicate.
+	 * @return the first index for which {@code predicate.test(s.charAt(index))}, or {@code -1}.
+	 */
+	public static int indexOf( String s , CharPredicate predicate )
+	{
+		return indexOf( s , 0 , predicate );
+	}
+
+	/**
+	 * Searches a string for a character matching a predicate and returns its index, or {@code -1} if no such character
+	 * was found.
+	 * 
+	 * @param s
+	 *            a string to search.
+	 * @param index
+	 *            the search start index.
+	 * @param predicate
+	 *            the search predicate.
+	 * @return the first index >= {@code index} for which {@code predicate.test(s.charAt(index))}, or {@code -1}.
+	 */
+	public static int indexOf( String s , int index , CharPredicate predicate )
+	{
+		for( int i = index ; i < s.length( ) ; i++ )
+		{
+			if( predicate.test( s.charAt( i ) ) )
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	public static String requireNonNullOrEmpty( String s )
+	{
+		if( isNullOrEmpty( s ) )
+		{
+			throw new IllegalArgumentException( "s must not be null or empty" );
+		}
+		return s;
 	}
 }
