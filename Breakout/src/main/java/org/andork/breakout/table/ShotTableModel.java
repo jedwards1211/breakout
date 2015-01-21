@@ -15,9 +15,7 @@ public class ShotTableModel extends SurveyDataTableModel<Shot>
 	public final SurveyDataModelColumn	xSectionAtFromColumn;
 	public final SurveyDataModelColumn	xSectionAtToColumn;
 	public final SurveyDataModelColumn	lengthUnitColumn;
-	public final SurveyDataModelColumn	frontsightUnitColumn;
-	public final SurveyDataModelColumn	backsightUnitColumn;
-
+	public final SurveyDataModelColumn	angleUnitColumn;
 	public ShotTableModel( )
 	{
 		fromStationNameColumn = new DefaultColumn(
@@ -44,12 +42,8 @@ public class ShotTableModel extends SurveyDataTableModel<Shot>
 			ShotColumnDefs.lengthUnit , s -> s.getLengthUnit( ) ,
 			( s , u ) -> s.setLengthUnit( ( Unit<Length> ) u ) );
 
-		frontsightUnitColumn = new UnitColumn(
-			ShotColumnDefs.frontsightUnit , s -> s.getAngleUnit( ) ,
-			( s , u ) -> s.setAngleUnit( ( Unit<Angle> ) u ) );
-
-		backsightUnitColumn = new UnitColumn(
-			ShotColumnDefs.backsightUnit , s -> s.getAngleUnit( ) ,
+		angleUnitColumn = new UnitColumn(
+			ShotColumnDefs.angleUnit , s -> s.getAngleUnit( ) ,
 			( s , u ) -> s.setAngleUnit( ( Unit<Angle> ) u ) );
 	}
 
@@ -62,7 +56,6 @@ public class ShotTableModel extends SurveyDataTableModel<Shot>
 		result.add( xSectionAtFromColumn );
 		result.add( xSectionAtToColumn );
 		result.add( lengthUnitColumn );
-		result.add( frontsightUnitColumn );
-		result.add( backsightUnitColumn );
+		result.add( angleUnitColumn );
 	}
 }

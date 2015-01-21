@@ -15,9 +15,7 @@ public class ShotColumnDefs
 																SurveyDataColumnType.BUILTIN );
 	public static final SurveyDataColumnDef	lengthUnit		= new SurveyDataColumnDef( "lengthUnit" ,
 																SurveyDataColumnType.BUILTIN );
-	public static final SurveyDataColumnDef	frontsightUnit	= new SurveyDataColumnDef( "frontsightUnit" ,
-																SurveyDataColumnType.BUILTIN );
-	public static final SurveyDataColumnDef	backsightUnit	= new SurveyDataColumnDef( "backsightUnit" ,
+	public static final SurveyDataColumnDef	angleUnit	= new SurveyDataColumnDef( "angleUnit" ,
 																SurveyDataColumnType.BUILTIN );
 
 }

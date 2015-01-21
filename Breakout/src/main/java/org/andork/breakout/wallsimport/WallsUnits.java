@@ -1,15 +1,14 @@
 package org.andork.breakout.wallsimport;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
-import org.andork.unit.UnitizedDouble;
 import org.andork.unit.Unit;
+import org.andork.unit.UnitizedDouble;
 
 /**
  * The state of everything that can be controlled by a #Units directive in Walls .srv files.
@@ -25,21 +24,10 @@ import org.andork.unit.Unit;
 public class WallsUnits
 {
 	/**
-	 * The order of measurements in data rows, represented as a sequence of characters. For compass and tape
-	 * measurements, some sequence of:
-	 * <ul>
-	 * <li>D = distance</li>
-	 * <li>A = azimuth</li>
-	 * <li>V = inclination (optional)</li>
-	 * </ul>
-	 * For RECT vectors, some combination of:
-	 * <ul>
-	 * <li>E = east</li>
-	 * <li>N = north</li>
-	 * <li>U = up (optional)</li>
-	 * </ul>
+	 * The order of measurements in vector rows.
 	 */
-	public String					order				= "dav";
+	public List<VectorElement>		order				= Arrays.asList( VectorElement.D , VectorElement.A ,
+															VectorElement.V );
 	/**
 	 * Unit for primary distance measurements (distance between stations, components of RECT vectors, FIX positions)
 	 */
@@ -69,80 +57,84 @@ public class WallsUnits
 	 * Declination (true north minus magnetic north) that would need to be added to the azimuth measurements of
 	 * compass and tape data lines to obtain a vector's true north direction.
 	 */
-	public UnitizedDouble<Angle>	decl				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Angle>	decl				= new UnitizedDouble<>( 0.0 , Angle.degrees );
 
 	/**
 	 * UTM grid convergence angle, #fix fectors would need to be rotated by this amount to obtain true north relative
 	 * vectors.
 	 */
-	public UnitizedDouble<Angle>	grid				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Angle>	grid				= new UnitizedDouble<>( 0.0 , Angle.degrees );
 
 	/**
 	 * The displacement vectors corresponding to RECT data lines would need to be rotated clockwise by this amount to
 	 * obtain true north relative vectors.
 	 */
-	public UnitizedDouble<Angle>	rect				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Angle>	rect				= new UnitizedDouble<>( 0.0 , Angle.degrees );
 
 	/**
 	 * Distance instrument correction.
 	 */
-	public UnitizedDouble<Length>	incd				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Length>	incd				= new UnitizedDouble<>( 0.0 , Length.meters );
 	/**
 	 * Frontsight azimuth instrument correction.
 	 */
-	public UnitizedDouble<Angle>	inca				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Angle>	inca				= new UnitizedDouble<>( 0.0 , Angle.degrees );
 	/**
 	 * Backsight azimuth instrument correction.
 	 */
-	public UnitizedDouble<Angle>	incab				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Angle>	incab				= new UnitizedDouble<>( 0.0 , Angle.degrees );
 	/**
 	 * Frontsight inclination instrument correction.
 	 */
-	public UnitizedDouble<Angle>	incv				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Angle>	incv				= new UnitizedDouble<>( 0.0 , Angle.degrees );
 	/**
 	 * Backsight inclination instrument correction.
 	 */
-	public UnitizedDouble<Angle>	incvb				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Angle>	incvb				= new UnitizedDouble<>( 0.0 , Angle.degrees );
 	/**
 	 * Secondary distance measurement correction (distance btw. instruments and stations or LRUDs)
 	 */
-	public UnitizedDouble<Length>	incs				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Length>	incs				= new UnitizedDouble<>( 0.0 , Length.meters );
 	/**
 	 * Height adjustment, amount added to the elevation of the To station relative to the From station.
 	 */
-	public UnitizedDouble<Length>	inch				= new UnitizedDouble<>( 0.0 , null );
+	public UnitizedDouble<Length>	inch				= new UnitizedDouble<>( 0.0 , Length.meters );
 	/**
 	 * Whether the azimuth backsight is corrected
 	 */
 	public boolean					typeab_corrected	= false;
 	/**
+	 * Whether the azimuth backsight is averaged into the vector azimuth
+	 */
+	public boolean					typeab_noAverage	= false;
+	/**
 	 * Whether the inclination backsight is corrected
 	 */
 	public boolean					typevb_corrected	= false;
 	/**
+	 * Whether the inclination backsight is averaged into the vector inclination
+	 */
+	public boolean					typevb_noAverage	= false;
+	/**
 	 * Whether to change or preserve the case of station names.
 	 */
-	public Case						case_				= Case.Mixed;
+	public CaseType					case_				= CaseType.Mixed;
 	/**
 	 * Where LRUDs are positioned and oriented
 	 */
-	public Lrud						lrud				= Lrud.From;
+	public LrudType					lrud				= LrudType.From;
 	/**
 	 * The order LRUDs are given in
 	 */
-	public String					lrud_order			= "LRUD";
+	public List<LrudElement>		lrud_order			= Arrays.asList( LrudElement.values( ) );
 	/**
 	 * Taping method
 	 */
-	public Tape						tape				= Tape.IT;
+	public TapeType					tape				= TapeType.IT;
 	/**
 	 * Flag (arbitrary text)
 	 */
 	public String					flag				= null;
-	/**
-	 * Macro names and replacement values
-	 */
-	public Map<String, String>		macros				= new HashMap<String, String>( );
 	/**
 	 * Prefixes for station names (the first is applied rightmost)
 	 */
@@ -156,23 +148,57 @@ public class WallsUnits
 	 */
 	public String					segment				= null;
 
-	public static enum Case
+	public String processStationName( String name )
+	{
+		name = case_.apply( name );
+		int explicitPrefixCount = ( int ) name.chars( ).filter( c -> c == ':' ).count( );
+		for( int i = explicitPrefixCount ; i < prefix.size( ) ; i++ )
+		{
+			name = prefix.get( i ) + ":" + name;
+		}
+		return name;
+	}
+
+	public static enum CaseType
 	{
 		/**
 		 * Convert station names to uppercase.
 		 */
-		Upper,
+		Upper
+		{
+			@Override
+			public String apply( String s )
+			{
+				return s.toUpperCase( );
+			}
+		},
 		/**
 		 * Convert station names to lowercase.
 		 */
-		Lower,
+		Lower
+		{
+			@Override
+			public String apply( String s )
+			{
+				return s.toLowerCase( );
+			}
+		},
 		/**
 		 * Preserve station name case.
 		 */
-		Mixed;
+		Mixed
+		{
+			@Override
+			public String apply( String s )
+			{
+				return s;
+			}
+		};
+
+		public abstract String apply( String s );
 	}
 
-	public static enum Lrud
+	public static enum LrudType
 	{
 		/**
 		 * Perpendicular to shot at from station
@@ -192,23 +218,53 @@ public class WallsUnits
 		TB;
 	}
 
-	public static enum Tape
+	public static enum TapeType
 	{
 		/**
 		 * Instrument-to-target
 		 */
-		IT,
+		IT
+		{
+			@Override
+			public void visit( TapeTypeVisitor visitor )
+			{
+				visitor.visitIT( );
+			}
+		},
 		/**
 		 * Station-to-station
 		 */
-		SS,
+		SS
+		{
+			@Override
+			public void visit( TapeTypeVisitor visitor )
+			{
+				visitor.visitSS( );
+			}
+		},
 		/**
 		 * Instrument-to-station
 		 */
-		IS,
+		IS
+		{
+			@Override
+			public void visit( TapeTypeVisitor visitor )
+			{
+				visitor.visitIS( );
+			}
+		},
 		/**
 		 * Station-to-target
 		 */
-		ST;
+		ST
+		{
+			@Override
+			public void visit( TapeTypeVisitor visitor )
+			{
+				visitor.visitST( );
+			}
+		};
+
+		public abstract void visit( TapeTypeVisitor visitor );
 	}
 }

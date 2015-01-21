@@ -37,7 +37,9 @@ public class SurveyDataList<R extends SurveyDataRow> extends TableModelList<R>
 
 	private void requireProperNumCustomFields( R dataRow )
 	{
-		if( dataRow.getCustom( ).length != customColumnDefs.size( ) )
+		int numCustom = dataRow.getCustom( ) == null ? 0 : dataRow.getCustom( ).length;
+
+		if( numCustom != customColumnDefs.size( ) )
 		{
 			throw new IllegalArgumentException( "dataRow does not have the proper number of custom fields: " + dataRow );
 		}

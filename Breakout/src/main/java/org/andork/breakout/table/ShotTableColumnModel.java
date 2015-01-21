@@ -24,9 +24,7 @@ public class ShotTableColumnModel extends SurveyDataTableColumnModel<Shot>
 	public final TableColumn	xSectionAtFromColumn;
 	public final TableColumn	xSectionAtToColumn;
 	public final TableColumn	lengthUnitColumn;
-	public final TableColumn	frontsightUnitColumn;
-	public final TableColumn	backsightUnitColumn;
-
+	public final TableColumn	angleUnitColumn;
 	public ShotTableColumnModel( I18n i18n , SurveyDataFormatter formats )
 	{
 		super( i18n , formats );
@@ -37,8 +35,7 @@ public class ShotTableColumnModel extends SurveyDataTableColumnModel<Shot>
 		xSectionAtFromColumn = createXSectionColumn( ShotColumnDefs.xSectionAtFrom );
 		xSectionAtToColumn = createXSectionColumn( ShotColumnDefs.xSectionAtTo );
 		lengthUnitColumn = createLengthUnitColumn( );
-		frontsightUnitColumn = createAngleUnitColumn( ShotColumnDefs.frontsightUnit );
-		backsightUnitColumn = createAngleUnitColumn( ShotColumnDefs.backsightUnit );
+		angleUnitColumn = createAngleUnitColumn( ShotColumnDefs.angleUnit );
 
 		for( TableColumn column : Arrays.asList(
 			fromColumn ,
@@ -47,8 +44,7 @@ public class ShotTableColumnModel extends SurveyDataTableColumnModel<Shot>
 			xSectionAtFromColumn ,
 			xSectionAtToColumn ,
 			lengthUnitColumn ,
-			frontsightUnitColumn ,
-			backsightUnitColumn ) )
+			angleUnitColumn ) )
 		{
 			SurveyDataColumnDef def = ( SurveyDataColumnDef ) column.getIdentifier( );
 			Binder<String> b = localizer.stringBinder( def.name );

@@ -1,11 +1,10 @@
-package org.andork.breakout.table;
+package org.andork.breakout.wallsimport;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -13,6 +12,18 @@ import javax.swing.JTable;
 import javax.swing.RowFilter.Entry;
 
 import org.andork.bind2.DefaultBinder;
+import org.andork.breakout.table.Shot;
+import org.andork.breakout.table.DataDefaults;
+import org.andork.breakout.table.ParseNote;
+import org.andork.breakout.table.ParseStatus;
+import org.andork.breakout.table.ShotColumnDefs;
+import org.andork.breakout.table.ShotTableColumnModel;
+import org.andork.breakout.table.ShotTableModel;
+import org.andork.breakout.table.ShotTableModelCopier;
+import org.andork.breakout.table.SurveyDataFormatter;
+import org.andork.breakout.table.SurveyDataList;
+import org.andork.breakout.table.SurveyDataTable;
+import org.andork.breakout.table.SurveyModel;
 import org.andork.i18n.I18n;
 import org.andork.q2.QArrayObject;
 import org.andork.q2.QObject;
@@ -25,27 +36,19 @@ import org.andork.swing.jump.JTableJumpSupport;
 import org.andork.swing.table.AnnotatingJTableJumpBarModel;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 
-public class ShotTableTest
+public class BigImportTest1
 {
+
 	public static void main( String[ ] args )
 	{
 		OnEDT.onEDT( ( ) ->
 		{
 			I18n i18n = new I18n( );
 
-			SurveyDataList<Shot> shotList = new SurveyDataList<>( new Shot( ) );
+			WallsImporter importer = new WallsImporter( i18n );
 
-			shotList.setCustomColumnDefs( Arrays.asList(
-				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE )
-				) );
-
-			shotList.setCustomColumnDefs( Arrays.asList(
-				new SurveyDataColumnDef( "Section" , SurveyDataColumnType.SECTION ) ,
-				new SurveyDataColumnDef( "Test" , SurveyDataColumnType.INTEGER ) ,
-				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE ) ,
-				new SurveyDataColumnDef( "Surveyors" , SurveyDataColumnType.TAGS ) ,
-				new SurveyDataColumnDef( "Link" , SurveyDataColumnType.LINK )
-				) );
+			importer.importSrvFile( Paths.get( "src/test/java/org/andork/breakout/wallsimport/vectorTest1.srv" ) , null );
+			SurveyDataList<Shot> shotList = importer.getOutputModel( ).get( SurveyModel.shotList );
 
 			QObject<SurveyModel> projModel = QArrayObject.create( SurveyModel.spec );
 			QObjectBinder<SurveyModel> projModelBinder = new QObjectBinder<SurveyModel>( SurveyModel.spec );
@@ -86,12 +89,7 @@ public class ShotTableTest
 				ShotColumnDefs.xSectionAtFrom ,
 				ShotColumnDefs.xSectionAtTo ,
 				ShotColumnDefs.lengthUnit ,
-				ShotColumnDefs.angleUnit ,
-				new SurveyDataColumnDef( "Test" , SurveyDataColumnType.INTEGER ) ,
-				new SurveyDataColumnDef( "Water Level" , SurveyDataColumnType.DOUBLE ) ,
-				new SurveyDataColumnDef( "Section" , SurveyDataColumnType.SECTION ) ,
-				new SurveyDataColumnDef( "Surveyors" , SurveyDataColumnType.TAGS ) ,
-				new SurveyDataColumnDef( "Link" , SurveyDataColumnType.LINK )
+				ShotColumnDefs.angleUnit
 				) );
 
 			columnModel.vectorColumn.setPreferredWidth( 300 );
@@ -146,4 +144,5 @@ public class ShotTableTest
 			QuickTestFrame.frame( scrollPane ).setVisible( true );
 		} );
 	}
+
 }
