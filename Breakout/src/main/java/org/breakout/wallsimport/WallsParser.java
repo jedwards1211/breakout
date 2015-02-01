@@ -5,7 +5,9 @@ import static org.breakout.wallsimport.CardinalDirection.NORTH;
 import static org.breakout.wallsimport.CardinalDirection.SOUTH;
 import static org.breakout.wallsimport.CardinalDirection.WEST;
 
-import java.text.ParseException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.andork.i18n.I18n;
@@ -21,33 +23,95 @@ import org.breakout.wallsimport.WallsImportMessage.Severity;
 
 public class WallsParser
 {
-	private final Localizer			localizer;
+	private final Localizer							localizer;
 
-	public static final Pattern	UNSIGNED_FLOATING_POINT			= Pattern.compile( "^(\\d+(\\.\\d*)?|\\.\\d+)" );
+	public static final Pattern						UNSIGNED_FLOATING_POINT			= Pattern
+																						.compile( "^(\\d+(\\.\\d*)?|\\.\\d+)" );
 
-	public static final Pattern	SIGNED_FLOATING_POINT			= Pattern.compile( "^[-+]?(\\d+(\\.\\d*)?|\\.\\d+)" );
+	public static final Pattern						SIGNED_FLOATING_POINT			= Pattern
+																						.compile( "^[-+]?(\\d+(\\.\\d*)?|\\.\\d+)" );
 
-	public static final Pattern	UNSIGNED_INTEGER				= Pattern.compile( "^\\d+" );
+	public static final Pattern						UNSIGNED_INTEGER				= Pattern.compile( "^\\d+" );
 
-	public static final Pattern	SIGNED_INTEGER					= Pattern.compile( "^[-+]?\\d+" );
+	public static final Pattern						SIGNED_INTEGER					= Pattern.compile( "^[-+]?\\d+" );
 
-	public static final Pattern	SIGN							= Pattern.compile( "^[-+]" );
+	public static final Pattern						SIGN							= Pattern.compile( "^[-+]" );
 
-	public static final Pattern	UNSIGNED_FLOATING_POINT_OR_OMIT	= Pattern.compile( "^(\\d+(\\.\\d*)?|\\.\\d+|-+)" );
+	public static final Pattern						UNSIGNED_FLOATING_POINT_OR_OMIT	= Pattern
+																						.compile( "^(\\d+(\\.\\d*)?|\\.\\d+|-+)" );
 
-	public static final Pattern	SIGNED_FLOATING_POINT_OR_OMIT	= Pattern
-	.compile( "^([-+]?(\\d+(\\.\\d*)?|\\.\\d+))|-+" );
+	public static final Pattern						SIGNED_FLOATING_POINT_OR_OMIT	= Pattern
+																						.compile( "^([-+]?(\\d+(\\.\\d*)?|\\.\\d+))|-+" );
 
-	public static final Pattern	OMIT							= Pattern.compile( "^-+" );
+	public static final Pattern						OMIT							= Pattern.compile( "^-+" );
 
-	private static final Pattern	LENGTH_UNIT_SUFFIX		= Pattern.compile( "^[mMfFiI]" );
-	private static final Pattern	AZIMUTH_UNIT_SUFFIX		= Pattern.compile( "^[dDmMgG]" );
-	private static final Pattern	INCLINATION_UNIT_SUFFIX	= Pattern.compile( "^[dDmMgGpP]" );
-	private static final Pattern	CARDINAL_DIRECTION		= Pattern.compile( "^[nNsSeEwW]" );
+	private static final Pattern					LENGTH_UNIT_SUFFIX				= Pattern.compile( "^[mMfFiI]" );
+	private static final Pattern					AZIMUTH_UNIT_SUFFIX				= Pattern.compile( "^[dDmMgG]" );
+	private static final Pattern					INCLINATION_UNIT_SUFFIX			= Pattern.compile( "^[dDmMgGpP]" );
+	private static final Pattern					CARDINAL_DIRECTION				= Pattern.compile( "^[nNsSeEwW]" );
+
+	private static final Map<String, Unit<Length>>	distanceUnitMap;
+	private static final Map<String, Unit<Angle>>	azimuthUnitMap;
+	private static final Map<String, Unit<Angle>>	inclinationUnitMap;
+
+	static
+	{
+		distanceUnitMap = Collections.unmodifiableMap( asMap(
+			"m" , Length.meters ,
+			"meters" , Length.meters ,
+			"f" , Length.feet ,
+			"feet" , Length.feet
+			) );
+
+		azimuthUnitMap = Collections.unmodifiableMap( asMap(
+			"d" , Angle.degrees ,
+			"degrees" , Angle.degrees ,
+			"m" , Angle.milsNATO ,
+			"mils" , Angle.milsNATO ,
+			"g" , Angle.gradians ,
+			"grads" , Angle.gradians
+			) );
+
+		inclinationUnitMap = Collections.unmodifiableMap( asMap(
+			"d" , Angle.degrees ,
+			"degrees" , Angle.degrees ,
+			"m" , Angle.milsNATO ,
+			"mils" , Angle.milsNATO ,
+			"g" , Angle.gradians ,
+			"grads" , Angle.gradians ,
+			"p" , Angle.percentGrade ,
+			"percent" , Angle.percentGrade
+			) );
+	}
+
+	private static final <K, V> Map<K, V> asMap( Object ... values )
+	{
+		Map<K, V> map = new HashMap<K, V>( );
+		for( int i = 0 ; i < values.length ; i += 2 )
+		{
+			map.put( ( K ) values[ i ] , ( V ) values[ i + 1 ] );
+		}
+		return map;
+	};
 
 	public WallsParser( I18n i18n )
 	{
 		localizer = i18n.forClass( WallsImporter.class );
+	}
+
+	public static Unit<Length> parseDistanceUnit( String s )
+	{
+		return distanceUnitMap.get( s.toLowerCase( ) );
+	}
+
+	public static Unit<Angle> parseAzimuthUnit( String s )
+	{
+		return azimuthUnitMap.get( s.toLowerCase( ) );
+	}
+
+	public static Unit<Angle> parseInclinationUnit( String s )
+	{
+		return inclinationUnitMap.get( s.toLowerCase( ) );
 	}
 
 	public static Unit<Length> parseDistanceUnitSuffix( String s )

@@ -31,6 +31,8 @@ import org.breakout.table.ShotColumnDefs;
 import org.breakout.table.ShotTableColumnModel;
 import org.breakout.table.ShotTableModel;
 import org.breakout.table.ShotTableModelCopier;
+import org.breakout.table.SurveyDataColumnDef;
+import org.breakout.table.SurveyDataColumnType;
 import org.breakout.table.SurveyDataFormatter;
 import org.breakout.table.SurveyDataList;
 import org.breakout.table.SurveyDataTable;
@@ -48,7 +50,7 @@ public class BigImportTest1
 
 			WallsImporter importer = new WallsImporter( i18n );
 
-			importer.importSrvFile( Paths.get( "src/test/java/org/andork/breakout/wallsimport/vectorTest1.srv" ) , null );
+			importer.importSrvFile( Paths.get( "src/test/java/org/breakout/wallsimport/vectorTest1.srv" ) , null );
 			SurveyDataList<Shot> shotList = importer.getOutputModel( ).get( SurveyModel.shotList );
 
 			QObject<SurveyModel> projModel = QArrayObject.create( SurveyModel.spec );
@@ -90,7 +92,8 @@ public class BigImportTest1
 				ShotColumnDefs.xSectionAtFrom ,
 				ShotColumnDefs.xSectionAtTo ,
 				ShotColumnDefs.lengthUnit ,
-				ShotColumnDefs.angleUnit
+				ShotColumnDefs.angleUnit ,
+				new SurveyDataColumnDef( "Line Comment" , SurveyDataColumnType.STRING )
 				) );
 
 			columnModel.vectorColumn.setPreferredWidth( 300 );

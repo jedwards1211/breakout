@@ -214,7 +214,7 @@ public class LineTokenizer
 
 	/**
 	 * Pulls the longest {@link ValueToken} starting at the current position whose image (to lowercase) is a key in the
-	 * given map.
+	 * given map. This is used for parsing units.
 	 * 
 	 * @param map
 	 *            a map whose keys represent valid tokens that can be pulled and their associated value representations.
@@ -238,5 +238,75 @@ public class LineTokenizer
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Pulls all remaining text from the current position to the end of the line.
+	 * 
+	 * @return a {@link Token} representing the text from the current position to the end of the line.
+	 */
+	public Token pullRemaining( )
+	{
+		return pull( c -> true );
+	}
+
+	/**
+	 * If there is a quote at the current position, pulls up through the end quote, taking some escaped characters into
+	 * account.
+	 * 
+	 * @return a {@link ValueToken} whose value represents the text pulled (if it was quoted, the value will be
+	 *         unescaped).
+	 */
+	public ValueToken<String> pullNonWhitespaceOrQuoted( )
+	{
+		if( line.charAt( position ) == '"' )
+		{
+			StringBuilder sb = new StringBuilder( );
+
+			for( int i = position + 1 ; i < line.length( ) ; i++ )
+			{
+				char c = line.charAt( i );
+				switch( c )
+				{
+				case '\\':
+					if( i == line.length( ) - 1 )
+					{
+						return null;
+					}
+					i++;
+					c = line.charAt( i );
+					switch( c )
+					{
+					case 'n':
+						sb.append( '\n' );
+						continue;
+					case 'r':
+						sb.append( '\r' );
+						continue;
+					case 't':
+						sb.append( '\t' );
+						continue;
+					default:
+						sb.append( line.charAt( i ) );
+						continue;
+					}
+				case '"':
+					ValueToken<String> result = new ValueToken<String>(
+						lineNumber , position , lineNumber , i , line.substring( position , i + 1 ) , sb.toString( ) );
+					position = i + 1;
+					return result;
+				default:
+					sb.append( c );
+					continue;
+				}
+			}
+
+			return null;
+		}
+		else
+		{
+			Token token = pull( LineTokenizer::isNotWhitespace );
+			return token != null ? new ValueToken<String>( token.image , token ) : null;
+		}
 	}
 }

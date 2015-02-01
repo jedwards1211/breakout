@@ -7,11 +7,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.andork.i18n.I18n;
@@ -21,26 +24,29 @@ import org.andork.q2.QObject;
 import org.andork.swing.async.Subtask;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
+import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
+import org.andork.util.StringUtils;
 import org.breakout.parse.LineTokenizer;
 import org.breakout.parse.Token;
 import org.breakout.parse.ValueToken;
 import org.breakout.table.DaiShotVector;
 import org.breakout.table.LrudXSection;
+import org.breakout.table.LrudXSection.FacingAzimuth;
 import org.breakout.table.NevShotVector;
 import org.breakout.table.ParsedTextWithType;
 import org.breakout.table.Shot;
 import org.breakout.table.ShotVector;
 import org.breakout.table.ShotVectorType;
 import org.breakout.table.Station;
+import org.breakout.table.SurveyDataColumnDef;
+import org.breakout.table.SurveyDataColumnType;
 import org.breakout.table.SurveyDataList;
 import org.breakout.table.SurveyModel;
 import org.breakout.table.XSection;
 import org.breakout.table.XSectionType;
-import org.breakout.table.LrudXSection.FacingAzimuth;
 import org.breakout.wallsimport.WallsImportMessage.Severity;
 import org.breakout.wallsimport.WallsUnits.LrudType;
-import org.breakout.wallsimport.WallsUnits.TapeType;
 
 /**
  * Imports survey data from the format for David McKenzie's Walls program.
@@ -50,32 +56,38 @@ import org.breakout.wallsimport.WallsUnits.TapeType;
  */
 public class WallsImporter
 {
-	private static final Pattern	BEGIN_LRUD_PATTERN	= Pattern.compile( "[<*]" );
-	private static final Pattern	END_LRUD_PATTERN	= Pattern.compile( "[>*]" );
-	private static final Pattern	LRUD_DELIMITER		= Pattern.compile( "\\s+|\\s*,\\s*" );
+	private static final Pattern		BEGIN_LRUD_PATTERN			= Pattern.compile( "[<*]" );
+	private static final Pattern		END_LRUD_PATTERN			= Pattern.compile( "[>*]" );
+	private static final Pattern		LRUD_DELIMITER				= Pattern.compile( "\\s+|\\s*,\\s*" );
 
-	Stack<WallsUnits>				stack				= new Stack<>( );
-	WallsUnits						units				= new WallsUnits( );
-	QObject<SurveyModel>			outputModel;
+	private static final Pattern		PREFIX_PATTERN				= Pattern.compile( "pre(fix)?([123])?" );
+	Stack<WallsUnits>					stack						= new Stack<>( );
+	WallsUnits							units						= new WallsUnits( );
+	QObject<SurveyModel>				outputModel;
 
-	Map<String, String>				macros				= new HashMap<>( );
+	Map<String, String>					macros						= new HashMap<>( );
 
-	String							globalComments		= "";
-	String							localComments		= "";
+	String								globalComments				= "";
+	String								localComments				= "";
 
-	final List<WallsImportMessage>	statusMessages		= new ArrayList<WallsImportMessage>( );
+	final List<WallsImportMessage>		statusMessages				= new ArrayList<WallsImportMessage>( );
 
-	I18n							i18n;
-	Localizer						localizer;
+	I18n								i18n;
+	Localizer							localizer;
 
-	Path							pathToSourceFile;
-	String							line;
-	String							preprocessedLine;
-	int								lineNumber;
-	LineTokenizer					lineTokenizer;
-	int								blockCommentLevel;
+	Path								pathToSourceFile;
+	String								line;
+	String								preprocessedLine;
+	int									lineNumber;
+	LineTokenizer						lineTokenizer;
+	int									blockCommentLevel;
 
-	WallsParser						parser;
+	WallsParser							parser;
+
+	private int							SHOT_CUSTOM_COLUMN_COUNT	= 1;
+	private int							SHOT_LINE_COMMENT_COLUMN	= 0;
+
+	private final Map<String, Runnable>	unitsOptionHandlers;
 
 	public WallsImporter( I18n i18n )
 	{
@@ -85,8 +97,70 @@ public class WallsImporter
 		parser = new WallsParser( i18n );
 
 		outputModel = new QArrayObject<>( SurveyModel.spec );
-		outputModel.set( SurveyModel.shotList , new SurveyDataList<>( new Shot( ) ) );
-		outputModel.set( SurveyModel.stationList , new SurveyDataList<>( new Station( ) ) );
+		SurveyDataList<Shot> shotList = new SurveyDataList<>( new Shot( ) );
+		shotList.setCustomColumnDefs( Arrays.asList( new SurveyDataColumnDef( "Line Comment" ,
+			SurveyDataColumnType.STRING ) ) );
+		SurveyDataList<Station> stationList = new SurveyDataList<>( new Station( ) );
+		stationList.setCustomColumnDefs( Arrays.asList( new SurveyDataColumnDef( "Line Comment" ,
+			SurveyDataColumnType.STRING ) ) );
+		outputModel.set( SurveyModel.shotList , shotList );
+		outputModel.set( SurveyModel.stationList , stationList );
+
+		unitsOptionHandlers = Collections.unmodifiableMap( createUnitsOptionHandlers( ) );
+	}
+
+	private Map<String, Runnable> createUnitsOptionHandlers( )
+	{
+		Map<String, Runnable> result = new HashMap<>( );
+
+		Runnable metersHandler = ( ) ->
+		{
+			units.d_unit = units.s_unit = Length.meters;
+		};
+
+		result.put( "m" , metersHandler );
+		result.put( "meters" , metersHandler );
+
+		Runnable feetHandler = ( ) ->
+		{
+			units.d_unit = units.s_unit = Length.feet;
+		};
+
+		result.put( "f" , feetHandler );
+		result.put( "feet" , feetHandler );
+
+		result.put( "d" , ( ) ->
+		{
+			pullRequiredEquals( );
+			units.d_unit = pullRequiredDistanceUnit( );
+		} );
+		result.put( "s" , ( ) ->
+		{
+			pullRequiredEquals( );
+			units.s_unit = pullRequiredDistanceUnit( );
+		} );
+
+		return result;
+	}
+
+	private void pullRequiredEquals( )
+	{
+		if( lineTokenizer.pull( '=' ) == null )
+		{
+			throwMessage( Severity.ERROR , "expectedEqualsSign" , lineTokenizer.lineNumber( ) ,
+				lineTokenizer.columnNumber( ) );
+		}
+	}
+
+	private Unit<Length> pullRequiredDistanceUnit( )
+	{
+		Token token = lineTokenizer.pull( LineTokenizer::isNotWhitespace );
+		Unit<Length> unit = parser.parseDistanceUnit( token == null ? "" : token.image );
+		if( unit == null )
+		{
+			throwMessage( Severity.ERROR , "expectedDistanceUnit" , token.beginLine , token.beginColumn );
+		}
+		return unit;
 	}
 
 	public QObject<SurveyModel> getOutputModel( )
@@ -129,13 +203,26 @@ public class WallsImporter
 		lineNumber++;
 
 		line = line.trim( );
-		lineTokenizer = new LineTokenizer( line , lineNumber );
+
+		if( line.charAt( 0 ) == '#' )
+		{
+			// Process macros
+
+			StringBuilder sb = new StringBuilder( line );
+			replaceMacroReferences( sb );
+			preprocessedLine = sb.toString( );
+			lineTokenizer = new LineTokenizer( preprocessedLine , lineNumber );
+		}
+		else
+		{
+			lineTokenizer = new LineTokenizer( line , lineNumber );
+		}
 
 		lineTokenizer.pull( Character::isWhitespace );
 
 		if( lineTokenizer.pull( '#' ) != null )
 		{
-
+			parseDirectiveLine( );
 		}
 		else if( lineTokenizer.pull( ';' ) != null )
 		{
@@ -157,11 +244,126 @@ public class WallsImporter
 		}
 	}
 
+	private void parseDirectiveLine( )
+	{
+		Token token = lineTokenizer.pull( LineTokenizer::isNotWhitespace );
+		String directive = token.image.toLowerCase( );
+
+		Integer prefixIndex;
+
+		if( directive.equals( "[" ) )
+		{
+			blockCommentLevel++;
+		}
+		else if( directive.equals( "]" ) )
+		{
+			if( blockCommentLevel == 0 )
+			{
+				throwMessage( Severity.ERROR , localizer.getString( "missingOpenBlockComment" ) ,
+					token.beginLine , token.beginColumn );
+			}
+			blockCommentLevel--;
+		}
+		else if( blockCommentLevel > 0 )
+		{
+			return;
+		}
+		else if( directive.equals( "units" ) )
+		{
+			parseUnits( );
+		}
+		else if( ( prefixIndex = prefixIndex( directive ) ) != null )
+		{
+			parsePrefix( prefixIndex );
+		}
+	}
+
+	private void parseUnits( )
+	{
+		while( !lineTokenizer.isAtEnd( ) )
+		{
+			lineTokenizer.pull( Character::isWhitespace );
+
+			if( lineTokenizer.pull( '$' ) != null )
+			{
+				parseMacroDefinition( );
+			}
+			else
+			{
+				Token optionName = lineTokenizer.pull( c -> !Character.isWhitespace( c ) && c != '=' && c != ';' );
+				if( optionName == null )
+				{
+					break;
+				}
+				Runnable r = unitsOptionHandlers.get( optionName.image.toLowerCase( ) );
+				if( r == null )
+				{
+					throwMessage( Severity.ERROR , "invalidUnitsOption" , optionName.beginLine , optionName.beginColumn );
+				}
+				r.run( );
+			}
+		}
+	}
+
+	private void parseMacroDefinition( )
+	{
+		Token macroName = lineTokenizer.pull( c -> !Character.isWhitespace( c ) && c != '=' && c != ';' );
+		if( macroName == null )
+		{
+			throwMessage( Severity.ERROR , localizer.getString( "missingMacroName" ) ,
+				lineTokenizer.lineNumber( ) , lineTokenizer.columnNumber( ) );
+		}
+
+		String newValue = "";
+
+		if( lineTokenizer.pull( '=' ) != null )
+		{
+			ValueToken<String> value = lineTokenizer.pullNonWhitespaceOrQuoted( );
+			if( value != null )
+			{
+				newValue = value.value;
+			}
+		}
+
+		macros.put( macroName.image , newValue );
+	}
+
+	private void parsePrefix( int prefixIndex )
+	{
+		lineTokenizer.pull( Character::isWhitespace );
+		Token prefixToken = lineTokenizer.pull( c -> c != ';' );
+		String prefix = prefixToken == null ? "" : prefixToken.image.trim( );
+
+		while( units.prefix.size( ) <= prefixIndex )
+		{
+			units.prefix.add( "" );
+		}
+		units.prefix.set( prefixIndex , prefix );
+
+		// remove trailing empty prefixes
+
+		while( units.prefix.size( ) > 0 && StringUtils.isNullOrEmpty( units.prefix.get( units.prefix.size( ) - 1 ) ) )
+		{
+			units.prefix.remove( units.prefix.size( ) - 1 );
+		}
+	}
+
+	private Integer prefixIndex( String directive )
+	{
+		Matcher m = PREFIX_PATTERN.matcher( directive );
+		if( m.matches( ) )
+		{
+			return m.group( 2 ) == null ? 0 : Integer.parseInt( m.group( 2 ) ) - 1;
+		}
+		return null;
+	}
+
 	public Shot parseVectorLine( LineTokenizer lineTokenizer )
 	{
 		// at this point we're assuming it will be a valid vector line; other possibilities have been ruled out.
 
 		Shot shot = new Shot( );
+		shot.setCustom( new Object[ SHOT_CUSTOM_COLUMN_COUNT ] );
 
 		lineTokenizer.pull( Character::isWhitespace );
 
@@ -199,6 +401,29 @@ public class WallsImporter
 		}
 
 		lineTokenizer.pull( Character::isWhitespace );
+
+		// INSTRUMENT HEIGHT
+
+		ValueToken<UnitizedDouble<Length>> token = parser.pullSignedDistance( lineTokenizer , units.s_unit ,
+			this::logMessage );
+
+		if( token != null )
+		{
+			coerceDaiShotVector( shot ).setInstrumentHeight( token.value.add( units.incs ) );
+
+			lineTokenizer.pull( Character::isWhitespace );
+
+			// TARGET HEIGHT
+
+			token = parser.pullSignedDistance( lineTokenizer , units.s_unit , this::logMessage );
+
+			if( token != null )
+			{
+				coerceDaiShotVector( shot ).setTargetHeight( token.value.add( units.incs ).add( units.inch ) );
+
+				lineTokenizer.pull( Character::isWhitespace );
+			}
+		}
 
 		// LRUDs
 
@@ -247,6 +472,14 @@ public class WallsImporter
 				throwMessage( Severity.ERROR , localizer.getString( "expectedEndLruds" ) ,
 					lineTokenizer.lineNumber( ) , lineTokenizer.columnNumber( ) );
 			}
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		if( lineTokenizer.pull( ';' ) != null )
+		{
+			Token comment = lineTokenizer.pullRemaining( );
+			shot.getCustom( )[ SHOT_LINE_COMMENT_COLUMN ] = comment.image;
 		}
 
 		return shot;
