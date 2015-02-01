@@ -231,8 +231,7 @@ public class WallsImporter
 				this::logMessage );
 			if( angle != null )
 			{
-				coerceLrudXSection( shot ).setAngle(
-					new FacingAzimuth( angle.value.doubleValue( shot.getAngleUnit( ) ) ) );
+				coerceLrudXSection( shot ).setAngle( new FacingAzimuth( angle.value ) );
 				coerceXSectionParsedText( shot ).setType( XSectionType.LRUD_WITH_FACING_AZIMUTH );
 			}
 			else
@@ -430,69 +429,6 @@ public class WallsImporter
 		throw new WallsImportMessageException( createMessage( severity , message , line , column ) );
 	}
 
-	private void adjustVector( Shot shot , UnitizedDouble<Length> instrumentHeightAboveStation ,
-		UnitizedDouble<Length> targetHeightAboveStation )
-	{
-		DaiShotVector vector = coerceDaiShotVector( shot );
-
-		double distance = vector.getDistance( );
-
-		double azimuthRad = Angle.type.convert(
-			average( vector.getFrontsightAzimuth( ) , vector.getBacksightAzimuth( ) ) ,
-			shot.getAngleUnit( ) , Angle.radians );
-
-		double inclination = average( vector.getFrontsightInclination( ) , vector.getBacksightInclination( ) );
-		double inclinationRad = Angle.type.convert( inclination , shot.getAngleUnit( ) , Angle.radians );
-
-		// compute the (north, east, up) components of the vector
-
-		double up = Math.sin( inclinationRad ) * distance;
-		double north = Math.cos( azimuthRad ) * Math.cos( inclinationRad ) * distance;
-		double east = Math.sin( azimuthRad ) * Math.cos( inclinationRad ) * distance;
-
-		// apply height adjustments to up
-
-		if( instrumentHeightAboveStation != null )
-		{
-			up += instrumentHeightAboveStation.doubleValue( shot.getLengthUnit( ) );
-			// apply correction to the instrument height measurement...
-			up += units.incs.doubleValue( shot.getLengthUnit( ) );
-		}
-		if( targetHeightAboveStation != null )
-		{
-			up -= targetHeightAboveStation.doubleValue( shot.getLengthUnit( ) );
-			// apply correction to the instrument height measurement...
-			up -= units.incs.doubleValue( shot.getLengthUnit( ) );
-		}
-		// apply systematic height correction...
-		up += units.inch.doubleValue( shot.getLengthUnit( ) );
-
-		// recompute distance and inclination from (north, east, adjusted up)
-
-		vector.setDistance( Math.sqrt( north * north + east * east + up * up ) );
-		double northEast = Math.sqrt( north * north + east * east );
-		double newInclinationRad = Math.atan2( up , northEast );
-		double newInclination = Angle.type.convert( newInclinationRad , Angle.radians , shot.getAngleUnit( ) );
-
-		// adjust the frontsight and backsight inclination of the shot by the amount the average inclination
-		// changed.
-
-		if( vector.getFrontsightInclination( ) != null )
-		{
-			vector.setFrontsightInclination( vector.getFrontsightInclination( ) + newInclination - inclination );
-		}
-		if( vector.getBacksightInclination( ) != null )
-		{
-			vector.setBacksightInclination( vector.getBacksightInclination( ) + newInclination - inclination );
-		}
-	}
-
-	private static double average( Double frontsightAzimuth , Double backsightAzimuth )
-	{
-		return frontsightAzimuth == null ? backsightAzimuth : backsightAzimuth == null ? frontsightAzimuth
-			: ( frontsightAzimuth + backsightAzimuth ) * 0.5;
-	}
-
 	private class VectorElementParser implements VectorElementVisitor
 	{
 		private Shot	shot;
@@ -513,13 +449,7 @@ public class WallsImporter
 					lineTokenizer.columnNumber( ) );
 			}
 
-			if( shot.getLengthUnit( ) == null )
-			{
-				shot.setLengthUnit( distance.value.unit );
-			}
-
-			coerceDaiShotVector( shot ).setDistance( distance.value.doubleValue( shot.getLengthUnit( ) ) +
-				units.incd.doubleValue( shot.getLengthUnit( ) ) );
+			coerceDaiShotVector( shot ).setDistance( distance.value.add( units.incd ) );
 		}
 
 		@Override
@@ -538,20 +468,13 @@ public class WallsImporter
 					lineTokenizer.columnNumber( ) );
 			}
 
-			if( shot.getAngleUnit( ) == null )
-			{
-				shot.setAngleUnit( fs.value.unit );
-			}
-
 			if( fs != null )
 			{
-				coerceDaiShotVector( shot ).setFrontsightAzimuth( fs.value.doubleValue( shot.getAngleUnit( ) ) +
-					units.inca.doubleValue( shot.getAngleUnit( ) ) + units.decl.doubleValue( shot.getAngleUnit( ) ) );
+				coerceDaiShotVector( shot ).setFrontsightAzimuth( fs.value.add( units.inca ).add( units.decl ) );
 			}
 			if( bs != null && ( fs == null || !units.typeab_noAverage ) )
 			{
-				coerceDaiShotVector( shot ).setBacksightAzimuth( bs.value.doubleValue( shot.getAngleUnit( ) ) +
-					units.incab.doubleValue( shot.getAngleUnit( ) ) + units.decl.doubleValue( shot.getAngleUnit( ) ) );
+				coerceDaiShotVector( shot ).setBacksightAzimuth( bs.value.add( units.incab ).add( units.decl ) );
 			}
 		}
 
@@ -572,25 +495,18 @@ public class WallsImporter
 					lineTokenizer.columnNumber( ) );
 			}
 
-			if( shot.getAngleUnit( ) == null )
-			{
-				shot.setAngleUnit( fs.value.unit );
-			}
-
 			if( fs != null )
 			{
-				coerceDaiShotVector( shot ).setFrontsightInclination( fs.value.doubleValue( shot.getAngleUnit( ) ) +
-					units.incv.doubleValue( shot.getAngleUnit( ) ) );
+				coerceDaiShotVector( shot ).setFrontsightInclination( fs.value.add( units.incv ) );
 			}
 			if( bs != null && ( fs == null || !units.typevb_noAverage ) )
 			{
-				double value = bs.value.doubleValue( shot.getAngleUnit( ) );
+				UnitizedDouble<Angle> value = bs.value;
 				if( units.typeab_corrected != units.typevb_corrected )
 				{
-					value = -value;
+					value = value.negate( );
 				}
-				coerceDaiShotVector( shot ).setBacksightInclination(
-					value + units.incvb.doubleValue( shot.getAngleUnit( ) ) );
+				coerceDaiShotVector( shot ).setBacksightInclination( value.add( units.incvb ) );
 			}
 		}
 
@@ -605,12 +521,7 @@ public class WallsImporter
 					lineTokenizer.columnNumber( ) );
 			}
 
-			if( shot.getLengthUnit( ) == null )
-			{
-				shot.setLengthUnit( east.value.unit );
-			}
-
-			coerceNevShotVector( shot ).setEastOffset( east.value.doubleValue( shot.getLengthUnit( ) ) );
+			coerceNevShotVector( shot ).setEastOffset( east.value );
 		}
 
 		@Override
@@ -624,12 +535,7 @@ public class WallsImporter
 					lineTokenizer.columnNumber( ) );
 			}
 
-			if( shot.getLengthUnit( ) == null )
-			{
-				shot.setLengthUnit( north.value.unit );
-			}
-
-			coerceNevShotVector( shot ).setNorthOffset( north.value.doubleValue( shot.getLengthUnit( ) ) );
+			coerceNevShotVector( shot ).setNorthOffset( north.value );
 		}
 
 		@Override
@@ -643,12 +549,7 @@ public class WallsImporter
 					lineTokenizer.columnNumber( ) );
 			}
 
-			if( shot.getLengthUnit( ) == null )
-			{
-				shot.setLengthUnit( up.value.unit );
-			}
-
-			coerceNevShotVector( shot ).setVerticalOffset( up.value.doubleValue( shot.getLengthUnit( ) ) );
+			coerceNevShotVector( shot ).setVerticalOffset( up.value );
 		}
 	}
 
@@ -661,7 +562,7 @@ public class WallsImporter
 			this.shot = shot;
 		}
 
-		private void handleLrudElement( Consumer<Double> setter )
+		private void handleLrudElement( Consumer<UnitizedDouble<Length>> setter )
 		{
 			ValueToken<UnitizedDouble<Length>> dist = parser.pullUnsignedDistance( lineTokenizer , units.s_unit ,
 				WallsImporter.this::logMessage );
@@ -672,7 +573,7 @@ public class WallsImporter
 					lineTokenizer.columnNumber( ) );
 			}
 
-			setter.accept( dist.value.doubleValue( shot.getLengthUnit( ) ) );
+			setter.accept( dist.value );
 		}
 
 		@Override
