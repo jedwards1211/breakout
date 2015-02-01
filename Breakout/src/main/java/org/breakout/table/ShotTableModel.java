@@ -14,8 +14,7 @@ public class ShotTableModel extends SurveyDataTableModel<Shot>
 	public final SurveyDataModelColumn	vectorColumn;
 	public final SurveyDataModelColumn	xSectionAtFromColumn;
 	public final SurveyDataModelColumn	xSectionAtToColumn;
-	public final SurveyDataModelColumn	lengthUnitColumn;
-	public final SurveyDataModelColumn	angleUnitColumn;
+
 	public ShotTableModel( )
 	{
 		fromStationNameColumn = new DefaultColumn(
@@ -37,14 +36,6 @@ public class ShotTableModel extends SurveyDataTableModel<Shot>
 		xSectionAtToColumn = new DefaultColumn(
 			ShotColumnDefs.xSectionAtTo , s -> s.getXSectionAtTo( ) ,
 			( s , v ) -> s.setXSectionAtTo( ( ParsedTextWithType<XSection> ) v ) );
-
-		lengthUnitColumn = new UnitColumn(
-			ShotColumnDefs.lengthUnit , s -> s.getLengthUnit( ) ,
-			( s , u ) -> s.setLengthUnit( ( Unit<Length> ) u ) );
-
-		angleUnitColumn = new UnitColumn(
-			ShotColumnDefs.angleUnit , s -> s.getAngleUnit( ) ,
-			( s , u ) -> s.setAngleUnit( ( Unit<Angle> ) u ) );
 	}
 
 	@Override
@@ -55,7 +46,5 @@ public class ShotTableModel extends SurveyDataTableModel<Shot>
 		result.add( vectorColumn );
 		result.add( xSectionAtFromColumn );
 		result.add( xSectionAtToColumn );
-		result.add( lengthUnitColumn );
-		result.add( angleUnitColumn );
 	}
 }

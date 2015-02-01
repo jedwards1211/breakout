@@ -19,8 +19,6 @@ public class Shot extends SurveyDataRow
 	private ParsedTextWithType<ShotVector>	vector;
 	private ParsedTextWithType<XSection>	xSectionAtFrom;
 	private ParsedTextWithType<XSection>	xSectionAtTo;
-	private Unit<Length>					lengthUnit;
-	private Unit<Angle>						angleUnit;
 	private Object[ ]						custom;
 
 	public String getFromStationName( )
@@ -71,26 +69,6 @@ public class Shot extends SurveyDataRow
 	public void setXSectionAtTo( ParsedTextWithType<XSection> xSectionAtTo )
 	{
 		this.xSectionAtTo = xSectionAtTo;
-	}
-
-	public Unit<Length> getLengthUnit( )
-	{
-		return lengthUnit;
-	}
-
-	public void setLengthUnit( Unit<Length> lengthUnit )
-	{
-		this.lengthUnit = lengthUnit;
-	}
-
-	public Unit<Angle> getAngleUnit( )
-	{
-		return angleUnit;
-	}
-
-	public void setAngleUnit( Unit<Angle> angleUnit )
-	{
-		this.angleUnit = angleUnit;
 	}
 
 	public Object[ ] getCustom( )
@@ -157,8 +135,6 @@ public class Shot extends SurveyDataRow
 		result.vector = ( ParsedTextWithType<ShotVector> ) subcloner.apply( vector );
 		result.xSectionAtFrom = ( ParsedTextWithType<XSection> ) subcloner.apply( xSectionAtFrom );
 		result.xSectionAtTo = ( ParsedTextWithType<XSection> ) subcloner.apply( xSectionAtTo );
-		result.lengthUnit = lengthUnit;
-		result.angleUnit = angleUnit;
 		result.custom = Cloners.cloneArray( custom , subcloner );
 		return result;
 	}

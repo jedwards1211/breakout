@@ -398,8 +398,8 @@ public class WallsImporter
 		if( ! ( text.getValue( ) instanceof LrudXSection ) )
 		{
 			LrudXSection value = new LrudXSection( );
-			value.setAngle( bisector ? LrudXSection.Angle.BISECTOR
-				: LrudXSection.Angle.PERPENDICULAR );
+			value.setAngle( bisector ? LrudXSection.XAngle.BISECTOR
+				: LrudXSection.XAngle.PERPENDICULAR );
 			text.setValue( value );
 		}
 		return ( LrudXSection ) text.getValue( );

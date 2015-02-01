@@ -2,22 +2,26 @@ package org.breakout.table;
 
 import java.util.function.Function;
 
+import org.andork.unit.Length;
+import org.andork.unit.UnitizedDouble;
+
 /**
  * A north, east, and vertical offset between to survey stations.
  */
 public class NevShotVector extends ShotVector
 {
-	private Double	northOffset;
-	private Double	eastOffset;
-	private Double	verticalOffset;
-	private boolean	downwardIsPositive;
+	private UnitizedDouble<Length>	northOffset;
+	private UnitizedDouble<Length>	eastOffset;
+	private UnitizedDouble<Length>	verticalOffset;
+	private boolean					downwardIsPositive;
 
 	public NevShotVector( )
 	{
 
 	}
 
-	public NevShotVector( Double northOffset , Double eastOffset , Double verticalOffset , boolean downwardIsPositive )
+	public NevShotVector( UnitizedDouble<Length> northOffset , UnitizedDouble<Length> eastOffset ,
+		UnitizedDouble<Length> verticalOffset , boolean downwardIsPositive )
 	{
 		super( );
 		this.northOffset = northOffset;
@@ -26,32 +30,32 @@ public class NevShotVector extends ShotVector
 		this.downwardIsPositive = downwardIsPositive;
 	}
 
-	public Double getNorthOffset( )
+	public UnitizedDouble<Length> getNorthOffset( )
 	{
 		return northOffset;
 	}
 
-	public void setNorthOffset( Double northOffset )
+	public void setNorthOffset( UnitizedDouble<Length> northOffset )
 	{
 		this.northOffset = northOffset;
 	}
 
-	public Double getEastOffset( )
+	public UnitizedDouble<Length> getEastOffset( )
 	{
 		return eastOffset;
 	}
 
-	public void setEastOffset( Double eastOffset )
+	public void setEastOffset( UnitizedDouble<Length> eastOffset )
 	{
 		this.eastOffset = eastOffset;
 	}
 
-	public Double getVerticalOffset( )
+	public UnitizedDouble<Length> getVerticalOffset( )
 	{
 		return verticalOffset;
 	}
 
-	public void setVerticalOffset( Double verticalOffset )
+	public void setVerticalOffset( UnitizedDouble<Length> verticalOffset )
 	{
 		this.verticalOffset = verticalOffset;
 	}

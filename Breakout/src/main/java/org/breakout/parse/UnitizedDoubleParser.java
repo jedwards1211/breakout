@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.andork.unit.Unit;
 import org.andork.unit.UnitNameType;
@@ -22,6 +23,8 @@ public class UnitizedDoubleParser<T extends UnitType<T>>
 	protected int					unitsMaxLength;
 	protected boolean				allowWhitespace;
 
+	protected static final Pattern	OMIT_PATTERN	= Pattern.compile( "-+" );
+
 	public UnitizedDoubleParser<T> numberFormat( GenericFormat<Double> numberFormat )
 	{
 		this.numberFormat = numberFormat;
@@ -33,6 +36,11 @@ public class UnitizedDoubleParser<T extends UnitType<T>>
 		this.units = Collections.unmodifiableList( new ArrayList<>( units ) );
 		rebuildUnitMap( );
 		return this;
+	}
+
+	public Unit<T> defaultUnit( )
+	{
+		return defaultUnit;
 	}
 
 	public UnitizedDoubleParser<T> defaultUnit( Unit<T> defaultUnit )
@@ -75,8 +83,8 @@ public class UnitizedDoubleParser<T extends UnitType<T>>
 		{
 			for( UnitNameType type : UnitNameType.values( ) )
 			{
-				result.put( unitNames.getName( unit , 1 , type ) , unit );
-				result.put( unitNames.getName( unit , 2 , type ) , unit );
+				result.put( unitNames.getName( unit , 1 , type ).toLowerCase( ) , unit );
+				result.put( unitNames.getName( unit , 2 , type ).toLowerCase( ) , unit );
 			}
 		}
 		return result;
@@ -93,7 +101,7 @@ public class UnitizedDoubleParser<T extends UnitType<T>>
 		int pos = lineTokenizer.position( );
 		pullWhitespaceIfAllowed( lineTokenizer );
 
-		ValueToken<Unit<T>> unit = lineTokenizer.pull( unitMap , unitsMaxLength );
+		ValueToken<Unit<T>> unit = lineTokenizer.pullLowercase( unitMap , unitsMaxLength );
 		if( unit == null )
 		{
 			lineTokenizer.position( pos );

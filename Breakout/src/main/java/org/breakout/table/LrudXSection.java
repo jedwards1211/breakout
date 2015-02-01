@@ -2,6 +2,9 @@ package org.breakout.table;
 
 import java.util.function.Function;
 
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.UnitizedDouble;
 import org.andork.util.PowerCloneable;
 
 /**
@@ -16,44 +19,44 @@ public class LrudXSection extends UdXSection
 	 * 
 	 * @author James
 	 */
-	public static class Angle
+	public static class XAngle
 	{
 		/**
 		 * Indicates an {@link LrudXSection} is perpendicular to its {@link Shot}.
 		 */
-		public static final Angle	PERPENDICULAR	= new Angle( );
+		public static final XAngle	PERPENDICULAR	= new XAngle( );
 		/**
 		 * Indicates an {@link LrudXSection} bisects the angle between two {@link Shot}s.
 		 */
-		public static final Angle	BISECTOR		= new Angle( );
+		public static final XAngle	BISECTOR		= new XAngle( );
 
-		private Angle( )
+		private XAngle( )
 		{
 
 		}
 	}
 
-	public static class FacingAzimuth extends Angle implements PowerCloneable
+	public static class FacingAzimuth extends XAngle implements PowerCloneable
 	{
-		private Double	azimuth;
+		private UnitizedDouble<Angle>	azimuth;
 
 		public FacingAzimuth( )
 		{
 
 		}
 
-		public FacingAzimuth( Double azimuth )
+		public FacingAzimuth( UnitizedDouble<Angle> azimuth )
 		{
 			super( );
 			this.azimuth = azimuth;
 		}
 
-		public Double getAzimuth( )
+		public UnitizedDouble<Angle> getAzimuth( )
 		{
 			return azimuth;
 		}
 
-		public void setAzimuth( Double azimuth )
+		public void setAzimuth( UnitizedDouble<Angle> azimuth )
 		{
 			this.azimuth = azimuth;
 		}
@@ -65,36 +68,36 @@ public class LrudXSection extends UdXSection
 		}
 	}
 
-	private Double				left;
-	private Double				right;
-	private LrudXSection.Angle	angle;
+	private UnitizedDouble<Length>				left;
+	private UnitizedDouble<Length>				right;
+	private LrudXSection.XAngle	angle;
 
-	public Double getLeft( )
+	public UnitizedDouble<Length> getLeft( )
 	{
 		return left;
 	}
 
-	public void setLeft( Double left )
+	public void setLeft( UnitizedDouble<Length> left )
 	{
 		this.left = left;
 	}
 
-	public Double getRight( )
+	public UnitizedDouble<Length> getRight( )
 	{
 		return right;
 	}
 
-	public void setRight( Double right )
+	public void setRight( UnitizedDouble<Length> right )
 	{
 		this.right = right;
 	}
 
-	public LrudXSection.Angle getAngle( )
+	public LrudXSection.XAngle getAngle( )
 	{
 		return angle;
 	}
 
-	public void setAngle( LrudXSection.Angle angle )
+	public void setAngle( LrudXSection.XAngle angle )
 	{
 		this.angle = angle;
 	}
@@ -111,7 +114,7 @@ public class LrudXSection extends UdXSection
 		LrudXSection result = ( LrudXSection ) super.clone( subcloner );
 		result.left = left;
 		result.right = right;
-		result.angle = ( Angle ) subcloner.apply( angle );
+		result.angle = ( XAngle ) subcloner.apply( angle );
 		return result;
 	}
 }

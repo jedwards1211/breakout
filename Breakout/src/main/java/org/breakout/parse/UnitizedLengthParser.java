@@ -3,7 +3,6 @@ package org.breakout.parse;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
-import org.andork.unit.Angle;
 import org.andork.unit.EnglishUnitNames;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
@@ -27,7 +26,7 @@ public class UnitizedLengthParser extends UnitizedDoubleParser<Length>
 			} )
 			.allowWhitespace( true );
 
-		LineTokenizer lineTokenizer = new LineTokenizer( "30 kilometers40m 20y -50 ' 1inches 4 in 22mi" , 0 );
+		LineTokenizer lineTokenizer = new LineTokenizer( "30 kilometers40m 20y -50 ' 1inches 4 inch 22mi" , 0 );
 		while( !lineTokenizer.isAtEnd( ) )
 		{
 			lineTokenizer.pull( Character::isWhitespace );
@@ -40,6 +39,12 @@ public class UnitizedLengthParser extends UnitizedDoubleParser<Length>
 		}
 	}
 
+	public ValueToken<UnitizedDouble<Length>> pullOptionalLength( LineTokenizer lineTokenizer )
+	{
+		ValueToken<UnitizedDouble<Length>> result = pullLength( lineTokenizer );
+		return result != null ? result : lineTokenizer.pull( OMIT_PATTERN , s -> null );
+	}
+
 	public ValueToken<UnitizedDouble<Length>> pullLength( LineTokenizer lineTokenizer )
 	{
 		ValueToken<Double> value = lineTokenizer.pull( numberFormat );
@@ -50,7 +55,7 @@ public class UnitizedLengthParser extends UnitizedDoubleParser<Length>
 		int pos = lineTokenizer.position( );
 		pullWhitespaceIfAllowed( lineTokenizer );
 
-		ValueToken<Unit<Length>> unit = lineTokenizer.pull( unitMap , unitsMaxLength );
+		ValueToken<Unit<Length>> unit = lineTokenizer.pullLowercase( unitMap , unitsMaxLength );
 		if( unit == null )
 		{
 			lineTokenizer.position( pos );
@@ -77,6 +82,7 @@ public class UnitizedLengthParser extends UnitizedDoubleParser<Length>
 						value.value + inches.value * ( value.value < 0 ? -1 : 1 ) / 12.0 , Length.feet ) , value ,
 						inchesUnit );
 				}
+
 			}
 			lineTokenizer.position( pos );
 		}

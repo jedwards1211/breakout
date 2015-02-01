@@ -179,7 +179,7 @@ public class LineTokenizer
 		ParsePosition pos = new ParsePosition( position );
 		V value = format.parseObject( line , pos );
 		ValueToken<V> result = value == null ? null : new ValueToken<V>(
-			lineNumber , position , lineNumber , pos.getIndex( ) - 1,
+			lineNumber , position , lineNumber , pos.getIndex( ) - 1 ,
 			line.substring( position , pos.getIndex( ) ) , value );
 		position = pos.getIndex( );
 		return result;
@@ -201,6 +201,34 @@ public class LineTokenizer
 		for( int i = Math.min( line.length( ) , position + maxLength ) ; i >= position ; i-- )
 		{
 			String s = line.substring( position , i );
+			V value = map.get( s );
+			if( value != null )
+			{
+				ValueToken<V> result = new ValueToken<V>( lineNumber , position , lineNumber , i , s , value );
+				position = i;
+				return result;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Pulls the longest {@link ValueToken} starting at the current position whose image (to lowercase) is a key in the
+	 * given map.
+	 * 
+	 * @param map
+	 *            a map whose keys represent valid tokens that can be pulled and their associated value representations.
+	 * @param maxLength
+	 *            the maximum token length to pull; the method will stop searching after this length.
+	 * @return a {@link ValueToken} whose image is the longest key in {@code map} starting at the current position and
+	 *         whose value is the associated value in {@code map}, or null if no keys in {@code map <= maxLength} were
+	 *         found.
+	 */
+	public <V> ValueToken<V> pullLowercase( Map<String, ? extends V> map , int maxLength )
+	{
+		for( int i = Math.min( line.length( ) , position + maxLength ) ; i >= position ; i-- )
+		{
+			String s = line.substring( position , i ).toLowerCase( );
 			V value = map.get( s );
 			if( value != null )
 			{

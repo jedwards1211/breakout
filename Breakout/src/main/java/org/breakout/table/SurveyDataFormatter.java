@@ -7,14 +7,28 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.ParsePosition;
-import java.util.regex.Matcher;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Pattern;
 
+import org.andork.bind2.Binding;
 import org.andork.i18n.I18n;
 import org.andork.i18n.I18n.Localizer;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
+import org.andork.unit.UnitNameType;
+import org.andork.unit.UnitNames;
+import org.andork.unit.UnitType;
+import org.andork.unit.UnitizedDouble;
 import org.andork.util.StringUtils;
-import org.breakout.table.LrudXSection.Angle;
+import org.breakout.parse.DoubleNumberFormat;
+import org.breakout.parse.LineTokenizer;
+import org.breakout.parse.UnitizedAngleParser;
+import org.breakout.parse.UnitizedLengthParser;
+import org.breakout.parse.ValueToken;
 import org.breakout.table.LrudXSection.FacingAzimuth;
+import org.breakout.table.LrudXSection.XAngle;
 
 /**
  * Provides methods for formatting all types of data in a {@link Shot}. These are combined into one class so that the
@@ -24,31 +38,38 @@ import org.breakout.table.LrudXSection.FacingAzimuth;
  */
 public class SurveyDataFormatter
 {
-	private final NumberFormat		intFormat;
-	private final NumberFormat		parseIntFormat;
+	private final NumberFormat			intFormat;
+	private final NumberFormat			parseIntFormat;
 
-	private final DecimalFormat		parseDoubleFormat;
-	private final DecimalFormat		doubleFormat;
-	private final DecimalFormat		lengthFormat;
-	private final DecimalFormat		azimuthFormat;
-	private final DecimalFormat		inclinationFormat;
+	private final DecimalFormat			parseDoubleFormat;
+	private final DecimalFormat			doubleFormat;
+	private final DecimalFormat			lengthFormat;
+	private final DecimalFormat			azimuthFormat;
+	private final DecimalFormat			inclinationFormat;
 
-	private Localizer				localizer;
+	private final UnitizedLengthParser	lengthParser;
+	private final UnitizedAngleParser	azimuthParser;
+	private final UnitizedAngleParser	inclinationParser;
 
-	private int						vectorColumn0Width		= 9;
-	private int						vectorColumn1Width		= 11;
-	private int						vectorColumn2Width		= 11;
+	private UnitNames					unitNames;
+	private UnitNameType				unitNameType			= UnitNameType.LETTER;
 
-	private int						xSectionColumnWidth		= 6;
+	private Localizer					localizer;
 
-	private static final Pattern	daiShotVectorPattern	= Pattern
-																.compile( "\\s*(\\S+)\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s*" );
-	private static final Pattern	whitespacePattern		= Pattern.compile( "\\s*" );
+	private int							vectorColumn0Width		= 10;
+	private int							vectorColumn1Width		= 13;
+	private int							vectorColumn2Width		= 13;
+	private int							vectorColumn3Width		= 10;
+	private int							vectorColumn4Width		= 10;
+
+	private int							xSectionColumnWidth		= 7;
+
+	private static final Pattern		daiShotVectorPattern	= Pattern
+																	.compile( "\\s*(\\S+)\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s+([^ \t\n\u000b\f\r/]+)\\s*(/\\s*(\\S+))?\\s*" );
+	private static final Pattern		whitespacePattern		= Pattern.compile( "\\s*" );
 
 	public SurveyDataFormatter( I18n i18n )
 	{
-		localizer = i18n.forClass( SurveyDataFormatter.class );
-
 		parseIntFormat = createDefaultIntegerFormat( );
 		intFormat = createDefaultIntegerFormat( );
 
@@ -58,6 +79,38 @@ public class SurveyDataFormatter
 		azimuthFormat = createDefaultDoubleFormat( );
 		inclinationFormat = createDefaultDoubleFormat( );
 		inclinationFormat.setPositivePrefix( "+" );
+
+		lengthParser = new UnitizedLengthParser( );
+		lengthParser.allowWhitespace( false );
+		lengthParser.defaultUnit( Length.meters );
+		lengthParser.numberFormat( new DoubleNumberFormat( lengthFormat ) );
+		lengthParser.units( Length.type.units( ) );
+
+		azimuthParser = new UnitizedAngleParser( );
+		azimuthParser.allowWhitespace( false );
+		azimuthParser.defaultUnit( Angle.degrees );
+		azimuthParser.numberFormat( new DoubleNumberFormat( azimuthFormat ) );
+		Set<Unit<Angle>> azimuthUnits = new HashSet<Unit<Angle>>( Angle.type.units( ) );
+		azimuthUnits.remove( Angle.percentGrade );
+		azimuthParser.units( azimuthUnits );
+
+		inclinationParser = new UnitizedAngleParser( );
+		inclinationParser.allowWhitespace( false );
+		inclinationParser.defaultUnit( Angle.degrees );
+		inclinationParser.numberFormat( new DoubleNumberFormat( inclinationFormat ) );
+		inclinationParser.units( Angle.type.units( ) );
+
+		localizer = i18n.forClass( SurveyDataFormatter.class );
+		i18n.getLocaleBinder( ).addBinding( new Binding( ) {
+			@Override
+			public void update( boolean force )
+			{
+				unitNames = UnitNames.getNames( i18n.getLocale( ) );
+				lengthParser.unitNames( unitNames );
+				azimuthParser.unitNames( unitNames );
+				inclinationParser.unitNames( unitNames );
+			}
+		} );
 
 		setDoubleFractionDigits( 2 );
 		setLengthFractionDigits( 2 );
@@ -80,6 +133,17 @@ public class SurveyDataFormatter
 		DecimalFormat result = ( DecimalFormat ) DecimalFormat.getInstance( );
 		result.setGroupingUsed( false );
 		return result;
+	}
+
+	public void setDefaultLengthUnit( Unit<Length> unit )
+	{
+		lengthParser.defaultUnit( unit );
+	}
+
+	public void setDefaultAngleUnit( Unit<Angle> unit )
+	{
+		azimuthParser.defaultUnit( unit );
+		inclinationParser.defaultUnit( unit );
 	}
 
 	public int getDoubleFractionDigits( )
@@ -264,19 +328,25 @@ public class SurveyDataFormatter
 		return doubleFormat.format( value );
 	}
 
-	public String formatLength( Double value )
+	public String formatLength( UnitizedDouble<Length> value )
 	{
-		return lengthFormat.format( value );
+		double dblValue = value.doubleValue( lengthParser.defaultUnit( ) );
+		return lengthFormat.format( dblValue ) +
+			unitNames.getName( lengthParser.defaultUnit( ) , dblValue , unitNameType );
 	}
 
-	public String formatAzimuth( Double value )
+	public String formatAzimuth( UnitizedDouble<Angle> value )
 	{
-		return azimuthFormat.format( value );
+		double dblValue = value.doubleValue( azimuthParser.defaultUnit( ) );
+		return azimuthFormat.format( dblValue ) +
+			unitNames.getName( azimuthParser.defaultUnit( ) , dblValue , unitNameType );
 	}
 
-	public String formatInclination( Double value )
+	public String formatInclination( UnitizedDouble<Angle> value )
 	{
-		return inclinationFormat.format( value );
+		double dblValue = value.doubleValue( inclinationParser.defaultUnit( ) );
+		return inclinationFormat.format( dblValue ) +
+			unitNames.getName( inclinationParser.defaultUnit( ) , dblValue , unitNameType );
 	}
 
 	public String formatOptionalDouble( Double value )
@@ -284,19 +354,19 @@ public class SurveyDataFormatter
 		return value == null ? "--" : doubleFormat.format( value );
 	}
 
-	public String formatOptionalLength( Double value )
+	public String formatOptionalLength( UnitizedDouble<Length> value )
 	{
-		return value == null ? "--" : lengthFormat.format( value );
+		return value == null ? "--" : formatLength( value );
 	}
 
-	public String formatOptionalAzimuth( Double value )
+	public String formatOptionalAzimuth( UnitizedDouble<Angle> value )
 	{
-		return value == null ? "--" : azimuthFormat.format( value );
+		return value == null ? "--" : formatAzimuth( value );
 	}
 
-	public String formatOptionalInclination( Double value )
+	public String formatOptionalInclination( UnitizedDouble<Angle> value )
 	{
-		return value == null ? "--" : inclinationFormat.format( value );
+		return value == null ? "--" : formatInclination( value );
 	}
 
 	public String format( ShotVector v )
@@ -317,7 +387,7 @@ public class SurveyDataFormatter
 		return localizer
 			.getFormattedString(
 				"shotVectorFormat.dai" ,
-				StringUtils.pad( formatOptionalDouble( t.getDistance( ) ) , ' ' , vectorColumn0Width , false ) ,
+				StringUtils.pad( formatOptionalLength( t.getDistance( ) ) , ' ' , vectorColumn0Width , false ) ,
 				StringUtils.pad( formatOptionalAzimuth( t.getFrontsightAzimuth( ) ) , ' ' , vectorColumn1Width / 2 ,
 					false ) ,
 				StringUtils.pad( formatOptionalAzimuth( t.getBacksightAzimuth( ) ) , ' ' , vectorColumn1Width / 2 ,
@@ -327,6 +397,12 @@ public class SurveyDataFormatter
 					false ) ,
 				StringUtils.pad( formatOptionalInclination( t.getBacksightInclination( ) ) , ' ' ,
 					vectorColumn2Width / 2 ,
+					false ) ,
+				StringUtils.pad( formatOptionalLength( t.getInstrumentHeight( ) ) , ' ' ,
+					vectorColumn3Width ,
+					false ) ,
+				StringUtils.pad( formatOptionalLength( t.getTargetHeight( ) ) , ' ' ,
+					vectorColumn4Width ,
 					false )
 			);
 	}
@@ -335,9 +411,9 @@ public class SurveyDataFormatter
 	{
 		return localizer.getFormattedString(
 			t.isDownwardPositive( ) ? "shotVectorFormat.ned" : "shotVectorFormat.neel" ,
-			StringUtils.pad( formatOptionalDouble( t.getNorthOffset( ) ) , ' ' , vectorColumn0Width , false ) ,
-			StringUtils.pad( formatOptionalDouble( t.getEastOffset( ) ) , ' ' , vectorColumn1Width , false ) ,
-			StringUtils.pad( formatOptionalDouble( t.getVerticalOffset( ) ) , ' ' , vectorColumn2Width , false )
+			StringUtils.pad( formatOptionalLength( t.getNorthOffset( ) ) , ' ' , vectorColumn0Width , false ) ,
+			StringUtils.pad( formatOptionalLength( t.getEastOffset( ) ) , ' ' , vectorColumn1Width , false ) ,
+			StringUtils.pad( formatOptionalLength( t.getVerticalOffset( ) ) , ' ' , vectorColumn2Width , false )
 			);
 	}
 
@@ -360,12 +436,25 @@ public class SurveyDataFormatter
 		sb.append( formatOptionalLength( t.getDistance( ) ) );
 		sb.append( "  " );
 		sb.append( formatOptionalAzimuth( t.getFrontsightAzimuth( ) ) );
-		sb.append( '/' );
-		sb.append( formatOptionalAzimuth( t.getBacksightAzimuth( ) ) );
+		if( t.getBacksightAzimuth( ) != null )
+		{
+			sb.append( '/' );
+			sb.append( formatOptionalAzimuth( t.getBacksightAzimuth( ) ) );
+		}
 		sb.append( "  " );
 		sb.append( formatOptionalInclination( t.getFrontsightInclination( ) ) );
-		sb.append( '/' );
-		sb.append( formatOptionalInclination( t.getBacksightInclination( ) ) );
+		if( t.getBacksightInclination( ) != null )
+		{
+			sb.append( '/' );
+			sb.append( formatOptionalInclination( t.getBacksightInclination( ) ) );
+		}
+		if( t.getInstrumentHeight( ) != null || t.getTargetHeight( ) != null )
+		{
+			sb.append( "  " );
+			sb.append( formatOptionalLength( t.getInstrumentHeight( ) ) );
+			sb.append( "  " );
+			sb.append( formatOptionalLength( t.getTargetHeight( ) ) );
+		}
 		return sb.toString( );
 	}
 
@@ -394,113 +483,183 @@ public class SurveyDataFormatter
 		throw new IllegalArgumentException( "invalid type: " + type );
 	}
 
+	private static <V> V valueOrNull( ValueToken<V> token )
+	{
+		return token != null ? token.value : null;
+	}
+
 	public ParsedTextWithType<ShotVector> parseDaiShotVector( String s , ShotVectorType type )
 	{
 		ParsedTextWithType<ShotVector> result = new ParsedTextWithType<>( );
 		result.setText( s );
 		result.setType( type );
 
-		Matcher m = daiShotVectorPattern.matcher( s );
-		if( !m.find( ) )
+		ValueToken<UnitizedDouble<Length>> dist = null;
+		ValueToken<UnitizedDouble<Angle>> azmFs = null;
+		ValueToken<UnitizedDouble<Angle>> azmBs = null;
+		ValueToken<UnitizedDouble<Angle>> incFs = null;
+		ValueToken<UnitizedDouble<Angle>> incBs = null;
+		ValueToken<UnitizedDouble<Length>> instHeight = null;
+		ValueToken<UnitizedDouble<Length>> targetHeight = null;
+
+		LineTokenizer lineTokenizer = new LineTokenizer( s , 0 );
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		if( lineTokenizer.isAtEnd( ) )
 		{
-			if( whitespacePattern.matcher( s ).matches( ) )
+			return result;
+		}
+
+		// DISTANCE
+
+		try
+		{
+			dist = lengthParser.pullOptionalLength( lineTokenizer );
+			if( dist == null )
 			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDaiShotVector" ) );
 				return result;
 			}
+		}
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDistance" ) );
+			return result;
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		// FS AZIMUTH
+
+		try
+		{
+			azmFs = azimuthParser.pullOptionalAzimuth( lineTokenizer );
+			if( azmFs == null )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDaiShotVector" ) );
+				return result;
+			}
+		}
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidAzimuth" ) );
+			return result;
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		// BS AZIMUTH
+
+		if( lineTokenizer.pull( '/' ) != null )
+		{
+			lineTokenizer.pull( Character::isWhitespace );
+
+			try
+			{
+				azmBs = azimuthParser.pullOptionalAzimuth( lineTokenizer );
+				if( azmBs == null )
+				{
+					result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDaiShotVector" ) );
+					return result;
+				}
+			}
+			catch( Exception ex )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidAzimuth" ) );
+				return result;
+			}
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		// FS INCLINATION
+
+		try
+		{
+			incFs = inclinationParser.pullOptionalInclination( lineTokenizer );
+			if( incFs == null )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDaiShotVector" ) );
+				return result;
+			}
+		}
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidInclination" ) );
+			return result;
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		// BS INCLINATION
+
+		if( lineTokenizer.pull( '/' ) != null )
+		{
+			lineTokenizer.pull( Character::isWhitespace );
+
+			try
+			{
+				incBs = inclinationParser.pullOptionalInclination( lineTokenizer );
+				if( incBs == null )
+				{
+					result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDaiShotVector" ) );
+					return result;
+				}
+			}
+			catch( Exception ex )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidInclination" ) );
+				return result;
+			}
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		// INSTRUMENT HEIGHT
+
+		try
+		{
+			instHeight = lengthParser.pullOptionalLength( lineTokenizer );
+		}
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidInstrumentHeight" ) );
+			return result;
+		}
+
+		// TARGET HEIGHT
+
+		if( instHeight != null )
+		{
+			try
+			{
+				targetHeight = lengthParser.pullOptionalLength( lineTokenizer );
+			}
+			catch( Exception ex )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidTargetHeight" ) );
+				return result;
+			}
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		if( !lineTokenizer.isAtEnd( ) )
+		{
 			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDaiShotVector" ) );
 			return result;
 		}
 
-		String distText = m.group( 1 );
-		Double dist = null;
-		try
-		{
-			dist = parseDouble( distText );
-			if( dist != null && dist < 0.0 )
-			{
-				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.negativeDistance" ) );
-				return result;
-			}
-		}
-		catch( Exception ex )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidDistance" , distText ) );
-			return result;
-		}
-
-		String azmFsText = m.group( 2 );
-		Double azmFs = null;
-		try
-		{
-			azmFs = parseOptionalDouble( azmFsText );
-		}
-		catch( Exception ex )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidAzimuth" , azmFsText ) );
-			return result;
-		}
-
-		String azmBsText = m.group( 4 );
-		Double azmBs = null;
-		if( azmBsText != null )
-		{
-			try
-			{
-				azmBs = parseOptionalDouble( azmBsText );
-			}
-			catch( Exception ex )
-			{
-				result
-					.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidAzimuth" , azmBsText ) );
-				return result;
-			}
-		}
-
-		String incFsText = m.group( 5 );
-		Double incFs = null;
-		try
-		{
-			incFs = parseOptionalInclination( incFsText );
-		}
-		catch( Exception ex )
-		{
-			result
-				.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidInclination" , incFsText ) );
-			return result;
-		}
-
-		String incBsText = m.group( 7 );
-		Double incBs = null;
-		if( incBsText != null )
-		{
-			try
-			{
-				incBs = parseOptionalInclination( incBsText );
-			}
-			catch( Exception ex )
-			{
-				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidInclination" ,
-					incBsText ) );
-				return result;
-			}
-		}
-
-		if( azmFs == null && azmBs == null )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.missingAzimuth" ) );
-		}
-		else if( incFs == null && incBs == null )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.missingInclination" ) );
-		}
-
 		DaiShotVector vector = new DaiShotVector( );
 		vector.setBacksightsAreCorrected( type == ShotVectorType.DAIc );
-		vector.setDistance( dist );
-		vector.setFrontsightAzimuth( azmFs );
-		vector.setBacksightAzimuth( azmBs );
-		vector.setFrontsightInclination( incFs );
-		vector.setBacksightInclination( incBs );
+		vector.setDistance( valueOrNull( dist ) );
+		vector.setFrontsightAzimuth( valueOrNull( azmFs ) );
+		vector.setBacksightAzimuth( valueOrNull( azmBs ) );
+		vector.setFrontsightInclination( valueOrNull( incFs ) );
+		vector.setBacksightInclination( valueOrNull( incBs ) );
+		vector.setInstrumentHeight( valueOrNull( instHeight ) );
+		vector.setTargetHeight( valueOrNull( targetHeight ) );
 		result.setValue( vector );
 
 		return result;
@@ -512,50 +671,87 @@ public class SurveyDataFormatter
 		result.setText( s );
 		result.setType( type );
 
-		String[ ] parts = s.split( "\\s+" );
+		LineTokenizer lineTokenizer = new LineTokenizer( s , 0 );
 
-		if( parts.length != 3 )
+		ValueToken<UnitizedDouble<Length>> northOffs = null;
+		ValueToken<UnitizedDouble<Length>> eastOffs = null;
+		ValueToken<UnitizedDouble<Length>> verticalOffs = null;
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		if( lineTokenizer.isAtEnd( ) )
 		{
-			if( whitespacePattern.matcher( s ).matches( ) )
+			return result;
+		}
+
+		// NORTH OFFSET
+
+		try
+		{
+			northOffs = lengthParser.pullOptionalLength( lineTokenizer );
+			if( northOffs == null )
 			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidNorthOffset" ) );
 				return result;
 			}
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidNevShotVector" ) );
+		}
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidNevShotVector" ) );
+			return result;
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		// EAST OFFSET
+
+		try
+		{
+			eastOffs = lengthParser.pullOptionalLength( lineTokenizer );
+			if( eastOffs == null )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidEastOffset" ) );
+				return result;
+			}
+		}
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidNevShotVector" ) );
+			return result;
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		// VERTICAL OFFSET
+
+		try
+		{
+			verticalOffs = lengthParser.pullOptionalLength( lineTokenizer );
+			if( verticalOffs == null )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidVerticalOffset" ) );
+				return result;
+			}
+		}
+		catch( Exception ex )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidNevShotVector" ) );
+			return result;
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		if( !lineTokenizer.isAtEnd( ) )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "vectorColumn.invalidNevShotVector" ) );
 			return result;
 		}
 
 		NevShotVector vector = new NevShotVector( );
 		vector.setDownwardIsPositive( type == ShotVectorType.NED );
-
-		try
-		{
-			vector.setNorthOffset( parseDouble( parts[ 0 ] ) );
-		}
-		catch( Exception ex )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidNorthOffset" , parts[ 0 ] ) );
-			return result;
-		}
-
-		try
-		{
-			vector.setEastOffset( parseDouble( parts[ 1 ] ) );
-		}
-		catch( Exception ex )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidEastOffset" , parts[ 1 ] ) );
-			return result;
-		}
-
-		try
-		{
-			vector.setVerticalOffset( parseDouble( parts[ 2 ] ) );
-		}
-		catch( Exception ex )
-		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidVerticalOffset" , parts[ 2 ] ) );
-			return result;
-		}
+		vector.setNorthOffset( valueOrNull( northOffs ) );
+		vector.setEastOffset( valueOrNull( eastOffs ) );
+		vector.setVerticalOffset( valueOrNull( verticalOffs ) );
 
 		result.setValue( vector );
 		return result;
@@ -589,7 +785,7 @@ public class SurveyDataFormatter
 					StringUtils.pad( formatOptionalLength( t.getRight( ) ) , ' ' , xSectionColumnWidth , false ) ,
 					StringUtils.pad( formatOptionalLength( t.getUp( ) ) , ' ' , xSectionColumnWidth , false ) ,
 					StringUtils.pad( formatOptionalLength( t.getDown( ) ) , ' ' , xSectionColumnWidth , false ) ,
-					StringUtils.pad( formatOptionalLength( ( ( FacingAzimuth ) t.getAngle( ) ).getAzimuth( ) ) , ' ' ,
+					StringUtils.pad( formatOptionalAzimuth( ( ( FacingAzimuth ) t.getAngle( ) ).getAzimuth( ) ) , ' ' ,
 						xSectionColumnWidth , false )
 				);
 		}
@@ -699,53 +895,61 @@ public class SurveyDataFormatter
 		ParsedTextWithType<XSection> result = new ParsedTextWithType<>( );
 		result.setType( type );
 
-		String trimmed = s.trim( );
-		if( trimmed.isEmpty( ) )
-		{
-			return result;
-		}
+		LineTokenizer lineTokenizer = new LineTokenizer( s , 0 );
+
 		result.setText( s );
 
-		String[ ] parts = trimmed.split( "\\s+" );
-
-		int reqNumParts = 0;
+		int reqNumLengths = 0;
 
 		switch( type )
 		{
 		case BISECTOR_LRUD:
 		case PERPENDICULAR_LRUD:
 		case NSEW:
-			reqNumParts = 4;
-			break;
 		case LRUD_WITH_FACING_AZIMUTH:
-			reqNumParts = 5;
+			reqNumLengths = 4;
 			break;
 		case LLRRUD:
-			reqNumParts = 6;
+			reqNumLengths = 6;
 			break;
 		default:
 			throw new IllegalArgumentException( "Unsupported type: " + type );
 		}
 
-		if( parts.length != reqNumParts )
+		ValueToken<UnitizedDouble<Length>>[ ] lengths = new ValueToken[ reqNumLengths ];
+
+		for( int i = 0 ; i < reqNumLengths ; i++ )
 		{
-			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "xSectionColumn.pleaseEnterXNumbers" ,
-				reqNumParts ) );
-			return result;
+			lineTokenizer.pull( Character::isWhitespace );
+
+			lengths[ i ] = lengthParser.pullOptionalLength( lineTokenizer );
+			if( lengths[ i ] == null )
+			{
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "xSectionColumn.invalidXSection" ) );
+				return result;
+			}
 		}
 
-		Double[ ] parsed = new Double[ parts.length ];
+		ValueToken<UnitizedDouble<Angle>> facingAzm = null;
 
-		for( int i = 0 ; i < parts.length ; i++ )
+		if( type == XSectionType.LRUD_WITH_FACING_AZIMUTH )
 		{
-			try
+			lineTokenizer.pull( Character::isWhitespace );
+
+			facingAzm = azimuthParser.pullOptionalAzimuth( lineTokenizer );
+			if( facingAzm == null )
 			{
-				parsed[ i ] = parseDouble( parts[ i ] );
+				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "xSectionColumn.invalidXSection" ) );
+				return result;
 			}
-			catch( Exception ex )
-			{
-				result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidNumber" , parts[ i ] ) );
-			}
+		}
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		if( !lineTokenizer.isAtEnd( ) )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "xSectionColumn.invalidXSection" ) );
+			return result;
 		}
 
 		switch( type )
@@ -753,38 +957,38 @@ public class SurveyDataFormatter
 		case BISECTOR_LRUD:
 		case PERPENDICULAR_LRUD:
 			LrudXSection lrud = new LrudXSection( );
-			lrud.setAngle( type == XSectionType.BISECTOR_LRUD ? Angle.BISECTOR : Angle.PERPENDICULAR );
-			lrud.setLeft( parsed[ 0 ] );
-			lrud.setRight( parsed[ 1 ] );
-			lrud.setUp( parsed[ 2 ] );
-			lrud.setDown( parsed[ 3 ] );
+			lrud.setAngle( type == XSectionType.BISECTOR_LRUD ? XAngle.BISECTOR : XAngle.PERPENDICULAR );
+			lrud.setLeft( valueOrNull( lengths[ 0 ] ) );
+			lrud.setRight( valueOrNull( lengths[ 1 ] ) );
+			lrud.setUp( valueOrNull( lengths[ 2 ] ) );
+			lrud.setDown( valueOrNull( lengths[ 3 ] ) );
 			result.setValue( lrud );
 			break;
 		case LRUD_WITH_FACING_AZIMUTH:
 			LrudXSection lruda = new LrudXSection( );
-			lruda.setAngle( new FacingAzimuth( parsed[ 4 ] ) );
-			lruda.setLeft( parsed[ 0 ] );
-			lruda.setRight( parsed[ 1 ] );
-			lruda.setUp( parsed[ 2 ] );
-			lruda.setDown( parsed[ 3 ] );
+			lruda.setAngle( new FacingAzimuth( valueOrNull( facingAzm ) ) );
+			lruda.setLeft( valueOrNull( lengths[ 0 ] ) );
+			lruda.setRight( valueOrNull( lengths[ 1 ] ) );
+			lruda.setUp( valueOrNull( lengths[ 2 ] ) );
+			lruda.setDown( valueOrNull( lengths[ 3 ] ) );
 			result.setValue( lruda );
 			break;
 		case NSEW:
 			NsewXSection nsew = new NsewXSection( );
-			nsew.setNorth( parsed[ 0 ] );
-			nsew.setSouth( parsed[ 1 ] );
-			nsew.setEast( parsed[ 2 ] );
-			nsew.setWest( parsed[ 3 ] );
+			nsew.setNorth( valueOrNull( lengths[ 0 ] ) );
+			nsew.setSouth( valueOrNull( lengths[ 1 ] ) );
+			nsew.setEast( valueOrNull( lengths[ 2 ] ) );
+			nsew.setWest( valueOrNull( lengths[ 3 ] ) );
 			result.setValue( nsew );
 			break;
 		case LLRRUD:
 			LlrrudXSection llrrud = new LlrrudXSection( );
-			llrrud.setLeftNorthing( parsed[ 0 ] );
-			llrrud.setLeftEasting( parsed[ 1 ] );
-			llrrud.setRightNorthing( parsed[ 2 ] );
-			llrrud.setRightEasting( parsed[ 3 ] );
-			llrrud.setUp( parsed[ 4 ] );
-			llrrud.setDown( parsed[ 5 ] );
+			llrrud.setLeftNorthing( valueOrNull( lengths[ 0 ] ) );
+			llrrud.setLeftEasting( valueOrNull( lengths[ 1 ] ) );
+			llrrud.setRightNorthing( valueOrNull( lengths[ 2 ] ) );
+			llrrud.setRightEasting( valueOrNull( lengths[ 3 ] ) );
+			llrrud.setUp( valueOrNull( lengths[ 4 ] ) );
+			llrrud.setDown( valueOrNull( lengths[ 5 ] ) );
 			result.setValue( llrrud );
 			break;
 		}

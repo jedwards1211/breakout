@@ -2,6 +2,9 @@ package org.breakout.table;
 
 import java.util.function.Function;
 
+import org.andork.unit.Length;
+import org.andork.unit.UnitizedDouble;
+
 /**
  * A {@link XSection} with distances to the floor and ceiling from a given station.
  * 
@@ -9,25 +12,25 @@ import java.util.function.Function;
  */
 public abstract class UdXSection extends XSection
 {
-	private Double	up;
-	private Double	down;
+	private UnitizedDouble<Length>	up;
+	private UnitizedDouble<Length>	down;
 
-	public Double getUp( )
+	public UnitizedDouble<Length> getUp( )
 	{
 		return up;
 	}
 
-	public void setUp( Double up )
+	public void setUp( UnitizedDouble<Length> up )
 	{
 		this.up = up;
 	}
 
-	public Double getDown( )
+	public UnitizedDouble<Length> getDown( )
 	{
 		return down;
 	}
 
-	public void setDown( Double down )
+	public void setDown( UnitizedDouble<Length> down )
 	{
 		this.down = down;
 	}

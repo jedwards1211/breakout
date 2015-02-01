@@ -5,6 +5,7 @@ import java.text.NumberFormat;
 
 import org.andork.unit.Angle;
 import org.andork.unit.EnglishUnitNames;
+import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 
@@ -36,6 +37,40 @@ public class UnitizedAngleParser extends UnitizedDoubleParser<Angle>
 			}
 			System.out.println( angle );
 		}
+	}
+
+	public ValueToken<UnitizedDouble<Angle>> pullOptionalAzimuth( LineTokenizer lineTokenizer )
+	{
+		ValueToken<UnitizedDouble<Angle>> result = pullAzimuth( lineTokenizer );
+		return result != null ? result : lineTokenizer.pull( OMIT_PATTERN , s -> null );
+	}
+
+	public ValueToken<UnitizedDouble<Angle>> pullAzimuth( LineTokenizer lineTokenizer )
+	{
+		ValueToken<UnitizedDouble<Angle>> azimuth = pullAngle( lineTokenizer );
+		if( azimuth != null && ( azimuth.value.doubleValue( azimuth.value.unit ) < 0.0 ||
+			azimuth.value.doubleValue( Angle.degrees ) > 360.0 ) )
+		{
+			throw new SurveyParseException( "azimuthOutOfRange" );
+		}
+		return azimuth;
+	}
+
+	public ValueToken<UnitizedDouble<Angle>> pullOptionalInclination( LineTokenizer lineTokenizer )
+	{
+		ValueToken<UnitizedDouble<Angle>> result = pullInclination( lineTokenizer );
+		return result != null ? result : lineTokenizer.pull( OMIT_PATTERN , s -> null );
+	}
+
+	public ValueToken<UnitizedDouble<Angle>> pullInclination( LineTokenizer lineTokenizer )
+	{
+		ValueToken<UnitizedDouble<Angle>> inclination = pullAngle( lineTokenizer );
+		if( inclination != null && ( inclination.value.doubleValue( Angle.degrees ) < -90.0 ||
+			inclination.value.doubleValue( Angle.degrees ) > 90.0 ) )
+		{
+			throw new SurveyParseException( "inclinationOutOfRange" );
+		}
+		return inclination;
 	}
 
 	public ValueToken<UnitizedDouble<Angle>> pullAngle( LineTokenizer lineTokenizer )
@@ -71,7 +106,7 @@ public class UnitizedAngleParser extends UnitizedDoubleParser<Angle>
 			int pos = lineTokenizer.position( );
 			pullWhitespaceIfAllowed( lineTokenizer );
 
-			unit = lineTokenizer.pull( unitMap , unitsMaxLength );
+			unit = lineTokenizer.pullLowercase( unitMap , unitsMaxLength );
 			if( unit == null )
 			{
 				lineTokenizer.position( pos );

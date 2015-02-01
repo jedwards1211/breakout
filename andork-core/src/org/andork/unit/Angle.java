@@ -14,6 +14,14 @@ public class Angle extends UnitType<Angle>
 	public static final AngleUnit	percentGrade;
 	public static final AngleUnit	milsNATO;
 
+	public static void main( String[ ] args )
+	{
+		System.out.println( type.convert( 360.0 , degrees , radians ) );
+		System.out.println( type.convert( Math.PI * 2 , radians , degrees ) );
+		System.out.println( type.convert( 400.0 , gradians , degrees ) );
+		System.out.println( type.convert( 400.0 , gradians , radians ) );
+	}
+
 	private static class AngleUnit extends Unit<Angle>
 	{
 		public AngleUnit( Angle type , String id , DoubleUnaryOperator toRadians , DoubleUnaryOperator fromRadians )

@@ -2,6 +2,9 @@ package org.breakout.table;
 
 import java.util.function.Function;
 
+import org.andork.unit.Length;
+import org.andork.unit.UnitizedDouble;
+
 /**
  * A {@link XSection} with distances to the north, south, east, and west walls from a given station.
  * 
@@ -9,47 +12,47 @@ import java.util.function.Function;
  */
 public class NsewXSection extends XSection
 {
-	private Double	north;
-	private Double	south;
-	private Double	east;
-	private Double	west;
+	private UnitizedDouble<Length>	north;
+	private UnitizedDouble<Length>	south;
+	private UnitizedDouble<Length>	east;
+	private UnitizedDouble<Length>	west;
 
-	public Double getNorth( )
+	public UnitizedDouble<Length> getNorth( )
 	{
 		return north;
 	}
 
-	public void setNorth( Double north )
+	public void setNorth( UnitizedDouble<Length> north )
 	{
 		this.north = north;
 	}
 
-	public Double getSouth( )
+	public UnitizedDouble<Length> getSouth( )
 	{
 		return south;
 	}
 
-	public void setSouth( Double south )
+	public void setSouth( UnitizedDouble<Length> south )
 	{
 		this.south = south;
 	}
 
-	public Double getEast( )
+	public UnitizedDouble<Length> getEast( )
 	{
 		return east;
 	}
 
-	public void setEast( Double east )
+	public void setEast( UnitizedDouble<Length> east )
 	{
 		this.east = east;
 	}
 
-	public Double getWest( )
+	public UnitizedDouble<Length> getWest( )
 	{
 		return west;
 	}
 
-	public void setWest( Double west )
+	public void setWest( UnitizedDouble<Length> west )
 	{
 		this.west = west;
 	}

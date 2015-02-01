@@ -12,21 +12,21 @@ import org.andork.util.StringUtils;
 public abstract class UnitNames
 {
 	public final Locale							locale;
-	
+
 	private static final Map<Locale, UnitNames>	map	= new HashMap<>( );
-	
+
 	static
 	{
 		map.put( Locale.ENGLISH , EnglishUnitNames.inst );
 	}
-	
+
 	public UnitNames( Locale locale )
 	{
 		super( );
 		this.locale = locale;
 	}
-	
-	private static UnitNames getNames( Locale locale )
+
+	public static UnitNames getNames( Locale locale )
 	{
 		UnitNames names = map.get( locale );
 		if( names == null )
@@ -51,17 +51,17 @@ public abstract class UnitNames
 		}
 		return names;
 	}
-	
+
 	public abstract String getName( Unit<?> unit , Number value , UnitNameType nameType );
-	
+
 	public static String getName( Locale locale , Unit<?> unit , Number value , UnitNameType nameType )
 	{
 		UnitNames names = getNames( locale );
 		return names.getName( unit , value , nameType );
 	}
-	
+
 	public abstract <T extends UnitType<T>> Unit<T> lookup( String unitText , T unitType );
-	
+
 	public static <T extends UnitType<T>> Unit<T> lookup( Locale locale , String unitText , T unitType )
 	{
 		UnitNames names = getNames( locale );

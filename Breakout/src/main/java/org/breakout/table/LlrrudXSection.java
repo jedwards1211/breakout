@@ -2,6 +2,9 @@ package org.breakout.table;
 
 import java.util.function.Function;
 
+import org.andork.unit.Length;
+import org.andork.unit.UnitizedDouble;
+
 /**
  * A {@link XSection} with distances to the floor, ceiling, and north/east offsets of the left and right walls
  * from a given station.
@@ -10,47 +13,47 @@ import java.util.function.Function;
  */
 public class LlrrudXSection extends UdXSection
 {
-	private Double	leftNorthing;
-	private Double	leftEasting;
-	private Double	rightNorthing;
-	private Double	rightEasting;
+	private UnitizedDouble<Length>	leftNorthing;
+	private UnitizedDouble<Length>	leftEasting;
+	private UnitizedDouble<Length>	rightNorthing;
+	private UnitizedDouble<Length>	rightEasting;
 
-	public Double getLeftNorthing( )
+	public UnitizedDouble<Length> getLeftNorthing( )
 	{
 		return leftNorthing;
 	}
 
-	public void setLeftNorthing( Double leftNorthing )
+	public void setLeftNorthing( UnitizedDouble<Length> leftNorthing )
 	{
 		this.leftNorthing = leftNorthing;
 	}
 
-	public Double getLeftEasting( )
+	public UnitizedDouble<Length> getLeftEasting( )
 	{
 		return leftEasting;
 	}
 
-	public void setLeftEasting( Double leftEasting )
+	public void setLeftEasting( UnitizedDouble<Length> leftEasting )
 	{
 		this.leftEasting = leftEasting;
 	}
 
-	public Double getRightNorthing( )
+	public UnitizedDouble<Length> getRightNorthing( )
 	{
 		return rightNorthing;
 	}
 
-	public void setRightNorthing( Double rightNorthing )
+	public void setRightNorthing( UnitizedDouble<Length> rightNorthing )
 	{
 		this.rightNorthing = rightNorthing;
 	}
 
-	public Double getRightEasting( )
+	public UnitizedDouble<Length> getRightEasting( )
 	{
 		return rightEasting;
 	}
 
-	public void setRightEasting( Double rightEasting )
+	public void setRightEasting( UnitizedDouble<Length> rightEasting )
 	{
 		this.rightEasting = rightEasting;
 	}
