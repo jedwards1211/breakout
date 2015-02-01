@@ -10,7 +10,6 @@ import javax.swing.table.TableColumn;
 import org.andork.bind2.Binder;
 import org.andork.bind2.Binding;
 import org.andork.i18n.I18n;
-import org.breakout.table.SurveyDataTableColumnModel.MonospaceFontEditor;
 
 @SuppressWarnings( "serial" )
 public class StationTableColumnModel extends SurveyDataTableColumnModel<Station>
@@ -19,24 +18,21 @@ public class StationTableColumnModel extends SurveyDataTableColumnModel<Station>
 	public final TableColumn	northColumn;
 	public final TableColumn	eastColumn;
 	public final TableColumn	upColumn;
-	public final TableColumn	lengthUnitColumn;
 
 	public StationTableColumnModel( I18n i18n , SurveyDataFormatter formats )
 	{
 		super( i18n , formats );
 
 		nameColumn = createNameColumn( );
-		northColumn = createDoubleColumn( StationColumnDefs.north );
-		eastColumn = createDoubleColumn( StationColumnDefs.east );
-		upColumn = createDoubleColumn( StationColumnDefs.up );
-		lengthUnitColumn = createLengthUnitColumn( );
+		northColumn = createLengthColumn( StationColumnDefs.north );
+		eastColumn = createLengthColumn( StationColumnDefs.east );
+		upColumn = createLengthColumn( StationColumnDefs.up );
 
 		for( TableColumn column : Arrays.asList(
 			nameColumn ,
 			northColumn ,
 			eastColumn ,
-			upColumn ,
-			lengthUnitColumn ) )
+			upColumn ) )
 		{
 			SurveyDataColumnDef def = ( SurveyDataColumnDef ) column.getIdentifier( );
 			Binder<String> b = localizer.stringBinder( def.name );

@@ -265,6 +265,33 @@ public class SurveyDataFormatter
 		return d;
 	}
 
+	public ParsedText<UnitizedDouble<Length>> parseLength( String value )
+	{
+		ParsedText<UnitizedDouble<Length>> result = new ParsedText<>( );
+		result.setText( value );
+
+		LineTokenizer lineTokenizer = new LineTokenizer( value , 0 );
+		lineTokenizer.pull( Character::isWhitespace );
+
+		if( lineTokenizer.isAtEnd( ) )
+		{
+			return result;
+		}
+
+		ValueToken<UnitizedDouble<Length>> token = lengthParser.pullLength( lineTokenizer );
+
+		lineTokenizer.pull( Character::isWhitespace );
+
+		if( !lineTokenizer.isAtEnd( ) )
+		{
+			result.setNote( ParseNote.forMessageKey( ParseStatus.ERROR , "invalidLength" ) );
+			return result;
+		}
+
+		result.setValue( valueOrNull( token ) );
+		return result;
+	}
+
 	public ParsedText<Double> parseCustomDouble( String text )
 	{
 		ParsePosition p = new ParsePosition( 0 );

@@ -4,7 +4,7 @@ import java.util.function.Function;
 
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
-import org.andork.util.PowerCloneable;
+import org.andork.unit.UnitizedDouble;
 import org.andork.util.StringUtils;
 
 /**
@@ -14,12 +14,11 @@ import org.andork.util.StringUtils;
  */
 public class Station extends SurveyDataRow
 {
-	private String				name;
-	private ParsedText<Double>	north;
-	private ParsedText<Double>	east;
-	private ParsedText<Double>	up;
-	private Unit<Length>		lengthUnit;
-	private Object[ ]			custom;
+	private String								name;
+	private ParsedText<UnitizedDouble<Length>>	north;
+	private ParsedText<UnitizedDouble<Length>>	east;
+	private ParsedText<UnitizedDouble<Length>>	up;
+	private Object[ ]							custom;
 
 	public String getName( )
 	{
@@ -31,44 +30,34 @@ public class Station extends SurveyDataRow
 		this.name = stationName;
 	}
 
-	public ParsedText<Double> getNorth( )
+	public ParsedText<UnitizedDouble<Length>> getNorth( )
 	{
 		return north;
 	}
 
-	public void setNorth( ParsedText<Double> north )
+	public void setNorth( ParsedText<UnitizedDouble<Length>> north )
 	{
 		this.north = north;
 	}
 
-	public ParsedText<Double> getEast( )
+	public ParsedText<UnitizedDouble<Length>> getEast( )
 	{
 		return east;
 	}
 
-	public void setEast( ParsedText<Double> east )
+	public void setEast( ParsedText<UnitizedDouble<Length>> east )
 	{
 		this.east = east;
 	}
 
-	public ParsedText<Double> getUp( )
+	public ParsedText<UnitizedDouble<Length>> getUp( )
 	{
 		return up;
 	}
 
-	public void setUp( ParsedText<Double> up )
+	public void setUp( ParsedText<UnitizedDouble<Length>> up )
 	{
 		this.up = up;
-	}
-
-	public Unit<Length> getLengthUnit( )
-	{
-		return lengthUnit;
-	}
-
-	public void setLengthUnit( Unit<Length> lengthUnit )
-	{
-		this.lengthUnit = lengthUnit;
 	}
 
 	public Object[ ] getCustom( )
@@ -130,10 +119,9 @@ public class Station extends SurveyDataRow
 		Station result = new Station( );
 
 		result.name = name;
-		result.north = ( ParsedText<Double> ) subcloner.apply( north );
-		result.east = ( ParsedText<Double> ) subcloner.apply( east );
-		result.up = ( ParsedText<Double> ) subcloner.apply( up );
-		result.lengthUnit = lengthUnit;
+		result.north = ( ParsedText<UnitizedDouble<Length>> ) subcloner.apply( north );
+		result.east = ( ParsedText<UnitizedDouble<Length>> ) subcloner.apply( east );
+		result.up = ( ParsedText<UnitizedDouble<Length>> ) subcloner.apply( up );
 		result.custom = Cloners.cloneArray( custom , subcloner );
 		return result;
 	}

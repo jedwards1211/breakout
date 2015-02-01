@@ -41,6 +41,7 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitNameType;
 import org.andork.unit.UnitNames;
+import org.andork.unit.UnitizedDouble;
 import org.andork.util.StringUtils;
 
 /**
@@ -233,6 +234,27 @@ public class SurveyDataTableColumnModel<R extends SurveyDataRow> extends Default
 
 		ParsedTextCellEditor<Double> editor = new ParsedTextCellEditor<>( valueFormatter ,
 			formats::parseCustomDouble );
+		result.setCellEditor( new MonospaceFontEditor( editor ) );
+
+		return result;
+	}
+
+	protected TableColumn createLengthColumn( SurveyDataColumnDef def )
+	{
+		TableColumn result = new TableColumn( );
+		result.setIdentifier( def );
+		result.setHeaderValue( def.name );
+
+		Function<UnitizedDouble<Length>, String> valueFormatter =
+			v -> v != null ? formats.formatLength( v ) : null;
+
+		ParsedTextTableCellRenderer<UnitizedDouble<Length>> renderer = new ParsedTextTableCellRenderer<>(
+			valueFormatter , forceShowText , backgroundColorFn , messageFn );
+		renderer.setHorizontalAlignment( SwingConstants.RIGHT );
+		result.setCellRenderer( new MonospaceFontRenderer( renderer ) );
+
+		ParsedTextCellEditor<UnitizedDouble<Length>> editor = new ParsedTextCellEditor<>( valueFormatter ,
+			formats::parseLength );
 		result.setCellEditor( new MonospaceFontEditor( editor ) );
 
 		return result;
