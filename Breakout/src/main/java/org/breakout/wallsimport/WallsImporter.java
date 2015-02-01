@@ -491,7 +491,7 @@ public class WallsImporter
 
 		while( fromIndex < line.length( ) )
 		{
-			int macroIndex = line.indexOf( "$" );
+			int macroIndex = line.indexOf( "$" , fromIndex );
 
 			if( macroIndex < 0 )
 			{
