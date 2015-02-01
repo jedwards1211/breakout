@@ -21,47 +21,55 @@ public class EnglishUnitNames extends UnitNames
 		kilometersEntry.put( UnitNameType.FULL , "kilometer" , "kilometers" );
 		kilometersEntry.put( UnitNameType.ABBREV , "km" , "km" );
 		kilometersEntry.put( UnitNameType.SYMBOL , "km" , "km" );
+		kilometersEntry.put( UnitNameType.LETTER , "km" , "km" );
 		map.put( Length.kilometers , kilometersEntry );
 
 		Entry metersEntry = new Entry( );
 		metersEntry.put( UnitNameType.FULL , "meter" , "meters" );
 		metersEntry.put( UnitNameType.ABBREV , "m" , "m" );
 		metersEntry.put( UnitNameType.SYMBOL , "m" , "m" );
+		metersEntry.put( UnitNameType.LETTER , "m" , "m" );
 		map.put( Length.meters , metersEntry );
 
 		Entry centimetersEntry = new Entry( );
 		centimetersEntry.put( UnitNameType.FULL , "centimeter" , "centimeters" );
 		centimetersEntry.put( UnitNameType.ABBREV , "cm" , "cm" );
 		centimetersEntry.put( UnitNameType.SYMBOL , "cm" , "cm" );
+		centimetersEntry.put( UnitNameType.LETTER , "cm" , "cm" );
 		map.put( Length.centimeters , centimetersEntry );
 
 		Entry milesEntry = new Entry( );
 		milesEntry.put( UnitNameType.FULL , "mile" , "miles" );
 		milesEntry.put( UnitNameType.ABBREV , "mi" , "mi" );
 		milesEntry.put( UnitNameType.SYMBOL , "mi" , "mi" );
+		milesEntry.put( UnitNameType.LETTER , "mi" , "mi" );
 		map.put( Length.miles , milesEntry );
 
 		Entry yardsEntry = new Entry( );
 		yardsEntry.put( UnitNameType.FULL , "yard" , "yards" );
 		yardsEntry.put( UnitNameType.ABBREV , "yd" , "yd" );
 		yardsEntry.put( UnitNameType.SYMBOL , "yd" , "yd" );
+		yardsEntry.put( UnitNameType.LETTER , "y" , "y" );
 		map.put( Length.yards , yardsEntry );
 
 		Entry feetEntry = new Entry( );
 		feetEntry.put( UnitNameType.FULL , "foot" , "feet" );
 		feetEntry.put( UnitNameType.ABBREV , "ft" , "ft" );
+		feetEntry.put( UnitNameType.LETTER , "f" , "f" );
 		feetEntry.put( UnitNameType.SYMBOL , "'" , "'" );
 		map.put( Length.feet , feetEntry );
 
 		Entry inchesEntry = new Entry( );
 		inchesEntry.put( UnitNameType.FULL , "inch" , "inches" );
 		inchesEntry.put( UnitNameType.ABBREV , "in" , "in" );
+		inchesEntry.put( UnitNameType.LETTER , "i" , "i" );
 		inchesEntry.put( UnitNameType.SYMBOL , "\"" , "\"" );
 		map.put( Length.inches , inchesEntry );
 
 		Entry degreesEntry = new Entry( );
 		degreesEntry.put( UnitNameType.FULL , "degree" , "degrees" );
 		degreesEntry.put( UnitNameType.ABBREV , "deg" , "deg" );
+		degreesEntry.put( UnitNameType.LETTER , "d" , "d" );
 		degreesEntry.put( UnitNameType.SYMBOL , "\u00b0" , "\u00b0" );
 		map.put( Angle.degrees , degreesEntry );
 
@@ -69,24 +77,28 @@ public class EnglishUnitNames extends UnitNames
 		radiansEntry.put( UnitNameType.FULL , "radian" , "radians" );
 		radiansEntry.put( UnitNameType.ABBREV , "rad" , "rad" );
 		radiansEntry.put( UnitNameType.SYMBOL , "rad" , "rad" );
+		radiansEntry.put( UnitNameType.LETTER , "r" , "r" );
 		map.put( Angle.radians , radiansEntry );
 
 		Entry gradiansEntry = new Entry( );
 		gradiansEntry.put( UnitNameType.FULL , "gradian" , "gradians" );
 		gradiansEntry.put( UnitNameType.ABBREV , "grad" , "grad" );
 		gradiansEntry.put( UnitNameType.SYMBOL , "gon" , "gon" );
+		gradiansEntry.put( UnitNameType.LETTER , "g" , "g" );
 		map.put( Angle.gradians , gradiansEntry );
 
 		Entry percentGradeEntry = new Entry( );
 		percentGradeEntry.put( UnitNameType.FULL , "percent grade" , "percent grade" );
 		percentGradeEntry.put( UnitNameType.ABBREV , "% grade" , "% grade" );
 		percentGradeEntry.put( UnitNameType.SYMBOL , "%" , "%" );
+		percentGradeEntry.put( UnitNameType.LETTER , "p" , "p" );
 		map.put( Angle.percentGrade , percentGradeEntry );
 
 		Entry mils6400Entry = new Entry( );
 		mils6400Entry.put( UnitNameType.FULL , "mil (NATO)" , "mils (NATO)" );
 		mils6400Entry.put( UnitNameType.ABBREV , "mil" , "mils" );
 		mils6400Entry.put( UnitNameType.SYMBOL , "mil" , "mil" );
+		mils6400Entry.put( UnitNameType.LETTER , "m" , "m" );
 		map.put( Angle.milsNATO , mils6400Entry );
 
 			for( Map.Entry<Unit<?>, Entry> entry : map.entrySet( ) )
