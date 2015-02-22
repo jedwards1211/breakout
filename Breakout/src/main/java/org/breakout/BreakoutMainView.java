@@ -990,6 +990,10 @@ public class BreakoutMainView
 	{
 		return rootDirectory;
 	}
+	
+	public Path getAbsoluteProjectFilePath(Path relativeProjectFilePath) {
+		return rootDirectory.toAbsolutePath( ).resolve( relativeProjectFilePath );
+	}
 
 	public Binder<QObject<RootModel>> getRootModelBinder( )
 	{

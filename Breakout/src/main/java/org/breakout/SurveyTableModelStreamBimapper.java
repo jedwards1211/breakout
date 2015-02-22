@@ -57,7 +57,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 				.addColumn( "Frontsight Azimuth" , Row.fsAzm )
 				.addColumn( "Frontsight Inclination" , Row.fsInc )
 				.addColumn( "Backsight Azimuth" , Row.bsAzm )
-				.addColumn( "Backsignt Inclination" , Row.bsInc )
+				.addColumn( "Backsight Inclination" , Row.bsInc )
 				.addColumn( "Left" , Row.left )
 				.addColumn( "Right" , Row.right )
 				.addColumn( "Up" , Row.up )

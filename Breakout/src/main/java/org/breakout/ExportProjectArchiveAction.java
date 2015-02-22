@@ -77,7 +77,8 @@ public class ExportProjectArchiveAction extends AbstractAction
 			Path currentProjectFile = mainView.getRootModel( ).get( RootModel.currentProjectFile );
 			if( currentProjectFile != null )
 			{
-				directory = currentProjectFile.getParent( ).toFile( );
+				directory = mainView.getAbsoluteProjectFilePath( currentProjectFile ).getParent( )
+					.toFile( );
 			}
 		}
 		if( directory != null )

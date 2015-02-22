@@ -1,4 +1,4 @@
-From	To	Distance	Frontsight Azimuth	Frontsight Inclination	Backsight Azimuth	Backsignt Inclination	Left	Right	Up	Down	North	East	Elevation	Description	Date	Surveyors	Comment	Scanned Notes
+From	To	Distance	Frontsight Azimuth	Frontsight Inclination	Backsight Azimuth	Backsight Inclination	Left	Right	Up	Down	North	East	Elevation	Description	Date	Surveyors	Comment	Scanned Notes
 PTX60	PTX61	54.362419	-83.47241947	-0.010539594	-83.47241947	-0.010539594	7.994848341	18.99816044	1	7	0	0	-200	Eclipse Canyon Continued.	2004-11-12	"Les Carney, Suzanne DeBlois, Mick Skowronsky"		
 PTX61	PTX62	55.3000877	-47.9758215	0.23830102	-47.9758215	0.23830102	6.99211699	4.997299271	0	4				Eclipse Canyon Continued.	2004-11-12	"Les Carney, Suzanne DeBlois, Mick Skowronsky"		
 PTX62	PTX63	35.49518559	-31.53135188	0.984701038	-31.53135188	0.984701038	7.990356688	13.99373074	0	4				Eclipse Canyon Continued.	2004-11-12	"Les Carney, Suzanne DeBlois, Mick Skowronsky"		
