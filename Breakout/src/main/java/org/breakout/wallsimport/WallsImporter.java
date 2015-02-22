@@ -154,7 +154,7 @@ public class WallsImporter
 
 	private Unit<Length> pullRequiredDistanceUnit( )
 	{
-		Token token = lineTokenizer.pull( LineTokenizer::isNotWhitespace );
+		Token token = lineTokenizer.pull( c -> !Character.isWhitespace( c ) && c != ';' );
 		Unit<Length> unit = parser.parseDistanceUnit( token == null ? "" : token.image );
 		if( unit == null )
 		{
@@ -246,7 +246,7 @@ public class WallsImporter
 
 	private void parseDirectiveLine( )
 	{
-		Token token = lineTokenizer.pull( LineTokenizer::isNotWhitespace );
+		Token token = lineTokenizer.pull( c -> !Character.isWhitespace( c ) && c != ';' );
 		String directive = token.image.toLowerCase( );
 
 		Integer prefixIndex;
