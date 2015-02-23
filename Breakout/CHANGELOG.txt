@@ -1,9 +1,17 @@
+0.9.21
+--------------------------------------------------------------------------------
+
+-Fixed a bug that caused the 3D view not to come up on some systems
+
 0.9.20
 --------------------------------------------------------------------------------
 
 -Made task list automatically show/hide while/after long running tasks like 
 opening, saving, or creating the 3D model are active.
 -Made the auto-update checker verify the checksum of new versions it downloads
+-Fixed a typo in the survey file format 
+ ('Backsignt Inclination' => 'Backsight Inclination')
+-Fixed bugs that were causing the new/open file dialogs to sometimes not open
 
 0.9.19
 --------------------------------------------------------------------------------
