@@ -247,7 +247,7 @@
 		</zip>
 	</target>
 
-	<target name="dist-win-i586" depends="copy-deps-win-i586,compile-main,copy-resources" description="generate the distribution">
+	<target name="dist-win-i586" depends="copy-deps-win-i586,compile-main" description="generate the distribution">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist}" />
 
@@ -296,7 +296,7 @@
 		</zip>
 	</target>
 
-	<target name="dist-all-desktops" depends="copy-deps-win-i586,copy-deps-win-amd64,copy-deps-linux-i586,copy-deps-linux-amd64,copy-deps-macosx-universal,compile-main,copy-resources" description="generate the distribution">
+	<target name="dist-all-desktops" depends="copy-deps-win-i586,copy-deps-win-amd64,copy-deps-linux-i586,copy-deps-linux-amd64,copy-deps-macosx-universal,compile-main" description="generate the distribution">
 		<!-- Create the distribution directory -->
 		<mkdir dir="${dist}" />
 

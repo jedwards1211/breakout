@@ -1,0 +1,8 @@
+A1	A2	10	140/145	+3/-100p;<1 2 3 4>
+#UNITS $sunit="=meters D=feet"
+#PREFIX CR
+#PREFIX3 BL
+#UNITS S$(sunit)
+A2	P2::A3	10	140	/-100p 10 10 <1 2 3 4 N45:30E>
+#PREFIX3
+:::A2	::A3	10	140	/-100p <1 2 3 4 C>    ; test comment 2
