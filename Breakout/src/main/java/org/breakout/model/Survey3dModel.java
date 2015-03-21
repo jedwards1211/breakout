@@ -1545,13 +1545,13 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 
 		final LinkedList<Segment3dDrawer>	drawers						= new LinkedList<Segment3dDrawer>( );
 
-		JoglBuffer						geometry;
-		JoglBuffer						stationAttrs;
+		JoglBuffer							geometry;
+		JoglBuffer							stationAttrs;
 		final AtomicBoolean					stationAttrsNeedRebuffering	= new AtomicBoolean( );
-		JoglBuffer						param0;
+		JoglBuffer							param0;
 		final AtomicBoolean					param0NeedsRebuffering		= new AtomicBoolean( );
-		JoglBuffer						fillIndices;
-		JoglBuffer						lineIndices;
+		JoglBuffer							fillIndices;
+		JoglBuffer							lineIndices;
 
 		int[ ]								shotIndicesInVertexArrays;
 		int[ ]								shotIndicesInFillIndices;
@@ -1811,7 +1811,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 
 		protected String createVertexShader( )
 		{
-			return "#version 120\n" +
+			return "#version 130\n" +
 				createVertexShaderVariables( ) +
 				"void main() {" +
 				createVertexShaderCode( ) +
@@ -1870,7 +1870,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 
 		protected String createFragmentShader( )
 		{
-			return "#version 120\n" +
+			return "#version 130\n" +
 				createFragmentShaderVariables( ) +
 				"void main() {" +
 				createFragmentShaderCode( ) +
