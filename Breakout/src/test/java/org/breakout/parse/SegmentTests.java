@@ -48,6 +48,18 @@ public class SegmentTests
 	{
 		Segment segment;
 
+		segment = new Segment( "hello world" , null , 5 , 3 ).substring( 0 , 0 );
+		Assert.assertEquals( 5 , segment.startLine );
+		Assert.assertEquals( 3 , segment.startCol );
+		Assert.assertEquals( 5 , segment.endLine );
+		Assert.assertEquals( 2 , segment.endCol );
+
+		segment = new Segment( "hello world" , null , 5 , 3 ).substring( 11 );
+		Assert.assertEquals( 5 , segment.startLine );
+		Assert.assertEquals( 14 , segment.startCol );
+		Assert.assertEquals( 5 , segment.endLine );
+		Assert.assertEquals( 13 , segment.endCol );
+
 		segment = new Segment( "hello world" , null , 5 , 3 ).substring( 2 , 8 );
 		Assert.assertEquals( 5 , segment.startLine );
 		Assert.assertEquals( 5 , segment.startCol );
@@ -65,6 +77,12 @@ public class SegmentTests
 		Assert.assertEquals( 5 , segment.startCol );
 		Assert.assertEquals( 5 , segment.endLine );
 		Assert.assertEquals( 8 , segment.endCol );
+
+		segment = new Segment( "hello\r\nworld" , null , 5 , 3 ).substring( 5 , 5 );
+		Assert.assertEquals( 5 , segment.startLine );
+		Assert.assertEquals( 8 , segment.startCol );
+		Assert.assertEquals( 5 , segment.endLine );
+		Assert.assertEquals( 7 , segment.endCol );
 
 		segment = new Segment( "hello\r\nworld" , null , 5 , 3 ).substring( 5 , 6 );
 		Assert.assertEquals( 5 , segment.startLine );
@@ -89,6 +107,18 @@ public class SegmentTests
 		Assert.assertEquals( 8 , segment.startCol );
 		Assert.assertEquals( 6 , segment.endLine );
 		Assert.assertEquals( 1 , segment.endCol );
+
+		segment = new Segment( "hello\r\nworld" , null , 5 , 3 ).substring( 6 , 6 );
+		Assert.assertEquals( 5 , segment.startLine );
+		Assert.assertEquals( 9 , segment.startCol );
+		Assert.assertEquals( 5 , segment.endLine );
+		Assert.assertEquals( 8 , segment.endCol );
+
+		segment = new Segment( "hello\r\nworld" , null , 5 , 3 ).substring( 7 , 7 );
+		Assert.assertEquals( 6 , segment.startLine );
+		Assert.assertEquals( 0 , segment.startCol );
+		Assert.assertEquals( 6 , segment.endLine );
+		Assert.assertEquals( -1 , segment.endCol );
 
 		segment = new Segment( "hello\r\nworld" , null , 5 , 3 ).substring( 6 , 9 );
 		Assert.assertEquals( 5 , segment.startLine );
@@ -119,7 +149,6 @@ public class SegmentTests
 		Assert.assertEquals( 8 , segment.startCol );
 		Assert.assertEquals( 7 , segment.endLine );
 		Assert.assertEquals( 0 , segment.endCol );
-		
 
 		segment = new Segment( "hello\r\n\n\rworld" , null , 5 , 3 ).substring( 5 , 8 );
 		Assert.assertEquals( 5 , segment.startLine );

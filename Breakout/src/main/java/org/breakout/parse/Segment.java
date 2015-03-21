@@ -7,8 +7,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * A {@link String} wrapper that tracks its location in a source file.  Even taking a substring, trimming, splitting,
- * etc. return Segments with correct location information.
+ * A {@link String} wrapper that tracks its location in a source file. Even taking a substring, trimming, splitting,
+ * etc. return Segments with correct location information. Line numbers and column numbers should start with 0 --
+ * otherwise inconsistent numbering may result.
  * 
  * @author Andy Edwards
  */
@@ -17,17 +18,21 @@ public class Segment implements CharSequence
 	private static final Pattern	LINE_BREAK	= Pattern.compile( "\r\n|\r|\n" );
 
 	private final String			value;
-	public final Object				resource;
+	public final Object				source;
 	public final int				startLine;
 	public final int				endLine;
 	public final int				startCol;
+	/**
+	 * The column of the last character in this Segment. If the segment is empty this will be one less than
+	 * {@link #startCol} (and possibly even negative).
+	 */
 	public final int				endCol;
 
-	public Segment( String value , Object resource , int startLine , int startCol )
+	public Segment( String value , Object source , int startLine , int startCol )
 	{
 		super( );
 		this.value = value;
-		this.resource = resource;
+		this.source = source;
 		this.startLine = startLine;
 		this.startCol = startCol;
 		int endLine = startLine;
@@ -38,6 +43,16 @@ public class Segment implements CharSequence
 			endLine++;
 			endCol = value.length( ) - m.end( ) - 1;
 		}
+		this.endLine = endLine;
+		this.endCol = endCol;
+	}
+
+	protected Segment( String value , Object source , int startLine , int startCol , int endLine , int endCol )
+	{
+		this.value = value;
+		this.source = source;
+		this.startLine = startLine;
+		this.startCol = startCol;
 		this.endLine = endLine;
 		this.endCol = endCol;
 	}
@@ -211,8 +226,8 @@ public class Segment implements CharSequence
 	{
 		if( startLine == endLine )
 		{
-			return new Segment( value.substring( beginIndex , endIndex ) , resource , startLine ,
-				startCol + beginIndex );
+			return new Segment( value.substring( beginIndex , endIndex ) , source , startLine ,
+				startCol + beginIndex , startLine , startCol + endIndex - 1 );
 		}
 
 		int newStartLine = startLine;
@@ -233,12 +248,12 @@ public class Segment implements CharSequence
 			newStartCol = beginIndex - m.end( );
 		}
 
-		return new Segment( value.substring( beginIndex , endIndex ) , resource , newStartLine , newStartCol );
+		return new Segment( value.substring( beginIndex , endIndex ) , source , newStartLine , newStartCol );
 	}
 
 	public CharSequence subSequence( int beginIndex , int endIndex )
 	{
-		return value.subSequence( beginIndex , endIndex );
+		return substring( beginIndex , endIndex );
 	}
 
 	public boolean matches( String regex )
