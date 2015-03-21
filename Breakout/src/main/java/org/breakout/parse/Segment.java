@@ -3,6 +3,11 @@ package org.breakout.parse;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -403,5 +408,126 @@ public class Segment implements CharSequence
 	public char[ ] toCharArray( )
 	{
 		return value.toCharArray( );
+	}
+
+	public int parseAsInteger( )
+	{
+		try
+		{
+			return Integer.parseInt( value );
+		}
+		catch( NumberFormatException ex )
+		{
+			throw new ParseExpectedException( this , ExpectedTypes.INTEGER );
+		}
+	}
+
+	public int parseAsNonNegativeInteger( )
+	{
+		try
+		{
+			int result = Integer.parseInt( value );
+			if( result >= 0 )
+			{
+				return result;
+			}
+		}
+		catch( NumberFormatException ex )
+		{
+		}
+		throw new ParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_INTEGER );
+	}
+
+	public float parseAsFloat( )
+	{
+		try
+		{
+			return Float.parseFloat( value );
+		}
+		catch( NumberFormatException ex )
+		{
+			throw new ParseExpectedException( this , ExpectedTypes.FLOAT );
+		}
+	}
+
+	public float parseAsNonNegativeFloat( )
+	{
+		try
+		{
+			float result = Float.parseFloat( value );
+			if( result >= 0 )
+			{
+				return result;
+			}
+		}
+		catch( NumberFormatException ex )
+		{
+		}
+		throw new ParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_FLOAT );
+	}
+
+	public double parseAsDouble( )
+	{
+		try
+		{
+			return Double.parseDouble( value );
+		}
+		catch( NumberFormatException ex )
+		{
+			throw new ParseExpectedException( this , ExpectedTypes.DOUBLE );
+		}
+	}
+
+	public double parseAsNonNegativeDouble( )
+	{
+		try
+		{
+			double result = Double.parseDouble( value );
+			if( result >= 0 )
+			{
+				return result;
+			}
+		}
+		catch( NumberFormatException ex )
+		{
+		}
+		throw new ParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_DOUBLE );
+	}
+
+	public <V> V parseFromMap( Map<String, V> map )
+	{
+		V result = map.get( value );
+		if( result == null )
+		{
+			throw new ParseExpectedException( this , map.values( ).toArray( ) );
+		}
+		return result;
+	}
+
+	public <T> T parseAsAnyOf( Function<Segment, ? extends T> ... parsers )
+	{
+		List<Object> expectedTypes = new LinkedList<Object>( );
+
+		for( Function<Segment, ? extends T> parser : parsers )
+		{
+			try
+			{
+				return parser.apply( this );
+			}
+			catch( ParseExpectedException ex )
+			{
+				expectedTypes.addAll( Arrays.asList( ex.expectedItems ) );
+			}
+		}
+
+		throw new ParseExpectedException( this , expectedTypes.toArray( ) );
+	}
+
+	public void requireToEqual( String s )
+	{
+		if( !value.equals( s ) )
+		{
+			throw new ParseExpectedException( this , s );
+		}
 	}
 }

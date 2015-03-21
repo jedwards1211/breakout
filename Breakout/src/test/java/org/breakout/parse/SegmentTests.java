@@ -1,5 +1,7 @@
 package org.breakout.parse;
 
+import java.util.function.Function;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -167,5 +169,63 @@ public class SegmentTests
 		Assert.assertEquals( 8 , segment.startCol );
 		Assert.assertEquals( 8 , segment.endLine );
 		Assert.assertEquals( 0 , segment.endCol );
+	}
+
+	@Test
+	public void parseAsNonNegativeIntegerTest( )
+	{
+		Segment segment = new Segment( "1234" , "file" , 5 , 3 );
+		Assert.assertEquals( 1234 , segment.parseAsNonNegativeInteger( ) );
+
+		segment = new Segment( "-1234" , "file" , 5 , 3 );
+		try
+		{
+			segment.parseAsNonNegativeInteger( );
+			Assert.fail( "expected to throw" );
+		}
+		catch( ParseExpectedException ex )
+		{
+			Assert.assertArrayEquals( new Object[ ] { ExpectedTypes.NON_NEGATIVE_INTEGER } , ex.expectedItems );
+			Assert.assertEquals( ex.source , "file" );
+			Assert.assertEquals( ex.startLine , 5 );
+			Assert.assertEquals( ex.startCol , 3 );
+			Assert.assertEquals( ex.endLine , 5 );
+			Assert.assertEquals( ex.endCol , 7 );
+		}
+	}
+
+	@Test
+	public void parseAsAnyOfTest( )
+	{
+		Segment integer = new Segment( "1234" , "file" , 5 , 3 );
+		Segment omit = new Segment( "--" , "file" , 5 , 3 );
+		Segment invalid = new Segment( "abc" , "file" , 5 , 3 );
+
+		Function<Segment, Integer> parseAsOmit = s ->
+		{
+			if( s.matches( "-+" ) )
+			{
+				return null;
+			}
+			throw new ParseExpectedException( s , "--" );
+		};
+		Assert.assertEquals( ( Integer ) 1234 ,
+			( Integer ) integer.parseAsAnyOf( Segment::parseAsInteger , parseAsOmit ) );
+		Assert.assertEquals( ( Integer ) null ,
+			( Integer ) omit.parseAsAnyOf( Segment::parseAsInteger , parseAsOmit ) );
+
+		try
+		{
+			invalid.parseAsAnyOf( Segment::parseAsInteger , parseAsOmit );
+		}
+		catch( ParseExpectedException ex )
+		{
+			Assert.assertArrayEquals( new Object[ ] { ExpectedTypes.INTEGER , "--" } , ex.expectedItems );
+			Assert.assertEquals( ex.source , "file" );
+			Assert.assertEquals( ex.startLine , 5 );
+			Assert.assertEquals( ex.startCol , 3 );
+			Assert.assertEquals( ex.endLine , 5 );
+			Assert.assertEquals( ex.endCol , 5 );
+		}
 	}
 }
