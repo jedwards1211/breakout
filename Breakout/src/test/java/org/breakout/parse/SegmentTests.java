@@ -183,14 +183,14 @@ public class SegmentTests
 			segment.parseAsNonNegativeInteger( );
 			Assert.fail( "expected to throw" );
 		}
-		catch( ParseExpectedException ex )
+		catch( SegmentParseExpectedException ex )
 		{
 			Assert.assertArrayEquals( new Object[ ] { ExpectedTypes.NON_NEGATIVE_INTEGER } , ex.expectedItems );
-			Assert.assertEquals( ex.source , "file" );
-			Assert.assertEquals( ex.startLine , 5 );
-			Assert.assertEquals( ex.startCol , 3 );
-			Assert.assertEquals( ex.endLine , 5 );
-			Assert.assertEquals( ex.endCol , 7 );
+			Assert.assertEquals( ex.segment.source , "file" );
+			Assert.assertEquals( ex.segment.startLine , 5 );
+			Assert.assertEquals( ex.segment.startCol , 3 );
+			Assert.assertEquals( ex.segment.endLine , 5 );
+			Assert.assertEquals( ex.segment.endCol , 7 );
 		}
 	}
 
@@ -207,7 +207,7 @@ public class SegmentTests
 			{
 				return null;
 			}
-			throw new ParseExpectedException( s , "--" );
+			throw new SegmentParseExpectedException( s , "--" );
 		};
 		Assert.assertEquals( ( Integer ) 1234 ,
 			( Integer ) integer.parseAsAnyOf( Segment::parseAsInteger , parseAsOmit ) );
@@ -218,14 +218,14 @@ public class SegmentTests
 		{
 			invalid.parseAsAnyOf( Segment::parseAsInteger , parseAsOmit );
 		}
-		catch( ParseExpectedException ex )
+		catch( SegmentParseExpectedException ex )
 		{
 			Assert.assertArrayEquals( new Object[ ] { ExpectedTypes.INTEGER , "--" } , ex.expectedItems );
-			Assert.assertEquals( ex.source , "file" );
-			Assert.assertEquals( ex.startLine , 5 );
-			Assert.assertEquals( ex.startCol , 3 );
-			Assert.assertEquals( ex.endLine , 5 );
-			Assert.assertEquals( ex.endCol , 5 );
+			Assert.assertEquals( ex.segment.source , "file" );
+			Assert.assertEquals( ex.segment.startLine , 5 );
+			Assert.assertEquals( ex.segment.startCol , 3 );
+			Assert.assertEquals( ex.segment.endLine , 5 );
+			Assert.assertEquals( ex.segment.endCol , 5 );
 		}
 	}
 }

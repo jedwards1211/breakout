@@ -24,6 +24,7 @@ public class Segment implements CharSequence
 
 	private final String			value;
 	public final Object				source;
+	public final Segment			sourceSegment;
 	public final int				startLine;
 	public final int				endLine;
 	public final int				startCol;
@@ -35,7 +36,13 @@ public class Segment implements CharSequence
 
 	public Segment( String value , Object source , int startLine , int startCol )
 	{
+		this( null , value , source , startLine , startCol );
+	}
+
+	protected Segment( Segment sourceSegment , String value , Object source , int startLine , int startCol )
+	{
 		super( );
+		this.sourceSegment = sourceSegment;
 		this.value = value;
 		this.source = source;
 		this.startLine = startLine;
@@ -52,8 +59,10 @@ public class Segment implements CharSequence
 		this.endCol = endCol;
 	}
 
-	protected Segment( String value , Object source , int startLine , int startCol , int endLine , int endCol )
+	protected Segment( Segment sourceSegment , String value , Object source , int startLine , int startCol ,
+		int endLine , int endCol )
 	{
+		this.sourceSegment = sourceSegment;
 		this.value = value;
 		this.source = source;
 		this.startLine = startLine;
@@ -231,7 +240,8 @@ public class Segment implements CharSequence
 	{
 		if( startLine == endLine )
 		{
-			return new Segment( value.substring( beginIndex , endIndex ) , source , startLine ,
+			return new Segment( sourceSegment != null ? sourceSegment : this ,
+				value.substring( beginIndex , endIndex ) , source , startLine ,
 				startCol + beginIndex , startLine , startCol + endIndex - 1 );
 		}
 
@@ -253,7 +263,8 @@ public class Segment implements CharSequence
 			newStartCol = beginIndex - m.end( );
 		}
 
-		return new Segment( value.substring( beginIndex , endIndex ) , source , newStartLine , newStartCol );
+		return new Segment( sourceSegment != null ? sourceSegment : this ,
+			value.substring( beginIndex , endIndex ) , source , newStartLine , newStartCol );
 	}
 
 	public CharSequence subSequence( int beginIndex , int endIndex )
@@ -418,7 +429,7 @@ public class Segment implements CharSequence
 		}
 		catch( NumberFormatException ex )
 		{
-			throw new ParseExpectedException( this , ExpectedTypes.INTEGER );
+			throw new SegmentParseExpectedException( this , ExpectedTypes.INTEGER );
 		}
 	}
 
@@ -435,7 +446,7 @@ public class Segment implements CharSequence
 		catch( NumberFormatException ex )
 		{
 		}
-		throw new ParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_INTEGER );
+		throw new SegmentParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_INTEGER );
 	}
 
 	public float parseAsFloat( )
@@ -446,7 +457,7 @@ public class Segment implements CharSequence
 		}
 		catch( NumberFormatException ex )
 		{
-			throw new ParseExpectedException( this , ExpectedTypes.FLOAT );
+			throw new SegmentParseExpectedException( this , ExpectedTypes.FLOAT );
 		}
 	}
 
@@ -463,7 +474,7 @@ public class Segment implements CharSequence
 		catch( NumberFormatException ex )
 		{
 		}
-		throw new ParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_FLOAT );
+		throw new SegmentParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_FLOAT );
 	}
 
 	public double parseAsDouble( )
@@ -474,7 +485,7 @@ public class Segment implements CharSequence
 		}
 		catch( NumberFormatException ex )
 		{
-			throw new ParseExpectedException( this , ExpectedTypes.DOUBLE );
+			throw new SegmentParseExpectedException( this , ExpectedTypes.DOUBLE );
 		}
 	}
 
@@ -491,15 +502,15 @@ public class Segment implements CharSequence
 		catch( NumberFormatException ex )
 		{
 		}
-		throw new ParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_DOUBLE );
+		throw new SegmentParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_DOUBLE );
 	}
 
-	public <V> V parseFromMap( Map<String, V> map )
+	public <V> V parseAsAnyOf( Map<String, V> map )
 	{
 		V result = map.get( value );
 		if( result == null )
 		{
-			throw new ParseExpectedException( this , map.values( ).toArray( ) );
+			throw new SegmentParseExpectedException( this , map.values( ).toArray( ) );
 		}
 		return result;
 	}
@@ -514,20 +525,12 @@ public class Segment implements CharSequence
 			{
 				return parser.apply( this );
 			}
-			catch( ParseExpectedException ex )
+			catch( SegmentParseExpectedException ex )
 			{
 				expectedTypes.addAll( Arrays.asList( ex.expectedItems ) );
 			}
 		}
 
-		throw new ParseExpectedException( this , expectedTypes.toArray( ) );
-	}
-
-	public void requireToEqual( String s )
-	{
-		if( !value.equals( s ) )
-		{
-			throw new ParseExpectedException( this , s );
-		}
+		throw new SegmentParseExpectedException( this , expectedTypes.toArray( ) );
 	}
 }

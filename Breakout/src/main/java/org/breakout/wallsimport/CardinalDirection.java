@@ -73,4 +73,18 @@ public enum CardinalDirection
 			throw new IllegalArgumentException( "Invalid cardinal direction character: " + c );
 		}
 	}
+
+	public UnitizedDouble<Angle> toward( CardinalDirection endDirection , UnitizedDouble<Angle> angle )
+	{
+		if( endDirection.angle.doubleValue( Angle.degrees ) == ( this.angle.doubleValue( Angle.degrees ) + 90.0 ) % 360.0 )
+		{
+			return this.angle.add( angle );
+		}
+		else if( endDirection.angle.doubleValue( Angle.degrees ) == ( this.angle.doubleValue( Angle.degrees ) + 270.0 ) % 360.0 )
+		{
+			double result = ( this.angle.doubleValue( Angle.degrees ) + 360.0 - angle.doubleValue( Angle.degrees ) ) % 360.0;
+			return new UnitizedDouble<>( result , Angle.degrees );
+		}
+		throw new IllegalArgumentException( "invalid endDirection" );
+	}
 }
