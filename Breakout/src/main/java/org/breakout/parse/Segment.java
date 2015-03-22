@@ -133,6 +133,10 @@ public class Segment implements CharSequence
 
 	public boolean equals( Object anObject )
 	{
+		if( anObject instanceof Segment )
+		{
+			return value.equals( ( ( Segment ) anObject ).value );
+		}
 		return value.equals( anObject );
 	}
 
@@ -433,7 +437,7 @@ public class Segment implements CharSequence
 		}
 	}
 
-	public int parseAsNonNegativeInteger( )
+	public int parseAsUnsignedInteger( )
 	{
 		try
 		{
@@ -446,7 +450,7 @@ public class Segment implements CharSequence
 		catch( NumberFormatException ex )
 		{
 		}
-		throw new SegmentParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_INTEGER );
+		throw new SegmentParseExpectedException( this , ExpectedTypes.UNSIGNED_INTEGER );
 	}
 
 	public float parseAsFloat( )
@@ -461,7 +465,7 @@ public class Segment implements CharSequence
 		}
 	}
 
-	public float parseAsNonNegativeFloat( )
+	public float parseAsUnsignedFloat( )
 	{
 		try
 		{
@@ -474,7 +478,7 @@ public class Segment implements CharSequence
 		catch( NumberFormatException ex )
 		{
 		}
-		throw new SegmentParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_FLOAT );
+		throw new SegmentParseExpectedException( this , ExpectedTypes.UNSIGNED_FLOAT );
 	}
 
 	public double parseAsDouble( )
@@ -489,7 +493,7 @@ public class Segment implements CharSequence
 		}
 	}
 
-	public double parseAsNonNegativeDouble( )
+	public double parseAsUnsignedDouble( )
 	{
 		try
 		{
@@ -502,7 +506,7 @@ public class Segment implements CharSequence
 		catch( NumberFormatException ex )
 		{
 		}
-		throw new SegmentParseExpectedException( this , ExpectedTypes.NON_NEGATIVE_DOUBLE );
+		throw new SegmentParseExpectedException( this , ExpectedTypes.UNSIGNED_DOUBLE );
 	}
 
 	public <V> V parseAsAnyOf( Map<String, V> map )

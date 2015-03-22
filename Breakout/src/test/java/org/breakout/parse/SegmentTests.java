@@ -175,17 +175,17 @@ public class SegmentTests
 	public void parseAsNonNegativeIntegerTest( )
 	{
 		Segment segment = new Segment( "1234" , "file" , 5 , 3 );
-		Assert.assertEquals( 1234 , segment.parseAsNonNegativeInteger( ) );
+		Assert.assertEquals( 1234 , segment.parseAsUnsignedInteger( ) );
 
 		segment = new Segment( "-1234" , "file" , 5 , 3 );
 		try
 		{
-			segment.parseAsNonNegativeInteger( );
+			segment.parseAsUnsignedInteger( );
 			Assert.fail( "expected to throw" );
 		}
 		catch( SegmentParseExpectedException ex )
 		{
-			Assert.assertArrayEquals( new Object[ ] { ExpectedTypes.NON_NEGATIVE_INTEGER } , ex.expectedItems );
+			Assert.assertArrayEquals( new Object[ ] { ExpectedTypes.UNSIGNED_INTEGER } , ex.expectedItems );
 			Assert.assertEquals( ex.segment.source , "file" );
 			Assert.assertEquals( ex.segment.startLine , 5 );
 			Assert.assertEquals( ex.segment.startCol , 3 );

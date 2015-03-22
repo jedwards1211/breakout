@@ -5,76 +5,101 @@ import static org.breakout.wallsimport.CardinalDirection.NORTH;
 import static org.breakout.wallsimport.CardinalDirection.SOUTH;
 import static org.breakout.wallsimport.CardinalDirection.WEST;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.andork.collect.MapLiteral;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
+import org.breakout.parse.ExpectedTypes;
 import org.breakout.parse.Segment;
+import org.breakout.parse.SegmentMatcher;
 import org.breakout.parse.SegmentParseException;
+import org.breakout.parse.SegmentParseExpectedException;
 
 public class NewWallsParser
 {
-	public static Map<String, Unit<Length>>			lengthUnitSuffixes	= new MapLiteral<String, Unit<Length>>( )
-																			.map( "m" , Length.meters )
-																			.map( "M" , Length.meters )
-																			.map( "f" , Length.feet )
-																			.map( "F" , Length.feet );
+	public static Map<String, Unit<Length>>			lengthUnitSuffixes		= new MapLiteral<String, Unit<Length>>( )
+																				.map( "m" , Length.meters )
+																				.map( "M" , Length.meters )
+																				.map( "f" , Length.feet )
+																				.map( "F" , Length.feet );
 
-	public static Map<String, Unit<Angle>>			azmUnitSuffixes		= new MapLiteral<String, Unit<Angle>>( )
-																			.map( "d" , Angle.degrees )
-																			.map( "D" , Angle.degrees )
-																			.map( "g" , Angle.gradians )
-																			.map( "G" , Angle.gradians )
-																			.map( "m" , Angle.milsNATO )
-																			.map( "M" , Angle.milsNATO );
+	public static Map<String, Unit<Angle>>			azmUnitSuffixes			= new MapLiteral<String, Unit<Angle>>( )
+																				.map( "d" , Angle.degrees )
+																				.map( "D" , Angle.degrees )
+																				.map( "g" , Angle.gradians )
+																				.map( "G" , Angle.gradians )
+																				.map( "m" , Angle.milsNATO )
+																				.map( "M" , Angle.milsNATO );
 
-	public static Map<Unit<Angle>, Double>			azmMaxes			= new MapLiteral<Unit<Angle>, Double>( )
-																			.map( Angle.degrees , 360.0 )
-																			.map( Angle.gradians , 400.0 )
-																			.map( Angle.milsNATO , 6400.0 );
+	public static Map<Unit<Angle>, Double>			azmMaxes				= new MapLiteral<Unit<Angle>, Double>( )
+																				.map( Angle.degrees , 360.0 )
+																				.map( Angle.gradians , 400.0 )
+																				.map( Angle.milsNATO , 6400.0 );
 
-	public static Map<Unit<Angle>, Double>			incMaxes			= new MapLiteral<Unit<Angle>, Double>( )
-																			.map( Angle.degrees , 90.0 )
-																			.map( Angle.gradians , 100.0 )
-																			.map( Angle.milsNATO , 1600.0 )
-																			.map( Angle.percentGrade ,
-																				Double.POSITIVE_INFINITY );
+	public static Map<Unit<Angle>, Double>			incMaxes				= new MapLiteral<Unit<Angle>, Double>( )
+																				.map( Angle.degrees , 90.0 )
+																				.map( Angle.gradians , 100.0 )
+																				.map( Angle.milsNATO , 1600.0 )
+																				.map( Angle.percentGrade ,
+																					Double.POSITIVE_INFINITY );
 
-	public static Map<String, Unit<Angle>>			incUnitSuffixes		= new MapLiteral<String, Unit<Angle>>( )
-																			.map( "d" , Angle.degrees )
-																			.map( "D" , Angle.degrees )
-																			.map( "g" , Angle.gradians )
-																			.map( "G" , Angle.gradians )
-																			.map( "m" , Angle.milsNATO )
-																			.map( "M" , Angle.milsNATO )
-																			.map( "p" , Angle.percentGrade )
-																			.map( "P" , Angle.percentGrade );
+	public static Map<String, Unit<Angle>>			incUnitSuffixes			= new MapLiteral<String, Unit<Angle>>( )
+																				.map( "d" , Angle.degrees )
+																				.map( "D" , Angle.degrees )
+																				.map( "g" , Angle.gradians )
+																				.map( "G" , Angle.gradians )
+																				.map( "m" , Angle.milsNATO )
+																				.map( "M" , Angle.milsNATO )
+																				.map( "p" , Angle.percentGrade )
+																				.map( "P" , Angle.percentGrade );
 
-	public static Map<String, CardinalDirection>	cardinalDirections	= new MapLiteral<String, CardinalDirection>( )
-																			.map( "n" , NORTH )
-																			.map( "N" , NORTH )
-																			.map( "s" , SOUTH )
-																			.map( "S" , SOUTH )
-																			.map( "e" , EAST )
-																			.map( "E" , EAST )
-																			.map( "w" , WEST )
-																			.map( "W" , WEST );
+	public static Map<String, CardinalDirection>	cardinalDirections		= new MapLiteral<String, CardinalDirection>( )
+																				.map( "n" , NORTH )
+																				.map( "N" , NORTH )
+																				.map( "s" , SOUTH )
+																				.map( "S" , SOUTH )
+																				.map( "e" , EAST )
+																				.map( "E" , EAST )
+																				.map( "w" , WEST )
+																				.map( "W" , WEST );
 
-	public static UnitizedDouble<Length> parseDistance( Segment segment , Unit<Length> defaultUnit )
+	/**
+	 * The quoted value, unclosed quote, and semicolon handling regex from hell!
+	 */
+	public static Pattern							UNITS_OPTION_PATTERN	= Pattern
+																				.compile( "([a-zA-Z0-9]+)(=([^ \t\n\r\f\";]+|(\"(([^\\\\\"]|\\\\.)*)(\")?))?)?|;" );
+
+	public static UnitizedDouble<Length> parseSignedDistance( Segment segment , Unit<Length> defaultUnit )
 	{
 		int lastIndex = segment.length( ) - 1;
 
 		if( Character.isLetter( segment.charAt( lastIndex ) ) )
 		{
 			return new UnitizedDouble<Length>(
-				segment.substring( 0 , lastIndex ).parseAsNonNegativeDouble( ) ,
+				segment.substring( 0 , lastIndex ).parseAsDouble( ) ,
 				segment.substring( lastIndex ).parseAsAnyOf( lengthUnitSuffixes ) );
 		}
 
-		return new UnitizedDouble<Length>( segment.parseAsNonNegativeDouble( ) , defaultUnit );
+		return new UnitizedDouble<Length>( segment.parseAsDouble( ) , defaultUnit );
+	}
+
+	public static UnitizedDouble<Length> parseUnsignedDistance( Segment segment , Unit<Length> defaultUnit )
+	{
+		int lastIndex = segment.length( ) - 1;
+
+		if( Character.isLetter( segment.charAt( lastIndex ) ) )
+		{
+			return new UnitizedDouble<Length>(
+				segment.substring( 0 , lastIndex ).parseAsUnsignedDouble( ) ,
+				segment.substring( lastIndex ).parseAsAnyOf( lengthUnitSuffixes ) );
+		}
+
+		return new UnitizedDouble<Length>( segment.parseAsUnsignedDouble( ) , defaultUnit );
 	}
 
 	private static double parseAsDouble( Segment segment , double defaultValue )
@@ -86,13 +111,13 @@ public class NewWallsParser
 		return segment.parseAsDouble( );
 	}
 
-	private static double parseAsNonNegativeDouble( Segment segment , double defaultValue )
+	private static double parseAsUnsignedDouble( Segment segment , double defaultValue )
 	{
 		if( segment.isEmpty( ) )
 		{
 			return defaultValue;
 		}
-		return segment.parseAsNonNegativeDouble( );
+		return segment.parseAsUnsignedDouble( );
 	}
 
 	private static UnitizedDouble<Angle> parseNonQuadrantAzimuth( Segment segment , Unit<Angle> defaultUnit )
@@ -104,7 +129,7 @@ public class NewWallsParser
 
 		if( Character.isLetter( segment.charAt( lastIndex ) ) )
 		{
-			angle = segment.substring( 0 , lastIndex ).parseAsNonNegativeDouble( );
+			angle = segment.substring( 0 , lastIndex ).parseAsUnsignedDouble( );
 			unit = segment.substring( lastIndex ).parseAsAnyOf( azmUnitSuffixes );
 		}
 		else
@@ -119,21 +144,21 @@ public class NewWallsParser
 
 				if( parts.length == 3 )
 				{
-					angle = parseAsNonNegativeDouble( parts[ 0 ] , 0 ) +
-						parseAsNonNegativeDouble( parts[ 1 ] , 0 ) / 60.0 +
-						parts[ 2 ].parseAsNonNegativeDouble( ) / 3600.0;
+					angle = parseAsUnsignedDouble( parts[ 0 ] , 0 ) +
+						parseAsUnsignedDouble( parts[ 1 ] , 0 ) / 60.0 +
+						parts[ 2 ].parseAsUnsignedDouble( ) / 3600.0;
 					unit = Angle.degrees;
 				}
 				else
 				{
-					angle = parseAsNonNegativeDouble( parts[ 0 ] , 0 ) +
-						parts[ 1 ].parseAsNonNegativeDouble( ) / 60.0;
+					angle = parseAsUnsignedDouble( parts[ 0 ] , 0 ) +
+						parts[ 1 ].parseAsUnsignedDouble( ) / 60.0;
 					unit = Angle.degrees;
 				}
 			}
 			else
 			{
-				angle = segment.parseAsNonNegativeDouble( );
+				angle = segment.parseAsUnsignedDouble( );
 				unit = defaultUnit;
 			}
 		}
@@ -146,6 +171,19 @@ public class NewWallsParser
 		}
 
 		return new UnitizedDouble<Angle>( angle , unit );
+	}
+
+	public static UnitizedDouble<Angle> parseAzimuthOffset( Segment segment , Unit<Angle> defaultUnit )
+	{
+		if( segment.startsWith( "-" ) )
+		{
+			return parseNonQuadrantAzimuth( segment.substring( 1 ) , defaultUnit ).negate( );
+		}
+		else if( segment.startsWith( "+" ) )
+		{
+			segment = segment.substring( 1 );
+		}
+		return parseNonQuadrantAzimuth( segment , defaultUnit );
 	}
 
 	public static UnitizedDouble<Angle> parseAzimuth( Segment segment , Unit<Angle> defaultUnit )
@@ -188,7 +226,7 @@ public class NewWallsParser
 
 		if( Character.isLetter( segment.charAt( lastIndex ) ) )
 		{
-			angle = segment.substring( 0 , lastIndex ).parseAsNonNegativeDouble( );
+			angle = segment.substring( 0 , lastIndex ).parseAsUnsignedDouble( );
 			unit = segment.substring( lastIndex ).parseAsAnyOf( incUnitSuffixes );
 		}
 		else
@@ -203,21 +241,21 @@ public class NewWallsParser
 
 				if( parts.length == 3 )
 				{
-					angle = parseAsNonNegativeDouble( parts[ 0 ] , 0 ) +
-						parseAsNonNegativeDouble( parts[ 1 ] , 0 ) / 60.0 +
-						parts[ 2 ].parseAsNonNegativeDouble( ) / 3600.0;
+					angle = parseAsUnsignedDouble( parts[ 0 ] , 0 ) +
+						parseAsUnsignedDouble( parts[ 1 ] , 0 ) / 60.0 +
+						parts[ 2 ].parseAsUnsignedDouble( ) / 3600.0;
 					unit = Angle.degrees;
 				}
 				else
 				{
-					angle = parseAsNonNegativeDouble( parts[ 0 ] , 0 ) +
-						parts[ 1 ].parseAsNonNegativeDouble( ) / 60.0;
+					angle = parseAsUnsignedDouble( parts[ 0 ] , 0 ) +
+						parts[ 1 ].parseAsUnsignedDouble( ) / 60.0;
 					unit = Angle.degrees;
 				}
 			}
 			else
 			{
-				angle = segment.parseAsNonNegativeDouble( );
+				angle = segment.parseAsUnsignedDouble( );
 				unit = defaultUnit;
 			}
 		}
@@ -260,5 +298,41 @@ public class NewWallsParser
 		}
 
 		return result;
+	}
+
+	public static Map<Segment, Segment> parseUnitsOptions( Segment segment )
+	{
+		Map<Segment, Segment> result = new LinkedHashMap<>( );
+
+		SegmentMatcher m = new SegmentMatcher( segment , UNITS_OPTION_PATTERN );
+
+		while( m.find( ) )
+		{
+			if( m.group( ).equals( ";" ) )
+			{
+				break;
+			}
+			Segment quote = m.group( 4 );
+			if( quote != null )
+			{
+				if( m.group( 7 ) == null )
+				{
+					throw new SegmentParseExpectedException( segment.substring( segment.length( ) ) ,
+						ExpectedTypes.QUOTE );
+				}
+				result.put( m.group( 1 ) , m.group( 5 ) );
+			}
+			else
+			{
+				result.put( m.group( 1 ) , m.group( 3 ) );
+			}
+		}
+
+		return result;
+	}
+
+	public static String unescape( Segment escapedText )
+	{
+		return escapedText.toString( ).replaceAll( "\\\\(.)" , "$1" );
 	}
 }
