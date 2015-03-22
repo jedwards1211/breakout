@@ -519,6 +519,15 @@ public class Segment implements CharSequence
 		return result;
 	}
 
+	public <V> V parseToLowerCaseAsAnyOf( Map<String, V> map )
+	{
+		V result = map.get( value.toLowerCase( ) );
+		if( result == null )
+		{
+			throw new SegmentParseExpectedException( this , map.values( ).toArray( ) );
+		}
+		return result;
+	}
 	public <T> T parseAsAnyOf( Function<Segment, ? extends T> ... parsers )
 	{
 		List<Object> expectedTypes = new LinkedList<Object>( );
