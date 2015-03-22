@@ -5,7 +5,8 @@ import static org.breakout.wallsimport.CardinalDirection.NORTH;
 import static org.breakout.wallsimport.CardinalDirection.SOUTH;
 import static org.breakout.wallsimport.CardinalDirection.WEST;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -14,6 +15,7 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
+import org.andork.util.Pair;
 import org.breakout.parse.ExpectedTypes;
 import org.breakout.parse.Segment;
 import org.breakout.parse.SegmentMatcher;
@@ -72,7 +74,7 @@ public class NewWallsParser
 	 * The quoted value, unclosed quote, and semicolon handling regex from hell!
 	 */
 	public static Pattern							UNITS_OPTION_PATTERN	= Pattern
-																				.compile( "([a-zA-Z0-9]+)(=([^ \t\n\r\f\";]+|(\"(([^\\\\\"]|\\\\.)*)(\")?))?)?|;" );
+																				.compile( "([a-zA-Z0-9]+)(=([^ \t\n\r\f\";]+|(\"(([^\\\\\"]|\\\\.)*)(\")?)|)?)?|;" );
 
 	public static UnitizedDouble<Length> parseSignedDistance( Segment segment , Unit<Length> defaultUnit )
 	{
@@ -300,9 +302,9 @@ public class NewWallsParser
 		return result;
 	}
 
-	public static Map<Segment, Segment> parseUnitsOptions( Segment segment )
+	public static List<Pair<Segment, Segment>> parseUnitsOptions( Segment segment )
 	{
-		Map<Segment, Segment> result = new LinkedHashMap<>( );
+		List<Pair<Segment, Segment>> result = new ArrayList<>( );
 
 		SegmentMatcher m = new SegmentMatcher( segment , UNITS_OPTION_PATTERN );
 
@@ -320,11 +322,11 @@ public class NewWallsParser
 					throw new SegmentParseExpectedException( segment.substring( segment.length( ) ) ,
 						ExpectedTypes.QUOTE );
 				}
-				result.put( m.group( 1 ) , m.group( 5 ) );
+				result.add( new Pair<>( m.group( 1 ) , m.group( 5 ) ) );
 			}
 			else
 			{
-				result.put( m.group( 1 ) , m.group( 3 ) );
+				result.add( new Pair<>( m.group( 1 ) , m.group( 3 ) ) );
 			}
 		}
 
