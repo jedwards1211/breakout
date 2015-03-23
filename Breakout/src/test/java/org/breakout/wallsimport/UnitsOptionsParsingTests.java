@@ -156,7 +156,7 @@ public class UnitsOptionsParsingTests
 		}
 		catch( Exception ex )
 		{
-
+			System.err.println( ex.getLocalizedMessage( ) );
 		}
 	}
 
@@ -234,6 +234,7 @@ public class UnitsOptionsParsingTests
 		assertThrows( ( ) -> parser.processUnits( new Segment( "lrud" , null , 0 , 0 ) ) );
 		assertThrows( ( ) -> parser.processUnits( new Segment( "lrud=x" , null , 0 , 0 ) ) );
 		assertThrows( ( ) -> parser.processUnits( new Segment( "lrud=from:" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.processUnits( new Segment( "lrud=x:lrud" , null , 0 , 0 ) ) );
 		assertThrows( ( ) -> parser.processUnits( new Segment( "lrud=from:lr" , null , 0 , 0 ) ) );
 		assertThrows( ( ) -> parser.processUnits( new Segment( "lrud=from:lrru" , null , 0 , 0 ) ) );
 	}

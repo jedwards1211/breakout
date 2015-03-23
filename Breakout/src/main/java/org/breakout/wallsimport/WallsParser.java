@@ -627,7 +627,7 @@ public class WallsParser
 		{
 			if( value != null )
 			{
-				throw new SegmentParseException( name , WallsParseError.ARG_NOT_ALLOWED );
+				throw new SegmentParseException( value , new ArgNotAllowedErrorMessage( name ) );
 			}
 			r.accept( parser , name );
 		};
@@ -639,7 +639,7 @@ public class WallsParser
 		{
 			if( value == null || value.length( ) == 0 )
 			{
-				throw new SegmentParseException( name , WallsParseError.ARG_NOT_ALLOWED );
+				throw new SegmentParseException( name.charAfter( ) , new ArgRequiredErrorMessage( name ) );
 			}
 			r.accept( parser , value );
 		};

@@ -246,7 +246,7 @@ public class Segment implements CharSequence
 
 	public Segment charAfter( )
 	{
-		return sourceIndex == null || sourceIndex == sourceSegment.length( ) ? substring( length( ) ) :
+		return sourceIndex == null || sourceIndex + length( ) >= sourceSegment.length( ) ? substring( length( ) ) :
 			sourceSegment.substring( sourceIndex + length( ) , sourceIndex + length( ) + 1 );
 	}
 
@@ -600,7 +600,7 @@ public class Segment implements CharSequence
 			}
 			else if( endLine == line.startLine )
 			{
-				while( k <= endCol )
+				while( k <= Math.max( startCol , endCol ) )
 				{
 					sb.append( '^' );
 					k++;
