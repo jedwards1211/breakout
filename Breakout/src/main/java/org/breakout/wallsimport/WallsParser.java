@@ -639,7 +639,8 @@ public class WallsParser
 		{
 			if( value == null || value.length( ) == 0 )
 			{
-				throw new SegmentParseException( name.charAfter( ) , new ArgRequiredErrorMessage( name ) );
+				throw new SegmentParseException( value != null ? value.charAfter( ) : name.charAfter( ) , 
+					new ArgRequiredErrorMessage( name ) );
 			}
 			r.accept( parser , value );
 		};
