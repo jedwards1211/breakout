@@ -12,7 +12,11 @@ public enum WallsParseError implements ParseErrorMessage
 	INC_OUT_OF_RANGE,
 	TOO_MANY_ARGS,
 	ARGS_NOT_ALLOWED,
-	ARGS_REQUIRED, ;
+	ARGS_REQUIRED,
+	STACK_FULL,
+	STACK_EMPTY,
+	INVALID_ORDER_ELEMENTS,
+	INVALID_LRUD_ELEMENTS;
 
 	@Override
 	public String getLocalizedMessage( )

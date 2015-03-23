@@ -6,12 +6,15 @@ import static org.breakout.wallsimport.CardinalDirection.SOUTH;
 import static org.breakout.wallsimport.CardinalDirection.WEST;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import org.andork.collect.MapLiteral;
@@ -19,6 +22,7 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
+import org.andork.util.ArrayUtils;
 import org.andork.util.Pair;
 import org.breakout.parse.ExpectedTypes;
 import org.breakout.parse.Segment;
@@ -95,6 +99,12 @@ public class NewWallsParser
 	WallsUnits units = new WallsUnits( );
 
 	Map<String, String> macros = new HashMap<>( );
+
+	@FunctionalInterface
+	private static interface UnitsOption
+	{
+		public void process( NewWallsParser parser , Segment name , Segment arg );
+	}
 
 	public static UnitizedDouble<Length> parseSignedDistance( Segment segment , Unit<Length> defaultUnit )
 	{
@@ -341,7 +351,7 @@ public class NewWallsParser
 					throw new SegmentParseExpectedException( segment.substring( segment.length( ) ) ,
 						ExpectedTypes.QUOTE );
 				}
-				result.add( new Pair<>( m.group( 1 ) , m.group( 5 ) ) );
+				result.add( new Pair<>( m.group( 1 ) , quote ) );
 			}
 			else
 			{
@@ -352,41 +362,48 @@ public class NewWallsParser
 		return result;
 	}
 
-	public static String unescape( Segment escapedText )
+	public static String dequoteUnitsArg( Segment escapedText )
 	{
-		return escapedText.toString( ).replace( "\\\\" , "\\" ).replace( "\\n" , "\n" ).replace( "\\t" , "\t" )
+		if( !escapedText.startsWith( "\"" ) )
+		{
+			return escapedText.toString( );
+		}
+		return escapedText.substring( 1 , escapedText.length( ) - 1 ).toString( )
+			.replace( "\\\\" , "\\" )
+			.replace( "\\n" , "\n" )
+			.replace( "\\t" , "\t" )
 			.replace( "\\\"" , "\"" );
 	}
 
-	private void save( )
+	private void save( Segment optionName )
 	{
 		if( stack.size( ) > 10 )
 		{
-			throw new IllegalStateException( "you cannot save more than 10 times without restoring" );
+			throw new SegmentParseException( optionName , WallsParseError.STACK_FULL );
 		}
 		stack.push( units.clone( ) );
 	}
 
-	private void restore( )
+	private void restore( Segment optionName )
 	{
 		if( stack.isEmpty( ) )
 		{
-			throw new IllegalStateException( "no saved units to restore" );
+			throw new SegmentParseException( optionName , WallsParseError.STACK_EMPTY );
 		}
 		units = stack.pop( );
 	}
 
-	private void reset( )
+	private void reset( Segment optionName )
 	{
 		units = new WallsUnits( );
 	}
 
-	private void meters( )
+	private void meters( Segment optionName )
 	{
 		units.d_unit = units.s_unit = Length.meters;
 	}
 
-	private void feet( )
+	private void feet( Segment optionName )
 	{
 		units.d_unit = units.s_unit = Length.feet;
 	}
@@ -429,6 +446,35 @@ public class NewWallsParser
 	private void v_vb( Segment s )
 	{
 		units.v_unit = units.vb_unit = s.parseToLowerCaseAsAnyOf( incUnits );
+	}
+
+	private static final Map<String, VectorElement> vectorElements = new MapLiteral<String, VectorElement>( )
+		.map( "d" , VectorElement.D )
+		.map( "a" , VectorElement.A )
+		.map( "v" , VectorElement.V )
+		.map( "n" , VectorElement.N )
+		.map( "e" , VectorElement.E )
+		.map( "u" , VectorElement.U );
+
+	private static final List<Set<VectorElement>> allowedOrderSets = Arrays.asList(
+		new HashSet<>( Arrays.asList( VectorElement.D , VectorElement.A , VectorElement.V ) ) ,
+		new HashSet<>( Arrays.asList( VectorElement.D , VectorElement.A ) ) ,
+		new HashSet<>( Arrays.asList( VectorElement.N , VectorElement.E , VectorElement.U ) ) ,
+		new HashSet<>( Arrays.asList( VectorElement.N , VectorElement.E ) )
+		);
+
+	private void order( Segment s )
+	{
+		List<VectorElement> newOrder = new ArrayList<>( );
+		for( Segment elem : s.split( "" ) )
+		{
+			newOrder.add( elem.parseToLowerCaseAsAnyOf( vectorElements ) );
+		}
+		if( !allowedOrderSets.stream( ).anyMatch( set -> newOrder.containsAll( set ) && newOrder.size( ) == set.size( ) ) )
+		{
+			throw new SegmentParseException( s , WallsParseError.INVALID_ORDER_ELEMENTS );
+		}
+		units.order = Collections.unmodifiableList( newOrder );
 	}
 
 	private void decl( Segment s )
@@ -517,58 +563,120 @@ public class NewWallsParser
 		units.typevb_noAverage = parts.length > 2 ? parts[ 2 ].parseToLowerCaseAsAnyOf( noAverageValues ) : false;
 	}
 
-	private static final BiConsumer<NewWallsParser, Segment> noArgOption( String option , Consumer<NewWallsParser> r )
+	private static final Map<String, CaseType> caseTypes = new MapLiteral<String, CaseType>( )
+		.map( "u" , CaseType.Upper )
+		.map( "upper" , CaseType.Upper )
+		.map( "l" , CaseType.Lower )
+		.map( "lower" , CaseType.Lower )
+		.map( "m" , CaseType.Mixed )
+		.map( "mixed" , CaseType.Mixed );
+
+	private void case_( Segment s )
 	{
-		return ( parser , segment ) ->
+		units.case_ = s.parseToLowerCaseAsAnyOf( caseTypes );
+	}
+
+	private static final Map<String, LrudType> lrudTypes = new MapLiteral<String, LrudType>( )
+		.map( "f" , LrudType.From )
+		.map( "from" , LrudType.From )
+		.map( "t" , LrudType.To )
+		.map( "to" , LrudType.To )
+		.map( "fb" , LrudType.FB )
+		.map( "tb" , LrudType.TB );
+
+	private static final Map<String, LrudElement> lrudElements = new MapLiteral<String, LrudElement>( )
+		.map( "l" , LrudElement.L )
+		.map( "r" , LrudElement.R )
+		.map( "u" , LrudElement.U )
+		.map( "d" , LrudElement.D );
+
+	private static final Set<LrudElement> lrudElementSet = new HashSet<>( Arrays.asList( LrudElement.values( ) ) );
+
+	private void lrud( Segment s )
+	{
+		Segment[ ] parts = s.split( ":" , 2 );
+		LrudType newLrud = parts[ 0 ].parseToLowerCaseAsAnyOf( lrudTypes );
+		if( parts.length == 2 )
 		{
-			if( segment != null )
+			List<LrudElement> newLrudOrder = new ArrayList<>( );
+			for( Segment elem : parts[ 1 ].split( "" ) )
 			{
-				throw new SegmentParseException( segment , WallsParseError.ARGS_NOT_ALLOWED );
+				newLrudOrder.add( elem.parseToLowerCaseAsAnyOf( lrudElements ) );
 			}
-			r.accept( parser );
+			if( !newLrudOrder.containsAll( lrudElementSet ) || newLrudOrder.size( ) != lrudElementSet.size( ) )
+			{
+				throw new SegmentParseException( parts[ 1 ] , WallsParseError.INVALID_LRUD_ELEMENTS );
+			}
+			units.lrud_order = Collections.unmodifiableList( newLrudOrder );
+		}
+		else
+		{
+			units.lrud_order = Arrays.asList(
+				LrudElement.L ,
+				LrudElement.R ,
+				LrudElement.U ,
+				LrudElement.D
+				);
+		}
+		units.lrud = newLrud;
+	}
+
+	private static final UnitsOption noArgUnitsOption( BiConsumer<NewWallsParser, Segment> r )
+	{
+		return ( parser , name , value ) ->
+		{
+			if( value != null )
+			{
+				throw new SegmentParseException( name , WallsParseError.ARGS_NOT_ALLOWED );
+			}
+			r.accept( parser , name );
 		};
 	}
 
-	private static final BiConsumer<NewWallsParser, Segment> requiredArgOption( String option , BiConsumer<NewWallsParser, Segment> r )
+	private static final UnitsOption requiredArgUnitsOption( BiConsumer<NewWallsParser, Segment> r )
 	{
-		return ( parser , segment ) ->
+		return ( parser , name , value ) ->
 		{
-			if( segment == null || segment.length( ) == 0 )
+			if( value == null || value.length( ) == 0 )
 			{
-				throw new SegmentParseException( segment , WallsParseError.ARGS_NOT_ALLOWED );
+				throw new SegmentParseException( name , WallsParseError.ARGS_NOT_ALLOWED );
 			}
-			r.accept( parser , segment );
+			r.accept( parser , value );
 		};
 	}
 
-	private static final Map<String, BiConsumer<NewWallsParser, Segment>> unitsOptionHandlers = new MapLiteral<String, BiConsumer<NewWallsParser, Segment>>( )
-		.map( "save" , noArgOption( "save" , NewWallsParser::save ) )
-		.map( "reset" , noArgOption( "reset" , NewWallsParser::reset ) )
-		.map( "restore" , noArgOption( "restore" , NewWallsParser::restore ) )
-		.map( "m" , noArgOption( "m" , NewWallsParser::meters ) )
-		.map( "meters" , noArgOption( "meters" , NewWallsParser::meters ) )
-		.map( "f" , noArgOption( "f" , NewWallsParser::feet ) )
-		.map( "feet" , noArgOption( "feet" , NewWallsParser::feet ) )
-		.map( "d" , requiredArgOption( "d" , NewWallsParser::d ) )
-		.map( "s" , requiredArgOption( "s" , NewWallsParser::s ) )
-		.map( "a" , requiredArgOption( "a" , NewWallsParser::a ) )
-		.map( "ab" , requiredArgOption( "ab" , NewWallsParser::ab ) )
-		.map( "a/ab" , requiredArgOption( "a/ab" , NewWallsParser::a_ab ) )
-		.map( "v" , requiredArgOption( "v" , NewWallsParser::v ) )
-		.map( "vb" , requiredArgOption( "vb" , NewWallsParser::vb ) )
-		.map( "v/vb" , requiredArgOption( "v/vb" , NewWallsParser::v_vb ) )
-		.map( "decl" , requiredArgOption( "decl" , NewWallsParser::decl ) )
-		.map( "grid" , requiredArgOption( "grid" , NewWallsParser::grid ) )
-		.map( "rect" , requiredArgOption( "rect" , NewWallsParser::rect ) )
-		.map( "incd" , requiredArgOption( "incd" , NewWallsParser::incd ) )
-		.map( "inch" , requiredArgOption( "inch" , NewWallsParser::inch ) )
-		.map( "incs" , requiredArgOption( "incs" , NewWallsParser::incs ) )
-		.map( "inca" , requiredArgOption( "inca" , NewWallsParser::inca ) )
-		.map( "incab" , requiredArgOption( "incab" , NewWallsParser::incab ) )
-		.map( "incv" , requiredArgOption( "incv" , NewWallsParser::incv ) )
-		.map( "incvb" , requiredArgOption( "incvb" , NewWallsParser::incvb ) )
-		.map( "typeab" , requiredArgOption( "typeab" , NewWallsParser::typeab ) )
-		.map( "typevb" , requiredArgOption( "typevb" , NewWallsParser::typevb ) );
+	private static final Map<String, UnitsOption> unitsOptions = new MapLiteral<String, UnitsOption>( )
+		.map( "save" , noArgUnitsOption( NewWallsParser::save ) )
+		.map( "reset" , noArgUnitsOption( NewWallsParser::reset ) )
+		.map( "restore" , noArgUnitsOption( NewWallsParser::restore ) )
+		.map( "m" , noArgUnitsOption( NewWallsParser::meters ) )
+		.map( "meters" , noArgUnitsOption( NewWallsParser::meters ) )
+		.map( "f" , noArgUnitsOption( NewWallsParser::feet ) )
+		.map( "feet" , noArgUnitsOption( NewWallsParser::feet ) )
+		.map( "d" , requiredArgUnitsOption( NewWallsParser::d ) )
+		.map( "s" , requiredArgUnitsOption( NewWallsParser::s ) )
+		.map( "a" , requiredArgUnitsOption( NewWallsParser::a ) )
+		.map( "ab" , requiredArgUnitsOption( NewWallsParser::ab ) )
+		.map( "a/ab" , requiredArgUnitsOption( NewWallsParser::a_ab ) )
+		.map( "v" , requiredArgUnitsOption( NewWallsParser::v ) )
+		.map( "vb" , requiredArgUnitsOption( NewWallsParser::vb ) )
+		.map( "v/vb" , requiredArgUnitsOption( NewWallsParser::v_vb ) )
+		.map( "o" , requiredArgUnitsOption( NewWallsParser::order ) )
+		.map( "order" , requiredArgUnitsOption( NewWallsParser::order ) )
+		.map( "decl" , requiredArgUnitsOption( NewWallsParser::decl ) )
+		.map( "grid" , requiredArgUnitsOption( NewWallsParser::grid ) )
+		.map( "rect" , requiredArgUnitsOption( NewWallsParser::rect ) )
+		.map( "incd" , requiredArgUnitsOption( NewWallsParser::incd ) )
+		.map( "inch" , requiredArgUnitsOption( NewWallsParser::inch ) )
+		.map( "incs" , requiredArgUnitsOption( NewWallsParser::incs ) )
+		.map( "inca" , requiredArgUnitsOption( NewWallsParser::inca ) )
+		.map( "incab" , requiredArgUnitsOption( NewWallsParser::incab ) )
+		.map( "incv" , requiredArgUnitsOption( NewWallsParser::incv ) )
+		.map( "incvb" , requiredArgUnitsOption( NewWallsParser::incvb ) )
+		.map( "typeab" , requiredArgUnitsOption( NewWallsParser::typeab ) )
+		.map( "typevb" , requiredArgUnitsOption( NewWallsParser::typevb ) )
+		.map( "case" , requiredArgUnitsOption( NewWallsParser::case_ ) )
+		.map( "lrud" , requiredArgUnitsOption( NewWallsParser::lrud ) );
 
 	/**
 	 * 
@@ -577,17 +685,9 @@ public class NewWallsParser
 	 */
 	public void processUnits( Segment segment )
 	{
-		for( Pair<Segment, Segment> option : parseUnitsOptions( segment ) )
+		for( Pair<Segment, Segment> pair : parseUnitsOptions( segment ) )
 		{
-			BiConsumer<NewWallsParser, Segment> consumer = option.getKey( ).parseToLowerCaseAsAnyOf( unitsOptionHandlers );
-			try
-			{
-				consumer.accept( this , option.getValue( ) );
-			}
-			catch( IllegalStateException ex )
-			{
-				throw new SegmentParseException( option.getKey( ) , null );
-			}
+			pair.getKey( ).parseToLowerCaseAsAnyOf( unitsOptions ).process( this , pair.getKey( ) , pair.getValue( ) );
 		}
 	}
 }

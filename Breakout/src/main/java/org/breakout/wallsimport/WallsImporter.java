@@ -46,7 +46,6 @@ import org.breakout.table.SurveyModel;
 import org.breakout.table.XSection;
 import org.breakout.table.XSectionType;
 import org.breakout.wallsimport.WallsImportMessage.Severity;
-import org.breakout.wallsimport.WallsUnits.LrudType;
 
 /**
  * Imports survey data from the format for David McKenzie's Walls program.
