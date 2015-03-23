@@ -1,7 +1,7 @@
 package org.breakout.wallsimport;
 
 import org.andork.i18n.I18n;
-import org.breakout.parse.ParseErrorMessage;
+import org.andork.parse.ParseErrorMessage;
 
 public enum WallsParseError implements ParseErrorMessage
 {
@@ -11,8 +11,8 @@ public enum WallsParseError implements ParseErrorMessage
 	UNSIGNED_NONZERO_INC,
 	INC_OUT_OF_RANGE,
 	TOO_MANY_ARGS,
-	ARGS_NOT_ALLOWED,
-	ARGS_REQUIRED,
+	ARG_NOT_ALLOWED,
+	ARG_REQUIRED,
 	STACK_FULL,
 	STACK_EMPTY,
 	INVALID_ORDER_ELEMENTS,

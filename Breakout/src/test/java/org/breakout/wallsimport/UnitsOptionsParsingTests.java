@@ -3,10 +3,10 @@ package org.breakout.wallsimport;
 import java.util.Arrays;
 import java.util.List;
 
+import org.andork.parse.Segment;
+import org.andork.parse.SegmentParseExpectedException;
 import org.andork.unit.Length;
 import org.andork.util.Pair;
-import org.breakout.parse.Segment;
-import org.breakout.parse.SegmentParseExpectedException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,7 +17,7 @@ public class UnitsOptionsParsingTests
 	{
 		Segment segment = new Segment( "hello=world flag=\"quoted text\"" , null , 7 , 3 );
 
-		List<Pair<Segment, Segment>> options = NewWallsParser.parseUnitsOptions( segment );
+		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
 
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
@@ -30,15 +30,15 @@ public class UnitsOptionsParsingTests
 	{
 		Segment segment = new Segment( "hello=world flag=\"\\\"quoted\\\" text\"" , null , 7 , 3 );
 
-		List<Pair<Segment, Segment>> options = NewWallsParser.parseUnitsOptions( segment );
+		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
 
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
 		Assert.assertEquals( new Segment( "flag" , null , 0 , 0 ) , options.get( 1 ).getKey( ) );
 		Assert.assertEquals( new Segment( "\"\\\"quoted\\\" text\"" , null , 0 , 0 ) , options.get( 1 ).getValue( ) );
 
-		Assert.assertEquals( "\"quoted\" text" , NewWallsParser.dequoteUnitsArg( options.get( 1 ).getValue( ) ) );
-		Assert.assertEquals( "world" , NewWallsParser.dequoteUnitsArg( options.get( 0 ).getValue( ) ) );
+		Assert.assertEquals( "\"quoted\" text" , WallsParser.dequoteUnitsArg( options.get( 1 ).getValue( ) ) );
+		Assert.assertEquals( "world" , WallsParser.dequoteUnitsArg( options.get( 0 ).getValue( ) ) );
 	}
 
 	@Test
@@ -46,7 +46,7 @@ public class UnitsOptionsParsingTests
 	{
 		Segment segment = new Segment( "hello=world ;flag=\"\\\"quoted\\\" text\"" , null , 7 , 3 );
 
-		List<Pair<Segment, Segment>> options = NewWallsParser.parseUnitsOptions( segment );
+		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
 
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
@@ -58,7 +58,7 @@ public class UnitsOptionsParsingTests
 	{
 		Segment segment = new Segment( "hello=world flag=\"\\\"quoted\\\" ;text\" then=" , null , 7 , 3 );
 
-		List<Pair<Segment, Segment>> options = NewWallsParser.parseUnitsOptions( segment );
+		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
 
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
@@ -75,7 +75,7 @@ public class UnitsOptionsParsingTests
 
 		try
 		{
-			NewWallsParser.parseUnitsOptions( segment );
+			WallsParser.parseUnitsOptions( segment );
 		}
 		catch( SegmentParseExpectedException ex )
 		{
@@ -89,7 +89,7 @@ public class UnitsOptionsParsingTests
 	@Test
 	public void testSaveAndRestore( )
 	{
-		NewWallsParser parser = new NewWallsParser( );
+		WallsParser parser = new WallsParser( );
 
 		Assert.assertEquals( 0 , parser.stack.size( ) );
 
@@ -111,7 +111,7 @@ public class UnitsOptionsParsingTests
 	@Test
 	public void testFeetAndMeters( )
 	{
-		NewWallsParser parser = new NewWallsParser( );
+		WallsParser parser = new WallsParser( );
 
 		parser.processUnits( new Segment( "meters" , null , 0 , 0 ) );
 		Assert.assertEquals( Length.meters , parser.units.d_unit );
@@ -130,7 +130,7 @@ public class UnitsOptionsParsingTests
 	@Test
 	public void testDAndS( )
 	{
-		NewWallsParser parser = new NewWallsParser( );
+		WallsParser parser = new WallsParser( );
 
 		parser.processUnits( new Segment( "d=f s=meters" , null , 0 , 0 ) );
 		Assert.assertEquals( Length.feet , parser.units.d_unit );
@@ -163,7 +163,7 @@ public class UnitsOptionsParsingTests
 	@Test
 	public void testTypeAB( )
 	{
-		NewWallsParser parser = new NewWallsParser( );
+		WallsParser parser = new WallsParser( );
 
 		parser.processUnits( new Segment( "typeab=Corrected,2,X" , null , 0 , 0 ) );
 		Assert.assertEquals( true , parser.units.typeab_corrected );
@@ -183,7 +183,7 @@ public class UnitsOptionsParsingTests
 	@Test
 	public void testOrder( )
 	{
-		NewWallsParser parser = new NewWallsParser( );
+		WallsParser parser = new WallsParser( );
 
 		parser.processUnits( new Segment( "o=vad" , null , 0 , 0 ) );
 		Assert.assertEquals( Arrays.asList( VectorElement.V , VectorElement.A , VectorElement.D ) , parser.units.order );
@@ -216,7 +216,7 @@ public class UnitsOptionsParsingTests
 	@Test
 	public void testLrud( )
 	{
-		NewWallsParser parser = new NewWallsParser( );
+		WallsParser parser = new WallsParser( );
 
 		parser.processUnits( new Segment( "lrud=f:rlud" , null , 0 , 0 ) );
 		Assert.assertEquals( LrudType.From , parser.units.lrud );
