@@ -161,7 +161,7 @@ public class NewWallsParser
 				Segment[ ] parts = segment.split( ":" );
 				if( parts.length > 2 && parts[ parts.length - 1 ].endCol != segment.endCol )
 				{
-					throw new SegmentParseException( parts[ 2 ].substring( parts[ 2 ].length( ) ) , "too many colons" );
+					throw new SegmentParseException( parts[ 2 ].charAfter( ) , WallsParseError.TOO_MANY_COLONS );
 				}
 
 				if( parts.length == 3 )
@@ -189,7 +189,7 @@ public class NewWallsParser
 
 		if( angle < 0 || angle > azmMax )
 		{
-			throw new SegmentParseException( segment , "azimuth must be between 0 and " + azmMax );
+			throw new SegmentParseException( segment , WallsParseError.AZM_OUT_OF_RANGE );
 		}
 
 		return new UnitizedDouble<Angle>( angle , unit );
@@ -227,7 +227,7 @@ public class NewWallsParser
 
 			if( angle.doubleValue( angle.unit ) < 0 || angle.doubleValue( angle.unit ) > angleMax )
 			{
-				throw new SegmentParseException( segment , "azimuth must be between 0 and " + angleMax );
+				throw new SegmentParseException( segment , WallsParseError.AZM_OUT_OF_RANGE );
 			}
 
 			CardinalDirection endDirection = segment.substring( segment.length( ) - 1 ).parseToLowerCaseAsAnyOf(
@@ -258,7 +258,7 @@ public class NewWallsParser
 				Segment[ ] parts = segment.split( ":" );
 				if( parts.length > 2 && parts[ parts.length - 1 ].endCol != segment.endCol )
 				{
-					throw new SegmentParseException( parts[ 2 ].substring( parts[ 2 ].length( ) ) , "too many colons" );
+					throw new SegmentParseException( parts[ 2 ].charAfter( ) , WallsParseError.TOO_MANY_COLONS );
 				}
 
 				if( parts.length == 3 )
@@ -295,7 +295,7 @@ public class NewWallsParser
 			result = parseUnsignedInclination( segment.substring( 1 ) , defaultUnit );
 			if( result.doubleValue( result.unit ) == 0 )
 			{
-				throw new SegmentParseException( segment , "+ or - is only allowed for nonzero inclinations" );
+				throw new SegmentParseException( segment , WallsParseError.SIGNED_ZERO_INC );
 			}
 			if( first == '-' )
 			{
@@ -307,7 +307,7 @@ public class NewWallsParser
 			result = parseUnsignedInclination( segment , defaultUnit );
 			if( result.doubleValue( result.unit ) != 0 )
 			{
-				throw new SegmentParseException( segment , "+ or - is required for nonzero inclinations" );
+				throw new SegmentParseException( segment , WallsParseError.UNSIGNED_NONZERO_INC );
 			}
 		}
 
@@ -315,8 +315,7 @@ public class NewWallsParser
 
 		if( result.doubleValue( result.unit ) < -incMax || result.doubleValue( result.unit ) > incMax )
 		{
-			throw new SegmentParseException( segment , "inclinations must be between " + ( -incMax ) + " and " + incMax
-				+ " " + result.unit );
+			throw new SegmentParseException( segment , WallsParseError.INC_OUT_OF_RANGE );
 		}
 
 		return result;
@@ -496,7 +495,7 @@ public class NewWallsParser
 
 		if( parts.length > 3 )
 		{
-			throw new SegmentParseException( parts[ 3 ] , "to many arguments" );
+			throw new SegmentParseException( parts[ 3 ].charBefore( ) , WallsParseError.TOO_MANY_ARGS );
 		}
 
 		units.typeab_corrected = parts[ 0 ].parseToLowerCaseAsAnyOf( correctedValues );
@@ -510,7 +509,7 @@ public class NewWallsParser
 
 		if( parts.length > 3 )
 		{
-			throw new SegmentParseException( parts[ 3 ] , "to many arguments" );
+			throw new SegmentParseException( parts[ 3 ].charBefore( ) , WallsParseError.TOO_MANY_ARGS );
 		}
 
 		units.typevb_corrected = parts[ 0 ].parseToLowerCaseAsAnyOf( correctedValues );
@@ -524,7 +523,7 @@ public class NewWallsParser
 		{
 			if( segment != null )
 			{
-				throw new SegmentParseException( segment , option + " doesn't take arguments" );
+				throw new SegmentParseException( segment , WallsParseError.ARGS_NOT_ALLOWED );
 			}
 			r.accept( parser );
 		};
@@ -536,7 +535,7 @@ public class NewWallsParser
 		{
 			if( segment == null || segment.length( ) == 0 )
 			{
-				throw new SegmentParseException( segment , option + " requires an argument" );
+				throw new SegmentParseException( segment , WallsParseError.ARGS_NOT_ALLOWED );
 			}
 			r.accept( parser , segment );
 		};
@@ -587,7 +586,7 @@ public class NewWallsParser
 			}
 			catch( IllegalStateException ex )
 			{
-				throw new SegmentParseException( option.getKey( ) , ex );
+				throw new SegmentParseException( option.getKey( ) , null );
 			}
 		}
 	}

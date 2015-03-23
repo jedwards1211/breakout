@@ -46,33 +46,33 @@ import org.andork.bind2.OpaqueBinderHolder;
 
 public class I18n
 {
-	private static final Logger				logger						= Logger.getLogger( I18n.class.getName( ) );
+	private static final Logger logger = Logger.getLogger( I18n.class.getName( ) );
 
-	private BinderHolder<Locale>			localeBinderHolder			= new BinderHolder<>( );
+	private static BinderHolder<Locale> localeBinderHolder = new BinderHolder<>( );
 
-	private OpaqueBinderHolder<Locale>		opaqueLocaleBinderHolder	= new OpaqueBinderHolder<>( localeBinderHolder );
+	private static OpaqueBinderHolder<Locale> opaqueLocaleBinderHolder = new OpaqueBinderHolder<>( localeBinderHolder );
 
-	private final Map<String, Localizer>	localizers					= new HashMap<String, Localizer>( );
+	private static final Map<String, Localizer> localizers = new HashMap<String, Localizer>( );
 
-	private boolean							disableBundleLoading		= System.getProperties( ).containsKey(
-																			"disableBundleLoading" );
+	private static boolean disableBundleLoading = System.getProperties( ).containsKey(
+		"disableBundleLoading" );
 
-	public I18n( )
+	static
 	{
 		setLocale( Locale.getDefault( ) );
 	}
 
-	public boolean isDisableBundleLoading( )
+	public static boolean isDisableBundleLoading( )
 	{
 		return disableBundleLoading;
 	}
 
-	public void setDisableBundleLoading( boolean disableBundleLoading )
+	public static void setDisableBundleLoading( boolean disableBundleLoading )
 	{
-		this.disableBundleLoading = disableBundleLoading;
+		I18n.disableBundleLoading = disableBundleLoading;
 	}
 
-	public Localizer forName( String name )
+	public static Localizer forName( String name )
 	{
 		Localizer result = localizers.get( name );
 		if( result == null )
@@ -83,32 +83,32 @@ public class I18n
 		return result;
 	}
 
-	public Localizer forClass( Class<?> cls )
+	public static Localizer forClass( Class<?> cls )
 	{
 		return forName( cls.getName( ) );
 	}
 
-	public Locale getLocale( )
+	public static Locale getLocale( )
 	{
 		return localeBinderHolder.get( );
 	}
 
-	public void setLocale( Locale locale )
+	public static void setLocale( Locale locale )
 	{
 		localeBinderHolder.binderLink.bind( new DefaultBinder<>( locale ) );
 	}
 
-	public void setLocaleBinder( Binder<? extends Locale> binder )
+	public static void setLocaleBinder( Binder<? extends Locale> binder )
 	{
 		localeBinderHolder.binderLink.bind( binder );
 	}
 
-	public Binder<Locale> getLocaleBinder( )
+	public static Binder<Locale> getLocaleBinder( )
 	{
 		return opaqueLocaleBinderHolder;
 	}
 
-	public Binder<String> formattedDateTimeBinder( Binder<Date> dateBinder , int dateStyle , int timeStyle )
+	public static Binder<String> formattedDateTimeBinder( Binder<Date> dateBinder , int dateStyle , int timeStyle )
 	{
 		Binder<DateFormat> formatBinder = new FunctionBinder<>( localeBinderHolder ,
 			locale -> locale == null ? DateFormat.getDateTimeInstance( dateStyle , timeStyle ) :
@@ -118,13 +118,13 @@ public class I18n
 			( date , format ) -> date == null || format == null ? null : format.format( date ) );
 	}
 
-	public class Localizer
+	public static class Localizer
 	{
-		public final String				name;
+		public final String name;
 
-		private Binder<ResourceBundle>	bundleBinder;
+		private Binder<ResourceBundle> bundleBinder;
 
-		private final Set<String>		missingKeys	= new HashSet<String>( );
+		private final Set<String> missingKeys = new HashSet<String>( );
 
 		private Localizer( String name , Binder<Locale> localeBinder )
 		{

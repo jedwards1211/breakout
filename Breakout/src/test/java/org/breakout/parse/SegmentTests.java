@@ -2,6 +2,8 @@ package org.breakout.parse;
 
 import java.util.function.Function;
 
+import org.andork.unit.Angle;
+import org.breakout.wallsimport.NewWallsParser;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -227,5 +229,16 @@ public class SegmentTests
 			Assert.assertEquals( ex.segment.endLine , 5 );
 			Assert.assertEquals( ex.segment.endCol , 5 );
 		}
+	}
+
+	@Test
+	public void underlineInContextTest( )
+	{
+		Segment s = new Segment( "hello\nweird\nworld" , null , 2 , 0 );
+		String inContext = s.substring( 2 , s.length( ) - 2 ).underlineInContext( );
+		Assert.assertEquals( "hello\n  ^^^\nweird\n^^^^^\nworld\n^^^".replace( "\n" , System.lineSeparator( ) ) , inContext );
+
+		inContext = s.substring( 6 , 9 ).underlineInContext( );
+		Assert.assertEquals( "weird\n^^^".replace( "\n" , System.lineSeparator( ) ) , inContext );
 	}
 }

@@ -20,29 +20,31 @@ import java.util.regex.Pattern;
  */
 public class Segment implements CharSequence
 {
-	private static final Pattern	LINE_BREAK	= Pattern.compile( "\r\n|\r|\n" );
+	private static final Pattern LINE_BREAK = Pattern.compile( "\r\n|\r|\n" );
 
-	private final String			value;
-	public final Object				source;
-	public final Segment			sourceSegment;
-	public final int				startLine;
-	public final int				endLine;
-	public final int				startCol;
+	private final String value;
+	public final Object source;
+	private final Integer sourceIndex;
+	public final Segment sourceSegment;
+	public final int startLine;
+	public final int endLine;
+	public final int startCol;
 	/**
 	 * The column of the last character in this Segment. If the segment is empty this will be one less than
 	 * {@link #startCol} (and possibly even negative).
 	 */
-	public final int				endCol;
+	public final int endCol;
 
 	public Segment( String value , Object source , int startLine , int startCol )
 	{
-		this( null , value , source , startLine , startCol );
+		this( null , null , value , source , startLine , startCol );
 	}
 
-	protected Segment( Segment sourceSegment , String value , Object source , int startLine , int startCol )
+	protected Segment( Segment sourceSegment , Integer sourceIndex , String value , Object source , int startLine , int startCol )
 	{
 		super( );
 		this.sourceSegment = sourceSegment;
+		this.sourceIndex = sourceIndex;
 		this.value = value;
 		this.source = source;
 		this.startLine = startLine;
@@ -59,10 +61,11 @@ public class Segment implements CharSequence
 		this.endCol = endCol;
 	}
 
-	protected Segment( Segment sourceSegment , String value , Object source , int startLine , int startCol ,
+	protected Segment( Segment sourceSegment , Integer sourceIndex , String value , Object source , int startLine , int startCol ,
 		int endLine , int endCol )
 	{
 		this.sourceSegment = sourceSegment;
+		this.sourceIndex = sourceIndex;
 		this.value = value;
 		this.source = source;
 		this.startLine = startLine;
@@ -235,6 +238,18 @@ public class Segment implements CharSequence
 		return value.lastIndexOf( str , fromIndex );
 	}
 
+	public Segment charBefore( )
+	{
+		return sourceIndex == null || sourceIndex == 0 ? substring( 0 , 0 ) :
+			sourceSegment.substring( sourceIndex - 1 , sourceIndex );
+	}
+
+	public Segment charAfter( )
+	{
+		return sourceIndex == null || sourceIndex == sourceSegment.length( ) ? substring( length( ) ) :
+			sourceSegment.substring( sourceIndex + length( ) , sourceIndex + length( ) + 1 );
+	}
+
 	public Segment substring( int beginIndex )
 	{
 		return substring( beginIndex , value.length( ) );
@@ -245,6 +260,7 @@ public class Segment implements CharSequence
 		if( startLine == endLine )
 		{
 			return new Segment( sourceSegment != null ? sourceSegment : this ,
+				sourceIndex != null ? sourceIndex + beginIndex : beginIndex ,
 				value.substring( beginIndex , endIndex ) , source , startLine ,
 				startCol + beginIndex , startLine , startCol + endIndex - 1 );
 		}
@@ -268,6 +284,7 @@ public class Segment implements CharSequence
 		}
 
 		return new Segment( sourceSegment != null ? sourceSegment : this ,
+			sourceIndex != null ? sourceIndex + beginIndex : beginIndex ,
 			value.substring( beginIndex , endIndex ) , source , newStartLine , newStartCol );
 	}
 
@@ -524,10 +541,11 @@ public class Segment implements CharSequence
 		V result = map.get( value.toLowerCase( ) );
 		if( result == null )
 		{
-			throw new SegmentParseExpectedException( this , map.values( ).toArray( ) );
+			throw new SegmentParseExpectedException( this , map.keySet( ).toArray( ) );
 		}
 		return result;
 	}
+
 	public <T> T parseAsAnyOf( Function<Segment, ? extends T> ... parsers )
 	{
 		List<Object> expectedTypes = new LinkedList<Object>( );
@@ -545,5 +563,54 @@ public class Segment implements CharSequence
 		}
 
 		throw new SegmentParseExpectedException( this , expectedTypes.toArray( ) );
+	}
+
+	/**
+	 * @return the lines of {@link #sourceSegment} this {@code Segment} occurs in,
+	 *         interspersed with lines of {@code ^^^} underlining the region it covers
+	 */
+	public String underlineInContext( )
+	{
+		StringBuilder sb = new StringBuilder( );
+		Segment[ ] lines = sourceSegment.split( "\r\n|\r|\n" );
+
+		for( Segment line : lines )
+		{
+			if( line.startLine < startLine || line.startLine > endLine )
+			{
+				continue;
+			}
+			sb.append( line ).append( System.lineSeparator( ) );
+			int k = 0;
+			if( startLine == line.startLine )
+			{
+				while( k < startCol )
+				{
+					sb.append( ' ' );
+					k++;
+				}
+			}
+			if( line.startLine < endLine )
+			{
+				while( k < line.length( ) )
+				{
+					sb.append( '^' );
+					k++;
+				}
+			}
+			else if( endLine == line.startLine )
+			{
+				while( k <= endCol )
+				{
+					sb.append( '^' );
+					k++;
+				}
+			}
+			if( line.startLine < endLine )
+			{
+				sb.append( System.lineSeparator( ) );
+			}
+		}
+		return sb.toString( );
 	}
 }
