@@ -639,7 +639,7 @@ public class WallsParser
 		{
 			if( value == null || value.length( ) == 0 )
 			{
-				throw new SegmentParseException( value != null ? value.charAfter( ) : name.charAfter( ) , 
+				throw new SegmentParseException( value != null ? value.charAfter( ) : name.charAfter( ) ,
 					new ArgRequiredErrorMessage( name ) );
 			}
 			r.accept( parser , value );
@@ -690,5 +690,74 @@ public class WallsParser
 		{
 			pair.getKey( ).parseToLowerCaseAsAnyOf( unitsOptions ).process( this , pair.getKey( ) , pair.getValue( ) );
 		}
+	}
+
+	/**
+	 * Should I use a regex for this?  TOTALLY!!!
+	 */
+	private static final Pattern VECTOR_LINE_PATTERN =
+		Pattern.compile( "^\\s*(([^ \t\r\n\f;]*)?\\s*([^(<*;]\\S*)?\\s*[^()<>*;]*)\\s*(\\(([^();]*)\\)?)?\\s*([^<*;#]*)\\s*(<([^<>;]*)>?|\\*([^*;]*)\\*?)?\\s*([^#;]*)\\s*(#([^;]*))?(;(.*))?" );
+	
+	// and for interpreting the above...
+	private static final int MEASUREMENT_GROUP = 1;
+	private static final int VARIANCE_GROUP = 4;
+	private static final int VARIANCE_INTERIOR_GROUP = 5;
+	private static final int BETWEEN_VARIANCE_AND_LRUD_GROUP = 6;
+	private static final int LRUD_GROUP = 7;
+	private static final int LRUD_INTERIOR_1_GROUP = 8;
+	private static final int LRUD_INTERIOR_2_GROUP = 9;
+	private static final int BETWEEN_LRUD_AND_DIRECTIVE_GROUP = 10;
+	private static final int DIRECTIVE_GROUP = 12;
+	private static final int COMMENT_GROUP = 14;
+
+	public static class SplitVectorLine
+	{
+		public Segment from;
+		public Segment to;
+		public Segment[ ] measurements;
+		public Segment[ ] variance;
+		public Segment[ ] lruds;
+		public Segment directive;
+		public Segment directiveArg;
+	}
+
+	private static void dumpMatches( SegmentMatcher matcher )
+	{
+		for( int i = 0 ; i <= matcher.groupCount( ) ; i++ )
+		{
+			Segment group = matcher.group( i );
+			if( group == null )
+			{
+				continue;
+			}
+			System.out.print( i + ": " );
+			for( int k = 0 ; k < matcher.start( i ) ; k++ )
+			{
+				System.out.print( ' ' );
+			}
+			System.out.println( group );
+		}
+	}
+
+	private static void temp( String vectorLine )
+	{
+		Segment segment = new Segment( vectorLine , null , 0 , 0 );
+		SegmentMatcher matcher = new SegmentMatcher( segment , VECTOR_LINE_PATTERN );
+		if( matcher.find( ) )
+		{
+			dumpMatches( matcher );
+		}
+	}
+
+	public static void main( String[ ] args )
+	{
+		temp( "*A*1 B1 350 41 25 (3, 5) *2, 3, *#Seg blah;4, 5>" );
+		temp( "*A*1 *2,3,4,5*" );
+		temp( "<A1, <bash <2,3,4,5>" );
+		temp( "A1 B1 350 41 25 (3, 5) <2, 3, > okay>< weird #Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 <2, 3, >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) <2, 3, >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3;, 5) <2, 3, >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) hello <2, 3, *#Seg blah;4, 5>" );
 	}
 }
