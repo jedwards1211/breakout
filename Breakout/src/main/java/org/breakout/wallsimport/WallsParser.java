@@ -18,6 +18,7 @@ import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
 import org.andork.collect.MapLiteral;
+import org.andork.func.CharPredicate;
 import org.andork.parse.ExpectedTypes;
 import org.andork.parse.Segment;
 import org.andork.parse.SegmentMatcher;
@@ -88,12 +89,6 @@ public class WallsParser
 		.map( "s" , SOUTH )
 		.map( "e" , EAST )
 		.map( "w" , WEST );
-
-	/**
-	 * The quoted value, unclosed quote, and semicolon handling regex from hell!
-	 */
-	public static Pattern UNITS_OPTION_PATTERN = Pattern
-		.compile( "([a-zA-Z0-9]+)(=([^ \t\n\r\f\";]+|(\"(([^\\\\\"]|\\\\.)*)(\")?)|)?)?|;" );
 
 	Stack<WallsUnits> stack = new Stack<>( );
 	WallsUnits units = new WallsUnits( );
@@ -331,35 +326,105 @@ public class WallsParser
 		return result;
 	}
 
-	public static List<Pair<Segment, Segment>> parseUnitsOptions( Segment segment )
+	private static class UnitsOptionParser
 	{
-		List<Pair<Segment, Segment>> result = new ArrayList<>( );
+		private Segment segment;
+		private int i = 0;
+		private List<Pair<Segment, Segment>> options = new ArrayList<>( );
 
-		SegmentMatcher m = new SegmentMatcher( segment , UNITS_OPTION_PATTERN );
-
-		while( m.find( ) )
+		public UnitsOptionParser( Segment segment )
 		{
-			if( m.group( ).equals( ";" ) )
+			this.segment = segment;
+
+			moveTo( c -> !Character.isWhitespace( c ) );
+
+			while( i < segment.length( ) && segment.charAt( i ) != ';' )
 			{
-				break;
-			}
-			Segment quote = m.group( 4 );
-			if( quote != null )
-			{
-				if( m.group( 7 ) == null )
-				{
-					throw new SegmentParseExpectedException( segment.substring( segment.length( ) ) ,
-						ExpectedTypes.QUOTE );
-				}
-				result.add( new Pair<>( m.group( 1 ) , quote ) );
-			}
-			else
-			{
-				result.add( new Pair<>( m.group( 1 ) , m.group( 3 ) ) );
+				options.add( parseOption( ) );
+				moveTo( c -> !Character.isWhitespace( c ) );
 			}
 		}
 
-		return result;
+		private void moveTo( CharPredicate p )
+		{
+			while( i < segment.length( ) && !p.test( segment.charAt( i ) ) )
+			{
+				i++;
+			}
+		}
+
+		private Pair<Segment, Segment> parseOption( )
+		{
+			int start = i;
+			moveTo( c -> Character.isWhitespace( c ) || c == '=' || c == ';' );
+			if( i == start )
+			{
+				throw new SegmentParseExpectedException( segment.substring( i , i + 1 ) , WallsExpectedTypes.UNITS_OPTION );
+			}
+
+			Segment name = segment.substring( start , i );
+
+			if( i < segment.length( ) && segment.charAt( i ) == '=' )
+			{
+				i++;
+				return new Pair<>( name , parseValue( ) );
+			}
+
+			return new Pair<>( name , null );
+		}
+
+		private Segment parseValue( )
+		{
+			if( i == segment.length( ) )
+			{
+				return segment.substring( i );
+			}
+
+			char ch = segment.charAt( i );
+			if( Character.isWhitespace( ch ) || ch == ';' )
+			{
+				return segment.substring( i , i );
+			}
+
+			if( ch == '"' )
+			{
+				return parseQuotedValue( );
+			}
+
+			int start = i;
+			moveTo( c -> Character.isWhitespace( c ) || c == ';' );
+			return segment.substring( start , i );
+		}
+
+		private Segment parseQuotedValue( )
+		{
+			int start = i;
+			i++;
+			while( i < segment.length( ) )
+			{
+				char c = segment.charAt( i );
+				switch( c )
+				{
+				case '\\':
+					i++;
+					if( i == segment.length( ) )
+					{
+						throw new SegmentParseExpectedException( segment.charAfter( ) , WallsExpectedTypes.ESCAPED_CHAR );
+					}
+					break;
+				case '"':
+					i++;
+					return segment.substring( start , i );
+				}
+				i++;
+			}
+			throw new SegmentParseExpectedException( segment.charAfter( ) , ExpectedTypes.QUOTE );
+		}
+	}
+
+	public static List<Pair<Segment, Segment>> parseUnitsOptions( Segment segment )
+	{
+		return new UnitsOptionParser( segment ).options;
 	}
 
 	public static String dequoteUnitsArg( Segment escapedText )
@@ -693,11 +758,11 @@ public class WallsParser
 	}
 
 	/**
-	 * Should I use a regex for this?  TOTALLY!!!
+	 * Should I use a regex for this? TOTALLY!!!
 	 */
 	private static final Pattern VECTOR_LINE_PATTERN =
 		Pattern.compile( "^\\s*(([^ \t\r\n\f;]*)?\\s*([^(<*;]\\S*)?\\s*[^()<>*;]*)\\s*(\\(([^();]*)\\)?)?\\s*([^<*;#]*)\\s*(<([^<>;]*)>?|\\*([^*;]*)\\*?)?\\s*([^#;]*)\\s*(#([^;]*))?(;(.*))?" );
-	
+
 	// and for interpreting the above...
 	private static final int MEASUREMENT_GROUP = 1;
 	private static final int VARIANCE_GROUP = 4;

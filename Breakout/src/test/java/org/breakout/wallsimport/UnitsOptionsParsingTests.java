@@ -44,13 +44,22 @@ public class UnitsOptionsParsingTests
 	@Test
 	public void testSemicolon( )
 	{
-		Segment segment = new Segment( "hello=world ;flag=\"\\\"quoted\\\" text\"" , null , 7 , 3 );
+		Segment segment = new Segment( "hello=world;flag=\"\\\"quoted\\\" text\"" , null , 7 , 3 );
 
 		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
 
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
 		Assert.assertEquals( 1 , options.size( ) );
+
+		segment = new Segment( "hello=;world flag=\"\\\"quoted\\\" text\"" , null , 7 , 3 );
+
+		options = WallsParser.parseUnitsOptions( segment );
+
+		Assert.assertEquals( new Segment( "" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
+		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
+		Assert.assertEquals( 1 , options.size( ) );
+
 	}
 
 	@Test
@@ -71,7 +80,7 @@ public class UnitsOptionsParsingTests
 	@Test
 	public void testUnclosedQuote( )
 	{
-		Segment segment = new Segment( "hello=world flag=\"\\\"quoted\\\" ;text then=\\\"" , null , 7 , 3 );
+		Segment segment = new Segment( "hello=world flag=\"\\\"quoted\\\" ;text then=\\\"" , null , 7 , 0 );
 
 		try
 		{
@@ -79,6 +88,7 @@ public class UnitsOptionsParsingTests
 		}
 		catch( SegmentParseExpectedException ex )
 		{
+			System.err.println( ex.getLocalizedMessage( ) );
 			Assert.assertEquals( ex.segment.startCol , segment.substring( segment.length( ) ).startCol );
 			return;
 		}
