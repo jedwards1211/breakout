@@ -10,7 +10,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,7 +17,6 @@ import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import org.andork.collect.MapLiteral;
 import org.andork.func.CharPredicate;
@@ -30,7 +28,6 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
-import org.andork.util.Pair;
 
 public class WallsParser
 {
@@ -780,7 +777,7 @@ public class WallsParser
 		public void comment( Segment comment );
 	}
 
-	public static class VectorLineParser
+	private static class VectorLineParser
 	{
 		private static final Function<Segment, Consumer<VectorLineParser>> TO_START =
 			ifNotEmpty( VectorLineParser::to , WallsExpectedTypes.TO_STATION );
@@ -1068,13 +1065,18 @@ public class WallsParser
 		}
 	}
 
+	public static void parseVectorLine( Segment line , int numVectorComponents , VectorLineVisitor visitor )
+	{
+		new VectorLineParser( line , numVectorComponents , visitor );
+	}
+
 	private static void temp( String s )
 	{
 		System.out.println( s );
 		Segment segment = new Segment( s , null , 0 , 0 );
 		try
 		{
-			new VectorLineParser( segment , 3 , new VectorLineVisitor( ) {
+			parseVectorLine( segment , 3 , new VectorLineVisitor( ) {
 				@Override
 				public void variance( int index , Segment item )
 				{
