@@ -327,21 +327,27 @@ public class WallsParser
 		return result;
 	}
 
+	public static interface UnitsOptionVisitor
+	{
+		public void unitsOption( Segment name , Segment value );
+	}
+
 	private static class UnitsOptionParser
 	{
 		private Segment segment;
+		private UnitsOptionVisitor visitor;
 		private int i = 0;
-		private List<Pair<Segment, Segment>> options = new ArrayList<>( );
 
-		public UnitsOptionParser( Segment segment )
+		public UnitsOptionParser( Segment segment , UnitsOptionVisitor visitor )
 		{
 			this.segment = segment;
+			this.visitor = visitor;
 
 			moveTo( c -> !Character.isWhitespace( c ) );
 
 			while( i < segment.length( ) && segment.charAt( i ) != ';' )
 			{
-				options.add( parseOption( ) );
+				parseOption( );
 				moveTo( c -> !Character.isWhitespace( c ) );
 			}
 		}
@@ -354,7 +360,7 @@ public class WallsParser
 			}
 		}
 
-		private Pair<Segment, Segment> parseOption( )
+		private void parseOption( )
 		{
 			int start = i;
 			moveTo( c -> Character.isWhitespace( c ) || c == '=' || c == ';' );
@@ -368,10 +374,11 @@ public class WallsParser
 			if( i < segment.length( ) && segment.charAt( i ) == '=' )
 			{
 				i++;
-				return new Pair<>( name , parseValue( ) );
+				visitor.unitsOption( name , parseValue( ) );
+				return;
 			}
 
-			return new Pair<>( name , null );
+			visitor.unitsOption( name , null );
 		}
 
 		private Segment parseValue( )
@@ -423,9 +430,9 @@ public class WallsParser
 		}
 	}
 
-	public static List<Pair<Segment, Segment>> parseUnitsOptions( Segment segment )
+	public static void parseUnitsOptions( Segment segment , UnitsOptionVisitor visitor )
 	{
-		return new UnitsOptionParser( segment ).options;
+		new UnitsOptionParser( segment , visitor );
 	}
 
 	public static String dequoteUnitsArg( Segment escapedText )
@@ -752,10 +759,8 @@ public class WallsParser
 	 */
 	public void processUnits( Segment segment )
 	{
-		for( Pair<Segment, Segment> pair : parseUnitsOptions( segment ) )
-		{
-			pair.getKey( ).parseToLowerCaseAsAnyOf( unitsOptions ).process( this , pair.getKey( ) , pair.getValue( ) );
-		}
+		parseUnitsOptions( segment , ( name , value ) ->
+			name.parseToLowerCaseAsAnyOf( unitsOptions ).process( this , name , value ) );
 	}
 
 	public static interface VectorLineVisitor
@@ -985,7 +990,6 @@ public class WallsParser
 
 		private void variance( )
 		{
-			line.charAtAsSegment( i ).expectToEqual( "(" );
 			int start = ++i;
 			moveToExpected( ')' );
 			Segment[ ] parts = line.substring( start , i ).split( "\\s*,\\s*" );
@@ -1054,7 +1058,6 @@ public class WallsParser
 
 		private void directive( )
 		{
-			line.charAtAsSegment( i ).expectToEqual( "#" );
 			Segment[ ] parts = line.substring( i + 1 ).split( "\\s+" , 2 );
 			visitor.directive( parts[ 0 ] , parts.length > 1 ? parts[ 1 ] : null );
 			i = line.length( );

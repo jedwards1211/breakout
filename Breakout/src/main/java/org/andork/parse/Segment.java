@@ -250,6 +250,17 @@ public class Segment implements CharSequence
 			sourceSegment.substring( sourceIndex + length( ) , sourceIndex + length( ) + 1 );
 	}
 
+	/**
+	 * @param index
+	 *            the index, from 0 to {@code length()} <b>(inclusive)</b>.
+	 * @return a {@code Segment} representing the character at {@code index}, or a {@code Segment} representing the
+	 *         empty string at the end of this {@code Segment} if {@code index == this.length()}.
+	 */
+	public Segment charAtAsSegment( int index )
+	{
+		return substring( index , Math.min( index + 1 , value.length( ) ) );
+	}
+
 	public Segment substring( int beginIndex )
 	{
 		return substring( beginIndex , value.length( ) );
@@ -286,11 +297,6 @@ public class Segment implements CharSequence
 		return new Segment( sourceSegment != null ? sourceSegment : this ,
 			sourceIndex != null ? sourceIndex + beginIndex : beginIndex ,
 			value.substring( beginIndex , endIndex ) , source , newStartLine , newStartCol );
-	}
-
-	public Segment charAtAsSegment( int index )
-	{
-		return substring( index , Math.min( index + 1 , value.length( ) ) );
 	}
 
 	public CharSequence subSequence( int beginIndex , int endIndex )
@@ -445,14 +451,6 @@ public class Segment implements CharSequence
 	public char[ ] toCharArray( )
 	{
 		return value.toCharArray( );
-	}
-
-	public void expectToEqual( String s )
-	{
-		if( !value.equals( s ) )
-		{
-			throw new SegmentParseExpectedException( this , s );
-		}
 	}
 
 	public int parseAsInteger( )

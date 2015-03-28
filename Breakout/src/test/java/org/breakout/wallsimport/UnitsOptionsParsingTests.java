@@ -1,5 +1,6 @@
 package org.breakout.wallsimport;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -7,17 +8,28 @@ import org.andork.parse.Segment;
 import org.andork.parse.SegmentParseExpectedException;
 import org.andork.unit.Length;
 import org.andork.util.Pair;
+import org.breakout.wallsimport.WallsParser.UnitsOptionVisitor;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class UnitsOptionsParsingTests
 {
+	private class UnitsOptionsSaver extends ArrayList<Pair<Segment, Segment>> implements UnitsOptionVisitor
+	{
+		@Override
+		public void unitsOption( Segment name , Segment value )
+		{
+			add( new Pair<>( name , value ) );
+		}
+	}
+
 	@Test
 	public void testBasicUnitsOptions( )
 	{
 		Segment segment = new Segment( "hello=world flag=\"quoted text\"" , null , 7 , 3 );
 
-		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
+		UnitsOptionsSaver options = new UnitsOptionsSaver( );
+		WallsParser.parseUnitsOptions( segment , options );
 
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
@@ -30,7 +42,8 @@ public class UnitsOptionsParsingTests
 	{
 		Segment segment = new Segment( "hello=world flag=\"\\\"quoted\\\" text\"" , null , 7 , 3 );
 
-		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
+		UnitsOptionsSaver options = new UnitsOptionsSaver( );
+		WallsParser.parseUnitsOptions( segment , options );
 
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
@@ -46,7 +59,8 @@ public class UnitsOptionsParsingTests
 	{
 		Segment segment = new Segment( "hello=world;flag=\"\\\"quoted\\\" text\"" , null , 7 , 3 );
 
-		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
+		UnitsOptionsSaver options = new UnitsOptionsSaver( );
+		WallsParser.parseUnitsOptions( segment , options );
 
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
@@ -54,7 +68,8 @@ public class UnitsOptionsParsingTests
 
 		segment = new Segment( "hello=;world flag=\"\\\"quoted\\\" text\"" , null , 7 , 3 );
 
-		options = WallsParser.parseUnitsOptions( segment );
+		options = new UnitsOptionsSaver( );
+		WallsParser.parseUnitsOptions( segment , options );
 
 		Assert.assertEquals( new Segment( "" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
@@ -67,7 +82,8 @@ public class UnitsOptionsParsingTests
 	{
 		Segment segment = new Segment( "hello=world flag=\"\\\"quoted\\\" ;text\" then=" , null , 7 , 3 );
 
-		List<Pair<Segment, Segment>> options = WallsParser.parseUnitsOptions( segment );
+		UnitsOptionsSaver options = new UnitsOptionsSaver( );
+		WallsParser.parseUnitsOptions( segment , options );
 
 		Assert.assertEquals( new Segment( "world" , null , 0 , 0 ) , options.get( 0 ).getValue( ) );
 		Assert.assertEquals( new Segment( "hello" , null , 0 , 0 ) , options.get( 0 ).getKey( ) );
@@ -84,7 +100,8 @@ public class UnitsOptionsParsingTests
 
 		try
 		{
-			WallsParser.parseUnitsOptions( segment );
+			UnitsOptionsSaver options = new UnitsOptionsSaver( );
+			WallsParser.parseUnitsOptions( segment , options );
 		}
 		catch( SegmentParseExpectedException ex )
 		{
