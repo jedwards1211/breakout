@@ -1,6 +1,6 @@
 package org.andork.q2;
 
-public enum QCollectionChange
+public enum QChange
 {
 	ADDED,
 	REMOVED,

@@ -22,9 +22,6 @@
 package org.andork.q2;
 
 import java.util.HashMap;
-import java.util.Map;
-
-import org.andork.func.Mapper;
 
 public class QHashMap<K, V> extends QMap<K, V, HashMap<K, V>>
 {
@@ -37,17 +34,5 @@ public class QHashMap<K, V> extends QMap<K, V, HashMap<K, V>>
 	protected HashMap<K, V> createMap( )
 	{
 		return new HashMap<K, V>( );
-	}
-	
-	@SuppressWarnings( "unchecked" )
-	@Override
-	public QElement deepClone( Mapper<Object, Object> childMapper )
-	{
-		QHashMap<K, V> result = newInstance( );
-		for( Map.Entry<K, V> entry : entrySet( ) )
-		{
-			result.put( entry.getKey( ) , ( V ) childMapper.map( entry.getValue( ) ) );
-		}
-		return result;
 	}
 }

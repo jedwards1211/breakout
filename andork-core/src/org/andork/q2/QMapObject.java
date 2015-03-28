@@ -19,7 +19,7 @@ import org.andork.q2.QSpec.Property;
  */
 public abstract class QMapObject<S extends QSpec> extends QObject<S>
 {
-	final Map<Property<?>, Object>	values;
+	final Map<Property<?>, Object> values;
 
 	public QMapObject( S spec )
 	{
@@ -37,13 +37,21 @@ public abstract class QMapObject<S extends QSpec> extends QObject<S>
 
 	protected abstract Map<Property<?>, Object> createValuesMap( );
 
-	public <T> T get( Property<T> property )
+	@SuppressWarnings( "unchecked" )
+	public <T> T doGet( Property<T> property )
 	{
-		return property.get( this );
+		return ( T ) values.get( property );
 	}
 
-	public <T> T set( Property<T> property , T newValue )
+	@SuppressWarnings( "unchecked" )
+	public <T> T doSet( Property<T> property , T newValue )
 	{
-		return property.set( this , newValue );
+		T oldValue = newValue == null ? ( T ) values.remove( this ) :
+			( T ) values.put( property , newValue );
+		if( !property.equals( oldValue , newValue ) )
+		{
+			fireObjectChanged( property , oldValue , newValue );
+		}
+		return oldValue;
 	}
 }

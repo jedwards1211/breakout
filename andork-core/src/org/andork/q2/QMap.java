@@ -34,10 +34,10 @@ import org.andork.util.Java7;
 
 public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implements Map<K, V>
 {
-	protected final C						map			= createMap( );
-	transient volatile Set<K>				keySet		= null;
-	transient volatile Collection<V>		values		= null;
-	transient volatile Set<Map.Entry<K, V>>	entrySet	= null;
+	protected final C map = createMap( );
+	transient volatile Set<K> keySet = null;
+	transient volatile Collection<V> values = null;
+	transient volatile Set<Map.Entry<K, V>> entrySet = null;
 
 	protected abstract C createMap( );
 
@@ -82,13 +82,14 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 		return prev;
 	}
 
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public V remove( Object key )
 	{
 		V prev = map.remove( key );
 		if( prev != null )
 		{
-			fireMapChanged( key , prev , true , null );
+			fireMapChanged( ( K ) key , prev , true , null );
 		}
 		return prev;
 	}
@@ -96,10 +97,10 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 	@Override
 	public void putAll( Map<? extends K, ? extends V> m )
 	{
-		List<Object> keys = new ArrayList<Object>( );
-		List<Object> oldValues = new ArrayList<Object>( );
+		List<K> keys = new ArrayList<>( );
+		List<V> oldValues = new ArrayList<>( );
 		List<Boolean> removed = new ArrayList<Boolean>( );
-		List<Object> newValues = new ArrayList<Object>( );
+		List<V> newValues = new ArrayList<>( );
 
 		for( Map.Entry<? extends K, ? extends V> entry : m.entrySet( ) )
 		{
@@ -122,10 +123,10 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 	@Override
 	public void clear( )
 	{
-		List<Object> oldKeys = new ArrayList<Object>( keySet( ) );
-		List<Object> oldValues = new ArrayList<Object>( values( ) );
+		List<K> oldKeys = new ArrayList<>( keySet( ) );
+		List<V> oldValues = new ArrayList<>( values( ) );
 		List<Boolean> removed = multiply( size( ) , true );
-		List<Object> newValues = multiply( size( ) , null );
+		List<V> newValues = multiply( size( ) , null );
 		map.clear( );
 		fireMapChanged( oldKeys , oldValues , removed , newValues );
 	}
@@ -151,12 +152,12 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 		return ( es != null ? es : ( entrySet = new EntrySet( ) ) );
 	}
 
-	public void addListener( QMapListener listener )
+	public void addListener( QMapListener<? super K, ? super V> listener )
 	{
 		super.addListener( listener );
 	}
 
-	public void removeListener( QMapListener listener )
+	public void removeListener( QMapListener<? super K, ? super V> listener )
 	{
 		super.removeListener( listener );
 	}
@@ -171,21 +172,23 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 		return result;
 	}
 
-	protected void fireMapChanged( Object key , Object oldValue , boolean removed , Object newValue )
+	@SuppressWarnings( "unchecked" )
+	protected void fireMapChanged( K key , V oldValue , boolean removed , V newValue )
 	{
 		forEachListener( QMapListener.class , l -> l.mapChanged( this , key , oldValue , removed , newValue ) );
 	}
 
-	protected void fireMapChanged( List<Object> keys , List<Object> oldValues , List<Boolean> removed ,
-		List<Object> newValues )
+	@SuppressWarnings( "unchecked" )
+	protected void fireMapChanged( List<K> keys , List<V> oldValues , List<Boolean> removed ,
+		List<V> newValues )
 	{
 		forEachListener( QMapListener.class , l -> l.mapChanged( this , keys , oldValues , removed , newValues ) );
 	}
 
 	private abstract class HashIterator<E> implements Iterator<E>
 	{
-		Iterator<Map.Entry<K, V>>	entryIter	= map.entrySet( ).iterator( );
-		Map.Entry<K, V>				last;
+		Iterator<Map.Entry<K, V>> entryIter = map.entrySet( ).iterator( );
+		Map.Entry<K, V> last;
 
 		@Override
 		public boolean hasNext( )

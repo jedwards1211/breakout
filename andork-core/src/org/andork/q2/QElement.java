@@ -25,13 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.andork.func.Mapper;
-
 public abstract class QElement
 {
-	private Object	listeners;
-
-	public abstract QElement deepClone( Mapper<Object, Object> childMapper );
+	private Object listeners;
 
 	@SuppressWarnings( "unchecked" )
 	protected void addListener( QListener listener )
@@ -89,12 +85,26 @@ public abstract class QElement
 		{
 			for( QListener listener : ( List<QListener> ) listeners )
 			{
-				consumer.accept( listener );
+				try
+				{
+					consumer.accept( listener );
+				}
+				catch( Exception ex )
+				{
+					ex.printStackTrace( );
+				}
 			}
 		}
 		else if( listeners instanceof QListener )
 		{
-			consumer.accept( ( QListener ) listeners );
+			try
+			{
+				consumer.accept( ( QListener ) listeners );
+			}
+			catch( Exception ex )
+			{
+				ex.printStackTrace( );
+			}
 		}
 	}
 
@@ -104,7 +114,14 @@ public abstract class QElement
 		{
 			if( type.isInstance( l ) )
 			{
-				consumer.accept( type.cast( l ) );
+				try
+				{
+					consumer.accept( type.cast( l ) );
+				}
+				catch( Exception ex )
+				{
+					ex.printStackTrace( );
+				}
 			}
 		} );
 	}

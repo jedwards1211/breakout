@@ -23,8 +23,6 @@ package org.andork.q2;
 
 import java.util.HashSet;
 
-import org.andork.func.Mapper;
-
 public class QHashSet<E> extends QSet<E, HashSet<E>>
 {
 	public static <E> QHashSet<E> newInstance( )
@@ -36,17 +34,5 @@ public class QHashSet<E> extends QSet<E, HashSet<E>>
 	protected HashSet<E> createCollection( )
 	{
 		return new HashSet<E>( );
-	}
-	
-	@SuppressWarnings( "unchecked" )
-	@Override
-	public QHashSet<E> deepClone( Mapper<Object, Object> childMapper )
-	{
-		QHashSet<E> result = newInstance( );
-		for( E elem : this )
-		{
-			result.add( ( E ) childMapper.map( elem ) );
-		}
-		return result;
 	}
 }

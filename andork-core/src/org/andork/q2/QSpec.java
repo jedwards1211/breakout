@@ -70,55 +70,16 @@ public class QSpec
 			return this;
 		}
 
-		@SuppressWarnings( "unchecked" )
-		public T get( QArrayObject<?> object )
+		public T get( QObject<?> object )
 		{
 			requirePropertyOf( object );
-			return ( T ) object.values[ index ];
+			return object.doGet( this );
 		}
 
-		@SuppressWarnings( "unchecked" )
-		public T get( QMapObject<?> object )
+		public T set( QObject<?> object , T newValue )
 		{
 			requirePropertyOf( object );
-			return ( T ) object.values.get( this );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		public T set( QArrayObject<?> object , T newValue )
-		{
-			requirePropertyOf( object );
-			T oldValue = ( T ) object.values[ index ];
-			if( !equals( oldValue , newValue ) )
-			{
-				object.values[ index ] = newValue;
-				object.fireObjectChanged( this , oldValue , newValue );
-			}
-			return oldValue;
-		}
-
-		@SuppressWarnings( "unchecked" )
-		public T set( QMapObject<?> object , T newValue )
-		{
-			requirePropertyOf( object );
-			T oldValue = newValue == null ? ( T ) object.values.remove( this ) :
-				( T ) object.values.put( this , newValue );
-			if( !equals( oldValue , newValue ) )
-			{
-				object.fireObjectChanged( this , oldValue , newValue );
-			}
-			return oldValue;
-		}
-
-		@SuppressWarnings( "unchecked" )
-		public <C> Property<C> cast( Class<C> type )
-		{
-			if( !this.type.isAssignableFrom( type ) )
-			{
-				throw new IllegalArgumentException( "property type (" + this.type.getName( )
-					+ ") is not assignable from " + type.getName( ) );
-			}
-			return ( Property<C> ) this;
+			return object.doSet( this , newValue );
 		}
 
 		public final int index( )
@@ -166,13 +127,7 @@ public class QSpec
 		}
 
 		@Override
-		public T set( QArrayObject<?> object , T newValue )
-		{
-			return super.set( object , Objects.requireNonNull( newValue ) );
-		}
-
-		@Override
-		public T set( QMapObject<?> object , T newValue )
+		public T set( QObject<?> object , T newValue )
 		{
 			return super.set( object , Objects.requireNonNull( newValue ) );
 		}
@@ -289,7 +244,7 @@ public class QSpec
 			QObject bq = ( QObject ) b;
 			for( int i = 0 ; i < properties.length ; i++ )
 			{
-				if( ! ( ( Property ) properties[ i ] ).equals( a.get( properties[ i ] ) , bq.get( properties[ i ] ) ) )
+				if( ! ( ( Property ) properties[ i ] ).equals( a.doGet( properties[ i ] ) , bq.doGet( properties[ i ] ) ) )
 				{
 					return false;
 				}
@@ -324,7 +279,7 @@ public class QSpec
 		for( int i = 0 ; i < properties.length ; i++ )
 		{
 			hashCode = ( hashCode * primes[ i % primes.length ] )
-				^ ( ( Property ) properties[ i ] ).hashCode( o.get( properties[ i ] ) );
+				^ ( ( Property ) properties[ i ] ).hashCode( o.doGet( properties[ i ] ) );
 		}
 
 		return hashCode;

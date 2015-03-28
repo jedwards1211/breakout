@@ -23,12 +23,12 @@ package org.andork.q2;
 
 import java.util.List;
 
-public interface QMapListener extends QListener
+public interface QMapListener<K, V> extends QListener
 {
 	public void
-		mapChanged( QMap<?, ?, ?> source , Object key , Object oldValue , boolean removed , Object newValue );
+		mapChanged( QMap<K, V, ?> source , K key , V oldValue , boolean removed , V newValue );
 
-	public void mapChanged( QMap<?, ?, ?> source , List<Object> keys , List<Object> oldValues ,
+	public void mapChanged( QMap<K, V, ?> source , List<K> keys , List<V> oldValues ,
 		List<Boolean> removed ,
-		List<Object> newValues );
+		List<V> newValues );
 }

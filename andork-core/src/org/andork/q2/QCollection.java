@@ -28,7 +28,7 @@ import java.util.List;
 
 public abstract class QCollection<E, C extends Collection<E>> extends QElement implements Collection<E>
 {
-	protected final C	collection	= createCollection( );
+	protected final C collection = createCollection( );
 
 	protected abstract C createCollection( );
 
@@ -92,25 +92,28 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		return new Iter( collection );
 	}
 
+	@SuppressWarnings( "unchecked" )
+	@Override
 	public boolean remove( Object element )
 	{
 		if( collection.remove( element ) )
 		{
-			fireElemRemoved( element );
+			fireElemRemoved( ( E ) element );
 			return true;
 		}
 		return false;
 	}
 
+	@SuppressWarnings( "unchecked" )
 	@Override
 	public boolean removeAll( Collection<?> c )
 	{
-		Collection<Object> removed = new ArrayList<Object>( );
+		Collection<E> removed = new ArrayList<>( );
 		for( Object e : c )
 		{
 			if( collection.remove( e ) )
 			{
-				removed.add( e );
+				removed.add( ( E ) e );
 			}
 		}
 		if( !removed.isEmpty( ) )
@@ -123,7 +126,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 	@Override
 	public boolean retainAll( Collection<?> c )
 	{
-		List<Object> removed = new ArrayList<Object>( );
+		List<E> removed = new ArrayList<>( );
 		Iter iter = ( Iter ) iterator( );
 		while( iter.hasNext( ) )
 		{
@@ -158,34 +161,38 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		return collection.toArray( a );
 	}
 
+	@SuppressWarnings( "unchecked" )
 	protected void fireElemAdded( E elem )
 	{
 		forEachListener( QCollectionListener.class ,
-			l -> l.collectionChanged( this , QCollectionChange.ADDED , elem ) );
+			l -> l.collectionChanged( this , QChange.ADDED , elem ) );
 	}
 
-	protected void fireElemRemoved( Object elem )
+	@SuppressWarnings( "unchecked" )
+	protected void fireElemRemoved( E elem )
 	{
 		forEachListener( QCollectionListener.class ,
-			l -> l.collectionChanged( this , QCollectionChange.REMOVED , elem ) );
+			l -> l.collectionChanged( this , QChange.REMOVED , elem ) );
 	}
 
-	protected void fireElemsAdded( Collection<?> elems )
+	@SuppressWarnings( "unchecked" )
+	protected void fireElemsAdded( Collection<E> elems )
 	{
 		forEachListener( QCollectionListener.class ,
-			l -> l.collectionChanged( this , QCollectionChange.ADDED , elems ) );
+			l -> l.collectionChanged( this , QChange.ADDED , elems ) );
 	}
 
-	protected void fireElemsRemoved( Collection<?> elems )
+	@SuppressWarnings( "unchecked" )
+	protected void fireElemsRemoved( Collection<E> elems )
 	{
 		forEachListener( QCollectionListener.class ,
-			l -> l.collectionChanged( this , QCollectionChange.REMOVED , elems ) );
+			l -> l.collectionChanged( this , QChange.REMOVED , elems ) );
 	}
 
 	protected class Iter implements Iterator<E>
 	{
-		Iterator<E>	wrapped;
-		E			last;
+		Iterator<E> wrapped;
+		E last;
 
 		public Iter( Collection<E> collection )
 		{
