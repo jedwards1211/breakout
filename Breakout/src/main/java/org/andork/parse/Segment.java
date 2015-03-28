@@ -288,6 +288,11 @@ public class Segment implements CharSequence
 			value.substring( beginIndex , endIndex ) , source , newStartLine , newStartCol );
 	}
 
+	public Segment charAtAsSegment( int index )
+	{
+		return substring( index , Math.min( index + 1 , value.length( ) ) );
+	}
+
 	public CharSequence subSequence( int beginIndex , int endIndex )
 	{
 		return substring( beginIndex , endIndex );
@@ -531,9 +536,15 @@ public class Segment implements CharSequence
 		V result = map.get( value );
 		if( result == null )
 		{
-			throw new SegmentParseExpectedException( this , map.values( ).toArray( ) );
+			throw new SegmentParseExpectedException( this , map.keySet( ).toArray( ) );
 		}
 		return result;
+	}
+
+	public <V> V parseAsAnyOf( Map<String, V> map , V elseValue )
+	{
+		V result = map.get( value );
+		return result == null ? elseValue : result;
 	}
 
 	public <V> V parseToLowerCaseAsAnyOf( Map<String, V> map )
@@ -548,6 +559,23 @@ public class Segment implements CharSequence
 
 	public <T> T parseAsAnyOf( Function<Segment, ? extends T> ... parsers )
 	{
+		for( Function<Segment, ? extends T> parser : parsers )
+		{
+			try
+			{
+				return parser.apply( this );
+			}
+			catch( SegmentParseExpectedException ex )
+			{
+				// ignore this time.
+			}
+		}
+
+		// now that we know none succeeded, go back through and build the list of
+		// each parser's expected types.  I moved this into a second loop to avoid
+		// wasting memory creating this list in the common case where one parser
+		// succeeds.
+
 		List<Object> expectedTypes = new LinkedList<Object>( );
 
 		for( Function<Segment, ? extends T> parser : parsers )
