@@ -21,69 +21,43 @@
  *******************************************************************************/
 package org.andork.q2;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public abstract class QElement
 {
-	private Object listeners;
+	private List<QListener> listeners;
 
-	@SuppressWarnings( "unchecked" )
 	protected void addListener( QListener listener )
 	{
-		if( listeners instanceof List )
+		if( listeners == null )
 		{
-			List<QListener> casted = ( List<QListener> ) listeners;
-			if( !casted.contains( listener ) )
-			{
-				casted.add( listener );
-			}
+			listeners = new LinkedList<>( );
 		}
-		else if( listeners instanceof QListener && !listeners.equals( listener ) )
+		if( !listeners.contains( listener ) )
 		{
-			ArrayList<QListener> newList = new ArrayList<>( 2 );
-			newList.add( ( QListener ) listeners );
-			newList.add( listener );
-			listeners = newList;
-		}
-		else
-		{
-			listeners = listener;
+			listeners.add( listener );
 		}
 	}
 
-	@SuppressWarnings( "unchecked" )
 	protected void removeListener( QListener listener )
 	{
-		if( listeners instanceof List )
+		if( listeners != null )
 		{
-			List<QListener> casted = ( List<QListener> ) listeners;
-			casted.remove( listener );
-			if( casted.size( ) == 1 )
-			{
-				listeners = casted.get( 0 );
-			}
-			else if( casted.isEmpty( ) )
-			{
-				listeners = null;
-			}
-		}
-		else if( listeners instanceof QListener )
-		{
-			if( listeners.equals( listener ) )
+			listeners.remove( listener );
+			if( listeners.isEmpty( ) )
 			{
 				listeners = null;
 			}
 		}
 	}
 
-	@SuppressWarnings( "unchecked" )
 	protected void forEachListener( Consumer<QListener> consumer )
 	{
-		if( listeners instanceof List )
+		if( listeners != null )
 		{
-			for( QListener listener : ( List<QListener> ) listeners )
+			for( QListener listener : listeners )
 			{
 				try
 				{
@@ -93,17 +67,6 @@ public abstract class QElement
 				{
 					ex.printStackTrace( );
 				}
-			}
-		}
-		else if( listeners instanceof QListener )
-		{
-			try
-			{
-				consumer.accept( ( QListener ) listeners );
-			}
-			catch( Exception ex )
-			{
-				ex.printStackTrace( );
 			}
 		}
 	}
