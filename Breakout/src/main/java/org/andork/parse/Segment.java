@@ -447,6 +447,14 @@ public class Segment implements CharSequence
 		return value.toCharArray( );
 	}
 
+	public void expectToEqual( String s )
+	{
+		if( !value.equals( s ) )
+		{
+			throw new SegmentParseExpectedException( this , s );
+		}
+	}
+
 	public int parseAsInteger( )
 	{
 		try

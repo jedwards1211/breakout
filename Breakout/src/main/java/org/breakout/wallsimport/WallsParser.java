@@ -17,14 +17,13 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 import org.andork.collect.MapLiteral;
 import org.andork.func.CharPredicate;
 import org.andork.parse.ExpectedTypes;
 import org.andork.parse.Segment;
-import org.andork.parse.SegmentMatcher;
 import org.andork.parse.SegmentParseException;
 import org.andork.parse.SegmentParseExpectedException;
 import org.andork.unit.Angle;
@@ -776,20 +775,32 @@ public class WallsParser
 		public void comment( Segment comment );
 	}
 
-	public static class PreparsedVectorLine
+	public static class VectorLineParser
 	{
-		public Segment from;
-		public Segment to;
-		public final List<Segment> measurements = new ArrayList<>( );
-		public Segment[ ] variance;
-		public Segment[ ] lruds;
-		public Segment directive;
-		public Segment directiveArg;
-		public Segment comment;
+		private static final Function<Segment, Consumer<VectorLineParser>> TO_START =
+			ifNotEmpty( VectorLineParser::to , WallsExpectedTypes.TO_STATION );
+
+		private static final Function<Segment, Consumer<VectorLineParser>> MEASUREMENT_START =
+			ifNotEmpty( VectorLineParser::measurement , WallsExpectedTypes.MEASUREMENT );
+
+		private static final Function<Segment, Consumer<VectorLineParser>> VARIANCE_START =
+			ifEqualsAny( VectorLineParser::variance , "(" );
+
+		private static final Function<Segment, Consumer<VectorLineParser>> LRUD_START =
+			ifEqualsAny( VectorLineParser::lruds , "<" , "*" );
+
+		private static final Function<Segment, Consumer<VectorLineParser>> DIRECTIVE_START =
+			ifEqualsAny( VectorLineParser::directive , "#" );
+
+		private static final Function<Segment, Consumer<VectorLineParser>> END_OF_LINE_OR_COMMENT_START =
+			ifEmpty( VectorLineParser::end , ";" , WallsExpectedTypes.END_OF_LINE );
 
 		private Segment line;
+		private VectorLineVisitor visitor;
 		private int i = 0;
 		private int numVectorComponents;
+
+		private int measurementCount;
 
 		private static final CharPredicate whitespace = Character::isWhitespace;
 		private static final CharPredicate nonWhitespace = whitespace.negate( );
@@ -798,9 +809,10 @@ public class WallsParser
 			.map( "<" , '>' )
 			.map( "*" , '*' );
 
-		public PreparsedVectorLine( Segment line , int numVectorComponents )
+		public VectorLineParser( Segment line , int numVectorComponents , VectorLineVisitor visitor )
 		{
 			this.line = line;
+			this.visitor = visitor;
 			this.numVectorComponents = numVectorComponents;
 			Segment[ ] parts = line.split( ";" , 2 );
 			if( parts.length > 0 )
@@ -808,7 +820,7 @@ public class WallsParser
 				this.line = parts[ 0 ];
 				if( parts.length > 1 )
 				{
-					comment = parts[ 1 ];
+					visitor.comment( parts[ 1 ] );
 				}
 				start( );
 			}
@@ -822,23 +834,52 @@ public class WallsParser
 			}
 		}
 
-		private Runnable parseAsAnyOf( Supplier<Runnable> ... parsers )
+		private void moveToExpected( char ch )
 		{
-			List<Object> expected = new LinkedList<>( );
-
-			for( Supplier<Runnable> parser : parsers )
+			moveTo( c -> c == ch );
+			if( i == line.length( ) )
 			{
-				try
-				{
-					return parser.get( );
-				}
-				catch( SegmentParseExpectedException ex )
-				{
-					expected.addAll( Arrays.asList( ex.expectedItems ) );
-				}
+				throw new SegmentParseExpectedException( line.substring( i ) , Character.toString( ch ) );
 			}
+		}
 
-			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , expected.toArray( ) );
+		private static Function<Segment, Consumer<VectorLineParser>> ifEqualsAny( Consumer<VectorLineParser> thenDo , Object ... expected )
+		{
+			return s ->
+			{
+				for( Object obj : expected )
+				{
+					if( s.equals( obj ) )
+					{
+						return thenDo;
+					}
+				}
+				throw new SegmentParseExpectedException( s , expected );
+			};
+		}
+
+		private static Function<Segment, Consumer<VectorLineParser>> ifEmpty( Consumer<VectorLineParser> thenDo , Object ... expected )
+		{
+			return s ->
+			{
+				if( s.equals( "" ) )
+				{
+					return thenDo;
+				}
+				throw new SegmentParseExpectedException( s , expected );
+			};
+		}
+
+		private static Function<Segment, Consumer<VectorLineParser>> ifNotEmpty( Consumer<VectorLineParser> thenDo , Object name )
+		{
+			return s ->
+			{
+				if( !s.equals( "" ) )
+				{
+					return thenDo;
+				}
+				throw new SegmentParseExpectedException( s , name );
+			};
 		}
 
 		private void start( )
@@ -848,10 +889,10 @@ public class WallsParser
 			{
 				return;
 			}
-			parseAsAnyOf( this::from , this::end ).run( );
+			from( );
 		}
 
-		private Runnable from( )
+		private void from( )
 		{
 			int start = i;
 			moveTo( whitespace );
@@ -859,18 +900,24 @@ public class WallsParser
 			{
 				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.FROM_STATION );
 			}
-			from = line.substring( start , i );
+			visitor.from( line.substring( start , i ) );
 			moveTo( nonWhitespace );
 
-			return this::afterFrom;
+			afterFrom( );
 		}
+
+		@SuppressWarnings( "unchecked" )
+		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_FROM = new Function[ ] {
+			LRUD_START ,
+			TO_START
+		};
 
 		private void afterFrom( )
 		{
-			parseAsAnyOf( this::lruds , this::to ).run( );
+			line.charAtAsSegment( i ).parseAsAnyOf( AFTER_FROM ).accept( this );
 		}
 
-		private Runnable to( )
+		private void to( )
 		{
 			int start = i;
 			moveTo( whitespace );
@@ -878,29 +925,51 @@ public class WallsParser
 			{
 				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.TO_STATION );
 			}
-			to = line.substring( start , i );
+			visitor.to( line.substring( start , i ) );
 			moveTo( nonWhitespace );
 
-			return this::afterTo;
+			afterTo( );
 		}
+
+		@SuppressWarnings( "unchecked" )
+		private static final Function<Segment, Consumer<VectorLineParser>>[ ] REQUIRED_MEASUREMENT = new Function[ ] {
+			MEASUREMENT_START
+		};
+
+		@SuppressWarnings( "unchecked" )
+		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_REQUIRED_MEASUREMENTS = new Function[ ] {
+			VARIANCE_START ,
+			LRUD_START ,
+			DIRECTIVE_START ,
+			MEASUREMENT_START ,
+			END_OF_LINE_OR_COMMENT_START
+		};
+
+		@SuppressWarnings( "unchecked" )
+		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_MEASUREMENTS = new Function[ ] {
+			VARIANCE_START ,
+			LRUD_START ,
+			DIRECTIVE_START ,
+			END_OF_LINE_OR_COMMENT_START
+		};
 
 		private void afterTo( )
 		{
-			if( measurements.size( ) < numVectorComponents )
+			if( measurementCount < numVectorComponents )
 			{
-				parseAsAnyOf( this::measurement ).run( );
+				line.charAtAsSegment( i ).parseAsAnyOf( REQUIRED_MEASUREMENT ).accept( this );
 			}
-			else if( measurements.size( ) < numVectorComponents + 2 )
+			else if( measurementCount < numVectorComponents + 2 )
 			{
-				parseAsAnyOf( this::variance , this::lruds , this::directive , this::measurement , this::end ).run( );
+				line.charAtAsSegment( i ).parseAsAnyOf( AFTER_REQUIRED_MEASUREMENTS ).accept( this );
 			}
 			else
 			{
-				parseAsAnyOf( this::variance , this::lruds , this::directive , this::end ).run( );
+				line.charAtAsSegment( i ).parseAsAnyOf( AFTER_MEASUREMENTS ).accept( this );
 			}
 		}
 
-		private Runnable measurement( )
+		private void measurement( )
 		{
 			int start = i;
 			moveTo( whitespace );
@@ -908,91 +977,91 @@ public class WallsParser
 			{
 				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.MEASUREMENT );
 			}
-			measurements.add( line.substring( start , i ) );
+			visitor.measurement( measurementCount++ , line.substring( start , i ) );
 			moveTo( nonWhitespace );
 
-			return this::afterTo;
+			afterTo( );
 		}
 
-		private Runnable variance( )
+		private void variance( )
 		{
-			if( i == line.length( ) || line.charAt( i ) != '(' )
+			line.charAtAsSegment( i ).expectToEqual( "(" );
+			int start = ++i;
+			moveToExpected( ')' );
+			Segment[ ] parts = line.substring( start , i ).split( "\\s*,\\s*" );
+			if( parts.length == 0 )
 			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , "(" );
+				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.VARIANCE );
 			}
-			int start = i;
-			moveTo( c -> c == ')' );
-			if( i == line.length( ) || line.charAt( i ) != ')' )
+			if( parts.length > 2 )
 			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , ")" );
+				throw new SegmentParseExpectedException( parts[ 2 ] , ")" );
 			}
-			variance = line.substring( start + 1 , i ).split( "\\s*,\\s*" );
+			for( int k = 0 ; k < parts.length ; k++ )
+			{
+				visitor.variance( k , parts[ k ] );
+			}
 			i++;
 			moveTo( nonWhitespace );
-			return this::afterVariance;
+			afterVariance( );
 		}
+
+		@SuppressWarnings( "unchecked" )
+		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_VARIANCE = new Function[ ] {
+			LRUD_START ,
+			DIRECTIVE_START ,
+			END_OF_LINE_OR_COMMENT_START
+		};
 
 		private void afterVariance( )
 		{
-			parseAsAnyOf( this::lruds , this::directive , this::end ).run( );
+			line.charAtAsSegment( i ).parseAsAnyOf( AFTER_VARIANCE ).accept( this );
 		}
 
-		private Runnable lruds( )
+		private void lruds( )
 		{
 			char endChar = line.charAtAsSegment( i ).parseAsAnyOf( LRUD_END_CHARS );
 			int start = ++i;
-			moveTo( c -> c == endChar );
-			if( i == line.length( ) || line.charAt( i ) != endChar )
+			moveToExpected( endChar );
+			Segment[ ] lruds = line.substring( start , i ).split( "\\s*,\\s*|\\s+" );
+			if( lruds.length < 4 )
 			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , Character.toString( endChar ) );
+				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.LRUD_MEASUREMENT );
 			}
-			Segment inner = line.substring( start , i );
-			if( inner.indexOf( ',' ) >= 0 )
+			if( lruds.length > 6 )
 			{
-				lruds = inner.split( "\\s*,\\s*" );
+				throw new SegmentParseExpectedException( lruds[ 6 ].charAfter( ) , Character.toString( endChar ) );
 			}
-			else
+			for( int k = 0 ; k < lruds.length ; k++ )
 			{
-				lruds = inner.split( "\\s+" );
+				visitor.lrud( k , lruds[ k ] );
 			}
 			i++;
 			moveTo( nonWhitespace );
-			return this::afterLruds;
+			afterLruds( );
 		}
+
+		@SuppressWarnings( "unchecked" )
+		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_LRUDS = new Function[ ] {
+			DIRECTIVE_START ,
+			END_OF_LINE_OR_COMMENT_START
+		};
 
 		private void afterLruds( )
 		{
-			parseAsAnyOf( this::directive , this::end ).run( );
+			line.charAtAsSegment( i ).parseAsAnyOf( AFTER_LRUDS ).accept( this );
 		}
 
-		private Runnable directive( )
+		private void directive( )
 		{
-			if( i == line.length( ) || line.charAt( i ) != '#' )
-			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , "#" );
-			}
+			line.charAtAsSegment( i ).expectToEqual( "#" );
 			Segment[ ] parts = line.substring( i + 1 ).split( "\\s+" , 2 );
-			if( parts.length > 0 )
-			{
-				directive = parts[ 0 ];
-				if( parts.length > 1 )
-				{
-					directiveArg = parts[ 1 ];
-				}
-			}
+			visitor.directive( parts[ 0 ] , parts.length > 1 ? parts[ 1 ] : null );
 			i = line.length( );
-			return this::end;
 		}
 
-		private Runnable end( )
+		private void end( )
 		{
-			if( i != line.length( ) )
-			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsParseError.END_OF_LINE );
-			}
-			return ( ) ->
-			{
-			};
 		}
 	}
 
@@ -1002,15 +1071,50 @@ public class WallsParser
 		Segment segment = new Segment( s , null , 0 , 0 );
 		try
 		{
-			PreparsedVectorLine line = new PreparsedVectorLine( segment , 3 );
-			System.out.println( "  from:         " + line.from );
-			System.out.println( "  to:           " + line.to );
-			System.out.println( "  measurements: " + line.measurements );
-			System.out.println( "  variance:     " + Arrays.toString( line.variance ) );
-			System.out.println( "  lruds:        " + Arrays.toString( line.lruds ) );
-			System.out.println( "  directive:    " + line.directive );
-			System.out.println( "  directiveArg: " + line.directiveArg );
-			System.out.println( "  comment:      " + line.comment );
+			new VectorLineParser( segment , 3 , new VectorLineVisitor( ) {
+				@Override
+				public void variance( int index , Segment item )
+				{
+					System.out.println( "  variance[" + index + "]: " + item );
+				}
+
+				@Override
+				public void to( Segment to )
+				{
+					System.out.println( "  to:           " + to );
+				}
+
+				@Override
+				public void measurement( int index , Segment measurement )
+				{
+					System.out.println( "  measurement[" + index + "]: " + measurement );
+				}
+
+				@Override
+				public void lrud( int index , Segment item )
+				{
+					System.out.println( "  lrud[" + index + "]:      " + item );
+				}
+
+				@Override
+				public void from( Segment from )
+				{
+					System.out.println( "  from:         " + from );
+				}
+
+				@Override
+				public void directive( Segment directive , Segment argument )
+				{
+					System.out.println( "  directive:    " + directive );
+					System.out.println( "  directiveArg: " + argument );
+				}
+
+				@Override
+				public void comment( Segment comment )
+				{
+					System.out.println( "  comment:      " + comment );
+				}
+			} );
 		}
 		catch( Exception ex )
 		{
@@ -1020,16 +1124,17 @@ public class WallsParser
 
 	public static void main( String[ ] args )
 	{
-		temp( "*A*1 B1 350 41 25 (3, 5) *2, 3, *#Seg blah;4, 5>" );
+		temp( "*A*1 B1 350 41 25 (3, 5) *2, 3, 4,5,C*#Seg blah;4, 5>" );
 		temp( "*A*1 *2,3,4,5*" );
+		temp( "*A*1 *2,3,4,*" );
 		temp( "<A1, <bash <2,3,4,5>" );
-		temp( "A1 B1 350 41 25 (3, 5) <2, 3, > okay>< weird #Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 <2, 3, >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 (3, 5) <2, 3, >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 (3;, 5) <2, 3, >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 (3, 5) hello <2, 3, *#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 (3, 5) hello <2, 3, *#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 15 16 (3, 5) <2, 3, >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 15 16 17 (3, 5) <2, 3, >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) <2, 3, 4,5> okay>< weird #Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 <2, 3, 4,5>#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3;, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 *#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) hello <2, 3,4,5 *#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 15 16 17 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
 	}
 }

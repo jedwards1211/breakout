@@ -14,8 +14,7 @@ public enum WallsParseError implements ParseErrorMessage
 	STACK_FULL,
 	STACK_EMPTY,
 	INVALID_ORDER_ELEMENTS,
-	INVALID_LRUD_ELEMENTS,
-	END_OF_LINE;
+	INVALID_LRUD_ELEMENTS;
 
 	@Override
 	public String getLocalizedMessage( )
