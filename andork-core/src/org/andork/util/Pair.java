@@ -21,44 +21,44 @@
  *******************************************************************************/
 package org.andork.util;
 
-public final class Pair<L, R>
+public final class Pair<K, V>
 {
-	private L	left;
-	
-	private R	right;
-	
-	public Pair( L left , R right )
+	private K	key;
+
+	private V	value;
+
+	public Pair( K key , V value )
 	{
-		this.left = left;
-		this.right = right;
+		this.key = key;
+		this.value = value;
 	}
-	
-	public L getLeft( )
+
+	public K getKey( )
 	{
-		return left;
+		return key;
 	}
-	
-	public R getRight( )
+
+	public V getValue( )
 	{
-		return right;
+		return value;
 	}
-	
+
 	public String toString( )
 	{
-		return "(" + left + ", " + right + ")";
+		return "(" + key + ", " + value + ")";
 	}
-	
+
 	public int hashCode( )
 	{
-		return ( left.hashCode( ) * 31 ) ^ right.hashCode( );
+		return ( key.hashCode( ) * 31 ) ^ value.hashCode( );
 	}
-	
+
 	public boolean equals( Object o )
 	{
 		if( o instanceof Pair )
 		{
 			Pair p = ( Pair ) o;
-			return left.equals( p.left ) && right.equals( p.right );
+			return key.equals( p.key ) && value.equals( p.value );
 		}
 		return false;
 	}
