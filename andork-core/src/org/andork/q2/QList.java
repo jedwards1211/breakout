@@ -49,9 +49,9 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 	{
 		int index = collection.size( );
 		boolean result = collection.addAll( c );
-		List<Object> newValues = new ArrayList<Object>( c );
+		List<E> newValues = new ArrayList<>( c );
 		fireElemsAdded( newValues );
-		fireListChanged( QCollectionChange.ADDED , range( index , index + c.size( ) ) , null , newValues );
+		fireListChanged( QChange.ADDED , range( index , index + c.size( ) ) , null , newValues );
 		return result;
 	}
 
@@ -61,9 +61,9 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 		if( !isEmpty( ) )
 		{
 			List<Integer> indices = range( 0 , collection.size( ) );
-			List<Object> oldValues = new ArrayList<Object>( collection );
+			List<E> oldValues = new ArrayList<>( collection );
 			fireElemsRemoved( oldValues );
-			fireListChanged( QCollectionChange.REMOVED , indices , oldValues , null );
+			fireListChanged( QChange.REMOVED , indices , oldValues , null );
 		}
 	}
 
@@ -73,7 +73,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 		int index = collection.indexOf( element );
 		if( index >= 0 )
 		{
-			Object removed = collection.remove( index );
+			E removed = collection.remove( index );
 			fireElemRemoved( removed );
 			fireElemRemoved( index , removed );
 		}
@@ -97,7 +97,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 		ListIterator<E> iter = collection.listIterator( );
 
 		List<Integer> indices = new ArrayList<Integer>( );
-		List<Object> oldValues = new ArrayList<Object>( );
+		List<E> oldValues = new ArrayList<>( );
 
 		while( iter.hasNext( ) )
 		{
@@ -112,7 +112,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 		}
 
 		fireElemsRemoved( oldValues );
-		fireListChanged( QCollectionChange.REMOVED , indices , oldValues , null );
+		fireListChanged( QChange.REMOVED , indices , oldValues , null );
 
 		return !indices.isEmpty( );
 	}
@@ -148,10 +148,10 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 	public boolean addAll( int index , Collection<? extends E> c )
 	{
 		List<Integer> indices = range( index , index + c.size( ) );
-		List<Object> newValues = new ArrayList<Object>( c );
+		List<E> newValues = new ArrayList<>( c );
 		boolean result = collection.addAll( index , c );
 		fireElemsAdded( newValues );
-		fireListChanged( QCollectionChange.ADDED , indices , null , newValues );
+		fireListChanged( QChange.ADDED , indices , null , newValues );
 		return result;
 	}
 
@@ -185,36 +185,40 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 		return new SubList( collection , fromIndex , toIndex );
 	}
 
-	public void addListener( QListListener listener )
+	public void addListener( QListListener<? super E> listener )
 	{
 		super.addListener( listener );
 	}
 
-	public void removeListener( QListListener listener )
+	public void removeListener( QListListener<? super E> listener )
 	{
 		super.removeListener( listener );
 	}
 
-	protected void fireElemAdded( int index , Object newValue )
+	@SuppressWarnings( "unchecked" )
+	protected void fireElemAdded( int index , E newValue )
 	{
 		forEachListener( QListListener.class ,
-			l -> l.listChanged( this , QCollectionChange.ADDED , index , null , newValue ) );
+			l -> l.listChanged( this , QChange.ADDED , index , null , newValue ) );
 	}
 
-	protected void fireElemRemoved( int index , Object oldValue )
+	@SuppressWarnings( "unchecked" )
+	protected void fireElemRemoved( int index , E oldValue )
 	{
 		forEachListener( QListListener.class ,
-			l -> l.listChanged( this , QCollectionChange.REMOVED , index , oldValue , null ) );
+			l -> l.listChanged( this , QChange.REMOVED , index , oldValue , null ) );
 	}
 
-	protected void fireElemReplaced( int index , Object oldValue , Object newValue )
+	@SuppressWarnings( "unchecked" )
+	protected void fireElemReplaced( int index , E oldValue , E newValue )
 	{
 		forEachListener( QListListener.class ,
-			l -> l.listChanged( this , QCollectionChange.REPLACED , index , oldValue , newValue ) );
+			l -> l.listChanged( this , QChange.REPLACED , index , oldValue , newValue ) );
 	}
 
-	protected void fireListChanged( QCollectionChange change , List<Integer> indices , List<Object> oldValues ,
-		List<Object> newValues )
+	@SuppressWarnings( "unchecked" )
+	protected void fireListChanged( QChange change , List<Integer> indices , List<E> oldValues ,
+		List<E> newValues )
 	{
 		forEachListener( QListListener.class ,
 			l -> l.listChanged( this , change , indices , oldValues , newValues ) );
@@ -232,10 +236,10 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 
 	protected class ListIter implements ListIterator<E>
 	{
-		private int				offset;
-		private ListIterator<E>	wrapped;
-		private E				last;
-		private int				lastIndex;
+		private int offset;
+		private ListIterator<E> wrapped;
+		private E last;
+		private int lastIndex;
 
 		public ListIter( List<E> list , int offset )
 		{
@@ -320,8 +324,8 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 
 	protected class SubList implements List<E>
 	{
-		private int		offset;
-		private List<E>	wrapped;
+		private int offset;
+		private List<E> wrapped;
 
 		public SubList( List<E> list , int fromIndex , int toIndex )
 		{
@@ -381,7 +385,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			int index = wrapped.indexOf( o );
 			if( index >= 0 )
 			{
-				Object removed = wrapped.remove( index );
+				E removed = wrapped.remove( index );
 				fireElemRemoved( removed );
 				fireElemRemoved( index + offset , removed );
 			}
@@ -399,9 +403,9 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 		{
 			int index = wrapped.size( );
 			boolean result = wrapped.addAll( c );
-			List<Object> newValues = new ArrayList<Object>( c );
+			List<E> newValues = new ArrayList<>( c );
 			fireElemsAdded( newValues );
-			fireListChanged( QCollectionChange.ADDED , range( index + offset , index + offset + c.size( ) ) , null ,
+			fireListChanged( QChange.ADDED , range( index + offset , index + offset + c.size( ) ) , null ,
 				newValues );
 			return result;
 		}
@@ -410,10 +414,10 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 		public boolean addAll( int index , Collection<? extends E> c )
 		{
 			List<Integer> indices = range( index + offset , index + offset + c.size( ) );
-			List<Object> newValues = new ArrayList<Object>( c );
+			List<E> newValues = new ArrayList<>( c );
 			boolean result = wrapped.addAll( index , c );
 			fireElemsAdded( newValues );
-			fireListChanged( QCollectionChange.ADDED , indices , null , newValues );
+			fireListChanged( QChange.ADDED , indices , null , newValues );
 			return result;
 		}
 
@@ -434,7 +438,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			ListIterator<E> iter = wrapped.listIterator( );
 
 			List<Integer> indices = new ArrayList<Integer>( );
-			List<Object> oldValues = new ArrayList<Object>( );
+			List<E> oldValues = new ArrayList<>( );
 
 			while( iter.hasNext( ) )
 			{
@@ -449,7 +453,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			}
 
 			fireElemsRemoved( oldValues );
-			fireListChanged( QCollectionChange.REMOVED , indices , oldValues , null );
+			fireListChanged( QChange.REMOVED , indices , oldValues , null );
 
 			return !indices.isEmpty( );
 		}
@@ -460,9 +464,9 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			if( !isEmpty( ) )
 			{
 				List<Integer> indices = range( offset , offset + wrapped.size( ) );
-				List<Object> oldValues = new ArrayList<Object>( wrapped );
+				List<E> oldValues = new ArrayList<>( wrapped );
 				fireElemsRemoved( oldValues );
-				fireListChanged( QCollectionChange.REMOVED , indices , oldValues , null );
+				fireListChanged( QChange.REMOVED , indices , oldValues , null );
 			}
 		}
 

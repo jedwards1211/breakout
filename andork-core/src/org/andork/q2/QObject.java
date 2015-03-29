@@ -17,7 +17,7 @@ import org.andork.q2.QSpec.Property;
  */
 public abstract class QObject<S extends QSpec> extends QElement
 {
-	S	spec;
+	S spec;
 
 	public QObject( S spec )
 	{
@@ -29,9 +29,19 @@ public abstract class QObject<S extends QSpec> extends QElement
 		return spec;
 	}
 
-	public abstract <T> T get( Property<T> property );
+	protected abstract <T> T doGet( Property<T> property );
 
-	public abstract <T> T set( Property<T> property , T newValue );
+	protected abstract <T> T doSet( Property<T> property , T newValue );
+
+	public <T> T get( Property<T> property )
+	{
+		return property.get( this );
+	}
+
+	public <T> T set( Property<T> property , T newValue )
+	{
+		return property.set( this , newValue );
+	}
 
 	public boolean equals( Object other )
 	{

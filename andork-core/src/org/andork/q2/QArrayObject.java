@@ -2,7 +2,6 @@ package org.andork.q2;
 
 import java.util.function.Supplier;
 
-import org.andork.func.Mapper;
 import org.andork.q2.QSpec.Property;
 
 /**
@@ -20,7 +19,7 @@ import org.andork.q2.QSpec.Property;
  */
 public final class QArrayObject<S extends QSpec> extends QObject<S>
 {
-	Object[ ]	values;
+	Object[ ] values;
 
 	public QArrayObject( S spec )
 	{
@@ -38,24 +37,21 @@ public final class QArrayObject<S extends QSpec> extends QObject<S>
 		return new QArrayObject<S>( spec );
 	}
 
-	public <T> T get( Property<T> property )
+	@SuppressWarnings( "unchecked" )
+	public <T> T doGet( Property<T> property )
 	{
-		return property.get( this );
+		return ( T ) values[ property.index ];
 	}
 
-	public <T> T set( Property<T> property , T newValue )
+	@SuppressWarnings( "unchecked" )
+	public <T> T doSet( Property<T> property , T newValue )
 	{
-		return property.set( this , newValue );
-	}
-
-	@Override
-	public QArrayObject<S> deepClone( Mapper<Object, Object> childMapper )
-	{
-		QArrayObject<S> result = new QArrayObject<S>( spec );
-		for( int i = 0 ; i < values.length ; i++ )
+		T oldValue = ( T ) values[ property.index ];
+		if( !property.equals( oldValue , newValue ) )
 		{
-			result.values[ i ] = childMapper.map( values[ i ] );
+			values[ property.index ] = newValue;
+			fireObjectChanged( property , oldValue , newValue );
 		}
-		return result;
+		return oldValue;
 	}
 }

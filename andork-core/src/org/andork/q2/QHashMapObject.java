@@ -3,7 +3,6 @@ package org.andork.q2;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.andork.func.Mapper;
 import org.andork.q2.QSpec.Property;
 
 public class QHashMapObject<S extends QSpec> extends QMapObject<S>
@@ -23,13 +22,5 @@ public class QHashMapObject<S extends QSpec> extends QMapObject<S>
 	protected Map<Property<?>, Object> createValuesMap( )
 	{
 		return new HashMap<>( );
-	}
-
-	@Override
-	public QElement deepClone( Mapper<Object, Object> childMapper )
-	{
-		QHashMapObject<S> result = new QHashMapObject<S>( spec );
-		result.values.putAll( values );
-		return result;
 	}
 }

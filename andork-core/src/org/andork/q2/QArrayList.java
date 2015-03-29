@@ -24,8 +24,6 @@ package org.andork.q2;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.andork.func.Mapper;
-
 public class QArrayList<E> extends QList<E, ArrayList<E>>
 {
 	public static <E> QArrayList<E> newInstance( )
@@ -54,17 +52,5 @@ public class QArrayList<E> extends QList<E, ArrayList<E>>
 	public void ensureCapacity( int minCapacity )
 	{
 		collection.ensureCapacity( minCapacity );
-	}
-
-	@SuppressWarnings( "unchecked" )
-	@Override
-	public QArrayList<E> deepClone( Mapper<Object, Object> childMapper )
-	{
-		QArrayList<E> result = newInstance( );
-		for( E elem : this )
-		{
-			result.add( ( E ) childMapper.map( elem ) );
-		}
-		return result;
 	}
 }
