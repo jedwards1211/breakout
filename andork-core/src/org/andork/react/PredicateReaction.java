@@ -4,8 +4,8 @@ import java.util.function.Predicate;
 
 public class PredicateReaction<T> extends Reaction<Boolean>
 {
-	private final Reactable<? extends T> input;
-	private final Predicate<? super T> p;
+	private Reactable<? extends T> input;
+	private Predicate<? super T> p;
 
 	public PredicateReaction( Reactable<? extends T> input , Predicate<? super T> p )
 	{

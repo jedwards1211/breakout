@@ -4,8 +4,8 @@ import java.util.function.Function;
 
 public class FunctionReaction<T, R> extends Reaction<R>
 {
-	private final Reactable<? extends T> input;
-	private final Function<? super T, ? extends R> fn;
+	private Reactable<? extends T> input;
+	private Function<? super T, ? extends R> fn;
 
 	public FunctionReaction( Reactable<? extends T> input , Function<? super T, ? extends R> fn )
 	{

@@ -1,11 +1,8 @@
 package org.andork.react;
 
-import java.util.Objects;
 
 public final class Atom<T> extends Reactable<T>
 {
-	private T value;
-
 	public Atom( )
 	{
 
@@ -13,21 +10,11 @@ public final class Atom<T> extends Reactable<T>
 
 	public Atom( T initValue )
 	{
-		value = initValue;
+		set( initValue );
 	}
 
-	@Override
-	public T get( )
+	protected void onValueChanged( T oldValue , T newValue )
 	{
-		return value;
-	}
-
-	public void set( T newValue )
-	{
-		if( !Objects.equals( value , newValue ) )
-		{
-			value = newValue;
-			invalidateReactions( );
-		}
+		invalidateReactions( );
 	}
 }

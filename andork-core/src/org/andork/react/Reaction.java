@@ -3,12 +3,16 @@ package org.andork.react;
 public abstract class Reaction<T> extends Reactable<T>
 {
 	private boolean valid;
-	protected T value;
 
 	public final T get( )
 	{
 		validate( );
-		return value;
+		return super.get( );
+	}
+
+	public boolean isValid( )
+	{
+		return valid;
 	}
 
 	public final void invalidate( )
@@ -27,11 +31,6 @@ public abstract class Reaction<T> extends Reactable<T>
 			set( calculate( ) );
 			valid = true;
 		}
-	}
-
-	protected void set( T newValue )
-	{
-		this.value = newValue;
 	}
 
 	protected abstract T calculate( );

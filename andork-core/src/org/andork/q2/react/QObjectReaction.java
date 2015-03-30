@@ -11,31 +11,18 @@ import org.andork.react.FunctionReaction;
 import org.andork.react.Reactable;
 import org.andork.react.Reaction;
 
-public class QObjectReactions<S extends QSpec> extends Reaction<QObject<? extends S>> implements QObjectListener
+public class QObjectReaction<S extends QSpec> extends Reaction<QObject<? extends S>> implements QObjectListener
 {
 	private final S spec;
 
 	private final Reactable<QObject<? extends S>> input;
 	private final Map<Property<?>, Reaction<?>> reactions = new HashMap<>( );
 
-	public QObjectReactions( S spec , Reactable<QObject<? extends S>> input )
+	public QObjectReaction( S spec , Reactable<QObject<? extends S>> input )
 	{
 		this.spec = spec;
 		this.input = input;
 		input.bind( this );
-	}
-
-	@Override
-	public void objectChanged( QObject<?> source , Property<?> property , Object oldValue , Object newValue )
-	{
-		if( source == value )
-		{
-			Reaction<?> reaction = reactions.get( property );
-			if( reaction != null )
-			{
-				reaction.invalidate( );
-			}
-		}
 	}
 
 	@SuppressWarnings( "unchecked" )
@@ -52,26 +39,34 @@ public class QObjectReactions<S extends QSpec> extends Reaction<QObject<? extend
 	}
 
 	@Override
+	public void objectChanged( QObject<?> source , Property<?> property , Object oldValue , Object newValue )
+	{
+		if( isValid( ) && source == get( ) )
+		{
+			Reaction<?> reaction = reactions.get( property );
+			if( reaction != null )
+			{
+				reaction.invalidate( );
+			}
+		}
+	}
+
+	@Override
 	protected QObject<? extends S> calculate( )
 	{
 		return input.get( );
 	}
 
-	protected void set( QObject<? extends S> newValue )
+	protected void onValueChanged( QObject<? extends S> oldValue , QObject<? extends S> newValue )
 	{
-		if( value != newValue )
+		if( oldValue != null )
 		{
-			if( value != null )
-			{
-				value.removeListener( this );
-			}
+			oldValue.removeListener( this );
+		}
 
-			value = newValue;
-
-			if( newValue != null )
-			{
-				newValue.addListener( this );
-			}
+		if( newValue != null )
+		{
+			newValue.addListener( this );
 		}
 	}
 }

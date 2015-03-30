@@ -10,6 +10,7 @@ import java.util.function.Predicate;
 
 public abstract class Reactable<T>
 {
+	private T value;
 	private final CopyOnWriteArraySet<Reaction<?>> reactions = new CopyOnWriteArraySet<>( );
 
 	public void bind( Reaction<?> reaction )
@@ -27,16 +28,6 @@ public abstract class Reactable<T>
 			reaction.invalidate( );
 		}
 	}
-
-	protected void invalidateReactions( )
-	{
-		for( Reaction<?> reaction : reactions )
-		{
-			reaction.invalidate( );
-		}
-	}
-
-	public abstract T get( );
 
 	public final <R> FunctionReaction<T, R> react( Function<T, R> fn )
 	{
@@ -68,4 +59,31 @@ public abstract class Reactable<T>
 		return new BiConsumerReaction<>( this , u , consumer );
 	}
 
+	public T get( )
+	{
+		return value;
+	}
+
+	protected void invalidateReactions( )
+	{
+		for( Reaction<?> reaction : reactions )
+		{
+			reaction.invalidate( );
+		}
+	}
+
+	protected void set( T newValue )
+	{
+		if( this.value != newValue )
+		{
+			T oldValue = this.value;
+			this.value = newValue;
+			onValueChanged( oldValue , newValue );
+		}
+	}
+
+	protected void onValueChanged( T oldValue , T newValue )
+	{
+
+	}
 }
