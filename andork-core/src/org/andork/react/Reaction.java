@@ -1,16 +1,13 @@
 package org.andork.react;
 
-public abstract class Rxn<T> extends Node<T>
+public abstract class Reaction<T> extends Reactable<T>
 {
 	private boolean valid;
 	protected T value;
 
 	public final T get( )
 	{
-		if( !valid )
-		{
-			validate( );
-		}
+		validate( );
 		return value;
 	}
 
@@ -19,14 +16,17 @@ public abstract class Rxn<T> extends Node<T>
 		if( valid )
 		{
 			valid = false;
-			fireValueChanged( );
+			invalidateReactions( );
 		}
 	}
 
 	public final void validate( )
 	{
-		set( recalculate( ) );
-		valid = true;
+		if( !valid )
+		{
+			set( calculate( ) );
+			valid = true;
+		}
 	}
 
 	protected void set( T newValue )
@@ -34,5 +34,5 @@ public abstract class Rxn<T> extends Node<T>
 		this.value = newValue;
 	}
 
-	protected abstract T recalculate( );
+	protected abstract T calculate( );
 }

@@ -7,18 +7,18 @@ import org.andork.q2.QObject;
 import org.andork.q2.QObjectListener;
 import org.andork.q2.QSpec;
 import org.andork.q2.QSpec.Property;
-import org.andork.react.FunctionRxn;
-import org.andork.react.Node;
-import org.andork.react.Rxn;
+import org.andork.react.FunctionReaction;
+import org.andork.react.Reactable;
+import org.andork.react.Reaction;
 
-public class QObjectRxns<S extends QSpec> extends Rxn<QObject<? extends S>> implements QObjectListener
+public class QObjectReactions<S extends QSpec> extends Reaction<QObject<? extends S>> implements QObjectListener
 {
 	private final S spec;
 
-	private final Node<QObject<? extends S>> input;
-	private final Map<Property<?>, Rxn<?>> rxns = new HashMap<>( );
+	private final Reactable<QObject<? extends S>> input;
+	private final Map<Property<?>, Reaction<?>> reactions = new HashMap<>( );
 
-	public QObjectRxns( S spec , Node<QObject<? extends S>> input )
+	public QObjectReactions( S spec , Reactable<QObject<? extends S>> input )
 	{
 		this.spec = spec;
 		this.input = input;
@@ -30,29 +30,29 @@ public class QObjectRxns<S extends QSpec> extends Rxn<QObject<? extends S>> impl
 	{
 		if( source == value )
 		{
-			Rxn<?> rxn = rxns.get( property );
-			if( rxn != null )
+			Reaction<?> reaction = reactions.get( property );
+			if( reaction != null )
 			{
-				rxn.invalidate( );
+				reaction.invalidate( );
 			}
 		}
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public <T> Rxn<T> rxn( final Property<T> property )
+	public <T> Reaction<T> react( final Property<T> property )
 	{
 		property.requirePropertyOf( spec );
-		Rxn<T> rxn = ( Rxn<T> ) rxns.get( property );
-		if( rxn == null )
+		Reaction<T> reaction = ( Reaction<T> ) reactions.get( property );
+		if( reaction == null )
 		{
-			rxn = new FunctionRxn<>( this , q -> q == null ? null : q.get( property ) );
-			rxns.put( property , rxn );
+			reaction = new FunctionReaction<>( this , q -> q == null ? null : q.get( property ) );
+			reactions.put( property , reaction );
 		}
-		return rxn;
+		return reaction;
 	}
 
 	@Override
-	protected QObject<? extends S> recalculate( )
+	protected QObject<? extends S> calculate( )
 	{
 		return input.get( );
 	}

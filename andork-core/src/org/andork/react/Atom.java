@@ -2,7 +2,7 @@ package org.andork.react;
 
 import java.util.Objects;
 
-public final class Atom<T> extends Node<T>
+public final class Atom<T> extends Reactable<T>
 {
 	private T value;
 
@@ -27,7 +27,7 @@ public final class Atom<T> extends Node<T>
 		if( !Objects.equals( value , newValue ) )
 		{
 			value = newValue;
-			fireValueChanged( );
+			invalidateReactions( );
 		}
 	}
 }
