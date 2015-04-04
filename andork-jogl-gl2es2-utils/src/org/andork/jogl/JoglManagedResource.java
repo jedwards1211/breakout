@@ -25,39 +25,92 @@ import javax.media.opengl.GL2ES2;
 
 public abstract class JoglManagedResource implements JoglResource
 {
-	private final JoglResourceManager	manager;
-	private int							useCount;
-	
+	private final JoglResourceManager manager;
+	private int useCount;
+	private boolean initialized;
+
 	public JoglManagedResource( JoglResourceManager manager )
 	{
 		this.manager = manager;
 	}
-	
-	public void use( )
-	{
-		if( useCount++ == 0 )
-		{
-			manager.initLater( this );
-		}
-	}
-	
-	public void release( )
-	{
-		if( useCount > 0 && --useCount == 0 )
-		{
-			manager.disposeLater( this );
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.andork.jogl.neu.JoglResource#init(javax.media.opengl.GL2ES2)
-	 */
-	@Override
-	public abstract void init( GL2ES2 gl );
-	
+
 	/* (non-Javadoc)
 	 * @see org.andork.jogl.neu.JoglResource#dispose(javax.media.opengl.GL2ES2)
 	 */
 	@Override
-	public abstract void dispose( GL2ES2 gl );
+	public final void dispose( GL2ES2 gl )
+	{
+		requireInitialized( );
+		initialized = false;
+		doDispose( gl );
+	}
+
+	protected abstract void doDispose( GL2ES2 gl );
+
+	protected abstract void doInit( GL2ES2 gl );
+
+	protected void doRelease( )
+	{
+
+	}
+
+	protected void doUse( )
+	{
+
+	}
+
+	/* (non-Javadoc)
+	 * @see org.andork.jogl.neu.JoglResource#init(javax.media.opengl.GL2ES2)
+	 */
+	@Override
+	public final void init( GL2ES2 gl )
+	{
+		requireUninitialized( );
+		initialized = true;
+		doInit( gl );
+	}
+
+	public final boolean isInitialized( )
+	{
+		return initialized;
+	}
+
+	public final boolean isInUse( )
+	{
+		return useCount > 0;
+	}
+
+	public final void removeUser( Object user )
+	{
+		if( useCount > 0 && --useCount == 0 )
+		{
+			manager.disposeLater( this );
+			doRelease( );
+		}
+	}
+
+	protected final void requireInitialized( )
+	{
+		if( !initialized )
+		{
+			throw new IllegalArgumentException( "not initialized" );
+		}
+	}
+
+	protected final void requireUninitialized( )
+	{
+		if( initialized )
+		{
+			throw new IllegalArgumentException( "already initialized" );
+		}
+	}
+
+	public final void addUser( Object user )
+	{
+		if( useCount++ == 0 )
+		{
+			doUse( );
+			manager.initLater( this );
+		}
+	}
 }
