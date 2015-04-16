@@ -47,7 +47,7 @@ public enum VectorElement
 		@Override
 		public void visit( VectorElementVisitor visitor )
 		{
-			visitor.visitUp( );
+			visitor.visitRectUp( );
 		}
 	};
 

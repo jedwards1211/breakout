@@ -24,7 +24,7 @@ public class Segment implements CharSequence
 
 	private final String value;
 	public final Object source;
-	private final Integer sourceIndex;
+	public final Integer sourceIndex;
 	public final Segment sourceSegment;
 	public final int startLine;
 	public final int endLine;
@@ -453,6 +453,22 @@ public class Segment implements CharSequence
 		return value.toCharArray( );
 	}
 
+	public void parseAs( String s )
+	{
+		if( !equals( s ) )
+		{
+			throw new SegmentParseExpectedException( this , s );
+		}
+	}
+
+	public void parseAsIgnoreCase( String s )
+	{
+		if( !equalsIgnoreCase( s ) )
+		{
+			throw new SegmentParseExpectedException( this , s );
+		}
+	}
+
 	public int parseAsInteger( )
 	{
 		try
@@ -606,7 +622,7 @@ public class Segment implements CharSequence
 	public String underlineInContext( )
 	{
 		StringBuilder sb = new StringBuilder( );
-		Segment[ ] lines = sourceSegment.split( "\r\n|\r|\n" );
+		Segment[ ] lines = sourceSegment == null ? this.split( "\r\n|\r|\n" ) : sourceSegment.split( "\r\n|\r|\n" );
 
 		for( Segment line : lines )
 		{

@@ -139,7 +139,7 @@ public class WallsUnits
 	/**
 	 * Taping method
 	 */
-	public TapeType tape = TapeType.IT;
+	public List<TapingMethodElement> tape = Collections.emptyList( );
 	/**
 	 * Flag (arbitrary text)
 	 */

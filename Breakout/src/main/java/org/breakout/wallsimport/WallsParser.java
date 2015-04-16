@@ -17,10 +17,13 @@ import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.andork.collect.MapLiteral;
 import org.andork.func.CharPredicate;
 import org.andork.parse.ExpectedTypes;
+import org.andork.parse.LineParser;
 import org.andork.parse.Segment;
 import org.andork.parse.SegmentParseException;
 import org.andork.parse.SegmentParseExpectedException;
@@ -31,13 +34,13 @@ import org.andork.unit.UnitizedDouble;
 
 public class WallsParser
 {
-	public static Map<String, Unit<Length>> lengthUnits = new MapLiteral<String, Unit<Length>>( )
+	private static Map<String, Unit<Length>> lengthUnits = new MapLiteral<String, Unit<Length>>( )
 		.map( "m" , Length.meters )
 		.map( "meters" , Length.meters )
 		.map( "f" , Length.feet )
 		.map( "feet" , Length.feet );
 
-	public static Map<String, Unit<Angle>> azmUnits = new MapLiteral<String, Unit<Angle>>( )
+	private static Map<String, Unit<Angle>> azmUnits = new MapLiteral<String, Unit<Angle>>( )
 		.map( "d" , Angle.degrees )
 		.map( "degrees" , Angle.degrees )
 		.map( "m" , Angle.milsNATO )
@@ -45,7 +48,7 @@ public class WallsParser
 		.map( "g" , Angle.gradians )
 		.map( "grads" , Angle.gradians );
 
-	public static Map<String, Unit<Angle>> incUnits = new MapLiteral<String, Unit<Angle>>( )
+	private static Map<String, Unit<Angle>> incUnits = new MapLiteral<String, Unit<Angle>>( )
 		.map( "d" , Angle.degrees )
 		.map( "degrees" , Angle.degrees )
 		.map( "m" , Angle.milsNATO )
@@ -55,38 +58,74 @@ public class WallsParser
 		.map( "p" , Angle.percentGrade )
 		.map( "percent" , Angle.percentGrade );
 
-	public static Map<String, Unit<Length>> lengthUnitSuffixes = new MapLiteral<String, Unit<Length>>( )
+	private static Map<String, Unit<Length>> lengthUnitSuffixes = new MapLiteral<String, Unit<Length>>( )
 		.map( "m" , Length.meters )
 		.map( "f" , Length.feet );
 
-	public static Map<String, Unit<Angle>> azmUnitSuffixes = new MapLiteral<String, Unit<Angle>>( )
+	private static Map<String, Unit<Angle>> azmUnitSuffixes = new MapLiteral<String, Unit<Angle>>( )
 		.map( "d" , Angle.degrees )
 		.map( "g" , Angle.gradians )
 		.map( "m" , Angle.milsNATO );
 
-	public static Map<Unit<Angle>, Double> azmMaxes = new MapLiteral<Unit<Angle>, Double>( )
+	private static Map<Character, Unit<Length>> lengthUnitSuffixesC = new MapLiteral<Character, Unit<Length>>( )
+		.map( 'm' , Length.meters )
+		.map( 'f' , Length.feet );
+
+	private static Map<Character, Unit<Angle>> azmUnitSuffixesC = new MapLiteral<Character, Unit<Angle>>( )
+		.map( 'd' , Angle.degrees )
+		.map( 'g' , Angle.gradians )
+		.map( 'm' , Angle.milsNATO );
+
+	private static Map<Unit<Angle>, Double> azmMaxes = new MapLiteral<Unit<Angle>, Double>( )
 		.map( Angle.degrees , 360.0 )
 		.map( Angle.gradians , 400.0 )
 		.map( Angle.milsNATO , 6400.0 );
 
-	public static Map<Unit<Angle>, Double> incMaxes = new MapLiteral<Unit<Angle>, Double>( )
+	private static Map<Unit<Angle>, Double> incMaxes = new MapLiteral<Unit<Angle>, Double>( )
 		.map( Angle.degrees , 90.0 )
 		.map( Angle.gradians , 100.0 )
 		.map( Angle.milsNATO , 1600.0 )
 		.map( Angle.percentGrade ,
 			Double.POSITIVE_INFINITY );
 
-	public static Map<String, Unit<Angle>> incUnitSuffixes = new MapLiteral<String, Unit<Angle>>( )
+	private static Map<String, Unit<Angle>> incUnitSuffixes = new MapLiteral<String, Unit<Angle>>( )
 		.map( "d" , Angle.degrees )
 		.map( "g" , Angle.gradians )
 		.map( "m" , Angle.milsNATO )
 		.map( "p" , Angle.percentGrade );
 
-	public static Map<String, CardinalDirection> cardinalDirections = new MapLiteral<String, CardinalDirection>( )
+	private static Map<String, CardinalDirection> cardinalDirections = new MapLiteral<String, CardinalDirection>( )
 		.map( "n" , NORTH )
 		.map( "s" , SOUTH )
 		.map( "e" , EAST )
 		.map( "w" , WEST );
+
+	private static Map<Character, Unit<Angle>> incUnitSuffixesC = new MapLiteral<Character, Unit<Angle>>( )
+		.map( 'd' , Angle.degrees )
+		.map( 'g' , Angle.gradians )
+		.map( 'm' , Angle.milsNATO )
+		.map( 'p' , Angle.percentGrade );
+
+	private static Map<Character, CardinalDirection> cardinalDirectionsC = new MapLiteral<Character, CardinalDirection>( )
+		.map( 'n' , NORTH )
+		.map( 's' , SOUTH )
+		.map( 'e' , EAST )
+		.map( 'w' , WEST );
+
+	private static Map<Character, CardinalDirection> eastWestC = new MapLiteral<Character, CardinalDirection>( )
+		.map( 'e' , EAST )
+		.map( 'w' , WEST );
+
+	private static Map<Character, CardinalDirection> northSouthC = new MapLiteral<Character, CardinalDirection>( )
+		.map( 'n' , NORTH )
+		.map( 's' , SOUTH );
+
+	private static Map<CardinalDirection, Map<Character, CardinalDirection>> toCardinalDirectionsC =
+		new MapLiteral<CardinalDirection, Map<Character, CardinalDirection>>( )
+			.map( CardinalDirection.NORTH , eastWestC )
+			.map( CardinalDirection.SOUTH , eastWestC )
+			.map( CardinalDirection.EAST , northSouthC )
+			.map( CardinalDirection.WEST , northSouthC );
 
 	Stack<WallsUnits> stack = new Stack<>( );
 	WallsUnits units = new WallsUnits( );
@@ -777,6 +816,542 @@ public class WallsParser
 		public void comment( Segment comment );
 	}
 
+	private static class WallsLineParser extends LineParser
+	{
+		private static final Pattern OPTIONAL_PATTERN = Pattern.compile( "--+" );
+
+		public WallsLineParser( Segment line )
+		{
+			super( line );
+		}
+
+		public UnitizedDouble<Length> length( Unit<Length> defaultUnit )
+		{
+			return new UnitizedDouble<>( doubleLiteral( ) ,
+				oneOfLowercase( lengthUnitSuffixesC , defaultUnit ) );
+		}
+
+		public UnitizedDouble<Length> unsignedLength( Unit<Length> defaultUnit )
+		{
+			return new UnitizedDouble<>( unsignedDoubleLiteral( ) ,
+				oneOfLowercase( lengthUnitSuffixesC , defaultUnit ) );
+		}
+
+		public UnitizedDouble<Angle> nonQuadrantAzimuth( Unit<Angle> defaultUnit )
+		{
+			int start = i;
+
+			Double value = maybeR( this::unsignedDoubleLiteral );
+			if( maybe( this::colon ) )
+			{
+				Double minutes = maybeR( this::unsignedDoubleLiteral );
+				Double seconds = null;
+				if( maybe( this::colon ) )
+				{
+					seconds = maybeR( this::unsignedDoubleLiteral );
+				}
+				if( value == null && minutes == null && seconds == null )
+				{
+					throwAllExpected( );
+				}
+				return dms( value , minutes , seconds );
+			}
+			else if( value == null )
+			{
+				throwAllExpected( );
+			}
+			UnitizedDouble<Angle> result = new UnitizedDouble<>( value ,
+				oneOfLowercase( azmUnitSuffixesC , defaultUnit ) );
+
+			int end = i;
+
+			if( result.doubleValue( result.unit ) > azmMaxes.get( result.unit ) )
+			{
+				throw new SegmentParseException( line.substring( start , end ) , WallsParseError.AZM_OUT_OF_RANGE );
+			}
+
+			return result;
+		}
+
+		private static UnitizedDouble<Angle> dms( Double degrees , Double minutes , Double seconds )
+		{
+			Double value = 0.0;
+			if( degrees != null )
+			{
+				value += degrees;
+			}
+			if( minutes != null )
+			{
+				value += minutes / 60.0;
+			}
+			if( seconds != null )
+			{
+				value += seconds / 3600.0;
+			}
+			return new UnitizedDouble<>( value , Angle.degrees );
+		}
+
+		public UnitizedDouble<Angle> quadrantAzimuth( Unit<Angle> defaultUnit )
+		{
+			CardinalDirection from = oneOfLowercase( cardinalDirectionsC );
+
+			int start = i;
+			UnitizedDouble<Angle> angle = nonQuadrantAzimuth( defaultUnit );
+			int end = i;
+
+			if( angle.doubleValue( angle.unit ) > incMaxes.get( angle.unit ) )
+			{
+				throw new SegmentParseException( line.substring( start , end ) , WallsParseError.AZM_OUT_OF_RANGE );
+			}
+
+			CardinalDirection to = oneOfLowercase( toCardinalDirectionsC.get( from ) );
+
+			return from.toward( to , angle );
+		}
+
+		public UnitizedDouble<Angle> azimuth( Unit<Angle> defaultUnit )
+		{
+			return oneOfR(
+				( ) -> quadrantAzimuth( defaultUnit ) ,
+				( ) -> nonQuadrantAzimuth( defaultUnit ) );
+		}
+
+		public UnitizedDouble<Angle> unsignedInclination( Unit<Angle> defaultUnit )
+		{
+			int start = i;
+			UnitizedDouble<Angle> result = new UnitizedDouble<>(
+				unsignedDoubleLiteral( ) , oneOfLowercase( incUnitSuffixesC , defaultUnit ) );
+			int end = i;
+
+			if( result.doubleValue( result.unit ) > incMaxes.get( result.unit ) )
+			{
+				throw new SegmentParseException( line.substring( start , end ) , WallsParseError.INC_OUT_OF_RANGE );
+			}
+
+			return result;
+		}
+
+		public UnitizedDouble<Angle> inclination( Unit<Angle> defaultUnit )
+		{
+			int start = i;
+			Double signum = maybeR( ( ) -> oneOf( SIGN_SIGNUMS ) );
+			UnitizedDouble<Angle> angle = unsignedInclination( defaultUnit );
+			int end = i;
+
+			boolean zeroAngle = angle.doubleValue( angle.unit ) == 0.0;
+			if( signum == null )
+			{
+				if( !zeroAngle )
+				{
+					throw new SegmentParseException( line.substring( start , end ) , WallsParseError.UNSIGNED_NONZERO_INC );
+				}
+				return angle;
+			}
+			else
+			{
+				if( zeroAngle )
+				{
+					throw new SegmentParseException( line.substring( start , end ) , WallsParseError.SIGNED_ZERO_INC );
+				}
+				return signum < 0 ? angle.negate( ) : angle;
+			}
+		}
+
+		public VarianceOverride varianceOverride( )
+		{
+			// TODO
+			return null;
+		}
+
+		public <R> R optional( Supplier<R> production )
+		{
+			return oneOfR(
+				( ) ->
+				{
+					expect( OPTIONAL_PATTERN );
+					return null;
+				} , production );
+		}
+	}
+
+	public static interface VectorLineVisitor2
+	{
+		public WallsUnits units( );
+
+		public void visitFrom( Segment from );
+
+		public void visitTo( Segment to );
+
+		public void visitDistance( UnitizedDouble<Length> distance );
+
+		public void visitFrontsightAzimuth( UnitizedDouble<Angle> fsAzimuth );
+
+		public void visitBacksightAzimuth( UnitizedDouble<Angle> bsAzimuth );
+
+		public void visitFrontsightInclination( UnitizedDouble<Angle> fsInclination );
+
+		public void visitBacksightInclination( UnitizedDouble<Angle> bsInclination );
+
+		public void visitNorth( UnitizedDouble<Length> north );
+
+		public void visitEast( UnitizedDouble<Length> east );
+
+		public void visitVectorUp( UnitizedDouble<Length> up );
+
+		public void visitInstrumentHeight( UnitizedDouble<Length> instrumentHeight );
+
+		public void visitTargetHeight( UnitizedDouble<Length> targetHeight );
+
+		public void visitLeft( UnitizedDouble<Length> left );
+
+		public void visitRight( UnitizedDouble<Length> right );
+
+		public void visitUp( UnitizedDouble<Length> up );
+
+		public void visitDown( UnitizedDouble<Length> down );
+
+		public void visitLrudFacingAngle( UnitizedDouble<Angle> facingAngle );
+
+		public void visitCFlag( );
+
+		public void visitHorizontalVarianceOverride( VarianceOverride variance );
+
+		public void visitVerticalVarianceOverride( VarianceOverride variance );
+
+		/**
+		 * In this case "segment" refers to Walls' #Segment directive, not {@link Segment}. Nonetheless, the
+		 * argument to the #Segment directive is given as a {@link Segment} :)
+		 * 
+		 * @param segment
+		 *            the argument to the #Segment directive
+		 */
+		public void visitSegment( Segment segment );
+
+		public void visitComment( Segment comment );
+	}
+
+	private static class VectorLineParser2 extends WallsLineParser implements VectorElementVisitor , TapingMethodElementVisitor , LrudElementVisitor
+	{
+		private VectorLineVisitor2 visitor;
+		private static final Pattern FROM_STATION_PATTERN = Pattern.compile( "[^:;,# \t]{1,8}" );
+		private static final Pattern TO_STATION_PATTERN = Pattern.compile( "[^<*:;,# \t][^:;,# \t]{0,7}" );
+
+		public VectorLineParser2( Segment line , VectorLineVisitor2 visitor )
+		{
+			super( line );
+			this.visitor = visitor;
+		}
+
+		public void parse( )
+		{
+			throwAllExpected( this::vectorLine );
+		}
+
+		public void vectorLine( )
+		{
+			maybe( this::whitespace );
+			oneOf( this::lineWithData , this::commentOrEndOfLine );
+		}
+
+		public void lineWithData( )
+		{
+			fromStation( );
+			whitespace( );
+			afterFromStation( );
+		}
+
+		public void fromStation( )
+		{
+			visitor.visitFrom( expect( FROM_STATION_PATTERN ) );
+		}
+
+		public void afterFromStation( )
+		{
+			oneOf(
+				( ) ->
+				{
+					toStation( );
+					whitespace( );
+					afterToStation( );
+				} ,
+				( ) ->
+				{
+					lruds( );
+					afterLruds( );
+				} );
+		}
+
+		public void toStation( )
+		{
+			visitor.visitTo( expect( TO_STATION_PATTERN ) );
+		}
+
+		public void afterToStation( )
+		{
+			int k = 0;
+			for( VectorElement elem : visitor.units( ).order )
+			{
+				if( k++ > 0 )
+				{
+					whitespace( );
+				}
+				elem.visit( this );
+			}
+			for( TapingMethodElement elem : visitor.units( ).tape )
+			{
+				whitespace( );
+				elem.visit( this );
+			}
+			if( maybe( this::whitespace ) )
+			{
+				afterMeasurements( );
+			}
+		}
+
+		@Override
+		public void visitDistance( )
+		{
+			visitor.visitDistance( unsignedLength( visitor.units( ).d_unit ) );
+		}
+
+		@Override
+		public void visitAzimuth( )
+		{
+			visitor.visitFrontsightAzimuth( optional( ( ) -> azimuth( visitor.units( ).a_unit ) ) );
+			if( maybe( this::forwardSlash ) )
+			{
+				visitor.visitBacksightAzimuth( optional( ( ) -> azimuth( visitor.units( ).ab_unit ) ) );
+			}
+		}
+
+		@Override
+		public void visitInclination( )
+		{
+			visitor.visitFrontsightInclination( optional( ( ) -> inclination( visitor.units( ).v_unit ) ) );
+			if( maybe( this::forwardSlash ) )
+			{
+				visitor.visitBacksightInclination( optional( ( ) -> inclination( visitor.units( ).vb_unit ) ) );
+			}
+		}
+
+		@Override
+		public void visitEast( )
+		{
+			visitor.visitEast( length( visitor.units( ).d_unit ) );
+		}
+
+		@Override
+		public void visitNorth( )
+		{
+			visitor.visitNorth( length( visitor.units( ).d_unit ) );
+		}
+
+		@Override
+		public void visitRectUp( )
+		{
+			visitor.visitVectorUp( length( visitor.units( ).d_unit ) );
+		}
+
+		@Override
+		public void visitInstrumentHeight( )
+		{
+			visitor.visitInstrumentHeight( optional( ( ) -> length( visitor.units( ).s_unit ) ) );
+		}
+
+		@Override
+		public void visitTargetHeight( )
+		{
+			visitor.visitTargetHeight( optional( ( ) -> length( visitor.units( ).s_unit ) ) );
+		}
+
+		public void afterMeasurements( )
+		{
+			if( maybe( this::varianceOverrides ) )
+			{
+				maybe( this::whitespace );
+			}
+			afterVarianceOverrides( );
+		}
+
+		public void varianceOverrides( )
+		{
+			expect( '(' );
+			maybe( this::whitespace );
+			VarianceOverride horizontal = varianceOverride( );
+			visitor.visitHorizontalVarianceOverride( horizontal );
+			maybe( this::whitespace );
+			if( maybe( this::comma ) )
+			{
+				maybe( this::whitespace );
+				visitor.visitVerticalVarianceOverride( varianceOverride( ) );
+				maybe( this::whitespace );
+			}
+			else
+			{
+				visitor.visitVerticalVarianceOverride( horizontal );
+			}
+			expect( ')' );
+		}
+
+		public void afterVarianceOverrides( )
+		{
+			if( maybe( this::lruds ) )
+			{
+				maybe( this::whitespace );
+			}
+			afterLruds( );
+		}
+
+		public void lruds( )
+		{
+			oneOfWithLookahead( ( ) ->
+			{
+				expect( '<' );
+				lrudContent( );
+				expect( '>' );
+			} , ( ) ->
+			{
+				expect( '*' );
+				lrudContent( );
+				expect( '*' );
+			} );
+		}
+
+		public void lrudContent( )
+		{
+			oneOfWithLookahead( this::commaDelimLrudContent , this::whitespaceDelimLrudContent );
+		}
+
+		public void commaDelimLrudContent( )
+		{
+			maybe( this::whitespace );
+			int m = 0;
+			for( LrudElement elem : visitor.units( ).lrud_order )
+			{
+				if( m++ > 0 )
+				{
+					maybe( this::whitespace );
+					comma( );
+					maybe( this::whitespace );
+				}
+				elem.visit( this );
+			}
+			maybe( this::whitespace );
+			afterRequiredCommaDelimLrudMeasurements( );
+		}
+
+		public void whitespaceDelimLrudContent( )
+		{
+			maybe( this::whitespace );
+			int m = 0;
+			for( LrudElement elem : visitor.units( ).lrud_order )
+			{
+				if( m++ > 0 )
+				{
+					whitespace( );
+				}
+				elem.visit( this );
+			}
+			maybe( this::whitespace );
+			afterRequiredWhitespaceDelimLrudMeasurements( );
+		}
+
+		@Override
+		public void visitLeft( )
+		{
+			visitor.visitLeft( optional( ( ) -> unsignedLength( visitor.units( ).s_unit ) ) );
+		}
+
+		@Override
+		public void visitRight( )
+		{
+			visitor.visitRight( optional( ( ) -> unsignedLength( visitor.units( ).s_unit ) ) );
+		}
+
+		@Override
+		public void visitUp( )
+		{
+			visitor.visitUp( optional( ( ) -> unsignedLength( visitor.units( ).s_unit ) ) );
+		}
+
+		@Override
+		public void visitDown( )
+		{
+			visitor.visitDown( optional( ( ) -> unsignedLength( visitor.units( ).s_unit ) ) );
+		}
+
+		public void afterRequiredCommaDelimLrudMeasurements( )
+		{
+			if( maybe( this::comma ) )
+			{
+				maybe( this::whitespace );
+				oneOf(
+					( ) ->
+					{
+						lrudFacingAngle( );
+						maybe( this::whitespace );
+						if( maybe( this::comma ) )
+						{
+							maybe( this::whitespace );
+							lrudCFlag( );
+						}
+					} ,
+					this::lrudCFlag );
+			}
+		}
+
+		public void afterRequiredWhitespaceDelimLrudMeasurements( )
+		{
+			maybe( ( ) -> oneOf(
+				( ) ->
+				{
+					lrudFacingAngle( );
+					if( maybe( this::whitespace ) )
+					{
+						maybe( this::lrudCFlag );
+					}
+				} ,
+				this::lrudCFlag ) );
+		}
+
+		public void lrudFacingAngle( )
+		{
+			visitor.visitLrudFacingAngle( azimuth( visitor.units( ).a_unit ) );
+		}
+
+		public void lrudCFlag( )
+		{
+			expectIgnoreCase( 'c' );
+			visitor.visitCFlag( );
+		}
+
+		public void afterLruds( )
+		{
+			if( maybe( this::directive ) )
+			{
+				maybe( this::whitespace );
+			}
+			commentOrEndOfLine( );
+		}
+
+		public void directive( )
+		{
+			expect( '#' );
+			// TODO
+		}
+
+		public void commentOrEndOfLine( )
+		{
+			oneOf( this::comment , this::endOfLine );
+		}
+
+		public void comment( )
+		{
+			expect( ';' );
+			visitor.visitComment( remaining( ) );
+		}
+	}
+
 	private static class VectorLineParser
 	{
 		private static final Function<Segment, Consumer<VectorLineParser>> TO_START =
@@ -1070,6 +1645,11 @@ public class WallsParser
 		new VectorLineParser( line , numVectorComponents , visitor );
 	}
 
+	public static void parseVectorLine2( Segment line , VectorLineVisitor2 visitor )
+	{
+		new VectorLineParser2( line , visitor ).parse( );
+	}
+
 	private static void temp( String s )
 	{
 		System.out.println( s );
@@ -1127,19 +1707,177 @@ public class WallsParser
 		}
 	}
 
+	private static void temp2( String s )
+	{
+		System.out.println( s );
+		Segment segment = new Segment( s , null , 0 , 0 );
+		try
+		{
+			parseVectorLine2( segment , new VectorLineVisitor2( ) {
+				WallsUnits units = new WallsUnits( );
+
+				@Override
+				public void visitTo( Segment to )
+				{
+					System.out.println( "  to:           " + to );
+				}
+
+				@Override
+				public void visitFrom( Segment from )
+				{
+					System.out.println( "  from:         " + from );
+				}
+
+				@Override
+				public WallsUnits units( )
+				{
+					return units;
+				}
+
+				@Override
+				public void visitDistance( UnitizedDouble<Length> distance )
+				{
+					System.out.println( "  distance:     " + distance );
+				}
+
+				@Override
+				public void visitFrontsightAzimuth( UnitizedDouble<Angle> fsAzimuth )
+				{
+					System.out.println( "  fsAzm:        " + fsAzimuth );
+				}
+
+				@Override
+				public void visitBacksightAzimuth( UnitizedDouble<Angle> bsAzimuth )
+				{
+					System.out.println( "  bsAzm:        " + bsAzimuth );
+				}
+
+				@Override
+				public void visitFrontsightInclination( UnitizedDouble<Angle> fsInclination )
+				{
+					System.out.println( "  fsInc:        " + fsInclination );
+				}
+
+				@Override
+				public void visitBacksightInclination( UnitizedDouble<Angle> bsInclination )
+				{
+					System.out.println( "  bsInc:        " + bsInclination );
+				}
+
+				@Override
+				public void visitNorth( UnitizedDouble<Length> north )
+				{
+					System.out.println( "  north:        " + north );
+				}
+
+				@Override
+				public void visitEast( UnitizedDouble<Length> east )
+				{
+					System.out.println( "  east:         " + east );
+				}
+
+				@Override
+				public void visitVectorUp( UnitizedDouble<Length> up )
+				{
+					System.out.println( "  vUp:          " + up );
+				}
+
+				@Override
+				public void visitInstrumentHeight( UnitizedDouble<Length> instrumentHeight )
+				{
+					System.out.println( "  ih:           " + instrumentHeight );
+				}
+
+				@Override
+				public void visitTargetHeight( UnitizedDouble<Length> targetHeight )
+				{
+					System.out.println( "  th:           " + targetHeight );
+				}
+
+				@Override
+				public void visitLeft( UnitizedDouble<Length> left )
+				{
+					System.out.println( "  left:         " + left );
+				}
+
+				@Override
+				public void visitRight( UnitizedDouble<Length> right )
+				{
+					System.out.println( "  right:        " + right );
+				}
+
+				@Override
+				public void visitUp( UnitizedDouble<Length> up )
+				{
+					System.out.println( "  up:           " + up );
+				}
+
+				@Override
+				public void visitDown( UnitizedDouble<Length> down )
+				{
+					System.out.println( "  down:         " + down );
+				}
+
+				@Override
+				public void visitLrudFacingAngle( UnitizedDouble<Angle> facingAngle )
+				{
+					System.out.println( "  facingAngle:  " + facingAngle );
+				}
+
+				@Override
+				public void visitCFlag( )
+				{
+					System.out.println( "  cflag" );
+				}
+
+				@Override
+				public void visitHorizontalVarianceOverride( VarianceOverride variance )
+				{
+					System.out.println( "  h:            " + variance );
+				}
+
+				@Override
+				public void visitVerticalVarianceOverride( VarianceOverride variance )
+				{
+					System.out.println( "  v:            " + variance );
+				}
+
+				@Override
+				public void visitSegment( Segment segment )
+				{
+					System.out.println( "  segment:      " + segment );
+				}
+
+				@Override
+				public void visitComment( Segment comment )
+				{
+					System.out.println( "  comment:      " + comment );
+				}
+			} );
+		}
+		catch( Exception ex )
+		{
+			ex.printStackTrace( );
+		}
+	}
+
 	public static void main( String[ ] args )
 	{
-		temp( "*A*1 B1 350 41 25 (3, 5) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( "*A*1 *2,3,4,5*" );
-		temp( "*A*1 *2,3,4,*" );
-		temp( "<A1, <bash <2,3,4,5>" );
-		temp( "A1 B1 350 41 25 (3, 5) <2, 3, 4,5> okay>< weird #Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 <2, 3, 4,5>#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 (3;, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 *#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 (3, 5) hello <2, 3,4,5 *#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 25 15 16 17 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp2( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*;4, 5>" );
+		temp2( "*A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
+		temp2( "*A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
+		temp2( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp2( "*A*1 B1 350 41 +25 (3, 5) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp2( "*A*1 *2,3,4,5*" );
+		temp2( "*A*1 *2,3,4,*" );
+		temp2( "<A1, <bash <2,3,4,5>" );
+		temp2( "A1 B1 350 41 25 (3, 5) <2, 3, 4,5> okay>< weird #Seg blah;4, 5>" );
+		temp2( "A1 B1 350 41 25 <2, 3, 4,5>#Seg blah;4, 5>" );
+		temp2( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp2( "A1 B1 350 41 25 (3;, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp2( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 *#Seg blah;4, 5>" );
+		temp2( "A1 B1 350 41 25 (3, 5) hello <2, 3,4,5 *#Seg blah;4, 5>" );
+		temp2( "A1 B1 350 41 25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp2( "A1 B1 350 41 25 15 16 17 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
 	}
 }
