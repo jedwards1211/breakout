@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -799,23 +797,6 @@ public class WallsParser
 			name.parseToLowerCaseAsAnyOf( unitsOptions ).process( this , name , value ) );
 	}
 
-	public static interface VectorLineVisitor
-	{
-		public void from( Segment from );
-
-		public void to( Segment to );
-
-		public void measurement( int index , Segment measurement );
-
-		public void variance( int index , Segment item );
-
-		public void lrud( int index , Segment item );
-
-		public void directive( Segment directive , Segment argument );
-
-		public void comment( Segment comment );
-	}
-
 	private static class WallsLineParser extends LineParser
 	{
 		private static final Pattern OPTIONAL_PATTERN = Pattern.compile( "--+" );
@@ -974,7 +955,7 @@ public class WallsParser
 		}
 	}
 
-	public static interface VectorLineVisitor2
+	public static interface VectorLineVisitor
 	{
 		public WallsUnits units( );
 
@@ -1030,13 +1011,13 @@ public class WallsParser
 		public void visitComment( Segment comment );
 	}
 
-	private static class VectorLineParser2 extends WallsLineParser implements VectorElementVisitor , TapingMethodElementVisitor , LrudElementVisitor
+	private static class VectorLineParser extends WallsLineParser implements VectorElementVisitor , TapingMethodElementVisitor , LrudElementVisitor
 	{
-		private VectorLineVisitor2 visitor;
+		private VectorLineVisitor visitor;
 		private static final Pattern FROM_STATION_PATTERN = Pattern.compile( "[^:;,# \t]{1,8}" );
 		private static final Pattern TO_STATION_PATTERN = Pattern.compile( "[^<*:;,# \t][^:;,# \t]{0,7}" );
 
-		public VectorLineParser2( Segment line , VectorLineVisitor2 visitor )
+		public VectorLineParser( Segment line , VectorLineVisitor visitor )
 		{
 			super( line );
 			this.visitor = visitor;
@@ -1352,302 +1333,9 @@ public class WallsParser
 		}
 	}
 
-	private static class VectorLineParser
+	public static void parseVectorLine( Segment line , VectorLineVisitor visitor )
 	{
-		private static final Function<Segment, Consumer<VectorLineParser>> TO_START =
-			ifNotEmpty( VectorLineParser::to , WallsExpectedTypes.TO_STATION );
-
-		private static final Function<Segment, Consumer<VectorLineParser>> MEASUREMENT_START =
-			ifNotEmpty( VectorLineParser::measurement , WallsExpectedTypes.MEASUREMENT );
-
-		private static final Function<Segment, Consumer<VectorLineParser>> VARIANCE_START =
-			ifEqualsAny( VectorLineParser::variance , "(" );
-
-		private static final Function<Segment, Consumer<VectorLineParser>> LRUD_START =
-			ifEqualsAny( VectorLineParser::lruds , "<" , "*" );
-
-		private static final Function<Segment, Consumer<VectorLineParser>> DIRECTIVE_START =
-			ifEqualsAny( VectorLineParser::directive , "#" );
-
-		private static final Function<Segment, Consumer<VectorLineParser>> END_OF_LINE_OR_COMMENT_START =
-			ifEmpty( VectorLineParser::end , ";" , WallsExpectedTypes.END_OF_LINE );
-
-		private Segment line;
-		private VectorLineVisitor visitor;
-		private int i = 0;
-		private int numVectorComponents;
-
-		private int measurementCount;
-
-		private static final CharPredicate whitespace = Character::isWhitespace;
-		private static final CharPredicate nonWhitespace = whitespace.negate( );
-
-		private static final Map<String, Character> LRUD_END_CHARS = new MapLiteral<String, Character>( )
-			.map( "<" , '>' )
-			.map( "*" , '*' );
-
-		public VectorLineParser( Segment line , int numVectorComponents , VectorLineVisitor visitor )
-		{
-			this.line = line;
-			this.visitor = visitor;
-			this.numVectorComponents = numVectorComponents;
-			Segment[ ] parts = line.split( ";" , 2 );
-			if( parts.length > 0 )
-			{
-				this.line = parts[ 0 ];
-				if( parts.length > 1 )
-				{
-					visitor.comment( parts[ 1 ] );
-				}
-				start( );
-			}
-		}
-
-		private void moveTo( CharPredicate p )
-		{
-			while( i < line.length( ) && !p.test( line.charAt( i ) ) )
-			{
-				i++;
-			}
-		}
-
-		private void moveToExpected( char ch )
-		{
-			moveTo( c -> c == ch );
-			if( i == line.length( ) )
-			{
-				throw new SegmentParseExpectedException( line.substring( i ) , Character.toString( ch ) );
-			}
-		}
-
-		private static Function<Segment, Consumer<VectorLineParser>> ifEqualsAny( Consumer<VectorLineParser> thenDo , Object ... expected )
-		{
-			return s ->
-			{
-				for( Object obj : expected )
-				{
-					if( s.equals( obj ) )
-					{
-						return thenDo;
-					}
-				}
-				throw new SegmentParseExpectedException( s , expected );
-			};
-		}
-
-		private static Function<Segment, Consumer<VectorLineParser>> ifEmpty( Consumer<VectorLineParser> thenDo , Object ... expected )
-		{
-			return s ->
-			{
-				if( s.equals( "" ) )
-				{
-					return thenDo;
-				}
-				throw new SegmentParseExpectedException( s , expected );
-			};
-		}
-
-		private static Function<Segment, Consumer<VectorLineParser>> ifNotEmpty( Consumer<VectorLineParser> thenDo , Object name )
-		{
-			return s ->
-			{
-				if( !s.equals( "" ) )
-				{
-					return thenDo;
-				}
-				throw new SegmentParseExpectedException( s , name );
-			};
-		}
-
-		private void start( )
-		{
-			moveTo( nonWhitespace );
-			if( i == line.length( ) )
-			{
-				return;
-			}
-			from( );
-		}
-
-		private void from( )
-		{
-			int start = i;
-			moveTo( whitespace );
-			if( i == start )
-			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.FROM_STATION );
-			}
-			visitor.from( line.substring( start , i ) );
-			moveTo( nonWhitespace );
-
-			afterFrom( );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_FROM = new Function[ ] {
-			LRUD_START ,
-			TO_START
-		};
-
-		private void afterFrom( )
-		{
-			line.charAtAsSegment( i ).parseAsAnyOf( AFTER_FROM ).accept( this );
-		}
-
-		private void to( )
-		{
-			int start = i;
-			moveTo( whitespace );
-			if( i == start )
-			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.TO_STATION );
-			}
-			visitor.to( line.substring( start , i ) );
-			moveTo( nonWhitespace );
-
-			afterTo( );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		private static final Function<Segment, Consumer<VectorLineParser>>[ ] REQUIRED_MEASUREMENT = new Function[ ] {
-			MEASUREMENT_START
-		};
-
-		@SuppressWarnings( "unchecked" )
-		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_REQUIRED_MEASUREMENTS = new Function[ ] {
-			VARIANCE_START ,
-			LRUD_START ,
-			DIRECTIVE_START ,
-			MEASUREMENT_START ,
-			END_OF_LINE_OR_COMMENT_START
-		};
-
-		@SuppressWarnings( "unchecked" )
-		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_MEASUREMENTS = new Function[ ] {
-			VARIANCE_START ,
-			LRUD_START ,
-			DIRECTIVE_START ,
-			END_OF_LINE_OR_COMMENT_START
-		};
-
-		private void afterTo( )
-		{
-			if( measurementCount < numVectorComponents )
-			{
-				line.charAtAsSegment( i ).parseAsAnyOf( REQUIRED_MEASUREMENT ).accept( this );
-			}
-			else if( measurementCount < numVectorComponents + 2 )
-			{
-				line.charAtAsSegment( i ).parseAsAnyOf( AFTER_REQUIRED_MEASUREMENTS ).accept( this );
-			}
-			else
-			{
-				line.charAtAsSegment( i ).parseAsAnyOf( AFTER_MEASUREMENTS ).accept( this );
-			}
-		}
-
-		private void measurement( )
-		{
-			int start = i;
-			moveTo( whitespace );
-			if( i == start )
-			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.MEASUREMENT );
-			}
-			visitor.measurement( measurementCount++ , line.substring( start , i ) );
-			moveTo( nonWhitespace );
-
-			afterTo( );
-		}
-
-		private void variance( )
-		{
-			int start = ++i;
-			moveToExpected( ')' );
-			Segment[ ] parts = line.substring( start , i ).split( "\\s*,\\s*" );
-			if( parts.length == 0 )
-			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.VARIANCE );
-			}
-			if( parts.length > 2 )
-			{
-				throw new SegmentParseExpectedException( parts[ 2 ] , ")" );
-			}
-			for( int k = 0 ; k < parts.length ; k++ )
-			{
-				visitor.variance( k , parts[ k ] );
-			}
-			i++;
-			moveTo( nonWhitespace );
-			afterVariance( );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_VARIANCE = new Function[ ] {
-			LRUD_START ,
-			DIRECTIVE_START ,
-			END_OF_LINE_OR_COMMENT_START
-		};
-
-		private void afterVariance( )
-		{
-			line.charAtAsSegment( i ).parseAsAnyOf( AFTER_VARIANCE ).accept( this );
-		}
-
-		private void lruds( )
-		{
-			char endChar = line.charAtAsSegment( i ).parseAsAnyOf( LRUD_END_CHARS );
-			int start = ++i;
-			moveToExpected( endChar );
-			Segment[ ] lruds = line.substring( start , i ).split( "\\s*,\\s*|\\s+" );
-			if( lruds.length < 4 )
-			{
-				throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , WallsExpectedTypes.LRUD_MEASUREMENT );
-			}
-			if( lruds.length > 6 )
-			{
-				throw new SegmentParseExpectedException( lruds[ 6 ].charAfter( ) , Character.toString( endChar ) );
-			}
-			for( int k = 0 ; k < lruds.length ; k++ )
-			{
-				visitor.lrud( k , lruds[ k ] );
-			}
-			i++;
-			moveTo( nonWhitespace );
-			afterLruds( );
-		}
-
-		@SuppressWarnings( "unchecked" )
-		private static final Function<Segment, Consumer<VectorLineParser>>[ ] AFTER_LRUDS = new Function[ ] {
-			DIRECTIVE_START ,
-			END_OF_LINE_OR_COMMENT_START
-		};
-
-		private void afterLruds( )
-		{
-			line.charAtAsSegment( i ).parseAsAnyOf( AFTER_LRUDS ).accept( this );
-		}
-
-		private void directive( )
-		{
-			Segment[ ] parts = line.substring( i + 1 ).split( "\\s+" , 2 );
-			visitor.directive( parts[ 0 ] , parts.length > 1 ? parts[ 1 ] : null );
-			i = line.length( );
-		}
-
-		private void end( )
-		{
-		}
-	}
-
-	public static void parseVectorLine( Segment line , int numVectorComponents , VectorLineVisitor visitor )
-	{
-		new VectorLineParser( line , numVectorComponents , visitor );
-	}
-
-	public static void parseVectorLine2( Segment line , VectorLineVisitor2 visitor )
-	{
-		new VectorLineParser2( line , visitor ).parse( );
+		new VectorLineParser( line , visitor ).parse( );
 	}
 
 	private static void temp( String s )
@@ -1656,64 +1344,7 @@ public class WallsParser
 		Segment segment = new Segment( s , null , 0 , 0 );
 		try
 		{
-			parseVectorLine( segment , 3 , new VectorLineVisitor( ) {
-				@Override
-				public void variance( int index , Segment item )
-				{
-					System.out.println( "  variance[" + index + "]: " + item );
-				}
-
-				@Override
-				public void to( Segment to )
-				{
-					System.out.println( "  to:           " + to );
-				}
-
-				@Override
-				public void measurement( int index , Segment measurement )
-				{
-					System.out.println( "  measurement[" + index + "]: " + measurement );
-				}
-
-				@Override
-				public void lrud( int index , Segment item )
-				{
-					System.out.println( "  lrud[" + index + "]:      " + item );
-				}
-
-				@Override
-				public void from( Segment from )
-				{
-					System.out.println( "  from:         " + from );
-				}
-
-				@Override
-				public void directive( Segment directive , Segment argument )
-				{
-					System.out.println( "  directive:    " + directive );
-					System.out.println( "  directiveArg: " + argument );
-				}
-
-				@Override
-				public void comment( Segment comment )
-				{
-					System.out.println( "  comment:      " + comment );
-				}
-			} );
-		}
-		catch( Exception ex )
-		{
-			ex.printStackTrace( );
-		}
-	}
-
-	private static void temp2( String s )
-	{
-		System.out.println( s );
-		Segment segment = new Segment( s , null , 0 , 0 );
-		try
-		{
-			parseVectorLine2( segment , new VectorLineVisitor2( ) {
+			parseVectorLine( segment , new VectorLineVisitor( ) {
 				WallsUnits units = new WallsUnits( );
 
 				@Override
@@ -1863,21 +1494,21 @@ public class WallsParser
 
 	public static void main( String[ ] args )
 	{
-		temp2( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*;4, 5>" );
-		temp2( "*A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
-		temp2( "*A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
-		temp2( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp2( "*A*1 B1 350 41 +25 (3, 5) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp2( "*A*1 *2,3,4,5*" );
-		temp2( "*A*1 *2,3,4,*" );
-		temp2( "<A1, <bash <2,3,4,5>" );
-		temp2( "A1 B1 350 41 25 (3, 5) <2, 3, 4,5> okay>< weird #Seg blah;4, 5>" );
-		temp2( "A1 B1 350 41 25 <2, 3, 4,5>#Seg blah;4, 5>" );
-		temp2( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp2( "A1 B1 350 41 25 (3;, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp2( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 *#Seg blah;4, 5>" );
-		temp2( "A1 B1 350 41 25 (3, 5) hello <2, 3,4,5 *#Seg blah;4, 5>" );
-		temp2( "A1 B1 350 41 25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp2( "A1 B1 350 41 25 15 16 17 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*;4, 5>" );
+		temp( "*A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
+		temp( "*A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
+		temp( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( "*A*1 B1 350 41 +25 (3, 5) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( "*A*1 *2,3,4,5*" );
+		temp( "*A*1 *2,3,4,*" );
+		temp( "<A1, <bash <2,3,4,5>" );
+		temp( "A1 B1 350 41 25 (3, 5) <2, 3, 4,5> okay>< weird #Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 <2, 3, 4,5>#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3;, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) <2, 3,4,5 *#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 (3, 5) hello <2, 3,4,5 *#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( "A1 B1 350 41 25 15 16 17 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
 	}
 }
