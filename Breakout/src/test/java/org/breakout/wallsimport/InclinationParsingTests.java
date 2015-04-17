@@ -3,6 +3,7 @@ package org.breakout.wallsimport;
 import org.andork.parse.Segment;
 import org.andork.unit.Angle;
 import org.andork.unit.UnitizedDouble;
+import org.breakout.wallsimport.WallsParser.WallsLineParser;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,7 +15,7 @@ public class InclinationParsingTests
 
 		Assert.assertEquals(
 			expected.doubleValue( Angle.degrees ) ,
-			WallsParser.parseInclination( segment , Angle.degrees ).doubleValue( Angle.degrees ) ,
+			new WallsLineParser(segment).inclination( Angle.degrees ).doubleValue( Angle.degrees ) ,
 			1e-6 );
 	}
 

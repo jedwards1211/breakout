@@ -1,6 +1,7 @@
 package org.andork.parse;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -41,6 +42,10 @@ public class LineParser
 		return value == null ? 0 : value;
 	}
 
+	public static final Pattern UNSIGNED_DOUBLE_LITERAL = Pattern.compile( "\\d+(\\.\\d*)?|\\.\\d+" );
+	public static final Map<Character, Double> SIGN_SIGNUMS = new MapLiteral<Character, Double>( )
+		.map( '-' , -1.0 ).map( '+' , 1.0 );
+
 	public void addExpected( SegmentParseExpectedException expected )
 	{
 		int index = nullZero( expected.segment.sourceIndex ) - nullZero( line.sourceIndex );
@@ -75,7 +80,11 @@ public class LineParser
 
 	public void throwAllExpected( SegmentParseExpectedException finalEx )
 	{
-		if( !expectedItems.isEmpty( ) || finalEx != null )
+		if( finalEx != null )
+		{
+			addExpected( finalEx );
+		}
+		if( !expectedItems.isEmpty( ) )
 		{
 			throw new SegmentParseExpectedException(
 				line.charAtAsSegment( expectedIndex ) , expectedItems.toArray( ) );
@@ -92,6 +101,18 @@ public class LineParser
 	{
 		line.charAtAsSegment( i ).parseAsIgnoreCase( Character.toString( c ) );
 		i++;
+	}
+
+	public void expect( String s )
+	{
+		line.substring( i , Math.min( i + s.length( ) , line.length( ) ) ).parseAs( s );
+		i += s.length( );
+	}
+
+	public void expectIgnoreCase( String s )
+	{
+		line.substring( i , Math.min( i + s.length( ) , line.length( ) ) ).parseAsIgnoreCase( s );
+		i += s.length( );
 	}
 
 	public Segment expect( Pattern p , Object ... expectedItems )
@@ -131,12 +152,65 @@ public class LineParser
 		expect( ':' );
 	}
 
+	public Segment whitespace( )
+	{
+		return charPlus( Character::isWhitespace , ExpectedTypes.WHITESPACE );
+	}
+
+	public Segment charPlus( CharPredicate c , Object ... expectedItems )
+	{
+		int start = i;
+
+		while( i < line.length( ) && c.test( line.charAt( i ) ) )
+		{
+			i++;
+		}
+
+		if( i == start )
+		{
+			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , expectedItems );
+		}
+
+		return line.substring( start , i );
+	}
+
+	public double unsignedDoubleLiteral( )
+	{
+		return Double.parseDouble( expect( UNSIGNED_DOUBLE_LITERAL , ExpectedTypes.DOUBLE ).toString( ) );
+	}
+
+	public double doubleLiteral( )
+	{
+		Double signum = maybeR( ( ) -> oneOf( SIGN_SIGNUMS ) );
+		if( signum == null )
+		{
+			signum = 0.0;
+		}
+		return signum * unsignedDoubleLiteral( );
+	}
+
+	public Segment remaining( )
+	{
+		Segment result = line.substring( i );
+		i = line.length( );
+		return result;
+	}
+
+	public Void endOfLine( )
+	{
+		if( i != line.length( ) )
+		{
+			throw new SegmentParseExpectedException( line.substring( i ) , ExpectedTypes.END_OF_LINE );
+		}
+		return null;
+	}
+
 	public <V> V oneOf( Map<Character, V> map )
 	{
 		char c;
 		if( i == line.length( ) || !map.containsKey( c = line.charAt( i ) ) )
 		{
-			throw new SegmentParseExpectedException( line.substring( i , i + 1 ) , map.keySet( ) );
+			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , map.keySet( ).toArray( ) );
 		}
 		i++;
 		return map.get( c );
@@ -147,30 +221,35 @@ public class LineParser
 		char c;
 		if( i == line.length( ) || !map.containsKey( c = Character.toLowerCase( line.charAt( i ) ) ) )
 		{
-			throw new SegmentParseExpectedException( line.substring( i , i + 1 ) , map.keySet( ) );
+			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , map.keySet( ).toArray( ) );
 		}
 		i++;
 		return map.get( c );
 	}
 
+	public <V> V oneOfIgnoreCase( Collection<? extends Map.Entry<String, V>> map )
+	{
+		for( Map.Entry<String, V> entry : map )
+		{
+			if( maybe( ( ) -> expectIgnoreCase( entry.getKey( ) ) ) )
+			{
+				return entry.getValue( );
+			}
+		}
+		throwAllExpected( );
+		return null;
+	}
+
 	public <V> V oneOf( Map<Character, V> map , V elseValue )
 	{
-		if( i == line.length( ) )
-		{
-			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , map.keySet( ) );
-		}
-		V value = map.get( line.charAt( i ) );
+		V value = i == line.length( ) ? null : map.get( line.charAt( i ) );
 		i++;
 		return value != null ? value : elseValue;
 	}
 
 	public <V> V oneOfLowercase( Map<Character, V> map , V elseValue )
 	{
-		if( i == line.length( ) )
-		{
-			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , map.keySet( ) );
-		}
-		V value = map.get( Character.toLowerCase( line.charAt( i ) ) );
+		V value = i == line.length( ) ? null : map.get( Character.toLowerCase( line.charAt( i ) ) );
 		if( value != null )
 		{
 			i++;
@@ -314,63 +393,5 @@ public class LineParser
 			}
 		}
 		throwAllExpected( );
-	}
-
-	public Segment whitespace( )
-	{
-		return charPlus( Character::isWhitespace , ExpectedTypes.WHITESPACE );
-	}
-
-	public Segment charPlus( CharPredicate c , Object ... expectedItems )
-	{
-		int start = i;
-
-		while( i < line.length( ) && c.test( line.charAt( i ) ) )
-		{
-			i++;
-		}
-
-		if( i == start )
-		{
-			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , expectedItems );
-		}
-
-		return line.substring( start , i );
-	}
-
-	public Segment remaining( )
-	{
-		Segment result = line.substring( i );
-		i = line.length( );
-		return result;
-	}
-
-	public Void endOfLine( )
-	{
-		if( i != line.length( ) )
-		{
-			throw new SegmentParseExpectedException( line.substring( i ) , ExpectedTypes.END_OF_LINE );
-		}
-		return null;
-	}
-
-	public static final Pattern UNSIGNED_DOUBLE_LITERAL = Pattern.compile( "\\d+(\\.\\d*)?|\\.\\d+" );
-
-	public static final Map<Character, Double> SIGN_SIGNUMS = new MapLiteral<Character, Double>( )
-		.map( '-' , -1.0 ).map( '+' , 1.0 );
-
-	public double unsignedDoubleLiteral( )
-	{
-		return Double.parseDouble( expect( UNSIGNED_DOUBLE_LITERAL , ExpectedTypes.DOUBLE ).toString( ) );
-	}
-
-	public double doubleLiteral( )
-	{
-		Double signum = maybeR( ( ) -> oneOf( SIGN_SIGNUMS ) );
-		if( signum == null )
-		{
-			signum = 0.0;
-		}
-		return signum * unsignedDoubleLiteral( );
 	}
 }

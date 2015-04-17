@@ -8,7 +8,7 @@ public abstract class VarianceOverride
 	public static final VarianceOverride FLOATED = new VarianceOverride( ) {};
 	public static final VarianceOverride FLOATED_TRAVERSE = new VarianceOverride( ) {};
 
-	public static final class LengthOverride
+	public static final class LengthOverride extends VarianceOverride
 	{
 		public final UnitizedDouble<Length> lengthOverride;
 
@@ -18,7 +18,7 @@ public abstract class VarianceOverride
 		}
 	}
 
-	public static final class RMSError
+	public static final class RMSError extends VarianceOverride
 	{
 		public final UnitizedDouble<Length> error;
 

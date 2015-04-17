@@ -35,7 +35,7 @@ public enum CardinalDirection
 	},
 	;
 
-	public final UnitizedDouble<Angle>	angle;
+	public final UnitizedDouble<Angle> angle;
 
 	private CardinalDirection( UnitizedDouble<Angle> angle )
 	{
@@ -78,12 +78,12 @@ public enum CardinalDirection
 	{
 		if( endDirection.angle.doubleValue( Angle.degrees ) == ( this.angle.doubleValue( Angle.degrees ) + 90.0 ) % 360.0 )
 		{
-			return this.angle.add( angle );
+			return angle.add( this.angle );
 		}
 		else if( endDirection.angle.doubleValue( Angle.degrees ) == ( this.angle.doubleValue( Angle.degrees ) + 270.0 ) % 360.0 )
 		{
 			double result = ( this.angle.doubleValue( Angle.degrees ) + 360.0 - angle.doubleValue( Angle.degrees ) ) % 360.0;
-			return new UnitizedDouble<>( result , Angle.degrees );
+			return new UnitizedDouble<>( result , Angle.degrees ).in( angle.unit );
 		}
 		throw new IllegalArgumentException( "invalid endDirection" );
 	}
