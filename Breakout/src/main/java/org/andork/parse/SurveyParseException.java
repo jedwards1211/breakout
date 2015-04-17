@@ -24,9 +24,9 @@ public class SurveyParseException extends RuntimeException
 		this( null , null , messageKey , messageArgs );
 	}
 
-	public String getLocalizedMessage( I18n i18n )
+	public String getLocalizedMessage( )
 	{
-		return i18n.forClass( SurveyParseException.class ).getFormattedString( messageKey , messageArgs );
+		return I18n.forClass( SurveyParseException.class ).getFormattedString( messageKey , messageArgs );
 	}
 
 	public String getMessage( )

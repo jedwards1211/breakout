@@ -114,6 +114,7 @@ public class Segment implements CharSequence
 		value.getChars( srcBegin , srcEnd , dst , dstBegin );
 	}
 
+	@SuppressWarnings( "deprecation" )
 	public void getBytes( int srcBegin , int srcEnd , byte[ ] dst , int dstBegin )
 	{
 		value.getBytes( srcBegin , srcEnd , dst , dstBegin );
@@ -579,7 +580,8 @@ public class Segment implements CharSequence
 		return result;
 	}
 
-	public <T> T parseAsAnyOf( Function<Segment, ? extends T> ... parsers )
+	@SafeVarargs
+	public final <T> T parseAsAnyOf( Function<Segment, ? extends T> ... parsers )
 	{
 		for( Function<Segment, ? extends T> parser : parsers )
 		{
