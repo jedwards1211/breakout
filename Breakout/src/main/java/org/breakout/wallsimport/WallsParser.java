@@ -201,7 +201,7 @@ public class WallsParser
 		.map( "prefix" , UnitsLineParser::prefix1 )
 		.map( "prefix1" , UnitsLineParser::prefix1 )
 		.map( "prefix2" , UnitsLineParser::prefix2 )
-		.map( "prefix3" , UnitsLineParser::prefix2 )
+		.map( "prefix3" , UnitsLineParser::prefix3 )
 		.map( "uvh" , UnitsLineParser::uvh )
 		.map( "uvv" , UnitsLineParser::uvv )
 		.map( "uv" , UnitsLineParser::uv )
@@ -914,7 +914,7 @@ public class WallsParser
 		public void fromStation( )
 		{
 			Segment from = expect( fromStationPattern , WallsExpectedTypes.FROM_STATION );
-			visitor.visitFrom( units.processStationName( from.toString( ) ) );
+			visitor.visitFrom( from.toString( ) );
 		}
 
 		public void afterFromStation( )
@@ -936,7 +936,7 @@ public class WallsParser
 		public void toStation( )
 		{
 			Segment to = expect( toStationPattern , WallsExpectedTypes.TO_STATION );
-			visitor.visitTo( units.processStationName( to.toString( ) ) );
+			visitor.visitTo( to.toString( ) );
 		}
 
 		public void afterToStation( )
@@ -1228,6 +1228,11 @@ public class WallsParser
 	public void parseVectorLine( Segment line , VectorLineVisitor visitor )
 	{
 		new VectorLineParser( line , visitor ).parse( );
+	}
+
+	public String processStationName( String name )
+	{
+		return units.processStationName( name );
 	}
 
 	private static void temp( WallsParser parser , String s )
