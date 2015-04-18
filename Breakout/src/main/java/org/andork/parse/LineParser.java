@@ -97,6 +97,15 @@ public class LineParser
 		i++;
 	}
 
+	public char expectChar( )
+	{
+		if( i == line.length( ) )
+		{
+			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , ExpectedTypes.CHARACTER );
+		}
+		return line.charAt( i++ );
+	}
+
 	public void expectIgnoreCase( char c )
 	{
 		line.charAtAsSegment( i ).parseAsIgnoreCase( Character.toString( c ) );
@@ -127,6 +136,17 @@ public class LineParser
 		return m.group( );
 	}
 
+	public char expect( CharPredicate p , Object ... expectedItems )
+	{
+		char c;
+		if( i == line.length( ) || !p.test( c = line.charAt( i ) ) )
+		{
+			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , expectedItems );
+		}
+		i++;
+		return c;
+	}
+
 	public void comma( )
 	{
 		expect( ',' );
@@ -154,10 +174,15 @@ public class LineParser
 
 	public Segment whitespace( )
 	{
-		return charPlus( Character::isWhitespace , ExpectedTypes.WHITESPACE );
+		return oneOrMore( Character::isWhitespace , ExpectedTypes.WHITESPACE );
 	}
 
-	public Segment charPlus( CharPredicate c , Object ... expectedItems )
+	public Segment nonwhitespace( )
+	{
+		return oneOrMore( c -> !Character.isWhitespace( c ) , ExpectedTypes.NON_WHITESPACE );
+	}
+
+	public Segment oneOrMore( CharPredicate c , Object ... expectedItems )
 	{
 		int start = i;
 
@@ -184,7 +209,7 @@ public class LineParser
 		Double signum = maybeR( ( ) -> oneOf( SIGN_SIGNUMS ) );
 		if( signum == null )
 		{
-			signum = 0.0;
+			signum = 1.0;
 		}
 		return signum * unsignedDoubleLiteral( );
 	}

@@ -251,4 +251,25 @@ public class UnitsOptionsParsingTests
 		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud=from:lr" , null , 0 , 0 ) ) );
 		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud=from:lrru" , null , 0 , 0 ) ) );
 	}
+
+	@Test
+	public void testMacroDefinition( )
+	{
+		WallsParser parser = new WallsParser( );
+
+		parser.parseUnitsLine( new Segment( "#u $hello=world" , null , 0 , 0 ) );
+		Assert.assertEquals( "world" , parser.macros.get( "hello" ) );
+
+		parser.parseUnitsLine( new Segment( "#u $hello=\"beautiful world\"" , null , 0 , 0 ) );
+		Assert.assertEquals( "beautiful world" , parser.macros.get( "hello" ) );
+
+		parser.parseUnitsLine( new Segment( "#u $hello=\"\\\"beautiful \\\" \\nworld\"" , null , 0 , 0 ) );
+		Assert.assertEquals( "\"beautiful \" \nworld" , parser.macros.get( "hello" ) );
+
+		parser.parseUnitsLine( new Segment( "#u $hello  " , null , 0 , 0 ) );
+		Assert.assertEquals( null , parser.macros.get( "hello" ) );
+
+		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u $hello= " , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u $hello=\"world " , null , 0 , 0 ) ) );
+	}
 }

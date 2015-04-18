@@ -156,6 +156,36 @@ public class WallsUnits
 	 * Survey segment (absolute or relative path separated by /)
 	 */
 	public String segment = null;
+	/**
+	 * Horizontal variance scale factor
+	 */
+	public double uvh = 1.0;
+	/**
+	 * Vertical variance scale factor
+	 */
+	public double uvv = 1.0;
+	/**
+	 * Variance scale factor
+	 */
+	public double uv = 1.0;
+
+	public void setPrefix( int index , String prefix )
+	{
+		if( index < 0 || index > 2 )
+		{
+			throw new IllegalArgumentException( "prefix index out of range" );
+		}
+		while( this.prefix.size( ) <= index )
+		{
+			this.prefix.add( null );
+		}
+		this.prefix.set( index , prefix );
+
+		while( this.prefix.get( this.prefix.size( ) - 1 ) == null )
+		{
+			this.prefix.remove( this.prefix.size( ) - 1 );
+		}
+	}
 
 	public WallsUnits clone( )
 	{
@@ -192,6 +222,9 @@ public class WallsUnits
 		result.prefix = Collections.unmodifiableList( new ArrayList<>( prefix ) );
 		result.date = date;
 		result.segment = segment;
+		result.uvh = uvh;
+		result.uvv = uvv;
+		result.uv = uv;
 
 		return result;
 	}

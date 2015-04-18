@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import org.andork.collect.MapLiteral;
+import org.andork.parse.ExpectedTypes;
 import org.andork.parse.LineParser;
 import org.andork.parse.Segment;
 import org.andork.parse.SegmentParseException;
@@ -30,9 +31,13 @@ public class WallsParser
 {
 	private static final Pattern unitsOptionPattern = Pattern.compile( "[a-zA-Z_/]*" );
 
-	private static final Pattern fromStationPattern = Pattern.compile( "[^:;,# \t]{1,8}" );
+	private static final Pattern macroNamePattern = Pattern.compile( "[^()=;,# \t]*" );
 
-	private static final Pattern toStationPattern = Pattern.compile( "[^<*:;,# \t][^:;,# \t]{0,7}" );
+	private static final Pattern fromStationPattern = Pattern.compile( "[^;,# \t]{1,8}" );
+
+	private static final Pattern toStationPattern = Pattern.compile( "[^<*;,# \t][^;,# \t]{0,7}" );
+
+	private static final Pattern prefixPattern = Pattern.compile( "[^:;,# \t]+" );
 
 	private static final Pattern optionalPattern = Pattern.compile( "--+" );
 
@@ -146,6 +151,20 @@ public class WallsParser
 		.map( 'u' , LrudElement.U )
 		.map( 'd' , LrudElement.D );
 
+	private static final Map<String, List<TapingMethodElement>> tapingMethods = new MapLiteral<String, List<TapingMethodElement>>( )
+		.map( "IT" , Collections.unmodifiableList( Arrays.asList( TapingMethodElement.INSTRUMENT_HEIGHT , TapingMethodElement.TARGET_HEIGHT ) ) )
+		.map( "IS" , Collections.unmodifiableList( Arrays.asList( TapingMethodElement.INSTRUMENT_HEIGHT ) ) )
+		.map( "ST" , Collections.unmodifiableList( Arrays.asList( TapingMethodElement.TARGET_HEIGHT ) ) )
+		.map( "SS" , Collections.emptyList( ) );
+
+	private static final Map<Character, Character> quotedChars = new MapLiteral<Character, Character>( )
+		.map( 'r' , '\r' )
+		.map( 'n' , '\n' )
+		.map( 'f' , '\f' )
+		.map( 't' , '\t' )
+		.map( '"' , '"' )
+		.map( '\\' , '\\' );
+
 	private static final Map<String, UnitsOption> unitsOptions = new MapLiteral<String, UnitsOption>( )
 		.map( "save" , UnitsLineParser::save )
 		.map( "reset" , UnitsLineParser::reset )
@@ -177,7 +196,16 @@ public class WallsParser
 		.map( "typeab" , UnitsLineParser::typeab )
 		.map( "typevb" , UnitsLineParser::typevb )
 		.map( "case" , UnitsLineParser::case_ )
-		.map( "lrud" , UnitsLineParser::lrud );
+		.map( "lrud" , UnitsLineParser::lrud )
+		.map( "tape" , UnitsLineParser::tape )
+		.map( "prefix" , UnitsLineParser::prefix1 )
+		.map( "prefix1" , UnitsLineParser::prefix1 )
+		.map( "prefix2" , UnitsLineParser::prefix2 )
+		.map( "prefix3" , UnitsLineParser::prefix2 )
+		.map( "uvh" , UnitsLineParser::uvh )
+		.map( "uvv" , UnitsLineParser::uvv )
+		.map( "uv" , UnitsLineParser::uv )
+		.map( "flag" , UnitsLineParser::flag );
 
 	Stack<WallsUnits> stack = new Stack<>( );
 
@@ -373,6 +401,22 @@ public class WallsParser
 			return new VarianceOverride.RMSError( unsignedLength( defaultUnit ) );
 		}
 
+		public String quotedText( )
+		{
+			expect( '"' );
+			StringBuilder sb = new StringBuilder( );
+			while( maybe( ( ) -> sb.append( quotedChar( ) ) ) )
+				;
+			expect( '"' );
+			return sb.toString( );
+		}
+
+		public char quotedChar( )
+		{
+			char c = expect( ch -> ch != '"' , ExpectedTypes.NOT_QUOTE );
+			return c == '\\' ? oneOf( quotedChars ) : c;
+		}
+
 		public <R> R optional( Supplier<R> production )
 		{
 			return oneOfR(
@@ -417,14 +461,26 @@ public class WallsParser
 			while( !maybe( ( ) -> oneOf( this::endOfLine , this::comment ) ) )
 			{
 				whitespace( );
-				maybe( this::unitsOption );
+				maybe( ( ) -> oneOf( this::unitsOption , this::macroOption ) );
 			}
 		}
 
 		public void unitsOption( )
 		{
-			Segment optionName = maybeR( ( ) -> expect( unitsOptionPattern ) );
+			Segment optionName = expect( unitsOptionPattern , WallsExpectedTypes.UNITS_OPTION );
 			optionName.parseToLowerCaseAsAnyOf( unitsOptions ).process( this , optionName );
+		}
+
+		public void macroOption( )
+		{
+			expect( '$' );
+			String macroName = expect( macroNamePattern , WallsExpectedTypes.MACRO_NAME ).toString( );
+			String macroValue = null;
+			if( maybe( ( ) -> expect( '=' ) ) )
+			{
+				macroValue = oneOfR( this::quotedText , this::nonwhitespace ).toString( );
+			}
+			macros.put( macroName , macroValue );
 		}
 
 		public void save( Segment optionName )
@@ -706,6 +762,66 @@ public class WallsParser
 			return result.toArray( );
 		}
 
+		public void prefix1( Segment optionName )
+		{
+			prefix( 0 );
+		}
+
+		public void prefix2( Segment optionName )
+		{
+			prefix( 1 );
+		}
+
+		public void prefix3( Segment optionName )
+		{
+			prefix( 2 );
+		}
+
+		public void prefix( int index )
+		{
+			String prefix = null;
+
+			if( maybe( ( ) -> expect( '=' ) ) )
+			{
+				prefix = expect( prefixPattern , WallsExpectedTypes.PREFIX ).toString( );
+			}
+			units.setPrefix( index , prefix );
+		}
+
+		public void tape( Segment optionName )
+		{
+			expect( '=' );
+			units.tape = oneOfIgnoreCase( tapingMethods.entrySet( ) );
+		}
+
+		public void uvh( Segment optionName )
+		{
+			expect( '=' );
+			units.uvh = unsignedDoubleLiteral( );
+		}
+
+		public void uvv( Segment optionName )
+		{
+			expect( '=' );
+			units.uvv = unsignedDoubleLiteral( );
+		}
+
+		public void uv( Segment optionName )
+		{
+			expect( '=' );
+			units.uv = unsignedDoubleLiteral( );
+		}
+
+		public void flag( Segment optionName )
+		{
+			String flag = null;
+			if( maybe( ( ) -> expect( '=' ) ) )
+			{
+				flag = oneOfR( this::quotedText , this::nonwhitespace ).toString( );
+			}
+			units.flag = flag;
+		}
+
 		public void comment( )
 		{
 			semicolon( );
@@ -715,11 +831,9 @@ public class WallsParser
 
 	public static interface VectorLineVisitor
 	{
-		public WallsUnits units( );
+		public void visitFrom( String from );
 
-		public void visitFrom( Segment from );
-
-		public void visitTo( Segment to );
+		public void visitTo( String to );
 
 		public void visitDistance( UnitizedDouble<Length> distance );
 
@@ -769,7 +883,7 @@ public class WallsParser
 		public void visitComment( Segment comment );
 	}
 
-	private static class VectorLineParser extends WallsLineParser implements VectorElementVisitor , TapingMethodElementVisitor , LrudElementVisitor
+	private class VectorLineParser extends WallsLineParser implements VectorElementVisitor , TapingMethodElementVisitor , LrudElementVisitor
 	{
 		private VectorLineVisitor visitor;
 
@@ -799,7 +913,8 @@ public class WallsParser
 
 		public void fromStation( )
 		{
-			visitor.visitFrom( expect( fromStationPattern , WallsExpectedTypes.FROM_STATION ) );
+			Segment from = expect( fromStationPattern , WallsExpectedTypes.FROM_STATION );
+			visitor.visitFrom( units.processStationName( from.toString( ) ) );
 		}
 
 		public void afterFromStation( )
@@ -820,13 +935,14 @@ public class WallsParser
 
 		public void toStation( )
 		{
-			visitor.visitTo( expect( toStationPattern , WallsExpectedTypes.TO_STATION ) );
+			Segment to = expect( toStationPattern , WallsExpectedTypes.TO_STATION );
+			visitor.visitTo( units.processStationName( to.toString( ) ) );
 		}
 
 		public void afterToStation( )
 		{
 			int k = 0;
-			for( VectorElement elem : visitor.units( ).order )
+			for( VectorElement elem : units.order )
 			{
 				if( k++ > 0 )
 				{
@@ -834,7 +950,7 @@ public class WallsParser
 				}
 				elem.visit( this );
 			}
-			for( TapingMethodElement elem : visitor.units( ).tape )
+			for( TapingMethodElement elem : units.tape )
 			{
 				whitespace( );
 				elem.visit( this );
@@ -848,57 +964,57 @@ public class WallsParser
 		@Override
 		public void visitDistance( )
 		{
-			visitor.visitDistance( unsignedLength( visitor.units( ).d_unit ) );
+			visitor.visitDistance( unsignedLength( units.d_unit ) );
 		}
 
 		@Override
 		public void visitAzimuth( )
 		{
-			visitor.visitFrontsightAzimuth( optional( ( ) -> azimuth( visitor.units( ).a_unit ) ) );
+			visitor.visitFrontsightAzimuth( optional( ( ) -> azimuth( units.a_unit ) ) );
 			if( maybe( this::forwardSlash ) )
 			{
-				visitor.visitBacksightAzimuth( optional( ( ) -> azimuth( visitor.units( ).ab_unit ) ) );
+				visitor.visitBacksightAzimuth( optional( ( ) -> azimuth( units.ab_unit ) ) );
 			}
 		}
 
 		@Override
 		public void visitInclination( )
 		{
-			visitor.visitFrontsightInclination( optional( ( ) -> inclination( visitor.units( ).v_unit ) ) );
+			visitor.visitFrontsightInclination( optional( ( ) -> inclination( units.v_unit ) ) );
 			if( maybe( this::forwardSlash ) )
 			{
-				visitor.visitBacksightInclination( optional( ( ) -> inclination( visitor.units( ).vb_unit ) ) );
+				visitor.visitBacksightInclination( optional( ( ) -> inclination( units.vb_unit ) ) );
 			}
 		}
 
 		@Override
 		public void visitEast( )
 		{
-			visitor.visitEast( length( visitor.units( ).d_unit ) );
+			visitor.visitEast( length( units.d_unit ) );
 		}
 
 		@Override
 		public void visitNorth( )
 		{
-			visitor.visitNorth( length( visitor.units( ).d_unit ) );
+			visitor.visitNorth( length( units.d_unit ) );
 		}
 
 		@Override
 		public void visitRectUp( )
 		{
-			visitor.visitVectorUp( length( visitor.units( ).d_unit ) );
+			visitor.visitVectorUp( length( units.d_unit ) );
 		}
 
 		@Override
 		public void visitInstrumentHeight( )
 		{
-			visitor.visitInstrumentHeight( optional( ( ) -> length( visitor.units( ).s_unit ) ) );
+			visitor.visitInstrumentHeight( optional( ( ) -> length( units.s_unit ) ) );
 		}
 
 		@Override
 		public void visitTargetHeight( )
 		{
-			visitor.visitTargetHeight( optional( ( ) -> length( visitor.units( ).s_unit ) ) );
+			visitor.visitTargetHeight( optional( ( ) -> length( units.s_unit ) ) );
 		}
 
 		public void afterMeasurements( )
@@ -914,13 +1030,13 @@ public class WallsParser
 		{
 			expect( '(' );
 			maybe( this::whitespace );
-			VarianceOverride horizontal = varianceOverride( visitor.units( ).d_unit );
+			VarianceOverride horizontal = varianceOverride( units.d_unit );
 			visitor.visitHorizontalVarianceOverride( horizontal );
 			maybe( this::whitespace );
 			if( maybe( this::comma ) )
 			{
 				maybe( this::whitespace );
-				VarianceOverride vertical = varianceOverride( visitor.units( ).d_unit );
+				VarianceOverride vertical = varianceOverride( units.d_unit );
 				if( horizontal == null && vertical == null )
 				{
 					throwAllExpected( );
@@ -968,7 +1084,7 @@ public class WallsParser
 		{
 			maybe( this::whitespace );
 			int m = 0;
-			for( LrudElement elem : visitor.units( ).lrud_order )
+			for( LrudElement elem : units.lrud_order )
 			{
 				if( m++ > 0 )
 				{
@@ -986,7 +1102,7 @@ public class WallsParser
 		{
 			maybe( this::whitespace );
 			int m = 0;
-			for( LrudElement elem : visitor.units( ).lrud_order )
+			for( LrudElement elem : units.lrud_order )
 			{
 				if( m++ > 0 )
 				{
@@ -1001,25 +1117,25 @@ public class WallsParser
 		@Override
 		public void visitLeft( )
 		{
-			visitor.visitLeft( optional( ( ) -> unsignedLength( visitor.units( ).s_unit ) ) );
+			visitor.visitLeft( optional( ( ) -> unsignedLength( units.s_unit ) ) );
 		}
 
 		@Override
 		public void visitRight( )
 		{
-			visitor.visitRight( optional( ( ) -> unsignedLength( visitor.units( ).s_unit ) ) );
+			visitor.visitRight( optional( ( ) -> unsignedLength( units.s_unit ) ) );
 		}
 
 		@Override
 		public void visitUp( )
 		{
-			visitor.visitUp( optional( ( ) -> unsignedLength( visitor.units( ).s_unit ) ) );
+			visitor.visitUp( optional( ( ) -> unsignedLength( units.s_unit ) ) );
 		}
 
 		@Override
 		public void visitDown( )
 		{
-			visitor.visitDown( optional( ( ) -> unsignedLength( visitor.units( ).s_unit ) ) );
+			visitor.visitDown( optional( ( ) -> unsignedLength( units.s_unit ) ) );
 		}
 
 		public void afterRequiredCommaDelimLrudMeasurements( )
@@ -1058,7 +1174,7 @@ public class WallsParser
 
 		public void lrudFacingAngle( )
 		{
-			visitor.visitLrudFacingAngle( azimuth( visitor.units( ).a_unit ) );
+			visitor.visitLrudFacingAngle( azimuth( units.a_unit ) );
 		}
 
 		public void lrudCFlag( )
@@ -1089,7 +1205,7 @@ public class WallsParser
 				( ) -> expectIgnoreCase( "seg" ) ,
 				( ) -> expectIgnoreCase( 's' ) );
 			whitespace( );
-			visitor.visitSegment( charPlus( c -> c != ';' , WallsExpectedTypes.SEGMENT ) );
+			visitor.visitSegment( oneOrMore( c -> c != ';' , WallsExpectedTypes.SEGMENT ) );
 		}
 
 		public void commentOrEndOfLine( )
@@ -1109,36 +1225,28 @@ public class WallsParser
 		new UnitsLineParser( line ).parse( );
 	}
 
-	public static void parseVectorLine( Segment line , VectorLineVisitor visitor )
+	public void parseVectorLine( Segment line , VectorLineVisitor visitor )
 	{
 		new VectorLineParser( line , visitor ).parse( );
 	}
 
-	private static void temp( String s )
+	private static void temp( WallsParser parser , String s )
 	{
 		System.out.println( s );
 		Segment segment = new Segment( s , null , 0 , 0 );
 		try
 		{
-			parseVectorLine( segment , new VectorLineVisitor( ) {
-				WallsUnits units = new WallsUnits( );
-
+			parser.parseVectorLine( segment , new VectorLineVisitor( ) {
 				@Override
-				public void visitTo( Segment to )
+				public void visitTo( String to )
 				{
 					System.out.println( "  to:           " + to );
 				}
 
 				@Override
-				public void visitFrom( Segment from )
+				public void visitFrom( String from )
 				{
 					System.out.println( "  from:         " + from );
-				}
-
-				@Override
-				public WallsUnits units( )
-				{
-					return units;
 				}
 
 				@Override
@@ -1270,32 +1378,42 @@ public class WallsParser
 
 	public static void main( String[ ] args )
 	{
-		temp( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
-		temp( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Q /some/really/cool segment;4, 5>" );
-		temp( "*A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
-		temp( "*A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
-		temp( "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( "*A*1 B1 350 41:20 +25 (?,) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( "*A*1 *2,3,4,5*" );
-		temp( "*A*1 B1 350 N41gW +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( "*A*1 *2,3,4,5*" );
-		temp( "*A*1 B1 350 N41gW +25 (*) *2, 3, 4m,3f,50g,C*#Seg blah;4, 5>" );
-		temp( "*A*1 *2,3,4,5*" );
-		temp( "*A*1 B1 350 N200gW +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( "*A*1 *2,3,4,5*" );
-		temp( "*A*1 B1 350 N200mS +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( "*A*1 *2,3,4,5*" );
-		temp( "*A*1 *2,3,4,*" );
-		temp( "<A1, <bash <2,3,4,5>" );
-		temp( "<A1 <bash <2,3,4,5>" );
-		temp( "<A1 b<ash <2,3,4,5>" );
-		temp( "A1 B1 350 41 +25 (3, 5) <2, 3, 4,5> okay>< weird #Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 +25 <2, 3, 4,5>#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 +25 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 +25 (3;, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 +25 (3, 5) <2, 3,4,5 *#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 +25 (3, 5) hello <2, 3,4,5 *#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp( "A1 B1 350 41 +25 15 16 17 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		WallsParser parser = new WallsParser( );
+
+		temp( parser , "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
+		temp( parser , "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Q /some/really/cool segment;4, 5>" );
+		temp( parser , "*A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
+		temp( parser , "*A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
+		temp( parser , "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "*A*1 B1 350 41:20 +25 (?,) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "*A*1 *2,3,4,5*" );
+		temp( parser , "*A*1 B1 350 N41gW +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "*A*1 *2,3,4,5*" );
+		temp( parser , "*A*1 B1 350 N41gW +25 (*) *2, 3, 4m,3f,50g,C*#Seg blah;4, 5>" );
+		temp( parser , "*A*1 *2,3,4,5*" );
+		temp( parser , "*A*1 B1 350 N200gW +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "*A*1 *2,3,4,5*" );
+		temp( parser , "*A*1 B1 350 N200mS +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "*A*1 *2,3,4,5*" );
+		temp( parser , "*A*1 *2,3,4,*" );
+		temp( parser , "<A1, <bash <2,3,4,5>" );
+		temp( parser , "<A1 <bash <2,3,4,5>" );
+		temp( parser , "<A1 b<ash <2,3,4,5>" );
+		temp( parser , "A1 B1 350 41 +25 (3, 5) <2, 3, 4,5> okay>< weird #Seg blah;4, 5>" );
+		temp( parser , "A1 B1 350 41 +25 <2, 3, 4,5>#Seg blah;4, 5>" );
+		temp( parser , "A1 B1 350 41 +25 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( parser , "A1 B1 350 41 +25 (3;, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( parser , "A1 B1 350 41 +25 (3, 5) <2, 3,4,5 *#Seg blah;4, 5>" );
+		temp( parser , "A1 B1 350 41 +25 (3, 5) hello <2, 3,4,5 *#Seg blah;4, 5>" );
+		parser.units.tape = Arrays.asList( TapingMethodElement.values( ) );
+		temp( parser , "A1 B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( parser , "A1 B1 350 41 +25 15 16 17 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+
+		parser.units.prefix.add( "A" );
+		parser.units.prefix.add( "CR" );
+		parser.units.case_ = CaseType.Lower;
+
+		temp( parser , "A1 B:B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( parser , "FR::A1 B:B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
 	}
 }
