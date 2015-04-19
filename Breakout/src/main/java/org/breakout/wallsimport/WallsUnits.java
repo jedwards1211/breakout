@@ -24,7 +24,7 @@ import org.andork.unit.UnitizedDouble;
  */
 public class WallsUnits
 {
-	public VectorType vectorType = VectorType.RECT;
+	public VectorType vectorType = VectorType.CT;
 
 	/**
 	 * The order of measurements in CT vectors.

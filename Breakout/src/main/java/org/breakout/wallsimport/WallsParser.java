@@ -2060,25 +2060,22 @@ public class WallsParser
 		WallsParser parser = new WallsParser( );
 		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
 
-		temp( parser , "*A*1 B1 350 41 +25/-6 *2, --, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
-		temp( parser , "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Q /some/really/cool segment;4, 5>" );
-		temp( parser , "*A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
-		temp( parser , "*A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
-		temp( parser , "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( parser , "*A*1 B1 350 41:20 +25 (?,) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( parser , "*A*1 *2,3,4,5*" );
-		temp( parser , "*A*1 B1 350 N41gW +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( parser , "*A*1 *2,3,4,5*" );
-		temp( parser , "*A*1 B1 350 N41gW +25 (*) *2, 3, 4m,3f,50g,C*#Seg blah;4, 5>" );
-		temp( parser , "*A*1 *2,3,4,5*" );
-		temp( parser , "*A*1 B1 350 N200gW +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( parser , "*A*1 *2,3,4,5*" );
-		temp( parser , "*A*1 B1 350 N200mS +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
-		temp( parser , "*A*1 *2,3,4,5*" );
-		temp( parser , "*A*1 *2,3,4,*" );
-		temp( parser , "<A1, <bash <2,3,4,5>" );
-		temp( parser , "<A1 <bash <2,3,4,5>" );
-		temp( parser , "<A1 b<ash <2,3,4,5>" );
+		temp( parser , "A*1 B1 350 41 +25/-6 *2, --, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
+		temp( parser , "A*1 B1 350 41 +25 *2, 3, 4,5,C*#Q /some/really/cool segment;4, 5>" );
+		temp( parser , "A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
+		temp( parser , "A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
+		temp( parser , "A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "A*1 B1 350 41:20 +25 (?,) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "A*1 *2,3,4,5*" );
+		temp( parser , "A*1 B1 350 N41gW +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "A*1 B1 350 N41gW +25 ;(*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "A*1 B1 350 N41gW +25 (*) *2, 3, 4m,3f,50g,C*#Seg blah;4, 5>" );
+		temp( parser , "A*1 B1 350 N200gW +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "A*1 B1 350 N200mS +25 (*) *2, 3, 4,5,C*#Seg blah;4, 5>" );
+		temp( parser , "A*1 *2,3,4,*" );
+		temp( parser , "A1, <bash <2,3,4,5>" );
+		temp( parser , "A1 <bash <2,3,4,5>" );
+		temp( parser , "A1 b<ash <2,3,4,5>" );
 		temp( parser , "A1 B1 350 41 +25 (3, 5) <2, 3, 4,5> okay>< weird #Seg blah;4, 5>" );
 		temp( parser , "A1 B1 350 41 +25 <2, 3, 4,5>#Seg blah;4, 5>" );
 		temp( parser , "A1 B1 350 41 +25 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
@@ -2127,7 +2124,7 @@ public class WallsParser
 		temp( parser , " #fix GPS9 620765 3461243 123 (R5,?) /Bat Cave Entrance" );
 		temp( parser , " #FIX A1 W97:43:52.5 N31:16:45 323f /Entrance #s /hello/world;dms with ft elevations" );
 
-		temp( parser , "#u $hello=\"er=vad order=NUE\"" );
+		temp( parser , "#uNits $hello=\"er=vad order=NUE\"" );
 		temp( parser , "#u ord$(hello)" );
 
 		System.out.println( parser.units.ctOrder );
