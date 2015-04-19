@@ -989,7 +989,13 @@ public class WallsParser
 
 		public void unitsOption( )
 		{
-			Segment optionName = expect( unitsOptionPattern , WallsExpectedTypes.UNITS_OPTION );
+			Segment optionName = maybeR( ( ) -> expect( unitsOptionPattern ) );
+			if( optionName == null )
+			{
+				// just do this so that the code below throws an exception
+				// with all possible expected items
+				optionName = line.substring( i , i );
+			}
 			optionName.parseToLowerCaseAsAnyOf( unitsOptions ).process( this );
 		}
 

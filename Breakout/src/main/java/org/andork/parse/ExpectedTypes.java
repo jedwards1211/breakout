@@ -1,5 +1,7 @@
 package org.andork.parse;
 
+import org.andork.i18n.I18n;
+
 public enum ExpectedTypes
 {
 	INTEGER,
@@ -10,5 +12,11 @@ public enum ExpectedTypes
 	UNSIGNED_DOUBLE,
 	WHITESPACE,
 	END_OF_LINE,
-	NON_WHITESPACE
+	NON_WHITESPACE;
+
+	@Override
+	public String toString( )
+	{
+		return I18n.forClass( ExpectedTypes.class ).getString( name( ) );
+	}
 }

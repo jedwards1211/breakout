@@ -1,6 +1,21 @@
 package org.breakout.wallsimport;
 
+import org.andork.i18n.I18n;
+
 public enum WallsExpectedTypes
 {
-	UNITS_OPTION, ESCAPED_CHAR, MEASUREMENT, LRUD_MEASUREMENT, END_OF_LINE, VARIANCE, SEGMENT, PREFIX, MACRO_NAME, STATION_NAME, FLAG, DATE, NOTE, QUOTED_TEXT
+	SEGMENT,
+	PREFIX,
+	MACRO_NAME,
+	STATION_NAME,
+	FLAG,
+	DATE,
+	NOTE,
+	QUOTED_TEXT;
+
+	@Override
+	public String toString( )
+	{
+		return I18n.forClass( WallsExpectedTypes.class ).getString( name( ) );
+	}
 }
