@@ -97,15 +97,6 @@ public class LineParser
 		i++;
 	}
 
-	public char expectChar( )
-	{
-		if( i == line.length( ) )
-		{
-			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , ExpectedTypes.CHARACTER );
-		}
-		return line.charAt( i++ );
-	}
-
 	public void expectIgnoreCase( char c )
 	{
 		line.charAtAsSegment( i ).parseAsIgnoreCase( Character.toString( c ) );
@@ -201,7 +192,7 @@ public class LineParser
 
 	public double unsignedDoubleLiteral( )
 	{
-		return Double.parseDouble( expect( UNSIGNED_DOUBLE_LITERAL , ExpectedTypes.DOUBLE ).toString( ) );
+		return Double.parseDouble( expect( UNSIGNED_DOUBLE_LITERAL , ExpectedTypes.UNSIGNED_DOUBLE ).toString( ) );
 	}
 
 	public double doubleLiteral( )

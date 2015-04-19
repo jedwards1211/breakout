@@ -368,9 +368,6 @@ public class WallsParser
 
 	public class WallsLineParser extends LineParser
 	{
-		// TODO FIX lines
-		// TODO macro replacement
-
 		private final VectorLineElementVisitor vectorLineElementVisitor = new VectorLineElementVisitor( );
 
 		private final FixLineElementVisitor fixLineElementVisitor = new FixLineElementVisitor( );
@@ -438,7 +435,7 @@ public class WallsParser
 		public UnitizedDouble<Angle> latitude( )
 		{
 			int start = i;
-			CardinalDirection side = oneOf( northSouth );
+			CardinalDirection side = oneOfLowercase( northSouth );
 			UnitizedDouble<Angle> latitude = unsignedDmsAngle( );
 
 			if( latitude.doubleValue( Angle.degrees ) > 90.0 )
@@ -456,10 +453,10 @@ public class WallsParser
 		public UnitizedDouble<Angle> longitude( )
 		{
 			int start = i;
-			CardinalDirection side = oneOf( eastWest );
+			CardinalDirection side = oneOfLowercase( eastWest );
 			UnitizedDouble<Angle> longitude = unsignedDmsAngle( );
 
-			if( longitude.doubleValue( Angle.degrees ) > 90.0 )
+			if( longitude.doubleValue( Angle.degrees ) > 180.0 )
 			{
 				throw new SegmentParseException( line.substring( start , i ) , WallsParseError.LONGITUDE_OUT_OF_RANGE );
 			}
@@ -652,26 +649,112 @@ public class WallsParser
 				return;
 			}
 
+			i = 0;
+
 			if( inBlockComment )
 			{
 				throwAllExpected( ( ) -> oneOfWithLookahead(
 					this::endBlockCommentLine ,
 					this::insideBlockCommentLine ) );
 			}
+			else if( seg.startsWith( ";" ) )
+			{
+				comment( );
+			}
 			else
 			{
-				throwAllExpected( ( ) -> oneOfWithLookahead(
-					this::unitsLine ,
-					this::symbolLine ,
-					this::segmentLine ,
-					this::fixLine ,
-					this::flagLine ,
-					this::dateLine ,
-					this::beginBlockCommentLine ,
-					this::prefixLine ,
-					this::noteLine ,
-					this::vectorLine ) );
+				Directive directive = maybeR( ( ) -> seg.parseToLowerCaseAsAnyOf( directives ) );
+
+				if( directive != null )
+				{
+					replaceMacros( );
+					throwAllExpected( ( ) -> directive.process( this ) );
+				}
+				else
+				{
+					throwAllExpected( this::vectorLine );
+				}
 			}
+		}
+
+		public void replaceMacros( )
+		{
+			StringBuilder sb = new StringBuilder( );
+
+			boolean replaced = false;
+
+			while( i < line.length( ) )
+			{
+				char c = line.charAt( i );
+				switch( c )
+				{
+				case '"':
+					sb.append( movePastEndQuote( ) );
+					break;
+				case '$':
+					if( i + 1 < line.length( ) && line.charAt( i + 1 ) == '(' )
+					{
+						replaced = true;
+						sb.append( replaceMacro( ) );
+						break;
+					}
+				default:
+					sb.append( c );
+					i++;
+					break;
+				}
+			}
+
+			i = 0;
+
+			if( replaced )
+			{
+				line = new Segment( sb.toString( ) , line.source , line.startLine , line.startCol );
+			}
+		}
+
+		private String movePastEndQuote( )
+		{
+			int start = i;
+			while( i < line.length( ) )
+			{
+				char c = line.charAt( i++ );
+				if( c == '\\' )
+				{
+					i++;
+				}
+				else if( c == '"' )
+				{
+					break;
+				}
+			}
+
+			return line.substring( start , i ).toString( );
+		}
+
+		private String replaceMacro( )
+		{
+			i += 2;
+			int start = i;
+			while( i < line.length( ) )
+			{
+				char c = line.charAt( i++ );
+				if( c == ')' )
+				{
+					Segment macroName = line.substring( start , i - 1 );
+					if( !macros.containsKey( macroName ) )
+					{
+						throw new SegmentParseException( macroName , WallsParseError.MACRO_NOT_DEFINED );
+					}
+					String macroValue = macros.get( macroName );
+					return macroValue == null ? "" : macroValue;
+				}
+				else if( Character.isWhitespace( c ) )
+				{
+					throw new SegmentParseExpectedException( line.charAtAsSegment( i - 1 ) , ExpectedTypes.NON_WHITESPACE );
+				}
+			}
+			throw new SegmentParseExpectedException( line.charAtAsSegment( i ) , ExpectedTypes.NON_WHITESPACE , ')' );
 		}
 
 		public void beginBlockCommentLine( )
@@ -1610,6 +1693,8 @@ public class WallsParser
 		public void fixLine( )
 		{
 			maybe( this::whitespace );
+			expectIgnoreCase( "#fix" );
+			whitespace( );
 			fixedStation( );
 			try
 			{
@@ -1714,7 +1799,7 @@ public class WallsParser
 		public void comment( )
 		{
 			semicolon( );
-			remaining( );
+			visitor.visitComment( remaining( ).toString( ) );
 		}
 	}
 
@@ -1738,7 +1823,7 @@ public class WallsParser
 		this.visitor = visitor;
 	}
 
-	private class DumpingWallsLineVisitor implements WallsLineVisitor
+	public class DumpingWallsLineVisitor implements WallsLineVisitor
 	{
 		public DumpingWallsLineVisitor( )
 		{
@@ -2038,6 +2123,17 @@ public class WallsParser
 
 		temp( parser , " FR::A1 B:B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
 
+		temp( parser , " #fox" );
 		temp( parser , " #fix GPS9 620765 3461243 123 (R5,?) /Bat Cave Entrance" );
+		temp( parser , " #FIX A1 W97:43:52.5 N31:16:45 323f /Entrance #s /hello/world;dms with ft elevations" );
+
+		temp( parser , "#u $hello=\"er=vad order=NUE\"" );
+		temp( parser , "#u ord$(hello)" );
+
+		System.out.println( parser.units.ctOrder );
+		System.out.println( parser.units.rectOrder );
+
+		temp( parser , "#u ord$(hel lo)" );
+		temp( parser , "#u ord$(hello" );
 	}
 }

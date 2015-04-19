@@ -11,6 +11,5 @@ public enum ExpectedTypes
 	QUOTE,
 	WHITESPACE,
 	END_OF_LINE,
-	CHARACTER,
 	NON_WHITESPACE
 }
