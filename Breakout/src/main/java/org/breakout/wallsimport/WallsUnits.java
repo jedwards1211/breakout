@@ -24,11 +24,18 @@ import org.andork.unit.UnitizedDouble;
  */
 public class WallsUnits
 {
+	public VectorType vectorType = VectorType.RECT;
+
 	/**
-	 * The order of measurements in vector rows.
+	 * The order of measurements in CT vectors.
 	 */
-	public List<VectorElement> order = Arrays.asList( VectorElement.D , VectorElement.A ,
-		VectorElement.V );
+	public List<CtElement> ctOrder = Arrays.asList( CtElement.D , CtElement.A ,
+		CtElement.V );
+	/**
+	 * The order of measurements in RECT vectors.
+	 */
+	public List<RectElement> rectOrder = Arrays.asList( RectElement.E , RectElement.N ,
+		RectElement.U );
 	/**
 	 * Unit for primary distance measurements (distance between stations, components of RECT vectors, FIX positions)
 	 */
@@ -181,7 +188,7 @@ public class WallsUnits
 		}
 		this.prefix.set( index , prefix );
 
-		while( this.prefix.get( this.prefix.size( ) - 1 ) == null )
+		while( !this.prefix.isEmpty( ) && this.prefix.get( this.prefix.size( ) - 1 ) == null )
 		{
 			this.prefix.remove( this.prefix.size( ) - 1 );
 		}
@@ -191,7 +198,8 @@ public class WallsUnits
 	{
 		WallsUnits result = new WallsUnits( );
 
-		result.order = Collections.unmodifiableList( new ArrayList<>( order ) );
+		result.ctOrder = Collections.unmodifiableList( new ArrayList<>( ctOrder ) );
+		result.rectOrder = Collections.unmodifiableList( new ArrayList<>( rectOrder ) );
 		result.d_unit = d_unit;
 		result.s_unit = s_unit;
 		result.a_unit = a_unit;

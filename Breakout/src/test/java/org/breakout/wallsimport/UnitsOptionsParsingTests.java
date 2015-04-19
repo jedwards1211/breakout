@@ -106,19 +106,19 @@ public class UnitsOptionsParsingTests
 
 		Assert.assertEquals( 0 , parser.stack.size( ) );
 
-		parser.parseUnitsLine( new Segment( "#u save save" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u save save" , null , 0 , 0 ) );
 		Assert.assertEquals( 2 , parser.stack.size( ) );
 
 		WallsUnits top = parser.stack.peek( );
 
-		parser.parseUnitsLine( new Segment( "#u restore" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u restore" , null , 0 , 0 ) );
 		Assert.assertEquals( 1 , parser.stack.size( ) );
 		Assert.assertSame( parser.units , top );
 
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u save=" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u save=test" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u restore=" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u restore=test" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u save=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u save=test" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u restore=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u restore=test" , null , 0 , 0 ) ) );
 	}
 
 	@Test
@@ -126,18 +126,18 @@ public class UnitsOptionsParsingTests
 	{
 		WallsParser parser = new WallsParser( );
 
-		parser.parseUnitsLine( new Segment( "#u meters" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u meters" , null , 0 , 0 ) );
 		Assert.assertEquals( Length.meters , parser.units.d_unit );
 		Assert.assertEquals( Length.meters , parser.units.s_unit );
 
-		parser.parseUnitsLine( new Segment( "#u m f" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u m f" , null , 0 , 0 ) );
 		Assert.assertEquals( Length.feet , parser.units.d_unit );
 		Assert.assertEquals( Length.feet , parser.units.s_unit );
 
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u m=" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u meters=test" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u f=" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u feet=test" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u m=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u meters=test" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u f=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u feet=test" , null , 0 , 0 ) ) );
 	}
 
 	@Test
@@ -145,19 +145,19 @@ public class UnitsOptionsParsingTests
 	{
 		WallsParser parser = new WallsParser( );
 
-		parser.parseUnitsLine( new Segment( "#u d=f s=meters" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u d=f s=meters" , null , 0 , 0 ) );
 		Assert.assertEquals( Length.feet , parser.units.d_unit );
 		Assert.assertEquals( Length.meters , parser.units.s_unit );
 
-		parser.parseUnitsLine( new Segment( "#u d=f s=meters s=feet d=m;test" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u d=f s=meters s=feet d=m;test" , null , 0 , 0 ) );
 		Assert.assertEquals( Length.meters , parser.units.d_unit );
 		Assert.assertEquals( Length.feet , parser.units.s_unit );
 
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u d" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u d=" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u s" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u s=" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u s=;feet" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u d" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u d=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u s" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u s=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u s=;feet" , null , 0 , 0 ) ) );
 	}
 
 	private void assertThrows( Runnable r )
@@ -178,19 +178,19 @@ public class UnitsOptionsParsingTests
 	{
 		WallsParser parser = new WallsParser( );
 
-		parser.parseUnitsLine( new Segment( "#u typeab=Corrected,2,X" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u typeab=Corrected,2,X" , null , 0 , 0 ) );
 		Assert.assertEquals( true , parser.units.typeab_corrected );
 		Assert.assertEquals( 2.0 , parser.units.typeab_tolerance , 0.0 );
 		Assert.assertEquals( true , parser.units.typeab_noAverage );
 
-		parser.parseUnitsLine( new Segment( "#u typeab=n" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u typeab=n" , null , 0 , 0 ) );
 		Assert.assertEquals( false , parser.units.typeab_corrected );
 		Assert.assertEquals( null , parser.units.typeab_tolerance );
 		Assert.assertEquals( false , parser.units.typeab_noAverage );
 
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u typeab=n,2,x,y" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u typeab" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u typeab=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u typeab=n,2,x,y" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u typeab" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u typeab=" , null , 0 , 0 ) ) );
 	}
 
 	@Test
@@ -198,32 +198,32 @@ public class UnitsOptionsParsingTests
 	{
 		WallsParser parser = new WallsParser( );
 
-		parser.parseUnitsLine( new Segment( "#u o=vad" , null , 0 , 0 ) );
-		Assert.assertEquals( Arrays.asList( VectorElement.V , VectorElement.A , VectorElement.D ) , parser.units.order );
+		parser.parseLine( new Segment( "#u o=vad" , null , 0 , 0 ) );
+		Assert.assertEquals( Arrays.asList( CtElement.V , CtElement.A , CtElement.D ) , parser.units.ctOrder );
 
-		parser.parseUnitsLine( new Segment( "#u o=ad" , null , 0 , 0 ) );
-		Assert.assertEquals( Arrays.asList( VectorElement.A , VectorElement.D ) , parser.units.order );
+		parser.parseLine( new Segment( "#u o=ad" , null , 0 , 0 ) );
+		Assert.assertEquals( Arrays.asList( CtElement.A , CtElement.D ) , parser.units.ctOrder );
 
-		parser.parseUnitsLine( new Segment( "#u o=nue" , null , 0 , 0 ) );
-		Assert.assertEquals( Arrays.asList( VectorElement.N , VectorElement.U , VectorElement.E ) , parser.units.order );
+		parser.parseLine( new Segment( "#u o=nue" , null , 0 , 0 ) );
+		Assert.assertEquals( Arrays.asList( RectElement.N , RectElement.U , RectElement.E ) , parser.units.rectOrder );
 
-		parser.parseUnitsLine( new Segment( "#u o=ne" , null , 0 , 0 ) );
-		Assert.assertEquals( Arrays.asList( VectorElement.N , VectorElement.E ) , parser.units.order );
+		parser.parseLine( new Segment( "#u o=ne" , null , 0 , 0 ) );
+		Assert.assertEquals( Arrays.asList( RectElement.N , RectElement.E ) , parser.units.rectOrder );
 
-		parser.parseUnitsLine( new Segment( "#u o=en" , null , 0 , 0 ) );
-		Assert.assertEquals( Arrays.asList( VectorElement.E , VectorElement.N ) , parser.units.order );
+		parser.parseLine( new Segment( "#u o=en" , null , 0 , 0 ) );
+		Assert.assertEquals( Arrays.asList( RectElement.E , RectElement.N ) , parser.units.rectOrder );
 
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=d" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=dv" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=dad" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=av" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=dan" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=n" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=nen" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=nu" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u o=eu" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=d" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=dv" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=dad" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=av" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=dan" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=n" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=nen" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=nu" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u o=eu" , null , 0 , 0 ) ) );
 	}
 
 	@Test
@@ -231,25 +231,25 @@ public class UnitsOptionsParsingTests
 	{
 		WallsParser parser = new WallsParser( );
 
-		parser.parseUnitsLine( new Segment( "#u lrud=f:rlud" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u lrud=f:rlud" , null , 0 , 0 ) );
 		Assert.assertEquals( LrudType.From , parser.units.lrud );
 		Assert.assertEquals( Arrays.asList( LrudElement.R , LrudElement.L , LrudElement.U , LrudElement.D ) , parser.units.lrud_order );
 
-		parser.parseUnitsLine( new Segment( "#u lrud=tb" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u lrud=tb" , null , 0 , 0 ) );
 		Assert.assertEquals( LrudType.TB , parser.units.lrud );
 		Assert.assertEquals( Arrays.asList( LrudElement.L , LrudElement.R , LrudElement.U , LrudElement.D ) , parser.units.lrud_order );
 
-		parser.parseUnitsLine( new Segment( "#u lrud=from:urld" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u lrud=from:urld" , null , 0 , 0 ) );
 		Assert.assertEquals( LrudType.From , parser.units.lrud );
 		Assert.assertEquals( Arrays.asList( LrudElement.U , LrudElement.R , LrudElement.L , LrudElement.D ) , parser.units.lrud_order );
 
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud=" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud=x" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud=from:" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud=x:lrud" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud=from:lr" , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u lrud=from:lrru" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u lrud=" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u lrud" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u lrud=x" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u lrud=from:" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u lrud=x:lrud" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u lrud=from:lr" , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u lrud=from:lrru" , null , 0 , 0 ) ) );
 	}
 
 	@Test
@@ -257,19 +257,19 @@ public class UnitsOptionsParsingTests
 	{
 		WallsParser parser = new WallsParser( );
 
-		parser.parseUnitsLine( new Segment( "#u $hello=world" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u $hello=world" , null , 0 , 0 ) );
 		Assert.assertEquals( "world" , parser.macros.get( "hello" ) );
 
-		parser.parseUnitsLine( new Segment( "#u $hello=\"beautiful world\"" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u $hello=\"beautiful world\"" , null , 0 , 0 ) );
 		Assert.assertEquals( "beautiful world" , parser.macros.get( "hello" ) );
 
-		parser.parseUnitsLine( new Segment( "#u $hello=\"\\\"beautiful \\\" \\nworld\"" , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u $hello=\"\\\"beautiful \\\" \\nworld\"" , null , 0 , 0 ) );
 		Assert.assertEquals( "\"beautiful \" \nworld" , parser.macros.get( "hello" ) );
 
-		parser.parseUnitsLine( new Segment( "#u $hello  " , null , 0 , 0 ) );
+		parser.parseLine( new Segment( "#u $hello  " , null , 0 , 0 ) );
 		Assert.assertEquals( null , parser.macros.get( "hello" ) );
 
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u $hello= " , null , 0 , 0 ) ) );
-		assertThrows( ( ) -> parser.parseUnitsLine( new Segment( "#u $hello=\"world " , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u $hello= " , null , 0 , 0 ) ) );
+		assertThrows( ( ) -> parser.parseLine( new Segment( "#u $hello=\"world " , null , 0 , 0 ) ) );
 	}
 }

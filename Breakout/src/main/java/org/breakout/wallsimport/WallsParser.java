@@ -5,9 +5,12 @@ import static org.breakout.wallsimport.CardinalDirection.NORTH;
 import static org.breakout.wallsimport.CardinalDirection.SOUTH;
 import static org.breakout.wallsimport.CardinalDirection.WEST;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import org.andork.collect.MapLiteral;
+import org.andork.func.CharPredicate;
 import org.andork.parse.ExpectedTypes;
 import org.andork.parse.LineParser;
 import org.andork.parse.Segment;
@@ -29,17 +33,19 @@ import org.andork.unit.UnitizedDouble;
 
 public class WallsParser
 {
-	private static final Pattern unitsOptionPattern = Pattern.compile( "[a-zA-Z_/]*" );
+	private static final Pattern unitsOptionPattern = Pattern.compile( "[a-zA-Z_0-9/]*" );
 
 	private static final Pattern macroNamePattern = Pattern.compile( "[^()=;,# \t]*" );
 
-	private static final Pattern fromStationPattern = Pattern.compile( "[^;,# \t]{1,8}" );
+	private static final Pattern stationPattern = Pattern.compile( "[^<*;,#/ \t][^;,#/ \t]{0,7}" );
 
-	private static final Pattern toStationPattern = Pattern.compile( "[^<*;,# \t][^;,# \t]{0,7}" );
-
-	private static final Pattern prefixPattern = Pattern.compile( "[^:;,# \t]+" );
+	private static final Pattern prefixPattern = Pattern.compile( "[^:;,#/ \t]+" );
 
 	private static final Pattern optionalPattern = Pattern.compile( "--+" );
+
+	private static final Pattern isoDatePattern = Pattern.compile( "\\d{4}-\\d{2}-\\d{2}" );
+	private static final Pattern usDatePattern1 = Pattern.compile( "\\d{2}-\\d{2}-\\d{2,4}" );
+	private static final Pattern usDatePattern2 = Pattern.compile( "\\d{2}/\\d{2}/\\d{2,4}" );
 
 	private static final Map<String, Unit<Length>> lengthUnits = new MapLiteral<String, Unit<Length>>( )
 		.map( "meters" , Length.meters )
@@ -113,15 +119,15 @@ public class WallsParser
 			.map( CardinalDirection.EAST , northSouth )
 			.map( CardinalDirection.WEST , northSouth );
 
-	private static final Map<Character, VectorElement> davElements = new MapLiteral<Character, VectorElement>( )
-		.map( 'd' , VectorElement.D )
-		.map( 'a' , VectorElement.A )
-		.map( 'v' , VectorElement.V );
+	private static final Map<Character, CtElement> ctElements = new MapLiteral<Character, CtElement>( )
+		.map( 'd' , CtElement.D )
+		.map( 'a' , CtElement.A )
+		.map( 'v' , CtElement.V );
 
-	private static final Map<Character, VectorElement> neuElements = new MapLiteral<Character, VectorElement>( )
-		.map( 'n' , VectorElement.N )
-		.map( 'e' , VectorElement.E )
-		.map( 'u' , VectorElement.U );
+	private static final Map<Character, RectElement> rectElements = new MapLiteral<Character, RectElement>( )
+		.map( 'n' , RectElement.N )
+		.map( 'e' , RectElement.E )
+		.map( 'u' , RectElement.U );
 
 	private static final Map<String, Boolean> correctedValues = new MapLiteral<String, Boolean>( )
 		.map( "corrected" , true )
@@ -157,7 +163,7 @@ public class WallsParser
 		.map( "ST" , Collections.unmodifiableList( Arrays.asList( TapingMethodElement.TARGET_HEIGHT ) ) )
 		.map( "SS" , Collections.emptyList( ) );
 
-	private static final Map<Character, Character> quotedChars = new MapLiteral<Character, Character>( )
+	private static final Map<Character, Character> escapedChars = new MapLiteral<Character, Character>( )
 		.map( 'r' , '\r' )
 		.map( 'n' , '\n' )
 		.map( 'f' , '\f' )
@@ -165,56 +171,210 @@ public class WallsParser
 		.map( '"' , '"' )
 		.map( '\\' , '\\' );
 
+	private static final Map<String, Integer> prefixDirectives = new MapLiteral<String, Integer>( )
+		.map( "#prefix1" , 0 )
+		.map( "#prefix2" , 1 )
+		.map( "#prefix3" , 2 )
+		.map( "#prefix" , 0 );
+
+	private static final Map<String, Directive> directives = new MapLiteral<String, Directive>( )
+		.map( "#units" , WallsLineParser::unitsLine )
+		.map( "#u" , WallsLineParser::unitsLine )
+		.map( "#flag" , WallsLineParser::flagLine )
+		.map( "#f" , WallsLineParser::flagLine )
+		.map( "#fix" , WallsLineParser::fixLine )
+		.map( "#note" , WallsLineParser::noteLine )
+		.map( "#symbol" , WallsLineParser::symbolLine )
+		.map( "#sym" , WallsLineParser::symbolLine )
+		.map( "#segment" , WallsLineParser::segmentLine )
+		.map( "#seg" , WallsLineParser::segmentLine )
+		.map( "#s" , WallsLineParser::segmentLine )
+		.map( "#date" , WallsLineParser::dateLine )
+		.map( "#[" , WallsLineParser::beginBlockCommentLine )
+		.map( "#]" , WallsLineParser::endBlockCommentLine )
+		.map( "#prefix1" , WallsLineParser::prefixLine )
+		.map( "#prefix2" , WallsLineParser::prefixLine )
+		.map( "#prefix3" , WallsLineParser::prefixLine )
+		.map( "#prefix" , WallsLineParser::prefixLine );
+
 	private static final Map<String, UnitsOption> unitsOptions = new MapLiteral<String, UnitsOption>( )
-		.map( "save" , UnitsLineParser::save )
-		.map( "reset" , UnitsLineParser::reset )
-		.map( "restore" , UnitsLineParser::restore )
-		.map( "m" , UnitsLineParser::meters )
-		.map( "meters" , UnitsLineParser::meters )
-		.map( "f" , UnitsLineParser::feet )
-		.map( "feet" , UnitsLineParser::feet )
-		.map( "d" , UnitsLineParser::d )
-		.map( "s" , UnitsLineParser::s )
-		.map( "a" , UnitsLineParser::a )
-		.map( "ab" , UnitsLineParser::ab )
-		.map( "a/ab" , UnitsLineParser::a_ab )
-		.map( "v" , UnitsLineParser::v )
-		.map( "vb" , UnitsLineParser::vb )
-		.map( "v/vb" , UnitsLineParser::v_vb )
-		.map( "o" , UnitsLineParser::order )
-		.map( "order" , UnitsLineParser::order )
-		.map( "decl" , UnitsLineParser::decl )
-		.map( "grid" , UnitsLineParser::grid )
-		.map( "rect" , UnitsLineParser::rect )
-		.map( "incd" , UnitsLineParser::incd )
-		.map( "inch" , UnitsLineParser::inch )
-		.map( "incs" , UnitsLineParser::incs )
-		.map( "inca" , UnitsLineParser::inca )
-		.map( "incab" , UnitsLineParser::incab )
-		.map( "incv" , UnitsLineParser::incv )
-		.map( "incvb" , UnitsLineParser::incvb )
-		.map( "typeab" , UnitsLineParser::typeab )
-		.map( "typevb" , UnitsLineParser::typevb )
-		.map( "case" , UnitsLineParser::case_ )
-		.map( "lrud" , UnitsLineParser::lrud )
-		.map( "tape" , UnitsLineParser::tape )
-		.map( "prefix" , UnitsLineParser::prefix1 )
-		.map( "prefix1" , UnitsLineParser::prefix1 )
-		.map( "prefix2" , UnitsLineParser::prefix2 )
-		.map( "prefix3" , UnitsLineParser::prefix3 )
-		.map( "uvh" , UnitsLineParser::uvh )
-		.map( "uvv" , UnitsLineParser::uvv )
-		.map( "uv" , UnitsLineParser::uv )
-		.map( "flag" , UnitsLineParser::flag );
+		.map( "save" , WallsLineParser::save )
+		.map( "reset" , WallsLineParser::reset )
+		.map( "restore" , WallsLineParser::restore )
+		.map( "m" , WallsLineParser::meters )
+		.map( "meters" , WallsLineParser::meters )
+		.map( "f" , WallsLineParser::feet )
+		.map( "feet" , WallsLineParser::feet )
+		.map( "ct" , WallsLineParser::ct )
+		.map( "d" , WallsLineParser::d )
+		.map( "s" , WallsLineParser::s )
+		.map( "a" , WallsLineParser::a )
+		.map( "ab" , WallsLineParser::ab )
+		.map( "a/ab" , WallsLineParser::a_ab )
+		.map( "v" , WallsLineParser::v )
+		.map( "vb" , WallsLineParser::vb )
+		.map( "v/vb" , WallsLineParser::v_vb )
+		.map( "o" , WallsLineParser::order )
+		.map( "order" , WallsLineParser::order )
+		.map( "decl" , WallsLineParser::decl )
+		.map( "grid" , WallsLineParser::grid )
+		.map( "rect" , WallsLineParser::rect )
+		.map( "incd" , WallsLineParser::incd )
+		.map( "inch" , WallsLineParser::inch )
+		.map( "incs" , WallsLineParser::incs )
+		.map( "inca" , WallsLineParser::inca )
+		.map( "incab" , WallsLineParser::incab )
+		.map( "incv" , WallsLineParser::incv )
+		.map( "incvb" , WallsLineParser::incvb )
+		.map( "typeab" , WallsLineParser::typeab )
+		.map( "typevb" , WallsLineParser::typevb )
+		.map( "case" , WallsLineParser::case_ )
+		.map( "lrud" , WallsLineParser::lrud )
+		.map( "tape" , WallsLineParser::tape )
+		.map( "prefix" , WallsLineParser::prefix1 )
+		.map( "prefix1" , WallsLineParser::prefix1 )
+		.map( "prefix2" , WallsLineParser::prefix2 )
+		.map( "prefix3" , WallsLineParser::prefix3 )
+		.map( "uvh" , WallsLineParser::uvh )
+		.map( "uvv" , WallsLineParser::uvv )
+		.map( "uv" , WallsLineParser::uv )
+		.map( "flag" , WallsLineParser::flag );
+
+	private SimpleDateFormat isoDateFormat = new SimpleDateFormat( "yyyy-MM-dd" );
+	private SimpleDateFormat usDateFormat1Long = new SimpleDateFormat( "MM-dd-yyyy" );
+	private SimpleDateFormat usDateFormat1Short = new SimpleDateFormat( "MM-dd-yy" );
+	private SimpleDateFormat usDateFormat2Long = new SimpleDateFormat( "MM/dd/yyyy" );
+	private SimpleDateFormat usDateFormat2Short = new SimpleDateFormat( "MM/dd/yy" );
+
+	WallsLineVisitor visitor;
 
 	Stack<WallsUnits> stack = new Stack<>( );
+
+	boolean inBlockComment = false;
 
 	WallsUnits units = new WallsUnits( );
 
 	Map<String, String> macros = new HashMap<>( );
 
-	public static class WallsLineParser extends LineParser
+	private static UnitizedDouble<Angle> dms( Double degrees , Double minutes , Double seconds )
 	{
+		Double value = 0.0;
+		if( degrees != null )
+		{
+			value += degrees;
+		}
+		if( minutes != null )
+		{
+			value += minutes / 60.0;
+		}
+		if( seconds != null )
+		{
+			value += seconds / 3600.0;
+		}
+		return new UnitizedDouble<>( value , Angle.degrees );
+	}
+
+	@FunctionalInterface
+	private static interface UnitsOption
+	{
+		public void process( WallsLineParser parser , Segment optionName );
+	}
+
+	@FunctionalInterface
+	private static interface Directive
+	{
+		public void process( WallsLineParser parser );
+	}
+
+	public static interface WallsLineVisitor
+	{
+		public void beginVectorLine( );
+
+		public void visitFrom( String from );
+
+		public void visitTo( String to );
+
+		public void visitDistance( UnitizedDouble<Length> distance );
+
+		public void visitFrontsightAzimuth( UnitizedDouble<Angle> fsAzimuth );
+
+		public void visitBacksightAzimuth( UnitizedDouble<Angle> bsAzimuth );
+
+		public void visitFrontsightInclination( UnitizedDouble<Angle> fsInclination );
+
+		public void visitBacksightInclination( UnitizedDouble<Angle> bsInclination );
+
+		public void visitNorth( UnitizedDouble<Length> north );
+
+		public void visitLatitude( UnitizedDouble<Angle> latitude );
+
+		public void visitEast( UnitizedDouble<Length> east );
+
+		public void visitLongitude( UnitizedDouble<Angle> longitude );
+
+		public void visitRectUp( UnitizedDouble<Length> up );
+
+		public void visitInstrumentHeight( UnitizedDouble<Length> instrumentHeight );
+
+		public void visitTargetHeight( UnitizedDouble<Length> targetHeight );
+
+		public void visitLeft( UnitizedDouble<Length> left );
+
+		public void visitRight( UnitizedDouble<Length> right );
+
+		public void visitUp( UnitizedDouble<Length> up );
+
+		public void visitDown( UnitizedDouble<Length> down );
+
+		public void visitLrudFacingAngle( UnitizedDouble<Angle> facingAngle );
+
+		public void visitCFlag( );
+
+		public void visitHorizontalVarianceOverride( VarianceOverride variance );
+
+		public void visitVerticalVarianceOverride( VarianceOverride variance );
+
+		/**
+		 * In this case "segment" refers to Walls' #Segment directive, not {@link Segment}. Nonetheless, the
+		 * argument to the #Segment directive is given as a {@link Segment} :)
+		 * 
+		 * @param segment
+		 *            the argument to the #Segment directive
+		 */
+		public void visitInlineSegment( String segment );
+
+		public void visitInlineNote( String note );
+
+		public void visitComment( String comment );
+
+		public void abortVectorLine( );
+
+		public void endVectorLine( );
+
+		public void visitFlaggedStations( String flag , List<String> stations );
+
+		public void visitBlockCommentLine( String string );
+
+		public void visitNoteLine( String station , String note );
+
+		public void beginFixLine( );
+
+		public void abortFixLine( );
+
+		public void endFixLine( );
+
+		public void visitFixedStation( String string );
+	}
+
+	public class WallsLineParser extends LineParser
+	{
+		// TODO FIX lines
+		// TODO macro replacement
+
+		private final VectorLineElementVisitor vectorLineElementVisitor = new VectorLineElementVisitor( );
+
+		private final FixLineElementVisitor fixLineElementVisitor = new FixLineElementVisitor( );
+
 		public WallsLineParser( Segment line )
 		{
 			super( line );
@@ -232,10 +392,8 @@ public class WallsParser
 				oneOfLowercase( lengthUnitSuffixes , defaultUnit ) );
 		}
 
-		public UnitizedDouble<Angle> nonQuadrantAzimuth( Unit<Angle> defaultUnit )
+		public UnitizedDouble<Angle> unsignedAngle( Map<Character, Unit<Angle>> unitSuffixes , Unit<Angle> defaultUnit )
 		{
-			int start = i;
-
 			Double value = maybeR( this::unsignedDoubleLiteral );
 			if( maybe( this::colon ) )
 			{
@@ -256,7 +414,68 @@ public class WallsParser
 				throwAllExpected( );
 			}
 			UnitizedDouble<Angle> result = new UnitizedDouble<>( value ,
-				oneOfLowercase( azmUnitSuffixes , defaultUnit ) );
+				oneOfLowercase( unitSuffixes , defaultUnit ) );
+			return result;
+		}
+
+		public UnitizedDouble<Angle> unsignedDmsAngle( )
+		{
+			Double degrees = maybeR( this::unsignedDoubleLiteral );
+			colon( );
+			Double minutes = maybeR( this::unsignedDoubleLiteral );
+			Double seconds = null;
+			if( maybe( this::colon ) )
+			{
+				seconds = maybeR( this::unsignedDoubleLiteral );
+			}
+			if( degrees == null && minutes == null && seconds == null )
+			{
+				throwAllExpected( );
+			}
+			return dms( degrees , minutes , seconds );
+		}
+
+		public UnitizedDouble<Angle> latitude( )
+		{
+			int start = i;
+			CardinalDirection side = oneOf( northSouth );
+			UnitizedDouble<Angle> latitude = unsignedDmsAngle( );
+
+			if( latitude.doubleValue( Angle.degrees ) > 90.0 )
+			{
+				throw new SegmentParseException( line.substring( start , i ) , WallsParseError.LATITUDE_OUT_OF_RANGE );
+			}
+
+			if( side == SOUTH )
+			{
+				latitude = latitude.negate( );
+			}
+			return latitude;
+		}
+
+		public UnitizedDouble<Angle> longitude( )
+		{
+			int start = i;
+			CardinalDirection side = oneOf( eastWest );
+			UnitizedDouble<Angle> longitude = unsignedDmsAngle( );
+
+			if( longitude.doubleValue( Angle.degrees ) > 90.0 )
+			{
+				throw new SegmentParseException( line.substring( start , i ) , WallsParseError.LONGITUDE_OUT_OF_RANGE );
+			}
+
+			if( side == WEST )
+			{
+				longitude = longitude.negate( );
+			}
+			return longitude;
+		}
+
+		public UnitizedDouble<Angle> nonQuadrantAzimuth( Unit<Angle> defaultUnit )
+		{
+			int start = i;
+
+			UnitizedDouble<Angle> result = unsignedAngle( azmUnitSuffixes , defaultUnit );
 
 			int end = i;
 
@@ -266,24 +485,6 @@ public class WallsParser
 			}
 
 			return result;
-		}
-
-		private static UnitizedDouble<Angle> dms( Double degrees , Double minutes , Double seconds )
-		{
-			Double value = 0.0;
-			if( degrees != null )
-			{
-				value += degrees;
-			}
-			if( minutes != null )
-			{
-				value += minutes / 60.0;
-			}
-			if( seconds != null )
-			{
-				value += seconds / 3600.0;
-			}
-			return new UnitizedDouble<>( value , Angle.degrees );
 		}
 
 		public UnitizedDouble<Angle> quadrantAzimuth( Unit<Angle> defaultUnit )
@@ -330,8 +531,7 @@ public class WallsParser
 		public UnitizedDouble<Angle> unsignedInclination( Unit<Angle> defaultUnit )
 		{
 			int start = i;
-			UnitizedDouble<Angle> result = new UnitizedDouble<>(
-				unsignedDoubleLiteral( ) , oneOfLowercase( incUnitSuffixes , defaultUnit ) );
+			UnitizedDouble<Angle> result = unsignedAngle( incUnitSuffixes , defaultUnit );
 			int end = i;
 
 			if( result.doubleValue( result.unit ) > incMaxes.get( result.unit ) )
@@ -401,20 +601,31 @@ public class WallsParser
 			return new VarianceOverride.RMSError( unsignedLength( defaultUnit ) );
 		}
 
+		public String quotedTextOrNonwhitespace( )
+		{
+			return oneOfR( this::quotedText , this::nonwhitespace ).toString( );
+		}
+
 		public String quotedText( )
 		{
 			expect( '"' );
-			StringBuilder sb = new StringBuilder( );
-			while( maybe( ( ) -> sb.append( quotedChar( ) ) ) )
-				;
+			String result = escapedText( p -> p != '"' , WallsExpectedTypes.QUOTED_TEXT );
 			expect( '"' );
+			return result;
+		}
+
+		public String escapedText( CharPredicate p , Object ... expectedTypes )
+		{
+			StringBuilder sb = new StringBuilder( );
+			while( maybe( ( ) -> sb.append( escapedChar( p , expectedTypes ) ) ) )
+				;
 			return sb.toString( );
 		}
 
-		public char quotedChar( )
+		public char escapedChar( CharPredicate p , Object ... expectedTypes )
 		{
-			char c = expect( ch -> ch != '"' , ExpectedTypes.NOT_QUOTE );
-			return c == '\\' ? oneOf( quotedChars ) : c;
+			char c = expect( p , expectedTypes );
+			return c == '\\' ? oneOf( escapedChars ) : c;
 		}
 
 		public <R> R optional( Supplier<R> production )
@@ -426,24 +637,252 @@ public class WallsParser
 					return null;
 				} , production );
 		}
-	}
-
-	@FunctionalInterface
-	private static interface UnitsOption
-	{
-		public void process( UnitsLineParser parser , Segment optionName );
-	}
-
-	private class UnitsLineParser extends WallsLineParser
-	{
-		public UnitsLineParser( Segment line )
-		{
-			super( line );
-		}
 
 		public void parse( )
 		{
-			throwAllExpected( this::unitsLine );
+			// do some manual lookahead to improve efficiency
+			// reduce confusion about which top-level production
+			// is called during debugging.
+
+			maybe( this::whitespace );
+			Segment seg = maybeR( this::nonwhitespace );
+
+			if( seg == null )
+			{
+				return;
+			}
+
+			if( inBlockComment )
+			{
+				throwAllExpected( ( ) -> oneOfWithLookahead(
+					this::endBlockCommentLine ,
+					this::insideBlockCommentLine ) );
+			}
+			else
+			{
+				throwAllExpected( ( ) -> oneOfWithLookahead(
+					this::unitsLine ,
+					this::symbolLine ,
+					this::segmentLine ,
+					this::fixLine ,
+					this::flagLine ,
+					this::dateLine ,
+					this::beginBlockCommentLine ,
+					this::prefixLine ,
+					this::noteLine ,
+					this::vectorLine ) );
+			}
+		}
+
+		public void beginBlockCommentLine( )
+		{
+			maybe( this::whitespace );
+			expect( "#[" );
+			inBlockComment = true;
+			visitor.visitBlockCommentLine( remaining( ).toString( ) );
+		}
+
+		public void endBlockCommentLine( )
+		{
+			maybe( this::whitespace );
+			expect( "#]" );
+			remaining( );
+			inBlockComment = false;
+		}
+
+		public void insideBlockCommentLine( )
+		{
+			visitor.visitBlockCommentLine( remaining( ).toString( ) );
+		}
+
+		public String untilComment( Object ... expectedTypes )
+		{
+			return oneOrMore( c -> c != ';' , expectedTypes ).toString( );
+		}
+
+		public void segmentLine( )
+		{
+			maybe( this::whitespace );
+			units.segment = segmentDirective( ).toString( );
+			maybe( this::whitespace );
+			commentOrEndOfLine( );
+		}
+
+		public String segmentDirective( )
+		{
+			oneOf( ( ) -> expectIgnoreCase( "#segment" ) ,
+				( ) -> expectIgnoreCase( "#seg" ) ,
+				( ) -> expectIgnoreCase( "#s" ) );
+
+			if( maybe( this::whitespace ) )
+			{
+				return maybeR( ( ) -> untilComment( WallsExpectedTypes.SEGMENT ) );
+			}
+			return null;
+		}
+
+		public void prefixLine( )
+		{
+			maybe( this::whitespace );
+			prefixDirective( );
+			maybe( this::whitespace );
+			commentOrEndOfLine( );
+		}
+
+		public void prefixDirective( )
+		{
+			int prefixIndex = oneOfIgnoreCase( prefixDirectives.entrySet( ) );
+
+			String prefix = null;
+
+			if( maybe( this::whitespace ) )
+			{
+				prefix = maybeR( ( ) -> expect( prefixPattern , WallsExpectedTypes.PREFIX ) ).toString( );
+			}
+
+			units.setPrefix( prefixIndex , prefix );
+		}
+
+		public void noteLine( )
+		{
+			maybe( this::whitespace );
+			noteDirective( );
+			maybe( this::whitespace );
+			commentOrEndOfLine( );
+		}
+
+		public void noteDirective( )
+		{
+			oneOf( ( ) -> expectIgnoreCase( "#note" ) ,
+				( ) -> expectIgnoreCase( "#n" ) );
+
+			whitespace( );
+			String station = expect( stationPattern , WallsExpectedTypes.STATION_NAME ).toString( );
+			whitespace( );
+			String note = escapedText( p -> p != ';' , WallsExpectedTypes.NOTE );
+
+			visitor.visitNoteLine( station , note );
+		}
+
+		public void flagLine( )
+		{
+			maybe( this::whitespace );
+			flagDirective( );
+			maybe( this::whitespace );
+			commentOrEndOfLine( );
+		}
+
+		public void flagDirective( )
+		{
+			oneOf( ( ) -> expectIgnoreCase( "#flag" ) ,
+				( ) -> expectIgnoreCase( "#f" ) );
+
+			List<String> stations = new ArrayList<>( );
+
+			maybe( this::whitespace );
+
+			while( true )
+			{
+				Segment station = maybeR( ( ) -> expect( stationPattern , WallsExpectedTypes.STATION_NAME ) );
+				if( station == null )
+				{
+					break;
+				}
+				stations.add( station.toString( ) );
+
+				maybe( this::whitespace );
+			}
+
+			String flag = null;
+
+			flag = maybeR( this::slashPrefixedFlag );
+			maybe( this::whitespace );
+
+			if( stations.isEmpty( ) )
+			{
+				units.flag = flag;
+			}
+			else
+			{
+				if( flag == null )
+				{
+					throwAllExpected( );
+				}
+				visitor.visitFlaggedStations( flag , stations );
+			}
+
+			commentOrEndOfLine( );
+		}
+
+		public String slashPrefixedFlag( )
+		{
+			expect( "/" );
+			return oneOrMore( c -> c != ';' , WallsExpectedTypes.FLAG ).toString( );
+		}
+
+		public void symbolLine( )
+		{
+			maybe( this::whitespace );
+
+			oneOf( ( ) -> expectIgnoreCase( "#symbol" ) ,
+				( ) -> expectIgnoreCase( "#sym" ) );
+
+			// ignore for now
+			remaining( );
+		}
+
+		public void dateLine( )
+		{
+			maybe( this::whitespace );
+			dateDirective( );
+			maybe( this::whitespace );
+			commentOrEndOfLine( );
+		}
+
+		public void dateDirective( )
+		{
+			expectIgnoreCase( "#date" );
+			whitespace( );
+			units.date = oneOfR( this::isoDate , this::usDate1 , this::usDate2 );
+		}
+
+		public Date isoDate( )
+		{
+			Segment dateSegment = expect( isoDatePattern , WallsExpectedTypes.DATE );
+			try
+			{
+				return isoDateFormat.parse( dateSegment.toString( ) );
+			}
+			catch( ParseException e )
+			{
+				throw new SegmentParseException( dateSegment , WallsParseError.INVALID_DATE );
+			}
+		}
+
+		public Date usDate1( )
+		{
+			Segment dateSegment = expect( usDatePattern1 , WallsExpectedTypes.DATE );
+			try
+			{
+				return ( dateSegment.length( ) > 8 ? usDateFormat1Long : usDateFormat1Short ).parse( dateSegment.toString( ) );
+			}
+			catch( ParseException e )
+			{
+				throw new SegmentParseException( dateSegment , WallsParseError.INVALID_DATE );
+			}
+		}
+
+		public Date usDate2( )
+		{
+			Segment dateSegment = expect( usDatePattern2 , WallsExpectedTypes.DATE );
+			try
+			{
+				return ( dateSegment.length( ) > 8 ? usDateFormat2Long : usDateFormat2Short ).parse( dateSegment.toString( ) );
+			}
+			catch( ParseException e )
+			{
+				throw new SegmentParseException( dateSegment , WallsParseError.INVALID_DATE );
+			}
 		}
 
 		public void unitsLine( )
@@ -478,7 +917,7 @@ public class WallsParser
 			String macroValue = null;
 			if( maybe( ( ) -> expect( '=' ) ) )
 			{
-				macroValue = oneOfR( this::quotedText , this::nonwhitespace ).toString( );
+				macroValue = quotedTextOrNonwhitespace( );
 			}
 			macros.put( macroName , macroValue );
 		}
@@ -564,17 +1003,30 @@ public class WallsParser
 			units.v_unit = units.vb_unit = oneOfIgnoreCase( incUnits.entrySet( ) );
 		}
 
+		public void ct( Segment optionName )
+		{
+			units.vectorType = VectorType.CT;
+		}
+
 		public void order( Segment optionName )
 		{
 			expect( '=' );
-			oneOf(
-				( ) -> order( davElements , VectorElement.V ) ,
-				( ) -> order( neuElements , VectorElement.U ) );
+			oneOf( this::ctOrder , this::rectOrder );
 		}
 
-		private void order( Map<Character, VectorElement> elements , VectorElement vertical )
+		private void ctOrder( )
 		{
-			ArrayList<VectorElement> newOrder = new ArrayList<VectorElement>( );
+			units.ctOrder = order( ctElements , CtElement.V );
+		}
+
+		private void rectOrder( )
+		{
+			units.rectOrder = order( rectElements , RectElement.U );
+		}
+
+		private <T> List<T> order( Map<Character, T> elements , T vertical )
+		{
+			ArrayList<T> newOrder = new ArrayList<T>( );
 			orderElement( newOrder , elements );
 			int second = i;
 			orderElement( newOrder , elements );
@@ -586,13 +1038,13 @@ public class WallsParser
 				}
 			}
 			newOrder.trimToSize( );
-			units.order = Collections.unmodifiableList( newOrder );
+			return Collections.unmodifiableList( newOrder );
 		}
 
-		private void orderElement( List<VectorElement> newOrder , Map<Character, VectorElement> elements )
+		private <T> void orderElement( List<T> newOrder , Map<Character, T> elements )
 		{
 			int start = i;
-			VectorElement elem = oneOfLowercase( elements );
+			T elem = oneOfLowercase( elements );
 			if( newOrder.contains( elem ) )
 			{
 				throw new SegmentParseExpectedException( line.charAtAsSegment( start ) , otherExpectedOrderElements( newOrder , elements ) );
@@ -600,10 +1052,10 @@ public class WallsParser
 			newOrder.add( elem );
 		}
 
-		private Object[ ] otherExpectedOrderElements( List<VectorElement> newOrder , Map<Character, VectorElement> elements )
+		private <T> Object[ ] otherExpectedOrderElements( List<T> newOrder , Map<Character, T> elements )
 		{
 			List<Object> result = new LinkedList<Object>( );
-			for( Map.Entry<Character, VectorElement> entry : elements.entrySet( ) )
+			for( Map.Entry<Character, T> entry : elements.entrySet( ) )
 			{
 				if( !newOrder.contains( entry.getValue( ) ) )
 				{
@@ -627,8 +1079,14 @@ public class WallsParser
 
 		public void rect( Segment optionName )
 		{
-			expect( '=' );
-			units.rect = azimuthOffset( units.a_unit );
+			if( maybe( ( ) -> expect( '=' ) ) )
+			{
+				units.rect = azimuthOffset( units.a_unit );
+			}
+			else
+			{
+				units.vectorType = VectorType.RECT;
+			}
 		}
 
 		public void incd( Segment optionName )
@@ -817,103 +1275,32 @@ public class WallsParser
 			String flag = null;
 			if( maybe( ( ) -> expect( '=' ) ) )
 			{
-				flag = oneOfR( this::quotedText , this::nonwhitespace ).toString( );
+				flag = quotedTextOrNonwhitespace( );
 			}
 			units.flag = flag;
-		}
-
-		public void comment( )
-		{
-			semicolon( );
-			remaining( );
-		}
-	}
-
-	public static interface VectorLineVisitor
-	{
-		public void visitFrom( String from );
-
-		public void visitTo( String to );
-
-		public void visitDistance( UnitizedDouble<Length> distance );
-
-		public void visitFrontsightAzimuth( UnitizedDouble<Angle> fsAzimuth );
-
-		public void visitBacksightAzimuth( UnitizedDouble<Angle> bsAzimuth );
-
-		public void visitFrontsightInclination( UnitizedDouble<Angle> fsInclination );
-
-		public void visitBacksightInclination( UnitizedDouble<Angle> bsInclination );
-
-		public void visitNorth( UnitizedDouble<Length> north );
-
-		public void visitEast( UnitizedDouble<Length> east );
-
-		public void visitVectorUp( UnitizedDouble<Length> up );
-
-		public void visitInstrumentHeight( UnitizedDouble<Length> instrumentHeight );
-
-		public void visitTargetHeight( UnitizedDouble<Length> targetHeight );
-
-		public void visitLeft( UnitizedDouble<Length> left );
-
-		public void visitRight( UnitizedDouble<Length> right );
-
-		public void visitUp( UnitizedDouble<Length> up );
-
-		public void visitDown( UnitizedDouble<Length> down );
-
-		public void visitLrudFacingAngle( UnitizedDouble<Angle> facingAngle );
-
-		public void visitCFlag( );
-
-		public void visitHorizontalVarianceOverride( VarianceOverride variance );
-
-		public void visitVerticalVarianceOverride( VarianceOverride variance );
-
-		/**
-		 * In this case "segment" refers to Walls' #Segment directive, not {@link Segment}. Nonetheless, the
-		 * argument to the #Segment directive is given as a {@link Segment} :)
-		 * 
-		 * @param segment
-		 *            the argument to the #Segment directive
-		 */
-		public void visitSegment( Segment segment );
-
-		public void visitComment( Segment comment );
-	}
-
-	private class VectorLineParser extends WallsLineParser implements VectorElementVisitor , TapingMethodElementVisitor , LrudElementVisitor
-	{
-		private VectorLineVisitor visitor;
-
-		public VectorLineParser( Segment line , VectorLineVisitor visitor )
-		{
-			super( line );
-			this.visitor = visitor;
-		}
-
-		public void parse( )
-		{
-			throwAllExpected( this::vectorLine );
 		}
 
 		public void vectorLine( )
 		{
 			maybe( this::whitespace );
-			oneOf( this::lineWithData , this::commentOrEndOfLine );
-		}
-
-		public void lineWithData( )
-		{
 			fromStation( );
-			whitespace( );
-			afterFromStation( );
+			try
+			{
+				whitespace( );
+				afterFromStation( );
+				visitor.endVectorLine( );
+			}
+			catch( RuntimeException ex )
+			{
+				visitor.abortVectorLine( );
+				throw ex;
+			}
 		}
 
 		public void fromStation( )
 		{
-			Segment from = expect( fromStationPattern , WallsExpectedTypes.FROM_STATION );
+			Segment from = expect( stationPattern , WallsExpectedTypes.STATION_NAME );
+			visitor.beginVectorLine( );
 			visitor.visitFrom( from.toString( ) );
 		}
 
@@ -935,95 +1322,136 @@ public class WallsParser
 
 		public void toStation( )
 		{
-			Segment to = expect( toStationPattern , WallsExpectedTypes.TO_STATION );
+			Segment to = expect( stationPattern , WallsExpectedTypes.STATION_NAME );
 			visitor.visitTo( to.toString( ) );
 		}
 
 		public void afterToStation( )
 		{
 			int k = 0;
-			for( VectorElement elem : units.order )
+			if( units.vectorType == VectorType.RECT )
 			{
-				if( k++ > 0 )
+				for( RectElement elem : units.rectOrder )
 				{
-					whitespace( );
+					if( k++ > 0 )
+					{
+						whitespace( );
+					}
+					elem.visit( vectorLineElementVisitor );
 				}
-				elem.visit( this );
+			}
+			else
+			{
+				for( CtElement elem : units.ctOrder )
+				{
+					if( k++ > 0 )
+					{
+						whitespace( );
+					}
+					elem.visit( vectorLineElementVisitor );
+				}
 			}
 			for( TapingMethodElement elem : units.tape )
 			{
 				whitespace( );
-				elem.visit( this );
+				elem.visit( vectorLineElementVisitor );
 			}
 			if( maybe( this::whitespace ) )
 			{
-				afterMeasurements( );
+				afterVectorMeasurements( );
 			}
 		}
 
-		@Override
-		public void visitDistance( )
+		private class VectorLineElementVisitor implements CtElementVisitor , RectElementVisitor , TapingMethodElementVisitor , LrudElementVisitor
 		{
-			visitor.visitDistance( unsignedLength( units.d_unit ) );
-		}
-
-		@Override
-		public void visitAzimuth( )
-		{
-			visitor.visitFrontsightAzimuth( optional( ( ) -> azimuth( units.a_unit ) ) );
-			if( maybe( this::forwardSlash ) )
+			@Override
+			public void visitDistance( )
 			{
-				visitor.visitBacksightAzimuth( optional( ( ) -> azimuth( units.ab_unit ) ) );
+				visitor.visitDistance( unsignedLength( units.d_unit ) );
 			}
-		}
 
-		@Override
-		public void visitInclination( )
-		{
-			visitor.visitFrontsightInclination( optional( ( ) -> inclination( units.v_unit ) ) );
-			if( maybe( this::forwardSlash ) )
+			@Override
+			public void visitAzimuth( )
 			{
-				visitor.visitBacksightInclination( optional( ( ) -> inclination( units.vb_unit ) ) );
+				visitor.visitFrontsightAzimuth( optional( ( ) -> azimuth( units.a_unit ) ) );
+				if( maybe( WallsLineParser.this::forwardSlash ) )
+				{
+					visitor.visitBacksightAzimuth( optional( ( ) -> azimuth( units.ab_unit ) ) );
+				}
+			}
+
+			@Override
+			public void visitInclination( )
+			{
+				visitor.visitFrontsightInclination( optional( ( ) -> inclination( units.v_unit ) ) );
+				if( maybe( WallsLineParser.this::forwardSlash ) )
+				{
+					visitor.visitBacksightInclination( optional( ( ) -> inclination( units.vb_unit ) ) );
+				}
+			}
+
+			@Override
+			public void visitEast( )
+			{
+				visitor.visitEast( length( units.d_unit ) );
+			}
+
+			@Override
+			public void visitNorth( )
+			{
+				visitor.visitNorth( length( units.d_unit ) );
+			}
+
+			@Override
+			public void visitRectUp( )
+			{
+				visitor.visitRectUp( length( units.d_unit ) );
+			}
+
+			@Override
+			public void visitInstrumentHeight( )
+			{
+				visitor.visitInstrumentHeight( optional( ( ) -> length( units.s_unit ) ) );
+			}
+
+			@Override
+			public void visitTargetHeight( )
+			{
+				visitor.visitTargetHeight( optional( ( ) -> length( units.s_unit ) ) );
+			}
+
+			@Override
+			public void visitLeft( )
+			{
+				visitor.visitLeft( optional( ( ) -> unsignedLength( units.s_unit ) ) );
+			}
+
+			@Override
+			public void visitRight( )
+			{
+				visitor.visitRight( optional( ( ) -> unsignedLength( units.s_unit ) ) );
+			}
+
+			@Override
+			public void visitUp( )
+			{
+				visitor.visitUp( optional( ( ) -> unsignedLength( units.s_unit ) ) );
+			}
+
+			@Override
+			public void visitDown( )
+			{
+				visitor.visitDown( optional( ( ) -> unsignedLength( units.s_unit ) ) );
 			}
 		}
 
-		@Override
-		public void visitEast( )
-		{
-			visitor.visitEast( length( units.d_unit ) );
-		}
-
-		@Override
-		public void visitNorth( )
-		{
-			visitor.visitNorth( length( units.d_unit ) );
-		}
-
-		@Override
-		public void visitRectUp( )
-		{
-			visitor.visitVectorUp( length( units.d_unit ) );
-		}
-
-		@Override
-		public void visitInstrumentHeight( )
-		{
-			visitor.visitInstrumentHeight( optional( ( ) -> length( units.s_unit ) ) );
-		}
-
-		@Override
-		public void visitTargetHeight( )
-		{
-			visitor.visitTargetHeight( optional( ( ) -> length( units.s_unit ) ) );
-		}
-
-		public void afterMeasurements( )
+		public void afterVectorMeasurements( )
 		{
 			if( maybe( this::varianceOverrides ) )
 			{
 				maybe( this::whitespace );
 			}
-			afterVarianceOverrides( );
+			afterVectorVarianceOverrides( );
 		}
 
 		public void varianceOverrides( )
@@ -1051,7 +1479,7 @@ public class WallsParser
 			expect( ')' );
 		}
 
-		public void afterVarianceOverrides( )
+		public void afterVectorVarianceOverrides( )
 		{
 			if( maybe( this::lruds ) )
 			{
@@ -1092,7 +1520,7 @@ public class WallsParser
 					comma( );
 					maybe( this::whitespace );
 				}
-				elem.visit( this );
+				elem.visit( vectorLineElementVisitor );
 			}
 			maybe( this::whitespace );
 			afterRequiredCommaDelimLrudMeasurements( );
@@ -1108,34 +1536,10 @@ public class WallsParser
 				{
 					whitespace( );
 				}
-				elem.visit( this );
+				elem.visit( vectorLineElementVisitor );
 			}
 			maybe( this::whitespace );
 			afterRequiredWhitespaceDelimLrudMeasurements( );
-		}
-
-		@Override
-		public void visitLeft( )
-		{
-			visitor.visitLeft( optional( ( ) -> unsignedLength( units.s_unit ) ) );
-		}
-
-		@Override
-		public void visitRight( )
-		{
-			visitor.visitRight( optional( ( ) -> unsignedLength( units.s_unit ) ) );
-		}
-
-		@Override
-		public void visitUp( )
-		{
-			visitor.visitUp( optional( ( ) -> unsignedLength( units.s_unit ) ) );
-		}
-
-		@Override
-		public void visitDown( )
-		{
-			visitor.visitDown( optional( ( ) -> unsignedLength( units.s_unit ) ) );
 		}
 
 		public void afterRequiredCommaDelimLrudMeasurements( )
@@ -1185,27 +1589,121 @@ public class WallsParser
 
 		public void afterLruds( )
 		{
-			if( maybe( this::directive ) )
+			if( maybe( this::inlineDirective ) )
 			{
 				maybe( this::whitespace );
 			}
 			commentOrEndOfLine( );
 		}
 
-		public void directive( )
+		public void inlineDirective( )
 		{
-			expect( '#' );
 			// currently this is the only directive that can be on a vector line
-			segmentDirective( );
+			inlineSegmentDirective( );
 		}
 
-		public void segmentDirective( )
+		public void inlineSegmentDirective( )
 		{
-			oneOf( ( ) -> expectIgnoreCase( "segment" ) ,
-				( ) -> expectIgnoreCase( "seg" ) ,
-				( ) -> expectIgnoreCase( 's' ) );
-			whitespace( );
-			visitor.visitSegment( oneOrMore( c -> c != ';' , WallsExpectedTypes.SEGMENT ) );
+			visitor.visitInlineSegment( segmentDirective( ) );
+		}
+
+		public void fixLine( )
+		{
+			maybe( this::whitespace );
+			fixedStation( );
+			try
+			{
+				whitespace( );
+				afterFixedStation( );
+				visitor.endFixLine( );
+			}
+			catch( RuntimeException ex )
+			{
+				visitor.abortFixLine( );
+				throw ex;
+			}
+		}
+
+		public void fixedStation( )
+		{
+			Segment fixed = expect( stationPattern , WallsExpectedTypes.STATION_NAME );
+			visitor.beginFixLine( );
+			visitor.visitFixedStation( fixed.toString( ) );
+		}
+
+		public void afterFixedStation( )
+		{
+			int k = 0;
+			for( RectElement elem : units.rectOrder )
+			{
+				if( k++ > 0 )
+				{
+					whitespace( );
+				}
+				elem.visit( fixLineElementVisitor );
+			}
+			if( maybe( this::whitespace ) )
+			{
+				afterFixMeasurements( );
+			}
+		}
+
+		private class FixLineElementVisitor implements RectElementVisitor
+		{
+			@Override
+			public void visitEast( )
+			{
+				oneOf(
+					( ) -> visitor.visitEast( length( units.d_unit ) ) ,
+					( ) -> visitor.visitLongitude( longitude( ) ) );
+			}
+
+			@Override
+			public void visitNorth( )
+			{
+				oneOf(
+					( ) -> visitor.visitNorth( length( units.d_unit ) ) ,
+					( ) -> visitor.visitLatitude( latitude( ) ) );
+			}
+
+			@Override
+			public void visitRectUp( )
+			{
+				visitor.visitRectUp( length( units.d_unit ) );
+			}
+		}
+
+		public void afterFixMeasurements( )
+		{
+			if( maybe( this::varianceOverrides ) )
+			{
+				maybe( this::whitespace );
+			}
+			afterFixVarianceOverrides( );
+		}
+
+		public void afterFixVarianceOverrides( )
+		{
+			if( maybe( this::inlineNote ) )
+			{
+				maybe( this::whitespace );
+			}
+			afterFixInlineNote( );
+		}
+
+		public void inlineNote( )
+		{
+			expect( '/' );
+			visitor.visitInlineNote( escapedText( p -> p != ';' && p != '#' , WallsExpectedTypes.NOTE ) );
+		}
+
+		public void afterFixInlineNote( )
+		{
+			if( maybe( this::inlineDirective ) )
+			{
+				maybe( this::whitespace );
+			}
+			commentOrEndOfLine( );
 		}
 
 		public void commentOrEndOfLine( )
@@ -1215,24 +1713,247 @@ public class WallsParser
 
 		public void comment( )
 		{
-			expect( ';' );
-			visitor.visitComment( remaining( ) );
+			semicolon( );
+			remaining( );
 		}
 	}
 
-	public void parseUnitsLine( Segment line )
+	public void parseLine( Segment line )
 	{
-		new UnitsLineParser( line ).parse( );
-	}
-
-	public void parseVectorLine( Segment line , VectorLineVisitor visitor )
-	{
-		new VectorLineParser( line , visitor ).parse( );
+		new WallsLineParser( line ).parse( );
 	}
 
 	public String processStationName( String name )
 	{
 		return units.processStationName( name );
+	}
+
+	public WallsLineVisitor getVisitor( )
+	{
+		return visitor;
+	}
+
+	public void setVisitor( WallsLineVisitor visitor )
+	{
+		this.visitor = visitor;
+	}
+
+	private class DumpingWallsLineVisitor implements WallsLineVisitor
+	{
+		public DumpingWallsLineVisitor( )
+		{
+			super( );
+		}
+
+		@Override
+		public void visitTo( String to )
+		{
+			System.out.println( "  to:           " + processStationName( to ) );
+		}
+
+		@Override
+		public void visitFrom( String from )
+		{
+			System.out.println( "  from:         " + processStationName( from ) );
+		}
+
+		@Override
+		public void visitDistance( UnitizedDouble<Length> distance )
+		{
+			System.out.println( "  distance:     " + distance );
+		}
+
+		@Override
+		public void visitFrontsightAzimuth( UnitizedDouble<Angle> fsAzimuth )
+		{
+			System.out.println( "  fsAzm:        " + fsAzimuth );
+		}
+
+		@Override
+		public void visitBacksightAzimuth( UnitizedDouble<Angle> bsAzimuth )
+		{
+			System.out.println( "  bsAzm:        " + bsAzimuth );
+		}
+
+		@Override
+		public void visitFrontsightInclination( UnitizedDouble<Angle> fsInclination )
+		{
+			System.out.println( "  fsInc:        " + fsInclination );
+		}
+
+		@Override
+		public void visitBacksightInclination( UnitizedDouble<Angle> bsInclination )
+		{
+			System.out.println( "  bsInc:        " + bsInclination );
+		}
+
+		@Override
+		public void visitNorth( UnitizedDouble<Length> north )
+		{
+			System.out.println( "  north:        " + north );
+		}
+
+		@Override
+		public void visitEast( UnitizedDouble<Length> east )
+		{
+			System.out.println( "  east:         " + east );
+		}
+
+		@Override
+		public void visitRectUp( UnitizedDouble<Length> up )
+		{
+			System.out.println( "  vUp:          " + up );
+		}
+
+		@Override
+		public void visitInstrumentHeight( UnitizedDouble<Length> instrumentHeight )
+		{
+			System.out.println( "  ih:           " + instrumentHeight );
+		}
+
+		@Override
+		public void visitTargetHeight( UnitizedDouble<Length> targetHeight )
+		{
+			System.out.println( "  th:           " + targetHeight );
+		}
+
+		@Override
+		public void visitLeft( UnitizedDouble<Length> left )
+		{
+			System.out.println( "  left:         " + left );
+		}
+
+		@Override
+		public void visitRight( UnitizedDouble<Length> right )
+		{
+			System.out.println( "  right:        " + right );
+		}
+
+		@Override
+		public void visitUp( UnitizedDouble<Length> up )
+		{
+			System.out.println( "  up:           " + up );
+		}
+
+		@Override
+		public void visitDown( UnitizedDouble<Length> down )
+		{
+			System.out.println( "  down:         " + down );
+		}
+
+		@Override
+		public void visitLrudFacingAngle( UnitizedDouble<Angle> facingAngle )
+		{
+			System.out.println( "  facingAngle:  " + facingAngle );
+		}
+
+		@Override
+		public void visitCFlag( )
+		{
+			System.out.println( "  cflag" );
+		}
+
+		@Override
+		public void visitHorizontalVarianceOverride( VarianceOverride variance )
+		{
+			System.out.println( "  h:            " + variance );
+		}
+
+		@Override
+		public void visitVerticalVarianceOverride( VarianceOverride variance )
+		{
+			System.out.println( "  v:            " + variance );
+		}
+
+		@Override
+		public void visitInlineSegment( String segment )
+		{
+			System.out.println( "  segment:      " + segment );
+		}
+
+		@Override
+		public void visitComment( String comment )
+		{
+			System.out.println( "  comment:      " + comment );
+		}
+
+		@Override
+		public void beginVectorLine( )
+		{
+			System.out.println( "begin vector line" );
+		}
+
+		@Override
+		public void endVectorLine( )
+		{
+			System.out.println( "end vector line" );
+		}
+
+		@Override
+		public void visitFlaggedStations( String flag , List<String> stations )
+		{
+			System.out.println( "flag stations: " + stations + " /" + flag );
+		}
+
+		@Override
+		public void visitBlockCommentLine( String string )
+		{
+			System.out.println( ";" + string );
+		}
+
+		@Override
+		public void visitNoteLine( String station , String note )
+		{
+			System.out.println( "note: " + station + ": " + note );
+		}
+
+		@Override
+		public void abortVectorLine( )
+		{
+			System.out.println( "abort vector line" );
+		}
+
+		@Override
+		public void beginFixLine( )
+		{
+			System.out.println( "begin fix line" );
+		}
+
+		@Override
+		public void abortFixLine( )
+		{
+			System.out.println( "abort fix line" );
+		}
+
+		@Override
+		public void endFixLine( )
+		{
+			System.out.println( "end fix line" );
+		}
+
+		@Override
+		public void visitLatitude( UnitizedDouble<Angle> latitude )
+		{
+			System.out.println( "  latitude:     " + latitude );
+		}
+
+		@Override
+		public void visitLongitude( UnitizedDouble<Angle> longitude )
+		{
+			System.out.println( "  longitude:    " + longitude );
+		}
+
+		@Override
+		public void visitInlineNote( String note )
+		{
+			System.out.println( "  note:         " + note );
+		}
+
+		@Override
+		public void visitFixedStation( String station )
+		{
+			System.out.println( "  fixed station:" + station );
+		}
 	}
 
 	private static void temp( WallsParser parser , String s )
@@ -1241,139 +1962,7 @@ public class WallsParser
 		Segment segment = new Segment( s , null , 0 , 0 );
 		try
 		{
-			parser.parseVectorLine( segment , new VectorLineVisitor( ) {
-				@Override
-				public void visitTo( String to )
-				{
-					System.out.println( "  to:           " + to );
-				}
-
-				@Override
-				public void visitFrom( String from )
-				{
-					System.out.println( "  from:         " + from );
-				}
-
-				@Override
-				public void visitDistance( UnitizedDouble<Length> distance )
-				{
-					System.out.println( "  distance:     " + distance );
-				}
-
-				@Override
-				public void visitFrontsightAzimuth( UnitizedDouble<Angle> fsAzimuth )
-				{
-					System.out.println( "  fsAzm:        " + fsAzimuth );
-				}
-
-				@Override
-				public void visitBacksightAzimuth( UnitizedDouble<Angle> bsAzimuth )
-				{
-					System.out.println( "  bsAzm:        " + bsAzimuth );
-				}
-
-				@Override
-				public void visitFrontsightInclination( UnitizedDouble<Angle> fsInclination )
-				{
-					System.out.println( "  fsInc:        " + fsInclination );
-				}
-
-				@Override
-				public void visitBacksightInclination( UnitizedDouble<Angle> bsInclination )
-				{
-					System.out.println( "  bsInc:        " + bsInclination );
-				}
-
-				@Override
-				public void visitNorth( UnitizedDouble<Length> north )
-				{
-					System.out.println( "  north:        " + north );
-				}
-
-				@Override
-				public void visitEast( UnitizedDouble<Length> east )
-				{
-					System.out.println( "  east:         " + east );
-				}
-
-				@Override
-				public void visitVectorUp( UnitizedDouble<Length> up )
-				{
-					System.out.println( "  vUp:          " + up );
-				}
-
-				@Override
-				public void visitInstrumentHeight( UnitizedDouble<Length> instrumentHeight )
-				{
-					System.out.println( "  ih:           " + instrumentHeight );
-				}
-
-				@Override
-				public void visitTargetHeight( UnitizedDouble<Length> targetHeight )
-				{
-					System.out.println( "  th:           " + targetHeight );
-				}
-
-				@Override
-				public void visitLeft( UnitizedDouble<Length> left )
-				{
-					System.out.println( "  left:         " + left );
-				}
-
-				@Override
-				public void visitRight( UnitizedDouble<Length> right )
-				{
-					System.out.println( "  right:        " + right );
-				}
-
-				@Override
-				public void visitUp( UnitizedDouble<Length> up )
-				{
-					System.out.println( "  up:           " + up );
-				}
-
-				@Override
-				public void visitDown( UnitizedDouble<Length> down )
-				{
-					System.out.println( "  down:         " + down );
-				}
-
-				@Override
-				public void visitLrudFacingAngle( UnitizedDouble<Angle> facingAngle )
-				{
-					System.out.println( "  facingAngle:  " + facingAngle );
-				}
-
-				@Override
-				public void visitCFlag( )
-				{
-					System.out.println( "  cflag" );
-				}
-
-				@Override
-				public void visitHorizontalVarianceOverride( VarianceOverride variance )
-				{
-					System.out.println( "  h:            " + variance );
-				}
-
-				@Override
-				public void visitVerticalVarianceOverride( VarianceOverride variance )
-				{
-					System.out.println( "  v:            " + variance );
-				}
-
-				@Override
-				public void visitSegment( Segment segment )
-				{
-					System.out.println( "  segment:      " + segment );
-				}
-
-				@Override
-				public void visitComment( Segment comment )
-				{
-					System.out.println( "  comment:      " + comment );
-				}
-			} );
+			parser.parseLine( segment );
 		}
 		catch( Exception ex )
 		{
@@ -1384,8 +1973,9 @@ public class WallsParser
 	public static void main( String[ ] args )
 	{
 		WallsParser parser = new WallsParser( );
+		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
 
-		temp( parser , "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
+		temp( parser , "*A*1 B1 350 41 +25/-6 *2, --, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
 		temp( parser , "*A*1 B1 350 41 +25 *2, 3, 4,5,C*#Q /some/really/cool segment;4, 5>" );
 		temp( parser , "*A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
 		temp( parser , "*A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
@@ -1410,15 +2000,44 @@ public class WallsParser
 		temp( parser , "A1 B1 350 41 +25 (3;, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
 		temp( parser , "A1 B1 350 41 +25 (3, 5) <2, 3,4,5 *#Seg blah;4, 5>" );
 		temp( parser , "A1 B1 350 41 +25 (3, 5) hello <2, 3,4,5 *#Seg blah;4, 5>" );
-		parser.units.tape = Arrays.asList( TapingMethodElement.values( ) );
+
+		temp( parser , "#u tape=it" );
 		temp( parser , "A1 B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
 		temp( parser , "A1 B1 350 41 +25 15 16 17 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
 
-		parser.units.prefix.add( "A" );
-		parser.units.prefix.add( "CR" );
-		parser.units.case_ = CaseType.Lower;
+		temp( parser , "   #flag /This is a test" );
+		temp( parser , "   #flag AB30 /This is a test" );
+		temp( parser , "   #f" );
+		temp( parser , "   #f AB30 CY5 /This is a test" );
+		//temp( parser , "   #u prefix1=A prefix2=CR case=lower" );
+		temp( parser , "   #u prefix1=A case=lower" );
+		temp( parser , "  #prefix2 CR    ;test" );
 
-		temp( parser , "A1 B:B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
-		temp( parser , "FR::A1 B:B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( parser , "   #symbol aslkjb;lkj aslkjasdf a; asdflaksjdf" );
+		temp( parser , "   #sym ; asdlkfjasldf" );
+
+		temp( parser , "    \tA1 B:B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( parser , " FR::A1 B:B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+		temp( parser , "   #seg /hello/world  blah;comment" );
+
+		temp( parser , "   #note FR::A1  blah\\n\" hello\\n hello;comment" );
+
+		temp( parser , "#date 2015-01-16" );
+		temp( parser , "#date 01-16-2005" );
+		temp( parser , "#date 01-16-05" );
+		temp( parser , "#date 01/16/05" );
+		temp( parser , "#date 01/16/1905" );
+
+		temp( parser , "  #[ this is a test" );
+		temp( parser , "  blah" );
+		temp( parser , "  blah" );
+		temp( parser , "  #segment /hello/world" );
+		temp( parser , "  ;#]" );
+		temp( parser , "  #segment /hello/world" );
+		temp( parser , "  #]" );
+
+		temp( parser , " FR::A1 B:B1 350 41 +25 15 16 (3, 5) <2, 3,4,5 >#Seg blah;4, 5>" );
+
+		temp( parser , " #fix GPS9 620765 3461243 123 (R5,?) /Bat Cave Entrance" );
 	}
 }
