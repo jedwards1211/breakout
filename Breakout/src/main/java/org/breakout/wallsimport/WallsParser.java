@@ -277,7 +277,7 @@ public class WallsParser
 	@FunctionalInterface
 	private static interface UnitsOption
 	{
-		public void process( WallsLineParser parser , Segment optionName );
+		public void process( WallsLineParser parser );
 	}
 
 	@FunctionalInterface
@@ -990,7 +990,7 @@ public class WallsParser
 		public void unitsOption( )
 		{
 			Segment optionName = expect( unitsOptionPattern , WallsExpectedTypes.UNITS_OPTION );
-			optionName.parseToLowerCaseAsAnyOf( unitsOptions ).process( this , optionName );
+			optionName.parseToLowerCaseAsAnyOf( unitsOptions ).process( this );
 		}
 
 		public void macroOption( )
@@ -1005,93 +1005,93 @@ public class WallsParser
 			macros.put( macroName , macroValue );
 		}
 
-		public void save( Segment optionName )
+		public void save( )
 		{
 			if( stack.size( ) > 10 )
 			{
-				throw new SegmentParseException( optionName , WallsParseError.STACK_FULL );
+				throw new SegmentParseException( line.substring( i - 4 , i ) , WallsParseError.STACK_FULL );
 			}
 			stack.push( units.clone( ) );
 		}
 
-		public void restore( Segment optionName )
+		public void restore( )
 		{
 			if( stack.isEmpty( ) )
 			{
-				throw new SegmentParseException( optionName , WallsParseError.STACK_EMPTY );
+				throw new SegmentParseException( line.substring( i - 7 , i ) , WallsParseError.STACK_EMPTY );
 			}
 			units = stack.pop( );
 		}
 
-		public void reset( Segment optionName )
+		public void reset( )
 		{
 			units = new WallsUnits( );
 		}
 
-		public void meters( Segment optionName )
+		public void meters( )
 		{
 			units.d_unit = units.s_unit = Length.meters;
 		}
 
-		public void feet( Segment optionName )
+		public void feet( )
 		{
 			units.d_unit = units.s_unit = Length.feet;
 		}
 
-		public void d( Segment optionName )
+		public void d( )
 		{
 			expect( '=' );
 			units.d_unit = oneOfIgnoreCase( lengthUnits.entrySet( ) );
 		}
 
-		public void s( Segment optionName )
+		public void s( )
 		{
 			expect( '=' );
 			units.s_unit = oneOfIgnoreCase( lengthUnits.entrySet( ) );
 		}
 
-		public void a( Segment optionName )
+		public void a( )
 		{
 			expect( '=' );
 			units.a_unit = oneOfIgnoreCase( azmUnits.entrySet( ) );
 		}
 
-		public void ab( Segment optionName )
+		public void ab( )
 		{
 			expect( '=' );
 			units.ab_unit = oneOfIgnoreCase( azmUnits.entrySet( ) );
 		}
 
-		public void a_ab( Segment optionName )
+		public void a_ab( )
 		{
 			expect( '=' );
 			units.a_unit = units.ab_unit = oneOfIgnoreCase( azmUnits.entrySet( ) );
 		}
 
-		public void v( Segment optionName )
+		public void v( )
 		{
 			expect( '=' );
 			units.v_unit = oneOfIgnoreCase( incUnits.entrySet( ) );
 		}
 
-		public void vb( Segment optionName )
+		public void vb( )
 		{
 			expect( '=' );
 			units.vb_unit = oneOfIgnoreCase( incUnits.entrySet( ) );
 		}
 
-		public void v_vb( Segment optionName )
+		public void v_vb( )
 		{
 			expect( '=' );
 			units.v_unit = units.vb_unit = oneOfIgnoreCase( incUnits.entrySet( ) );
 		}
 
-		public void ct( Segment optionName )
+		public void ct( )
 		{
 			units.vectorType = VectorType.CT;
 		}
 
-		public void order( Segment optionName )
+		public void order( )
 		{
 			expect( '=' );
 			oneOf( this::ctOrder , this::rectOrder );
@@ -1148,19 +1148,19 @@ public class WallsParser
 			return result.toArray( );
 		}
 
-		public void decl( Segment optionName )
+		public void decl( )
 		{
 			expect( '=' );
 			units.decl = azimuthOffset( units.a_unit );
 		}
 
-		public void grid( Segment optionName )
+		public void grid( )
 		{
 			expect( '=' );
 			units.grid = azimuthOffset( units.a_unit );
 		}
 
-		public void rect( Segment optionName )
+		public void rect( )
 		{
 			if( maybe( ( ) -> expect( '=' ) ) )
 			{
@@ -1172,49 +1172,49 @@ public class WallsParser
 			}
 		}
 
-		public void incd( Segment optionName )
+		public void incd( )
 		{
 			expect( '=' );
 			units.incd = length( units.d_unit );
 		}
 
-		public void inch( Segment optionName )
+		public void inch( )
 		{
 			expect( '=' );
 			units.inch = length( units.s_unit );
 		}
 
-		public void incs( Segment optionName )
+		public void incs( )
 		{
 			expect( '=' );
 			units.incs = length( units.s_unit );
 		}
 
-		public void inca( Segment optionName )
+		public void inca( )
 		{
 			expect( '=' );
 			units.inca = azimuthOffset( units.a_unit );
 		}
 
-		public void incab( Segment optionName )
+		public void incab( )
 		{
 			expect( '=' );
 			units.incab = azimuthOffset( units.ab_unit );
 		}
 
-		public void incv( Segment optionName )
+		public void incv( )
 		{
 			expect( '=' );
 			units.incv = inclination( units.v_unit );
 		}
 
-		public void incvb( Segment optionName )
+		public void incvb( )
 		{
 			expect( '=' );
 			units.incvb = inclination( units.vb_unit );
 		}
 
-		public void typeab( Segment optionName )
+		public void typeab( )
 		{
 			expect( '=' );
 			units.typeab_corrected = oneOfIgnoreCase( correctedValues.entrySet( ) );
@@ -1231,7 +1231,7 @@ public class WallsParser
 			}
 		}
 
-		public void typevb( Segment optionName )
+		public void typevb( )
 		{
 			expect( '=' );
 			units.typevb_corrected = oneOfIgnoreCase( correctedValues.entrySet( ) );
@@ -1248,13 +1248,13 @@ public class WallsParser
 			}
 		}
 
-		public void case_( Segment optionName )
+		public void case_( )
 		{
 			expect( '=' );
 			units.case_ = oneOfIgnoreCase( caseTypes.entrySet( ) );
 		}
 
-		public void lrud( Segment optionName )
+		public void lrud( )
 		{
 			expect( '=' );
 			units.lrud = oneOfIgnoreCase( lrudTypes.entrySet( ) );
@@ -1303,17 +1303,17 @@ public class WallsParser
 			return result.toArray( );
 		}
 
-		public void prefix1( Segment optionName )
+		public void prefix1( )
 		{
 			prefix( 0 );
 		}
 
-		public void prefix2( Segment optionName )
+		public void prefix2( )
 		{
 			prefix( 1 );
 		}
 
-		public void prefix3( Segment optionName )
+		public void prefix3( )
 		{
 			prefix( 2 );
 		}
@@ -1329,31 +1329,31 @@ public class WallsParser
 			units.setPrefix( index , prefix );
 		}
 
-		public void tape( Segment optionName )
+		public void tape( )
 		{
 			expect( '=' );
 			units.tape = oneOfIgnoreCase( tapingMethods.entrySet( ) );
 		}
 
-		public void uvh( Segment optionName )
+		public void uvh( )
 		{
 			expect( '=' );
 			units.uvh = unsignedDoubleLiteral( );
 		}
 
-		public void uvv( Segment optionName )
+		public void uvv( )
 		{
 			expect( '=' );
 			units.uvv = unsignedDoubleLiteral( );
 		}
 
-		public void uv( Segment optionName )
+		public void uv( )
 		{
 			expect( '=' );
 			units.uv = unsignedDoubleLiteral( );
 		}
 
-		public void flag( Segment optionName )
+		public void flag( )
 		{
 			String flag = null;
 			if( maybe( ( ) -> expect( '=' ) ) )
