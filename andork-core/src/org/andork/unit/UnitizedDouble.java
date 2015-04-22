@@ -76,4 +76,9 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T>
 	{
 		return new UnitizedDouble<T>( -value , unit );
 	}
+
+	public boolean isZero( )
+	{
+		return value == 0;
+	}
 }

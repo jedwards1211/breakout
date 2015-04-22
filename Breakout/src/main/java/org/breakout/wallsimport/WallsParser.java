@@ -363,6 +363,12 @@ public class WallsParser
 
 		public void endFixLine( );
 
+		public void beginUnitsLine( );
+
+		public void abortUnitsLine( );
+
+		public void endUnitsLine( );
+
 		public void visitFixedStation( String string );
 	}
 
@@ -975,7 +981,18 @@ public class WallsParser
 				( ) -> expectIgnoreCase( "#units" ) ,
 				( ) -> expectIgnoreCase( "#u" ) );
 
-			unitsOptions( );
+			visitor.beginUnitsLine( );
+
+			try
+			{
+				unitsOptions( );
+				visitor.endUnitsLine( );
+			}
+			catch( Exception ex )
+			{
+				visitor.abortUnitsLine( );
+				throw ex;
+			}
 		}
 
 		public void unitsOptions( )
@@ -1829,6 +1846,11 @@ public class WallsParser
 		this.visitor = visitor;
 	}
 
+	public WallsUnits units( )
+	{
+		return this.units;
+	}
+
 	public class DumpingWallsLineVisitor implements WallsLineVisitor
 	{
 		public DumpingWallsLineVisitor( )
@@ -2044,6 +2066,24 @@ public class WallsParser
 		public void visitFixedStation( String station )
 		{
 			System.out.println( "  fixed station:" + station );
+		}
+
+		@Override
+		public void beginUnitsLine( )
+		{
+			System.out.println( "begin units line" );
+		}
+
+		@Override
+		public void abortUnitsLine( )
+		{
+			System.out.println( "abort units line" );
+		}
+
+		@Override
+		public void endUnitsLine( )
+		{
+			System.out.println( "end units line" );
 		}
 	}
 

@@ -16,7 +16,7 @@ grad
       "distUnit": "ft",                                                        
       "stations":
       [
-        {"station": "AE20", "nev": [[0, "ft"], 0, 0]},
+        {"station": "AE20", "north": [0, "ft"], "east": 0, "up": 0},
         ...
       ]
     },
@@ -29,8 +29,8 @@ grad
                                                                                // support data other than WGS84.
       "stations":
       [
-        {"station": "Q", "utmZone": "17T", "datum": "NAD27", "nev": [0, 0, 0]},
-        {"station": "B", "latLonElev": [0, 0, 0]},
+        {"station": "Q", "utmZone": "17T", "datum": "NAD27", "north": 0, "east": 0, "up": 0},
+        {"station": "B", "lat": 0, "lon": 0, "elev": 0},
         ...
       ]
     },
