@@ -73,7 +73,8 @@ public class WallsParser
 
 	private static final Map<Character, Unit<Length>> lengthUnitSuffixes = new MapLiteral<Character, Unit<Length>>( )
 		.map( 'm' , Length.meters )
-		.map( 'f' , Length.feet );
+		.map( 'f' , Length.feet )
+		.map( 'i' , Length.inches );
 
 	private static final Map<Character, Unit<Angle>> azmUnitSuffixes = new MapLiteral<Character, Unit<Angle>>( )
 		.map( 'd' , Angle.degrees )
@@ -385,14 +386,26 @@ public class WallsParser
 
 		public UnitizedDouble<Length> length( Unit<Length> defaultUnit )
 		{
-			return new UnitizedDouble<>( doubleLiteral( ) ,
-				oneOfLowercase( lengthUnitSuffixes , defaultUnit ) );
+			double value = doubleLiteral( );
+			Unit<Length> unit = oneOfLowercase( lengthUnitSuffixes , defaultUnit );
+			if( unit == Length.inches )
+			{
+				double inches = unsignedDoubleLiteral( );
+				return new UnitizedDouble<>( value * 12 + inches * ( value > 0 ? 1 : -1 ) , Length.inches );
+			}
+			return new UnitizedDouble<>( value , unit );
 		}
 
 		public UnitizedDouble<Length> unsignedLength( Unit<Length> defaultUnit )
 		{
-			return new UnitizedDouble<>( unsignedDoubleLiteral( ) ,
-				oneOfLowercase( lengthUnitSuffixes , defaultUnit ) );
+			double value = unsignedDoubleLiteral( );
+			Unit<Length> unit = oneOfLowercase( lengthUnitSuffixes , defaultUnit );
+			if( unit == Length.inches )
+			{
+				double inches = unsignedDoubleLiteral( );
+				return new UnitizedDouble<>( value * 12 + inches , Length.inches );
+			}
+			return new UnitizedDouble<>( value , unit );
 		}
 
 		public UnitizedDouble<Angle> unsignedAngle( Map<Character, Unit<Angle>> unitSuffixes , Unit<Angle> defaultUnit )
@@ -2106,7 +2119,7 @@ public class WallsParser
 		WallsParser parser = new WallsParser( );
 		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
 
-		temp( parser , "A*1 B1 350 41 +25/-6 *2, --, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
+		temp( parser , "A*1 B1 350i4 41 +25/-6 *2, --, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
 		temp( parser , "A*1 B1 350 41 +25 *2, 3, 4,5,C*#Q /some/really/cool segment;4, 5>" );
 		temp( parser , "A*1 B1 350 41 +25 *2, 3 4,5,C*;4, 5>" );
 		temp( parser , "A*1 B1 350 41 +25 *2 3 4 5 C*;4, 5>" );
