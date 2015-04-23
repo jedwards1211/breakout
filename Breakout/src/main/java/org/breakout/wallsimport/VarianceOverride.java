@@ -5,8 +5,18 @@ import org.andork.unit.UnitizedDouble;
 
 public abstract class VarianceOverride
 {
-	public static final VarianceOverride FLOATED = new VarianceOverride( ) {};
-	public static final VarianceOverride FLOATED_TRAVERSE = new VarianceOverride( ) {};
+	public static final VarianceOverride FLOATED = new VarianceOverride( ) {
+		public String toString( )
+		{
+			return "?";
+		}
+	};
+	public static final VarianceOverride FLOATED_TRAVERSE = new VarianceOverride( ) {
+		public String toString( )
+		{
+			return "*";
+		}
+	};
 
 	public static final class LengthOverride extends VarianceOverride
 	{
@@ -15,6 +25,11 @@ public abstract class VarianceOverride
 		public LengthOverride( UnitizedDouble<Length> lengthOverride )
 		{
 			this.lengthOverride = lengthOverride;
+		}
+
+		public String toString( )
+		{
+			return lengthOverride.toString( );
 		}
 	}
 
@@ -25,6 +40,11 @@ public abstract class VarianceOverride
 		public RMSError( UnitizedDouble<Length> error )
 		{
 			this.error = error;
+		}
+
+		public String toString( )
+		{
+			return "R" + error.toString( );
 		}
 	}
 }

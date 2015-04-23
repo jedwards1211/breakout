@@ -49,7 +49,7 @@ public class Angle extends UnitType<Angle>
 		type.addUnit( gradians = new AngleUnit( type , "grad" ,
 			angle -> Math.PI * angle / 200.0 ,
 			angle -> angle * 200.0 / Math.PI ) );
-		type.addUnit( percentGrade = new AngleUnit( type , "% grade" ,
+		type.addUnit( percentGrade = new AngleUnit( type , "%" ,
 			angle -> Math.atan( angle / 100.0 ) ,
 			angle -> Math.tan( angle ) * 100 ) );
 		type.addUnit( milsNATO = new AngleUnit( type , "mil" ,

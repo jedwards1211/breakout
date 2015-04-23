@@ -73,18 +73,9 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 	 */
 	private ObjectNode fromStation;
 
-	/**
-	 * The current shot
-	 */
-	private ObjectNode shot;
-
-	/**
-	 * The to station of the current shot
-	 */
-	private ObjectNode toStation;
-
 	private String from;
 	private String to;
+
 	private UnitizedDouble<Length> distance;
 	private UnitizedDouble<Angle> fsAzm;
 	private UnitizedDouble<Angle> bsAzm;
@@ -98,16 +89,20 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 	private UnitizedDouble<Length> east;
 	private UnitizedDouble<Length> rUp;
 
-	private UnitizedDouble<Angle> lat;
-	private UnitizedDouble<Angle> lon;
-
 	private UnitizedDouble<Length> left;
 	private UnitizedDouble<Length> right;
 	private UnitizedDouble<Length> up;
 	private UnitizedDouble<Length> down;
 	private UnitizedDouble<Angle> facingAngle;
 
+	private String fixedStation;
+	private UnitizedDouble<Angle> lat;
+	private UnitizedDouble<Angle> lon;
+
 	private String inlineComment;
+	private String inlineSegment;
+	private String inlineNote;
+	private StringBuilder priorComments = new StringBuilder( );
 
 	private static String asTextOrNull( JsonNode node , String prop )
 	{
@@ -115,6 +110,10 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		return node == null ? null : node.asText( );
 	}
 
+	/**
+	 * @param angle
+	 * @return {@code true} if the given inclination angle is approximately vertical
+	 */
 	private static boolean isVertical( UnitizedDouble<Angle> angle )
 	{
 		return Math.abs( Math.abs( angle.doubleValue( Angle.degrees ) ) - 90.0 ) < 0.0001;
@@ -127,6 +126,15 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 				-180.0 : 180.0 , Angle.degrees ) );
 	}
 
+	/**
+	 * Converts a {@link UnitizedDouble} quantity to its representation metacave format.
+	 * This is just a number if it is in the default unit for its context, otherwise an array
+	 * containing the number and the unit id string (for inches, the first two entries are feet
+	 * and the last two are inches)
+	 * @param value
+	 * @param defaultUnit
+	 * @return
+	 */
 	private <T extends UnitType<T>> JsonNode quantity( UnitizedDouble<T> value , Unit<T> defaultUnit )
 	{
 		if( value == null )
@@ -135,10 +143,13 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		}
 		if( value.unit == Length.inches )
 		{
+			@SuppressWarnings( "unchecked" )
 			UnitizedDouble<Length> lvalue = ( UnitizedDouble<Length> ) value;
+
 			double inches = lvalue.doubleValue( Length.inches );
 			double feet = Math.floor( inches / 12.0 );
 			inches = Math.abs( inches ) % 12.0;
+
 			return new ArrayNode( nodeFactory )
 				.add( new DoubleNode( feet ) )
 				.add( new TextNode( Length.feet.id ) )
@@ -154,6 +165,10 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 			.add( new TextNode( value.unit.id ) );
 	}
 
+	/**
+	 * Adds the current fixed station group to the output if it is not empty,
+	 * and sets the current fixed station group to a new one.
+	 */
 	private void newFixedStationGroup( )
 	{
 		if( fixedGroupStations != null && fixedGroupStations.size( ) > 0 )
@@ -165,6 +180,10 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		fixedGroup.set( "stations" , fixedGroupStations );
 	}
 
+	/**
+	 * Adds the current trip to the output if it is not empty,
+	 * and sets the current trip to a new one.
+	 */
 	private void newTrip( )
 	{
 		if( survey != null && survey.size( ) > 0 )
@@ -175,11 +194,12 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		survey = new ArrayNode( nodeFactory );
 		trip.set( "survey" , survey );
 		fromStation = null;
-		shot = null;
-		toStation = null;
 	}
 
-	private void nullifyVectorLineFields( )
+	/**
+	 * Nullifies all fields that temporarily store values received by the visitor methods.
+	 */
+	private void nullifyFields( )
 	{
 		from = null;
 		to = null;
@@ -193,16 +213,22 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		north = null;
 		east = null;
 		rUp = null;
-		lat = null;
-		lon = null;
 		left = null;
 		right = null;
 		up = null;
 		down = null;
 		facingAngle = null;
+		fixedStation = null;
+		lat = null;
+		lon = null;
 		inlineComment = null;
+		inlineSegment = null;
 	}
 
+	/**
+	 * Splits a processed (i.e. with prefixes) station name into the "cave" name
+	 * (all prefixes) and station name (the rest).
+	 */
 	private String[ ] caveAndStation( String procStationName )
 	{
 		String cave , station;
@@ -226,6 +252,11 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		return new String[ ] { cave , station };
 	}
 
+	/**
+	 * Applies inch (height adjustment, instrument height, and target height,
+	 * by adjusting the distance and inclination(s), since these corrections
+	 * are not supported by the metacave format.
+	 */
 	private void applyUnsupportedCorrections( )
 	{
 		WallsUnits units = parser.units( );
@@ -262,7 +293,14 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 				}
 				if( bsInc != null )
 				{
-					bsInc = bsInc.add( dinc );
+					if( parser.units( ).typevb_corrected )
+					{
+						bsInc = bsInc.add( dinc );
+					}
+					else
+					{
+						bsInc = bsInc.subtract( dinc );
+					}
 				}
 
 				distance = new UnitizedDouble<>( Math.sqrt( ne * ne + u * u ) , distance.unit );
@@ -270,24 +308,33 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		}
 	}
 
-	private UnitizedDouble<Angle> avgInc( UnitizedDouble<Angle> a , UnitizedDouble<Angle> b )
+	/**
+	 * @param fsInc
+	 * @param bsInc
+	 * @return the average inclination, relative to frontsight.
+	 */
+	private UnitizedDouble<Angle> avgInc( UnitizedDouble<Angle> fsInc , UnitizedDouble<Angle> bsInc )
 	{
-		if( b != null && !parser.units( ).typevb_corrected )
+		if( bsInc != null && !parser.units( ).typevb_corrected )
 		{
-			b = b.negate( );
+			bsInc = bsInc.negate( );
 		}
-		if( a == null )
+		if( fsInc == null )
 		{
-			return b;
+			return bsInc;
 		}
-		if( b == null )
+		if( bsInc == null )
 		{
-			return a;
+			return fsInc;
 		}
 
-		return new UnitizedDouble<>( ( a.doubleValue( a.unit ) + b.doubleValue( a.unit ) ) * 0.5 , a.unit );
+		return new UnitizedDouble<>( ( fsInc.doubleValue( fsInc.unit ) + bsInc.doubleValue( fsInc.unit ) ) * 0.5 , fsInc.unit );
 	}
 
+	/**
+	 * Converts rectangular vector measurements into compass-and-tape measurements,
+	 * since rectangular measurements are not supported by the metacave format.
+	 */
 	private void rectToCt( )
 	{
 		WallsUnits units = parser.units( );
@@ -304,6 +351,9 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		fsInc = new UnitizedDouble<>( Math.atan2( u , ne ) , units.v_unit );
 	}
 
+	/**
+	 * @return {@code true} if the current line contained any LRUDs.
+	 */
 	private boolean gotLruds( )
 	{
 		return left != null || right != null || up != null || down != null;
@@ -341,13 +391,13 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 	@Override
 	public void beginVectorLine( )
 	{
-		nullifyVectorLineFields( );
+		nullifyFields( );
 	}
 
 	@Override
 	public void abortVectorLine( )
 	{
-		nullifyVectorLineFields( );
+		nullifyFields( );
 	}
 
 	public boolean newFromStationIfNecessary( String procStationName )
@@ -418,8 +468,8 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 				bsInc = bsInc.negate( );
 			}
 
-			shot = new ObjectNode( nodeFactory );
-			toStation = new ObjectNode( nodeFactory );
+			ObjectNode shot = new ObjectNode( nodeFactory );
+			ObjectNode toStation = new ObjectNode( nodeFactory );
 
 			if( usePrefixesAsCaveNames )
 			{
@@ -500,6 +550,24 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 			{
 				shot.set( "comment" , new TextNode( inlineComment ) );
 			}
+			if( inlineSegment != null )
+			{
+				shot.set( "segment" , new TextNode( inlineSegment ) );
+			}
+			else if( units.segment != null )
+			{
+				shot.set( "segment" , new TextNode( units.segment ) );
+			}
+			if( units.flag != null )
+			{
+				shot.set( "flag" , new TextNode( units.flag ) );
+			}
+
+			if( priorComments.length( ) > 0 )
+			{
+				shot.set( "priorComments" , new TextNode( priorComments.toString( ) ) );
+				priorComments = new StringBuilder( );
+			}
 
 			survey.add( shot );
 			survey.add( toStation );
@@ -507,6 +575,8 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 			fromStation = toStation;
 			shot = null;
 			toStation = null;
+
+			nullifyFields( );
 		}
 		else if( gotLruds( ) )
 		{
@@ -645,43 +715,38 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 	@Override
 	public void visitCFlag( )
 	{
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void visitHorizontalVarianceOverride( VarianceOverride variance )
 	{
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void visitVerticalVarianceOverride( VarianceOverride variance )
 	{
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
-	public void visitInlineSegment( String segment )
+	public void visitInlineSegment( String inlineSegment )
 	{
-		// TODO Auto-generated method stub
-
+		this.inlineSegment = inlineSegment;
 	}
 
 	@Override
-	public void visitInlineNote( String note )
+	public void visitInlineNote( String inlineNote )
 	{
-		// TODO Auto-generated method stub
-
+		this.inlineNote = inlineNote;
 	}
 
 	@Override
-	public void visitComment( String comment )
+	public void visitCommentLine( String comment )
 	{
-		// TODO Auto-generated method stub
-
+		if( priorComments.length( ) > 0 )
+		{
+			priorComments.append( '\n' );
+		}
+		priorComments.append( comment );
 	}
 
 	@Override
@@ -693,71 +758,124 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 	@Override
 	public void visitFlaggedStations( String flag , List<String> stations )
 	{
-		// TODO Auto-generated method stub
-
+		WallsUnits units = parser.units( );
+		for( String station : stations )
+		{
+			newFromStationIfNecessary( units.processStationName( station ) );
+			fromStation.set( "flag" , new TextNode( flag ) );
+		}
 	}
 
 	@Override
 	public void visitBlockCommentLine( String string )
 	{
-		// TODO Auto-generated method stub
-
+		visitCommentLine( string );
 	}
 
 	@Override
 	public void visitNoteLine( String station , String note )
 	{
-		// TODO Auto-generated method stub
-
+		newFromStationIfNecessary( parser.units( ).processStationName( station ) );
+		fromStation.set( "note" , new TextNode( note ) );
 	}
 
 	@Override
 	public void beginFixLine( )
 	{
-		// TODO Auto-generated method stub
-
+		nullifyFields( );
 	}
 
 	@Override
 	public void abortFixLine( )
 	{
-		// TODO Auto-generated method stub
-
+		nullifyFields( );
 	}
 
 	@Override
 	public void endFixLine( )
 	{
-		// TODO Auto-generated method stub
+		WallsUnits units = parser.units( );
+		ObjectNode station = new ObjectNode( nodeFactory );
+		station.set( "station" , new TextNode( fixedStation ) );
 
+		if( north != null )
+		{
+			station.set( "north" , quantity( north , units.d_unit ) );
+		}
+		if( east != null )
+		{
+			station.set( "east" , quantity( east , units.d_unit ) );
+		}
+		if( rUp != null )
+		{
+			station.set( "up" , quantity( rUp , units.d_unit ) );
+		}
+		if( lat != null )
+		{
+			station.set( "lat" , new DoubleNode( lat.doubleValue( Angle.degrees ) ) );
+		}
+		if( lon != null )
+		{
+			station.set( "lon" , new DoubleNode( lon.doubleValue( Angle.degrees ) ) );
+		}
+
+		if( inlineSegment != null )
+		{
+			station.set( "segment" , new TextNode( inlineSegment ) );
+		}
+		else if( units.segment != null )
+		{
+			station.set( "segment" , new TextNode( units.segment ) );
+		}
+
+		if( inlineNote != null )
+		{
+			station.set( "note" , new TextNode( inlineNote ) );
+		}
+
+		if( inlineComment != null )
+		{
+			station.set( "comment" , new TextNode( inlineComment ) );
+		}
+
+		if( units.flag != null )
+		{
+			station.set( "flag" , new TextNode( units.flag ) );
+		}
+
+		if( priorComments.length( ) > 0 )
+		{
+			station.set( "priorComments" , new TextNode( priorComments.toString( ) ) );
+			priorComments = new StringBuilder( );
+		}
+
+		fixedGroupStations.add( station );
+
+		nullifyFields( );
 	}
 
 	@Override
-	public void visitFixedStation( String string )
+	public void visitFixedStation( String fixedStation )
 	{
-		// TODO Auto-generated method stub
-
+		this.fixedStation = fixedStation;
 	}
 
 	@Override
 	public void beginUnitsLine( )
 	{
-		// TODO Auto-generated method stub
 	}
 
 	@Override
 	public void abortUnitsLine( )
 	{
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void endUnitsLine( )
 	{
-		newTrip( );
-
 		WallsUnits units = parser.units( );
+
+		newTrip( );
 
 		trip.set( "distUnit" , new TextNode( units.d_unit.id ) );
 		trip.set( "angleUnit" , new TextNode( units.a_unit.id ) );
@@ -813,6 +931,20 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		if( !units.incvb.isZero( ) )
 		{
 			trip.set( "incBsCorrection" , quantity( units.incvb , units.vb_unit ) );
+		}
+
+		newFixedStationGroup( );
+
+		fixedGroup.set( "distUnit" , new TextNode( units.d_unit.id ) );
+		fixedGroup.set( "angleUnit" , new TextNode( units.a_unit.id ) );
+
+		if( usePrefixesAsCaveNames )
+		{
+			String prefix = units.processStationName( "" );
+			if( !prefix.isEmpty( ) )
+			{
+				fixedGroup.set( "cave" , new TextNode( prefix ) );
+			}
 		}
 	}
 }

@@ -365,7 +365,7 @@ public class WallsParser
 
 		public void visitInlineNote( String note );
 
-		public void visitComment( String comment );
+		public void visitCommentLine( String comment );
 
 		public void abortVectorLine( );
 
@@ -1039,7 +1039,7 @@ public class WallsParser
 
 		public void unitsOptions( )
 		{
-			while( !maybe( ( ) -> oneOf( this::endOfLine , this::comment ) ) )
+			while( !maybe( this::inlineCommentOrEndOfLine ) )
 			{
 				whitespace( );
 				maybe( ( ) -> oneOf( this::unitsOption , this::macroOption ) );
@@ -1868,7 +1868,7 @@ public class WallsParser
 		public void comment( )
 		{
 			semicolon( );
-			visitor.visitComment( remaining( ).toString( ) );
+			visitor.visitCommentLine( remaining( ).toString( ) );
 		}
 
 		public void inlineComment( )
@@ -2090,21 +2090,21 @@ public class WallsParser
 		}
 
 		@Override
-		public void visitComment( String comment )
+		public void visitCommentLine( String comment )
 		{
-			System.out.println( "  comment:      " + comment );
+			System.out.println( "comment:        " + comment );
 		}
 
 		@Override
 		public void beginVectorLine( )
 		{
-			System.out.println( "begin vector line" );
+			System.out.println( "=== begin vector line ===" );
 		}
 
 		@Override
 		public void endVectorLine( )
 		{
-			System.out.println( "end vector line" );
+			System.out.println( "=== end vector line ===" );
 		}
 
 		@Override
@@ -2128,25 +2128,25 @@ public class WallsParser
 		@Override
 		public void abortVectorLine( )
 		{
-			System.out.println( "abort vector line" );
+			System.out.println( "=== abort vector line ===" );
 		}
 
 		@Override
 		public void beginFixLine( )
 		{
-			System.out.println( "begin fix line" );
+			System.out.println( "=== begin fix line ===" );
 		}
 
 		@Override
 		public void abortFixLine( )
 		{
-			System.out.println( "abort fix line" );
+			System.out.println( "=== abort fix line ===" );
 		}
 
 		@Override
 		public void endFixLine( )
 		{
-			System.out.println( "end fix line" );
+			System.out.println( "=== end fix line ===" );
 		}
 
 		@Override
@@ -2176,25 +2176,25 @@ public class WallsParser
 		@Override
 		public void beginUnitsLine( )
 		{
-			System.out.println( "begin units line" );
+			System.out.println( "=== begin units line ===" );
 		}
 
 		@Override
 		public void abortUnitsLine( )
 		{
-			System.out.println( "abort units line" );
+			System.out.println( "=== abort units line ===" );
 		}
 
 		@Override
 		public void endUnitsLine( )
 		{
-			System.out.println( "end units line" );
+			System.out.println( "=== end units line ===" );
 		}
 
 		@Override
 		public void visitInlineComment( String comment )
 		{
-			System.out.println( "  inline comment: " + comment );
+			System.out.println( "  comment:      " + comment );
 		}
 	}
 
