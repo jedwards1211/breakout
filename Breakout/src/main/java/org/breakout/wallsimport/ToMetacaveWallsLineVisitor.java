@@ -36,9 +36,11 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 
 	// how to handle UTM zones and datum?
 
-	private final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-ddTHH:mmZ" );
+	private final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd'T'HH:mmZ" );
 
 	private WallsParser parser;
+
+	private boolean usePrefixesAsCaveNames = false;
 
 	private JsonNodeFactory nodeFactory;
 
@@ -105,6 +107,8 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 	private UnitizedDouble<Length> down;
 	private UnitizedDouble<Angle> facingAngle;
 
+	private String inlineComment;
+
 	private static String asTextOrNull( JsonNode node , String prop )
 	{
 		node = node.get( prop );
@@ -129,11 +133,24 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		{
 			return NullNode.instance;
 		}
+		if( value.unit == Length.inches )
+		{
+			UnitizedDouble<Length> lvalue = ( UnitizedDouble<Length> ) value;
+			double inches = lvalue.doubleValue( Length.inches );
+			double feet = Math.floor( inches / 12.0 );
+			inches = Math.abs( inches ) % 12.0;
+			return new ArrayNode( nodeFactory )
+				.add( new DoubleNode( feet ) )
+				.add( new TextNode( Length.feet.id ) )
+				.add( new DoubleNode( inches ) )
+				.add( new TextNode( Length.inches.id ) );
+		}
 		if( value.unit == defaultUnit )
 		{
 			return new DoubleNode( value.doubleValue( value.unit ) );
 		}
-		return new ArrayNode( nodeFactory ).add( new DoubleNode( value.doubleValue( value.unit ) ) )
+		return new ArrayNode( nodeFactory )
+			.add( new DoubleNode( value.doubleValue( value.unit ) ) )
 			.add( new TextNode( value.unit.id ) );
 	}
 
@@ -150,13 +167,16 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 
 	private void newTrip( )
 	{
-		if( survey.size( ) > 0 )
+		if( survey != null && survey.size( ) > 0 )
 		{
 			tripsRoot.add( trip );
 		}
 		trip = new ObjectNode( nodeFactory );
 		survey = new ArrayNode( nodeFactory );
 		trip.set( "survey" , survey );
+		fromStation = null;
+		shot = null;
+		toStation = null;
 	}
 
 	private void nullifyVectorLineFields( )
@@ -180,6 +200,7 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		up = null;
 		down = null;
 		facingAngle = null;
+		inlineComment = null;
 	}
 
 	private String[ ] caveAndStation( String procStationName )
@@ -212,6 +233,10 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		if( !units.inch.isZero( ) || ih != null || th != null )
 		{
 			UnitizedDouble<Angle> uinc = avgInc( fsInc , bsInc );
+			if( uinc == null )
+			{
+				return;
+			}
 			if( !isVertical( uinc ) )
 			{
 				double inc = uinc.doubleValue( Angle.radians );
@@ -247,7 +272,7 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 
 	private UnitizedDouble<Angle> avgInc( UnitizedDouble<Angle> a , UnitizedDouble<Angle> b )
 	{
-		if( !parser.units( ).typevb_corrected )
+		if( b != null && !parser.units( ).typevb_corrected )
 		{
 			b = b.negate( );
 		}
@@ -269,7 +294,7 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 
 		double n = north.doubleValue( units.d_unit );
 		double e = east.doubleValue( units.d_unit );
-		double u = rUp.doubleValue( units.d_unit );
+		double u = rUp == null ? 0 : rUp.doubleValue( units.d_unit );
 
 		double ne2 = n * n + e * e;
 		double ne = Math.sqrt( ne2 );
@@ -284,9 +309,33 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		return left != null || right != null || up != null || down != null;
 	}
 
-	public ToMetacaveWallsLineVisitor( )
+	public ToMetacaveWallsLineVisitor( WallsParser parser )
 	{
-		// TODO Auto-generated constructor stub
+		this.parser = parser;
+
+		root = new ObjectNode( nodeFactory );
+		root.set( "trips" , tripsRoot = new ArrayNode( nodeFactory ) );
+		root.set( "fixedStations" , fixedRoot = new ArrayNode( nodeFactory ) );
+
+		newFixedStationGroup( );
+		newTrip( );
+	}
+
+	public boolean isUsePrefixesAsCaveNames( )
+	{
+		return usePrefixesAsCaveNames;
+	}
+
+	public void setUsePrefixesAsCaveNames( boolean usePrefixesAsCaveNames )
+	{
+		this.usePrefixesAsCaveNames = usePrefixesAsCaveNames;
+	}
+
+	public JsonNode getMetacaveData( )
+	{
+		newFixedStationGroup( );
+		newTrip( );
+		return root;
 	}
 
 	@Override
@@ -303,13 +352,30 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 
 	public boolean newFromStationIfNecessary( String procStationName )
 	{
-		String[ ] caveAndStation = caveAndStation( procStationName );
-		String cave = caveAndStation[ 0 ] , station = caveAndStation[ 1 ];
+		String cave , station;
+
+		if( usePrefixesAsCaveNames )
+		{
+			String[ ] caveAndStation = caveAndStation( procStationName );
+			cave = caveAndStation[ 0 ];
+			station = caveAndStation[ 1 ];
+		}
+		else
+		{
+			cave = null;
+			station = procStationName;
+		}
 
 		if( fromStation == null ||
 			!Objects.equals( cave , asTextOrNull( fromStation , "cave" ) ) ||
 			!Objects.equals( station , asTextOrNull( fromStation , "station" ) ) )
 		{
+
+			if( fromStation != null )
+			{
+				survey.add( new ObjectNode( nodeFactory ) );
+			}
+
 			fromStation = new ObjectNode( nodeFactory );
 			fromStation.set( "station" , new TextNode( station ) );
 			if( cave != null )
@@ -355,12 +421,19 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 			shot = new ObjectNode( nodeFactory );
 			toStation = new ObjectNode( nodeFactory );
 
-			String[ ] toCaveAndStation = caveAndStation( units.processStationName( to ) );
-			if( toCaveAndStation[ 0 ] != null )
+			if( usePrefixesAsCaveNames )
 			{
-				toStation.set( "cave" , new TextNode( toCaveAndStation[ 0 ] ) );
+				String[ ] toCaveAndStation = caveAndStation( units.processStationName( to ) );
+				if( toCaveAndStation[ 0 ] != null )
+				{
+					toStation.set( "cave" , new TextNode( toCaveAndStation[ 0 ] ) );
+				}
+				toStation.set( "station" , new TextNode( toCaveAndStation[ 1 ] ) );
 			}
-			toStation.set( "station" , new TextNode( toCaveAndStation[ 1 ] ) );
+			else
+			{
+				toStation.set( "station" , new TextNode( units.processStationName( to ) ) );
+			}
 
 			shot.set( "dist" , quantity( distance , units.d_unit ) );
 			if( fsAzm != null )
@@ -423,6 +496,11 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 				}
 			}
 
+			if( inlineComment != null )
+			{
+				shot.set( "comment" , new TextNode( inlineComment ) );
+			}
+
 			survey.add( shot );
 			survey.add( toStation );
 
@@ -441,6 +519,11 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 			if( facingAngle != null )
 			{
 				fromStation.set( "lrudAngle" , quantity( facingAngle , units.a_unit ) );
+			}
+
+			if( inlineComment != null )
+			{
+				fromStation.set( "comment" , new TextNode( inlineComment ) );
 			}
 		}
 	}
@@ -602,6 +685,12 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 	}
 
 	@Override
+	public void visitInlineComment( String inlineComment )
+	{
+		this.inlineComment = inlineComment;
+	}
+
+	@Override
 	public void visitFlaggedStations( String flag , List<String> stations )
 	{
 		// TODO Auto-generated method stub
@@ -685,15 +774,16 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		{
 			trip.set( "incBsUnit" , new TextNode( units.vb_unit.id ) );
 		}
-		if( units.typeab_corrected && units.typevb_corrected )
-		{
-			trip.set( "backsightsCorrected" , BooleanNode.getTrue( ) );
-		}
+		trip.set( "backsightsCorrected" , units.typeab_corrected && units.typevb_corrected ?
+			BooleanNode.getTrue( ) : BooleanNode.getFalse( ) );
 
-		String prefix = units.processStationName( "" );
-		if( !prefix.isEmpty( ) )
+		if( usePrefixesAsCaveNames )
 		{
-			trip.set( "cave" , new TextNode( prefix ) );
+			String prefix = units.processStationName( "" );
+			if( !prefix.isEmpty( ) )
+			{
+				trip.set( "cave" , new TextNode( prefix ) );
+			}
 		}
 
 		if( units.date != null )

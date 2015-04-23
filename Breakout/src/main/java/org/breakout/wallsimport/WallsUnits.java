@@ -146,7 +146,7 @@ public class WallsUnits
 	/**
 	 * Taping method
 	 */
-	public List<TapingMethodElement> tape = Collections.emptyList( );
+	public List<TapingMethodElement> tape = Arrays.asList( TapingMethodElement.INSTRUMENT_HEIGHT , TapingMethodElement.TARGET_HEIGHT );
 	/**
 	 * Flag (arbitrary text)
 	 */

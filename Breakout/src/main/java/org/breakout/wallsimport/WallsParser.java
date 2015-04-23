@@ -5,10 +5,14 @@ import static org.breakout.wallsimport.CardinalDirection.NORTH;
 import static org.breakout.wallsimport.CardinalDirection.SOUTH;
 import static org.breakout.wallsimport.CardinalDirection.WEST;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,12 +22,14 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import org.andork.collect.MapLiteral;
 import org.andork.func.CharPredicate;
 import org.andork.parse.ExpectedTypes;
 import org.andork.parse.LineParser;
 import org.andork.parse.Segment;
+import org.andork.parse.SegmentLineReader;
 import org.andork.parse.SegmentParseException;
 import org.andork.parse.SegmentParseExpectedException;
 import org.andork.unit.Angle;
@@ -49,24 +55,37 @@ public class WallsParser
 
 	private static final Map<String, Unit<Length>> lengthUnits = new MapLiteral<String, Unit<Length>>( )
 		.map( "meters" , Length.meters )
+		.map( "meter" , Length.meters )
 		.map( "m" , Length.meters )
 		.map( "feet" , Length.feet )
+		.map( "foot" , Length.feet )
+		.map( "ft" , Length.feet )
 		.map( "f" , Length.feet );
 
 	private static final Map<String, Unit<Angle>> azmUnits = new MapLiteral<String, Unit<Angle>>( )
 		.map( "degrees" , Angle.degrees )
+		.map( "degree" , Angle.degrees )
+		.map( "deg" , Angle.degrees )
 		.map( "d" , Angle.degrees )
+		.map( "mills" , Angle.milsNATO )
 		.map( "mils" , Angle.milsNATO )
+		.map( "mil" , Angle.milsNATO )
 		.map( "m" , Angle.milsNATO )
 		.map( "grads" , Angle.gradians )
+		.map( "grad" , Angle.gradians )
 		.map( "g" , Angle.gradians );
 
 	private static final Map<String, Unit<Angle>> incUnits = new MapLiteral<String, Unit<Angle>>( )
 		.map( "degrees" , Angle.degrees )
+		.map( "degree" , Angle.degrees )
+		.map( "deg" , Angle.degrees )
 		.map( "d" , Angle.degrees )
+		.map( "mills" , Angle.milsNATO )
 		.map( "mils" , Angle.milsNATO )
+		.map( "mil" , Angle.milsNATO )
 		.map( "m" , Angle.milsNATO )
 		.map( "grads" , Angle.gradians )
+		.map( "grad" , Angle.gradians )
 		.map( "g" , Angle.gradians )
 		.map( "percent" , Angle.percentGrade )
 		.map( "p" , Angle.percentGrade );
@@ -371,6 +390,8 @@ public class WallsParser
 		public void endUnitsLine( );
 
 		public void visitFixedStation( String string );
+
+		public void visitInlineComment( String string );
 	}
 
 	public class WallsLineParser extends LineParser
@@ -386,17 +407,23 @@ public class WallsParser
 
 		public UnitizedDouble<Length> length( Unit<Length> defaultUnit )
 		{
-			double value = doubleLiteral( );
-			Unit<Length> unit = oneOfLowercase( lengthUnitSuffixes , defaultUnit );
-			if( unit == Length.inches )
+			boolean negate = maybe( ( ) -> expect( '-' ) );
+			UnitizedDouble<Length> length = unsignedLength( defaultUnit );
+			if( negate )
 			{
-				double inches = unsignedDoubleLiteral( );
-				return new UnitizedDouble<>( value * 12 + inches * ( value > 0 ? 1 : -1 ) , Length.inches );
+				return length.negate( );
 			}
-			return new UnitizedDouble<>( value , unit );
+			return length;
 		}
 
-		public UnitizedDouble<Length> unsignedLength( Unit<Length> defaultUnit )
+		public UnitizedDouble<Length> unsignedLengthInches( Unit<Length> defaultUnit )
+		{
+			expectIgnoreCase( 'i' );
+			double inches = unsignedDoubleLiteral( );
+			return new UnitizedDouble<>( inches , Length.inches );
+		}
+
+		public UnitizedDouble<Length> unsignedLengthNonInches( Unit<Length> defaultUnit )
 		{
 			double value = unsignedDoubleLiteral( );
 			Unit<Length> unit = oneOfLowercase( lengthUnitSuffixes , defaultUnit );
@@ -406,6 +433,13 @@ public class WallsParser
 				return new UnitizedDouble<>( value * 12 + inches , Length.inches );
 			}
 			return new UnitizedDouble<>( value , unit );
+		}
+
+		public UnitizedDouble<Length> unsignedLength( Unit<Length> defaultUnit )
+		{
+			return oneOfR(
+				( ) -> unsignedLengthNonInches( defaultUnit ) ,
+				( ) -> unsignedLengthInches( defaultUnit ) );
 		}
 
 		public UnitizedDouble<Angle> unsignedAngle( Map<Character, Unit<Angle>> unitSuffixes , Unit<Angle> defaultUnit )
@@ -566,15 +600,7 @@ public class WallsParser
 			int end = i;
 
 			boolean zeroAngle = angle.doubleValue( angle.unit ) == 0.0;
-			if( signum == null )
-			{
-				if( !zeroAngle )
-				{
-					throw new SegmentParseException( line.substring( start , end ) , WallsParseError.UNSIGNED_NONZERO_INC );
-				}
-				return angle;
-			}
-			else
+			if( signum != null )
 			{
 				if( zeroAngle )
 				{
@@ -582,6 +608,7 @@ public class WallsParser
 				}
 				return signum < 0 ? angle.negate( ) : angle;
 			}
+			return angle;
 		}
 
 		public VarianceOverride varianceOverride( Unit<Length> defaultUnit )
@@ -807,7 +834,7 @@ public class WallsParser
 			maybe( this::whitespace );
 			units.segment = segmentDirective( ).toString( );
 			maybe( this::whitespace );
-			commentOrEndOfLine( );
+			inlineCommentOrEndOfLine( );
 		}
 
 		public String segmentDirective( )
@@ -828,7 +855,7 @@ public class WallsParser
 			maybe( this::whitespace );
 			prefixDirective( );
 			maybe( this::whitespace );
-			commentOrEndOfLine( );
+			inlineCommentOrEndOfLine( );
 		}
 
 		public void prefixDirective( )
@@ -850,7 +877,7 @@ public class WallsParser
 			maybe( this::whitespace );
 			noteDirective( );
 			maybe( this::whitespace );
-			commentOrEndOfLine( );
+			inlineCommentOrEndOfLine( );
 		}
 
 		public void noteDirective( )
@@ -871,7 +898,7 @@ public class WallsParser
 			maybe( this::whitespace );
 			flagDirective( );
 			maybe( this::whitespace );
-			commentOrEndOfLine( );
+			inlineCommentOrEndOfLine( );
 		}
 
 		public void flagDirective( )
@@ -893,6 +920,8 @@ public class WallsParser
 				stations.add( station.toString( ) );
 
 				maybe( this::whitespace );
+				maybe( this::comma );
+				maybe( this::whitespace );
 			}
 
 			String flag = null;
@@ -913,7 +942,7 @@ public class WallsParser
 				visitor.visitFlaggedStations( flag , stations );
 			}
 
-			commentOrEndOfLine( );
+			inlineCommentOrEndOfLine( );
 		}
 
 		public String slashPrefixedFlag( )
@@ -938,7 +967,7 @@ public class WallsParser
 			maybe( this::whitespace );
 			dateDirective( );
 			maybe( this::whitespace );
-			commentOrEndOfLine( );
+			inlineCommentOrEndOfLine( );
 		}
 
 		public void dateDirective( )
@@ -1472,13 +1501,17 @@ public class WallsParser
 			}
 			for( TapingMethodElement elem : units.tape )
 			{
-				whitespace( );
-				elem.visit( vectorLineElementVisitor );
+				if( !maybe( this::whitespace ) )
+				{
+					break;
+				}
+				if( !maybe( ( ) -> elem.visit( vectorLineElementVisitor ) ) )
+				{
+					break;
+				}
 			}
-			if( maybe( this::whitespace ) )
-			{
-				afterVectorMeasurements( );
-			}
+			maybe( this::whitespace );
+			afterVectorMeasurements( );
 		}
 
 		private class VectorLineElementVisitor implements CtElementVisitor , RectElementVisitor , TapingMethodElementVisitor , LrudElementVisitor
@@ -1712,7 +1745,7 @@ public class WallsParser
 			{
 				maybe( this::whitespace );
 			}
-			commentOrEndOfLine( );
+			inlineCommentOrEndOfLine( );
 		}
 
 		public void inlineDirective( )
@@ -1824,12 +1857,12 @@ public class WallsParser
 			{
 				maybe( this::whitespace );
 			}
-			commentOrEndOfLine( );
+			inlineCommentOrEndOfLine( );
 		}
 
-		public void commentOrEndOfLine( )
+		public void inlineCommentOrEndOfLine( )
 		{
-			oneOf( this::comment , this::endOfLine );
+			oneOf( this::inlineComment , this::endOfLine );
 		}
 
 		public void comment( )
@@ -1837,11 +1870,70 @@ public class WallsParser
 			semicolon( );
 			visitor.visitComment( remaining( ).toString( ) );
 		}
+
+		public void inlineComment( )
+		{
+			semicolon( );
+			visitor.visitInlineComment( remaining( ).toString( ) );
+		}
+	}
+
+	public void reset( )
+	{
+		stack.clear( );
+		units = new WallsUnits( );
+		macros.clear( );
+		inBlockComment = false;
 	}
 
 	public void parseLine( Segment line )
 	{
 		new WallsLineParser( line ).parse( );
+	}
+
+	public void parse( SegmentLineReader reader ) throws IOException
+	{
+		reset( );
+		Segment line;
+		while( ( line = reader.readLine( ) ) != null )
+		{
+			parseLine( line );
+		}
+	}
+
+	public void parse( Collection<File> files ) throws IOException
+	{
+		for( File file : files )
+		{
+			SegmentLineReader reader = new SegmentLineReader( file );
+			parse( reader );
+		}
+	}
+
+	public void parse( Stream<Path> paths ) throws IOException
+	{
+		try
+		{
+			paths.forEach( path ->
+			{
+				try
+				{
+					parse( new SegmentLineReader( path.toFile( ) ) );
+				}
+				catch( Exception ex )
+				{
+					throw new RuntimeException( ex );
+				}
+			} );
+		}
+		catch( RuntimeException ex )
+		{
+			if( ex.getCause( ) instanceof IOException )
+			{
+				throw ( IOException ) ex.getCause( );
+			}
+			throw ex;
+		}
 	}
 
 	public String processStationName( String name )
@@ -2097,6 +2189,12 @@ public class WallsParser
 		public void endUnitsLine( )
 		{
 			System.out.println( "end units line" );
+		}
+
+		@Override
+		public void visitInlineComment( String comment )
+		{
+			System.out.println( "  inline comment: " + comment );
 		}
 	}
 
