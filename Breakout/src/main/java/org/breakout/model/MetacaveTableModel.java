@@ -1,23 +1,29 @@
 package org.breakout.model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+
 import org.andork.swing.table.NiceTableModel;
-import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
 import org.metacave.MetacaveJson;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
+@SuppressWarnings( "serial" )
 public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 {
 	public static class Row
 	{
-		public final ObjectNode trip;
-		public final ObjectNode from;
-		public final ObjectNode shot;
-		public final ObjectNode to;
+		public final JsonNode trip;
+		public final JsonNode from;
+		public final JsonNode shot;
+		public final JsonNode to;
 
-		public Row( ObjectNode trip , ObjectNode from , ObjectNode shot , ObjectNode to )
+		public Row( JsonNode trip , JsonNode from , JsonNode shot , JsonNode to )
 		{
 			super( );
 			this.trip = trip;
@@ -26,91 +32,20 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 			this.to = to;
 		}
 	}
-	
-	public static class FromStationColumn implements Column<Row>
+
+	public static class DefaultColumn implements Column<Row>
 	{
-		@Override
-		public String getColumnName( )
-		{
-			return "From";
-		}
+		String columnName;
+		Class<?> columnClass;
+		Function<Row, ?> getter;
+		BiConsumer<Row, Object> setter;
 
-		@Override
-		public Class<?> getColumnClass( )
-		{
-			return String.class;
-		}
-
-		@Override
-		public boolean isCellEditable( Row row )
-		{
-			return true;
-		}
-
-		@Override
-		public Object getValueAt( Row row )
-		{
-			return row.from.get( "station" ).asText( );
-		}
-
-		@Override
-		public boolean setValueAt( Object aValue , Row row )
-		{
-			row.from.set( "station" , new TextNode( aValue.toString( ) ) );
-			return true;
-		}
-	}
-
-	public static class ToStationColumn implements Column<Row>
-	{
-		@Override
-		public String getColumnName( )
-		{
-			return "To";
-		}
-
-		@Override
-		public Class<?> getColumnClass( )
-		{
-			return String.class;
-		}
-
-		@Override
-		public boolean isCellEditable( Row row )
-		{
-			return true;
-		}
-
-		@Override
-		public Object getValueAt( Row row )
-		{
-			return row.to.get( "station" ).asText( );
-		}
-
-		@Override
-		public boolean setValueAt( Object aValue , Row row )
-		{
-			row.to.set( "station" , new TextNode( aValue.toString( ) ) );
-			return true;
-		}
-	}
-
-	@FunctionalInterface
-	private static interface QuantityProp
-	{
-		public UnitizedDouble<?> get( ObjectNode shotOrStation , ObjectNode trip );
-	}
-
-	public static class ShotPropColumn implements Column<Row>
-	{
-		private final String columnName;
-		private final QuantityProp prop;
-
-		public ShotPropColumn( String columnName , QuantityProp prop )
+		public DefaultColumn( String columnName , Class<?> columnClass , Function<Row, ?> getter )
 		{
 			super( );
 			this.columnName = columnName;
-			this.prop = prop;
+			this.columnClass = columnClass;
+			this.getter = getter;
 		}
 
 		@Override
@@ -122,33 +57,144 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 		@Override
 		public Class<?> getColumnClass( )
 		{
-			return UnitizedDouble.class;
+			return columnClass;
 		}
 
 		@Override
 		public boolean isCellEditable( Row row )
 		{
-			return false;
+			return setter != null;
 		}
 
 		@Override
 		public Object getValueAt( Row row )
 		{
-			return prop.get( row.shot , row.trip );
+			return getter.apply( row );
 		}
 
 		@Override
 		public boolean setValueAt( Object aValue , Row row )
 		{
-			return false;
+			setter.accept( row , aValue );
+			return true;
 		}
+
 	}
 
-	private final FromStationColumn from = new FromStationColumn( );
-	private final ToStationColumn to = new ToStationColumn( );
-	private final ShotPropColumn dist = new ShotPropColumn( "Dist" , MetacaveJson::dist );
-	private final ShotPropColumn fsAzm = new ShotPropColumn( "FS Azm" , MetacaveJson::fsAzm );
-	private final ShotPropColumn bsAzm = new ShotPropColumn( "BS Azm" , MetacaveJson::bsAzm );
-	private final ShotPropColumn fsInc = new ShotPropColumn( "FS Inc" , MetacaveJson::fsInc );
-	private final ShotPropColumn bsInc = new ShotPropColumn( "BS Inc" , MetacaveJson::bsInc );
+	private final DefaultColumn from = new DefaultColumn( "From" , String.class ,
+		row -> row.from.get( "station" ).asText( ) );
+	private final DefaultColumn to = new DefaultColumn( "To" , String.class ,
+		row -> row.to.get( "station" ).asText( ) );
+
+	private final DefaultColumn dist = new DefaultColumn( "Dist" , UnitizedDouble.class ,
+		row -> MetacaveJson.dist( row.shot , row.trip ) );
+	private final DefaultColumn fsAzm = new DefaultColumn( "FS Azm" , UnitizedDouble.class ,
+		row -> MetacaveJson.fsAzm( row.shot , row.trip ) );
+	private final DefaultColumn bsAzm = new DefaultColumn( "BS Azm" , UnitizedDouble.class ,
+		row -> MetacaveJson.bsAzm( row.shot , row.trip ) );
+	private final DefaultColumn fsInc = new DefaultColumn( "FS Inc" , UnitizedDouble.class ,
+		row -> MetacaveJson.fsInc( row.shot , row.trip ) );
+	private final DefaultColumn bsInc = new DefaultColumn( "BS Inc" , UnitizedDouble.class ,
+		row -> MetacaveJson.bsInc( row.shot , row.trip ) );
+
+	private final DefaultColumn fromLrudType = new DefaultColumn( "From LRUD type" , String.class ,
+		row -> lrudType( row.from ) );
+	private final DefaultColumn[ ] fromLruds = createFromLrudColumns( );
+
+	private final DefaultColumn toLrudType = new DefaultColumn( "To LRUD type" , String.class ,
+		row -> lrudType( row.to ) );
+	private final DefaultColumn[ ] toLruds = createToLrudColumns( );
+
+	public MetacaveTableModel( )
+	{
+		setColumns( Arrays.asList(
+			from ,
+			to ,
+			dist ,
+			fsAzm ,
+			bsAzm ,
+			fsInc ,
+			bsInc ,
+			fromLrudType ,
+			fromLruds[ 0 ] ,
+			fromLruds[ 1 ] ,
+			fromLruds[ 2 ] ,
+			fromLruds[ 3 ] ,
+			toLrudType ,
+			toLruds[ 0 ] ,
+			toLruds[ 1 ] ,
+			toLruds[ 2 ] ,
+			toLruds[ 3 ]
+			) );
+	}
+
+	public void setData( JsonNode root )
+	{
+		List<Row> rows = new ArrayList<Row>( );
+
+		JsonNode trips = root.get( "trips" );
+		if( trips == null || ! ( trips instanceof ArrayNode ) )
+		{
+			clearRows( );
+		}
+
+		for( int i = 0 ; i < trips.size( ) ; i++ )
+		{
+			JsonNode trip = trips.get( i );
+
+			JsonNode survey = trip.get( "survey" );
+			if( survey == null || ! ( survey instanceof ArrayNode ) )
+			{
+				continue;
+			}
+
+			for( int k = 0 ; k < trips.size( ) - 2 ; k += 2 )
+			{
+				JsonNode from = trips.get( k );
+				JsonNode shot = trips.get( k + 1 );
+				JsonNode to = trips.get( k + 2 );
+
+				if( !from.has( "station" ) || !shot.has( "dist" ) || !to.has( "station" ) )
+				{
+					continue;
+				}
+
+				rows.add( new Row( trip , from , shot , to ) );
+			}
+		}
+
+		setRows( rows );
+	}
+
+	private DefaultColumn[ ] createFromLrudColumns( )
+	{
+		String[ ] names = { "L" , "R" , "U" , "D" };
+		DefaultColumn[ ] result = new DefaultColumn[ 4 ];
+		for( int i = 0 ; i < 4 ; i++ )
+		{
+			final int index = i;
+			result[ i ] = new DefaultColumn( names[ index ] , UnitizedDouble.class ,
+				row -> MetacaveJson.lrudOrNsewElem( row.from , row.trip , index ) );
+		}
+		return result;
+	}
+
+	private DefaultColumn[ ] createToLrudColumns( )
+	{
+		String[ ] names = { "L" , "R" , "U" , "D" };
+		DefaultColumn[ ] result = new DefaultColumn[ 4 ];
+		for( int i = 0 ; i < 4 ; i++ )
+		{
+			final int index = i;
+			result[ i ] = new DefaultColumn( names[ index ] , UnitizedDouble.class ,
+				row -> MetacaveJson.lrudOrNsewElem( row.to , row.trip , index ) );
+		}
+		return result;
+	}
+
+	private static String lrudType( JsonNode station )
+	{
+		return station.has( "lrud" ) ? "LRUD" :
+			station.has( "nsew" ) ? "NSEW" : null;
+	}
 }

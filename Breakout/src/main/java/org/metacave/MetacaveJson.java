@@ -11,7 +11,6 @@ import org.andork.unit.UnitizedDouble;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class MetacaveJson
 {
@@ -43,13 +42,12 @@ public class MetacaveJson
 		}
 		else if( quantity instanceof ArrayNode )
 		{
-			ArrayNode array = ( ArrayNode ) quantity;
-			UnitizedDouble<T> result = new UnitizedDouble<>( array.get( 0 ).asDouble( ) , ( Unit<T> ) unitMap.get( array.get( 1 ).asText( ) ) );
-			if( array.size( ) > 2 )
+			UnitizedDouble<T> result = new UnitizedDouble<>( quantity.get( 0 ).asDouble( ) , ( Unit<T> ) unitMap.get( quantity.get( 1 ).asText( ) ) );
+			if( quantity.size( ) > 2 )
 			{
-				for( int i = 2 ; i < array.size( ) ; i += 2 )
+				for( int i = 2 ; i < quantity.size( ) ; i += 2 )
 				{
-					UnitizedDouble<T> next = new UnitizedDouble<>( array.get( i ).asDouble( ) , ( Unit<T> ) unitMap.get( array.get( i + 1 ).asText( ) ) );
+					UnitizedDouble<T> next = new UnitizedDouble<>( quantity.get( i ).asDouble( ) , ( Unit<T> ) unitMap.get( quantity.get( i + 1 ).asText( ) ) );
 					result = result.add( next );
 				}
 			}
@@ -72,7 +70,7 @@ public class MetacaveJson
 	}
 
 	@SuppressWarnings( "unchecked" )
-	public static <T extends UnitType<T>> UnitizedDouble<T> quantity( ObjectNode data , ObjectNode parent , String prop , UnitType<T> type )
+	public static <T extends UnitType<T>> UnitizedDouble<T> quantity( JsonNode data , JsonNode parent , String prop , UnitType<T> type )
 	{
 		if( type == Length.type )
 		{
@@ -85,36 +83,36 @@ public class MetacaveJson
 		throw new IllegalArgumentException( "Unsupported unit type: " + type );
 	}
 
-	public static UnitizedDouble<Length> dist( ObjectNode shot , ObjectNode trip )
+	public static UnitizedDouble<Length> dist( JsonNode shot , JsonNode trip )
 	{
 		return quantity( shot.get( "dist" ) , trip.get( "distUnit" ).asText( ) , lengthUnitMap );
 	}
 
-	public static UnitizedDouble<Angle> fsAzm( ObjectNode shot , ObjectNode trip )
+	public static UnitizedDouble<Angle> fsAzm( JsonNode shot , JsonNode trip )
 	{
 		String defaultUnit = ( trip.has( "fsAzmUnit" ) ? trip.get( "fsAzmUnit" ) : trip.get( "angleUnit" ) ).asText( );
 		return quantity( shot.get( "fsAzm" ) , defaultUnit , angleUnitMap );
 	}
 
-	public static UnitizedDouble<Angle> bsAzm( ObjectNode shot , ObjectNode trip )
+	public static UnitizedDouble<Angle> bsAzm( JsonNode shot , JsonNode trip )
 	{
 		String defaultUnit = ( trip.has( "bsAzmUnit" ) ? trip.get( "bsAzmUnit" ) : trip.get( "angleUnit" ) ).asText( );
 		return quantity( shot.get( "bsAzm" ) , defaultUnit , angleUnitMap );
 	}
 
-	public static UnitizedDouble<Angle> fsInc( ObjectNode shot , ObjectNode trip )
+	public static UnitizedDouble<Angle> fsInc( JsonNode shot , JsonNode trip )
 	{
 		String defaultUnit = ( trip.has( "fsIncUnit" ) ? trip.get( "fsIncUnit" ) : trip.get( "angleUnit" ) ).asText( );
 		return quantity( shot.get( "fsInc" ) , defaultUnit , angleUnitMap );
 	}
 
-	public static UnitizedDouble<Angle> bsInc( ObjectNode shot , ObjectNode trip )
+	public static UnitizedDouble<Angle> bsInc( JsonNode shot , JsonNode trip )
 	{
 		String defaultUnit = ( trip.has( "bsIncUnit" ) ? trip.get( "bsIncUnit" ) : trip.get( "angleUnit" ) ).asText( );
 		return quantity( shot.get( "bsInc" ) , defaultUnit , angleUnitMap );
 	}
 
-	public static UnitizedDouble<Length> lrudElem( ObjectNode station , ObjectNode trip , int index )
+	public static UnitizedDouble<Length> lrudElem( JsonNode station , JsonNode trip , int index )
 	{
 		JsonNode lrud = station.get( "lrud" );
 		if( lrud == null )
@@ -124,12 +122,26 @@ public class MetacaveJson
 		return quantity( lrud.get( index ) , trip.get( "distUnit" ).asText( ) , lengthUnitMap );
 	}
 
-	public static UnitizedDouble<Angle> lrudAngle( ObjectNode station , ObjectNode trip )
+	public static UnitizedDouble<Length> lrudOrNsewElem( JsonNode station , JsonNode trip , int index )
+	{
+		JsonNode lrud = station.get( "lrud" );
+		if( lrud == null )
+		{
+			lrud = station.get( "nsew" );
+			if( lrud == null )
+			{
+				return null;
+			}
+		}
+		return quantity( lrud.get( index ) , trip.get( "distUnit" ).asText( ) , lengthUnitMap );
+	}
+
+	public static UnitizedDouble<Angle> lrudAngle( JsonNode station , JsonNode trip )
 	{
 		return quantity( station.get( "lrudAngle" ) , trip.get( "angleUnit" ).asText( ) , angleUnitMap );
 	}
 
-	public static UnitizedDouble<Length> nsewElem( ObjectNode station , ObjectNode trip , int index )
+	public static UnitizedDouble<Length> nsewElem( JsonNode station , JsonNode trip , int index )
 	{
 		JsonNode nsew = station.get( "nsew" );
 		if( nsew == null )
@@ -139,13 +151,13 @@ public class MetacaveJson
 		return quantity( nsew.get( index ) , trip.get( "distUnit" ).asText( ) , lengthUnitMap );
 	}
 
-	public static UnitizedDouble<Length> length( ObjectNode data , ObjectNode parent , String prop )
+	public static UnitizedDouble<Length> length( JsonNode data , JsonNode parent , String prop )
 	{
 		String propUnit = prop + "Unit";
 		return quantity( data.get( prop ) , parent.get( propUnit ).asText( ) , lengthUnitMap );
 	}
 
-	public static UnitizedDouble<Angle> angle( ObjectNode data , ObjectNode parent , String prop )
+	public static UnitizedDouble<Angle> angle( JsonNode data , JsonNode parent , String prop )
 	{
 		String propUnit = prop + "Unit";
 		return quantity( data.get( prop ) , parent.get( propUnit ).asText( ) , angleUnitMap );
