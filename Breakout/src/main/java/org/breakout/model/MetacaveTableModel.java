@@ -1,6 +1,7 @@
 package org.breakout.model;
 
 import org.andork.swing.table.NiceTableModel;
+import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
 import org.metacave.MetacaveJson;
 
@@ -25,8 +26,8 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 			this.to = to;
 		}
 	}
-
-	public class FromStationColumn implements Column<Row>
+	
+	public static class FromStationColumn implements Column<Row>
 	{
 		@Override
 		public String getColumnName( )
@@ -60,7 +61,7 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 		}
 	}
 
-	public class ToStationColumn implements Column<Row>
+	public static class ToStationColumn implements Column<Row>
 	{
 		@Override
 		public String getColumnName( )
@@ -94,12 +95,28 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 		}
 	}
 
-	public class DistanceColumn implements Column<Row>
+	@FunctionalInterface
+	private static interface QuantityProp
 	{
+		public UnitizedDouble<?> get( ObjectNode shotOrStation , ObjectNode trip );
+	}
+
+	public static class ShotPropColumn implements Column<Row>
+	{
+		private final String columnName;
+		private final QuantityProp prop;
+
+		public ShotPropColumn( String columnName , QuantityProp prop )
+		{
+			super( );
+			this.columnName = columnName;
+			this.prop = prop;
+		}
+
 		@Override
 		public String getColumnName( )
 		{
-			return "Dist";
+			return columnName;
 		}
 
 		@Override
@@ -111,20 +128,27 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 		@Override
 		public boolean isCellEditable( Row row )
 		{
-			return true;
+			return false;
 		}
 
 		@Override
 		public Object getValueAt( Row row )
 		{
-			return MetacaveJson.dist( row.shot , row.trip );
+			return prop.get( row.shot , row.trip );
 		}
 
 		@Override
 		public boolean setValueAt( Object aValue , Row row )
 		{
-			row.from.set( "station" , new TextNode( aValue.toString( ) ) );
-			return true;
+			return false;
 		}
 	}
+
+	private final FromStationColumn from = new FromStationColumn( );
+	private final ToStationColumn to = new ToStationColumn( );
+	private final ShotPropColumn dist = new ShotPropColumn( "Dist" , MetacaveJson::dist );
+	private final ShotPropColumn fsAzm = new ShotPropColumn( "FS Azm" , MetacaveJson::fsAzm );
+	private final ShotPropColumn bsAzm = new ShotPropColumn( "BS Azm" , MetacaveJson::bsAzm );
+	private final ShotPropColumn fsInc = new ShotPropColumn( "FS Inc" , MetacaveJson::fsInc );
+	private final ShotPropColumn bsInc = new ShotPropColumn( "BS Inc" , MetacaveJson::bsInc );
 }
