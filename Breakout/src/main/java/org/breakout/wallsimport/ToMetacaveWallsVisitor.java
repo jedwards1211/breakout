@@ -9,7 +9,6 @@ import org.andork.unit.Unit;
 import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
 import org.andork.util.Java7.Objects;
-import org.breakout.wallsimport.WallsParser.WallsLineVisitor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -20,7 +19,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
-public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
+public class ToMetacaveWallsVisitor implements WallsVisitor
 {
 	// thoughts
 
@@ -359,7 +358,7 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		return left != null || right != null || up != null || down != null;
 	}
 
-	public ToMetacaveWallsLineVisitor( WallsParser parser )
+	public ToMetacaveWallsVisitor( WallsParser parser )
 	{
 		this.parser = parser;
 
@@ -386,6 +385,18 @@ public class ToMetacaveWallsLineVisitor implements WallsLineVisitor
 		newFixedStationGroup( );
 		newTrip( );
 		return root;
+	}
+
+	@Override
+	public void beginFile( Object source )
+	{
+		endUnitsLine( );
+	}
+
+	@Override
+	public void endFile( Object source )
+	{
+		
 	}
 
 	@Override

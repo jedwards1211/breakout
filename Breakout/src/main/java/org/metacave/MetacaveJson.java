@@ -162,4 +162,10 @@ public class MetacaveJson
 		String propUnit = prop + "Unit";
 		return quantity( data.get( prop ) , parent.get( propUnit ).asText( ) , angleUnitMap );
 	}
+
+	public static String propAsString( JsonNode data , JsonNode parent , String prop )
+	{
+		JsonNode node = data.has( prop ) ? data.get( prop ) : parent.get( prop );
+		return node == null ? null : node.asText( );
+	}
 }

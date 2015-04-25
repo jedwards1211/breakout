@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
 @SuppressWarnings( "serial" )
-public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
+public class MetacaveShotTableModel extends NiceTableModel<MetacaveShotTableModel.Row>
 {
 	public static class Row
 	{
@@ -100,12 +100,18 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 	private final DefaultColumn fromLrudType = new DefaultColumn( "From LRUD type" , String.class ,
 		row -> lrudType( row.from ) );
 	private final DefaultColumn[ ] fromLruds = createFromLrudColumns( );
+	private final DefaultColumn fromLrudAngle = new DefaultColumn( "Facing Angle" , String.class ,
+		row -> MetacaveJson.lrudAngle( row.from , row.trip ) );
 
 	private final DefaultColumn toLrudType = new DefaultColumn( "To LRUD type" , String.class ,
 		row -> lrudType( row.to ) );
 	private final DefaultColumn[ ] toLruds = createToLrudColumns( );
+	private final DefaultColumn toLrudAngle = new DefaultColumn( "Facing Angle" , String.class ,
+		row -> MetacaveJson.lrudAngle( row.to , row.trip ) );
+	private final DefaultColumn segment = new DefaultColumn( "Segment" , String.class ,
+		row -> MetacaveJson.propAsString( row.shot , row.trip , "segment" ) );
 
-	public MetacaveTableModel( )
+	public MetacaveShotTableModel( )
 	{
 		setColumns( Arrays.asList(
 			from ,
@@ -120,11 +126,14 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 			fromLruds[ 1 ] ,
 			fromLruds[ 2 ] ,
 			fromLruds[ 3 ] ,
+			fromLrudAngle ,
 			toLrudType ,
 			toLruds[ 0 ] ,
 			toLruds[ 1 ] ,
 			toLruds[ 2 ] ,
-			toLruds[ 3 ]
+			toLruds[ 3 ] ,
+			toLrudAngle ,
+			segment
 			) );
 	}
 
@@ -148,11 +157,11 @@ public class MetacaveTableModel extends NiceTableModel<MetacaveTableModel.Row>
 				continue;
 			}
 
-			for( int k = 0 ; k < trips.size( ) - 2 ; k += 2 )
+			for( int k = 0 ; k < survey.size( ) - 2 ; k += 2 )
 			{
-				JsonNode from = trips.get( k );
-				JsonNode shot = trips.get( k + 1 );
-				JsonNode to = trips.get( k + 2 );
+				JsonNode from = survey.get( k );
+				JsonNode shot = survey.get( k + 1 );
+				JsonNode to = survey.get( k + 2 );
 
 				if( !from.has( "station" ) || !shot.has( "dist" ) || !to.has( "station" ) )
 				{

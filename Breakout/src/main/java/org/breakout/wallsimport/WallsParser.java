@@ -266,7 +266,7 @@ public class WallsParser
 	private SimpleDateFormat usDateFormat2Long = new SimpleDateFormat( "MM/dd/yyyy" );
 	private SimpleDateFormat usDateFormat2Short = new SimpleDateFormat( "MM/dd/yy" );
 
-	WallsLineVisitor visitor;
+	WallsVisitor visitor;
 
 	Stack<WallsUnits> stack = new Stack<>( );
 
@@ -304,94 +304,6 @@ public class WallsParser
 	private static interface Directive
 	{
 		public void process( WallsLineParser parser );
-	}
-
-	public static interface WallsLineVisitor
-	{
-		public void beginVectorLine( );
-
-		public void visitFrom( String from );
-
-		public void visitTo( String to );
-
-		public void visitDistance( UnitizedDouble<Length> distance );
-
-		public void visitFrontsightAzimuth( UnitizedDouble<Angle> fsAzimuth );
-
-		public void visitBacksightAzimuth( UnitizedDouble<Angle> bsAzimuth );
-
-		public void visitFrontsightInclination( UnitizedDouble<Angle> fsInclination );
-
-		public void visitBacksightInclination( UnitizedDouble<Angle> bsInclination );
-
-		public void visitNorth( UnitizedDouble<Length> north );
-
-		public void visitLatitude( UnitizedDouble<Angle> latitude );
-
-		public void visitEast( UnitizedDouble<Length> east );
-
-		public void visitLongitude( UnitizedDouble<Angle> longitude );
-
-		public void visitRectUp( UnitizedDouble<Length> up );
-
-		public void visitInstrumentHeight( UnitizedDouble<Length> instrumentHeight );
-
-		public void visitTargetHeight( UnitizedDouble<Length> targetHeight );
-
-		public void visitLeft( UnitizedDouble<Length> left );
-
-		public void visitRight( UnitizedDouble<Length> right );
-
-		public void visitUp( UnitizedDouble<Length> up );
-
-		public void visitDown( UnitizedDouble<Length> down );
-
-		public void visitLrudFacingAngle( UnitizedDouble<Angle> facingAngle );
-
-		public void visitCFlag( );
-
-		public void visitHorizontalVarianceOverride( VarianceOverride variance );
-
-		public void visitVerticalVarianceOverride( VarianceOverride variance );
-
-		/**
-		 * In this case "segment" refers to Walls' #Segment directive, not {@link Segment}. Nonetheless, the
-		 * argument to the #Segment directive is given as a {@link Segment} :)
-		 * 
-		 * @param segment
-		 *            the argument to the #Segment directive
-		 */
-		public void visitInlineSegment( String segment );
-
-		public void visitInlineNote( String note );
-
-		public void visitCommentLine( String comment );
-
-		public void abortVectorLine( );
-
-		public void endVectorLine( );
-
-		public void visitFlaggedStations( String flag , List<String> stations );
-
-		public void visitBlockCommentLine( String string );
-
-		public void visitNoteLine( String station , String note );
-
-		public void beginFixLine( );
-
-		public void abortFixLine( );
-
-		public void endFixLine( );
-
-		public void beginUnitsLine( );
-
-		public void abortUnitsLine( );
-
-		public void endUnitsLine( );
-
-		public void visitFixedStation( String string );
-
-		public void visitInlineComment( String string );
 	}
 
 	public class WallsLineParser extends LineParser
@@ -1905,8 +1817,11 @@ public class WallsParser
 	{
 		for( File file : files )
 		{
+			reset( );
+			visitor.beginFile( file );
 			SegmentLineReader reader = new SegmentLineReader( file );
 			parse( reader );
+			visitor.endFile( file );
 		}
 	}
 
@@ -1916,6 +1831,8 @@ public class WallsParser
 		{
 			paths.forEach( path ->
 			{
+				reset( );
+				visitor.beginFile( path );
 				try
 				{
 					parse( new SegmentLineReader( path.toFile( ) ) );
@@ -1924,6 +1841,7 @@ public class WallsParser
 				{
 					throw new RuntimeException( ex );
 				}
+				visitor.endFile( path );
 			} );
 		}
 		catch( RuntimeException ex )
@@ -1941,12 +1859,12 @@ public class WallsParser
 		return units.processStationName( name );
 	}
 
-	public WallsLineVisitor getVisitor( )
+	public WallsVisitor getVisitor( )
 	{
 		return visitor;
 	}
 
-	public void setVisitor( WallsLineVisitor visitor )
+	public void setVisitor( WallsVisitor visitor )
 	{
 		this.visitor = visitor;
 	}
@@ -1956,11 +1874,23 @@ public class WallsParser
 		return this.units;
 	}
 
-	public class DumpingWallsLineVisitor implements WallsLineVisitor
+	public class DumpingWallsVisitor implements WallsVisitor
 	{
-		public DumpingWallsLineVisitor( )
+		public DumpingWallsVisitor( )
 		{
 			super( );
+		}
+
+		@Override
+		public void beginFile( Object source )
+		{
+			System.out.println( "<BEGIN FILE: " + source + ">" );
+		}
+
+		@Override
+		public void endFile( Object source )
+		{
+			System.out.println( "<END FILE: " + source + ">" );
 		}
 
 		@Override
@@ -2215,7 +2145,7 @@ public class WallsParser
 	public static void main( String[ ] args )
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		temp( parser , "A*1 B1 350i4 41 +25/-6 *2, --, 4,5,C*#Seg /some/really/cool segment;4, 5>" );
 		temp( parser , "A*1 B1 350 41 +25 *2, 3, 4,5,C*#Q /some/really/cool segment;4, 5>" );

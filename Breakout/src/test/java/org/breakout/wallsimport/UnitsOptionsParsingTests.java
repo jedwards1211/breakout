@@ -103,7 +103,7 @@ public class UnitsOptionsParsingTests
 	public void testSaveAndRestore( )
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		Assert.assertEquals( 0 , parser.stack.size( ) );
 
@@ -126,7 +126,7 @@ public class UnitsOptionsParsingTests
 	public void testFeetAndMeters( )
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		parser.parseLine( new Segment( "#u meters" , null , 0 , 0 ) );
 		Assert.assertEquals( Length.meters , parser.units.d_unit );
@@ -146,7 +146,7 @@ public class UnitsOptionsParsingTests
 	public void testDAndS( )
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		parser.parseLine( new Segment( "#u d=f s=meters" , null , 0 , 0 ) );
 		Assert.assertEquals( Length.feet , parser.units.d_unit );
@@ -180,7 +180,7 @@ public class UnitsOptionsParsingTests
 	public void testTypeAB( )
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		parser.parseLine( new Segment( "#u typeab=Corrected,2,X" , null , 0 , 0 ) );
 		Assert.assertEquals( true , parser.units.typeab_corrected );
@@ -201,7 +201,7 @@ public class UnitsOptionsParsingTests
 	public void testOrder( )
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		parser.parseLine( new Segment( "#u o=vad" , null , 0 , 0 ) );
 		Assert.assertEquals( Arrays.asList( CtElement.V , CtElement.A , CtElement.D ) , parser.units.ctOrder );
@@ -235,7 +235,7 @@ public class UnitsOptionsParsingTests
 	public void testLrud( )
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		parser.parseLine( new Segment( "#u lrud=f:rlud" , null , 0 , 0 ) );
 		Assert.assertEquals( LrudType.From , parser.units.lrud );
@@ -262,7 +262,7 @@ public class UnitsOptionsParsingTests
 	public void testMacroDefinition( )
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		parser.parseLine( new Segment( "#u $hello=world" , null , 0 , 0 ) );
 		Assert.assertEquals( "world" , parser.macros.get( "hello" ) );

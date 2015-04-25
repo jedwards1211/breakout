@@ -11,7 +11,7 @@ public class WallsKauaParseTest
 	public void testParseAll( ) throws IOException
 	{
 		WallsParser parser = new WallsParser( );
-		parser.setVisitor( parser.new DumpingWallsLineVisitor( ) );
+		parser.setVisitor( parser.new DumpingWallsVisitor( ) );
 
 		InputStreamLineIterable.grepFiles( "kauadata/*.srv" ).forEach( System.out::println );
 
