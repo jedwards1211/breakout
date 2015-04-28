@@ -108,8 +108,6 @@ public class MetacaveShotTableModel extends NiceTableModel<MetacaveShotTableMode
 	private final DefaultColumn[ ] toLruds = createToLrudColumns( );
 	private final DefaultColumn toLrudAngle = new DefaultColumn( "Facing Angle" , String.class ,
 		row -> MetacaveJson.lrudAngle( row.to , row.trip ) );
-	private final DefaultColumn segment = new DefaultColumn( "Segment" , String.class ,
-		row -> MetacaveJson.propAsString( row.shot , row.trip , "segment" ) );
 
 	public MetacaveShotTableModel( )
 	{
@@ -132,8 +130,7 @@ public class MetacaveShotTableModel extends NiceTableModel<MetacaveShotTableMode
 			toLruds[ 1 ] ,
 			toLruds[ 2 ] ,
 			toLruds[ 3 ] ,
-			toLrudAngle ,
-			segment
+			toLrudAngle
 			) );
 	}
 

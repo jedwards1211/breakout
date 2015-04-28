@@ -239,6 +239,10 @@ public class WallsUnits
 
 	public String processStationName( String name )
 	{
+		if( name == null )
+		{
+			return null;
+		}
 		name = case_.apply( name );
 		int explicitPrefixCount = ( int ) name.chars( ).filter( c -> c == ':' ).count( );
 		for( int i = explicitPrefixCount ; i < prefix.size( ) ; i++ )

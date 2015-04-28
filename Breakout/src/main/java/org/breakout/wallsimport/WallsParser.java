@@ -48,6 +48,7 @@ public class WallsParser
 	private static final Pattern prefixPattern = Pattern.compile( "[^:;,#/ \t]+" );
 
 	private static final Pattern optionalPattern = Pattern.compile( "--+" );
+	private static final Pattern optionalStationPattern = Pattern.compile( "-+" );
 
 	private static final Pattern isoDatePattern = Pattern.compile( "\\d{4}-\\d{2}-\\d{2}" );
 	private static final Pattern usDatePattern1 = Pattern.compile( "\\d{2}-\\d{2}-\\d{2,4}" );
@@ -1359,9 +1360,13 @@ public class WallsParser
 
 		public void fromStation( )
 		{
-			Segment from = expect( stationPattern , WallsExpectedTypes.STATION_NAME );
+			String from = expect( stationPattern , WallsExpectedTypes.STATION_NAME ).toString( );
+			if( optionalStationPattern.matcher( from ).find( ) )
+			{
+				from = null;
+			}
 			visitor.beginVectorLine( );
-			visitor.visitFrom( from.toString( ) );
+			visitor.visitFrom( from );
 		}
 
 		public void afterFromStation( )
@@ -1382,8 +1387,12 @@ public class WallsParser
 
 		public void toStation( )
 		{
-			Segment to = expect( stationPattern , WallsExpectedTypes.STATION_NAME );
-			visitor.visitTo( to.toString( ) );
+			String to = expect( stationPattern , WallsExpectedTypes.STATION_NAME ).toString( );
+			if( optionalStationPattern.matcher( to ).find( ) )
+			{
+				to = null;
+			}
+			visitor.visitTo( to );
 		}
 
 		public void afterToStation( )
@@ -2219,5 +2228,10 @@ public class WallsParser
 
 		temp( parser , "#u ord$(hel lo)" );
 		temp( parser , "#u ord$(hello" );
+
+		temp( parser , "#u o=dav" );
+
+		temp( parser , "a - 350 20 +5 *1,2,3,4*" );
+		temp( parser , "- a 350 20 +5 *1,2,3,4*" );
 	}
 }

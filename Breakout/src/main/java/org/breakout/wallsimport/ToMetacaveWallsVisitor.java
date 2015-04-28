@@ -130,6 +130,7 @@ public class ToMetacaveWallsVisitor implements WallsVisitor
 	 * This is just a number if it is in the default unit for its context, otherwise an array
 	 * containing the number and the unit id string (for inches, the first two entries are feet
 	 * and the last two are inches)
+	 * 
 	 * @param value
 	 * @param defaultUnit
 	 * @return
@@ -396,7 +397,7 @@ public class ToMetacaveWallsVisitor implements WallsVisitor
 	@Override
 	public void endFile( Object source )
 	{
-		
+
 	}
 
 	@Override
@@ -434,7 +435,7 @@ public class ToMetacaveWallsVisitor implements WallsVisitor
 
 			if( fromStation != null )
 			{
-				survey.add( new ObjectNode( nodeFactory ) );
+				survey.add( NullNode.instance );
 			}
 
 			fromStation = new ObjectNode( nodeFactory );
@@ -463,6 +464,8 @@ public class ToMetacaveWallsVisitor implements WallsVisitor
 		}
 
 		newFromStationIfNecessary( units.processStationName( from ) );
+		
+		// TODO splay shots!
 
 		if( distance != null )
 		{

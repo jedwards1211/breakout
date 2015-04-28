@@ -1,10 +1,14 @@
 SUPPORTED UNITS:
+(In the interest of simplicity, I'd rather not allow synonyms.  But feel free to try to convince me otherwise)
 m
+cm
 ft
-(ft,in)
+in
+(ft+in)
 deg
 grad
-%
+mil
+% (grade)
 
 {
   "fixedStations":
@@ -29,6 +33,7 @@ grad
                                                                                // support data other than WGS84.
       "stations":
       [
+        // note utmZone can be overridden
         {"station": "Q", "utmZone": "17T", "datum": "NAD27", "north": 0, "east": 0, "elev": 0},
         {"station": "B", "lat": 0, "lon": 0, "elev": 0},
         ...
@@ -40,19 +45,19 @@ grad
   [
     {                                                                      
                                                                                 // REQUIRED:
-      "distUnit": "ft",                                                         // unit for all distances in this survey. ft or m
-      "angleUnit": "deg",                                                       // unit for all angles in this survey. 
-                                                                                // deg, grad, or mils (NATO, 1/6400).
+      "distUnit": "ft",                                                         // unit for all distances in this survey. ft, m, in, cm
+      "angleUnit": "deg",                                                       // unit for all angles in this survey. deg, grad, or mil (NATO, 1/6400).
+      "backsightsCorrected": false,                                             // required so there will be no doubt about it
+
+                                                                                // OPTIONAL:
       "azmFsUnit": "deg",                                                       // azimuth and inclination units are optional
       "azmBsUnit": "deg",                                                       // and override the angle unit for these measurements.
-      "incFsUnit": "deg",                                                       // inc units may also be % grade.
+      "incFsUnit": "deg",                                                       // inc units may also be "%" (grade).
       "incBsUnit": "deg",
-      "backsightsCorrected": false,                                           
-                                                                                // OPTIONAL:
+
       "cave": "Fisher Ridge",                                                   // the default cave name for stations.  disambiguates
                                                                                 // surveys with the same name in different caves. 
-                                                                                // If you connect to stations in a different cave, 
-                                                                                // you may add an overriding cave property to those stations
+
       "name": "TRICKY TRAVERSE AND THEN FIRST SURVEY IN UPPER CROWLWAY",        // A name for the trip.
       "desc": "...",                                                            // A longer description of the trip.
       "date": "1981-02-14T00:00Z",                                              // subset of ISO8601
@@ -64,35 +69,50 @@ grad
         "Peter Quick", 
         "Larry Bean"
       ],
+
       "declination": [0, "deg"],                                                // magnetic declination.
       "azmFsCorrection": 0,                                                     // frontsight azimuth correction
       "azmBsCorrection": 0,                                                     // backsight azimuth correction
       "incFsCorrection": 0,                                                     // frontsight inclination correction
       "incBsCorrection": 0,                                                     // backsight inclination correction
-      "distCorrection": 0,                                                      // distance correction.  does not apply to cross section.
+      "distCorrection": 0,                                                      // distance correction.  does not apply to lrud/nsew.
+
       "survey":
       [
-        // must have alternating stations and shots, and the last element must be a station.
+        // must have alternating stations and shots, and the first and last element must be stations.
         // (there will always be an odd number of elements in this array)
+
         {"station": "A1"},
-        // distInches is only allowed if the distUnit is ft
+
+        // here's how ft/in measurements are represented.
         {"dist": [48, "ft", 10, "in"], "azmFs": 292, "azmBs": [110, "grad"], "incFs": -42},
+
+        // note that anywhere you can put a measurement you can put an array containing a unit override.
         {"station": "A2", "nsew": [[5, "m"], 10, 35, 5]},
 
         {"dist": 12, "azmFs": 333.5, "azmBs": 153.5, "incFs": 35},
-        {"station": "A3", "lrud": [3, null, 15, 5], "lrudAngle": [35, "deg"]},
-        {}, // indicates the surrounding stations are not connected by a shot here
-        {"station": "A4", "lrud": [3, 1, 15, 5], "lrudPerp": "prev"},
-        {"connect": true}, // indicates the surrounding stations are connected by a shot but measurements are not specified.
-                           // if the surrounding stations locations are fixed, this "shot" should still display in maps.
+
+        // cave can be overridden for individual stations to specify connection points
+        {"cave": "Mammoth Cave", "station": "A3", "lrud": [3, null, 15, 5], "lrudAngle": [35, "deg"]},
+
+        null, // indicates the surrounding stations are not connected by a shot here
+
+        // if you want to the lruds to be perpendicular to the previous shot, use "lrudPerp": "prev" (likewise with "next")
+        {"station": "A5", "lrud": [3, 1, 15, [7, "in"]], "lrudPerp": "prev"},
+
+        ///////////////////////////////////////////////////////////////////////
+        // features I'm less certain about:
+
+        // if you want to draw a passage between two fixed stations without specifying measurements, you can do this:
+        {"dist": "auto"}, 
         ...
 
-        {"station": "Q32"},                                                     // indicate splay shots by omitting
-        {"dist": 12, ...},                                                      // the "station" property from the
-        {}                                                                      // from or to station
+        // how to represent splay shots? perhaps just set the to station to null:
+        {"station": "Q32"},                                                     
+        {"dist": 12, ...},                                                      
+        null                                                                    
       ]
     },
-    {...},
     ...
   ]
 }
