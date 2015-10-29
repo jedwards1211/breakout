@@ -174,103 +174,103 @@ import com.andork.plot.PlotAxis;
 
 public class BreakoutMainView
 {
-	GLAutoDrawable										autoDrawable;
-	GLCanvas											canvas;
-	JoglScene											scene;
-	JoglBackgroundColor									bgColor;
-	DefaultJoglRenderer									renderer;
+	GLAutoDrawable autoDrawable;
+	GLCanvas canvas;
+	JoglScene scene;
+	JoglBackgroundColor bgColor;
+	DefaultJoglRenderer renderer;
 
-	DefaultNavigator									navigator;
-	JoglOrbiter											orbiter;
-	JoglOrthoNavigator									orthoNavigator;
+	DefaultNavigator navigator;
+	JoglOrbiter orbiter;
+	JoglOrthoNavigator orthoNavigator;
 
-	I18n												i18n						= new I18n( );
+	I18n i18n = new I18n( );
 
-	PerspectiveProjection								perspCalculator				= new PerspectiveProjection(
-																						( float ) Math.PI / 2 , 1f ,
-																						1e7f );
+	PerspectiveProjection perspCalculator = new PerspectiveProjection(
+		( float ) Math.PI / 2 , 1f ,
+		1e7f );
 
-	TaskService											rebuildTaskService;
-	TaskService											sortTaskService;
-	TaskService											ioTaskService;
+	TaskService rebuildTaskService;
+	TaskService sortTaskService;
+	TaskService ioTaskService;
 
-	SurveyTableChangeHandler							surveyTableChangeHandler;
+	SurveyTableChangeHandler surveyTableChangeHandler;
 
-	final double[ ]										fromLoc						= new double[ 3 ];
-	final double[ ]										toLoc						= new double[ 3 ];
-	final double[ ]										toToLoc						= new double[ 3 ];
-	final double[ ]										leftAtTo					= new double[ 3 ];
-	final double[ ]										leftAtTo2					= new double[ 3 ];
-	final double[ ]										leftAtFrom					= new double[ 3 ];
+	final double[ ] fromLoc = new double[ 3 ];
+	final double[ ] toLoc = new double[ 3 ];
+	final double[ ] toToLoc = new double[ 3 ];
+	final double[ ] leftAtTo = new double[ 3 ];
+	final double[ ] leftAtTo2 = new double[ 3 ];
+	final double[ ] leftAtFrom = new double[ 3 ];
 
-	JPanel												mainPanel;
-	JLayeredPane										layeredPane;
+	JPanel mainPanel;
+	JLayeredPane layeredPane;
 
-	MouseAdapterWrapper									canvasMouseAdapterWrapper;
+	MouseAdapterWrapper canvasMouseAdapterWrapper;
 
 	// normal mouse mode
-	MouseLooper											mouseLooper;
-	MouseAdapterChain									mouseAdapterChain;
-	MousePickHandler									pickHandler;
-	DrawerAutoshowController							autoshowController;
-	OtherMouseHandler									otherMouseHandler;
+	MouseLooper mouseLooper;
+	MouseAdapterChain mouseAdapterChain;
+	MousePickHandler pickHandler;
+	DrawerAutoshowController autoshowController;
+	OtherMouseHandler otherMouseHandler;
 
-	WindowSelectionMouseHandler							windowSelectionMouseHandler;
+	WindowSelectionMouseHandler windowSelectionMouseHandler;
 
-	TableSelectionHandler								selectionHandler;
+	TableSelectionHandler selectionHandler;
 
-	RowFilterFactory<String, TableModel, Integer>		rowFilterFactory;
+	RowFilterFactory<String, TableModel, Integer> rowFilterFactory;
 
-	SurveyDrawer										surveyDrawer;
-	MiniSurveyDrawer									miniSurveyDrawer;
-	TaskListDrawer										taskListDrawer;
-	SettingsDrawer										settingsDrawer;
+	SurveyDrawer surveyDrawer;
+	MiniSurveyDrawer miniSurveyDrawer;
+	TaskListDrawer taskListDrawer;
+	SettingsDrawer settingsDrawer;
 
-	Survey3dModel										model3d;
-	float[ ]											v							= newMat4f( );
+	Survey3dModel model3d;
+	float[ ] v = newMat4f( );
 
-	int													debugMbrCount				= 0;
-	List<BasicJOGLObject>								debugMbrs					= new ArrayList<BasicJOGLObject>( );
+	int debugMbrCount = 0;
+	List<BasicJOGLObject> debugMbrs = new ArrayList<BasicJOGLObject>( );
 
-	Shot3dPickContext									spc							= new Shot3dPickContext( );
+	Shot3dPickContext spc = new Shot3dPickContext( );
 
-	final LinePlaneIntersection3f						lpx							= new LinePlaneIntersection3f( );
-	final float[ ]										p0							= new float[ 3 ];
-	final float[ ]										p1							= new float[ 3 ];
-	final float[ ]										p2							= new float[ 3 ];
+	final LinePlaneIntersection3f lpx = new LinePlaneIntersection3f( );
+	final float[ ] p0 = new float[ 3 ];
+	final float[ ] p1 = new float[ 3 ];
+	final float[ ] p2 = new float[ 3 ];
 
-	File												rootFile;
-	Path												rootDirectory;
-	TaskServiceFilePersister<QObject<RootModel>>		rootPersister;
-	final Binder<QObject<RootModel>>					rootModelBinder				= new DefaultBinder<QObject<RootModel>>( );
+	File rootFile;
+	Path rootDirectory;
+	TaskServiceFilePersister<QObject<RootModel>> rootPersister;
+	final Binder<QObject<RootModel>> rootModelBinder = new DefaultBinder<QObject<RootModel>>( );
 
-	final Binder<QObject<ProjectModel>>					projectModelBinder			= new DefaultBinder<QObject<ProjectModel>>( );
-	Binder<ColorParam>									colorParamBinder			= QObjectAttributeBinder.bind(
-																						ProjectModel.colorParam ,
-																						projectModelBinder );
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>>	paramRangesBinder			= QObjectAttributeBinder.bind(
-																						ProjectModel.paramRanges ,
-																						projectModelBinder );
-	Binder<LinearAxisConversion>						paramRangeBinder			= QMapKeyedBinder.bindKeyed(
-																						colorParamBinder ,
-																						paramRangesBinder );
-	TaskServiceFilePersister<QObject<ProjectModel>>		projectPersister;
+	final Binder<QObject<ProjectModel>> projectModelBinder = new DefaultBinder<QObject<ProjectModel>>( );
+	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(
+		ProjectModel.colorParam ,
+		projectModelBinder );
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>> paramRangesBinder = QObjectAttributeBinder.bind(
+		ProjectModel.paramRanges ,
+		projectModelBinder );
+	Binder<LinearAxisConversion> paramRangeBinder = QMapKeyedBinder.bindKeyed(
+		colorParamBinder ,
+		paramRangesBinder );
+	TaskServiceFilePersister<QObject<ProjectModel>> projectPersister;
 
-	SubtaskFilePersister<SurveyTableModel>				surveyPersister;
+	SubtaskFilePersister<SurveyTableModel> surveyPersister;
 
-	final AnimationQueue								cameraAnimationQueue		= new AnimationQueue( );
+	final AnimationQueue cameraAnimationQueue = new AnimationQueue( );
 
-	NewProjectAction									newProjectAction			= new NewProjectAction( this );
-	OpenProjectAction									openProjectAction			= new OpenProjectAction( this );
-	ImportProjectArchiveAction							importProjectArchiveAction	= new ImportProjectArchiveAction(
-																						this );
-	ExportProjectArchiveAction							exportProjectArchiveAction	= new ExportProjectArchiveAction(
-																						this );
-	ExportImageAction									exportImageAction			= new ExportImageAction( this );
+	NewProjectAction newProjectAction = new NewProjectAction( this );
+	OpenProjectAction openProjectAction = new OpenProjectAction( this );
+	ImportProjectArchiveAction importProjectArchiveAction = new ImportProjectArchiveAction(
+		this );
+	ExportProjectArchiveAction exportProjectArchiveAction = new ExportProjectArchiveAction(
+		this );
+	ExportImageAction exportImageAction = new ExportImageAction( this );
 
-	final WeakHashMap<Animation, Object>				protectedAnimations			= new WeakHashMap<>( );
+	final WeakHashMap<Animation, Object> protectedAnimations = new WeakHashMap<>( );
 
-	JLabel												hintLabel;
+	JLabel hintLabel;
 
 	public BreakoutMainView( )
 	{
@@ -849,21 +849,68 @@ public class BreakoutMainView
 				{
 					return;
 				}
+				float[ ] UNIT_Y = { 0 , 1 , 0 };
+
+				float MIN_ANGLE = ( float ) ( 80 * Math.PI / 180 );
+				float MAX_ANGLE = ( float ) ( 100 * Math.PI / 180 );
+
+				float[ ] from = new float[ 3 ];
+				float[ ] to = new float[ 3 ];
 				List<float[ ]> vectors = new ArrayList<>( );
 				for( Shot3d shot3d : getDefaultShotsForOperations( ) )
 				{
 					SurveyTableModel tableModel = surveyDrawer.table( ).getModel( );
 					Shot shot = tableModel.shotAtRow( tableModel.rowOfShot( shot3d.getNumber( ) ) );
+					if( shot.fromSplayPoints == null ||
+						shot.toSplayPoints == null ||
+						shot.fromSplayPoints[ 0 ] == null ||
+						shot.fromSplayPoints[ 1 ] == null ||
+						shot.fromSplayPoints[ 3 ] == null ||
+						shot.toSplayPoints[ 0 ] == null ||
+						shot.toSplayPoints[ 1 ] == null ||
+						shot.toSplayPoints[ 3 ] == null )
+					{
+						continue;
+					}
+					from[ 0 ] = ( shot.fromSplayPoints[ 0 ][ 0 ] + shot.fromSplayPoints[ 1 ][ 0 ] ) * 0.5f;
+					from[ 1 ] = shot.fromSplayPoints[ 3 ][ 1 ];
+					from[ 2 ] = ( shot.fromSplayPoints[ 0 ][ 2 ] + shot.fromSplayPoints[ 1 ][ 2 ] ) * 0.5f;
+					to[ 0 ] = ( shot.toSplayPoints[ 0 ][ 0 ] + shot.toSplayPoints[ 1 ][ 0 ] ) * 0.5f;
+					to[ 1 ] = shot.toSplayPoints[ 3 ][ 1 ];
+					to[ 2 ] = ( shot.toSplayPoints[ 0 ][ 2 ] + shot.toSplayPoints[ 1 ][ 2 ] ) * 0.5f;
 					float[ ] vector = new float[ 3 ];
-					Vecmath.sub3( shot.to.position , shot.from.position , vector );
+					Vecmath.sub3( to , from , vector );
 
 					if( !Vecmath.hasNaNsOrInfinites( vector ) )
 					{
-						vectors.add( vector );
+						Vecmath.normalize3( vector , from );
+						float angle = ( float ) Math.acos( Vecmath.dot3( from , UNIT_Y ) );
+						if( angle >= MIN_ANGLE && angle <= MAX_ANGLE )
+						{
+							float[ ] backVector = new float[ 3 ];
+							Vecmath.negate3( vector , backVector );
+							vectors.add( vector );
+							vectors.add( backVector );
+						}
 					}
 				}
 				float[ ] normal = Fitting3d.planeNormalLeastSquares2f( vectors.stream( ) );
 				Vecmath.normalize3( normal );
+
+				if( normal[ 1 ] < 0 )
+				{
+					Vecmath.negate3( normal );
+				}
+
+				float dipAngle = ( float ) ( Math.acos( Vecmath.dot3( normal , UNIT_Y ) ) * 180 / Math.PI );
+				float dipAzimuth = ( float ) ( Math.atan2( normal[ 0 ] , -normal[ 2 ] ) * 180 / Math.PI );
+				if( dipAzimuth < 0 )
+				{
+					dipAzimuth += 360.0;
+				}
+				System.out.println( "normal:    " + Arrays.toString( normal ) );
+				System.out.println( "dip angle: " + dipAngle + " deg" );
+				System.out.println( "dip azimuth: " + dipAzimuth + " deg" );
 
 				if( normal[ 1 ] > 0 )
 				{
@@ -990,8 +1037,9 @@ public class BreakoutMainView
 	{
 		return rootDirectory;
 	}
-	
-	public Path getAbsoluteProjectFilePath(Path relativeProjectFilePath) {
+
+	public Path getAbsoluteProjectFilePath( Path relativeProjectFilePath )
+	{
 		return rootDirectory.toAbsolutePath( ).resolve( relativeProjectFilePath );
 	}
 
@@ -1133,7 +1181,7 @@ public class BreakoutMainView
 		} );
 	}
 
-	CameraView	currentView;
+	CameraView currentView;
 
 	public void setCameraView( CameraView view )
 	{
@@ -1517,12 +1565,12 @@ public class BreakoutMainView
 		this.openProjectAction = openProjectAction;
 	}
 
-	private static Shot3dPickContext	hoverUpdaterSpc	= new Shot3dPickContext( );
+	private static Shot3dPickContext hoverUpdaterSpc = new Shot3dPickContext( );
 
 	private class HoverUpdater extends Task
 	{
-		Survey3dModel	model3d;
-		MouseEvent		e;
+		Survey3dModel model3d;
+		MouseEvent e;
 
 		public HoverUpdater( Survey3dModel model3d , MouseEvent e )
 		{
@@ -1578,7 +1626,7 @@ public class BreakoutMainView
 		}
 	}
 
-	private final PlanarHull3f	hull	= new PlanarHull3f( );
+	private final PlanarHull3f hull = new PlanarHull3f( );
 
 	private Shot3dPickResult pick( Survey3dModel model3d , MouseEvent e , Shot3dPickContext spc )
 	{
@@ -1717,10 +1765,10 @@ public class BreakoutMainView
 
 	private class MinAvgMaxCalc
 	{
-		int		count	= 0;
-		double	total	= 0.0;
-		double	min		= Double.NaN;
-		double	max		= Double.NaN;
+		int count = 0;
+		double total = 0.0;
+		double min = Double.NaN;
+		double max = Double.NaN;
 
 		public void add( double value )
 		{
@@ -1854,26 +1902,26 @@ public class BreakoutMainView
 				if( !newSelectedShots.isEmpty( ) )
 				{
 					// scale3( center , 0.5 / newSelectedShots.size( ) );
-				p[ 0 ] = ( float ) ( bounds[ 0 ] + bounds[ 3 ] ) * 0.5f;
-				p[ 1 ] = ( float ) ( bounds[ 1 ] + bounds[ 4 ] ) * 0.5f;
-				p[ 2 ] = ( float ) ( bounds[ 2 ] + bounds[ 5 ] ) * 0.5f;
+					p[ 0 ] = ( float ) ( bounds[ 0 ] + bounds[ 3 ] ) * 0.5f;
+					p[ 1 ] = ( float ) ( bounds[ 1 ] + bounds[ 4 ] ) * 0.5f;
+					p[ 2 ] = ( float ) ( bounds[ 2 ] + bounds[ 5 ] ) * 0.5f;
 
-				SwingUtilities.invokeLater( ( ) ->
-				{
-					orbiter.setCenter( p );
-					navigator.setCenter( p );
-				} );
-			}
+					SwingUtilities.invokeLater( ( ) ->
+					{
+						orbiter.setCenter( p );
+						navigator.setCenter( p );
+					} );
+				}
 
-			autoDrawable.display( );
-		} )	;
+				autoDrawable.display( );
+			} );
 		}
 	}
 
 	class FitToFilteredHandler implements ActionListener
 	{
-		AnnotatingJTable	table;
-		long				lastAction	= 0;
+		AnnotatingJTable table;
+		long lastAction = 0;
 
 		public FitToFilteredHandler( AnnotatingJTable table )
 		{
@@ -2026,8 +2074,8 @@ public class BreakoutMainView
 
 	class SurveyTableChangeHandler extends TaskServiceBatcher<TableModelEvent> implements TableModelListener
 	{
-		private boolean	persistOnUpdate		= true;
-		private boolean	rebuildViewOnUpdate	= true;
+		private boolean persistOnUpdate = true;
+		private boolean rebuildViewOnUpdate = true;
 
 		public SurveyTableChangeHandler( TaskService taskService )
 		{
@@ -2265,7 +2313,7 @@ public class BreakoutMainView
 
 	private class ImportProjectArchiveTask extends DrawerPinningTask
 	{
-		File	newProjectFile;
+		File newProjectFile;
 
 		private ImportProjectArchiveTask( File newProjectFile )
 		{
@@ -2350,7 +2398,7 @@ public class BreakoutMainView
 
 	private class ExportProjectArchiveTask extends DrawerPinningTask
 	{
-		File	newProjectFile;
+		File newProjectFile;
 
 		private ExportProjectArchiveTask( File newProjectFile )
 		{
@@ -2423,8 +2471,8 @@ public class BreakoutMainView
 
 	private class OpenProjectTask extends DrawerPinningTask
 	{
-		Path	newProjectFile;
-		Path	relativizedNewProjectFile;
+		Path newProjectFile;
+		Path relativizedNewProjectFile;
 
 		private OpenProjectTask( Path newProjectFile )
 		{
@@ -2545,8 +2593,8 @@ public class BreakoutMainView
 
 	private class OpenSurveyTask extends DrawerPinningTask
 	{
-		Path	newSurveyFile;
-		Path	relativizedNewSurveyFile;
+		Path newSurveyFile;
+		Path relativizedNewSurveyFile;
 
 		private OpenSurveyTask( Path newSurveyFile )
 		{
