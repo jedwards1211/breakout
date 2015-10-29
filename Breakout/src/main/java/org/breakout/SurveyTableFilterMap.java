@@ -64,7 +64,7 @@ public class SurveyTableFilterMap implements BiFunction<String, String, RowFilte
 		Matcher m = regexPattern.matcher( prefix );
 		if( m.find( ) )
 		{
-			property = m.group( 1 );
+			property = m.group( 1 ).trim( );
 			
 			if( property.matches( "stations?|shots?|surveys?" ) )
 			{
