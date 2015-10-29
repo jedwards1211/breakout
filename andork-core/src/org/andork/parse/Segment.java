@@ -652,10 +652,17 @@ public class Segment implements CharSequence
 			}
 			else if( endLine == line.startLine )
 			{
-				while( k <= Math.max( startCol , endCol ) )
+				if( endCol < startCol )
 				{
 					sb.append( '^' );
-					k++;
+				}
+				else
+				{
+					while( k <= endCol )
+					{
+						sb.append( '^' );
+						k++;
+					}
 				}
 			}
 			if( line.startLine < endLine )

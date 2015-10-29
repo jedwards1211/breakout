@@ -256,13 +256,6 @@ public class LineParser
 		return null;
 	}
 
-	public <V> V oneOf( Map<Character, V> map , V elseValue )
-	{
-		V value = i == line.length( ) ? null : map.get( line.charAt( i ) );
-		i++;
-		return value != null ? value : elseValue;
-	}
-
 	public <V> V oneOfLowercase( Map<Character, V> map , V elseValue )
 	{
 		V value = i == line.length( ) ? null : map.get( Character.toLowerCase( line.charAt( i ) ) );
