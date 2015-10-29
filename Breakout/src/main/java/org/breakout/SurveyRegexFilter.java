@@ -32,19 +32,22 @@ import org.breakout.model.SurveyTableModel.Row;
 
 public class SurveyRegexFilter extends RowFilter<TableModel, Integer>
 {
-	Pattern	pattern;
-	
+	Pattern pattern;
+
 	public SurveyRegexFilter( String designation )
 	{
 		pattern = Pattern.compile( designation );
 	}
-	
+
 	@Override
 	public boolean include( javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry )
 	{
 		SurveyTableModel model = ( SurveyTableModel ) entry.getModel( );
 		QObject<Row> row = model.getRow( entry.getIdentifier( ) );
-		
-		return pattern.matcher( row.get( Row.from ) ).find( ) && pattern.matcher( row.get( Row.to ) ).find( );
+
+		String from = row.get( Row.from );
+		String to = row.get( Row.to );
+
+		return from != null && to != null && pattern.matcher( from ).find( ) && pattern.matcher( to ).find( );
 	}
 }
