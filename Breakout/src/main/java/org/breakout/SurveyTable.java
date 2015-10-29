@@ -86,7 +86,7 @@ public class SurveyTable extends AnnotatingJTable
 					{
 						try
 						{
-							Runtime.getRuntime( ).exec( "explorer " + o.toString( ) );
+							Runtime.getRuntime( ).exec( "explorer \"" + o.toString( ) + "\"" );
 						}
 						catch( IOException e1 )
 						{
