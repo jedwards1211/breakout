@@ -244,5 +244,8 @@ public class SegmentTests
 
 		inContext = s.substring( 6 , 9 ).underlineInContext( );
 		Assert.assertEquals( "weird\n^^^".replace( "\n" , System.lineSeparator( ) ) , inContext );
+
+		inContext = s.substring( 3 , 13 ).underlineInContext( );
+		Assert.assertEquals( "hello\n   ^^\nweird\n^^^^^\nworld\n^".replace( "\n" , System.lineSeparator( ) ) , inContext );
 	}
 }

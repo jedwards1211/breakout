@@ -345,9 +345,15 @@ public class ToMetacaveWallsVisitor implements WallsVisitor
 
 		double ne2 = n * n + e * e;
 		double ne = Math.sqrt( ne2 );
+		
+		double azm = Math.atan2( e , n );
+		if ( azm < 0.0 )
+		{
+			azm += 360.0;
+		}
 
 		distance = new UnitizedDouble<>( Math.sqrt( ne2 + u * u ) , units.d_unit );
-		fsAzm = new UnitizedDouble<>( Math.atan2( e , n ) , units.a_unit );
+		fsAzm = new UnitizedDouble<>( azm , units.a_unit );
 		fsInc = new UnitizedDouble<>( Math.atan2( u , ne ) , units.v_unit );
 	}
 
