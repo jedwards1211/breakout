@@ -1,11 +1,11 @@
 package org.andork.jogl;
 
-import javax.media.opengl.GL2ES2;
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLEventListener;
 
-import static javax.media.opengl.GL3.*;
+import static com.jogamp.opengl.GL3.*;
 import static org.andork.math3d.Vecmath.*;
 
 public class DefaultJoglRenderer implements GLEventListener

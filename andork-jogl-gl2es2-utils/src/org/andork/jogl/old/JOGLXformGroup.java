@@ -30,7 +30,7 @@ import static org.andork.math3d.Vecmath.newMat4f;
 
 
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 import org.andork.jogl.JoglDrawContext;
 

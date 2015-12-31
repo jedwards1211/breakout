@@ -24,7 +24,7 @@ package org.andork.jogl.old;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 public class BasicJOGLTexture implements JOGLResource
 {

@@ -21,15 +21,15 @@
  *******************************************************************************/
 package org.breakout.model;
 
-import static javax.media.opengl.GL.GL_ARRAY_BUFFER;
-import static javax.media.opengl.GL.GL_BLEND;
-import static javax.media.opengl.GL.GL_ELEMENT_ARRAY_BUFFER;
-import static javax.media.opengl.GL.GL_FLOAT;
-import static javax.media.opengl.GL.GL_ONE_MINUS_SRC_ALPHA;
-import static javax.media.opengl.GL.GL_SRC_ALPHA;
-import static javax.media.opengl.GL.GL_STATIC_DRAW;
-import static javax.media.opengl.GL.GL_TRIANGLES;
-import static javax.media.opengl.GL.GL_UNSIGNED_INT;
+import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER;
+import static com.jogamp.opengl.GL.GL_BLEND;
+import static com.jogamp.opengl.GL.GL_ELEMENT_ARRAY_BUFFER;
+import static com.jogamp.opengl.GL.GL_FLOAT;
+import static com.jogamp.opengl.GL.GL_ONE_MINUS_SRC_ALPHA;
+import static com.jogamp.opengl.GL.GL_SRC_ALPHA;
+import static com.jogamp.opengl.GL.GL_STATIC_DRAW;
+import static com.jogamp.opengl.GL.GL_TRIANGLES;
+import static com.jogamp.opengl.GL.GL_UNSIGNED_INT;
 import static org.andork.math3d.Vecmath.setf;
 import static org.andork.math3d.Vecmath.subDot3;
 
@@ -38,8 +38,8 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.Random;
 
-import javax.media.opengl.GL2ES2;
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL3;
 
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;

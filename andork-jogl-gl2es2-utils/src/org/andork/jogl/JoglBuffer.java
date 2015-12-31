@@ -23,8 +23,8 @@ package org.andork.jogl;
 
 import java.nio.ByteBuffer;
 
-import javax.media.opengl.GL;
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GL2ES2;
 
 public class JoglBuffer implements JoglResource
 {

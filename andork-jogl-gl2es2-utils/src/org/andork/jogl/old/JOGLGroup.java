@@ -24,7 +24,7 @@ package org.andork.jogl.old;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglResource;

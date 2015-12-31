@@ -26,7 +26,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 public class JoglScene implements JoglDrawable , JoglResourceManager
 {

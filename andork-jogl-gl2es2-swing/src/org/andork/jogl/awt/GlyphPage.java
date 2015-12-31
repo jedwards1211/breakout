@@ -21,19 +21,19 @@
  *******************************************************************************/
 package org.andork.jogl.awt;
 
-import static javax.media.opengl.GL.GL_BGRA;
-import static javax.media.opengl.GL.GL_CLAMP_TO_EDGE;
-import static javax.media.opengl.GL.GL_LINEAR;
-import static javax.media.opengl.GL.GL_LINEAR_MIPMAP_LINEAR;
-import static javax.media.opengl.GL.GL_RGBA;
-import static javax.media.opengl.GL.GL_TEXTURE0;
-import static javax.media.opengl.GL.GL_TEXTURE_2D;
-import static javax.media.opengl.GL.GL_TEXTURE_MAG_FILTER;
-import static javax.media.opengl.GL.GL_TEXTURE_MIN_FILTER;
-import static javax.media.opengl.GL.GL_TEXTURE_WRAP_S;
-import static javax.media.opengl.GL.GL_TEXTURE_WRAP_T;
-import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
-import static javax.media.opengl.GL2ES2.GL_RED;
+import static com.jogamp.opengl.GL.GL_BGRA;
+import static com.jogamp.opengl.GL.GL_CLAMP_TO_EDGE;
+import static com.jogamp.opengl.GL.GL_LINEAR;
+import static com.jogamp.opengl.GL.GL_LINEAR_MIPMAP_LINEAR;
+import static com.jogamp.opengl.GL.GL_RGBA;
+import static com.jogamp.opengl.GL.GL_TEXTURE0;
+import static com.jogamp.opengl.GL.GL_TEXTURE_2D;
+import static com.jogamp.opengl.GL.GL_TEXTURE_MAG_FILTER;
+import static com.jogamp.opengl.GL.GL_TEXTURE_MIN_FILTER;
+import static com.jogamp.opengl.GL.GL_TEXTURE_WRAP_S;
+import static com.jogamp.opengl.GL.GL_TEXTURE_WRAP_T;
+import static com.jogamp.opengl.GL.GL_UNSIGNED_BYTE;
+import static com.jogamp.opengl.GL2ES2.GL_RED;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -43,7 +43,7 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 import org.andork.jogl.JoglManagedResource;
 import org.andork.jogl.JoglResourceManager;

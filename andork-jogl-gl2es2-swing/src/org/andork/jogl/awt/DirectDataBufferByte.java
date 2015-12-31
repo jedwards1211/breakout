@@ -35,8 +35,6 @@ import java.awt.image.WritableRaster;
 import java.nio.ByteBuffer;
 import java.util.Hashtable;
 
-import com.jogamp.common.nio.Buffers;
-
 /**
  * {@link DataBuffer} specialization using NIO direct buffer of type {@link DataBuffer#TYPE_INT} as storage.
  */
@@ -148,7 +146,7 @@ public final class DirectDataBufferByte extends DataBuffer
 	public DirectDataBufferByte( int size )
 	{
 		super( TYPE_BYTE , size );
-		data = Buffers.newDirectByteBuffer( size );
+		data = ByteBuffer.allocateDirect( size );
 		bankdata = new ByteBuffer[ 1 ];
 		bankdata[ 0 ] = data;
 	}
@@ -167,7 +165,7 @@ public final class DirectDataBufferByte extends DataBuffer
 		bankdata = new ByteBuffer[ numBanks ];
 		for( int i = 0 ; i < numBanks ; i++ )
 		{
-			bankdata[ i ] = Buffers.newDirectByteBuffer( size );
+			bankdata[ i ] = ByteBuffer.allocateDirect( size );
 		}
 		data = bankdata[ 0 ];
 	}

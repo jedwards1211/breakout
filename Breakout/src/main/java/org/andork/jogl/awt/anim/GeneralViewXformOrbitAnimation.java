@@ -38,7 +38,7 @@ import static org.andork.math3d.Vecmath.setd;
 import static org.andork.math3d.Vecmath.setf;
 import static org.andork.math3d.Vecmath.subDot3;
 
-import javax.media.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
 import org.andork.jogl.JoglViewSettings;

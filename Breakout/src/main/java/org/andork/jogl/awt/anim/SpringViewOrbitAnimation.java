@@ -35,7 +35,7 @@ import static org.andork.math3d.Vecmath.setColumn3;
 import static org.andork.math3d.Vecmath.setIdentity;
 import static org.andork.math3d.Vecmath.setRotation;
 
-import javax.media.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
 import org.andork.jogl.JoglViewSettings;

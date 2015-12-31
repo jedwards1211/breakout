@@ -25,7 +25,7 @@ import java.nio.Buffer;
 
 import static org.andork.jogl.util.JoglUtils.*;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 public class SimplePolygon
 {

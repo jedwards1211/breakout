@@ -1,6 +1,6 @@
 package org.andork.jogl.awt;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglManagedResource;

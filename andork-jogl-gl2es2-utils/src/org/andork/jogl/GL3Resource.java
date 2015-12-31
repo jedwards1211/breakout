@@ -21,7 +21,7 @@
  *******************************************************************************/
 package org.andork.jogl;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 
 public interface GL3Resource
 {

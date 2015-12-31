@@ -21,13 +21,13 @@
  *******************************************************************************/
 package org.andork.jogl.awt;
 
-import static javax.media.opengl.GL.GL_BGRA;
-import static javax.media.opengl.GL.GL_COLOR_BUFFER_BIT;
-import static javax.media.opengl.GL.GL_DEPTH_BUFFER_BIT;
-import static javax.media.opengl.GL.GL_NEAREST;
-import static javax.media.opengl.GL.GL_UNSIGNED_BYTE;
-import static javax.media.opengl.GL2ES3.GL_DRAW_FRAMEBUFFER;
-import static javax.media.opengl.GL2ES3.GL_READ_FRAMEBUFFER;
+import static com.jogamp.opengl.GL.GL_BGRA;
+import static com.jogamp.opengl.GL.GL_COLOR_BUFFER_BIT;
+import static com.jogamp.opengl.GL.GL_DEPTH_BUFFER_BIT;
+import static com.jogamp.opengl.GL.GL_NEAREST;
+import static com.jogamp.opengl.GL.GL_UNSIGNED_BYTE;
+import static com.jogamp.opengl.GL2ES3.GL_DRAW_FRAMEBUFFER;
+import static com.jogamp.opengl.GL2ES3.GL_READ_FRAMEBUFFER;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -55,11 +55,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-import javax.media.opengl.GL2ES2;
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLProfile;
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLProfile;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JDialog;

@@ -21,7 +21,7 @@
  *******************************************************************************/
 package org.andork.jogl.awt.anim;
 
-import javax.media.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLAutoDrawable;
 
 import org.andork.awt.anim.Animation;
 import org.andork.jogl.JoglViewSettings;

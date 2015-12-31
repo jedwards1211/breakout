@@ -21,7 +21,7 @@
  *******************************************************************************/
 package org.andork.jogl;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 public abstract class JoglManagedResource implements JoglResource
 {
@@ -35,7 +35,7 @@ public abstract class JoglManagedResource implements JoglResource
 	}
 
 	/* (non-Javadoc)
-	 * @see org.andork.jogl.neu.JoglResource#dispose(javax.media.opengl.GL2ES2)
+	 * @see org.andork.jogl.neu.JoglResource#dispose(com.jogamp.opengl.GL2ES2)
 	 */
 	@Override
 	public final void dispose( GL2ES2 gl )
@@ -60,7 +60,7 @@ public abstract class JoglManagedResource implements JoglResource
 	}
 
 	/* (non-Javadoc)
-	 * @see org.andork.jogl.neu.JoglResource#init(javax.media.opengl.GL2ES2)
+	 * @see org.andork.jogl.neu.JoglResource#init(com.jogamp.opengl.GL2ES2)
 	 */
 	@Override
 	public final void init( GL2ES2 gl )

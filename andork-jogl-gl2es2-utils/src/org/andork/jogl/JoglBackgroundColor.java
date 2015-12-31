@@ -4,7 +4,7 @@ import static org.andork.math3d.Vecmath.setf;
 
 import java.util.Arrays;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 public class JoglBackgroundColor implements JoglDrawable
 {

@@ -21,7 +21,7 @@
  *******************************************************************************/
 package org.andork.jogl;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 public interface JoglDrawable
 {

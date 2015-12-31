@@ -28,7 +28,7 @@ import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.FloatBuffer;
 
-import javax.media.opengl.GL2ES2;
+import com.jogamp.opengl.GL2ES2;
 
 public class IndexedPackedCube
 {

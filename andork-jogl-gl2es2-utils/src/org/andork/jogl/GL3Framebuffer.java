@@ -21,13 +21,13 @@
  *******************************************************************************/
 package org.andork.jogl;
 
-import static javax.media.opengl.GL.GL_COLOR_ATTACHMENT0;
-import static javax.media.opengl.GL.GL_DEPTH_ATTACHMENT;
-import static javax.media.opengl.GL.GL_DEPTH_COMPONENT32;
-import static javax.media.opengl.GL.GL_FRAMEBUFFER;
-import static javax.media.opengl.GL.GL_RENDERBUFFER;
+import static com.jogamp.opengl.GL.GL_COLOR_ATTACHMENT0;
+import static com.jogamp.opengl.GL.GL_DEPTH_ATTACHMENT;
+import static com.jogamp.opengl.GL.GL_DEPTH_COMPONENT32;
+import static com.jogamp.opengl.GL.GL_FRAMEBUFFER;
+import static com.jogamp.opengl.GL.GL_RENDERBUFFER;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 
 public class GL3Framebuffer implements GL3Resource
 {
