@@ -1781,23 +1781,23 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			return "uniform mat4 m;" +
 				"uniform mat4 v;" +
 				"uniform mat4 p;" +
-				"attribute vec3 a_pos;" +
+				"in vec3 a_pos;" +
 
 				// lighting
-				"attribute vec3 a_norm;" +
-				"varying vec3 v_norm;" +
+				"in vec3 a_norm;" +
+				"out vec3 v_norm;" +
 				"uniform mat3 n;" +
 
 				// distance coloration
-				"varying float v_dist;" +
+				"out float v_dist;" +
 
 				// glow
-				"attribute vec2 a_glow;" +
-				"varying vec2 v_glow;" +
+				"in vec2 a_glow;" +
+				"out vec2 v_glow;" +
 
 				// highlights
-				"attribute float a_highlightIndex;" +
-				"varying float v_highlightIndex;";
+				"in float a_highlightIndex;" +
+				"out float v_highlightIndex;";
 		}
 
 		protected String createVertexShaderCode( )
@@ -1811,7 +1811,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 
 		protected String createVertexShader( )
 		{
-			return "#version 130\n" +
+			return "#version 330\n" +
 				createVertexShaderVariables( ) +
 				"void main() {" +
 				createVertexShaderCode( ) +
@@ -1821,21 +1821,23 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		protected String createFragmentShaderVariables( )
 		{
 			// lighting
-			return "varying vec3 v_norm;" +
+			return "in vec3 v_norm;" +
 				"uniform float u_ambient;" +
 
 				// distance coloration
-				"varying float v_dist;" +
+				"in float v_dist;" +
 				"uniform float u_farDist;" +
 				"uniform float u_nearDist;" +
 
 				// glow
-				"varying vec2 v_glow;" +
+				"in vec2 v_glow;" +
 				"uniform vec4 u_glowColor;" +
 
 				// highlights
 				"uniform vec4 u_highlightColors[3];" +
-				"varying float v_highlightIndex;";
+				"in float v_highlightIndex;" +
+				
+				"out vec4 color;";
 
 		}
 
@@ -1847,11 +1849,11 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				+
 
 				// distance coloration
-				"  gl_FragColor.xyz *= mix(1.0, u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));"
+				"  color.xyz *= mix(1.0, u_ambient, clamp((v_dist - u_nearDist) / (u_farDist - u_nearDist), 0.0, 1.0));"
 				+
 
 				// glow
-				"  gl_FragColor = mix(gl_FragColor, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));"
+				"  color = mix(color, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));"
 				+
 
 				// lighting
@@ -1859,18 +1861,18 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				+
 				"  temp = u_ambient + temp * (1.0 - u_ambient);"
 				+
-				"  gl_FragColor.xyz *= temp;"
+				"  color.xyz *= temp;"
 				+
 
 				// highlights
 				"  indexedHighlight = u_highlightColors[int(floor(v_highlightIndex + 0.5))];"
 				+
-				"  gl_FragColor = clamp(gl_FragColor + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);";
+				"  color = clamp(color + vec4(indexedHighlight.xyz * indexedHighlight.w, 0.0), 0.0, 1.0);";
 		}
 
 		protected String createFragmentShader( )
 		{
-			return "#version 130\n" +
+			return "#version 330\n" +
 				createFragmentShaderVariables( ) +
 				"void main() {" +
 				createFragmentShaderCode( ) +
@@ -2019,14 +2021,14 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 				"uniform float u_loParam;" +
 				"uniform float u_hiParam;" +
 				"uniform sampler2D u_paramSampler;" +
-				"varying float v_param;";
+				"in float v_param;";
 		}
 
 		@Override
 		protected String createFragmentShaderCode( )
 		{
 			// param coloration
-			return "  gl_FragColor = texture2D(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));"
+			return "  color = texture(u_paramSampler, vec2(0.5, clamp((v_param - u_loParam) / (u_hiParam - u_loParam), 0.0, 1.0)));"
 				+
 				super.createFragmentShaderCode( );
 		}
@@ -2069,7 +2071,7 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 			return super.createVertexShaderVariables( ) +
 				"uniform vec3 u_axis;" +
 				"uniform vec3 u_origin;" +
-				"varying float v_param;";
+				"out float v_param;";
 		}
 
 		@Override
@@ -2137,8 +2139,8 @@ public class Survey3dModel implements JoglDrawable , JoglResource
 		protected String createVertexShaderVariables( )
 		{
 			return super.createVertexShaderVariables( ) +
-				"attribute float a_param0;" +
-				"varying float v_param;";
+				"in float a_param0;" +
+				"out float v_param;";
 		}
 
 		@Override

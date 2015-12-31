@@ -274,7 +274,7 @@ public class BreakoutMainView
 
 	public BreakoutMainView( )
 	{
-		final GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
+		final GLProfile glp = GLProfile.get( GLProfile.GL4 ); 
 		final GLCapabilities caps = new GLCapabilities( glp );
 		autoDrawable = canvas = new GLCanvas( caps );
 		autoDrawable.display( );
