@@ -161,7 +161,7 @@ public class JumpBar extends JComponent
 		
 		if( decrButton == null || incrButton == null )
 		{
-			return null;
+			return SwingUtilities.calculateInnerArea( scrollBar , null );
 		}
 		
 		if( axis.lower( decrButton ) > axis.lower( incrButton ) )
@@ -220,6 +220,10 @@ public class JumpBar extends JComponent
 		Axis axis = getAxis( );
 		
 		Rectangle track = getScrollBarTrackBounds( );
+		if (track == null)
+		{
+			return;
+		}
 		track = SwingUtilities.convertRectangle( scrollBar , track , this );
 		
 		int start = axis.lower( track );
