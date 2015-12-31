@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>breakout</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.9.22</version>
 	<build>
 		<resources>
 			<resource>
@@ -34,42 +34,42 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-core</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-math</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-math3d</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-plot</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-spatial</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-ui</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-jogl-gl2es2-utils</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-jogl-gl2es2-swing</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>0.9.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.swinglabs.swingx</groupId>
@@ -150,6 +150,7 @@
 	</dependencies>
 	<profiles>
 		<profile>
+			<id>Windows</id>
 			<activation>
 				<os>
 					<family>windows</family>
@@ -177,6 +178,7 @@
 			</dependencies>
 		</profile>
 		<profile>
+			<id>Windows x86</id>
 			<activation>
 				<os>
 					<family>windows</family>
@@ -211,6 +213,7 @@
 			</dependencies>
 		</profile>
 		<profile>
+			<id>Windows x64</id>
 			<activation>
 				<os>
 					<family>windows</family>
@@ -245,6 +248,7 @@
 			</dependencies>
 		</profile>
 		<profile>
+			<id>Linux</id>
 			<activation>
 				<os>
 					<family>linux</family>
@@ -272,6 +276,7 @@
 			</dependencies>
 		</profile>
 		<profile>
+			<id>Linux x86</id>
 			<activation>
 				<os>
 					<family>linux</family>
@@ -306,6 +311,7 @@
 			</dependencies>
 		</profile>
 		<profile>
+			<id>Linux x64</id>
 			<activation>
 				<os>
 					<family>linux</family>
@@ -340,6 +346,7 @@
 			</dependencies>
 		</profile>
 		<profile>
+			<id>OSX</id>
 			<activation>
 				<os>
 					<family>mac</family>

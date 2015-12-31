@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.andork</groupId>
   <artifactId>andork-jogl-gl2es2-utils</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.9.22</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
