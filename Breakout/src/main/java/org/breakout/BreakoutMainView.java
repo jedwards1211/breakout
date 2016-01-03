@@ -515,7 +515,7 @@ public class BreakoutMainView
 		canvasDelegate.putExtraConstraint( Side.TOP , new SideConstraint( taskListDrawer , Side.BOTTOM , 0 ));
 		canvasDelegate.putExtraConstraint( Side.LEFT , new SideConstraint( miniSurveyDrawer , Side.RIGHT , 0 ));
 		canvasDelegate.putExtraConstraint( Side.RIGHT , new SideConstraint( settingsDrawer , Side.LEFT , 0 ));
-		canvasDelegate.putExtraConstraint( Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ));
+		canvasDelegate.putExtraConstraint( Side.BOTTOM , new SideConstraint( hintLabel , Side.TOP , 0 ));
 		layeredPane.add( canvas, canvasDelegate );
 		
 		new javax.swing.Timer(1000, e -> {
