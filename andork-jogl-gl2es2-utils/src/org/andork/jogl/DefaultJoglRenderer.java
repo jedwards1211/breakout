@@ -7,6 +7,12 @@ import static com.jogamp.opengl.GL.GL_READ_FRAMEBUFFER;
 import static org.andork.math3d.Vecmath.newMat3f;
 import static org.andork.math3d.Vecmath.newMat4f;
 
+import java.awt.Component;
+import java.awt.Rectangle;
+import java.awt.Window;
+
+import javax.swing.SwingUtilities;
+
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLAutoDrawable;
@@ -23,6 +29,12 @@ public class DefaultJoglRenderer implements GLEventListener
 
 	protected float[ ]			m					= newMat4f( );
 	protected float[ ]			n					= newMat3f( );
+	
+	protected boolean 			useWindowBoundsForViewport = true;
+	protected int 				x;
+	protected int 				y;
+	protected int 				width;
+	protected int 				height;
 
 	public DefaultJoglRenderer( JoglScene scene )
 	{
@@ -117,7 +129,7 @@ public class DefaultJoglRenderer implements GLEventListener
 			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , renderingFbo );
 		}
 
-		viewState.update( viewSettings , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) );
+		viewState.update( viewSettings , this.width , this.height );
 
 		drawScene( drawable );
 
@@ -145,6 +157,24 @@ public class DefaultJoglRenderer implements GLEventListener
 	public void reshape( GLAutoDrawable drawable , int x , int y , int width , int height )
 	{
 		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
+		
+		if( useWindowBoundsForViewport && drawable instanceof Component )
+		{
+			Component canvas = ( Component ) drawable;
+			Window window = SwingUtilities.getWindowAncestor( canvas );
+			if( window != null )
+			{
+				this.width = window.getWidth( );
+				this.height = window.getHeight( );
+				Rectangle bounds = SwingUtilities.convertRectangle( canvas , canvas.getBounds( ) , window );
+				gl.glViewport( -bounds.x / 2 , bounds.y / 2 + bounds.height - window.getHeight( ) , this.width , this.height );
+				return;
+			}
+		}
+
+		this.width = width;
+		this.height = height;
+
 		gl.glViewport( x , y , width , height );
 	}
 }
