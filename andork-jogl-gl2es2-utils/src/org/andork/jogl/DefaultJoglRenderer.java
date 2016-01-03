@@ -30,9 +30,7 @@ public class DefaultJoglRenderer implements GLEventListener
 	protected float[ ]			m					= newMat4f( );
 	protected float[ ]			n					= newMat3f( );
 	
-	protected boolean 			useWindowBoundsForViewport = true;
-	protected int 				x;
-	protected int 				y;
+	protected boolean 			useWindowBoundsForViewport = false;
 	protected int 				width;
 	protected int 				height;
 
