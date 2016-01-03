@@ -1,12 +1,16 @@
 package org.andork.jogl;
 
+import static com.jogamp.opengl.GL.GL_BACK;
+import static com.jogamp.opengl.GL.GL_DRAW_FRAMEBUFFER;
+import static com.jogamp.opengl.GL.GL_NEAREST;
+import static com.jogamp.opengl.GL.GL_READ_FRAMEBUFFER;
+import static org.andork.math3d.Vecmath.newMat3f;
+import static org.andork.math3d.Vecmath.newMat4f;
+
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
-
-import static com.jogamp.opengl.GL3.*;
-import static org.andork.math3d.Vecmath.*;
 
 public class DefaultJoglRenderer implements GLEventListener
 {
@@ -124,8 +128,8 @@ public class DefaultJoglRenderer implements GLEventListener
 			gl3.glBindFramebuffer( GL_DRAW_FRAMEBUFFER , 0 );
 			gl3.glBindFramebuffer( GL_READ_FRAMEBUFFER , renderingFbo );
 			gl3.glDrawBuffer( GL_BACK );
-			gl3.glBlitFramebuffer( 0 , 0 , drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) , 0 , 0 ,
-				drawable.getSurfaceWidth( ) , drawable.getSurfaceHeight( ) , GL3.GL_COLOR_BUFFER_BIT , GL_NEAREST );
+			gl3.glBlitFramebuffer( 0 , 0 , drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), 0 , 0 ,
+				drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), GL3.GL_COLOR_BUFFER_BIT , GL_NEAREST );
 		}
 	}
 
@@ -141,6 +145,6 @@ public class DefaultJoglRenderer implements GLEventListener
 	public void reshape( GLAutoDrawable drawable , int x , int y , int width , int height )
 	{
 		GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
-		gl.glViewport( 0 , 0 , width , height );
+		gl.glViewport( x , y , width , height );
 	}
 }

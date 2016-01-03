@@ -59,12 +59,6 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL3;
-import com.jogamp.opengl.GLAutoDrawable;
-import com.jogamp.opengl.GLCapabilities;
-import com.jogamp.opengl.GLProfile;
-import com.jogamp.opengl.awt.GLCanvas;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
@@ -159,23 +153,31 @@ import org.breakout.model.RootModel;
 import org.breakout.model.Shot;
 import org.breakout.model.Station;
 import org.breakout.model.Survey3dModel;
-import org.breakout.model.SurveyTableModel;
-import org.breakout.model.TransparentTerrain;
 import org.breakout.model.Survey3dModel.SelectionEditor;
 import org.breakout.model.Survey3dModel.Shot3d;
 import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
+import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
+import org.breakout.model.TransparentTerrain;
 import org.breakout.update.UpdateStatusPanelController;
 
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
+import com.jogamp.newt.opengl.GLWindow;
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.awt.GLCanvas;
 
 public class BreakoutMainView
 {
 	GLAutoDrawable										autoDrawable;
 	GLCanvas											canvas;
+	GLWindow											glWindow;
 	JoglScene											scene;
 	JoglBackgroundColor									bgColor;
 	DefaultJoglRenderer									renderer;
@@ -278,7 +280,7 @@ public class BreakoutMainView
 		final GLCapabilities caps = new GLCapabilities( glp );
 		autoDrawable = canvas = new GLCanvas( caps );
 		autoDrawable.display( );
-
+		
 		scene = new JoglScene( );
 		bgColor = new JoglBackgroundColor( );
 		scene.add( bgColor );
@@ -453,7 +455,6 @@ public class BreakoutMainView
 		surveyTableChangeHandler = new SurveyTableChangeHandler( rebuildTaskService );
 		surveyDrawer.table( ).getModel( ).addTableModelListener( surveyTableChangeHandler );
 
-		layeredPane.add( canvas );
 		surveyDrawer.addTo( layeredPane , 5 );
 
 		mainPanel = new JPanel( new BorderLayout( ) );
@@ -510,6 +511,20 @@ public class BreakoutMainView
 		layeredPane.add( hintLabel , hintLabelDelegate );
 		layeredPane.setLayer( hintLabel , JLayeredPane.getLayer( settingsDrawer ) );
 
+		SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
+		canvasDelegate.putExtraConstraint( Side.TOP , new SideConstraint( taskListDrawer , Side.BOTTOM , 0 ));
+		canvasDelegate.putExtraConstraint( Side.LEFT , new SideConstraint( miniSurveyDrawer , Side.RIGHT , 0 ));
+		canvasDelegate.putExtraConstraint( Side.RIGHT , new SideConstraint( settingsDrawer , Side.LEFT , 0 ));
+		canvasDelegate.putExtraConstraint( Side.BOTTOM , new SideConstraint( surveyDrawer , Side.TOP , 0 ));
+		layeredPane.add( canvas, canvasDelegate );
+		
+		new javax.swing.Timer(1000, e -> {
+			Rectangle bounds = canvas.getBounds();
+			SwingUtilities.convertRectangle(canvas.getParent(), bounds, layeredPane);
+			System.out.println(bounds);
+			glWindow.display();
+		}).start();
+
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
 
 		surveyDrawer.table( ).addPropertyChangeListener( "model" , new PropertyChangeListener( ) {
@@ -527,6 +542,8 @@ public class BreakoutMainView
 				miniSurveyDrawer.table( ).setRowSorter( sorter );
 			}
 		} );
+		
+//		new javax.swing.Timer(1000, e -> System.out.println(layeredPane.getBounds())).start();
 
 		surveyDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.surveyDrawer , projectModelBinder ) );
 		settingsDrawer.setBinder( QObjectAttributeBinder.bind( ProjectModel.settingsDrawer , projectModelBinder ) );

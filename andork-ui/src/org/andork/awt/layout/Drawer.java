@@ -23,6 +23,7 @@ package org.andork.awt.layout;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
@@ -173,6 +174,22 @@ public class Drawer extends PaintablePanel
 			mainResizeHandle = handle;
 		}
 		return mainResizeHandle;
+	}
+
+	public void addTo( Container layeredPane , int layer )
+	{
+		if( ! ( layeredPane.getLayout( ) instanceof DelegatingLayoutManager ) )
+		{
+			layeredPane.setLayout( new DelegatingLayoutManager( ) );
+		}
+
+//		layeredPane.setLayer( this , layer );
+		layeredPane.add( this , delegate );
+		if( pinButtonDelegate != null )
+		{
+//			layeredPane.setLayer( pinButton( ) , layer + 1 );
+			layeredPane.add( pinButton( ) , pinButtonDelegate );
+		}
 	}
 
 	public void addTo( JLayeredPane layeredPane , int layer )

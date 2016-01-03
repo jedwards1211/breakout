@@ -33,4 +33,11 @@
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+  	<dependency>
+  		<groupId>org.andork</groupId>
+  		<artifactId>andork-core</artifactId>
+  		<version>0.9.22</version>
+  	</dependency>
+  </dependencies>
 </project>

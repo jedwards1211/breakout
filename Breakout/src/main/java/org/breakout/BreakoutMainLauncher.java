@@ -23,6 +23,8 @@ package org.breakout;
 
 import java.awt.Color;
 import java.awt.Image;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
@@ -49,6 +51,8 @@ public class BreakoutMainLauncher
 					"Fisher Ridge Forever" , JOptionPane.ERROR_MESSAGE );
 			System.exit( 1 );
 		}
+		
+		BlockingQueue<Runnable> runnables = new LinkedBlockingQueue<>();
 
 		OnEDT.onEDT( ( ) ->
 		{
@@ -71,13 +75,17 @@ public class BreakoutMainLauncher
 				final BreakoutMainView view = new BreakoutMainView( );
 				OnEDT.onEDT( ( ) ->
 				{
-					if( splash.isVisible( ) )
+					if( splash.isVisible( ) ) // i.e. user didn't change their mind and close the splash
 					{
 						BreakoutMainFrame frame = new BreakoutMainFrame( view );
 						frame.setTitle( "Breakout" );
 						frame.setExtendedState( JFrame.MAXIMIZED_BOTH );
-						frame.setVisible( true );
-						splash.setVisible( false );
+						runnables.put( ( ) -> {
+							// unfortunately the positioning of GLCanvas and NewtCanvasAWT bug out
+							// if the frame is set visible on the EDT...
+							frame.setVisible( true );
+							splash.setVisible( false );
+						} );
 					}
 				} );
 			} , "BreakoutMainView loader" );
@@ -103,5 +111,18 @@ public class BreakoutMainLauncher
 			splash.setLocationRelativeTo( null );
 			splash.setVisible( true );
 		} );
+		
+		while( true )
+		{
+			try 
+			{
+				runnables.take( ).run( );
+			} 
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+				break;
+			}
+		}
 	}
 }
