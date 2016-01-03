@@ -166,11 +166,21 @@ public class JoglScreenPolygon implements JoglDrawable , JoglResource
 
 	private void initProgram( GL2ES2 gl )
 	{
-		String vertexShaderCode = "#version 120\n" + "uniform mat4 screenXform;" + "attribute vec2 a_pos;"
-			+ "void main() {" + "  gl_Position = screenXform * vec4(a_pos, 0.0, 1.0);" + "}";
+		String vertexShaderCode = 
+			"#version 330\n" + 
+			"uniform mat4 screenXform;" + 
+			"in vec2 a_pos;" + 
+			"void main() {" + 
+			"  gl_Position = screenXform * vec4(a_pos, 0.0, 1.0);" + 
+			"}";
 
-		String fragmentShaderCode = "#version 120\n" + "uniform vec4 u_outlineColor;" + "void main() {"
-			+ "  gl_FragColor = u_outlineColor;" + "}";
+		String fragmentShaderCode = 
+			"#version 330\n" + 
+			"uniform vec4 u_outlineColor;" + 
+			"out vec4 color;" +
+			"void main() {" + 
+			"  color = u_outlineColor;" + 
+			"}";
 
 		program = JoglUtils.loadProgram( gl , vertexShaderCode , fragmentShaderCode );
 		screenXform_location = gl.glGetUniformLocation( program , "screenXform" );
