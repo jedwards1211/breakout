@@ -9,3 +9,4 @@
 version.properties
 /target/
 defaultProject-survey.txt
+dependency-reduced-pom.xml
