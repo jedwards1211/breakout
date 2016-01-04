@@ -409,7 +409,7 @@ public class SettingsDrawer extends Drawer
 		Properties props = new Properties( );
 		try
 		{
-			props.load( getClass( ).getResourceAsStream( "version.properties" ) );
+			props.load( getClass( ).getClassLoader().getResourceAsStream( "version.properties" ) );
 		}
 		catch( Exception ex )
 		{

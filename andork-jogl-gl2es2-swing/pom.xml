@@ -18,13 +18,18 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
         <configuration>
-          <source/>
-          <target/>
+          <source>1.8</source>
+          <target>1.8</target>
         </configuration>
       </plugin>
     </plugins>
   </build>
   <dependencies>
+	<dependency>
+		<groupId>org.jogamp.gluegen</groupId>
+		<artifactId>gluegen-rt</artifactId>
+		<version>2.3.2</version>
+	</dependency>
   	<dependency>
   		<groupId>org.jogamp.jogl</groupId>
   		<artifactId>jogl</artifactId>
@@ -91,5 +96,11 @@
   		<classifier>ogl</classifier>
   	</dependency>
   	-->
+  	<dependency>
+  		<groupId>junit</groupId>
+  		<artifactId>junit</artifactId>
+  		<version>4.12</version>
+  		<scope>test</scope>
+  	</dependency>
   </dependencies>
 </project>

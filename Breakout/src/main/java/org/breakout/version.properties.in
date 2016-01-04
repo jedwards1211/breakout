@@ -1,5 +1,0 @@
-# Modify by hand
-version=0.9.21
-
-# populated by Ant
-build.date=@timestamp@

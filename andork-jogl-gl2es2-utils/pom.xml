@@ -10,8 +10,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.3</version>
         <configuration>
-          <source/>
-          <target/>
+          <source>1.8</source>
+          <target>1.8</target>
         </configuration>
       </plugin>
     </plugins>
@@ -22,10 +22,20 @@
   		<artifactId>vecmath</artifactId>
   		<version>1.5.2</version>
   	</dependency>
+	<dependency>
+		<groupId>org.jogamp.gluegen</groupId>
+		<artifactId>gluegen-rt</artifactId>
+		<version>2.3.2</version>
+	</dependency>
   	<dependency>
   		<groupId>org.jogamp.jogl</groupId>
   		<artifactId>jogl</artifactId>
   		<version>2.3.2</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.andork</groupId>
+  		<artifactId>andork-math3d</artifactId>
+  		<version>0.9.22</version>
   	</dependency>
   </dependencies>
 </project>

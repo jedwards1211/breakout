@@ -921,46 +921,47 @@ public class Vecmath
 		out[ 15 ] = 1f;
 	}
 	
-	public static void invAffineToTranspose3x3( double[ ] m , double[ ] out )
-	{
-		double determinant = detAffine( m );
-		
-		if( determinant == 0.0 )
-			throw new IllegalArgumentException( "Singular matrix" );
-		
-		double s = ( m[ 0 ] * m[ 0 ] + m[ 4 ] * m[ 4 ] +
-				m[ 8 ] * m[ 8 ] + m[ 12 ] * m[ 12 ] ) *
-				( m[ 1 ] * m[ 1 ] + m[ 5 ] * m[ 5 ] +
-						m[ 9 ] * m[ 9 ] + m[ 13 ] * m[ 13 ] ) *
-				( m[ 2 ] * m[ 2 ] + m[ 6 ] * m[ 6 ] +
-						m[ 10 ] * m[ 10 ] + m[ 14 ] * m[ 14 ] );
-		
-		if( ( determinant * determinant ) < ( FEPS * s ) )
-		{
-			invertGeneral( m , out );
-			return;
-		}
-		s = 1f / determinant;
-		double tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 6 ] * m[ 9 ] ) * s;
-		double tmp1 = -( m[ 4 ] * m[ 10 ] - m[ 6 ] * m[ 8 ] ) * s;
-		double tmp2 = ( m[ 4 ] * m[ 9 ] - m[ 5 ] * m[ 8 ] ) * s;
-		double tmp4 = -( m[ 1 ] * m[ 10 ] - m[ 2 ] * m[ 9 ] ) * s;
-		double tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 2 ] * m[ 8 ] ) * s;
-		double tmp6 = -( m[ 0 ] * m[ 9 ] - m[ 1 ] * m[ 8 ] ) * s;
-		double tmp8 = ( m[ 1 ] * m[ 6 ] - m[ 2 ] * m[ 5 ] ) * s;
-		double tmp9 = -( m[ 0 ] * m[ 6 ] - m[ 2 ] * m[ 4 ] ) * s;
-		double tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 1 ] * m[ 4 ] ) * s;
-		
-		out[ 0 ] = tmp0;
-		out[ 3 ] = tmp4;
-		out[ 6 ] = tmp8;
-		out[ 1 ] = tmp1;
-		out[ 4 ] = tmp5;
-		out[ 7 ] = tmp9;
-		out[ 2 ] = tmp2;
-		out[ 5 ] = tmp6;
-		out[ 8 ] = tmp10;
-	}
+	// this may have a bug.  It's currently unused.
+//	public static void invAffineToTranspose3x3( double[ ] m , double[ ] out )
+//	{
+//		double determinant = detAffine( m );
+//		
+//		if( determinant == 0.0 )
+//			throw new IllegalArgumentException( "Singular matrix" );
+//		
+//		double s = ( m[ 0 ] * m[ 0 ] + m[ 4 ] * m[ 4 ] +
+//				m[ 8 ] * m[ 8 ] + m[ 12 ] * m[ 12 ] ) *
+//				( m[ 1 ] * m[ 1 ] + m[ 5 ] * m[ 5 ] +
+//						m[ 9 ] * m[ 9 ] + m[ 13 ] * m[ 13 ] ) *
+//				( m[ 2 ] * m[ 2 ] + m[ 6 ] * m[ 6 ] +
+//						m[ 10 ] * m[ 10 ] + m[ 14 ] * m[ 14 ] );
+//		
+//		if( ( determinant * determinant ) < ( FEPS * s ) )
+//		{
+//			invertGeneral( m , out );
+//			return;
+//		}
+//		s = 1f / determinant;
+//		double tmp0 = ( m[ 5 ] * m[ 10 ] - m[ 6 ] * m[ 9 ] ) * s;
+//		double tmp1 = -( m[ 4 ] * m[ 10 ] - m[ 6 ] * m[ 8 ] ) * s;
+//		double tmp2 = ( m[ 4 ] * m[ 9 ] - m[ 5 ] * m[ 8 ] ) * s;
+//		double tmp4 = -( m[ 1 ] * m[ 10 ] - m[ 2 ] * m[ 9 ] ) * s;
+//		double tmp5 = ( m[ 0 ] * m[ 10 ] - m[ 2 ] * m[ 8 ] ) * s;
+//		double tmp6 = -( m[ 0 ] * m[ 9 ] - m[ 1 ] * m[ 8 ] ) * s;
+//		double tmp8 = ( m[ 1 ] * m[ 6 ] - m[ 2 ] * m[ 5 ] ) * s;
+//		double tmp9 = -( m[ 0 ] * m[ 6 ] - m[ 2 ] * m[ 4 ] ) * s;
+//		double tmp10 = ( m[ 0 ] * m[ 5 ] - m[ 1 ] * m[ 4 ] ) * s;
+//		
+//		out[ 0 ] = tmp0;
+//		out[ 3 ] = tmp4;
+//		out[ 6 ] = tmp8;
+//		out[ 1 ] = tmp1;
+//		out[ 4 ] = tmp5;
+//		out[ 7 ] = tmp9;
+//		out[ 2 ] = tmp2;
+//		out[ 5 ] = tmp6;
+//		out[ 8 ] = tmp10;
+//	}
 	
 	public static void invertGeneral( double[ ] mat )
 	{
