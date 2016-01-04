@@ -22,12 +22,10 @@
 package org.andork.jogl.awt;
 
 import static com.jogamp.opengl.GL.GL_BGRA;
-import static com.jogamp.opengl.GL.GL_COLOR_BUFFER_BIT;
-import static com.jogamp.opengl.GL.GL_DEPTH_BUFFER_BIT;
+import static com.jogamp.opengl.GL.GL_DRAW_FRAMEBUFFER;
 import static com.jogamp.opengl.GL.GL_NEAREST;
+import static com.jogamp.opengl.GL.GL_READ_FRAMEBUFFER;
 import static com.jogamp.opengl.GL.GL_UNSIGNED_BYTE;
-import static com.jogamp.opengl.GL2ES3.GL_DRAW_FRAMEBUFFER;
-import static com.jogamp.opengl.GL2ES3.GL_READ_FRAMEBUFFER;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -51,15 +49,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
-import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL3;
-import com.jogamp.opengl.GLAutoDrawable;
-import com.jogamp.opengl.GLCapabilities;
-import com.jogamp.opengl.GLProfile;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -122,8 +114,12 @@ import org.andork.util.StringUtils;
 
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
-import com.jogamp.newt.awt.NewtCanvasAWT;
-import com.jogamp.newt.opengl.GLWindow;
+import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.awt.GLCanvas;
 
 @SuppressWarnings( "serial" )
 public class JoglExportImageDialog extends JDialog
@@ -137,8 +133,7 @@ public class JoglExportImageDialog extends JDialog
 
 	GLAutoDrawable												sharedAutoDrawable;
 	JPanel														canvasHolder;
-	NewtCanvasAWT												canvas;
-	GLWindow													glWindow;
+	GLCanvas 													canvas;
 	Renderer													renderer				= new Renderer( );
 
 	JFileChooser												outputDirectoryChooser;
@@ -333,7 +328,6 @@ public class JoglExportImageDialog extends JDialog
 
 	protected void createComponents( )
 	{
-		canvas = new NewtCanvasAWT( );
 		canvasHolder = new JPanel( );
 		canvasHolder.setBackground( Color.GRAY );
 
@@ -510,7 +504,6 @@ public class JoglExportImageDialog extends JDialog
 		leftPanel.setPreferredSize( leftPanel.getPreferredSize( ) );
 		leftPanel.setMaximumSize( leftPanel.getPreferredSize( ) );
 
-		canvasHolder.add( canvas );
 		canvasHolder.setLayout( new CanvasHolderLayout( ) );
 
 		getContentPane( ).add( leftPanel , BorderLayout.WEST );
@@ -687,9 +680,9 @@ public class JoglExportImageDialog extends JDialog
 			{
 				updateNumSamplesLabel( );
 				renderer.setDesiredNumSamples( numSamplesSlider.getValue( ) );
-				if( glWindow != null )
+				if (canvas != null)
 				{
-					glWindow.display( );
+					canvas.display();
 				}
 			}
 		} );
@@ -958,18 +951,28 @@ public class JoglExportImageDialog extends JDialog
 		@Override
 		public Dimension preferredLayoutSize( Container parent )
 		{
+			if (canvas == null) {
+				return new Dimension(0, 0);
+			}
 			return canvas.getPreferredSize( );
 		}
 
 		@Override
 		public Dimension minimumLayoutSize( Container parent )
 		{
+			if (canvas == null) {
+				return new Dimension(0, 0);
+			}
 			return canvas.getMinimumSize( );
 		}
 
 		@Override
 		public void layoutContainer( Container parent )
 		{
+			if (canvas == null) {
+				return;
+			}
+
 			Rectangle insetBounds = RectangleUtils.insetCopy( new Rectangle( parent.getSize( ) ) , parent.getInsets( ) );
 
 			Integer width = ( Integer ) pixelWidthSpinner.getValue( );
@@ -1302,7 +1305,7 @@ public class JoglExportImageDialog extends JDialog
 						return;
 					}
 
-					glWindow.invoke( true , gl ->
+					canvas.invoke( true , gl ->
 					{
 						return true;
 					} );
@@ -1389,20 +1392,9 @@ public class JoglExportImageDialog extends JDialog
 
 	public void setVisible( boolean visible )
 	{
-		if( visible && glWindow == null )
+		if( visible && canvas == null )
 		{
 			taskService.submit( new NEWTInitializer( ) );
-		}
-		if( glWindow != null )
-		{
-			SwingUtilities.invokeLater( ( ) ->
-			{
-				if( canvas.getNEWTChild( ) != glWindow )
-				{
-					canvas.setNEWTChild( glWindow );
-				}
-				canvasHolder.revalidate( );
-			} );
 		}
 		super.setVisible( visible );
 	}
@@ -1417,18 +1409,18 @@ public class JoglExportImageDialog extends JDialog
 		@Override
 		protected void duringDialog( ) throws Exception
 		{
-			final GLProfile glp = GLProfile.get( GLProfile.GL2ES2 );
+			final GLProfile glp = GLProfile.get( GLProfile.GL3 );
 			final GLCapabilities caps = new GLCapabilities( glp );
-			if( glWindow == null )
+			if( canvas == null )
 			{
-				glWindow = GLWindow.create( caps );
+				canvas = new GLCanvas( caps );
 				if( sharedAutoDrawable != null )
 				{
-					glWindow.setSharedAutoDrawable( sharedAutoDrawable );
+					canvas.setSharedAutoDrawable( sharedAutoDrawable );
 				}
-				glWindow.addGLEventListener( renderer );
+				canvas.addGLEventListener( renderer );
 
-				glWindow.invoke( false , drawable ->
+				canvas.invoke( false , drawable ->
 				{
 					GL2ES2 gl = ( GL2ES2 ) drawable.getGL( );
 					int[ ] temp = new int[ 1 ];
@@ -1437,8 +1429,8 @@ public class JoglExportImageDialog extends JDialog
 					return false;
 				} );
 			}
-			canvas.setNEWTChild( glWindow );
-			canvas.revalidate( );
+			canvasHolder.add(canvas);
+			canvasHolder.revalidate();
 		}
 	}
 }

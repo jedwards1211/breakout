@@ -165,7 +165,6 @@ import org.breakout.update.UpdateStatusPanelController;
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
-import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLAutoDrawable;
@@ -177,7 +176,6 @@ public class BreakoutMainView
 {
 	GLAutoDrawable										autoDrawable;
 	GLCanvas											canvas;
-	GLWindow											glWindow;
 	JoglScene											scene;
 	JoglBackgroundColor									bgColor;
 	DefaultJoglRenderer									renderer;
@@ -276,7 +274,7 @@ public class BreakoutMainView
 
 	public BreakoutMainView( )
 	{
-		final GLProfile glp = GLProfile.get( GLProfile.GL4 ); 
+		final GLProfile glp = GLProfile.get( GLProfile.GL3 ); 
 		final GLCapabilities caps = new GLCapabilities( glp );
 		autoDrawable = canvas = new GLCanvas( caps );
 		autoDrawable.display( );
@@ -517,13 +515,6 @@ public class BreakoutMainView
 		canvasDelegate.putExtraConstraint( Side.RIGHT , new SideConstraint( settingsDrawer , Side.LEFT , 0 ));
 		canvasDelegate.putExtraConstraint( Side.BOTTOM , new SideConstraint( hintLabel , Side.TOP , 0 ));
 		layeredPane.add( canvas, canvasDelegate );
-		
-		new javax.swing.Timer(1000, e -> {
-			Rectangle bounds = canvas.getBounds();
-			SwingUtilities.convertRectangle(canvas.getParent(), bounds, layeredPane);
-			System.out.println(bounds);
-			glWindow.display();
-		}).start();
 
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
 

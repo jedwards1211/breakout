@@ -31,6 +31,12 @@
   		<version>2.3.2</version>
   	</dependency>
   	<dependency>
+  		<groupId>org.jogamp.jogl</groupId>
+  		<artifactId>jogl</artifactId>
+  		<version>2.3.2</version>
+  		<classifier>awt</classifier>
+  	</dependency>
+   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-core</artifactId>
   		<version>0.9.22</version>
@@ -66,6 +72,7 @@
   		<version>2.3.2</version>
   		<classifier>awt</classifier>
   	</dependency>
+  	<!--
    	<dependency>
   		<groupId>org.jogamp.jogl</groupId>
   		<artifactId>newt</artifactId>
@@ -83,5 +90,6 @@
   		<version>2.3.2</version>
   		<classifier>ogl</classifier>
   	</dependency>
+  	-->
   </dependencies>
 </project>
