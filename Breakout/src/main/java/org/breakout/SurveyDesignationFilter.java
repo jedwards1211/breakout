@@ -37,7 +37,7 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer>
 {
 	Segment[ ]						segments;
 	
-	private static final Pattern	SEGMENT_PATTERN	= Pattern.compile( "\\s*(\\p{Alpha}+)\\s*(([0-9]+(\\.[0-9]+)?)\\s*(\\+|(-\\s*([0-9]+(\\.[0-9]+)?)))?)?\\s*" );
+	private static final Pattern	SEGMENT_PATTERN	= Pattern.compile( "\\s*(\\D+)\\s*((\\d+(\\.\\d+)?)\\s*(\\+|(-\\s*(\\d+(\\.\\d+)?)))?)?\\s*" );
 	
 	private static class Segment
 	{
