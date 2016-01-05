@@ -1,0 +1,34 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.andork</groupId>
+  <artifactId>breakout-parent</artifactId>
+  <version>0.9.22</version>
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>andork-core</module>
+    <module>andork-jogl-gl2es2-swing</module>
+    <module>andork-jogl-gl2es2-utils</module>
+    <module>andork-math</module>
+    <module>andork-math3d</module>
+    <module>andork-plot</module>
+    <module>andork-spatial</module>
+    <module>andork-ui</module>
+    <module>andork-ui-test</module>
+    <module>Breakout</module>
+  </modules>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.3</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

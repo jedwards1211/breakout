@@ -21,7 +21,8 @@
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
   		<version>4.12</version>
-  		<scope>test</scope>
+  		<scope>compile</scope> <!-- needs to be compile, the non-test jar of this module
+      will contain things for working with JUnit in test jars of other projects -->
   	</dependency>
   	<dependency>
   		<groupId>org.andork</groupId>
