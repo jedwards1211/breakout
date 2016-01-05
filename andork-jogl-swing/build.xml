@@ -1,4 +1,4 @@
-<project name="andork-jogl-gl2es2-swing" default="dist" basedir=".">
+<project name="andork-jogl-swing" default="dist" basedir=".">
 	<!-- set global properties for this build -->
 	<property name="src" location="src" />
 	<property name="build" location="build" />
@@ -17,7 +17,7 @@
 		<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-math3d/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-ui/build.xml" inheritAll="false" target="dist" />
-		<ant antfile="../andork-jogl-gl2es2-utils/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-jogl-utils/build.xml" inheritAll="false" target="dist" />
 	</target>
 
 	<target name="compile" depends="init,compile-dependencies" description="compile the source ">
@@ -46,7 +46,7 @@
 				<include name="dist/lib/*.jar" />
 			</fileset>
 
-			<fileset dir="../andork-jogl-gl2es2-utils">
+			<fileset dir="../andork-jogl-utils">
 				<include name="dist/lib/*.jar" />
 			</fileset>
 		</path>

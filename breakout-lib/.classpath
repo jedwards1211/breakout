@@ -23,14 +23,14 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-utils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-utils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-plot"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-spatial"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math3d"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-swing"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-swing"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui-debug"/>
 	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
 		<attributes>

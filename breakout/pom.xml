@@ -1,32 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.andork</groupId>
-	<artifactId>breakout</artifactId>
-	<version>0.9.22</version>
-	<properties>
-		<maven.build.timestamp.format>yyyy-MM-dd HH:mm z</maven.build.timestamp.format>
-		<build.date>${maven.build.timestamp}</build.date>
-	</properties>
+	<parent>
+		<groupId>org.andork</groupId>
+		<artifactId>breakout-parent</artifactId>
+		<version>0.9.22</version>
+	</parent>
+	<artifactId>breakout-lib</artifactId>
 	<build>
-		<resources>
-			<resource>
-				<directory>src/main/java</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
-			</resource>
-			<resource>
-				<directory>src/tools/java</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
-			</resource>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>true</filtering>
-			</resource>
-		</resources>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -65,115 +46,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.andork</groupId>
-			<artifactId>andork-core</artifactId>
+			<artifactId>breakout-lib</artifactId>
 			<version>0.9.22</version>
-		</dependency>
-		<dependency>
-			<groupId>org.andork</groupId>
-			<artifactId>andork-math</artifactId>
-			<version>0.9.22</version>
-		</dependency>
-		<dependency>
-			<groupId>org.andork</groupId>
-			<artifactId>andork-math3d</artifactId>
-			<version>0.9.22</version>
-		</dependency>
-		<dependency>
-			<groupId>org.andork</groupId>
-			<artifactId>andork-plot</artifactId>
-			<version>0.9.22</version>
-		</dependency>
-		<dependency>
-			<groupId>org.andork</groupId>
-			<artifactId>andork-spatial</artifactId>
-			<version>0.9.22</version>
-		</dependency>
-		<dependency>
-			<groupId>org.andork</groupId>
-			<artifactId>andork-ui</artifactId>
-			<version>0.9.22</version>
-		</dependency>
-		<dependency>
-			<groupId>org.andork</groupId>
-			<artifactId>andork-jogl-gl2es2-utils</artifactId>
-			<version>0.9.22</version>
-		</dependency>
-		<dependency>
-			<groupId>org.andork</groupId>
-			<artifactId>andork-jogl-gl2es2-swing</artifactId>
-			<version>0.9.22</version>
-		</dependency>
-		<dependency>
-			<groupId>org.swinglabs.swingx</groupId>
-			<artifactId>swingx-all</artifactId>
-			<version>1.6.5-1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.yaml</groupId>
-			<artifactId>snakeyaml</artifactId>
-			<version>1.16</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.directory.studio</groupId>
-			<artifactId>org.apache.commons.io</artifactId>
-			<version>2.4</version>
-		</dependency>
-		<dependency>
-			<groupId>javax.vecmath</groupId>
-			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl</artifactId>
-			<version>2.3.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl</artifactId>
-			<version>2.3.2</version>
-			<classifier>awt</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl</artifactId>
-			<version>2.3.2</version>
-			<classifier>gldesktop</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>nativewindow</artifactId>
-			<version>2.3.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>nativewindow</artifactId>
-			<version>2.3.2</version>
-			<classifier>awt</classifier>
-		</dependency>
-		<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
-			<version>2.3.2</version> </dependency> <dependency> <groupId>org.jogamp.jogl</groupId> 
-			<artifactId>newt</artifactId> <version>2.3.2</version> <classifier>event</classifier> 
-			</dependency> <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
-			<version>2.3.2</version> <classifier>ogl</classifier> </dependency> <dependency> 
-			<groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> <version>2.3.2</version> 
-			<classifier>awt</classifier> </dependency> -->
-		<dependency>
-			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt</artifactId>
-			<version>2.3.2</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.andork</groupId>
-			<artifactId>andork-ui-test</artifactId>
-			<version>0.9.22</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<profiles>

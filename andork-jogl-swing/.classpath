@@ -12,7 +12,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-core"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-gl2es2-utils"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/andork-jogl-utils"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-ui"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/andork-math3d"/>

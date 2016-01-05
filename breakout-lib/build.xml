@@ -36,8 +36,8 @@
 		<ant antfile="../andork-math/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-math3d/build.xml" inheritAll="false" target="dist" />
 		<ant antfile="../andork-spatial/build.xml" inheritAll="false" target="dist" />
-		<ant antfile="../andork-jogl-gl2es2-utils/build.xml" inheritAll="false" target="dist" />
-		<ant antfile="../andork-jogl-gl2es2-swing/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-jogl-utils/build.xml" inheritAll="false" target="dist" />
+		<ant antfile="../andork-jogl-swing/build.xml" inheritAll="false" target="dist" />
 	</target>
 
 	<target name="copy-deps-shared" depends="compile-deps">
@@ -89,14 +89,14 @@
 				<include name="andork-spatial-sources.jar" />
 			</fileset>
 
-			<fileset dir="../andork-jogl-gl2es2-utils/dist/lib">
-				<include name="andork-jogl-gl2es2-utils.jar" />
-				<include name="andork-jogl-gl2es2-utils-sources.jar" />
+			<fileset dir="../andork-jogl-utils/dist/lib">
+				<include name="andork-jogl-utils.jar" />
+				<include name="andork-jogl-utils-sources.jar" />
 			</fileset>
 
-			<fileset dir="../andork-jogl-gl2es2-swing/dist/lib">
-				<include name="andork-jogl-gl2es2-swing.jar" />
-				<include name="andork-jogl-gl2es2-swing-sources.jar" />
+			<fileset dir="../andork-jogl-swing/dist/lib">
+				<include name="andork-jogl-swing.jar" />
+				<include name="andork-jogl-swing-sources.jar" />
 			</fileset>
 
 			<fileset dir="${swingx-lib}">
@@ -241,8 +241,8 @@
 				<include name="lib/andork-math3d-sources.jar" />
 				<include name="lib/andork-plot-sources.jar" />
 				<include name="lib/andork-spatial-sources.jar" />
-				<include name="lib/andork-jogl-gl2es2-utils-sources.jar" />
-				<include name="lib/andork-jogl-gl2es2-swing-sources.jar" />
+				<include name="lib/andork-jogl-utils-sources.jar" />
+				<include name="lib/andork-jogl-swing-sources.jar" />
 			</fileset>
 		</zip>
 	</target>
@@ -274,8 +274,8 @@
 				<include name="lib/andork-math3d.jar" />
 				<include name="lib/andork-plot.jar" />
 				<include name="lib/andork-spatial.jar" />
-				<include name="lib/andork-jogl-gl2es2-utils.jar" />
-				<include name="lib/andork-jogl-gl2es2-swing.jar" />
+				<include name="lib/andork-jogl-utils.jar" />
+				<include name="lib/andork-jogl-swing.jar" />
 				<include name="lib/jogl-awt.jar" />
 				<include name="lib/jogl.jar" />
 				<include name="lib/jogl-gldesktop.jar" />
@@ -326,8 +326,8 @@
 				<include name="lib/andork-math3d.jar" />
 				<include name="lib/andork-plot.jar" />
 				<include name="lib/andork-spatial.jar" />
-				<include name="lib/andork-jogl-gl2es2-utils.jar" />
-				<include name="lib/andork-jogl-gl2es2-swing.jar" />
+				<include name="lib/andork-jogl-utils.jar" />
+				<include name="lib/andork-jogl-swing.jar" />
 				<include name="lib/gluegen-rt.jar" />
 				<include name="lib/gluegen-rt-natives-windows-i586.jar" />
 				<include name="lib/gluegen-rt-natives-windows-amd64.jar" />
@@ -411,7 +411,7 @@
 		<ant antfile="../andork-math/build.xml" inheritAll="false" target="clean" />
 		<ant antfile="../andork-math3d/build.xml" inheritAll="false" target="clean" />
 		<ant antfile="../andork-spatial/build.xml" inheritAll="false" target="clean" />
-		<ant antfile="../andork-jogl-gl2es2-utils/build.xml" inheritAll="false" target="clean" />
-		<ant antfile="../andork-jogl-gl2es2-swing/build.xml" inheritAll="false" target="clean" />
+		<ant antfile="../andork-jogl-utils/build.xml" inheritAll="false" target="clean" />
+		<ant antfile="../andork-jogl-swing/build.xml" inheritAll="false" target="clean" />
 	</target>
 </project>

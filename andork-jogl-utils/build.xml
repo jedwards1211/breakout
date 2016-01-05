@@ -1,4 +1,4 @@
-<project name="andork-jogl-gl2es2-utils" default="dist" basedir=".">
+<project name="andork-jogl-utils" default="dist" basedir=".">
   <!-- set global properties for this build -->
   <property name="src" location="src"/>
   <property name="build" location="build"/>
