@@ -178,7 +178,7 @@
 	</dependencies>
 	<profiles>
 		<profile>
-			<id>Windows</id>
+			<id>windows</id>
 			<activation>
 				<os>
 					<family>windows</family>
@@ -202,11 +202,11 @@
 			</dependencies>
 		</profile>
 		<profile>
-			<id>Windows x86</id>
+			<id>windows-i586</id>
 			<activation>
 				<os>
 					<family>windows</family>
-					<arch>x86</arch>
+					<arch>i586</arch>
 				</os>
 			</activation>
 			<dependencies>
@@ -233,11 +233,11 @@
 			</dependencies>
 		</profile>
 		<profile>
-			<id>Windows x64</id>
+			<id>windows-amd64</id>
 			<activation>
 				<os>
 					<family>windows</family>
-					<arch>x64</arch>
+					<arch>amd64</arch>
 				</os>
 			</activation>
 			<dependencies>
@@ -264,7 +264,7 @@
 			</dependencies>
 		</profile>
 		<profile>
-			<id>Linux</id>
+			<id>linux</id>
 			<activation>
 				<os>
 					<family>linux</family>
@@ -288,11 +288,11 @@
 			</dependencies>
 		</profile>
 		<profile>
-			<id>Linux x86</id>
+			<id>linux-i586</id>
 			<activation>
 				<os>
 					<family>linux</family>
-					<arch>x86</arch>
+					<arch>i586</arch>
 				</os>
 			</activation>
 			<dependencies>
@@ -319,11 +319,11 @@
 			</dependencies>
 		</profile>
 		<profile>
-			<id>Linux x64</id>
+			<id>linux-amd64</id>
 			<activation>
 				<os>
 					<family>linux</family>
-					<arch>x64</arch>
+					<arch>amd64</arch>
 				</os>
 			</activation>
 			<dependencies>
@@ -350,7 +350,7 @@
 			</dependencies>
 		</profile>
 		<profile>
-			<id>OSX</id>
+			<id>osx</id>
 			<activation>
 				<os>
 					<family>mac</family>
