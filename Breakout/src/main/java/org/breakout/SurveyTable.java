@@ -24,11 +24,12 @@ package org.breakout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
-import org.andork.awt.event.MouseAdapterWrapper;
 import org.andork.q.QSpec.Attribute;
 import org.andork.swing.table.AnnotatingJTable;
 import org.breakout.model.SurveyTableModel;
@@ -38,6 +39,16 @@ import org.jdesktop.swingx.table.TableColumnExt;
 @SuppressWarnings( "serial" )
 public class SurveyTable extends AnnotatingJTable
 {
+	private List<SurveyTableListener> listeners = new ArrayList<>();
+	
+	public void addSurveyTableListener(SurveyTableListener listener) {
+		listeners.add(listener);
+	}
+	
+	public void removeSurveyTableListener(SurveyTableListener listener) {
+		listeners.remove(listener);
+	}
+
 	public void createDefaultColumnsFromModel( )
 	{
 		TableModel m = getModel( );
@@ -84,14 +95,8 @@ public class SurveyTable extends AnnotatingJTable
 					Object o = getValueAt( row , column );
 					if( o != null )
 					{
-						try
-						{
-							Runtime.getRuntime( ).exec( "explorer \"" + o.toString( ) + "\"" );
-						}
-						catch( IOException e1 )
-						{
-							e1.printStackTrace( );
-						}
+						listeners.forEach(listener -> listener.surveyNotesClicked(o.toString(), row));
+
 					}
 				}
 			}

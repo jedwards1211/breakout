@@ -41,6 +41,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -533,6 +534,20 @@ public class BreakoutMainView
 				miniSurveyDrawer.table( ).setRowSorter( sorter );
 			}
 		} );
+		
+		surveyDrawer.table( ).addSurveyTableListener(new SurveyTableListener() {
+			@Override
+			public void surveyNotesClicked(String link, int viewRow) {
+				try
+				{
+					Runtime.getRuntime( ).exec( "explorer \"" + link + "\"" );
+				}
+				catch( IOException e1 )
+				{
+					e1.printStackTrace( );
+				}
+			}
+		});
 		
 //		new javax.swing.Timer(1000, e -> System.out.println(layeredPane.getBounds())).start();
 
