@@ -213,7 +213,7 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				ShotSide positionSide = row.get( Row.positionSide );
 				if( positionSide == null )
 				{
-					positionSide = ShotSide.AT_FROM;
+					positionSide = ShotSide.AT_TO;
 				}
 				
 				if( fromName == null || toName == null )
