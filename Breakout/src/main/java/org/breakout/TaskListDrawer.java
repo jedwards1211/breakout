@@ -55,7 +55,8 @@ public class TaskListDrawer extends Drawer
 		delegate( ).dockingSide( Side.TOP );
 		mainResizeHandle( );
 		pinButton( ).setUI( new SpinnerButtonUI( ) );
-		pinButton( ).setBackground( Color.BLACK );
+		pinButton( ).setOpaque( false );
+		pinButton( ).setBackground( null );
 	}
 	
 	public void addTaskService( TaskService taskService )

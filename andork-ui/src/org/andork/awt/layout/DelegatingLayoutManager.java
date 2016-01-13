@@ -135,7 +135,6 @@ public class DelegatingLayoutManager implements LayoutManager2
 		else
 		{
 			Rectangle defaultBounds = LayoutUtils.calculateInnerArea( parent , LayoutSize.ACTUAL );
-			defaultBounds.height -= 500;
 			comp.setBounds( defaultBounds );
 		}
 

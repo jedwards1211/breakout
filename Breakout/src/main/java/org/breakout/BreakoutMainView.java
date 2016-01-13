@@ -171,12 +171,12 @@ import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
-import com.jogamp.opengl.awt.GLCanvas;
+import com.jogamp.opengl.awt.GLJPanel;
 
 public class BreakoutMainView
 {
 	GLAutoDrawable										autoDrawable;
-	GLCanvas											canvas;
+	GLJPanel											canvas;
 	JoglScene											scene;
 	JoglBackgroundColor									bgColor;
 	DefaultJoglRenderer									renderer;
@@ -277,7 +277,7 @@ public class BreakoutMainView
 	{
 		final GLProfile glp = GLProfile.get( GLProfile.GL3 ); 
 		final GLCapabilities caps = new GLCapabilities( glp );
-		autoDrawable = canvas = new GLCanvas( caps );
+		autoDrawable = canvas = new GLJPanel( caps );
 		autoDrawable.display( );
 		
 		scene = new JoglScene( );
@@ -304,8 +304,8 @@ public class BreakoutMainView
 
 		hintLabel = new JLabel( "A" );
 		hintLabel.setForeground( Color.WHITE );
-		hintLabel.setBackground( Color.BLACK );
-		hintLabel.setOpaque( true );
+		hintLabel.setBackground( null );
+		hintLabel.setOpaque( false );
 		Font hintFont = hintLabel.getFont( );
 		hintLabel.setFont( hintFont.deriveFont( Font.PLAIN ).deriveFont( hintFont.getSize2D( ) + 3f ) );
 		hintLabel.setPreferredSize( new Dimension( 200 , hintLabel.getPreferredSize( ).height ) );
@@ -510,12 +510,7 @@ public class BreakoutMainView
 		layeredPane.add( hintLabel , hintLabelDelegate );
 		layeredPane.setLayer( hintLabel , JLayeredPane.getLayer( settingsDrawer ) );
 
-		SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
-		canvasDelegate.putExtraConstraint( Side.TOP , new SideConstraint( taskListDrawer , Side.BOTTOM , 0 ));
-		canvasDelegate.putExtraConstraint( Side.LEFT , new SideConstraint( miniSurveyDrawer , Side.RIGHT , 0 ));
-		canvasDelegate.putExtraConstraint( Side.RIGHT , new SideConstraint( settingsDrawer , Side.LEFT , 0 ));
-		canvasDelegate.putExtraConstraint( Side.BOTTOM , new SideConstraint( hintLabel , Side.TOP , 0 ));
-		layeredPane.add( canvas, canvasDelegate );
+		layeredPane.add(canvas);
 
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
 
@@ -536,6 +531,7 @@ public class BreakoutMainView
 		} );
 		
 		surveyDrawer.table( ).addSurveyTableListener(new SurveyTableListener() {
+			
 			@Override
 			public void surveyNotesClicked(String link, int viewRow) {
 				try
@@ -1473,7 +1469,6 @@ public class BreakoutMainView
 				return calc;
 			} ).also( new ViewXformAnimation( autoDrawable , renderer.getViewSettings( ) , 1750 , true , f ->
 		{
-			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
 			return viewXform;
 		} ) ) );
 		finisher = finisher.also( new AnimationViewSaver( ) );
