@@ -75,12 +75,13 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer>
 		
 		public boolean include( String from )
 		{
-			if( !from.startsWith( designation ) )
-			{
+			int index = from.indexOf( designation );
+			// allow something to come before the designation as long as it's not another letter
+			if (index < 0 || (index > 0 && Character.isLetter(from.charAt(index - 1)))) {
 				return false;
 			}
 			
-			if( from.length( ) > designation.length( ) && Character.isLetter( from.charAt( designation.length( ) ) ) )
+			if( from.length( ) > index + designation.length( ) && Character.isLetter( from.charAt( index + designation.length( ) ) ) )
 			{
 				return false;
 			}
@@ -89,12 +90,12 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer>
 			{
 				if( lowerBound != null )
 				{
-					checkBound( from , lowerBound );
+					checkBound( from.substring(index + designation.length()).trim() , lowerBound );
 				}
 				
 				if( upperBound != null )
 				{
-					checkBound( from , upperBound );
+					checkBound( from.substring(index + designation.length()).trim() , upperBound );
 				}
 			}
 			catch( Exception ex )
@@ -107,7 +108,7 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer>
 		
 		protected void checkBound( String s , BigDecimal bound ) throws Exception
 		{
-			BigDecimal number = new BigDecimal( s.substring( designation.length( ) ) );
+			BigDecimal number = new BigDecimal( s );
 			if( bound == lowerBound && number.compareTo( bound ) < 0 )
 			{
 				throw new RuntimeException( "number out of bounds" );

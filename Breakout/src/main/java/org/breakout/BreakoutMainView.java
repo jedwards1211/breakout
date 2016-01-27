@@ -138,6 +138,7 @@ import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.FromEDT;
 import org.andork.swing.OnEDT;
+import org.andork.swing.SmartComboTableRowFilter;
 import org.andork.swing.async.DrawerPinningTask;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Subtask;
@@ -336,7 +337,12 @@ public class BreakoutMainView
 		{
 			surveyDrawer = new SurveyDrawer( sortRunner );
 
-			rowFilterFactory = new MultiRowFilterFactory( new SurveyTableFilterMap( surveyDrawer.table( ) ) );
+			rowFilterFactory = text -> new SmartComboTableRowFilter(Arrays.asList(
+				new SurveyDesignationFilter(text),
+//				new SurveyRegexFilter(text),
+				new SurveyorFilter(text),
+				new DescriptionFilter(text)
+			));
 
 			surveyDrawer.filterField( ).textComponent.getDocument( ).addDocumentListener(
 				AnnotatingJTables.createFilterFieldListener( surveyDrawer.table( ) ,

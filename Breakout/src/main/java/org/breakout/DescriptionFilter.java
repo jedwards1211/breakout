@@ -21,20 +21,28 @@
  *******************************************************************************/
 package org.breakout;
 
+import java.util.regex.Pattern;
+
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
 import org.andork.q.QObject;
+import org.andork.util.ArrayUtils;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.Row;
 
 public class DescriptionFilter extends RowFilter<TableModel, Integer>
 {
-	String[ ]	descriptions;
+//	String[ ]	descriptions;
+	Pattern[ ] descriptions;
 	
 	public DescriptionFilter( String descriptions )
 	{
-		this.descriptions = descriptions.toLowerCase( ).split( "\\s+" );
+		String[] parts = descriptions.toLowerCase( ).split( "\\s+" );
+		this.descriptions = new Pattern[parts.length];
+		for (int i = 0; i < parts.length; i++) {
+			this.descriptions[i] = Pattern.compile("\\b" + parts[i] + "\\b");
+		}
 	}
 	
 	@Override
@@ -51,10 +59,9 @@ public class DescriptionFilter extends RowFilter<TableModel, Integer>
 			return false;
 		}
 		String desc = row.get( Row.desc ).toLowerCase( );
-		for( String description : descriptions )
+		for( Pattern description : descriptions )
 		{
-			if( !desc.contains( description ) )
-			{
+			if (!description.matcher(desc).find()) {
 				return false;
 			}
 		}

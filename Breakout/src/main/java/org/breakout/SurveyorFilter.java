@@ -21,6 +21,8 @@
  *******************************************************************************/
 package org.breakout;
 
+import java.util.regex.Pattern;
+
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
@@ -30,11 +32,15 @@ import org.breakout.model.SurveyTableModel.Row;
 
 public class SurveyorFilter extends RowFilter<TableModel, Integer>
 {
-	String[ ]	surveyors;
+	Pattern[ ]	surveyors;
 	
 	public SurveyorFilter( String surveyors )
 	{
-		this.surveyors = surveyors.split( "\\s*,\\s*" );
+		String[] parts = surveyors.toLowerCase().replaceAll("\\s+", " ").split( "\\s*,\\s*" );
+		this.surveyors = new Pattern[parts.length];
+		for (int i = 0; i < parts.length; i++) {
+			this.surveyors[i] = Pattern.compile("\\b" + parts[i] + "\\b");
+		}
 	}
 	
 	@Override
@@ -42,7 +48,7 @@ public class SurveyorFilter extends RowFilter<TableModel, Integer>
 	{
 		if( surveyors.length == 0 )
 		{
-			return true;
+			return false;
 		}
 		
 		QObject<Row> row = ( ( SurveyTableModel ) entry.getModel( ) ).getRow( entry.getIdentifier( ) );
@@ -50,14 +56,13 @@ public class SurveyorFilter extends RowFilter<TableModel, Integer>
 		{
 			return false;
 		}
-		String surveyorString = row.get( Row.surveyors ).toLowerCase( );
-		for( String surveyor : surveyors )
+		String surveyorString = row.get( Row.surveyors ).toLowerCase( ).replaceAll("\\s+", " ");
+		for( Pattern surveyor : surveyors )
 		{
-			if( surveyorString.contains( surveyor.toLowerCase( ) ) )
-			{
-				return true;
+			if (!surveyor.matcher(surveyorString).find()) {
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 }
