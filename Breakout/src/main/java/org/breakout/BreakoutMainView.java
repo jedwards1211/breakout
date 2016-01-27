@@ -288,7 +288,7 @@ public class BreakoutMainView
 
 		autoDrawable.addGLEventListener( renderer );
 
-		navigator = new DefaultNavigator( autoDrawable , renderer.getViewSettings( ) );
+		navigator = new DefaultNavigator( autoDrawable , renderer );
 		navigator.setMoveFactor( 5f );
 		navigator.setWheelFactor( 5f );
 

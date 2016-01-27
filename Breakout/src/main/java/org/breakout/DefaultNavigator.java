@@ -26,17 +26,21 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
-import com.jogamp.opengl.GLAutoDrawable;
+import javax.swing.SwingUtilities;
 
+import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.math3d.Vecmath;
+
+import com.jogamp.opengl.GLAutoDrawable;
 
 public class DefaultNavigator extends MouseAdapter
 {
 	final GLAutoDrawable	drawable;
-	final JoglViewSettings	viewSettings;
+	final DefaultJoglRenderer renderer;
 
 	MouseEvent				lastEvent	= null;
+	float[ ]				o			= new float[ 3 ];
 	float[ ]				v			= new float[ 3 ];
 	MouseEvent				pressEvent	= null;
 
@@ -57,12 +61,15 @@ public class DefaultNavigator extends MouseAdapter
 
 	final float[ ]			center		=
 										{ Float.NaN , Float.NaN , Float.NaN };
+	
+	boolean 				zoomQueued = false;
+	float 					queuedWheelRotation = 0f;
 
-	public DefaultNavigator( GLAutoDrawable drawable , JoglViewSettings viewSettings )
+	public DefaultNavigator( GLAutoDrawable drawable , DefaultJoglRenderer renderer )
 	{
 		super( );
 		this.drawable = drawable;
-		this.viewSettings = viewSettings;
+		this.renderer = renderer;
 	}
 
 	public boolean isActive( )
@@ -196,6 +203,7 @@ public class DefaultNavigator extends MouseAdapter
 		}
 		lastEvent = e;
 
+		JoglViewSettings viewSettings = renderer.getViewSettings();
 		viewSettings.getViewXform( cam );
 		Vecmath.invAffine( cam );
 
@@ -288,39 +296,48 @@ public class DefaultNavigator extends MouseAdapter
 		{
 			return;
 		}
+		
+		queuedWheelRotation += e.getPreciseWheelRotation();
 
-		viewSettings.getViewXform( cam );
-		Vecmath.invAffine( cam );
+		if (!zoomQueued) {
+			zoomQueued = true;
+			SwingUtilities.invokeLater(() -> {
+				float distance = -queuedWheelRotation * wheelFactor * sensitivity;
+				queuedWheelRotation = 0f;
+				zoomQueued = false;
 
-		float distance = e.getWheelRotation( ) * wheelFactor * sensitivity;
-		if( e.isControlDown( ) )
-		{
-			distance /= 10f;
-		}
+				JoglViewSettings viewSettings = renderer.getViewSettings();
+				viewSettings.getViewXform( cam );
+				Vecmath.invAffine( cam );
 
-		if( e.isShiftDown( ) && !Vecmath.hasNaNsOrInfinites( center ) )
-		{
-			Vecmath.sub3( center , 0 , cam , 12 , v , 0 );
-			float dist = Vecmath.length3( v );
-			Vecmath.scale3( v , 1f / dist );
-			double motion = Math.min( Math.max( 0 , dist - 1 ) , -distance );
-			cam[ 12 ] += v[ 0 ] * motion;
-			cam[ 13 ] += v[ 1 ] * motion;
-			cam[ 14 ] += v[ 2 ] * motion;
-		}
-		else
-		{
-			cam[ 12 ] += cam[ 8 ] * distance;
-			cam[ 13 ] += cam[ 9 ] * distance;
-			cam[ 14 ] += cam[ 10 ] * distance;
-		}
+				if( e.isControlDown( ) )
+				{
+					distance /= 10f;
+				}
 
-		Vecmath.invAffine( cam );
-		viewSettings.setViewXform( cam );
+				if( e.isShiftDown( ) && !Vecmath.hasNaNsOrInfinites( center ) )
+				{
+					Vecmath.sub3( center , 0 , cam , 12 , v , 0 );
+					float dist = Vecmath.length3( v );
+					Vecmath.scale3( v , 1f / dist );
+					distance = Math.min( Math.max( 0 , dist - 1 ) , distance );
+				}
+				else
+				{
+					renderer.getViewState().pickXform().xform(e, o, v);
+				}
+				cam[ 12 ] += v[ 0 ] * distance;
+				cam[ 13 ] += v[ 1 ] * distance;
+				cam[ 14 ] += v[ 2 ] * distance;
 
-		if( callDisplay )
-		{
-			this.drawable.display( );
+				Vecmath.invAffine( cam );
+				viewSettings.setViewXform( cam );
+
+				if( callDisplay )
+				{
+					this.drawable.display( );
+				}
+			});
 		}
 	}
 }
