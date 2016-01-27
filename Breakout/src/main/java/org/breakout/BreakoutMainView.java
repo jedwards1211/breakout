@@ -1469,6 +1469,7 @@ public class BreakoutMainView
 				return calc;
 			} ).also( new ViewXformAnimation( autoDrawable , renderer.getViewSettings( ) , 1750 , true , f ->
 		{
+			viewAnimation.calcViewXform( viewReparam.applyAsFloat( f ) , viewXform );
 			return viewXform;
 		} ) ) );
 		finisher = finisher.also( new AnimationViewSaver( ) );
