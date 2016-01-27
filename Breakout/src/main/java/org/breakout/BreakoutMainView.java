@@ -171,12 +171,12 @@ import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
-import com.jogamp.opengl.awt.GLJPanel;
+import com.jogamp.opengl.awt.GLCanvas;
 
 public class BreakoutMainView
 {
 	GLAutoDrawable										autoDrawable;
-	GLJPanel											canvas;
+	GLCanvas											canvas;
 	JoglScene											scene;
 	JoglBackgroundColor									bgColor;
 	DefaultJoglRenderer									renderer;
@@ -277,7 +277,7 @@ public class BreakoutMainView
 	{
 		final GLProfile glp = GLProfile.get( GLProfile.GL3 ); 
 		final GLCapabilities caps = new GLCapabilities( glp );
-		autoDrawable = canvas = new GLJPanel( caps );
+		autoDrawable = canvas = new GLCanvas( caps );
 		autoDrawable.display( );
 		
 		scene = new JoglScene( );
@@ -304,8 +304,8 @@ public class BreakoutMainView
 
 		hintLabel = new JLabel( "A" );
 		hintLabel.setForeground( Color.WHITE );
-		hintLabel.setBackground( null );
-		hintLabel.setOpaque( false );
+		hintLabel.setBackground( Color.BLACK );
+		hintLabel.setOpaque( true );
 		Font hintFont = hintLabel.getFont( );
 		hintLabel.setFont( hintFont.deriveFont( Font.PLAIN ).deriveFont( hintFont.getSize2D( ) + 3f ) );
 		hintLabel.setPreferredSize( new Dimension( 200 , hintLabel.getPreferredSize( ).height ) );
@@ -510,7 +510,12 @@ public class BreakoutMainView
 		layeredPane.add( hintLabel , hintLabelDelegate );
 		layeredPane.setLayer( hintLabel , JLayeredPane.getLayer( settingsDrawer ) );
 
-		layeredPane.add(canvas);
+		SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
+		canvasDelegate.putExtraConstraint( Side.TOP , new SideConstraint( taskListDrawer , Side.BOTTOM , 0 ));
+		canvasDelegate.putExtraConstraint( Side.LEFT , new SideConstraint( miniSurveyDrawer , Side.RIGHT , 0 ));
+		canvasDelegate.putExtraConstraint( Side.RIGHT , new SideConstraint( settingsDrawer , Side.LEFT , 0 ));
+		canvasDelegate.putExtraConstraint( Side.BOTTOM , new SideConstraint( hintLabel , Side.TOP , 0 ));
+		layeredPane.add( canvas, canvasDelegate );
 
 		surveyDrawer.table( ).setTransferHandler( new SurveyTableTransferHandler( ) );
 
@@ -2095,12 +2100,12 @@ public class BreakoutMainView
 				{
 					try
 					{
-						taskListDrawer.holder( ).hold( this );
+						OnEDT.onEDT(() -> taskListDrawer.holder( ).hold( this ));
 						reallyExecute( );
 					}
 					finally
 					{
-						taskListDrawer.holder( ).release( this );
+						OnEDT.onEDT(() -> taskListDrawer.holder( ).release( this ));
 					}
 				}
 
