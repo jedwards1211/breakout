@@ -42,12 +42,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -60,6 +65,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.net.ssl.StandardConstants;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
@@ -146,6 +152,7 @@ import org.andork.swing.async.TaskServiceSubtaskFilePersister;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.RowFilterFactory;
+import org.apache.commons.io.FileUtils;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.model.ColorParam;
 import org.breakout.model.ProjectArchiveModel;
@@ -946,7 +953,28 @@ public class BreakoutMainView
 
 		if( rootFilePath == null )
 		{
-			rootFile = new File( new File( ".breakout" ) , "settings.yaml" );
+			File rootDir = new File(".breakout");
+			rootFile = new File( rootDir , "settings.yaml" );
+			if (!rootFile.exists()) {
+				rootDir.mkdir();
+				try {
+					ClassLoader cl = getClass().getClassLoader();
+					for (String file : Arrays.asList("demo.bop", "demo-survey.txt", "settings.yaml")) {
+						Path path = new File(rootDir, file).toPath();
+						URL resource = cl.getResource("demo/" + file);
+						InputStream in = resource.openStream();
+						Files.copy(in, path);
+					}
+				}
+				catch (Exception ex) {
+					try {
+						FileUtils.deleteDirectory(rootDir);
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
+					ex.printStackTrace();
+				}
+			}
 		}
 		else
 		{

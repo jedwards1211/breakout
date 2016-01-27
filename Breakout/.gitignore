@@ -2,9 +2,9 @@
 /build
 /dist
 .settings
-/.breakout
+.breakout
 /screenshots
-/_.breakout
+_.breakout
 /update/
 /target/
 defaultProject-survey.txt
