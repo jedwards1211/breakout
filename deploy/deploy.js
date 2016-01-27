@@ -3,6 +3,10 @@ var Promise = require('bluebird');
 var path = require('path');
 var shell = require('shelljs');
 var request = require('superagent-bluebird-promise');
+var apiSettings = require('./github-api.json');
+
+var username = apiSettings.username;
+var token = apiSettings.token;
 
 shell.cd('..');
 var version = shell.exec("mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version " + 
@@ -10,8 +14,6 @@ var version = shell.exec("mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:e
 var jarName = 'breakout-' + version + '.jar';
 var jarFile = path.join(__dirname, '../Breakout/target', jarName);
 version = 'v' + version;
-
-var token = '7a9d705e276eb9d2f177ebb8d274882e2793f5ea';
 
 shell.echo('deploying Breakout ' + version);
 
@@ -22,7 +24,7 @@ function streamToPromise(stream) {
     });
 }
 
-request.post('https://jedwards1211:' + token + '@api.github.com/repos/jedwards1211/breakout/releases')
+request.post('https://' + username + ':' + token + '@api.github.com/repos/' + username + '/breakout/releases')
   .send(JSON.stringify({
     tag_name: version,
     name: version,
@@ -36,7 +38,7 @@ request.post('https://jedwards1211:' + token + '@api.github.com/repos/jedwards12
       port: 443,
       auth: {
         pass: token,
-        user: 'jedwards1211',
+        user: username,
       },
       headers: {
         'User-Agent': 'Release-Agent',
