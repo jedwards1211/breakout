@@ -53,6 +53,9 @@ public final class RootModel extends QSpec<RootModel>
 	public static final Attribute<File>							currentProjectFileChooserDirectory	= newAttribute(
 																										File.class ,
 																										"currentProjectFileChooserDirectory" );
+	public static final Attribute<File>							currentSurveyFileChooserDirectory	= newAttribute(
+																										File.class ,
+																										"currentSurveyFileChooserDirectory" );
 	public static final Attribute<File>							currentArchiveFileChooserDirectory	= newAttribute(
 																										File.class ,
 																										"currentArchiveFileChooserDirectory" );
@@ -79,6 +82,7 @@ public final class RootModel extends QSpec<RootModel>
 			.map( currentProjectFile , PathStringBimapper.instance )
 			.map( recentProjectFiles , QArrayListBimapper.newInstance( PathStringBimapper.instance ) )
 			.map( currentProjectFileChooserDirectory , FileStringBimapper.instance )
+			.map( currentSurveyFileChooserDirectory , FileStringBimapper.instance )
 			.map( currentArchiveFileChooserDirectory , FileStringBimapper.instance );
 	}
 

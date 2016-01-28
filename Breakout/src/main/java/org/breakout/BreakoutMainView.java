@@ -271,6 +271,7 @@ public class BreakoutMainView
 
 	NewProjectAction									newProjectAction			= new NewProjectAction( this );
 	OpenProjectAction									openProjectAction			= new OpenProjectAction( this );
+	OpenSurveyAction									openSurveyAction			= new OpenSurveyAction( this );
 	ImportProjectArchiveAction							importProjectArchiveAction	= new ImportProjectArchiveAction(
 																						this );
 	ExportProjectArchiveAction							exportProjectArchiveAction	= new ExportProjectArchiveAction(
@@ -706,6 +707,7 @@ public class BreakoutMainView
 				popupMenu.setLightWeightPopupEnabled( false );
 				popupMenu.add( new JMenuItem( newProjectAction ) );
 				popupMenu.add( new JMenuItem( openProjectAction ) );
+				popupMenu.add( new JMenuItem( openSurveyAction ) );
 				popupMenu.add( new JSeparator( ) );
 				JMenu importMenu = new JMenu( );
 				localizer.setText( importMenu , "importMenu.text" );
