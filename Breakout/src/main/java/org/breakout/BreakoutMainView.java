@@ -27,6 +27,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Rectangle;
@@ -555,7 +556,7 @@ public class BreakoutMainView
 			public void surveyNotesClicked(String link, int viewRow) {
 				try
 				{
-					Runtime.getRuntime( ).exec( "explorer \"" + link + "\"" );
+					Desktop.getDesktop( ).open( new File( link ) );
 				}
 				catch( IOException e1 )
 				{
