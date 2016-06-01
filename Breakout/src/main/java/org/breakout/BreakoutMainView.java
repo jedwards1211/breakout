@@ -1858,17 +1858,29 @@ public class BreakoutMainView
 						{
 							distCalc.add( shot.dist );
 						}
-						if( !Vecmath.hasNaNsOrInfinites( shot.from.position ) )
+						if ( shot.fromSplayPoints != null )
 						{
-							northCalc.add( -shot.from.position[ 2 ] );
-							eastCalc.add( shot.from.position[ 0 ] );
-							depthCalc.add( -shot.from.position[ 1 ] );
+							for( float[ ] point : shot.fromSplayPoints )
+							{
+								if( !Vecmath.hasNaNsOrInfinites( point ) )
+								{
+									northCalc.add( -point[ 2 ] );
+									eastCalc.add( point[ 0 ] );
+									depthCalc.add( -point[ 1 ] );
+								}
+							}
 						}
-						if( !Vecmath.hasNaNsOrInfinites( shot.to.position ) )
+						if ( shot.toSplayPoints != null )
 						{
-							northCalc.add( -shot.to.position[ 2 ] );
-							eastCalc.add( shot.to.position[ 0 ] );
-							depthCalc.add( -shot.to.position[ 1 ] );
+							for( float[ ] point : shot.toSplayPoints )
+							{
+								if( !Vecmath.hasNaNsOrInfinites( point ) )
+								{
+									northCalc.add( -point[ 2 ] );
+									eastCalc.add( point[ 0 ] );
+									depthCalc.add( -point[ 1 ] );
+								}
+							}
 						}
 					}
 					else
