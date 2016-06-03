@@ -15,10 +15,16 @@ public class Redux {
 				dispatcher = i.previous().store(store).next(dispatcher);
 			}
 			final Dispatcher finalDispatcher = dispatcher;
+
 			return new Store() {
 				@Override
 				public Object dispatch(Action action) {
-					return finalDispatcher.dispatch(action);
+					try {
+						return finalDispatcher.dispatch(action);
+					} catch (Exception e) {
+						e.printStackTrace();
+						return store.getState();
+					}
 				}
 
 				@Override
@@ -41,14 +47,19 @@ public class Redux {
 
 			@Override
 			public Object dispatch(Action action) {
-				Object nextState = reducer.apply(state, action);
-				if (nextState != state) {
-					state = nextState;
-					for (Runnable r : listeners) {
-						r.run();
+				try {
+					Object nextState = reducer.apply(state, action);
+					if (nextState != state) {
+						state = nextState;
+						for (Runnable r : listeners) {
+							r.run();
+						}
 					}
+					return nextState;
+				} catch (Exception e) {
+					e.printStackTrace();
+					return getState();
 				}
-				return nextState;
 			}
 
 			@Override
