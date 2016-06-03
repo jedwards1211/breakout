@@ -24,7 +24,7 @@ public class Logger implements Middleware {
 	}
 
 	@Override
-	public ForStore store(Store store) {
+	public ForStore store(Store<?> store) {
 		return new ForStore() {
 			@Override
 			public Dispatcher next(Dispatcher next) {
