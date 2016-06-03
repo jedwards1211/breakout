@@ -1,5 +1,7 @@
 package org.andork.tracker.model;
 
+import java.util.function.UnaryOperator;
+
 import org.andork.tracker.model.QSpec.Property;
 
 /**
@@ -44,15 +46,25 @@ public abstract class QObject<S extends QSpec> {
 		return spec.hashCode(this);
 	}
 
-	public <T> T set(Property<T> property, T newValue) {
+	public <T> QObject<S> set(Property<T> property, T newValue) {
 		T oldValue = property.set(this, newValue);
 		if (oldValue != newValue) {
 			deps.changed(property);
 		}
-		return oldValue;
+		return this;
 	}
 
 	public S spec() {
 		return spec;
+	}
+
+	public <T> QObject<S> update(Property<T> property, UnaryOperator<T> op) {
+		T oldValue = property.get(this);
+		T newValue = op.apply(oldValue);
+		property.set(this, newValue);
+		if (oldValue != newValue) {
+			deps.changed(property);
+		}
+		return this;
 	}
 }
