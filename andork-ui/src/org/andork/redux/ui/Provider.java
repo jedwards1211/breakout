@@ -6,15 +6,12 @@ import java.awt.Container;
 
 import org.andork.redux.Store;
 
-public class Provider extends Container {
-	/**
-	 *
-	 */
+public class Provider<S> extends Container {
 	private static final long serialVersionUID = -6849202639075735732L;
 
-	private final Store store;
+	private final Store<S> store;
 
-	public Provider(Store store, Component comp) {
+	public Provider(Store<S> store, Component comp) {
 		setLayout(new BorderLayout());
 		this.store = store;
 		if (comp != null) {
@@ -22,7 +19,7 @@ public class Provider extends Container {
 		}
 	}
 
-	public Store getStore() {
+	public Store<S> getStore() {
 		return store;
 	}
 }

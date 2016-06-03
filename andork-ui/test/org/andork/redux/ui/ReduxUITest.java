@@ -1,7 +1,6 @@
 package org.andork.redux.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Container;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
@@ -19,8 +18,6 @@ import javax.swing.text.NumberFormatter;
 import org.andork.redux.Action;
 import org.andork.redux.Redux;
 import org.andork.redux.Store;
-import org.andork.redux.ui.Connector;
-import org.andork.redux.ui.Provider;
 
 public class ReduxUITest {
 	public static class SetValueAction extends Action {
@@ -35,7 +32,6 @@ public class ReduxUITest {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			JFrame frame = new JFrame();
-			Container content = frame.getContentPane();
 
 			JPanel mainContent = new JPanel();
 
@@ -47,10 +43,12 @@ public class ReduxUITest {
 			mainContent.add(slider, BorderLayout.CENTER);
 			mainContent.add(textField, BorderLayout.SOUTH);
 
-			Connector connector = new Connector(mainContent) {
+			Connector<Number> connector = new Connector<Number>(mainContent) {
+				private static final long serialVersionUID = -5296821559052373735L;
+
 				@Override
-				public void update(Object state) {
-					int value = ((Number) state).intValue();
+				public void update(Number state) {
+					int value = state.intValue();
 					slider.setValue(value);
 					textField.setValue(value);
 				}
@@ -68,13 +66,13 @@ public class ReduxUITest {
 				}
 			});
 
-			Store store = Redux.createStore((state, action) -> {
-				return action.type == "SET_VALUE"
+			Store<Number> store = Redux.createStore((state, action) -> {
+				return action instanceof SetValueAction
 						? ((SetValueAction) action).payload
 						: state;
 			} , 25);
 
-			frame.setContentPane(new Provider(store, connector));
+			frame.setContentPane(new Provider<Number>(store, connector));
 
 			frame.pack();
 			frame.setLocationRelativeTo(null);

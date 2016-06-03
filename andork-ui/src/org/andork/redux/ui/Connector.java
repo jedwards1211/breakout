@@ -11,13 +11,10 @@ import org.andork.redux.Dispatcher;
 import org.andork.redux.Store;
 import org.andork.swing.FromEDT;
 
-public abstract class Connector extends Container implements Dispatcher {
-	/**
-	 *
-	 */
+public abstract class Connector<S> extends Container implements Dispatcher {
 	private static final long serialVersionUID = 3101848419113180498L;
 
-	private Store store;
+	private Store<S> store;
 	private Runnable unsubscribe;
 
 	public Connector(Component comp) {
@@ -45,7 +42,7 @@ public abstract class Connector extends Container implements Dispatcher {
 		});
 	}
 
-	void onParentChanged() {
+	protected void onParentChanged() {
 		if (unsubscribe != null) {
 			unsubscribe.run();
 			unsubscribe = null;
@@ -55,7 +52,8 @@ public abstract class Connector extends Container implements Dispatcher {
 		Container parent = getParent();
 		while (parent != null) {
 			if (parent instanceof Provider) {
-				Provider provider = (Provider) parent;
+				@SuppressWarnings("unchecked")
+				Provider<S> provider = (Provider<S>) parent;
 				store = provider.getStore();
 				unsubscribe = store.subscribe(() -> {
 					update(store.getState());
@@ -70,5 +68,5 @@ public abstract class Connector extends Container implements Dispatcher {
 		}
 	}
 
-	public abstract void update(Object state);
+	public abstract void update(S state);
 }

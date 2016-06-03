@@ -1,5 +1,7 @@
 package org.andork.redux;
 
+import java.util.Arrays;
+
 import org.andork.redux.logger.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -8,13 +10,14 @@ import org.omg.CORBA.IntHolder;
 public class ReduxTest {
 	@Test
 	public void test1() {
-		Store store = Redux.applyMiddleware(new Logger().logState(false)).apply(
+		Store<Number> store = Redux.applyMiddleware(
+				Arrays.asList(new Logger()),
 				Redux.createStore(
-						new Reducer() {
+						new Reducer<Number>() {
 							@Override
-							public Object apply(Object state, Action action) {
+							public Number apply(Number state, Action action) {
 								return action.type == "INCREMENT"
-										? (Integer) state + 1
+										? state.intValue() + 1
 										: state;
 							}
 						},
