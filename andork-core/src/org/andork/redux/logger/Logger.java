@@ -1,9 +1,9 @@
 package org.andork.redux.logger;
 
-import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.function.Consumer;
 
 import org.andork.redux.Action;
 import org.andork.redux.Dispatcher;
@@ -11,7 +11,7 @@ import org.andork.redux.Middleware;
 import org.andork.redux.Store;
 
 public class Logger implements Middleware {
-	private PrintStream out = System.out;
+	private Consumer<String> log = System.out::println;
 	private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 	private boolean logState = true;
 
@@ -20,13 +20,13 @@ public class Logger implements Middleware {
 		return this;
 	}
 
-	public Logger logState(boolean logState) {
-		this.logState = logState;
+	public Logger log(Consumer<String> log) {
+		this.log = log;
 		return this;
 	}
 
-	public Logger out(PrintStream out) {
-		this.out = out;
+	public Logger logState(boolean logState) {
+		this.logState = logState;
 		return this;
 	}
 
@@ -42,13 +42,13 @@ public class Logger implements Middleware {
 						Object prevState = store.getState();
 						Object result = next.dispatch(action);
 						Object nextState = store.getState();
-						out.println(dateFormat.format(date) + " " + action.type);
+						log.accept(dateFormat.format(date) + " " + action.type);
 						if (logState) {
 							System.out.println("  prevState: " + prevState);
 						}
-						out.println("  action:    " + action);
+						log.accept("  action:    " + action);
 						if (logState) {
-							out.println("  nextState: " + nextState);
+							log.accept("  nextState: " + nextState);
 						}
 						return result;
 					}
