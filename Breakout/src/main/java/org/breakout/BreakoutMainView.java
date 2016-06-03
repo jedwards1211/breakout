@@ -554,14 +554,7 @@ public class BreakoutMainView
 			
 			@Override
 			public void surveyNotesClicked(String link, int viewRow) {
-				try
-				{
-					Desktop.getDesktop( ).open( new File( link ) );
-				}
-				catch( IOException e1 )
-				{
-					e1.printStackTrace( );
-				}
+				openSurveyNotes(link);
 			}
 		});
 		
@@ -1709,6 +1702,20 @@ public class BreakoutMainView
 			{
 				surveyDrawer.table( ).clearSelection( );
 			}
+			else if ( e.getClickCount( ) == 2 )
+			{
+				int index = picked.picked.getNumber( );
+				int modelRow = surveyDrawer.table( ).getModel( ).rowOfShot( index );
+				if (modelRow >= 0) {
+					QObject<SurveyTableModel.Row> row = surveyDrawer.table().getModel().getRow(modelRow);
+					if (row != null) {
+						String link = row.get(SurveyTableModel.Row.scannedNotes);
+						if (link != null) {
+							openSurveyNotes(link);
+						}
+					}
+				}
+			}
 		}
 
 		@Override
@@ -2614,6 +2621,17 @@ public class BreakoutMainView
 	public void openSurveyFile( Path newSurveyFile )
 	{
 		ioTaskService.submit( new OpenSurveyTask( newSurveyFile ) );
+	}
+
+	private void openSurveyNotes(String link) {
+		try
+		{
+			Desktop.getDesktop( ).open( new File( link ) );
+		}
+		catch( IOException e1 )
+		{
+			e1.printStackTrace( );
+		}
 	}
 
 	private class OpenSurveyTask extends DrawerPinningTask
