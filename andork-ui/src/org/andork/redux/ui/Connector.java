@@ -1,4 +1,4 @@
-package org.andork.redux.awt;
+package org.andork.redux.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -9,6 +9,7 @@ import java.awt.event.HierarchyListener;
 import org.andork.redux.Action;
 import org.andork.redux.Dispatcher;
 import org.andork.redux.Store;
+import org.andork.swing.FromEDT;
 
 public abstract class Connector extends Container implements Dispatcher {
 	/**
@@ -36,10 +37,12 @@ public abstract class Connector extends Container implements Dispatcher {
 
 	@Override
 	public Object dispatch(Action action) {
-		if (store != null) {
-			return store.dispatch(action);
-		}
-		throw new IllegalStateException("not connected to a store");
+		return FromEDT.fromEDT(() -> {
+			if (store != null) {
+				return store.dispatch(action);
+			}
+			throw new IllegalStateException("not connected to a store");
+		});
 	}
 
 	void onParentChanged() {

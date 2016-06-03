@@ -1,4 +1,4 @@
-package org.andork.redux.awt;
+package org.andork.redux.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
@@ -19,6 +19,8 @@ import javax.swing.text.NumberFormatter;
 import org.andork.redux.Action;
 import org.andork.redux.Redux;
 import org.andork.redux.Store;
+import org.andork.redux.ui.Connector;
+import org.andork.redux.ui.Provider;
 
 public class ReduxUITest {
 	public static class SetValueAction extends Action {

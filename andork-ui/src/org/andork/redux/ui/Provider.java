@@ -1,4 +1,4 @@
-package org.andork.redux.awt;
+package org.andork.redux.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
