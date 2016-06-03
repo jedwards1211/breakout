@@ -19,49 +19,51 @@ public class Computation implements Runnable {
 		this.tracker = tracker;
 		func = r;
 	}
-	
-	void start() throws Exception {
-		boolean errored = true;
+
+	void compute() throws Exception {
+		invalidated = false;
+		Computation previous = Tracker.currentComputation();
+		Tracker.setCurrentComputation(this);
+
+		boolean previousInCompute = tracker.inCompute();
+		tracker.setInCompute(true);
 		try {
-			compute();
-			errored = false;
+			func.run(this);
 		} finally {
-			firstRun = false;
-			if (errored) {
-				stop();
-			}
+			Tracker.setCurrentComputation(previous);
+			tracker.setInCompute(previousInCompute);
 		}
 	}
 
-	public void invalidate() {
-		if (invalidated) {
-		    // if we're currently in _recompute(), don't enqueue                                                              // 271
-		    // ourselves, since we'll rerun immediately anyway.  
+	public void flush() {
+		if (recomputing) {
 			return;
 		}
+		recompute();
+	}
+
+	public void invalidate() {
+		// if we're currently in _recompute(), don't enqueue
+		// ourselves, since we'll rerun immediately anyway.
+		if (invalidated) {
+			return;
+		}
+
 		invalidated = true;
 		if (!recomputing && !stopped) {
 			tracker.requireFlush();
 			tracker.addPendingComputation(this);
 		}
-	    // callbacks can't add callbacks, because                                                                         // 280
-	    // self.invalidated === true.
+		// callbacks can't add callbacks, because // 280
+		// self.invalidated === true.
 		for (Runnable callback : onInvalidateCallbacks) {
 			tracker.nonreactive(callback);
 		}
 		onInvalidateCallbacks.clear();
 	}
 
-	public void stop() {
-		if (stopped) {
-			return;
-		}
-		stopped = true;
-		invalidate();
-		for (Runnable callback : onStopCallbacks) {
-			tracker.nonreactive(callback);
-		}
-		onStopCallbacks.clear();
+	boolean needsRecompute() {
+		return invalidated && !stopped;
 	}
 
 	public void onInvalidate(Runnable r) {
@@ -80,25 +82,6 @@ public class Computation implements Runnable {
 		}
 	}
 
-	void compute() throws Exception {
-		invalidated = false;
-		Computation previous = Tracker.currentComputation();
-		Tracker.setCurrentComputation(this);
-
-		boolean previousInCompute = tracker.inCompute();
-		tracker.setInCompute(true);
-		try {
-			func.run(this);
-		} finally {
-			Tracker.setCurrentComputation(previous);
-			tracker.setInCompute(previousInCompute);
-		}
-	}
-
-	boolean needsRecompute() {
-		return invalidated && !stopped;
-	}
-
 	void recompute() {
 		recomputing = true;
 		try {
@@ -114,16 +97,35 @@ public class Computation implements Runnable {
 		}
 	}
 
-	public void flush() {
-		if (recomputing) {
-			return;
-		}
-		recompute();
-	}
-
 	@Override
 	public void run() {
 		invalidate();
 		flush();
+	}
+
+	void start() throws Exception {
+		boolean errored = true;
+		try {
+			compute();
+			errored = false;
+		} finally {
+			firstRun = false;
+			if (errored) {
+				stop();
+			}
+		}
+	}
+
+	public void stop() {
+		if (stopped) {
+			return;
+		}
+
+		stopped = true;
+		invalidate();
+		for (Runnable callback : onStopCallbacks) {
+			tracker.nonreactive(callback);
+		}
+		onStopCallbacks.clear();
 	}
 }

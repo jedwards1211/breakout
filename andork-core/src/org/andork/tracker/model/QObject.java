@@ -10,7 +10,7 @@ import org.andork.tracker.model.QSpec.Property;
  * write any boilerplate property change notification code.<br>
  * <br>
  * The Q doesn't stand for anything.
- * 
+ *
  * @author andy.edwards
  * @param <S>
  *            the type of {@link QSpec} for this object.
@@ -23,17 +23,25 @@ public abstract class QObject<S extends QSpec> {
 		this.spec = spec;
 	}
 
-	public S spec() {
-		return spec;
-	}
-
 	protected abstract <T> T doGet(Property<T> property);
 
 	protected abstract <T> T doSet(Property<T> property, T newValue);
 
+	@Override
+	public boolean equals(Object other) {
+		deps.depend();
+		return spec.equals(this, other);
+	}
+
 	public <T> T get(Property<T> property) {
 		deps.depend(property);
 		return property.get(this);
+	}
+
+	@Override
+	public int hashCode() {
+		deps.depend();
+		return spec.hashCode(this);
 	}
 
 	public <T> T set(Property<T> property, T newValue) {
@@ -44,13 +52,7 @@ public abstract class QObject<S extends QSpec> {
 		return oldValue;
 	}
 
-	public boolean equals(Object other) {
-		deps.depend();
-		return spec.equals(this, other);
-	}
-
-	public int hashCode() {
-		deps.depend();
-		return spec.hashCode(this);
+	public S spec() {
+		return spec;
 	}
 }

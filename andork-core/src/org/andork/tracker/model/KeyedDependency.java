@@ -10,6 +10,20 @@ public class KeyedDependency<K> {
 	final Dependency allDependency = new Dependency();
 	final MultiMap<K, Computation> dependents = new HashSetMultiMap<>();
 
+	public void changed() {
+		allDependency.changed();
+		for (Computation comp : dependents.values()) {
+			comp.invalidate();
+		}
+	}
+
+	public void changed(K key) {
+		allDependency.changed();
+		for (Computation comp : dependents.get(key)) {
+			comp.invalidate();
+		}
+	}
+
 	public boolean depend() {
 		return allDependency.depend();
 	}
@@ -27,20 +41,6 @@ public class KeyedDependency<K> {
 			return true;
 		}
 		return false;
-	}
-
-	public void changed() {
-		allDependency.changed();
-		for (Computation comp : dependents.values()) {
-			comp.invalidate();
-		}
-	}
-
-	public void changed(K key) {
-		allDependency.changed();
-		for (Computation comp : dependents.get(key)) {
-			comp.invalidate();
-		}
 	}
 
 	public boolean hasDependents(K key) {

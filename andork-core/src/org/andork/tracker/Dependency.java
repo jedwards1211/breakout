@@ -5,7 +5,13 @@ import java.util.Set;
 
 public class Dependency {
 	final Set<Computation> dependents = new HashSet<>();
-	
+
+	public void changed() {
+		for (Computation comp : dependents) {
+			comp.invalidate();
+		}
+	}
+
 	public boolean depend() {
 		return depend(Tracker.currentComputation());
 	}
@@ -14,17 +20,13 @@ public class Dependency {
 		if (!Tracker.isActive()) {
 			return false;
 		}
-		if (this.dependents.add(comp)) {
+		if (dependents.add(comp)) {
 			comp.onInvalidate(() -> dependents.remove(comp));
 			return true;
 		}
 		return false;
 	}
-	public void changed() {
-		for (Computation comp : dependents) {
-			comp.invalidate();
-		}
-	}
+
 	public boolean hasDependents() {
 		return !dependents.isEmpty();
 	}
