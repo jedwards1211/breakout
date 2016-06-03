@@ -43,28 +43,19 @@ public abstract class Connector<S> extends Container implements Dispatcher {
 	}
 
 	protected void onParentChanged() {
-		if (unsubscribe != null) {
-			unsubscribe.run();
-			unsubscribe = null;
-		}
-		store = null;
-
-		Container parent = getParent();
-		while (parent != null) {
-			if (parent instanceof Provider) {
-				@SuppressWarnings("unchecked")
-				Provider<S> provider = (Provider<S>) parent;
-				store = provider.getStore();
+		Store<S> newStore = Provider.<S> getStore(this);
+		if (newStore != store) {
+			if (unsubscribe != null) {
+				unsubscribe.run();
+				unsubscribe = null;
+			}
+			store = newStore;
+			if (store != null) {
 				unsubscribe = store.subscribe(() -> {
 					update(store.getState());
 				});
-				break;
+				update(store.getState());
 			}
-			parent = parent.getParent();
-		}
-
-		if (store != null) {
-			update(store.getState());
 		}
 	}
 
