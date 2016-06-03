@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing;
 
@@ -32,8 +32,6 @@ import javax.swing.JList;
 import javax.swing.ListModel;
 
 public class DropLocationFinder implements DropTargetListener {
-	Point	dropLocation	= null;
-
 	public static int getCell(JList list, Point point) {
 		ListModel model = list.getModel();
 		for (int i = 0; i < model.getSize(); i++) {
@@ -45,6 +43,36 @@ public class DropLocationFinder implements DropTargetListener {
 		return -1;
 	}
 
+	Point dropLocation = null;
+
+	@Override
+	public void dragEnter(DropTargetDragEvent dtde) {
+		dropLocation = getLocation(dtde);
+	}
+
+	@Override
+	public void dragExit(DropTargetEvent dte) {
+		dropLocation = null;
+	}
+
+	@Override
+	public void dragOver(DropTargetDragEvent dtde) {
+		dropLocation = getLocation(dtde);
+	}
+
+	@Override
+	public void drop(DropTargetDropEvent dtde) {
+		dropLocation = getLocation(dtde);
+	}
+
+	@Override
+	public void dropActionChanged(DropTargetDragEvent dtde) {
+	}
+
+	public Point getDropLocation() {
+		return new Point(dropLocation);
+	}
+
 	private Point getLocation(DropTargetEvent dte) {
 		if (dte instanceof DropTargetDragEvent) {
 			return ((DropTargetDragEvent) dte).getLocation();
@@ -52,29 +80,6 @@ public class DropLocationFinder implements DropTargetListener {
 			return ((DropTargetDropEvent) dte).getLocation();
 		}
 		return null;
-	}
-
-	public Point getDropLocation() {
-		return new Point(dropLocation);
-	}
-
-	public void dragEnter(DropTargetDragEvent dtde) {
-		dropLocation = getLocation(dtde);
-	}
-
-	public void dragOver(DropTargetDragEvent dtde) {
-		dropLocation = getLocation(dtde);
-	}
-
-	public void dropActionChanged(DropTargetDragEvent dtde) {
-	}
-
-	public void dragExit(DropTargetEvent dte) {
-		dropLocation = null;
-	}
-
-	public void drop(DropTargetDropEvent dtde) {
-		dropLocation = getLocation(dtde);
 	}
 
 }

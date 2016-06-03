@@ -10,14 +10,15 @@ import org.andork.bind2.Link;
 import org.andork.swing.selector.JComboBoxUtils;
 
 public class JComboBoxItemsBinding implements Binding {
-	public final Link<List<?>>	itemsLink	= new Link<List<?>>(this);
-	public final JComboBox		comboBox;
+	public final Link<List<?>> itemsLink = new Link<List<?>>(this);
+	public final JComboBox comboBox;
 
 	public JComboBoxItemsBinding(JComboBox comboBox) {
 		super();
 		this.comboBox = comboBox;
 	}
 
+	@Override
 	public void update(boolean force) {
 		List<?> values = itemsLink.get();
 		if (values == null) {

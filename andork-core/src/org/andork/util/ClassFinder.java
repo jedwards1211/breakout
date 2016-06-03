@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.util;
 
@@ -31,23 +31,16 @@ import java.util.zip.ZipEntry;
 import org.andork.collect.Visitor;
 
 public class ClassFinder {
-	public static void findClasses(Visitor<String> visitor) {
-		String classpath = System.getProperty("java.class.path");
-		System.out.println(classpath);
-		String[] paths = classpath.split(";");
-
-		String javaHome = System.getProperty("java.home");
-		File file = new File(javaHome + File.separator + "lib");
-		if (file.exists()) {
-			findClasses(file, file, true, visitor);
+	private static String createClassName(File root, File file) {
+		StringBuffer sb = new StringBuffer();
+		String fileName = file.getName();
+		sb.append(fileName.substring(0, fileName.lastIndexOf(".class")));
+		file = file.getParentFile();
+		while (file != null && !file.equals(root)) {
+			sb.insert(0, '.').insert(0, file.getName());
+			file = file.getParentFile();
 		}
-
-		for (String path : paths) {
-			file = new File(path);
-			if (file.exists()) {
-				findClasses(file, file, true, visitor);
-			}
-		}
+		return sb.toString();
 	}
 
 	private static boolean findClasses(File root, File file, boolean includeJars, Visitor<String> visitor) {
@@ -75,7 +68,7 @@ public class ClassFinder {
 							}
 						}
 					}
-					
+
 					String jarClassPath = null;
 					try {
 						jarClassPath = jar.getManifest().getMainAttributes().getValue("Class-Path");
@@ -91,8 +84,7 @@ public class ClassFinder {
 						}
 					}
 				}
-			}
-			else if (file.getName().toLowerCase().endsWith(".class")) {
+			} else if (file.getName().toLowerCase().endsWith(".class")) {
 				if (!visitor.visit(createClassName(root, file))) {
 					return false;
 				}
@@ -102,15 +94,22 @@ public class ClassFinder {
 		return true;
 	}
 
-	private static String createClassName(File root, File file) {
-		StringBuffer sb = new StringBuffer();
-		String fileName = file.getName();
-		sb.append(fileName.substring(0, fileName.lastIndexOf(".class")));
-		file = file.getParentFile();
-		while (file != null && !file.equals(root)) {
-			sb.insert(0, '.').insert(0, file.getName());
-			file = file.getParentFile();
+	public static void findClasses(Visitor<String> visitor) {
+		String classpath = System.getProperty("java.class.path");
+		System.out.println(classpath);
+		String[] paths = classpath.split(";");
+
+		String javaHome = System.getProperty("java.home");
+		File file = new File(javaHome + File.separator + "lib");
+		if (file.exists()) {
+			findClasses(file, file, true, visitor);
 		}
-		return sb.toString();
+
+		for (String path : paths) {
+			file = new File(path);
+			if (file.exists()) {
+				findClasses(file, file, true, visitor);
+			}
+		}
 	}
 }

@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.util;
 
@@ -28,20 +28,18 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ObjectTraverser {
-	public static interface Visitor {
-		public boolean visitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index);
-
-		public void exitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index);
-
-		public void visitPrimitive(ObjectTraverser traverser, Object prim, Object parent, Field parentField);
-	}
-
 	public static class DefaultVisitorBase implements Visitor {
-		int				depth		= 0;
-		int				maxDepth	= 10000;
+		int depth = 0;
+		int maxDepth = 10000;
 
-		Set<Instance>	instances	= new HashSet<Instance>();
+		Set<Instance> instances = new HashSet<Instance>();
 
+		@Override
+		public void exitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
+			depth--;
+		}
+
+		@Override
 		public boolean visitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
 			if (depth == maxDepth) {
 				return false;
@@ -51,44 +49,48 @@ public class ObjectTraverser {
 				depth++;
 				return true;
 			}
-			
+
 			return false;
 		}
 
-		public void exitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
-			depth--;
-		}
-
+		@Override
 		public void visitPrimitive(ObjectTraverser traverser, Object prim, Object parent, Field parentField) {
 		}
 	}
 
 	public static final class Instance {
-		final Object	obj;
+		final Object obj;
 
 		protected Instance(Object obj) {
 			super();
 			this.obj = obj;
 		}
 
+		@Override
 		public boolean equals(Object o) {
 			if (o instanceof Instance) {
-				return this.obj == ((Instance) o).obj;
+				return obj == ((Instance) o).obj;
 			}
 			return false;
 		}
 
+		@Override
 		public int hashCode() {
 			return System.identityHashCode(obj);
 		}
 	}
 
-	public void traverse(Object obj, Visitor visitor) throws Exception {
-		traverse(obj, null, null, visitor, -1);
+	public static interface Visitor {
+		public void exitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index);
+
+		public boolean visitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index);
+
+		public void visitPrimitive(ObjectTraverser traverser, Object prim, Object parent, Field parentField);
 	}
 
 	private void traverse(Object obj, Object parent, Field parentField, Visitor visitor, int index) throws Exception {
-		if (visitor.visitObject(this, obj, parent, parentField, index) && obj != null && (parentField == null || !parentField.getType().isPrimitive())) {
+		if (visitor.visitObject(this, obj, parent, parentField, index) && obj != null
+				&& (parentField == null || !parentField.getType().isPrimitive())) {
 			Class<?> oclass = obj.getClass();
 
 			if (oclass.isArray()) {
@@ -121,5 +123,9 @@ public class ObjectTraverser {
 
 			visitor.exitObject(this, obj, parent, parentField, index);
 		}
+	}
+
+	public void traverse(Object obj, Visitor visitor) throws Exception {
+		traverse(obj, null, null, visitor, -1);
 	}
 }

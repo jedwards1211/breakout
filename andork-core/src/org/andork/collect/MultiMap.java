@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.collect;
 
@@ -28,13 +28,13 @@ import java.util.Set;
 /**
  * A map where a single key can map to multiple values. Depending on the
  * subtype, duplicate values may or may not be permitted.
- * 
+ *
  * Unlike {@link Map}, {@link #keySet()}, {@link #entrySet()}, {@link #values()}
  * , etc. are not guaranteed to be views; they may be unmodifiable or copies of
  * the underlying data.
- * 
+ *
  * @author james.a.edwards
- * 
+ *
  * @param <K>
  *            the key type.
  * @param <V>
@@ -73,6 +73,14 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * @param key
+	 *            the key to get values mapped to.
+	 * @return all values mapped to {@code key}. This collection is not
+	 *         necessarily modifiable or backed by the {@code MultiMap}.
+	 */
+	public abstract Collection<V> get(K key);
+
+	/**
+	 * @param key
 	 *            the key to get the only value for.
 	 * @return the only value mapped to {@code key}, or {@code null} if none
 	 *         exists.
@@ -82,14 +90,6 @@ public interface MultiMap<K, V> {
 	public abstract V getOnlyValue(K key);
 
 	/**
-	 * @param key
-	 *            the key to get values mapped to.
-	 * @return all values mapped to {@code key}. This collection is not
-	 *         necessarily modifiable or backed by the {@code MultiMap}.
-	 */
-	public abstract Collection<V> get(K key);
-
-	/**
 	 * @return a {@link Set} of all keys in this {@code MultiMap}. This set is
 	 *         not necessarily modifiable or backed by the {@code MultiMap}.
 	 */
@@ -97,7 +97,7 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * Adds a key-value pair to this {@code MultiMap}.
-	 * 
+	 *
 	 * @param key
 	 *            the key.
 	 * @param value
@@ -109,7 +109,7 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * Adds multiple key-value pairs to this {@code MultiMap}.
-	 * 
+	 *
 	 * @param key
 	 *            the key.
 	 * @param values
@@ -121,7 +121,7 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * Adds multiple key-value pairs to this {@code MultiMap}.
-	 * 
+	 *
 	 * @param m
 	 *            a {@link Map} of key-value pairs to add.
 	 * @return {@code true} if this {@code MultiMap} was changed as a result of
@@ -131,7 +131,7 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * Adds multiple key-value pairs to this {@code MultiMap}.
-	 * 
+	 *
 	 * @param m
 	 *            a {@code MultiMap} of key-value pairs to add.
 	 * @return {@code true} if this {@code MultiMap} was changed as a result of
@@ -141,7 +141,7 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * Removes a key-value pair from this {@code MultiMap}.
-	 * 
+	 *
 	 * @param key
 	 *            the key.
 	 * @param value
@@ -153,7 +153,7 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * Removes multiple key-value pairs from this {@code MultiMap}.
-	 * 
+	 *
 	 * @param key
 	 *            the key.
 	 * @param values
@@ -165,7 +165,7 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * Removes multiple key-value pairs from this {@code MultiMap}.
-	 * 
+	 *
 	 * @param m
 	 *            a {@link Map} of key-value pairs to remove from this
 	 *            {@code MultiMap}.
@@ -176,7 +176,7 @@ public interface MultiMap<K, V> {
 
 	/**
 	 * Removes multiple key-value pairs from this {@code MultiMap}.
-	 * 
+	 *
 	 * @param m
 	 *            a {@code MultiMap} of key-value pairs to remove from this
 	 *            {@code MultiMap}.

@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.util;
 
@@ -30,65 +30,61 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-
 public class Sizer implements ObjectTraverser.Visitor {
 	private static class Instance {
-		final Object	obj;
+		final Object obj;
 
 		protected Instance(Object obj) {
 			super();
 			this.obj = obj;
 		}
 
+		@Override
 		public boolean equals(Object o) {
 			if (o instanceof Instance) {
-				return this.obj == ((Instance) o).obj;
+				return obj == ((Instance) o).obj;
 			}
 			return false;
 		}
 
+		@Override
 		public int hashCode() {
 			return System.identityHashCode(obj);
 		}
 	}
 
-	protected Map<Class<?>, Integer>	typeCounts		= null;
-	protected Map<Field, Integer>		fieldCounts		= null;
+	protected Map<Class<?>, Integer> typeCounts = null;
+	protected Map<Field, Integer> fieldCounts = null;
 
-	protected Set<Instance>				instances		= new HashSet<Instance>();
+	protected Set<Instance> instances = new HashSet<Instance>();
 
-	protected int						referenceSize	= 32;
-	protected int						booleanSize		= 32;
-	protected int						byteSize		= 32;
-	protected int						shortSize		= 32;
-	protected int						charSize		= 32;
-	protected int						intSize			= 32;
-	protected int						floatSize		= 32;
-	protected int						longSize		= 64;
-	protected int						doubleSize		= 64;
+	protected int referenceSize = 32;
+	protected int booleanSize = 32;
+	protected int byteSize = 32;
+	protected int shortSize = 32;
+	protected int charSize = 32;
+	protected int intSize = 32;
+	protected int floatSize = 32;
+	protected int longSize = 64;
+	protected int doubleSize = 64;
 
-	protected int						referenceCount	= 0;
-	protected int						booleanCount	= 0;
-	protected int						byteCount		= 0;
-	protected int						shortCount		= 0;
-	protected int						charCount		= 0;
-	protected int						intCount		= 0;
-	protected int						floatCount		= 0;
-	protected int						longCount		= 0;
-	protected int						doubleCount		= 0;
+	protected int referenceCount = 0;
+	protected int booleanCount = 0;
+	protected int byteCount = 0;
+	protected int shortCount = 0;
+	protected int charCount = 0;
+	protected int intCount = 0;
+	protected int floatCount = 0;
+	protected int longCount = 0;
+	protected int doubleCount = 0;
 
-	protected boolean					sizingActive	= true;
+	protected boolean sizingActive = true;
 
-	protected long						size			= 0;
+	protected long size = 0;
 
-	public long sizeOf(Object obj) {
-		reset();
-		try {
-			new ObjectTraverser().traverse(obj, this);
-		} catch (Exception ex) {
-			throw new RuntimeException(ex);
-		}
-		return size;
+	public Sizer enableFieldCounts() {
+		fieldCounts = new HashMap<Field, Integer>();
+		return this;
 	}
 
 	public Sizer enableTypeCounts() {
@@ -96,17 +92,17 @@ public class Sizer implements ObjectTraverser.Visitor {
 		return this;
 	}
 
-	public Sizer enableFieldCounts() {
-		fieldCounts = new HashMap<Field, Integer>();
-		return this;
-	}
+	@Override
+	public void exitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
 
-	public Map<Class<?>, Integer> getTypeCounts() {
-		return Collections.unmodifiableMap(typeCounts);
 	}
 
 	public Map<Field, Integer> getFieldCounts() {
 		return Collections.unmodifiableMap(fieldCounts);
+	}
+
+	public Map<Class<?>, Integer> getTypeCounts() {
+		return Collections.unmodifiableMap(typeCounts);
 	}
 
 	private void reset() {
@@ -129,6 +125,17 @@ public class Sizer implements ObjectTraverser.Visitor {
 		size = 0;
 	}
 
+	public long sizeOf(Object obj) {
+		reset();
+		try {
+			new ObjectTraverser().traverse(obj, this);
+		} catch (Exception ex) {
+			throw new RuntimeException(ex);
+		}
+		return size;
+	}
+
+	@Override
 	public boolean visitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
 		if (parentField != null && Modifier.isStatic(parentField.getModifiers())) {
 			return false;
@@ -185,10 +192,7 @@ public class Sizer implements ObjectTraverser.Visitor {
 		return false;
 	}
 
-	public void exitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
-
-	}
-
+	@Override
 	public void visitPrimitive(ObjectTraverser traverser, Object prim, Object parent, Field parentField) {
 		if (Modifier.isStatic(parentField.getModifiers())) {
 			return;

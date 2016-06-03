@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.ui.test;
 
@@ -45,73 +45,10 @@ import javax.swing.SwingUtilities;
 /**
  * Like {@link Robot}, except that it works by posting fake events to the AWT
  * event queue rather than faking user action at the OS level.
- * 
+ *
  * @author andy.edwards
  */
 public class DefaultGhost implements Ghost {
-	public void type(Component c, String text) {
-		for (int i = 0; i < text.length(); i++) {
-			type(c, 0, text.charAt(i));
-		}
-	}
-
-	private void type(Component c, int modifiers, int keyCode) {
-		EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-
-		char keyChar = (char) keyCode;
-
-		boolean ctrl = (modifiers & CTRL_DOWN_MASK) != 0;
-		boolean alt = (modifiers & ALT_DOWN_MASK) != 0;
-		boolean shift = (modifiers & SHIFT_DOWN_MASK) != 0;
-
-		int curModifiers = 0;
-
-		if (ctrl) {
-			curModifiers |= CTRL_DOWN_MASK;
-			queue.postEvent(new KeyEvent(c, KEY_PRESSED, System.currentTimeMillis(),
-					curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
-		}
-		if (alt) {
-			curModifiers |= ALT_DOWN_MASK;
-			queue.postEvent(new KeyEvent(c, KEY_PRESSED, System.currentTimeMillis(),
-					curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
-		}
-		if (shift) {
-			curModifiers |= SHIFT_DOWN_MASK;
-			queue.postEvent(new KeyEvent(c, KEY_PRESSED, System.currentTimeMillis(),
-					curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
-		}
-		queue.postEvent(new KeyEvent(c, KEY_PRESSED, System.currentTimeMillis(),
-				modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
-		queue.postEvent(new KeyEvent(c, KEY_TYPED, System.currentTimeMillis(),
-				modifiers, KeyEvent.VK_UNDEFINED, keyChar));
-		queue.postEvent(new KeyEvent(c, KEY_RELEASED, System.currentTimeMillis(),
-				modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
-		if (ctrl) {
-			curModifiers &= ~CTRL_DOWN_MASK;
-			queue.postEvent(new KeyEvent(c, KEY_RELEASED, System.currentTimeMillis(),
-					curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
-		}
-		if (alt) {
-			curModifiers &= ~ALT_DOWN_MASK;
-			queue.postEvent(new KeyEvent(c, KEY_RELEASED, System.currentTimeMillis(),
-					curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
-		}
-		if (shift) {
-			curModifiers &= ~SHIFT_DOWN_MASK;
-			queue.postEvent(new KeyEvent(c, KEY_RELEASED, System.currentTimeMillis(),
-					curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
-		}
-	}
-
-	public void scroll(final Component c, final Rectangle toBounds) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				scrollRectToVisible(c, toBounds);
-			}
-		});
-	}
-
 	private static void scrollRectToVisible(Component c, Rectangle aRect) {
 		if (c instanceof JComponent) {
 			((JComponent) c).scrollRectToVisible(aRect);
@@ -140,136 +77,9 @@ public class DefaultGhost implements Ghost {
 		}
 	}
 
+	@Override
 	public InputBuilder on(Component c) {
 		return new InputBuilder(c) {
-			@Override
-			public InputBuilder press(int keyCode) {
-				EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-
-				char keyChar = (char) keyCode;
-
-				boolean ctrl = (modifiers & CTRL_DOWN_MASK) != 0;
-				boolean alt = (modifiers & ALT_DOWN_MASK) != 0;
-				boolean shift = (modifiers & SHIFT_DOWN_MASK) != 0;
-
-				int curModifiers = 0;
-
-				if (ctrl) {
-					curModifiers |= CTRL_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
-				}
-				if (alt) {
-					curModifiers |= ALT_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
-				}
-				if (shift) {
-					curModifiers |= SHIFT_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
-				}
-				queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
-						modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
-
-				return this;
-			}
-
-			@Override
-			public InputBuilder type(int keyCode) {
-				EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-
-				char keyChar = (char) keyCode;
-
-				boolean ctrl = (modifiers & CTRL_DOWN_MASK) != 0;
-				boolean alt = (modifiers & ALT_DOWN_MASK) != 0;
-				boolean shift = (modifiers & SHIFT_DOWN_MASK) != 0;
-
-				int curModifiers = 0;
-
-				if (ctrl) {
-					curModifiers |= CTRL_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
-				}
-				if (alt) {
-					curModifiers |= ALT_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
-				}
-				if (shift) {
-					curModifiers |= SHIFT_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
-				}
-				queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
-						modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
-				queue.postEvent(new KeyEvent(comp, KEY_TYPED, System.currentTimeMillis(),
-						modifiers, KeyEvent.VK_UNDEFINED, keyChar));
-				queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
-						modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
-				if (ctrl) {
-					curModifiers &= ~CTRL_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
-				}
-				if (alt) {
-					curModifiers &= ~ALT_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
-				}
-				if (shift) {
-					curModifiers &= ~SHIFT_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
-				}
-
-				return this;
-			}
-
-			@Override
-			public InputBuilder release(int keyCode) {
-				EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-
-				char keyChar = (char) keyCode;
-
-				boolean ctrl = (modifiers & CTRL_DOWN_MASK) != 0;
-				boolean alt = (modifiers & ALT_DOWN_MASK) != 0;
-				boolean shift = (modifiers & SHIFT_DOWN_MASK) != 0;
-
-				int curModifiers = 0;
-
-				if (ctrl) {
-					curModifiers |= CTRL_DOWN_MASK;
-				}
-				if (alt) {
-					curModifiers |= ALT_DOWN_MASK;
-				}
-				if (shift) {
-					curModifiers |= SHIFT_DOWN_MASK;
-				}
-
-				queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
-						modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
-				if (ctrl) {
-					curModifiers &= ~CTRL_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
-				}
-				if (alt) {
-					curModifiers &= ~ALT_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
-				}
-				if (shift) {
-					curModifiers &= ~SHIFT_DOWN_MASK;
-					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
-							curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
-				}
-
-				return this;
-			}
-
 			@Override
 			public InputBuilder click(int button, int clickCount) {
 				EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
@@ -330,6 +140,200 @@ public class DefaultGhost implements Ghost {
 
 				return this;
 			}
+
+			@Override
+			public InputBuilder press(int keyCode) {
+				EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+
+				char keyChar = (char) keyCode;
+
+				boolean ctrl = (modifiers & CTRL_DOWN_MASK) != 0;
+				boolean alt = (modifiers & ALT_DOWN_MASK) != 0;
+				boolean shift = (modifiers & SHIFT_DOWN_MASK) != 0;
+
+				int curModifiers = 0;
+
+				if (ctrl) {
+					curModifiers |= CTRL_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
+				}
+				if (alt) {
+					curModifiers |= ALT_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
+				}
+				if (shift) {
+					curModifiers |= SHIFT_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
+				}
+				queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
+						modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
+
+				return this;
+			}
+
+			@Override
+			public InputBuilder release(int keyCode) {
+				EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+
+				char keyChar = (char) keyCode;
+
+				boolean ctrl = (modifiers & CTRL_DOWN_MASK) != 0;
+				boolean alt = (modifiers & ALT_DOWN_MASK) != 0;
+				boolean shift = (modifiers & SHIFT_DOWN_MASK) != 0;
+
+				int curModifiers = 0;
+
+				if (ctrl) {
+					curModifiers |= CTRL_DOWN_MASK;
+				}
+				if (alt) {
+					curModifiers |= ALT_DOWN_MASK;
+				}
+				if (shift) {
+					curModifiers |= SHIFT_DOWN_MASK;
+				}
+
+				queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
+						modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
+				if (ctrl) {
+					curModifiers &= ~CTRL_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
+				}
+				if (alt) {
+					curModifiers &= ~ALT_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
+				}
+				if (shift) {
+					curModifiers &= ~SHIFT_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
+				}
+
+				return this;
+			}
+
+			@Override
+			public InputBuilder type(int keyCode) {
+				EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+
+				char keyChar = (char) keyCode;
+
+				boolean ctrl = (modifiers & CTRL_DOWN_MASK) != 0;
+				boolean alt = (modifiers & ALT_DOWN_MASK) != 0;
+				boolean shift = (modifiers & SHIFT_DOWN_MASK) != 0;
+
+				int curModifiers = 0;
+
+				if (ctrl) {
+					curModifiers |= CTRL_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
+				}
+				if (alt) {
+					curModifiers |= ALT_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
+				}
+				if (shift) {
+					curModifiers |= SHIFT_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
+				}
+				queue.postEvent(new KeyEvent(comp, KEY_PRESSED, System.currentTimeMillis(),
+						modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
+				queue.postEvent(new KeyEvent(comp, KEY_TYPED, System.currentTimeMillis(),
+						modifiers, KeyEvent.VK_UNDEFINED, keyChar));
+				queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
+						modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
+				if (ctrl) {
+					curModifiers &= ~CTRL_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
+				}
+				if (alt) {
+					curModifiers &= ~ALT_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
+				}
+				if (shift) {
+					curModifiers &= ~SHIFT_DOWN_MASK;
+					queue.postEvent(new KeyEvent(comp, KEY_RELEASED, System.currentTimeMillis(),
+							curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
+				}
+
+				return this;
+			}
 		};
+	}
+
+	@Override
+	public void scroll(final Component c, final Rectangle toBounds) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				scrollRectToVisible(c, toBounds);
+			}
+		});
+	}
+
+	private void type(Component c, int modifiers, int keyCode) {
+		EventQueue queue = Toolkit.getDefaultToolkit().getSystemEventQueue();
+
+		char keyChar = (char) keyCode;
+
+		boolean ctrl = (modifiers & CTRL_DOWN_MASK) != 0;
+		boolean alt = (modifiers & ALT_DOWN_MASK) != 0;
+		boolean shift = (modifiers & SHIFT_DOWN_MASK) != 0;
+
+		int curModifiers = 0;
+
+		if (ctrl) {
+			curModifiers |= CTRL_DOWN_MASK;
+			queue.postEvent(new KeyEvent(c, KEY_PRESSED, System.currentTimeMillis(),
+					curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
+		}
+		if (alt) {
+			curModifiers |= ALT_DOWN_MASK;
+			queue.postEvent(new KeyEvent(c, KEY_PRESSED, System.currentTimeMillis(),
+					curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
+		}
+		if (shift) {
+			curModifiers |= SHIFT_DOWN_MASK;
+			queue.postEvent(new KeyEvent(c, KEY_PRESSED, System.currentTimeMillis(),
+					curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
+		}
+		queue.postEvent(new KeyEvent(c, KEY_PRESSED, System.currentTimeMillis(),
+				modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
+		queue.postEvent(new KeyEvent(c, KEY_TYPED, System.currentTimeMillis(),
+				modifiers, KeyEvent.VK_UNDEFINED, keyChar));
+		queue.postEvent(new KeyEvent(c, KEY_RELEASED, System.currentTimeMillis(),
+				modifiers, Character.toUpperCase(keyChar), CHAR_UNDEFINED));
+		if (ctrl) {
+			curModifiers &= ~CTRL_DOWN_MASK;
+			queue.postEvent(new KeyEvent(c, KEY_RELEASED, System.currentTimeMillis(),
+					curModifiers, KeyEvent.VK_CONTROL, CHAR_UNDEFINED));
+		}
+		if (alt) {
+			curModifiers &= ~ALT_DOWN_MASK;
+			queue.postEvent(new KeyEvent(c, KEY_RELEASED, System.currentTimeMillis(),
+					curModifiers, KeyEvent.VK_ALT, CHAR_UNDEFINED));
+		}
+		if (shift) {
+			curModifiers &= ~SHIFT_DOWN_MASK;
+			queue.postEvent(new KeyEvent(c, KEY_RELEASED, System.currentTimeMillis(),
+					curModifiers, KeyEvent.VK_SHIFT, CHAR_UNDEFINED));
+		}
+	}
+
+	@Override
+	public void type(Component c, String text) {
+		for (int i = 0; i < text.length(); i++) {
+			type(c, 0, text.charAt(i));
+		}
 	}
 }

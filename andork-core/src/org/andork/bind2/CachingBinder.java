@@ -3,7 +3,7 @@ package org.andork.bind2;
 import java.util.Objects;
 
 public class CachingBinder<T> extends Binder<T> {
-	T	value;
+	T value;
 
 	public CachingBinder() {
 
@@ -11,6 +11,11 @@ public class CachingBinder<T> extends Binder<T> {
 
 	public CachingBinder(T initValue) {
 		value = initValue;
+	}
+
+	@Override
+	public T get() {
+		return value;
 	}
 
 	protected void set(T newValue) {
@@ -22,10 +27,5 @@ public class CachingBinder<T> extends Binder<T> {
 			value = newValue;
 			updateBindings(forceUpdates);
 		}
-	}
-
-	@Override
-	public T get() {
-		return value;
 	}
 }

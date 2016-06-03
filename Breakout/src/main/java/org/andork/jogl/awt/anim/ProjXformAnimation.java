@@ -5,32 +5,41 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.jogl.awt.anim;
 
 import java.util.function.Function;
 
-import com.jogamp.opengl.GLAutoDrawable;
-
 import org.andork.awt.anim.Animation;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.Projection;
 
-public class ProjXformAnimation implements Animation
-{
+import com.jogamp.opengl.GLAutoDrawable;
+
+public class ProjXformAnimation implements Animation {
+	JoglViewSettings viewSettings;
+
+	GLAutoDrawable drawable;
+	long elapsedTime = 0;
+
+	long totalTime;
+
+	boolean display;
+	Function<Float, Projection> function;
+
 	/**
 	 * @param setup
 	 * @param totalTime
@@ -39,8 +48,8 @@ public class ProjXformAnimation implements Animation
 	 *            the inverted view matrix as arguments, and returns the new
 	 *            inverted view matrix.
 	 */
-	public ProjXformAnimation( GLAutoDrawable drawable , JoglViewSettings viewSettings , long totalTime , boolean display , Function<Float, Projection> function )
-	{
+	public ProjXformAnimation(GLAutoDrawable drawable, JoglViewSettings viewSettings, long totalTime, boolean display,
+			Function<Float, Projection> function) {
 		this.viewSettings = viewSettings;
 		this.drawable = drawable;
 		this.totalTime = totalTime;
@@ -48,28 +57,17 @@ public class ProjXformAnimation implements Animation
 		this.function = function;
 	}
 
-	JoglViewSettings					viewSettings;
-	GLAutoDrawable				drawable;
-
-	long						elapsedTime	= 0;
-
-	long						totalTime;
-	boolean						display;
-	Function<Float, Projection>	function;
-
 	@Override
-	public long animate( long animTime )
-	{
+	public long animate(long animTime) {
 		elapsedTime += animTime;
 
-		float f = Math.min( 1f , ( float ) elapsedTime / totalTime );
+		float f = Math.min(1f, (float) elapsedTime / totalTime);
 
-		viewSettings.setProjection( function.apply( f ) );
-		if( display )
-		{
-			drawable.display( );
+		viewSettings.setProjection(function.apply(f));
+		if (display) {
+			drawable.display();
 		}
 
-		return Math.min( 30 , Math.max( 0 , totalTime - elapsedTime ) );
+		return Math.min(30, Math.max(0, totalTime - elapsedTime));
 	}
 }

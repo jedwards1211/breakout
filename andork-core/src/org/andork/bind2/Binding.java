@@ -6,7 +6,7 @@ package org.andork.bind2;
  * <br>
  * To reduce boilerplate code, implementations typically provide a {@link Link}
  * to a {@code Binder} for each input.
- * 
+ *
  * @author andy.edwards
  */
 public interface Binding {
@@ -14,7 +14,7 @@ public interface Binding {
 	 * Called by a {@link Binder} whenever its value changes, if this
 	 * {@code Binding} is bound to it. Of course, there is nothing to stop you
 	 * from calling this method yourself, and in some cases you may want to.
-	 * 
+	 *
 	 * @param force
 	 *            whether to "force" an update: this Binder should assume the
 	 *            bound values have changed, even if the values of the

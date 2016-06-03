@@ -7,8 +7,8 @@ import java.beans.PropertyChangeListener;
 import org.andork.bind2.Binder;
 
 public abstract class ComponentPropertyBinder extends Binder<Object> implements PropertyChangeListener {
-	private Component	component;
-	private String		property;
+	private Component component;
+	private String property;
 
 	public ComponentPropertyBinder() {
 	}
@@ -18,8 +18,7 @@ public abstract class ComponentPropertyBinder extends Binder<Object> implements 
 			if (this.component != null) {
 				if (this.property != null) {
 					this.component.removePropertyChangeListener(this.property, this);
-				}
-				else {
+				} else {
 					this.component.removePropertyChangeListener(this);
 				}
 			}
@@ -43,6 +42,7 @@ public abstract class ComponentPropertyBinder extends Binder<Object> implements 
 		return property;
 	}
 
+	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 		updateBindings(false);
 	}

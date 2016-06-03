@@ -5,22 +5,21 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.selector;
-
 
 /**
  * An interface for some UI element that allows the user to select a value. The
@@ -36,18 +35,20 @@ package org.andork.swing.selector;
  * {@link IPosition} constructed from those values. These two selectors are
  * combined by a {@link TandemSelector}, which keeps them in sync with each
  * other and provides a single point to listen for selection changes.
- * 
+ *
  * @author james.a.edwards
  */
 public interface ISelector<T> {
+	public void addSelectorListener(ISelectorListener<T> listener);
+
 	/**
-	 * Sets the selected position. If the new selection is different from the
-	 * current selection, the {@link ISelectorListener}s will be notified.
-	 * 
-	 * @param newSelection
-	 *            the new selection.
+	 * Gets the selected position.
+	 *
+	 * @return the selected position.
 	 */
-	public void setSelection(T newSelection);
+	public T getSelection();
+
+	public void removeSelectorListener(ISelectorListener<T> listener);
 
 	/**
 	 * Sets whether the selector component is enabled for user interaction. Even
@@ -57,13 +58,11 @@ public interface ISelector<T> {
 	public void setEnabled(boolean enabled);
 
 	/**
-	 * Gets the selected position.
-	 * 
-	 * @return the selected position.
+	 * Sets the selected position. If the new selection is different from the
+	 * current selection, the {@link ISelectorListener}s will be notified.
+	 *
+	 * @param newSelection
+	 *            the new selection.
 	 */
-	public T getSelection();
-
-	public void addSelectorListener(ISelectorListener<T> listener);
-
-	public void removeSelectorListener(ISelectorListener<T> listener);
+	public void setSelection(T newSelection);
 }

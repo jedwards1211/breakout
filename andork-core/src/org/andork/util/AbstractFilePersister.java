@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.util;
 
@@ -32,83 +32,66 @@ import org.andork.func.Bimapper;
 import org.andork.func.BimapperStreamBimapper;
 import org.andork.func.StreamBimapper;
 
-public abstract class AbstractFilePersister<M> implements HierarchicalBasicPropertyChangeListener
-{
-	protected StreamBimapper<M>	bimapper;
-	protected Batcher<M>		batcher;
-	protected File				file;
-	
-	public AbstractFilePersister( File file , Bimapper<M, String> format )
-	{
-		this( file , new BimapperStreamBimapper<M>( format ) );
+public abstract class AbstractFilePersister<M> implements HierarchicalBasicPropertyChangeListener {
+	protected StreamBimapper<M> bimapper;
+	protected Batcher<M> batcher;
+	protected File file;
+
+	public AbstractFilePersister(File file, Bimapper<M, String> format) {
+		this(file, new BimapperStreamBimapper<M>(format));
 	}
-	
-	public AbstractFilePersister( File file , StreamBimapper<M> bimapper )
-	{
+
+	public AbstractFilePersister(File file, StreamBimapper<M> bimapper) {
 		this.file = file;
 		this.bimapper = bimapper;
-		
-		batcher = new Batcher<M>( )
-		{
+
+		batcher = new Batcher<M>() {
 			@Override
-			protected void handleLater( final LinkedList<M> batch )
-			{
-				saveInBackground( batch );
+			protected void handleLater(final LinkedList<M> batch) {
+				saveInBackground(batch);
 			}
 		};
 	}
-	
-	public void saveLater( M model )
-	{
-		batcher.add( model );
+
+	@Override
+	public void childrenChanged(Object source, ChangeType changeType, Object... children) {
+		batcher.add(getRootModel(source));
 	}
-	
-	protected abstract void saveInBackground( final LinkedList<M> batch );
-	
-	protected void save( M model )
-	{
-		try
-		{
-			if( !file.getParentFile( ).exists( ) )
-			{
-				file.getParentFile( ).mkdirs( );
-			}
-			bimapper.write( model , new FileOutputStream( file ) );
+
+	private M getRootModel(Object source) {
+		if (source instanceof SourcePath) {
+			return getRootModel(((SourcePath) source).parent);
 		}
-		catch( Throwable t )
-		{
-			t.printStackTrace( );
-		}
+		return (M) source;
 	}
-	
-	public M load( ) throws Exception
-	{
-		if( !file.exists( ) )
-		{
+
+	public M load() throws Exception {
+		if (!file.exists()) {
 			return null;
 		}
-		return bimapper.read( new FileInputStream( file ) );
+		return bimapper.read(new FileInputStream(file));
 	}
-	
-	private M getRootModel( Object source )
-	{
-		if( source instanceof SourcePath )
-		{
-			return getRootModel( ( M ) ( ( SourcePath ) source ).parent );
+
+	@Override
+	public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
+		batcher.add(getRootModel(source));
+	}
+
+	protected void save(M model) {
+		try {
+			if (!file.getParentFile().exists()) {
+				file.getParentFile().mkdirs();
+			}
+			bimapper.write(model, new FileOutputStream(file));
+		} catch (Throwable t) {
+			t.printStackTrace();
 		}
-		return ( M ) source;
 	}
-	
-	@Override
-	public void propertyChange( Object source , Object property , Object oldValue , Object newValue , int index )
-	{
-		batcher.add( getRootModel( source ) );
+
+	protected abstract void saveInBackground(final LinkedList<M> batch);
+
+	public void saveLater(M model) {
+		batcher.add(model);
 	}
-	
-	@Override
-	public void childrenChanged( Object source , ChangeType changeType , Object ... children )
-	{
-		batcher.add( getRootModel( source ) );
-	}
-	
+
 }

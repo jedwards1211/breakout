@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.ui.debug;
 
@@ -43,31 +43,58 @@ import org.andork.util.ArrayUtils;
 
 @SuppressWarnings("serial")
 public class ComponentTree extends JTree {
-	private AWTEventHandler	awtEventHandler				= new AWTEventHandler();
-	private boolean			awtEventHandlerRegistered	= false;
-
-	public ComponentTree() {
-		super(new DefaultTreeModel(null));
-		addTreeExpansionListener(new ExpansionHandler());
-	}
-
-	public void setAWTEventHandlerRegistered(boolean registered) {
-		if (registered && !awtEventHandlerRegistered) {
-			awtEventHandlerRegistered = true;
-			Toolkit.getDefaultToolkit().addAWTEventListener(awtEventHandler, AWTEvent.CONTAINER_EVENT_MASK);
-		} else if (!registered && awtEventHandlerRegistered) {
-			awtEventHandlerRegistered = false;
-			Toolkit.getDefaultToolkit().removeAWTEventListener(awtEventHandler);
+	private class AWTEventHandler implements AWTEventListener {
+		@Override
+		public void eventDispatched(AWTEvent event) {
+			if (event instanceof ContainerEvent) {
+				ContainerEvent ce = (ContainerEvent) event;
+				DefaultMutableTreeNode contNode = getNode(ce.getContainer());
+				if (contNode != null) {
+					if (event.getID() == ContainerEvent.COMPONENT_ADDED) {
+						DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) contNode.getParent();
+						if (contNode == getRoot() || isExpanded(new TreePath(parentNode.getPath()))) {
+							int childIndex = ArrayUtils.strictIndexOf(ce.getContainer().getComponents(), ce.getChild());
+							DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(ce.getChild());
+							if (isExpanded(new TreePath(contNode.getPath()))) {
+								updateChildren(childNode);
+							}
+							contNode.insert(childNode, childIndex);
+						}
+					} else if (event.getID() == ContainerEvent.COMPONENT_REMOVED) {
+						int childIndex = childIndex(contNode, ce.getChild());
+						if (childIndex >= 0) {
+							contNode.remove(childIndex);
+						}
+					}
+				}
+			}
 		}
 	}
 
-	private static DefaultMutableTreeNode getNode(TreePath path) {
-		return (DefaultMutableTreeNode) path.getLastPathComponent();
+	private class ExpansionHandler implements TreeExpansionListener {
+		@Override
+		public void treeCollapsed(TreeExpansionEvent event) {
+
+		}
+
+		@Override
+		public void treeExpanded(TreeExpansionEvent event) {
+			DefaultMutableTreeNode node = getNode(event);
+			for (int i = 0; i < node.getChildCount(); i++) {
+				DefaultMutableTreeNode child = (DefaultMutableTreeNode) node.getChildAt(i);
+				Component childComp = (Component) child.getUserObject();
+				if (childComp instanceof Container) {
+					Container childCont = (Container) childComp;
+					setChildren(child, childCont.getComponents());
+				}
+			}
+		}
 	}
 
-	private static DefaultMutableTreeNode getNode(TreeExpansionEvent event) {
-		return getNode(event.getPath());
-	}
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 8961491609539291891L;
 
 	private static int childIndex(DefaultMutableTreeNode node, Object childUserObject) {
 		for (int i = 0; i < node.getChildCount(); i++) {
@@ -82,6 +109,26 @@ public class ComponentTree extends JTree {
 	private static DefaultMutableTreeNode childNode(DefaultMutableTreeNode node, Object childUserObject) {
 		int childIndex = childIndex(node, childUserObject);
 		return childIndex < 0 ? null : (DefaultMutableTreeNode) node.getChildAt(childIndex);
+	}
+
+	private static DefaultMutableTreeNode getNode(TreeExpansionEvent event) {
+		return getNode(event.getPath());
+	}
+
+	private static DefaultMutableTreeNode getNode(TreePath path) {
+		return (DefaultMutableTreeNode) path.getLastPathComponent();
+	}
+
+	private static List<Component> getPath(Component c) {
+		List<Component> result = new ArrayList<Component>();
+		while (c != null) {
+			result.add(0, c);
+			if (c instanceof Window) {
+				break;
+			}
+			c = c.getParent();
+		}
+		return result;
 	}
 
 	private static void setChildren(DefaultMutableTreeNode node, Component[] children) {
@@ -105,50 +152,13 @@ public class ComponentTree extends JTree {
 		}
 	}
 
-	private static List<Component> getPath(Component c) {
-		List<Component> result = new ArrayList<Component>();
-		while (c != null) {
-			result.add(0, c);
-			if (c instanceof Window) {
-				break;
-			}
-			c = c.getParent();
-		}
-		return result;
-	}
+	private AWTEventHandler awtEventHandler = new AWTEventHandler();
 
-	public void setRootComponent(Component rootComp) {
-		Object rootUserObject = getRoot() == null ? null : getRoot().getUserObject();
-		if (rootComp != rootUserObject) {
-			DefaultTreeModel model = (DefaultTreeModel) getModel();
-			if (rootComp == null) {
-				model.setRoot(null);
-			} else {
-				DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(rootComp);
-				updateChildren(rootNode);
-				for (int i = 0; i < rootNode.getChildCount(); i++) {
-					updateChildren((DefaultMutableTreeNode) rootNode.getChildAt(i));
-				}
-				model.setRoot(rootNode);
-			}
-		}
-	}
+	private boolean awtEventHandlerRegistered = false;
 
-	public DefaultMutableTreeNode getRoot() {
-		return (DefaultMutableTreeNode) getModel().getRoot();
-	}
-
-	public DefaultMutableTreeNode getNode(Component c) {
-		List<Component> path = getPath(c);
-		DefaultMutableTreeNode node = getRoot();
-		if (node == null || node.getUserObject() != path.get(0)) {
-			return null;
-		}
-		for (int i = 1; i < path.size() && node != null; i++) {
-			Component child = path.get(i);
-			node = childNode(node, child);
-		}
-		return node;
+	public ComponentTree() {
+		super(new DefaultTreeModel(null));
+		addTreeExpansionListener(new ExpansionHandler());
 	}
 
 	public void focus(Component c) {
@@ -176,47 +186,46 @@ public class ComponentTree extends JTree {
 		}
 	}
 
-	private class ExpansionHandler implements TreeExpansionListener {
-		public void treeExpanded(TreeExpansionEvent event) {
-			DefaultMutableTreeNode node = getNode(event);
-			for (int i = 0; i < node.getChildCount(); i++) {
-				DefaultMutableTreeNode child = (DefaultMutableTreeNode) node.getChildAt(i);
-				Component childComp = (Component) child.getUserObject();
-				if (childComp instanceof Container) {
-					Container childCont = (Container) childComp;
-					setChildren(child, childCont.getComponents());
-				}
-			}
+	public DefaultMutableTreeNode getNode(Component c) {
+		List<Component> path = getPath(c);
+		DefaultMutableTreeNode node = getRoot();
+		if (node == null || node.getUserObject() != path.get(0)) {
+			return null;
 		}
+		for (int i = 1; i < path.size() && node != null; i++) {
+			Component child = path.get(i);
+			node = childNode(node, child);
+		}
+		return node;
+	}
 
-		public void treeCollapsed(TreeExpansionEvent event) {
+	public DefaultMutableTreeNode getRoot() {
+		return (DefaultMutableTreeNode) getModel().getRoot();
+	}
 
+	public void setAWTEventHandlerRegistered(boolean registered) {
+		if (registered && !awtEventHandlerRegistered) {
+			awtEventHandlerRegistered = true;
+			Toolkit.getDefaultToolkit().addAWTEventListener(awtEventHandler, AWTEvent.CONTAINER_EVENT_MASK);
+		} else if (!registered && awtEventHandlerRegistered) {
+			awtEventHandlerRegistered = false;
+			Toolkit.getDefaultToolkit().removeAWTEventListener(awtEventHandler);
 		}
 	}
 
-	private class AWTEventHandler implements AWTEventListener {
-		public void eventDispatched(AWTEvent event) {
-			if (event instanceof ContainerEvent) {
-				ContainerEvent ce = (ContainerEvent) event;
-				DefaultMutableTreeNode contNode = getNode(ce.getContainer());
-				if (contNode != null) {
-					if (event.getID() == ContainerEvent.COMPONENT_ADDED) {
-						DefaultMutableTreeNode parentNode = (DefaultMutableTreeNode) contNode.getParent();
-						if (contNode == getRoot() || isExpanded(new TreePath(parentNode.getPath()))) {
-							int childIndex = ArrayUtils.strictIndexOf(ce.getContainer().getComponents(), ce.getChild());
-							DefaultMutableTreeNode childNode = new DefaultMutableTreeNode(ce.getChild());
-							if (isExpanded(new TreePath(contNode.getPath()))) {
-								updateChildren(childNode);
-							}
-							contNode.insert(childNode, childIndex);
-						}
-					} else if (event.getID() == ContainerEvent.COMPONENT_REMOVED) {
-						int childIndex = childIndex(contNode, ce.getChild());
-						if (childIndex >= 0) {
-							contNode.remove(childIndex);
-						}
-					}
+	public void setRootComponent(Component rootComp) {
+		Object rootUserObject = getRoot() == null ? null : getRoot().getUserObject();
+		if (rootComp != rootUserObject) {
+			DefaultTreeModel model = (DefaultTreeModel) getModel();
+			if (rootComp == null) {
+				model.setRoot(null);
+			} else {
+				DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(rootComp);
+				updateChildren(rootNode);
+				for (int i = 0; i < rootNode.getChildCount(); i++) {
+					updateChildren((DefaultMutableTreeNode) rootNode.getChildAt(i));
 				}
+				model.setRoot(rootNode);
 			}
 		}
 	}

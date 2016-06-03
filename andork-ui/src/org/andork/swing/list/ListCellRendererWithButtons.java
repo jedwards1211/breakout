@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.list;
 
@@ -34,10 +34,16 @@ import javax.swing.SwingUtilities;
 import org.andork.swing.CellRendererWithButtons;
 
 @SuppressWarnings("serial")
-public abstract class ListCellRendererWithButtons extends CellRendererWithButtons implements ListCellRendererTracker, ListCellRenderer {
-	protected ListCellRenderer	wrapped;
+public abstract class ListCellRendererWithButtons extends CellRendererWithButtons
+		implements ListCellRendererTracker, ListCellRenderer {
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = -7231795690983332168L;
 
-	protected int				rendererIndex;
+	protected ListCellRenderer wrapped;
+
+	protected int rendererIndex;
 
 	protected ListCellRendererWithButtons(ListCellRenderer wrapped) {
 		super();
@@ -46,22 +52,6 @@ public abstract class ListCellRendererWithButtons extends CellRendererWithButton
 	}
 
 	@Override
-	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-		rendererIndex = index;
-		setContent(wrapped.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
-		return this;
-	}
-
-	@Override
-	public int getRendererIndex() {
-		return rendererIndex;
-	}
-
-	@Override
-	protected Dimension getSizeForLayout(AbstractButton button) {
-		return button.getPreferredSize();
-	}
-
 	public void doLayout() {
 		JList list = (JList) SwingUtilities.getAncestorOfClass(JList.class, this);
 		if (list != null) {
@@ -86,5 +76,23 @@ public abstract class ListCellRendererWithButtons extends CellRendererWithButton
 				content.setBounds(contentArea);
 			}
 		}
+	}
+
+	@Override
+	public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
+			boolean cellHasFocus) {
+		rendererIndex = index;
+		setContent(wrapped.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
+		return this;
+	}
+
+	@Override
+	public int getRendererIndex() {
+		return rendererIndex;
+	}
+
+	@Override
+	protected Dimension getSizeForLayout(AbstractButton button) {
+		return button.getPreferredSize();
 	}
 }

@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.border;
 
@@ -40,12 +40,24 @@ import org.andork.awt.layout.RectangleUtils;
 import org.andork.awt.layout.Side;
 
 public class InnerGradientBorder implements Border {
-	Insets	insets;
-	Color	outerColor;
-	Color	innerColor;
+	private static Point2D.Float Point2D(Point p) {
+		return new Point2D.Float(p.x, p.y);
+	}
 
-	int[]	xpoints	= new int[4];
-	int[]	ypoints	= new int[4];
+	Insets insets;
+	Color outerColor;
+
+	Color innerColor;
+	int[] xpoints = new int[4];
+
+	int[] ypoints = new int[4];
+
+	public InnerGradientBorder(Insets insets, Color outerColor) {
+		super();
+		this.insets = insets;
+		this.outerColor = outerColor;
+		innerColor = ColorUtils.alphaColor(outerColor, 0);
+	}
 
 	public InnerGradientBorder(Insets insets, Color outerColor, Color innerColor) {
 		super();
@@ -54,11 +66,14 @@ public class InnerGradientBorder implements Border {
 		this.innerColor = innerColor;
 	}
 
-	public InnerGradientBorder(Insets insets, Color outerColor) {
-		super();
-		this.insets = insets;
-		this.outerColor = outerColor;
-		innerColor = ColorUtils.alphaColor(outerColor, 0);
+	@Override
+	public Insets getBorderInsets(Component c) {
+		return (Insets) insets.clone();
+	}
+
+	@Override
+	public boolean isBorderOpaque() {
+		return false;
 	}
 
 	@Override
@@ -106,19 +121,5 @@ public class InnerGradientBorder implements Border {
 		}
 
 		g2.setPaint(prevPaint);
-	}
-
-	private static Point2D.Float Point2D(Point p) {
-		return new Point2D.Float(p.x, p.y);
-	}
-
-	@Override
-	public Insets getBorderInsets(Component c) {
-		return (Insets) insets.clone();
-	}
-
-	@Override
-	public boolean isBorderOpaque() {
-		return false;
 	}
 }

@@ -5,22 +5,18 @@ import java.util.Map;
 
 import org.andork.q2.QSpec.Property;
 
-public class QHashMapObject<S extends QSpec> extends QMapObject<S>
-{
+public class QHashMapObject<S extends QSpec> extends QMapObject<S> {
 
-	public QHashMapObject( S spec )
-	{
-		super( spec );
+	public static <S extends QSpec> QHashMapObject<S> create(S spec) {
+		return new QHashMapObject<S>(spec);
 	}
 
-	public static <S extends QSpec> QHashMapObject<S> create( S spec )
-	{
-		return new QHashMapObject<S>( spec );
+	public QHashMapObject(S spec) {
+		super(spec);
 	}
 
 	@Override
-	protected Map<Property<?>, Object> createValuesMap( )
-	{
-		return new HashMap<>( );
+	protected Map<Property<?>, Object> createValuesMap() {
+		return new HashMap<>();
 	}
 }

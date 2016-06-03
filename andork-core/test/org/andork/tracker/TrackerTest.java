@@ -11,7 +11,7 @@ public class TrackerTest {
 	public void test1() throws Exception {
 		Dependency dep1 = new Dependency();
 		Dependency dep2 = new Dependency();
-		
+
 		IntHolder callCount = new IntHolder(0);
 
 		SwingUtilities.invokeAndWait(() -> {
@@ -26,7 +26,6 @@ public class TrackerTest {
 			dep1.changed();
 			dep2.changed();
 		});
-		
 
 		SwingUtilities.invokeAndWait(() -> {
 			Assert.assertEquals(2, callCount.value);

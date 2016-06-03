@@ -6,14 +6,15 @@ import org.andork.bind2.Binding;
 import org.andork.bind2.Link;
 
 public class JTableSelectedRowBinding implements Binding {
-	public final Link<Integer>	rowLink	= new Link<Integer>(this);
-	public final JTable			table;
+	public final Link<Integer> rowLink = new Link<Integer>(this);
+	public final JTable table;
 
 	public JTableSelectedRowBinding(JTable table) {
 		super();
 		this.table = table;
 	}
 
+	@Override
 	public void update(boolean force) {
 		Integer row = rowLink.get();
 		if (row == null || row < 0) {

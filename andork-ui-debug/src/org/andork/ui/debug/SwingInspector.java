@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.ui.debug;
 
@@ -35,6 +35,7 @@ import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.AWTEventListener;
 import java.awt.event.ContainerEvent;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
@@ -53,6 +54,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
@@ -66,37 +68,154 @@ import javax.swing.tree.TreeSelectionModel;
  * Alt and displays its component hierarchy (path to root ancestor) in a list.
  * The selected component in the list is highlighted by setting its border.<br>
  * <br>
- * 
+ *
  * SwingInspector works by listening to all AWT Mouse events with an
  * {@link AWTEventListener}.
- * 
+ *
  * @author james.a.edwards
  */
 public class SwingInspector extends JFrame {
+	private class EventHandler implements AWTEventListener {
+		@Override
+		public void eventDispatched(AWTEvent event) {
+			if (event instanceof MouseEvent) {
+				MouseEvent me = (MouseEvent) event;
+				if ((me.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0) {
+					Component deepest = SwingUtilities.getDeepestComponentAt(
+							me.getComponent(), me.getX(), me.getY());
+					setDisplayedComponent(deepest);
+				}
+			} else if (event instanceof ContainerEvent) {
+				ContainerEvent ce = (ContainerEvent) event;
+				if (ce.getID() == ContainerEvent.COMPONENT_ADDED) {
+					stackTraces.put(ce.getChild(), new RuntimeException().getStackTrace());
+				} else if (ce.getID() == ContainerEvent.COMPONENT_REMOVED) {
+					stackTraces.remove(ce.getChild());
+				}
+			} else if (event instanceof KeyEvent) {
+				KeyEvent ke = (KeyEvent) event;
+				if (ke.getKeyCode() == KeyEvent.VK_D && (ke.getModifiersEx()
+						& (InputEvent.CTRL_DOWN_MASK | InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK)) != 0) {
+					Window window = SwingUtilities.getWindowAncestor(ke.getComponent());
+					if (window instanceof JDialog) {
+						JDialog dialog = (JDialog) window;
+						dialog.setModal(false);
+						dialog.setVisible(false);
+						dialog.setVisible(true);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * A border with a red outline and semitransparent fill to show which
+	 * component is selected in the hierarchy list. Keeps a reference to the
+	 * component's original border and draws it beneath the highlight,
+	 * preserving the insets.
+	 *
+	 * @author james.a.edwards
+	 */
+	private class HighlightBorder implements Border {
+		Border inner = null;
+
+		public HighlightBorder(Border inner) {
+			this.inner = inner;
+		}
+
+		@Override
+		public Insets getBorderInsets(Component c) {
+			return inner == null ? new Insets(0, 0, 0, 0) : inner
+					.getBorderInsets(c);
+		}
+
+		@Override
+		public boolean isBorderOpaque() {
+			return inner == null ? false : inner.isBorderOpaque();
+		}
+
+		@Override
+		public void paintBorder(Component c, Graphics g, int x, int y,
+				int width, int height) {
+			Graphics2D g2 = (Graphics2D) g;
+			Paint prevPaint = g2.getPaint();
+			g2.setColor(new Color(255, 0, 0, 128));
+			g2.fillRect(x, y, width - 1, height - 1);
+			g2.setColor(Color.RED);
+			g2.drawRect(x, y, width - 1, height - 1);
+			g2.setPaint(prevPaint);
+			if (inner != null) {
+				inner.paintBorder(c, g2, x, y, width, height);
+			}
+		}
+	}
+
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 2594539320189073849L;
+	private ComponentTree componentTree;
+
+	private JScrollPane componentTreeScroller;
+	private JTextArea stackTraceArea;
+	private JScrollPane stackTraceAreaScroller;
+	private Component displayedComponent;
+
+	private Component highlightedComponent;
+	private JTable attributesTable;
+	private DefaultTableModel attributesTableModel;
+
+	private JScrollPane attributesTableScroller;
+	private JSplitPane topSplitPane;
+
+	private JSplitPane mainSplitPane;
+	private EventHandler eventHandler;
+
+	private boolean listening = false;
+
+	private Map<Component, StackTraceElement[]> stackTraces = new HashMap<Component, StackTraceElement[]>();
+
 	public SwingInspector() {
 		super("Swing Inspector (Ctrl + Alt + Shift + S)");
 		init();
 	}
 
-	private ComponentTree						componentTree;
-	private JScrollPane							componentTreeScroller;
+	private int getAttrEnd(String attrStr, Matcher m, int start) {
+		int level = 0;
+		int i = start;
+		do {
+			int nextOpen = attrStr.indexOf('[', i);
+			int nextClose = attrStr.indexOf(']', i);
+			int nextAttr = -1;
+			if (m.find(i)) {
+				nextAttr = m.start();
+			}
 
-	private JTextArea							stackTraceArea;
-	private JScrollPane							stackTraceAreaScroller;
-	private Component							displayedComponent;
-	private Component							highlightedComponent;
+			if (nextOpen < 0) {
+				nextOpen = attrStr.length();
+			}
+			if (nextClose < 0) {
+				nextClose = attrStr.length();
+			}
+			if (nextAttr < 0 || level > 0) {
+				nextAttr = attrStr.length();
+			}
 
-	private JTable								attributesTable;
-	private DefaultTableModel					attributesTableModel;
-	private JScrollPane							attributesTableScroller;
+			if (nextOpen < nextClose && nextOpen < nextAttr) {
+				level++;
+				i = nextOpen + 1;
+			} else if (nextClose < nextOpen && nextClose < nextAttr) {
+				level--;
+				i = nextClose + 1;
+			} else {
+				level = 0;
+				i = nextAttr;
+			}
 
-	private JSplitPane							topSplitPane;
-	private JSplitPane							mainSplitPane;
+		} while (level > 0);
 
-	private EventHandler						eventHandler;
-	private boolean								listening	= false;
-
-	private Map<Component, StackTraceElement[]>	stackTraces	= new HashMap<Component, StackTraceElement[]>();
+		return Math.min(attrStr.length() - 1, i);
+	}
 
 	private void init() {
 		componentTree = new ComponentTree();
@@ -105,6 +224,7 @@ public class SwingInspector extends JFrame {
 		componentTreeScroller = new JScrollPane(componentTree);
 
 		componentTree.addTreeSelectionListener(new TreeSelectionListener() {
+			@Override
 			public void valueChanged(TreeSelectionEvent e) {
 				TreePath newPath = e.getNewLeadSelectionPath();
 				if (newPath == null) {
@@ -175,14 +295,28 @@ public class SwingInspector extends JFrame {
 		topSplitPane.setDividerLocation(getWidth() / 2);
 
 		setLocationRelativeTo(null);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+	}
+
+	/**
+	 * Sets the component whose path to root is displayed in the list, and
+	 * selects that component (which will be last) in the list.
+	 *
+	 * @param comp
+	 *            the new component to show.
+	 */
+	public void setDisplayedComponent(final Component comp) {
+		if (displayedComponent != comp) {
+			displayedComponent = comp;
+			componentTree.focus(comp);
+		}
 	}
 
 	/**
 	 * Sets the highlighted component. The highlight border will be removed from
 	 * the old highlighted component, and a highlight border will be added to
 	 * the new one.
-	 * 
+	 *
 	 * @param selectedValue
 	 */
 	private void setHighlightedComponent(Component selectedValue) {
@@ -224,6 +358,7 @@ public class SwingInspector extends JFrame {
 
 				stackTraceArea.setText(sb.toString());
 				SwingUtilities.invokeLater(new Runnable() {
+					@Override
 					public void run() {
 						stackTraceAreaScroller.getVerticalScrollBar().setValue(0);
 					}
@@ -268,127 +403,6 @@ public class SwingInspector extends JFrame {
 					attributesTableModel.addRow(new Object[] { attr, attrMap.get(attr) });
 				}
 			}
-		}
-	}
-
-	private int getAttrEnd(String attrStr, Matcher m, int start) {
-		int level = 0;
-		int i = start;
-		do {
-			int nextOpen = attrStr.indexOf('[', i);
-			int nextClose = attrStr.indexOf(']', i);
-			int nextAttr = -1;
-			if (m.find(i)) {
-				nextAttr = m.start();
-			}
-
-			if (nextOpen < 0) {
-				nextOpen = attrStr.length();
-			}
-			if (nextClose < 0) {
-				nextClose = attrStr.length();
-			}
-			if (nextAttr < 0 || level > 0) {
-				nextAttr = attrStr.length();
-			}
-
-			if (nextOpen < nextClose && nextOpen < nextAttr) {
-				level++;
-				i = nextOpen + 1;
-			} else if (nextClose < nextOpen && nextClose < nextAttr) {
-				level--;
-				i = nextClose + 1;
-			} else {
-				level = 0;
-				i = nextAttr;
-			}
-
-		} while (level > 0);
-
-		return Math.min(attrStr.length() - 1, i);
-	}
-
-	/**
-	 * Sets the component whose path to root is displayed in the list, and
-	 * selects that component (which will be last) in the list.
-	 * 
-	 * @param comp
-	 *            the new component to show.
-	 */
-	public void setDisplayedComponent(final Component comp) {
-		if (displayedComponent != comp) {
-			displayedComponent = comp;
-			componentTree.focus(comp);
-		}
-	}
-
-	private class EventHandler implements AWTEventListener {
-		public void eventDispatched(AWTEvent event) {
-			if (event instanceof MouseEvent) {
-				MouseEvent me = (MouseEvent) event;
-				if ((me.getModifiersEx() & MouseEvent.ALT_DOWN_MASK) != 0) {
-					Component deepest = SwingUtilities.getDeepestComponentAt(
-							me.getComponent(), me.getX(), me.getY());
-					setDisplayedComponent(deepest);
-				}
-			} else if (event instanceof ContainerEvent) {
-				ContainerEvent ce = (ContainerEvent) event;
-				if (ce.getID() == ContainerEvent.COMPONENT_ADDED) {
-					stackTraces.put(ce.getChild(), new RuntimeException().getStackTrace());
-				} else if (ce.getID() == ContainerEvent.COMPONENT_REMOVED) {
-					stackTraces.remove(ce.getChild());
-				}
-			} else if (event instanceof KeyEvent) {
-				KeyEvent ke = (KeyEvent) event;
-				if (ke.getKeyCode() == KeyEvent.VK_D && (ke.getModifiersEx() & (MouseEvent.CTRL_DOWN_MASK | MouseEvent.ALT_DOWN_MASK | MouseEvent.SHIFT_DOWN_MASK)) != 0) {
-					Window window = SwingUtilities.getWindowAncestor(ke.getComponent());
-					if (window instanceof JDialog) {
-						JDialog dialog = (JDialog) window;
-						dialog.setModal(false);
-						dialog.setVisible(false);
-						dialog.setVisible(true);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * A border with a red outline and semitransparent fill to show which
-	 * component is selected in the hierarchy list. Keeps a reference to the
-	 * component's original border and draws it beneath the highlight,
-	 * preserving the insets.
-	 * 
-	 * @author james.a.edwards
-	 */
-	private class HighlightBorder implements Border {
-		public HighlightBorder(Border inner) {
-			this.inner = inner;
-		}
-
-		Border	inner	= null;
-
-		public void paintBorder(Component c, Graphics g, int x, int y,
-				int width, int height) {
-			Graphics2D g2 = (Graphics2D) g;
-			Paint prevPaint = g2.getPaint();
-			g2.setColor(new Color(255, 0, 0, 128));
-			g2.fillRect(x, y, width - 1, height - 1);
-			g2.setColor(Color.RED);
-			g2.drawRect(x, y, width - 1, height - 1);
-			g2.setPaint(prevPaint);
-			if (inner != null) {
-				inner.paintBorder(c, g2, x, y, width, height);
-			}
-		}
-
-		public Insets getBorderInsets(Component c) {
-			return inner == null ? new Insets(0, 0, 0, 0) : inner
-					.getBorderInsets(c);
-		}
-
-		public boolean isBorderOpaque() {
-			return inner == null ? false : inner.isBorderOpaque();
 		}
 	}
 }

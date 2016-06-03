@@ -9,68 +9,58 @@ import javax.swing.JTable;
 import javax.swing.event.CellEditorListener;
 import javax.swing.table.TableCellEditor;
 
-public class FunctionCellEditor implements CellEditor , TableCellEditor
-{
-	CellEditor	wrapped;
+public class FunctionCellEditor implements CellEditor, TableCellEditor {
+	CellEditor wrapped;
 
-	Function	valueToEditor;
-	Function	editorToValue;
+	Function valueToEditor;
+	Function editorToValue;
 
-	public FunctionCellEditor( CellEditor wrapped , Function valueToEditor , Function editorToValue )
-	{
-		super( );
+	public FunctionCellEditor(CellEditor wrapped, Function valueToEditor, Function editorToValue) {
+		super();
 		this.wrapped = wrapped;
 		this.valueToEditor = valueToEditor;
 		this.editorToValue = editorToValue;
 	}
 
 	@Override
-	public Component getTableCellEditorComponent( JTable table , Object value , boolean isSelected , int row ,
-		int column )
-	{
-		return ( ( TableCellEditor ) wrapped ).getTableCellEditorComponent( table , valueToEditor.apply( value ) ,
-			isSelected , row , column );
+	public void addCellEditorListener(CellEditorListener l) {
+		wrapped.addCellEditorListener(l);
 	}
 
 	@Override
-	public Object getCellEditorValue( )
-	{
-		return editorToValue.apply( wrapped.getCellEditorValue( ) );
+	public void cancelCellEditing() {
+		wrapped.cancelCellEditing();
 	}
 
 	@Override
-	public boolean isCellEditable( EventObject anEvent )
-	{
-		return wrapped.isCellEditable( anEvent );
+	public Object getCellEditorValue() {
+		return editorToValue.apply(wrapped.getCellEditorValue());
 	}
 
 	@Override
-	public boolean shouldSelectCell( EventObject anEvent )
-	{
-		return wrapped.shouldSelectCell( anEvent );
+	public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row,
+			int column) {
+		return ((TableCellEditor) wrapped).getTableCellEditorComponent(table, valueToEditor.apply(value),
+				isSelected, row, column);
 	}
 
 	@Override
-	public boolean stopCellEditing( )
-	{
-		return wrapped.stopCellEditing( );
+	public boolean isCellEditable(EventObject anEvent) {
+		return wrapped.isCellEditable(anEvent);
 	}
 
 	@Override
-	public void cancelCellEditing( )
-	{
-		wrapped.cancelCellEditing( );
+	public void removeCellEditorListener(CellEditorListener l) {
+		wrapped.removeCellEditorListener(l);
 	}
 
 	@Override
-	public void addCellEditorListener( CellEditorListener l )
-	{
-		wrapped.addCellEditorListener( l );
+	public boolean shouldSelectCell(EventObject anEvent) {
+		return wrapped.shouldSelectCell(anEvent);
 	}
 
 	@Override
-	public void removeCellEditorListener( CellEditorListener l )
-	{
-		wrapped.removeCellEditorListener( l );
+	public boolean stopCellEditing() {
+		return wrapped.stopCellEditing();
 	}
 }

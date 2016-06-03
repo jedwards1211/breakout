@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.text;
 
@@ -33,14 +33,57 @@ import org.andork.format.Format;
 import org.andork.swing.event.EasyDocumentListener;
 
 public class SimpleFormatter {
-	JTextComponent	textComp;
-	Format			format;
+	private class ChangeHandler extends EasyDocumentListener implements PropertyChangeListener, FocusListener {
+		boolean updating = false;
 
-	ChangeHandler	changeHandler	= new ChangeHandler();
+		@Override
+		public void documentChanged(DocumentEvent e) {
+			if (!updating && e.getDocument() == textComp.getDocument()) {
+				try {
+					commitEdit();
+				} catch (Exception e1) {
+				}
+			}
+		}
+
+		@Override
+		public void focusGained(FocusEvent e) {
+
+		}
+
+		@Override
+		public void focusLost(FocusEvent e) {
+			if (e.getSource() == textComp) {
+				valueToText();
+			}
+		}
+
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			if (!updating && evt.getSource() == textComp && "value".equals(evt.getPropertyName())) {
+				valueToText();
+			}
+		}
+	}
+
+	JTextComponent textComp;
+
+	Format format;
+
+	ChangeHandler changeHandler = new ChangeHandler();
 
 	public SimpleFormatter(Format format) {
 		super();
 		this.format = format;
+	}
+
+	public void commitEdit() throws Exception {
+		changeHandler.updating = true;
+		try {
+			textComp.putClientProperty("value", format.parse(textComp.getText()));
+		} finally {
+			changeHandler.updating = false;
+		}
 	}
 
 	public void install(JTextComponent textComp) {
@@ -71,43 +114,5 @@ public class SimpleFormatter {
 			changeHandler.updating = false;
 		}
 
-	}
-
-	public void commitEdit() throws Exception {
-		changeHandler.updating = true;
-		try {
-			textComp.putClientProperty("value", format.parse(textComp.getText()));
-		} finally {
-			changeHandler.updating = false;
-		}
-	}
-
-	private class ChangeHandler extends EasyDocumentListener implements PropertyChangeListener, FocusListener {
-		boolean	updating	= false;
-
-		public void propertyChange(PropertyChangeEvent evt) {
-			if (!updating && evt.getSource() == textComp && "value".equals(evt.getPropertyName())) {
-				valueToText();
-			}
-		}
-
-		@Override
-		public void documentChanged(DocumentEvent e) {
-			if (!updating && e.getDocument() == textComp.getDocument()) {
-				try {
-					commitEdit();
-				} catch (Exception e1) {}
-			}
-		}
-
-		public void focusGained(FocusEvent e) {
-
-		}
-
-		public void focusLost(FocusEvent e) {
-			if (e.getSource() == textComp) {
-				valueToText();
-			}
-		}
 	}
 }

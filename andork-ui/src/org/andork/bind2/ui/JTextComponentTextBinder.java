@@ -11,8 +11,8 @@ import javax.swing.text.JTextComponent;
 import org.andork.bind2.Binder;
 
 public class JTextComponentTextBinder extends Binder<String> implements PropertyChangeListener, DocumentListener {
-	JTextComponent	component;
-	Document		document;
+	JTextComponent component;
+	Document document;
 
 	public JTextComponentTextBinder(JTextComponent component) {
 		this.component = component;
@@ -21,24 +21,28 @@ public class JTextComponentTextBinder extends Binder<String> implements Property
 	}
 
 	@Override
-	public String get() {
-		return component.getText();
-	}
-
-	public void insertUpdate(DocumentEvent e) {
-		updateBindings(false);
-	}
-
-	public void removeUpdate(DocumentEvent e) {
-		updateBindings(false);
-	}
-
 	public void changedUpdate(DocumentEvent e) {
 		updateBindings(false);
 	}
 
+	@Override
+	public String get() {
+		return component.getText();
+	}
+
+	@Override
+	public void insertUpdate(DocumentEvent e) {
+		updateBindings(false);
+	}
+
+	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
 		setDocument(component.getDocument());
+	}
+
+	@Override
+	public void removeUpdate(DocumentEvent e) {
+		updateBindings(false);
 	}
 
 	private void setDocument(Document newDocument) {

@@ -5,22 +5,23 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.table.old;
 
+import java.awt.Adjustable;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -42,28 +43,14 @@ import org.andork.swing.table.old.FilteringTableModel.HighlightingFilterResult;
 
 @SuppressWarnings("serial")
 public class HighlightingTableScroller extends JScrollPane {
-	private HighlightingTable	table;
-	private FilteringTableModel	filteringModel;
-	private RepaintHandler		repaintHandler;
-
-	public HighlightingTableScroller(HighlightingTable table) {
-		super(table);
-		this.table = table;
-		repaintHandler = new RepaintHandler();
-		repaintHandler.setModel(table.getModel());
-		repaintHandler.setSelectionModel(table.getSelectionModel());
-		table.addPropertyChangeListener("model", repaintHandler);
-		table.addPropertyChangeListener("selectionModel", repaintHandler);
-	}
-
-	@Override
-	public JScrollBar createVerticalScrollBar() {
-		return new HighlightingScrollbar();
-	}
-
 	protected class HighlightingScrollbar extends ScrollBar {
+		/**
+		 *
+		 */
+		private static final long serialVersionUID = -337180854527625492L;
+
 		public HighlightingScrollbar() {
-			super(JScrollBar.VERTICAL);
+			super(Adjustable.VERTICAL);
 		}
 
 		private Color getDarkerColor(Color c, float darkness, int alpha) {
@@ -136,8 +123,17 @@ public class HighlightingTableScroller extends JScrollPane {
 	}
 
 	private class RepaintHandler implements PropertyChangeListener, TableModelListener, ListSelectionListener {
-		private TableModel			model;
-		private ListSelectionModel	selectionModel;
+		private TableModel model;
+		private ListSelectionModel selectionModel;
+
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			if ("model".equals(evt.getPropertyName())) {
+				setModel((TableModel) evt.getNewValue());
+			} else if ("selectionModel".equals(evt.getPropertyName())) {
+				setSelectionModel((ListSelectionModel) evt.getNewValue());
+			}
+		}
 
 		public void setModel(TableModel model) {
 			if (this.model != model) {
@@ -168,24 +164,40 @@ public class HighlightingTableScroller extends JScrollPane {
 		}
 
 		@Override
-		public void valueChanged(ListSelectionEvent e) {
-			if (!e.getValueIsAdjusting()) {
-				getVerticalScrollBar().repaint();
-			}
-		}
-
-		@Override
 		public void tableChanged(TableModelEvent e) {
 			getVerticalScrollBar().repaint();
 		}
 
 		@Override
-		public void propertyChange(PropertyChangeEvent evt) {
-			if ("model".equals(evt.getPropertyName())) {
-				setModel((TableModel) evt.getNewValue());
-			} else if ("selectionModel".equals(evt.getPropertyName())) {
-				setSelectionModel((ListSelectionModel) evt.getNewValue());
+		public void valueChanged(ListSelectionEvent e) {
+			if (!e.getValueIsAdjusting()) {
+				getVerticalScrollBar().repaint();
 			}
 		}
+	}
+
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 8743638445712360337L;
+	private HighlightingTable table;
+
+	private FilteringTableModel filteringModel;
+
+	private RepaintHandler repaintHandler;
+
+	public HighlightingTableScroller(HighlightingTable table) {
+		super(table);
+		this.table = table;
+		repaintHandler = new RepaintHandler();
+		repaintHandler.setModel(table.getModel());
+		repaintHandler.setSelectionModel(table.getSelectionModel());
+		table.addPropertyChangeListener("model", repaintHandler);
+		table.addPropertyChangeListener("selectionModel", repaintHandler);
+	}
+
+	@Override
+	public JScrollBar createVerticalScrollBar() {
+		return new HighlightingScrollbar();
 	}
 }

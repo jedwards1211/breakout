@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing;
 
@@ -37,6 +37,55 @@ import javax.swing.SwingUtilities;
 import javax.swing.plaf.TabbedPaneUI;
 
 public class JTabbedPaneExtrasLayeredPane extends JLayeredPane {
+	private class Layout implements LayoutManager {
+		@Override
+		public void addLayoutComponent(String name, Component comp) {
+
+		}
+
+		@Override
+		public void layoutContainer(Container parent) {
+			Rectangle r = SwingUtilities.calculateInnerArea(
+					JTabbedPaneExtrasLayeredPane.this, new Rectangle());
+
+			Dimension extrasPrefSize = extras.getPreferredSize();
+
+			TabbedPaneUI ui = tabbedPane.getUI();
+			Rectangle lastTabBounds = ui.getTabBounds(tabbedPane, tabbedPane.getTabCount() - 1);
+
+			int tabSpace = lastTabBounds.y + lastTabBounds.height;
+			int extrasHeight = Math.max(tabSpace, extrasPrefSize.height);
+
+			tabbedPane.setBounds(r.x, r.y + extrasHeight - tabSpace,
+					r.width, r.height + tabSpace - extrasHeight);
+
+			if (tabbedPane.getTabCount() > 0) {
+				int x = lastTabBounds.x + lastTabBounds.width;
+				extras.setBounds(x, r.y, r.x + r.width - x, extrasHeight);
+			}
+		}
+
+		@Override
+		public Dimension minimumLayoutSize(Container parent) {
+			return tabbedPane.getMinimumSize();
+		}
+
+		@Override
+		public Dimension preferredLayoutSize(Container parent) {
+			return tabbedPane.getPreferredSize();
+		}
+
+		@Override
+		public void removeLayoutComponent(Component comp) {
+
+		}
+	}
+
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = -6355404782512099968L;
+
 	public static void main(String[] args) {
 		JTabbedPane tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("Test 1", new JPanel());
@@ -54,8 +103,9 @@ public class JTabbedPaneExtrasLayeredPane extends JLayeredPane {
 		frame.setVisible(true);
 	}
 
-	private JTabbedPane	tabbedPane;
-	private Component	extras;
+	private JTabbedPane tabbedPane;
+
+	private Component extras;
 
 	public JTabbedPaneExtrasLayeredPane(JTabbedPane tabbedPane, Component extras) {
 		this.tabbedPane = tabbedPane;
@@ -67,49 +117,5 @@ public class JTabbedPaneExtrasLayeredPane extends JLayeredPane {
 		setLayer(extras, JLayeredPane.DEFAULT_LAYER + 1);
 
 		setLayout(new Layout());
-	}
-
-	private class Layout implements LayoutManager {
-		@Override
-		public void addLayoutComponent(String name, Component comp) {
-
-		}
-
-		@Override
-		public void removeLayoutComponent(Component comp) {
-
-		}
-
-		@Override
-		public Dimension preferredLayoutSize(Container parent) {
-			return tabbedPane.getPreferredSize();
-		}
-
-		@Override
-		public Dimension minimumLayoutSize(Container parent) {
-			return tabbedPane.getMinimumSize();
-		}
-
-		@Override
-		public void layoutContainer(Container parent) {
-			Rectangle r = SwingUtilities.calculateInnerArea(
-					JTabbedPaneExtrasLayeredPane.this, new Rectangle());
-
-			Dimension extrasPrefSize = extras.getPreferredSize();
-			
-			TabbedPaneUI ui = (TabbedPaneUI) tabbedPane.getUI();
-			Rectangle lastTabBounds = ui.getTabBounds(tabbedPane, tabbedPane.getTabCount() - 1);
-
-			int tabSpace = lastTabBounds.y + lastTabBounds.height;
-			int extrasHeight = Math.max(tabSpace, extrasPrefSize.height);
-
-			tabbedPane.setBounds(r.x, r.y + extrasHeight - tabSpace,
-					r.width, r.height + tabSpace - extrasHeight);
-
-			if (tabbedPane.getTabCount() > 0) {
-				int x = lastTabBounds.x + lastTabBounds.width;
-				extras.setBounds(x, r.y, r.x + r.width - x, extrasHeight);
-			}
-		}
 	}
 }

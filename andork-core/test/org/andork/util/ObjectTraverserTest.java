@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.util;
 
@@ -31,7 +31,13 @@ import org.andork.collect.CollectionUtils;
 public class ObjectTraverserTest {
 
 	public static class TestVisitor extends ObjectTraverser.DefaultVisitorBase {
-		String	tabs	= "";
+		String tabs = "";
+
+		@Override
+		public void exitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
+			tabs = tabs.substring(0, tabs.length() - 4);
+			super.exitObject(traverser, obj, parent, parentField, index);
+		}
 
 		private String getDescription(Object obj, Object parent, Field parentField, int index) {
 			StringBuffer sb = new StringBuffer();
@@ -46,11 +52,9 @@ public class ObjectTraverserTest {
 				if (index >= 0) {
 					type = type.getComponentType();
 				}
-			}
-			else if (parentField != null && parentField.getType().isPrimitive()) {
+			} else if (parentField != null && parentField.getType().isPrimitive()) {
 				type = parentField.getType();
-			}
-			else {
+			} else {
 				type = obj.getClass();
 			}
 
@@ -109,6 +113,7 @@ public class ObjectTraverserTest {
 			return sb.toString();
 		}
 
+		@Override
 		public boolean visitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
 			if (index < 0 || obj != null) {
 				System.out.println(tabs + getDescription(obj, parent, parentField, index));
@@ -121,11 +126,7 @@ public class ObjectTraverserTest {
 			return result;
 		}
 
-		public void exitObject(ObjectTraverser traverser, Object obj, Object parent, Field parentField, int index) {
-			tabs = tabs.substring(0, tabs.length() - 4);
-			super.exitObject(traverser, obj, parent, parentField, index);
-		}
-
+		@Override
 		public void visitPrimitive(ObjectTraverser traverser, Object prim, Object parent, Field parentField) {
 			System.out.println(tabs + getDescription(prim, parent, parentField, -1));
 			super.visitPrimitive(traverser, prim, parent, parentField);

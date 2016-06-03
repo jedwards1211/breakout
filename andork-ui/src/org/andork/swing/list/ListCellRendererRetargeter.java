@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.list;
 
@@ -34,21 +34,31 @@ import javax.swing.SwingUtilities;
 import org.andork.awt.event.MouseRetargeter;
 
 public class ListCellRendererRetargeter extends MouseRetargeter {
-	protected MouseEvent	prevEvent;
-	protected boolean		allowButtonChange;
-	protected int			rolloverIndex;
-	protected int			pressIndex;
+	protected MouseEvent prevEvent;
+	protected boolean allowButtonChange;
+	protected int rolloverIndex;
+	protected int pressIndex;
 
-	public boolean isAllowButtonChange() {
-		return allowButtonChange;
-	}
-
-	public int getRolloverIndex() {
-		return rolloverIndex;
-	}
-
-	public int getPressIndex() {
-		return pressIndex;
+	@Override
+	protected Point convertPoint(Component origComp, Point origPoint, Component newTarget) {
+		JList list = (JList) origComp;
+		int index = findRolloverIndex(list, origPoint);
+		if (index >= 0) {
+			Rectangle bounds = list.getCellBounds(index, index);
+			Point newPoint = new Point(origPoint.x - bounds.x, origPoint.y - bounds.y);
+			ListCellRenderer cellRenderer = list.getCellRenderer();
+			Object value = list.getModel().getElementAt(index);
+			boolean isSelected = list.getSelectionModel().isSelectedIndex(index);
+			boolean cellHasFocus = list.hasFocus() && isSelected;
+			Component rendComp = cellRenderer.getListCellRendererComponent(
+					list, value, index, isSelected, cellHasFocus);
+			if (rendComp != null) {
+				rendComp.setBounds(list.getCellBounds(index, index));
+				rendComp.doLayout();
+				return SwingUtilities.convertPoint(rendComp, newPoint, newTarget);
+			}
+		}
+		return new Point(0, 0);
 	}
 
 	private int findRolloverIndex(JList list, Point p) {
@@ -85,61 +95,26 @@ public class ListCellRendererRetargeter extends MouseRetargeter {
 		return null;
 	}
 
-	@Override
-	protected Point convertPoint(Component origComp, Point origPoint, Component newTarget) {
-		JList list = (JList) origComp;
-		int index = findRolloverIndex(list, origPoint);
-		if (index >= 0) {
-			Rectangle bounds = list.getCellBounds(index, index);
-			Point newPoint = new Point(origPoint.x - bounds.x, origPoint.y - bounds.y);
-			ListCellRenderer cellRenderer = list.getCellRenderer();
-			Object value = list.getModel().getElementAt(index);
-			boolean isSelected = list.getSelectionModel().isSelectedIndex(index);
-			boolean cellHasFocus = list.hasFocus() && isSelected;
-			Component rendComp = cellRenderer.getListCellRendererComponent(
-					list, value, index, isSelected, cellHasFocus);
-			if (rendComp != null) {
-				rendComp.setBounds(list.getCellBounds(index, index));
-				rendComp.doLayout();
-				return SwingUtilities.convertPoint(rendComp, newPoint, newTarget);
-			}
-		}
-		return new Point(0, 0);
+	public int getPressIndex() {
+		return pressIndex;
 	}
 
-	protected void repaintFor(MouseEvent e) {
-		if (e == null) {
-			return;
-		}
+	public int getRolloverIndex() {
+		return rolloverIndex;
+	}
+
+	public boolean isAllowButtonChange() {
+		return allowButtonChange;
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
 		JList list = (JList) e.getComponent();
-		int index = list.locationToIndex(e.getPoint());
-		repaintCell(list, index);
-	}
-
-	protected void repaintCell(JList list, int index) {
-		if (index >= 0) {
-			list.repaint(list.getCellBounds(index, index));
-		}
-	}
-
-	@Override
-	protected void retarget(MouseEvent e, Component target, int newID) {
-		allowButtonChange = true;
-		try {
-			super.retarget(e, target, newID);
-		} finally {
-			allowButtonChange = false;
-		}
-	}
-
-	@Override
-	protected void retarget(MouseWheelEvent e, Component target) {
-		allowButtonChange = true;
-		try {
-			super.retarget(e, target);
-		} finally {
-			allowButtonChange = false;
-		}
+		rolloverIndex = list.locationToIndex(e.getPoint());
+		repaintFor(prevEvent);
+		super.mouseDragged(e);
+		repaintFor(e);
+		prevEvent = e;
 	}
 
 	@Override
@@ -171,16 +146,6 @@ public class ListCellRendererRetargeter extends MouseRetargeter {
 	}
 
 	@Override
-	public void mouseDragged(MouseEvent e) {
-		JList list = (JList) e.getComponent();
-		rolloverIndex = list.locationToIndex(e.getPoint());
-		repaintFor(prevEvent);
-		super.mouseDragged(e);
-		repaintFor(e);
-		prevEvent = e;
-	}
-
-	@Override
 	public void mousePressed(MouseEvent e) {
 		JList list = (JList) e.getComponent();
 		pressIndex = rolloverIndex = list.locationToIndex(e.getPoint());
@@ -199,5 +164,40 @@ public class ListCellRendererRetargeter extends MouseRetargeter {
 		super.mouseReleased(e);
 		repaintFor(e);
 		prevEvent = e;
+	}
+
+	protected void repaintCell(JList list, int index) {
+		if (index >= 0) {
+			list.repaint(list.getCellBounds(index, index));
+		}
+	}
+
+	protected void repaintFor(MouseEvent e) {
+		if (e == null) {
+			return;
+		}
+		JList list = (JList) e.getComponent();
+		int index = list.locationToIndex(e.getPoint());
+		repaintCell(list, index);
+	}
+
+	@Override
+	protected void retarget(MouseEvent e, Component target, int newID) {
+		allowButtonChange = true;
+		try {
+			super.retarget(e, target, newID);
+		} finally {
+			allowButtonChange = false;
+		}
+	}
+
+	@Override
+	protected void retarget(MouseWheelEvent e, Component target) {
+		allowButtonChange = true;
+		try {
+			super.retarget(e, target);
+		} finally {
+			allowButtonChange = false;
+		}
 	}
 }

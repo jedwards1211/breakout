@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing;
 
@@ -30,24 +30,24 @@ import javax.swing.SwingUtilities;
 
 import org.andork.persist.PersistenceScheduler;
 
-
 /**
  * A {@link DefaultSelectorPresetsManager} that saves presets to individual
  * files in a given directory. The files are saved/loaded on a given
  * {@link ScheduledExecutorService}, and the implementation doesn't have to
  * handle threading, only I/O.
- * 
+ *
  * @author andy.edwards
- * 
+ *
  * @param <T>
  *            the preset type.
  */
 public abstract class FileSetDefaultSelectorPresetsManager<T> extends DefaultSelectorPresetsManager<T> {
-	private File						presetDir;
-	private PersistenceScheduler		persistenceScheduler;
-	private ScheduledExecutorService	executor;
+	private File presetDir;
+	private PersistenceScheduler persistenceScheduler;
+	private ScheduledExecutorService executor;
 
-	protected FileSetDefaultSelectorPresetsManager(File presetDir, PersistenceScheduler persistenceScheduler, ScheduledExecutorService executor) {
+	protected FileSetDefaultSelectorPresetsManager(File presetDir, PersistenceScheduler persistenceScheduler,
+			ScheduledExecutorService executor) {
 		super();
 		this.presetDir = presetDir;
 		this.persistenceScheduler = persistenceScheduler;
@@ -55,28 +55,7 @@ public abstract class FileSetDefaultSelectorPresetsManager<T> extends DefaultSel
 		deserializeAll();
 	}
 
-	@Override
-	protected void serialize(final T preset) {
-		if (preset == getDefaultPreset() || preset == getUntitledPreset()) {
-			return;
-		}
-
-		persistenceScheduler.save(executor, preset, new Runnable() {
-			@Override
-			public void run() {
-				if (!presetDir.exists()) {
-					presetDir.mkdirs();
-				}
-
-				File file = new File(presetDir, getName(preset));
-				try {
-					serialize(preset, file);
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-			}
-		});
-	}
+	protected abstract T deserialize(File file) throws Exception;
 
 	protected void deserializeAll() {
 		executor.submit(new Runnable() {
@@ -114,10 +93,6 @@ public abstract class FileSetDefaultSelectorPresetsManager<T> extends DefaultSel
 		});
 	}
 
-	protected abstract void serialize(T preset, File file) throws Exception;
-
-	protected abstract T deserialize(File file) throws Exception;
-
 	private void doSwing(Runnable r) {
 		try {
 			SwingUtilities.invokeAndWait(r);
@@ -125,4 +100,29 @@ public abstract class FileSetDefaultSelectorPresetsManager<T> extends DefaultSel
 			e.printStackTrace();
 		}
 	}
+
+	@Override
+	protected void serialize(final T preset) {
+		if (preset == getDefaultPreset() || preset == getUntitledPreset()) {
+			return;
+		}
+
+		persistenceScheduler.save(executor, preset, new Runnable() {
+			@Override
+			public void run() {
+				if (!presetDir.exists()) {
+					presetDir.mkdirs();
+				}
+
+				File file = new File(presetDir, getName(preset));
+				try {
+					serialize(preset, file);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+	}
+
+	protected abstract void serialize(T preset, File file) throws Exception;
 }

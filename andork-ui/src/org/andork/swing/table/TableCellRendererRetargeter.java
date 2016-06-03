@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.table;
 
@@ -34,31 +34,36 @@ import javax.swing.table.TableCellRenderer;
 import org.andork.awt.event.MouseRetargeter;
 
 public class TableCellRendererRetargeter extends MouseRetargeter {
-	protected MouseEvent			prevEvent;
-	protected boolean				allowButtonChange;
-	protected int					rolloverRow;
-	protected int					rolloverColumn;
-	protected int					pressRow;
-	protected int					pressColumn;
+	protected MouseEvent prevEvent;
+	protected boolean allowButtonChange;
+	protected int rolloverRow;
+	protected int rolloverColumn;
+	protected int pressRow;
+	protected int pressColumn;
 
-	public boolean isAllowButtonChange() {
-		return allowButtonChange;
-	}
-
-	public int getRolloverRow() {
-		return rolloverRow;
-	}
-
-	public int getRolloverColumn() {
-		return rolloverColumn;
-	}
-
-	public int getPressRow() {
-		return pressRow;
-	}
-
-	public int getPressColumn() {
-		return pressColumn;
+	@Override
+	protected Point convertPoint(Component origComp, Point origPoint, Component newTarget) {
+		JTable table = (JTable) origComp;
+		int row = table.rowAtPoint(origPoint);
+		int column = table.columnAtPoint(origPoint);
+		if (row >= 0 && column >= 0) {
+			Rectangle bounds = table.getCellRect(row, column, false);
+			int x = origPoint.x - bounds.x;
+			int y = origPoint.y - bounds.y;
+			Point newPoint = new Point(x, y);
+			TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
+			Object value = table.getValueAt(row, column);
+			boolean isSelected = table.isCellSelected(row, column);
+			boolean cellHasFocus = table.hasFocus() && isSelected;
+			Component rendComp = cellRenderer.getTableCellRendererComponent(
+					table, value, isSelected, cellHasFocus, row, column);
+			if (rendComp != null) {
+				rendComp.setBounds(bounds);
+				rendComp.doLayout();
+				return SwingUtilities.convertPoint(rendComp, newPoint, newTarget);
+			}
+		}
+		return new Point(0, 0);
 	}
 
 	@Override
@@ -86,65 +91,35 @@ public class TableCellRendererRetargeter extends MouseRetargeter {
 		return null;
 	}
 
-	@Override
-	protected Point convertPoint(Component origComp, Point origPoint, Component newTarget) {
-		JTable table = (JTable) origComp;
-		int row = table.rowAtPoint(origPoint);
-		int column = table.columnAtPoint(origPoint);
-		if (row >= 0 && column >= 0) {
-			Rectangle bounds = table.getCellRect(row, column, false);
-			int x = origPoint.x - bounds.x;
-			int y = origPoint.y - bounds.y;
-			Point newPoint = new Point(x, y);
-			TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
-			Object value = table.getValueAt(row, column);
-			boolean isSelected = table.isCellSelected(row, column);
-			boolean cellHasFocus = table.hasFocus() && isSelected;
-			Component rendComp = cellRenderer.getTableCellRendererComponent(
-					table, value, isSelected, cellHasFocus, row, column);
-			if (rendComp != null) {
-				rendComp.setBounds(bounds);
-				rendComp.doLayout();
-				return SwingUtilities.convertPoint(rendComp, newPoint, newTarget);
-			}
-		}
-		return new Point(0, 0);
+	public int getPressColumn() {
+		return pressColumn;
 	}
 
-	protected void repaintFor(MouseEvent e) {
-		if (e == null) {
-			return;
-		}
+	public int getPressRow() {
+		return pressRow;
+	}
+
+	public int getRolloverColumn() {
+		return rolloverColumn;
+	}
+
+	public int getRolloverRow() {
+		return rolloverRow;
+	}
+
+	public boolean isAllowButtonChange() {
+		return allowButtonChange;
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent e) {
 		JTable table = (JTable) e.getComponent();
-		int row = table.rowAtPoint(e.getPoint());
-		int column = table.columnAtPoint(e.getPoint());
-		repaintCell(table, row, column);
-	}
-
-	protected void repaintCell(JTable table, int row, int column) {
-		if (row >= 0 && column >= 0) {
-			table.repaint(table.getCellRect(row, column, false));
-		}
-	}
-
-	@Override
-	protected void retarget(MouseEvent e, Component target, int newID) {
-		allowButtonChange = true;
-		try {
-			super.retarget(e, target, newID);
-		} finally {
-			allowButtonChange = false;
-		}
-	}
-
-	@Override
-	protected void retarget(MouseWheelEvent e, Component target) {
-		allowButtonChange = true;
-		try {
-			super.retarget(e, target);
-		} finally {
-			allowButtonChange = false;
-		}
+		rolloverRow = table.rowAtPoint(e.getPoint());
+		rolloverColumn = table.columnAtPoint(e.getPoint());
+		repaintFor(prevEvent);
+		super.mouseDragged(e);
+		repaintFor(e);
+		prevEvent = e;
 	}
 
 	@Override
@@ -179,17 +154,6 @@ public class TableCellRendererRetargeter extends MouseRetargeter {
 	}
 
 	@Override
-	public void mouseDragged(MouseEvent e) {
-		JTable table = (JTable) e.getComponent();
-		rolloverRow = table.rowAtPoint(e.getPoint());
-		rolloverColumn = table.columnAtPoint(e.getPoint());
-		repaintFor(prevEvent);
-		super.mouseDragged(e);
-		repaintFor(e);
-		prevEvent = e;
-	}
-
-	@Override
 	public void mousePressed(MouseEvent e) {
 		JTable table = (JTable) e.getComponent();
 		pressRow = rolloverRow = table.rowAtPoint(e.getPoint());
@@ -210,5 +174,41 @@ public class TableCellRendererRetargeter extends MouseRetargeter {
 		super.mouseReleased(e);
 		repaintFor(e);
 		prevEvent = e;
+	}
+
+	protected void repaintCell(JTable table, int row, int column) {
+		if (row >= 0 && column >= 0) {
+			table.repaint(table.getCellRect(row, column, false));
+		}
+	}
+
+	protected void repaintFor(MouseEvent e) {
+		if (e == null) {
+			return;
+		}
+		JTable table = (JTable) e.getComponent();
+		int row = table.rowAtPoint(e.getPoint());
+		int column = table.columnAtPoint(e.getPoint());
+		repaintCell(table, row, column);
+	}
+
+	@Override
+	protected void retarget(MouseEvent e, Component target, int newID) {
+		allowButtonChange = true;
+		try {
+			super.retarget(e, target, newID);
+		} finally {
+			allowButtonChange = false;
+		}
+	}
+
+	@Override
+	protected void retarget(MouseWheelEvent e, Component target) {
+		allowButtonChange = true;
+		try {
+			super.retarget(e, target);
+		} finally {
+			allowButtonChange = false;
+		}
 	}
 }

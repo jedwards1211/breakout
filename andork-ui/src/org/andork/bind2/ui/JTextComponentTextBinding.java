@@ -6,14 +6,15 @@ import org.andork.bind2.Binding;
 import org.andork.bind2.Link;
 
 public class JTextComponentTextBinding implements Binding {
-	public final Link<String>	textLink	= new Link<String>(this);
-	public final JTextComponent	label;
+	public final Link<String> textLink = new Link<String>(this);
+	public final JTextComponent label;
 
 	public JTextComponentTextBinding(JTextComponent label) {
 		super();
 		this.label = label;
 	}
 
+	@Override
 	public void update(boolean force) {
 		label.setText(textLink.get());
 	}

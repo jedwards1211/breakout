@@ -11,115 +11,101 @@ import javax.swing.table.TableModel;
 
 import org.andork.swing.table.NiceTableModel.Column;
 
-public class NiceRecolumnizedTableModel extends AbstractTableModel implements TableModelListener
-{
-	private TableModel					model;
+public class NiceRecolumnizedTableModel extends AbstractTableModel implements TableModelListener {
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = -3582058456019625665L;
 
-	private final List<Column<Integer>>	columns				= new ArrayList<>( );
-	private final List<Column<Integer>>	unmodifiableColumns	= Collections.unmodifiableList( columns );
+	private TableModel model;
 
-	public NiceRecolumnizedTableModel( )
-	{
+	private final List<Column<Integer>> columns = new ArrayList<>();
+	private final List<Column<Integer>> unmodifiableColumns = Collections.unmodifiableList(columns);
+
+	public NiceRecolumnizedTableModel() {
 
 	}
 
-	public NiceRecolumnizedTableModel( TableModel model )
-	{
-		setModel( model );
+	public NiceRecolumnizedTableModel(TableModel model) {
+		setModel(model);
 	}
 
-	public void setModel( TableModel newModel )
-	{
-		if( model != newModel )
-		{
-			if( model != null )
-			{
-				model.removeTableModelListener( this );
-			}
-			model = newModel;
-			if( newModel != null )
-			{
-				newModel.addTableModelListener( this );
-			}
-			fireTableDataChanged( );
-		}
+	@Override
+	public Class<?> getColumnClass(int columnIndex) {
+		return columns.get(columnIndex).getColumnClass();
 	}
 
-	public TableModel getModel( )
-	{
-		return model;
+	@Override
+	public int getColumnCount() {
+		return columns.size();
 	}
 
-	public List<Column<Integer>> getColumns( )
-	{
+	@Override
+	public String getColumnName(int column) {
+		return columns.get(column).getColumnName();
+	}
+
+	public List<Column<Integer>> getColumns() {
 		return unmodifiableColumns;
 	}
 
-	public void setColumns( List<Column<Integer>> newColumns )
-	{
-		columns.clear( );
-		columns.addAll( newColumns );
-		fireTableStructureChanged( );
+	public TableModel getModel() {
+		return model;
 	}
 
 	@Override
-	public int getRowCount( )
-	{
-		return model == null ? 0 : model.getRowCount( );
+	public int getRowCount() {
+		return model == null ? 0 : model.getRowCount();
 	}
 
 	@Override
-	public int getColumnCount( )
-	{
-		return columns.size( );
+	public Object getValueAt(int rowIndex, int columnIndex) {
+		return columns.get(columnIndex).getValueAt(rowIndex);
 	}
 
 	@Override
-	public String getColumnName( int column )
-	{
-		return columns.get( column ).getColumnName( );
+	public boolean isCellEditable(int rowIndex, int columnIndex) {
+		return columns.get(columnIndex).isCellEditable(rowIndex);
+	}
+
+	public void setColumns(List<Column<Integer>> newColumns) {
+		columns.clear();
+		columns.addAll(newColumns);
+		fireTableStructureChanged();
+	}
+
+	public void setModel(TableModel newModel) {
+		if (model != newModel) {
+			if (model != null) {
+				model.removeTableModelListener(this);
+			}
+			model = newModel;
+			if (newModel != null) {
+				newModel.addTableModelListener(this);
+			}
+			fireTableDataChanged();
+		}
 	}
 
 	@Override
-	public Class<?> getColumnClass( int columnIndex )
-	{
-		return columns.get( columnIndex ).getColumnClass( );
+	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
+		columns.get(columnIndex).setValueAt(aValue, rowIndex);
 	}
 
 	@Override
-	public boolean isCellEditable( int rowIndex , int columnIndex )
-	{
-		return columns.get( columnIndex ).isCellEditable( rowIndex );
-	}
-
-	@Override
-	public void setValueAt( Object aValue , int rowIndex , int columnIndex )
-	{
-		columns.get( columnIndex ).setValueAt( aValue , rowIndex );
-	}
-
-	@Override
-	public Object getValueAt( int rowIndex , int columnIndex )
-	{
-		return columns.get( columnIndex ).getValueAt( rowIndex );
-	}
-
-	@Override
-	public void tableChanged( TableModelEvent e )
-	{
-		switch( e.getType( ) )
-		{
+	public void tableChanged(TableModelEvent e) {
+		switch (e.getType()) {
 		case TableModelEvent.INSERT:
-			fireTableChanged( new TableModelEvent( this , e.getFirstRow( ) , e.getLastRow( ) ,
-				TableModelEvent.ALL_COLUMNS , TableModelEvent.INSERT ) );
+			fireTableChanged(new TableModelEvent(this, e.getFirstRow(), e.getLastRow(),
+					TableModelEvent.ALL_COLUMNS, TableModelEvent.INSERT));
 			break;
 		case TableModelEvent.DELETE:
-			fireTableChanged( new TableModelEvent( this , e.getFirstRow( ) , e.getLastRow( ) ,
-				TableModelEvent.ALL_COLUMNS , TableModelEvent.DELETE ) );
+			fireTableChanged(new TableModelEvent(this, e.getFirstRow(), e.getLastRow(),
+					TableModelEvent.ALL_COLUMNS, TableModelEvent.DELETE));
 			break;
 		case TableModelEvent.UPDATE:
-			fireTableChanged( new TableModelEvent( this , e.getFirstRow( ) , e.getLastRow( ) ,
-				TableModelEvent.ALL_COLUMNS , TableModelEvent.UPDATE ) );
+			fireTableChanged(new TableModelEvent(this, e.getFirstRow(), e.getLastRow(),
+					TableModelEvent.ALL_COLUMNS, TableModelEvent.UPDATE));
 			break;
 		}
 	}

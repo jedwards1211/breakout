@@ -12,45 +12,39 @@ import org.andork.q2.QSpec.Property;
  * write any boilerplate property change notification code.<br>
  * <br>
  * The Q doesn't stand for anything.
- * 
+ *
  * @author andy.edwards
  * @param <S>
  *            the type of {@link QSpec} for this object.
  */
-public abstract class QMapObject<S extends QSpec> extends QObject<S>
-{
+public abstract class QMapObject<S extends QSpec> extends QObject<S> {
 	final Map<Property<?>, Object> values;
 
-	public QMapObject( S spec )
-	{
-		super( spec );
-		values = createValuesMap( );
-		for( Property<?> property : spec.propertyList )
-		{
-			Object initValue = property.initValue( ).get( );
-			if( initValue != null )
-			{
-				values.put( property , initValue );
+	public QMapObject(S spec) {
+		super(spec);
+		values = createValuesMap();
+		for (Property<?> property : spec.propertyList) {
+			Object initValue = property.initValue().get();
+			if (initValue != null) {
+				values.put(property, initValue);
 			}
 		}
 	}
 
-	protected abstract Map<Property<?>, Object> createValuesMap( );
+	protected abstract Map<Property<?>, Object> createValuesMap();
 
-	@SuppressWarnings( "unchecked" )
-	public <T> T doGet( Property<T> property )
-	{
-		return ( T ) values.get( property );
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T doGet(Property<T> property) {
+		return (T) values.get(property);
 	}
 
-	@SuppressWarnings( "unchecked" )
-	public <T> T doSet( Property<T> property , T newValue )
-	{
-		T oldValue = newValue == null ? ( T ) values.remove( this ) :
-			( T ) values.put( property , newValue );
-		if( !property.equals( oldValue , newValue ) )
-		{
-			fireObjectChanged( property , oldValue , newValue );
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T doSet(Property<T> property, T newValue) {
+		T oldValue = newValue == null ? (T) values.remove(this) : (T) values.put(property, newValue);
+		if (!property.equals(oldValue, newValue)) {
+			fireObjectChanged(property, oldValue, newValue);
 		}
 		return oldValue;
 	}

@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.ui.test;
 
@@ -36,17 +36,11 @@ import java.awt.Point;
 import java.awt.Rectangle;
 
 public interface Ghost {
-	public void type(final Component c, String text);
-
-	public void scroll(final Component c, Rectangle toBounds);
-
-	public InputBuilder on(Component c);
-
 	public abstract class InputBuilder {
-		Component	comp;
-		Point		mouseLocation;
+		Component comp;
+		Point mouseLocation;
 
-		int			modifiers;
+		int modifiers;
 
 		public InputBuilder(Component comp) {
 			super();
@@ -54,38 +48,10 @@ public interface Ghost {
 			mouseLocation = new Point(comp.getWidth() / 2, comp.getHeight() / 2);
 		}
 
-		public InputBuilder ctrl() {
-			modifiers |= CTRL_DOWN_MASK;
-			return this;
-		}
-
-		public InputBuilder shift() {
-			modifiers |= SHIFT_DOWN_MASK;
-			return this;
-		}
-
 		public InputBuilder alt() {
 			modifiers |= ALT_DOWN_MASK;
 			return this;
 		}
-
-		public InputBuilder enter() {
-			return type(VK_ENTER);
-		}
-
-		public InputBuilder backspace() {
-			return type(VK_BACK_SPACE);
-		}
-
-		public InputBuilder delete() {
-			return type(VK_DELETE);
-		}
-
-		public abstract InputBuilder press(int keyCode);
-
-		public abstract InputBuilder type(int keyCode);
-
-		public abstract InputBuilder release(int keyCode);
 
 		public InputBuilder at(Point mouseLocation) {
 			if (mouseLocation == null) {
@@ -93,6 +59,25 @@ public interface Ghost {
 			}
 			this.mouseLocation = mouseLocation;
 			return this;
+		}
+
+		public InputBuilder backspace() {
+			return type(VK_BACK_SPACE);
+		}
+
+		public abstract InputBuilder click(int button, int clickCount);
+
+		public InputBuilder ctrl() {
+			modifiers |= CTRL_DOWN_MASK;
+			return this;
+		}
+
+		public InputBuilder delete() {
+			return type(VK_DELETE);
+		}
+
+		public InputBuilder enter() {
+			return type(VK_ENTER);
 		}
 
 		public InputBuilder leftClick() {
@@ -103,10 +88,25 @@ public interface Ghost {
 			return click(BUTTON2, 1);
 		}
 
+		public abstract InputBuilder press(int keyCode);
+
+		public abstract InputBuilder release(int keyCode);
+
 		public InputBuilder rightClick() {
 			return click(BUTTON3, 1);
 		}
 
-		public abstract InputBuilder click(int button, int clickCount);
+		public InputBuilder shift() {
+			modifiers |= SHIFT_DOWN_MASK;
+			return this;
+		}
+
+		public abstract InputBuilder type(int keyCode);
 	}
+
+	public InputBuilder on(Component c);
+
+	public void scroll(final Component c, Rectangle toBounds);
+
+	public void type(final Component c, String text);
 }

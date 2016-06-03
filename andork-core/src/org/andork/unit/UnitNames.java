@@ -9,62 +9,52 @@ import java.util.Map;
 
 import org.andork.util.StringUtils;
 
-public abstract class UnitNames
-{
-	public final Locale							locale;
+public abstract class UnitNames {
+	private static final Map<Locale, UnitNames> map = new HashMap<>();
 
-	private static final Map<Locale, UnitNames>	map	= new HashMap<>( );
-
-	static
-	{
-		map.put( Locale.ENGLISH , EnglishUnitNames.inst );
+	static {
+		map.put(Locale.ENGLISH, EnglishUnitNames.inst);
 	}
 
-	public UnitNames( Locale locale )
-	{
-		super( );
-		this.locale = locale;
+	public static String getName(Locale locale, Unit<?> unit, Number value, UnitNameType nameType) {
+		UnitNames names = getNames(locale);
+		return names.getName(unit, value, nameType);
 	}
 
-	public static UnitNames getNames( Locale locale )
-	{
-		UnitNames names = map.get( locale );
-		if( names == null )
-		{
+	public static UnitNames getNames(Locale locale) {
+		UnitNames names = map.get(locale);
+		if (names == null) {
 			Locale origLocale = locale;
-			List<LanguageRange> ranges = new ArrayList<>( );
-			if( !StringUtils.isNullOrEmpty( locale.getLanguage( ) ) )
-			{
-				ranges.add( new LanguageRange( locale.getLanguage( ) + "-*" ) );
+			List<LanguageRange> ranges = new ArrayList<>();
+			if (!StringUtils.isNullOrEmpty(locale.getLanguage())) {
+				ranges.add(new LanguageRange(locale.getLanguage() + "-*"));
 			}
-			if( !StringUtils.isNullOrEmpty( locale.getCountry( ) ) )
-			{
-				ranges.add( new LanguageRange( "*-" + locale.getCountry( ) ) );
+			if (!StringUtils.isNullOrEmpty(locale.getCountry())) {
+				ranges.add(new LanguageRange("*-" + locale.getCountry()));
 			}
-			locale = Locale.lookup( ranges , map.keySet( ) );
-			if( locale == null )
-			{
+			locale = Locale.lookup(ranges, map.keySet());
+			if (locale == null) {
 				locale = EnglishUnitNames.inst.locale;
 			}
-			names = map.get( locale );
-			map.put( origLocale , names );
+			names = map.get(locale);
+			map.put(origLocale, names);
 		}
 		return names;
 	}
 
-	public abstract String getName( Unit<?> unit , Number value , UnitNameType nameType );
-
-	public static String getName( Locale locale , Unit<?> unit , Number value , UnitNameType nameType )
-	{
-		UnitNames names = getNames( locale );
-		return names.getName( unit , value , nameType );
+	public static <T extends UnitType<T>> Unit<T> lookup(Locale locale, String unitText, T unitType) {
+		UnitNames names = getNames(locale);
+		return names.lookup(unitText, unitType);
 	}
 
-	public abstract <T extends UnitType<T>> Unit<T> lookup( String unitText , T unitType );
+	public final Locale locale;
 
-	public static <T extends UnitType<T>> Unit<T> lookup( Locale locale , String unitText , T unitType )
-	{
-		UnitNames names = getNames( locale );
-		return names.lookup( unitText , unitType );
+	public UnitNames(Locale locale) {
+		super();
+		this.locale = locale;
 	}
+
+	public abstract String getName(Unit<?> unit, Number value, UnitNameType nameType);
+
+	public abstract <T extends UnitType<T>> Unit<T> lookup(String unitText, T unitType);
 }

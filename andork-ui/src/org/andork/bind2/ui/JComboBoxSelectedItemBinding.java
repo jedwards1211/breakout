@@ -6,14 +6,15 @@ import org.andork.bind2.Binding;
 import org.andork.bind2.Link;
 
 public class JComboBoxSelectedItemBinding implements Binding {
-	public final Link<Object>	selectedItemLink	= new Link<Object>(this);
-	public final JComboBox		comboBox;
+	public final Link<Object> selectedItemLink = new Link<Object>(this);
+	public final JComboBox comboBox;
 
 	public JComboBoxSelectedItemBinding(JComboBox comboBox) {
 		super();
 		this.comboBox = comboBox;
 	}
 
+	@Override
 	public void update(boolean force) {
 		comboBox.setSelectedItem(selectedItemLink.get());
 	}

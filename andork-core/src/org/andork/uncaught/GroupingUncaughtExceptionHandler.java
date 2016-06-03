@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.uncaught;
 
@@ -38,39 +38,22 @@ import java.util.TimerTask;
  * exception and schedules a timer to report (via Exceptions sent to the
  * downstream {@code UncaughtExceptionHandler} how many of each type of
  * exception occured since the last report.
- * 
+ *
  * @author andy.edwards
  */
 public class GroupingUncaughtExceptionHandler implements UncaughtExceptionHandler {
-	private final Object					lock		= new Object();
-	private long							lastDump;
-	private long							nextDump;
-	private final Map<Trace, Integer>		delayedMap	= new LinkedHashMap<Trace, Integer>();
-
-	private final UncaughtExceptionHandler	downstream;
-
-	private final java.util.Timer			timer;
-
-	private final long						dumpInterval;
-	
-	public GroupingUncaughtExceptionHandler(UncaughtExceptionHandler downstream, long dumpInterval) {
-		super();
-		this.downstream = downstream;
-		this.dumpInterval = dumpInterval;
-		timer = new Timer(true);
-	}
-
 	private static class Trace {
-		int					hashCode;
-		Throwable			throwable;
-		StackTraceElement[]	trace;
+		int hashCode;
+		Throwable throwable;
+		StackTraceElement[] trace;
 
 		public Trace(Throwable throwable) {
 			this.throwable = throwable;
 			trace = throwable.getStackTrace();
-			hashCode = throwable.getClass().hashCode() ^ (29 * Arrays.hashCode(trace));
+			hashCode = throwable.getClass().hashCode() ^ 29 * Arrays.hashCode(trace);
 		}
 
+		@Override
 		public boolean equals(Object o) {
 			if (o instanceof Trace) {
 				Trace t = (Trace) o;
@@ -81,11 +64,51 @@ public class GroupingUncaughtExceptionHandler implements UncaughtExceptionHandle
 			return false;
 		}
 
+		@Override
 		public int hashCode() {
 			return hashCode;
 		}
 	}
 
+	private final Object lock = new Object();
+	private long lastDump;
+	private long nextDump;
+
+	private final Map<Trace, Integer> delayedMap = new LinkedHashMap<Trace, Integer>();
+
+	private final UncaughtExceptionHandler downstream;
+
+	private final java.util.Timer timer;
+
+	private final long dumpInterval;
+
+	public GroupingUncaughtExceptionHandler(UncaughtExceptionHandler downstream, long dumpInterval) {
+		super();
+		this.downstream = downstream;
+		this.dumpInterval = dumpInterval;
+		timer = new Timer(true);
+	}
+
+	protected void dumpGroups() {
+		synchronized (lock) {
+			for (Map.Entry<Trace, Integer> entry : delayedMap.entrySet()) {
+				Trace groupTrace = entry.getKey();
+				int groupCount = entry.getValue();
+
+				if (groupCount > 0) {
+					downstream.uncaughtException(Thread.currentThread(),
+							new Exception("There were " + groupCount +
+									" uncaught exceptions of the following form since last notice",
+									groupTrace.throwable));
+				}
+			}
+
+			delayedMap.clear();
+			lastDump = System.currentTimeMillis();
+		}
+	}
+
+	@Override
 	public void uncaughtException(Thread t, Throwable e) {
 		synchronized (lock) {
 
@@ -119,25 +142,6 @@ public class GroupingUncaughtExceptionHandler implements UncaughtExceptionHandle
 					}
 				}
 			}
-		}
-	}
-
-	protected void dumpGroups() {
-		synchronized (lock) {
-			for (Map.Entry<Trace, Integer> entry : delayedMap.entrySet()) {
-				Trace groupTrace = entry.getKey();
-				int groupCount = entry.getValue();
-
-				if (groupCount > 0) {
-					downstream.uncaughtException(Thread.currentThread(),
-							new Exception("There were " + groupCount +
-									" uncaught exceptions of the following form since last notice",
-									groupTrace.throwable));
-				}
-			}
-
-			delayedMap.clear();
-			lastDump = System.currentTimeMillis();
 		}
 	}
 }

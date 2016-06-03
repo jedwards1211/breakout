@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.table;
 
@@ -42,15 +42,16 @@ import org.andork.swing.CellRendererWithContentArea;
  * {@link CellRendererWithContentArea}, sets the bounds of the cell editor to
  * the renderer's {@link CellRendererWithContentArea#getContentArea() content
  * area}. Used with {@link TableCellRendererWithButtons}.
- * 
+ *
  * @author andy.edwards
- * 
+ *
  */
 public class CellEditorBoundsOverridingTableUI extends BasicTableUI {
 	/**
 	 * Paint a representation of the <code>table</code> instance that was set in
 	 * installUI().
 	 */
+	@Override
 	public void paint(Graphics g, JComponent c) {
 		Rectangle clip = g.getClipBounds();
 
@@ -105,64 +106,29 @@ public class CellEditorBoundsOverridingTableUI extends BasicTableUI {
 		paintCells(g, rMin, rMax, cMin, cMax);
 	}
 
-	/*
-	 * Paints the grid lines within <I>aRect</I>, using the grid color set with
-	 * <I>setGridColor</I>. Paints vertical lines if
-	 * <code>getShowVerticalLines()</code> returns true and paints horizontal
-	 * lines if <code>getShowHorizontalLines()</code> returns true.
-	 */
-	private void paintGrid(Graphics g, int rMin, int rMax, int cMin, int cMax) {
-		g.setColor(table.getGridColor());
-
-		Rectangle minCell = table.getCellRect(rMin, cMin, true);
-		Rectangle maxCell = table.getCellRect(rMax, cMax, true);
-		Rectangle damagedArea = minCell.union(maxCell);
-
-		if (table.getShowHorizontalLines()) {
-			int tableWidth = damagedArea.x + damagedArea.width;
-			int y = damagedArea.y;
-			for (int row = rMin; row <= rMax; row++) {
-				y += table.getRowHeight(row);
-				g.drawLine(damagedArea.x, y - 1, tableWidth - 1, y - 1);
-			}
-		}
-		if (table.getShowVerticalLines()) {
-			TableColumnModel cm = table.getColumnModel();
-			int tableHeight = damagedArea.y + damagedArea.height;
-			int x;
-			if (table.getComponentOrientation().isLeftToRight()) {
-				x = damagedArea.x;
-				for (int column = cMin; column <= cMax; column++) {
-					int w = cm.getColumn(column).getWidth();
-					x += w;
-					g.drawLine(x - 1, 0, x - 1, tableHeight - 1);
-				}
+	private void paintCell(Graphics g, Rectangle cellRect, int row, int column) {
+		TableCellRenderer renderer = table.getCellRenderer(row, column);
+		Component rendComp = table.prepareRenderer(renderer, row, column);
+		rendererPane.paintComponent(g, rendComp, table, cellRect.x, cellRect.y,
+				cellRect.width, cellRect.height, true);
+		if (table.isEditing() && table.getEditingRow() == row &&
+				table.getEditingColumn() == column) {
+			Component editorComp = table.getEditorComponent();
+			if (rendComp instanceof CellRendererWithButtons) {
+				Rectangle bounds = new Rectangle(((CellRendererWithButtons) rendComp).getContentArea());
+				bounds.x += cellRect.x;
+				bounds.y += cellRect.y;
+				editorComp.setBounds(bounds);
 			} else {
-				x = damagedArea.x + damagedArea.width;
-				for (int column = cMin; column < cMax; column++) {
-					int w = cm.getColumn(column).getWidth();
-					x -= w;
-					g.drawLine(x - 1, 0, x - 1, tableHeight - 1);
-				}
-				x -= cm.getColumn(cMax).getWidth();
-				g.drawLine(x, 0, x, tableHeight - 1);
+				editorComp.setBounds(cellRect);
 			}
+			editorComp.validate();
 		}
-	}
-
-	private int viewIndexForColumn(TableColumn aColumn) {
-		TableColumnModel cm = table.getColumnModel();
-		for (int column = 0; column < cm.getColumnCount(); column++) {
-			if (cm.getColumn(column) == aColumn) {
-				return column;
-			}
-		}
-		return -1;
 	}
 
 	private void paintCells(Graphics g, int rMin, int rMax, int cMin, int cMax) {
 		JTableHeader header = table.getTableHeader();
-		TableColumn draggedColumn = (header == null) ? null : header.getDraggedColumn();
+		TableColumn draggedColumn = header == null ? null : header.getDraggedColumn();
 
 		TableColumnModel cm = table.getColumnModel();
 		int columnMargin = cm.getColumnMargin();
@@ -267,23 +233,58 @@ public class CellEditorBoundsOverridingTableUI extends BasicTableUI {
 		}
 	}
 
-	private void paintCell(Graphics g, Rectangle cellRect, int row, int column) {
-		TableCellRenderer renderer = table.getCellRenderer(row, column);
-		Component rendComp = table.prepareRenderer(renderer, row, column);
-		rendererPane.paintComponent(g, rendComp, table, cellRect.x, cellRect.y,
-				cellRect.width, cellRect.height, true);
-		if (table.isEditing() && table.getEditingRow() == row &&
-				table.getEditingColumn() == column) {
-			Component editorComp = table.getEditorComponent();
-			if (rendComp instanceof CellRendererWithButtons) {
-				Rectangle bounds = new Rectangle(((CellRendererWithButtons) rendComp).getContentArea());
-				bounds.x += cellRect.x;
-				bounds.y += cellRect.y;
-				editorComp.setBounds(bounds);
-			} else {
-				editorComp.setBounds(cellRect);
+	/*
+	 * Paints the grid lines within <I>aRect</I>, using the grid color set with
+	 * <I>setGridColor</I>. Paints vertical lines if
+	 * <code>getShowVerticalLines()</code> returns true and paints horizontal
+	 * lines if <code>getShowHorizontalLines()</code> returns true.
+	 */
+	private void paintGrid(Graphics g, int rMin, int rMax, int cMin, int cMax) {
+		g.setColor(table.getGridColor());
+
+		Rectangle minCell = table.getCellRect(rMin, cMin, true);
+		Rectangle maxCell = table.getCellRect(rMax, cMax, true);
+		Rectangle damagedArea = minCell.union(maxCell);
+
+		if (table.getShowHorizontalLines()) {
+			int tableWidth = damagedArea.x + damagedArea.width;
+			int y = damagedArea.y;
+			for (int row = rMin; row <= rMax; row++) {
+				y += table.getRowHeight(row);
+				g.drawLine(damagedArea.x, y - 1, tableWidth - 1, y - 1);
 			}
-			editorComp.validate();
 		}
+		if (table.getShowVerticalLines()) {
+			TableColumnModel cm = table.getColumnModel();
+			int tableHeight = damagedArea.y + damagedArea.height;
+			int x;
+			if (table.getComponentOrientation().isLeftToRight()) {
+				x = damagedArea.x;
+				for (int column = cMin; column <= cMax; column++) {
+					int w = cm.getColumn(column).getWidth();
+					x += w;
+					g.drawLine(x - 1, 0, x - 1, tableHeight - 1);
+				}
+			} else {
+				x = damagedArea.x + damagedArea.width;
+				for (int column = cMin; column < cMax; column++) {
+					int w = cm.getColumn(column).getWidth();
+					x -= w;
+					g.drawLine(x - 1, 0, x - 1, tableHeight - 1);
+				}
+				x -= cm.getColumn(cMax).getWidth();
+				g.drawLine(x, 0, x, tableHeight - 1);
+			}
+		}
+	}
+
+	private int viewIndexForColumn(TableColumn aColumn) {
+		TableColumnModel cm = table.getColumnModel();
+		for (int column = 0; column < cm.getColumnCount(); column++) {
+			if (cm.getColumn(column) == aColumn) {
+				return column;
+			}
+		}
+		return -1;
 	}
 }

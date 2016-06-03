@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.async;
 
@@ -26,80 +26,62 @@ import java.util.concurrent.ExecutionException;
 
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
 
-public interface TaskService
-{
-	public void submit( Task task );
-	
-	public void cancel( Task task );
-	
-	public boolean hasTasks( );
-	
-	public List<Task> getTasks( );
-	
-	public HierarchicalBasicPropertyChangeSupport.External changeSupport( );
-	
-	public default void submit( TaskRunnable task )
-	{
-		submit( new Task( )
-		{
-			@Override
-			protected void execute( ) throws Exception
-			{
-				task.execute( this );
-			}
-		} );
+public interface TaskService {
+	public void cancel(Task task);
+
+	public HierarchicalBasicPropertyChangeSupport.External changeSupport();
+
+	public default <R> R fromThread(TaskSupplier<R> supplier) {
+		try {
+			return invokeAndGet(supplier);
+		} catch (Exception ex) {
+			throw new RuntimeException(ex);
+		}
 	}
-	
-	public default void invokeAndWait( TaskRunnable task ) throws InterruptedException , ExecutionException
-	{
-		Task actualTask = new Task( )
-		{
+
+	public List<Task> getTasks();
+
+	public boolean hasTasks();
+
+	public default <R> R invokeAndGet(TaskSupplier<R> supplier) throws InterruptedException, ExecutionException {
+		FutureTask<R> task = new FutureTask<R>() {
 			@Override
-			protected void execute( ) throws Exception
-			{
-				task.execute( this );
+			protected R doGet() throws Exception {
+				return supplier.get(this);
 			}
 		};
-		
-		submit( actualTask );
-		actualTask.waitUntilHasFinished( );
+
+		return task.get();
 	}
-	
-	public default void onThread( TaskRunnable task )
-	{
-		try
-		{
-			invokeAndWait( task );
-		}
-		catch( Exception ex )
-		{
-			throw new RuntimeException( ex );
-		}
-	}
-	
-	public default <R> R invokeAndGet( TaskSupplier<R> supplier ) throws InterruptedException , ExecutionException
-	{
-		FutureTask<R> task = new FutureTask<R>( )
-		{
+
+	public default void invokeAndWait(TaskRunnable task) throws InterruptedException, ExecutionException {
+		Task actualTask = new Task() {
 			@Override
-			protected R doGet( ) throws Exception
-			{
-				return supplier.get( this );
+			protected void execute() throws Exception {
+				task.execute(this);
 			}
 		};
-		
-		return task.get( );
+
+		submit(actualTask);
+		actualTask.waitUntilHasFinished();
 	}
-	
-	public default <R> R fromThread( TaskSupplier<R> supplier )
-	{
-		try
-		{
-			return invokeAndGet( supplier );
+
+	public default void onThread(TaskRunnable task) {
+		try {
+			invokeAndWait(task);
+		} catch (Exception ex) {
+			throw new RuntimeException(ex);
 		}
-		catch( Exception ex )
-		{
-			throw new RuntimeException( ex );
-		}
+	}
+
+	public void submit(Task task);
+
+	public default void submit(TaskRunnable task) {
+		submit(new Task() {
+			@Override
+			protected void execute() throws Exception {
+				task.execute(this);
+			}
+		});
 	}
 }

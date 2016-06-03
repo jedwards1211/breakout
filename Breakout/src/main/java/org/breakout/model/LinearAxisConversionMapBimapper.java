@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.breakout.model;
 
@@ -28,44 +28,35 @@ import org.andork.func.Bimapper;
 
 import com.andork.plot.LinearAxisConversion;
 
-public class LinearAxisConversionMapBimapper implements Bimapper<LinearAxisConversion, Object>
-{
-	private LinearAxisConversionMapBimapper( )
-	{
-		
+public class LinearAxisConversionMapBimapper implements Bimapper<LinearAxisConversion, Object> {
+	public static final LinearAxisConversionMapBimapper instance = new LinearAxisConversionMapBimapper();
+
+	private LinearAxisConversionMapBimapper() {
+
 	}
-	
-	public static final LinearAxisConversionMapBimapper	instance	= new LinearAxisConversionMapBimapper( );
-	
+
 	@Override
-	public Map<String, Double> map( LinearAxisConversion in )
-	{
-		if( in == null )
-		{
+	public Map<String, Double> map(LinearAxisConversion in) {
+		if (in == null) {
 			return null;
 		}
-		Map<String, Double> result = new HashMap<String, Double>( );
-		result.put( "offset" , in.getOffset( ) );
-		result.put( "scale" , in.getScale( ) );
+		Map<String, Double> result = new HashMap<String, Double>();
+		result.put("offset", in.getOffset());
+		result.put("scale", in.getScale());
 		return result;
 	}
-	
+
 	@Override
-	public LinearAxisConversion unmap( Object out )
-	{
-		if( out == null || !( out instanceof Map ) )
-		{
+	public LinearAxisConversion unmap(Object out) {
+		if (out == null || !(out instanceof Map)) {
 			return null;
 		}
-		Map<?, ?> m = ( Map<?, ?> ) out;
-		LinearAxisConversion result = new LinearAxisConversion( );
-		try
-		{
-			result.setOffset( Double.parseDouble( String.valueOf( m.get( "offset" ) ) ) );
-			result.setScale( Double.parseDouble( String.valueOf( m.get( "scale" ) ) ) );
-		}
-		catch( Exception ex )
-		{
+		Map<?, ?> m = (Map<?, ?>) out;
+		LinearAxisConversion result = new LinearAxisConversion();
+		try {
+			result.setOffset(Double.parseDouble(String.valueOf(m.get("offset"))));
+			result.setScale(Double.parseDouble(String.valueOf(m.get("scale"))));
+		} catch (Exception ex) {
 			return null;
 		}
 		return result;

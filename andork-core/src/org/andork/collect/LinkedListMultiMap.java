@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.collect;
 
@@ -33,103 +33,98 @@ import java.util.Set;
 /**
  * A {@link ListMultiMap} that stores all values for the same key in a
  * {@link LinkedList}.
- * 
+ *
  * @author james.a.edwards
- * 
+ *
  * @param <K>
  *            the key type.
  * @param <V>
  *            the value type.
  */
 public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
-	private final Map<K, List<V>>	kv;
+	private class Entry implements Map.Entry<K, V> {
+		private K key;
+		private V value;
+
+		public Entry(K key, V value) {
+			this.key = key;
+			this.value = value;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (!(obj instanceof Map.Entry)) {
+				return false;
+			}
+			Map.Entry e = (Map.Entry) obj;
+			Object k1 = getKey();
+			Object k2 = e.getKey();
+			if (k1 == k2 || k1 != null && k1.equals(k2)) {
+				Object v1 = getValue();
+				Object v2 = e.getValue();
+				if (v1 == v2 || v1 != null && v1.equals(v2)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		@Override
+		public K getKey() {
+			return key;
+		}
+
+		@Override
+		public V getValue() {
+			return value;
+		}
+
+		@Override
+		public int hashCode() {
+			return (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
+		}
+
+		@Override
+		public V setValue(V value) {
+			V oldValue = this.value;
+			remove(this.key, this.value);
+			this.value = value;
+			put(this.key, this.value);
+			return oldValue;
+		}
+
+		@Override
+		public String toString() {
+			return getKey() + "=" + getValue();
+		}
+	}
+
+	public static <K, V> LinkedListMultiMap<K, V> newInstance() {
+		return new LinkedListMultiMap<K, V>();
+	}
+
+	private final Map<K, List<V>> kv;
 
 	public LinkedListMultiMap() {
 		kv = new HashMap<K, List<V>>();
 	}
 
-	public boolean put(K key, V value) {
-		List<V> values = kv.get(key);
-		
-		if (values == null) {
-			values = new LinkedList<V>();
-			kv.put(key, values);
-		}
-		return values.add(value);
+	@Override
+	public void clear() {
+		kv.clear();
 	}
 
-	public boolean putAll(Map<? extends K, ? extends V> m) {
-		boolean result = false;
-		for (Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
-			result |= put(entry.getKey(), entry.getValue());
-		}
-		return result;
+	@Override
+	public boolean contains(K key, V value) {
+		return get(key).contains(value);
 	}
 
-	public boolean putAll(K key, Collection<? extends V> values) {
-		List<V> m_values = kv.get(key);
-		
-		if (m_values == null) {
-			m_values = new LinkedList<V>();
-			kv.put(key, m_values);
-		}
-		return m_values.addAll(values);
+	@Override
+	public boolean containsKey(K key) {
+		return kv.containsKey(key);
 	}
 
-	public <K2 extends K, V2 extends V> boolean putAll(MultiMap<K2, V2> m) {
-		boolean result = false;
-		for (K2 key : m.keySet()) {
-			result |= putAll(key, m.get(key));
-		}
-		return result;
-	}
-
-	public boolean remove(K key, V value) {
-		List<V> values = kv.get(key);
-		
-		if (values != null) {
-			boolean result = values.remove(value);
-			if (values.isEmpty()) {
-				kv.remove(key);
-			}
-			return result;
-		}
-		return false;
-	}
-
-	public boolean removeAll(K key, Collection<? extends V> values) {
-		List<V> m_values = kv.get(key);
-		
-		if (m_values != null) {
-			boolean result = m_values.removeAll(values);
-			if (m_values.isEmpty()) {
-				kv.remove(key);
-			}
-			return result;
-		}
-		return false;
-	}
-
-	public boolean removeAll(Map<? extends K, ? extends V> m) {
-		boolean result = false;
-		for (Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
-			result |= remove(entry.getKey(), entry.getValue());
-		}
-		return result;
-	}
-
-	public <K2 extends K, V2 extends V> boolean removeAll(MultiMap<K2, V2> m) {
-		boolean result = false;
-		for (K2 key : m.keySet()) {
-			result |= removeAll(key, m.get(key));
-		}
-		return result;
-	}
-
-	public Set<K> keySet() {
-		return Collections.unmodifiableSet(kv.keySet());
-	}
-
+	@Override
 	public Set<Map.Entry<K, V>> entrySet() {
 		Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
 		for (Map.Entry<K, List<V>> entry : kv.entrySet()) {
@@ -140,19 +135,13 @@ public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
 		return result;
 	}
 
-	public Collection<V> values() {
-		List<V> result = new LinkedList<V>();
-		for (List<V> values : kv.values()) {
-			result.addAll(values);
-		}
-		return result;
-	}
-
+	@Override
 	public List<V> get(K key) {
 		List<V> result = kv.get(key);
 		return result == null ? new LinkedList<V>() : Collections.unmodifiableList(result);
 	}
 
+	@Override
 	public V getOnlyValue(K key) {
 		List<V> result = kv.get(key);
 		if (result == null || result.size() == 0) {
@@ -164,69 +153,103 @@ public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
 		return result.iterator().next();
 	}
 
-	public boolean containsKey(K key) {
-		return kv.containsKey(key);
+	@Override
+	public Set<K> keySet() {
+		return Collections.unmodifiableSet(kv.keySet());
 	}
 
-	public boolean contains(K key, V value) {
-		return get(key).contains(value);
+	@Override
+	public boolean put(K key, V value) {
+		List<V> values = kv.get(key);
+
+		if (values == null) {
+			values = new LinkedList<V>();
+			kv.put(key, values);
+		}
+		return values.add(value);
 	}
 
-	public void clear() {
-		kv.clear();
+	@Override
+	public boolean putAll(K key, Collection<? extends V> values) {
+		List<V> m_values = kv.get(key);
+
+		if (m_values == null) {
+			m_values = new LinkedList<V>();
+			kv.put(key, m_values);
+		}
+		return m_values.addAll(values);
 	}
 
-	private class Entry implements Map.Entry<K, V> {
-		private K	key;
-		private V	value;
-
-		public Entry(K key, V value) {
-			this.key = key;
-			this.value = value;
+	@Override
+	public boolean putAll(Map<? extends K, ? extends V> m) {
+		boolean result = false;
+		for (Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
+			result |= put(entry.getKey(), entry.getValue());
 		}
+		return result;
+	}
 
-		public K getKey() {
-			return key;
+	@Override
+	public <K2 extends K, V2 extends V> boolean putAll(MultiMap<K2, V2> m) {
+		boolean result = false;
+		for (K2 key : m.keySet()) {
+			result |= putAll(key, m.get(key));
 		}
+		return result;
+	}
 
-		public V getValue() {
-			return value;
-		}
+	@Override
+	public boolean remove(K key, V value) {
+		List<V> values = kv.get(key);
 
-		public V setValue(V value) {
-			V oldValue = this.value;
-			remove(this.key, this.value);
-			this.value = value;
-			put(this.key, this.value);
-			return oldValue;
-		}
-
-		public int hashCode() {
-			return (key == null ? 0 : key.hashCode()) ^ (value == null ? 0 : value.hashCode());
-		}
-
-		public String toString() {
-			return getKey() + "=" + getValue();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (!(obj instanceof Map.Entry))
-				return false;
-			Map.Entry e = (Map.Entry) obj;
-			Object k1 = getKey();
-			Object k2 = e.getKey();
-			if (k1 == k2 || (k1 != null && k1.equals(k2))) {
-				Object v1 = getValue();
-				Object v2 = e.getValue();
-				if (v1 == v2 || (v1 != null && v1.equals(v2)))
-					return true;
+		if (values != null) {
+			boolean result = values.remove(value);
+			if (values.isEmpty()) {
+				kv.remove(key);
 			}
-			return false;
+			return result;
 		}
+		return false;
 	}
 
-	public static <K, V> LinkedListMultiMap<K, V> newInstance() {
-		return new LinkedListMultiMap<K, V>();
+	@Override
+	public boolean removeAll(K key, Collection<? extends V> values) {
+		List<V> m_values = kv.get(key);
+
+		if (m_values != null) {
+			boolean result = m_values.removeAll(values);
+			if (m_values.isEmpty()) {
+				kv.remove(key);
+			}
+			return result;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean removeAll(Map<? extends K, ? extends V> m) {
+		boolean result = false;
+		for (Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
+			result |= remove(entry.getKey(), entry.getValue());
+		}
+		return result;
+	}
+
+	@Override
+	public <K2 extends K, V2 extends V> boolean removeAll(MultiMap<K2, V2> m) {
+		boolean result = false;
+		for (K2 key : m.keySet()) {
+			result |= removeAll(key, m.get(key));
+		}
+		return result;
+	}
+
+	@Override
+	public Collection<V> values() {
+		List<V> result = new LinkedList<V>();
+		for (List<V> values : kv.values()) {
+			result.addAll(values);
+		}
+		return result;
 	}
 }

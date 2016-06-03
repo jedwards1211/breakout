@@ -5,111 +5,94 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.awt.layout;
 
 import java.awt.Component;
 import java.awt.Dimension;
 
-public enum LayoutSize
-{
-	MINIMUM
-	{
+public enum LayoutSize {
+	MINIMUM {
 		@Override
-		public Dimension get( Component comp )
-		{
-			return comp.getMinimumSize( );
+		public Dimension get(Component comp) {
+			return comp.getMinimumSize();
 		}
-		
+
 		@Override
-		public void set( Component comp , Dimension size )
-		{
-			comp.setMinimumSize( size );
+		public boolean isSet(Component comp) {
+			return comp.isMinimumSizeSet();
 		}
-		
+
 		@Override
-		public boolean isSet( Component comp )
-		{
-			return comp.isMinimumSizeSet( );
+		public void set(Component comp, Dimension size) {
+			comp.setMinimumSize(size);
 		}
-	} ,
-	PREFERRED
-	{
+	},
+	PREFERRED {
 		@Override
-		public Dimension get( Component comp )
-		{
-			return comp.getPreferredSize( );
+		public Dimension get(Component comp) {
+			return comp.getPreferredSize();
 		}
-		
+
 		@Override
-		public void set( Component comp , Dimension size )
-		{
-			comp.setPreferredSize( size );
+		public boolean isSet(Component comp) {
+			return comp.isPreferredSizeSet();
 		}
-		
+
 		@Override
-		public boolean isSet( Component comp )
-		{
-			return comp.isPreferredSizeSet( );
+		public void set(Component comp, Dimension size) {
+			comp.setPreferredSize(size);
 		}
-	} ,
-	MAXIMUM
-	{
+	},
+	MAXIMUM {
 		@Override
-		public Dimension get( Component comp )
-		{
-			return comp.getMaximumSize( );
+		public Dimension get(Component comp) {
+			return comp.getMaximumSize();
 		}
-		
+
 		@Override
-		public void set( Component comp , Dimension size )
-		{
-			comp.setMaximumSize( size );
+		public boolean isSet(Component comp) {
+			return comp.isMaximumSizeSet();
 		}
-		
+
 		@Override
-		public boolean isSet( Component comp )
-		{
-			return comp.isMaximumSizeSet( );
+		public void set(Component comp, Dimension size) {
+			comp.setMaximumSize(size);
 		}
-	} ,
-	ACTUAL
-	{
+	},
+	ACTUAL {
 		@Override
-		public Dimension get( Component comp )
-		{
-			return comp.getSize( );
+		public Dimension get(Component comp) {
+			return comp.getSize();
 		}
-		
+
 		@Override
-		public void set( Component comp , Dimension size )
-		{
-			comp.setSize( size );
+		public boolean isSet(Component comp) {
+			throw new UnsupportedOperationException("the actual size is always set");
 		}
-		
+
 		@Override
-		public boolean isSet( Component comp )
-		{
-			throw new UnsupportedOperationException( "the actual size is always set" );
+		public void set(Component comp, Dimension size) {
+			comp.setSize(size);
 		}
 	};
-	
-	public abstract Dimension get( Component comp );
-	
-	public abstract void set( Component comp , Dimension size );
-	
-	public abstract boolean isSet( Component comp );
+
+	public abstract Dimension get(Component comp);
+
+	public abstract boolean isSet(Component comp);
+
+	public abstract void set(Component comp, Dimension size);
 }

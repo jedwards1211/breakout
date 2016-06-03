@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.bind.ui;
 
@@ -36,12 +36,25 @@ import org.andork.bind.Binder;
 import org.andork.util.Java7;
 
 public class ComponentTextBinder extends Binder<String> implements PropertyChangeListener, DocumentListener {
-	Binder<String>	upstream;
-	Component		comp;
+	public static ComponentTextBinder bind(AbstractButton textComp, Binder<String> upstream) {
+		return new ComponentTextBinder(textComp).bind(upstream);
+	}
 
-	Document		document;
+	public static ComponentTextBinder bind(JLabel textComp, Binder<String> upstream) {
+		return new ComponentTextBinder(textComp).bind(upstream);
+	}
 
-	boolean			updating;
+	public static ComponentTextBinder bind(JTextComponent textComp, Binder<String> upstream) {
+		return new ComponentTextBinder(textComp).bind(upstream);
+	}
+
+	Binder<String> upstream;
+
+	Component comp;
+
+	Document document;
+
+	boolean updating;
 
 	public ComponentTextBinder(Component comp) {
 		super();
@@ -52,18 +65,6 @@ public class ComponentTextBinder extends Binder<String> implements PropertyChang
 		} else {
 			comp.addPropertyChangeListener("text", this);
 		}
-	}
-
-	public static ComponentTextBinder bind(JTextComponent textComp, Binder<String> upstream) {
-		return new ComponentTextBinder(textComp).bind(upstream);
-	}
-
-	public static ComponentTextBinder bind(JLabel textComp, Binder<String> upstream) {
-		return new ComponentTextBinder(textComp).bind(upstream);
-	}
-
-	public static ComponentTextBinder bind(AbstractButton textComp, Binder<String> upstream) {
-		return new ComponentTextBinder(textComp).bind(upstream);
 	}
 
 	public ComponentTextBinder bind(Binder<String> upstream) {
@@ -80,8 +81,9 @@ public class ComponentTextBinder extends Binder<String> implements PropertyChang
 		return this;
 	}
 
-	public void unbind() {
-		bind(null);
+	@Override
+	public void changedUpdate(DocumentEvent e) {
+		handle(e);
 	}
 
 	@Override
@@ -98,6 +100,35 @@ public class ComponentTextBinder extends Binder<String> implements PropertyChang
 		return null;
 	}
 
+	public void handle(DocumentEvent e) {
+		if (!updating && upstream != null && e.getDocument() == document) {
+			setUpstream();
+		}
+	}
+
+	@Override
+	public void insertUpdate(DocumentEvent e) {
+		handle(e);
+	}
+
+	@Override
+	public void propertyChange(PropertyChangeEvent evt) {
+		if (evt.getSource() == comp) {
+			if ("text".equals(evt.getPropertyName())) {
+				if (!updating && upstream != null) {
+					setUpstream();
+				}
+			} else if ("document".equals(evt.getPropertyName())) {
+				setDocument(((JTextComponent) comp).getDocument());
+			}
+		}
+	}
+
+	@Override
+	public void removeUpdate(DocumentEvent e) {
+		handle(e);
+	}
+
 	@Override
 	public void set(String newValue) {
 		if (comp instanceof JTextComponent) {
@@ -106,18 +137,6 @@ public class ComponentTextBinder extends Binder<String> implements PropertyChang
 			((JLabel) comp).setText(newValue);
 		} else if (comp instanceof AbstractButton) {
 			((AbstractButton) comp).setText(newValue);
-		}
-	}
-
-	public void update(boolean force) {
-		updating = true;
-		try {
-			String newValue = upstream == null ? null : upstream.get();
-			if (force || !Java7.Objects.equals(get(), newValue)) {
-				set(newValue);
-			}
-		} finally {
-			updating = false;
 		}
 	}
 
@@ -135,12 +154,6 @@ public class ComponentTextBinder extends Binder<String> implements PropertyChang
 		}
 	}
 
-	public void handle(DocumentEvent e) {
-		if (!updating && upstream != null && e.getDocument() == document) {
-			setUpstream();
-		}
-	}
-
 	protected void setUpstream() {
 		try {
 			upstream.set(get());
@@ -149,32 +162,20 @@ public class ComponentTextBinder extends Binder<String> implements PropertyChang
 		}
 	}
 
-	@Override
-	public void insertUpdate(DocumentEvent e) {
-		handle(e);
+	public void unbind() {
+		bind(null);
 	}
 
 	@Override
-	public void removeUpdate(DocumentEvent e) {
-		handle(e);
-	}
-
-	@Override
-	public void changedUpdate(DocumentEvent e) {
-		handle(e);
-	}
-
-	@Override
-	public void propertyChange(PropertyChangeEvent evt) {
-		if (evt.getSource() == comp) {
-			if ("text".equals(evt.getPropertyName())) {
-				if (!updating && upstream != null) {
-					setUpstream();
-				}
+	public void update(boolean force) {
+		updating = true;
+		try {
+			String newValue = upstream == null ? null : upstream.get();
+			if (force || !Java7.Objects.equals(get(), newValue)) {
+				set(newValue);
 			}
-			else if ("document".equals(evt.getPropertyName())) {
-				setDocument(((JTextComponent) comp).getDocument());
-			}
+		} finally {
+			updating = false;
 		}
 	}
 }

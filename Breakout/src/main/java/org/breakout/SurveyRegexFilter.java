@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.breakout;
 
@@ -30,24 +30,21 @@ import org.andork.q.QObject;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.Row;
 
-public class SurveyRegexFilter extends RowFilter<TableModel, Integer>
-{
+public class SurveyRegexFilter extends RowFilter<TableModel, Integer> {
 	Pattern pattern;
 
-	public SurveyRegexFilter( String designation )
-	{
-		pattern = Pattern.compile( designation );
+	public SurveyRegexFilter(String designation) {
+		pattern = Pattern.compile(designation);
 	}
 
 	@Override
-	public boolean include( javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry )
-	{
-		SurveyTableModel model = ( SurveyTableModel ) entry.getModel( );
-		QObject<Row> row = model.getRow( entry.getIdentifier( ) );
+	public boolean include(javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
+		SurveyTableModel model = (SurveyTableModel) entry.getModel();
+		QObject<Row> row = model.getRow(entry.getIdentifier());
 
-		String from = row.get( Row.from );
-		String to = row.get( Row.to );
+		String from = row.get(Row.from);
+		String to = row.get(Row.to);
 
-		return from != null && to != null && pattern.matcher( from ).find( ) && pattern.matcher( to ).find( );
+		return from != null && to != null && pattern.matcher(from).find() && pattern.matcher(to).find();
 	}
 }

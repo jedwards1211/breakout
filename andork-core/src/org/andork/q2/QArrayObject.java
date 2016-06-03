@@ -12,45 +12,40 @@ import org.andork.q2.QSpec.Property;
  * write any boilerplate property change notification code.<br>
  * <br>
  * The Q doesn't stand for anything.
- * 
+ *
  * @author andy.edwards
  * @param <S>
  *            the type of {@link QSpec} for this object.
  */
-public final class QArrayObject<S extends QSpec> extends QObject<S>
-{
-	Object[ ] values;
+public final class QArrayObject<S extends QSpec> extends QObject<S> {
+	public static <S extends QSpec> QArrayObject<S> create(S spec) {
+		return new QArrayObject<S>(spec);
+	}
 
-	public QArrayObject( S spec )
-	{
-		super( spec );
-		values = new Object[ spec.properties.length ];
-		for( int i = 0 ; i < values.length ; i++ )
-		{
-			Supplier<?> supplier = spec.properties[ i ].initValue( );
-			values[ i ] = supplier == null ? null : supplier.get( );
+	Object[] values;
+
+	public QArrayObject(S spec) {
+		super(spec);
+		values = new Object[spec.properties.length];
+		for (int i = 0; i < values.length; i++) {
+			Supplier<?> supplier = spec.properties[i].initValue();
+			values[i] = supplier == null ? null : supplier.get();
 		}
 	}
 
-	public static <S extends QSpec> QArrayObject<S> create( S spec )
-	{
-		return new QArrayObject<S>( spec );
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T doGet(Property<T> property) {
+		return (T) values[property.index];
 	}
 
-	@SuppressWarnings( "unchecked" )
-	public <T> T doGet( Property<T> property )
-	{
-		return ( T ) values[ property.index ];
-	}
-
-	@SuppressWarnings( "unchecked" )
-	public <T> T doSet( Property<T> property , T newValue )
-	{
-		T oldValue = ( T ) values[ property.index ];
-		if( !property.equals( oldValue , newValue ) )
-		{
-			values[ property.index ] = newValue;
-			fireObjectChanged( property , oldValue , newValue );
+	@Override
+	@SuppressWarnings("unchecked")
+	public <T> T doSet(Property<T> property, T newValue) {
+		T oldValue = (T) values[property.index];
+		if (!property.equals(oldValue, newValue)) {
+			values[property.index] = newValue;
+			fireObjectChanged(property, oldValue, newValue);
 		}
 		return oldValue;
 	}

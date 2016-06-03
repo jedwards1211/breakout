@@ -7,7 +7,7 @@ import javax.swing.event.ChangeListener;
 import org.andork.bind2.Binder;
 
 public class JSpinnerValueBinder extends Binder<Object> implements ChangeListener {
-	private JSpinner	spinner;
+	private JSpinner spinner;
 
 	public JSpinnerValueBinder() {
 	}
@@ -29,6 +29,7 @@ public class JSpinnerValueBinder extends Binder<Object> implements ChangeListene
 		return spinner.getValue();
 	}
 
+	@Override
 	public void stateChanged(ChangeEvent e) {
 		updateBindings(false);
 	}

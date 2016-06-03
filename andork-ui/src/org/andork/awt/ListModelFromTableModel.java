@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.awt;
 
@@ -35,35 +35,40 @@ import javax.swing.table.TableModel;
  * {@link ListDataEvent}s. By default {@link #getElementAt(int)} just returns
  * values in column 0 of the model, but derived classes may override it to
  * return other values.
- * 
+ *
  * @author andy.edwards
  */
 public class ListModelFromTableModel implements ListModel {
-	protected TableModel		tableModel;
+	protected class ChangeHandler implements TableModelListener {
+		@Override
+		public void tableChanged(TableModelEvent e) {
+			if (tableModel == null) {
+				return;
+			}
+			switch (e.getType()) {
+			case TableModelEvent.INSERT:
+				fireIntervalAdded(e.getFirstRow(), e.getLastRow());
+				break;
+			case TableModelEvent.UPDATE:
+				fireContentsChanged(0, Integer.MAX_VALUE);
+				break;
+			case TableModelEvent.DELETE:
+				fireIntervalRemoved(e.getFirstRow(), e.getLastRow());
+				break;
+			}
+		}
+	}
+
+	protected TableModel tableModel;
 
 	/** List of listeners */
-	protected EventListenerList	listenerList	= new EventListenerList();
+	protected EventListenerList listenerList = new EventListenerList();
 
-	protected ChangeHandler		changeHandler	= new ChangeHandler();
+	protected ChangeHandler changeHandler = new ChangeHandler();
 
 	public ListModelFromTableModel(TableModel tableModel) {
 		this.tableModel = tableModel;
 		tableModel.addTableModelListener(changeHandler);
-	}
-
-	public void destroy() {
-		tableModel.removeTableModelListener(changeHandler);
-		tableModel = null;
-	}
-
-	@Override
-	public int getSize() {
-		return tableModel.getRowCount();
-	}
-
-	@Override
-	public Object getElementAt(int index) {
-		return tableModel.getValueAt(index, 0);
 	}
 
 	@Override
@@ -71,14 +76,9 @@ public class ListModelFromTableModel implements ListModel {
 		listenerList.add(ListDataListener.class, l);
 	}
 
-	@Override
-	public void removeListDataListener(ListDataListener l) {
-		listenerList.remove(ListDataListener.class, l);
-	}
-
-	public ListDataListener[] getListDataListeners() {
-		return (ListDataListener[]) listenerList.getListeners(
-				ListDataListener.class);
+	public void destroy() {
+		tableModel.removeTableModelListener(changeHandler);
+		tableModel = null;
 	}
 
 	protected void fireContentsChanged(int index0, int index1) {
@@ -123,23 +123,23 @@ public class ListModelFromTableModel implements ListModel {
 		}
 	}
 
-	protected class ChangeHandler implements TableModelListener {
-		@Override
-		public void tableChanged(TableModelEvent e) {
-			if (tableModel == null) {
-				return;
-			}
-			switch (e.getType()) {
-			case TableModelEvent.INSERT:
-				fireIntervalAdded(e.getFirstRow(), e.getLastRow());
-				break;
-			case TableModelEvent.UPDATE:
-				fireContentsChanged(0, Integer.MAX_VALUE);
-				break;
-			case TableModelEvent.DELETE:
-				fireIntervalRemoved(e.getFirstRow(), e.getLastRow());
-				break;
-			}
-		}
+	@Override
+	public Object getElementAt(int index) {
+		return tableModel.getValueAt(index, 0);
+	}
+
+	public ListDataListener[] getListDataListeners() {
+		return listenerList.getListeners(
+				ListDataListener.class);
+	}
+
+	@Override
+	public int getSize() {
+		return tableModel.getRowCount();
+	}
+
+	@Override
+	public void removeListDataListener(ListDataListener l) {
+		listenerList.remove(ListDataListener.class, l);
 	}
 }

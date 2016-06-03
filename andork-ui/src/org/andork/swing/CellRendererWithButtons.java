@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing;
 
@@ -29,21 +29,25 @@ import java.awt.Rectangle;
 import javax.swing.AbstractButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import javax.swing.table.TableCellRenderer;
 
 /**
- * 
+ *
  * @author andy.edwards
- * 
+ *
  */
 @SuppressWarnings("serial")
 public abstract class CellRendererWithButtons extends JPanel implements CellRendererWithContentArea {
-	protected int				spacing		= 1;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 6180976924327587352L;
 
-	protected AbstractButton[]	buttons;
-	protected Rectangle			contentArea	= new Rectangle();
+	protected int spacing = 1;
 
-	protected Component			content;
+	protected AbstractButton[] buttons;
+	protected Rectangle contentArea = new Rectangle();
+
+	protected Component content;
 
 	public CellRendererWithButtons() {
 		buttons = initButtons();
@@ -52,18 +56,7 @@ public abstract class CellRendererWithButtons extends JPanel implements CellRend
 		}
 	}
 
-	protected abstract AbstractButton[] initButtons();
-
 	@Override
-	protected void paintChildren(Graphics g) {
-		doLayout();
-		super.paintChildren(g);
-	}
-
-	protected Dimension getSizeForLayout(AbstractButton button) {
-		return new Dimension(getHeight(), getHeight());
-	}
-
 	public void doLayout() {
 		int x = getWidth();
 		for (int i = buttons.length - 1; i >= 0; i--) {
@@ -80,6 +73,27 @@ public abstract class CellRendererWithButtons extends JPanel implements CellRend
 		}
 	}
 
+	public Component getContent() {
+		return content;
+	}
+
+	@Override
+	public Rectangle getContentArea() {
+		return contentArea;
+	}
+
+	protected Dimension getSizeForLayout(AbstractButton button) {
+		return new Dimension(getHeight(), getHeight());
+	}
+
+	protected abstract AbstractButton[] initButtons();
+
+	@Override
+	protected void paintChildren(Graphics g) {
+		doLayout();
+		super.paintChildren(g);
+	}
+
 	public void setContent(Component content) {
 		this.content = content;
 		add(content);
@@ -90,13 +104,5 @@ public abstract class CellRendererWithButtons extends JPanel implements CellRend
 			jc.setBorder(null);
 		}
 		setBackground(content.getBackground());
-	}
-
-	public Component getContent() {
-		return content;
-	}
-
-	public Rectangle getContentArea() {
-		return contentArea;
 	}
 }

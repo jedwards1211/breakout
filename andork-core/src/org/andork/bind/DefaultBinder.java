@@ -5,66 +5,57 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.bind;
 
 import org.andork.util.Java7;
 
-public class DefaultBinder<T> extends Binder<T>
-{
-	private T	value;
-	
-	public DefaultBinder( )
-	{
-		
+public class DefaultBinder<T> extends Binder<T> {
+	public static <T> DefaultBinder<T> bind(T value) {
+		return new DefaultBinder<T>(value);
 	}
-	
-	public DefaultBinder( T value )
-	{
-		super( );
+
+	private T value;
+
+	public DefaultBinder() {
+
+	}
+
+	public DefaultBinder(T value) {
+		super();
 		this.value = value;
 	}
-	
-	public static <T> DefaultBinder<T> bind( T value )
-	{
-		return new DefaultBinder<T>( value );
-	}
-	
+
 	@Override
-	public T get( )
-	{
+	public T get() {
 		return value;
 	}
-	
+
 	@Override
-	public void set( T newValue )
-	{
-		if( !Java7.Objects.equals( value , newValue ) )
-		{
+	public void set(T newValue) {
+		if (!Java7.Objects.equals(value, newValue)) {
 			value = newValue;
-			updateDownstream( false );
+			updateDownstream(false);
 		}
 	}
-	
+
 	@Override
-	public void update( boolean force )
-	{
-		if( force )
-		{
-			updateDownstream( force );
+	public void update(boolean force) {
+		if (force) {
+			updateDownstream(force);
 		}
 	}
 }

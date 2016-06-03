@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.jogl.shadelet;
 
@@ -29,14 +29,14 @@ import java.util.List;
 import java.util.Map;
 
 public class CombinedShadelet extends Shadelet {
-	final List<Shadelet>	segments	= new ArrayList<Shadelet>();
-
-	public CombinedShadelet(Shadelet... segments) {
-		this(Arrays.asList(segments));
-	}
+	final List<Shadelet> segments = new ArrayList<Shadelet>();
 
 	public CombinedShadelet(Collection<Shadelet> segments) {
 		this.segments.addAll(segments);
+	}
+
+	public CombinedShadelet(Shadelet... segments) {
+		this(Arrays.asList(segments));
 	}
 
 	public void addSegment(Shadelet segment) {
@@ -44,16 +44,34 @@ public class CombinedShadelet extends Shadelet {
 	}
 
 	@Override
-	public Collection<String> getVertexShaderVariableDecls() {
+	public Collection<String> getFragmentShaderFunctionDecls() {
+		List<String> result = new ArrayList<String>();
+		for (Shadelet segment : segments) {
+			result.addAll(segment.replaceProperties(segment.getFragmentShaderFunctionDecls()));
+		}
+		return result;
+	}
+
+	@Override
+	public Collection<String> getFragmentShaderLocalDecls() {
 		Map<String, String> vars = new LinkedHashMap<String, String>();
 
 		for (Shadelet segment : segments) {
-			for (String variableDecl : segment.getVertexShaderVariableDecls()) {
-				vars.put(variableKey(variableDecl), variableDecl);
+			for (String LocalDecl : segment.getFragmentShaderLocalDecls()) {
+				vars.put(variableKey(LocalDecl), LocalDecl);
 			}
 		}
 
 		return vars.values();
+	}
+
+	@Override
+	public String getFragmentShaderMainCode() {
+		StringBuffer sb = new StringBuffer();
+		for (Shadelet segment : segments) {
+			sb.append(segment.replaceProperties(segment.getFragmentShaderMainCode()));
+		}
+		return sb.toString();
 	}
 
 	@Override
@@ -70,24 +88,20 @@ public class CombinedShadelet extends Shadelet {
 	}
 
 	@Override
+	public Collection<String> getVertexShaderFunctionDecls() {
+		List<String> result = new ArrayList<String>();
+		for (Shadelet segment : segments) {
+			result.addAll(segment.replaceProperties(segment.getVertexShaderFunctionDecls()));
+		}
+		return result;
+	}
+
+	@Override
 	public Collection<String> getVertexShaderLocalDecls() {
 		Map<String, String> vars = new LinkedHashMap<String, String>();
 
 		for (Shadelet segment : segments) {
 			for (String LocalDecl : segment.getVertexShaderLocalDecls()) {
-				vars.put(variableKey(LocalDecl), LocalDecl);
-			}
-		}
-
-		return vars.values();
-	}
-
-	@Override
-	public Collection<String> getFragmentShaderLocalDecls() {
-		Map<String, String> vars = new LinkedHashMap<String, String>();
-
-		for (Shadelet segment : segments) {
-			for (String LocalDecl : segment.getFragmentShaderLocalDecls()) {
 				vars.put(variableKey(LocalDecl), LocalDecl);
 			}
 		}
@@ -105,29 +119,15 @@ public class CombinedShadelet extends Shadelet {
 	}
 
 	@Override
-	public String getFragmentShaderMainCode() {
-		StringBuffer sb = new StringBuffer();
-		for (Shadelet segment : segments) {
-			sb.append(segment.replaceProperties(segment.getFragmentShaderMainCode()));
-		}
-		return sb.toString();
-	}
+	public Collection<String> getVertexShaderVariableDecls() {
+		Map<String, String> vars = new LinkedHashMap<String, String>();
 
-	@Override
-	public Collection<String> getVertexShaderFunctionDecls() {
-		List<String> result = new ArrayList<String>();
 		for (Shadelet segment : segments) {
-			result.addAll(segment.replaceProperties(segment.getVertexShaderFunctionDecls()));
+			for (String variableDecl : segment.getVertexShaderVariableDecls()) {
+				vars.put(variableKey(variableDecl), variableDecl);
+			}
 		}
-		return result;
-	}
 
-	@Override
-	public Collection<String> getFragmentShaderFunctionDecls() {
-		List<String> result = new ArrayList<String>();
-		for (Shadelet segment : segments) {
-			result.addAll(segment.replaceProperties(segment.getFragmentShaderFunctionDecls()));
-		}
-		return result;
+		return vars.values();
 	}
 }

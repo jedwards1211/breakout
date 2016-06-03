@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.swing.selector;
 
@@ -30,16 +30,16 @@ import org.andork.util.Java7;
 /**
  * A {@link ISelector} that combines several {@link ISelector}s, keeps them in
  * sync, and fires a single event when any of them changes.
- * 
+ *
  * @author james.a.edwards
  */
 public class TandemSelector<T> implements ISelector<T> {
-	private final List<ISelector<T>>			selectors			= new ArrayList<ISelector<T>>();
-	private final List<ISelectorListener<T>>	listeners			= new ArrayList<ISelectorListener<T>>();
+	private final List<ISelector<T>> selectors = new ArrayList<ISelector<T>>();
+	private final List<ISelectorListener<T>> listeners = new ArrayList<ISelectorListener<T>>();
 
-	private T									selection;
+	private T selection;
 
-	private boolean								disableListeners	= false;
+	private boolean disableListeners = false;
 
 	public TandemSelector(ISelector<T>... selectors) {
 		for (ISelector<T> selector : selectors) {
@@ -48,8 +48,25 @@ public class TandemSelector<T> implements ISelector<T> {
 		init();
 	}
 
+	@Override
+	public void addSelectorListener(ISelectorListener<T> listener) {
+		if (!listeners.contains(listener)) {
+			listeners.add(listener);
+		}
+	}
+
+	public List<ISelector<T>> getAvailableSelectors() {
+		return Collections.unmodifiableList(selectors);
+	}
+
+	@Override
+	public T getSelection() {
+		return selection;
+	}
+
 	private void init() {
 		ISelectorListener<T> selectorListener = new ISelectorListener<T>() {
+			@Override
 			public void selectionChanged(ISelector<T> selector, T oldSelection, T newSelection) {
 				if (!disableListeners) {
 					setSelection(selector.getSelection(), selector);
@@ -72,16 +89,19 @@ public class TandemSelector<T> implements ISelector<T> {
 		}
 	}
 
-	public void addSelectorListener(ISelectorListener<T> listener) {
-		if (!listeners.contains(listener)) {
-			listeners.add(listener);
-		}
-	}
-
+	@Override
 	public void removeSelectorListener(ISelectorListener<T> listener) {
 		listeners.remove(listener);
 	}
 
+	@Override
+	public void setEnabled(boolean enabled) {
+		for (ISelector<T> selector : selectors) {
+			selector.setEnabled(enabled);
+		}
+	}
+
+	@Override
 	public void setSelection(T newSelection) {
 		setSelection(newSelection, null);
 	}
@@ -104,20 +124,6 @@ public class TandemSelector<T> implements ISelector<T> {
 				disableListeners = false;
 			}
 			notifySelectionChanged(newSelection);
-		}
-	}
-
-	public T getSelection() {
-		return selection;
-	}
-
-	public List<ISelector<T>> getAvailableSelectors() {
-		return Collections.unmodifiableList(selectors);
-	}
-
-	public void setEnabled(boolean enabled) {
-		for (ISelector<T> selector : selectors) {
-			selector.setEnabled(enabled);
 		}
 	}
 

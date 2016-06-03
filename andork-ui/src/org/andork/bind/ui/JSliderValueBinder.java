@@ -5,19 +5,19 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.bind.ui;
 
@@ -33,11 +33,16 @@ import org.andork.bind.Binder;
 import org.andork.util.Java7;
 
 public class JSliderValueBinder extends Binder<Integer> implements ChangeListener, PropertyChangeListener {
-	Binder<Integer>		upstream;
-	JSlider				slider;
-	BoundedRangeModel	model;
+	public static JSliderValueBinder bind(JSlider slider, Binder<Integer> upstream) {
+		return new JSliderValueBinder(slider).bind(upstream);
+	}
 
-	boolean				updating;
+	Binder<Integer> upstream;
+	JSlider slider;
+
+	BoundedRangeModel model;
+
+	boolean updating;
 
 	public JSliderValueBinder(JSlider slider) {
 		super();
@@ -46,10 +51,6 @@ public class JSliderValueBinder extends Binder<Integer> implements ChangeListene
 			slider.addPropertyChangeListener("model", this);
 			setModel(slider.getModel());
 		}
-	}
-
-	public static JSliderValueBinder bind(JSlider slider, Binder<Integer> upstream) {
-		return new JSliderValueBinder(slider).bind(upstream);
 	}
 
 	public JSliderValueBinder bind(Binder<Integer> upstream) {
@@ -66,31 +67,24 @@ public class JSliderValueBinder extends Binder<Integer> implements ChangeListene
 		return this;
 	}
 
-	public void unbind() {
-		bind(null);
-	}
-
 	@Override
 	public Integer get() {
 		return model == null ? null : model.getValue();
 	}
 
 	@Override
-	public void set(Integer newValue) {
-		if (model != null && newValue != null) {
-			model.setValue(newValue);
+	public void propertyChange(PropertyChangeEvent evt) {
+		if (evt.getSource() == slider) {
+			if ("model".equals(evt.getPropertyName())) {
+				setModel(slider.getModel());
+			}
 		}
 	}
 
-	public void update(boolean force) {
-		updating = true;
-		try {
-			Integer newValue = upstream == null ? null : upstream.get();
-			if (force || !Java7.Objects.equals(get(), newValue)) {
-				set(newValue);
-			}
-		} finally {
-			updating = false;
+	@Override
+	public void set(Integer newValue) {
+		if (model != null && newValue != null) {
+			model.setValue(newValue);
 		}
 	}
 
@@ -109,18 +103,26 @@ public class JSliderValueBinder extends Binder<Integer> implements ChangeListene
 	}
 
 	@Override
-	public void propertyChange(PropertyChangeEvent evt) {
-		if (evt.getSource() == slider) {
-			if ("model".equals(evt.getPropertyName())) {
-				setModel(slider.getModel());
-			}
-		}
-	}
-
-	@Override
 	public void stateChanged(ChangeEvent e) {
 		if (!updating && upstream != null && e.getSource() == model) {
 			upstream.set(get());
+		}
+	}
+
+	public void unbind() {
+		bind(null);
+	}
+
+	@Override
+	public void update(boolean force) {
+		updating = true;
+		try {
+			Integer newValue = upstream == null ? null : upstream.get();
+			if (force || !Java7.Objects.equals(get(), newValue)) {
+				set(newValue);
+			}
+		} finally {
+			updating = false;
 		}
 	}
 }

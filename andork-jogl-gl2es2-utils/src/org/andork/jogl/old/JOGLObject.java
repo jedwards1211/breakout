@@ -5,38 +5,38 @@
  *
  * jedwards8 at fastmail dot fm
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * This program is free software; you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation; either version 2 of the License, or (at your option) any later
+ * version.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program; if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License along with
+ * this program; if not, write to the Free Software Foundation, Inc., 51
+ * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
 package org.andork.jogl.old;
 
-import com.jogamp.opengl.GL2ES2;
-
 import org.andork.jogl.JoglDrawable;
 
-public interface JOGLObject extends JOGLResource, JoglDrawable
-{
+import com.jogamp.opengl.GL2ES2;
+
+public interface JOGLObject extends JOGLResource, JoglDrawable {
 	/**
 	 * @param gl
 	 * @param m
 	 *            the model matrix
 	 * @param n
-	 *            the normal matrix (transpose inverse of the upper-left 3x3 of {@code m})
+	 *            the normal matrix (transpose inverse of the upper-left 3x3 of
+	 *            {@code m})
 	 * @param v
 	 *            the view matrix
 	 * @param p
 	 *            the projection matrix
 	 */
-	public void draw( GL2ES2 gl , float[ ] m , float[ ] n , float[ ] v , float[ ] p );
+	public void draw(GL2ES2 gl, float[] m, float[] n, float[] v, float[] p);
 }

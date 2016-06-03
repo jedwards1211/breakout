@@ -9,8 +9,14 @@ import org.andork.bind2.CachingBinder;
 import org.andork.bind2.Link;
 
 public class TableModelBinder<T extends TableModel> extends CachingBinder<T> implements Binding, TableModelListener {
-	public final Link<T>	modelLink	= new Link<T>(this);
+	public final Link<T> modelLink = new Link<T>(this);
 
+	@Override
+	public void tableChanged(TableModelEvent e) {
+		update(true);
+	}
+
+	@Override
 	public void update(boolean force) {
 		T oldModel = get();
 		T newModel = modelLink.get();
@@ -24,9 +30,5 @@ public class TableModelBinder<T extends TableModel> extends CachingBinder<T> imp
 			}
 		}
 		set(newModel, force);
-	}
-
-	public void tableChanged(TableModelEvent e) {
-		update(true);
 	}
 }

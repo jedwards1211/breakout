@@ -7,9 +7,9 @@ import org.andork.bind2.Binding;
 import org.andork.bind2.Link;
 
 public class CardLayoutBinding implements Binding {
-	public final Link<String>	nameLink	= new Link<String>(this);
-	final CardLayout			layout;
-	final Container				target;
+	public final Link<String> nameLink = new Link<String>(this);
+	final CardLayout layout;
+	final Container target;
 
 	public CardLayoutBinding(CardLayout layout, Container target) {
 		super();
@@ -17,6 +17,7 @@ public class CardLayoutBinding implements Binding {
 		this.target = target;
 	}
 
+	@Override
 	public void update(boolean force) {
 		layout.show(target, nameLink.get());
 	}

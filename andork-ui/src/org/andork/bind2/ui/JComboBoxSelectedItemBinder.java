@@ -8,7 +8,7 @@ import javax.swing.JComboBox;
 import org.andork.bind2.Binder;
 
 public class JComboBoxSelectedItemBinder extends Binder<Object> implements ItemListener {
-	private JComboBox	comboBox;
+	private JComboBox comboBox;
 
 	public JComboBoxSelectedItemBinder() {
 	}
@@ -30,6 +30,7 @@ public class JComboBoxSelectedItemBinder extends Binder<Object> implements ItemL
 		return comboBox.getSelectedItem();
 	}
 
+	@Override
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
 			updateBindings(false);

@@ -14,14 +14,14 @@ public class JComponentClientPropertyBinder extends ComponentPropertyBinder {
 	}
 
 	@Override
-	public JComponent getComponent() {
-		return (JComponent) super.getComponent();
+	public Object get() {
+		JComponent comp = getComponent();
+		String property = getProperty();
+		return comp != null && property != null ? comp.getClientProperty(property) : null;
 	}
 
 	@Override
-	public Object get() {
-		JComponent comp = (JComponent) getComponent();
-		String property = getProperty();
-		return comp != null && property != null ? comp.getClientProperty(property) : null;
+	public JComponent getComponent() {
+		return (JComponent) super.getComponent();
 	}
 }

@@ -9,12 +9,12 @@ public class DefaultBinder<T> extends CachingBinder<T> {
 	}
 
 	@Override
-	public void set(T newValue, boolean forceUpdates) {
-		super.set(newValue, forceUpdates);
+	public void set(T newValue) {
+		super.set(newValue);
 	}
 
 	@Override
-	public void set(T newValue) {
-		super.set(newValue);
+	public void set(T newValue, boolean forceUpdates) {
+		super.set(newValue, forceUpdates);
 	}
 }
