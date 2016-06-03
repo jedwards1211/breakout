@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
+import java.util.Arrays;
 
 import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
@@ -18,6 +19,7 @@ import javax.swing.text.NumberFormatter;
 import org.andork.redux.Action;
 import org.andork.redux.Redux;
 import org.andork.redux.Store;
+import org.andork.redux.logger.Logger;
 
 public class ReduxUITest {
 	public static class SetValueAction extends Action {
@@ -26,6 +28,11 @@ public class ReduxUITest {
 		public SetValueAction(Number newValue) {
 			super("SET_VALUE");
 			payload = newValue;
+		}
+
+		@Override
+		public String toString() {
+			return "SetValueAction{payload: " + payload + "}";
 		}
 	}
 
@@ -66,11 +73,13 @@ public class ReduxUITest {
 				}
 			});
 
-			Store<Number> store = Redux.createStore((state, action) -> {
+			Store<Number> store = Redux.applyMiddleware(
+					Arrays.asList(new Logger()),
+					Redux.createStore((state, action) -> {
 				return action instanceof SetValueAction
 						? ((SetValueAction) action).payload
 						: state;
-			} , 25);
+			} , 25));
 
 			frame.setContentPane(new Provider<Number>(store, connector));
 

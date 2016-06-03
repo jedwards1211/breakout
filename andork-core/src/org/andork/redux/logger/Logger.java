@@ -1,5 +1,6 @@
 package org.andork.redux.logger;
 
+import java.io.PrintStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -10,6 +11,7 @@ import org.andork.redux.Middleware;
 import org.andork.redux.Store;
 
 public class Logger implements Middleware {
+	private PrintStream out = System.out;
 	private DateFormat dateFormat = new SimpleDateFormat("HH:mm:ss.SSS");
 	private boolean logState = true;
 
@@ -23,6 +25,11 @@ public class Logger implements Middleware {
 		return this;
 	}
 
+	public Logger out(PrintStream out) {
+		this.out = out;
+		return this;
+	}
+
 	@Override
 	public ForStore store(Store<?> store) {
 		return new ForStore() {
@@ -31,14 +38,17 @@ public class Logger implements Middleware {
 				return new Dispatcher() {
 					@Override
 					public Object dispatch(Action action) {
-						System.out.println(dateFormat.format(new Date()) + "\t" + action.type);
-						if (logState) {
-							System.out.println("\tprevState: " + store.getState());
-						}
-						System.out.println("\taction:    " + action);
+						Date date = new Date();
+						Object prevState = store.getState();
 						Object result = next.dispatch(action);
+						Object nextState = store.getState();
+						out.println(dateFormat.format(date) + " " + action.type);
 						if (logState) {
-							System.out.println("\tnextState: " + store.getState());
+							System.out.println("  prevState: " + prevState);
+						}
+						out.println("  action:    " + action);
+						if (logState) {
+							out.println("  nextState: " + nextState);
 						}
 						return result;
 					}
