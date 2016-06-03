@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.andork</groupId>
   <artifactId>andork-ui-test</artifactId>
-  <version>0.9.25</version>
+  <version>0.9.26</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <plugins>
@@ -27,7 +27,7 @@
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-ui</artifactId>
-  		<version>0.9.25</version>
+  		<version>0.9.26</version>
   	</dependency>
   </dependencies>
 </project>
