@@ -8,7 +8,7 @@ import org.omg.CORBA.IntHolder;
 public class ReduxTest {
 	@Test
 	public void test1() {
-		Store store = Redux.applyMiddleware(new Logger()).apply(
+		Store store = Redux.applyMiddleware(new Logger().logState(false)).apply(
 				Redux.createStore(
 						new Reducer() {
 							@Override
