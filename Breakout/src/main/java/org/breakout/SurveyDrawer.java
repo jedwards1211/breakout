@@ -25,6 +25,7 @@ import java.awt.Dimension;
 import java.util.function.Consumer;
 
 import javax.swing.JLabel;
+import javax.swing.JToggleButton;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
@@ -36,7 +37,6 @@ import org.andork.swing.table.DefaultAnnotatingJTableSetup;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 
-@SuppressWarnings("serial")
 public class SurveyDrawer extends Drawer {
 	/**
 	 *
@@ -49,6 +49,7 @@ public class SurveyDrawer extends Drawer {
 
 	SurveyTable surveyTable;
 	DefaultAnnotatingJTableSetup surveyTableSetup;
+	JToggleButton showDataButton;
 
 	public SurveyDrawer(Consumer<Runnable> sortRunner) {
 		setPreferredSize(new Dimension(800, 250));
@@ -64,6 +65,8 @@ public class SurveyDrawer extends Drawer {
 		((AnnotatingTableRowSorter<SurveyTableModel>) surveyTableSetup.table.getAnnotatingRowSorter())
 				.setModelCopier(new SurveyTableModelCopier());
 
+		showDataButton = new JToggleButton("123");
+
 		delegate().dockingSide(Side.BOTTOM);
 		mainResizeHandle();
 
@@ -72,11 +75,12 @@ public class SurveyDrawer extends Drawer {
 		gbw.defaults().autoinsets(new DefaultAutoInsets(2, 2));
 		gbw.put(mainResizeHandle()).xy(0, 0).fillx(1.0).remWidth();
 		gbw.put(filterLabel).xy(0, 1).west().insets(2, 2, 0, 0);
-		gbw.put(filterField).rightOf(filterLabel).fillboth(1.0, 0.0);
-		gbw.put(highlightLabel).rightOf(filterField).west().insets(2, 10, 0, 0);
-		gbw.put(highlightField).rightOf(highlightLabel).fillboth(1.0, 0.0);
-		gbw.put(pinButton()).rightOf(highlightField).east().filly(0.0);
-		gbw.put(maxButton()).rightOf(pinButton()).east().filly(0.0);
+		gbw.put(filterField).rightOfLast().fillboth(1.0, 0.0);
+		gbw.put(highlightLabel).rightOfLast().west().insets(2, 10, 0, 0);
+		gbw.put(highlightField).rightOfLast().fillboth(1.0, 0.0);
+		gbw.put(showDataButton).rightOfLast().filly(0.0);
+		gbw.put(pinButton()).rightOfLast().east().filly(0.0);
+		gbw.put(maxButton()).rightOfLast().east().filly(0.0);
 		gbw.put(surveyTableSetup.scrollPane).below(filterLabel, maxButton()).fillboth(0.0, 1.0);
 	}
 
@@ -86,6 +90,10 @@ public class SurveyDrawer extends Drawer {
 
 	public TextComponentWithHintAndClear highlightField() {
 		return highlightField;
+	}
+
+	public JToggleButton showDataButton() {
+		return showDataButton;
 	}
 
 	public SurveyTable table() {

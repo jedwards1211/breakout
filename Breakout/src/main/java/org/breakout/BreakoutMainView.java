@@ -105,6 +105,7 @@ import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
+import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.CollectionUtils;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.jogl.AutoClipOrthoProjection;
@@ -1744,6 +1745,18 @@ public class BreakoutMainView {
 				surveyDrawer.table()));
 		((JTextField) miniSurveyDrawer.filterField().textComponent)
 				.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
+		Binder<Boolean> showDataInSurveyTableBinder = new QObjectAttributeBinder<>(RootModel.showDataInSurveyTable)
+				.bind(rootModelBinder);
+		new ButtonSelectedBinder(surveyDrawer.showDataButton).bind(showDataInSurveyTableBinder);
+		new BinderWrapper<Boolean>() {
+			@Override
+			protected void onValueChanged(Boolean showData) {
+				if (showData == null) {
+					showData = false;
+				}
+				surveyDrawer.table().setShowData(showData);
+			}
+		}.bind(showDataInSurveyTableBinder);
 
 		new BinderWrapper<Integer>() {
 			@Override

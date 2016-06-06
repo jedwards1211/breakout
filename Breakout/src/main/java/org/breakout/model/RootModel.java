@@ -70,6 +70,9 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<Boolean> doNotShowNewProjectInfoDialog = newAttribute(
 			Boolean.class,
 			"doNotShowNewProjectInfoDialog");
+	public static final Attribute<Boolean> showDataInSurveyTable = newAttribute(
+			Boolean.class,
+			"showDataInSurveyTable");
 
 	public static final RootModel instance = new RootModel();
 

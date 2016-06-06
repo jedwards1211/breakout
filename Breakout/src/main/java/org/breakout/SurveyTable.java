@@ -21,11 +21,17 @@
  *******************************************************************************/
 package org.breakout;
 
+import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JLabel;
+import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
@@ -37,46 +43,24 @@ import org.jdesktop.swingx.table.TableColumnExt;
 
 @SuppressWarnings("serial")
 public class SurveyTable extends AnnotatingJTable {
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = -3257512752381778654L;
 	private List<SurveyTableListener> listeners = new ArrayList<>();
 
+	private final TableCellRenderer rightAlignRenderer = new DefaultTableCellRenderer() {
+		@Override
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+				int row, int column) {
+			JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+					column);
+			label.setHorizontalAlignment(SwingConstants.RIGHT);
+			return label;
+		}
+	};
+
+	private boolean showData;
+
 	public SurveyTable() {
 		super(new SurveyTableModel());
-	}
-
-	public void addSurveyTableListener(SurveyTableListener listener) {
-		listeners.add(listener);
-	}
-
-	@Override
-	public void createDefaultColumnsFromModel() {
-		TableModel m = getModel();
-		if (m != null) {
-			// Remove any current columns
-			TableColumnModel cm = getColumnModel();
-			while (cm.getColumnCount() > 0) {
-				cm.removeColumn(cm.getColumn(0));
-			}
-
-			Attribute<?>[] attrs = new Attribute<?>[] { Row.from, Row.to, Row.distance, Row.fsAzm, Row.fsInc, Row.bsAzm,
-					Row.bsInc,
-					Row.left, Row.right, Row.up, Row.down, Row.north, Row.east, Row.elev, Row.desc, Row.date,
-					Row.surveyors, Row.comment, Row.scannedNotes };
-			String[] names = new String[] { "From", "To", "Distance", "Front Azimuth", "Front Inclination",
-					"Back Azimuth", "Back Inclination",
-					"Left", "Right", "Up", "Down", "Northing", "Easting", "Elevation", "Description", "Date",
-					"Surveyors", "Comment", "Scanned Notes" };
-
-			for (int i = 0; i < attrs.length; i++) {
-				TableColumnExt column = new TableColumnExt(attrs[i].getIndex());
-				column.setIdentifier(names[i]);
-				column.setHeaderValue(names[i]);
-				addColumn(column);
-			}
-		}
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -101,6 +85,52 @@ public class SurveyTable extends AnnotatingJTable {
 		});
 	}
 
+	public void addSurveyTableListener(SurveyTableListener listener) {
+		listeners.add(listener);
+	}
+
+	@Override
+	public void createDefaultColumnsFromModel() {
+		TableModel m = getModel();
+		if (m != null) {
+			// Remove any current columns
+			TableColumnModel cm = getColumnModel();
+			while (cm.getColumnCount() > 0) {
+				cm.removeColumn(cm.getColumn(0));
+			}
+
+			Attribute<?>[] attrs = showData
+					? new Attribute<?>[] { Row.from, Row.to, Row.distance, Row.fsAzm, Row.fsInc, Row.bsAzm,
+							Row.bsInc, Row.left, Row.right, Row.up, Row.down, Row.north, Row.east, Row.elev,
+							Row.scannedNotes }
+					: new Attribute<?>[] { Row.from, Row.to, Row.desc, Row.date, Row.surveyors, Row.comment };
+			String[] names = showData
+					? new String[] { "From", "To", "Distance", "Front Azimuth", "Front Inclination", "Back Azimuth",
+							"Back Inclination", "Left", "Right", "Up", "Down", "Northing", "Easting", "Elevation",
+							"Scanned Notes" }
+					: new String[] { "From", "To", "Description", "Date", "Surveyors", "Comment" };
+			boolean[] rightAlign = showData
+					? new boolean[] { false, false, true, true, true, true, true, true, true, true, true, true, true,
+							true, false }
+					: new boolean[] { false, false, false, false, false, false };
+			int[] widths = showData
+					? null
+					: new int[] { 50, 50, 300, 70, 200, 200 };
+			for (int i = 0; i < attrs.length; i++) {
+				TableColumnExt column = new TableColumnExt(attrs[i].getIndex());
+				column.setIdentifier(names[i]);
+				column.setHeaderValue(names[i]);
+				if (widths != null) {
+					column.setPreferredWidth(widths[i]);
+				}
+				if (rightAlign[i]) {
+					column.setCellRenderer(rightAlignRenderer);
+				}
+				addColumn(column);
+			}
+		}
+	}
+
 	@Override
 	public SurveyTableModel getModel() {
 		return (SurveyTableModel) super.getModel();
@@ -108,6 +138,13 @@ public class SurveyTable extends AnnotatingJTable {
 
 	public void removeSurveyTableListener(SurveyTableListener listener) {
 		listeners.remove(listener);
+	}
+
+	public void setShowData(boolean showData) {
+		if (this.showData != showData) {
+			this.showData = showData;
+			createDefaultColumnsFromModel();
+		}
 	}
 
 }
