@@ -45,10 +45,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,6 +59,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
@@ -1126,6 +1130,8 @@ public class BreakoutMainView {
 
 	NewProjectAction newProjectAction = new NewProjectAction(this);
 
+	EditSurveyScanPathsAction editSurveyScanPathsAction = new EditSurveyScanPathsAction(this);
+
 	OpenProjectAction openProjectAction = new OpenProjectAction(this);
 
 	OpenSurveyAction openSurveyAction = new OpenSurveyAction(this);
@@ -1536,6 +1542,8 @@ public class BreakoutMainView {
 				popupMenu.add(new JMenuItem(newProjectAction));
 				popupMenu.add(new JMenuItem(openProjectAction));
 				popupMenu.add(new JMenuItem(openSurveyAction));
+				popupMenu.add(new JSeparator());
+				popupMenu.add(new JMenuItem(editSurveyScanPathsAction));
 				popupMenu.add(new JSeparator());
 				JMenu importMenu = new JMenu();
 				localizer.setText(importMenu, "importMenu.text");
@@ -2233,9 +2241,53 @@ public class BreakoutMainView {
 	}
 
 	private void openSurveyNotes(String link) {
+		boolean isURI = false;
 		try {
-			Desktop.getDesktop().open(new File(link));
-		} catch (IOException e1) {
+			URI uri = new URL(link).toURI();
+			isURI = true;
+			Desktop.getDesktop().browse(uri);
+			return;
+		} catch (Exception e) {
+			if (isURI) {
+				return;
+			}
+		}
+		try {
+			File file = new File(link);
+			if (!file.isAbsolute()) {
+				QArrayList<File> dirs = getProjectModel().get(ProjectModel.surveyScanPaths);
+				if (dirs == null || dirs.isEmpty()) {
+					int option = JOptionPane.showConfirmDialog(mainPanel,
+							"There are no directories configured to search for the file: " + link
+									+ ".  Would you like to configure them now?",
+							"Can't find file",
+							JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+					if (option == JOptionPane.YES_OPTION) {
+						editSurveyScanPathsAction.actionPerformed(
+								new ActionEvent(this, ActionEvent.ACTION_PERFORMED, ""));
+						dirs = getProjectModel().get(ProjectModel.surveyScanPaths);
+					}
+				}
+				if (dirs != null) {
+					for (File dir : dirs) {
+						Optional<Path> foundFile = Files
+								.find(dir.toPath(), 10, (Path path, BasicFileAttributes attrs) -> {
+									return path.toString().endsWith(link);
+								} , FileVisitOption.FOLLOW_LINKS).findFirst();
+						if (foundFile.isPresent()) {
+							file = foundFile.get().toFile();
+							break;
+						}
+					}
+				}
+			}
+			if (!file.exists()) {
+				JOptionPane.showMessageDialog(mainPanel, "Can't find file: " + link, "Error",
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			Desktop.getDesktop().open(file);
+		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
 	}

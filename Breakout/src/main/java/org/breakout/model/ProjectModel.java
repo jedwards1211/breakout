@@ -22,15 +22,19 @@
 package org.breakout.model;
 
 import java.awt.Color;
+import java.io.File;
 import java.nio.file.Path;
 
 import org.andork.awt.layout.DrawerModel;
 import org.andork.func.Bimapper;
 import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;
+import org.andork.func.FileStringBimapper;
 import org.andork.func.PathStringBimapper;
 import org.andork.jogl.Projection;
 import org.andork.jogl.awt.JoglExportImageDialogModel;
+import org.andork.q.QArrayList;
+import org.andork.q.QArrayListBimapper;
 import org.andork.q.QMap;
 import org.andork.q.QMapBimapper;
 import org.andork.q.QObject;
@@ -92,6 +96,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<float[]> depthAxis = newAttribute(
 			float[].class,
 			"depthAxis");
+	public static final Attribute<QArrayList<File>> surveyScanPaths = newAttribute(
+			QArrayList.class,
+			"surveyScanPaths");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -112,7 +119,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(miniSurveyDrawer, DrawerModel.defaultMapper)
 				.map(taskListDrawer, DrawerModel.defaultMapper)
 				.map(exportImageDialogModel, JoglExportImageDialogModel.defaultMapper)
-				.map(backgroundColor, Color2HexStringBimapper.instance);
+				.map(backgroundColor, Color2HexStringBimapper.instance)
+				.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance));
 	}
 
 	private ProjectModel() {

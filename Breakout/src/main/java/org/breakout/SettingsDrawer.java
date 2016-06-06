@@ -159,6 +159,8 @@ public class SettingsDrawer extends Drawer {
 	JPanel mainPanel;
 	JScrollPane mainPanelScrollPane;
 
+	JLabel openSurveyScanCommandLabel;
+
 	BinderWrapper<QObject<RootModel>> rootBinder = new BinderWrapper<QObject<RootModel>>();
 	Binder<Path> currentProjectFileBinder = QObjectAttributeBinder.bind(
 			RootModel.currentProjectFile,
