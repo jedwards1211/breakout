@@ -22,6 +22,7 @@
 package org.breakout;
 
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.util.function.Consumer;
 
 import javax.swing.JLabel;
@@ -66,6 +67,8 @@ public class SurveyDrawer extends Drawer {
 				.setModelCopier(new SurveyTableModelCopier());
 
 		showDataButton = new JToggleButton("123");
+		showDataButton.setMargin(new Insets(0, 0, 0, 0));
+		showDataButton.setToolTipText("Switch between data/metadata");
 
 		delegate().dockingSide(Side.BOTTOM);
 		mainResizeHandle();
