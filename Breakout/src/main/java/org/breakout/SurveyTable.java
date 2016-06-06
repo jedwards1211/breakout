@@ -24,6 +24,8 @@ package org.breakout;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,10 +48,18 @@ public class SurveyTable extends AnnotatingJTable {
 	private static final long serialVersionUID = -3257512752381778654L;
 	private List<SurveyTableListener> listeners = new ArrayList<>();
 
-	private final TableCellRenderer rightAlignRenderer = new DefaultTableCellRenderer() {
+	private final NumberFormat numberFormat = NumberFormat.getInstance();
+
+	private final TableCellRenderer numberRenderer = new DefaultTableCellRenderer() {
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
 				int row, int column) {
+			if (value instanceof String) {
+				try {
+					value = numberFormat.format(numberFormat.parse(value.toString()));
+				} catch (ParseException e) {
+				}
+			}
 			JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 					column);
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -61,6 +71,10 @@ public class SurveyTable extends AnnotatingJTable {
 
 	public SurveyTable() {
 		super(new SurveyTableModel());
+
+		numberFormat.setGroupingUsed(false);
+		numberFormat.setMinimumFractionDigits(1);
+		numberFormat.setMaximumFractionDigits(1);
 
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -109,7 +123,7 @@ public class SurveyTable extends AnnotatingJTable {
 							"Back Inclination", "Left", "Right", "Up", "Down", "Northing", "Easting", "Elevation",
 							"Scanned Notes" }
 					: new String[] { "From", "To", "Description", "Date", "Surveyors", "Comment" };
-			boolean[] rightAlign = showData
+			boolean[] useNumberFormat = showData
 					? new boolean[] { false, false, true, true, true, true, true, true, true, true, true, true, true,
 							true, false }
 					: new boolean[] { false, false, false, false, false, false };
@@ -123,8 +137,8 @@ public class SurveyTable extends AnnotatingJTable {
 				if (widths != null) {
 					column.setPreferredWidth(widths[i]);
 				}
-				if (rightAlign[i]) {
-					column.setCellRenderer(rightAlignRenderer);
+				if (useNumberFormat[i]) {
+					column.setCellRenderer(numberRenderer);
 				}
 				addColumn(column);
 			}
