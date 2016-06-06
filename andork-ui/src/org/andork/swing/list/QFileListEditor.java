@@ -71,7 +71,7 @@ public class QFileListEditor extends JPanel {
 				if (model != null) {
 					int[] selectedIndices = list.getSelectedIndices();
 					for (int i = selectedIndices.length - 1; i >= 0; i--) {
-						model.remove(i);
+						model.remove(selectedIndices[i]);
 					}
 					list.clearSelection();
 				}
