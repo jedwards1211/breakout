@@ -29,6 +29,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.Window;
@@ -45,6 +46,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.FileVisitOption;
@@ -144,6 +146,7 @@ import org.andork.swing.FromEDT;
 import org.andork.swing.OnEDT;
 import org.andork.swing.SmartComboTableRowFilter;
 import org.andork.swing.async.DrawerPinningTask;
+import org.andork.swing.async.SelfReportingTask;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.SubtaskFilePersister;
@@ -174,6 +177,7 @@ import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.breakout.model.TransparentTerrain;
 import org.breakout.update.UpdateStatusPanelController;
+import org.jdesktop.swingx.JXHyperlink;
 
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
@@ -367,6 +371,7 @@ public class BreakoutMainView {
 			final ProjectArchiveModel finalProjectModel = projectModel;
 
 			new OnEDT() {
+
 				@Override
 				public void run() throws Throwable {
 					finalProjectModel.getProjectModel().set(ProjectModel.surveyFile,
@@ -1040,26 +1045,28 @@ public class BreakoutMainView {
 
 	private static Shot3dPickContext hoverUpdaterSpc = new Shot3dPickContext();
 
-	GLAutoDrawable autoDrawable;
+	private static final int SCANNED_NOTES_SEARCH_DEPTH = 10;
 
+	GLAutoDrawable autoDrawable;
 	GLCanvas canvas;
 	JoglScene scene;
 	JoglBackgroundColor bgColor;
 	DefaultJoglRenderer renderer;
 	DefaultNavigator navigator;
-	JoglOrbiter orbiter;
 
+	JoglOrbiter orbiter;
 	JoglOrthoNavigator orthoNavigator;
+
 	I18n i18n = new I18n();
 
 	PerspectiveProjection perspCalculator = new PerspectiveProjection(
 			(float) Math.PI / 2, 1f,
 			1e7f);
-
 	TaskService rebuildTaskService;
 	TaskService sortTaskService;
 	TaskService ioTaskService;
 	SurveyTableChangeHandler surveyTableChangeHandler;
+
 	final double[] fromLoc = new double[3];
 
 	final double[] toLoc = new double[3];
@@ -1067,46 +1074,46 @@ public class BreakoutMainView {
 	final double[] toToLoc = new double[3];
 
 	final double[] leftAtTo = new double[3];
-
 	final double[] leftAtTo2 = new double[3];
 	final double[] leftAtFrom = new double[3];
 	JPanel mainPanel;
-	JLayeredPane layeredPane;
 
+	JLayeredPane layeredPane;
 	MouseAdapterWrapper canvasMouseAdapterWrapper;
+
 	// normal mouse mode
 	MouseLooper mouseLooper;
-
 	MouseAdapterChain mouseAdapterChain;
+
 	MousePickHandler pickHandler;
 
 	DrawerAutoshowController autoshowController;
-
 	OtherMouseHandler otherMouseHandler;
 	WindowSelectionMouseHandler windowSelectionMouseHandler;
 	TableSelectionHandler selectionHandler;
-	RowFilterFactory<String, TableModel, Integer> rowFilterFactory;
 
+	RowFilterFactory<String, TableModel, Integer> rowFilterFactory;
 	SurveyDrawer surveyDrawer;
 	MiniSurveyDrawer miniSurveyDrawer;
 	TaskListDrawer taskListDrawer;
-	SettingsDrawer settingsDrawer;
 
+	SettingsDrawer settingsDrawer;
 	Survey3dModel model3d;
 	float[] v = newMat4f();
 	int debugMbrCount = 0;
 	List<BasicJOGLObject> debugMbrs = new ArrayList<BasicJOGLObject>();
+
 	Shot3dPickContext spc = new Shot3dPickContext();
 
 	final LinePlaneIntersection3f lpx = new LinePlaneIntersection3f();
 
 	final float[] p0 = new float[3];
-
 	final float[] p1 = new float[3];
 	final float[] p2 = new float[3];
 	File rootFile;
 	Path rootDirectory;
 	TaskServiceFilePersister<QObject<RootModel>> rootPersister;
+
 	final Binder<QObject<RootModel>> rootModelBinder = new DefaultBinder<QObject<RootModel>>();
 
 	final Binder<QObject<ProjectModel>> projectModelBinder = new DefaultBinder<QObject<ProjectModel>>();
@@ -2232,11 +2239,11 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
-	}
+	};
 
 	public void northFacingProfileMode() {
 		changeView(new float[] { 0, 0, -1 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations());
-	};
+	}
 
 	/**
 	 * Opens the given project file.
@@ -2253,18 +2260,43 @@ public class BreakoutMainView {
 		ioTaskService.submit(new OpenSurveyTask(newSurveyFile));
 	}
 
-	private void openSurveyNotes(String link) {
-		boolean isURI = false;
+	private void openSurveyNotes(File file) {
+		if (file == null || !file.exists()) {
+			JXHyperlink searchDirsLink = new JXHyperlink(editSurveyScanPathsAction);
+			searchDirsLink.setText("search directories");
+
+			JPanel message = new JPanel(new FlowLayout());
+			message.add(new JLabel("Couldn't find the file '" + file + "' in any of your "));
+			message.add(searchDirsLink);
+			message.add(new JLabel("(note: Breakout only searches " + SCANNED_NOTES_SEARCH_DEPTH +
+					" levels deep)."));
+
+			JOptionPane.showMessageDialog(mainPanel, message, "Can't find file", JOptionPane.ERROR_MESSAGE);
+
+			return;
+		}
 		try {
-			URI uri = new URL(link).toURI();
-			isURI = true;
+			Desktop.getDesktop().open(file);
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(mainPanel, "Failed to open file '" + file + "': " + e,
+					"Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
+	private void openSurveyNotes(String link) {
+		URI uri = null;
+		try {
+			uri = new URL(link).toURI();
 			Desktop.getDesktop().browse(uri);
 			return;
+		} catch (MalformedURLException e) {
 		} catch (Exception e) {
-			if (isURI) {
-				return;
-			}
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(mainPanel, "Failed to open URL " + uri + ": " + e,
+					"Error", JOptionPane.ERROR_MESSAGE);
 		}
+
 		try {
 			File file = new File(link);
 			if (!file.isAbsolute()) {
@@ -2282,24 +2314,40 @@ public class BreakoutMainView {
 					}
 				}
 				if (dirs != null) {
-					for (File dir : dirs) {
-						Optional<Path> foundFile = Files
-								.find(dir.toPath(), 10, (Path path, BasicFileAttributes attrs) -> {
+					final QArrayList<File> finalDirs = dirs;
+					ioTaskService.submit(new SelfReportingTask(mainPanel) {
+						@Override
+						public boolean isCancelable() {
+							return true;
+						}
+
+						@Override
+						protected void duringDialog() throws Exception {
+							setStatus("Searching for file: " + link + "...");
+							setIndeterminate(true);
+
+							showDialogLater();
+
+							for (File dir : finalDirs) {
+								Optional<Path> foundFile = Files
+										.find(dir.toPath(), SCANNED_NOTES_SEARCH_DEPTH,
+												(Path path, BasicFileAttributes attrs) -> {
 									return path.toString().endsWith(link);
 								} , FileVisitOption.FOLLOW_LINKS).findFirst();
-						if (foundFile.isPresent()) {
-							file = foundFile.get().toFile();
-							break;
+								if (foundFile.isPresent() && !isCanceled() && !isCanceling()) {
+									SwingUtilities.invokeLater(() -> openSurveyNotes(foundFile.get().toFile()));
+									return;
+								}
+							}
+							if (!isCanceled() && !isCanceling()) {
+								SwingUtilities.invokeLater(() -> openSurveyNotes(file));
+							}
 						}
-					}
+					});
+					return;
 				}
+				openSurveyNotes(file);
 			}
-			if (!file.exists()) {
-				JOptionPane.showMessageDialog(mainPanel, "Can't find file: " + link, "Error",
-						JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-			Desktop.getDesktop().open(file);
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
