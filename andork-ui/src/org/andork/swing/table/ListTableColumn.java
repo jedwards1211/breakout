@@ -83,6 +83,11 @@ public class ListTableColumn<R, V> extends TableColumn {
 		return this;
 	}
 
+	public ListTableColumn<R, V> headerValue(Object value) {
+		setHeaderValue(value);
+		return this;
+	}
+
 	public TableCellRenderer renderer() {
 		return super.getCellRenderer();
 	}
