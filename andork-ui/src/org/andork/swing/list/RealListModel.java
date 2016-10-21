@@ -254,7 +254,7 @@ public class RealListModel<E> extends AbstractList<E> implements ListModel<E> {
 
 	@Override
 	public E set(int index, E element) {
-		E replaced = super.set(index, element);
+		E replaced = list.set(index, element);
 		fireContentsChanged(index, index);
 		return replaced;
 	}
