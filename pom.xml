@@ -16,6 +16,8 @@
     <module>andork-spatial</module>
     <module>andork-ui</module>
     <module>andork-ui-test</module>
+    <module>segment</module>
+    <module>compass-parser</module>
     <module>Breakout</module>
   </modules>
 
