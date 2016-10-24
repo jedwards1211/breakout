@@ -15,6 +15,24 @@ import org.junit.Test;
 
 public class CompassConverterTest {
 	@Test
+	public void lengthConversionTest() {
+		CompassTripHeader header = new CompassTripHeader();
+		header.setLengthUnit(LengthUnit.DECIMAL_FEET);
+		CompassTrip trip = new CompassTrip();
+		trip.setHeader(header);
+		CompassShot shot = new CompassShot();
+		shot.setLength(1.0);
+		shot.setLeft(2.0);
+		trip.setShots(Arrays.asList(shot));
+
+		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.METERS);
+		Assert.assertEquals(1, rows.size());
+		Row row = rows.get(0);
+		Assert.assertEquals("0.3048", row.getDistance());
+		Assert.assertEquals("0.6096", row.getLeft());
+	}
+
+	@Test
 	public void testEmptyShot() {
 		CompassTripHeader header = new CompassTripHeader();
 		CompassTrip trip = new CompassTrip();
@@ -71,7 +89,7 @@ public class CompassConverterTest {
 		shot.setLeft(3.5);
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.METERS);
+		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
 		Assert.assertEquals(1, rows.size());
 		Assert.assertEquals("3.5", rows.get(0).getLeft());
 	}
@@ -88,7 +106,7 @@ public class CompassConverterTest {
 		shot.setLeft(3.5);
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.METERS);
+		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
 		Assert.assertEquals(2, rows.size());
 		Assert.assertEquals(null, rows.get(0).getLeft());
 		Assert.assertEquals("A1", rows.get(0).getFromStation());

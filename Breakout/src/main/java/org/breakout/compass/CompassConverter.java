@@ -68,10 +68,10 @@ public class CompassConverter {
 		while (tripShotIter.hasNext() && compassShotIter.hasNext()) {
 			Row shot = tripShotIter.next();
 			CompassShot compassShot = compassShotIter.next();
-			shot.setLeft(toString(compassShot.getLeft()));
-			shot.setRight(toString(compassShot.getRight()));
-			shot.setUp(toString(compassShot.getUp()));
-			shot.setDown(toString(compassShot.getDown()));
+			shot.setLeft(toString(LengthUnit.convert(compassShot.getLeft(), lengthUnit)));
+			shot.setRight(toString(LengthUnit.convert(compassShot.getRight(), lengthUnit)));
+			shot.setUp(toString(LengthUnit.convert(compassShot.getUp(), lengthUnit)));
+			shot.setDown(toString(LengthUnit.convert(compassShot.getDown(), lengthUnit)));
 		}
 		return tripShots;
 	}
