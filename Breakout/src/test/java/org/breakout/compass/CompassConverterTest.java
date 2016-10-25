@@ -35,6 +35,7 @@ public class CompassConverterTest {
 
 	@Test
 	public void testConvertTeam() {
+		Assert.assertEquals(null, CompassConverter.convertTeam(null));
 		Assert.assertEquals(Arrays.asList("Edwards, Andy", "Lewis, Sean"),
 				CompassConverter.convertTeam("  \tEdwards, Andy; Lewis, Sean  "));
 		Assert.assertEquals(Arrays.asList("Andy", "Sean"),
@@ -101,6 +102,47 @@ public class CompassConverterTest {
 		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
 		Assert.assertEquals(1, rows.size());
 		Assert.assertEquals("3.5", rows.get(0).getLeft());
+	}
+
+	@Test
+	public void testFullShot() {
+		CompassTripHeader header = new CompassTripHeader();
+		header.setLrudAssociation(LrudAssociation.FROM);
+		CompassTrip trip = new CompassTrip();
+		trip.setHeader(header);
+		CompassShot shot = new CompassShot();
+		shot.setFromStationName("A");
+		shot.setToStationName("B");
+		shot.setLength(1.5);
+		shot.setFrontsightAzimuth(2.5);
+		shot.setFrontsightInclination(3.5);
+		shot.setBacksightAzimuth(4.5);
+		shot.setBacksightInclination(5.5);
+		shot.setLeft(6.5);
+		shot.setRight(7.5);
+		shot.setUp(8.5);
+		shot.setDown(9.5);
+		trip.setShots(Arrays.asList(shot));
+
+		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
+		Assert.assertEquals(1, rows.size());
+		Row row = rows.get(0);
+		Assert.assertNull(row.getFromCave());
+		Assert.assertEquals("A", row.getFromStation());
+		Assert.assertNull(row.getToCave());
+		Assert.assertEquals("B", row.getToStation());
+		Assert.assertEquals("1.5", row.getDistance());
+		Assert.assertEquals("2.5", row.getFrontAzimuth());
+		Assert.assertEquals("3.5", row.getFrontInclination());
+		Assert.assertEquals("4.5", row.getBackAzimuth());
+		Assert.assertEquals("5.5", row.getBackInclination());
+		Assert.assertEquals("6.5", row.getLeft());
+		Assert.assertEquals("7.5", row.getRight());
+		Assert.assertEquals("8.5", row.getUp());
+		Assert.assertEquals("9.5", row.getDown());
+		Assert.assertNull(row.getNorthing());
+		Assert.assertNull(row.getEasting());
+		Assert.assertNull(row.getElevation());
 	}
 
 	@SuppressWarnings("deprecation")
