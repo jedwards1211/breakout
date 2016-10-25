@@ -120,8 +120,4 @@ public class CompassConverter {
 	private static String toString(double value) {
 		return Double.isNaN(value) ? null : String.valueOf(value);
 	}
-
-	private static String toString(Object obj) {
-		return obj == null ? null : obj.toString();
-	}
 }
