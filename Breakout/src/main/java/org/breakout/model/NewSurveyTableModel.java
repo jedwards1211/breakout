@@ -1,5 +1,7 @@
 package org.breakout.model;
 
+import java.util.List;
+
 public class NewSurveyTableModel {
 	/**
 	 * Data for a row in the survey table, which represents a shot.<br>
@@ -177,7 +179,7 @@ public class NewSurveyTableModel {
 		private String name;
 		private String date;
 		private String surveyNotes;
-		private String surveyors;
+		private List<String> surveyors;
 
 		public String getCave() {
 			return cave;
@@ -195,7 +197,7 @@ public class NewSurveyTableModel {
 			return surveyNotes;
 		}
 
-		public String getSurveyors() {
+		public List<String> getSurveyors() {
 			return surveyors;
 		}
 
@@ -215,7 +217,7 @@ public class NewSurveyTableModel {
 			this.surveyNotes = surveyNotes;
 		}
 
-		public void setSurveyors(String surveyors) {
+		public void setSurveyors(List<String> surveyors) {
 			this.surveyors = surveyors;
 		}
 	}

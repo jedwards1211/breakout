@@ -1,6 +1,7 @@
 package org.breakout.compass;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.andork.compass.CompassShot;
@@ -30,6 +31,14 @@ public class CompassConverterTest {
 		Row row = rows.get(0);
 		Assert.assertEquals("0.3048", row.getDistance());
 		Assert.assertEquals("0.6096", row.getLeft());
+	}
+
+	@Test
+	public void testConvertTeam() {
+		Assert.assertEquals(Arrays.asList("Edwards, Andy", "Lewis, Sean"),
+				CompassConverter.convertTeam("  \tEdwards, Andy; Lewis, Sean  "));
+		Assert.assertEquals(Arrays.asList("Andy", "Sean"),
+				CompassConverter.convertTeam("  Andy    , Sean   "));
 	}
 
 	@Test
@@ -92,6 +101,23 @@ public class CompassConverterTest {
 		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
 		Assert.assertEquals(1, rows.size());
 		Assert.assertEquals("3.5", rows.get(0).getLeft());
+	}
+
+	@SuppressWarnings("deprecation")
+	@Test
+	public void testFullTripHeader() {
+		CompassTripHeader header = new CompassTripHeader();
+		header.setCaveName("Fisher Ridge");
+		header.setSurveyName("MAM");
+		header.setComment("The secret connection");
+		header.setTeam(" Sean Lewis;    Andy Edwards   ; Ronnie Harrison ");
+		header.setDate(new Date(2016 - 1900, 11, 11));
+		Trip trip = CompassConverter.convertTripHeader(header);
+		Assert.assertEquals("Fisher Ridge", trip.getCave());
+		Assert.assertEquals("The secret connection", trip.getName());
+		Assert.assertEquals("2016/12/11", trip.getDate());
+		Assert.assertEquals(Arrays.asList("Sean Lewis", "Andy Edwards", "Ronnie Harrison"),
+				trip.getSurveyors());
 	}
 
 	@Test

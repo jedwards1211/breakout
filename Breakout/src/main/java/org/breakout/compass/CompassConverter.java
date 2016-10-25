@@ -1,6 +1,10 @@
 package org.breakout.compass;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -13,6 +17,8 @@ import org.breakout.model.NewSurveyTableModel.Row;
 import org.breakout.model.NewSurveyTableModel.Trip;
 
 public class CompassConverter {
+	private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
+
 	public static List<Row> convertFromCompass(List<CompassTrip> compassTrips) {
 		List<Row> shots = new ArrayList<Row>();
 
@@ -76,12 +82,20 @@ public class CompassConverter {
 		return tripShots;
 	}
 
+	public static List<String> convertTeam(String team) {
+		if (team == null) {
+			return null;
+		}
+		return new ArrayList<>(Arrays.asList(
+				team.trim().split(team.indexOf(';') >= 0 ? "\\s*;\\s*" : "\\s*,\\s*")));
+	}
+
 	public static Trip convertTripHeader(CompassTripHeader compassTripHeader) {
 		Trip trip = new Trip();
 		trip.setCave(compassTripHeader.getCaveName());
 		trip.setName(compassTripHeader.getComment());
 		trip.setDate(toString(compassTripHeader.getDate()));
-		trip.setSurveyors(toString(compassTripHeader.getTeam()));
+		trip.setSurveyors(convertTeam(compassTripHeader.getTeam()));
 		return trip;
 	}
 
@@ -97,6 +111,10 @@ public class CompassConverter {
 			}
 		}
 		return lengthUnit;
+	}
+
+	private static String toString(Date date) {
+		return date == null ? null : dateFormat.format(date);
 	}
 
 	private static String toString(double value) {
