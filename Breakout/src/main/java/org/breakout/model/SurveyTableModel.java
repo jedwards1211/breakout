@@ -207,8 +207,6 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		}
 	}
 
-	private Map<Integer, Integer> shotNumberToRowIndexMap = CollectionUtils.newHashMap();
-
 	private final List<Shot> shots = new ArrayList<Shot>();
 
 	public SurveyTableModel() {
@@ -218,7 +216,6 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 	}
 
 	public void clear() {
-		setShots(Collections.<Shot> emptyList());
 		setRows(Collections.singletonList(Row.instance.newObject()));
 	}
 
@@ -393,22 +390,6 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		return true;
 	}
 
-	public void rebuildShotNumberToRowMap() {
-		shotNumberToRowIndexMap.clear();
-
-		for (int i = 0; i < shots.size(); i++) {
-			Shot shot = shots.get(i);
-			if (shot != null) {
-				shotNumberToRowIndexMap.put(shot.number, i);
-			}
-		}
-	}
-
-	public int rowOfShot(int shotNumber) {
-		Integer row = shotNumberToRowIndexMap.get(shotNumber);
-		return row == null ? -1 : row;
-	}
-
 	@Override
 	public void setRow(int index, QObject<Row> row) {
 		while (index >= getRowCount()) {
@@ -418,12 +399,6 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		if (index >= getRowCount() - 2) {
 			fixEndRows();
 		}
-	}
-
-	public void setShots(List<Shot> shotList) {
-		shots.clear();
-		shots.addAll(shotList);
-		rebuildShotNumberToRowMap();
 	}
 
 	@Override
@@ -436,16 +411,6 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		if (prevValue == null || "".equals(prevValue) != (aValue == null || "".equals(aValue))) {
 			fixEndRows();
 		}
-	}
-
-	public Shot shotAtRow(int rowIndex) {
-		if (rowIndex < 0) {
-			throw new IndexOutOfBoundsException("row index out of bounds: " + rowIndex + " < 0");
-		}
-		if (rowIndex >= getRowCount()) {
-			throw new IndexOutOfBoundsException("row index out of bounds: " + rowIndex + " >= " + getRowCount());
-		}
-		return rowIndex < shots.size() ? shots.get(rowIndex) : null;
 	}
 
 	protected String shotName(Shot shot) {

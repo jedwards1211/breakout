@@ -61,6 +61,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Random;
@@ -437,7 +438,7 @@ public class BreakoutMainView {
 				surveyDrawer.table().clearSelection();
 			} else if (e.getClickCount() == 2) {
 				int index = picked.picked.getNumber();
-				int modelRow = surveyDrawer.table().getModel().rowOfShot(index);
+				int modelRow = rowOfShot(index);
 				if (modelRow >= 0) {
 					QObject<SurveyTableModel.Row> row = surveyDrawer.table().getModel().getRow(modelRow);
 					if (row != null) {
@@ -488,7 +489,7 @@ public class BreakoutMainView {
 
 			int index = picked.picked.getNumber();
 
-			int modelRow = surveyDrawer.table().getModel().rowOfShot(index);
+			int modelRow = rowOfShot(index);
 
 			if (modelRow >= 0) {
 				if ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0) {
@@ -657,6 +658,7 @@ public class BreakoutMainView {
 					try {
 						surveyTableChangeHandler.setPersistOnUpdate(false);
 						surveyDrawer.table().getModel().clear();
+						setShots(Collections.emptyList());
 					} finally {
 						surveyTableChangeHandler.setPersistOnUpdate(true);
 					}
@@ -787,7 +789,7 @@ public class BreakoutMainView {
 					new OnEDT() {
 						@Override
 						public void run() throws Throwable {
-							surveyDrawer.table().getModel().setShots(shots);
+							setShots(shots);
 						}
 					};
 
@@ -960,7 +962,7 @@ public class BreakoutMainView {
 
 				for (int i = e.getFirstIndex(); i <= e.getLastIndex()
 						&& i < surveyDrawer.table().getModel().getRowCount(); i++) {
-					Shot shot = surveyDrawer.table().getModel().shotAtRow(i);
+					Shot shot = shotAtRow(i);
 					if (shot == null) {
 						continue;
 					}
@@ -1160,6 +1162,9 @@ public class BreakoutMainView {
 
 	private final PlanarHull3f hull = new PlanarHull3f();
 
+	List<Shot> shots = Collections.emptyList();
+	Map<Integer, Integer> shotNumberToRowIndexMap = CollectionUtils.newHashMap();
+
 	public BreakoutMainView() {
 		final GLProfile glp = GLProfile.get(GLProfile.GL3);
 		final GLCapabilities caps = new GLCapabilities(glp);
@@ -1271,14 +1276,12 @@ public class BreakoutMainView {
 			public void selectShots(Set<Shot3d> newSelected, boolean add, boolean toggle) {
 				OnEDT.onEDT(() -> {
 					ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
-					SurveyTableModel model = surveyDrawer.table().getModel();
-
 					selModel.setValueIsAdjusting(true);
 					if (!add && !toggle) {
 						selModel.clearSelection();
 					}
 					for (Shot3d shot3d : newSelected) {
-						int row = model.rowOfShot(shot3d.getNumber());
+						int row = rowOfShot(shot3d.getNumber());
 						if (toggle && selModel.isSelectedIndex(row)) {
 							selModel.removeSelectionInterval(row, row);
 						} else {
@@ -1712,8 +1715,7 @@ public class BreakoutMainView {
 				}
 				List<float[]> vectors = new ArrayList<>();
 				for (Shot3d shot3d : getDefaultShotsForOperations()) {
-					SurveyTableModel tableModel = surveyDrawer.table().getModel();
-					Shot shot = tableModel.shotAtRow(tableModel.rowOfShot(shot3d.getNumber()));
+					Shot shot = getShot(shot3d);
 					float[] vector = new float[3];
 					Vecmath.sub3(shot.to.position, shot.from.position, vector);
 
@@ -1859,9 +1861,8 @@ public class BreakoutMainView {
 	public void autoProfileMode() {
 		Set<Shot3d> shots = getDefaultShotsForOperations();
 		List<float[]> forFitting = new ArrayList<>();
-		SurveyTableModel tableModel = surveyDrawer.table().getModel();
 		for (Shot3d shot : shots) {
-			Shot origShot = tableModel.shotAtRow(tableModel.rowOfShot(shot.getNumber()));
+			Shot origShot = getShot(shot);
 			forFitting
 					.add(new float[] { (float) origShot.from.position[0], (float) origShot.from.position[2] });
 			forFitting.add(new float[] { (float) origShot.to.position[0], (float) origShot.to.position[2] });
@@ -2195,12 +2196,16 @@ public class BreakoutMainView {
 		SurveyTableModel model = surveyDrawer.table().getModel();
 		ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
 		return IntStream.range(0, model.getRowCount()).filter(i -> selModel.isSelectedIndex(i))
-				.mapToObj(i -> model.shotAtRow(i)).filter(o -> o != null);
+				.mapToObj(i -> shotAtRow(i)).filter(o -> o != null);
+	}
+
+	public Shot getShot(Shot3d shot) {
+		return shotAtRow(rowOfShot(shot.getNumber()));
 	}
 
 	protected Stream<Shot> getShotsFromTable() {
 		SurveyTableModel model = surveyDrawer.table().getModel();
-		return IntStream.range(0, model.getRowCount()).mapToObj(i -> model.shotAtRow(i))
+		return IntStream.range(0, model.getRowCount()).mapToObj(i -> shotAtRow(i))
 				.filter(o -> o != null);
 	}
 
@@ -2317,11 +2322,6 @@ public class BreakoutMainView {
 					final QArrayList<File> finalDirs = dirs;
 					ioTaskService.submit(new SelfReportingTask(mainPanel) {
 						@Override
-						public boolean isCancelable() {
-							return true;
-						}
-
-						@Override
 						protected void duringDialog() throws Exception {
 							setStatus("Searching for file: " + link + "...");
 							setIndeterminate(true);
@@ -2342,6 +2342,11 @@ public class BreakoutMainView {
 							if (!isCanceled() && !isCanceling()) {
 								SwingUtilities.invokeLater(() -> openSurveyNotes(file));
 							}
+						}
+
+						@Override
+						public boolean isCancelable() {
+							return true;
 						}
 					});
 					return;
@@ -2422,6 +2427,17 @@ public class BreakoutMainView {
 		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations());
 	}
 
+	public void rebuildShotNumberToRowMap() {
+		shotNumberToRowIndexMap.clear();
+
+		for (int i = 0; i < shots.size(); i++) {
+			Shot shot = shots.get(i);
+			if (shot != null) {
+				shotNumberToRowIndexMap.put(shot.number, i);
+			}
+		}
+	}
+
 	protected void removeUnprotectedCameraAnimations() {
 		cameraAnimationQueue.removeAll(anim -> !protectedAnimations.containsKey(anim));
 	}
@@ -2472,6 +2488,11 @@ public class BreakoutMainView {
 					NewProjectAction.pickDefaultSurveyFile(projectFile.toFile()).toPath());
 			projectModel.set(ProjectModel.surveyFile, surveyFile);
 		}
+	}
+
+	public int rowOfShot(int shotNumber) {
+		Integer row = shotNumberToRowIndexMap.get(shotNumber);
+		return row == null ? -1 : row;
 	}
 
 	private void saveProjection() {
@@ -2532,6 +2553,22 @@ public class BreakoutMainView {
 				rootModel.changeSupport().addPropertyChangeListener(rootPersister);
 			}
 		}
+	}
+
+	public void setShots(List<Shot> shotList) {
+		shots = shotList;
+		rebuildShotNumberToRowMap();
+	}
+
+	public Shot shotAtRow(int rowIndex) {
+		SurveyTableModel model = surveyDrawer.table().getModel();
+		if (rowIndex < 0) {
+			throw new IndexOutOfBoundsException("row index out of bounds: " + rowIndex + " < 0");
+		}
+		if (rowIndex >= model.getRowCount()) {
+			throw new IndexOutOfBoundsException("row index out of bounds: " + rowIndex + " >= " + model.getRowCount());
+		}
+		return rowIndex < shots.size() ? shots.get(rowIndex) : null;
 	}
 
 	public void southFacingProfileMode() {
