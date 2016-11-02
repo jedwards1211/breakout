@@ -38,15 +38,6 @@ import org.breakout.model.SurveyTableModel.Row;
 
 public class SurveyTable extends AnnotatingJTable {
 	public static class Columns {
-		static final NumberFormat numberFormat = NumberFormat.getInstance();
-		static final RawNumberCellRenderer numberCellRenderer = new RawNumberCellRenderer(numberFormat);
-
-		static {
-			numberFormat.setGroupingUsed(false);
-			numberFormat.setMinimumFractionDigits(1);
-			numberFormat.setMaximumFractionDigits(1);
-		}
-
 		public static ListTableColumn<Row, String> fromCave = new ListTableColumn<Row, String>()
 				.headerValue("From Cave")
 				.getter(row -> row.getFromCave())
@@ -192,9 +183,17 @@ public class SurveyTable extends AnnotatingJTable {
 
 	private static final long serialVersionUID = -3257512752381778654L;
 
-	private List<SurveyTableListener> listeners = new ArrayList<>();
+	private static final NumberFormat numberFormat = NumberFormat.getInstance();
 
-	private final NumberFormat numberFormat = NumberFormat.getInstance();
+	static {
+		numberFormat.setGroupingUsed(false);
+		numberFormat.setMinimumFractionDigits(1);
+		numberFormat.setMaximumFractionDigits(1);
+	}
+
+	private static final RawNumberCellRenderer numberCellRenderer = new RawNumberCellRenderer(numberFormat);
+
+	private List<SurveyTableListener> listeners = new ArrayList<>();
 
 	private boolean showData;
 

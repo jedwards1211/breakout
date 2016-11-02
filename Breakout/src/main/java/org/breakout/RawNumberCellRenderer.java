@@ -1,6 +1,5 @@
 package org.breakout;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -37,7 +36,6 @@ public class RawNumberCellRenderer extends DefaultTableCellRenderer {
 		JLabel label = (JLabel) super.getTableCellRendererComponent(
 				table, value, isSelected, hasFocus, row, column);
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
-		label.setBackground(invalid ? new Color(255, 64, 64) : null);
 		return label;
 	}
 }
