@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.ListModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
@@ -55,7 +56,7 @@ public class ListTableModelTest {
 	public void init(String... elements) {
 		events.clear();
 		list = new RealListModel<>(new ArrayList<>(Arrays.asList(elements)));
-		model = new ListTableModel<>(list);
+		model = new ListTableModel<>((ListModel<String>) list);
 		listener = new Listener();
 		model.addTableModelListener(listener);
 	}

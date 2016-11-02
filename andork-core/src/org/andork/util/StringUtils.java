@@ -120,7 +120,7 @@ public class StringUtils {
 		return aValue == null || "".equals(aValue.toString());
 	}
 
-	public static String join(String separator, List<String> strings) {
+	public static String join(String separator, List<?> strings) {
 		StringBuilder sb = new StringBuilder();
 		if (strings.size() > 0) {
 			sb.append(strings.get(0));

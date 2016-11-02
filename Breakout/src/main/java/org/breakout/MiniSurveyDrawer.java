@@ -8,7 +8,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.TableColumn;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
@@ -71,14 +70,8 @@ public class MiniSurveyDrawer extends Drawer {
 		content = new JPanel();
 
 		DefaultTableColumnModel quickTableColumnModel = new DefaultTableColumnModel();
-		TableColumn fromColumn = new TableColumn(SurveyTableModel.Row.from.getIndex());
-		fromColumn.setIdentifier("From");
-		fromColumn.setHeaderValue("From");
-		TableColumn toColumn = new TableColumn(SurveyTableModel.Row.to.getIndex());
-		toColumn.setIdentifier("To");
-		toColumn.setHeaderValue("To");
-		quickTableColumnModel.addColumn(fromColumn);
-		quickTableColumnModel.addColumn(toColumn);
+		quickTableColumnModel.addColumn(SurveyTable.Columns.fromStation);
+		quickTableColumnModel.addColumn(SurveyTable.Columns.toStation);
 
 		table = new AnnotatingJTable(new SurveyTableModel(), quickTableColumnModel);
 

@@ -29,9 +29,7 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
-import org.andork.q.QObject;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.SurveyTableModel.Row;
 
 public class SurveyDesignationFilter extends RowFilter<TableModel, Integer> {
 	private static class Segment {
@@ -122,7 +120,7 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer> {
 
 	@Override
 	public boolean include(javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
-		QObject<Row> row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
+		SurveyTableModel.Row row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
 		if (row == null) {
 			return false;
 		}
@@ -130,8 +128,8 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer> {
 		boolean foundFrom = false;
 		boolean foundTo = false;
 
-		String from = row.get(Row.from);
-		String to = row.get(Row.to);
+		String from = row.getFromStation();
+		String to = row.getToStation();
 
 		for (Segment segment : segments) {
 			if (!foundFrom && from != null && segment.include(from)) {

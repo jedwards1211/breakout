@@ -440,9 +440,9 @@ public class BreakoutMainView {
 				int index = picked.picked.getNumber();
 				int modelRow = rowOfShot(index);
 				if (modelRow >= 0) {
-					QObject<SurveyTableModel.Row> row = surveyDrawer.table().getModel().getRow(modelRow);
+					SurveyTableModel.Row row = surveyDrawer.table().getModel().getListModel().getElementAt(modelRow);
 					if (row != null) {
-						String link = row.get(SurveyTableModel.Row.scannedNotes);
+						String link = row.getTrip() == null ? null : row.getTrip().getSurveyNotes();
 						if (link != null) {
 							openSurveyNotes(link);
 						}

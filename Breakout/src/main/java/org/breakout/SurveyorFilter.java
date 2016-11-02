@@ -26,34 +26,31 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
-import org.andork.q.QObject;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.SurveyTableModel.Row;
 
 public class SurveyorFilter extends RowFilter<TableModel, Integer> {
-	Pattern[] surveyors;
+	Pattern[] patterns;
 
 	public SurveyorFilter(String surveyors) {
 		String[] parts = surveyors.toLowerCase().replaceAll("\\s+", " ").split("\\s*,\\s*");
-		this.surveyors = new Pattern[parts.length];
+		patterns = new Pattern[parts.length];
 		for (int i = 0; i < parts.length; i++) {
-			this.surveyors[i] = Pattern.compile("\\b" + parts[i] + "\\b");
+			patterns[i] = Pattern.compile("\\b" + parts[i] + "\\b");
 		}
 	}
 
 	@Override
 	public boolean include(javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
-		if (surveyors.length == 0) {
+		if (patterns.length == 0) {
 			return false;
 		}
 
-		QObject<Row> row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
-		if (row == null || row.get(Row.surveyors) == null) {
+		SurveyTableModel.Row row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
+		if (row == null || row.getTrip() == null || row.getTrip().getSurveyors() == null) {
 			return false;
 		}
-		String surveyorString = row.get(Row.surveyors).toLowerCase().replaceAll("\\s+", " ");
-		for (Pattern surveyor : surveyors) {
-			if (!surveyor.matcher(surveyorString).find()) {
+		for (Pattern pattern : patterns) {
+			if (!row.getTrip().getSurveyors().stream().anyMatch(surveyor -> pattern.matcher(surveyor).find())) {
 				return false;
 			}
 		}

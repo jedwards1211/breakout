@@ -7,6 +7,8 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.table.AbstractTableModel;
 
+import org.andork.swing.list.RealListModel;
+
 public class ListTableModel<E> extends AbstractTableModel {
 	private class Listener implements ListDataListener {
 		@Override
@@ -27,11 +29,15 @@ public class ListTableModel<E> extends AbstractTableModel {
 
 	private static final long serialVersionUID = -3448915340186127126L;
 
-	private final ListModel<E> list;
+	private final ListModel<E> listModel;
 	private final Listener listener = new Listener();
 
+	public ListTableModel(List<E> list) {
+		this((ListModel<E>) new RealListModel<E>(list));
+	}
+
 	public ListTableModel(ListModel<E> list) {
-		this.list = list;
+		this.listModel = list;
 		list.addListDataListener(listener);
 	}
 
@@ -40,14 +46,18 @@ public class ListTableModel<E> extends AbstractTableModel {
 		return 1;
 	}
 
+	public ListModel<E> getListModel() {
+		return listModel;
+	}
+
 	@Override
 	public int getRowCount() {
-		return list != null ? list.getSize() : 0;
+		return listModel != null ? listModel.getSize() : 0;
 	}
 
 	@Override
 	public E getValueAt(int rowIndex, int columnIndex) {
-		return list.getElementAt(rowIndex);
+		return listModel.getElementAt(rowIndex);
 	}
 
 	/**
@@ -64,8 +74,8 @@ public class ListTableModel<E> extends AbstractTableModel {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-		if (list instanceof List) {
-			((List<E>) list).set(rowIndex, (E) aValue);
+		if (listModel instanceof List) {
+			((List<E>) listModel).set(rowIndex, (E) aValue);
 		}
 	}
 }

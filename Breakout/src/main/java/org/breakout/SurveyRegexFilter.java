@@ -26,9 +26,7 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
-import org.andork.q.QObject;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.SurveyTableModel.Row;
 
 public class SurveyRegexFilter extends RowFilter<TableModel, Integer> {
 	Pattern pattern;
@@ -40,10 +38,10 @@ public class SurveyRegexFilter extends RowFilter<TableModel, Integer> {
 	@Override
 	public boolean include(javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
 		SurveyTableModel model = (SurveyTableModel) entry.getModel();
-		QObject<Row> row = model.getRow(entry.getIdentifier());
+		SurveyTableModel.Row row = model.getRow(entry.getIdentifier());
 
-		String from = row.get(Row.from);
-		String to = row.get(Row.to);
+		String from = row.getFromStation();
+		String to = row.getToStation();
 
 		return from != null && to != null && pattern.matcher(from).find() && pattern.matcher(to).find();
 	}

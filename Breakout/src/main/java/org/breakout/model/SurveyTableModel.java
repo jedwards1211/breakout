@@ -21,11 +21,9 @@
  *******************************************************************************/
 package org.breakout.model;
 
-import static org.andork.util.StringUtils.toStringOrNull;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,44 +32,244 @@ import java.util.Map;
 import org.andork.collect.CollectionUtils;
 import org.andork.math.misc.AngleUtils;
 import org.andork.math3d.Vecmath;
-import org.andork.q.QObject;
-import org.andork.q.QSpec;
 import org.andork.swing.async.Subtask;
+import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
-import org.andork.swing.table.EasyTableModel;
-import org.andork.swing.table.QObjectRowFormat;
+import org.andork.swing.table.ListTableModel;
 
 @SuppressWarnings("serial")
-public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Row>> {
-	public static class Row extends QSpec<Row> {
-		public static final Attribute<String> from = newAttribute(String.class, "from");
-		public static final Attribute<String> to = newAttribute(String.class, "to");
-		public static final Attribute<String> distance = newAttribute(String.class, "dist");
-		public static final Attribute<String> fsAzm = newAttribute(String.class, "fsAzm");
-		public static final Attribute<String> fsInc = newAttribute(String.class, "fsInc");
-		public static final Attribute<String> bsAzm = newAttribute(String.class, "bsAzm");
-		public static final Attribute<String> bsInc = newAttribute(String.class, "bsInc");
-		public static final Attribute<CrossSectionType> xSectionType = newAttribute(CrossSectionType.class,
-				"xSectionType");
-		public static final Attribute<ShotSide> xSectionSide = newAttribute(ShotSide.class, "xSectionSide");
-		public static final Attribute<String> left = newAttribute(String.class, "left");
-		public static final Attribute<String> right = newAttribute(String.class, "right");
-		public static final Attribute<String> up = newAttribute(String.class, "up");
-		public static final Attribute<String> down = newAttribute(String.class, "down");
-		public static final Attribute<ShotSide> positionSide = newAttribute(ShotSide.class, "positionSide");
-		public static final Attribute<String> north = newAttribute(String.class, "north");
-		public static final Attribute<String> east = newAttribute(String.class, "east");
-		public static final Attribute<String> elev = newAttribute(String.class, "elev");
-		public static final Attribute<String> desc = newAttribute(String.class, "desc");
-		public static final Attribute<String> date = newAttribute(String.class, "date");
-		public static final Attribute<String> surveyors = newAttribute(String.class, "surveyors");
-		public static final Attribute<String> comment = newAttribute(String.class, "comment");
-		public static final Attribute<String> scannedNotes = newAttribute(String.class, "scannedNotes");
+public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
+	public static class DataCloner {
+		private final IdentityHashMap<Row, Row> rows = new IdentityHashMap<>();
+		private final IdentityHashMap<Trip, Trip> trips = new IdentityHashMap<>();
 
-		public static final Row instance = new Row();
+		public Row clone(Row row) {
+			if (row == null) {
+				return null;
+			}
+			Row result = rows.get(row);
+			if (result == null) {
+				result = new Row();
+				result.setFromCave(row.getFromCave());
+				result.setFromStation(row.getFromStation());
+				result.setToCave(row.getToCave());
+				result.setToStation(row.getToStation());
+				result.setDistance(row.getDistance());
+				result.setFrontAzimuth(row.getFrontAzimuth());
+				result.setFrontInclination(row.getFrontInclination());
+				result.setBackAzimuth(row.getBackAzimuth());
+				result.setBackInclination(row.getBackInclination());
+				result.setLeft(row.getLeft());
+				result.setRight(row.getRight());
+				result.setUp(row.getUp());
+				result.setDown(row.getDown());
+				result.setNorthing(row.getNorthing());
+				result.setEasting(row.getEasting());
+				result.setElevation(row.getElevation());
+				result.setComment(row.getComment());
+				result.setTrip(clone(row.getTrip()));
+			}
+			return result;
+		}
 
-		private Row() {
-			super();
+		public Trip clone(Trip trip) {
+			if (trip == null) {
+				return null;
+			}
+			Trip result = trips.get(trip);
+			if (result == null) {
+				result = new Trip();
+				result.setCave(trip.getCave());
+				result.setDate(trip.getDate());
+				result.setName(trip.getName());
+				result.setSurveyNotes(trip.getSurveyNotes());
+				result.setSurveyors(new ArrayList<>(trip.getSurveyors()));
+				trips.put(trip, result);
+			}
+			return result;
+		}
+	}
+
+	/**
+	 * Data for a row in the survey table, which represents a shot.<br>
+	 * <br>
+	 * LRUDs are associated with the {@link #getFromStation()} station and the
+	 * {@link #getToStation()} station of the previous shot, if it's the same.
+	 * <br>
+	 * <br>
+	 * {@link #getNorthing()}, {@link #getEasting()}, and
+	 * {@link #getElevation()} are associated with the {@link #getFromStation()}
+	 * station.
+	 */
+	public static class Row {
+		private String fromCave;
+		private String fromStation;
+		private String toCave;
+		private String toStation;
+		private String distance;
+		private String frontAzimuth;
+		private String frontInclination;
+		private String backAzimuth;
+		private String backInclination;
+		private String left;
+		private String right;
+		private String up;
+		private String down;
+		private String northing;
+		private String easting;
+		private String elevation;
+		private String comment;
+		private Trip trip;
+
+		public Trip ensureTrip() {
+			if (trip == null) {
+				trip = new Trip();
+			}
+			return trip;
+		}
+
+		public String getBackAzimuth() {
+			return backAzimuth;
+		}
+
+		public String getBackInclination() {
+			return backInclination;
+		}
+
+		public String getComment() {
+			return comment;
+		}
+
+		public String getDistance() {
+			return distance;
+		}
+
+		public String getDown() {
+			return down;
+		}
+
+		public String getEasting() {
+			return easting;
+		}
+
+		public String getElevation() {
+			return elevation;
+		}
+
+		public String getFromCave() {
+			return fromCave;
+		}
+
+		public String getFromStation() {
+			return fromStation;
+		}
+
+		public String getFrontAzimuth() {
+			return frontAzimuth;
+		}
+
+		public String getFrontInclination() {
+			return frontInclination;
+		}
+
+		public String getLeft() {
+			return left;
+		}
+
+		public String getNorthing() {
+			return northing;
+		}
+
+		public String getRight() {
+			return right;
+		}
+
+		public String getToCave() {
+			return toCave;
+		}
+
+		public String getToStation() {
+			return toStation;
+		}
+
+		public Trip getTrip() {
+			return trip;
+		}
+
+		public String getUp() {
+			return up;
+		}
+
+		public void setBackAzimuth(String backAzimuth) {
+			this.backAzimuth = backAzimuth;
+		}
+
+		public void setBackInclination(String backInclination) {
+			this.backInclination = backInclination;
+		}
+
+		public void setComment(String comment) {
+			this.comment = comment;
+		}
+
+		public void setDistance(String distance) {
+			this.distance = distance;
+		}
+
+		public void setDown(String down) {
+			this.down = down;
+		}
+
+		public void setEasting(String easting) {
+			this.easting = easting;
+		}
+
+		public void setElevation(String elevation) {
+			this.elevation = elevation;
+		}
+
+		public void setFromCave(String fromCave) {
+			this.fromCave = fromCave;
+		}
+
+		public void setFromStation(String from) {
+			fromStation = from;
+		}
+
+		public void setFrontAzimuth(String frontAzimuth) {
+			this.frontAzimuth = frontAzimuth;
+		}
+
+		public void setFrontInclination(String frontInclination) {
+			this.frontInclination = frontInclination;
+		}
+
+		public void setLeft(String left) {
+			this.left = left;
+		}
+
+		public void setNorthing(String northing) {
+			this.northing = northing;
+		}
+
+		public void setRight(String right) {
+			this.right = right;
+		}
+
+		public void setToCave(String toCave) {
+			this.toCave = toCave;
+		}
+
+		public void setToStation(String to) {
+			toStation = to;
+		}
+
+		public void setTrip(Trip trip) {
+			this.trip = trip;
+		}
+
+		public void setUp(String up) {
+			this.up = up;
 		}
 	}
 
@@ -87,6 +285,120 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		@Override
 		public SurveyTableModel createEmptyCopy(SurveyTableModel model) {
 			return new SurveyTableModel();
+		}
+	}
+
+	/**
+	 * Data common to a group of {@link Row}s (shots) all taken in one survey
+	 * trip.
+	 */
+	public static class Trip {
+		private String cave;
+		private String name;
+		private String date;
+		private String surveyNotes;
+		private List<String> surveyors;
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			Trip other = (Trip) obj;
+			if (cave == null) {
+				if (other.cave != null) {
+					return false;
+				}
+			} else if (!cave.equals(other.cave)) {
+				return false;
+			}
+			if (date == null) {
+				if (other.date != null) {
+					return false;
+				}
+			} else if (!date.equals(other.date)) {
+				return false;
+			}
+			if (name == null) {
+				if (other.name != null) {
+					return false;
+				}
+			} else if (!name.equals(other.name)) {
+				return false;
+			}
+			if (surveyNotes == null) {
+				if (other.surveyNotes != null) {
+					return false;
+				}
+			} else if (!surveyNotes.equals(other.surveyNotes)) {
+				return false;
+			}
+			if (surveyors == null) {
+				if (other.surveyors != null) {
+					return false;
+				}
+			} else if (!surveyors.equals(other.surveyors)) {
+				return false;
+			}
+			return true;
+		}
+
+		public String getCave() {
+			return cave;
+		}
+
+		public String getDate() {
+			return date;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public String getSurveyNotes() {
+			return surveyNotes;
+		}
+
+		public List<String> getSurveyors() {
+			return surveyors;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + (cave == null ? 0 : cave.hashCode());
+			result = prime * result + (date == null ? 0 : date.hashCode());
+			result = prime * result + (name == null ? 0 : name.hashCode());
+			result = prime * result + (surveyNotes == null ? 0 : surveyNotes.hashCode());
+			result = prime * result + (surveyors == null ? 0 : surveyors.hashCode());
+			return result;
+		}
+
+		public void setCave(String cave) {
+			this.cave = cave;
+		}
+
+		public void setDate(String date) {
+			this.date = date;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public void setSurveyNotes(String surveyNotes) {
+			this.surveyNotes = surveyNotes;
+		}
+
+		public void setSurveyors(List<String> surveyors) {
+			this.surveyors = surveyors;
 		}
 	}
 
@@ -207,21 +519,38 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		}
 	}
 
-	private final List<Shot> shots = new ArrayList<Shot>();
+	private final List<Row> rows;
 
 	public SurveyTableModel() {
-		super(true);
-		setPrototypeFormat(new QObjectRowFormat<Row>(Row.instance));
+		super(new ArrayList<Row>());
+		rows = ((RealListModel<Row>) getListModel()).getList();
 		fixEndRows();
 	}
 
 	public void clear() {
-		setRows(Collections.singletonList(Row.instance.newObject()));
+		rows.clear();
 	}
 
-	@Override
-	public void copyRowsFrom(EasyTableModel<QObject<Row>> src, int srcStart, int srcEnd, int myStart) {
-		super.copyRowsFrom(src, srcStart, srcEnd, myStart);
+	public void copyRowsFrom(SurveyTableModel src, int srcStart, int srcEnd, int myStart) {
+		DataCloner cloner = new DataCloner();
+
+		int origRowCount = rows.size();
+		int myEnd = myStart + srcEnd - srcStart;
+		for (int i = srcStart; i <= srcEnd; i++) {
+			Row srcRow = src.rows.get(i);
+			int destI = i + myStart - srcStart;
+			while (destI >= rows.size()) {
+				rows.add(null);
+			}
+			rows.set(destI, cloner.clone(srcRow));
+		}
+		int updateEnd = Math.min(origRowCount - 1, myEnd);
+		if (updateEnd >= myStart) {
+			fireTableRowsUpdated(myStart, updateEnd);
+		}
+		if (myEnd >= origRowCount) {
+			fireTableRowsInserted(origRowCount, myEnd);
+		}
 		fixEndRows();
 	}
 
@@ -238,37 +567,28 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		List<Shot> shotList = new ArrayList<Shot>();
 
 		for (int i = 0; i < getRowCount(); i++) {
-			QObject<Row> row = getRow(i);
+			Row row = getRow(i);
 
 			Shot shot = null;
 
 			try {
-				String fromName = toStringOrNull(row.get(Row.from));
-				String toName = toStringOrNull(row.get(Row.to));
-				double dist = parse(row.get(Row.distance));
-				double fsAzm = Math.toRadians(parse(row.get(Row.fsAzm)));
-				double bsAzm = Math.toRadians(parse(row.get(Row.bsAzm)));
-				double fsInc = Math.toRadians(parse(row.get(Row.fsInc)));
-				double bsInc = Math.toRadians(parse(row.get(Row.bsInc)));
+				String fromName = row.getFromStation();
+				String toName = row.getToStation();
+				double dist = parse(row.getDistance());
+				double fsAzm = Math.toRadians(parse(row.getFrontAzimuth()));
+				double bsAzm = Math.toRadians(parse(row.getBackAzimuth()));
+				double fsInc = Math.toRadians(parse(row.getFrontInclination()));
+				double bsInc = Math.toRadians(parse(row.getBackInclination()));
 
-				CrossSectionType xSectionType = row.get(Row.xSectionType);
-				if (xSectionType == null) {
-					xSectionType = CrossSectionType.LRUD;
-				}
-				ShotSide xSectionSide = row.get(Row.xSectionSide);
-				if (xSectionSide == null) {
-					xSectionSide = ShotSide.AT_TO;
-				}
+				CrossSectionType xSectionType = CrossSectionType.LRUD;
+				ShotSide xSectionSide = ShotSide.AT_FROM;
 
-				float left = parseFloat(row.get(Row.left));
-				float right = parseFloat(row.get(Row.right));
-				float up = parseFloat(row.get(Row.up));
-				float down = parseFloat(row.get(Row.down));
+				float left = parseFloat(row.getLeft());
+				float right = parseFloat(row.getRight());
+				float up = parseFloat(row.getUp());
+				float down = parseFloat(row.getDown());
 
-				ShotSide positionSide = row.get(Row.positionSide);
-				if (positionSide == null) {
-					positionSide = ShotSide.AT_TO;
-				}
+				ShotSide positionSide = ShotSide.AT_FROM;
 
 				if (fromName == null || toName == null) {
 					continue;
@@ -300,9 +620,9 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 					}
 				}
 
-				double north = parse(row.get(Row.north));
-				double east = parse(row.get(Row.east));
-				double elev = parse(row.get(Row.elev));
+				double north = parse(row.getNorthing());
+				double east = parse(row.getEasting());
+				double elev = parse(row.getElevation());
 
 				Station from = getStation(stations, fromName);
 				Station to = getStation(stations, toName);
@@ -316,10 +636,10 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 				shot.dist = dist;
 				shot.inc = Shot.averageInc(fsInc, bsInc);
 				shot.azm = Shot.averageAzm(shot.inc, fsAzm, bsAzm);
-				shot.desc = row.get(Row.desc);
+				shot.desc = row.getTrip() == null ? null : row.getTrip().getName();
 
 				try {
-					shot.date = dateFormat.parse(row.get(Row.date));
+					shot.date = row.getTrip() == null ? null : dateFormat.parse(row.getTrip().getDate());
 				} catch (Exception ex) {
 
 				}
@@ -374,10 +694,14 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		}
 
 		if (startOfEmptyRows == getRowCount()) {
-			addRow(Row.instance.newObject());
+			rows.add(new Row());
 		} else if (startOfEmptyRows <= getRowCount() - 2) {
-			removeRows(startOfEmptyRows, getRowCount() - 2);
+			rows.subList(startOfEmptyRows, getRowCount() - 1).clear();
 		}
+	}
+
+	public Row getRow(int index) {
+		return rows.get(index);
 	}
 
 	private boolean isEmpty(int row) {
@@ -390,24 +714,23 @@ public class SurveyTableModel extends EasyTableModel<QObject<SurveyTableModel.Ro
 		return true;
 	}
 
-	@Override
-	public void setRow(int index, QObject<Row> row) {
+	public void setRow(int index, Row row) {
 		while (index >= getRowCount()) {
-			addRow(Row.instance.newObject());
+			rows.add(new Row());
 		}
-		super.setRow(index, row);
+		rows.set(index, row);
 		if (index >= getRowCount() - 2) {
 			fixEndRows();
 		}
 	}
 
 	@Override
-	public void setValueAt(Object aValue, int row, int column, boolean fireEvent) {
+	public void setValueAt(Object aValue, int row, int column) {
 		while (row >= getRowCount()) {
-			addRow(Row.instance.newObject());
+			rows.add(new Row());
 		}
 		Object prevValue = getValueAt(row, column);
-		super.setValueAt(aValue, row, column, fireEvent);
+		super.setValueAt(aValue, row, column);
 		if (prevValue == null || "".equals(prevValue) != (aValue == null || "".equals(aValue))) {
 			fixEndRows();
 		}

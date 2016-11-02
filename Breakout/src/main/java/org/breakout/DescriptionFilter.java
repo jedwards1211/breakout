@@ -26,9 +26,7 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
-import org.andork.q.QObject;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.SurveyTableModel.Row;
 
 public class DescriptionFilter extends RowFilter<TableModel, Integer> {
 	// String[ ] descriptions;
@@ -48,11 +46,11 @@ public class DescriptionFilter extends RowFilter<TableModel, Integer> {
 			return true;
 		}
 
-		QObject<Row> row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
-		if (row == null || row.get(Row.desc) == null) {
+		SurveyTableModel.Row row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
+		if (row == null || row.getTrip() == null || row.getTrip().getName() == null) {
 			return false;
 		}
-		String desc = row.get(Row.desc).toLowerCase();
+		String desc = row.getTrip().getName().toLowerCase();
 		for (Pattern description : descriptions) {
 			if (!description.matcher(desc).find()) {
 				return false;
