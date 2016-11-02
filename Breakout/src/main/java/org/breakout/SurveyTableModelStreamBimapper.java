@@ -253,7 +253,7 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 			p.print(columns[0].name());
 			for (int i = 1; i < columns.length; i++) {
 				p.print('\t');
-				p.print(columns[i]);
+				p.print(columns[i].name());
 			}
 			p.println();
 
