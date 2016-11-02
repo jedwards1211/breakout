@@ -110,6 +110,8 @@ import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.CollectionUtils;
+import org.andork.compass.CompassParser;
+import org.andork.compass.CompassTrip;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.DefaultJoglRenderer;
@@ -163,6 +165,7 @@ import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.RowFilterFactory;
 import org.apache.commons.io.FileUtils;
 import org.breakout.StatsModel.MinAvgMax;
+import org.breakout.compass.CompassConverter;
 import org.breakout.model.ColorParam;
 import org.breakout.model.ProjectArchiveModel;
 import org.breakout.model.ProjectModel;
@@ -326,6 +329,59 @@ public class BreakoutMainView {
 		@Override
 		public boolean isCancelable() {
 			return true;
+		}
+	}
+
+	private class ImportCompassTask extends DrawerPinningTask {
+		Path compassFile;
+
+		private ImportCompassTask(Path newSurveyFile) {
+			super(getMainPanel(), taskListDrawer.holder());
+			compassFile = newSurveyFile;
+			setStatus("Importing " + newSurveyFile + "...");
+			setIndeterminate(true);
+
+			showDialogLater();
+		}
+
+		@Override
+		protected void reallyDuringDialog() throws Exception {
+			setStatus("Importing data from " + compassFile + "...");
+
+			final SurveyTableModel newModel;
+			try {
+				CompassParser parser = new CompassParser();
+				List<CompassTrip> trips = parser.parseCompassSurveyData(compassFile);
+				List<SurveyTableModel.Row> rows = CompassConverter.convertFromCompass(trips);
+				newModel = new SurveyTableModel(rows);
+			} catch (Exception ex) {
+				new OnEDT() {
+					@Override
+					public void run() throws Throwable {
+						JOptionPane.showConfirmDialog(getMainPanel(),
+								ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
+								"Failed to import compass data", JOptionPane.ERROR_MESSAGE);
+					}
+				};
+
+				return;
+			}
+
+			new OnEDT() {
+				@Override
+				public void run() throws Throwable {
+					if (newModel != null && newModel.getRowCount() > 0) {
+						try {
+							surveyTableChangeHandler.setPersistOnUpdate(false);
+							surveyDrawer.table().getModel().clear();
+							surveyDrawer.table().getModel()
+									.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
+						} finally {
+							surveyTableChangeHandler.setPersistOnUpdate(true);
+						}
+					}
+				}
+			};
 		}
 	}
 
@@ -1149,6 +1205,8 @@ public class BreakoutMainView {
 	ImportProjectArchiveAction importProjectArchiveAction = new ImportProjectArchiveAction(
 			this);
 
+	ImportCompassAction importCompassAction = new ImportCompassAction(this);
+
 	ExportProjectArchiveAction exportProjectArchiveAction = new ExportProjectArchiveAction(
 			this);
 
@@ -1559,6 +1617,7 @@ public class BreakoutMainView {
 				JMenu importMenu = new JMenu();
 				localizer.setText(importMenu, "importMenu.text");
 				importMenu.add(new JMenuItem(importProjectArchiveAction));
+				importMenu.add(new JMenuItem(importCompassAction));
 				popupMenu.add(importMenu);
 				JMenu exportMenu = new JMenu();
 				localizer.setText(exportMenu, "exportMenu.text");
@@ -2217,6 +2276,10 @@ public class BreakoutMainView {
 		return renderer.getViewSettings();
 	}
 
+	public void importCompassFile(File file) {
+		ioTaskService.submit(new ImportCompassTask(file.toPath()));
+	}
+
 	public void importProjectArchive(File newProjectFile) {
 		ioTaskService.submit(new ImportProjectArchiveTask(newProjectFile));
 	}
@@ -2231,7 +2294,7 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
-	}
+	};
 
 	private void installPerspectiveMouseAdapters() {
 		if (mouseAdapterChain != null) {
@@ -2244,7 +2307,7 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
-	};
+	}
 
 	public void northFacingProfileMode() {
 		changeView(new float[] { 0, 0, -1 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations());
@@ -2368,6 +2431,28 @@ public class BreakoutMainView {
 		changeView(forward, right, false, getDefaultShotsForOperations());
 	}
 
+	// class SurveyFilterFactory implements RowFilterFactory<String, TableModel,
+	// Integer>
+	// {
+	// @Override
+	// public RowFilter<TableModel, Integer> createFilter( String input )
+	// {
+	// switch( getProjectModel( ).get( ProjectModel.filterType ) )
+	// {
+	// case ALPHA_DESIGNATION:
+	// return new SurveyDesignationFilter( input );
+	// case REGEXP:
+	// return new SurveyRegexFilter( input );
+	// case SURVEYORS:
+	// return new SurveyorFilter( input );
+	// case DESCRIPTION:
+	// return new DescriptionFilter( input );
+	// default:
+	// return null;
+	// }
+	// }
+	// }
+
 	private Shot3dPickResult pick(Survey3dModel model3d, MouseEvent e, Shot3dPickContext spc) {
 		PlanarHull3f hull = new PlanarHull3f();
 		float[] origin = new float[3];
@@ -2400,28 +2485,6 @@ public class BreakoutMainView {
 
 		return null;
 	}
-
-	// class SurveyFilterFactory implements RowFilterFactory<String, TableModel,
-	// Integer>
-	// {
-	// @Override
-	// public RowFilter<TableModel, Integer> createFilter( String input )
-	// {
-	// switch( getProjectModel( ).get( ProjectModel.filterType ) )
-	// {
-	// case ALPHA_DESIGNATION:
-	// return new SurveyDesignationFilter( input );
-	// case REGEXP:
-	// return new SurveyRegexFilter( input );
-	// case SURVEYORS:
-	// return new SurveyorFilter( input );
-	// case DESCRIPTION:
-	// return new DescriptionFilter( input );
-	// default:
-	// return null;
-	// }
-	// }
-	// }
 
 	public void planMode() {
 		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations());

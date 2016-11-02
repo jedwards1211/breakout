@@ -13,8 +13,8 @@ import org.andork.collect.CollectionUtils;
 import org.andork.math.misc.AngleUtils;
 import org.andork.math3d.Vecmath;
 import org.andork.swing.async.Subtask;
-import org.breakout.model.NewSurveyTableModel.Row;
-import org.breakout.model.NewSurveyTableModel.Trip;
+import org.breakout.model.SurveyTableModel.Row;
+import org.breakout.model.SurveyTableModel.Trip;
 
 public class SurveyTableParser {
 	private static float coalesceNaNOrInf(float a, float b) {

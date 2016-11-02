@@ -527,6 +527,12 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 		fixEndRows();
 	}
 
+	public SurveyTableModel(List<Row> rows) {
+		super(rows);
+		this.rows = rows;
+		fixEndRows();
+	}
+
 	public void clear() {
 		rows.clear();
 	}

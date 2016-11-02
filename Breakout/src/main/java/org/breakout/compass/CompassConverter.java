@@ -13,8 +13,8 @@ import org.andork.compass.CompassTrip;
 import org.andork.compass.CompassTripHeader;
 import org.andork.compass.LengthUnit;
 import org.andork.compass.LrudAssociation;
-import org.breakout.model.NewSurveyTableModel.Row;
-import org.breakout.model.NewSurveyTableModel.Trip;
+import org.breakout.model.SurveyTableModel.Row;
+import org.breakout.model.SurveyTableModel.Trip;
 
 public class CompassConverter {
 	private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
