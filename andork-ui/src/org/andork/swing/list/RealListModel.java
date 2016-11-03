@@ -25,7 +25,22 @@ import javax.swing.event.ListDataListener;
  *            the type of elements in the list.
  */
 public class RealListModel<E> extends AbstractList<E> implements ListModel<E> {
+	public static <E> List<E> getList(ListModel<E> model) {
+		if (model instanceof RealListModel) {
+			return ((RealListModel<E>) model).getList();
+		}
+		return null;
+	}
+
+	public static <E> RealListModel<E> wrap(List<E> list) {
+		if (list instanceof RealListModel) {
+			return (RealListModel<E>) list;
+		}
+		return new RealListModel<>(list);
+	}
+
 	protected List<E> list;
+
 	protected EventListenerList listenerList = new EventListenerList();
 
 	public RealListModel(List<E> list) {

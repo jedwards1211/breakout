@@ -88,6 +88,16 @@ public class ListTableColumn<R, V> extends TableColumn {
 		return this;
 	}
 
+	public ListTableColumn<R, V> maxWidth(int maxWidth) {
+		setMaxWidth(maxWidth);
+		return this;
+	}
+
+	public ListTableColumn<R, V> preferredWidth(int preferredWidth) {
+		setPreferredWidth(preferredWidth);
+		return this;
+	}
+
 	public TableCellRenderer renderer() {
 		return super.getCellRenderer();
 	}

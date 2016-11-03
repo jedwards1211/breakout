@@ -6,6 +6,7 @@ import javax.swing.ListModel;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 
 import org.andork.swing.list.RealListModel;
 
@@ -29,11 +30,22 @@ public class ListTableModel<E> extends AbstractTableModel {
 
 	private static final long serialVersionUID = -3448915340186127126L;
 
+	@SuppressWarnings("unchecked")
+	public static <E> List<E> getList(TableModel model) {
+		if (model instanceof ListTableModel) {
+			return RealListModel.getList(((ListTableModel<E>) model).getListModel());
+		}
+		return null;
+	}
+
 	private final ListModel<E> listModel;
+
 	private final Listener listener = new Listener();
 
+	private boolean editable = true;
+
 	public ListTableModel(List<E> list) {
-		this((ListModel<E>) new RealListModel<E>(list));
+		this((ListModel<E>) RealListModel.wrap(list));
 	}
 
 	public ListTableModel(ListModel<E> list) {
@@ -68,7 +80,11 @@ public class ListTableModel<E> extends AbstractTableModel {
 	 */
 	@Override
 	public boolean isCellEditable(int rowIndex, int columnIndex) {
-		return true;
+		return editable;
+	}
+
+	public void setEditable(boolean editable) {
+		this.editable = editable;
 	}
 
 	@SuppressWarnings("unchecked")
