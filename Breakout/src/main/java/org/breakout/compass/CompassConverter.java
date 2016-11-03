@@ -96,6 +96,7 @@ public class CompassConverter {
 		trip.setName(compassTripHeader.getComment());
 		trip.setDate(toString(compassTripHeader.getDate()));
 		trip.setSurveyors(convertTeam(compassTripHeader.getTeam()));
+		trip.setBacksightsCorrected(false);
 		return trip;
 	}
 

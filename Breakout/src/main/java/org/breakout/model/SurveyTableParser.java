@@ -1,5 +1,7 @@
 package org.breakout.model;
 
+import static org.andork.util.JavaScript.isFinite;
+import static org.andork.util.JavaScript.or;
 import static org.andork.util.StringUtils.toStringOrNull;
 
 import java.text.SimpleDateFormat;
@@ -17,8 +19,106 @@ import org.breakout.model.SurveyTableModel.Row;
 import org.breakout.model.SurveyTableModel.Trip;
 
 public class SurveyTableParser {
-	private static float coalesceNaNOrInf(float a, float b) {
-		return Float.isNaN(a) || Float.isInfinite(a) ? b : a;
+	private static class ShotKey {
+		final String fromCave;
+		final String fromStation;
+		final String toCave;
+		final String toStation;
+
+		public ShotKey(Row row) {
+			this(row.getFromCave(), row.getFromStation(), row.getToCave(), row.getToStation());
+		}
+
+		public ShotKey(String fromCave, String fromStation, String toCave, String toStation) {
+			super();
+			this.fromCave = or(fromCave, "");
+			this.fromStation = fromStation;
+			this.toCave = or(toCave, "");
+			this.toStation = toStation;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+
+			ShotKey other = (ShotKey) obj;
+
+			if (fromCave.equals(other.fromCave) && fromStation.equals(other.fromStation)) {
+				return toCave.equals(other.toCave) && toStation.equals(other.toStation);
+			}
+			// reverse is equal too
+			else if (fromCave.equals(other.toCave) && fromStation.equals(other.toStation)) {
+				return toCave.equals(other.fromCave) && toStation.equals(other.fromStation);
+			}
+			return false;
+		}
+
+		@Override
+		public int hashCode() {
+			String fromCave = this.fromCave;
+			String fromStation = this.fromStation;
+			String toCave = this.toCave;
+			String toStation = this.toStation;
+
+			// alphabetize so that reverse of this shot has the same hash code
+			if (fromCave.compareTo(toCave) > 0 || fromStation.compareTo(toStation) > 0) {
+				// swap
+				fromCave = this.toCave;
+				fromStation = this.toStation;
+				toCave = this.fromCave;
+				toStation = this.fromStation;
+			}
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + fromCave.hashCode();
+			result = prime * result + fromStation.hashCode();
+			result = prime * result + toCave.hashCode();
+			result = prime * result + toStation.hashCode();
+			return result;
+		}
+	}
+
+	private static class StationKey {
+		final String cave;
+		final String station;
+
+		public StationKey(String cave, String station) {
+			this.cave = or(cave, "");
+			this.station = or(station, "");
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			StationKey other = (StationKey) obj;
+			return cave.equals(other.cave) && station.equals(other.station);
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + cave.hashCode();
+			result = prime * result + station.hashCode();
+			return result;
+		}
+
 	}
 
 	public static List<Shot> createShots(List<Row> rows, Subtask subtask) {
@@ -26,8 +126,8 @@ public class SurveyTableParser {
 			subtask.setTotal(rows.size());
 		}
 
-		Map<String, Station> stations = new LinkedHashMap<String, Station>();
-		Map<String, Shot> shots = new LinkedHashMap<String, Shot>();
+		Map<StationKey, Station> stations = new LinkedHashMap<>();
+		Map<ShotKey, Shot> shots = new LinkedHashMap<>();
 
 		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -49,6 +149,11 @@ public class SurveyTableParser {
 				double fsInc = Math.toRadians(parse(row.getFrontInclination()));
 				double bsInc = Math.toRadians(parse(row.getBackInclination()));
 
+				if (trip != null && !trip.areBacksightsCorrected()) {
+					bsAzm = AngleUtils.oppositeAngle(bsAzm);
+					bsInc = -bsInc;
+				}
+
 				float left = parseFloat(row.getLeft());
 				float right = parseFloat(row.getRight());
 				float up = parseFloat(row.getUp());
@@ -58,10 +163,14 @@ public class SurveyTableParser {
 					continue;
 				}
 
-				shot = shots.get(Shot.getName(fromName, toName));
+				shot = shots.get(new ShotKey(row));
 				if (shot == null) {
-					shot = shots.get(Shot.getName(toName, fromName));
-					if (shot != null) {
+					shot = new Shot();
+				} else {
+					// TODO make sure caves are reversed too
+					if (shot.from.equals(row.getToStation()) &&
+							shot.to.equals(row.getFromStation())) {
+						// reverse measurements
 						shot = new Shot();
 						String s = fromName;
 						fromName = toName;
@@ -74,10 +183,10 @@ public class SurveyTableParser {
 						d = fsInc;
 						fsInc = bsInc;
 						bsInc = d;
-					} else {
-						if (Double.isNaN(dist) || Double.isNaN(fsInc) && Double.isNaN(bsInc)) {
-							continue;
-						}
+					}
+
+					if (Double.isNaN(dist) || Double.isNaN(fsInc) && Double.isNaN(bsInc)) {
+						continue;
 					}
 				}
 
@@ -85,8 +194,8 @@ public class SurveyTableParser {
 				double east = parse(row.getEasting());
 				double elev = parse(row.getElevation());
 
-				Station from = getStation(stations, fromName);
-				Station to = getStation(stations, toName);
+				Station from = getStation(stations, new StationKey(row.getFromCave(), row.getFromStation()));
+				Station to = getStation(stations, new StationKey(row.getToCave(), row.getToStation()));
 
 				Vecmath.setdNoNaNOrInf(from.position, east, elev, -north);
 
@@ -95,8 +204,8 @@ public class SurveyTableParser {
 				shot.to = to;
 				shot.dist = dist;
 				shot.inc = Shot.averageInc(fsInc, bsInc);
-				shot.azm = Shot.averageAzm(shot.inc, fsAzm, bsAzm);
-				// shot.desc = row.get(Row.desc);
+				shot.azm = Shot.averageAzm(fsAzm, bsAzm);
+				shot.desc = row.getTrip() == null ? null : row.getTrip().getName();
 
 				try {
 					shot.date = dateFormat.parse(trip.getDate());
@@ -106,10 +215,10 @@ public class SurveyTableParser {
 
 				CrossSection xSection = shot.fromXsection;
 				xSection.type = CrossSectionType.LRUD;
-				xSection.dist[0] = coalesceNaNOrInf(left, xSection.dist[0]);
-				xSection.dist[1] = coalesceNaNOrInf(right, xSection.dist[1]);
-				xSection.dist[2] = coalesceNaNOrInf(up, xSection.dist[2]);
-				xSection.dist[3] = coalesceNaNOrInf(down, xSection.dist[3]);
+				xSection.dist[0] = isFinite(left) ? left : xSection.dist[0];
+				xSection.dist[1] = isFinite(right) ? right : xSection.dist[1];
+				xSection.dist[2] = isFinite(up) ? up : xSection.dist[2];
+				xSection.dist[3] = isFinite(down) ? down : xSection.dist[3];
 
 				if (subtask != null) {
 					if (subtask.isCanceling()) {
@@ -121,7 +230,7 @@ public class SurveyTableParser {
 				shot = null;
 			} finally {
 				if (shot != null) {
-					shots.put(shotName(shot), shot);
+					shots.put(new ShotKey(row), shot);
 				}
 				// DO add null shots to shotList
 				shotList.add(shot);
@@ -147,12 +256,12 @@ public class SurveyTableParser {
 		return shotList;
 	}
 
-	private static Station getStation(Map<String, Station> stations, String name) {
-		Station station = stations.get(name);
+	private static Station getStation(Map<StationKey, Station> stations, StationKey key) {
+		Station station = stations.get(key);
 		if (station == null) {
 			station = new Station();
-			station.name = name;
-			stations.put(name, station);
+			station.name = key.station;
+			stations.put(key, station);
 		}
 		return station;
 	}
@@ -177,10 +286,6 @@ public class SurveyTableParser {
 		} catch (Exception ex) {
 			return Float.NaN;
 		}
-	}
-
-	protected static String shotName(Shot shot) {
-		return shot.from.name + " - " + shot.to.name;
 	}
 
 	private static void updateCrossSections(Station station) {

@@ -47,17 +47,7 @@ public class Shot {
 		}
 	}
 
-	private static double angle(double a, double b) {
-		double a1 = b - a;
-		double a2 = b - a - Math.PI * 2.0;
-
-		return Math.abs(a1) < Math.abs(a2) ? a1 : a2;
-	}
-
-	public static double averageAzm(double avgIncDegrees, double fsAzm, double bsAzm) {
-		if (Math.abs(avgIncDegrees) == Math.toRadians(90.0)) {
-			return 0.0;
-		}
+	public static double averageAzm(double fsAzm, double bsAzm) {
 		if (Double.isInfinite(fsAzm) || Double.isInfinite(bsAzm)) {
 			throw new IllegalArgumentException("fsAzm and bsAzm must be non-infinite");
 		}
@@ -69,20 +59,12 @@ public class Shot {
 			return fsAzm;
 		}
 
-		fsAzm %= Math.PI * 2.0;
-		if (fsAzm < 0) {
-			fsAzm += Math.PI * 2.0;
-		}
-		bsAzm %= Math.PI * 2.0;
-		if (bsAzm < 0) {
-			bsAzm += Math.PI * 2.0;
-		}
-		double bsAzm180 = (bsAzm + Math.PI) % Math.PI * 2.0;
-		if (Math.abs(angle(fsAzm, bsAzm180)) < Math.abs(angle(fsAzm, bsAzm))) {
-			bsAzm = bsAzm180;
-		}
+		double avg = (fsAzm + bsAzm) * 0.5;
 
-		return fsAzm + angle(fsAzm, bsAzm) * 0.5;
+		if (Math.abs(fsAzm - bsAzm) > Math.PI) {
+			return AngleUtils.oppositeAngle(avg);
+		}
+		return avg;
 	}
 
 	public static double averageInc(double fsInc, double bsInc) {
@@ -91,12 +73,6 @@ public class Shot {
 		} else if (Double.isNaN(bsInc)) {
 			return fsInc;
 		} else {
-			if (Math.signum(fsInc) != Math.signum(bsInc)) {
-				double angle = Math.abs(fsInc) + Math.abs(bsInc);
-				if (angle > Math.toRadians(4.0)) {
-					bsInc = -bsInc;
-				}
-			}
 			return (fsInc + bsInc) * 0.5;
 		}
 	}
@@ -143,14 +119,14 @@ public class Shot {
 				try {
 					shot.computeFrom();
 				} catch (Exception ex) {
-					System.err.println("Can't caltulate: " + shot);
+					System.err.println("Can't calculate: " + shot);
 				}
 				station = shot.from;
 			} else if (visited.add(shot.to)) {
 				try {
 					shot.computeTo();
 				} catch (Exception ex) {
-					System.err.println("Can't caltulate: " + shot);
+					System.err.println("Can't calculate: " + shot);
 				}
 				station = shot.to;
 			}
@@ -188,10 +164,6 @@ public class Shot {
 				}
 			}
 		}
-	}
-
-	public static String getName(String fromName, String toName) {
-		return String.valueOf(fromName) + " - " + String.valueOf(toName);
 	}
 
 	public int number = -1;
@@ -302,10 +274,6 @@ public class Shot {
 		if (Double.isNaN(inc)) {
 			inc = Math.atan2(dy, dxz);
 		}
-	}
-
-	public String getName() {
-		return getName(from.name, to.name);
 	}
 
 	public double leftAt(Station station) {
@@ -482,6 +450,9 @@ public class Shot {
 
 	@Override
 	public String toString() {
-		return getName();
+		StringBuilder builder = new StringBuilder();
+		builder.append("Shot [from=").append(from).append(", to=").append(to).append("]");
+		return builder.toString();
 	}
+
 }

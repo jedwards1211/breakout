@@ -22,9 +22,9 @@
 package org.andork.util;
 
 public final class Pair<K, V> {
-	private K key;
+	private final K key;
 
-	private V value;
+	private final V value;
 
 	public Pair(K key, V value) {
 		this.key = key;
@@ -32,12 +32,33 @@ public final class Pair<K, V> {
 	}
 
 	@Override
-	public boolean equals(Object o) {
-		if (o instanceof Pair) {
-			Pair p = (Pair) o;
-			return key.equals(p.key) && value.equals(p.value);
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
 		}
-		return false;
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		@SuppressWarnings("rawtypes")
+		Pair other = (Pair) obj;
+		if (key == null) {
+			if (other.key != null) {
+				return false;
+			}
+		} else if (!key.equals(other.key)) {
+			return false;
+		}
+		if (value == null) {
+			if (other.value != null) {
+				return false;
+			}
+		} else if (!value.equals(other.value)) {
+			return false;
+		}
+		return true;
 	}
 
 	public K getKey() {
@@ -50,7 +71,11 @@ public final class Pair<K, V> {
 
 	@Override
 	public int hashCode() {
-		return key.hashCode() * 31 ^ value.hashCode();
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (key == null ? 0 : key.hashCode());
+		result = prime * result + (value == null ? 0 : value.hashCode());
+		return result;
 	}
 
 	@Override

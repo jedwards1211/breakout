@@ -79,14 +79,14 @@ public class SurveyTableModelStreamBimapper extends SubtaskStreamBimapper<Survey
 
 	final Column[] columns = {
 			column("From Cave", Pattern.compile("from\\s+cave", Pattern.CASE_INSENSITIVE),
-					row -> row.getFromCave(),
-					(fromCave, row) -> row.setFromCave(fromCave)),
+					row -> row.getOverrideFromCave(),
+					(fromCave, row) -> row.setOverrideFromCave(fromCave)),
 			column("From Station", Pattern.compile("from(\\s*station)?", Pattern.CASE_INSENSITIVE),
 					row -> row.getFromStation(),
 					(fromStation, row) -> row.setFromStation(fromStation)),
 			column("To Cave", Pattern.compile("to\\s*cave", Pattern.CASE_INSENSITIVE),
-					row -> row.getToCave(),
-					(toCave, row) -> row.setToCave(toCave)),
+					row -> row.getOverrideToCave(),
+					(toCave, row) -> row.setOverrideToCave(toCave)),
 			column("To Station", Pattern.compile("to(\\s*station)?", Pattern.CASE_INSENSITIVE),
 					row -> row.getToStation(),
 					(toStation, row) -> row.setToStation(toStation)),

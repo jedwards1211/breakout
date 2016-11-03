@@ -40,9 +40,9 @@ public class SurveyTable extends AnnotatingJTable {
 	public static class Columns {
 		public static ListTableColumn<Row, String> fromCave = new ListTableColumn<Row, String>()
 				.headerValue("From Cave")
-				.getter(row -> row.getFromCave())
+				.getter(row -> row.getOverrideFromCave())
 				.setter((row, value) -> {
-					row.setFromCave(value);
+					row.setOverrideFromCave(value);
 				});
 		public static ListTableColumn<Row, String> fromStation = new ListTableColumn<Row, String>()
 				.headerValue("From Station")
@@ -52,9 +52,9 @@ public class SurveyTable extends AnnotatingJTable {
 				});
 		public static ListTableColumn<Row, String> toCave = new ListTableColumn<Row, String>()
 				.headerValue("To Cave")
-				.getter(row -> row.getToCave())
+				.getter(row -> row.getOverrideToCave())
 				.setter((row, value) -> {
-					row.setToCave(value);
+					row.setOverrideToCave(value);
 				});
 		public static ListTableColumn<Row, String> toStation = new ListTableColumn<Row, String>()
 				.headerValue("To Station")

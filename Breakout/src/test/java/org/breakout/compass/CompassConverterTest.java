@@ -53,9 +53,9 @@ public class CompassConverterTest {
 		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.METERS);
 		Assert.assertEquals(1, rows.size());
 		Row row = rows.get(0);
-		Assert.assertNull(row.getFromCave());
+		Assert.assertNull(row.getOverrideFromCave());
 		Assert.assertNull(row.getFromStation());
-		Assert.assertNull(row.getToCave());
+		Assert.assertNull(row.getOverrideToCave());
 		Assert.assertNull(row.getToStation());
 		Assert.assertNull(row.getDistance());
 		Assert.assertNull(row.getFrontAzimuth());
@@ -127,9 +127,9 @@ public class CompassConverterTest {
 		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
 		Assert.assertEquals(1, rows.size());
 		Row row = rows.get(0);
-		Assert.assertNull(row.getFromCave());
+		Assert.assertNull(row.getOverrideFromCave());
 		Assert.assertEquals("A", row.getFromStation());
-		Assert.assertNull(row.getToCave());
+		Assert.assertNull(row.getOverrideToCave());
 		Assert.assertEquals("B", row.getToStation());
 		Assert.assertEquals("1.5", row.getDistance());
 		Assert.assertEquals("2.5", row.getFrontAzimuth());

@@ -179,6 +179,7 @@ import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
+import org.breakout.model.SurveyTableParser;
 import org.breakout.model.TransparentTerrain;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
@@ -836,7 +837,7 @@ public class BreakoutMainView {
 					parsingSubtask.setStatus("Parsing shot data");
 					parsingSubtask.setIndeterminate(false);
 
-					final List<Shot> shots = copy.createShots(parsingSubtask);
+					final List<Shot> shots = SurveyTableParser.createShots(copy.getRows(), parsingSubtask);
 
 					if (parsingSubtask.isCanceling()) {
 						return;
