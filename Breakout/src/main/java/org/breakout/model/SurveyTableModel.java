@@ -76,7 +76,9 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 				result.setDate(trip.getDate());
 				result.setName(trip.getName());
 				result.setSurveyNotes(trip.getSurveyNotes());
-				result.setSurveyors(new ArrayList<>(trip.getSurveyors()));
+				if (trip.getSurveyors() != null) {
+					result.setSurveyors(new ArrayList<>(trip.getSurveyors()));
+				}
 				trips.put(trip, result);
 			}
 			return result;
