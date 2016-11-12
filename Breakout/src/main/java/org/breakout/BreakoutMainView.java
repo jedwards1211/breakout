@@ -337,34 +337,38 @@ public class BreakoutMainView {
 	}
 
 	private class ImportCompassTask extends DrawerPinningTask {
-		Path compassFile;
+		Iterable<Path> compassFiles;
 		String importOption;
 
-		private ImportCompassTask(Path newSurveyFile) {
+		private ImportCompassTask(Iterable<Path> compassFiles) {
 			super(getMainPanel(), taskListDrawer.holder());
-			compassFile = newSurveyFile;
-			setStatus("Importing " + newSurveyFile + "...");
-			setIndeterminate(true);
+			this.compassFiles = compassFiles;
+			compassFiles.forEach(p -> setTotal(getTotal() + 1));
 
 			showDialogLater();
 		}
 
 		@Override
 		protected void reallyDuringDialog() throws Exception {
-			setStatus("Importing data from " + compassFile + "...");
-
+			List<SurveyTableModel.Row> rows = new ArrayList<>();
 			final SurveyTableModel newModel;
 			final CompassParser parser = new CompassParser();
 			try {
-				List<CompassTrip> trips = parser.parseCompassSurveyData(compassFile);
-				List<SurveyTableModel.Row> rows = CompassConverter.convertFromCompass(trips);
+				int progress = 0;
+				for (Path compassFile : compassFiles) {
+					setStatus("Importing data from " + compassFile + "...");
+					setCompleted(progress++);
+					List<CompassTrip> trips = parser.parseCompassSurveyData(compassFile);
+					rows.addAll(CompassConverter.convertFromCompass(trips));
+				}
 				newModel = new SurveyTableModel(rows);
 				newModel.setEditable(false);
 			} catch (Exception ex) {
+				ex.printStackTrace();
 				new OnEDT() {
 					@Override
 					public void run() throws Throwable {
-						JOptionPane.showConfirmDialog(getMainPanel(),
+						JOptionPane.showMessageDialog(getMainPanel(),
 								ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
 								"Failed to import compass data", JOptionPane.ERROR_MESSAGE);
 					}
@@ -2317,8 +2321,8 @@ public class BreakoutMainView {
 		return renderer.getViewSettings();
 	}
 
-	public void importCompassFile(File file) {
-		ioTaskService.submit(new ImportCompassTask(file.toPath()));
+	public void importCompassFiles(List<File> files) {
+		ioTaskService.submit(new ImportCompassTask(CollectionUtils.map(file -> file.toPath(), files)));
 	}
 
 	public void importProjectArchive(File newProjectFile) {

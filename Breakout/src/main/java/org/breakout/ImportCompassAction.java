@@ -24,6 +24,7 @@ package org.breakout;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -52,6 +53,7 @@ public class ImportCompassAction extends AbstractAction {
 				localizer.setName(ImportCompassAction.this, "name");
 
 				fileChooser = new JFileChooser();
+				fileChooser.setMultiSelectionEnabled(true);
 				fileChooser.setAcceptAllFileFilterUsed(true);
 				fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Compass Survey File (*.dat)",
 						"dat"));
@@ -81,7 +83,6 @@ public class ImportCompassAction extends AbstractAction {
 			return;
 		}
 
-		File file = fileChooser.getSelectedFile();
-		mainView.importCompassFile(file);
+		mainView.importCompassFiles(Arrays.asList(fileChooser.getSelectedFiles()));
 	}
 }
