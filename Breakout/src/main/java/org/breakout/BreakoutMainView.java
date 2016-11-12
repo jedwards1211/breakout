@@ -28,10 +28,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Desktop;
+import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -166,6 +168,7 @@ import org.andork.swing.table.RowFilterFactory;
 import org.apache.commons.io.FileUtils;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
+import org.breakout.compass.ui.CompassParseResultsDialog;
 import org.breakout.model.ColorParam;
 import org.breakout.model.ProjectArchiveModel;
 import org.breakout.model.ProjectModel;
@@ -335,6 +338,7 @@ public class BreakoutMainView {
 
 	private class ImportCompassTask extends DrawerPinningTask {
 		Path compassFile;
+		String importOption;
 
 		private ImportCompassTask(Path newSurveyFile) {
 			super(getMainPanel(), taskListDrawer.holder());
@@ -350,11 +354,12 @@ public class BreakoutMainView {
 			setStatus("Importing data from " + compassFile + "...");
 
 			final SurveyTableModel newModel;
+			final CompassParser parser = new CompassParser();
 			try {
-				CompassParser parser = new CompassParser();
 				List<CompassTrip> trips = parser.parseCompassSurveyData(compassFile);
 				List<SurveyTableModel.Row> rows = CompassConverter.convertFromCompass(trips);
 				newModel = new SurveyTableModel(rows);
+				newModel.setEditable(false);
 			} catch (Exception ex) {
 				new OnEDT() {
 					@Override
@@ -371,15 +376,50 @@ public class BreakoutMainView {
 			new OnEDT() {
 				@Override
 				public void run() throws Throwable {
-					if (newModel != null && newModel.getRowCount() > 0) {
+					CompassParseResultsDialog dialog = new CompassParseResultsDialog(i18n);
+					dialog.setErrors(parser.getErrors());
+					dialog.setSurveyTableModel(newModel);
+					dialog.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
+					importOption = null;
+					dialog.onImportAsNewProject(e -> {
+						importOption = "importAsNewProject";
+						dialog.dispose();
+					});
+					dialog.onAddToCurrentProject(e -> {
+						importOption = "addToCurrentProject";
+						dialog.dispose();
+					});
+					dialog.setModalityType(ModalityType.APPLICATION_MODAL);
+					dialog.setVisible(true);
+
+					if (newModel == null || newModel.getRowCount() == 0) {
+						return;
+					}
+
+					if ("addToCurrentProject".equals(importOption)) {
 						try {
 							surveyTableChangeHandler.setPersistOnUpdate(false);
-							surveyDrawer.table().getModel().clear();
-							surveyDrawer.table().getModel()
-									.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
+							SurveyTableModel model = surveyDrawer.table().getModel();
+							model.clear();
+							model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, model.getRowCount());
 						} finally {
 							surveyTableChangeHandler.setPersistOnUpdate(true);
 						}
+					} else if ("importAsNewProject".equals(importOption)) {
+						newProjectAction.actionPerformed(
+								new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "open new project"));
+						ioTaskService.submit(task -> {
+							OnEDT.onEDT(() -> {
+								try {
+									surveyTableChangeHandler.setPersistOnUpdate(false);
+									SurveyTableModel model = surveyDrawer.table().getModel();
+									model.clear();
+									model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
+								} finally {
+									surveyTableChangeHandler.setPersistOnUpdate(true);
+								}
+							});
+						});
 					}
 				}
 			};

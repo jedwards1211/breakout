@@ -63,7 +63,7 @@ public class CompassParseErrorsPane extends JSplitPane {
 
 		contextArea = new JTextArea();
 		contextArea.setEditable(false);
-		contextArea.setFont(Font.getFont("Monospaced"));
+		contextArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 11));
 		contextAreaScroller = new JScrollPane(contextArea);
 		contextAreaScroller.setPreferredSize(new Dimension(600, 300));
 		add(contextAreaScroller, JSplitPane.BOTTOM);
