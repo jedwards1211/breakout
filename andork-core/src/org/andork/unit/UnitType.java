@@ -14,6 +14,10 @@ public abstract class UnitType<T extends UnitType<T>> {
 
 	public abstract double convert(double d, Unit<T> from, Unit<T> to);
 
+	public float convertf(float f, Unit<T> from, Unit<T> to) {
+		return (float) convert(f, from, to);
+	}
+
 	public final Set<Unit<T>> units() {
 		return unmodifiableUnits;
 	}
