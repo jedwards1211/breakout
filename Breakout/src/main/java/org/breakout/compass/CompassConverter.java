@@ -8,11 +8,16 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.andork.compass.AzimuthUnit;
 import org.andork.compass.CompassShot;
 import org.andork.compass.CompassTrip;
 import org.andork.compass.CompassTripHeader;
+import org.andork.compass.InclinationUnit;
 import org.andork.compass.LengthUnit;
 import org.andork.compass.LrudAssociation;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
 import org.breakout.model.SurveyTableModel.Row;
 import org.breakout.model.SurveyTableModel.Trip;
 
@@ -22,12 +27,10 @@ public class CompassConverter {
 	public static List<Row> convertFromCompass(List<CompassTrip> compassTrips) {
 		List<Row> shots = new ArrayList<Row>();
 
-		LengthUnit lengthUnit = pickLengthUnit(compassTrips);
-
 		for (CompassTrip compassTrip : compassTrips) {
 			Trip trip = convertTripHeader(compassTrip.getHeader());
 
-			List<Row> tripShots = convertShots(compassTrip, lengthUnit);
+			List<Row> tripShots = convertShots(compassTrip);
 
 			for (Row shot : tripShots) {
 				shot.setTrip(trip);
@@ -39,9 +42,10 @@ public class CompassConverter {
 		return shots;
 	}
 
-	public static List<Row> convertShots(CompassTrip compassTrip, LengthUnit lengthUnit) {
+	public static List<Row> convertShots(CompassTrip compassTrip) {
 		List<CompassShot> compassShots = compassTrip.getShots();
 		List<Row> tripShots = new ArrayList<Row>();
+		LengthUnit lengthUnit = compassTrip.getHeader().getLengthUnit();
 
 		if (compassShots == null) {
 			return tripShots;
@@ -96,13 +100,43 @@ public class CompassConverter {
 		trip.setName(compassTripHeader.getComment());
 		trip.setDate(toString(compassTripHeader.getDate()));
 		trip.setSurveyors(convertTeam(compassTripHeader.getTeam()));
-		trip.setBacksightsCorrected(false);
-		trip.setDeclination(toString(compassTripHeader.getDeclination()));
-		trip.setDistanceCorrection(toString(compassTripHeader.getLengthCorrection()));
-		trip.setFrontAzimuthCorrection(toString(compassTripHeader.getFrontsightAzimuthCorrection()));
-		trip.setBackAzimuthCorrection(toString(compassTripHeader.getBacksightAzimuthCorrection()));
-		trip.setFrontInclinationCorrection(toString(compassTripHeader.getFrontsightInclinationCorrection()));
-		trip.setBackInclinationCorrection(toString(compassTripHeader.getBacksightInclinationCorrection()));
+
+		trip.setDistanceCorrection(toString(
+				LengthUnit.convert(compassTripHeader.getLengthCorrection(), compassTripHeader.getLengthUnit())));
+
+		trip.setDeclination(toString(
+				AzimuthUnit.convert(compassTripHeader.getDeclination(), compassTripHeader.getAzimuthUnit())));
+
+		trip.setFrontAzimuthCorrection(toString(
+				AzimuthUnit.convert(compassTripHeader.getFrontsightAzimuthCorrection(),
+						compassTripHeader.getAzimuthUnit())));
+		trip.setBackAzimuthCorrection(toString(
+				AzimuthUnit.convert(compassTripHeader.getBacksightAzimuthCorrection(),
+						compassTripHeader.getAzimuthUnit())));
+		trip.setBackAzimuthsCorrected(false);
+
+		trip.setFrontInclinationCorrection(toString(
+				InclinationUnit.convert(compassTripHeader.getFrontsightInclinationCorrection(),
+						compassTripHeader.getInclinationUnit())));
+		trip.setBackInclinationCorrection(toString(
+				InclinationUnit.convert(compassTripHeader.getBacksightInclinationCorrection(),
+						compassTripHeader.getInclinationUnit())));
+		trip.setBackInclinationsCorrected(false);
+
+		trip.setDistanceUnit(compassTripHeader.getLengthUnit() == LengthUnit.METERS
+				? Length.meters : Length.feet);
+		Unit<Angle> azimuthUnit = compassTripHeader.getAzimuthUnit() == AzimuthUnit.GRADS
+				? Angle.gradians : Angle.degrees;
+		Unit<Angle> inclinationUnit = compassTripHeader.getInclinationUnit() == InclinationUnit.PERCENT_GRADE
+				? Angle.percentGrade : compassTripHeader.getInclinationUnit() == InclinationUnit.GRADS
+						? Angle.gradians : Angle.degrees;
+		trip.setAngleUnit(azimuthUnit);
+		if (azimuthUnit != inclinationUnit) {
+			trip.setOverrideFrontAzimuthUnit(azimuthUnit);
+			trip.setOverrideBackAzimuthUnit(azimuthUnit);
+			trip.setOverrideFrontInclinationUnit(inclinationUnit);
+			trip.setOverrideBackInclinationUnit(inclinationUnit);
+		}
 		return trip;
 	}
 

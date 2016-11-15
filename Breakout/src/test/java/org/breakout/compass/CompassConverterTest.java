@@ -18,7 +18,7 @@ public class CompassConverterTest {
 	@Test
 	public void lengthConversionTest() {
 		CompassTripHeader header = new CompassTripHeader();
-		header.setLengthUnit(LengthUnit.DECIMAL_FEET);
+		header.setLengthUnit(LengthUnit.METERS);
 		CompassTrip trip = new CompassTrip();
 		trip.setHeader(header);
 		CompassShot shot = new CompassShot();
@@ -26,7 +26,7 @@ public class CompassConverterTest {
 		shot.setLeft(2.0);
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.METERS);
+		List<Row> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(1, rows.size());
 		Row row = rows.get(0);
 		Assert.assertEquals("0.3048", row.getDistance());
@@ -45,12 +45,13 @@ public class CompassConverterTest {
 	@Test
 	public void testEmptyShot() {
 		CompassTripHeader header = new CompassTripHeader();
+		header.setLengthUnit(LengthUnit.METERS);
 		CompassTrip trip = new CompassTrip();
 		trip.setHeader(header);
 		CompassShot shot = new CompassShot();
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.METERS);
+		List<Row> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(1, rows.size());
 		Row row = rows.get(0);
 		Assert.assertNull(row.getOverrideFromCave());
@@ -75,7 +76,7 @@ public class CompassConverterTest {
 	public void testEmptyTrip() {
 		CompassTrip trip = new CompassTrip();
 		trip.setHeader(new CompassTripHeader());
-		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.METERS);
+		List<Row> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(0, rows.size());
 	}
 
@@ -99,7 +100,7 @@ public class CompassConverterTest {
 		shot.setLeft(3.5);
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
+		List<Row> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(1, rows.size());
 		Assert.assertEquals("3.5", rows.get(0).getLeft());
 	}
@@ -124,7 +125,7 @@ public class CompassConverterTest {
 		shot.setDown(9.5);
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
+		List<Row> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(1, rows.size());
 		Row row = rows.get(0);
 		Assert.assertNull(row.getOverrideFromCave());
@@ -174,7 +175,7 @@ public class CompassConverterTest {
 		shot.setLeft(3.5);
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip, LengthUnit.DECIMAL_FEET);
+		List<Row> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(2, rows.size());
 		Assert.assertEquals(null, rows.get(0).getLeft());
 		Assert.assertEquals("A1", rows.get(0).getFromStation());

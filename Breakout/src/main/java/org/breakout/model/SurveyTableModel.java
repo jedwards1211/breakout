@@ -30,6 +30,9 @@ import java.util.List;
 import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.ListTableModel;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
 
 public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 	public static class DataCloner {
@@ -301,7 +304,14 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 		private String date;
 		private String surveyNotes;
 		private List<String> surveyors;
-		private boolean backsightsAreCorrected;
+		private Unit<Length> distanceUnit = Length.meters;
+		private Unit<Angle> angleUnit = Angle.degrees;
+		private Unit<Angle> overrideFrontAzimuthUnit;
+		private Unit<Angle> overrideBackAzimuthUnit;
+		private Unit<Angle> overrideFrontInclinationUnit;
+		private Unit<Angle> overrideBackInclinationUnit;
+		private boolean backAzimuthsCorrected;
+		private boolean backInclinationsCorrected;
 		private String declination;
 		private String distanceCorrection;
 		private String frontAzimuthCorrection;
@@ -309,16 +319,32 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 		private String backAzimuthCorrection;
 		private String backInclinationCorrection;
 
-		public boolean areBacksightsCorrected() {
-			return backsightsAreCorrected;
+		public boolean areBackAzimuthsCorrected() {
+			return backAzimuthsCorrected;
+		}
+
+		public boolean areBackInclinationsCorrected() {
+			return backInclinationsCorrected;
+		}
+
+		public Unit<Angle> getAngleUnit() {
+			return angleUnit;
 		}
 
 		public String getBackAzimuthCorrection() {
 			return backAzimuthCorrection;
 		}
 
+		public Unit<Angle> getBackAzimuthUnit() {
+			return overrideBackAzimuthUnit == null ? angleUnit : overrideBackAzimuthUnit;
+		}
+
 		public String getBackInclinationCorrection() {
 			return backInclinationCorrection;
+		}
+
+		public Unit<Angle> getBackInclinationUnit() {
+			return overrideBackInclinationUnit == null ? angleUnit : overrideBackInclinationUnit;
 		}
 
 		public String getCave() {
@@ -337,16 +363,44 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 			return distanceCorrection;
 		}
 
+		public Unit<Length> getDistanceUnit() {
+			return distanceUnit;
+		}
+
 		public String getFrontAzimuthCorrection() {
 			return frontAzimuthCorrection;
+		}
+
+		public Unit<Angle> getFrontAzimuthUnit() {
+			return overrideFrontAzimuthUnit == null ? angleUnit : overrideFrontAzimuthUnit;
 		}
 
 		public String getFrontInclinationCorrection() {
 			return frontInclinationCorrection;
 		}
 
+		public Unit<Angle> getFrontInclinationUnit() {
+			return overrideFrontInclinationUnit == null ? angleUnit : overrideFrontInclinationUnit;
+		}
+
 		public String getName() {
 			return name;
+		}
+
+		public Unit<Angle> getOverrideBackAzimuthUnit() {
+			return overrideBackAzimuthUnit;
+		}
+
+		public Unit<Angle> getOverrideBackInclinationUnit() {
+			return overrideBackInclinationUnit;
+		}
+
+		public Unit<Angle> getOverrideFrontAzimuthUnit() {
+			return overrideFrontAzimuthUnit;
+		}
+
+		public Unit<Angle> getOverrideFrontInclinationUnit() {
+			return overrideFrontInclinationUnit;
 		}
 
 		public String getSurveyNotes() {
@@ -357,16 +411,24 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 			return surveyors;
 		}
 
+		public void setAngleUnit(Unit<Angle> angleUnit) {
+			this.angleUnit = angleUnit;
+		}
+
 		public void setBackAzimuthCorrection(String backAzimuthCorrection) {
 			this.backAzimuthCorrection = backAzimuthCorrection;
+		}
+
+		public void setBackAzimuthsCorrected(boolean backAzimuthsCorrected) {
+			this.backAzimuthsCorrected = backAzimuthsCorrected;
 		}
 
 		public void setBackInclinationCorrection(String backInclinationCorrection) {
 			this.backInclinationCorrection = backInclinationCorrection;
 		}
 
-		public void setBacksightsCorrected(boolean corrected) {
-			backsightsAreCorrected = corrected;
+		public void setBackInclinationsCorrected(boolean backInclinationsCorrected) {
+			this.backInclinationsCorrected = backInclinationsCorrected;
 		}
 
 		public void setCave(String cave) {
@@ -385,6 +447,10 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 			this.distanceCorrection = distanceCorrection;
 		}
 
+		public void setDistanceUnit(Unit<Length> distanceUnit) {
+			this.distanceUnit = distanceUnit;
+		}
+
 		public void setFrontAzimuthCorrection(String frontAzimuthCorrection) {
 			this.frontAzimuthCorrection = frontAzimuthCorrection;
 		}
@@ -395,6 +461,22 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 
 		public void setName(String name) {
 			this.name = name;
+		}
+
+		public void setOverrideBackAzimuthUnit(Unit<Angle> backAzimuthUnit) {
+			overrideBackAzimuthUnit = backAzimuthUnit;
+		}
+
+		public void setOverrideBackInclinationUnit(Unit<Angle> backInclinationUnit) {
+			overrideBackInclinationUnit = backInclinationUnit;
+		}
+
+		public void setOverrideFrontAzimuthUnit(Unit<Angle> frontAzimuthUnit) {
+			overrideFrontAzimuthUnit = frontAzimuthUnit;
+		}
+
+		public void setOverrideFrontInclinationUnit(Unit<Angle> frontInclinationUnit) {
+			overrideFrontInclinationUnit = frontInclinationUnit;
 		}
 
 		public void setSurveyNotes(String surveyNotes) {

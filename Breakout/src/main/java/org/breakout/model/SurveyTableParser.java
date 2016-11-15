@@ -11,13 +11,19 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.math.misc.AngleUtils;
 import org.andork.math3d.Vecmath;
 import org.andork.swing.async.Subtask;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
 import org.breakout.model.SurveyTableModel.Row;
 import org.breakout.model.SurveyTableModel.Trip;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class SurveyTableParser {
 	private static class ParsedTripHeader {
@@ -131,10 +137,17 @@ public class SurveyTableParser {
 
 	}
 
+	private static final Trip defaultTrip = new Trip();
+
 	public static List<Shot> createShots(List<Row> rows, Subtask subtask) {
 		if (subtask != null) {
 			subtask.setTotal(rows.size());
 		}
+
+		MetacaveExporter exporter = new MetacaveExporter();
+		exporter.export(rows);
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		gson.toJson(exporter.getRoot(), System.out);
 
 		Map<StationKey, Station> stations = new LinkedHashMap<>();
 		Map<ShotKey, Shot> shots = new LinkedHashMap<>();
@@ -148,7 +161,11 @@ public class SurveyTableParser {
 		int i = 0;
 		for (Iterator<Row> iter = rows.iterator(); iter.hasNext(); i++) {
 			Row row = iter.next();
-			Trip trip = row.getTrip();
+			final Trip trip = row.getTrip() == null ? defaultTrip : row.getTrip();
+			Function<String, Double> toMeters = s -> Length.type.convert(
+					parse(s), trip.getDistanceUnit(), Length.meters);
+			Function<String, Float> toMetersf = s -> Length.type.convertf(
+					parseFloat(s), trip.getDistanceUnit(), Length.meters);
 			ParsedTripHeader header = parsedTripHeaders.get(trip);
 			if (header == null) {
 				header = parseTripHeader(trip);
@@ -160,21 +177,27 @@ public class SurveyTableParser {
 			try {
 				String fromName = toStringOrNull(row.getFromStation());
 				String toName = toStringOrNull(row.getToStation());
-				double dist = parse(row.getDistance());
-				double fsAzm = Math.toRadians(parse(row.getFrontAzimuth()));
-				double bsAzm = Math.toRadians(parse(row.getBackAzimuth()));
-				double fsInc = Math.toRadians(parse(row.getFrontInclination()));
-				double bsInc = Math.toRadians(parse(row.getBackInclination()));
+				double dist = toMeters.apply(row.getDistance());
+				double fsAzm = Angle.type.convert(parse(row.getFrontAzimuth()), trip.getFrontAzimuthUnit(),
+						Angle.radians);
+				double bsAzm = Angle.type.convert(parse(row.getBackAzimuth()), trip.getBackAzimuthUnit(),
+						Angle.radians);
+				double fsInc = Angle.type.convert(parse(row.getFrontInclination()), trip.getFrontInclinationUnit(),
+						Angle.radians);
+				double bsInc = Angle.type.convert(parse(row.getBackInclination()), trip.getBackInclinationUnit(),
+						Angle.radians);
 
-				if (trip != null && !trip.areBacksightsCorrected()) {
+				if (!trip.areBackAzimuthsCorrected()) {
 					bsAzm = AngleUtils.oppositeAngle(bsAzm);
+				}
+				if (!trip.areBackInclinationsCorrected()) {
 					bsInc = -bsInc;
 				}
 
-				float left = parseFloat(row.getLeft());
-				float right = parseFloat(row.getRight());
-				float up = parseFloat(row.getUp());
-				float down = parseFloat(row.getDown());
+				float left = toMetersf.apply(row.getLeft());
+				float right = toMetersf.apply(row.getRight());
+				float up = toMetersf.apply(row.getUp());
+				float down = toMetersf.apply(row.getDown());
 
 				if (fromName == null || toName == null) {
 					continue;
@@ -207,9 +230,9 @@ public class SurveyTableParser {
 					}
 				}
 
-				double north = parse(row.getNorthing());
-				double east = parse(row.getEasting());
-				double elev = parse(row.getElevation());
+				double north = toMeters.apply(row.getNorthing());
+				double east = toMeters.apply(row.getEasting());
+				double elev = toMeters.apply(row.getElevation());
 
 				Station from = getStation(stations, new StationKey(row.getFromCave(), row.getFromStation()));
 				Station to = getStation(stations, new StationKey(row.getToCave(), row.getToStation()));
@@ -320,12 +343,24 @@ public class SurveyTableParser {
 		if (trip == null) {
 			return result;
 		}
-		result.declination = parse(trip.getDeclination(), 0);
-		result.distanceCorrection = parse(trip.getDistanceCorrection(), 0);
-		result.frontAzimuthCorrection = parse(trip.getFrontAzimuthCorrection(), 0);
-		result.frontInclinationCorrection = parse(trip.getFrontInclinationCorrection(), 0);
-		result.backAzimuthCorrection = parse(trip.getBackAzimuthCorrection(), 0);
-		result.backInclinationCorrection = parse(trip.getBackInclinationCorrection(), 0);
+		result.declination = Angle.type.convert(
+				parse(trip.getDeclination(), 0),
+				trip.getAngleUnit(), Angle.radians);
+		result.distanceCorrection = Length.type.convert(
+				parse(trip.getDistanceCorrection(), 0),
+				trip.getDistanceUnit(), Length.meters);
+		result.frontAzimuthCorrection = Angle.type.convert(
+				parse(trip.getFrontAzimuthCorrection(), 0),
+				trip.getFrontAzimuthUnit(), Angle.radians);
+		result.frontInclinationCorrection = Angle.type.convert(
+				parse(trip.getFrontInclinationCorrection(), 0),
+				trip.getFrontInclinationUnit(), Angle.radians);
+		result.backAzimuthCorrection = Angle.type.convert(
+				parse(trip.getBackAzimuthCorrection(), 0),
+				trip.getBackAzimuthUnit(), Angle.radians);
+		result.backInclinationCorrection = Angle.type.convert(
+				parse(trip.getBackInclinationCorrection(), 0),
+				trip.getBackInclinationUnit(), Angle.radians);
 		return result;
 	}
 
