@@ -23,6 +23,9 @@ public class ListTableColumn<R, V> extends TableColumn {
 		@Override
 		public Object getCellEditorValue() {
 			TableCellEditor editor = ListTableColumn.super.getCellEditor();
+			if (setter == null || editor == null) {
+				return editingRow;
+			}
 			return setter.apply(editingRow, (V) editor.getCellEditorValue());
 		}
 
