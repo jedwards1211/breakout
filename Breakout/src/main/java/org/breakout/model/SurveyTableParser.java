@@ -6,6 +6,7 @@ import static org.andork.util.StringUtils.toStringOrNull;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,6 +20,15 @@ import org.breakout.model.SurveyTableModel.Row;
 import org.breakout.model.SurveyTableModel.Trip;
 
 public class SurveyTableParser {
+	private static class ParsedTripHeader {
+		double declination;
+		double distanceCorrection;
+		double frontAzimuthCorrection;
+		double frontInclinationCorrection;
+		double backAzimuthCorrection;
+		double backInclinationCorrection;
+	}
+
 	private static class ShotKey {
 		final String fromCave;
 		final String fromStation;
@@ -133,10 +143,17 @@ public class SurveyTableParser {
 
 		List<Shot> shotList = new ArrayList<Shot>();
 
+		IdentityHashMap<Trip, ParsedTripHeader> parsedTripHeaders = new IdentityHashMap<>();
+
 		int i = 0;
 		for (Iterator<Row> iter = rows.iterator(); iter.hasNext(); i++) {
 			Row row = iter.next();
 			Trip trip = row.getTrip();
+			ParsedTripHeader header = parsedTripHeaders.get(trip);
+			if (header == null) {
+				header = parseTripHeader(trip);
+				parsedTripHeaders.put(trip, header);
+			}
 
 			Shot shot = null;
 
@@ -202,9 +219,15 @@ public class SurveyTableParser {
 				shot = new Shot();
 				shot.from = from;
 				shot.to = to;
-				shot.dist = dist;
-				shot.inc = Shot.averageInc(fsInc, bsInc);
-				shot.azm = Shot.averageAzm(fsAzm, bsAzm);
+				shot.dist = dist + header.distanceCorrection;
+				shot.inc = Shot.averageInc(
+						fsInc + header.frontInclinationCorrection,
+						bsInc + header.backInclinationCorrection);
+				shot.azm = AngleUtils.normalize(
+						Shot.averageAzm(
+								fsAzm + header.frontAzimuthCorrection,
+								bsAzm + header.backAzimuthCorrection)
+								+ header.declination);
 				shot.desc = row.getTrip() == null ? null : row.getTrip().getName();
 
 				try {
@@ -267,13 +290,17 @@ public class SurveyTableParser {
 	}
 
 	private static double parse(Object o) {
+		return parse(o, Double.NaN);
+	}
+
+	private static double parse(Object o, double defaultValue) {
 		if (o == null) {
-			return Double.NaN;
+			return defaultValue;
 		}
 		try {
 			return Double.valueOf(o.toString());
 		} catch (Exception ex) {
-			return Double.NaN;
+			return defaultValue;
 		}
 	}
 
@@ -286,6 +313,20 @@ public class SurveyTableParser {
 		} catch (Exception ex) {
 			return Float.NaN;
 		}
+	}
+
+	private static ParsedTripHeader parseTripHeader(Trip trip) {
+		ParsedTripHeader result = new ParsedTripHeader();
+		if (trip == null) {
+			return result;
+		}
+		result.declination = parse(trip.getDeclination(), 0);
+		result.distanceCorrection = parse(trip.getDistanceCorrection(), 0);
+		result.frontAzimuthCorrection = parse(trip.getFrontAzimuthCorrection(), 0);
+		result.frontInclinationCorrection = parse(trip.getFrontInclinationCorrection(), 0);
+		result.backAzimuthCorrection = parse(trip.getBackAzimuthCorrection(), 0);
+		result.backInclinationCorrection = parse(trip.getBackInclinationCorrection(), 0);
+		return result;
 	}
 
 	private static void updateCrossSections(Station station) {

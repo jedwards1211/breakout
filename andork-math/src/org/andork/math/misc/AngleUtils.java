@@ -40,6 +40,14 @@ public class AngleUtils {
 		return Math.PI * 2.0 - clockwiseRotation(a, b);
 	}
 
+	public static double normalize(double a) {
+		a %= Math.PI * 2.0;
+		if (a < 0) {
+			a += Math.PI * 2.0;
+		}
+		return a;
+	}
+
 	public static double oppositeAngle(double angle) {
 		angle = (angle + Math.PI) % (Math.PI * 2);
 		return angle < 0 ? angle + Math.PI * 2 : angle;

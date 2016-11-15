@@ -52,6 +52,9 @@ public class Shot {
 			throw new IllegalArgumentException("fsAzm and bsAzm must be non-infinite");
 		}
 
+		fsAzm = AngleUtils.normalize(fsAzm);
+		bsAzm = AngleUtils.normalize(bsAzm);
+
 		if (Double.isNaN(fsAzm)) {
 			return bsAzm;
 		}

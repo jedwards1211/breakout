@@ -302,59 +302,23 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 		private String surveyNotes;
 		private List<String> surveyors;
 		private boolean backsightsAreCorrected;
+		private String declination;
+		private String distanceCorrection;
+		private String frontAzimuthCorrection;
+		private String frontInclinationCorrection;
+		private String backAzimuthCorrection;
+		private String backInclinationCorrection;
 
 		public boolean areBacksightsCorrected() {
 			return backsightsAreCorrected;
 		}
 
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			Trip other = (Trip) obj;
-			if (cave == null) {
-				if (other.cave != null) {
-					return false;
-				}
-			} else if (!cave.equals(other.cave)) {
-				return false;
-			}
-			if (date == null) {
-				if (other.date != null) {
-					return false;
-				}
-			} else if (!date.equals(other.date)) {
-				return false;
-			}
-			if (name == null) {
-				if (other.name != null) {
-					return false;
-				}
-			} else if (!name.equals(other.name)) {
-				return false;
-			}
-			if (surveyNotes == null) {
-				if (other.surveyNotes != null) {
-					return false;
-				}
-			} else if (!surveyNotes.equals(other.surveyNotes)) {
-				return false;
-			}
-			if (surveyors == null) {
-				if (other.surveyors != null) {
-					return false;
-				}
-			} else if (!surveyors.equals(other.surveyors)) {
-				return false;
-			}
-			return true;
+		public String getBackAzimuthCorrection() {
+			return backAzimuthCorrection;
+		}
+
+		public String getBackInclinationCorrection() {
+			return backInclinationCorrection;
 		}
 
 		public String getCave() {
@@ -363,6 +327,22 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 
 		public String getDate() {
 			return date;
+		}
+
+		public String getDeclination() {
+			return declination;
+		}
+
+		public String getDistanceCorrection() {
+			return distanceCorrection;
+		}
+
+		public String getFrontAzimuthCorrection() {
+			return frontAzimuthCorrection;
+		}
+
+		public String getFrontInclinationCorrection() {
+			return frontInclinationCorrection;
 		}
 
 		public String getName() {
@@ -377,16 +357,12 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 			return surveyors;
 		}
 
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + (cave == null ? 0 : cave.hashCode());
-			result = prime * result + (date == null ? 0 : date.hashCode());
-			result = prime * result + (name == null ? 0 : name.hashCode());
-			result = prime * result + (surveyNotes == null ? 0 : surveyNotes.hashCode());
-			result = prime * result + (surveyors == null ? 0 : surveyors.hashCode());
-			return result;
+		public void setBackAzimuthCorrection(String backAzimuthCorrection) {
+			this.backAzimuthCorrection = backAzimuthCorrection;
+		}
+
+		public void setBackInclinationCorrection(String backInclinationCorrection) {
+			this.backInclinationCorrection = backInclinationCorrection;
 		}
 
 		public void setBacksightsCorrected(boolean corrected) {
@@ -399,6 +375,22 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 
 		public void setDate(String date) {
 			this.date = date;
+		}
+
+		public void setDeclination(String declination) {
+			this.declination = declination;
+		}
+
+		public void setDistanceCorrection(String distanceCorrection) {
+			this.distanceCorrection = distanceCorrection;
+		}
+
+		public void setFrontAzimuthCorrection(String frontAzimuthCorrection) {
+			this.frontAzimuthCorrection = frontAzimuthCorrection;
+		}
+
+		public void setFrontInclinationCorrection(String frontInclinationCorrection) {
+			this.frontInclinationCorrection = frontInclinationCorrection;
 		}
 
 		public void setName(String name) {

@@ -97,6 +97,12 @@ public class CompassConverter {
 		trip.setDate(toString(compassTripHeader.getDate()));
 		trip.setSurveyors(convertTeam(compassTripHeader.getTeam()));
 		trip.setBacksightsCorrected(false);
+		trip.setDeclination(toString(compassTripHeader.getDeclination()));
+		trip.setDistanceCorrection(toString(compassTripHeader.getLengthCorrection()));
+		trip.setFrontAzimuthCorrection(toString(compassTripHeader.getFrontsightAzimuthCorrection()));
+		trip.setBackAzimuthCorrection(toString(compassTripHeader.getBacksightAzimuthCorrection()));
+		trip.setFrontInclinationCorrection(toString(compassTripHeader.getFrontsightInclinationCorrection()));
+		trip.setBackInclinationCorrection(toString(compassTripHeader.getBacksightInclinationCorrection()));
 		return trip;
 	}
 
