@@ -5,6 +5,13 @@ package org.andork.util;
  */
 public class JavaScript {
 	/**
+	 * @return true if s is null or empty.
+	 */
+	public static boolean falsy(String s) {
+		return s == null || s.isEmpty();
+	}
+
+	/**
 	 * @return true iff d is not NaN or infinite.
 	 */
 	public static boolean isFinite(float d) {
@@ -17,7 +24,7 @@ public class JavaScript {
 	 */
 	public static String or(String... strings) {
 		int i;
-		for (i = 0; i < strings.length - 2; i++) {
+		for (i = 0; i < strings.length - 1; i++) {
 			if (truthy(strings[i])) {
 				break;
 			}
