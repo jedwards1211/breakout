@@ -53,7 +53,8 @@ public class MetacaveImporter {
 		if (!obj.has(property)) {
 			return false;
 		}
-		return obj.get(property).getAsBoolean();
+		JsonElement elem = obj.get(property);
+		return elem.isJsonNull() ? null : obj.get(property).getAsBoolean();
 	}
 
 	private static Integer getAsInteger(JsonObject obj, String property) {
@@ -67,11 +68,12 @@ public class MetacaveImporter {
 		if (!obj.has(property)) {
 			return null;
 		}
-		return obj.get(property).getAsString();
+		JsonElement elem = obj.get(property);
+		return elem.isJsonNull() ? null : elem.getAsString();
 	}
 
 	private static String getMeasurement(JsonElement elem) {
-		if (elem == null) {
+		if (elem == null || elem.isJsonNull()) {
 			return null;
 		}
 		if (elem.isJsonArray()) {
@@ -135,7 +137,7 @@ public class MetacaveImporter {
 	}
 
 	public void importMetacave(InputStream stream) throws IOException {
-		importMetacave(new InputStreamReader(stream));
+		importMetacave(new InputStreamReader(stream, "UTF-8"));
 	}
 
 	public void importMetacave(JsonObject obj) {

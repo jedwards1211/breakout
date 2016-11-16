@@ -200,7 +200,7 @@ public class MetacaveExporter {
 			if (trip.getSurveyors() != null) {
 				JsonObject surveyors = new JsonObject();
 				for (String surveyor : trip.getSurveyors()) {
-					surveyors.add(surveyor, null);
+					surveyors.add(surveyor, new JsonObject());
 				}
 				exported.add("surveyors", surveyors);
 			}
