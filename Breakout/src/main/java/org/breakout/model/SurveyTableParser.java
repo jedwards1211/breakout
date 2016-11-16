@@ -6,6 +6,7 @@ import static org.andork.util.StringUtils.toStringOrNull;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -21,9 +22,6 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.breakout.model.SurveyTableModel.Row;
 import org.breakout.model.SurveyTableModel.Trip;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 public class SurveyTableParser {
 	private static class ParsedTripHeader {
@@ -144,10 +142,10 @@ public class SurveyTableParser {
 			subtask.setTotal(rows.size());
 		}
 
-		MetacaveExporter exporter = new MetacaveExporter();
-		exporter.export(rows);
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		gson.toJson(exporter.getRoot(), System.out);
+		// MetacaveExporter exporter = new MetacaveExporter();
+		// exporter.export(rows);
+		// Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		// gson.toJson(exporter.getRoot(), System.out);
 
 		Map<StationKey, Station> stations = new LinkedHashMap<>();
 		Map<ShotKey, Shot> shots = new LinkedHashMap<>();
@@ -288,8 +286,19 @@ public class SurveyTableParser {
 			shot.to.shots.add(shot);
 		}
 
+		boolean fixedStationFound = false;
+
 		for (Station station : stations.values()) {
 			updateCrossSections(station);
+			if (!Vecmath.hasNaNsOrInfinites(station.position)) {
+				fixedStationFound = true;
+			}
+		}
+
+		// if there are no fixed stations, set the first station's position to 0
+		if (!fixedStationFound && !stations.isEmpty()) {
+			Station station = stations.values().iterator().next();
+			Arrays.fill(station.position, 0);
 		}
 
 		int number = 0;

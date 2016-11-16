@@ -1,0 +1,76 @@
+{
+  "caves": {
+    "Fisher Ridge": {
+      "trips": [
+        {
+          name: "Trip 1",
+          date: "2016-01-01",
+          surveyors: {
+            "Andy Edwards": null,
+            "Sean Lewis": null
+          },
+          "distUnit": "ft",
+          "angleUnit": "deg",
+          "azmBacksightsCorrected": false,
+          "incBacksightsCorrected": true,
+          "declination": "1.0",
+          "azmFsUnit": "grad", 
+          "azmBsUnit": "mil", 
+          "incFsUnit": "deg", 
+          "incBsUnit": "%", 
+          "distCorrection": "2.0",
+          "azmFsCorrection": "3.0",
+          "azmBsCorrection": "4.0",
+          "incFsCorrection": "5.0",
+          "incBsCorrection": "6.0",
+          "survey": [
+          	{
+          	  "station": "A1",
+          	  "lrud": ["1.0", "2.0", "3.0", "4.0"],
+          	  "breakoutRow": 0
+          	},
+          	{
+          	  "measurements": [
+          	    {
+			      "dir": "fs",
+			      "dist": "1.0",
+			      "azm": "180",
+			      "inc": "-5",
+			      "breakoutRow": 0
+          	   	},
+          	   	{
+			      "dir": "bs",
+			      "dist": "2.0",
+			      "azm": "0",
+			      "inc": "5",
+			      "breakoutRow": 0
+          	   	},
+          	   	{
+			      "dist": "3.0",
+			      "azm": "90",
+			      "inc": "-10",
+			      "breakoutRow": 3
+          	   	}	 
+          	  ]
+          	},
+          	{
+          	  "cave": "Mammoth",
+          	  "station": "A2",
+          	  "lrud": ["1.0", "2.0", "3.0", "4.0"],
+			  "breakoutRow": 2,
+          	  "splays": [
+          	  	{
+          	  	  "dir": "fs",
+          	  	  "dist": "5.0",
+          	  	  "azm": "23.5",
+          	  	  "inc": "48.2",
+			      "breakoutRow": 2
+          	  	}
+          	  ]
+          	}
+          ]
+        }
+      ]
+    }
+  }
+}

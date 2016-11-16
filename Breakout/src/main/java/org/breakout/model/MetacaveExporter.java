@@ -4,8 +4,6 @@ import static org.andork.util.JavaScript.falsy;
 import static org.andork.util.JavaScript.or;
 import static org.andork.util.JavaScript.truthy;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -40,13 +38,40 @@ public class MetacaveExporter {
 		metacaveAngleUnits.put(Angle.percentGrade, "%");
 	}
 
+	private static void addAngleUnitProperty(JsonObject obj, String property, Unit<Angle> unit) {
+		if (unit != null) {
+			obj.addProperty(property, metacaveAngleUnits.get(unit));
+		}
+	}
+
+	private static void addLengthUnitProperty(JsonObject obj, String property, Unit<Length> unit) {
+		if (unit != null) {
+			obj.addProperty(property, metacaveLengthUnits.get(unit));
+		}
+	}
+
+	private static void addProperty(JsonObject obj, String property, boolean value) {
+		obj.addProperty(property, value);
+	}
+
+	private static void addProperty(JsonObject obj, String property, String value) {
+		if (truthy(value)) {
+			obj.addProperty(property, value);
+		}
+	}
+
+	private static String getAsString(JsonObject obj, String property) {
+		if (!obj.has(property) || obj.get(property).isJsonNull()) {
+			return null;
+		}
+		return obj.get(property).getAsString();
+	}
+
 	private final JsonObject root = new JsonObject();
 
 	private final JsonObject caves = new JsonObject();
 
 	private final IdentityHashMap<Trip, JsonObject> trips = new IdentityHashMap<>();
-
-	private final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'");
 
 	public MetacaveExporter() {
 		root.add("caves", caves);
@@ -60,8 +85,11 @@ public class MetacaveExporter {
 	}
 
 	public void export(Row row, int rowIndex) {
+		if (row == null) {
+			return;
+		}
 		// TODO: splays && LRUD-only rows
-		if (falsy(row.getFromStation()) || falsy(row.getToStation())) {
+		if (falsy(row.getFromStation()) && falsy(row.getToStation())) {
 			return;
 		}
 
@@ -71,12 +99,12 @@ public class MetacaveExporter {
 		JsonObject lastFromStation = survey.size() < 3 ? emptyObject : survey.get(survey.size() - 3).getAsJsonObject();
 		JsonObject lastToStation = survey.size() < 1 ? emptyObject : survey.get(survey.size() - 1).getAsJsonObject();
 
-		JsonArray measurements;
+		JsonArray measurements = null;
 
-		if (Objects.equals(row.getOverrideFromCave(), lastFromStation.get("cave")) &&
-				Objects.equals(row.getFromStation(), lastFromStation.get("station")) &&
-				Objects.equals(row.getOverrideToCave(), lastToStation.get("cave")) &&
-				Objects.equals(row.getToStation(), lastToStation.get("station"))) {
+		if (Objects.equals(row.getOverrideFromCave(), getAsString(lastFromStation, "cave")) &&
+				Objects.equals(row.getFromStation(), getAsString(lastFromStation, "station")) &&
+				Objects.equals(row.getOverrideToCave(), getAsString(lastToStation, "cave")) &&
+				Objects.equals(row.getToStation(), getAsString(lastToStation, "station"))) {
 			// same from and to station;
 			// prepare to add measurements to the last shot
 			measurements = survey.get(survey.size() - 2).getAsJsonObject().getAsJsonArray("measurements");
@@ -84,18 +112,17 @@ public class MetacaveExporter {
 			// if the last station doesn't match the from station of this shot,
 			// insert an empty (non) shot and a new from station
 			JsonObject fromStation = null;
-			if (Objects.equals(row.getOverrideFromCave(), lastToStation.get("cave")) &&
-					Objects.equals(row.getFromStation(), lastToStation.get("station"))) {
+			if (Objects.equals(row.getOverrideFromCave(), getAsString(lastToStation, "cave")) &&
+					Objects.equals(row.getFromStation(), getAsString(lastToStation, "station"))) {
 				fromStation = lastToStation;
 			} else if (survey.size() != 0) {
+				// insert empty shot
 				survey.add(new JsonObject());
 			}
 			if (fromStation == null) {
 				fromStation = new JsonObject();
-				if (truthy(row.getOverrideFromCave())) {
-					fromStation.addProperty("cave", row.getOverrideFromCave());
-				}
-				fromStation.addProperty("station", row.getFromStation());
+				addProperty(fromStation, "cave", row.getOverrideFromCave());
+				addProperty(fromStation, "station", row.getFromStation());
 				survey.add(fromStation);
 			}
 			// add lruds to from station
@@ -109,47 +136,45 @@ public class MetacaveExporter {
 				fromStation.addProperty("breakoutRow", rowIndex);
 			}
 
-			// insert shot
-			measurements = new JsonArray();
-			JsonObject shot = new JsonObject();
-			shot.add("measurements", measurements);
-			shot.addProperty("breakoutRow", rowIndex);
-			survey.add(shot);
+			if (truthy(row.getToStation())) {
+				// insert shot
+				measurements = new JsonArray();
+				JsonObject shot = new JsonObject();
+				shot.add("measurements", measurements);
+				survey.add(shot);
 
-			// insert to station
-			JsonObject toStation = new JsonObject();
-			if (truthy(row.getOverrideToCave())) {
-				toStation.addProperty("cave", row.getOverrideToCave());
+				// insert to station
+				JsonObject toStation = new JsonObject();
+				addProperty(toStation, "cave", row.getOverrideToCave());
+				addProperty(toStation, "station", row.getToStation());
+				survey.add(toStation);
+			} else if (truthy(or(
+					row.getDistance(), row.getFrontAzimuth(), row.getFrontInclination(), row.getBackAzimuth(),
+					row.getBackInclination()))) {
+				measurements = new JsonArray();
+				fromStation.add("splays", measurements);
 			}
-			toStation.addProperty("station", row.getToStation());
-			survey.add(toStation);
 		}
 
 		// add frontsight measurements
-		JsonObject fs = new JsonObject();
-		fs.addProperty("dir", "fs");
-		if (truthy(row.getDistance())) {
-			fs.addProperty("dist", row.getDistance());
-		}
-		if (truthy(row.getFrontAzimuth())) {
-			fs.addProperty("azm", row.getFrontAzimuth());
-		}
-		if (truthy(row.getFrontInclination())) {
-			fs.addProperty("inc", row.getFrontInclination());
-		}
-		measurements.add(fs);
+		if (measurements != null) {
+			JsonObject fs = new JsonObject();
+			addProperty(fs, "dir", "fs");
+			fs.addProperty("breakoutRow", rowIndex);
+			addProperty(fs, "dist", row.getDistance());
+			addProperty(fs, "azm", row.getFrontAzimuth());
+			addProperty(fs, "inc", row.getFrontInclination());
+			measurements.add(fs);
 
-		// add backsight measurements
-		if (truthy(row.getBackAzimuth()) || truthy(row.getBackInclination())) {
-			JsonObject bs = new JsonObject();
-			bs.addProperty("dir", "bs");
-			if (truthy(row.getBackAzimuth())) {
-				bs.addProperty("azm", row.getBackAzimuth());
+			// add backsight measurements
+			if (truthy(row.getBackAzimuth()) || truthy(row.getBackInclination())) {
+				JsonObject bs = new JsonObject();
+				addProperty(bs, "dir", "bs");
+				bs.addProperty("breakoutRow", rowIndex);
+				addProperty(bs, "azm", row.getBackAzimuth());
+				addProperty(bs, "inc", row.getBackInclination());
+				measurements.add(bs);
 			}
-			if (truthy(row.getBackInclination())) {
-				bs.addProperty("inc", row.getBackInclination());
-			}
-			measurements.add(bs);
 		}
 	}
 
@@ -158,6 +183,7 @@ public class MetacaveExporter {
 		JsonObject exported = trips.get(trip);
 		if (exported == null) {
 			exported = new JsonObject();
+			trips.put(trip, exported);
 
 			String caveName = or(trip.getCave(), "");
 			JsonObject cave = (JsonObject) caves.get(caveName);
@@ -168,12 +194,9 @@ public class MetacaveExporter {
 			}
 			((JsonArray) cave.get("trips")).add(exported);
 
-			if (trip.getName() != null) {
-				exported.addProperty("name", trip.getName());
-			}
-			if (trip.getDate() != null) {
-				exported.addProperty("date", dateFormat.format(trip.getDate()));
-			}
+			addProperty(exported, "name", trip.getName());
+			addProperty(exported, "date", trip.getDate());
+			addProperty(exported, "surveyNotesFile", trip.getSurveyNotes());
 			if (trip.getSurveyors() != null) {
 				JsonObject surveyors = new JsonObject();
 				for (String surveyor : trip.getSurveyors()) {
@@ -181,42 +204,22 @@ public class MetacaveExporter {
 				}
 				exported.add("surveyors", surveyors);
 			}
-			exported.addProperty("distUnit", metacaveLengthUnits.get(trip.getDistanceUnit()));
-			exported.addProperty("angleUnit", metacaveAngleUnits.get(trip.getAngleUnit()));
+			addLengthUnitProperty(exported, "distUnit", trip.getDistanceUnit());
+			addAngleUnitProperty(exported, "angleUnit", trip.getAngleUnit());
 
-			if (trip.getOverrideFrontAzimuthUnit() != null) {
-				exported.addProperty("fsAzmUnit", metacaveAngleUnits.get(trip.getOverrideFrontAzimuthUnit()));
-			}
-			if (trip.getOverrideBackAzimuthUnit() != null) {
-				exported.addProperty("bsAzmUnit", metacaveAngleUnits.get(trip.getOverrideBackAzimuthUnit()));
-			}
-			if (trip.getOverrideFrontInclinationUnit() != null) {
-				exported.addProperty("fsIncUnit", metacaveAngleUnits.get(trip.getOverrideFrontInclinationUnit()));
-			}
-			if (trip.getOverrideBackInclinationUnit() != null) {
-				exported.addProperty("bsIncUnit", metacaveAngleUnits.get(trip.getOverrideBackInclinationUnit()));
-			}
+			addAngleUnitProperty(exported, "azmFsUnit", trip.getOverrideFrontAzimuthUnit());
+			addAngleUnitProperty(exported, "azmBsUnit", trip.getOverrideBackAzimuthUnit());
+			addAngleUnitProperty(exported, "incFsUnit", trip.getOverrideFrontInclinationUnit());
+			addAngleUnitProperty(exported, "incBsUnit", trip.getOverrideBackInclinationUnit());
 
-			exported.addProperty("azmBacksightsCorrected", trip.areBackAzimuthsCorrected());
-			exported.addProperty("incBacksightsCorrected", trip.areBackInclinationsCorrected());
-			if (trip.getDeclination() != null) {
-				exported.addProperty("declination", trip.getDeclination());
-			}
-			if (trip.getDistanceCorrection() != null) {
-				exported.addProperty("distCorrection", trip.getDistanceCorrection());
-			}
-			if (trip.getFrontAzimuthCorrection() != null) {
-				exported.addProperty("azmFsCorrection", trip.getFrontAzimuthCorrection());
-			}
-			if (trip.getBackAzimuthCorrection() != null) {
-				exported.addProperty("azmBsCorrection", trip.getBackAzimuthCorrection());
-			}
-			if (trip.getFrontInclinationCorrection() != null) {
-				exported.addProperty("incFsCorrection", trip.getFrontInclinationCorrection());
-			}
-			if (trip.getBackInclinationCorrection() != null) {
-				exported.addProperty("incBsCorrection", trip.getBackInclinationCorrection());
-			}
+			addProperty(exported, "azmBacksightsCorrected", trip.areBackAzimuthsCorrected());
+			addProperty(exported, "incBacksightsCorrected", trip.areBackInclinationsCorrected());
+			addProperty(exported, "declination", trip.getDeclination());
+			addProperty(exported, "distCorrection", trip.getDistanceCorrection());
+			addProperty(exported, "azmFsCorrection", trip.getFrontAzimuthCorrection());
+			addProperty(exported, "azmBsCorrection", trip.getBackAzimuthCorrection());
+			addProperty(exported, "incFsCorrection", trip.getFrontInclinationCorrection());
+			addProperty(exported, "incBsCorrection", trip.getBackInclinationCorrection());
 			exported.add("survey", new JsonArray());
 		}
 		return exported;
