@@ -34,7 +34,7 @@ import javax.swing.UIManager;
 import org.andork.swing.OnEDT;
 import org.andork.swing.SplashFrame;
 
-public class BreakoutMainLauncher {
+public class Breakout {
 	public static void main(String[] args) {
 		String[] versionPieces = System.getProperty("java.version").split("\\.");
 		int v0 = Integer.valueOf(versionPieces[0]);
@@ -50,6 +50,9 @@ public class BreakoutMainLauncher {
 		}
 
 		BlockingQueue<Runnable> runnables = new LinkedBlockingQueue<>();
+
+		System.setProperty("apple.laf.useScreenMenuBar", "true");
+		System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Breakout");
 
 		OnEDT.onEDT(() -> {
 			Image image = null;
@@ -87,7 +90,7 @@ public class BreakoutMainLauncher {
 			loaderThread.start();
 
 			try {
-				image = ImageIO.read(BreakoutMainLauncher.class.getResource("splash.png"));
+				image = ImageIO.read(Breakout.class.getResource("splash.png"));
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

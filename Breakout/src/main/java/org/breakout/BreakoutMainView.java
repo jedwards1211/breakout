@@ -76,6 +76,7 @@ import java.util.stream.Stream;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -1150,6 +1151,8 @@ public class BreakoutMainView {
 
 	private static final int SCANNED_NOTES_SEARCH_DEPTH = 10;
 
+	JMenuBar menuBar;
+
 	GLAutoDrawable autoDrawable;
 	GLCanvas canvas;
 	JoglScene scene;
@@ -1644,11 +1647,46 @@ public class BreakoutMainView {
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder));
 
+		menuBar = new JMenuBar();
+		JMenu fileMenu = new JMenu();
+		menuBar.add(fileMenu);
+
+		fileMenu.add(new JMenuItem(newProjectAction));
+		fileMenu.add(new JMenuItem(openProjectAction));
+		fileMenu.add(new JMenuItem(openSurveyAction));
+		fileMenu.add(new JSeparator());
+		fileMenu.add(new JMenuItem(editSurveyScanPathsAction));
+		fileMenu.add(new JSeparator());
+		JMenu importMenu = new JMenu();
+		importMenu.add(new JMenuItem(importProjectArchiveAction));
+		importMenu.add(new JMenuItem(importCompassAction));
+		fileMenu.add(importMenu);
+		JMenu exportMenu = new JMenu();
+		exportMenu.add(new JMenuItem(exportProjectArchiveAction));
+		exportMenu.add(new JMenuItem(exportImageAction));
+		fileMenu.add(exportMenu);
+
+		// QArrayList<Path> recentProjectFiles =
+		// getRootModel().get(RootModel.recentProjectFiles);
+		// if (recentProjectFiles != null && !recentProjectFiles.isEmpty()) {
+		// fileMenu.add(new JSeparator());
+		// for (Path file : recentProjectFiles) {
+		// fileMenu.add(new JMenuItem(new
+		// OpenRecentProjectAction(BreakoutMainView.this, file)));
+		// }
+		// }
+
+		OnEDT.onEDT(() -> {
+			Localizer localizer = i18n.forClass(BreakoutMainView.class);
+			localizer.setText(fileMenu, "fileMenu.text");
+			localizer.setText(importMenu, "importMenu.text");
+			localizer.setText(exportMenu, "exportMenu.text");
+		});
+
 		settingsDrawer.getProjectFileMenuButton().addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				Component source = (Component) e.getSource();
-
 				Localizer localizer = i18n.forClass(BreakoutMainView.class);
 
 				JPopupMenu popupMenu = new JPopupMenu();
@@ -2260,6 +2298,10 @@ public class BreakoutMainView {
 		return mainPanel;
 	}
 
+	public JMenuBar getMenuBar() {
+		return menuBar;
+	}
+
 	public NewProjectAction getNewProjectAction() {
 		return newProjectAction;
 	}
@@ -2327,7 +2369,7 @@ public class BreakoutMainView {
 
 	public void importProjectArchive(File newProjectFile) {
 		ioTaskService.submit(new ImportProjectArchiveTask(newProjectFile));
-	}
+	};
 
 	private void installOrthoMouseAdapters() {
 		if (mouseAdapterChain != null) {
@@ -2339,7 +2381,7 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
-	};
+	}
 
 	private void installPerspectiveMouseAdapters() {
 		if (mouseAdapterChain != null) {
@@ -2466,16 +2508,6 @@ public class BreakoutMainView {
 		}
 	}
 
-	public void perspectiveMode() {
-		float[] forward = new float[3];
-		float[] right = new float[3];
-
-		Vecmath.negate3(renderer.getViewState().inverseViewXform(), 8, forward, 0);
-		Vecmath.getColumn3(renderer.getViewState().inverseViewXform(), 0, right);
-
-		changeView(forward, right, false, getDefaultShotsForOperations());
-	}
-
 	// class SurveyFilterFactory implements RowFilterFactory<String, TableModel,
 	// Integer>
 	// {
@@ -2497,6 +2529,16 @@ public class BreakoutMainView {
 	// }
 	// }
 	// }
+
+	public void perspectiveMode() {
+		float[] forward = new float[3];
+		float[] right = new float[3];
+
+		Vecmath.negate3(renderer.getViewState().inverseViewXform(), 8, forward, 0);
+		Vecmath.getColumn3(renderer.getViewState().inverseViewXform(), 0, right);
+
+		changeView(forward, right, false, getDefaultShotsForOperations());
+	}
 
 	private Shot3dPickResult pick(Survey3dModel model3d, MouseEvent e, Shot3dPickContext spc) {
 		PlanarHull3f hull = new PlanarHull3f();
