@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.andork.awt.I18n.Localizer;
@@ -55,8 +56,9 @@ public class ImportCompassAction extends AbstractAction {
 				fileChooser = new JFileChooser();
 				fileChooser.setMultiSelectionEnabled(true);
 				fileChooser.setAcceptAllFileFilterUsed(true);
-				fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Compass Survey File (*.dat)",
-						"dat"));
+				FileFilter datFilter = new FileNameExtensionFilter("Compass Survey File (*.dat)", "dat");
+				fileChooser.addChoosableFileFilter(datFilter);
+				fileChooser.setFileFilter(datFilter);
 			}
 		};
 	}
