@@ -32,10 +32,10 @@ public class SurveyorFilter extends RowFilter<TableModel, Integer> {
 	Pattern[] patterns;
 
 	public SurveyorFilter(String surveyors) {
-		String[] parts = surveyors.toLowerCase().replaceAll("\\s+", " ").split("\\s*,\\s*");
+		String[] parts = surveyors.replaceAll("\\s+", " ").split("\\s*,\\s*");
 		patterns = new Pattern[parts.length];
 		for (int i = 0; i < parts.length; i++) {
-			patterns[i] = Pattern.compile("\\b" + parts[i] + "\\b");
+			patterns[i] = Pattern.compile("\\b" + parts[i] + "\\b", Pattern.CASE_INSENSITIVE);
 		}
 	}
 
