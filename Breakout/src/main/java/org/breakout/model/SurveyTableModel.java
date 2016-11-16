@@ -277,6 +277,21 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 		public void setUp(String up) {
 			this.up = up;
 		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("Row [overrideFromCave=").append(overrideFromCave).append(", fromStation=")
+					.append(fromStation).append(", overrideToCave=").append(overrideToCave).append(", toStation=")
+					.append(toStation).append(", distance=").append(distance).append(", frontAzimuth=")
+					.append(frontAzimuth).append(", frontInclination=").append(frontInclination)
+					.append(", backAzimuth=").append(backAzimuth).append(", backInclination=").append(backInclination)
+					.append(", left=").append(left).append(", right=").append(right).append(", up=").append(up)
+					.append(", down=").append(down).append(", northing=").append(northing).append(", easting=")
+					.append(easting).append(", elevation=").append(elevation).append(", comment=").append(comment)
+					.append(", trip=").append(trip).append("]");
+			return builder.toString();
+		}
 	}
 
 	public static class SurveyTableModelCopier extends AbstractTableModelCopier<SurveyTableModel> {

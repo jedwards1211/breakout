@@ -119,7 +119,19 @@ public class MetacaveImporter {
 	private final IdentityHashMap<JsonObject, Trip> trips = new IdentityHashMap<>();
 
 	public List<Row> getRows() {
-		return rows;
+		List<Row> result = new ArrayList<Row>();
+		Row lastRow = null;
+		for (Row row : rows) {
+			if (row == null) {
+				row = new Row();
+				if (lastRow != null) {
+					row.setTrip(lastRow.getTrip());
+				}
+			}
+			result.add(row);
+			lastRow = row;
+		}
+		return result;
 	}
 
 	public void importMetacave(InputStream stream) throws IOException {

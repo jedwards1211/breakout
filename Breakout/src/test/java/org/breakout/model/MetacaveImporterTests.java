@@ -60,6 +60,22 @@ public class MetacaveImporterTests {
 		assertEquals("0", r0.getBackAzimuth());
 		assertEquals("5", r0.getBackInclination());
 
+		Row r1 = rows.get(1);
+		assertSame(trip, r1.getTrip());
+		assertEquals(null, r1.getOverrideFromCave());
+		assertEquals(null, r1.getFromStation());
+		assertEquals(null, r1.getOverrideToCave());
+		assertEquals(null, r1.getToStation());
+		assertEquals(null, r1.getLeft());
+		assertEquals(null, r1.getRight());
+		assertEquals(null, r1.getUp());
+		assertEquals(null, r1.getDown());
+		assertEquals(null, r1.getDistance());
+		assertEquals(null, r1.getFrontAzimuth());
+		assertEquals(null, r1.getFrontInclination());
+		assertEquals(null, r1.getBackAzimuth());
+		assertEquals(null, r1.getBackInclination());
+
 		Row r3 = rows.get(3);
 		assertSame(trip, r3.getTrip());
 		assertEquals(null, r3.getOverrideFromCave());
