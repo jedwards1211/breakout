@@ -1,3 +1,6 @@
 .csync_journal.db 
 .csync_journal.db.ctmp
 *.bop
+compass-parser
+segment
+hs_err*
