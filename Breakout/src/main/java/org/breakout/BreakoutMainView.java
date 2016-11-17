@@ -66,7 +66,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Random;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.Consumer;
@@ -184,7 +183,6 @@ import org.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.breakout.model.SurveyTableParser;
-import org.breakout.model.TransparentTerrain;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
 
@@ -956,35 +954,9 @@ public class BreakoutMainView {
 					bounds[1] = bounds[4] + 100;
 					bounds[4] = bounds[1] + 100;
 
-					float[][][] vertices = new float[100][100][3];
-
-					Random rand = new Random(2);
-
-					TransparentTerrain.randomVerts(vertices, bounds, rand);
-
-					TransparentTerrain terrain = new TransparentTerrain(vertices);
-
 					SwingUtilities.invokeLater(() -> {
 						model3d = model;
 						model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
-
-						// GlyphCache cache = new GlyphCache( scene , new Font(
-						// "Arial" , Font.PLAIN , 72 ) , 1024 , 1024 ,
-						// new BufferedImageIntFactory(
-						// BufferedImage.TYPE_INT_ARGB ) , new
-						// OutlinedGlyphPagePainter(
-						// new BasicStroke( 3f , BasicStroke.CAP_ROUND ,
-						// BasicStroke.JOIN_ROUND ) ,
-						// Color.BLACK , Color.WHITE ) );
-						//
-						// JoglText text = new JoglText.Builder( )
-						// .ascent( 0 , cache.fontMetrics.getAscent( ) , 0
-						// ).baseline( cache.fontMetrics.getAscent( ) , 0 , 0 )
-						// .add( "This is a test" , cache , 1f , 1f , 1f , 1f
-						// ).create( scene );
-						//
-						// text.use( );
-						// scene.add( text );
 
 						projectModelBinder.update(true);
 
@@ -996,8 +968,6 @@ public class BreakoutMainView {
 						autoDrawable.invoke(false, drawable -> {
 							scene.add(model);
 							scene.initLater(model);
-							// scene.add( terrain );
-							// scene.initLater( terrain );
 							return false;
 						});
 					});
@@ -1266,8 +1236,6 @@ public class BreakoutMainView {
 
 	CameraView currentView;
 
-	private final PlanarHull3f hull = new PlanarHull3f();
-
 	List<Shot> shots = Collections.emptyList();
 	Map<Integer, Integer> shotNumberToRowIndexMap = CollectionUtils.newHashMap();
 
@@ -1295,9 +1263,6 @@ public class BreakoutMainView {
 		ioTaskService = new SingleThreadedTaskService();
 		rebuildTaskService = new SingleThreadedTaskService();
 		sortTaskService = new SingleThreadedTaskService();
-
-		JLabel highlightLabel = new JLabel("Highlight: ");
-		JLabel filterLabel = new JLabel("Filter: ");
 
 		hintLabel = new JLabel("A");
 		hintLabel.setForeground(Color.WHITE);
@@ -1336,8 +1301,6 @@ public class BreakoutMainView {
 					AnnotatingJTables.createHighlightFieldListener(surveyDrawer.table(),
 							surveyDrawer.highlightField().textComponent, rowFilterFactory, Color.YELLOW));
 		});
-
-		Color darkColor = new Color(255 * 3 / 10, 255 * 3 / 10, 255 * 3 / 10);
 
 		pickHandler = new MousePickHandler();
 
@@ -1505,6 +1468,7 @@ public class BreakoutMainView {
 		surveyDrawer.table().addPropertyChangeListener("model", new PropertyChangeListener() {
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
+				@SuppressWarnings("unchecked")
 				AnnotatingRowSorter<TableModel, Integer> sorter = (AnnotatingRowSorter<TableModel, Integer>) miniSurveyDrawer
 						.table().getRowSorter();
 
