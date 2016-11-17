@@ -26,7 +26,6 @@ import java.nio.file.Path;
 
 import javax.swing.AbstractAction;
 
-@SuppressWarnings("serial")
 public class OpenRecentProjectAction extends AbstractAction {
 	/**
 	 *
@@ -49,15 +48,14 @@ public class OpenRecentProjectAction extends AbstractAction {
 	public OpenRecentProjectAction(final BreakoutMainView mainView, Path recentProjectFile) {
 		super();
 		this.mainView = mainView;
-		this.recentProjectFile = recentProjectFile;
+		this.recentProjectFile = mainView.getRootDirectory().toAbsolutePath()
+				.resolve(recentProjectFile).normalize();
 
-		putValue(NAME, recentProjectFile.toString());
+		putValue(NAME, this.recentProjectFile.toString());
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		Path resolvedProjectFile = mainView.getRootDirectory().toAbsolutePath().resolve(recentProjectFile)
-				.normalize();
-		mainView.openProject(resolvedProjectFile);
+		mainView.openProject(recentProjectFile);
 	}
 }

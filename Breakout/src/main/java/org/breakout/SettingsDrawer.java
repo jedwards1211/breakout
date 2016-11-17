@@ -108,8 +108,6 @@ public class SettingsDrawer extends Drawer {
 
 	JLabel projectFileLabel;
 	JTextField projectFileField;
-	JButton projectFileMenuButton;
-
 	ViewButtonsPanel viewButtonsPanel;
 	JLabel mouseSensitivityLabel;
 	JSlider mouseSensitivitySlider;
@@ -283,8 +281,6 @@ public class SettingsDrawer extends Drawer {
 		projectFileField.setEditable(false);
 		projectFileField.setPreferredSize(new Dimension(150, projectFileField.getPreferredSize().height));
 		ImageIcon dropdownIcon = new ImageIcon(getClass().getResource("dropdown.png"));
-		projectFileMenuButton = new JButton(dropdownIcon);
-		projectFileMenuButton.setMargin(new Insets(2, 4, 2, 4));
 
 		viewButtonsPanel = new ViewButtonsPanel();
 
@@ -447,7 +443,6 @@ public class SettingsDrawer extends Drawer {
 		GridBagWizard projectFilePanel = GridBagWizard.quickPanel();
 		projectFilePanel.defaults().filly();
 		projectFilePanel.put(projectFileField).xy(0, 0).fillx(1.0);
-		projectFilePanel.put(projectFileMenuButton).rightOfLast();
 
 		w.put(projectFilePanel.getTarget()).below(pinButton(), projectFileLabel).fillx();
 
@@ -580,10 +575,6 @@ public class SettingsDrawer extends Drawer {
 
 	public PaintablePanel getParamColorationAxisPanel() {
 		return paramColorationAxisPanel;
-	}
-
-	public JButton getProjectFileMenuButton() {
-		return projectFileMenuButton;
 	}
 
 	public AbstractButton getRecalcColorByDistanceButton() {

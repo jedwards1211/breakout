@@ -24,22 +24,44 @@ package org.breakout;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.nio.file.Path;
 
 import javax.swing.JFrame;
 
+import org.andork.bind.BinderWrapper;
+import org.andork.bind.QObjectAttributeBinder;
+import org.breakout.model.RootModel;
+
 public class BreakoutMainFrame extends JFrame {
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = -3629909041138921073L;
 
+	private final BreakoutMainView mainView;
+
 	public BreakoutMainFrame(BreakoutMainView breakoutMainView) {
-		super("Breakout");
+		mainView = breakoutMainView;
+		updateTitle();
+
+		new BinderWrapper<Path>() {
+			@Override
+			protected void onValueChanged(Path newValue) {
+				updateTitle();
+			}
+		}.bind(new QObjectAttributeBinder<>(RootModel.currentProjectFile)
+				.bind(breakoutMainView.getRootModelBinder()));
+
 		getContentPane().add(breakoutMainView.getMainPanel(), BorderLayout.CENTER);
 		setJMenuBar(breakoutMainView.getMenuBar());
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		setSize(screenSize.width * 2 / 3, screenSize.height * 2 / 3);
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
+	}
+
+	private void updateTitle() {
+		Path rootDirectory = mainView.getRootDirectory();
+		Path currentProjectFile = mainView.getRootModel() == null
+				? null : mainView.getRootModel().get(RootModel.currentProjectFile);
+		setTitle(currentProjectFile == null ? "Breakout" : "Breakout - " +
+				rootDirectory.resolve(currentProjectFile).normalize().toString());
 	}
 }

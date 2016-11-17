@@ -79,7 +79,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
@@ -93,6 +92,7 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.andork.awt.I18n;
+import org.andork.awt.I18n.I18nUpdater;
 import org.andork.awt.I18n.Localizer;
 import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
@@ -1618,6 +1618,8 @@ public class BreakoutMainView {
 		fileMenu.add(new JMenuItem(newProjectAction));
 		fileMenu.add(new JMenuItem(openProjectAction));
 		fileMenu.add(new JMenuItem(openSurveyAction));
+		JMenu openRecentMenu = new JMenu();
+		fileMenu.add(openRecentMenu);
 		fileMenu.add(new JSeparator());
 		fileMenu.add(new JMenuItem(editSurveyScanPathsAction));
 		fileMenu.add(new JSeparator());
@@ -1639,49 +1641,37 @@ public class BreakoutMainView {
 		// OpenRecentProjectAction(BreakoutMainView.this, file)));
 		// }
 		// }
+		JMenuItem noRecentFilesItem = new JMenuItem();
+		noRecentFilesItem.setEnabled(false);
+
+		new BinderWrapper<QArrayList<Path>>() {
+			@Override
+			protected void onValueChanged(QArrayList<Path> newValue) {
+				openRecentMenu.removeAll();
+				if (newValue == null || newValue.isEmpty()) {
+					openRecentMenu.add(noRecentFilesItem);
+				} else {
+					for (Path file : newValue) {
+						openRecentMenu.add(new JMenuItem(
+								new OpenRecentProjectAction(BreakoutMainView.this, file)));
+					}
+				}
+			}
+
+		}.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder));
 
 		OnEDT.onEDT(() -> {
 			Localizer localizer = i18n.forClass(BreakoutMainView.class);
-			localizer.setText(fileMenu, "fileMenu.text");
-			localizer.setText(importMenu, "importMenu.text");
-			localizer.setText(exportMenu, "exportMenu.text");
-		});
-
-		settingsDrawer.getProjectFileMenuButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Component source = (Component) e.getSource();
-				Localizer localizer = i18n.forClass(BreakoutMainView.class);
-
-				JPopupMenu popupMenu = new JPopupMenu();
-				popupMenu.setLightWeightPopupEnabled(false);
-				popupMenu.add(new JMenuItem(newProjectAction));
-				popupMenu.add(new JMenuItem(openProjectAction));
-				popupMenu.add(new JMenuItem(openSurveyAction));
-				popupMenu.add(new JSeparator());
-				popupMenu.add(new JMenuItem(editSurveyScanPathsAction));
-				popupMenu.add(new JSeparator());
-				JMenu importMenu = new JMenu();
-				localizer.setText(importMenu, "importMenu.text");
-				importMenu.add(new JMenuItem(importProjectArchiveAction));
-				importMenu.add(new JMenuItem(importCompassAction));
-				popupMenu.add(importMenu);
-				JMenu exportMenu = new JMenu();
-				localizer.setText(exportMenu, "exportMenu.text");
-				exportMenu.add(new JMenuItem(exportProjectArchiveAction));
-				exportMenu.add(new JMenuItem(exportImageAction));
-				popupMenu.add(exportMenu);
-
-				QArrayList<Path> recentProjectFiles = getRootModel().get(RootModel.recentProjectFiles);
-				if (recentProjectFiles != null && !recentProjectFiles.isEmpty()) {
-					popupMenu.add(new JSeparator());
-					for (Path file : recentProjectFiles) {
-						popupMenu.add(new JMenuItem(new OpenRecentProjectAction(BreakoutMainView.this, file)));
-					}
+			localizer.register(menuBar, new I18nUpdater<JMenuBar>() {
+				@Override
+				public void updateI18n(Localizer localizer, JMenuBar localizedObject) {
+					localizer.setText(fileMenu, "fileMenu.text");
+					localizer.setText(importMenu, "importMenu.text");
+					localizer.setText(exportMenu, "exportMenu.text");
+					localizer.setText(openRecentMenu, "openRecentMenu.text");
+					localizer.setText(noRecentFilesItem, "noRecentFilesItem.text");
 				}
-
-				popupMenu.show(source, source.getWidth(), source.getHeight());
-			}
+			});
 		});
 
 		settingsDrawer.getFitViewToSelectedButton().addActionListener(new ActionListener() {
