@@ -112,8 +112,8 @@ import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.CollectionUtils;
-import org.andork.compass.CompassParser;
-import org.andork.compass.CompassTrip;
+import org.andork.compass.survey.CompassSurveyParser;
+import org.andork.compass.survey.CompassTrip;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.DefaultJoglRenderer;
@@ -351,7 +351,7 @@ public class BreakoutMainView {
 		protected void reallyDuringDialog() throws Exception {
 			List<SurveyTableModel.Row> rows = new ArrayList<>();
 			final SurveyTableModel newModel;
-			final CompassParser parser = new CompassParser();
+			final CompassSurveyParser parser = new CompassSurveyParser();
 			try {
 				int progress = 0;
 				for (Path compassFile : compassFiles) {

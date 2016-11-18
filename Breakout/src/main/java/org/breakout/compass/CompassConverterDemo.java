@@ -13,8 +13,8 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
-import org.andork.compass.CompassParser;
-import org.andork.compass.CompassTrip;
+import org.andork.compass.survey.CompassSurveyParser;
+import org.andork.compass.survey.CompassTrip;
 import org.andork.swing.QuickTestFrame;
 import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.ListTableModel;
@@ -23,7 +23,7 @@ import org.breakout.model.SurveyTableModel.Row;
 
 public class CompassConverterDemo {
 	public static void main(String[] args) throws IOException, IllegalArgumentException, IllegalAccessException {
-		CompassParser parser = new CompassParser();
+		CompassSurveyParser parser = new CompassSurveyParser();
 		List<CompassTrip> trips = parser.parseCompassSurveyData(
 				Paths.get("/Users", "andy", "FRCS OwnCloud", "compass", "all-caves.compass.dat"));
 		List<Row> rows = CompassConverter.convertFromCompass(trips);

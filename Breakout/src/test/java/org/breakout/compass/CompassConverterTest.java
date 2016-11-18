@@ -4,11 +4,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import org.andork.compass.CompassShot;
-import org.andork.compass.CompassTrip;
-import org.andork.compass.CompassTripHeader;
 import org.andork.compass.LengthUnit;
 import org.andork.compass.LrudAssociation;
+import org.andork.compass.survey.CompassShot;
+import org.andork.compass.survey.CompassTrip;
+import org.andork.compass.survey.CompassTripHeader;
 import org.breakout.model.SurveyTableModel.Row;
 import org.breakout.model.SurveyTableModel.Trip;
 import org.junit.Assert;

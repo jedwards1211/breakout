@@ -9,12 +9,12 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.andork.compass.AzimuthUnit;
-import org.andork.compass.CompassShot;
-import org.andork.compass.CompassTrip;
-import org.andork.compass.CompassTripHeader;
 import org.andork.compass.InclinationUnit;
 import org.andork.compass.LengthUnit;
 import org.andork.compass.LrudAssociation;
+import org.andork.compass.survey.CompassShot;
+import org.andork.compass.survey.CompassTrip;
+import org.andork.compass.survey.CompassTripHeader;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
