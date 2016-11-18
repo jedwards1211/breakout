@@ -1,5 +1,6 @@
 package org.breakout.compass;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -22,8 +23,8 @@ public class CompassConverterTest {
 		CompassTrip trip = new CompassTrip();
 		trip.setHeader(header);
 		CompassShot shot = new CompassShot();
-		shot.setLength(1.0);
-		shot.setLeft(2.0);
+		shot.setLength(new BigDecimal(1.0));
+		shot.setLeft(new BigDecimal(2.0));
 		trip.setShots(Arrays.asList(shot));
 
 		List<Row> rows = CompassConverter.convertShots(trip);
@@ -97,7 +98,7 @@ public class CompassConverterTest {
 		CompassTrip trip = new CompassTrip();
 		trip.setHeader(header);
 		CompassShot shot = new CompassShot();
-		shot.setLeft(3.5);
+		shot.setLeft(new BigDecimal(3.5));
 		trip.setShots(Arrays.asList(shot));
 
 		List<Row> rows = CompassConverter.convertShots(trip);
@@ -114,15 +115,15 @@ public class CompassConverterTest {
 		CompassShot shot = new CompassShot();
 		shot.setFromStationName("A");
 		shot.setToStationName("B");
-		shot.setLength(1.5);
-		shot.setFrontsightAzimuth(2.5);
-		shot.setFrontsightInclination(3.5);
-		shot.setBacksightAzimuth(4.5);
-		shot.setBacksightInclination(5.5);
-		shot.setLeft(6.5);
-		shot.setRight(7.5);
-		shot.setUp(8.5);
-		shot.setDown(9.5);
+		shot.setLength(new BigDecimal(1.5));
+		shot.setFrontsightAzimuth(new BigDecimal(2.5));
+		shot.setFrontsightInclination(new BigDecimal(3.5));
+		shot.setBacksightAzimuth(new BigDecimal(4.5));
+		shot.setBacksightInclination(new BigDecimal(5.5));
+		shot.setLeft(new BigDecimal(6.5));
+		shot.setRight(new BigDecimal(7.5));
+		shot.setUp(new BigDecimal(8.5));
+		shot.setDown(new BigDecimal(9.5));
 		trip.setShots(Arrays.asList(shot));
 
 		List<Row> rows = CompassConverter.convertShots(trip);
@@ -172,7 +173,7 @@ public class CompassConverterTest {
 		CompassShot shot = new CompassShot();
 		shot.setFromStationName("A1");
 		shot.setToStationName("A2");
-		shot.setLeft(3.5);
+		shot.setLeft(new BigDecimal(3.5));
 		trip.setShots(Arrays.asList(shot));
 
 		List<Row> rows = CompassConverter.convertShots(trip);

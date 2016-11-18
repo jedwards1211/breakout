@@ -1,5 +1,6 @@
 package org.breakout.compass;
 
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -154,11 +155,11 @@ public class CompassConverter {
 		return lengthUnit;
 	}
 
-	private static String toString(Date date) {
-		return date == null ? null : dateFormat.format(date);
+	private static String toString(BigDecimal value) {
+		return value == null ? null : value.toString();
 	}
 
-	private static String toString(double value) {
-		return Double.isNaN(value) ? null : String.valueOf(value);
+	private static String toString(Date date) {
+		return date == null ? null : dateFormat.format(date);
 	}
 }
