@@ -225,10 +225,12 @@ public class MetacaveImporter {
 			final JsonObject shot = i + 1 < survey.size() ? survey.get(i + 1).getAsJsonObject() : null;
 			final JsonObject toStation = i + 2 < survey.size() ? survey.get(i + 2).getAsJsonObject() : null;
 
+			final int defaultRow = rows.size();
+
 			Function<JsonObject, Row> getRow = obj -> {
 				Integer rowIndex = getRowIndex(obj);
 				if (rowIndex == null) {
-					rowIndex = rows.size();
+					rowIndex = defaultRow;
 				}
 				while (rows.size() <= rowIndex) {
 					rows.add(null);
@@ -303,6 +305,13 @@ public class MetacaveImporter {
 				lrudRow.setRight(getMeasurement(lrud.get(1)));
 				lrudRow.setUp(getMeasurement(lrud.get(2)));
 				lrudRow.setDown(getMeasurement(lrud.get(3)));
+			}
+			if (fromStation.has("nev")) {
+				Row row = getRow.apply(fromStation);
+				JsonArray nev = fromStation.getAsJsonArray("nev");
+				row.setNorthing(getMeasurement(nev.get(0)));
+				row.setEasting(getMeasurement(nev.get(1)));
+				row.setElevation(getMeasurement(nev.get(2)));
 			}
 			// TODO: lrudAzm
 

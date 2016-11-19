@@ -79,6 +79,20 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 				result.setDate(trip.getDate());
 				result.setName(trip.getName());
 				result.setSurveyNotes(trip.getSurveyNotes());
+				result.setDistanceUnit(trip.getDistanceUnit());
+				result.setDistanceCorrection(trip.getDistanceCorrection());
+				result.setAngleUnit(trip.getAngleUnit());
+				result.setDeclination(trip.getDeclination());
+				result.setOverrideFrontAzimuthUnit(trip.getOverrideFrontAzimuthUnit());
+				result.setOverrideBackAzimuthUnit(trip.getOverrideBackAzimuthUnit());
+				result.setOverrideFrontInclinationUnit(trip.getOverrideFrontInclinationUnit());
+				result.setOverrideBackInclinationUnit(trip.getOverrideBackInclinationUnit());
+				result.setBackAzimuthsCorrected(trip.areBackAzimuthsCorrected());
+				result.setBackInclinationsCorrected(trip.areBackInclinationsCorrected());
+				result.setFrontAzimuthCorrection(trip.getFrontAzimuthCorrection());
+				result.setBackAzimuthCorrection(trip.getBackAzimuthCorrection());
+				result.setFrontInclinationCorrection(trip.getFrontInclinationCorrection());
+				result.setBackInclinationCorrection(trip.getBackInclinationCorrection());
 				if (trip.getSurveyors() != null) {
 					result.setSurveyors(new ArrayList<>(trip.getSurveyors()));
 				}

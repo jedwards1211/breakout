@@ -259,10 +259,18 @@ public class SurveyTableParser {
 
 				CrossSection xSection = shot.fromXsection;
 				xSection.type = CrossSectionType.LRUD;
-				xSection.dist[0] = isFinite(left) ? left : xSection.dist[0];
-				xSection.dist[1] = isFinite(right) ? right : xSection.dist[1];
-				xSection.dist[2] = isFinite(up) ? up : xSection.dist[2];
-				xSection.dist[3] = isFinite(down) ? down : xSection.dist[3];
+				if (isFinite(left) || Float.isNaN(xSection.dist[0])) {
+					xSection.dist[0] = isFinite(left) ? left : 0;
+				}
+				if (isFinite(right) || Float.isNaN(xSection.dist[1])) {
+					xSection.dist[1] = isFinite(right) ? right : 0;
+				}
+				if (isFinite(up) || Float.isNaN(xSection.dist[2])) {
+					xSection.dist[2] = isFinite(up) ? up : 0;
+				}
+				if (isFinite(down) || Float.isNaN(xSection.dist[3])) {
+					xSection.dist[3] = isFinite(down) ? down : 0;
+				}
 
 				if (subtask != null) {
 					if (subtask.isCanceling()) {

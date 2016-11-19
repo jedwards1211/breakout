@@ -307,10 +307,10 @@ public class BreakoutMainView {
 					public LinearAxisConversion run() throws Throwable {
 						Shot shot = model3d.getOriginalShots().get(picked.picked.getNumber());
 						hintLabel.setText(String.format(
-								"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%.2f</b>&emsp;Azm: <b>%.2f</b>"
+								"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%.2f m</b>&emsp;Azm: <b>%.2f</b>"
 										+ "&emsp;Inc: <b>%.2f</b>&emsp;<i>%s</i></html>",
 								shot.from.name, shot.to.name,
-								shot.dist, shot.azm, shot.inc, shot.desc));
+								shot.dist, Math.toDegrees(shot.azm), Math.toDegrees(shot.inc), shot.desc));
 
 						LinearAxisConversion conversion = getProjectModel().get(ProjectModel.highlightRange);
 						LinearAxisConversion conversion2 = new LinearAxisConversion(conversion.invert(0.0), 1.0,
