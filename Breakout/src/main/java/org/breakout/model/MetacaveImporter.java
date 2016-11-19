@@ -64,6 +64,13 @@ public class MetacaveImporter {
 		return obj.get(property).getAsInt();
 	}
 
+	private static String getAsString(JsonElement e) {
+		if (e == null || e.isJsonNull()) {
+			return null;
+		}
+		return e.getAsString();
+	}
+
 	private static String getAsString(JsonObject obj, String property) {
 		if (!obj.has(property)) {
 			return null;
@@ -82,21 +89,14 @@ public class MetacaveImporter {
 		return elem.getAsString();
 	}
 
-	private static String getMeasurement(JsonObject obj, String property) {
-		if (!obj.has(property)) {
-			return null;
-		}
-		return getMeasurement(obj.get(property));
-	}
-
 	private static void getMeasurements(JsonObject obj, Row row) {
-		row.setDistance(getMeasurement(obj, "dist"));
+		row.setDistance(getAsString(obj, "dist"));
 		if ("bs".equals(getAsString(obj, "dir"))) {
-			row.setBackAzimuth(getMeasurement(obj, "azm"));
-			row.setBackInclination(getMeasurement(obj, "inc"));
+			row.setBackAzimuth(getAsString(obj, "azm"));
+			row.setBackInclination(getAsString(obj, "inc"));
 		} else {
-			row.setFrontAzimuth(getMeasurement(obj, "azm"));
-			row.setFrontInclination(getMeasurement(obj, "inc"));
+			row.setFrontAzimuth(getAsString(obj, "azm"));
+			row.setFrontInclination(getAsString(obj, "inc"));
 		}
 	}
 
@@ -201,16 +201,16 @@ public class MetacaveImporter {
 			}
 			trip.setBackAzimuthsCorrected(getAsBoolean(obj, "azmBacksightsCorrected"));
 			trip.setBackInclinationsCorrected(getAsBoolean(obj, "incBacksightsCorrected"));
-			trip.setDeclination(getMeasurement(obj, "declination"));
+			trip.setDeclination(getAsString(obj, "declination"));
 			trip.setOverrideFrontAzimuthUnit(getAngleUnit(obj, "azmFsUnit"));
 			trip.setOverrideBackAzimuthUnit(getAngleUnit(obj, "azmBsUnit"));
 			trip.setOverrideFrontInclinationUnit(getAngleUnit(obj, "incFsUnit"));
 			trip.setOverrideBackInclinationUnit(getAngleUnit(obj, "incBsUnit"));
-			trip.setDistanceCorrection(getMeasurement(obj, "distCorrection"));
-			trip.setFrontAzimuthCorrection(getMeasurement(obj, "azmFsCorrection"));
-			trip.setBackAzimuthCorrection(getMeasurement(obj, "azmBsCorrection"));
-			trip.setFrontInclinationCorrection(getMeasurement(obj, "incFsCorrection"));
-			trip.setBackInclinationCorrection(getMeasurement(obj, "incBsCorrection"));
+			trip.setDistanceCorrection(getAsString(obj, "distCorrection"));
+			trip.setFrontAzimuthCorrection(getAsString(obj, "azmFsCorrection"));
+			trip.setBackAzimuthCorrection(getAsString(obj, "azmBsCorrection"));
+			trip.setFrontInclinationCorrection(getAsString(obj, "incFsCorrection"));
+			trip.setBackInclinationCorrection(getAsString(obj, "incBsCorrection"));
 		}
 		return trip;
 	}

@@ -22,6 +22,9 @@ public class MetacaveImporterTests {
 		importer.importMetacave(getClass().getResourceAsStream("metacave1.json"));
 
 		List<Row> rows = importer.getRows();
+		for (Row row : rows) {
+			System.out.println(row);
+		}
 		assertEquals(4, rows.size());
 
 		Trip trip = rows.get(0).getTrip();
