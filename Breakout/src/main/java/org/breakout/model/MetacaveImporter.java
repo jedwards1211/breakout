@@ -1,6 +1,7 @@
 package org.breakout.model;
 
-import java.io.FileReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -62,13 +63,6 @@ public class MetacaveImporter {
 			return null;
 		}
 		return obj.get(property).getAsInt();
-	}
-
-	private static String getAsString(JsonElement e) {
-		if (e == null || e.isJsonNull()) {
-			return null;
-		}
-		return e.getAsString();
 	}
 
 	private static String getAsString(JsonObject obj, String property) {
@@ -159,10 +153,16 @@ public class MetacaveImporter {
 	}
 
 	public void importMetacave(Path path) throws IOException {
-		importMetacave(new FileReader(path.toFile()));
+		importMetacave(path.toFile());
 	}
 
-	public void importMetacave(Reader reader) {
+	public void importMetacave(File file) throws IOException {
+		try (InputStream in = new FileInputStream(file)) {
+			importMetacave(in);
+		}
+	}
+
+	private void importMetacave(Reader reader) {
 		JsonObject obj = new JsonParser().parse(new JsonReader(reader)).getAsJsonObject();
 		importMetacave(obj);
 	}

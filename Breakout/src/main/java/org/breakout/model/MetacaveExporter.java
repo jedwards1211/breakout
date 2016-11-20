@@ -4,6 +4,13 @@ import static org.andork.util.JavaScript.falsy;
 import static org.andork.util.JavaScript.or;
 import static org.andork.util.JavaScript.truthy;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -16,6 +23,7 @@ import org.andork.util.Java7.Objects;
 import org.breakout.model.SurveyTableModel.Row;
 import org.breakout.model.SurveyTableModel.Trip;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -75,6 +83,26 @@ public class MetacaveExporter {
 
 	public MetacaveExporter() {
 		root.add("caves", caves);
+	}
+
+	public void export(List<Row> rows, Path path) throws IOException {
+		export(rows, path.toFile());
+	}
+
+	public void export(List<Row> rows, File file) throws IOException {
+		try (OutputStream out = new FileOutputStream(file)) {
+			export(rows, out);
+		}
+	}
+
+	public void export(List<Row> rows, OutputStream out) throws IOException {
+		export(rows, new OutputStreamWriter(out, "UTF-8"));
+	}
+
+	private void export(List<Row> rows, Writer w) throws IOException {
+		export(rows);
+		new Gson().toJson(root, w);
+		w.flush();
 	}
 
 	public void export(List<Row> rows) {

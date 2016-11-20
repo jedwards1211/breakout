@@ -50,6 +50,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -64,13 +66,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -121,8 +124,13 @@ import org.andork.compass.plot.CompassPlotParser;
 import org.andork.compass.plot.DrawSurveyCommand;
 import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
+import org.andork.event.BasicPropertyChangeListener;
+import org.andork.func.Bimapper;
+import org.andork.func.ExceptionRunnable;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
+import org.andork.func.Lodash.DebounceOptions;
+import org.andork.func.Lodash.DebouncedRunnable;
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
@@ -153,6 +161,7 @@ import org.andork.q.QArrayList;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
+import org.andork.q.QSpec;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.FromEDT;
@@ -162,14 +171,8 @@ import org.andork.swing.async.DrawerPinningTask;
 import org.andork.swing.async.SelfReportingTask;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Subtask;
-import org.andork.swing.async.SubtaskFilePersister;
-import org.andork.swing.async.SubtaskStreamBimapper;
-import org.andork.swing.async.SubtaskStreamBimapperFactory;
 import org.andork.swing.async.Task;
 import org.andork.swing.async.TaskService;
-import org.andork.swing.async.TaskServiceBatcher;
-import org.andork.swing.async.TaskServiceFilePersister;
-import org.andork.swing.async.TaskServiceSubtaskFilePersister;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.RowFilterFactory;
@@ -179,7 +182,8 @@ import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
 import org.breakout.compass.ui.CompassPlotParseResultsDialog;
 import org.breakout.model.ColorParam;
-import org.breakout.model.ProjectArchiveModel;
+import org.breakout.model.MetacaveExporter;
+import org.breakout.model.MetacaveImporter;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.model.Shot;
@@ -196,6 +200,9 @@ import org.breakout.model.SurveyTableModel.Trip;
 import org.breakout.model.SurveyTableParser;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.DumperOptions.FlowStyle;
+import org.yaml.snakeyaml.Yaml;
 
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
@@ -214,61 +221,6 @@ public class BreakoutMainView {
 		public long animate(long animTime) {
 			saveViewXform();
 			return 0;
-		}
-	}
-
-	private class ExportProjectArchiveTask extends DrawerPinningTask {
-		File newProjectFile;
-
-		private ExportProjectArchiveTask(File newProjectFile) {
-			super(getMainPanel(), taskListDrawer.holder());
-			this.newProjectFile = newProjectFile;
-			setStatus("Saving project...");
-			setIndeterminate(true);
-
-			showDialogLater();
-		}
-
-		@Override
-		protected void reallyDuringDialog() throws Exception {
-			setStatus("Exporting project archive: " + newProjectFile + "...");
-
-			setTotal(1000);
-
-			Subtask rootSubtask = new Subtask(this);
-			rootSubtask.setTotal(3);
-			Subtask prepareSubtask = rootSubtask.beginSubtask(1);
-			prepareSubtask.setStatus("Preparing for export");
-
-			SurveyTableModel surveyTableModelCopy = new SurveyTableModel();
-			SurveyTableModelCopier copier = new SurveyTableModelCopier();
-			copier.copyInBackground(surveyDrawer.table().getModel(), surveyTableModelCopy, 1000, prepareSubtask);
-
-			ProjectArchiveModel projectModel = new ProjectArchiveModel(getProjectModel(), surveyTableModelCopy);
-
-			prepareSubtask.end();
-			rootSubtask.setCompleted(prepareSubtask.getProportion());
-
-			Subtask exportSubtask = rootSubtask.beginSubtask(2);
-			exportSubtask.setStatus("Exporting project to " + newProjectFile);
-
-			try {
-				new ProjectArchiveModelStreamBimapper(getI18n(), exportSubtask).write(projectModel,
-						new FileOutputStream(newProjectFile));
-				exportSubtask.end();
-				rootSubtask.setCompleted(rootSubtask.getCompleted() + exportSubtask.getProportion());
-			} catch (final Exception ex) {
-				ex.printStackTrace();
-				new OnEDT() {
-					@Override
-					public void run() throws Throwable {
-						JOptionPane.showMessageDialog(getMainPanel(),
-								ex.getClass().getName() + ": " + ex.getLocalizedMessage(),
-								"Failed to export project archive", JOptionPane.ERROR_MESSAGE);
-					}
-				};
-				return;
-			}
 		}
 	}
 
@@ -388,6 +340,7 @@ public class BreakoutMainView {
 			}
 
 			new OnEDT() {
+
 				@Override
 				public void run() throws Throwable {
 					CompassParseResultsDialog dialog = new CompassParseResultsDialog(i18n);
@@ -411,100 +364,20 @@ public class BreakoutMainView {
 					}
 
 					if ("addToCurrentProject".equals(importOption)) {
-						try {
-							surveyTableChangeHandler.setPersistOnUpdate(false);
-							SurveyTableModel model = surveyDrawer.table().getModel();
-							model.clear();
-							model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, model.getRowCount());
-						} finally {
-							surveyTableChangeHandler.setPersistOnUpdate(true);
-						}
+						SurveyTableModel model = surveyDrawer.table().getModel();
+						model.clear();
+						model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, model.getRowCount());
 					} else if ("importAsNewProject".equals(importOption)) {
 						newProjectAction.actionPerformed(
 								new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "open new project"));
 						ioTaskService.submit(task -> {
 							OnEDT.onEDT(() -> {
-								try {
-									surveyTableChangeHandler.setPersistOnUpdate(false);
-									SurveyTableModel model = surveyDrawer.table().getModel();
-									model.clear();
-									model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
-								} finally {
-									surveyTableChangeHandler.setPersistOnUpdate(true);
-								}
+								SurveyTableModel model = surveyDrawer.table().getModel();
+								model.clear();
+								model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
 							});
 						});
 					}
-				}
-			};
-		}
-	}
-
-	private class ImportProjectArchiveTask extends DrawerPinningTask {
-		File newProjectFile;
-
-		private ImportProjectArchiveTask(File newProjectFile) {
-			super(getMainPanel(), taskListDrawer.holder());
-			this.newProjectFile = newProjectFile;
-			setStatus("Saving project...");
-			setIndeterminate(true);
-
-			showDialogLater();
-		}
-
-		@Override
-		protected void reallyDuringDialog() throws Exception {
-			setStatus("Importing project archive: " + newProjectFile + "...");
-
-			ProjectArchiveModel projectModel = null;
-
-			Subtask rootSubtask = new Subtask(this);
-
-			try {
-				projectModel = new ProjectArchiveModelStreamBimapper(getI18n(), rootSubtask)
-						.read(new FileInputStream(newProjectFile));
-
-				if (projectModel == null) {
-					return;
-				}
-			} catch (final Exception ex) {
-				ex.printStackTrace();
-				new OnEDT() {
-					@Override
-					public void run() throws Throwable {
-						JOptionPane.showMessageDialog(getMainPanel(),
-								ex.getClass().getName() + ": " + ex.getLocalizedMessage(),
-								"Failed to import project archive", JOptionPane.ERROR_MESSAGE);
-					}
-				};
-				return;
-			}
-
-			final ProjectArchiveModel finalProjectModel = projectModel;
-
-			new OnEDT() {
-
-				@Override
-				public void run() throws Throwable {
-					finalProjectModel.getProjectModel().set(ProjectModel.surveyFile,
-							getProjectModel().get(ProjectModel.surveyFile));
-					replaceNulls(finalProjectModel.getProjectModel(),
-							getRootModel().get(RootModel.currentProjectFile));
-					if (projectPersister != null) {
-						if (getProjectModel() != null) {
-							getProjectModel().changeSupport().removePropertyChangeListener(projectPersister);
-						}
-						finalProjectModel.getProjectModel().changeSupport()
-								.addPropertyChangeListener(projectPersister);
-						projectPersister.saveLater(finalProjectModel.getProjectModel());
-					}
-					projectModelBinder.set(finalProjectModel.getProjectModel());
-
-					surveyDrawer
-							.table()
-							.getModel()
-							.copyRowsFrom(finalProjectModel.getSurveyTableModel(), 0,
-									finalProjectModel.getSurveyTableModel().getRowCount() - 1, 0);
 				}
 			};
 		}
@@ -663,42 +536,26 @@ public class BreakoutMainView {
 					}
 					recentProjectFiles.add(0, relativizedNewProjectFile);
 
-					if (getProjectModel() != null && projectPersister != null) {
-						getProjectModel().changeSupport().removePropertyChangeListener(projectPersister);
+					if (getProjectModel() != null) {
+						getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
 					}
-					projectPersister = new TaskServiceFilePersister<QObject<ProjectModel>>(ioTaskService,
-							"Saving project...", QObjectBimappers.defaultBimapper(ProjectModel.defaultMapper),
-							newProjectFile.toAbsolutePath().toFile());
 				}
 			};
 			QObject<ProjectModel> projectModel = null;
 
-			try {
-				projectModel = projectPersister.load();
+			projectModel = loadProjectModel(newProjectFile.toFile());
 
-				if (projectModel == null) {
-					projectModel = ProjectModel.instance.newObject();
-				}
-				replaceNulls(projectModel, newProjectFile);
-			} catch (final Exception ex) {
-				ex.printStackTrace();
-				new OnEDT() {
-					@Override
-					public void run() throws Throwable {
-						JOptionPane.showMessageDialog(getMainPanel(),
-								ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
-								"Failed to load project", JOptionPane.ERROR_MESSAGE);
-					}
-				};
-				return;
+			if (projectModel == null) {
+				projectModel = ProjectModel.instance.newObject();
 			}
+			replaceNulls(projectModel, newProjectFile);
 
 			final QObject<ProjectModel> finalProjectModel = projectModel;
 
 			new OnEDT() {
 				@Override
 				public void run() throws Throwable {
-					finalProjectModel.changeSupport().addPropertyChangeListener(projectPersister);
+					finalProjectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
 					projectModelBinder.set(finalProjectModel);
 
 					float[] viewXform = finalProjectModel.get(ProjectModel.viewXform);
@@ -737,10 +594,28 @@ public class BreakoutMainView {
 					.resolve(getRootModel().get(RootModel.currentProjectFile)).normalize();
 			relativizedNewSurveyFile = projectPath.toAbsolutePath().getParent()
 					.relativize(newSurveyFile.toAbsolutePath());
-			setStatus("Saving current survey...");
+			setStatus("Loading survey...");
 			setIndeterminate(true);
 
 			showDialogLater();
+		}
+
+		private SurveyTableModel loadSurvey(File file) {
+			try {
+				MetacaveImporter importer = new MetacaveImporter();
+				importer.importMetacave(file);
+				return new SurveyTableModel(importer.getRows());
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				OnEDT.onEDT(new ExceptionRunnable() {
+					@Override
+					public void run() throws Exception {
+						JOptionPane.showMessageDialog(mainPanel, ex.getLocalizedMessage(),
+								"Failed to load survey", JOptionPane.ERROR_MESSAGE);
+					}
+				});
+				return null;
+			}
 		}
 
 		@Override
@@ -748,31 +623,10 @@ public class BreakoutMainView {
 			boolean changed = new FromEDT<Boolean>() {
 				@Override
 				public Boolean run() throws Throwable {
-					File absoluteSurveyFile = newSurveyFile.toAbsolutePath().toFile();
-
-					if (surveyPersister == null || !absoluteSurveyFile.equals(surveyPersister.getFile())) {
-						surveyPersister = new TaskServiceSubtaskFilePersister<SurveyTableModel>(
-								ioTaskService,
-								"Saving survey...",
-								new SubtaskStreamBimapperFactory<SurveyTableModel, SubtaskStreamBimapper<SurveyTableModel>>() {
-							@Override
-							public SubtaskStreamBimapper<SurveyTableModel> createSubtaskStreamBimapper(
-									Subtask subtask) {
-								return new SurveyTableModelStreamBimapper(subtask);
-							}
-						}, absoluteSurveyFile);
-					} else {
-						return false;
-					}
 					getProjectModel().set(ProjectModel.surveyFile, relativizedNewSurveyFile);
 
-					try {
-						surveyTableChangeHandler.setPersistOnUpdate(false);
-						surveyDrawer.table().getModel().clear();
-						setShots(Collections.emptyList());
-					} finally {
-						surveyTableChangeHandler.setPersistOnUpdate(true);
-					}
+					surveyDrawer.table().getModel().clear();
+					setShots(Collections.emptyList());
 					return true;
 				}
 			}.result();
@@ -783,36 +637,21 @@ public class BreakoutMainView {
 
 			setStatus("Opening survey: " + newSurveyFile + "...");
 
-			SurveyTableModel surveyModel;
-
-			try {
-				surveyModel = surveyPersister.load(null);
-			} catch (final Exception ex) {
-				ex.printStackTrace();
-				new OnEDT() {
-					@Override
-					public void run() throws Throwable {
-						JOptionPane.showConfirmDialog(getMainPanel(),
-								ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
-								"Failed to load survey", JOptionPane.ERROR_MESSAGE);
-					}
-				};
-
+			SurveyTableModel surveyModel = loadSurvey(newSurveyFile.toFile());
+			if (surveyModel == null) {
 				return;
 			}
-
-			final SurveyTableModel finalSurveyModel = surveyModel;
 
 			new OnEDT() {
 				@Override
 				public void run() throws Throwable {
-					if (finalSurveyModel != null && finalSurveyModel.getRowCount() > 0) {
+					if (surveyModel != null && surveyModel.getRowCount() > 0) {
+						loadingSurvey = true;
 						try {
-							surveyTableChangeHandler.setPersistOnUpdate(false);
 							surveyDrawer.table().getModel()
-									.copyRowsFrom(finalSurveyModel, 0, finalSurveyModel.getRowCount() - 1, 0);
+									.copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
 						} finally {
-							surveyTableChangeHandler.setPersistOnUpdate(true);
+							loadingSurvey = false;
 						}
 					}
 				}
@@ -834,183 +673,6 @@ public class BreakoutMainView {
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
 			saveViewXform();
-		}
-	}
-
-	class SurveyTableChangeHandler extends TaskServiceBatcher<TableModelEvent> implements TableModelListener {
-		private boolean persistOnUpdate = true;
-		private boolean rebuildViewOnUpdate = true;
-
-		public SurveyTableChangeHandler(TaskService taskService) {
-			super(taskService, true);
-		}
-
-		@Override
-		public BatcherTask<TableModelEvent> createTask(final LinkedList<TableModelEvent> batch) {
-			BatcherTask<TableModelEvent> task = new BatcherTask<TableModelEvent>("Updating view") {
-				@Override
-				protected void execute() {
-					try {
-						OnEDT.onEDT(() -> taskListDrawer.holder().hold(this));
-						reallyExecute();
-					} finally {
-						OnEDT.onEDT(() -> taskListDrawer.holder().release(this));
-					}
-				}
-
-				@Override
-				public boolean isCancelable() {
-					return true;
-				}
-
-				protected void reallyExecute() {
-					setTotal(1000);
-					Subtask copySubtask = new Subtask(this);
-					copySubtask.setStatus("Parsing shot data");
-					copySubtask.setIndeterminate(false);
-
-					SurveyTableModel copy = new SurveyTableModel();
-					SurveyTableModelCopier copier = new SurveyTableModelCopier();
-
-					SurveyTableModel model = new FromEDT<SurveyTableModel>() {
-						@Override
-						public SurveyTableModel run() throws Throwable {
-							return surveyDrawer.table().getModel();
-						}
-					}.result();
-
-					copier.copyInBackground(model, copy, 1000, copySubtask);
-
-					if (copySubtask.isCanceling()) {
-						return;
-					}
-
-					copySubtask.end();
-
-					Subtask parsingSubtask = new Subtask(this);
-					parsingSubtask.setStatus("Parsing shot data");
-					parsingSubtask.setIndeterminate(false);
-
-					final List<Shot> shots = SurveyTableParser.createShots(copy.getRows(), parsingSubtask);
-
-					if (parsingSubtask.isCanceling()) {
-						return;
-					}
-
-					new OnEDT() {
-						@Override
-						public void run() throws Throwable {
-							setShots(shots);
-						}
-					};
-
-					final List<Shot> nonNullShots = new ArrayList<Shot>();
-
-					if (!shots.isEmpty()) {
-						Subtask calculatingSubtask = new Subtask(this);
-						calculatingSubtask.setStatus("calculating");
-						calculatingSubtask.setIndeterminate(true);
-
-						LinkedHashSet<Station> stations = new LinkedHashSet<Station>();
-
-						for (Shot shot : shots) {
-							if (shot != null) {
-								nonNullShots.add(shot);
-								stations.add(shot.from);
-								stations.add(shot.to);
-							}
-						}
-
-						Shot.computeConnected(stations);
-
-						LineLineIntersection2d llx = new LineLineIntersection2d();
-
-						for (Station station : stations) {
-							station.calcSplayPoints(llx);
-						}
-
-						calculatingSubtask.end();
-					}
-
-					updateModel(nonNullShots);
-				}
-
-				public void updateModel(List<Shot> shots) {
-					setStatus("Updating view...");
-
-					SwingUtilities.invokeLater(() -> {
-						if (model3d != null) {
-							final Survey3dModel model3d = BreakoutMainView.this.model3d;
-							BreakoutMainView.this.model3d = null;
-
-							autoDrawable.invoke(false, drawable -> {
-								scene.remove(model3d);
-								scene.disposeLater(model3d);
-								return false;
-							});
-						}
-					});
-
-					setStatus("Updating view: constructing new model...");
-
-					final Survey3dModel model = Survey3dModel.create(shots, 10, 3, 3, this);
-					if (isCanceling()) {
-						return;
-					}
-
-					setStatus("Updating view: installing new model...");
-
-					float[] bounds = Arrays.copyOf(model.getTree().getRoot().mbr(), 6);
-
-					bounds[1] = bounds[4] + 100;
-					bounds[4] = bounds[1] + 100;
-
-					SwingUtilities.invokeLater(() -> {
-						model3d = model;
-						model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
-
-						projectModelBinder.update(true);
-
-						float[] center = new float[3];
-						Rectmath.center(model.getTree().getRoot().mbr(), center);
-						orbiter.setCenter(center);
-						navigator.setCenter(center);
-
-						autoDrawable.invoke(false, drawable -> {
-							scene.add(model);
-							scene.initLater(model);
-							return false;
-						});
-					});
-				}
-			};
-			return task;
-		}
-
-		public boolean isPersistOnUpdate() {
-			return persistOnUpdate;
-		}
-
-		public boolean isRebuildViewOnUpdate() {
-			return rebuildViewOnUpdate;
-		}
-
-		public void setPersistOnUpdate(boolean persistOnUpdate) {
-			this.persistOnUpdate = persistOnUpdate;
-		}
-
-		public void setRebuildViewOnUpdate(boolean rebuildViewOnUpdate) {
-			this.rebuildViewOnUpdate = rebuildViewOnUpdate;
-		}
-
-		@Override
-		public void tableChanged(TableModelEvent e) {
-			if (persistOnUpdate && surveyPersister != null) {
-				surveyPersister.saveLater((SurveyTableModel) e.getSource());
-			}
-			if (rebuildViewOnUpdate) {
-				add(e);
-			}
 		}
 	}
 
@@ -1197,6 +859,7 @@ public class BreakoutMainView {
 			}
 
 			new OnEDT() {
+
 				@Override
 				public void run() throws Throwable {
 					CompassPlotParseResultsDialog dialog = new CompassPlotParseResultsDialog(i18n);
@@ -1216,22 +879,17 @@ public class BreakoutMainView {
 					}
 
 					if ("import".equals(importOption)) {
-						try {
-							surveyTableChangeHandler.setPersistOnUpdate(false);
-							SurveyTableModel model = surveyDrawer.table().getModel();
-							for (Row row : model.getRows()) {
-								if (truthy(row.getFromStation())) {
-									Row posRow = stationPositionRows.get(row.getFromStation());
-									if (posRow == null) {
-										continue;
-									}
-									row.setNorthing(posRow.getNorthing());
-									row.setEasting(posRow.getEasting());
-									row.setElevation(posRow.getElevation());
+						SurveyTableModel model = surveyDrawer.table().getModel();
+						for (Row row : model.getRows()) {
+							if (truthy(row.getFromStation())) {
+								Row posRow = stationPositionRows.get(row.getFromStation());
+								if (posRow == null) {
+									continue;
 								}
+								row.setNorthing(posRow.getNorthing());
+								row.setEasting(posRow.getEasting());
+								row.setElevation(posRow.getElevation());
 							}
-						} finally {
-							surveyTableChangeHandler.setPersistOnUpdate(true);
 						}
 					}
 				}
@@ -1260,10 +918,23 @@ public class BreakoutMainView {
 	PerspectiveProjection perspCalculator = new PerspectiveProjection(
 			(float) Math.PI / 2, 1f,
 			1e7f);
-	TaskService rebuildTaskService;
-	TaskService sortTaskService;
-	TaskService ioTaskService;
-	SurveyTableChangeHandler surveyTableChangeHandler;
+
+	final ScheduledExecutorService debouncer = Executors.newSingleThreadScheduledExecutor();
+	final TaskService rebuildTaskService = new SingleThreadedTaskService();
+	final TaskService sortTaskService = new SingleThreadedTaskService();
+	final TaskService ioTaskService = new SingleThreadedTaskService();
+
+	boolean loadingSurvey = false;
+
+	final TableModelListener surveyTableChangeHandler = new TableModelListener() {
+		@Override
+		public void tableChanged(TableModelEvent e) {
+			if (!loadingSurvey) {
+				saveSurvey.run();
+			}
+			rebuild3dModel.run();
+		}
+	};
 
 	final double[] fromLoc = new double[3];
 
@@ -1310,7 +981,6 @@ public class BreakoutMainView {
 	final float[] p2 = new float[3];
 	File rootFile;
 	Path rootDirectory;
-	TaskServiceFilePersister<QObject<RootModel>> rootPersister;
 
 	final Binder<QObject<RootModel>> rootModelBinder = new DefaultBinder<QObject<RootModel>>();
 
@@ -1328,10 +998,6 @@ public class BreakoutMainView {
 			colorParamBinder,
 			paramRangesBinder);
 
-	TaskServiceFilePersister<QObject<ProjectModel>> projectPersister;
-
-	SubtaskFilePersister<SurveyTableModel> surveyPersister;
-
 	final AnimationQueue cameraAnimationQueue = new AnimationQueue();
 
 	NewProjectAction newProjectAction = new NewProjectAction(this);
@@ -1342,14 +1008,8 @@ public class BreakoutMainView {
 
 	OpenSurveyAction openSurveyAction = new OpenSurveyAction(this);
 
-	ImportProjectArchiveAction importProjectArchiveAction = new ImportProjectArchiveAction(
-			this);
-
 	ImportCompassAction importCompassAction = new ImportCompassAction(this);
 	ImportCompassPlotAction importCompassPlotAction = new ImportCompassPlotAction(this);
-
-	ExportProjectArchiveAction exportProjectArchiveAction = new ExportProjectArchiveAction(
-			this);
 
 	ExportImageAction exportImageAction = new ExportImageAction(this);
 
@@ -1361,6 +1021,216 @@ public class BreakoutMainView {
 
 	List<Shot> shots = Collections.emptyList();
 	Map<Integer, Integer> shotNumberToRowIndexMap = CollectionUtils.newHashMap();
+
+	private <S extends QSpec<S>> void saveModel(QObject<S> m, Path path, Bimapper<QObject<S>, Object> mapper) {
+		saveModel(m, path == null ? null : path.toFile(), mapper);
+	}
+
+	private <S extends QSpec<S>> void saveModel(QObject<S> m, File file, Bimapper<QObject<S>, Object> mapper) {
+		ioTaskService.submit(new Task() {
+			@Override
+			protected void execute() throws Exception {
+				if (m == null || file == null) {
+					return;
+				}
+				QObject<S> model = FromEDT.fromEDT(() -> m.deepClone());
+				setStatus("Saving settings...");
+				setIndeterminate(true);
+
+				try (Writer w = new OutputStreamWriter(new FileOutputStream(file), "UTF-8")) {
+					if (!rootFile.getParentFile().exists()) {
+						rootFile.getParentFile().mkdirs();
+					}
+					DumperOptions options = new DumperOptions();
+					options.setDefaultFlowStyle(FlowStyle.BLOCK);
+					new Yaml(options).dump(mapper.map(model), w);
+					w.flush();
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+	}
+
+	final DebouncedRunnable saveRootModel = Lodash.debounce(
+			() -> saveModel(getRootModel(), rootFile, RootModel.defaultMapper),
+			1000, new DebounceOptions<Void>().executor(debouncer));
+
+	final DebouncedRunnable saveProjectModel = Lodash.debounce(
+			() -> saveModel(getProjectModel(), getCurrentProjectFile(), ProjectModel.defaultMapper),
+			1000, new DebounceOptions<Void>().executor(debouncer));
+
+	final DebouncedRunnable saveSurvey = Lodash.debounce(() -> {
+		ioTaskService.submit(new Task() {
+			SurveyTableModel model;
+
+			@Override
+			protected void execute() throws Exception {
+				Path p = getSurveyFile();
+				File surveyFile = p == null ? null : p.toFile();
+
+				OnEDT.onEDT(() -> {
+					model = new SurveyTableModelCopier().copy(surveyDrawer.table().getModel());
+				});
+
+				if (surveyFile == null || model == null) {
+					return;
+				}
+				setStatus("Saving survey...");
+				setIndeterminate(true);
+
+				try {
+					if (!surveyFile.getParentFile().exists()) {
+						surveyFile.getParentFile().mkdirs();
+					}
+					MetacaveExporter exporter = new MetacaveExporter();
+					exporter.export(model.getRows(), surveyFile);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+	} , 1000, new DebounceOptions<Void>().executor(debouncer));
+
+	final DebouncedRunnable rebuild3dModel = Lodash.debounce(() -> {
+		rebuildTaskService.submit(new Task() {
+			@Override
+			protected void execute() {
+				try {
+					OnEDT.onEDT(() -> taskListDrawer.holder().hold(this));
+					reallyExecute();
+				} finally {
+					OnEDT.onEDT(() -> taskListDrawer.holder().release(this));
+				}
+			}
+
+			@Override
+			public boolean isCancelable() {
+				return true;
+			}
+
+			protected void reallyExecute() {
+				setTotal(1000);
+				Subtask copySubtask = new Subtask(this);
+				copySubtask.setStatus("Parsing shot data");
+				copySubtask.setIndeterminate(false);
+
+				SurveyTableModel copy = new SurveyTableModel();
+				SurveyTableModelCopier copier = new SurveyTableModelCopier();
+
+				SurveyTableModel model = new FromEDT<SurveyTableModel>() {
+					@Override
+					public SurveyTableModel run() throws Throwable {
+						return surveyDrawer.table().getModel();
+					}
+				}.result();
+
+				copier.copyInBackground(model, copy, 1000, copySubtask);
+
+				if (copySubtask.isCanceling()) {
+					return;
+				}
+
+				copySubtask.end();
+
+				Subtask parsingSubtask = new Subtask(this);
+				parsingSubtask.setStatus("Parsing shot data");
+				parsingSubtask.setIndeterminate(false);
+
+				final List<Shot> shots = SurveyTableParser.createShots(copy.getRows(), parsingSubtask);
+
+				if (parsingSubtask.isCanceling()) {
+					return;
+				}
+
+				new OnEDT() {
+					@Override
+					public void run() throws Throwable {
+						setShots(shots);
+					}
+				};
+
+				final List<Shot> nonNullShots = new ArrayList<Shot>();
+
+				if (!shots.isEmpty()) {
+					Subtask calculatingSubtask = new Subtask(this);
+					calculatingSubtask.setStatus("calculating");
+					calculatingSubtask.setIndeterminate(true);
+
+					LinkedHashSet<Station> stations = new LinkedHashSet<Station>();
+
+					for (Shot shot : shots) {
+						if (shot != null) {
+							nonNullShots.add(shot);
+							stations.add(shot.from);
+							stations.add(shot.to);
+						}
+					}
+
+					Shot.computeConnected(stations);
+
+					LineLineIntersection2d llx = new LineLineIntersection2d();
+
+					for (Station station : stations) {
+						station.calcSplayPoints(llx);
+					}
+
+					calculatingSubtask.end();
+				}
+
+				updateModel(nonNullShots);
+			}
+
+			public void updateModel(List<Shot> shots) {
+				setStatus("Updating view...");
+
+				SwingUtilities.invokeLater(() -> {
+					if (model3d != null) {
+						final Survey3dModel model3d = BreakoutMainView.this.model3d;
+						BreakoutMainView.this.model3d = null;
+
+						autoDrawable.invoke(false, drawable -> {
+							scene.remove(model3d);
+							scene.disposeLater(model3d);
+							return false;
+						});
+					}
+				});
+
+				setStatus("Updating view: constructing new model...");
+
+				final Survey3dModel model = Survey3dModel.create(shots, 10, 3, 3, this);
+				if (isCanceling()) {
+					return;
+				}
+
+				setStatus("Updating view: installing new model...");
+
+				float[] bounds = Arrays.copyOf(model.getTree().getRoot().mbr(), 6);
+
+				bounds[1] = bounds[4] + 100;
+				bounds[4] = bounds[1] + 100;
+
+				SwingUtilities.invokeLater(() -> {
+					model3d = model;
+					model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
+
+					projectModelBinder.update(true);
+
+					float[] center = new float[3];
+					Rectmath.center(model.getTree().getRoot().mbr(), center);
+					orbiter.setCenter(center);
+					navigator.setCenter(center);
+
+					autoDrawable.invoke(false, drawable -> {
+						scene.add(model);
+						scene.initLater(model);
+						return false;
+					});
+				});
+			}
+		});
+	} , 1000, new DebounceOptions<Void>().executor(debouncer));
 
 	public BreakoutMainView() {
 		final GLProfile glp = GLProfile.get(GLProfile.GL3);
@@ -1382,10 +1252,6 @@ public class BreakoutMainView {
 
 		orbiter = new JoglOrbiter(autoDrawable, renderer.getViewSettings());
 		orthoNavigator = new JoglOrthoNavigator(autoDrawable, renderer.getViewState(), renderer.getViewSettings());
-
-		ioTaskService = new SingleThreadedTaskService();
-		rebuildTaskService = new SingleThreadedTaskService();
-		sortTaskService = new SingleThreadedTaskService();
 
 		hintLabel = new JLabel("A");
 		hintLabel.setForeground(Color.WHITE);
@@ -1410,7 +1276,6 @@ public class BreakoutMainView {
 
 		OnEDT.onEDT(() -> {
 			surveyDrawer = new SurveyDrawer(sortRunner);
-			surveyDrawer.table().getModel().setEditable(false);
 
 			rowFilterFactory = text -> new SmartComboTableRowFilter(Arrays.asList(
 					new SurveyDesignationFilter(text),
@@ -1522,7 +1387,6 @@ public class BreakoutMainView {
 		settingsDrawer = new SettingsDrawer(i18n, rootModelBinder, projectModelBinder);
 		settingsDrawer.addTo(layeredPane, 1);
 
-		surveyTableChangeHandler = new SurveyTableChangeHandler(rebuildTaskService);
 		surveyDrawer.table().getModel().addTableModelListener(surveyTableChangeHandler);
 
 		surveyDrawer.addTo(layeredPane, 5);
@@ -1748,12 +1612,10 @@ public class BreakoutMainView {
 		fileMenu.add(new JMenuItem(editSurveyScanPathsAction));
 		fileMenu.add(new JSeparator());
 		JMenu importMenu = new JMenu();
-		importMenu.add(new JMenuItem(importProjectArchiveAction));
 		importMenu.add(new JMenuItem(importCompassAction));
 		importMenu.add(new JMenuItem(importCompassPlotAction));
 		fileMenu.add(importMenu);
 		JMenu exportMenu = new JMenu();
-		exportMenu.add(new JMenuItem(exportProjectArchiveAction));
 		exportMenu.add(new JMenuItem(exportImageAction));
 		fileMenu.add(exportMenu);
 
@@ -2006,7 +1868,6 @@ public class BreakoutMainView {
 			return true;
 		});
 
-		File rootFile;
 		String rootFilePath = System.getProperty("rootFile");
 
 		if (rootFilePath == null) {
@@ -2037,12 +1898,10 @@ public class BreakoutMainView {
 
 		rootDirectory = rootFile.toPath().getParent();
 
-		rootPersister = new TaskServiceFilePersister<QObject<RootModel>>(ioTaskService, "Saving settings...",
-				QObjectBimappers.defaultBimapper(RootModel.defaultMapper), rootFile);
 		QObject<RootModel> rootModel = null;
 
 		try {
-			rootModel = rootPersister.load();
+			rootModel = loadRootModel(rootFile);
 		} catch (Exception ex) {
 		}
 
@@ -2270,10 +2129,6 @@ public class BreakoutMainView {
 		changeView(new float[] { 1, 0, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations());
 	}
 
-	public void exportProjectArchive(File newProjectFile) {
-		ioTaskService.submit(new ExportProjectArchiveTask(newProjectFile));
-	}
-
 	protected void fitViewToEverything() {
 		if (model3d == null) {
 			return;
@@ -2445,10 +2300,6 @@ public class BreakoutMainView {
 	public void importCompassFiles(List<File> files) {
 		ioTaskService.submit(new ImportCompassTask(Lodash.map(files, file -> file.toPath())));
 	}
-
-	public void importProjectArchive(File newProjectFile) {
-		ioTaskService.submit(new ImportProjectArchiveTask(newProjectFile));
-	};
 
 	private void installOrthoMouseAdapters() {
 		if (mouseAdapterChain != null) {
@@ -2771,15 +2622,54 @@ public class BreakoutMainView {
 		this.openProjectAction = openProjectAction;
 	}
 
+	private final BasicPropertyChangeListener projectModelChangeHandler = new BasicPropertyChangeListener() {
+		@Override
+		public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
+			saveProjectModel.run();
+		}
+	};
+
+	private final BasicPropertyChangeListener rootModelChangeHandler = new BasicPropertyChangeListener() {
+		@Override
+		public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
+			saveRootModel.run();
+		}
+	};
+
+	private QObject<RootModel> loadRootModel(File file) {
+		return loadModel(file, RootModel.defaultMapper);
+	}
+
+	private QObject<ProjectModel> loadProjectModel(File file) {
+		return loadModel(file, ProjectModel.defaultMapper);
+	}
+
+	private <S extends QSpec<S>> QObject<S> loadModel(File file, Bimapper<QObject<S>, Object> mapper) {
+		try (InputStream in = new FileInputStream(file)) {
+			Object o = new Yaml().load(in);
+			return mapper.unmap(o);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			OnEDT.onEDT(new ExceptionRunnable() {
+				@Override
+				public void run() throws Exception {
+					JOptionPane.showMessageDialog(mainPanel, ex.getLocalizedMessage(),
+							"Failed to load settings", JOptionPane.ERROR_MESSAGE);
+				}
+			});
+			return null;
+		}
+	}
+
 	public void setRootModel(QObject<RootModel> rootModel) {
 		QObject<RootModel> currentModel = getRootModel();
 		if (currentModel != rootModel) {
 			if (currentModel != null) {
-				currentModel.changeSupport().removePropertyChangeListener(rootPersister);
+				currentModel.changeSupport().removePropertyChangeListener(rootModelChangeHandler);
 			}
 			rootModelBinder.set(rootModel);
 			if (rootModel != null) {
-				rootModel.changeSupport().addPropertyChangeListener(rootPersister);
+				rootModel.changeSupport().addPropertyChangeListener(rootModelChangeHandler);
 			}
 		}
 	}
@@ -2811,5 +2701,24 @@ public class BreakoutMainView {
 	public void importCompassPlot(List<File> files) {
 		ioTaskService
 				.submit(new ImportCompassPlotTask(Lodash.map(files, file -> file.toPath())));
+	}
+
+	public Path getCurrentProjectFile() {
+		QObject<RootModel> rootModel = getRootModel();
+		if (rootModel == null || rootFile == null) {
+			return null;
+		}
+		Path file = rootModel.get(RootModel.currentProjectFile);
+		return rootFile.toPath().getParent().toAbsolutePath().resolve(file).normalize();
+	}
+
+	public Path getSurveyFile() {
+		QObject<ProjectModel> projectModel = getProjectModel();
+		Path projectFile = getCurrentProjectFile();
+		if (projectModel == null || projectFile == null) {
+			return null;
+		}
+		Path file = projectModel.get(ProjectModel.surveyFile);
+		return projectFile.getParent().resolve(file).normalize();
 	}
 }

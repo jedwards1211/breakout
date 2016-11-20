@@ -57,6 +57,22 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 		}
 	}
 
+	private static class DefaultChildMapper implements Mapper<Object, Object> {
+		@Override
+		public Object map(Object in) {
+			if (in instanceof QElement) {
+				return ((QElement) in).deepClone(this);
+			}
+			return in;
+		}
+
+		public static DefaultChildMapper instance = new DefaultChildMapper();
+	}
+
+	public QObject<S> deepClone() {
+		return deepClone(DefaultChildMapper.instance);
+	}
+
 	@Override
 	public QObject<S> deepClone(Mapper<Object, Object> childMapper) {
 		QObject<S> result = spec.newObject();
