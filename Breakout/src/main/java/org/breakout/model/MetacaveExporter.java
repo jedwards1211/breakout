@@ -135,6 +135,14 @@ public class MetacaveExporter {
 				fromStation.add("lrud", lrud);
 				fromStation.addProperty("breakoutRow", rowIndex);
 			}
+			// add calculated location to from station
+			if (!fromStation.has("nev")) {
+				JsonArray nev = new JsonArray();
+				nev.add(row.getNorthing());
+				nev.add(row.getEasting());
+				nev.add(row.getElevation());
+				fromStation.add("nev", nev);
+			}
 
 			if (truthy(row.getToStation())) {
 				// insert shot
