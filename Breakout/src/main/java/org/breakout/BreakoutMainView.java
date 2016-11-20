@@ -22,6 +22,8 @@
 package org.breakout;
 
 import static org.andork.math3d.Vecmath.newMat4f;
+import static org.andork.util.JavaScript.falsy;
+import static org.andork.util.JavaScript.truthy;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -59,6 +61,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -112,6 +115,10 @@ import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.CollectionUtils;
+import org.andork.compass.plot.BeginSectionCommand;
+import org.andork.compass.plot.CompassPlotCommand;
+import org.andork.compass.plot.CompassPlotParser;
+import org.andork.compass.plot.DrawSurveyCommand;
 import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.func.FloatUnaryOperator;
@@ -169,6 +176,7 @@ import org.apache.commons.io.FileUtils;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
+import org.breakout.compass.ui.CompassPlotParseResultsDialog;
 import org.breakout.model.ColorParam;
 import org.breakout.model.ProjectArchiveModel;
 import org.breakout.model.ProjectModel;
@@ -181,7 +189,9 @@ import org.breakout.model.Survey3dModel.Shot3d;
 import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.breakout.model.SurveyTableModel;
+import org.breakout.model.SurveyTableModel.Row;
 import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
+import org.breakout.model.SurveyTableModel.Trip;
 import org.breakout.model.SurveyTableParser;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
@@ -1117,6 +1127,117 @@ public class BreakoutMainView {
 		}
 	}
 
+	private class ImportCompassPlotTask extends DrawerPinningTask {
+		Iterable<Path> compassFiles;
+		String importOption;
+
+		private ImportCompassPlotTask(Iterable<Path> compassFiles) {
+			super(getMainPanel(), taskListDrawer.holder());
+			this.compassFiles = compassFiles;
+			compassFiles.forEach(p -> setTotal(getTotal() + 1));
+
+			showDialogLater();
+		}
+
+		private String toString(Object o) {
+			if (o == null) {
+				return null;
+			}
+			return o.toString();
+		}
+
+		@Override
+		protected void reallyDuringDialog() throws Exception {
+			final SurveyTableModel newModel;
+			final CompassPlotParser parser = new CompassPlotParser();
+			final List<Row> rows = new ArrayList<>();
+			final Map<String, Row> stationPositionRows = new HashMap<>();
+			try {
+				int progress = 0;
+				for (Path compassFile : compassFiles) {
+					setStatus("Importing data from " + compassFile + "...");
+					setCompleted(progress++);
+
+					Trip trip = null;
+					for (CompassPlotCommand command : parser.parsePlot(compassFile)) {
+						if (command instanceof BeginSectionCommand) {
+							trip = new Trip();
+							trip.setCave(((BeginSectionCommand) command).getSectionName());
+						} else if (command instanceof DrawSurveyCommand) {
+							DrawSurveyCommand c = (DrawSurveyCommand) command;
+							if (falsy(c.getStationName())) {
+								continue;
+							}
+							Row row = new Row();
+							row.setTrip(trip);
+							row.setFromStation(c.getStationName());
+							row.setNorthing(toString(c.getLocation().getNorthing()));
+							row.setEasting(toString(c.getLocation().getEasting()));
+							row.setElevation(toString(c.getLocation().getVertical()));
+							rows.add(row);
+							stationPositionRows.put(c.getStationName(), row);
+						}
+					}
+				}
+				newModel = new SurveyTableModel(rows);
+				newModel.setEditable(false);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				new OnEDT() {
+					@Override
+					public void run() throws Throwable {
+						JOptionPane.showMessageDialog(getMainPanel(),
+								ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
+								"Failed to import compass plot data", JOptionPane.ERROR_MESSAGE);
+					}
+				};
+
+				return;
+			}
+
+			new OnEDT() {
+				@Override
+				public void run() throws Throwable {
+					CompassPlotParseResultsDialog dialog = new CompassPlotParseResultsDialog(i18n);
+					dialog.setErrors(parser.getErrors());
+					dialog.setSurveyTableModel(newModel);
+					dialog.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
+					importOption = null;
+					dialog.onImport(e -> {
+						importOption = "import";
+						dialog.dispose();
+					});
+					dialog.setModalityType(ModalityType.APPLICATION_MODAL);
+					dialog.setVisible(true);
+
+					if (newModel == null || newModel.getRowCount() == 0) {
+						return;
+					}
+
+					if ("import".equals(importOption)) {
+						try {
+							surveyTableChangeHandler.setPersistOnUpdate(false);
+							SurveyTableModel model = surveyDrawer.table().getModel();
+							for (Row row : model.getRows()) {
+								if (truthy(row.getFromStation())) {
+									Row posRow = stationPositionRows.get(row.getFromStation());
+									if (posRow == null) {
+										continue;
+									}
+									row.setNorthing(posRow.getNorthing());
+									row.setEasting(posRow.getEasting());
+									row.setElevation(posRow.getElevation());
+								}
+							}
+						} finally {
+							surveyTableChangeHandler.setPersistOnUpdate(true);
+						}
+					}
+				}
+			};
+		}
+	}
+
 	private static Shot3dPickContext hoverUpdaterSpc = new Shot3dPickContext();
 
 	private static final int SCANNED_NOTES_SEARCH_DEPTH = 10;
@@ -1224,6 +1345,7 @@ public class BreakoutMainView {
 			this);
 
 	ImportCompassAction importCompassAction = new ImportCompassAction(this);
+	ImportCompassPlotAction importCompassPlotAction = new ImportCompassPlotAction(this);
 
 	ExportProjectArchiveAction exportProjectArchiveAction = new ExportProjectArchiveAction(
 			this);
@@ -1626,6 +1748,7 @@ public class BreakoutMainView {
 		JMenu importMenu = new JMenu();
 		importMenu.add(new JMenuItem(importProjectArchiveAction));
 		importMenu.add(new JMenuItem(importCompassAction));
+		importMenu.add(new JMenuItem(importCompassPlotAction));
 		fileMenu.add(importMenu);
 		JMenu exportMenu = new JMenu();
 		exportMenu.add(new JMenuItem(exportProjectArchiveAction));
@@ -2681,5 +2804,10 @@ public class BreakoutMainView {
 
 	public void westFacingProfileMode() {
 		changeView(new float[] { -1, 0, 0 }, new float[] { 0, 0, -1 }, true, getDefaultShotsForOperations());
+	}
+
+	public void importCompassPlot(List<File> files) {
+		ioTaskService
+				.submit(new ImportCompassPlotTask(CollectionUtils.map(file -> file.toPath(), files)));
 	}
 }
