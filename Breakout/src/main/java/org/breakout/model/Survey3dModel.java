@@ -257,6 +257,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					"}";
 		}
 
+		private String fragmentShader;
+
 		protected String createFragmentShaderCode() {
 			return "  float temp;"
 					+

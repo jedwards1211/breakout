@@ -9,6 +9,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
 import org.andork.swing.list.RealListModel;
+import org.andork.swing.table.ListTableModel.ColumnBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -56,7 +57,10 @@ public class ListTableModelTest {
 	public void init(String... elements) {
 		events.clear();
 		list = new RealListModel<>(new ArrayList<>(Arrays.asList(elements)));
-		model = new ListTableModel<>((ListModel<String>) list);
+		model = new ListTableModel<>(Arrays.asList(
+				new ColumnBuilder<String, String>()
+						.getter(s -> s).create()),
+				(ListModel<String>) list);
 		listener = new Listener();
 		model.addTableModelListener(listener);
 	}

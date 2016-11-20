@@ -122,6 +122,7 @@ import org.andork.compass.plot.DrawSurveyCommand;
 import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.func.FloatUnaryOperator;
+import org.andork.func.Lodash;
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
@@ -1409,6 +1410,7 @@ public class BreakoutMainView {
 
 		OnEDT.onEDT(() -> {
 			surveyDrawer = new SurveyDrawer(sortRunner);
+			surveyDrawer.table().getModel().setEditable(false);
 
 			rowFilterFactory = text -> new SmartComboTableRowFilter(Arrays.asList(
 					new SurveyDesignationFilter(text),
@@ -2441,7 +2443,7 @@ public class BreakoutMainView {
 	}
 
 	public void importCompassFiles(List<File> files) {
-		ioTaskService.submit(new ImportCompassTask(CollectionUtils.map(file -> file.toPath(), files)));
+		ioTaskService.submit(new ImportCompassTask(Lodash.map(files, file -> file.toPath())));
 	}
 
 	public void importProjectArchive(File newProjectFile) {
@@ -2808,6 +2810,6 @@ public class BreakoutMainView {
 
 	public void importCompassPlot(List<File> files) {
 		ioTaskService
-				.submit(new ImportCompassPlotTask(CollectionUtils.map(file -> file.toPath(), files)));
+				.submit(new ImportCompassPlotTask(Lodash.map(files, file -> file.toPath())));
 	}
 }

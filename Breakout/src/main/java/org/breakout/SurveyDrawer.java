@@ -51,6 +51,7 @@ public class SurveyDrawer extends Drawer {
 	SurveyTable surveyTable;
 	DefaultAnnotatingJTableSetup surveyTableSetup;
 	JToggleButton showDataButton;
+	JToggleButton editButton;
 
 	public SurveyDrawer(Consumer<Runnable> sortRunner) {
 		setPreferredSize(new Dimension(800, 250));
@@ -70,6 +71,9 @@ public class SurveyDrawer extends Drawer {
 		showDataButton.setMargin(new Insets(0, 0, 0, 0));
 		showDataButton.setToolTipText("Switch between data/metadata");
 
+		editButton = new JToggleButton("Edit");
+		editButton.setMargin(new Insets(0, 0, 0, 0));
+
 		delegate().dockingSide(Side.BOTTOM);
 		mainResizeHandle();
 
@@ -82,6 +86,7 @@ public class SurveyDrawer extends Drawer {
 		gbw.put(highlightLabel).rightOfLast().west().insets(2, 10, 0, 0);
 		gbw.put(highlightField).rightOfLast().fillboth(1.0, 0.0);
 		gbw.put(showDataButton).rightOfLast().filly(0.0);
+		gbw.put(editButton).rightOfLast().filly(0.0);
 		gbw.put(pinButton()).rightOfLast().east().filly(0.0);
 		gbw.put(maxButton()).rightOfLast().east().filly(0.0);
 		gbw.put(surveyTableSetup.scrollPane).below(filterLabel, maxButton()).fillboth(0.0, 1.0);
@@ -97,6 +102,10 @@ public class SurveyDrawer extends Drawer {
 
 	public JToggleButton showDataButton() {
 		return showDataButton;
+	}
+
+	public JToggleButton editButton() {
+		return editButton;
 	}
 
 	public SurveyTable table() {

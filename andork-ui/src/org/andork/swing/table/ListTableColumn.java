@@ -1,88 +1,27 @@
 package org.andork.swing.table;
 
-import java.awt.Component;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.HashMap;
+import java.util.Map;
 
-import javax.swing.AbstractCellEditor;
-import javax.swing.DefaultCellEditor;
 import javax.swing.JTable;
-import javax.swing.JTextField;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
+import org.andork.swing.table.ListTableModel.Column;
+
+@SuppressWarnings("serial")
 public class ListTableColumn<R, V> extends TableColumn {
-	@SuppressWarnings("serial")
-	private class CellEditor extends AbstractCellEditor implements TableCellEditor {
-		R editingRow;
+	private final ListTableModel.Column<R, V> modelColumn;
 
-		@SuppressWarnings("unchecked")
-		@Override
-		public Object getCellEditorValue() {
-			TableCellEditor editor = ListTableColumn.super.getCellEditor();
-			if (setter == null || editor == null) {
-				return editingRow;
-			}
-			return setter.apply(editingRow, (V) editor.getCellEditorValue());
-		}
-
-		@SuppressWarnings("unchecked")
-		@Override
-		public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected,
-				int row, int column) {
-			TableCellEditor editor = ListTableColumn.super.getCellEditor();
-			editingRow = (R) value;
-			return editor.getTableCellEditorComponent(table, getter.apply(editingRow), isSelected, row, column);
-		}
-	}
-
-	private class CellRenderer implements TableCellRenderer {
-		@SuppressWarnings("unchecked")
-		@Override
-		public Component getTableCellRendererComponent(JTable table, Object value,
-				boolean isSelected, boolean hasFocus, int row, int column) {
-			TableCellRenderer renderer = ListTableColumn.super.getCellRenderer();
-			return renderer.getTableCellRendererComponent(
-					table, getter.apply((R) value), isSelected, hasFocus, row, column);
-		}
-	}
-
-	private static final long serialVersionUID = -7933306824250262751L;
-	private Function<R, V> getter;
-	private BiFunction<R, V, R> setter;
-	private final CellRenderer renderer = new CellRenderer();
-	private final CellEditor editor = new CellEditor();
-
-	public ListTableColumn() {
+	public ListTableColumn(ListTableModel.Column<R, V> modelColumn) {
 		super(0);
-		super.setCellRenderer(new DefaultTableCellRenderer());
-		super.setCellEditor(new DefaultCellEditor(new JTextField()));
-	}
-
-	public TableCellEditor editor() {
-		return super.getCellEditor();
+		this.modelColumn = modelColumn;
 	}
 
 	public ListTableColumn<R, V> editor(TableCellEditor editor) {
-		super.setCellEditor(editor);
-		return this;
-	}
-
-	@Override
-	public TableCellEditor getCellEditor() {
-		return super.getCellEditor() != null ? editor : null;
-	}
-
-	@Override
-	public TableCellRenderer getCellRenderer() {
-		return super.getCellRenderer() != null ? renderer : null;
-	}
-
-	public ListTableColumn<R, V> getter(Function<R, V> getter) {
-		this.getter = getter;
+		setCellEditor(editor);
 		return this;
 	}
 
@@ -101,25 +40,26 @@ public class ListTableColumn<R, V> extends TableColumn {
 		return this;
 	}
 
-	public TableCellRenderer renderer() {
-		return super.getCellRenderer();
-	}
-
 	public ListTableColumn<R, V> renderer(TableCellRenderer renderer) {
-		super.setCellRenderer(renderer);
+		setCellRenderer(renderer);
 		return this;
 	}
 
-	public ListTableColumn<R, V> setter(BiConsumer<R, V> setter) {
-		this.setter = (row, value) -> {
-			setter.accept(row, value);
-			return row;
-		};
-		return this;
-	}
+	@SuppressWarnings("unchecked")
+	public static <R> void updateModelIndices(JTable table) {
+		ListTableModel<R> m = (ListTableModel<R>) table.getModel();
+		TableColumnModel cm = table.getColumnModel();
+		Map<Column<? super R, ?>, Integer> modelIndices = new HashMap<>();
+		int index = 0;
+		for (Column<? super R, ?> c : m.getColumns()) {
+			modelIndices.put(c, index++);
+		}
 
-	public ListTableColumn<R, V> setter(BiFunction<R, V, R> setter) {
-		this.setter = setter;
-		return this;
+		for (int i = 0; i < cm.getColumnCount(); i++) {
+			TableColumn c = cm.getColumn(i);
+			if (c instanceof ListTableColumn) {
+				c.setModelIndex(modelIndices.get(((ListTableColumn<R, ?>) c).modelColumn));
+			}
+		}
 	}
 }

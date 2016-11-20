@@ -24,15 +24,20 @@ package org.breakout.model;
 import static org.andork.util.JavaScript.or;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
+import org.andork.model.DefaultProperty;
 import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.ListTableModel;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
+import org.andork.util.StringUtils;
 
 public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 	public static class DataCloner {
@@ -114,6 +119,131 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 	 * station.
 	 */
 	public static class Row {
+		public static class Properties {
+			private static <V> DefaultProperty<Row, V> property(String name, Class<V> valueClass,
+					Function<? super Row, ? extends V> getter,
+					BiConsumer<? super Row, V> setter) {
+				return new DefaultProperty<Row, V>(name, valueClass, getter, setter);
+			}
+
+			private static <V> DefaultProperty<Row, V> tripProperty(String name, Class<V> valueClass,
+					Function<Trip, ? extends V> getter,
+					BiConsumer<Trip, V> setter) {
+				return new DefaultProperty<Row, V>(name, valueClass,
+						r -> r.getTrip() == null ? null : getter.apply(r.getTrip()),
+						(r, v) -> setter.accept(r.ensureTrip(), v));
+			}
+
+			public static DefaultProperty<Row, String> fromCave = property(
+					"fromCave", String.class,
+					r -> r.getFromCave(),
+					(r, v) -> {
+						if (r.getTrip() != null && v == r.getTrip().getCave()) {
+							r.setOverrideFromCave(null);
+						} else {
+							r.setOverrideFromCave(v);
+						}
+					});
+			public static DefaultProperty<Row, String> overrideFromCave = property(
+					"overrideFromCave", String.class,
+					r -> r.getOverrideFromCave(),
+					(r, v) -> r.setOverrideFromCave(v));
+			public static DefaultProperty<Row, String> fromStation = property(
+					"fromStation", String.class,
+					r -> r.getFromStation(),
+					(r, v) -> r.setFromStation(v));
+			public static DefaultProperty<Row, String> toCave = property(
+					"toCave", String.class,
+					r -> r.getToCave(),
+					(r, v) -> {
+						if (r.getTrip() != null && v == r.getTrip().getCave()) {
+							r.setOverrideToCave(null);
+						} else {
+							r.setOverrideToCave(v);
+						}
+					});
+			public static DefaultProperty<Row, String> overrideToCave = property(
+					"overrideToCave", String.class,
+					r -> r.getOverrideToCave(),
+					(r, v) -> r.setOverrideToCave(v));
+			public static DefaultProperty<Row, String> toStation = property(
+					"toStation", String.class,
+					r -> r.getToStation(),
+					(r, v) -> r.setToStation(v));
+			public static DefaultProperty<Row, String> distance = property(
+					"distance", String.class,
+					r -> r.getDistance(),
+					(r, v) -> r.setDistance(v));
+			public static DefaultProperty<Row, String> frontAzimuth = property(
+					"frontAzimuth", String.class,
+					r -> r.getFrontAzimuth(),
+					(r, v) -> r.setFrontAzimuth(v));
+			public static DefaultProperty<Row, String> frontInclination = property(
+					"frontInclination", String.class,
+					r -> r.getFrontInclination(),
+					(r, v) -> r.setFrontInclination(v));
+			public static DefaultProperty<Row, String> backAzimuth = property(
+					"backAzimuth", String.class,
+					r -> r.getBackAzimuth(),
+					(r, v) -> r.setBackAzimuth(v));
+			public static DefaultProperty<Row, String> backInclination = property(
+					"backInclination", String.class,
+					r -> r.getBackInclination(),
+					(r, v) -> r.setBackInclination(v));
+			public static DefaultProperty<Row, String> left = property(
+					"left", String.class,
+					r -> r.getLeft(),
+					(r, v) -> r.setLeft(v));
+			public static DefaultProperty<Row, String> right = property(
+					"right", String.class,
+					r -> r.getRight(),
+					(r, v) -> r.setRight(v));
+			public static DefaultProperty<Row, String> up = property(
+					"up", String.class,
+					r -> r.getUp(),
+					(r, v) -> r.setUp(v));
+			public static DefaultProperty<Row, String> down = property(
+					"down", String.class,
+					r -> r.getDown(),
+					(r, v) -> r.setDown(v));
+			public static DefaultProperty<Row, String> northing = property(
+					"northing", String.class,
+					r -> r.getNorthing(),
+					(r, v) -> r.setNorthing(v));
+			public static DefaultProperty<Row, String> easting = property(
+					"easting", String.class,
+					r -> r.getEasting(),
+					(r, v) -> r.setEasting(v));
+			public static DefaultProperty<Row, String> elevation = property(
+					"elevation", String.class,
+					r -> r.getElevation(),
+					(r, v) -> r.setElevation(v));
+			public static DefaultProperty<Row, String> comment = property(
+					"comment", String.class,
+					r -> r.getComment(),
+					(r, v) -> r.setComment(v));
+			public static DefaultProperty<Row, Trip> trip = property(
+					"trip", Trip.class,
+					r -> r.getTrip(),
+					(r, v) -> r.setTrip(v));
+			public static DefaultProperty<Row, String> tripName = tripProperty(
+					"tripName", String.class,
+					t -> t.getName(),
+					(t, v) -> t.setName(v));
+			public static DefaultProperty<Row, String> surveyors = tripProperty(
+					"surveyors", String.class,
+					t -> t.getSurveyors() == null ? null : StringUtils.join("; ", t.getSurveyors()),
+					(t, v) -> t.setSurveyors(v == null ? null : Arrays.asList(v.split(";"))));
+			public static DefaultProperty<Row, String> date = tripProperty(
+					"date", String.class,
+					t -> t.getDate(),
+					(t, v) -> t.setDate(v));
+			public static DefaultProperty<Row, String> surveyNotes = tripProperty(
+					"surveyNotes", String.class,
+					t -> t.getSurveyNotes(),
+					(t, v) -> t.setSurveyNotes(v));
+		}
+
 		private String overrideFromCave;
 		private String fromStation;
 		private String overrideToCave;
@@ -517,6 +647,53 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 		}
 	}
 
+	public static class Columns {
+		public static final Column<Row, String> fromCave = column(Row.Properties.fromCave);
+		public static final Column<Row, String> fromStation = column(Row.Properties.fromStation);
+		public static final Column<Row, String> toCave = column(Row.Properties.toCave);
+		public static final Column<Row, String> toStation = column(Row.Properties.toStation);
+		public static final Column<Row, String> distance = column(Row.Properties.distance);
+		public static final Column<Row, String> frontAzimuth = column(Row.Properties.frontAzimuth);
+		public static final Column<Row, String> frontInclination = column(Row.Properties.frontInclination);
+		public static final Column<Row, String> backAzimuth = column(Row.Properties.backAzimuth);
+		public static final Column<Row, String> backInclination = column(Row.Properties.backInclination);
+		public static final Column<Row, String> left = column(Row.Properties.left);
+		public static final Column<Row, String> right = column(Row.Properties.right);
+		public static final Column<Row, String> up = column(Row.Properties.up);
+		public static final Column<Row, String> down = column(Row.Properties.down);
+		public static final Column<Row, String> northing = column(Row.Properties.northing);
+		public static final Column<Row, String> easting = column(Row.Properties.easting);
+		public static final Column<Row, String> elevation = column(Row.Properties.elevation);
+		public static final Column<Row, String> comment = column(Row.Properties.comment);
+		public static final Column<Row, String> tripName = column(Row.Properties.tripName);
+		public static final Column<Row, String> surveyors = column(Row.Properties.surveyors);
+		public static final Column<Row, String> date = column(Row.Properties.date);
+		public static final Column<Row, String> surveyNotes = column(Row.Properties.surveyNotes);
+
+		public static final List<Column<Row, ?>> list = Arrays.asList(
+				fromCave,
+				fromStation,
+				toCave,
+				toStation,
+				distance,
+				frontAzimuth,
+				frontInclination,
+				backAzimuth,
+				backInclination,
+				left,
+				right,
+				up,
+				down,
+				northing,
+				easting,
+				elevation,
+				comment,
+				tripName,
+				surveyors,
+				date,
+				surveyNotes);
+	}
+
 	/**
 	 *
 	 */
@@ -525,13 +702,13 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 	private final List<Row> rows;
 
 	public SurveyTableModel() {
-		super(new ArrayList<Row>());
+		super(Columns.list, new ArrayList<Row>());
 		rows = ((RealListModel<Row>) getListModel()).getList();
 		fixEndRows();
 	}
 
 	public SurveyTableModel(List<Row> rows) {
-		super(rows);
+		super(Columns.list, rows);
 		this.rows = rows;
 		fixEndRows();
 	}

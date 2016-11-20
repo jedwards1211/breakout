@@ -34,7 +34,6 @@ import java.util.ListIterator;
 import java.util.Map;
 import java.util.RandomAccess;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.andork.func.Mapper;
@@ -234,12 +233,6 @@ public class CollectionUtils {
 		}
 	}
 
-	public static <K, V> Map<K, V> keyify(Stream<? extends V> stream, Function<? super V, K> keyAssigner) {
-		Map<K, V> result = new LinkedHashMap<>();
-		stream.forEach(v -> result.put(keyAssigner.apply(v), v));
-		return result;
-	}
-
 	public static <T, E extends T> int lastIndexOf(List<T> list, E element, int startIndex) {
 		while (startIndex >= 0) {
 			if (Java7.Objects.equals(list.get(startIndex), element)) {
@@ -258,40 +251,6 @@ public class CollectionUtils {
 			}
 		}
 		return -1;
-	}
-
-	public static <I, O> O[] map(Mapper<I, O> mapper, I[] in) {
-		O[] out = (O[]) new Object[in.length];
-		for (int i = 0; i < in.length; i++) {
-			out[i] = mapper.map(in[i]);
-		}
-		return out;
-	}
-
-	public static <I, O> Iterable<O> map(final Mapper<I, O> mapper, final Iterable<? extends I> in) {
-		return new Iterable<O>() {
-			@Override
-			public Iterator<O> iterator() {
-				return new Iterator<O>() {
-					Iterator<? extends I> inIter = in.iterator();
-
-					@Override
-					public boolean hasNext() {
-						return inIter.hasNext();
-					}
-
-					@Override
-					public O next() {
-						return mapper.map(inIter.next());
-					}
-
-					@Override
-					public void remove() {
-						throw new UnsupportedOperationException();
-					}
-				};
-			}
-		};
 	}
 
 	/**
