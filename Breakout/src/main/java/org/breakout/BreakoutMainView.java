@@ -40,6 +40,7 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.ItemEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -78,6 +79,7 @@ import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.swing.CellEditor;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
@@ -891,6 +893,7 @@ public class BreakoutMainView {
 								row.setElevation(posRow.getElevation());
 							}
 						}
+						model.fireTableDataChanged();
 					}
 				}
 			};
@@ -925,10 +928,14 @@ public class BreakoutMainView {
 	final TaskService ioTaskService = new SingleThreadedTaskService();
 
 	boolean loadingSurvey = false;
+	boolean editingSurvey = false;
 
 	final TableModelListener surveyTableChangeHandler = new TableModelListener() {
 		@Override
 		public void tableChanged(TableModelEvent e) {
+			if (editingSurvey) {
+				return;
+			}
 			if (!loadingSurvey) {
 				saveSurvey.run();
 			}
@@ -1387,7 +1394,20 @@ public class BreakoutMainView {
 		settingsDrawer = new SettingsDrawer(i18n, rootModelBinder, projectModelBinder);
 		settingsDrawer.addTo(layeredPane, 1);
 
+		surveyDrawer.table().getModel().setEditable(false);
 		surveyDrawer.table().getModel().addTableModelListener(surveyTableChangeHandler);
+		surveyDrawer.editButton().setSelected(false);
+		surveyDrawer.editButton().addItemListener(e -> {
+			editingSurvey = e.getStateChange() == ItemEvent.SELECTED;
+			if (e.getStateChange() == ItemEvent.DESELECTED) {
+				CellEditor editor = surveyDrawer.table().getCellEditor();
+				if (editor != null) {
+					editor.stopCellEditing();
+				}
+				saveSurvey.run();
+				rebuild3dModel.run();
+			}
+		});
 
 		surveyDrawer.addTo(layeredPane, 5);
 

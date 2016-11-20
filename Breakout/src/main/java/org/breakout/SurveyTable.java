@@ -27,6 +27,8 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.DefaultCellEditor;
+import javax.swing.JTextField;
 import javax.swing.table.TableColumnModel;
 
 import org.andork.swing.table.AnnotatingJTable;
@@ -121,6 +123,8 @@ public class SurveyTable extends AnnotatingJTable {
 		numberFormat.setGroupingUsed(false);
 		numberFormat.setMinimumFractionDigits(1);
 		numberFormat.setMaximumFractionDigits(1);
+
+		setDefaultEditor(String.class, new DefaultCellEditor(new JTextField()));
 
 		addMouseListener(new MouseAdapter() {
 			@Override

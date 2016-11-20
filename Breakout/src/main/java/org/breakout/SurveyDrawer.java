@@ -23,6 +23,7 @@ package org.breakout;
 
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.event.ItemEvent;
 import java.util.function.Consumer;
 
 import javax.swing.JLabel;
@@ -73,6 +74,13 @@ public class SurveyDrawer extends Drawer {
 
 		editButton = new JToggleButton("Edit");
 		editButton.setMargin(new Insets(0, 0, 0, 0));
+		editButton.addItemListener(e -> {
+			SurveyTableModel model = surveyTable.getModel();
+			if (model != null) {
+				model.setEditable(e.getStateChange() == ItemEvent.SELECTED);
+			}
+			editButton.setText(e.getStateChange() == ItemEvent.SELECTED ? "Done" : "Edit");
+		});
 
 		delegate().dockingSide(Side.BOTTOM);
 		mainResizeHandle();
