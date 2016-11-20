@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>breakout</artifactId>
-	<version>0.9.27</version>
+	<version>0.10.0</version>
 	<properties>
 		<maven.build.timestamp.format>yyyy-MM-dd HH:mm z</maven.build.timestamp.format>
 		<build.date>${maven.build.timestamp}</build.date>
@@ -66,42 +66,42 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-core</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-math</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-math3d</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-plot</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-spatial</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-ui</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-jogl-gl2es2-utils</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-jogl-gl2es2-swing</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.swinglabs.swingx</groupId>
@@ -184,7 +184,7 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-ui-test</artifactId>
-			<version>0.9.27</version>
+			<version>0.10.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
