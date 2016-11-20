@@ -667,7 +667,7 @@ public class BreakoutMainView {
 					}
 					projectPersister = new TaskServiceFilePersister<QObject<ProjectModel>>(ioTaskService,
 							"Saving project...", QObjectBimappers.defaultBimapper(ProjectModel.defaultMapper),
-							newProjectFile.toFile());
+							newProjectFile.toAbsolutePath().toFile());
 				}
 			};
 			QObject<ProjectModel> projectModel = null;
