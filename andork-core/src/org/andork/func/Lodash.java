@@ -6,6 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -14,7 +17,251 @@ import java.util.stream.Stream;
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
 
+/**
+ * Excellent stuff adapted from <a href="https://lodash.com/">Lodash</a>.
+ */
 public class Lodash {
+	public static class DebounceOptions<O> {
+		private Long maxWait;
+		private boolean leading = false;
+		private boolean trailing = true;
+		private BiFunction<Runnable, Long, Future<O>> setTimeout;
+
+		public DebounceOptions<O> maxWait(long maxWait) {
+			this.maxWait = maxWait;
+			return this;
+		}
+
+		public DebounceOptions<O> leading(boolean leading) {
+			this.leading = leading;
+			return this;
+		}
+
+		public DebounceOptions<O> trailing(boolean trailing) {
+			this.trailing = trailing;
+			return this;
+		}
+
+		public DebounceOptions<O> setTimeout(BiFunction<Runnable, Long, Future<O>> setTimeout) {
+			this.setTimeout = setTimeout;
+			return this;
+		}
+
+		public BiFunction<Runnable, Long, Future<O>> setTimeout() {
+			return setTimeout;
+		}
+
+		@SuppressWarnings("unchecked")
+		public DebounceOptions<O> executor(ScheduledExecutorService executor) {
+			this.setTimeout = (r, wait) -> (Future<O>) executor.schedule(r, wait, TimeUnit.MILLISECONDS);
+			return this;
+		}
+	}
+
+	public static interface Debounced<O> {
+		public void cancel();
+
+		public void cancel(boolean mayInterruptIfRunning);
+
+		public O flush();
+	}
+
+	public static interface DebouncedRunnable extends Runnable, Debounced<Void> {
+	}
+
+	public static interface DebouncedBiFunction<A, B, O> extends BiFunction<A, B, O>, Debounced<O> {
+	}
+
+	public static interface DebouncedFunction<I, O> extends Function<I, O>, Debounced<O> {
+	}
+
+	private static class DebouncedWrapper<O> implements Debounced<O> {
+		final Debounced<O> wrapped;
+
+		public DebouncedWrapper(Debounced<O> wrapped) {
+			this.wrapped = wrapped;
+		}
+
+		@Override
+		public void cancel() {
+			wrapped.cancel();
+		}
+
+		@Override
+		public void cancel(boolean mayInterruptIfRunning) {
+			wrapped.cancel(mayInterruptIfRunning);
+		}
+
+		@Override
+		public O flush() {
+			return wrapped.flush();
+		}
+	}
+
+	public static DebouncedRunnable debounce(Runnable fn, long wait, DebounceOptions<Void> options) {
+		DebouncedBiFunction<Object, Object, Void> debounced = debounce((a, b) -> {
+			fn.run();
+			return null;
+		} , wait, options);
+
+		class Result extends DebouncedWrapper<Void> implements DebouncedRunnable {
+			public Result() {
+				super(debounced);
+			}
+
+			@Override
+			public void run() {
+				debounced.apply(null, null);
+			}
+		}
+		return new Result();
+	}
+
+	public static <I, O> DebouncedFunction<I, O> debounce(Function<I, O> fn, long wait,
+			DebounceOptions<O> options) {
+		DebouncedBiFunction<I, Void, O> debounced = debounce((a, b) -> fn.apply(a), wait, options);
+
+		class Result extends DebouncedWrapper<O> implements DebouncedFunction<I, O> {
+			public Result() {
+				super(debounced);
+			}
+
+			@Override
+			public O apply(I t) {
+				return debounced.apply(t, null);
+			}
+		}
+		return new Result();
+	}
+
+	public static <A, B, O> DebouncedBiFunction<A, B, O> debounce(BiFunction<A, B, O> fn, long wait,
+			DebounceOptions<O> options) {
+		class Result implements DebouncedBiFunction<A, B, O> {
+			A lastA;
+			B lastB;
+			boolean hasLastArgs = false;
+			O result;
+			Future<O> future;
+			long lastCallTime = -1;
+			long lastInvokeTime = 0;
+			boolean maxing = options.maxWait != null;
+
+			@Override
+			public O apply(A a, B b) {
+				long time = System.currentTimeMillis();
+				boolean isInvoking = shouldInvoke(time);
+
+				lastA = a;
+				lastB = b;
+				hasLastArgs = true;
+				lastCallTime = time;
+
+				if (isInvoking) {
+					if (future == null) {
+						return leadingEdge(lastCallTime);
+					}
+					if (maxing) {
+						// Handle invocations in a tight loop.
+						future = options.setTimeout.apply(this::timerExpired, wait);
+						return invokeFunc(lastCallTime);
+					}
+				}
+				if (future == null) {
+					future = options.setTimeout.apply(this::timerExpired, wait);
+				}
+				return result;
+			}
+
+			O invokeFunc(long time) {
+				A a = lastA;
+				B b = lastB;
+				lastA = null;
+				lastB = null;
+				hasLastArgs = false;
+				lastInvokeTime = time;
+				result = fn.apply(a, b);
+				return result;
+			}
+
+			O leadingEdge(long time) {
+				// Reset any `maxWait` timer.
+				lastInvokeTime = time;
+				// Start the timer for the trailing edge.
+				future = options.setTimeout.apply(this::timerExpired, wait);
+				// Invoke the leading edge.
+				return options.leading ? invokeFunc(time) : result;
+			}
+
+			boolean shouldInvoke(long time) {
+				long timeSinceLastCall = time - lastCallTime;
+				long timeSinceLastInvoke = time - lastInvokeTime;
+
+				// Either this is the first call, activity has stopped and we're
+				// at the
+				// trailing edge, the system time has gone backwards and we're
+				// treating
+				// it as the trailing edge, or we've hit the `maxWait` limit.
+				return lastCallTime < 0 || timeSinceLastCall >= wait ||
+						timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= options.maxWait;
+			}
+
+			long remainingWait(long time) {
+				long timeSinceLastCall = time - lastCallTime;
+				long timeSinceLastInvoke = time - lastInvokeTime;
+				long result = wait - timeSinceLastCall;
+				return maxing ? Math.min(result, options.maxWait - timeSinceLastInvoke) : result;
+			}
+
+			O timerExpired() {
+				long time = System.currentTimeMillis();
+				if (shouldInvoke(time)) {
+					return trailingEdge(time);
+				}
+				// Restart the timer.
+				future = options.setTimeout.apply(this::timerExpired, remainingWait(time));
+				return null;
+			}
+
+			O trailingEdge(long time) {
+				future = null;
+
+				// Only invoke if we have `lastArgs` which means `func` has been
+				// debounced at least once.
+				if (options.trailing && hasLastArgs) {
+					return invokeFunc(time);
+				}
+				hasLastArgs = false;
+				lastA = null;
+				lastB = null;
+				return result;
+			}
+
+			@Override
+			public void cancel() {
+				cancel(false);
+			}
+
+			@Override
+			public void cancel(boolean mayInterruptIfRunning) {
+				if (future != null) {
+					future.cancel(mayInterruptIfRunning);
+				}
+				lastInvokeTime = 0;
+				hasLastArgs = false;
+				lastA = null;
+				lastB = null;
+				lastCallTime = -1;
+				future = null;
+			}
+
+			@Override
+			public O flush() {
+				return future == null ? result : trailingEdge(System.currentTimeMillis());
+			}
+		}
+		return new Result();
+	}
+
 	public static <K, V> void forEach(Map<? extends K, ? extends V> c,
 			BiConsumer<? super V, ? super K> iteratee) {
 		for (Entry<? extends K, ? extends V> e : c.entrySet()) {
