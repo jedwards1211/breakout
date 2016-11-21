@@ -241,7 +241,7 @@ public class MetacaveImporter {
 					row.setTrip(trip);
 					row.setOverrideFromCave(getAsString(fromStation, "cave"));
 					row.setFromStation(getAsString(fromStation, "station"));
-					if (toStation != null) {
+					if (shot != null && shot.size() > 0 && toStation != null) {
 						row.setOverrideToCave(getAsString(toStation, "cave"));
 						row.setToStation(getAsString(toStation, "station"));
 					}
