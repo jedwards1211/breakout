@@ -99,6 +99,8 @@ public class SurveyTable extends AnnotatingJTable {
 				.headerValue("Date");
 		public static final ListTableColumn<Row, String> surveyNotes = column(SurveyTableModel.Columns.surveyNotes)
 				.headerValue("Survey Notes");
+		public static final ListTableColumn<Row, String> units = column(SurveyTableModel.Columns.units)
+				.headerValue("Units");
 	}
 
 	private static final long serialVersionUID = -3257512752381778654L;
@@ -170,6 +172,7 @@ public class SurveyTable extends AnnotatingJTable {
 			addColumn(Columns.toStation);
 
 			if (showData) {
+				addColumn(Columns.units);
 				addColumn(Columns.distance);
 				addColumn(Columns.frontAzimuth);
 				addColumn(Columns.frontInclination);

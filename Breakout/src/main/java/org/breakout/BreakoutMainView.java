@@ -197,7 +197,6 @@ import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.Row;
-import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 import org.breakout.model.SurveyTableModel.Trip;
 import org.breakout.model.SurveyTableParser;
 import org.breakout.update.UpdateStatusPanelController;
@@ -1069,16 +1068,12 @@ public class BreakoutMainView {
 
 	final DebouncedRunnable saveSurvey = Lodash.debounce(() -> {
 		ioTaskService.submit(new Task() {
-			SurveyTableModel model;
-
 			@Override
 			protected void execute() throws Exception {
 				Path p = getSurveyFile();
 				File surveyFile = p == null ? null : p.toFile();
 
-				OnEDT.onEDT(() -> {
-					model = new SurveyTableModelCopier().copy(surveyDrawer.table().getModel());
-				});
+				SurveyTableModel model = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 
 				if (surveyFile == null || model == null) {
 					return;
@@ -1122,17 +1117,19 @@ public class BreakoutMainView {
 				copySubtask.setStatus("Parsing shot data");
 				copySubtask.setIndeterminate(false);
 
-				SurveyTableModel copy = new SurveyTableModel();
-				SurveyTableModelCopier copier = new SurveyTableModelCopier();
+				// SurveyTableModel copy = new SurveyTableModel();
+				// SurveyTableModelCopier copier = new SurveyTableModelCopier();
+				//
+				// SurveyTableModel model = new FromEDT<SurveyTableModel>() {
+				// @Override
+				// public SurveyTableModel run() throws Throwable {
+				// return surveyDrawer.table().getModel();
+				// }
+				// }.result();
+				//
+				// copier.copyInBackground(model, copy, 1000, copySubtask);
 
-				SurveyTableModel model = new FromEDT<SurveyTableModel>() {
-					@Override
-					public SurveyTableModel run() throws Throwable {
-						return surveyDrawer.table().getModel();
-					}
-				}.result();
-
-				copier.copyInBackground(model, copy, 1000, copySubtask);
+				SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 
 				if (copySubtask.isCanceling()) {
 					return;

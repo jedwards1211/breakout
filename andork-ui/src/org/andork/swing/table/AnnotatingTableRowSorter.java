@@ -218,7 +218,9 @@ public class AnnotatingTableRowSorter<M extends TableModel> extends AnnotatingRo
 		@Override
 		public void copyRow(M src, int row, M dest) {
 			for (int column = 0; column < Math.min(src.getColumnCount(), dest.getColumnCount()); column++) {
-				dest.setValueAt(src.getValueAt(row, column), row, column);
+				if (dest.isCellEditable(row, column)) {
+					dest.setValueAt(src.getValueAt(row, column), row, column);
+				}
 			}
 		}
 	}

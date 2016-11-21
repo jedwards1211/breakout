@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import org.andork.func.Lodash;
 import org.andork.model.DefaultProperty;
 import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
@@ -440,11 +441,7 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 
 	public static class SurveyTableModelCopier extends AbstractTableModelCopier<SurveyTableModel> {
 		public SurveyTableModel copy(SurveyTableModel src) {
-			SurveyTableModel dest = createEmptyCopy(src);
-			for (int row = 0; row < src.getRowCount(); row++) {
-				copyRow(src, row, dest);
-			}
-			return dest;
+			return src.clone();
 		}
 
 		@Override
@@ -669,6 +666,23 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 		public static final Column<Row, String> surveyors = column(Row.Properties.surveyors);
 		public static final Column<Row, String> date = column(Row.Properties.date);
 		public static final Column<Row, String> surveyNotes = column(Row.Properties.surveyNotes);
+		public static final Column<Row, String> units = new ColumnBuilder<Row, String>()
+				.columnClass(String.class)
+				.columnName("Units")
+				.getter(r -> {
+					Trip trip = r.getTrip();
+					if (trip == null) {
+						return null;
+					}
+					String dist = trip.getDistanceUnit().toString();
+					String azm = trip.getFrontAzimuthUnit().toString() + "/" + trip.getBackAzimuthUnit();
+					String azmCorrected = trip.areBackAzimuthsCorrected() ? "C" : "U";
+					String inc = trip.getFrontInclinationUnit().toString() + "/" + trip.getBackInclinationUnit();
+					String incCorrected = trip.areBackInclinationsCorrected() ? "C" : "U";
+					return String.format("dist=%1s azm=%2s %3s inc=%4s %5s", dist, azm, azmCorrected, inc,
+							incCorrected);
+				})
+				.create();
 
 		public static final List<Column<Row, ?>> list = Arrays.asList(
 				fromCave,
@@ -691,7 +705,8 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 				tripName,
 				surveyors,
 				date,
-				surveyNotes);
+				surveyNotes,
+				units);
 	}
 
 	/**
@@ -715,6 +730,12 @@ public class SurveyTableModel extends ListTableModel<SurveyTableModel.Row> {
 
 	public void clear() {
 		rows.clear();
+	}
+
+	@Override
+	public SurveyTableModel clone() {
+		DataCloner cloner = new DataCloner();
+		return new SurveyTableModel(Lodash.map(rows, cloner::clone));
 	}
 
 	public void copyRowsFrom(SurveyTableModel src, int srcStart, int srcEnd, int myStart) {
