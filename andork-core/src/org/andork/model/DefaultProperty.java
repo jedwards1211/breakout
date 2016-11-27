@@ -1,33 +1,24 @@
 package org.andork.model;
 
-import java.util.Collections;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class DefaultProperty<T, V> implements Property<T, V> {
 	private final String name;
-	private final Class<V> valueClass;
+	private final Class<? super V> valueClass;
 	private final Function<? super T, ? extends V> getter;
 	private final BiConsumer<? super T, V> setter;
-	private final Map<String, Object> metadata;
 
-	public DefaultProperty(String name, Class<V> valueClass, Function<? super T, ? extends V> getter) {
-		this(name, valueClass, getter, null, Collections.emptyMap());
+	public DefaultProperty(String name, Class<? super V> valueClass, Function<? super T, ? extends V> getter) {
+		this(name, valueClass, getter, null);
 	}
 
-	public DefaultProperty(String name, Class<V> valueClass, Function<? super T, ? extends V> getter,
+	public DefaultProperty(String name, Class<? super V> valueClass, Function<? super T, ? extends V> getter,
 			BiConsumer<? super T, V> setter) {
-		this(name, valueClass, getter, setter, Collections.emptyMap());
-	}
-
-	public DefaultProperty(String name, Class<V> valueClass, Function<? super T, ? extends V> getter,
-			BiConsumer<? super T, V> setter, Map<String, Object> metadata) {
 		this.name = name;
 		this.valueClass = valueClass;
 		this.getter = getter;
 		this.setter = setter;
-		this.metadata = Collections.unmodifiableMap(metadata);
 	}
 
 	@Override
@@ -36,7 +27,7 @@ public class DefaultProperty<T, V> implements Property<T, V> {
 	}
 
 	@Override
-	public Class<V> valueClass() {
+	public Class<? super V> valueClass() {
 		return valueClass;
 	}
 
@@ -61,10 +52,5 @@ public class DefaultProperty<T, V> implements Property<T, V> {
 		V prevValue = get(obj);
 		setter.accept(obj, value);
 		return prevValue;
-	}
-
-	@Override
-	public Map<String, ?> metadata() {
-		return metadata;
 	}
 }

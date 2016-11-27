@@ -1,7 +1,5 @@
 package org.andork.model;
 
-import java.util.Map;
-
 /**
  * Java reflection without actual reflection. With a list of the names, types,
  * getters, and setters of each property of a model class defined by
@@ -27,7 +25,7 @@ public interface Property<T, V> {
 	/**
 	 * @return the type of values for this property.
 	 */
-	public Class<V> valueClass();
+	public Class<? super V> valueClass();
 
 	/**
 	 * @return the value of this property in {@code obj}.
@@ -40,10 +38,4 @@ public interface Property<T, V> {
 	 * @return the previous value of this property in {@code obj}.
 	 */
 	public V set(T obj, V value);
-
-	/**
-	 * @return whatever random additional information about this property you'd
-	 *         like to provide.
-	 */
-	public Map<String, ?> metadata();
 }
