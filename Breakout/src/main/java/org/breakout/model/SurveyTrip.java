@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 11/29/2016, 1:24:28 PM.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 11/29/2016, 1:39:13 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -364,13 +364,7 @@ public final class SurveyTrip {
 	}
 
 	public <T> SurveyTrip update(String key, Function<? super T, ? extends T> updater) {
-		@SuppressWarnings("unchecked")
-		T oldValue = (T) data.get(key);
-		T newValue = updater.apply(oldValue);
-		if (Objects.equals(oldValue, newValue)) {
-			return this;
-		}
-		return set(key, newValue);
+		return set(key, updater.apply(get(key)));
 	}
 
 	@Override

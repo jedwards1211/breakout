@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 11/29/2016, 1:24:28 PM.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 11/29/2016, 1:39:13 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -46,9 +46,17 @@ public final class MutableSurveyRow {
 	public <T> T get(String key) {
 		return (T) persist().get(key);
 	}
+	
+	private static boolean equals(Object a, Object b) {
+		if (a instanceof Number || b instanceof Number ||
+			a instanceof String || b instanceof String) {
+			return Objects.equals(a, b);
+		}
+		return a == b;
+	}
 
 	public MutableSurveyRow set(String key, Object value) {
-		if (persisted != null && Objects.equals(value, persisted.get(key))) {
+		if (persisted != null && equals(value, persisted.get(key))) {
 			return this;
 		}
 		persisted = null;
@@ -60,7 +68,7 @@ public final class MutableSurveyRow {
 		@SuppressWarnings("unchecked")
 		T oldValue = (T) persist().get(key);
 		T newValue = updater.apply(oldValue);
-		if (Objects.equals(oldValue, newValue)) {
+		if (equals(oldValue, newValue)) {
 			return this;
 		}
 		data.plus(key, newValue);
