@@ -1,10 +1,10 @@
 module.exports = {
 	imports: [
 	  'java.util.List',
-	  'java.util.Date',
 	  'org.andork.unit.Unit',
 	  'org.andork.unit.Angle',
 	  'org.andork.unit.Length',
+	  'static org.andork.util.JavaScript.or',
 	],
 	generateProperties: true,
 	generateSetters: true,
@@ -12,7 +12,7 @@ module.exports = {
 	fields: {
 		cave: {type: 'String', description: 'cave name'},
 		name: {type: 'String', description: 'trip name'},
-		date: {type: 'Date', description: 'trip date'},
+		date: {type: 'String', description: 'trip date'},
 		surveyNotes: {type: 'String', description: 'survey notes file path'},
 		surveyors: {type: 'List<String>', description: 'surveyor names'},
 		distanceUnit: {type: 'Unit<Length>', description: 'default length unit', initValue: 'Length.meters'},
@@ -37,5 +37,22 @@ module.exports = {
 		frontInclinationCorrection: {type: 'String', description: 'correction for frontsight inclinations'},
 		backAzimuthCorrection: {type: 'String', description: 'correction for backsight azimuths'},
 		backInclinationCorrection: {type: 'String', description: 'correction for backsight inclinations'},
+	},
+	extraCode: `
+	public Unit<Angle> getFrontAzimuthUnit() {
+		return or(data.overrideFrontAzimuthUnit, data.angleUnit);
 	}
+
+	public Unit<Angle> getBackAzimuthUnit() {
+		return or(data.overrideBackAzimuthUnit, data.angleUnit);
+	}
+
+	public Unit<Angle> getFrontInclinationUnit() {
+		return or(data.overrideFrontInclinationUnit, data.angleUnit);
+	}
+
+	public Unit<Angle> getBackInclinationUnit() {
+		return or(data.overrideBackInclinationUnit, data.angleUnit);
+	}
+	`
 }

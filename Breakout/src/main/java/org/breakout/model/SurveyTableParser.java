@@ -20,8 +20,6 @@ import org.andork.math3d.Vecmath;
 import org.andork.swing.async.Subtask;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
-import org.breakout.model.SurveyTableModel.Row;
-import org.breakout.model.SurveyTableModel.Trip;
 
 public class SurveyTableParser {
 	private static class ParsedTripHeader {
@@ -39,8 +37,8 @@ public class SurveyTableParser {
 		final String toCave;
 		final String toStation;
 
-		public ShotKey(Row row) {
-			this(row.getFromCave(), row.getFromStation(), row.getToCave(), row.getToStation());
+		public ShotKey(SurveyRow SurveyRow) {
+			this(SurveyRow.getFromCave(), SurveyRow.getFromStation(), SurveyRow.getToCave(), SurveyRow.getToStation());
 		}
 
 		public ShotKey(String fromCave, String fromStation, String toCave, String toStation) {
@@ -135,9 +133,9 @@ public class SurveyTableParser {
 
 	}
 
-	private static final Trip defaultTrip = new Trip();
+	private static final SurveyTrip defaultTrip = new SurveyTrip();
 
-	public static List<Shot> createShots(List<Row> rows, Subtask subtask) {
+	public static List<Shot> createShots(List<SurveyRow> rows, Subtask subtask) {
 		if (subtask != null) {
 			subtask.setTotal(rows.size());
 		}
@@ -154,12 +152,12 @@ public class SurveyTableParser {
 
 		List<Shot> shotList = new ArrayList<Shot>();
 
-		IdentityHashMap<Trip, ParsedTripHeader> parsedTripHeaders = new IdentityHashMap<>();
+		IdentityHashMap<SurveyTrip, ParsedTripHeader> parsedTripHeaders = new IdentityHashMap<>();
 
 		int i = 0;
-		for (Iterator<Row> iter = rows.iterator(); iter.hasNext(); i++) {
-			Row row = iter.next();
-			final Trip trip = row.getTrip() == null ? defaultTrip : row.getTrip();
+		for (Iterator<SurveyRow> iter = rows.iterator(); iter.hasNext(); i++) {
+			SurveyRow SurveyRow = iter.next();
+			final SurveyTrip trip = SurveyRow.getTrip() == null ? defaultTrip : SurveyRow.getTrip();
 			Function<String, Double> toMeters = s -> Length.type.convert(
 					parse(s), trip.getDistanceUnit(), Length.meters);
 			Function<String, Float> toMetersf = s -> Length.type.convertf(
@@ -173,16 +171,17 @@ public class SurveyTableParser {
 			Shot shot = null;
 
 			try {
-				String fromName = toStringOrNull(row.getFromStation());
-				String toName = toStringOrNull(row.getToStation());
-				double dist = toMeters.apply(row.getDistance());
-				double fsAzm = Angle.type.convert(parse(row.getFrontAzimuth()), trip.getFrontAzimuthUnit(),
+				String fromName = toStringOrNull(SurveyRow.getFromStation());
+				String toName = toStringOrNull(SurveyRow.getToStation());
+				double dist = toMeters.apply(SurveyRow.getDistance());
+				double fsAzm = Angle.type.convert(parse(SurveyRow.getFrontAzimuth()), trip.getFrontAzimuthUnit(),
 						Angle.radians);
-				double bsAzm = Angle.type.convert(parse(row.getBackAzimuth()), trip.getBackAzimuthUnit(),
+				double bsAzm = Angle.type.convert(parse(SurveyRow.getBackAzimuth()), trip.getBackAzimuthUnit(),
 						Angle.radians);
-				double fsInc = Angle.type.convert(parse(row.getFrontInclination()), trip.getFrontInclinationUnit(),
+				double fsInc = Angle.type.convert(parse(SurveyRow.getFrontInclination()),
+						trip.getFrontInclinationUnit(),
 						Angle.radians);
-				double bsInc = Angle.type.convert(parse(row.getBackInclination()), trip.getBackInclinationUnit(),
+				double bsInc = Angle.type.convert(parse(SurveyRow.getBackInclination()), trip.getBackInclinationUnit(),
 						Angle.radians);
 
 				if (!trip.areBackAzimuthsCorrected()) {
@@ -192,22 +191,22 @@ public class SurveyTableParser {
 					bsInc = -bsInc;
 				}
 
-				float left = toMetersf.apply(row.getLeft());
-				float right = toMetersf.apply(row.getRight());
-				float up = toMetersf.apply(row.getUp());
-				float down = toMetersf.apply(row.getDown());
+				float left = toMetersf.apply(SurveyRow.getLeft());
+				float right = toMetersf.apply(SurveyRow.getRight());
+				float up = toMetersf.apply(SurveyRow.getUp());
+				float down = toMetersf.apply(SurveyRow.getDown());
 
 				if (fromName == null || toName == null) {
 					continue;
 				}
 
-				shot = shots.get(new ShotKey(row));
+				shot = shots.get(new ShotKey(SurveyRow));
 				if (shot == null) {
 					shot = new Shot();
 				} else {
 					// TODO make sure caves are reversed too
-					if (shot.from.equals(row.getToStation()) &&
-							shot.to.equals(row.getFromStation())) {
+					if (shot.from.equals(SurveyRow.getToStation()) &&
+							shot.to.equals(SurveyRow.getFromStation())) {
 						// reverse measurements
 						shot = new Shot();
 						String s = fromName;
@@ -228,12 +227,13 @@ public class SurveyTableParser {
 					}
 				}
 
-				double north = toMeters.apply(row.getNorthing());
-				double east = toMeters.apply(row.getEasting());
-				double elev = toMeters.apply(row.getElevation());
+				double north = toMeters.apply(SurveyRow.getNorthing());
+				double east = toMeters.apply(SurveyRow.getEasting());
+				double elev = toMeters.apply(SurveyRow.getElevation());
 
-				Station from = getStation(stations, new StationKey(row.getFromCave(), row.getFromStation()));
-				Station to = getStation(stations, new StationKey(row.getToCave(), row.getToStation()));
+				Station from = getStation(stations,
+						new StationKey(SurveyRow.getFromCave(), SurveyRow.getFromStation()));
+				Station to = getStation(stations, new StationKey(SurveyRow.getToCave(), SurveyRow.getToStation()));
 
 				Vecmath.setdNoNaNOrInf(from.position, east, elev, -north);
 
@@ -249,7 +249,7 @@ public class SurveyTableParser {
 								fsAzm + header.frontAzimuthCorrection,
 								bsAzm + header.backAzimuthCorrection)
 								+ header.declination);
-				shot.desc = row.getTrip() == null ? null : row.getTrip().getName();
+				shot.desc = SurveyRow.getTrip() == null ? null : SurveyRow.getTrip().getName();
 
 				try {
 					shot.date = dateFormat.parse(trip.getDate());
@@ -282,7 +282,7 @@ public class SurveyTableParser {
 				shot = null;
 			} finally {
 				if (shot != null) {
-					shots.put(new ShotKey(row), shot);
+					shots.put(new ShotKey(SurveyRow), shot);
 				}
 				// DO add null shots to shotList
 				shotList.add(shot);
@@ -355,7 +355,7 @@ public class SurveyTableParser {
 		}
 	}
 
-	private static ParsedTripHeader parseTripHeader(Trip trip) {
+	private static ParsedTripHeader parseTripHeader(SurveyTrip trip) {
 		ParsedTripHeader result = new ParsedTripHeader();
 		if (trip == null) {
 			return result;

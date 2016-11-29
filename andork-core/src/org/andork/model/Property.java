@@ -35,7 +35,8 @@ public interface Property<T, V> {
 	/**
 	 * Sets the value of this property in {@code obj}.
 	 *
-	 * @return the previous value of this property in {@code obj}.
+	 * @return either a copy of {@code obj} with the new value set, or
+	 *         {@code obj} (after modification).
 	 */
-	public V set(T obj, V value);
+	public T set(T obj, V value);
 }

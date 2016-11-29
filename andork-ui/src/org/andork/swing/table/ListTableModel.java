@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javax.swing.ListModel;
@@ -41,7 +42,7 @@ public class ListTableModel<E> extends AbstractTableModel {
 
 		public V getValueAt(E row);
 
-		public void setValueAt(E row, V value);
+		public E setValueAt(E row, V value);
 
 		public boolean isCellEditable(E row);
 	}
@@ -50,7 +51,9 @@ public class ListTableModel<E> extends AbstractTableModel {
 		return new ColumnBuilder<E, V>().columnClass(prop.valueClass())
 				.columnName(prop.name())
 				.getter(e -> prop.get(e))
-				.setter((e, v) -> prop.set(e, v))
+				.setter((e, v) -> {
+					return prop.set(e, v);
+				})
 				.create();
 	}
 
@@ -66,14 +69,16 @@ public class ListTableModel<E> extends AbstractTableModel {
 		private Class<? super V> columnClass = Object.class;
 		private String columnName = "";
 		private Function<? super E, ? extends V> getter;
-		private BiConsumer<? super E, V> setter;
+		private BiFunction<? super E, V, ? extends E> setter;
 		private Function<? super E, Boolean> isCellEditable;
 
 		public static <E, V> ColumnBuilder<E, V> create(Property<E, V> prop) {
 			return new ColumnBuilder<E, V>().columnClass(prop.valueClass())
 					.columnName(prop.name())
 					.getter(e -> prop.get(e))
-					.setter((e, v) -> prop.set(e, v));
+					.setter((e, v) -> {
+						return prop.set(e, v);
+					});
 		}
 
 		public static <E, V> ColumnBuilder<E, V> create(DefaultProperty<E, V> prop) {
@@ -99,6 +104,14 @@ public class ListTableModel<E> extends AbstractTableModel {
 		}
 
 		public ColumnBuilder<E, V> setter(BiConsumer<? super E, V> setter) {
+			this.setter = (e, v) -> {
+				setter.accept(e, v);
+				return e;
+			};
+			return this;
+		}
+
+		public ColumnBuilder<E, V> setter(BiFunction<? super E, V, ? extends E> setter) {
 			this.setter = setter;
 			return this;
 		}
@@ -129,11 +142,11 @@ public class ListTableModel<E> extends AbstractTableModel {
 				}
 
 				@Override
-				public void setValueAt(E row, V value) {
+				public E setValueAt(E row, V value) {
 					if (setter == null) {
-						return;
+						return row;
 					}
-					setter.accept(row, value);
+					return setter.apply(row, value);
 				}
 
 				@Override
@@ -230,6 +243,10 @@ public class ListTableModel<E> extends AbstractTableModel {
 			throw new IllegalArgumentException(
 					"cell at row " + rowIndex + ", column " + columnIndex + " is not editable");
 		}
-		((Column) columns.get(columnIndex)).setValueAt(listModel.getElementAt(rowIndex), aValue);
+		E oldRow = listModel.getElementAt(rowIndex);
+		E newRow = (E) ((Column) columns.get(columnIndex)).setValueAt(oldRow, aValue);
+		if (newRow != oldRow) {
+			getList(this).set(rowIndex, newRow);
+		}
 	}
 }

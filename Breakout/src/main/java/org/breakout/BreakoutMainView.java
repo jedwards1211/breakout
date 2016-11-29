@@ -195,10 +195,10 @@ import org.breakout.model.Survey3dModel.SelectionEditor;
 import org.breakout.model.Survey3dModel.Shot3d;
 import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
+import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.SurveyTableModel.Row;
-import org.breakout.model.SurveyTableModel.Trip;
 import org.breakout.model.SurveyTableParser;
+import org.breakout.model.SurveyTrip;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
 import org.yaml.snakeyaml.DumperOptions;
@@ -313,7 +313,7 @@ public class BreakoutMainView {
 
 		@Override
 		protected void reallyDuringDialog() throws Exception {
-			List<SurveyTableModel.Row> rows = new ArrayList<>();
+			List<SurveyRow> rows = new ArrayList<>();
 			final SurveyTableModel newModel;
 			final CompassSurveyParser parser = new CompassSurveyParser();
 			try {
@@ -425,7 +425,7 @@ public class BreakoutMainView {
 				int index = picked.picked.getNumber();
 				int modelRow = rowOfShot(index);
 				if (modelRow >= 0) {
-					SurveyTableModel.Row row = surveyDrawer.table().getModel().getListModel().getElementAt(modelRow);
+					SurveyRow row = surveyDrawer.table().getModel().getListModel().getElementAt(modelRow);
 					if (row != null) {
 						String link = row.getTrip() == null ? null : row.getTrip().getSurveyNotes();
 						if (link != null) {
@@ -814,25 +814,25 @@ public class BreakoutMainView {
 		protected void reallyDuringDialog() throws Exception {
 			final SurveyTableModel newModel;
 			final CompassPlotParser parser = new CompassPlotParser();
-			final List<Row> rows = new ArrayList<>();
-			final Map<String, Row> stationPositionRows = new HashMap<>();
+			final List<SurveyRow> rows = new ArrayList<>();
+			final Map<String, SurveyRow> stationPositionRows = new HashMap<>();
 			try {
 				int progress = 0;
 				for (Path compassFile : compassFiles) {
 					setStatus("Importing data from " + compassFile + "...");
 					setCompleted(progress++);
 
-					Trip trip = null;
+					SurveyTrip trip = null;
 					for (CompassPlotCommand command : parser.parsePlot(compassFile)) {
 						if (command instanceof BeginSectionCommand) {
-							trip = new Trip();
+							trip = new SurveyTrip();
 							trip.setCave(((BeginSectionCommand) command).getSectionName());
 						} else if (command instanceof DrawSurveyCommand) {
 							DrawSurveyCommand c = (DrawSurveyCommand) command;
 							if (falsy(c.getStationName())) {
 								continue;
 							}
-							Row row = new Row();
+							SurveyRow row = new SurveyRow();
 							row.setTrip(trip);
 							row.setFromStation(c.getStationName());
 							row.setNorthing(toString(c.getLocation().getNorthing()));
@@ -881,9 +881,9 @@ public class BreakoutMainView {
 
 					if ("import".equals(importOption)) {
 						SurveyTableModel model = surveyDrawer.table().getModel();
-						for (Row row : model.getRows()) {
+						for (SurveyRow row : model.getRows()) {
 							if (truthy(row.getFromStation())) {
-								Row posRow = stationPositionRows.get(row.getFromStation());
+								SurveyRow posRow = stationPositionRows.get(row.getFromStation());
 								if (posRow == null) {
 									continue;
 								}

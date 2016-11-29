@@ -17,8 +17,8 @@ import java.util.function.Function;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
-import org.breakout.model.SurveyTableModel.Row;
-import org.breakout.model.SurveyTableModel.Trip;
+import org.breakout.model.SurveyRow.MutableSurveyRow;
+import org.breakout.model.SurveyTrip.MutableSurveyTrip;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -83,7 +83,7 @@ public class MetacaveImporter {
 		return elem.getAsString();
 	}
 
-	private static void getMeasurements(JsonObject obj, Row row) {
+	private static void getMeasurements(JsonObject obj, MutableSurveyRow row) {
 		row.setDistance(getAsString(obj, "dist"));
 		if ("bs".equals(getAsString(obj, "dir"))) {
 			row.setBackAzimuth(getAsString(obj, "azm"));
@@ -110,19 +110,18 @@ public class MetacaveImporter {
 		return builder.toString();
 	}
 
-	private final List<Row> rows = new ArrayList<>();
+	private final List<MutableSurveyRow> rows = new ArrayList<>();
 
-	private final IdentityHashMap<JsonObject, Trip> trips = new IdentityHashMap<>();
+	private final IdentityHashMap<JsonObject, SurveyTrip> trips = new IdentityHashMap<>();
 
-	public List<Row> getRows() {
-		List<Row> result = new ArrayList<Row>();
-		Row lastRow = null;
-		for (Row row : rows) {
+	public List<SurveyRow> getRows() {
+		List<SurveyRow> result = new ArrayList<SurveyRow>();
+		SurveyRow lastRow = null;
+		for (SurveyRow row : rows) {
 			if (row == null) {
-				row = new Row();
-				if (lastRow != null) {
-					row.setTrip(lastRow.getTrip());
-				}
+				final SurveyRow finalLastRow = lastRow;
+				row = SurveyRow.builder()
+						.setTrip(finalLastRow == null ? null : finalLastRow.getTrip()).create();
 			}
 			result.add(row);
 			lastRow = row;
@@ -146,7 +145,7 @@ public class MetacaveImporter {
 				return;
 			}
 			for (int i = 0; i < trips.size(); i++) {
-				Trip trip = importTrip(trips.get(i).getAsJsonObject());
+				SurveyTrip trip = importTrip(trips.get(i).getAsJsonObject());
 				trip.setCave(e.getKey());
 			}
 		});
@@ -167,55 +166,55 @@ public class MetacaveImporter {
 		importMetacave(obj);
 	}
 
-	public Trip importTrip(JsonObject obj) {
-		Trip trip = importTripHeader(obj);
+	public SurveyTrip importTrip(JsonObject obj) {
+		SurveyTrip trip = importTripHeader(obj);
 		importTripSurvey(trip, obj.getAsJsonArray("survey"));
 		return trip;
 	}
 
-	public Trip importTripHeader(JsonObject obj) {
-		Trip trip = trips.get(obj);
+	public SurveyTrip importTripHeader(JsonObject obj) {
+		SurveyTrip trip = trips.get(obj);
 		if (trip == null) {
-			trip = new Trip();
-			trips.put(obj, trip);
-
+			MutableSurveyTrip t = SurveyTrip.builder();
 			if (obj.has("name")) {
-				trip.setName(obj.get("name").getAsString());
+				t.setName(obj.get("name").getAsString());
 			}
 			if (obj.has("date")) {
-				trip.setDate(obj.get("date").getAsString());
+				t.setDate(obj.get("date").getAsString());
 			}
 			if (obj.has("surveyors")) {
 				List<String> surveyors = new ArrayList<>();
 				obj.get("surveyors").getAsJsonObject().entrySet().forEach(e -> surveyors.add(e.getKey()));
-				trip.setSurveyors(surveyors);
+				t.setSurveyors(surveyors);
 			}
 			if (obj.has("surveyNotesFile")) {
-				trip.setSurveyNotes(obj.get("surveyNotesFile").getAsString());
+				t.setSurveyNotes(obj.get("surveyNotesFile").getAsString());
 			}
 			if (obj.has("distUnit")) {
-				trip.setDistanceUnit(metacaveLengthUnits.get(obj.get("distUnit").getAsString()));
+				t.setDistanceUnit(metacaveLengthUnits.get(obj.get("distUnit").getAsString()));
 			}
 			if (obj.has("angleUnit")) {
-				trip.setAngleUnit(metacaveAngleUnits.get(obj.get("angleUnit").getAsString()));
+				t.setAngleUnit(metacaveAngleUnits.get(obj.get("angleUnit").getAsString()));
 			}
-			trip.setBackAzimuthsCorrected(getAsBoolean(obj, "azmBacksightsCorrected"));
-			trip.setBackInclinationsCorrected(getAsBoolean(obj, "incBacksightsCorrected"));
-			trip.setDeclination(getAsString(obj, "declination"));
-			trip.setOverrideFrontAzimuthUnit(getAngleUnit(obj, "azmFsUnit"));
-			trip.setOverrideBackAzimuthUnit(getAngleUnit(obj, "azmBsUnit"));
-			trip.setOverrideFrontInclinationUnit(getAngleUnit(obj, "incFsUnit"));
-			trip.setOverrideBackInclinationUnit(getAngleUnit(obj, "incBsUnit"));
-			trip.setDistanceCorrection(getAsString(obj, "distCorrection"));
-			trip.setFrontAzimuthCorrection(getAsString(obj, "azmFsCorrection"));
-			trip.setBackAzimuthCorrection(getAsString(obj, "azmBsCorrection"));
-			trip.setFrontInclinationCorrection(getAsString(obj, "incFsCorrection"));
-			trip.setBackInclinationCorrection(getAsString(obj, "incBsCorrection"));
+			t.setBackAzimuthsCorrected(getAsBoolean(obj, "azmBacksightsCorrected"));
+			t.setBackInclinationsCorrected(getAsBoolean(obj, "incBacksightsCorrected"));
+			t.setDeclination(getAsString(obj, "declination"));
+			t.setOverrideFrontAzimuthUnit(getAngleUnit(obj, "azmFsUnit"));
+			t.setOverrideBackAzimuthUnit(getAngleUnit(obj, "azmBsUnit"));
+			t.setOverrideFrontInclinationUnit(getAngleUnit(obj, "incFsUnit"));
+			t.setOverrideBackInclinationUnit(getAngleUnit(obj, "incBsUnit"));
+			t.setDistanceCorrection(getAsString(obj, "distCorrection"));
+			t.setFrontAzimuthCorrection(getAsString(obj, "azmFsCorrection"));
+			t.setBackAzimuthCorrection(getAsString(obj, "azmBsCorrection"));
+			t.setFrontInclinationCorrection(getAsString(obj, "incFsCorrection"));
+			t.setBackInclinationCorrection(getAsString(obj, "incBsCorrection"));
+			trip = t.create();
+			trips.put(obj, trip);
 		}
 		return trip;
 	}
 
-	public void importTripSurvey(Trip trip, JsonArray survey) {
+	public void importTripSurvey(SurveyTrip trip, JsonArray survey) {
 		if (survey == null || survey.size() == 0) {
 			return;
 		}
@@ -227,7 +226,7 @@ public class MetacaveImporter {
 
 			final int defaultRow = rows.size();
 
-			Function<JsonObject, Row> getRow = obj -> {
+			Function<JsonObject, MutableSurveyRow> getRow = obj -> {
 				Integer rowIndex = getRowIndex(obj);
 				if (rowIndex == null) {
 					rowIndex = defaultRow;
@@ -235,9 +234,9 @@ public class MetacaveImporter {
 				while (rows.size() <= rowIndex) {
 					rows.add(null);
 				}
-				Row row = rows.get(rowIndex);
+				MutableSurveyRow row = rows.get(rowIndex);
 				if (row == null) {
-					row = new Row();
+					row = SurveyRow.builder();
 					row.setTrip(trip);
 					row.setOverrideFromCave(getAsString(fromStation, "cave"));
 					row.setFromStation(getAsString(fromStation, "station"));
@@ -254,7 +253,7 @@ public class MetacaveImporter {
 				JsonArray splays = fromStation.getAsJsonArray("splays");
 				for (int k = 0; k < splays.size(); k++) {
 					JsonObject splay = splays.get(k).getAsJsonObject();
-					Row row = getRow.apply(splay);
+					MutableSurveyRow row = getRow.apply(splay);
 					getMeasurements(splay, row);
 					// TODO: splayDepth
 				}
@@ -283,11 +282,11 @@ public class MetacaveImporter {
 						JsonObject backsight = k < backsights.size() ? backsights.get(k) : null;
 
 						if (frontsight != null) {
-							Row row = getRow.apply(frontsight);
+							MutableSurveyRow row = getRow.apply(frontsight);
 							getMeasurements(frontsight, row);
 						}
 						if (backsight != null) {
-							Row row = getRow.apply(backsight);
+							MutableSurveyRow row = getRow.apply(backsight);
 							getMeasurements(backsight, row);
 						}
 					}
@@ -299,7 +298,7 @@ public class MetacaveImporter {
 			}
 
 			if (fromStation.has("lrud")) {
-				Row lrudRow = getRow.apply(fromStation);
+				MutableSurveyRow lrudRow = getRow.apply(fromStation);
 				JsonArray lrud = fromStation.getAsJsonArray("lrud");
 				lrudRow.setLeft(getMeasurement(lrud.get(0)));
 				lrudRow.setRight(getMeasurement(lrud.get(1)));
@@ -307,7 +306,7 @@ public class MetacaveImporter {
 				lrudRow.setDown(getMeasurement(lrud.get(3)));
 			}
 			if (fromStation.has("nev")) {
-				Row row = getRow.apply(fromStation);
+				MutableSurveyRow row = getRow.apply(fromStation);
 				JsonArray nev = fromStation.getAsJsonArray("nev");
 				row.setNorthing(getMeasurement(nev.get(0)));
 				row.setEasting(getMeasurement(nev.get(1)));

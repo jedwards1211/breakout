@@ -10,8 +10,8 @@ import org.andork.compass.LrudAssociation;
 import org.andork.compass.survey.CompassShot;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.compass.survey.CompassTripHeader;
-import org.breakout.model.SurveyTableModel.Row;
-import org.breakout.model.SurveyTableModel.Trip;
+import org.breakout.model.SurveyRow;
+import org.breakout.model.SurveyTrip;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,9 +27,9 @@ public class CompassConverterTest {
 		shot.setLeft(new BigDecimal(2.0));
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip);
+		List<SurveyRow> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(1, rows.size());
-		Row row = rows.get(0);
+		SurveyRow row = rows.get(0);
 		Assert.assertEquals("0.3048", row.getDistance());
 		Assert.assertEquals("0.6096", row.getLeft());
 	}
@@ -52,9 +52,9 @@ public class CompassConverterTest {
 		CompassShot shot = new CompassShot();
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip);
+		List<SurveyRow> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(1, rows.size());
-		Row row = rows.get(0);
+		SurveyRow row = rows.get(0);
 		Assert.assertNull(row.getOverrideFromCave());
 		Assert.assertNull(row.getFromStation());
 		Assert.assertNull(row.getOverrideToCave());
@@ -77,14 +77,14 @@ public class CompassConverterTest {
 	public void testEmptyTrip() {
 		CompassTrip trip = new CompassTrip();
 		trip.setHeader(new CompassTripHeader());
-		List<Row> rows = CompassConverter.convertShots(trip);
+		List<SurveyRow> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(0, rows.size());
 	}
 
 	@Test
 	public void testEmptyTripHeader() {
 		CompassTripHeader header = new CompassTripHeader();
-		Trip trip = CompassConverter.convertTripHeader(header);
+		SurveyTrip trip = CompassConverter.convertTripHeader(header);
 		Assert.assertNull(trip.getCave());
 		Assert.assertNull(trip.getName());
 		Assert.assertNull(trip.getSurveyors());
@@ -101,7 +101,7 @@ public class CompassConverterTest {
 		shot.setLeft(new BigDecimal(3.5));
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip);
+		List<SurveyRow> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(1, rows.size());
 		Assert.assertEquals("3.5", rows.get(0).getLeft());
 	}
@@ -126,9 +126,9 @@ public class CompassConverterTest {
 		shot.setDown(new BigDecimal(9.5));
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip);
+		List<SurveyRow> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(1, rows.size());
-		Row row = rows.get(0);
+		SurveyRow row = rows.get(0);
 		Assert.assertNull(row.getOverrideFromCave());
 		Assert.assertEquals("A", row.getFromStation());
 		Assert.assertNull(row.getOverrideToCave());
@@ -156,7 +156,7 @@ public class CompassConverterTest {
 		header.setComment("The secret connection");
 		header.setTeam(" Sean Lewis;    Andy Edwards   ; Ronnie Harrison ");
 		header.setDate(new Date(2016 - 1900, 11, 11));
-		Trip trip = CompassConverter.convertTripHeader(header);
+		SurveyTrip trip = CompassConverter.convertTripHeader(header);
 		Assert.assertEquals("Fisher Ridge", trip.getCave());
 		Assert.assertEquals("The secret connection", trip.getName());
 		Assert.assertEquals("2016/12/11", trip.getDate());
@@ -176,7 +176,7 @@ public class CompassConverterTest {
 		shot.setLeft(new BigDecimal(3.5));
 		trip.setShots(Arrays.asList(shot));
 
-		List<Row> rows = CompassConverter.convertShots(trip);
+		List<SurveyRow> rows = CompassConverter.convertShots(trip);
 		Assert.assertEquals(2, rows.size());
 		Assert.assertEquals(null, rows.get(0).getLeft());
 		Assert.assertEquals("A1", rows.get(0).getFromStation());

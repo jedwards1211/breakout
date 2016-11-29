@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
+import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
 
 public class DescriptionFilter extends RowFilter<TableModel, Integer> {
@@ -46,7 +47,7 @@ public class DescriptionFilter extends RowFilter<TableModel, Integer> {
 			return true;
 		}
 
-		SurveyTableModel.Row row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
+		SurveyRow row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
 		if (row == null || row.getTrip() == null || row.getTrip().getName() == null) {
 			return false;
 		}

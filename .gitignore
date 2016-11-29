@@ -4,3 +4,4 @@
 compass-parser
 segment
 hs_err*
+node_modules

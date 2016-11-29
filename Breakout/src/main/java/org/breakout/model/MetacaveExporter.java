@@ -20,15 +20,13 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.util.Java7.Objects;
-import org.breakout.model.SurveyTableModel.Row;
-import org.breakout.model.SurveyTableModel.Trip;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 public class MetacaveExporter {
-	private static final Trip defaultTrip = new Trip();
+	private static final SurveyTrip defaultTrip = new SurveyTrip();
 	private static final JsonObject emptyObject = new JsonObject();
 	private static final Map<Unit<Length>, String> metacaveLengthUnits = new HashMap<>();
 	private static final Map<Unit<Angle>, String> metacaveAngleUnits = new HashMap<>();
@@ -79,40 +77,40 @@ public class MetacaveExporter {
 
 	private final JsonObject caves = new JsonObject();
 
-	private final IdentityHashMap<Trip, JsonObject> trips = new IdentityHashMap<>();
+	private final IdentityHashMap<SurveyTrip, JsonObject> trips = new IdentityHashMap<>();
 
 	public MetacaveExporter() {
 		root.add("caves", caves);
 	}
 
-	public void export(List<Row> rows, Path path) throws IOException {
+	public void export(List<SurveyRow> rows, Path path) throws IOException {
 		export(rows, path.toFile());
 	}
 
-	public void export(List<Row> rows, File file) throws IOException {
+	public void export(List<SurveyRow> rows, File file) throws IOException {
 		try (OutputStream out = new FileOutputStream(file)) {
 			export(rows, out);
 		}
 	}
 
-	public void export(List<Row> rows, OutputStream out) throws IOException {
+	public void export(List<SurveyRow> rows, OutputStream out) throws IOException {
 		export(rows, new OutputStreamWriter(out, "UTF-8"));
 	}
 
-	private void export(List<Row> rows, Writer w) throws IOException {
+	private void export(List<SurveyRow> rows, Writer w) throws IOException {
 		export(rows);
 		new Gson().toJson(root, w);
 		w.flush();
 	}
 
-	public void export(List<Row> rows) {
+	public void export(List<SurveyRow> rows) {
 		int rowIndex = 0;
-		for (Row row : rows) {
+		for (SurveyRow row : rows) {
 			export(row, rowIndex++);
 		}
 	}
 
-	public void export(Row row, int rowIndex) {
+	public void export(SurveyRow row, int rowIndex) {
 		if (row == null) {
 			return;
 		}
@@ -214,8 +212,8 @@ public class MetacaveExporter {
 		}
 	}
 
-	public JsonObject export(Trip _trip) {
-		Trip trip = _trip == null ? defaultTrip : _trip;
+	public JsonObject export(SurveyTrip _trip) {
+		SurveyTrip trip = _trip == null ? defaultTrip : _trip;
 		JsonObject exported = trips.get(trip);
 		if (exported == null) {
 			exported = new JsonObject();

@@ -6,8 +6,6 @@ import java.util.List;
 
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
-import org.breakout.model.SurveyTableModel.Row;
-import org.breakout.model.SurveyTableModel.Trip;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -38,11 +36,11 @@ public class MetacaveExporterTests {
 
 	@Test
 	public void testMetacave1() {
-		List<Row> rows = new ArrayList<Row>();
+		List<SurveyRow> rows = new ArrayList<SurveyRow>();
 
-		Trip _trip = new Trip();
+		SurveyTrip _trip = new SurveyTrip();
 		_trip.setCave("Fisher Ridge");
-		_trip.setName("Trip 1");
+		_trip.setName("SurveyTrip 1");
 		_trip.setDate("2016-01-01");
 		_trip.setSurveyors(Arrays.asList("Andy Edwards", "Sean Lewis"));
 		_trip.setDistanceUnit(Length.feet);
@@ -60,7 +58,7 @@ public class MetacaveExporterTests {
 		_trip.setFrontInclinationCorrection("5.0");
 		_trip.setBackInclinationCorrection("6.0");
 
-		Row _r0 = new Row();
+		SurveyRow _r0 = new SurveyRow();
 		_r0.setTrip(_trip);
 		_r0.setOverrideFromCave(null);
 		_r0.setFromStation("A1");
@@ -76,7 +74,7 @@ public class MetacaveExporterTests {
 		_r0.setBackAzimuth("0");
 		_r0.setBackInclination("5");
 
-		Row _r3 = new Row();
+		SurveyRow _r3 = new SurveyRow();
 		_r3.setTrip(_trip);
 		_r3.setOverrideFromCave(null);
 		_r3.setFromStation("A1");
@@ -92,7 +90,7 @@ public class MetacaveExporterTests {
 		_r3.setBackAzimuth(null);
 		_r3.setBackInclination(null);
 
-		Row _r2 = new Row();
+		SurveyRow _r2 = new SurveyRow();
 		_r2.setTrip(_trip);
 		_r2.setOverrideFromCave("Mammoth");
 		_r2.setFromStation("A2");
@@ -125,7 +123,7 @@ public class MetacaveExporterTests {
 				.getAsJsonArray("trips")
 				.get(0).getAsJsonObject();
 
-		assertEquals(trip, "name", "Trip 1");
+		assertEquals(trip, "name", "SurveyTrip 1");
 		assertEquals(trip, "date", "2016-01-01");
 		JsonObject surveyors = trip.getAsJsonObject("surveyors");
 		Assert.assertTrue(surveyors.has("Andy Edwards"));

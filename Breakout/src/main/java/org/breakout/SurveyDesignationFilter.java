@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
+import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
 
 public class SurveyDesignationFilter extends RowFilter<TableModel, Integer> {
@@ -120,7 +121,7 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer> {
 
 	@Override
 	public boolean include(javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
-		SurveyTableModel.Row row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
+		SurveyRow row = ((SurveyTableModel) entry.getModel()).getRow(entry.getIdentifier());
 		if (row == null) {
 			return false;
 		}

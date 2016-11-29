@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
+import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
 
 public class SurveyRegexFilter extends RowFilter<TableModel, Integer> {
@@ -38,7 +39,7 @@ public class SurveyRegexFilter extends RowFilter<TableModel, Integer> {
 	@Override
 	public boolean include(javax.swing.RowFilter.Entry<? extends TableModel, ? extends Integer> entry) {
 		SurveyTableModel model = (SurveyTableModel) entry.getModel();
-		SurveyTableModel.Row row = model.getRow(entry.getIdentifier());
+		SurveyRow row = model.getRow(entry.getIdentifier());
 
 		String from = row.getFromStation();
 		String to = row.getToStation();

@@ -1,0 +1,22 @@
+{
+  "name": "breakout",
+  "version": "1.0.0",
+  "description": "breakout ========",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jedwards1211/breakout.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jedwards1211/breakout/issues"
+  },
+  "homepage": "https://github.com/jedwards1211/breakout#readme",
+  "dependencies": {
+    "babel-preset-es2015-node": "^6.1.1"
+  }
+}

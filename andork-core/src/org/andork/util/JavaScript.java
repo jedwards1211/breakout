@@ -18,6 +18,17 @@ public class JavaScript {
 		return !Float.isNaN(d) && !Float.isInfinite(d);
 	}
 
+	@SafeVarargs
+	public static <T> T or(T... objects) {
+		int i;
+		for (i = 0; i < objects.length - 1; i++) {
+			if (truthy(objects[i])) {
+				break;
+			}
+		}
+		return i < objects.length ? objects[i] : null;
+	}
+
 	/**
 	 * @return the first string that is {@link #truthy(String)}, or the last
 	 *         string
@@ -30,6 +41,11 @@ public class JavaScript {
 			}
 		}
 		return i < strings.length ? strings[i] : null;
+	}
+
+	public static boolean truthy(Object o) {
+		return o != null && !o.equals(false) && !o.equals("") && !o.equals(0) &&
+				(!(o instanceof Number) || Double.isNaN(((Number) o).doubleValue()));
 	}
 
 	/**

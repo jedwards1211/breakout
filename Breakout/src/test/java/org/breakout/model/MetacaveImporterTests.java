@@ -11,8 +11,6 @@ import java.util.List;
 
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
-import org.breakout.model.SurveyTableModel.Row;
-import org.breakout.model.SurveyTableModel.Trip;
 import org.junit.Test;
 
 public class MetacaveImporterTests {
@@ -21,15 +19,15 @@ public class MetacaveImporterTests {
 		MetacaveImporter importer = new MetacaveImporter();
 		importer.importMetacave(getClass().getResourceAsStream("metacave1.json"));
 
-		List<Row> rows = importer.getRows();
-		for (Row row : rows) {
+		List<SurveyRow> rows = importer.getRows();
+		for (SurveyRow row : rows) {
 			System.out.println(row);
 		}
 		assertEquals(4, rows.size());
 
-		Trip trip = rows.get(0).getTrip();
+		SurveyTrip trip = rows.get(0).getTrip();
 		assertEquals("Fisher Ridge", trip.getCave());
-		assertEquals("Trip 1", trip.getName());
+		assertEquals("SurveyTrip 1", trip.getName());
 		assertEquals("2016-01-01", trip.getDate());
 		assertEquals(Arrays.asList("Andy Edwards", "Sean Lewis"), trip.getSurveyors());
 		assertEquals(Length.feet, trip.getDistanceUnit());
@@ -47,7 +45,7 @@ public class MetacaveImporterTests {
 		assertEquals("5.0", trip.getFrontInclinationCorrection());
 		assertEquals("6.0", trip.getBackInclinationCorrection());
 
-		Row r0 = rows.get(0);
+		SurveyRow r0 = rows.get(0);
 		assertSame(trip, r0.getTrip());
 		assertEquals(null, r0.getOverrideFromCave());
 		assertEquals("A1", r0.getFromStation());
@@ -63,7 +61,7 @@ public class MetacaveImporterTests {
 		assertEquals("0", r0.getBackAzimuth());
 		assertEquals("5", r0.getBackInclination());
 
-		Row r1 = rows.get(1);
+		SurveyRow r1 = rows.get(1);
 		assertSame(trip, r1.getTrip());
 		assertEquals(null, r1.getOverrideFromCave());
 		assertEquals(null, r1.getFromStation());
@@ -79,7 +77,7 @@ public class MetacaveImporterTests {
 		assertEquals(null, r1.getBackAzimuth());
 		assertEquals(null, r1.getBackInclination());
 
-		Row r3 = rows.get(3);
+		SurveyRow r3 = rows.get(3);
 		assertSame(trip, r3.getTrip());
 		assertEquals(null, r3.getOverrideFromCave());
 		assertEquals("A1", r3.getFromStation());
@@ -95,7 +93,7 @@ public class MetacaveImporterTests {
 		assertEquals(null, r3.getBackAzimuth());
 		assertEquals(null, r3.getBackInclination());
 
-		Row r2 = rows.get(2);
+		SurveyRow r2 = rows.get(2);
 		assertSame(trip, r2.getTrip());
 		assertEquals("Mammoth", r2.getOverrideFromCave());
 		assertEquals("A2", r2.getFromStation());
