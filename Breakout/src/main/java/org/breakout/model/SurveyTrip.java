@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 11/29/2016, 1:16:50 AM.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 11/29/2016, 1:24:28 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -11,15 +11,123 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import static org.andork.util.JavaScript.or;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.Objects;
+import com.github.krukow.clj_lang.PersistentHashMap;
+import com.github.krukow.clj_ds.TransientMap;
 import org.andork.model.DefaultProperty;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 /**
  *
  */
 public final class SurveyTrip {
+	
+	/**
+	 * Key for cave name.
+	 */
+	public static final String cave = "cave";
+	
+	/**
+	 * Key for trip name.
+	 */
+	public static final String name = "name";
+	
+	/**
+	 * Key for trip date.
+	 */
+	public static final String date = "date";
+	
+	/**
+	 * Key for survey notes file path.
+	 */
+	public static final String surveyNotes = "surveyNotes";
+	
+	/**
+	 * Key for surveyor names.
+	 */
+	public static final String surveyors = "surveyors";
+	
+	/**
+	 * Key for default length unit.
+	 */
+	public static final String distanceUnit = "distanceUnit";
+	
+	/**
+	 * Key for default angle unit.
+	 */
+	public static final String angleUnit = "angleUnit";
+	
+	/**
+	 * Key for default frontsight azimuth unit.
+	 */
+	public static final String overrideFrontAzimuthUnit = "overrideFrontAzimuthUnit";
+	
+	/**
+	 * Key for default backsight azimuth unit.
+	 */
+	public static final String overrideBackAzimuthUnit = "overrideBackAzimuthUnit";
+	
+	/**
+	 * Key for default frontsight inclination unit.
+	 */
+	public static final String overrideFrontInclinationUnit = "overrideFrontInclinationUnit";
+	
+	/**
+	 * Key for default backsight inclination unit.
+	 */
+	public static final String overrideBackInclinationUnit = "overrideBackInclinationUnit";
+	
+	/**
+	 * Key for whether backsight azimuths are corrected.
+	 */
+	public static final String backAzimuthsCorrected = "backAzimuthsCorrected";
+	
+	/**
+	 * Key for whether backsight inclinations are corrected.
+	 */
+	public static final String backInclinationsCorrected = "backInclinationsCorrected";
+	
+	/**
+	 * Key for magnetic declination.
+	 */
+	public static final String declination = "declination";
+	
+	/**
+	 * Key for correction for shot distances.
+	 */
+	public static final String distanceCorrection = "distanceCorrection";
+	
+	/**
+	 * Key for correction for frontsight azimuths.
+	 */
+	public static final String frontAzimuthCorrection = "frontAzimuthCorrection";
+	
+	/**
+	 * Key for correction for frontsight inclinations.
+	 */
+	public static final String frontInclinationCorrection = "frontInclinationCorrection";
+	
+	/**
+	 * Key for correction for backsight azimuths.
+	 */
+	public static final String backAzimuthCorrection = "backAzimuthCorrection";
+	
+	/**
+	 * Key for correction for backsight inclinations.
+	 */
+	public static final String backInclinationCorrection = "backInclinationCorrection";
+	
+	
+	static final PersistentHashMap<String, Object> initialData;
+	static {
+		@SuppressWarnings("unchecked")
+		TransientMap<String, Object> init = PersistentHashMap.emptyMap().asTransient();
+		init.plus(distanceUnit, Length.meters);
+		init.plus(angleUnit, Angle.degrees);
+		initialData = (PersistentHashMap<String, Object>) init.persist();
+	}
+	
 	
 	public static final class Properties {
 		public static <V> DefaultProperty<SurveyTrip, V> create(
@@ -39,8 +147,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> cave = create(
 			"cave", String.class,
-			r -> r.getCave(),
-			(m, v) -> m.setCave(v)
+			r -> r.get(SurveyTrip.cave),
+			(m, v) -> m.set(SurveyTrip.cave, v)
 		);
 		
 
@@ -49,8 +157,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> name = create(
 			"name", String.class,
-			r -> r.getName(),
-			(m, v) -> m.setName(v)
+			r -> r.get(SurveyTrip.name),
+			(m, v) -> m.set(SurveyTrip.name, v)
 		);
 		
 
@@ -59,8 +167,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> date = create(
 			"date", String.class,
-			r -> r.getDate(),
-			(m, v) -> m.setDate(v)
+			r -> r.get(SurveyTrip.date),
+			(m, v) -> m.set(SurveyTrip.date, v)
 		);
 		
 
@@ -69,8 +177,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> surveyNotes = create(
 			"surveyNotes", String.class,
-			r -> r.getSurveyNotes(),
-			(m, v) -> m.setSurveyNotes(v)
+			r -> r.get(SurveyTrip.surveyNotes),
+			(m, v) -> m.set(SurveyTrip.surveyNotes, v)
 		);
 		
 
@@ -79,8 +187,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, List<String>> surveyors = create(
 			"surveyors", List.class,
-			r -> r.getSurveyors(),
-			(m, v) -> m.setSurveyors(v)
+			r -> r.get(SurveyTrip.surveyors),
+			(m, v) -> m.set(SurveyTrip.surveyors, v)
 		);
 		
 
@@ -89,8 +197,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, Unit<Length>> distanceUnit = create(
 			"distanceUnit", Unit.class,
-			r -> r.getDistanceUnit(),
-			(m, v) -> m.setDistanceUnit(v)
+			r -> r.get(SurveyTrip.distanceUnit),
+			(m, v) -> m.set(SurveyTrip.distanceUnit, v)
 		);
 		
 
@@ -99,8 +207,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, Unit<Angle>> angleUnit = create(
 			"angleUnit", Unit.class,
-			r -> r.getAngleUnit(),
-			(m, v) -> m.setAngleUnit(v)
+			r -> r.get(SurveyTrip.angleUnit),
+			(m, v) -> m.set(SurveyTrip.angleUnit, v)
 		);
 		
 
@@ -109,8 +217,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, Unit<Angle>> overrideFrontAzimuthUnit = create(
 			"overrideFrontAzimuthUnit", Unit.class,
-			r -> r.getOverrideFrontAzimuthUnit(),
-			(m, v) -> m.setOverrideFrontAzimuthUnit(v)
+			r -> r.get(SurveyTrip.overrideFrontAzimuthUnit),
+			(m, v) -> m.set(SurveyTrip.overrideFrontAzimuthUnit, v)
 		);
 		
 
@@ -119,8 +227,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, Unit<Angle>> overrideBackAzimuthUnit = create(
 			"overrideBackAzimuthUnit", Unit.class,
-			r -> r.getOverrideBackAzimuthUnit(),
-			(m, v) -> m.setOverrideBackAzimuthUnit(v)
+			r -> r.get(SurveyTrip.overrideBackAzimuthUnit),
+			(m, v) -> m.set(SurveyTrip.overrideBackAzimuthUnit, v)
 		);
 		
 
@@ -129,8 +237,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, Unit<Angle>> overrideFrontInclinationUnit = create(
 			"overrideFrontInclinationUnit", Unit.class,
-			r -> r.getOverrideFrontInclinationUnit(),
-			(m, v) -> m.setOverrideFrontInclinationUnit(v)
+			r -> r.get(SurveyTrip.overrideFrontInclinationUnit),
+			(m, v) -> m.set(SurveyTrip.overrideFrontInclinationUnit, v)
 		);
 		
 
@@ -139,8 +247,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, Unit<Angle>> overrideBackInclinationUnit = create(
 			"overrideBackInclinationUnit", Unit.class,
-			r -> r.getOverrideBackInclinationUnit(),
-			(m, v) -> m.setOverrideBackInclinationUnit(v)
+			r -> r.get(SurveyTrip.overrideBackInclinationUnit),
+			(m, v) -> m.set(SurveyTrip.overrideBackInclinationUnit, v)
 		);
 		
 
@@ -149,8 +257,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, Boolean> backAzimuthsCorrected = create(
 			"backAzimuthsCorrected", Boolean.class,
-			r -> r.areBackAzimuthsCorrected(),
-			(m, v) -> m.setBackAzimuthsCorrected(v)
+			r -> r.get(SurveyTrip.backAzimuthsCorrected),
+			(m, v) -> m.set(SurveyTrip.backAzimuthsCorrected, v)
 		);
 		
 
@@ -159,8 +267,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, Boolean> backInclinationsCorrected = create(
 			"backInclinationsCorrected", Boolean.class,
-			r -> r.areBackInclinationsCorrected(),
-			(m, v) -> m.setBackInclinationsCorrected(v)
+			r -> r.get(SurveyTrip.backInclinationsCorrected),
+			(m, v) -> m.set(SurveyTrip.backInclinationsCorrected, v)
 		);
 		
 
@@ -169,8 +277,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> declination = create(
 			"declination", String.class,
-			r -> r.getDeclination(),
-			(m, v) -> m.setDeclination(v)
+			r -> r.get(SurveyTrip.declination),
+			(m, v) -> m.set(SurveyTrip.declination, v)
 		);
 		
 
@@ -179,8 +287,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> distanceCorrection = create(
 			"distanceCorrection", String.class,
-			r -> r.getDistanceCorrection(),
-			(m, v) -> m.setDistanceCorrection(v)
+			r -> r.get(SurveyTrip.distanceCorrection),
+			(m, v) -> m.set(SurveyTrip.distanceCorrection, v)
 		);
 		
 
@@ -189,8 +297,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> frontAzimuthCorrection = create(
 			"frontAzimuthCorrection", String.class,
-			r -> r.getFrontAzimuthCorrection(),
-			(m, v) -> m.setFrontAzimuthCorrection(v)
+			r -> r.get(SurveyTrip.frontAzimuthCorrection),
+			(m, v) -> m.set(SurveyTrip.frontAzimuthCorrection, v)
 		);
 		
 
@@ -199,8 +307,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> frontInclinationCorrection = create(
 			"frontInclinationCorrection", String.class,
-			r -> r.getFrontInclinationCorrection(),
-			(m, v) -> m.setFrontInclinationCorrection(v)
+			r -> r.get(SurveyTrip.frontInclinationCorrection),
+			(m, v) -> m.set(SurveyTrip.frontInclinationCorrection, v)
 		);
 		
 
@@ -209,8 +317,8 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> backAzimuthCorrection = create(
 			"backAzimuthCorrection", String.class,
-			r -> r.getBackAzimuthCorrection(),
-			(m, v) -> m.setBackAzimuthCorrection(v)
+			r -> r.get(SurveyTrip.backAzimuthCorrection),
+			(m, v) -> m.set(SurveyTrip.backAzimuthCorrection, v)
 		);
 		
 
@@ -219,205 +327,72 @@ public final class SurveyTrip {
 		 */
 		public static final DefaultProperty<SurveyTrip, String> backInclinationCorrection = create(
 			"backInclinationCorrection", String.class,
-			r -> r.getBackInclinationCorrection(),
-			(m, v) -> m.setBackInclinationCorrection(v)
+			r -> r.get(SurveyTrip.backInclinationCorrection),
+			(m, v) -> m.set(SurveyTrip.backInclinationCorrection, v)
 		);
 		
 	}
+	 
+
+	private final PersistentHashMap<String, Object> data;
 	
-	static final class Data implements Cloneable {
-		static final Data initial = new Data();
-		
-		
-		/**
-		 * cave name.
-		 */
-		String cave;
-	
-		/**
-		 * trip name.
-		 */
-		String name;
-	
-		/**
-		 * trip date.
-		 */
-		String date;
-	
-		/**
-		 * survey notes file path.
-		 */
-		String surveyNotes;
-	
-		/**
-		 * surveyor names.
-		 */
-		List<String> surveyors;
-	
-		/**
-		 * default length unit.
-		 */
-		Unit<Length> distanceUnit = Length.meters;
-	
-		/**
-		 * default angle unit.
-		 */
-		Unit<Angle> angleUnit = Angle.degrees;
-	
-		/**
-		 * default frontsight azimuth unit.
-		 */
-		Unit<Angle> overrideFrontAzimuthUnit;
-	
-		/**
-		 * default backsight azimuth unit.
-		 */
-		Unit<Angle> overrideBackAzimuthUnit;
-	
-		/**
-		 * default frontsight inclination unit.
-		 */
-		Unit<Angle> overrideFrontInclinationUnit;
-	
-		/**
-		 * default backsight inclination unit.
-		 */
-		Unit<Angle> overrideBackInclinationUnit;
-	
-		/**
-		 * whether backsight azimuths are corrected.
-		 */
-		boolean backAzimuthsCorrected;
-	
-		/**
-		 * whether backsight inclinations are corrected.
-		 */
-		boolean backInclinationsCorrected;
-	
-		/**
-		 * magnetic declination.
-		 */
-		String declination;
-	
-		/**
-		 * correction for shot distances.
-		 */
-		String distanceCorrection;
-	
-		/**
-		 * correction for frontsight azimuths.
-		 */
-		String frontAzimuthCorrection;
-	
-		/**
-		 * correction for frontsight inclinations.
-		 */
-		String frontInclinationCorrection;
-	
-		/**
-		 * correction for backsight azimuths.
-		 */
-		String backAzimuthCorrection;
-	
-		/**
-		 * correction for backsight inclinations.
-		 */
-		String backInclinationCorrection;
-	
-		@Override
-		public Data clone() {
-			try {
-				return (Data) super.clone(); 
-			} catch (Exception e) {
-				// should not happen
-				throw new RuntimeException(e);
-			} 
-		}
-		
-		
-		@Override
-		public int hashCode() {
-			int prime = 31;
-			int result = 0;
-			result = prime * result + Objects.hashCode(cave);
-			result = prime * result + Objects.hashCode(name);
-			result = prime * result + Objects.hashCode(date);
-			result = prime * result + Objects.hashCode(surveyNotes);
-			result = prime * result + Objects.hashCode(surveyors);
-			result = prime * result + Objects.hashCode(distanceUnit);
-			result = prime * result + Objects.hashCode(angleUnit);
-			result = prime * result + Objects.hashCode(overrideFrontAzimuthUnit);
-			result = prime * result + Objects.hashCode(overrideBackAzimuthUnit);
-			result = prime * result + Objects.hashCode(overrideFrontInclinationUnit);
-			result = prime * result + Objects.hashCode(overrideBackInclinationUnit);
-			result = prime * result + (backAzimuthsCorrected ? 1231 : 1237);
-			result = prime * result + (backInclinationsCorrected ? 1231 : 1237);
-			result = prime * result + Objects.hashCode(declination);
-			result = prime * result + Objects.hashCode(distanceCorrection);
-			result = prime * result + Objects.hashCode(frontAzimuthCorrection);
-			result = prime * result + Objects.hashCode(frontInclinationCorrection);
-			result = prime * result + Objects.hashCode(backAzimuthCorrection);
-			result = prime * result + Objects.hashCode(backInclinationCorrection);
-			return result;
-		}
-	
-		
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) return true;
-			if (obj == null) return false;
-			if (getClass() != obj.getClass()) return false;
-			Data other = (Data) obj;
-			if (!Objects.equals(cave, other.cave)) return false;
-			if (!Objects.equals(name, other.name)) return false;
-			if (!Objects.equals(date, other.date)) return false;
-			if (!Objects.equals(surveyNotes, other.surveyNotes)) return false;
-			if (!Objects.equals(surveyors, other.surveyors)) return false;
-			if (!Objects.equals(distanceUnit, other.distanceUnit)) return false;
-			if (!Objects.equals(angleUnit, other.angleUnit)) return false;
-			if (!Objects.equals(overrideFrontAzimuthUnit, other.overrideFrontAzimuthUnit)) return false;
-			if (!Objects.equals(overrideBackAzimuthUnit, other.overrideBackAzimuthUnit)) return false;
-			if (!Objects.equals(overrideFrontInclinationUnit, other.overrideFrontInclinationUnit)) return false;
-			if (!Objects.equals(overrideBackInclinationUnit, other.overrideBackInclinationUnit)) return false;
-			if (backAzimuthsCorrected != other.backAzimuthsCorrected) return false;
-			if (backInclinationsCorrected != other.backInclinationsCorrected) return false;
-			if (!Objects.equals(declination, other.declination)) return false;
-			if (!Objects.equals(distanceCorrection, other.distanceCorrection)) return false;
-			if (!Objects.equals(frontAzimuthCorrection, other.frontAzimuthCorrection)) return false;
-			if (!Objects.equals(frontInclinationCorrection, other.frontInclinationCorrection)) return false;
-			if (!Objects.equals(backAzimuthCorrection, other.backAzimuthCorrection)) return false;
-			if (!Objects.equals(backInclinationCorrection, other.backInclinationCorrection)) return false;
-			return true;
-		}
-	
-	}
- 
-	private volatile Data data;
-	
-	SurveyTrip(Data data) {
+	SurveyTrip(PersistentHashMap<String, Object> data) {
 		this.data = data;
 	}
-	
+
 	public SurveyTrip() {
-		this(Data.initial);
+		this(initialData);
 	}
-	
-	/**
-	 * @param mutator a {@link Consumer} that applies mutations to this {@code SurveyTrip}.
-	 *
-	 * @return a copy of this {@code SurveyTrip} with the given mutations applied.
-	 */
+
+	public MutableSurveyTrip toMutable() {
+		return new MutableSurveyTrip(data);
+	}
+
 	public SurveyTrip withMutations(Consumer<MutableSurveyTrip> mutator) {
 		MutableSurveyTrip mutable = toMutable();
 		mutator.accept(mutable);
-		return mutable.dataIs(data) ? this : mutable.toImmutable();
+		return mutable.dataEquals(data) ? this : mutable.toImmutable();
 	}
 	
-	/**
-	 * @return a mutable copy of this {@code SurveyTrip}.
-	 */
-	public MutableSurveyTrip toMutable() {
-		return new MutableSurveyTrip(data);
+	@SuppressWarnings("unchecked")
+	public <T> T get(String key) {
+		return (T) data.get(key);
+	}
+
+	public SurveyTrip set(String key, Object newValue) {
+		return withMutations(m -> m.set(key, newValue));
+	}
+
+	public <T> SurveyTrip update(String key, Function<? super T, ? extends T> updater) {
+		@SuppressWarnings("unchecked")
+		T oldValue = (T) data.get(key);
+		T newValue = updater.apply(oldValue);
+		if (Objects.equals(oldValue, newValue)) {
+			return this;
+		}
+		return set(key, newValue);
+	}
+
+	@Override
+	public int hashCode() {
+		return data.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (obj instanceof SurveyTrip) {
+			return ((SurveyTrip) obj).data.equals(data);
+		}
+		if (obj instanceof MutableSurveyTrip) {
+			return ((MutableSurveyTrip) obj).persist().equals(data);
+		}
+		return false;
 	}
 	
 	
@@ -425,133 +400,133 @@ public final class SurveyTrip {
 	 * @return cave name.
 	 */
 	public String getCave() {
-		return data.cave;
+		return get(cave);
 	}
 	
 	/**
 	 * @return trip name.
 	 */
 	public String getName() {
-		return data.name;
+		return get(name);
 	}
 	
 	/**
 	 * @return trip date.
 	 */
 	public String getDate() {
-		return data.date;
+		return get(date);
 	}
 	
 	/**
 	 * @return survey notes file path.
 	 */
 	public String getSurveyNotes() {
-		return data.surveyNotes;
+		return get(surveyNotes);
 	}
 	
 	/**
 	 * @return surveyor names.
 	 */
 	public List<String> getSurveyors() {
-		return data.surveyors;
+		return get(surveyors);
 	}
 	
 	/**
 	 * @return default length unit.
 	 */
 	public Unit<Length> getDistanceUnit() {
-		return data.distanceUnit;
+		return get(distanceUnit);
 	}
 	
 	/**
 	 * @return default angle unit.
 	 */
 	public Unit<Angle> getAngleUnit() {
-		return data.angleUnit;
+		return get(angleUnit);
 	}
 	
 	/**
 	 * @return default frontsight azimuth unit.
 	 */
 	public Unit<Angle> getOverrideFrontAzimuthUnit() {
-		return data.overrideFrontAzimuthUnit;
+		return get(overrideFrontAzimuthUnit);
 	}
 	
 	/**
 	 * @return default backsight azimuth unit.
 	 */
 	public Unit<Angle> getOverrideBackAzimuthUnit() {
-		return data.overrideBackAzimuthUnit;
+		return get(overrideBackAzimuthUnit);
 	}
 	
 	/**
 	 * @return default frontsight inclination unit.
 	 */
 	public Unit<Angle> getOverrideFrontInclinationUnit() {
-		return data.overrideFrontInclinationUnit;
+		return get(overrideFrontInclinationUnit);
 	}
 	
 	/**
 	 * @return default backsight inclination unit.
 	 */
 	public Unit<Angle> getOverrideBackInclinationUnit() {
-		return data.overrideBackInclinationUnit;
+		return get(overrideBackInclinationUnit);
 	}
 	
 	/**
 	 * @return whether backsight azimuths are corrected.
 	 */
 	public boolean areBackAzimuthsCorrected() {
-		return data.backAzimuthsCorrected;
+		return get(backAzimuthsCorrected);
 	}
 	
 	/**
 	 * @return whether backsight inclinations are corrected.
 	 */
 	public boolean areBackInclinationsCorrected() {
-		return data.backInclinationsCorrected;
+		return get(backInclinationsCorrected);
 	}
 	
 	/**
 	 * @return magnetic declination.
 	 */
 	public String getDeclination() {
-		return data.declination;
+		return get(declination);
 	}
 	
 	/**
 	 * @return correction for shot distances.
 	 */
 	public String getDistanceCorrection() {
-		return data.distanceCorrection;
+		return get(distanceCorrection);
 	}
 	
 	/**
 	 * @return correction for frontsight azimuths.
 	 */
 	public String getFrontAzimuthCorrection() {
-		return data.frontAzimuthCorrection;
+		return get(frontAzimuthCorrection);
 	}
 	
 	/**
 	 * @return correction for frontsight inclinations.
 	 */
 	public String getFrontInclinationCorrection() {
-		return data.frontInclinationCorrection;
+		return get(frontInclinationCorrection);
 	}
 	
 	/**
 	 * @return correction for backsight azimuths.
 	 */
 	public String getBackAzimuthCorrection() {
-		return data.backAzimuthCorrection;
+		return get(backAzimuthCorrection);
 	}
 	
 	/**
 	 * @return correction for backsight inclinations.
 	 */
 	public String getBackInclinationCorrection() {
-		return data.backInclinationCorrection;
+		return get(backInclinationCorrection);
 	}
 	
 	
@@ -563,8 +538,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code cave} is unchanged, or a copy with the new {@code cave}.
 	 */
 	public SurveyTrip setCave(String cave) {
-		if (data.cave == cave) return this;
-		return toMutable().setCave(cave).toImmutable();
+		return set(SurveyTrip.cave, cave);
 	}
 	
 	/**
@@ -575,8 +549,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code name} is unchanged, or a copy with the new {@code name}.
 	 */
 	public SurveyTrip setName(String name) {
-		if (data.name == name) return this;
-		return toMutable().setName(name).toImmutable();
+		return set(SurveyTrip.name, name);
 	}
 	
 	/**
@@ -587,8 +560,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code date} is unchanged, or a copy with the new {@code date}.
 	 */
 	public SurveyTrip setDate(String date) {
-		if (data.date == date) return this;
-		return toMutable().setDate(date).toImmutable();
+		return set(SurveyTrip.date, date);
 	}
 	
 	/**
@@ -599,8 +571,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code surveyNotes} is unchanged, or a copy with the new {@code surveyNotes}.
 	 */
 	public SurveyTrip setSurveyNotes(String surveyNotes) {
-		if (data.surveyNotes == surveyNotes) return this;
-		return toMutable().setSurveyNotes(surveyNotes).toImmutable();
+		return set(SurveyTrip.surveyNotes, surveyNotes);
 	}
 	
 	/**
@@ -611,8 +582,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code surveyors} is unchanged, or a copy with the new {@code surveyors}.
 	 */
 	public SurveyTrip setSurveyors(List<String> surveyors) {
-		if (data.surveyors == surveyors) return this;
-		return toMutable().setSurveyors(surveyors).toImmutable();
+		return set(SurveyTrip.surveyors, surveyors);
 	}
 	
 	/**
@@ -623,8 +593,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code distanceUnit} is unchanged, or a copy with the new {@code distanceUnit}.
 	 */
 	public SurveyTrip setDistanceUnit(Unit<Length> distanceUnit) {
-		if (data.distanceUnit == distanceUnit) return this;
-		return toMutable().setDistanceUnit(distanceUnit).toImmutable();
+		return set(SurveyTrip.distanceUnit, distanceUnit);
 	}
 	
 	/**
@@ -635,8 +604,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code angleUnit} is unchanged, or a copy with the new {@code angleUnit}.
 	 */
 	public SurveyTrip setAngleUnit(Unit<Angle> angleUnit) {
-		if (data.angleUnit == angleUnit) return this;
-		return toMutable().setAngleUnit(angleUnit).toImmutable();
+		return set(SurveyTrip.angleUnit, angleUnit);
 	}
 	
 	/**
@@ -647,8 +615,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code overrideFrontAzimuthUnit} is unchanged, or a copy with the new {@code overrideFrontAzimuthUnit}.
 	 */
 	public SurveyTrip setOverrideFrontAzimuthUnit(Unit<Angle> overrideFrontAzimuthUnit) {
-		if (data.overrideFrontAzimuthUnit == overrideFrontAzimuthUnit) return this;
-		return toMutable().setOverrideFrontAzimuthUnit(overrideFrontAzimuthUnit).toImmutable();
+		return set(SurveyTrip.overrideFrontAzimuthUnit, overrideFrontAzimuthUnit);
 	}
 	
 	/**
@@ -659,8 +626,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code overrideBackAzimuthUnit} is unchanged, or a copy with the new {@code overrideBackAzimuthUnit}.
 	 */
 	public SurveyTrip setOverrideBackAzimuthUnit(Unit<Angle> overrideBackAzimuthUnit) {
-		if (data.overrideBackAzimuthUnit == overrideBackAzimuthUnit) return this;
-		return toMutable().setOverrideBackAzimuthUnit(overrideBackAzimuthUnit).toImmutable();
+		return set(SurveyTrip.overrideBackAzimuthUnit, overrideBackAzimuthUnit);
 	}
 	
 	/**
@@ -671,8 +637,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code overrideFrontInclinationUnit} is unchanged, or a copy with the new {@code overrideFrontInclinationUnit}.
 	 */
 	public SurveyTrip setOverrideFrontInclinationUnit(Unit<Angle> overrideFrontInclinationUnit) {
-		if (data.overrideFrontInclinationUnit == overrideFrontInclinationUnit) return this;
-		return toMutable().setOverrideFrontInclinationUnit(overrideFrontInclinationUnit).toImmutable();
+		return set(SurveyTrip.overrideFrontInclinationUnit, overrideFrontInclinationUnit);
 	}
 	
 	/**
@@ -683,8 +648,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code overrideBackInclinationUnit} is unchanged, or a copy with the new {@code overrideBackInclinationUnit}.
 	 */
 	public SurveyTrip setOverrideBackInclinationUnit(Unit<Angle> overrideBackInclinationUnit) {
-		if (data.overrideBackInclinationUnit == overrideBackInclinationUnit) return this;
-		return toMutable().setOverrideBackInclinationUnit(overrideBackInclinationUnit).toImmutable();
+		return set(SurveyTrip.overrideBackInclinationUnit, overrideBackInclinationUnit);
 	}
 	
 	/**
@@ -695,8 +659,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code backAzimuthsCorrected} is unchanged, or a copy with the new {@code backAzimuthsCorrected}.
 	 */
 	public SurveyTrip setBackAzimuthsCorrected(boolean backAzimuthsCorrected) {
-		if (data.backAzimuthsCorrected == backAzimuthsCorrected) return this;
-		return toMutable().setBackAzimuthsCorrected(backAzimuthsCorrected).toImmutable();
+		return set(SurveyTrip.backAzimuthsCorrected, backAzimuthsCorrected);
 	}
 	
 	/**
@@ -707,8 +670,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code backInclinationsCorrected} is unchanged, or a copy with the new {@code backInclinationsCorrected}.
 	 */
 	public SurveyTrip setBackInclinationsCorrected(boolean backInclinationsCorrected) {
-		if (data.backInclinationsCorrected == backInclinationsCorrected) return this;
-		return toMutable().setBackInclinationsCorrected(backInclinationsCorrected).toImmutable();
+		return set(SurveyTrip.backInclinationsCorrected, backInclinationsCorrected);
 	}
 	
 	/**
@@ -719,8 +681,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code declination} is unchanged, or a copy with the new {@code declination}.
 	 */
 	public SurveyTrip setDeclination(String declination) {
-		if (data.declination == declination) return this;
-		return toMutable().setDeclination(declination).toImmutable();
+		return set(SurveyTrip.declination, declination);
 	}
 	
 	/**
@@ -731,8 +692,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code distanceCorrection} is unchanged, or a copy with the new {@code distanceCorrection}.
 	 */
 	public SurveyTrip setDistanceCorrection(String distanceCorrection) {
-		if (data.distanceCorrection == distanceCorrection) return this;
-		return toMutable().setDistanceCorrection(distanceCorrection).toImmutable();
+		return set(SurveyTrip.distanceCorrection, distanceCorrection);
 	}
 	
 	/**
@@ -743,8 +703,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code frontAzimuthCorrection} is unchanged, or a copy with the new {@code frontAzimuthCorrection}.
 	 */
 	public SurveyTrip setFrontAzimuthCorrection(String frontAzimuthCorrection) {
-		if (data.frontAzimuthCorrection == frontAzimuthCorrection) return this;
-		return toMutable().setFrontAzimuthCorrection(frontAzimuthCorrection).toImmutable();
+		return set(SurveyTrip.frontAzimuthCorrection, frontAzimuthCorrection);
 	}
 	
 	/**
@@ -755,8 +714,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code frontInclinationCorrection} is unchanged, or a copy with the new {@code frontInclinationCorrection}.
 	 */
 	public SurveyTrip setFrontInclinationCorrection(String frontInclinationCorrection) {
-		if (data.frontInclinationCorrection == frontInclinationCorrection) return this;
-		return toMutable().setFrontInclinationCorrection(frontInclinationCorrection).toImmutable();
+		return set(SurveyTrip.frontInclinationCorrection, frontInclinationCorrection);
 	}
 	
 	/**
@@ -767,8 +725,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code backAzimuthCorrection} is unchanged, or a copy with the new {@code backAzimuthCorrection}.
 	 */
 	public SurveyTrip setBackAzimuthCorrection(String backAzimuthCorrection) {
-		if (data.backAzimuthCorrection == backAzimuthCorrection) return this;
-		return toMutable().setBackAzimuthCorrection(backAzimuthCorrection).toImmutable();
+		return set(SurveyTrip.backAzimuthCorrection, backAzimuthCorrection);
 	}
 	
 	/**
@@ -779,8 +736,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code backInclinationCorrection} is unchanged, or a copy with the new {@code backInclinationCorrection}.
 	 */
 	public SurveyTrip setBackInclinationCorrection(String backInclinationCorrection) {
-		if (data.backInclinationCorrection == backInclinationCorrection) return this;
-		return toMutable().setBackInclinationCorrection(backInclinationCorrection).toImmutable();
+		return set(SurveyTrip.backInclinationCorrection, backInclinationCorrection);
 	}
 	
 	
@@ -792,7 +748,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code cave} is unchanged, or a copy with the updated {@code cave}.
 	 */
 	public SurveyTrip updateCave(Function<String, String> updater) {
-		return setCave(updater.apply(data.cave));
+		return update(cave, updater);
 	}
 	
 	/**
@@ -803,7 +759,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code name} is unchanged, or a copy with the updated {@code name}.
 	 */
 	public SurveyTrip updateName(Function<String, String> updater) {
-		return setName(updater.apply(data.name));
+		return update(name, updater);
 	}
 	
 	/**
@@ -814,7 +770,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code date} is unchanged, or a copy with the updated {@code date}.
 	 */
 	public SurveyTrip updateDate(Function<String, String> updater) {
-		return setDate(updater.apply(data.date));
+		return update(date, updater);
 	}
 	
 	/**
@@ -825,7 +781,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code surveyNotes} is unchanged, or a copy with the updated {@code surveyNotes}.
 	 */
 	public SurveyTrip updateSurveyNotes(Function<String, String> updater) {
-		return setSurveyNotes(updater.apply(data.surveyNotes));
+		return update(surveyNotes, updater);
 	}
 	
 	/**
@@ -836,7 +792,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code surveyors} is unchanged, or a copy with the updated {@code surveyors}.
 	 */
 	public SurveyTrip updateSurveyors(Function<List<String>, List<String>> updater) {
-		return setSurveyors(updater.apply(data.surveyors));
+		return update(surveyors, updater);
 	}
 	
 	/**
@@ -847,7 +803,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code distanceUnit} is unchanged, or a copy with the updated {@code distanceUnit}.
 	 */
 	public SurveyTrip updateDistanceUnit(Function<Unit<Length>, Unit<Length>> updater) {
-		return setDistanceUnit(updater.apply(data.distanceUnit));
+		return update(distanceUnit, updater);
 	}
 	
 	/**
@@ -858,7 +814,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code angleUnit} is unchanged, or a copy with the updated {@code angleUnit}.
 	 */
 	public SurveyTrip updateAngleUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
-		return setAngleUnit(updater.apply(data.angleUnit));
+		return update(angleUnit, updater);
 	}
 	
 	/**
@@ -869,7 +825,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code overrideFrontAzimuthUnit} is unchanged, or a copy with the updated {@code overrideFrontAzimuthUnit}.
 	 */
 	public SurveyTrip updateOverrideFrontAzimuthUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
-		return setOverrideFrontAzimuthUnit(updater.apply(data.overrideFrontAzimuthUnit));
+		return update(overrideFrontAzimuthUnit, updater);
 	}
 	
 	/**
@@ -880,7 +836,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code overrideBackAzimuthUnit} is unchanged, or a copy with the updated {@code overrideBackAzimuthUnit}.
 	 */
 	public SurveyTrip updateOverrideBackAzimuthUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
-		return setOverrideBackAzimuthUnit(updater.apply(data.overrideBackAzimuthUnit));
+		return update(overrideBackAzimuthUnit, updater);
 	}
 	
 	/**
@@ -891,7 +847,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code overrideFrontInclinationUnit} is unchanged, or a copy with the updated {@code overrideFrontInclinationUnit}.
 	 */
 	public SurveyTrip updateOverrideFrontInclinationUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
-		return setOverrideFrontInclinationUnit(updater.apply(data.overrideFrontInclinationUnit));
+		return update(overrideFrontInclinationUnit, updater);
 	}
 	
 	/**
@@ -902,7 +858,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code overrideBackInclinationUnit} is unchanged, or a copy with the updated {@code overrideBackInclinationUnit}.
 	 */
 	public SurveyTrip updateOverrideBackInclinationUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
-		return setOverrideBackInclinationUnit(updater.apply(data.overrideBackInclinationUnit));
+		return update(overrideBackInclinationUnit, updater);
 	}
 	
 	/**
@@ -913,7 +869,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code backAzimuthsCorrected} is unchanged, or a copy with the updated {@code backAzimuthsCorrected}.
 	 */
 	public SurveyTrip updateBackAzimuthsCorrected(Function<Boolean, Boolean> updater) {
-		return setBackAzimuthsCorrected(updater.apply(data.backAzimuthsCorrected));
+		return update(backAzimuthsCorrected, updater);
 	}
 	
 	/**
@@ -924,7 +880,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code backInclinationsCorrected} is unchanged, or a copy with the updated {@code backInclinationsCorrected}.
 	 */
 	public SurveyTrip updateBackInclinationsCorrected(Function<Boolean, Boolean> updater) {
-		return setBackInclinationsCorrected(updater.apply(data.backInclinationsCorrected));
+		return update(backInclinationsCorrected, updater);
 	}
 	
 	/**
@@ -935,7 +891,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code declination} is unchanged, or a copy with the updated {@code declination}.
 	 */
 	public SurveyTrip updateDeclination(Function<String, String> updater) {
-		return setDeclination(updater.apply(data.declination));
+		return update(declination, updater);
 	}
 	
 	/**
@@ -946,7 +902,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code distanceCorrection} is unchanged, or a copy with the updated {@code distanceCorrection}.
 	 */
 	public SurveyTrip updateDistanceCorrection(Function<String, String> updater) {
-		return setDistanceCorrection(updater.apply(data.distanceCorrection));
+		return update(distanceCorrection, updater);
 	}
 	
 	/**
@@ -957,7 +913,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code frontAzimuthCorrection} is unchanged, or a copy with the updated {@code frontAzimuthCorrection}.
 	 */
 	public SurveyTrip updateFrontAzimuthCorrection(Function<String, String> updater) {
-		return setFrontAzimuthCorrection(updater.apply(data.frontAzimuthCorrection));
+		return update(frontAzimuthCorrection, updater);
 	}
 	
 	/**
@@ -968,7 +924,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code frontInclinationCorrection} is unchanged, or a copy with the updated {@code frontInclinationCorrection}.
 	 */
 	public SurveyTrip updateFrontInclinationCorrection(Function<String, String> updater) {
-		return setFrontInclinationCorrection(updater.apply(data.frontInclinationCorrection));
+		return update(frontInclinationCorrection, updater);
 	}
 	
 	/**
@@ -979,7 +935,7 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code backAzimuthCorrection} is unchanged, or a copy with the updated {@code backAzimuthCorrection}.
 	 */
 	public SurveyTrip updateBackAzimuthCorrection(Function<String, String> updater) {
-		return setBackAzimuthCorrection(updater.apply(data.backAzimuthCorrection));
+		return update(backAzimuthCorrection, updater);
 	}
 	
 	/**
@@ -990,47 +946,24 @@ public final class SurveyTrip {
 	 * @return this {@code SurveyTrip} if {@code backInclinationCorrection} is unchanged, or a copy with the updated {@code backInclinationCorrection}.
 	 */
 	public SurveyTrip updateBackInclinationCorrection(Function<String, String> updater) {
-		return setBackInclinationCorrection(updater.apply(data.backInclinationCorrection));
-	}
-	
-	
-	@Override
-	public int hashCode() {
-		return data.hashCode();
-	}
-
-	boolean dataIs(Data data) {
-		return this.data == data;
-	}
-
-	boolean dataEquals(Data data) {
-		return data.equals(data);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null) return false;
-		if (obj instanceof SurveyTrip) return ((SurveyTrip) obj).dataEquals(data);
-		if (obj instanceof MutableSurveyTrip) return ((MutableSurveyTrip) obj).dataEquals(data);
-		return false;
+		return update(backInclinationCorrection, updater);
 	}
 	
 	
 	public Unit<Angle> getFrontAzimuthUnit() {
-		return or(data.overrideFrontAzimuthUnit, data.angleUnit);
+		return or(getOverrideFrontAzimuthUnit(), getAngleUnit());
 	}
 
 	public Unit<Angle> getBackAzimuthUnit() {
-		return or(data.overrideBackAzimuthUnit, data.angleUnit);
+		return or(getOverrideBackAzimuthUnit(), getAngleUnit());
 	}
-
+	
 	public Unit<Angle> getFrontInclinationUnit() {
-		return or(data.overrideFrontInclinationUnit, data.angleUnit);
+		return or(getOverrideFrontInclinationUnit(), getAngleUnit());
 	}
 
 	public Unit<Angle> getBackInclinationUnit() {
-		return or(data.overrideBackInclinationUnit, data.angleUnit);
+		return or(getOverrideBackInclinationUnit(), getAngleUnit());
 	}
 	
 }

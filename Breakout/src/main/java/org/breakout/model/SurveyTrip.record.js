@@ -1,4 +1,5 @@
 module.exports = {
+	type: 'PersistentHashMap',
 	imports: [
 	  'java.util.List',
 	  'org.andork.unit.Unit',
@@ -42,19 +43,19 @@ module.exports = {
 	},
 	extraCode: `
 	public Unit<Angle> getFrontAzimuthUnit() {
-		return or(data.overrideFrontAzimuthUnit, data.angleUnit);
+		return or(getOverrideFrontAzimuthUnit(), getAngleUnit());
 	}
 
 	public Unit<Angle> getBackAzimuthUnit() {
-		return or(data.overrideBackAzimuthUnit, data.angleUnit);
+		return or(getOverrideBackAzimuthUnit(), getAngleUnit());
 	}
-
+	
 	public Unit<Angle> getFrontInclinationUnit() {
-		return or(data.overrideFrontInclinationUnit, data.angleUnit);
+		return or(getOverrideFrontInclinationUnit(), getAngleUnit());
 	}
 
 	public Unit<Angle> getBackInclinationUnit() {
-		return or(data.overrideBackInclinationUnit, data.angleUnit);
+		return or(getOverrideBackInclinationUnit(), getAngleUnit());
 	}
 	`
 }

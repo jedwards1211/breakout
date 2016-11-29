@@ -1,4 +1,5 @@
 module.exports = {
+	type: 'PersistentHashMap',
   generateProperties: true,
   generateSetters: true,
   generateUpdaters: true,
@@ -83,11 +84,11 @@ module.exports = {
   ],
   extraCode: `
   public String getFromCave() {
-    return or(data.overrideFromCave, data.trip == null ? null : data.trip.getCave());
+    return or(getOverrideFromCave(), getTrip() == null ? null : getTrip().getCave());
   }
 
   public String getToCave() {
-    return or(data.overrideToCave, data.trip == null ? null : data.trip.getCave());
+    return or(getOverrideToCave(), getTrip() == null ? null : getTrip().getCave());
   }
   `,
   extraProperties: `
@@ -125,7 +126,7 @@ module.exports = {
   `,
   extraMutableCode: `
 	public MutableSurveyRow ensureTrip() {
-		if (data.trip == null) setTrip(new SurveyTrip());
+		if (getTrip() == null) setTrip(new SurveyTrip());
 		return this;
 	}
   `,

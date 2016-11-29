@@ -64,6 +64,11 @@
 	</build>
 	<dependencies>
 		<dependency>
+			<groupId>com.github.krukow</groupId>
+			<artifactId>clj-ds</artifactId>
+			<version>0.0.4</version>
+		</dependency>
+		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-core</artifactId>
 			<version>0.10.0</version>
