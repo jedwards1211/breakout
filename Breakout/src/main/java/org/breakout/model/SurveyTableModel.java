@@ -28,6 +28,7 @@ import java.util.List;
 import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.ListTableModel;
+import org.andork.util.StringUtils;
 
 public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	public static class SurveyTableModelCopier extends AbstractTableModelCopier<SurveyTableModel> {
@@ -60,7 +61,17 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 		public static final Column<SurveyRow, String> elevation = column(SurveyRow.Properties.elevation);
 		public static final Column<SurveyRow, String> comment = column(SurveyRow.Properties.comment);
 		public static final Column<SurveyRow, String> tripName = column(SurveyRow.Properties.tripName);
-		public static final Column<SurveyRow, String> surveyors = column(SurveyRow.Properties.surveyors);
+		public static final Column<SurveyRow, String> surveyors = new ColumnBuilder<SurveyRow, String>()
+				.columnName("Surveyors")
+				.columnClass(String.class)
+				.getter(r -> r.getTrip() == null ? null : StringUtils.join("; ", r.getTrip().getSurveyors()))
+				.setter((row, surveyors) -> {
+					return row.withMutations(r -> {
+						List<String> parsed = Arrays.asList(surveyors.split("\\s*;\\s*"));
+						r.updateTrip(t -> (t == null ? new SurveyTrip() : t).setSurveyors(parsed));
+					});
+				})
+				.create();
 		public static final Column<SurveyRow, String> date = column(SurveyRow.Properties.date);
 		public static final Column<SurveyRow, String> surveyNotes = column(SurveyRow.Properties.surveyNotes);
 		public static final Column<SurveyRow, String> units = new ColumnBuilder<SurveyRow, String>()

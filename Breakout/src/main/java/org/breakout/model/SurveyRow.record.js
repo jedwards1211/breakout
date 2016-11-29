@@ -126,5 +126,7 @@ module.exports = {
       "date", String.class, SurveyTrip.Properties.date);
     public static DefaultProperty<SurveyRow, List<String>> surveyors = createTripProperty(
       "surveyors", List.class, SurveyTrip.Properties.surveyors);
+    public static DefaultProperty<SurveyRow, String> surveyNotes = createTripProperty(
+      "surveyNotes", String.class, SurveyTrip.Properties.surveyNotes);
   `
 }

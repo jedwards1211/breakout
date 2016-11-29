@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 11/28/2016, 11:04:08 PM.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 11/28/2016, 11:18:30 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -239,6 +239,8 @@ public class SurveyRow {
 			"date", String.class, SurveyTrip.Properties.date);
 		public static DefaultProperty<SurveyRow, List<String>> surveyors = createTripProperty(
 			"surveyors", List.class, SurveyTrip.Properties.surveyors);
+		public static DefaultProperty<SurveyRow, String> surveyNotes = createTripProperty(
+			"surveyNotes", String.class, SurveyTrip.Properties.surveyNotes);
 	
 	}
 	
