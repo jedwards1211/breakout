@@ -1,9 +1,4 @@
 module.exports = {
-  imports: [
-    'java.util.List',
-    'static org.andork.util.JavaScript.or',
-    'org.andork.model.Property',
-  ],
   generateProperties: true,
   generateSetters: true,
   generateUpdaters: true,
@@ -81,6 +76,11 @@ module.exports = {
       description: 'trip this row belongs to',
     },
   },
+  extraImports: [
+    'java.util.List',
+    'static org.andork.util.JavaScript.or',
+    'org.andork.model.Property',
+  ],
   extraCode: `
   public String getFromCave() {
     return or(data.overrideFromCave, data.trip == null ? null : data.trip.getCave());
@@ -89,12 +89,6 @@ module.exports = {
   public String getToCave() {
     return or(data.overrideToCave, data.trip == null ? null : data.trip.getCave());
   }
-  `,
-  extraMutableCode: `
-    public MutableSurveyRow ensureTrip() {
-      if (data.trip == null) setTrip(new SurveyTrip());
-      return this;
-    }
   `,
   extraProperties: `
     public static <V> DefaultProperty<SurveyRow, V> createTripProperty(
@@ -113,12 +107,12 @@ module.exports = {
     public static DefaultProperty<SurveyRow, String> fromCave = create(
 			"fromCave", String.class,
 			r -> r.getFromCave(),
-			(row, fromCave) -> row.withMutations(r -> r.setOverrideFromCave(fromCave))
+			(r, fromCave) -> r.setOverrideFromCave(fromCave)
 		);
     public static DefaultProperty<SurveyRow, String> toCave = create(
 			"toCave", String.class,
 			r -> r.getToCave(),
-			(row, toCave) -> row.withMutations(r -> r.setOverrideToCave(toCave))
+			(r, toCave) -> r.setOverrideToCave(toCave)
 		);
     public static DefaultProperty<SurveyRow, String> tripName = createTripProperty(
       "tripName", String.class, SurveyTrip.Properties.name);
@@ -128,5 +122,12 @@ module.exports = {
       "surveyors", List.class, SurveyTrip.Properties.surveyors);
     public static DefaultProperty<SurveyRow, String> surveyNotes = createTripProperty(
       "surveyNotes", String.class, SurveyTrip.Properties.surveyNotes);
-  `
+  `,
+  extraMutableCode: `
+	public MutableSurveyRow ensureTrip() {
+		if (data.trip == null) setTrip(new SurveyTrip());
+		return this;
+	}
+  `,
+
 }

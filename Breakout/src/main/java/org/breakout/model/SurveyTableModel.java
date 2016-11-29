@@ -32,8 +32,9 @@ import org.andork.util.StringUtils;
 
 public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	public static class SurveyTableModelCopier extends AbstractTableModelCopier<SurveyTableModel> {
-		public SurveyTableModel copy(SurveyTableModel src) {
-			return src.clone();
+		@Override
+		public void copyRow(SurveyTableModel src, int row, SurveyTableModel dest) {
+			dest.setRow(row, src.getRow(row));
 		}
 
 		@Override

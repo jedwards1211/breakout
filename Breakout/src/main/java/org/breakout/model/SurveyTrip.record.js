@@ -4,6 +4,8 @@ module.exports = {
 	  'org.andork.unit.Unit',
 	  'org.andork.unit.Angle',
 	  'org.andork.unit.Length',
+	],
+	extraImports: [
 	  'static org.andork.util.JavaScript.or',
 	],
 	generateProperties: true,

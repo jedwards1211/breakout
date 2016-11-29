@@ -17,8 +17,6 @@ import java.util.function.Function;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
-import org.breakout.model.SurveyRow.MutableSurveyRow;
-import org.breakout.model.SurveyTrip.MutableSurveyTrip;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -116,14 +114,14 @@ public class MetacaveImporter {
 
 	public List<SurveyRow> getRows() {
 		List<SurveyRow> result = new ArrayList<SurveyRow>();
-		SurveyRow lastRow = null;
-		for (SurveyRow row : rows) {
+		MutableSurveyRow lastRow = null;
+		for (MutableSurveyRow row : rows) {
 			if (row == null) {
-				final SurveyRow finalLastRow = lastRow;
-				row = SurveyRow.builder()
-						.setTrip(finalLastRow == null ? null : finalLastRow.getTrip()).create();
+				final MutableSurveyRow finalLastRow = lastRow;
+				row = new MutableSurveyRow()
+						.setTrip(finalLastRow == null ? null : finalLastRow.getTrip());
 			}
-			result.add(row);
+			result.add(row.toImmutable());
 			lastRow = row;
 		}
 		return result;
@@ -175,7 +173,7 @@ public class MetacaveImporter {
 	public SurveyTrip importTripHeader(JsonObject obj) {
 		SurveyTrip trip = trips.get(obj);
 		if (trip == null) {
-			MutableSurveyTrip t = SurveyTrip.builder();
+			MutableSurveyTrip t = new MutableSurveyTrip();
 			if (obj.has("name")) {
 				t.setName(obj.get("name").getAsString());
 			}
@@ -208,7 +206,7 @@ public class MetacaveImporter {
 			t.setBackAzimuthCorrection(getAsString(obj, "azmBsCorrection"));
 			t.setFrontInclinationCorrection(getAsString(obj, "incFsCorrection"));
 			t.setBackInclinationCorrection(getAsString(obj, "incBsCorrection"));
-			trip = t.create();
+			trip = t.toImmutable();
 			trips.put(obj, trip);
 		}
 		return trip;
@@ -236,7 +234,7 @@ public class MetacaveImporter {
 				}
 				MutableSurveyRow row = rows.get(rowIndex);
 				if (row == null) {
-					row = SurveyRow.builder();
+					row = new MutableSurveyRow();
 					row.setTrip(trip);
 					row.setOverrideFromCave(getAsString(fromStation, "cave"));
 					row.setFromStation(getAsString(fromStation, "station"));

@@ -20,10 +20,10 @@ import org.andork.compass.survey.CompassTripHeader;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
+import org.breakout.model.MutableSurveyRow;
+import org.breakout.model.MutableSurveyTrip;
 import org.breakout.model.SurveyRow;
-import org.breakout.model.SurveyRow.MutableSurveyRow;
 import org.breakout.model.SurveyTrip;
-import org.breakout.model.SurveyTrip.MutableSurveyTrip;
 
 public class CompassConverter {
 	private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
@@ -49,7 +49,7 @@ public class CompassConverter {
 			return tripShots;
 		}
 		for (CompassShot compassShot : compassTrip.getShots()) {
-			MutableSurveyRow shot = SurveyRow.builder();
+			MutableSurveyRow shot = new MutableSurveyRow();
 			shot.setTrip(trip);
 			shot.setFromStation(compassShot.getFromStationName());
 			shot.setToStation(compassShot.getToStationName());
@@ -58,16 +58,16 @@ public class CompassConverter {
 			shot.setBackAzimuth(toString(compassShot.getBacksightAzimuth()));
 			shot.setFrontInclination(toString(compassShot.getFrontsightInclination()));
 			shot.setBackInclination(toString(compassShot.getBacksightInclination()));
-			tripShots.add(shot);
+			tripShots.add(shot.toImmutable());
 		}
 
 		ListIterator<SurveyRow> tripShotIter = tripShots.listIterator();
 		if (compassTrip.getHeader().getLrudAssociation() == LrudAssociation.TO && !compassShots.isEmpty()) {
 			// add a row for the LRUDs at the to station of the last shot
-			SurveyRow shot = SurveyRow.builder()
+			SurveyRow shot = new MutableSurveyRow()
 					.setTrip(trip)
 					.setFromStation(last(compassShots).getToStationName())
-					.create();
+					.toImmutable();
 			tripShots.add(shot);
 
 			// offset tripShotIter so that compass LRUDs for to station get
@@ -99,7 +99,7 @@ public class CompassConverter {
 	}
 
 	public static SurveyTrip convertTripHeader(CompassTripHeader compassTripHeader) {
-		MutableSurveyTrip trip = SurveyTrip.builder();
+		MutableSurveyTrip trip = new MutableSurveyTrip();
 		trip.setCave(compassTripHeader.getCaveName());
 		trip.setName(compassTripHeader.getComment());
 		trip.setDate(toString(compassTripHeader.getDate()));
@@ -141,7 +141,7 @@ public class CompassConverter {
 			trip.setOverrideFrontInclinationUnit(inclinationUnit);
 			trip.setOverrideBackInclinationUnit(inclinationUnit);
 		}
-		return trip.create();
+		return trip.toImmutable();
 	}
 
 	private static <T> T last(List<T> list) {

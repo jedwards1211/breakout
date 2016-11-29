@@ -23,7 +23,6 @@ package org.breakout;
 
 import static org.andork.math3d.Vecmath.newMat4f;
 import static org.andork.util.JavaScript.falsy;
-import static org.andork.util.JavaScript.truthy;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -186,6 +185,7 @@ import org.breakout.compass.ui.CompassPlotParseResultsDialog;
 import org.breakout.model.ColorParam;
 import org.breakout.model.MetacaveExporter;
 import org.breakout.model.MetacaveImporter;
+import org.breakout.model.MutableSurveyRow;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.model.Shot;
@@ -832,12 +832,13 @@ public class BreakoutMainView {
 							if (falsy(c.getStationName())) {
 								continue;
 							}
-							SurveyRow row = new SurveyRow();
-							row.setTrip(trip);
-							row.setFromStation(c.getStationName());
-							row.setNorthing(toString(c.getLocation().getNorthing()));
-							row.setEasting(toString(c.getLocation().getEasting()));
-							row.setElevation(toString(c.getLocation().getVertical()));
+							SurveyRow row = new MutableSurveyRow()
+									.setTrip(trip)
+									.setFromStation(c.getStationName())
+									.setNorthing(toString(c.getLocation().getNorthing()))
+									.setEasting(toString(c.getLocation().getEasting()))
+									.setElevation(toString(c.getLocation().getVertical()))
+									.toImmutable();
 							rows.add(row);
 							stationPositionRows.put(c.getStationName(), row);
 						}
@@ -881,18 +882,17 @@ public class BreakoutMainView {
 
 					if ("import".equals(importOption)) {
 						SurveyTableModel model = surveyDrawer.table().getModel();
-						for (SurveyRow row : model.getRows()) {
-							if (truthy(row.getFromStation())) {
-								SurveyRow posRow = stationPositionRows.get(row.getFromStation());
-								if (posRow == null) {
-									continue;
-								}
-								row.setNorthing(posRow.getNorthing());
-								row.setEasting(posRow.getEasting());
-								row.setElevation(posRow.getElevation());
+						model.updateRows(row -> {
+							SurveyRow posRow = stationPositionRows.get(row.getFromStation());
+							if (posRow == null) {
+								return row;
 							}
-						}
-						model.fireTableDataChanged();
+							return row.withMutations(r -> {
+								r.setNorthing(posRow.getNorthing());
+								r.setEasting(posRow.getEasting());
+								r.setElevation(posRow.getElevation());
+							});
+						});
 					}
 				}
 			};

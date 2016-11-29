@@ -2,6 +2,7 @@ package org.andork.swing.table;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -249,4 +250,19 @@ public class ListTableModel<E> extends AbstractTableModel {
 			getList(this).set(rowIndex, newRow);
 		}
 	}
+
+	public void updateRows(Function<E, E> updater) {
+		listModel.removeListDataListener(listener);
+		try {
+			List<E> rows = getList(this);
+			ListIterator<E> i = rows.listIterator();
+			while (i.hasNext()) {
+				i.set(updater.apply(i.next()));
+			}
+			fireTableDataChanged();
+		} finally {
+			listModel.addListDataListener(listener);
+		}
+	}
+
 }

@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 11/28/2016, 11:18:30 PM.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 11/29/2016, 1:16:50 AM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -17,15 +17,17 @@ import java.util.function.Function;
 /**
  *
  */
-public class SurveyRow {
+public final class SurveyRow {
 	
-	public static class Properties {
+	public static final class Properties {
 		public static <V> DefaultProperty<SurveyRow, V> create(
 				String name, Class<? super V> valueClass,
 				Function<? super SurveyRow, ? extends V> getter, 
 				BiConsumer<MutableSurveyRow, ? super V> setter) {
 			return new DefaultProperty<SurveyRow, V>(
-				name, valueClass, getter, (m, v) -> setter.accept((MutableSurveyRow) m, v)
+				name, valueClass, getter, (m, v) -> {
+					return m.withMutations(m2 -> setter.accept(m2, v));
+				}
 			);
 		}
 		
@@ -226,12 +228,12 @@ public class SurveyRow {
 		public static DefaultProperty<SurveyRow, String> fromCave = create(
 			"fromCave", String.class,
 			r -> r.getFromCave(),
-			(row, fromCave) -> row.withMutations(r -> r.setOverrideFromCave(fromCave))
+			(r, fromCave) -> r.setOverrideFromCave(fromCave)
 		);
 		public static DefaultProperty<SurveyRow, String> toCave = create(
 			"toCave", String.class,
 			r -> r.getToCave(),
-			(row, toCave) -> row.withMutations(r -> r.setOverrideToCave(toCave))
+			(r, toCave) -> r.setOverrideToCave(toCave)
 		);
 		public static DefaultProperty<SurveyRow, String> tripName = createTripProperty(
 			"tripName", String.class, SurveyTrip.Properties.name);
@@ -244,8 +246,8 @@ public class SurveyRow {
 	
 	}
 	
-	static class SurveyRowData implements Cloneable {
-		static final SurveyRowData initial = new SurveyRowData();
+	static final class Data implements Cloneable {
+		static final Data initial = new Data();
 		
 		
 		/**
@@ -339,9 +341,9 @@ public class SurveyRow {
 		SurveyTrip trip;
 	
 		@Override
-		public SurveyRowData clone() {
+		public Data clone() {
 			try {
-				return (SurveyRowData) super.clone(); 
+				return (Data) super.clone(); 
 			} catch (Exception e) {
 				// should not happen
 				throw new RuntimeException(e);
@@ -380,7 +382,7 @@ public class SurveyRow {
 			if (this == obj) return true;
 			if (obj == null) return false;
 			if (getClass() != obj.getClass()) return false;
-			SurveyRowData other = (SurveyRowData) obj;
+			Data other = (Data) obj;
 			if (!Objects.equals(overrideFromCave, other.overrideFromCave)) return false;
 			if (!Objects.equals(fromStation, other.fromStation)) return false;
 			if (!Objects.equals(overrideToCave, other.overrideToCave)) return false;
@@ -403,512 +405,15 @@ public class SurveyRow {
 		}
 	
 	}
+ 
+	private volatile Data data;
 	
-	public static class MutableSurveyRow extends SurveyRow {
-		private volatile boolean frozen = true;
-		
-		MutableSurveyRow(SurveyRowData data) {
-			super(data);
-		}
-		
-		MutableSurveyRow() {
-			this(SurveyRowData.initial);
-		}
-		
-		public void detach() {
-			if (frozen) {
-				data = data.clone();
-				frozen = false;
-			}
-		}
-		
-		public SurveyRow create() {
-			frozen = true;
-			return new SurveyRow(data);
-		} 
-		
-		public MutableSurveyRow withMutations(Consumer<MutableSurveyRow> mutator) {
-			mutator.accept(this);
-			return this;
-		}
-		
-		
-		/**
-		 * Sets name of cave from station is in, if different from trip.
-		 *
-		 * @param overrideFromCave - the new value for name of cave from station is in, if different from trip
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setOverrideFromCave(String overrideFromCave) {
-			if (data.overrideFromCave == overrideFromCave) return this;
-			detach();
-			data.overrideFromCave = overrideFromCave;
-			return this;
-		}
-		
-		/**
-		 * Sets from station name.
-		 *
-		 * @param fromStation - the new value for from station name
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setFromStation(String fromStation) {
-			if (data.fromStation == fromStation) return this;
-			detach();
-			data.fromStation = fromStation;
-			return this;
-		}
-		
-		/**
-		 * Sets name of cave of to station is in, if different to trip.
-		 *
-		 * @param overrideToCave - the new value for name of cave of to station is in, if different to trip
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setOverrideToCave(String overrideToCave) {
-			if (data.overrideToCave == overrideToCave) return this;
-			detach();
-			data.overrideToCave = overrideToCave;
-			return this;
-		}
-		
-		/**
-		 * Sets to station name.
-		 *
-		 * @param toStation - the new value for to station name
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setToStation(String toStation) {
-			if (data.toStation == toStation) return this;
-			detach();
-			data.toStation = toStation;
-			return this;
-		}
-		
-		/**
-		 * Sets distance between from and to station.
-		 *
-		 * @param distance - the new value for distance between from and to station
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setDistance(String distance) {
-			if (data.distance == distance) return this;
-			detach();
-			data.distance = distance;
-			return this;
-		}
-		
-		/**
-		 * Sets azimuth toward to station at from station.
-		 *
-		 * @param frontAzimuth - the new value for azimuth toward to station at from station
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setFrontAzimuth(String frontAzimuth) {
-			if (data.frontAzimuth == frontAzimuth) return this;
-			detach();
-			data.frontAzimuth = frontAzimuth;
-			return this;
-		}
-		
-		/**
-		 * Sets azimuth toward from station at to station.
-		 *
-		 * @param backAzimuth - the new value for azimuth toward from station at to station
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setBackAzimuth(String backAzimuth) {
-			if (data.backAzimuth == backAzimuth) return this;
-			detach();
-			data.backAzimuth = backAzimuth;
-			return this;
-		}
-		
-		/**
-		 * Sets inclination toward to station at from station.
-		 *
-		 * @param frontInclination - the new value for inclination toward to station at from station
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setFrontInclination(String frontInclination) {
-			if (data.frontInclination == frontInclination) return this;
-			detach();
-			data.frontInclination = frontInclination;
-			return this;
-		}
-		
-		/**
-		 * Sets inclination toward from station at to station.
-		 *
-		 * @param backInclination - the new value for inclination toward from station at to station
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setBackInclination(String backInclination) {
-			if (data.backInclination == backInclination) return this;
-			detach();
-			data.backInclination = backInclination;
-			return this;
-		}
-		
-		/**
-		 * Sets distance between from station and left wall.
-		 *
-		 * @param left - the new value for distance between from station and left wall
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setLeft(String left) {
-			if (data.left == left) return this;
-			detach();
-			data.left = left;
-			return this;
-		}
-		
-		/**
-		 * Sets distance between from station and right wall.
-		 *
-		 * @param right - the new value for distance between from station and right wall
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setRight(String right) {
-			if (data.right == right) return this;
-			detach();
-			data.right = right;
-			return this;
-		}
-		
-		/**
-		 * Sets distance between from station and ceiling.
-		 *
-		 * @param up - the new value for distance between from station and ceiling
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setUp(String up) {
-			if (data.up == up) return this;
-			detach();
-			data.up = up;
-			return this;
-		}
-		
-		/**
-		 * Sets distance between from station and floor.
-		 *
-		 * @param down - the new value for distance between from station and floor
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setDown(String down) {
-			if (data.down == down) return this;
-			detach();
-			data.down = down;
-			return this;
-		}
-		
-		/**
-		 * Sets distance north relative to coordinate origin.
-		 *
-		 * @param northing - the new value for distance north relative to coordinate origin
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setNorthing(String northing) {
-			if (data.northing == northing) return this;
-			detach();
-			data.northing = northing;
-			return this;
-		}
-		
-		/**
-		 * Sets distance east relative to coordinate origin.
-		 *
-		 * @param easting - the new value for distance east relative to coordinate origin
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setEasting(String easting) {
-			if (data.easting == easting) return this;
-			detach();
-			data.easting = easting;
-			return this;
-		}
-		
-		/**
-		 * Sets distance east relative to coordinate origin.
-		 *
-		 * @param elevation - the new value for distance east relative to coordinate origin
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setElevation(String elevation) {
-			if (data.elevation == elevation) return this;
-			detach();
-			data.elevation = elevation;
-			return this;
-		}
-		
-		/**
-		 * Sets any user comment.
-		 *
-		 * @param comment - the new value for any user comment
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setComment(String comment) {
-			if (data.comment == comment) return this;
-			detach();
-			data.comment = comment;
-			return this;
-		}
-		
-		/**
-		 * Sets trip this row belongs to.
-		 *
-		 * @param trip - the new value for trip this row belongs to
-		 * 
-		 * @return this {@code MutableSurveyRow}.
-		 */
-		public MutableSurveyRow setTrip(SurveyTrip trip) {
-			if (data.trip == trip) return this;
-			detach();
-			data.trip = trip;
-			return this;
-		}
-		
-		
-		/**
-		 * Updates name of cave from station is in, if different from trip.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code overrideFromCave} and returns the new value for {@code overrideFromCave}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code overrideFromCave} is unchanged, or a copy with the updated {@code overrideFromCave}.
-		 */
-		public MutableSurveyRow updateOverrideFromCave(Function<String, String> updater) {
-			return setOverrideFromCave(updater.apply(data.overrideFromCave));
-		}
-		
-		/**
-		 * Updates from station name.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code fromStation} and returns the new value for {@code fromStation}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code fromStation} is unchanged, or a copy with the updated {@code fromStation}.
-		 */
-		public MutableSurveyRow updateFromStation(Function<String, String> updater) {
-			return setFromStation(updater.apply(data.fromStation));
-		}
-		
-		/**
-		 * Updates name of cave of to station is in, if different to trip.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code overrideToCave} and returns the new value for {@code overrideToCave}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code overrideToCave} is unchanged, or a copy with the updated {@code overrideToCave}.
-		 */
-		public MutableSurveyRow updateOverrideToCave(Function<String, String> updater) {
-			return setOverrideToCave(updater.apply(data.overrideToCave));
-		}
-		
-		/**
-		 * Updates to station name.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code toStation} and returns the new value for {@code toStation}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code toStation} is unchanged, or a copy with the updated {@code toStation}.
-		 */
-		public MutableSurveyRow updateToStation(Function<String, String> updater) {
-			return setToStation(updater.apply(data.toStation));
-		}
-		
-		/**
-		 * Updates distance between from and to station.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code distance} and returns the new value for {@code distance}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code distance} is unchanged, or a copy with the updated {@code distance}.
-		 */
-		public MutableSurveyRow updateDistance(Function<String, String> updater) {
-			return setDistance(updater.apply(data.distance));
-		}
-		
-		/**
-		 * Updates azimuth toward to station at from station.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code frontAzimuth} and returns the new value for {@code frontAzimuth}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code frontAzimuth} is unchanged, or a copy with the updated {@code frontAzimuth}.
-		 */
-		public MutableSurveyRow updateFrontAzimuth(Function<String, String> updater) {
-			return setFrontAzimuth(updater.apply(data.frontAzimuth));
-		}
-		
-		/**
-		 * Updates azimuth toward from station at to station.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code backAzimuth} and returns the new value for {@code backAzimuth}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code backAzimuth} is unchanged, or a copy with the updated {@code backAzimuth}.
-		 */
-		public MutableSurveyRow updateBackAzimuth(Function<String, String> updater) {
-			return setBackAzimuth(updater.apply(data.backAzimuth));
-		}
-		
-		/**
-		 * Updates inclination toward to station at from station.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code frontInclination} and returns the new value for {@code frontInclination}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code frontInclination} is unchanged, or a copy with the updated {@code frontInclination}.
-		 */
-		public MutableSurveyRow updateFrontInclination(Function<String, String> updater) {
-			return setFrontInclination(updater.apply(data.frontInclination));
-		}
-		
-		/**
-		 * Updates inclination toward from station at to station.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code backInclination} and returns the new value for {@code backInclination}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code backInclination} is unchanged, or a copy with the updated {@code backInclination}.
-		 */
-		public MutableSurveyRow updateBackInclination(Function<String, String> updater) {
-			return setBackInclination(updater.apply(data.backInclination));
-		}
-		
-		/**
-		 * Updates distance between from station and left wall.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code left} and returns the new value for {@code left}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code left} is unchanged, or a copy with the updated {@code left}.
-		 */
-		public MutableSurveyRow updateLeft(Function<String, String> updater) {
-			return setLeft(updater.apply(data.left));
-		}
-		
-		/**
-		 * Updates distance between from station and right wall.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code right} and returns the new value for {@code right}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code right} is unchanged, or a copy with the updated {@code right}.
-		 */
-		public MutableSurveyRow updateRight(Function<String, String> updater) {
-			return setRight(updater.apply(data.right));
-		}
-		
-		/**
-		 * Updates distance between from station and ceiling.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code up} and returns the new value for {@code up}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code up} is unchanged, or a copy with the updated {@code up}.
-		 */
-		public MutableSurveyRow updateUp(Function<String, String> updater) {
-			return setUp(updater.apply(data.up));
-		}
-		
-		/**
-		 * Updates distance between from station and floor.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code down} and returns the new value for {@code down}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code down} is unchanged, or a copy with the updated {@code down}.
-		 */
-		public MutableSurveyRow updateDown(Function<String, String> updater) {
-			return setDown(updater.apply(data.down));
-		}
-		
-		/**
-		 * Updates distance north relative to coordinate origin.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code northing} and returns the new value for {@code northing}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code northing} is unchanged, or a copy with the updated {@code northing}.
-		 */
-		public MutableSurveyRow updateNorthing(Function<String, String> updater) {
-			return setNorthing(updater.apply(data.northing));
-		}
-		
-		/**
-		 * Updates distance east relative to coordinate origin.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code easting} and returns the new value for {@code easting}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code easting} is unchanged, or a copy with the updated {@code easting}.
-		 */
-		public MutableSurveyRow updateEasting(Function<String, String> updater) {
-			return setEasting(updater.apply(data.easting));
-		}
-		
-		/**
-		 * Updates distance east relative to coordinate origin.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code elevation} and returns the new value for {@code elevation}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code elevation} is unchanged, or a copy with the updated {@code elevation}.
-		 */
-		public MutableSurveyRow updateElevation(Function<String, String> updater) {
-			return setElevation(updater.apply(data.elevation));
-		}
-		
-		/**
-		 * Updates any user comment.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code comment} and returns the new value for {@code comment}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code comment} is unchanged, or a copy with the updated {@code comment}.
-		 */
-		public MutableSurveyRow updateComment(Function<String, String> updater) {
-			return setComment(updater.apply(data.comment));
-		}
-		
-		/**
-		 * Updates trip this row belongs to.
-		 *
-		 * @param updater - {@code Function} that takes the current value of {@code trip} and returns the new value for {@code trip}.
-		 * 
-		 * @return this {@code SurveyRow} if {@code trip} is unchanged, or a copy with the updated {@code trip}.
-		 */
-		public MutableSurveyRow updateTrip(Function<SurveyTrip, SurveyTrip> updater) {
-			return setTrip(updater.apply(data.trip));
-		}
-		
-		
-		public MutableSurveyRow ensureTrip() {
-			if (data.trip == null) setTrip(new SurveyTrip());
-			return this;
-		}
-	
-	}
-	
-	volatile SurveyRowData data;
-	
-	SurveyRow(SurveyRowData data) {
+	SurveyRow(Data data) {
 		this.data = data;
 	}
 	
 	public SurveyRow() {
-		this(SurveyRowData.initial);
-	}
-	
-	/**
-	 * @param initializer a {@link Consumer} that initializes a {@code SurveyRow}.
-	 *
-	 * @return a new {@code SurveyRow} with values initialized by {@code initializer}.
-	 */
-	public static MutableSurveyRow builder() {
-		return new MutableSurveyRow(); 
+		this(Data.initial);
 	}
 	
 	/**
@@ -917,9 +422,16 @@ public class SurveyRow {
 	 * @return a copy of this {@code SurveyRow} with the given mutations applied.
 	 */
 	public SurveyRow withMutations(Consumer<MutableSurveyRow> mutator) {
-		MutableSurveyRow mutable = new MutableSurveyRow(data);
+		MutableSurveyRow mutable = toMutable();
 		mutator.accept(mutable);
-		return data == mutable.data ? this : new SurveyRow(mutable.data);
+		return mutable.dataIs(data) ? this : mutable.toImmutable();
+	}
+	
+	/**
+	 * @return a mutable copy of this {@code SurveyRow}.
+	 */
+	public MutableSurveyRow toMutable() {
+		return new MutableSurveyRow(data);
 	}
 	
 	
@@ -1059,7 +571,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setOverrideFromCave(String overrideFromCave) {
 		if (data.overrideFromCave == overrideFromCave) return this;
-		return new MutableSurveyRow(data).setOverrideFromCave(overrideFromCave).create();
+		return toMutable().setOverrideFromCave(overrideFromCave).toImmutable();
 	}
 	
 	/**
@@ -1071,7 +583,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setFromStation(String fromStation) {
 		if (data.fromStation == fromStation) return this;
-		return new MutableSurveyRow(data).setFromStation(fromStation).create();
+		return toMutable().setFromStation(fromStation).toImmutable();
 	}
 	
 	/**
@@ -1083,7 +595,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setOverrideToCave(String overrideToCave) {
 		if (data.overrideToCave == overrideToCave) return this;
-		return new MutableSurveyRow(data).setOverrideToCave(overrideToCave).create();
+		return toMutable().setOverrideToCave(overrideToCave).toImmutable();
 	}
 	
 	/**
@@ -1095,7 +607,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setToStation(String toStation) {
 		if (data.toStation == toStation) return this;
-		return new MutableSurveyRow(data).setToStation(toStation).create();
+		return toMutable().setToStation(toStation).toImmutable();
 	}
 	
 	/**
@@ -1107,7 +619,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setDistance(String distance) {
 		if (data.distance == distance) return this;
-		return new MutableSurveyRow(data).setDistance(distance).create();
+		return toMutable().setDistance(distance).toImmutable();
 	}
 	
 	/**
@@ -1119,7 +631,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setFrontAzimuth(String frontAzimuth) {
 		if (data.frontAzimuth == frontAzimuth) return this;
-		return new MutableSurveyRow(data).setFrontAzimuth(frontAzimuth).create();
+		return toMutable().setFrontAzimuth(frontAzimuth).toImmutable();
 	}
 	
 	/**
@@ -1131,7 +643,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setBackAzimuth(String backAzimuth) {
 		if (data.backAzimuth == backAzimuth) return this;
-		return new MutableSurveyRow(data).setBackAzimuth(backAzimuth).create();
+		return toMutable().setBackAzimuth(backAzimuth).toImmutable();
 	}
 	
 	/**
@@ -1143,7 +655,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setFrontInclination(String frontInclination) {
 		if (data.frontInclination == frontInclination) return this;
-		return new MutableSurveyRow(data).setFrontInclination(frontInclination).create();
+		return toMutable().setFrontInclination(frontInclination).toImmutable();
 	}
 	
 	/**
@@ -1155,7 +667,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setBackInclination(String backInclination) {
 		if (data.backInclination == backInclination) return this;
-		return new MutableSurveyRow(data).setBackInclination(backInclination).create();
+		return toMutable().setBackInclination(backInclination).toImmutable();
 	}
 	
 	/**
@@ -1167,7 +679,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setLeft(String left) {
 		if (data.left == left) return this;
-		return new MutableSurveyRow(data).setLeft(left).create();
+		return toMutable().setLeft(left).toImmutable();
 	}
 	
 	/**
@@ -1179,7 +691,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setRight(String right) {
 		if (data.right == right) return this;
-		return new MutableSurveyRow(data).setRight(right).create();
+		return toMutable().setRight(right).toImmutable();
 	}
 	
 	/**
@@ -1191,7 +703,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setUp(String up) {
 		if (data.up == up) return this;
-		return new MutableSurveyRow(data).setUp(up).create();
+		return toMutable().setUp(up).toImmutable();
 	}
 	
 	/**
@@ -1203,7 +715,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setDown(String down) {
 		if (data.down == down) return this;
-		return new MutableSurveyRow(data).setDown(down).create();
+		return toMutable().setDown(down).toImmutable();
 	}
 	
 	/**
@@ -1215,7 +727,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setNorthing(String northing) {
 		if (data.northing == northing) return this;
-		return new MutableSurveyRow(data).setNorthing(northing).create();
+		return toMutable().setNorthing(northing).toImmutable();
 	}
 	
 	/**
@@ -1227,7 +739,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setEasting(String easting) {
 		if (data.easting == easting) return this;
-		return new MutableSurveyRow(data).setEasting(easting).create();
+		return toMutable().setEasting(easting).toImmutable();
 	}
 	
 	/**
@@ -1239,7 +751,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setElevation(String elevation) {
 		if (data.elevation == elevation) return this;
-		return new MutableSurveyRow(data).setElevation(elevation).create();
+		return toMutable().setElevation(elevation).toImmutable();
 	}
 	
 	/**
@@ -1251,7 +763,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setComment(String comment) {
 		if (data.comment == comment) return this;
-		return new MutableSurveyRow(data).setComment(comment).create();
+		return toMutable().setComment(comment).toImmutable();
 	}
 	
 	/**
@@ -1263,7 +775,7 @@ public class SurveyRow {
 	 */
 	public SurveyRow setTrip(SurveyTrip trip) {
 		if (data.trip == trip) return this;
-		return new MutableSurveyRow(data).setTrip(trip).create();
+		return toMutable().setTrip(trip).toImmutable();
 	}
 	
 	
@@ -1465,18 +977,29 @@ public class SurveyRow {
 		return setTrip(updater.apply(data.trip));
 	}
 	
+	
 	@Override
 	public int hashCode() {
 		return data.hashCode();
 	}
-	
+
+	boolean dataIs(Data data) {
+		return this.data == data;
+	}
+
+	boolean dataEquals(Data data) {
+		return data.equals(data);
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) return true;
 		if (obj == null) return false;
-		if (!(obj instanceof SurveyRow)) return false;
-		return data.equals(((SurveyRow) obj).data);
+		if (obj instanceof SurveyRow) return ((SurveyRow) obj).dataEquals(data);
+		if (obj instanceof MutableSurveyRow) return ((MutableSurveyRow) obj).dataEquals(data);
+		return false;
 	}
+	
 	
 	public String getFromCave() {
 		return or(data.overrideFromCave, data.trip == null ? null : data.trip.getCave());
