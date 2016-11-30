@@ -1712,18 +1712,22 @@ public class BreakoutMainView {
 						rootSubtask.setCompleted(1);
 						calcSubtask.end();
 
-						if (range != null) {
-							ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
-							if (!colorParam.isLoBright()) {
-								float swap = range[0];
-								range[0] = range[1];
-								range[1] = swap;
-							}
-							LinearAxisConversion conversion = new LinearAxisConversion(range[0], 0.0, range[1],
-									settingsDrawer.getParamColorationAxis().getViewSpan());
-
-							paramRangeBinder.set(conversion);
+						if (range == null ||
+								!Float.isFinite(range[0]) || !Float.isFinite(range[1]) ||
+								range[0] == -Float.MAX_VALUE || range[1] == -Float.MIN_VALUE) {
+							return;
 						}
+
+						ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
+						if (!colorParam.isLoBright()) {
+							float swap = range[0];
+							range[0] = range[1];
+							range[1] = swap;
+						}
+						LinearAxisConversion conversion = new LinearAxisConversion(range[0], 0.0, range[1],
+								settingsDrawer.getParamColorationAxis().getViewSpan());
+
+						paramRangeBinder.set(conversion);
 					}
 				});
 			}

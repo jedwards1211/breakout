@@ -788,7 +788,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					float f = (coord[0] - origin[0]) * axis[0] +
 							(coord[1] - origin[1]) * axis[1] +
 							(coord[2] - origin[2]) * axis[2];
-					if (!Double.isNaN(f)) {
+					if (Float.isFinite(f)) {
 						rangeInOut[0] = Math.min(rangeInOut[0], f);
 						rangeInOut[1] = Math.max(rangeInOut[1], f);
 					}
@@ -804,7 +804,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 				while (i < maxIndex) {
 					float f = param0buffer.getFloat(i * 4);
-					if (!Double.isNaN(f)) {
+					if (Float.isFinite(f)) {
 						rangeInOut[0] = Math.min(rangeInOut[0], f);
 						rangeInOut[1] = Math.max(rangeInOut[1], f);
 					}

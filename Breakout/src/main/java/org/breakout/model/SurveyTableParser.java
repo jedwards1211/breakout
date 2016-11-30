@@ -135,6 +135,9 @@ public class SurveyTableParser {
 
 	private static final SurveyTrip defaultTrip = new SurveyTrip();
 
+	private static final SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+	private static final SimpleDateFormat dateFormat2 = new SimpleDateFormat("yyyy/MM/dd");
+
 	public static List<Shot> createShots(List<SurveyRow> rows, Subtask subtask) {
 		if (subtask != null) {
 			subtask.setTotal(rows.size());
@@ -147,8 +150,6 @@ public class SurveyTableParser {
 
 		Map<StationKey, Station> stations = new LinkedHashMap<>();
 		Map<ShotKey, Shot> shots = new LinkedHashMap<>();
-
-		SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
 		List<Shot> shotList = new ArrayList<Shot>();
 
@@ -252,9 +253,13 @@ public class SurveyTableParser {
 				shot.desc = SurveyRow.getTrip() == null ? null : SurveyRow.getTrip().getName();
 
 				try {
-					shot.date = dateFormat.parse(trip.getDate());
-				} catch (Exception ex) {
+					shot.date = dateFormat1.parse(trip.getDate().trim());
+				} catch (Exception ex1) {
+					try {
+						shot.date = dateFormat2.parse(trip.getDate().trim());
+					} catch (Exception ex2) {
 
+					}
 				}
 
 				CrossSection xSection = shot.fromXsection;
