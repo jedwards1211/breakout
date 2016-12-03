@@ -103,8 +103,11 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer> {
 			.compile("\\s*(\\D+)\\s*((\\d+(\\.\\d+)?)\\s*(\\+|(-\\s*(\\d+(\\.\\d+)?)))?)?\\s*");
 
 	Segment[] segments;
+	String originalString;
 
 	public SurveyDesignationFilter(String designation) {
+		originalString = designation.trim();
+
 		// this.designation = designation;
 		String[] split = designation.split("[,;]");
 		segments = new Segment[split.length];
@@ -126,11 +129,15 @@ public class SurveyDesignationFilter extends RowFilter<TableModel, Integer> {
 			return false;
 		}
 
-		boolean foundFrom = false;
-		boolean foundTo = false;
-
 		String from = row.getFromStation();
 		String to = row.getToStation();
+
+		if (originalString.equals(from) || originalString.equals(to)) {
+			return true;
+		}
+
+		boolean foundFrom = false;
+		boolean foundTo = false;
 
 		for (Segment segment : segments) {
 			if (!foundFrom && from != null && segment.include(from)) {
