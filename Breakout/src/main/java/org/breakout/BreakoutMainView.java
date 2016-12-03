@@ -94,8 +94,6 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
 
 import org.andork.awt.I18n;
@@ -376,6 +374,8 @@ public class BreakoutMainView {
 								SurveyTableModel model = surveyDrawer.table().getModel();
 								model.clear();
 								model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
+								saveSurvey.run();
+								rebuild3dModel.run();
 							});
 						});
 					}
@@ -651,6 +651,8 @@ public class BreakoutMainView {
 						try {
 							surveyDrawer.table().getModel()
 									.copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
+							saveSurvey.run();
+							rebuild3dModel.run();
 						} finally {
 							loadingSurvey = false;
 						}
@@ -893,6 +895,8 @@ public class BreakoutMainView {
 								r.setElevation(posRow.getElevation());
 							});
 						});
+						saveSurvey.run();
+						rebuild3dModel.run();
 					}
 				}
 			};
@@ -928,19 +932,6 @@ public class BreakoutMainView {
 
 	boolean loadingSurvey = false;
 	boolean editingSurvey = false;
-
-	final TableModelListener surveyTableChangeHandler = new TableModelListener() {
-		@Override
-		public void tableChanged(TableModelEvent e) {
-			if (editingSurvey) {
-				return;
-			}
-			if (!loadingSurvey) {
-				saveSurvey.run();
-			}
-			rebuild3dModel.run();
-		}
-	};
 
 	final double[] fromLoc = new double[3];
 
@@ -1392,7 +1383,6 @@ public class BreakoutMainView {
 		settingsDrawer.addTo(layeredPane, 1);
 
 		surveyDrawer.table().getModel().setEditable(false);
-		surveyDrawer.table().getModel().addTableModelListener(surveyTableChangeHandler);
 		surveyDrawer.editButton().setSelected(false);
 		surveyDrawer.editButton().addItemListener(e -> {
 			editingSurvey = e.getStateChange() == ItemEvent.SELECTED;
