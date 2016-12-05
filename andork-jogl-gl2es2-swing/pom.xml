@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.andork</groupId>
   <artifactId>andork-jogl-gl2es2-swing</artifactId>
-  <version>0.11.0</version>
+  <version>0.11.1</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
@@ -44,27 +44,27 @@
    	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-core</artifactId>
-  		<version>0.11.0</version>
+  		<version>0.11.1</version>
   	</dependency>
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-jogl-gl2es2-utils</artifactId>
-  		<version>0.11.0</version>
+  		<version>0.11.1</version>
   	</dependency>
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-ui</artifactId>
-  		<version>0.11.0</version>
+  		<version>0.11.1</version>
   	</dependency>
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-math</artifactId>
-  		<version>0.11.0</version>
+  		<version>0.11.1</version>
   	</dependency>
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-math3d</artifactId>
-  		<version>0.11.0</version>
+  		<version>0.11.1</version>
   	</dependency>
   	<dependency>
   		<groupId>org.jogamp.jogl</groupId>
