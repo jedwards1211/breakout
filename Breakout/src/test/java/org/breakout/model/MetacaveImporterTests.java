@@ -27,7 +27,7 @@ public class MetacaveImporterTests {
 
 		SurveyTrip trip = rows.get(0).getTrip();
 		assertEquals("Fisher Ridge", trip.getCave());
-		assertEquals("SurveyTrip 1", trip.getName());
+		assertEquals("Trip 1", trip.getName());
 		assertEquals("2016-01-01", trip.getDate());
 		assertEquals(Arrays.asList("Andy Edwards", "Sean Lewis"), trip.getSurveyors());
 		assertEquals(Length.feet, trip.getDistanceUnit());

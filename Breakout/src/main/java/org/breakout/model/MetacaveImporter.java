@@ -137,14 +137,14 @@ public class MetacaveImporter {
 			return;
 		}
 		caves.entrySet().forEach(e -> {
+			String caveName = e.getKey();
 			JsonObject cave = e.getValue().getAsJsonObject();
 			JsonArray trips = cave.getAsJsonArray("trips");
 			if (trips == null) {
 				return;
 			}
 			for (int i = 0; i < trips.size(); i++) {
-				SurveyTrip trip = importTrip(trips.get(i).getAsJsonObject());
-				trip.setCave(e.getKey());
+				importTrip(trips.get(i).getAsJsonObject(), caveName);
 			}
 		});
 	}
@@ -164,16 +164,17 @@ public class MetacaveImporter {
 		importMetacave(obj);
 	}
 
-	public SurveyTrip importTrip(JsonObject obj) {
-		SurveyTrip trip = importTripHeader(obj);
+	public SurveyTrip importTrip(JsonObject obj, String caveName) {
+		SurveyTrip trip = importTripHeader(obj, caveName);
 		importTripSurvey(trip, obj.getAsJsonArray("survey"));
 		return trip;
 	}
 
-	public SurveyTrip importTripHeader(JsonObject obj) {
+	public SurveyTrip importTripHeader(JsonObject obj, String caveName) {
 		SurveyTrip trip = trips.get(obj);
 		if (trip == null) {
 			MutableSurveyTrip t = new MutableSurveyTrip();
+			t.setCave(caveName);
 			if (obj.has("name")) {
 				t.setName(obj.get("name").getAsString());
 			}

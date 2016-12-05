@@ -38,6 +38,7 @@ public class Station {
 	}
 
 	public Station calcedFrom;
+	public String cave;
 	public String name;
 
 	public final List<Shot> shots = new ArrayList<>();

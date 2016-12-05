@@ -20,6 +20,7 @@ import org.andork.math3d.Vecmath;
 import org.andork.swing.async.Subtask;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
+import org.andork.util.Java7.Objects;
 
 public class SurveyTableParser {
 	private static class ParsedTripHeader {
@@ -157,8 +158,8 @@ public class SurveyTableParser {
 
 		int i = 0;
 		for (Iterator<SurveyRow> iter = rows.iterator(); iter.hasNext(); i++) {
-			SurveyRow SurveyRow = iter.next();
-			final SurveyTrip trip = SurveyRow.getTrip() == null ? defaultTrip : SurveyRow.getTrip();
+			SurveyRow row = iter.next();
+			final SurveyTrip trip = row.getTrip() == null ? defaultTrip : row.getTrip();
 			Function<String, Double> toMeters = s -> Length.type.convert(
 					parse(s), trip.getDistanceUnit(), Length.meters);
 			Function<String, Float> toMetersf = s -> Length.type.convertf(
@@ -172,17 +173,17 @@ public class SurveyTableParser {
 			Shot shot = null;
 
 			try {
-				String fromName = toStringOrNull(SurveyRow.getFromStation());
-				String toName = toStringOrNull(SurveyRow.getToStation());
-				double dist = toMeters.apply(SurveyRow.getDistance());
-				double fsAzm = Angle.type.convert(parse(SurveyRow.getFrontAzimuth()), trip.getFrontAzimuthUnit(),
+				String fromName = toStringOrNull(row.getFromStation());
+				String toName = toStringOrNull(row.getToStation());
+				double dist = toMeters.apply(row.getDistance());
+				double fsAzm = Angle.type.convert(parse(row.getFrontAzimuth()), trip.getFrontAzimuthUnit(),
 						Angle.radians);
-				double bsAzm = Angle.type.convert(parse(SurveyRow.getBackAzimuth()), trip.getBackAzimuthUnit(),
+				double bsAzm = Angle.type.convert(parse(row.getBackAzimuth()), trip.getBackAzimuthUnit(),
 						Angle.radians);
-				double fsInc = Angle.type.convert(parse(SurveyRow.getFrontInclination()),
+				double fsInc = Angle.type.convert(parse(row.getFrontInclination()),
 						trip.getFrontInclinationUnit(),
 						Angle.radians);
-				double bsInc = Angle.type.convert(parse(SurveyRow.getBackInclination()), trip.getBackInclinationUnit(),
+				double bsInc = Angle.type.convert(parse(row.getBackInclination()), trip.getBackInclinationUnit(),
 						Angle.radians);
 
 				if (!trip.areBackAzimuthsCorrected()) {
@@ -192,65 +193,57 @@ public class SurveyTableParser {
 					bsInc = -bsInc;
 				}
 
-				float left = toMetersf.apply(SurveyRow.getLeft());
-				float right = toMetersf.apply(SurveyRow.getRight());
-				float up = toMetersf.apply(SurveyRow.getUp());
-				float down = toMetersf.apply(SurveyRow.getDown());
+				float left = toMetersf.apply(row.getLeft());
+				float right = toMetersf.apply(row.getRight());
+				float up = toMetersf.apply(row.getUp());
+				float down = toMetersf.apply(row.getDown());
 
 				if (fromName == null || toName == null) {
 					continue;
 				}
 
-				shot = shots.get(new ShotKey(SurveyRow));
-				if (shot == null) {
-					shot = new Shot();
-				} else {
-					// TODO make sure caves are reversed too
-					if (shot.from.equals(SurveyRow.getToStation()) &&
-							shot.to.equals(SurveyRow.getFromStation())) {
-						// reverse measurements
-						shot = new Shot();
-						String s = fromName;
-						fromName = toName;
-						toName = s;
+				shot = shots.get(new ShotKey(row));
 
-						double d = fsAzm;
-						fsAzm = bsAzm;
-						bsAzm = d;
-
-						d = fsInc;
-						fsInc = bsInc;
-						bsInc = d;
-					}
-
-					if (Double.isNaN(dist) || Double.isNaN(fsInc) && Double.isNaN(bsInc)) {
-						continue;
-					}
-				}
-
-				double north = toMeters.apply(SurveyRow.getNorthing());
-				double east = toMeters.apply(SurveyRow.getEasting());
-				double elev = toMeters.apply(SurveyRow.getElevation());
+				double north = toMeters.apply(row.getNorthing());
+				double east = toMeters.apply(row.getEasting());
+				double elev = toMeters.apply(row.getElevation());
 
 				Station from = getStation(stations,
-						new StationKey(SurveyRow.getFromCave(), SurveyRow.getFromStation()));
-				Station to = getStation(stations, new StationKey(SurveyRow.getToCave(), SurveyRow.getToStation()));
+						new StationKey(row.getFromCave(), row.getFromStation()));
+				Station to = getStation(stations,
+						new StationKey(row.getToCave(), row.getToStation()));
 
-				Vecmath.setdNoNaNOrInf(from.position, east, elev, -north);
+				if (Double.isFinite(north) && Double.isFinite(east) && Double.isFinite(elev)) {
+					Vecmath.setdNoNaNOrInf(from.position, east, elev, -north);
+				}
 
-				shot = new Shot();
-				shot.from = from;
-				shot.to = to;
-				shot.dist = dist + header.distanceCorrection;
-				shot.inc = Shot.averageInc(
-						fsInc + header.frontInclinationCorrection,
-						bsInc + header.backInclinationCorrection);
-				shot.azm = AngleUtils.normalize(
-						Shot.averageAzm(
-								fsAzm + header.frontAzimuthCorrection,
-								bsAzm + header.backAzimuthCorrection)
-								+ header.declination);
-				shot.desc = SurveyRow.getTrip() == null ? null : SurveyRow.getTrip().getName();
+				if (shot == null) {
+					shot = new Shot();
+					shot.from = from;
+					shot.to = to;
+				}
+				if (Double.isFinite(dist)) {
+					shot.dist = dist + header.distanceCorrection;
+				}
+				if (Double.isFinite(fsInc) || Double.isFinite(bsInc)) {
+					shot.inc = Shot.averageInc(
+							fsInc + header.frontInclinationCorrection,
+							bsInc + header.backInclinationCorrection);
+					if (isReverse(shot, row)) {
+						shot.inc = -shot.inc;
+					}
+				}
+				if (Double.isFinite(fsAzm) || Double.isFinite(bsAzm)) {
+					shot.azm = AngleUtils.normalize(
+							Shot.averageAzm(
+									fsAzm + header.frontAzimuthCorrection,
+									bsAzm + header.backAzimuthCorrection)
+									+ header.declination);
+					if (isReverse(shot, row)) {
+						shot.azm = AngleUtils.oppositeAngle(shot.azm);
+					}
+				}
+				shot.desc = row.getTrip() == null ? null : row.getTrip().getName();
 
 				try {
 					shot.date = dateFormat1.parse(trip.getDate().trim());
@@ -287,7 +280,7 @@ public class SurveyTableParser {
 				shot = null;
 			} finally {
 				if (shot != null) {
-					shots.put(new ShotKey(SurveyRow), shot);
+					shots.put(new ShotKey(row), shot);
 				}
 				// DO add null shots to shotList
 				shotList.add(shot);
@@ -324,10 +317,19 @@ public class SurveyTableParser {
 		return shotList;
 	}
 
+	private static boolean isReverse(Shot shot, SurveyRow row) {
+		return Objects.equals(shot.from.cave, row.getToCave()) &&
+				shot.from.name.equals(row.getToStation()) &&
+				Objects.equals(shot.to.cave, row.getFromCave()) &&
+				shot.to.name.equals(row.getFromStation());
+
+	}
+
 	private static Station getStation(Map<StationKey, Station> stations, StationKey key) {
 		Station station = stations.get(key);
 		if (station == null) {
 			station = new Station();
+			station.cave = key.cave;
 			station.name = key.station;
 			stations.put(key, station);
 		}
