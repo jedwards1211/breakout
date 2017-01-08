@@ -73,6 +73,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -916,6 +917,17 @@ public class BreakoutMainView {
 	final TaskService rebuildTaskService = new SingleThreadedTaskService();
 	final TaskService sortTaskService = new SingleThreadedTaskService();
 	final TaskService ioTaskService = new SingleThreadedTaskService();
+
+	public void shutdown() throws InterruptedException {
+		debouncer.shutdown();
+		rebuildTaskService.shutdown();
+		sortTaskService.shutdown();
+		ioTaskService.shutdown();
+		debouncer.awaitTermination(30, TimeUnit.SECONDS);
+		rebuildTaskService.awaitTermination(30, TimeUnit.SECONDS);
+		sortTaskService.awaitTermination(30, TimeUnit.SECONDS);
+		ioTaskService.awaitTermination(30, TimeUnit.SECONDS);
+	}
 
 	boolean loadingSurvey = false;
 	boolean editingSurvey = false;

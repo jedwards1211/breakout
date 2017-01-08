@@ -23,6 +23,7 @@ package org.andork.swing.async;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
 
@@ -84,4 +85,8 @@ public interface TaskService {
 			}
 		});
 	}
+
+	public abstract void shutdown();
+
+	public abstract boolean awaitTermination(long timeout, TimeUnit timeUnit) throws InterruptedException;
 }

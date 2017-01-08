@@ -24,6 +24,8 @@ package org.breakout;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.nio.file.Path;
 
 import javax.swing.JFrame;
@@ -53,8 +55,20 @@ public class BreakoutMainFrame extends JFrame {
 		setJMenuBar(breakoutMainView.getMenuBar());
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		setSize(screenSize.width * 2 / 3, screenSize.height * 2 / 3);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLocationRelativeTo(null);
+		addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				try {
+					breakoutMainView.shutdown();
+				} catch (Exception e1) {
+					System.exit(1);
+					e1.printStackTrace();
+				}
+				System.exit(0);
+			}
+		});
 	}
 
 	private void updateTitle() {
