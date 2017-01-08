@@ -920,12 +920,10 @@ public class BreakoutMainView {
 
 	public void shutdown() throws InterruptedException {
 		debouncer.shutdown();
-		rebuildTaskService.shutdown();
-		sortTaskService.shutdown();
+		rebuildTaskService.shutdownNow();
+		sortTaskService.shutdownNow();
 		ioTaskService.shutdown();
 		debouncer.awaitTermination(30, TimeUnit.SECONDS);
-		rebuildTaskService.awaitTermination(30, TimeUnit.SECONDS);
-		sortTaskService.awaitTermination(30, TimeUnit.SECONDS);
 		ioTaskService.awaitTermination(30, TimeUnit.SECONDS);
 	}
 

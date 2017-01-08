@@ -89,4 +89,6 @@ public interface TaskService {
 	public abstract void shutdown();
 
 	public abstract boolean awaitTermination(long timeout, TimeUnit timeUnit) throws InterruptedException;
+
+	public abstract List<Task> shutdownNow();
 }

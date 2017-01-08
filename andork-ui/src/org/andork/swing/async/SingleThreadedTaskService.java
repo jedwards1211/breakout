@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.andork.swing.async;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -124,6 +125,18 @@ public class SingleThreadedTaskService implements TaskService {
 	@Override
 	public void shutdown() {
 		executor.shutdown();
+	}
+
+	@Override
+	public List<Task> shutdownNow() {
+		List<Task> tasks = new ArrayList<>(this.tasks);
+		for (Task task : tasks) {
+			if (task.isCancelable()) {
+				task.cancel();
+			}
+		}
+		executor.shutdownNow();
+		return tasks;
 	}
 
 	@Override
