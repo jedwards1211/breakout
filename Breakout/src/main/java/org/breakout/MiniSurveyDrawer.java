@@ -11,7 +11,6 @@ import javax.swing.table.DefaultTableColumnModel;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
-import org.andork.awt.I18n.Localizer;
 import org.andork.awt.layout.Drawer;
 import org.andork.bind.DefaultBinder;
 import org.andork.swing.TextComponentWithHintAndClear;
@@ -41,11 +40,7 @@ public class MiniSurveyDrawer extends Drawer {
 
 	private StatsPanel statsPanel;
 
-	private Localizer localizer;
-
 	public MiniSurveyDrawer(I18n i18n, Consumer<Runnable> sortRunner) {
-		localizer = i18n.forClass(MiniSurveyDrawer.class);
-
 		initComponents(sortRunner);
 		initLayout();
 	}
