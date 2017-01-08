@@ -29,6 +29,8 @@ import org.andork.func.FileStringBimapper;
 import org.andork.func.PathStringBimapper;
 import org.andork.q.QArrayList;
 import org.andork.q.QArrayListBimapper;
+import org.andork.q.QHashMap;
+import org.andork.q.QMapBimapper;
 import org.andork.q.QObject;
 import org.andork.q.QObjectMapBimapper;
 import org.andork.q.QSpec;
@@ -49,6 +51,9 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<QArrayList<Path>> recentProjectFiles = newAttribute(
 			QArrayList.class,
 			"recentSurveyFiles");
+	public static final Attribute<QHashMap<Path, Path>> swapFiles = newAttribute(
+			QHashMap.class,
+			"swapFiles");
 	public static final Attribute<File> currentProjectFileChooserDirectory = newAttribute(
 			File.class,
 			"currentProjectFileChooserDirectory");
@@ -77,6 +82,7 @@ public final class RootModel extends QSpec<RootModel> {
 
 	static {
 		defaultMapper = new QObjectMapBimapper<RootModel>(instance)
+				.map(swapFiles, QMapBimapper.newInstance(PathStringBimapper.instance, PathStringBimapper.instance))
 				.map(currentProjectFile, PathStringBimapper.instance)
 				.map(recentProjectFiles, QArrayListBimapper.newInstance(PathStringBimapper.instance))
 				.map(currentProjectFileChooserDirectory, FileStringBimapper.instance)

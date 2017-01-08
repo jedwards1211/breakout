@@ -28,19 +28,19 @@ import java.util.logging.Logger;
 
 import org.andork.func.Bimapper;
 
-public class QMapBimapper<K, V> implements Bimapper<QMap<K, V, ?>, Object> {
+public class QMapBimapper<K, KM, V, VM> implements Bimapper<QMap<K, V, ?>, Object> {
 	private static final Logger LOGGER = Logger.getLogger(QObjectMapBimapper.class.getName());
 
-	public static <K, V> QMapBimapper<K, V> newInstance(Bimapper<K, Object> keyBimapper,
-			Bimapper<V, Object> valueBimapper) {
-		return new QMapBimapper<K, V>(keyBimapper, valueBimapper);
+	public static <K, KM, V, VM> QMapBimapper<K, KM, V, VM> newInstance(Bimapper<K, KM> keyBimapper,
+			Bimapper<V, VM> valueBimapper) {
+		return new QMapBimapper<K, KM, V, VM>(keyBimapper, valueBimapper);
 	}
 
-	private Bimapper<K, Object> keyBimapper;
+	private Bimapper<K, KM> keyBimapper;
 
-	private Bimapper<V, Object> valueBimapper;
+	private Bimapper<V, VM> valueBimapper;
 
-	private QMapBimapper(Bimapper<K, Object> keyBimapper, Bimapper<V, Object> valueBimapper) {
+	private QMapBimapper(Bimapper<K, KM> keyBimapper, Bimapper<V, VM> valueBimapper) {
 		super();
 		this.keyBimapper = keyBimapper;
 		this.valueBimapper = valueBimapper;
@@ -51,10 +51,10 @@ public class QMapBimapper<K, V> implements Bimapper<QMap<K, V, ?>, Object> {
 		if (in == null) {
 			return null;
 		}
-		Map<Object, Object> result = new LinkedHashMap<Object, Object>();
+		Map<KM, VM> result = new LinkedHashMap<KM, VM>();
 		for (Map.Entry<K, V> entry : in.entrySet()) {
-			result.put(keyBimapper == null ? entry.getKey() : keyBimapper.map(entry.getKey()),
-					valueBimapper == null ? entry.getValue() : valueBimapper.map(entry.getValue()));
+			result.put(keyBimapper == null ? (KM) entry.getKey() : keyBimapper.map(entry.getKey()),
+					valueBimapper == null ? (VM) entry.getValue() : valueBimapper.map(entry.getValue()));
 		}
 		return result;
 	}
@@ -65,12 +65,12 @@ public class QMapBimapper<K, V> implements Bimapper<QMap<K, V, ?>, Object> {
 			return null;
 		}
 
-		Map<?, ?> m = (Map<?, ?>) out;
+		Map<KM, VM> m = (Map<KM, VM>) out;
 		QLinkedHashMap<K, V> result = QLinkedHashMap.newInstance();
-		for (Map.Entry<?, ?> entry : m.entrySet()) {
+		for (Map.Entry<KM, VM> entry : m.entrySet()) {
 			try {
-				K key = (K) (keyBimapper == null ? entry.getKey() : keyBimapper.unmap(entry.getKey()));
-				V value = (V) (valueBimapper == null ? entry.getValue() : valueBimapper.unmap(entry.getValue()));
+				K key = keyBimapper == null ? (K) entry.getKey() : keyBimapper.unmap(entry.getKey());
+				V value = valueBimapper == null ? (V) entry.getValue() : valueBimapper.unmap(entry.getValue());
 				result.put(key, value);
 			} catch (Throwable t) {
 				LOGGER.log(Level.WARNING, "Failed to add entry: " + entry, t);

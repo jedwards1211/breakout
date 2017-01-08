@@ -204,6 +204,7 @@ import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL3;
@@ -1025,7 +1026,10 @@ public class BreakoutMainView {
 					if (!rootFile.getParentFile().exists()) {
 						rootFile.getParentFile().mkdirs();
 					}
-					w.write(new Gson().toJson(mapper.map(model), Object.class));
+					Gson gson = new GsonBuilder()
+							.setPrettyPrinting()
+							.create();
+					w.write(gson.toJson(mapper.map(model), Object.class));
 					w.write(System.lineSeparator());
 					w.flush();
 				} catch (Exception ex) {
@@ -2605,7 +2609,20 @@ public class BreakoutMainView {
 	}
 
 	public Path getSwapFile(Path surveyFile) {
-		return Paths.get(surveyFile.toString() + ".swp");
+		QObject<RootModel> rootModel = getRootModel();
+		QMap<Path, Path, ?> swapFiles = rootModel.get(RootModel.swapFiles);
+		if (swapFiles == null) {
+			rootModel.set(RootModel.swapFiles, swapFiles = QLinkedHashMap.newInstance());
+		}
+		Path swapFile = swapFiles.get(surveyFile);
+		if (swapFile == null) {
+			int index = 0;
+			do {
+				swapFile = Paths.get(surveyFile.getFileName() + "-" + index + ".json");
+			} while (Files.exists(rootDirectory.resolve(swapFile)));
+			swapFiles.put(surveyFile, swapFile);
+		}
+		return rootDirectory.resolve(swapFile);
 	}
 
 	public void setNewProjectAction(NewProjectAction newProjectAction) {
