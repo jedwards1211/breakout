@@ -34,8 +34,8 @@ public class DoubleBimapper implements Bimapper<Double, Object> {
 
 	@Override
 	public Double unmap(Object out) {
-		if (out instanceof Double) {
-			return (Double) out;
+		if (out instanceof Number) {
+			return ((Number) out).doubleValue();
 		}
 		return out == null ? null : Double.valueOf(out.toString());
 	}

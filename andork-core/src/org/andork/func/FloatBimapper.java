@@ -35,8 +35,8 @@ public class FloatBimapper implements Bimapper<Float, Object> {
 
 	@Override
 	public Float unmap(Object out) {
-		if (out instanceof Float) {
-			return (Float) out;
+		if (out instanceof Number) {
+			return ((Number) out).floatValue();
 		}
 		return out == null ? null : Float.valueOf(out.toString());
 	}

@@ -35,10 +35,10 @@ public class IntegerBimapper implements Bimapper<Integer, Object> {
 
 	@Override
 	public Integer unmap(Object out) {
-		if (out instanceof Integer) {
-			return (Integer) out;
+		if (out instanceof Number) {
+			return ((Number) out).intValue();
 		}
-		return out == null ? null : Integer.valueOf(out.toString());
+		return out == null ? null : Double.valueOf(out.toString()).intValue();
 	}
 
 }

@@ -35,10 +35,10 @@ public class LongBimapper implements Bimapper<Long, Object> {
 
 	@Override
 	public Long unmap(Object out) {
-		if (out instanceof Long) {
-			return (Long) out;
+		if (out instanceof Number) {
+			return ((Number) out).longValue();
 		}
-		return out == null ? null : Long.valueOf(out.toString());
+		return out == null ? null : Double.valueOf(out.toString()).longValue();
 	}
 
 }
