@@ -48,8 +48,9 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.InputStream;
+import java.io.FileReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -198,13 +199,11 @@ import org.breakout.model.SurveyTableParser;
 import org.breakout.model.SurveyTrip;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.DumperOptions.FlowStyle;
-import org.yaml.snakeyaml.Yaml;
 
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
+import com.google.gson.Gson;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL3;
@@ -1026,9 +1025,8 @@ public class BreakoutMainView {
 					if (!rootFile.getParentFile().exists()) {
 						rootFile.getParentFile().mkdirs();
 					}
-					DumperOptions options = new DumperOptions();
-					options.setDefaultFlowStyle(FlowStyle.BLOCK);
-					new Yaml(options).dump(mapper.map(model), w);
+					w.write(new Gson().toJson(mapper.map(model), Object.class));
+					w.write(System.lineSeparator());
 					w.flush();
 				} catch (Exception ex) {
 					ex.printStackTrace();
@@ -1639,7 +1637,7 @@ public class BreakoutMainView {
 				}
 			}
 
-		}.bind(new HierarchicalChangeBinder()
+		}.bind(new HierarchicalChangeBinder<QArrayList<Path>>()
 				.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder)));
 
 		OnEDT.onEDT(() -> {
@@ -1871,7 +1869,7 @@ public class BreakoutMainView {
 
 		if (rootFilePath == null) {
 			File rootDir = new File(".breakout");
-			rootFile = new File(rootDir, "settings.yaml");
+			rootFile = new File(rootDir, "settings.json");
 			if (!rootFile.exists()) {
 				rootDir.mkdir();
 				// try {
@@ -2642,9 +2640,8 @@ public class BreakoutMainView {
 
 	private <S extends QSpec<S>> QObject<S> loadModel(File file, Bimapper<QObject<S>, Object> mapper,
 			boolean showError) {
-		try (InputStream in = new FileInputStream(file)) {
-			Object o = new Yaml().load(in);
-			return mapper.unmap(o);
+		try (Reader reader = new FileReader(file)) {
+			return mapper.unmap(new Gson().fromJson(reader, Object.class));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			if (showError) {
