@@ -61,7 +61,7 @@ public class NewProjectAction extends AbstractAction {
 				projectFileChooser = new JFileChooser();
 				projectFileChooser.setAcceptAllFileFilterUsed(false);
 				projectFileChooser.addChoosableFileFilter(new FileNameExtensionFilter(
-						"Metacave File (*.mcj)", "mcj"));
+						"Metacave File (*.mcj, *.json)", "mcj", "json"));
 			}
 		};
 	}
