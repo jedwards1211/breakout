@@ -48,6 +48,7 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -369,16 +370,12 @@ public class BreakoutMainView {
 					} else if ("importAsNewProject".equals(importOption)) {
 						newProjectAction.actionPerformed(
 								new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "open new project"));
-						ioTaskService.submit(task -> {
-							OnEDT.onEDT(() -> {
-								SurveyTableModel model = surveyDrawer.table().getModel();
-								model.clear();
-								model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
-								saveSurvey.run();
-								rebuild3dModel.run();
-							});
-						});
+						SurveyTableModel model = surveyDrawer.table().getModel();
+						model.clear();
+						model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
 					}
+					saveSurvey.run();
+					rebuild3dModel.run();
 				}
 			};
 		}
@@ -639,7 +636,6 @@ public class BreakoutMainView {
 						try {
 							surveyDrawer.table().getModel()
 									.copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
-							saveSurvey.run();
 							rebuild3dModel.run();
 						} finally {
 							loadingSurvey = false;
@@ -1030,8 +1026,8 @@ public class BreakoutMainView {
 				setIndeterminate(true);
 
 				try (Writer w = new OutputStreamWriter(new RecoverableFileOutputStream(file), "UTF-8")) {
-					if (!rootFile.getParentFile().exists()) {
-						rootFile.getParentFile().mkdirs();
+					if (!file.getParentFile().exists()) {
+						file.getParentFile().mkdirs();
 					}
 					Gson gson = new GsonBuilder()
 							.setPrettyPrinting()
@@ -1069,12 +1065,12 @@ public class BreakoutMainView {
 				setStatus("Saving project...");
 				setIndeterminate(true);
 
-				try {
+				try (OutputStream out = new RecoverableFileOutputStream(projectFile)) {
 					if (!projectFile.getParentFile().exists()) {
 						projectFile.getParentFile().mkdirs();
 					}
 					MetacaveExporter exporter = new MetacaveExporter();
-					exporter.export(model.getRows(), new RecoverableFileOutputStream(projectFile));
+					exporter.export(model.getRows(), out);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
