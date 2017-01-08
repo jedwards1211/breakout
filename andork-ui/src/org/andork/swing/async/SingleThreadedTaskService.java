@@ -47,25 +47,14 @@ public class SingleThreadedTaskService implements TaskService {
 
 	@Override
 	public void cancel(Task task) {
-		Task removed = null;
+		if (!tasks.remove(task)) {
+			return;
+		}
 		Task.State state = task.getState();
 		if (state != Task.State.CANCELED && state != Task.State.CANCELING) {
 			task.cancel();
 		}
-		int index = tasks.indexOf(task);
-
-		// TODO figure out how to handle interruption properly
-		// if( index == 0 )
-		// {
-		// thread.interrupt( );
-		// }
-		if (index > 0) {
-			removed = tasks.remove(index);
-		}
-
-		if (removed != null) {
-			fireTaskRemoved(removed);
-		}
+		fireTaskRemoved(task);
 	}
 
 	@Override
