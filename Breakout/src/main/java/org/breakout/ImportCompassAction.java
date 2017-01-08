@@ -69,7 +69,7 @@ public class ImportCompassAction extends AbstractAction {
 		if (directory == null) {
 			Path currentSurveyFile = mainView.getRootModel().get(RootModel.currentProjectFile);
 			if (currentSurveyFile != null) {
-				directory = mainView.getAbsoluteProjectFilePath(currentSurveyFile).toFile();
+				directory = currentSurveyFile.getParent().toFile();
 			}
 		}
 		if (directory != null) {

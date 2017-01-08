@@ -75,7 +75,7 @@ public class NewProjectAction extends AbstractAction {
 		if (directory == null) {
 			Path currentProjectFile = mainView.getRootModel().get(RootModel.currentProjectFile);
 			if (currentProjectFile != null) {
-				directory = mainView.getAbsoluteProjectFilePath(currentProjectFile).getParent().toFile();
+				directory = currentProjectFile.getParent().toFile();
 			}
 		}
 		if (directory != null) {

@@ -26,6 +26,8 @@ public class RecoverableFileOutputStream extends FileOutputStream {
 
 	@Override
 	public void close() throws IOException {
+		flush();
+		getFD().sync();
 		super.close();
 
 		try {
@@ -37,13 +39,13 @@ public class RecoverableFileOutputStream extends FileOutputStream {
 		}
 
 		try {
-			Files.move(mainFile, backupFile, StandardCopyOption.ATOMIC_MOVE);
+			Files.move(mainFile, backupFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException ex) {
 			if (Files.exists(mainFile)) {
 				throw ex;
 			}
 		}
 
-		Files.move(tempFile, mainFile, StandardCopyOption.ATOMIC_MOVE);
+		Files.move(tempFile, mainFile, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
 	}
 }

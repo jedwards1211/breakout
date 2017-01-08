@@ -47,7 +47,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
@@ -176,6 +175,7 @@ import org.andork.swing.async.TaskService;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.RowFilterFactory;
+import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
@@ -502,13 +502,10 @@ public class BreakoutMainView {
 
 	private class OpenProjectTask extends DrawerPinningTask {
 		Path newProjectFile;
-		Path relativizedNewProjectFile;
 
 		private OpenProjectTask(Path newProjectFile) {
 			super(getMainPanel(), taskListDrawer.holder());
-			this.newProjectFile = newProjectFile;
-			relativizedNewProjectFile = rootDirectory.toAbsolutePath().relativize(
-					newProjectFile.toAbsolutePath());
+			this.newProjectFile = newProjectFile.toAbsolutePath();
 			setIndeterminate(true);
 
 			showDialogLater();
@@ -522,18 +519,18 @@ public class BreakoutMainView {
 				@Override
 				public void run() throws Throwable {
 					QObject<RootModel> rootModel = getRootModel();
-					rootModel.set(RootModel.currentProjectFile, relativizedNewProjectFile);
+					rootModel.set(RootModel.currentProjectFile, newProjectFile);
 					QArrayList<Path> recentProjectFiles = rootModel.get(RootModel.recentProjectFiles);
 					if (recentProjectFiles == null) {
 						recentProjectFiles = QArrayList.newInstance();
 						rootModel.set(RootModel.recentProjectFiles, recentProjectFiles);
 					}
 
-					recentProjectFiles.remove(relativizedNewProjectFile);
+					recentProjectFiles.remove(newProjectFile);
 					while (recentProjectFiles.size() > 20) {
 						recentProjectFiles.remove(recentProjectFiles.size() - 1);
 					}
-					recentProjectFiles.add(0, relativizedNewProjectFile);
+					recentProjectFiles.add(0, newProjectFile);
 
 					if (getProjectModel() != null) {
 						getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
@@ -1022,7 +1019,7 @@ public class BreakoutMainView {
 				setStatus("Saving settings...");
 				setIndeterminate(true);
 
-				try (Writer w = new OutputStreamWriter(new FileOutputStream(file), "UTF-8")) {
+				try (Writer w = new OutputStreamWriter(new RecoverableFileOutputStream(file), "UTF-8")) {
 					if (!rootFile.getParentFile().exists()) {
 						rootFile.getParentFile().mkdirs();
 					}
@@ -1067,7 +1064,7 @@ public class BreakoutMainView {
 						projectFile.getParentFile().mkdirs();
 					}
 					MetacaveExporter exporter = new MetacaveExporter();
-					exporter.export(model.getRows(), projectFile);
+					exporter.export(model.getRows(), new RecoverableFileOutputStream(projectFile));
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -2192,10 +2189,6 @@ public class BreakoutMainView {
 		});
 	}
 
-	public Path getAbsoluteProjectFilePath(Path relativeProjectFilePath) {
-		return rootDirectory.toAbsolutePath().resolve(relativeProjectFilePath);
-	}
-
 	public GLAutoDrawable getAutoDrawable() {
 		return autoDrawable;
 	}
@@ -2616,9 +2609,9 @@ public class BreakoutMainView {
 		}
 		Path swapFile = swapFiles.get(surveyFile);
 		if (swapFile == null) {
-			int index = 0;
+			int index = -1;
 			do {
-				swapFile = Paths.get(surveyFile.getFileName() + "-" + index + ".json");
+				swapFile = Paths.get(surveyFile.getFileName() + "-" + (++index) + ".json");
 			} while (Files.exists(rootDirectory.resolve(swapFile)));
 			swapFiles.put(surveyFile, swapFile);
 		}

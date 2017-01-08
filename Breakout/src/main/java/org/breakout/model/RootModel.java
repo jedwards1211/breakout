@@ -43,14 +43,14 @@ public final class RootModel extends QSpec<RootModel> {
 	 */
 	public static final Attribute<Path> currentProjectFile = newAttribute(
 			Path.class,
-			"currentSurveyFile");
+			"currentProjectFile");
 	/**
 	 * the paths to recent project files, relative to the current
 	 * {@linkplain BreakoutMainView#getRootDirectory() root settings directory}.
 	 */
 	public static final Attribute<QArrayList<Path>> recentProjectFiles = newAttribute(
 			QArrayList.class,
-			"recentSurveyFiles");
+			"recentProjectFiles");
 	public static final Attribute<QHashMap<Path, Path>> swapFiles = newAttribute(
 			QHashMap.class,
 			"swapFiles");
