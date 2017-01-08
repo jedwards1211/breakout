@@ -41,20 +41,17 @@ public final class RootModel extends QSpec<RootModel> {
 	 */
 	public static final Attribute<Path> currentProjectFile = newAttribute(
 			Path.class,
-			"currentProjectFile");
+			"currentSurveyFile");
 	/**
 	 * the paths to recent project files, relative to the current
 	 * {@linkplain BreakoutMainView#getRootDirectory() root settings directory}.
 	 */
 	public static final Attribute<QArrayList<Path>> recentProjectFiles = newAttribute(
 			QArrayList.class,
-			"recentProjectFiles");
+			"recentSurveyFiles");
 	public static final Attribute<File> currentProjectFileChooserDirectory = newAttribute(
 			File.class,
 			"currentProjectFileChooserDirectory");
-	public static final Attribute<File> currentSurveyFileChooserDirectory = newAttribute(
-			File.class,
-			"currentSurveyFileChooserDirectory");
 	public static final Attribute<File> currentArchiveFileChooserDirectory = newAttribute(
 			File.class,
 			"currentArchiveFileChooserDirectory");
@@ -83,7 +80,6 @@ public final class RootModel extends QSpec<RootModel> {
 				.map(currentProjectFile, PathStringBimapper.instance)
 				.map(recentProjectFiles, QArrayListBimapper.newInstance(PathStringBimapper.instance))
 				.map(currentProjectFileChooserDirectory, FileStringBimapper.instance)
-				.map(currentSurveyFileChooserDirectory, FileStringBimapper.instance)
 				.map(currentArchiveFileChooserDirectory, FileStringBimapper.instance);
 	}
 

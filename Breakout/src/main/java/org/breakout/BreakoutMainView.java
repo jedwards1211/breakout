@@ -48,7 +48,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -113,6 +112,7 @@ import org.andork.awt.layout.SideConstraintLayoutDelegate;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
+import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
@@ -175,7 +175,6 @@ import org.andork.swing.async.TaskService;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.RowFilterFactory;
-import org.apache.commons.io.FileUtils;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
@@ -510,7 +509,6 @@ public class BreakoutMainView {
 			this.newProjectFile = newProjectFile;
 			relativizedNewProjectFile = rootDirectory.toAbsolutePath().relativize(
 					newProjectFile.toAbsolutePath());
-			setStatus("Saving current project...");
 			setIndeterminate(true);
 
 			showDialogLater();
@@ -544,12 +542,13 @@ public class BreakoutMainView {
 			};
 			QObject<ProjectModel> projectModel = null;
 
-			projectModel = loadProjectModel(newProjectFile.toFile());
+			Path swapFile = getSwapFile(newProjectFile);
+			projectModel = loadProjectModel(swapFile.toFile());
 
 			if (projectModel == null) {
 				projectModel = ProjectModel.instance.newObject();
 			}
-			replaceNulls(projectModel, newProjectFile);
+			replaceNulls(projectModel, swapFile);
 
 			final QObject<ProjectModel> finalProjectModel = projectModel;
 
@@ -577,24 +576,16 @@ public class BreakoutMainView {
 				}
 			};
 
-			Path surveyFile = newProjectFile.toAbsolutePath().getParent().resolve(
-					projectModel.get(ProjectModel.surveyFile)).normalize();
-
-			openSurveyFile(surveyFile);
+			openSurveyFile(newProjectFile);
 		}
 	}
 
 	private class OpenSurveyTask extends DrawerPinningTask {
-		Path newSurveyFile;
-		Path relativizedNewSurveyFile;
+		Path newProjectFile;
 
-		private OpenSurveyTask(Path newSurveyFile) {
+		private OpenSurveyTask(Path newProjectFile) {
 			super(getMainPanel(), taskListDrawer.holder());
-			this.newSurveyFile = newSurveyFile;
-			Path projectPath = rootDirectory.toAbsolutePath()
-					.resolve(getRootModel().get(RootModel.currentProjectFile)).normalize();
-			relativizedNewSurveyFile = projectPath.toAbsolutePath().getParent()
-					.relativize(newSurveyFile.toAbsolutePath());
+			this.newProjectFile = newProjectFile;
 			setStatus("Loading survey...");
 			setIndeterminate(true);
 
@@ -611,8 +602,9 @@ public class BreakoutMainView {
 				OnEDT.onEDT(new ExceptionRunnable() {
 					@Override
 					public void run() throws Exception {
-						JOptionPane.showMessageDialog(mainPanel, ex.getLocalizedMessage(),
-								"Failed to load survey", JOptionPane.ERROR_MESSAGE);
+						JOptionPane.showMessageDialog(mainPanel,
+								"Failed to load survey: " + ex.getLocalizedMessage(),
+								"Error", JOptionPane.ERROR_MESSAGE);
 					}
 				});
 				return null;
@@ -624,8 +616,6 @@ public class BreakoutMainView {
 			boolean changed = new FromEDT<Boolean>() {
 				@Override
 				public Boolean run() throws Throwable {
-					getProjectModel().set(ProjectModel.surveyFile, relativizedNewSurveyFile);
-
 					surveyDrawer.table().getModel().clear();
 					setShots(Collections.emptyList());
 					return true;
@@ -636,9 +626,9 @@ public class BreakoutMainView {
 				return;
 			}
 
-			setStatus("Opening survey: " + newSurveyFile + "...");
+			setStatus("Opening survey: " + newProjectFile + "...");
 
-			SurveyTableModel surveyModel = loadSurvey(newSurveyFile.toFile());
+			SurveyTableModel surveyModel = loadSurvey(newProjectFile.toFile());
 			if (surveyModel == null) {
 				return;
 			}
@@ -1003,8 +993,6 @@ public class BreakoutMainView {
 
 	OpenProjectAction openProjectAction = new OpenProjectAction(this);
 
-	OpenSurveyAction openSurveyAction = new OpenSurveyAction(this);
-
 	ImportCompassAction importCompassAction = new ImportCompassAction(this);
 	ImportCompassPlotAction importCompassPlotAction = new ImportCompassPlotAction(this);
 
@@ -1053,31 +1041,31 @@ public class BreakoutMainView {
 			() -> saveModel(getRootModel(), rootFile, RootModel.defaultMapper),
 			1000, new DebounceOptions<Void>().executor(debouncer));
 
-	final DebouncedRunnable saveProjectModel = Lodash.debounce(
-			() -> saveModel(getProjectModel(), getCurrentProjectFile(), ProjectModel.defaultMapper),
+	final DebouncedRunnable saveSwap = Lodash.debounce(
+			() -> saveModel(getProjectModel(), getCurrentSwapFile(), ProjectModel.defaultMapper),
 			1000, new DebounceOptions<Void>().executor(debouncer));
 
 	final DebouncedRunnable saveSurvey = Lodash.debounce(() -> {
 		ioTaskService.submit(new Task() {
 			@Override
 			protected void execute() throws Exception {
-				Path p = getSurveyFile();
-				File surveyFile = p == null ? null : p.toFile();
+				Path p = getCurrentProjectFile();
+				File projectFile = p == null ? null : p.toFile();
 
 				SurveyTableModel model = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 
-				if (surveyFile == null || model == null) {
+				if (projectFile == null || model == null) {
 					return;
 				}
-				setStatus("Saving survey...");
+				setStatus("Saving project...");
 				setIndeterminate(true);
 
 				try {
-					if (!surveyFile.getParentFile().exists()) {
-						surveyFile.getParentFile().mkdirs();
+					if (!projectFile.getParentFile().exists()) {
+						projectFile.getParentFile().mkdirs();
 					}
 					MetacaveExporter exporter = new MetacaveExporter();
-					exporter.export(model.getRows(), surveyFile);
+					exporter.export(model.getRows(), projectFile);
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
@@ -1612,7 +1600,6 @@ public class BreakoutMainView {
 
 		fileMenu.add(new JMenuItem(newProjectAction));
 		fileMenu.add(new JMenuItem(openProjectAction));
-		fileMenu.add(new JMenuItem(openSurveyAction));
 		JMenu openRecentMenu = new JMenu();
 		fileMenu.add(openRecentMenu);
 		fileMenu.add(new JSeparator());
@@ -1652,7 +1639,8 @@ public class BreakoutMainView {
 				}
 			}
 
-		}.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder));
+		}.bind(new HierarchicalChangeBinder()
+				.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder)));
 
 		OnEDT.onEDT(() -> {
 			Localizer localizer = i18n.forClass(BreakoutMainView.class);
@@ -1886,22 +1874,23 @@ public class BreakoutMainView {
 			rootFile = new File(rootDir, "settings.yaml");
 			if (!rootFile.exists()) {
 				rootDir.mkdir();
-				try {
-					ClassLoader cl = getClass().getClassLoader();
-					for (String file : Arrays.asList("demo.bop", "demo-survey.txt", "settings.yaml")) {
-						Path path = new File(rootDir, file).toPath();
-						URL resource = cl.getResource("demo/" + file);
-						InputStream in = resource.openStream();
-						Files.copy(in, path);
-					}
-				} catch (Exception ex) {
-					try {
-						FileUtils.deleteDirectory(rootDir);
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
-					ex.printStackTrace();
-				}
+				// try {
+				// ClassLoader cl = getClass().getClassLoader();
+				// for (String file : Arrays.asList("demo.bop",
+				// "demo-survey.txt", "settings.yaml")) {
+				// Path path = new File(rootDir, file).toPath();
+				// URL resource = cl.getResource("demo/" + file);
+				// InputStream in = resource.openStream();
+				// Files.copy(in, path);
+				// }
+				// } catch (Exception ex) {
+				// try {
+				// FileUtils.deleteDirectory(rootDir);
+				// } catch (IOException e1) {
+				// e1.printStackTrace();
+				// }
+				// ex.printStackTrace();
+				// }
 			}
 		} else {
 			rootFile = new File(rootFilePath);
@@ -1909,28 +1898,25 @@ public class BreakoutMainView {
 
 		rootDirectory = rootFile.toPath().getParent();
 
-		QObject<RootModel> rootModel = null;
-
-		try {
-			rootModel = loadRootModel(rootFile);
-		} catch (Exception ex) {
-		}
+		QObject<RootModel> rootModel = loadRootModel(rootFile);
 
 		if (rootModel == null) {
 			rootModel = RootModel.instance.newObject();
+			rootModel.set(RootModel.desiredNumSamples, 2);
 		}
 
 		if (rootModel.get(RootModel.currentProjectFile) == null) {
-			rootModel.set(RootModel.currentProjectFile, Paths.get("defaultProject.bop"));
-			rootModel.set(RootModel.desiredNumSamples, 2);
+			// rootModel.set(RootModel.currentProjectFile,
+			// Paths.get("defaultProject.bop"));
 		}
 
 		setRootModel(rootModel);
 
-		Path projectFile = rootDirectory.resolve(rootModel.get(RootModel.currentProjectFile))
-				.normalize();
-
-		openProject(projectFile);
+		if (rootModel.get(RootModel.currentProjectFile) != null) {
+			Path projectFile = rootDirectory.resolve(rootModel.get(RootModel.currentProjectFile))
+					.normalize();
+			openProject(projectFile);
+		}
 
 		try (FileInputStream updateIn = new FileInputStream("update.properties")) {
 			Properties updateProps = new Properties();
@@ -2574,11 +2560,6 @@ public class BreakoutMainView {
 		if (projectModel.get(ProjectModel.taskListDrawer) == null) {
 			projectModel.set(ProjectModel.taskListDrawer, DrawerModel.instance.newObject());
 		}
-		if (projectModel.get(ProjectModel.surveyFile) == null) {
-			Path surveyFile = projectFile.relativize(
-					NewProjectAction.pickDefaultSurveyFile(projectFile.toFile()).toPath());
-			projectModel.set(ProjectModel.surveyFile, surveyFile);
-		}
 	}
 
 	public int rowOfShot(int shotNumber) {
@@ -2625,6 +2606,10 @@ public class BreakoutMainView {
 		}
 	}
 
+	public Path getSwapFile(Path surveyFile) {
+		return Paths.get(surveyFile.toString() + ".swp");
+	}
+
 	public void setNewProjectAction(NewProjectAction newProjectAction) {
 		this.newProjectAction = newProjectAction;
 	}
@@ -2636,7 +2621,7 @@ public class BreakoutMainView {
 	private final BasicPropertyChangeListener projectModelChangeHandler = new BasicPropertyChangeListener() {
 		@Override
 		public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
-			saveProjectModel.run();
+			saveSwap.run();
 		}
 	};
 
@@ -2648,26 +2633,30 @@ public class BreakoutMainView {
 	};
 
 	private QObject<RootModel> loadRootModel(File file) {
-		return loadModel(file, RootModel.defaultMapper);
+		return loadModel(file, RootModel.defaultMapper, false);
 	}
 
 	private QObject<ProjectModel> loadProjectModel(File file) {
-		return loadModel(file, ProjectModel.defaultMapper);
+		return loadModel(file, ProjectModel.defaultMapper, false);
 	}
 
-	private <S extends QSpec<S>> QObject<S> loadModel(File file, Bimapper<QObject<S>, Object> mapper) {
+	private <S extends QSpec<S>> QObject<S> loadModel(File file, Bimapper<QObject<S>, Object> mapper,
+			boolean showError) {
 		try (InputStream in = new FileInputStream(file)) {
 			Object o = new Yaml().load(in);
 			return mapper.unmap(o);
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			OnEDT.onEDT(new ExceptionRunnable() {
-				@Override
-				public void run() throws Exception {
-					JOptionPane.showMessageDialog(mainPanel, ex.getLocalizedMessage(),
-							"Failed to load settings", JOptionPane.ERROR_MESSAGE);
-				}
-			});
+			if (showError) {
+				OnEDT.onEDT(new ExceptionRunnable() {
+					@Override
+					public void run() throws Exception {
+						JOptionPane.showMessageDialog(mainPanel,
+								"Failed to load settings: " + ex.getLocalizedMessage(),
+								"Error", JOptionPane.ERROR_MESSAGE);
+					}
+				});
+			}
 			return null;
 		}
 	}
@@ -2723,13 +2712,7 @@ public class BreakoutMainView {
 		return rootFile.toPath().getParent().toAbsolutePath().resolve(file).normalize();
 	}
 
-	public Path getSurveyFile() {
-		QObject<ProjectModel> projectModel = getProjectModel();
-		Path projectFile = getCurrentProjectFile();
-		if (projectModel == null || projectFile == null) {
-			return null;
-		}
-		Path file = projectModel.get(ProjectModel.surveyFile);
-		return projectFile.getParent().resolve(file).normalize();
+	public Path getCurrentSwapFile() {
+		return getSwapFile(getCurrentProjectFile());
 	}
 }

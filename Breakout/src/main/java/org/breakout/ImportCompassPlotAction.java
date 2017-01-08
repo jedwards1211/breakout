@@ -33,7 +33,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.andork.awt.I18n.Localizer;
 import org.andork.swing.OnEDT;
-import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 
 public class ImportCompassPlotAction extends AbstractAction {
@@ -66,13 +65,11 @@ public class ImportCompassPlotAction extends AbstractAction {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
-		File directory = mainView.getRootModel().get(RootModel.currentSurveyFileChooserDirectory);
+		File directory = mainView.getRootModel().get(RootModel.currentProjectFileChooserDirectory);
 		if (directory == null) {
-			Path currentProjectFile = mainView.getRootModel().get(RootModel.currentProjectFile);
-			Path currentSurveyFile = mainView.getProjectModel().get(ProjectModel.surveyFile);
-			if (currentProjectFile != null && currentSurveyFile != null) {
-				directory = mainView.getAbsoluteProjectFilePath(currentProjectFile)
-						.resolve(currentSurveyFile).getParent().toFile();
+			Path currentSurveyFile = mainView.getRootModel().get(RootModel.currentProjectFile);
+			if (currentSurveyFile != null) {
+				directory = mainView.getAbsoluteProjectFilePath(currentSurveyFile).toFile();
 			}
 		}
 		if (directory != null) {

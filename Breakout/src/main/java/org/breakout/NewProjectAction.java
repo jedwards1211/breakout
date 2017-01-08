@@ -44,16 +44,6 @@ public class NewProjectAction extends AbstractAction {
 	 */
 	private static final long serialVersionUID = -8899030390228292424L;
 
-	public static final File pickDefaultSurveyFile(File projectFile) {
-		String surveyFileName = projectFile.getName();
-		int extIndex = surveyFileName.lastIndexOf('.');
-		if (extIndex > 0) {
-			surveyFileName = surveyFileName.substring(0, extIndex);
-		}
-		surveyFileName += "-survey.txt";
-		return new File(projectFile.getParentFile(), surveyFileName);
-	}
-
 	BreakoutMainView mainView;
 
 	JFileChooser projectFileChooser;
@@ -71,7 +61,7 @@ public class NewProjectAction extends AbstractAction {
 				projectFileChooser = new JFileChooser();
 				projectFileChooser.setAcceptAllFileFilterUsed(false);
 				projectFileChooser.addChoosableFileFilter(new FileNameExtensionFilter(
-						"Breakout Project File (*.bop)", "bop"));
+						"Metacave File (*.mcj)", "mcj"));
 			}
 		};
 	}
@@ -116,23 +106,6 @@ public class NewProjectAction extends AbstractAction {
 					return;
 				}
 			} else {
-				File surveyFile = pickDefaultSurveyFile(projectFile);
-
-				if (surveyFile.exists()) {
-					choice = JOptionPane.showConfirmDialog(
-							mainView.getMainPanel(),
-							new MultilineLabelHolder(localizer.getFormattedString(
-									"surveyFileAlreadyExistsDialog.message",
-									surveyFile.getName())).setWidth(600),
-							localizer.getString("surveyFileAlreadyExistsDialog.title"),
-							JOptionPane.YES_NO_CANCEL_OPTION);
-					if (choice == JOptionPane.YES_OPTION) {
-						break;
-					} else if (choice != JOptionPane.NO_OPTION) {
-						return;
-					}
-				}
-
 				break;
 			}
 		} while (true);

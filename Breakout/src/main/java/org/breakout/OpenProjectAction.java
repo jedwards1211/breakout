@@ -56,8 +56,8 @@ public class OpenProjectAction extends AbstractAction {
 
 				fileChooser = new JFileChooser();
 				fileChooser.setAcceptAllFileFilterUsed(false);
-				fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Breakout Project File (*.bop)",
-						"bop"));
+				fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Metacave File (*.mcj)",
+						"mcj"));
 			}
 		};
 	}
