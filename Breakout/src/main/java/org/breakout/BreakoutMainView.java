@@ -374,7 +374,6 @@ public class BreakoutMainView {
 						model.clear();
 						model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
 					}
-					saveSurvey.run();
 					rebuild3dModel.run();
 				}
 			};
@@ -498,6 +497,69 @@ public class BreakoutMainView {
 		}
 	}
 
+	void markProjectRecentlyVisited(Path projectFile) {
+		QObject<RootModel> rootModel = getRootModel();
+		QArrayList<Path> recentProjectFiles = rootModel.get(RootModel.recentProjectFiles);
+		if (recentProjectFiles == null) {
+			recentProjectFiles = QArrayList.newInstance();
+			rootModel.set(RootModel.recentProjectFiles, recentProjectFiles);
+		}
+
+		recentProjectFiles.remove(projectFile);
+		while (recentProjectFiles.size() > 20) {
+			recentProjectFiles.remove(recentProjectFiles.size() - 1);
+		}
+		recentProjectFiles.add(0, projectFile);
+
+	}
+
+	private class NewProjectTask extends Task {
+		private NewProjectTask() {
+			super("Creating New Project...");
+			setIndeterminate(true);
+		}
+
+		@Override
+		protected void execute() throws Exception {
+			new OnEDT() {
+				@Override
+				public void run() throws Throwable {
+					QObject<RootModel> rootModel = getRootModel();
+					rootModel.set(RootModel.currentProjectFile, null);
+
+					if (getProjectModel() != null) {
+						getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
+					}
+
+					final QObject<ProjectModel> projectModel = ProjectModel.instance.newObject();
+
+					projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
+					projectModelBinder.set(projectModel);
+
+					surveyDrawer.table().getModel().clear();
+
+					float[] viewXform = projectModel.get(ProjectModel.viewXform);
+					if (viewXform != null) {
+						renderer.getViewSettings().setViewXform(viewXform);
+					}
+
+					Projection projCalculator = projectModel.get(ProjectModel.projCalculator);
+					if (projCalculator != null) {
+						renderer.getViewSettings().setProjection(projCalculator);
+					}
+
+					if (projectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
+						installPerspectiveMouseAdapters();
+					} else {
+						installOrthoMouseAdapters();
+					}
+				}
+			};
+
+			rebuild3dModel.run();
+		}
+	}
+
 	private class OpenProjectTask extends DrawerPinningTask {
 		Path newProjectFile;
 
@@ -518,17 +580,7 @@ public class BreakoutMainView {
 				public void run() throws Throwable {
 					QObject<RootModel> rootModel = getRootModel();
 					rootModel.set(RootModel.currentProjectFile, newProjectFile);
-					QArrayList<Path> recentProjectFiles = rootModel.get(RootModel.recentProjectFiles);
-					if (recentProjectFiles == null) {
-						recentProjectFiles = QArrayList.newInstance();
-						rootModel.set(RootModel.recentProjectFiles, recentProjectFiles);
-					}
-
-					recentProjectFiles.remove(newProjectFile);
-					while (recentProjectFiles.size() > 20) {
-						recentProjectFiles.remove(recentProjectFiles.size() - 1);
-					}
-					recentProjectFiles.add(0, newProjectFile);
+					markProjectRecentlyVisited(newProjectFile);
 
 					if (getProjectModel() != null) {
 						getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
@@ -879,7 +931,6 @@ public class BreakoutMainView {
 								r.setElevation(posRow.getElevation());
 							});
 						});
-						saveSurvey.run();
 						rebuild3dModel.run();
 					}
 				}
@@ -914,7 +965,22 @@ public class BreakoutMainView {
 	final TaskService sortTaskService = new SingleThreadedTaskService();
 	final TaskService ioTaskService = new SingleThreadedTaskService();
 
-	public void shutdown() throws InterruptedException {
+	public void shutdown() throws InterruptedException, ShutdownCanceledException {
+		if (getProjectModel().get(ProjectModel.hasUnsavedChanges)) {
+			int choice = JOptionPane.showConfirmDialog(
+					SwingUtilities.getWindowAncestor(getMainPanel()),
+					"Do you want to save changes?",
+					"Unsaved Changes",
+					JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.WARNING_MESSAGE);
+			switch (choice) {
+			case JOptionPane.YES_OPTION:
+				saveProject();
+				break;
+			case JOptionPane.CANCEL_OPTION:
+				throw new ShutdownCanceledException();
+			}
+		}
 		debouncer.shutdown();
 		rebuildTaskService.shutdownNow();
 		sortTaskService.shutdownNow();
@@ -991,6 +1057,8 @@ public class BreakoutMainView {
 	final AnimationQueue cameraAnimationQueue = new AnimationQueue();
 
 	NewProjectAction newProjectAction = new NewProjectAction(this);
+	SaveProjectAction saveProjectAction = new SaveProjectAction(this);
+	SaveProjectAsAction saveProjectAsAction = new SaveProjectAsAction(this);
 
 	EditSurveyScanPathsAction editSurveyScanPathsAction = new EditSurveyScanPathsAction(this);
 
@@ -1015,12 +1083,13 @@ public class BreakoutMainView {
 	}
 
 	private <S extends QSpec<S>> void saveModel(QObject<S> m, File file, Bimapper<QObject<S>, Object> mapper) {
+		if (m == null || file == null) {
+			return;
+		}
+
 		ioTaskService.submit(new Task() {
 			@Override
 			protected void execute() throws Exception {
-				if (m == null || file == null) {
-					return;
-				}
 				QObject<S> model = FromEDT.fromEDT(() -> m.deepClone());
 				setStatus("Saving settings...");
 				setIndeterminate(true);
@@ -1049,34 +1118,6 @@ public class BreakoutMainView {
 	final DebouncedRunnable saveSwap = Lodash.debounce(
 			() -> saveModel(getProjectModel(), getCurrentSwapFile(), ProjectModel.defaultMapper),
 			1000, new DebounceOptions<Void>().executor(debouncer));
-
-	final DebouncedRunnable saveSurvey = Lodash.debounce(() -> {
-		ioTaskService.submit(new Task() {
-			@Override
-			protected void execute() throws Exception {
-				Path p = getCurrentProjectFile();
-				File projectFile = p == null ? null : p.toFile();
-
-				SurveyTableModel model = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
-
-				if (projectFile == null || model == null) {
-					return;
-				}
-				setStatus("Saving project...");
-				setIndeterminate(true);
-
-				try (OutputStream out = new RecoverableFileOutputStream(projectFile)) {
-					if (!projectFile.getParentFile().exists()) {
-						projectFile.getParentFile().mkdirs();
-					}
-					MetacaveExporter exporter = new MetacaveExporter();
-					exporter.export(model.getRows(), out);
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
-			}
-		});
-	} , 1000, new DebounceOptions<Void>().executor(debouncer));
 
 	final DebouncedRunnable rebuild3dModel = Lodash.debounce(() -> {
 		rebuildTaskService.submit(new Task() {
@@ -1384,7 +1425,7 @@ public class BreakoutMainView {
 				if (editor != null) {
 					editor.stopCellEditing();
 				}
-				saveSurvey.run();
+				getProjectModel().set(ProjectModel.hasUnsavedChanges, true);
 				rebuild3dModel.run();
 			}
 		});
@@ -1605,6 +1646,8 @@ public class BreakoutMainView {
 
 		fileMenu.add(new JMenuItem(newProjectAction));
 		fileMenu.add(new JMenuItem(openProjectAction));
+		fileMenu.add(new JMenuItem(saveProjectAction));
+		fileMenu.add(new JMenuItem(saveProjectAsAction));
 		JMenu openRecentMenu = new JMenu();
 		fileMenu.add(openRecentMenu);
 		fileMenu.add(new JSeparator());
@@ -1618,15 +1661,6 @@ public class BreakoutMainView {
 		exportMenu.add(new JMenuItem(exportImageAction));
 		fileMenu.add(exportMenu);
 
-		// QArrayList<Path> recentProjectFiles =
-		// getRootModel().get(RootModel.recentProjectFiles);
-		// if (recentProjectFiles != null && !recentProjectFiles.isEmpty()) {
-		// fileMenu.add(new JSeparator());
-		// for (Path file : recentProjectFiles) {
-		// fileMenu.add(new JMenuItem(new
-		// OpenRecentProjectAction(BreakoutMainView.this, file)));
-		// }
-		// }
 		JMenuItem noRecentFilesItem = new JMenuItem();
 		noRecentFilesItem.setEnabled(false);
 
@@ -1910,18 +1944,9 @@ public class BreakoutMainView {
 			rootModel.set(RootModel.desiredNumSamples, 2);
 		}
 
-		if (rootModel.get(RootModel.currentProjectFile) == null) {
-			// rootModel.set(RootModel.currentProjectFile,
-			// Paths.get("defaultProject.bop"));
-		}
-
 		setRootModel(rootModel);
 
-		if (rootModel.get(RootModel.currentProjectFile) != null) {
-			Path projectFile = rootDirectory.resolve(rootModel.get(RootModel.currentProjectFile))
-					.normalize();
-			openProject(projectFile);
-		}
+		newProject();
 
 		try (FileInputStream updateIn = new FileInputStream("update.properties")) {
 			Properties updateProps = new Properties();
@@ -2608,6 +2633,9 @@ public class BreakoutMainView {
 	}
 
 	public Path getSwapFile(Path surveyFile) {
+		if (surveyFile == null) {
+			return null;
+		}
 		QObject<RootModel> rootModel = getRootModel();
 		QMap<Path, Path, ?> swapFiles = rootModel.get(RootModel.swapFiles);
 		if (swapFiles == null) {
@@ -2624,17 +2652,13 @@ public class BreakoutMainView {
 		return rootDirectory.resolve(swapFile);
 	}
 
-	public void setNewProjectAction(NewProjectAction newProjectAction) {
-		this.newProjectAction = newProjectAction;
-	}
-
-	public void setOpenProjectAction(OpenProjectAction openProjectAction) {
-		this.openProjectAction = openProjectAction;
-	}
-
 	private final BasicPropertyChangeListener projectModelChangeHandler = new BasicPropertyChangeListener() {
+		@SuppressWarnings("unchecked")
 		@Override
 		public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
+			if (property != ProjectModel.hasUnsavedChanges) {
+				((QObject<ProjectModel>) source).set(ProjectModel.hasUnsavedChanges, true);
+			}
 			saveSwap.run();
 		}
 	};
@@ -2722,10 +2746,59 @@ public class BreakoutMainView {
 			return null;
 		}
 		Path file = rootModel.get(RootModel.currentProjectFile);
-		return rootFile.toPath().getParent().toAbsolutePath().resolve(file).normalize();
+		return file == null
+				? null
+				: rootFile.toPath().getParent().toAbsolutePath().resolve(file).normalize();
 	}
 
 	public Path getCurrentSwapFile() {
 		return getSwapFile(getCurrentProjectFile());
+	}
+
+	public void newProject() {
+		ioTaskService.submit(new NewProjectTask());
+	}
+
+	public void saveProject() {
+		Path file = getCurrentProjectFile();
+		if (file == null) {
+			saveProjectAsAction.actionPerformed(
+					new ActionEvent(saveProjectAsAction, ActionEvent.ACTION_PERFORMED, "saveProjectAs"));
+			return;
+		}
+		saveProjectToFile(getCurrentProjectFile());
+	}
+
+	public void saveProjectToFile(Path projectFile) {
+		ioTaskService.submit(new Task("Saving project to " + projectFile + "...") {
+			@Override
+			protected void execute() throws Exception {
+				setIndeterminate(true);
+
+				SurveyTableModel model = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
+
+				if (projectFile == null || model == null) {
+					return;
+				}
+
+				try (OutputStream out = new RecoverableFileOutputStream(projectFile.toFile())) {
+					if (!Files.exists(projectFile.getParent())) {
+						projectFile.getParent().toFile().mkdirs();
+					}
+					MetacaveExporter exporter = new MetacaveExporter();
+					exporter.export(model.getRows(), out);
+					getProjectModel().set(ProjectModel.hasUnsavedChanges, false);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
+	}
+
+	public void saveProjectAs(Path newProjectFile) {
+		QObject<RootModel> rootModel = getRootModel();
+		rootModel.set(RootModel.currentProjectFile, newProjectFile);
+		markProjectRecentlyVisited(newProjectFile);
+		saveProjectToFile(newProjectFile);
 	}
 }

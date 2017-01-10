@@ -91,6 +91,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<QArrayList<File>> surveyScanPaths = newAttribute(
 			QArrayList.class,
 			"surveyScanPaths");
+	public static final Attribute<Boolean> hasUnsavedChanges = newAttribute(
+			Boolean.class,
+			"hasUnsavedChanges");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -111,7 +114,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(taskListDrawer, DrawerModel.defaultMapper)
 				.map(exportImageDialogModel, JoglExportImageDialogModel.defaultMapper)
 				.map(backgroundColor, Color2HexStringBimapper.instance)
-				.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance));
+				.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance))
+				.exclude(hasUnsavedChanges);
 	}
 
 	private ProjectModel() {

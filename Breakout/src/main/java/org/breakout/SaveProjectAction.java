@@ -28,7 +28,7 @@ import javax.swing.AbstractAction;
 import org.andork.awt.I18n.Localizer;
 import org.andork.swing.OnEDT;
 
-public class NewProjectAction extends AbstractAction {
+public class SaveProjectAction extends AbstractAction {
 	/**
 	 *
 	 */
@@ -36,21 +36,17 @@ public class NewProjectAction extends AbstractAction {
 
 	BreakoutMainView mainView;
 
-	public NewProjectAction(final BreakoutMainView mainView) {
+	public SaveProjectAction(final BreakoutMainView mainView) {
 		super();
 		this.mainView = mainView;
-
-		new OnEDT() {
-			@Override
-			public void run() throws Throwable {
-				Localizer localizer = mainView.getI18n().forClass(NewProjectAction.this.getClass());
-				localizer.setName(NewProjectAction.this, "name");
-			}
-		};
+		OnEDT.onEDT(() -> {
+			Localizer localizer = mainView.getI18n().forClass(SaveProjectAction.this.getClass());
+			localizer.setName(SaveProjectAction.this, "name");
+		});
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		mainView.newProject();
+		mainView.saveProject();
 	}
 }

@@ -55,13 +55,16 @@ public class BreakoutMainFrame extends JFrame {
 		setJMenuBar(breakoutMainView.getMenuBar());
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		setSize(screenSize.width * 2 / 3, screenSize.height * 2 / 3);
-		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		setLocationRelativeTo(null);
 		addWindowListener(new WindowAdapter() {
 			@Override
-			public void windowClosed(WindowEvent e) {
+			public void windowClosing(WindowEvent e) {
 				try {
 					breakoutMainView.shutdown();
+					dispose();
+				} catch (ShutdownCanceledException ex) {
+					return;
 				} catch (Exception e1) {
 					System.exit(1);
 					e1.printStackTrace();

@@ -86,7 +86,8 @@ public final class RootModel extends QSpec<RootModel> {
 				.map(currentProjectFile, PathStringBimapper.instance)
 				.map(recentProjectFiles, QArrayListBimapper.newInstance(PathStringBimapper.instance))
 				.map(currentProjectFileChooserDirectory, FileStringBimapper.instance)
-				.map(currentArchiveFileChooserDirectory, FileStringBimapper.instance);
+				.map(currentArchiveFileChooserDirectory, FileStringBimapper.instance)
+				.exclude(currentProjectFile);
 	}
 
 	private RootModel() {

@@ -31,6 +31,7 @@ import java.util.logging.Logger;
 import org.andork.func.BigDecimalBimapper;
 import org.andork.func.BigIntegerBimapper;
 import org.andork.func.Bimapper;
+import org.andork.func.Bimappers;
 import org.andork.func.BooleanBimapper;
 import org.andork.func.DoubleBimapper;
 import org.andork.func.EnumBimapper;
@@ -50,6 +51,7 @@ public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<
 
 	S spec;
 
+	static final Bimapper EXCLUDED = Bimappers.identity();
 	Bimapper[] attrBimappers;
 
 	public QObjectMapBimapper(S spec) {
@@ -89,6 +91,11 @@ public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<
 		this.attrBimappers = attrBimappers;
 	}
 
+	public QObjectMapBimapper<S> exclude(Attribute<?> attr) {
+		attrBimappers[attr.index] = EXCLUDED;
+		return this;
+	}
+
 	public QObjectMapBimapper<S> map(Attribute<?> attr, Bimapper bimapper) {
 		attrBimappers[attr.index] = bimapper;
 		return this;
@@ -102,7 +109,7 @@ public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<
 		Map<Object, Object> result = new LinkedHashMap<Object, Object>();
 		for (int i = 0; i < spec.getAttributeCount(); i++) {
 			Attribute<?> attribute = spec.attributeAt(i);
-			if (in.has(attribute)) {
+			if (in.has(attribute) && attrBimappers[i] != EXCLUDED) {
 				Object value = in.get(attribute);
 				result.put(attribute.getName(),
 						value == null || attrBimappers[i] == null ? value : attrBimappers[i].map(value));
@@ -121,7 +128,7 @@ public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<
 		QObject<S> result = spec.newObject();
 		for (int i = 0; i < spec.getAttributeCount(); i++) {
 			Attribute<?> attribute = spec.attributeAt(i);
-			if (m.containsKey(attribute.getName())) {
+			if (m.containsKey(attribute.getName()) && attrBimappers[i] != EXCLUDED) {
 				Object value = m.get(attribute.getName());
 				try {
 					result.set(attribute,
