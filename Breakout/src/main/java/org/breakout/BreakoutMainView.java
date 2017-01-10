@@ -80,6 +80,7 @@ import java.util.stream.Stream;
 
 import javax.swing.CellEditor;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
@@ -967,13 +968,14 @@ public class BreakoutMainView {
 		sortTaskService.shutdownNow();
 		ioTaskService.shutdown();
 
-		JDialog finalTaskDialog = new JDialog();
+		JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(mainPanel);
+		JDialog finalTaskDialog = new JDialog((JFrame) null, frame.getTitle());
 		TaskList finalTaskList = new TaskList();
 		finalTaskList.addService(ioTaskService);
 		JScrollPane finalTaskListScroller = new JScrollPane(finalTaskList);
 		finalTaskDialog.getContentPane().add(finalTaskListScroller, BorderLayout.CENTER);
 		finalTaskDialog.setSize(800, 200);
-		finalTaskDialog.setLocationRelativeTo(SwingUtilities.getWindowAncestor(mainPanel));
+		finalTaskDialog.setLocationRelativeTo(frame);
 
 		Thread shutdownThread = new Thread("Shutdown") {
 			@Override
@@ -989,7 +991,7 @@ public class BreakoutMainView {
 			}
 		};
 		shutdownThread.start();
-		SwingUtilities.getWindowAncestor(mainPanel).dispose();
+		frame.dispose();
 		finalTaskDialog.setVisible(true);
 	}
 
