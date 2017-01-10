@@ -48,7 +48,6 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
-import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
@@ -210,6 +209,9 @@ import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL3;
@@ -563,89 +565,40 @@ public class BreakoutMainView {
 		}
 	}
 
-	private class OpenProjectTask extends DrawerPinningTask {
-		Path newProjectFile;
-
-		private OpenProjectTask(Path newProjectFile) {
-			super(getMainPanel(), taskListDrawer.holder());
-			this.newProjectFile = newProjectFile.toAbsolutePath();
-			setIndeterminate(true);
-
-			showDialogLater();
-		}
-
-		@Override
-		protected void reallyDuringDialog() throws Exception {
-			setStatus("Opening project: " + newProjectFile + "...");
-
-			new OnEDT() {
-				@Override
-				public void run() throws Throwable {
-					QObject<RootModel> rootModel = getRootModel();
-					rootModel.set(RootModel.currentProjectFile, newProjectFile);
-					markProjectRecentlyVisited(newProjectFile);
-
-					if (getProjectModel() != null) {
-						getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
-					}
-				}
-			};
-			QObject<ProjectModel> projectModel = null;
-
-			Path swapFile = getSwapFile(newProjectFile);
-			projectModel = loadProjectModel(swapFile.toFile());
-
-			if (projectModel == null) {
-				projectModel = ProjectModel.instance.newObject();
+	static boolean isNewer(Path a, Path b) {
+		try {
+			return Files.getLastModifiedTime(a).compareTo(Files.getLastModifiedTime(b)) > 0;
+		} catch (Exception e) {
+			try {
+				return Files.exists(a);
+			} catch (Exception e2) {
+				return false;
 			}
-			replaceNulls(projectModel, swapFile);
-
-			final QObject<ProjectModel> finalProjectModel = projectModel;
-
-			new OnEDT() {
-				@Override
-				public void run() throws Throwable {
-					finalProjectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
-					projectModelBinder.set(finalProjectModel);
-
-					float[] viewXform = finalProjectModel.get(ProjectModel.viewXform);
-					if (viewXform != null) {
-						renderer.getViewSettings().setViewXform(viewXform);
-					}
-
-					Projection projCalculator = finalProjectModel.get(ProjectModel.projCalculator);
-					if (projCalculator != null) {
-						renderer.getViewSettings().setProjection(projCalculator);
-					}
-
-					if (finalProjectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
-						installPerspectiveMouseAdapters();
-					} else {
-						installOrthoMouseAdapters();
-					}
-				}
-			};
-
-			openSurveyFile(newProjectFile);
 		}
 	}
 
-	private class OpenSurveyTask extends DrawerPinningTask {
+	private class OpenProjectTask extends DrawerPinningTask {
 		Path newProjectFile;
+		QObject<ProjectModel> projectModel;
 
-		private OpenSurveyTask(Path newProjectFile) {
+		private OpenProjectTask(Path newProjectFile) {
 			super(getMainPanel(), taskListDrawer.holder());
 			this.newProjectFile = newProjectFile;
-			setStatus("Loading survey...");
+			setStatus("Opening project: " + newProjectFile + "...");
 			setIndeterminate(true);
 
 			showDialogLater();
 		}
 
 		private SurveyTableModel loadSurvey(File file) {
-			try {
+			try (FileReader reader = new FileReader(file)) {
+				JsonObject json = new JsonParser().parse(new JsonReader(reader)).getAsJsonObject();
+				if (json.has("breakout")) {
+					projectModel = ProjectModel.defaultMapper.unmap(
+							new Gson().fromJson(json.get("breakout"), Object.class));
+				}
 				MetacaveImporter importer = new MetacaveImporter();
-				importer.importMetacave(file);
+				importer.importMetacave(json);
 				return new SurveyTableModel(importer.getRows());
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -663,41 +616,65 @@ public class BreakoutMainView {
 
 		@Override
 		protected void reallyDuringDialog() throws Exception {
-			boolean changed = new FromEDT<Boolean>() {
-				@Override
-				public Boolean run() throws Throwable {
-					surveyDrawer.table().getModel().clear();
-					setShots(Collections.emptyList());
-					return true;
+			boolean changed = FromEDT.fromEDT(() -> {
+				QObject<RootModel> rootModel = getRootModel();
+				rootModel.set(RootModel.currentProjectFile, newProjectFile);
+				markProjectRecentlyVisited(newProjectFile);
+
+				if (getProjectModel() != null) {
+					getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
 				}
-			}.result();
+
+				surveyDrawer.table().getModel().clear();
+				setShots(Collections.emptyList());
+				return true;
+			});
 
 			if (!changed) {
 				return;
 			}
-
-			setStatus("Opening survey: " + newProjectFile + "...");
 
 			SurveyTableModel surveyModel = loadSurvey(newProjectFile.toFile());
 			if (surveyModel == null) {
 				return;
 			}
 
-			new OnEDT() {
-				@Override
-				public void run() throws Throwable {
-					if (surveyModel != null && surveyModel.getRowCount() > 0) {
-						loadingSurvey = true;
-						try {
-							surveyDrawer.table().getModel()
-									.copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
-							rebuild3dModel.run();
-						} finally {
-							loadingSurvey = false;
-						}
-					}
+			Path swapFile = getSwapFile(newProjectFile);
+			if (projectModel == null || isNewer(swapFile, newProjectFile)) {
+				projectModel = loadProjectModel(swapFile.toFile());
+			}
+
+			if (projectModel == null) {
+				projectModel = ProjectModel.instance.newObject();
+			}
+			replaceNulls(projectModel);
+
+			OnEDT.onEDT(() -> {
+				if (surveyModel != null && surveyModel.getRowCount() > 0) {
+					surveyDrawer.table().getModel()
+							.copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
+					rebuild3dModel.run();
 				}
-			};
+
+				projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
+				projectModelBinder.set(projectModel);
+
+				float[] viewXform = projectModel.get(ProjectModel.viewXform);
+				if (viewXform != null) {
+					renderer.getViewSettings().setViewXform(viewXform);
+				}
+
+				Projection projCalculator = projectModel.get(ProjectModel.projCalculator);
+				if (projCalculator != null) {
+					renderer.getViewSettings().setProjection(projCalculator);
+				}
+
+				if (projectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
+					installPerspectiveMouseAdapters();
+				} else {
+					installOrthoMouseAdapters();
+				}
+			});
 		}
 	}
 
@@ -2391,7 +2368,7 @@ public class BreakoutMainView {
 	}
 
 	public void openSurveyFile(Path newSurveyFile) {
-		ioTaskService.submit(new OpenSurveyTask(newSurveyFile));
+		ioTaskService.submit(new OpenProjectTask(newSurveyFile));
 	}
 
 	private void openSurveyNotes(File file) {
@@ -2571,7 +2548,7 @@ public class BreakoutMainView {
 		cameraAnimationQueue.removeAll(anim -> !protectedAnimations.containsKey(anim));
 	}
 
-	private void replaceNulls(QObject<ProjectModel> projectModel, Path projectFile) {
+	private void replaceNulls(QObject<ProjectModel> projectModel) {
 		if (projectModel.get(ProjectModel.cameraView) == null) {
 			projectModel.set(ProjectModel.cameraView, CameraView.PERSPECTIVE);
 		}
@@ -2801,18 +2778,25 @@ public class BreakoutMainView {
 			protected void execute() throws Exception {
 				setIndeterminate(true);
 
-				SurveyTableModel model = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
+				SurveyTableModel surveyModel = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
+				QObject<ProjectModel> projectModel = getProjectModel();
 
-				if (projectFile == null || model == null) {
+				if (projectFile == null || surveyModel == null) {
 					return;
 				}
 
-				try (OutputStream out = new RecoverableFileOutputStream(projectFile.toFile())) {
+				try (Writer out = new OutputStreamWriter(
+						new RecoverableFileOutputStream(projectFile.toFile()))) {
 					if (!Files.exists(projectFile.getParent())) {
 						projectFile.getParent().toFile().mkdirs();
 					}
 					MetacaveExporter exporter = new MetacaveExporter();
-					exporter.export(model.getRows(), out);
+					exporter.export(surveyModel.getRows());
+					JsonObject json = exporter.getRoot();
+					Gson gson = new Gson();
+					json.add("breakout", gson.toJsonTree(
+							ProjectModel.defaultMapper.map(projectModel), Object.class));
+					gson.toJson(json, out);
 					getProjectModel().set(ProjectModel.hasUnsavedChanges, false);
 				} catch (Exception ex) {
 					ex.printStackTrace();
