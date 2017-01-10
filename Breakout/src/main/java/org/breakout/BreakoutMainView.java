@@ -80,6 +80,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.swing.CellEditor;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
@@ -87,6 +88,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
@@ -173,6 +175,7 @@ import org.andork.swing.async.SelfReportingTask;
 import org.andork.swing.async.SingleThreadedTaskService;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.Task;
+import org.andork.swing.async.TaskList;
 import org.andork.swing.async.TaskService;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
@@ -965,8 +968,8 @@ public class BreakoutMainView {
 	final TaskService sortTaskService = new SingleThreadedTaskService();
 	final TaskService ioTaskService = new SingleThreadedTaskService();
 
-	public void shutdown() throws InterruptedException, ShutdownCanceledException {
-		if (getProjectModel().get(ProjectModel.hasUnsavedChanges)) {
+	public void shutdown() {
+		if (hasUnsavedChanges()) {
 			int choice = JOptionPane.showConfirmDialog(
 					SwingUtilities.getWindowAncestor(getMainPanel()),
 					"Do you want to save changes?",
@@ -978,15 +981,38 @@ public class BreakoutMainView {
 				saveProject();
 				break;
 			case JOptionPane.CANCEL_OPTION:
-				throw new ShutdownCanceledException();
+				return;
 			}
 		}
 		debouncer.shutdown();
 		rebuildTaskService.shutdownNow();
 		sortTaskService.shutdownNow();
 		ioTaskService.shutdown();
-		debouncer.awaitTermination(30, TimeUnit.SECONDS);
-		ioTaskService.awaitTermination(30, TimeUnit.SECONDS);
+
+		JDialog finalTaskDialog = new JDialog();
+		TaskList finalTaskList = new TaskList();
+		finalTaskList.addService(ioTaskService);
+		JScrollPane finalTaskListScroller = new JScrollPane(finalTaskList);
+		finalTaskDialog.getContentPane().add(finalTaskListScroller, BorderLayout.CENTER);
+		finalTaskDialog.setSize(800, 200);
+		finalTaskDialog.setLocationRelativeTo(SwingUtilities.getWindowAncestor(mainPanel));
+
+		Thread shutdownThread = new Thread("Shutdown") {
+			@Override
+			public void run() {
+				try {
+					debouncer.awaitTermination(30, TimeUnit.SECONDS);
+					ioTaskService.awaitTermination(30, TimeUnit.SECONDS);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					System.exit(1);
+				}
+				System.exit(0);
+			}
+		};
+		shutdownThread.start();
+		SwingUtilities.getWindowAncestor(mainPanel).dispose();
+		finalTaskDialog.setVisible(true);
 	}
 
 	boolean loadingSurvey = false;
@@ -2800,5 +2826,13 @@ public class BreakoutMainView {
 		rootModel.set(RootModel.currentProjectFile, newProjectFile);
 		markProjectRecentlyVisited(newProjectFile);
 		saveProjectToFile(newProjectFile);
+	}
+
+	public boolean hasUnsavedChanges() {
+		return hasUnsavedChanges(getProjectModel());
+	}
+
+	public static boolean hasUnsavedChanges(QObject<ProjectModel> projectModel) {
+		return Boolean.TRUE.equals(projectModel.get(ProjectModel.hasUnsavedChanges));
 	}
 }

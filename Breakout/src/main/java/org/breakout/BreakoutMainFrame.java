@@ -60,16 +60,7 @@ public class BreakoutMainFrame extends JFrame {
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				try {
-					breakoutMainView.shutdown();
-					dispose();
-				} catch (ShutdownCanceledException ex) {
-					return;
-				} catch (Exception e1) {
-					System.exit(1);
-					e1.printStackTrace();
-				}
-				System.exit(0);
+				breakoutMainView.shutdown();
 			}
 		});
 	}
