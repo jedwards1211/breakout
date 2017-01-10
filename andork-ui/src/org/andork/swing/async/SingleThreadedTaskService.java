@@ -87,7 +87,7 @@ public class SingleThreadedTaskService implements TaskService {
 
 	@Override
 	public boolean hasTasks() {
-		return tasks.isEmpty();
+		return !tasks.isEmpty();
 	}
 
 	@Override

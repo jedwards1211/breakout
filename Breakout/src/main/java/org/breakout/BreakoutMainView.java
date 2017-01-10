@@ -127,6 +127,7 @@ import org.andork.compass.plot.DrawSurveyCommand;
 import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.event.BasicPropertyChangeListener;
+import org.andork.event.SourcePath;
 import org.andork.func.Bimapper;
 import org.andork.func.ExceptionRunnable;
 import org.andork.func.FloatUnaryOperator;
@@ -2657,10 +2658,21 @@ public class BreakoutMainView {
 
 	private final BasicPropertyChangeListener projectModelChangeHandler = new BasicPropertyChangeListener() {
 		@SuppressWarnings("unchecked")
+		private QObject<ProjectModel> getProjectModel(Object source) {
+			if (source instanceof QObject && ((QObject<?>) source).getSpec() == ProjectModel.instance) {
+				return (QObject<ProjectModel>) source;
+			}
+			if (source instanceof SourcePath) {
+				return getProjectModel(((SourcePath) source).parent);
+			}
+			return null;
+		}
+
 		@Override
 		public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
-			if (property != ProjectModel.hasUnsavedChanges) {
-				((QObject<ProjectModel>) source).set(ProjectModel.hasUnsavedChanges, true);
+			QObject<ProjectModel> projectModel = getProjectModel(source);
+			if (projectModel != null && property != ProjectModel.hasUnsavedChanges) {
+				projectModel.set(ProjectModel.hasUnsavedChanges, true);
 			}
 			saveSwap.run();
 		}
