@@ -3,6 +3,11 @@ package org.andork.unit;
 public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 	private final double value;
 
+	public UnitizedDouble(Number value, Unit<T> unit) {
+		super(unit);
+		this.value = value.doubleValue();
+	}
+
 	public UnitizedDouble(double value, Unit<T> unit) {
 		super(unit);
 		this.value = value;
@@ -24,6 +29,16 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 	@Override
 	public Double get(Unit<T> unit) {
 		return doubleValue(unit);
+	}
+
+	@Override
+	public boolean isInfinite() {
+		return Double.isInfinite(value);
+	}
+
+	@Override
+	public boolean isNaN() {
+		return Double.isNaN(value);
 	}
 
 	@Override
@@ -70,7 +85,12 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 	 * @return
 	 */
 	@Override
-	public UnitizedDouble<T> subtract(UnitizedNumber<T> addend) {
+	public UnitizedDouble<T> sub(UnitizedNumber<T> addend) {
 		return new UnitizedDouble<T>(value - addend.doubleValue(unit), unit);
+	}
+
+	@Override
+	public UnitizedDouble<T> mul(Number multiplicand) {
+		return new UnitizedDouble<T>(value * multiplicand.doubleValue(), unit);
 	}
 }

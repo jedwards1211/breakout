@@ -94,4 +94,20 @@ public class Angle extends UnitType<Angle> {
 		return ((AngleUnit) to).fromRadians.applyAsDouble(((AngleUnit) from).toRadians.applyAsDouble(d));
 	}
 
+	public static double sin(UnitizedNumber<Angle> angle) {
+		return Math.sin(angle.doubleValue(radians));
+	}
+
+	public static double cos(UnitizedNumber<Angle> angle) {
+		return Math.cos(angle.doubleValue(radians));
+	}
+
+	public static double tan(UnitizedNumber<Angle> angle) {
+		return Math.tan(angle.doubleValue(radians));
+	}
+
+	public static UnitizedDouble<Angle> atan2(UnitizedNumber<Length> y, UnitizedNumber<Length> x) {
+		return new UnitizedDouble<Angle>(
+				Math.atan2(y.doubleValue(y.unit), x.doubleValue(y.unit)), Angle.radians);
+	}
 }

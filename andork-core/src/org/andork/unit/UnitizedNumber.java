@@ -15,7 +15,9 @@ public abstract class UnitizedNumber<T extends UnitType<T>> {
 
 	public abstract UnitizedNumber<T> add(UnitizedNumber<T> addend);
 
-	public abstract UnitizedNumber<T> subtract(UnitizedNumber<T> addend);
+	public abstract UnitizedNumber<T> sub(UnitizedNumber<T> addend);
+
+	public abstract UnitizedNumber<T> mul(Number multiplicand);
 
 	public abstract UnitizedNumber<T> negate();
 
@@ -24,6 +26,22 @@ public abstract class UnitizedNumber<T extends UnitType<T>> {
 	public abstract Number get(Unit<T> unit);
 
 	public abstract double doubleValue(Unit<T> unit);
+
+	public float floatValue(Unit<T> unit) {
+		return (float) doubleValue(unit);
+	}
+
+	public boolean isFinite() {
+		return !isInfinite() && !isNaN();
+	}
+
+	public boolean isInfinite() {
+		return false;
+	}
+
+	public boolean isNaN() {
+		return false;
+	}
 
 	@Override
 	public String toString() {
