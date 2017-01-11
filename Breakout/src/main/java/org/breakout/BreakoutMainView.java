@@ -569,7 +569,7 @@ public class BreakoutMainView {
 			showDialogLater();
 		}
 
-		private SurveyTableModel loadSurvey(File file) {
+		private SurveyTableModel loadSurvey(File file, File backupFile) {
 			try (FileReader reader = new FileReader(file)) {
 				JsonObject json = new JsonParser().parse(new JsonReader(reader)).getAsJsonObject();
 				if (json.has("breakout")) {
@@ -581,13 +581,23 @@ public class BreakoutMainView {
 				return new SurveyTableModel(importer.getRows());
 			} catch (Exception ex) {
 				ex.printStackTrace();
-				OnEDT.onEDT(new ExceptionRunnable() {
-					@Override
-					public void run() throws Exception {
-						JOptionPane.showMessageDialog(mainPanel,
-								"Failed to load survey: " + ex.getLocalizedMessage(),
-								"Error", JOptionPane.ERROR_MESSAGE);
+				if (!file.equals(backupFile) && backupFile != null && backupFile.exists()) {
+					int option = FromEDT.fromEDT(() -> JOptionPane.showConfirmDialog(
+							mainPanel,
+							"<html>Failed to load survey " + ex.getLocalizedMessage() +
+									"<br>A backup exists at " + backupFile +
+									"; do you want to try to recover it?</html>",
+							"Error", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE));
+					if (option == JOptionPane.NO_OPTION) {
+						return null;
 					}
+					return loadSurvey(backupFile, backupFile);
+				}
+
+				OnEDT.onEDT(() -> {
+					JOptionPane.showMessageDialog(mainPanel,
+							"Failed to load survey: " + ex.getLocalizedMessage(),
+							"Error", JOptionPane.ERROR_MESSAGE);
 				});
 				return null;
 			}
@@ -618,7 +628,7 @@ public class BreakoutMainView {
 			if (!fileToLoad.exists() && backupFile.exists()) {
 				fileToLoad = backupFile;
 			}
-			SurveyTableModel surveyModel = loadSurvey(fileToLoad);
+			SurveyTableModel surveyModel = loadSurvey(fileToLoad, backupFile);
 			if (surveyModel == null) {
 				return;
 			}
