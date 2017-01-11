@@ -35,9 +35,8 @@ public class CompassParseResultsDialog extends JDialog {
 	SurveyTable surveyTable;
 	JScrollPane surveyTableScroller;
 	JTabbedPane tabbedPane;
-	JButton importAsNewProjectButton;
 	JButton cancelButton;
-	JButton addToCurrentProjectButton;
+	JButton importButton;
 
 	final I18nUpdater<CompassParseResultsDialog> i18nUpdater = new I18nUpdater<CompassParseResultsDialog>() {
 		@Override
@@ -46,8 +45,7 @@ public class CompassParseResultsDialog extends JDialog {
 			tabbedPane.setTitleAt(0, localizer.getString("errorsTab.title"));
 			tabbedPane.setTitleAt(1, localizer.getString("dataTab.title"));
 			cancelButton.setText(localizer.getString("cancelButton.text"));
-			importAsNewProjectButton.setText(localizer.getString("importAsNewProjectButton.text"));
-			addToCurrentProjectButton.setText(localizer.getString("addToCurrentProjectButton.text"));
+			importButton.setText(localizer.getString("addToCurrentProjectButton.text"));
 		}
 	};
 
@@ -63,14 +61,12 @@ public class CompassParseResultsDialog extends JDialog {
 		tabbedPane.addTab("Data", surveyTableScroller);
 
 		cancelButton = new JButton();
-		importAsNewProjectButton = new JButton();
-		addToCurrentProjectButton = new JButton();
+		importButton = new JButton();
 
 		Box buttonBox = Box.createHorizontalBox();
 		buttonBox.add(Box.createGlue());
 		buttonBox.add(cancelButton);
-		buttonBox.add(importAsNewProjectButton);
-		buttonBox.add(addToCurrentProjectButton);
+		buttonBox.add(importButton);
 
 		localizer.register(this, i18nUpdater);
 
@@ -85,12 +81,8 @@ public class CompassParseResultsDialog extends JDialog {
 		setLocationRelativeTo(null);
 	}
 
-	public void onAddToCurrentProject(ActionListener listener) {
-		addToCurrentProjectButton.addActionListener(listener);
-	}
-
-	public void onImportAsNewProject(ActionListener listener) {
-		importAsNewProjectButton.addActionListener(listener);
+	public void onImport(ActionListener listener) {
+		importButton.addActionListener(listener);
 	}
 
 	public CompassParseResultsDialog setErrors(List<CompassParseError> errors) {

@@ -74,7 +74,7 @@ public class Drawer extends PaintablePanel {
 		add(content, BorderLayout.CENTER);
 	}
 
-	public void addTo(Container layeredPane, int layer) {
+	public void addTo(Container layeredPane) {
 		if (!(layeredPane.getLayout() instanceof DelegatingLayoutManager)) {
 			layeredPane.setLayout(new DelegatingLayoutManager());
 		}

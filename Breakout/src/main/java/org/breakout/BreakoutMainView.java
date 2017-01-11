@@ -82,7 +82,6 @@ import javax.swing.CellEditor;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JLayeredPane;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -109,7 +108,6 @@ import org.andork.awt.event.MouseAdapterWrapper;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
-import org.andork.awt.layout.DrawerModel;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.SideConstraint;
 import org.andork.awt.layout.SideConstraintLayoutDelegate;
@@ -307,7 +305,7 @@ public class BreakoutMainView {
 
 	private class ImportCompassTask extends DrawerPinningTask {
 		Iterable<Path> compassFiles;
-		String importOption;
+		boolean doImport;
 
 		private ImportCompassTask(Iterable<Path> compassFiles) {
 			super(getMainPanel(), taskListDrawer.holder());
@@ -354,13 +352,9 @@ public class BreakoutMainView {
 					dialog.setErrors(parser.getErrors());
 					dialog.setSurveyTableModel(newModel);
 					dialog.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
-					importOption = null;
-					dialog.onImportAsNewProject(e -> {
-						importOption = "importAsNewProject";
-						dialog.dispose();
-					});
-					dialog.onAddToCurrentProject(e -> {
-						importOption = "addToCurrentProject";
+					doImport = false;
+					dialog.onImport(e -> {
+						doImport = true;
 						dialog.dispose();
 					});
 					dialog.setModalityType(ModalityType.APPLICATION_MODAL);
@@ -370,16 +364,10 @@ public class BreakoutMainView {
 						return;
 					}
 
-					if ("addToCurrentProject".equals(importOption)) {
+					if (doImport) {
 						SurveyTableModel model = surveyDrawer.table().getModel();
 						model.clear();
 						model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, model.getRowCount());
-					} else if ("importAsNewProject".equals(importOption)) {
-						newProjectAction.actionPerformed(
-								new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "open new project"));
-						SurveyTableModel model = surveyDrawer.table().getModel();
-						model.clear();
-						model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
 					}
 					rebuild3dModel.run();
 				}
@@ -538,7 +526,7 @@ public class BreakoutMainView {
 						getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
 					}
 
-					final QObject<ProjectModel> projectModel = ProjectModel.instance.newObject();
+					final QObject<ProjectModel> projectModel = ProjectModel.newInstance();
 
 					projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
 					projectModelBinder.set(projectModel);
@@ -649,7 +637,7 @@ public class BreakoutMainView {
 			if (projectModel == null) {
 				projectModel = ProjectModel.instance.newObject();
 			}
-			replaceNulls(projectModel);
+			ProjectModel.setDefaults(projectModel);
 
 			OnEDT.onEDT(() -> {
 				if (surveyModel != null && surveyModel.getRowCount() > 0) {
@@ -1007,9 +995,8 @@ public class BreakoutMainView {
 	final double[] leftAtTo = new double[3];
 	final double[] leftAtTo2 = new double[3];
 	final double[] leftAtFrom = new double[3];
-	JPanel mainPanel;
 
-	JLayeredPane layeredPane;
+	JPanel mainPanel;
 	MouseAdapterWrapper canvasMouseAdapterWrapper;
 
 	// normal mouse mode
@@ -1399,8 +1386,8 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 
-		layeredPane = new JLayeredPane();
-		layeredPane.setLayout(new DelegatingLayoutManager() {
+		mainPanel = new JPanel();
+		mainPanel.setLayout(new DelegatingLayoutManager() {
 			@Override
 			public void onLayoutChanged(Container target) {
 				Window w = SwingUtilities.getWindowAncestor(target);
@@ -1417,10 +1404,10 @@ public class BreakoutMainView {
 		taskListDrawer.addTaskService(rebuildTaskService);
 		taskListDrawer.addTaskService(sortTaskService);
 		taskListDrawer.addTaskService(ioTaskService);
-		taskListDrawer.addTo(layeredPane, JLayeredPane.DEFAULT_LAYER + 5);
+		taskListDrawer.addTo(mainPanel);
 
 		settingsDrawer = new SettingsDrawer(i18n, rootModelBinder, projectModelBinder);
-		settingsDrawer.addTo(layeredPane, 1);
+		settingsDrawer.addTo(mainPanel);
 
 		surveyDrawer.table().getModel().setEditable(false);
 		surveyDrawer.editButton().setSelected(false);
@@ -1436,10 +1423,7 @@ public class BreakoutMainView {
 			}
 		});
 
-		surveyDrawer.addTo(layeredPane, 5);
-
-		mainPanel = new JPanel(new BorderLayout());
-		mainPanel.add(layeredPane, BorderLayout.CENTER);
+		surveyDrawer.addTo(mainPanel);
 
 		selectionHandler = new TableSelectionHandler();
 		surveyDrawer.table().getModelSelectionModel().addListSelectionListener(selectionHandler);
@@ -1459,7 +1443,7 @@ public class BreakoutMainView {
 
 			miniSurveyDrawer.delegate().dockingSide(Side.LEFT);
 			miniSurveyDrawer.mainResizeHandle();
-			miniSurveyDrawer.addTo(layeredPane, 3);
+			miniSurveyDrawer.addTo(mainPanel);
 
 			miniSurveyDrawer.delegate()
 					.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
@@ -1486,17 +1470,19 @@ public class BreakoutMainView {
 		hintLabelDelegate.putExtraConstraint(
 				Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
-		layeredPane.add(taskListDrawer.pinButton(), spinnerDelegate);
-		layeredPane.setLayer(taskListDrawer.pinButton(), JLayeredPane.getLayer(settingsDrawer));
-		layeredPane.add(hintLabel, hintLabelDelegate);
-		layeredPane.setLayer(hintLabel, JLayeredPane.getLayer(settingsDrawer));
+		mainPanel.add(taskListDrawer.pinButton(), spinnerDelegate);
+		// mainPanel.setLayer(taskListDrawer.pinButton(),
+		// JmainPanel.getLayer(settingsDrawer));
+		mainPanel.add(hintLabel, hintLabelDelegate);
+		// mainPanel.setLayer(hintLabel,
+		// JmainPanel.getLayer(settingsDrawer));
 
 		SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
 		canvasDelegate.putExtraConstraint(Side.TOP, new SideConstraint(taskListDrawer, Side.BOTTOM, 0));
 		canvasDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
 		canvasDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
 		canvasDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(hintLabel, Side.TOP, 0));
-		layeredPane.add(canvas, canvasDelegate);
+		mainPanel.add(canvas, canvasDelegate);
 
 		surveyDrawer.table().setTransferHandler(new SurveyTableTransferHandler());
 
@@ -1525,7 +1511,7 @@ public class BreakoutMainView {
 		});
 
 		// new javax.swing.Timer(1000, e ->
-		// System.out.println(layeredPane.getBounds())).start();
+		// System.out.println(mainPanel.getBounds())).start();
 
 		surveyDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.surveyDrawer, projectModelBinder));
 		settingsDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.settingsDrawer, projectModelBinder));
@@ -2549,49 +2535,6 @@ public class BreakoutMainView {
 
 	protected void removeUnprotectedCameraAnimations() {
 		cameraAnimationQueue.removeAll(anim -> !protectedAnimations.containsKey(anim));
-	}
-
-	private void replaceNulls(QObject<ProjectModel> projectModel) {
-		if (projectModel.get(ProjectModel.cameraView) == null) {
-			projectModel.set(ProjectModel.cameraView, CameraView.PERSPECTIVE);
-		}
-		if (projectModel.get(ProjectModel.backgroundColor) == null) {
-			projectModel.set(ProjectModel.backgroundColor, Color.black);
-		}
-		if (projectModel.get(ProjectModel.distRange) == null) {
-			projectModel.set(ProjectModel.distRange, new LinearAxisConversion(0, 0, 20000, 200));
-		}
-		if (projectModel.get(ProjectModel.viewXform) == null) {
-			projectModel.set(ProjectModel.viewXform, Vecmath.newMat4f());
-		}
-		if (projectModel.get(ProjectModel.colorParam) == null) {
-			projectModel.set(ProjectModel.colorParam, ColorParam.DEPTH);
-		}
-		if (projectModel.get(ProjectModel.paramRanges) == null) {
-			projectModel
-					.set(ProjectModel.paramRanges, QLinkedHashMap.<ColorParam, LinearAxisConversion> newInstance());
-		}
-		QMap<ColorParam, LinearAxisConversion, ?> paramRanges = projectModel.get(ProjectModel.paramRanges);
-		for (ColorParam colorParam : ColorParam.values()) {
-			if (!paramRanges.containsKey(colorParam)) {
-				paramRanges.put(colorParam, new LinearAxisConversion());
-			}
-		}
-		if (projectModel.get(ProjectModel.highlightRange) == null) {
-			projectModel.set(ProjectModel.highlightRange, new LinearAxisConversion(0, 0, 1000, 200));
-		}
-		if (projectModel.get(ProjectModel.surveyDrawer) == null) {
-			projectModel.set(ProjectModel.surveyDrawer, DrawerModel.instance.newObject());
-		}
-		if (projectModel.get(ProjectModel.settingsDrawer) == null) {
-			projectModel.set(ProjectModel.settingsDrawer, DrawerModel.instance.newObject());
-		}
-		if (projectModel.get(ProjectModel.miniSurveyDrawer) == null) {
-			projectModel.set(ProjectModel.miniSurveyDrawer, DrawerModel.instance.newObject());
-		}
-		if (projectModel.get(ProjectModel.taskListDrawer) == null) {
-			projectModel.set(ProjectModel.taskListDrawer, DrawerModel.instance.newObject());
-		}
 	}
 
 	public int rowOfShot(int shotNumber) {

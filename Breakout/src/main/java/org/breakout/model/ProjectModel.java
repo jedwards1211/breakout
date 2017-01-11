@@ -31,8 +31,10 @@ import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
 import org.andork.jogl.Projection;
 import org.andork.jogl.awt.JoglExportImageDialogModel;
+import org.andork.math3d.Vecmath;
 import org.andork.q.QArrayList;
 import org.andork.q.QArrayListBimapper;
+import org.andork.q.QLinkedHashMap;
 import org.andork.q.QMap;
 import org.andork.q.QMapBimapper;
 import org.andork.q.QObject;
@@ -120,5 +122,54 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 
 	private ProjectModel() {
 		super();
+	}
+
+	public static QObject<ProjectModel> newInstance() {
+		QObject<ProjectModel> result = QObject.newInstance(instance);
+		setDefaults(result);
+		return result;
+	}
+
+	public static void setDefaults(QObject<ProjectModel> projectModel) {
+		if (projectModel.get(ProjectModel.cameraView) == null) {
+			projectModel.set(ProjectModel.cameraView, CameraView.PERSPECTIVE);
+		}
+		if (projectModel.get(ProjectModel.backgroundColor) == null) {
+			projectModel.set(ProjectModel.backgroundColor, Color.black);
+		}
+		if (projectModel.get(ProjectModel.distRange) == null) {
+			projectModel.set(ProjectModel.distRange, new LinearAxisConversion(0, 0, 20000, 200));
+		}
+		if (projectModel.get(ProjectModel.viewXform) == null) {
+			projectModel.set(ProjectModel.viewXform, Vecmath.newMat4f());
+		}
+		if (projectModel.get(ProjectModel.colorParam) == null) {
+			projectModel.set(ProjectModel.colorParam, ColorParam.DEPTH);
+		}
+		if (projectModel.get(ProjectModel.paramRanges) == null) {
+			projectModel
+					.set(ProjectModel.paramRanges, QLinkedHashMap.<ColorParam, LinearAxisConversion> newInstance());
+		}
+		QMap<ColorParam, LinearAxisConversion, ?> paramRanges = projectModel.get(ProjectModel.paramRanges);
+		for (ColorParam colorParam : ColorParam.values()) {
+			if (!paramRanges.containsKey(colorParam)) {
+				paramRanges.put(colorParam, new LinearAxisConversion());
+			}
+		}
+		if (projectModel.get(ProjectModel.highlightRange) == null) {
+			projectModel.set(ProjectModel.highlightRange, new LinearAxisConversion(0, 0, 1000, 200));
+		}
+		if (projectModel.get(ProjectModel.surveyDrawer) == null) {
+			projectModel.set(ProjectModel.surveyDrawer, DrawerModel.instance.newObject());
+		}
+		if (projectModel.get(ProjectModel.settingsDrawer) == null) {
+			projectModel.set(ProjectModel.settingsDrawer, DrawerModel.instance.newObject());
+		}
+		if (projectModel.get(ProjectModel.miniSurveyDrawer) == null) {
+			projectModel.set(ProjectModel.miniSurveyDrawer, DrawerModel.instance.newObject());
+		}
+		if (projectModel.get(ProjectModel.taskListDrawer) == null) {
+			projectModel.set(ProjectModel.taskListDrawer, DrawerModel.instance.newObject());
+		}
 	}
 }
