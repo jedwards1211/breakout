@@ -57,9 +57,9 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<File> currentProjectFileChooserDirectory = newAttribute(
 			File.class,
 			"currentProjectFileChooserDirectory");
-	public static final Attribute<File> currentArchiveFileChooserDirectory = newAttribute(
+	public static final Attribute<File> currentCompassImportDirectory = newAttribute(
 			File.class,
-			"currentArchiveFileChooserDirectory");
+			"currentCompassImportDirectory");
 	public static final Attribute<Integer> desiredNumSamples = newAttribute(
 			Integer.class,
 			"desiredNumSamples");
@@ -86,11 +86,33 @@ public final class RootModel extends QSpec<RootModel> {
 				.map(currentProjectFile, PathStringBimapper.instance)
 				.map(recentProjectFiles, QArrayListBimapper.newInstance(PathStringBimapper.instance))
 				.map(currentProjectFileChooserDirectory, FileStringBimapper.instance)
-				.map(currentArchiveFileChooserDirectory, FileStringBimapper.instance)
+				.map(currentCompassImportDirectory, FileStringBimapper.instance)
 				.exclude(currentProjectFile);
 	}
 
 	private RootModel() {
 		super();
+	}
+
+	public static File getCurrentProjectFileChooserDirectory(QObject<RootModel> model) {
+		File directory = model.get(currentProjectFileChooserDirectory);
+		if (directory == null) {
+			Path file = model.get(currentProjectFile);
+			if (file != null) {
+				directory = file.getParent().toFile();
+			}
+		}
+		if (directory == null) {
+			directory = new File(System.getProperty("user.dir"));
+		}
+		return directory;
+	}
+
+	public static File getCurrentCompassImportDirectory(QObject<RootModel> model) {
+		File directory = model.get(currentCompassImportDirectory);
+		if (directory == null) {
+			return getCurrentProjectFileChooserDirectory(model);
+		}
+		return directory;
 	}
 }

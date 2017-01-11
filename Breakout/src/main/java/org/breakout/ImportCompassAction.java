@@ -23,7 +23,6 @@ package org.breakout;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Arrays;
 
 import javax.swing.AbstractAction;
@@ -64,23 +63,17 @@ public class ImportCompassAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-
-		File directory = mainView.getRootModel().get(RootModel.currentProjectFileChooserDirectory);
-		if (directory == null) {
-			Path currentSurveyFile = mainView.getRootModel().get(RootModel.currentProjectFile);
-			if (currentSurveyFile != null) {
-				directory = currentSurveyFile.getParent().toFile();
-			}
-		}
-		if (directory != null) {
-			fileChooser.setCurrentDirectory(directory);
-		}
+		File directory = RootModel.getCurrentCompassImportDirectory(mainView.getRootModel());
+		fileChooser.setCurrentDirectory(directory);
 
 		int choice = fileChooser.showOpenDialog(mainView.getMainPanel());
 
 		if (choice != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
+
+		mainView.getRootModel().set(
+				RootModel.currentCompassImportDirectory, fileChooser.getCurrentDirectory());
 
 		mainView.importCompassFiles(Arrays.asList(fileChooser.getSelectedFiles()));
 	}

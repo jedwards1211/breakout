@@ -23,7 +23,6 @@ package org.breakout;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.nio.file.Path;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -64,17 +63,8 @@ public class OpenProjectAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-
-		File directory = mainView.getRootModel().get(RootModel.currentProjectFileChooserDirectory);
-		if (directory == null) {
-			Path currentProjectFile = mainView.getRootModel().get(RootModel.currentProjectFile);
-			if (currentProjectFile != null) {
-				directory = currentProjectFile.getParent().toFile();
-			}
-		}
-		if (directory != null) {
-			fileChooser.setCurrentDirectory(directory);
-		}
+		File directory = RootModel.getCurrentProjectFileChooserDirectory(mainView.getRootModel());
+		fileChooser.setCurrentDirectory(directory);
 
 		int choice = fileChooser.showOpenDialog(mainView.getMainPanel());
 

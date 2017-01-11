@@ -23,7 +23,6 @@ package org.breakout;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.nio.file.Path;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -70,16 +69,8 @@ public class SaveProjectAsAction extends AbstractAction {
 		I18n i18n = mainView.getI18n();
 		Localizer localizer = i18n.forClass(getClass());
 
-		File directory = mainView.getRootModel().get(RootModel.currentProjectFileChooserDirectory);
-		if (directory == null) {
-			Path currentProjectFile = mainView.getRootModel().get(RootModel.currentProjectFile);
-			if (currentProjectFile != null) {
-				directory = currentProjectFile.getParent().toFile();
-			}
-		}
-		if (directory != null) {
-			projectFileChooser.setCurrentDirectory(directory);
-		}
+		File directory = RootModel.getCurrentProjectFileChooserDirectory(mainView.getRootModel());
+		projectFileChooser.setCurrentDirectory(directory);
 
 		projectFileChooser.setDialogTitle("Save Project As");
 
