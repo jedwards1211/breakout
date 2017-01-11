@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.andork</groupId>
   <artifactId>andork-math3d</artifactId>
-  <version>1.0.0-alpha.0</version>
+  <version>1.0.0-alpha.1</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
@@ -21,12 +21,12 @@
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-core</artifactId>
-  		<version>1.0.0-alpha.0</version>
+  		<version>1.0.0-alpha.1</version>
   	</dependency>
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-math</artifactId>
-  		<version>1.0.0-alpha.0</version>
+  		<version>1.0.0-alpha.1</version>
   	</dependency>
   	<dependency>
   		<groupId>junit</groupId>
