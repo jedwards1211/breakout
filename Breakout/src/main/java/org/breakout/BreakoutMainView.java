@@ -179,6 +179,7 @@ import org.andork.swing.async.TaskService;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.RowFilterFactory;
+import org.andork.util.FileRecoveryConfig;
 import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
@@ -555,18 +556,6 @@ public class BreakoutMainView {
 		}
 	}
 
-	static boolean isNewer(Path a, Path b) {
-		try {
-			return Files.getLastModifiedTime(a).compareTo(Files.getLastModifiedTime(b)) > 0;
-		} catch (Exception e) {
-			try {
-				return Files.exists(a);
-			} catch (Exception e2) {
-				return false;
-			}
-		}
-	}
-
 	private class OpenProjectTask extends DrawerPinningTask {
 		Path newProjectFile;
 		QObject<ProjectModel> projectModel;
@@ -624,13 +613,18 @@ public class BreakoutMainView {
 				return;
 			}
 
-			SurveyTableModel surveyModel = loadSurvey(newProjectFile.toFile());
+			File fileToLoad = newProjectFile.toFile();
+			File backupFile = fileRecoveryConfig.getBackupFile(fileToLoad);
+			if (!fileToLoad.exists() && backupFile.exists()) {
+				fileToLoad = backupFile;
+			}
+			SurveyTableModel surveyModel = loadSurvey(fileToLoad);
 			if (surveyModel == null) {
 				return;
 			}
 
 			Path swapFile = getSwapFile(newProjectFile);
-			if (projectModel == null || isNewer(swapFile, newProjectFile)) {
+			if (Files.exists(swapFile)) {
 				projectModel = loadProjectModel(swapFile.toFile());
 			}
 
@@ -663,6 +657,10 @@ public class BreakoutMainView {
 					installPerspectiveMouseAdapters();
 				} else {
 					installOrthoMouseAdapters();
+				}
+
+				if (!Files.exists(newProjectFile)) {
+					saveProject();
 				}
 			});
 		}
@@ -1071,6 +1069,8 @@ public class BreakoutMainView {
 	List<Shot> shots = Collections.emptyList();
 	Map<Integer, Integer> shotNumberToRowIndexMap = CollectionUtils.newHashMap();
 
+	private static final FileRecoveryConfig fileRecoveryConfig = new FileRecoveryConfig() {};
+
 	private <S extends QSpec<S>> void saveModel(QObject<S> m, Path path, Bimapper<QObject<S>, Object> mapper) {
 		saveModel(m, path == null ? null : path.toFile(), mapper);
 	}
@@ -1087,7 +1087,8 @@ public class BreakoutMainView {
 				setStatus("Saving settings...");
 				setIndeterminate(true);
 
-				try (Writer w = new OutputStreamWriter(new RecoverableFileOutputStream(file), "UTF-8")) {
+				try (Writer w = new OutputStreamWriter(new RecoverableFileOutputStream(file, fileRecoveryConfig),
+						"UTF-8")) {
 					if (!file.getParentFile().exists()) {
 						file.getParentFile().mkdirs();
 					}
@@ -1905,23 +1906,6 @@ public class BreakoutMainView {
 			rootFile = new File(rootDir, "settings.json");
 			if (!rootFile.exists()) {
 				rootDir.mkdir();
-				// try {
-				// ClassLoader cl = getClass().getClassLoader();
-				// for (String file : Arrays.asList("demo.bop",
-				// "demo-survey.txt", "settings.yaml")) {
-				// Path path = new File(rootDir, file).toPath();
-				// URL resource = cl.getResource("demo/" + file);
-				// InputStream in = resource.openStream();
-				// Files.copy(in, path);
-				// }
-				// } catch (Exception ex) {
-				// try {
-				// FileUtils.deleteDirectory(rootDir);
-				// } catch (IOException e1) {
-				// e1.printStackTrace();
-				// }
-				// ex.printStackTrace();
-				// }
 			}
 		} else {
 			rootFile = new File(rootFilePath);
@@ -1938,7 +1922,9 @@ public class BreakoutMainView {
 
 		setRootModel(rootModel);
 
-		newProject();
+		if (!recoverBackupIfNecessary(rootModel)) {
+			newProject();
+		}
 
 		try (FileInputStream updateIn = new FileInputStream("update.properties")) {
 			Properties updateProps = new Properties();
@@ -1955,6 +1941,45 @@ public class BreakoutMainView {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public boolean recoverBackupIfNecessary(QObject<RootModel> rootModel) {
+		try {
+			QArrayList<Path> recentProjectFiles = rootModel.get(RootModel.recentProjectFiles);
+			if (recentProjectFiles != null && !recentProjectFiles.isEmpty()) {
+				File mostRecentFile = recentProjectFiles.get(0).toFile();
+				File mostRecentBackup = fileRecoveryConfig.getBackupFile(mostRecentFile);
+				String message = "<html>It appears that Breakout shutdown unexpectedly while you were working on "
+						+ mostRecentFile + ",<br>but it is backed up in " +
+						mostRecentBackup + ".  What do you want to do?</html>";
+
+				if (!mostRecentFile.exists() && mostRecentBackup.exists()) {
+					Object[] options = { "Recover It", "Delete It", "Leave It" };
+					int option = JOptionPane.showOptionDialog(
+							SwingUtilities.getWindowAncestor(mainPanel),
+							message, "File Recovery",
+							JOptionPane.WARNING_MESSAGE, 0, null,
+							options, options[0]);
+					switch (option) {
+					case 0:
+						openProject(mostRecentFile.toPath());
+						return true;
+					case 1:
+						mostRecentBackup.delete();
+						recentProjectFiles.remove(mostRecentFile);
+						break;
+					}
+				}
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			JOptionPane.showMessageDialog(
+					SwingUtilities.getWindowAncestor(mainPanel),
+					ex.getLocalizedMessage(),
+					"Error",
+					JOptionPane.ERROR_MESSAGE);
+		}
+		return false;
 	}
 
 	public void autoProfileMode() {
@@ -2743,7 +2768,7 @@ public class BreakoutMainView {
 				}
 
 				try (Writer out = new OutputStreamWriter(
-						new RecoverableFileOutputStream(projectFile.toFile()))) {
+						new RecoverableFileOutputStream(projectFile.toFile(), fileRecoveryConfig))) {
 					if (!Files.exists(projectFile.getParent())) {
 						projectFile.getParent().toFile().mkdirs();
 					}
