@@ -16,8 +16,14 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 	 *            the {@link UnitizedDouble} to add to this one.
 	 * @return
 	 */
-	public UnitizedDouble<T> add(UnitizedDouble<T> addend) {
+	@Override
+	public UnitizedDouble<T> add(UnitizedNumber<T> addend) {
 		return new UnitizedDouble<T>(value + addend.doubleValue(unit), unit);
+	}
+
+	@Override
+	public Double get(Unit<T> unit) {
+		return doubleValue(unit);
 	}
 
 	@Override
@@ -42,6 +48,7 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 		return Double.hashCode(value) * 31 ^ unit.hashCode();
 	}
 
+	@Override
 	public UnitizedDouble<T> in(Unit<T> unit) {
 		if (unit == this.unit) {
 			return this;
@@ -49,6 +56,7 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 		return new UnitizedDouble<>(doubleValue(unit), unit);
 	}
 
+	@Override
 	public UnitizedDouble<T> negate() {
 		return new UnitizedDouble<T>(-value, unit);
 	}
@@ -61,12 +69,8 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 	 *            the {@link UnitizedDouble} to subtract from this one.
 	 * @return
 	 */
-	public UnitizedDouble<T> subtract(UnitizedDouble<T> addend) {
-		return new UnitizedDouble<T>(value - addend.doubleValue(unit), unit);
-	}
-
 	@Override
-	public String toString() {
-		return value + " " + unit;
+	public UnitizedDouble<T> subtract(UnitizedNumber<T> addend) {
+		return new UnitizedDouble<T>(value - addend.doubleValue(unit), unit);
 	}
 }
