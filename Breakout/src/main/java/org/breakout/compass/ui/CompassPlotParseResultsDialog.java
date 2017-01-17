@@ -19,6 +19,7 @@ import org.andork.awt.I18n.I18nUpdater;
 import org.andork.awt.I18n.Localizer;
 import org.andork.compass.CompassParseError;
 import org.andork.swing.OnEDT;
+import org.andork.swing.table.ListTableColumn;
 import org.breakout.SurveyTable;
 import org.breakout.SurveyTable.Aspect;
 import org.breakout.model.SurveyTableModel;
@@ -76,6 +77,7 @@ public class CompassPlotParseResultsDialog extends JDialog {
 					addColumn(columns.easting);
 					addColumn(columns.elevation);
 				}
+				ListTableColumn.updateModelIndices(this);
 			}
 		};
 		surveyTable.setAspect(Aspect.NEV);
