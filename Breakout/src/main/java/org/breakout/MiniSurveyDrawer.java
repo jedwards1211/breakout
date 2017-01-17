@@ -4,8 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.util.function.Consumer;
 
-import javax.swing.JLabel;
+import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableColumnModel;
 
@@ -32,11 +33,9 @@ public class MiniSurveyDrawer extends Drawer {
 	private AnnotatingJTable table;
 	private DefaultAnnotatingJTableSetup tableSetup;
 
-	private JLabel filterLabel;
-	private TextComponentWithHintAndClear filterField;
-
-	private JLabel highlightLabel;
-	private TextComponentWithHintAndClear highlightField;
+	private TextComponentWithHintAndClear searchField;
+	private JRadioButton filterButton;
+	private JRadioButton highlightButton;
 
 	private StatsPanel statsPanel;
 
@@ -45,20 +44,16 @@ public class MiniSurveyDrawer extends Drawer {
 		initLayout();
 	}
 
-	public TextComponentWithHintAndClear filterField() {
-		return filterField;
+	public TextComponentWithHintAndClear searchField() {
+		return searchField;
 	}
 
-	public JLabel filterLabel() {
-		return filterLabel;
+	public JRadioButton filterButton() {
+		return filterButton;
 	}
 
-	public TextComponentWithHintAndClear highlightField() {
-		return highlightField;
-	}
-
-	public JLabel highlightLabel() {
-		return highlightLabel;
+	public JRadioButton highlightButton() {
+		return highlightButton;
 	}
 
 	private void initComponents(Consumer<Runnable> sortRunner) {
@@ -74,11 +69,15 @@ public class MiniSurveyDrawer extends Drawer {
 		((AnnotatingTableRowSorter<SurveyTableModel>) table.getAnnotatingRowSorter())
 				.setModelCopier(new SurveyTableModelCopier());
 
-		filterLabel = new JLabel("Filter: ");
-		filterField = new TextComponentWithHintAndClear("Enter search terms");
+		searchField = new TextComponentWithHintAndClear("Enter search terms");
+		highlightButton = new JRadioButton("Highlight");
+		filterButton = new JRadioButton("Filter");
 
-		highlightLabel = new JLabel("Highlight: ");
-		highlightField = new TextComponentWithHintAndClear("Enter search terms");
+		ButtonGroup searchGroup = new ButtonGroup();
+		searchGroup.add(highlightButton);
+		searchGroup.add(filterButton);
+
+		highlightButton.setSelected(true);
 
 		statsPanel = new StatsPanel(new DefaultBinder<>());
 		statsPanel.setBorder(new EmptyBorder(5, 5, 5, 0));
@@ -89,13 +88,10 @@ public class MiniSurveyDrawer extends Drawer {
 
 		setPreferredSize(new Dimension(250, 500));
 		GridBagWizard gbw = GridBagWizard.create(content);
-		gbw.put(filterLabel).xy(0, 0).west().insets(2, 2, 0, 0);
-		gbw.put(filterField).rightOf(filterLabel).fillx(1.0).insets(2, 2, 0, 0);
-		gbw.put(pinButton()).rightOf(filterField).filly().insets(2, 0, 0, 0);
-		gbw.put(highlightLabel).below(filterLabel).west().insets(2, 2, 2, 0);
-		gbw.put(highlightField).below(filterField, pinButton()).fillx(1.0)
-				.insets(2, 2, 2, 0);
-		gbw.put(tableSetup.scrollPane).below(highlightLabel, highlightField)
+		gbw.put(searchField).xy(0, 0).width(2).fillx(1.0).insets(2, 2, 0, 0);
+		gbw.put(pinButton()).rightOf(searchField).filly().insets(2, 0, 0, 0);
+		gbw.put(highlightButton, filterButton).below(searchField).width(1).intoRow().insets(2, 2, 2, 0);
+		gbw.put(tableSetup.scrollPane).below(highlightButton, pinButton())
 				.fillboth(1.0, 1.0);
 		gbw.put(statsPanel).below(tableSetup.scrollPane).fillx(1.0);
 	}

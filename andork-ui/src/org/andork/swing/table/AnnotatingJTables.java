@@ -22,9 +22,13 @@
 package org.andork.swing.table;
 
 import java.awt.Color;
+import java.awt.Rectangle;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Collections;
 import java.util.Map;
 
+import javax.swing.JToggleButton;
 import javax.swing.RowFilter;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -32,6 +36,7 @@ import javax.swing.table.TableModel;
 import javax.swing.text.JTextComponent;
 
 import org.andork.awt.AWTUtil;
+import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.RowAnnotator;
 import org.andork.swing.event.EasyDocumentListener;
 import org.andork.swing.jump.JScrollAndJumpPane;
@@ -72,9 +77,7 @@ public class AnnotatingJTables {
 			@Override
 			public void documentChanged(DocumentEvent e) {
 				if (table.getAnnotatingRowSorter() == null) {
-					{
-						return;
-					}
+					return;
 				}
 
 				RowFilter<TableModel, Integer> filter = null;
@@ -92,11 +95,80 @@ public class AnnotatingJTables {
 					setAnnotationColors(table, Collections.singletonMap(filter, highlightColor));
 				} else {
 					highlightField.setForeground(Color.BLACK);
-					setAnnotationColors(table, Collections.<RowFilter<TableModel, Integer>, Color> emptyMap());
+					setAnnotationColors(table, Collections.<RowFilter<TableModel, Integer>, Color>emptyMap());
 				}
 
 			}
 		};
+	}
+
+	public static void connectSearchFieldAndRadioButtons(
+			final AnnotatingJTable table,
+			final JTextComponent searchField,
+			final RowFilterFactory<String, TableModel, Integer> filterFactory,
+			final JToggleButton highlightButton,
+			final JToggleButton filterButton,
+			final Color highlightColor) {
+		class Updater extends EasyDocumentListener implements ItemListener {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				update();
+			}
+
+			@Override
+			public void documentChanged(DocumentEvent e) {
+				update();
+			}
+
+			@SuppressWarnings("unchecked")
+			public void update() {
+				AnnotatingRowSorter<TableModel, Integer> rowSorter = (AnnotatingRowSorter<TableModel, Integer>) table
+						.getAnnotatingRowSorter();
+				if (rowSorter == null) {
+					return;
+				}
+
+				RowFilter<TableModel, Integer> filter = null;
+
+				if (searchField.getText() != null && searchField.getText().length() > 0) {
+					try {
+						filter = filterFactory.createFilter(searchField.getText());
+						searchField.setForeground(Color.BLACK);
+					} catch (Exception ex) {
+						searchField.setForeground(Color.RED);
+					}
+				}
+				final RowFilter<TableModel, Integer> finalFilter = filter;
+
+				rowSorter.setRowFilter(filterButton.isSelected() ? filter : null);
+				rowSorter.setRowAnnotator(highlightButton.isSelected() && filter != null
+						? RowAnnotator.filterAnnotator(filter) : null);
+				setAnnotationColors(table, filter != null
+						? Collections.singletonMap(filter, highlightColor)
+						: Collections.emptyMap());
+				if (filter == null) {
+					searchField.setForeground(Color.BLACK);
+				} else {
+					rowSorter.invokeWhenDoneSorting(() -> {
+						if (highlightButton.isSelected()) {
+							for (int row = 0; row < rowSorter.getViewRowCount(); row++) {
+								if (rowSorter.getAnnotation(row) == finalFilter) {
+									Rectangle rect = table.getCellRect(row, 0, true);
+									rect.height = table.getHeight();
+									table.scrollRectToVisible(rect);
+									break;
+								}
+							}
+						}
+					});
+				}
+			}
+		}
+
+		Updater updater = new Updater();
+		searchField.getDocument().addDocumentListener(updater);
+		filterButton.addItemListener(updater);
+		highlightButton.addItemListener(updater);
 	}
 
 	private static void setAnnotationColors(AnnotatingJTable table, Map<?, Color> colors) {

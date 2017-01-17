@@ -26,7 +26,10 @@ import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.util.function.Consumer;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JTable;
 import javax.swing.JToggleButton;
 
 import org.andork.awt.GridBagWizard;
@@ -44,10 +47,10 @@ public class SurveyDrawer extends Drawer {
 	 *
 	 */
 	private static final long serialVersionUID = -8494125520077495833L;
-	JLabel highlightLabel;
-	TextComponentWithHintAndClear highlightField;
-	JLabel filterLabel;
-	TextComponentWithHintAndClear filterField;
+	JLabel searchLabel;
+	TextComponentWithHintAndClear searchField;
+	JRadioButton filterButton;
+	JRadioButton highlightButton;
 
 	SurveyTable surveyTable;
 	DefaultAnnotatingJTableSetup surveyTableSetup;
@@ -57,13 +60,19 @@ public class SurveyDrawer extends Drawer {
 	public SurveyDrawer(Consumer<Runnable> sortRunner) {
 		setPreferredSize(new Dimension(800, 250));
 
-		highlightLabel = new JLabel("Highlight: ");
-		filterLabel = new JLabel("Filter: ");
+		searchLabel = new JLabel("Search: ");
+		searchField = new TextComponentWithHintAndClear("Enter search terms");
+		filterButton = new JRadioButton("Filter");
+		highlightButton = new JRadioButton("Highlight");
 
-		highlightField = new TextComponentWithHintAndClear("Enter search terms");
-		filterField = new TextComponentWithHintAndClear("Enter search terms");
+		ButtonGroup searchGroup = new ButtonGroup();
+		searchGroup.add(filterButton);
+		searchGroup.add(highlightButton);
+
+		highlightButton.setSelected(true);
 
 		surveyTable = new SurveyTable();
+		surveyTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		surveyTableSetup = new DefaultAnnotatingJTableSetup(surveyTable, sortRunner);
 		((AnnotatingTableRowSorter<SurveyTableModel>) surveyTableSetup.table.getAnnotatingRowSorter())
 				.setModelCopier(new SurveyTableModelCopier());
@@ -89,23 +98,27 @@ public class SurveyDrawer extends Drawer {
 
 		gbw.defaults().autoinsets(new DefaultAutoInsets(2, 2));
 		gbw.put(mainResizeHandle()).xy(0, 0).fillx(1.0).remWidth();
-		gbw.put(filterLabel).xy(0, 1).west().insets(2, 2, 0, 0);
-		gbw.put(filterField).rightOfLast().fillboth(1.0, 0.0);
-		gbw.put(highlightLabel).rightOfLast().west().insets(2, 10, 0, 0);
-		gbw.put(highlightField).rightOfLast().fillboth(1.0, 0.0);
+		gbw.put(searchLabel).xy(0, 1).west().insets(2, 2, 0, 0);
+		gbw.put(searchField).rightOfLast().fillboth(1.0, 0.0);
+		gbw.put(highlightButton).rightOfLast().west().insets(2, 5, 0, 0);
+		gbw.put(filterButton).rightOfLast().west().insets(2, 5, 0, 0);
 		gbw.put(showDataButton).rightOfLast().filly(0.0);
 		gbw.put(editButton).rightOfLast().filly(0.0);
 		gbw.put(pinButton()).rightOfLast().east().filly(0.0);
 		gbw.put(maxButton()).rightOfLast().east().filly(0.0);
-		gbw.put(surveyTableSetup.scrollPane).below(filterLabel, maxButton()).fillboth(0.0, 1.0);
+		gbw.put(surveyTableSetup.scrollPane).below(searchLabel, maxButton()).fillboth(0.0, 1.0);
 	}
 
-	public TextComponentWithHintAndClear filterField() {
-		return filterField;
+	public TextComponentWithHintAndClear searchField() {
+		return searchField;
 	}
 
-	public TextComponentWithHintAndClear highlightField() {
-		return highlightField;
+	public JRadioButton highlightButton() {
+		return highlightButton;
+	}
+
+	public JRadioButton filterButton() {
+		return filterButton;
 	}
 
 	public JToggleButton showDataButton() {

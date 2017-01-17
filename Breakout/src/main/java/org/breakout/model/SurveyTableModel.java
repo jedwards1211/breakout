@@ -139,6 +139,7 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 
 	public void clear() {
 		rows.clear();
+		fixEndRows();
 	}
 
 	@Override

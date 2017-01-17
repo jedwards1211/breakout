@@ -1027,7 +1027,7 @@ public class BreakoutMainView {
 	Survey3dModel model3d;
 	float[] v = newMat4f();
 	int debugMbrCount = 0;
-	List<BasicJOGLObject> debugMbrs = new ArrayList<BasicJOGLObject>();
+	List<BasicJOGLObject> debugMbrs = new ArrayList<>();
 
 	Shot3dPickContext spc = new Shot3dPickContext();
 
@@ -1039,9 +1039,9 @@ public class BreakoutMainView {
 	File rootFile;
 	Path rootDirectory;
 
-	final Binder<QObject<RootModel>> rootModelBinder = new DefaultBinder<QObject<RootModel>>();
+	final Binder<QObject<RootModel>> rootModelBinder = new DefaultBinder<>();
 
-	final Binder<QObject<ProjectModel>> projectModelBinder = new DefaultBinder<QObject<ProjectModel>>();
+	final Binder<QObject<ProjectModel>> projectModelBinder = new DefaultBinder<>();
 
 	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(
 			ProjectModel.colorParam,
@@ -1183,14 +1183,14 @@ public class BreakoutMainView {
 					}
 				};
 
-				final List<Shot> nonNullShots = new ArrayList<Shot>();
+				final List<Shot> nonNullShots = new ArrayList<>();
 
 				if (!shots.isEmpty()) {
 					Subtask calculatingSubtask = new Subtask(this);
 					calculatingSubtask.setStatus("calculating");
 					calculatingSubtask.setIndeterminate(true);
 
-					LinkedHashSet<Station> stations = new LinkedHashSet<Station>();
+					LinkedHashSet<Station> stations = new LinkedHashSet<>();
 
 					for (Shot shot : shots) {
 						if (shot != null) {
@@ -1263,7 +1263,7 @@ public class BreakoutMainView {
 				});
 			}
 		});
-	} , 1000, new DebounceOptions<Void>().executor(debouncer));
+	}, 1000, new DebounceOptions<Void>().executor(debouncer));
 
 	public BreakoutMainView() {
 		final GLProfile glp = GLProfile.get(GLProfile.GL3);
@@ -1316,12 +1316,10 @@ public class BreakoutMainView {
 					new SurveyorFilter(text),
 					new DescriptionFilter(text)));
 
-			surveyDrawer.filterField().textComponent.getDocument().addDocumentListener(
-					AnnotatingJTables.createFilterFieldListener(surveyDrawer.table(),
-							surveyDrawer.filterField().textComponent, rowFilterFactory));
-			surveyDrawer.highlightField().textComponent.getDocument().addDocumentListener(
-					AnnotatingJTables.createHighlightFieldListener(surveyDrawer.table(),
-							surveyDrawer.highlightField().textComponent, rowFilterFactory, Color.YELLOW));
+			AnnotatingJTables.connectSearchFieldAndRadioButtons(
+					surveyDrawer.table(), surveyDrawer.searchField().textComponent,
+					rowFilterFactory, surveyDrawer.highlightButton(),
+					surveyDrawer.filterButton(), Color.YELLOW);
 		});
 
 		pickHandler = new MousePickHandler();
@@ -1445,12 +1443,10 @@ public class BreakoutMainView {
 			miniSurveyDrawer.table().setModel(surveyDrawer.table().getModel());
 			miniSurveyDrawer.table().setModelSelectionModel(surveyDrawer.table().getModelSelectionModel());
 
-			miniSurveyDrawer.filterField().textComponent.getDocument().addDocumentListener(
-					AnnotatingJTables.createFilterFieldListener(miniSurveyDrawer.table(),
-							miniSurveyDrawer.filterField().textComponent, rowFilterFactory));
-			miniSurveyDrawer.highlightField().textComponent.getDocument().addDocumentListener(
-					AnnotatingJTables.createHighlightFieldListener(miniSurveyDrawer.table(),
-							miniSurveyDrawer.highlightField().textComponent, rowFilterFactory, Color.YELLOW));
+			AnnotatingJTables.connectSearchFieldAndRadioButtons(
+					miniSurveyDrawer.table(), miniSurveyDrawer.searchField().textComponent,
+					rowFilterFactory, miniSurveyDrawer.highlightButton(), miniSurveyDrawer.filterButton(),
+					Color.YELLOW);
 
 			miniSurveyDrawer.delegate().dockingSide(Side.LEFT);
 			miniSurveyDrawer.mainResizeHandle();
@@ -1874,9 +1870,9 @@ public class BreakoutMainView {
 			}
 		});
 
-		((JTextField) surveyDrawer.filterField().textComponent).addActionListener(new FitToFilteredHandler(
+		((JTextField) surveyDrawer.searchField().textComponent).addActionListener(new FitToFilteredHandler(
 				surveyDrawer.table()));
-		((JTextField) miniSurveyDrawer.filterField().textComponent)
+		((JTextField) miniSurveyDrawer.searchField().textComponent)
 				.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
 		Binder<Boolean> showDataInSurveyTableBinder = new QObjectAttributeBinder<>(RootModel.showDataInSurveyTable)
 				.bind(rootModelBinder);
@@ -2223,7 +2219,24 @@ public class BreakoutMainView {
 			@Override
 			public long animate(long animTime) {
 				table.getModelSelectionModel().clearSelection();
-				table.selectAll();
+				AnnotatingRowSorter<TableModel, Integer> rowSorter = (AnnotatingRowSorter<TableModel, Integer>) table
+						.getAnnotatingRowSorter();
+				if (rowSorter.getRowFilter() != null) {
+					table.selectAll();
+				} else {
+					ListSelectionModel selectionModel = table.getSelectionModel();
+					int intervalStart = -1;
+					for (int row = 0; row < rowSorter.getViewRowCount(); row++) {
+						if (rowSorter.getAnnotation(row) != null) {
+							if (intervalStart < 0) {
+								intervalStart = row;
+							}
+						} else if (intervalStart >= 0) {
+							selectionModel.addSelectionInterval(intervalStart, row - 1);
+							intervalStart = -1;
+						}
+					}
+				}
 
 				fitViewToSelected();
 
@@ -2259,7 +2272,7 @@ public class BreakoutMainView {
 		if (model3d == null) {
 			return Collections.emptySet();
 		}
-		Set<Shot3d> result = new HashSet<Shot3d>();
+		Set<Shot3d> result = new HashSet<>();
 		getSelectedShotsFromTable().forEach(shot -> result.add(model3d.getShot(shot.number)));
 		if (result.size() < 2) {
 			result.clear();
@@ -2462,8 +2475,9 @@ public class BreakoutMainView {
 								Optional<Path> foundFile = Files
 										.find(dir.toPath(), SCANNED_NOTES_SEARCH_DEPTH,
 												(Path path, BasicFileAttributes attrs) -> {
-									return path.toString().endsWith(link);
-								} , FileVisitOption.FOLLOW_LINKS).findFirst();
+													return path.toString().endsWith(link);
+												}, FileVisitOption.FOLLOW_LINKS)
+										.findFirst();
 								if (foundFile.isPresent() && !isCanceled() && !isCanceling()) {
 									SwingUtilities.invokeLater(() -> openSurveyNotes(foundFile.get().toFile()));
 									return;
@@ -2532,7 +2546,7 @@ public class BreakoutMainView {
 		renderer.getViewState().pickXform().exportViewVolume(hull, e, 10);
 
 		if (model3d != null) {
-			List<PickResult<Shot3d>> pickResults = new ArrayList<PickResult<Shot3d>>();
+			List<PickResult<Shot3d>> pickResults = new ArrayList<>();
 			// model3d.pickShots( origin , direction , ( float ) Math.PI / 64 ,
 			// spc , pickResults );
 			model3d.pickShots(hull, spc, pickResults);
