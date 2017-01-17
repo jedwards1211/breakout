@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.andork</groupId>
   <artifactId>andork-ui-debug</artifactId>
-  <version>1.0.0-alpha.1</version>
+  <version>1.0.0-alpha.2</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <resources>
@@ -33,7 +33,7 @@
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-ui</artifactId>
-  		<version>1.0.0-alpha.1</version>
+  		<version>1.0.0-alpha.2</version>
   	</dependency>
   </dependencies>
 </project>
