@@ -28,7 +28,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.Insets;
 import java.awt.LinearGradientPaint;
 import java.nio.file.Path;
@@ -44,7 +43,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -68,11 +66,9 @@ import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.BetterCardLayoutBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.bind.ui.ComponentBackgroundBinder;
-import org.andork.bind.ui.ComponentTextBinder;
 import org.andork.bind.ui.ISelectorSelectionBinder;
 import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.func.LinearFloatBimapper;
-import org.andork.func.PathStringBimapper;
 import org.andork.func.RoundingFloat2IntegerBimapper;
 import org.andork.plot.PlotAxisConversionBinder;
 import org.andork.q.QMap;
@@ -106,8 +102,7 @@ public class SettingsDrawer extends Drawer {
 
 	Localizer localizer;
 
-	JLabel projectFileLabel;
-	JTextField projectFileField;
+	JLabel titleLabel;
 	ViewButtonsPanel viewButtonsPanel;
 	JLabel mouseSensitivityLabel;
 	JSlider mouseSensitivitySlider;
@@ -243,9 +238,6 @@ public class SettingsDrawer extends Drawer {
 	}
 
 	private void createBindings() {
-		ComponentTextBinder.bind(projectFileField,
-				BimapperBinder.bind(PathStringBimapper.instance, currentProjectFileBinder));
-
 		ComponentBackgroundBinder.bind(bgColorButton, backgroundColorBinder);
 
 		ButtonSelectedBinder
@@ -278,13 +270,9 @@ public class SettingsDrawer extends Drawer {
 	}
 
 	private void createComponents(I18n i18n) {
-		projectFileLabel = new JLabel();
-		projectFileLabel.setFont(projectFileLabel.getFont().deriveFont(Font.BOLD).deriveFont(14f));
-		localizer.setText(projectFileLabel, "projectFileLabel.text");
-		projectFileField = new JTextField();
-		projectFileField.setEditable(false);
-		projectFileField.setPreferredSize(new Dimension(150, projectFileField.getPreferredSize().height));
-		ImageIcon dropdownIcon = new ImageIcon(getClass().getResource("dropdown.png"));
+		titleLabel = new JLabel();
+		titleLabel.setFont(titleLabel.getFont().deriveFont(titleLabel.getFont().getSize() * 1.5f));
+		localizer.setText(titleLabel, "titleLabel.text");
 
 		viewButtonsPanel = new ViewButtonsPanel();
 
@@ -390,9 +378,8 @@ public class SettingsDrawer extends Drawer {
 		mouseWheelSensitivitySlider.setOpaque(false);
 
 		resetViewButton = new JButton("Reset View");
-
-		fitViewToSelectedButton = new JButton("Fit View to Selected");
-		fitViewToEverythingButton = new JButton("Fit View to Everything");
+		fitViewToSelectedButton = new JButton("Fit to Selected");
+		fitViewToEverythingButton = new JButton("Fit to Everything");
 		orbitToPlanButton = new JButton("Orbit to Plan");
 
 		numSamplesLabel = new JLabel();
@@ -442,19 +429,19 @@ public class SettingsDrawer extends Drawer {
 	private void createLayout() {
 		GridBagWizard w = GridBagWizard.create(mainPanel);
 		w.defaults().autoinsets(new DefaultAutoInsets(3, 3));
-		w.put(pinButton()).xy(0, 0).northwest();
-		w.put(projectFileLabel).rightOf(pinButton()).west();
-		GridBagWizard projectFilePanel = GridBagWizard.quickPanel();
-		projectFilePanel.defaults().filly();
-		projectFilePanel.put(projectFileField).xy(0, 0).fillx(1.0);
-
-		w.put(projectFilePanel.getTarget()).below(pinButton(), projectFileLabel).fillx();
+		GridBagWizard titlePanel = GridBagWizard.quickPanel();
+		titlePanel.put(pinButton()).xy(0, 0).northwest();
+		titlePanel.put(titleLabel).rightOfLast().fillx(1.0).insets(10, 3, 3, 3);
+		w.put(titlePanel.getTarget()).xy(0, 0).fillx(1.0);
 
 		w.put(viewButtonsPanel).belowLast().addToInsets(10, 0, 0, 0);
-		w.put(resetViewButton).belowLast().fillx(1.0);
-		w.put(fitViewToSelectedButton).belowLast().fillx(1.0);
-		w.put(fitViewToEverythingButton).belowLast().fillx(1.0);
-		w.put(orbitToPlanButton).belowLast().fillx(1.0);
+		GridBagWizard autoButtonPanel = GridBagWizard.quickPanel();
+		autoButtonPanel.put(resetViewButton).xy(0, 0).fillx(1.0);
+		autoButtonPanel.put(fitViewToSelectedButton).rightOfLast().width(1).fillx(1.0);
+		autoButtonPanel.put(orbitToPlanButton).below(resetViewButton).width(1).fillx(1.0);
+		autoButtonPanel.put(fitViewToEverythingButton).rightOfLast().width(1).fillx(1.0);
+		w.put(autoButtonPanel.getTarget()).belowLast().fillx(1.0);
+
 		w.put(mouseSensitivityLabel).belowLast().west().addToInsets(10, 0, 0, 0);
 		w.put(mouseSensitivitySlider).belowLast().fillx().north();
 
@@ -463,7 +450,7 @@ public class SettingsDrawer extends Drawer {
 
 		GridBagWizard bgPanel = GridBagWizard.quickPanel();
 		bgPanel.put(bgColorLabel).xy(0, 0).west();
-		bgPanel.put(bgColorButton).rightOfLast().west().weightx(1.0);
+		bgPanel.put(bgColorButton).rightOfLast().west().weightx(1.0).insets(0, 10, 0, 0);
 		w.put(bgPanel.getTarget()).belowLast().fillx().addToInsets(10, 0, 0, 0);
 
 		w.put(ambientLightLabel).belowLast().west();
@@ -471,10 +458,10 @@ public class SettingsDrawer extends Drawer {
 
 		w.put(distColorationLabel).belowLast().west().addToInsets(10, 0, 0, 0);
 		w.put(distColorationAxisPanel).belowLast().fillx();
+		w.put(colorParamLabel).belowLast().west();
 
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel();
-		colorParamPanel.put(colorParamLabel).xy(0, 0).filly().west();
-		colorParamPanel.put(colorParamSelector.comboBox()).rightOfLast().fillboth(1.0, 0.0)
+		colorParamPanel.put(colorParamSelector.comboBox()).xy(0, 0).fillboth(1.0, 0.0)
 				.addToInsets(0, 5, 0, 0);
 		colorParamButtonsPanel.setLayout(colorParamButtonsLayout = new BetterCardLayout());
 		colorParamButtonsLayout.setSizeHidden(false);
