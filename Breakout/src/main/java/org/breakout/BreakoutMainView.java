@@ -117,7 +117,6 @@ import org.andork.bind.DefaultBinder;
 import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
-import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.CollectionUtils;
 import org.andork.compass.plot.BeginSectionCommand;
 import org.andork.compass.plot.CompassPlotCommand;
@@ -1146,18 +1145,6 @@ public class BreakoutMainView {
 				copySubtask.setStatus("Parsing shot data");
 				copySubtask.setIndeterminate(false);
 
-				// SurveyTableModel copy = new SurveyTableModel();
-				// SurveyTableModelCopier copier = new SurveyTableModelCopier();
-				//
-				// SurveyTableModel model = new FromEDT<SurveyTableModel>() {
-				// @Override
-				// public SurveyTableModel run() throws Throwable {
-				// return surveyDrawer.table().getModel();
-				// }
-				// }.result();
-				//
-				// copier.copyInBackground(model, copy, 1000, copySubtask);
-
 				SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 
 				if (copySubtask.isCanceling()) {
@@ -1312,7 +1299,6 @@ public class BreakoutMainView {
 
 			rowFilterFactory = text -> new SmartComboTableRowFilter(Arrays.asList(
 					new SurveyDesignationFilter(text),
-					// new SurveyRegexFilter(text),
 					new SurveyorFilter(text),
 					new DescriptionFilter(text)));
 
@@ -1383,9 +1369,6 @@ public class BreakoutMainView {
 		});
 		canvasMouseAdapterWrapper.setWrapped(mouseLooper);
 
-		// glWindow.addMouseListener( new NEWT2AWTMouseEventConverter( canvas ,
-		// canvasMouseAdapterWrapper ) );
-
 		autoshowController = new DrawerAutoshowController();
 
 		otherMouseHandler = new OtherMouseHandler();
@@ -1444,8 +1427,10 @@ public class BreakoutMainView {
 			miniSurveyDrawer.table().setModelSelectionModel(surveyDrawer.table().getModelSelectionModel());
 
 			AnnotatingJTables.connectSearchFieldAndRadioButtons(
-					miniSurveyDrawer.table(), miniSurveyDrawer.searchField().textComponent,
-					rowFilterFactory, miniSurveyDrawer.highlightButton(), miniSurveyDrawer.filterButton(),
+					miniSurveyDrawer.table(),
+					miniSurveyDrawer.searchField().textComponent,
+					rowFilterFactory, miniSurveyDrawer.highlightButton(),
+					miniSurveyDrawer.filterButton(),
 					Color.YELLOW);
 
 			miniSurveyDrawer.delegate().dockingSide(Side.LEFT);
@@ -1478,11 +1463,7 @@ public class BreakoutMainView {
 				Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
 		mainPanel.add(taskListDrawer.pinButton(), spinnerDelegate);
-		// mainPanel.setLayer(taskListDrawer.pinButton(),
-		// JmainPanel.getLayer(settingsDrawer));
 		mainPanel.add(hintLabel, hintLabelDelegate);
-		// mainPanel.setLayer(hintLabel,
-		// JmainPanel.getLayer(settingsDrawer));
 
 		SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
 		canvasDelegate.putExtraConstraint(Side.TOP, new SideConstraint(taskListDrawer, Side.BOTTOM, 0));
@@ -1516,9 +1497,6 @@ public class BreakoutMainView {
 				openSurveyNotes(link);
 			}
 		});
-
-		// new javax.swing.Timer(1000, e ->
-		// System.out.println(mainPanel.getBounds())).start();
 
 		surveyDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.surveyDrawer, projectModelBinder));
 		settingsDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.settingsDrawer, projectModelBinder));
@@ -1874,18 +1852,6 @@ public class BreakoutMainView {
 				surveyDrawer.table()));
 		((JTextField) miniSurveyDrawer.searchField().textComponent)
 				.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
-		Binder<Boolean> showDataInSurveyTableBinder = new QObjectAttributeBinder<>(RootModel.showDataInSurveyTable)
-				.bind(rootModelBinder);
-		new ButtonSelectedBinder(surveyDrawer.showDataButton).bind(showDataInSurveyTableBinder);
-		new BinderWrapper<Boolean>() {
-			@Override
-			protected void onValueChanged(Boolean showData) {
-				if (showData == null) {
-					showData = false;
-				}
-				surveyDrawer.table().setShowData(showData);
-			}
-		}.bind(showDataInSurveyTableBinder);
 
 		new BinderWrapper<Integer>() {
 			@Override
@@ -2502,28 +2468,6 @@ public class BreakoutMainView {
 		}
 	}
 
-	// class SurveyFilterFactory implements RowFilterFactory<String, TableModel,
-	// Integer>
-	// {
-	// @Override
-	// public RowFilter<TableModel, Integer> createFilter( String input )
-	// {
-	// switch( getProjectModel( ).get( ProjectModel.filterType ) )
-	// {
-	// case ALPHA_DESIGNATION:
-	// return new SurveyDesignationFilter( input );
-	// case REGEXP:
-	// return new SurveyRegexFilter( input );
-	// case SURVEYORS:
-	// return new SurveyorFilter( input );
-	// case DESCRIPTION:
-	// return new DescriptionFilter( input );
-	// default:
-	// return null;
-	// }
-	// }
-	// }
-
 	public void perspectiveMode() {
 		float[] forward = new float[3];
 		float[] right = new float[3];
@@ -2547,8 +2491,6 @@ public class BreakoutMainView {
 
 		if (model3d != null) {
 			List<PickResult<Shot3d>> pickResults = new ArrayList<>();
-			// model3d.pickShots( origin , direction , ( float ) Math.PI / 64 ,
-			// spc , pickResults );
 			model3d.pickShots(hull, spc, pickResults);
 
 			PickResult<Shot3d> best = null;

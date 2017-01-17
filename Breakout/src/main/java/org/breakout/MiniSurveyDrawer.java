@@ -18,14 +18,11 @@ import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
+import org.andork.swing.table.ListTableColumn;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 
-@SuppressWarnings("serial")
 public class MiniSurveyDrawer extends Drawer {
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = -4890482486147486271L;
 
 	private JPanel content;
@@ -60,10 +57,13 @@ public class MiniSurveyDrawer extends Drawer {
 		content = new JPanel();
 
 		DefaultTableColumnModel quickTableColumnModel = new DefaultTableColumnModel();
-		quickTableColumnModel.addColumn(SurveyTable.Columns.fromStation);
-		quickTableColumnModel.addColumn(SurveyTable.Columns.toStation);
+		SurveyTable.Columns columns = new SurveyTable.Columns();
+		quickTableColumnModel.addColumn(columns.fromStation);
+		quickTableColumnModel.addColumn(columns.toStation);
 
-		table = new AnnotatingJTable(new SurveyTableModel(), quickTableColumnModel);
+		table = new AnnotatingJTable(new SurveyTableModel(),
+				quickTableColumnModel);
+		ListTableColumn.updateModelIndices(table);
 
 		tableSetup = new DefaultAnnotatingJTableSetup(table, sortRunner);
 		((AnnotatingTableRowSorter<SurveyTableModel>) table.getAnnotatingRowSorter())

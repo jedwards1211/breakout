@@ -24,13 +24,16 @@ package org.breakout;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.function.Consumer;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JToggleButton;
+import javax.swing.SwingConstants;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
@@ -39,6 +42,7 @@ import org.andork.awt.layout.Side;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.table.AnnotatingTableRowSorter;
 import org.andork.swing.table.DefaultAnnotatingJTableSetup;
+import org.breakout.SurveyTable.Aspect;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.SurveyTableModel.SurveyTableModelCopier;
 
@@ -54,7 +58,11 @@ public class SurveyDrawer extends Drawer {
 
 	SurveyTable surveyTable;
 	DefaultAnnotatingJTableSetup surveyTableSetup;
-	JToggleButton showDataButton;
+
+	JRadioButton shotsButton;
+	JRadioButton nevButton;
+	JRadioButton tripButton;
+
 	JToggleButton editButton;
 
 	public SurveyDrawer(Consumer<Runnable> sortRunner) {
@@ -77,9 +85,13 @@ public class SurveyDrawer extends Drawer {
 		((AnnotatingTableRowSorter<SurveyTableModel>) surveyTableSetup.table.getAnnotatingRowSorter())
 				.setModelCopier(new SurveyTableModelCopier());
 
-		showDataButton = new JToggleButton("123");
-		showDataButton.setMargin(new Insets(0, 0, 0, 0));
-		showDataButton.setToolTipText("Switch between data/metadata");
+		shotsButton = new JRadioButton("Shots");
+		nevButton = new JRadioButton("NEV");
+		tripButton = new JRadioButton("Trip");
+		ButtonGroup aspectGroup = new ButtonGroup();
+		aspectGroup.add(shotsButton);
+		aspectGroup.add(nevButton);
+		aspectGroup.add(tripButton);
 
 		editButton = new JToggleButton("Edit");
 		editButton.setMargin(new Insets(0, 0, 0, 0));
@@ -102,11 +114,36 @@ public class SurveyDrawer extends Drawer {
 		gbw.put(searchField).rightOfLast().fillboth(1.0, 0.0);
 		gbw.put(highlightButton).rightOfLast().west().insets(2, 5, 0, 0);
 		gbw.put(filterButton).rightOfLast().west().insets(2, 5, 0, 0);
-		gbw.put(showDataButton).rightOfLast().filly(0.0);
+		gbw.put(shotsButton).rightOfLast().filly(0.0);
+		gbw.put(new JSeparator(SwingConstants.VERTICAL)).rightOfLast().filly(0.0);
+		gbw.put(nevButton).rightOfLast().filly(0.0);
+		gbw.put(tripButton).rightOfLast().filly(0.0);
 		gbw.put(editButton).rightOfLast().filly(0.0);
+		gbw.put(new JSeparator(SwingConstants.VERTICAL)).rightOfLast().filly(0.0);
 		gbw.put(pinButton()).rightOfLast().east().filly(0.0);
 		gbw.put(maxButton()).rightOfLast().east().filly(0.0);
 		gbw.put(surveyTableSetup.scrollPane).below(searchLabel, maxButton()).fillboth(0.0, 1.0);
+
+		ItemListener aspectListener = new ItemListener() {
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				if (e.getStateChange() == ItemEvent.DESELECTED) {
+					return;
+				}
+				if (e.getSource() == shotsButton) {
+					surveyTable.setAspect(Aspect.SHOTS);
+				} else if (e.getSource() == nevButton) {
+					surveyTable.setAspect(Aspect.NEV);
+				} else if (e.getSource() == tripButton) {
+					surveyTable.setAspect(Aspect.TRIP);
+				}
+			}
+		};
+		shotsButton.addItemListener(aspectListener);
+		nevButton.addItemListener(aspectListener);
+		tripButton.addItemListener(aspectListener);
+
+		shotsButton.setSelected(true);
 	}
 
 	public TextComponentWithHintAndClear searchField() {
@@ -119,10 +156,6 @@ public class SurveyDrawer extends Drawer {
 
 	public JRadioButton filterButton() {
 		return filterButton;
-	}
-
-	public JToggleButton showDataButton() {
-		return showDataButton;
 	}
 
 	public JToggleButton editButton() {

@@ -159,7 +159,7 @@ public class SettingsDrawer extends Drawer {
 
 	JLabel openSurveyScanCommandLabel;
 
-	BinderWrapper<QObject<RootModel>> rootBinder = new BinderWrapper<QObject<RootModel>>();
+	BinderWrapper<QObject<RootModel>> rootBinder = new BinderWrapper<>();
 	Binder<Path> currentProjectFileBinder = QObjectAttributeBinder.bind(
 			RootModel.currentProjectFile,
 			rootBinder);
@@ -174,7 +174,7 @@ public class SettingsDrawer extends Drawer {
 					RootModel.mouseWheelSensitivity,
 					rootBinder);
 
-	BinderWrapper<QObject<ProjectModel>> projectBinder = new BinderWrapper<QObject<ProjectModel>>();
+	BinderWrapper<QObject<ProjectModel>> projectBinder = new BinderWrapper<>();
 	Binder<CameraView> cameraViewBinder = QObjectAttributeBinder.bind(
 			ProjectModel.cameraView,
 			projectBinder);
@@ -216,8 +216,12 @@ public class SettingsDrawer extends Drawer {
 
 				delegate().dockingSide(Side.RIGHT);
 
+				Color background = getBackground();
+				if (background == null) {
+					background = new Color(228, 228, 228);
+				}
 				setUnderpaintBorder(GradientFillBorder.from(Side.TOP).to(Side.BOTTOM).colors(
-						ColorUtils.darkerColor(getBackground(), 0.05),
+						ColorUtils.darkerColor(background, 0.05),
 						ColorUtils.darkerColor(Color.LIGHT_GRAY, 0.05)));
 				setBorder(new OverrideInsetsBorder(
 						new InnerGradientBorder(new Insets(0, 5, 0, 0), Color.GRAY),
@@ -313,7 +317,7 @@ public class SettingsDrawer extends Drawer {
 
 		colorParamLabel = new JLabel();
 		localizer.setText(colorParamLabel, "colorParamLabel.text");
-		colorParamSelector = new DefaultSelector<ColorParam>();
+		colorParamSelector = new DefaultSelector<>();
 		colorParamSelector.setAvailableValues(ColorParam.values());
 		colorParamButtonsPanel = new JPanel();
 		colorParamButtonsPanel.setOpaque(false);

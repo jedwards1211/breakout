@@ -84,7 +84,7 @@ public class Breakout {
 						});
 					}
 				});
-			} , "BreakoutMainView loader");
+			}, "BreakoutMainView loader");
 
 			loaderThread.setDaemon(true);
 			loaderThread.start();

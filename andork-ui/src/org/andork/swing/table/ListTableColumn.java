@@ -62,4 +62,12 @@ public class ListTableColumn<R, V> extends TableColumn {
 			}
 		}
 	}
+
+	@Override
+	public void setWidth(int width) {
+		if (width == getWidth()) {
+			return;
+		}
+		super.setWidth(width);
+	}
 }

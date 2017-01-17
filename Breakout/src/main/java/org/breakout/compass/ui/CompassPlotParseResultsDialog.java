@@ -20,6 +20,7 @@ import org.andork.awt.I18n.Localizer;
 import org.andork.compass.CompassParseError;
 import org.andork.swing.OnEDT;
 import org.breakout.SurveyTable;
+import org.breakout.SurveyTable.Aspect;
 import org.breakout.model.SurveyTableModel;
 
 public class CompassPlotParseResultsDialog extends JDialog {
@@ -67,15 +68,17 @@ public class CompassPlotParseResultsDialog extends JDialog {
 						cm.removeColumn(cm.getColumn(0));
 					}
 
-					addColumn(Columns.fromCave);
-					addColumn(Columns.fromStation);
-					addColumn(Columns.northing);
-					addColumn(Columns.easting);
-					addColumn(Columns.elevation);
+					columns = new Columns();
+
+					addColumn(columns.fromCave);
+					addColumn(columns.fromStation);
+					addColumn(columns.northing);
+					addColumn(columns.easting);
+					addColumn(columns.elevation);
 				}
 			}
 		};
-		surveyTable.setShowData(true);
+		surveyTable.setAspect(Aspect.NEV);
 		JScrollPane surveyTableScroller = new JScrollPane(surveyTable);
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("Errors", errorsPane);
