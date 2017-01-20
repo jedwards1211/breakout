@@ -183,7 +183,9 @@ public class SurveyTable extends AnnotatingJTable {
 
 			final Aspect aspect = this.aspect == null ? Aspect.SHOTS : this.aspect;
 
-			columns = new Columns();
+			if (columns == null) {
+				columns = new Columns();
+			}
 
 			addColumn(columns.fromCave);
 			addColumn(columns.fromStation);
