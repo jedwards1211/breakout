@@ -54,7 +54,7 @@ public class ImportCompassAction extends AbstractAction {
 				fileChooser = new JFileChooser();
 				fileChooser.setMultiSelectionEnabled(true);
 				fileChooser.setAcceptAllFileFilterUsed(true);
-				FileFilter datFilter = new FileNameExtensionFilter("Compass Survey File (*.dat)", "dat");
+				FileFilter datFilter = new FileNameExtensionFilter("Compass Files (*.dat, *.plt)", "dat", "plt");
 				fileChooser.addChoosableFileFilter(datFilter);
 				fileChooser.setFileFilter(datFilter);
 			}

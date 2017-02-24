@@ -2,11 +2,16 @@ package org.breakout.compass.ui;
 
 import java.awt.Toolkit;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
 
 import javax.swing.Box;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTabbedPane;
@@ -39,6 +44,9 @@ public class CompassParseResultsDialog extends JDialog {
 	JButton cancelButton;
 	JButton importButton;
 
+	JRadioButton shotsButton;
+	JRadioButton nevButton;
+
 	final I18nUpdater<CompassParseResultsDialog> i18nUpdater = new I18nUpdater<CompassParseResultsDialog>() {
 		@Override
 		public void updateI18n(Localizer localizer, CompassParseResultsDialog localizedObject) {
@@ -59,10 +67,35 @@ public class CompassParseResultsDialog extends JDialog {
 		JScrollPane surveyTableScroller = new JScrollPane(surveyTable);
 		tabbedPane = new JTabbedPane();
 		tabbedPane.addTab("Errors", errorsPane);
-		tabbedPane.addTab("Data", surveyTableScroller);
 
 		cancelButton = new JButton();
 		importButton = new JButton();
+
+		shotsButton = new JRadioButton("Shots");
+		shotsButton.setSelected(true);
+		nevButton = new JRadioButton("NEV");
+		ButtonGroup aspectGroup = new ButtonGroup();
+		aspectGroup.add(shotsButton);
+		aspectGroup.add(nevButton);
+		Box aspectBox = Box.createHorizontalBox();
+		aspectBox.add(Box.createGlue());
+		aspectBox.add(shotsButton);
+		aspectBox.add(nevButton);
+
+		ItemListener aspectListener = e -> {
+			if (e.getStateChange() != ItemEvent.SELECTED) {
+				return;
+			}
+			surveyTable.setAspect(e.getSource() == nevButton ? Aspect.NEV : Aspect.SHOTS);
+		};
+		shotsButton.addItemListener(aspectListener);
+		nevButton.addItemListener(aspectListener);
+
+		JPanel dataPanel = new JPanel();
+		GridBagWizard w = GridBagWizard.create(dataPanel);
+		w.put(aspectBox, surveyTableScroller).fillx(1.0).intoColumn();
+		w.put(surveyTableScroller).fillboth(1.0, 1.0);
+		tabbedPane.addTab("Data", dataPanel);
 
 		Box buttonBox = Box.createHorizontalBox();
 		buttonBox.add(Box.createGlue());
@@ -71,7 +104,7 @@ public class CompassParseResultsDialog extends JDialog {
 
 		localizer.register(this, i18nUpdater);
 
-		GridBagWizard w = GridBagWizard.create(getContentPane());
+		w = GridBagWizard.create(getContentPane());
 		w.put(tabbedPane, new JSeparator(), buttonBox).x(0).fillx(1.0).intoColumn();
 		w.put(tabbedPane).fillboth(1.0, 1.0);
 		w.put(buttonBox).insets(5, 0, 5, 0);

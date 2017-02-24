@@ -118,6 +118,7 @@ import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.collect.CollectionUtils;
+import org.andork.compass.CompassParseError;
 import org.andork.compass.plot.BeginSectionCommand;
 import org.andork.compass.plot.CompassPlotCommand;
 import org.andork.compass.plot.CompassPlotParser;
@@ -183,7 +184,6 @@ import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
-import org.breakout.compass.ui.CompassPlotParseResultsDialog;
 import org.breakout.model.ColorParam;
 import org.breakout.model.MetacaveExporter;
 import org.breakout.model.MetacaveImporter;
@@ -304,15 +304,29 @@ public class BreakoutMainView {
 	}
 
 	private class ImportCompassTask extends DrawerPinningTask {
-		Iterable<Path> compassFiles;
+		final List<Path> surveyFiles = new ArrayList<>();
+		final List<Path> plotFiles = new ArrayList<>();
 		boolean doImport;
 
 		private ImportCompassTask(Iterable<Path> compassFiles) {
 			super(getMainPanel(), taskListDrawer.holder());
-			this.compassFiles = compassFiles;
+			for (Path p : compassFiles) {
+				if (p.toString().toLowerCase().endsWith(".dat")) {
+					surveyFiles.add(p);
+				} else if (p.toString().toLowerCase().endsWith(".plt")) {
+					plotFiles.add(p);
+				}
+			}
 			compassFiles.forEach(p -> setTotal(getTotal() + 1));
 
 			showDialogLater();
+		}
+
+		private String toString(Object o) {
+			if (o == null) {
+				return null;
+			}
+			return o.toString();
 		}
 
 		@Override
@@ -320,16 +334,59 @@ public class BreakoutMainView {
 			List<SurveyRow> rows = new ArrayList<>();
 			final SurveyTableModel newModel;
 			final CompassSurveyParser parser = new CompassSurveyParser();
+			final CompassPlotParser plotParser = new CompassPlotParser();
+			final Map<String, SurveyRow> stationPositionRows = new HashMap<>();
+
 			try {
 				int progress = 0;
-				for (Path compassFile : compassFiles) {
-					setStatus("Importing data from " + compassFile + "...");
+				for (Path file : surveyFiles) {
+					setStatus("Importing data from " + file + "...");
 					setCompleted(progress++);
-					List<CompassTrip> trips = parser.parseCompassSurveyData(compassFile);
+					List<CompassTrip> trips = parser.parseCompassSurveyData(file);
 					rows.addAll(CompassConverter.convertFromCompass(trips));
 				}
 				newModel = new SurveyTableModel(rows);
 				newModel.setEditable(false);
+
+				for (Path file : plotFiles) {
+					setStatus("Importing data from " + file + "...");
+					setCompleted(progress++);
+
+					SurveyTrip trip = null;
+					for (CompassPlotCommand command : plotParser.parsePlot(file)) {
+						if (command instanceof BeginSectionCommand) {
+							trip = new SurveyTrip();
+							trip.setCave(((BeginSectionCommand) command).getSectionName());
+						} else if (command instanceof DrawSurveyCommand) {
+							DrawSurveyCommand c = (DrawSurveyCommand) command;
+							if (falsy(c.getStationName())) {
+								continue;
+							}
+							SurveyRow row = new MutableSurveyRow()
+									.setTrip(trip)
+									.setFromStation(c.getStationName())
+									.setNorthing(toString(c.getLocation().getNorthing()))
+									.setEasting(toString(c.getLocation().getEasting()))
+									.setElevation(toString(c.getLocation().getVertical()))
+									.toImmutable();
+							stationPositionRows.put(c.getStationName(), row);
+						}
+					}
+				}
+
+				if (!stationPositionRows.isEmpty()) {
+					newModel.updateRows(row -> {
+						SurveyRow posRow = stationPositionRows.get(row.getFromStation());
+						if (posRow == null) {
+							return row;
+						}
+						return row.withMutations(r -> {
+							r.setNorthing(posRow.getNorthing());
+							r.setEasting(posRow.getEasting());
+							r.setElevation(posRow.getElevation());
+						});
+					});
+				}
 			} catch (Exception ex) {
 				ex.printStackTrace();
 				new OnEDT() {
@@ -349,7 +406,10 @@ public class BreakoutMainView {
 				@Override
 				public void run() throws Throwable {
 					CompassParseResultsDialog dialog = new CompassParseResultsDialog(i18n);
-					dialog.setErrors(parser.getErrors());
+					List<CompassParseError> errors = new ArrayList<>();
+					errors.addAll(parser.getErrors());
+					errors.addAll(plotParser.getErrors());
+					dialog.setErrors(errors);
 					dialog.setSurveyTableModel(newModel);
 					dialog.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
 					doImport = false;
@@ -806,115 +866,6 @@ public class BreakoutMainView {
 		}
 	}
 
-	private class ImportCompassPlotTask extends DrawerPinningTask {
-		Iterable<Path> compassFiles;
-		String importOption;
-
-		private ImportCompassPlotTask(Iterable<Path> compassFiles) {
-			super(getMainPanel(), taskListDrawer.holder());
-			this.compassFiles = compassFiles;
-			compassFiles.forEach(p -> setTotal(getTotal() + 1));
-
-			showDialogLater();
-		}
-
-		private String toString(Object o) {
-			if (o == null) {
-				return null;
-			}
-			return o.toString();
-		}
-
-		@Override
-		protected void reallyDuringDialog() throws Exception {
-			final SurveyTableModel newModel;
-			final CompassPlotParser parser = new CompassPlotParser();
-			final List<SurveyRow> rows = new ArrayList<>();
-			final Map<String, SurveyRow> stationPositionRows = new HashMap<>();
-			try {
-				int progress = 0;
-				for (Path compassFile : compassFiles) {
-					setStatus("Importing data from " + compassFile + "...");
-					setCompleted(progress++);
-
-					SurveyTrip trip = null;
-					for (CompassPlotCommand command : parser.parsePlot(compassFile)) {
-						if (command instanceof BeginSectionCommand) {
-							trip = new SurveyTrip();
-							trip.setCave(((BeginSectionCommand) command).getSectionName());
-						} else if (command instanceof DrawSurveyCommand) {
-							DrawSurveyCommand c = (DrawSurveyCommand) command;
-							if (falsy(c.getStationName())) {
-								continue;
-							}
-							SurveyRow row = new MutableSurveyRow()
-									.setTrip(trip)
-									.setFromStation(c.getStationName())
-									.setNorthing(toString(c.getLocation().getNorthing()))
-									.setEasting(toString(c.getLocation().getEasting()))
-									.setElevation(toString(c.getLocation().getVertical()))
-									.toImmutable();
-							rows.add(row);
-							stationPositionRows.put(c.getStationName(), row);
-						}
-					}
-				}
-				newModel = new SurveyTableModel(rows);
-				newModel.setEditable(false);
-			} catch (Exception ex) {
-				ex.printStackTrace();
-				new OnEDT() {
-					@Override
-					public void run() throws Throwable {
-						JOptionPane.showMessageDialog(getMainPanel(),
-								ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
-								"Failed to import compass plot data", JOptionPane.ERROR_MESSAGE);
-					}
-				};
-
-				return;
-			}
-
-			new OnEDT() {
-
-				@Override
-				public void run() throws Throwable {
-					CompassPlotParseResultsDialog dialog = new CompassPlotParseResultsDialog(i18n);
-					dialog.setErrors(parser.getErrors());
-					dialog.setSurveyTableModel(newModel);
-					dialog.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
-					importOption = null;
-					dialog.onImport(e -> {
-						importOption = "import";
-						dialog.dispose();
-					});
-					dialog.setModalityType(ModalityType.APPLICATION_MODAL);
-					dialog.setVisible(true);
-
-					if (newModel == null || newModel.getRowCount() == 0) {
-						return;
-					}
-
-					if ("import".equals(importOption)) {
-						SurveyTableModel model = surveyDrawer.table().getModel();
-						model.updateRows(row -> {
-							SurveyRow posRow = stationPositionRows.get(row.getFromStation());
-							if (posRow == null) {
-								return row;
-							}
-							return row.withMutations(r -> {
-								r.setNorthing(posRow.getNorthing());
-								r.setEasting(posRow.getEasting());
-								r.setElevation(posRow.getElevation());
-							});
-						});
-						rebuild3dModel.run();
-					}
-				}
-			};
-		}
-	}
-
 	private static Shot3dPickContext hoverUpdaterSpc = new Shot3dPickContext();
 
 	private static final int SCANNED_NOTES_SEARCH_DEPTH = 10;
@@ -1065,7 +1016,6 @@ public class BreakoutMainView {
 	OpenProjectAction openProjectAction = new OpenProjectAction(this);
 
 	ImportCompassAction importCompassAction = new ImportCompassAction(this);
-	ImportCompassPlotAction importCompassPlotAction = new ImportCompassPlotAction(this);
 
 	ExportImageAction exportImageAction = new ExportImageAction(this);
 
@@ -1632,7 +1582,6 @@ public class BreakoutMainView {
 		fileMenu.add(new JSeparator());
 		JMenu importMenu = new JMenu();
 		importMenu.add(new JMenuItem(importCompassAction));
-		importMenu.add(new JMenuItem(importCompassPlotAction));
 		fileMenu.add(importMenu);
 		JMenu exportMenu = new JMenu();
 		exportMenu.add(new JMenuItem(exportImageAction));
@@ -2684,11 +2633,6 @@ public class BreakoutMainView {
 
 	public void westFacingProfileMode() {
 		changeView(new float[] { -1, 0, 0 }, new float[] { 0, 0, -1 }, true, getDefaultShotsForOperations());
-	}
-
-	public void importCompassPlot(List<File> files) {
-		ioTaskService
-				.submit(new ImportCompassPlotTask(Lodash.map(files, file -> file.toPath())));
 	}
 
 	public Path getCurrentProjectFile() {
