@@ -123,6 +123,8 @@ import org.andork.compass.plot.BeginSectionCommand;
 import org.andork.compass.plot.CompassPlotCommand;
 import org.andork.compass.plot.CompassPlotParser;
 import org.andork.compass.plot.DrawSurveyCommand;
+import org.andork.compass.project.CompassProject;
+import org.andork.compass.project.CompassProjectParser;
 import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.event.BasicPropertyChangeListener;
@@ -306,18 +308,22 @@ public class BreakoutMainView {
 	private class ImportCompassTask extends DrawerPinningTask {
 		final List<Path> surveyFiles = new ArrayList<>();
 		final List<Path> plotFiles = new ArrayList<>();
+		final List<Path> projFiles = new ArrayList<>();
 		boolean doImport;
 
 		private ImportCompassTask(Iterable<Path> compassFiles) {
 			super(getMainPanel(), taskListDrawer.holder());
 			for (Path p : compassFiles) {
-				if (p.toString().toLowerCase().endsWith(".dat")) {
+				String s = p.toString().toLowerCase();
+				if (s.endsWith(".dat")) {
 					surveyFiles.add(p);
-				} else if (p.toString().toLowerCase().endsWith(".plt")) {
+				} else if (s.endsWith(".plt")) {
 					plotFiles.add(p);
+				} else if (s.endsWith(".mak")) {
+					projFiles.add(p);
 				}
 			}
-			compassFiles.forEach(p -> setTotal(getTotal() + 1));
+			setTotal(surveyFiles.size() + plotFiles.size() + projFiles.size());
 
 			showDialogLater();
 		}
@@ -339,6 +345,15 @@ public class BreakoutMainView {
 
 			try {
 				int progress = 0;
+
+				for (Path file : projFiles) {
+					setStatus("Importing data from " + file + "...");
+					setCompleted(progress++);
+					CompassProject proj = new CompassProjectParser().parseProject(file);
+					surveyFiles.addAll(proj.getDataFiles());
+					setTotal(getTotal() + proj.getDataFiles().size());
+				}
+
 				for (Path file : surveyFiles) {
 					setStatus("Importing data from " + file + "...");
 					setCompleted(progress++);
