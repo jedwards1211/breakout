@@ -351,10 +351,21 @@ public class BreakoutMainView {
 					setCompleted(progress++);
 					CompassProject proj = new CompassProjectParser().parseProject(file);
 					surveyFiles.addAll(proj.getDataFiles());
-					setTotal(getTotal() + proj.getDataFiles().size());
 				}
 
+				Set<Path> finalSurveyFiles = new HashSet<>();
 				for (Path file : surveyFiles) {
+					finalSurveyFiles.add(file.toRealPath().normalize());
+				}
+
+				Set<Path> finalPlotFiles = new HashSet<>();
+				for (Path file : plotFiles) {
+					finalPlotFiles.add(file.toRealPath().normalize());
+				}
+
+				setTotal(projFiles.size() + finalSurveyFiles.size() + finalPlotFiles.size());
+
+				for (Path file : finalSurveyFiles) {
 					setStatus("Importing data from " + file + "...");
 					setCompleted(progress++);
 					List<CompassTrip> trips = parser.parseCompassSurveyData(file);
@@ -363,7 +374,7 @@ public class BreakoutMainView {
 				newModel = new SurveyTableModel(rows);
 				newModel.setEditable(false);
 
-				for (Path file : plotFiles) {
+				for (Path file : finalPlotFiles) {
 					setStatus("Importing data from " + file + "...");
 					setCompleted(progress++);
 
