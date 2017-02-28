@@ -2,13 +2,15 @@ package org.breakout.model;
 
 import static org.andork.util.JavaScript.or;
 
+import java.util.Objects;
+
 public class StationKey {
-	final String cave;
-	final String station;
+	public final String cave;
+	public final String station;
 
 	public StationKey(String cave, String station) {
 		this.cave = or(cave, "");
-		this.station = or(station, "");
+		this.station = Objects.requireNonNull(station);
 	}
 
 	@Override

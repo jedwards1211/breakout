@@ -7,9 +7,8 @@ import org.andork.unit.Angle;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 
-public class MetacaveAngleParser {
+public class MetacaveAngleParser extends MetacaveMeasurementParser<Angle> {
 	public UnitizedDouble<Angle> angle;
-	public ParseMessage message;
 
 	public static final Map<String, Unit<Angle>> units = new HashMap<>();
 	static {
@@ -24,22 +23,10 @@ public class MetacaveAngleParser {
 		return unit != null;
 	}
 
-	public UnitizedDouble<Angle> parse(String text, Unit<Angle> defaultUnit, double defaultValue) {
-		if (text == null || text.trim().isEmpty()) {
-			return new UnitizedDouble<>(defaultValue, defaultUnit);
-		}
-		return parse(text, defaultUnit);
-	}
-
-	public UnitizedDouble<Angle> parse(String text, Unit<Angle> defaultUnit, UnitizedDouble<Angle> defaultValue) {
-		if (text == null || text.trim().isEmpty()) {
-			return defaultValue;
-		}
-		return parse(text, defaultUnit);
-	}
-
+	@Override
 	public UnitizedDouble<Angle> parse(String text, Unit<Angle> defaultUnit) {
 		angle = null;
+		severity = null;
 		message = null;
 
 		Unit<Angle> unit;
@@ -53,7 +40,8 @@ public class MetacaveAngleParser {
 		if (parts.length > 1) {
 			unit = units.get(parts[1]);
 			if (!isValidUnit(unit)) {
-				message = ParseMessage.error("invalid unit: " + parts[1]);
+				severity = Severity.ERROR;
+				message = "invalid unit: " + parts[1];
 				return null;
 			}
 		} else {
@@ -64,21 +52,24 @@ public class MetacaveAngleParser {
 			double value = Double.parseDouble(parts[0]);
 			angle = new UnitizedDouble<>(value, unit);
 		} catch (NumberFormatException ex) {
-			message = ParseMessage.error("invalid number: " + parts[0]);
+			severity = Severity.ERROR;
+			message = "invalid number: " + parts[0];
 			return null;
 		}
 
 		for (int i = 2; i < parts.length - 1; i += 2) {
 			unit = units.get(parts[i + 1]);
 			if (!isValidUnit(unit)) {
-				message = ParseMessage.error("invalid unit: " + parts[i + 1]);
+				severity = Severity.ERROR;
+				message = "invalid unit: " + parts[i + 1];
 				return null;
 			}
 			try {
 				double value = Double.parseDouble(parts[i]);
 				angle = angle.add(new UnitizedDouble<>(value, unit));
 			} catch (NumberFormatException ex) {
-				message = ParseMessage.error("invalid number: " + parts[i]);
+				severity = Severity.ERROR;
+				message = "invalid number: " + parts[i];
 				return null;
 			}
 		}

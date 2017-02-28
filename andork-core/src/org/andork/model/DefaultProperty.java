@@ -61,4 +61,9 @@ public class DefaultProperty<T, V> implements Property<T, V> {
 		}
 		return setter.apply(obj, value);
 	}
+
+	@Override
+	public String toString() {
+		return name;
+	}
 }

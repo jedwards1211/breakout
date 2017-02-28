@@ -19,7 +19,7 @@ public class CalcProjectParserTests {
 				.setDistanceUnit(Length.meters).toImmutable();
 
 		SurveyRow row = new MutableSurveyRow().setDistance("3.54").setTrip(trip).toImmutable();
-		CalcRow shot = parser.parse(row);
+		CalcShot shot = parser.parse(row);
 		Assert.assertEquals(new UnitizedDouble<>(3.54, Length.meters), shot.distance);
 
 		SurveyTrip trip2 = trip.setDistanceCorrection("2.5");
@@ -40,8 +40,8 @@ public class CalcProjectParserTests {
 		shot = parser.parse(row);
 		Assert.assertNull(shot.distance);
 		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: g")),
-				shot.messages.get(SurveyRow.Properties.distance));
+				Arrays.asList(ParseMessages.error("invalid number: g")),
+				parser.messages.get(row, SurveyRow.Properties.distance));
 	}
 
 	@Test
@@ -56,7 +56,7 @@ public class CalcProjectParserTests {
 				.setTrip(trip)
 				.toImmutable();
 
-		CalcRow shot = parser.parse(row);
+		CalcShot shot = parser.parse(row);
 		Assert.assertEquals(
 				new UnitizedDouble<>(3.54, Angle.gradians)
 						.add(new UnitizedDouble<>(2, Angle.degrees)).mul(0.5),
@@ -79,9 +79,11 @@ public class CalcProjectParserTests {
 		row = new MutableSurveyRow().setTrip(trip2).setFrontAzimuth(" g  ").toImmutable();
 		shot = parser.parse(row);
 		Assert.assertNull(shot.azimuth);
+		System.out.println(row);
+		System.out.println(parser.messages.entrySet());
 		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: g")),
-				shot.messages.get(SurveyRow.Properties.frontAzimuth));
+				Arrays.asList(ParseMessages.error("invalid number: g")),
+				parser.messages.get(row, SurveyRow.Properties.frontAzimuth));
 	}
 
 	@Test
@@ -96,7 +98,7 @@ public class CalcProjectParserTests {
 				.setTrip(trip)
 				.toImmutable();
 
-		CalcRow shot = parser.parse(row);
+		CalcShot shot = parser.parse(row);
 		Assert.assertEquals(
 				new UnitizedDouble<>(3.54, Angle.gradians)
 						.add(new UnitizedDouble<>(2, Angle.degrees)).mul(0.5),
@@ -120,108 +122,127 @@ public class CalcProjectParserTests {
 		shot = parser.parse(row);
 		Assert.assertNull(shot.inclination);
 		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: g")),
-				shot.messages.get(SurveyRow.Properties.frontInclination));
+				Arrays.asList(ParseMessages.error("invalid number: g")),
+				parser.messages.get(row, SurveyRow.Properties.frontInclination));
 	}
 
 	@Test
 	public void testParseLruds() {
-		CalcProjectParser parser = new CalcProjectParser();
 		SurveyTrip trip = new MutableSurveyTrip()
 				.setDistanceUnit(Length.meters).toImmutable();
-
-		SurveyRow row = new MutableSurveyRow().setLeft("1").setRight("2").setUp("3").setDown("4")
-				.setTrip(trip).toImmutable();
-		CalcRow shot = parser.parse(row);
-		Assert.assertEquals(new UnitizedDouble<>(1, Length.meters), shot.left);
-		Assert.assertEquals(new UnitizedDouble<>(2, Length.meters), shot.right);
-		Assert.assertEquals(new UnitizedDouble<>(3, Length.meters), shot.up);
-		Assert.assertEquals(new UnitizedDouble<>(4, Length.meters), shot.down);
-
-		row = new MutableSurveyRow().setTrip(trip).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.left);
-		Assert.assertNull(shot.right);
-		Assert.assertNull(shot.up);
-		Assert.assertNull(shot.down);
-
-		row = new MutableSurveyRow().setLeft("  ").setRight("\t").setUp("\f\r").setDown("  \n")
-				.setTrip(trip).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.left);
-		Assert.assertNull(shot.right);
-		Assert.assertNull(shot.up);
-		Assert.assertNull(shot.down);
-
-		row = new MutableSurveyRow().setLeft("a").setRight("b").setUp("c").setDown("d")
-				.setTrip(trip).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.left);
-		Assert.assertNull(shot.right);
-		Assert.assertNull(shot.up);
-		Assert.assertNull(shot.down);
-		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: a")),
-				shot.messages.get(SurveyRow.Properties.left));
-		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: b")),
-				shot.messages.get(SurveyRow.Properties.right));
-		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: c")),
-				shot.messages.get(SurveyRow.Properties.up));
-		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: d")),
-				shot.messages.get(SurveyRow.Properties.down));
-	}
-
-	@Test
-	public void testParseNev() {
 		CalcProjectParser parser = new CalcProjectParser();
-		SurveyTrip trip = new MutableSurveyTrip()
-				.setDistanceUnit(Length.meters).toImmutable();
 
-		SurveyRow row = new MutableSurveyRow().setFromStation("A")
-				.setNorthing("1").setEasting("2").setElevation("3")
+		SurveyRow row = new MutableSurveyRow().setFromStation("A").setToStation("B").setLeft("1").setRight("2")
+				.setUp("3").setDown("4")
 				.setTrip(trip).toImmutable();
-		CalcRow shot = parser.parse(row);
-		Assert.assertEquals(new UnitizedDouble<>(1, Length.meters), shot.fromStation.northing);
-		Assert.assertEquals(new UnitizedDouble<>(2, Length.meters), shot.fromStation.easting);
-		Assert.assertEquals(new UnitizedDouble<>(3, Length.meters), shot.fromStation.elevation);
+		CalcShot shot = parser.parse(row);
+		UnitizedDouble<Length>[] lruds = shot.fromStation.crossSections.get(shot.toStation.key()).measurements;
+		Assert.assertEquals(new UnitizedDouble<>(1, Length.meters), lruds[0]);
+		Assert.assertEquals(new UnitizedDouble<>(2, Length.meters), lruds[1]);
+		Assert.assertEquals(new UnitizedDouble<>(3, Length.meters), lruds[2]);
+		Assert.assertEquals(new UnitizedDouble<>(4, Length.meters), lruds[3]);
 
-		// make sure there's no NPE when there's no station name
-		row = new MutableSurveyRow()
-				.setNorthing("1").setEasting("2").setElevation("3")
+		row = new MutableSurveyRow().setFromStation("B").setLeft("5").setRight("6").setUp("7").setDown("8")
 				.setTrip(trip).toImmutable();
 		parser.parse(row);
+		lruds = shot.toStation.crossSections.get(shot.fromStation.key()).measurements;
+		Assert.assertEquals(new UnitizedDouble<>(5, Length.meters), lruds[0]);
+		Assert.assertEquals(new UnitizedDouble<>(6, Length.meters), lruds[1]);
+		Assert.assertEquals(new UnitizedDouble<>(7, Length.meters), lruds[2]);
+		Assert.assertEquals(new UnitizedDouble<>(8, Length.meters), lruds[3]);
 
-		row = new MutableSurveyRow().setFromStation("B").setTrip(trip).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.fromStation.northing);
-		Assert.assertNull(shot.fromStation.easting);
-		Assert.assertNull(shot.fromStation.elevation);
-
-		row = new MutableSurveyRow().setFromStation("C").setNorthing(" ").setEasting("\t").setElevation("\f\r")
-				.setTrip(trip).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.fromStation.northing);
-		Assert.assertNull(shot.fromStation.easting);
-		Assert.assertNull(shot.fromStation.elevation);
-
-		row = new MutableSurveyRow().setFromStation("D").setNorthing("a").setEasting("b").setElevation("c")
-				.setTrip(trip).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.fromStation.northing);
-		Assert.assertNull(shot.fromStation.easting);
-		Assert.assertNull(shot.fromStation.elevation);
-		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: a")),
-				shot.messages.get(SurveyRow.Properties.northing));
-		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: b")),
-				shot.messages.get(SurveyRow.Properties.easting));
-		Assert.assertEquals(
-				Arrays.asList(ParseMessage.error("invalid number: c")),
-				shot.messages.get(SurveyRow.Properties.elevation));
+		// row = new MutableSurveyRow().setTrip(trip).toImmutable();
+		// shot = parser.parse(row);
+		// Assert.assertNull(shot.left);
+		// Assert.assertNull(shot.right);
+		// Assert.assertNull(shot.up);
+		// Assert.assertNull(shot.down);
+		//
+		// row = new MutableSurveyRow().setLeft("
+		// ").setRight("\t").setUp("\f\r").setDown(" \n")
+		// .setTrip(trip).toImmutable();
+		// shot = parser.parse(row);
+		// Assert.assertNull(shot.left);
+		// Assert.assertNull(shot.right);
+		// Assert.assertNull(shot.up);
+		// Assert.assertNull(shot.down);
+		//
+		// row = new
+		// MutableSurveyRow().setLeft("a").setRight("b").setUp("c").setDown("d")
+		// .setTrip(trip).toImmutable();
+		// shot = parser.parse(row);
+		// Assert.assertNull(shot.left);
+		// Assert.assertNull(shot.right);
+		// Assert.assertNull(shot.up);
+		// Assert.assertNull(shot.down);
+		// Assert.assertEquals(
+		// Arrays.asList(ParseMessage.error("invalid number: a")),
+		// shot.messages.get(SurveyRow.Properties.left));
+		// Assert.assertEquals(
+		// Arrays.asList(ParseMessage.error("invalid number: b")),
+		// shot.messages.get(SurveyRow.Properties.right));
+		// Assert.assertEquals(
+		// Arrays.asList(ParseMessage.error("invalid number: c")),
+		// shot.messages.get(SurveyRow.Properties.up));
+		// Assert.assertEquals(
+		// Arrays.asList(ParseMessage.error("invalid number: d")),
+		// shot.messages.get(SurveyRow.Properties.down));
+		// }
+		//
+		// @Test
+		// public void testParseNev() {
+		// CalcProjectParser parser = new CalcProjectParser();
+		// SurveyTrip trip = new MutableSurveyTrip()
+		// .setDistanceUnit(Length.meters).toImmutable();
+		//
+		// SurveyRow row = new MutableSurveyRow().setFromStation("A")
+		// .setNorthing("1").setEasting("2").setElevation("3")
+		// .setTrip(trip).toImmutable();
+		// CalcRow shot = parser.parse(row);
+		// Assert.assertEquals(new UnitizedDouble<>(1, Length.meters),
+		// shot.fromStation.northing);
+		// Assert.assertEquals(new UnitizedDouble<>(2, Length.meters),
+		// shot.fromStation.easting);
+		// Assert.assertEquals(new UnitizedDouble<>(3, Length.meters),
+		// shot.fromStation.elevation);
+		//
+		// // make sure there's no NPE when there's no station name
+		// row = new MutableSurveyRow()
+		// .setNorthing("1").setEasting("2").setElevation("3")
+		// .setTrip(trip).toImmutable();
+		// parser.parse(row);
+		//
+		// row = new
+		// MutableSurveyRow().setFromStation("B").setTrip(trip).toImmutable();
+		// shot = parser.parse(row);
+		// Assert.assertNull(shot.fromStation.northing);
+		// Assert.assertNull(shot.fromStation.easting);
+		// Assert.assertNull(shot.fromStation.elevation);
+		//
+		// row = new MutableSurveyRow().setFromStation("C").setNorthing("
+		// ").setEasting("\t").setElevation("\f\r")
+		// .setTrip(trip).toImmutable();
+		// shot = parser.parse(row);
+		// Assert.assertNull(shot.fromStation.northing);
+		// Assert.assertNull(shot.fromStation.easting);
+		// Assert.assertNull(shot.fromStation.elevation);
+		//
+		// row = new
+		// MutableSurveyRow().setFromStation("D").setNorthing("a").setEasting("b").setElevation("c")
+		// .setTrip(trip).toImmutable();
+		// shot = parser.parse(row);
+		// Assert.assertNull(shot.fromStation.northing);
+		// Assert.assertNull(shot.fromStation.easting);
+		// Assert.assertNull(shot.fromStation.elevation);
+		// Assert.assertEquals(
+		// Arrays.asList(ParseMessage.error("invalid number: a")),
+		// shot.messages.get(SurveyRow.Properties.northing));
+		// Assert.assertEquals(
+		// Arrays.asList(ParseMessage.error("invalid number: b")),
+		// shot.messages.get(SurveyRow.Properties.easting));
+		// Assert.assertEquals(
+		// Arrays.asList(ParseMessage.error("invalid number: c")),
+		// shot.messages.get(SurveyRow.Properties.elevation));
 	}
 
 	@Test
@@ -230,7 +251,7 @@ public class CalcProjectParserTests {
 
 		SurveyTrip trip = new SurveyTrip();
 
-		List<CalcRow> rows = Arrays.asList(
+		List<CalcShot> rows = Arrays.asList(
 				parser.parse(
 						new MutableSurveyRow().setTrip(trip).setFromStation("A1").setToStation("A2").toImmutable()),
 				parser.parse(
@@ -258,7 +279,7 @@ public class CalcProjectParserTests {
 
 		Assert.assertEquals(rows, project.rows);
 
-		Map<ShotKey, CalcRow> shots = new HashMap<>();
+		Map<ShotKey, CalcShot> shots = new HashMap<>();
 		shots.put(new ShotKey(null, "A1", null, "A2"), rows.get(0));
 		shots.put(new ShotKey(null, "A3", null, "A4"), rows.get(2));
 		shots.put(new ShotKey(null, "A2", null, "B1"), rows.get(4));
@@ -278,14 +299,14 @@ public class CalcProjectParserTests {
 
 		Assert.assertEquals(stations, project.stations);
 
-		for (CalcRow shot : shots.values()) {
+		for (CalcShot shot : shots.values()) {
 			Assert.assertEquals(shot.fromStation.shots.get(new StationKey(null, shot.toStation.name)), shot);
 			Assert.assertEquals(shot.toStation.shots.get(new StationKey(null, shot.fromStation.name)), shot);
 		}
 
 		for (CalcStation station : stations.values()) {
-			for (Map.Entry<StationKey, CalcRow> entry : station.shots.entrySet()) {
-				CalcRow shot = entry.getValue();
+			for (Map.Entry<StationKey, CalcShot> entry : station.shots.entrySet()) {
+				CalcShot shot = entry.getValue();
 				Assert.assertTrue(station == shot.fromStation || station == shot.toStation);
 				if (station == shot.fromStation) {
 					Assert.assertEquals(entry.getKey().station, shot.toStation.name);

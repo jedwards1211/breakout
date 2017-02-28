@@ -7,9 +7,8 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 
-public class MetacaveLengthParser {
+public class MetacaveLengthParser extends MetacaveMeasurementParser<Length> {
 	public UnitizedDouble<Length> length;
-	public ParseMessage message;
 
 	public static final Map<String, Unit<Length>> units = new HashMap<>();
 	static {
@@ -20,22 +19,10 @@ public class MetacaveLengthParser {
 		units.put("in", Length.inches);
 	}
 
-	public UnitizedDouble<Length> parse(String text, Unit<Length> defaultUnit, double defaultValue) {
-		if (text == null || text.trim().isEmpty()) {
-			return new UnitizedDouble<>(defaultValue, defaultUnit);
-		}
-		return parse(text, defaultUnit);
-	}
-
-	public UnitizedDouble<Length> parse(String text, Unit<Length> defaultUnit, UnitizedDouble<Length> defaultValue) {
-		if (text == null || text.trim().isEmpty()) {
-			return defaultValue;
-		}
-		return parse(text, defaultUnit);
-	}
-
+	@Override
 	public UnitizedDouble<Length> parse(String text, Unit<Length> defaultUnit) {
 		length = null;
+		severity = null;
 		message = null;
 
 		Unit<Length> unit;
@@ -49,7 +36,8 @@ public class MetacaveLengthParser {
 		if (parts.length > 1) {
 			unit = units.get(parts[1]);
 			if (unit == null) {
-				message = ParseMessage.error("invalid unit: " + parts[1]);
+				severity = Severity.ERROR;
+				message = "invalid unit: " + parts[1];
 				return null;
 			}
 		} else {
@@ -60,21 +48,24 @@ public class MetacaveLengthParser {
 			double value = Double.parseDouble(parts[0]);
 			length = new UnitizedDouble<>(value, unit);
 		} catch (NumberFormatException ex) {
-			message = ParseMessage.error("invalid number: " + parts[0]);
+			severity = Severity.ERROR;
+			message = "invalid number: " + parts[0];
 			return null;
 		}
 
 		for (int i = 2; i < parts.length - 1; i += 2) {
 			unit = units.get(parts[i + 1]);
 			if (unit == null) {
-				message = ParseMessage.error("invalid unit: " + parts[i + 1]);
+				severity = Severity.ERROR;
+				message = "invalid unit: " + parts[i + 1];
 				return null;
 			}
 			try {
 				double value = Double.parseDouble(parts[i]);
 				length = length.add(new UnitizedDouble<>(value, unit));
 			} catch (NumberFormatException ex) {
-				message = ParseMessage.error("invalid number: " + parts[i]);
+				severity = Severity.ERROR;
+				message = "invalid number: " + parts[i];
 				return null;
 			}
 		}

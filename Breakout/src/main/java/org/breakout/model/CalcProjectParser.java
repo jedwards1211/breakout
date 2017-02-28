@@ -2,12 +2,17 @@ package org.breakout.model;
 
 import java.util.IdentityHashMap;
 
+import org.andork.model.Property;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
+import org.andork.unit.Unit;
+import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
+import org.breakout.model.ParseMessages.Severity;
 
 public class CalcProjectParser {
-	public CalcProject project;
+	public final CalcProject project;
+	public final ParseMessages messages = new ParseMessages();
 
 	public CalcProjectParser() {
 		this(new CalcProject());
@@ -25,6 +30,45 @@ public class CalcProjectParser {
 
 	private final IdentityHashMap<SurveyTrip, CalcTrip> trips = new IdentityHashMap<>();
 
+	private <T, U extends UnitType<U>> UnitizedDouble<U> parse(T object, Property<T, String> property,
+			MetacaveMeasurementParser<U> parser, Unit<U> defaultUnit) {
+		String text = property.get(object);
+
+		UnitizedDouble<U> result = parser.parse(text, defaultUnit);
+		if (parser.message != null && parser.severity != null) {
+			Severity severity = null;
+			switch (parser.severity) {
+			case INFO:
+				severity = Severity.INFO;
+			case WARNING:
+				severity = Severity.WARNING;
+			case ERROR:
+				severity = Severity.ERROR;
+			}
+			messages.add(object, property, severity, parser.message);
+		}
+		return result;
+	}
+
+	private <T, U extends UnitType<U>> UnitizedDouble<U> parse(T object, Property<T, String> property,
+			MetacaveMeasurementParser<U> parser, Unit<U> defaultUnit,
+			Severity missingSeverity) {
+		String text = property.get(object);
+		UnitizedDouble<U> result = text == null || text.isEmpty()
+				? null : parse(object, property, parser, defaultUnit);
+		if (result == null && missingSeverity != null) {
+			messages.add(object, property, missingSeverity, "missing " + property.name());
+		}
+		return result;
+	}
+
+	private <T, U extends UnitType<U>> UnitizedDouble<U> parse(T object, Property<T, String> property,
+			MetacaveMeasurementParser<U> parser, Unit<U> defaultUnit,
+			Severity missingSeverity, double defaultValue) {
+		UnitizedDouble<U> result = parse(object, property, parser, defaultUnit, missingSeverity);
+		return result != null ? result : new UnitizedDouble<>(defaultValue, defaultUnit);
+	}
+
 	public CalcTrip parse(SurveyTrip trip) {
 		CalcTrip calcTrip = trips.get(trip);
 		if (calcTrip != null) {
@@ -33,78 +77,53 @@ public class CalcProjectParser {
 		calcTrip = new CalcTrip();
 		trips.put(trip, calcTrip);
 
-		calcTrip.distanceCorrection = lengthParser.parse(trip.getDistanceCorrection(),
-				trip.getDistanceUnit(), 0);
-		if (lengthParser.message != null) {
-			calcTrip.addMessage(SurveyTrip.Properties.distanceCorrection, lengthParser.message);
-		}
-		calcTrip.declination = angleParser.parse(trip.getDeclination(), trip.getAngleUnit(), 0);
-		if (angleParser.message != null) {
-			calcTrip.addMessage(SurveyTrip.Properties.declination, angleParser.message);
-		}
-		calcTrip.frontAzimuthCorrection = angleParser.parse(trip.getFrontAzimuthCorrection(),
-				trip.getFrontAzimuthUnit(), 0);
-		if (angleParser.message != null) {
-			calcTrip.addMessage(SurveyTrip.Properties.frontAzimuthCorrection, angleParser.message);
-		}
-		calcTrip.backAzimuthCorrection = angleParser.parse(trip.getBackAzimuthCorrection(),
-				trip.getBackAzimuthUnit(), 0);
-		if (angleParser.message != null) {
-			calcTrip.addMessage(SurveyTrip.Properties.backAzimuthCorrection, angleParser.message);
-		}
-		calcTrip.frontInclinationCorrection = angleParser.parse(trip.getFrontInclinationCorrection(),
-				trip.getFrontInclinationUnit(), 0);
-		if (angleParser.message != null) {
-			calcTrip.addMessage(SurveyTrip.Properties.frontInclinationCorrection, angleParser.message);
-		}
-		calcTrip.backInclinationCorrection = angleParser.parse(trip.getBackInclinationCorrection(),
-				trip.getBackInclinationUnit(), 0);
-		if (angleParser.message != null) {
-			calcTrip.addMessage(SurveyTrip.Properties.backInclinationCorrection, angleParser.message);
-		}
+		calcTrip.distanceCorrection = parse(trip, SurveyTrip.Properties.distanceCorrection,
+				lengthParser, trip.getDistanceUnit(), null, 0);
+		calcTrip.declination = parse(trip, SurveyTrip.Properties.declination,
+				angleParser, trip.getAngleUnit(), null, 0);
+		calcTrip.frontAzimuthCorrection = parse(trip, SurveyTrip.Properties.frontAzimuthCorrection,
+				angleParser, trip.getFrontAzimuthUnit(), null, 0);
+		calcTrip.backAzimuthCorrection = parse(trip, SurveyTrip.Properties.backAzimuthCorrection,
+				angleParser, trip.getBackAzimuthUnit(), null, 0);
+		calcTrip.frontInclinationCorrection = parse(trip, SurveyTrip.Properties.frontInclinationCorrection,
+				angleParser, trip.getFrontInclinationUnit(), null, 0);
+		calcTrip.backInclinationCorrection = parse(trip, SurveyTrip.Properties.backInclinationCorrection,
+				angleParser, trip.getBackInclinationUnit(), null, 0);
 
 		return calcTrip;
 	}
 
-	public CalcRow parse(SurveyRow row) {
-		CalcRow shot = new CalcRow();
+	public CalcShot parse(SurveyRow row) {
+		CalcShot shot = new CalcShot();
 		shot.trip = parse(row.getTrip());
 
 		parseDistance(row, shot);
 		parseAzimuth(row, shot);
 		parseInclination(row, shot);
-		parseLruds(row, shot);
 
 		linkRow(row, shot);
+		parseLruds(row, shot);
 		parseNev(row, shot);
 
 		return shot;
 	}
 
-	public void parseDistance(SurveyRow row, CalcRow shot) {
-		UnitizedDouble<Length> distance = lengthParser.parse(row.getDistance(),
-				row.getTrip().getDistanceUnit(), null);
-		if (lengthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.distance, lengthParser.message);
-		}
+	public void parseDistance(SurveyRow row, CalcShot shot) {
+		UnitizedDouble<Length> distance = parse(row, SurveyRow.Properties.distance,
+				lengthParser, row.getTrip().getDistanceUnit(), null);
 		if (distance != null) {
 			shot.distance = distance.add(shot.trip.distanceCorrection);
 		}
 	}
 
-	public void parseAzimuth(SurveyRow row, CalcRow shot) {
+	public void parseAzimuth(SurveyRow row, CalcShot shot) {
 		SurveyTrip trip = row.getTrip();
-		UnitizedDouble<Angle> frontAzimuth = azimuthParser.parse(row.getFrontAzimuth(),
-				trip.getFrontAzimuthUnit(), null);
-		if (azimuthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.frontAzimuth, azimuthParser.message);
-		}
 
-		UnitizedDouble<Angle> backAzimuth = azimuthParser.parse(row.getBackAzimuth(),
-				trip.getBackAzimuthUnit(), null);
-		if (azimuthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.backAzimuth, azimuthParser.message);
-		}
+		UnitizedDouble<Angle> frontAzimuth = parse(row, SurveyRow.Properties.frontAzimuth,
+				azimuthParser, trip.getFrontAzimuthUnit(), null);
+		UnitizedDouble<Angle> backAzimuth = parse(row, SurveyRow.Properties.backAzimuth,
+				azimuthParser, trip.getBackAzimuthUnit(), null);
+
 		if (frontAzimuth != null) {
 			frontAzimuth = Angle.normalize(frontAzimuth.add(shot.trip.frontAzimuthCorrection));
 		}
@@ -128,19 +147,12 @@ public class CalcProjectParser {
 		}
 	}
 
-	public void parseInclination(SurveyRow row, CalcRow shot) {
+	public void parseInclination(SurveyRow row, CalcShot shot) {
 		SurveyTrip trip = row.getTrip();
-		UnitizedDouble<Angle> frontInclination = inclinationParser.parse(row.getFrontInclination(),
-				trip.getFrontInclinationUnit(), null);
-		if (inclinationParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.frontInclination, inclinationParser.message);
-		}
-
-		UnitizedDouble<Angle> backInclination = inclinationParser.parse(row.getBackInclination(),
-				trip.getBackInclinationUnit(), null);
-		if (inclinationParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.backInclination, inclinationParser.message);
-		}
+		UnitizedDouble<Angle> frontInclination = parse(row, SurveyRow.Properties.frontInclination,
+				inclinationParser, trip.getFrontInclinationUnit(), null);
+		UnitizedDouble<Angle> backInclination = parse(row, SurveyRow.Properties.backInclination,
+				inclinationParser, trip.getBackInclinationUnit(), null);
 
 		if (frontInclination != null) {
 			frontInclination = frontInclination.add(shot.trip.frontInclinationCorrection);
@@ -161,40 +173,52 @@ public class CalcProjectParser {
 		}
 	}
 
-	public void parseLruds(SurveyRow row, CalcRow shot) {
+	public void parseLruds(SurveyRow row, CalcShot shot) {
 		SurveyTrip trip = row.getTrip();
-		shot.left = lengthParser.parse(row.getLeft(), trip.getDistanceUnit(), null);
-		if (lengthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.left, lengthParser.message);
+
+		@SuppressWarnings("unchecked")
+		UnitizedDouble<Length>[] lruds = new UnitizedDouble[4];
+		lruds[0] = parse(row, SurveyRow.Properties.left,
+				lengthParser, trip.getDistanceUnit(), Severity.WARNING, 0);
+		lruds[1] = parse(row, SurveyRow.Properties.right,
+				lengthParser, trip.getDistanceUnit(), Severity.WARNING, 0);
+		lruds[2] = parse(row, SurveyRow.Properties.up,
+				lengthParser, trip.getDistanceUnit(), Severity.WARNING, 0);
+		lruds[3] = parse(row, SurveyRow.Properties.down,
+				lengthParser, trip.getDistanceUnit(), Severity.WARNING, 0);
+
+		if (shot.fromStation == null) {
+			return;
 		}
-		shot.right = lengthParser.parse(row.getRight(), trip.getDistanceUnit(), null);
-		if (lengthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.right, lengthParser.message);
+
+		StationKey toKey = null;
+		if (shot.toStation != null) {
+			toKey = shot.toStation.key();
+		} else {
+			for (CalcShot other : shot.fromStation.shots.values()) {
+				StationKey key = other.fromStation.key();
+				if (other.toStation == shot.fromStation &&
+						!shot.fromStation.crossSections.containsKey(key)) {
+					toKey = key;
+					break;
+				}
+			}
 		}
-		shot.up = lengthParser.parse(row.getUp(), trip.getDistanceUnit(), null);
-		if (lengthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.up, lengthParser.message);
-		}
-		shot.down = lengthParser.parse(row.getDown(), trip.getDistanceUnit(), null);
-		if (lengthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.down, lengthParser.message);
+		if (toKey != null) {
+			CalcCrossSection crossSection = new CalcCrossSection();
+			crossSection.measurements = lruds;
+			shot.fromStation.crossSections.put(toKey, crossSection);
 		}
 	}
 
-	public void parseNev(SurveyRow row, CalcRow shot) {
+	public void parseNev(SurveyRow row, CalcShot shot) {
 		SurveyTrip trip = row.getTrip();
-		UnitizedDouble<Length> northing = lengthParser.parse(row.getNorthing(), trip.getDistanceUnit(), null);
-		if (lengthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.northing, lengthParser.message);
-		}
-		UnitizedDouble<Length> easting = lengthParser.parse(row.getEasting(), trip.getDistanceUnit(), null);
-		if (lengthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.easting, lengthParser.message);
-		}
-		UnitizedDouble<Length> elevation = lengthParser.parse(row.getElevation(), trip.getDistanceUnit(), null);
-		if (lengthParser.message != null) {
-			shot.addMessage(SurveyRow.Properties.elevation, lengthParser.message);
-		}
+		UnitizedDouble<Length> northing = parse(row, SurveyRow.Properties.northing,
+				lengthParser, trip.getDistanceUnit(), null);
+		UnitizedDouble<Length> easting = parse(row, SurveyRow.Properties.easting,
+				lengthParser, trip.getDistanceUnit(), null);
+		UnitizedDouble<Length> elevation = parse(row, SurveyRow.Properties.elevation,
+				lengthParser, trip.getDistanceUnit(), null);
 
 		if (shot.fromStation != null) {
 			if (northing != null) {
@@ -209,7 +233,7 @@ public class CalcProjectParser {
 		}
 	}
 
-	public void linkRow(SurveyRow row, CalcRow shot) {
+	public void linkRow(SurveyRow row, CalcShot shot) {
 		project.rows.add(shot);
 
 		StationKey fromKey = row.getFromStation() != null
@@ -219,8 +243,7 @@ public class CalcProjectParser {
 
 		if (fromKey != null) {
 			if (fromKey.equals(toKey)) {
-				shot.addMessage(SurveyRow.Properties.toStation,
-						ParseMessage.error("to station is the same as from station"));
+				messages.error(row, SurveyRow.Properties.toStation, "to station is the same as from station");
 				return;
 			}
 			CalcStation fromStation = project.stations.get(fromKey);

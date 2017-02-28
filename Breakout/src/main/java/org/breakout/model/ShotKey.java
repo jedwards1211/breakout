@@ -2,6 +2,8 @@ package org.breakout.model;
 
 import static org.andork.util.JavaScript.or;
 
+import java.util.Objects;
+
 public class ShotKey {
 	final String fromCave;
 	final String fromStation;
@@ -16,9 +18,9 @@ public class ShotKey {
 	public ShotKey(String fromCave, String fromStation, String toCave, String toStation) {
 		super();
 		this.fromCave = fromCave = or(fromCave, "");
-		this.fromStation = fromStation;
+		this.fromStation = Objects.requireNonNull(fromStation);
 		this.toCave = toCave = or(toCave, "");
-		this.toStation = toStation;
+		this.toStation = Objects.requireNonNull(toStation);
 
 		// alphabetize so that reverse of this shot has the same hash code
 		if (fromCave.compareTo(toCave) > 0 || fromStation.compareTo(toStation) > 0) {

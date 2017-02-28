@@ -2,6 +2,7 @@ package org.breakout.model;
 
 import org.andork.unit.Angle;
 import org.andork.unit.UnitizedDouble;
+import org.breakout.model.MetacaveMeasurementParser.Severity;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -21,7 +22,8 @@ public class MetacaveAngleParserTests {
 		parser.parse("    ", Angle.degrees);
 
 		Assert.assertNull(parser.angle);
-		Assert.assertEquals(ParseMessage.error("invalid number: "), parser.message);
+		Assert.assertEquals(Severity.ERROR, parser.severity);
+		Assert.assertEquals("invalid number: ", parser.message);
 	}
 
 	@Test
@@ -30,7 +32,8 @@ public class MetacaveAngleParserTests {
 		parser.parse("  24 k  ", Angle.degrees);
 
 		Assert.assertNull(parser.angle);
-		Assert.assertEquals(ParseMessage.error("invalid unit: k"), parser.message);
+		Assert.assertEquals(Severity.ERROR, parser.severity);
+		Assert.assertEquals("invalid unit: k", parser.message);
 	}
 
 	@Test
@@ -39,7 +42,8 @@ public class MetacaveAngleParserTests {
 		parser.parse("  32 deg 24 k  ", Angle.degrees);
 
 		Assert.assertNull(parser.angle);
-		Assert.assertEquals(ParseMessage.error("invalid unit: k"), parser.message);
+		Assert.assertEquals(Severity.ERROR, parser.severity);
+		Assert.assertEquals("invalid unit: k", parser.message);
 	}
 
 	@Test

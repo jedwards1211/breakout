@@ -13,7 +13,8 @@ public class MetacaveInclinationParser extends MetacaveAngleParser {
 			AngleUnit unit = (AngleUnit) result.unit;
 			double limit = unit.range.get(unit) / 4;
 			if (result.get(unit) < -limit || result.get(unit) > limit) {
-				message = ParseMessage.error("inclination out of range: " + result);
+				severity = Severity.ERROR;
+				message = "inclination out of range: " + result;
 				result = null;
 			}
 		}

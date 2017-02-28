@@ -17,7 +17,8 @@ public class MetacaveAzimuthParser extends MetacaveAngleParser {
 		if (result != null) {
 			AngleUnit unit = (AngleUnit) result.unit;
 			if (result.isNegative() || result.doubleValue(unit) >= unit.range.doubleValue(unit)) {
-				message = ParseMessage.error("azimuth out of range: " + result);
+				severity = Severity.ERROR;
+				message = "azimuth out of range: " + result;
 				result = null;
 			}
 		}
