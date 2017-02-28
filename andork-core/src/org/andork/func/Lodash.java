@@ -1,8 +1,10 @@
 package org.andork.func;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -16,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
+import org.omg.CORBA.IntHolder;
 
 /**
  * Excellent stuff adapted from <a href="https://lodash.com/">Lodash</a>.
@@ -102,7 +105,7 @@ public class Lodash {
 		DebouncedBiFunction<Object, Object, Void> debounced = debounce((a, b) -> {
 			fn.run();
 			return null;
-		} , wait, options);
+		}, wait, options);
 
 		class Result extends DebouncedWrapper<Void> implements DebouncedRunnable {
 			public Result() {
@@ -292,6 +295,11 @@ public class Lodash {
 		}
 	}
 
+	public static <E> void forEach(Stream<? extends E> c, BiConsumer<? super E, Integer> iteratee) {
+		IntHolder count = new IntHolder(0);
+		c.forEach(elem -> iteratee.accept(elem, count.value++));
+	}
+
 	public static <E> int forEach(E[] array, BiFunction<? super E, Integer, Boolean> iteratee) {
 		return forEach(Arrays.asList(array), iteratee);
 	}
@@ -306,17 +314,26 @@ public class Lodash {
 		return count;
 	}
 
-	public static <I, O> List<O> map(I[] in, Function<? super I, ? extends O> mapper) {
-		return map(Stream.of(in), mapper);
+	@SuppressWarnings("unchecked")
+	public static <I, O> O[] map(I[] in, Function<? super I, ? extends O> mapper) {
+		return (O[]) map(Stream.of(in), mapper).toArray();
 	}
 
 	public static <I, O> List<O> map(Collection<? extends I> in, Function<? super I, ? extends O> mapper) {
-		return map(in.stream(), mapper);
+		List<O> out;
+		if (in instanceof LinkedList) {
+			out = new LinkedList<>();
+		} else {
+			out = new ArrayList<>(in.size());
+		}
+		for (I i : in) {
+			out.add(mapper.apply(i));
+		}
+		return out;
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <I, O> List<O> map(Stream<? extends I> in, Function<? super I, ? extends O> mapper) {
-		return (List<O>) Arrays.asList(in.map(mapper).toArray());
+	public static <I, O> Stream<O> map(Stream<? extends I> in, Function<? super I, ? extends O> mapper) {
+		return in.map(mapper);
 	}
 
 	public static <K, V> Map<K, V> keyBy(V[] array, Function<? super V, ? extends K> keyAssigner) {

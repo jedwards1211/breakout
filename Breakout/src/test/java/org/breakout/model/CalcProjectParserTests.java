@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.andork.func.Lodash;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
@@ -14,41 +15,51 @@ import org.junit.Test;
 public class CalcProjectParserTests {
 	@Test
 	public void testParseDistance() {
-		CalcProjectParser parser = new CalcProjectParser();
+		ProjectParser parser = new ProjectParser();
+		Parsed2Calc p2c = new Parsed2Calc();
 		SurveyTrip trip = new MutableSurveyTrip()
+				.setBackAzimuthsCorrected(true)
+				.setBackInclinationsCorrected(true)
 				.setDistanceUnit(Length.meters).toImmutable();
 
 		SurveyRow row = new MutableSurveyRow().setDistance("3.54").setTrip(trip).toImmutable();
-		CalcShot shot = parser.parse(row);
-		Assert.assertEquals(new UnitizedDouble<>(3.54, Length.meters), shot.distance);
+		ParsedRow parsed = parser.parse(row);
+		CalcShot shot = p2c.convert(parsed);
+		Assert.assertEquals(3.54, shot.distance, 0.0);
 
 		SurveyTrip trip2 = trip.setDistanceCorrection("2.5");
 
 		row = new MutableSurveyRow().setDistance("3 m 5 cm").setTrip(trip2).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertEquals(new UnitizedDouble<>(5.55, Length.meters), shot.distance);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertEquals(5.55, shot.distance, 0.0);
 
 		row = new MutableSurveyRow().setTrip(trip2).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.distance);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.distance));
 
 		row = new MutableSurveyRow().setTrip(trip2).setDistance("   ").toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.distance);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.distance));
 
 		row = new MutableSurveyRow().setTrip(trip2).setDistance(" g  ").toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.distance);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.distance));
 		Assert.assertEquals(
 				Arrays.asList(ParseMessages.error("invalid number: g")),
-				parser.messages.get(row, SurveyRow.Properties.distance));
+				parser.project.messages.get(row, SurveyRow.Properties.distance));
 	}
 
 	@Test
 	public void testParseAzimuth() {
-		CalcProjectParser parser = new CalcProjectParser();
+		ProjectParser parser = new ProjectParser();
+		Parsed2Calc p2c = new Parsed2Calc();
 		SurveyTrip trip = new MutableSurveyTrip()
 				.setBackAzimuthsCorrected(true)
+				.setBackInclinationsCorrected(true)
 				.setOverrideFrontAzimuthUnit(Angle.gradians).toImmutable();
 		SurveyRow row = new MutableSurveyRow()
 				.setFrontAzimuth("3.54")
@@ -56,40 +67,45 @@ public class CalcProjectParserTests {
 				.setTrip(trip)
 				.toImmutable();
 
-		CalcShot shot = parser.parse(row);
+		ParsedRow parsed = parser.parse(row);
+		CalcShot shot = p2c.convert(parsed);
 		Assert.assertEquals(
 				new UnitizedDouble<>(3.54, Angle.gradians)
-						.add(new UnitizedDouble<>(2, Angle.degrees)).mul(0.5),
-				shot.azimuth);
+						.add(new UnitizedDouble<>(2, Angle.degrees)).mul(0.5).doubleValue(Angle.radians),
+				shot.azimuth, 0.0);
 
 		SurveyTrip trip2 = trip.setBackAzimuthCorrection("2.5");
 
 		row = new MutableSurveyRow().setBackAzimuth("3.05").setTrip(trip2).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertEquals(new UnitizedDouble<>(5.55, Angle.degrees), shot.azimuth);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertEquals(Angle.type.convert(5.55, Angle.degrees, Angle.radians), shot.azimuth, 0.0);
 
 		row = new MutableSurveyRow().setTrip(trip2).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.azimuth);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.azimuth));
 
 		row = new MutableSurveyRow().setTrip(trip2).setFrontAzimuth("   ").toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.azimuth);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.azimuth));
 
 		row = new MutableSurveyRow().setTrip(trip2).setFrontAzimuth(" g  ").toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.azimuth);
-		System.out.println(row);
-		System.out.println(parser.messages.entrySet());
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.azimuth));
 		Assert.assertEquals(
 				Arrays.asList(ParseMessages.error("invalid number: g")),
-				parser.messages.get(row, SurveyRow.Properties.frontAzimuth));
+				parser.project.messages.get(row, SurveyRow.Properties.frontAzimuth));
 	}
 
 	@Test
 	public void testParseInclination() {
-		CalcProjectParser parser = new CalcProjectParser();
+		ProjectParser parser = new ProjectParser();
+		Parsed2Calc p2c = new Parsed2Calc();
 		SurveyTrip trip = new MutableSurveyTrip()
+				.setBackAzimuthsCorrected(true)
 				.setBackInclinationsCorrected(true)
 				.setOverrideFrontInclinationUnit(Angle.gradians).toImmutable();
 		SurveyRow row = new MutableSurveyRow()
@@ -98,58 +114,68 @@ public class CalcProjectParserTests {
 				.setTrip(trip)
 				.toImmutable();
 
-		CalcShot shot = parser.parse(row);
+		ParsedRow parsed = parser.parse(row);
+		CalcShot shot = p2c.convert(parsed);
 		Assert.assertEquals(
 				new UnitizedDouble<>(3.54, Angle.gradians)
-						.add(new UnitizedDouble<>(2, Angle.degrees)).mul(0.5),
-				shot.inclination);
+						.add(new UnitizedDouble<>(2, Angle.degrees)).mul(0.5).doubleValue(Angle.radians),
+				shot.inclination, 0.0);
 
 		SurveyTrip trip2 = trip.setBackInclinationCorrection("2.5");
 
 		row = new MutableSurveyRow().setBackInclination("3.05").setTrip(trip2).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertEquals(new UnitizedDouble<>(5.55, Angle.degrees), shot.inclination);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertEquals(Angle.type.convert(5.55, Angle.degrees, Angle.radians), shot.inclination, 0.0);
 
 		row = new MutableSurveyRow().setTrip(trip2).toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.inclination);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.inclination));
 
 		row = new MutableSurveyRow().setTrip(trip2).setFrontInclination("   ").toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.inclination);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.inclination));
 
 		row = new MutableSurveyRow().setTrip(trip2).setFrontInclination(" g  ").toImmutable();
-		shot = parser.parse(row);
-		Assert.assertNull(shot.inclination);
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertTrue(Double.isNaN(shot.inclination));
 		Assert.assertEquals(
 				Arrays.asList(ParseMessages.error("invalid number: g")),
-				parser.messages.get(row, SurveyRow.Properties.frontInclination));
+				parser.project.messages.get(row, SurveyRow.Properties.frontInclination));
 	}
 
 	@Test
 	public void testParseLruds() {
 		SurveyTrip trip = new MutableSurveyTrip()
+				.setBackAzimuthsCorrected(true)
+				.setBackInclinationsCorrected(true)
 				.setDistanceUnit(Length.meters).toImmutable();
-		CalcProjectParser parser = new CalcProjectParser();
+		ProjectParser parser = new ProjectParser();
+		Parsed2Calc p2c = new Parsed2Calc();
 
 		SurveyRow row = new MutableSurveyRow().setFromStation("A").setToStation("B").setLeft("1").setRight("2")
 				.setUp("3").setDown("4")
 				.setTrip(trip).toImmutable();
-		CalcShot shot = parser.parse(row);
-		UnitizedDouble<Length>[] lruds = shot.fromStation.crossSections.get(shot.toStation.key()).measurements;
-		Assert.assertEquals(new UnitizedDouble<>(1, Length.meters), lruds[0]);
-		Assert.assertEquals(new UnitizedDouble<>(2, Length.meters), lruds[1]);
-		Assert.assertEquals(new UnitizedDouble<>(3, Length.meters), lruds[2]);
-		Assert.assertEquals(new UnitizedDouble<>(4, Length.meters), lruds[3]);
+		ParsedRow parsed = parser.parse(row);
+		CalcShot shot = p2c.convert(parsed);
+		double[] lruds = shot.fromStation.crossSections.get(shot.toStation.key()).measurements;
+		Assert.assertEquals(1, lruds[0], 0);
+		Assert.assertEquals(2, lruds[1], 0);
+		Assert.assertEquals(3, lruds[2], 0);
+		Assert.assertEquals(4, lruds[3], 0);
 
 		row = new MutableSurveyRow().setFromStation("B").setLeft("5").setRight("6").setUp("7").setDown("8")
 				.setTrip(trip).toImmutable();
-		parser.parse(row);
+		parsed = parser.parse(row);
+		p2c.convert(parsed);
 		lruds = shot.toStation.crossSections.get(shot.fromStation.key()).measurements;
-		Assert.assertEquals(new UnitizedDouble<>(5, Length.meters), lruds[0]);
-		Assert.assertEquals(new UnitizedDouble<>(6, Length.meters), lruds[1]);
-		Assert.assertEquals(new UnitizedDouble<>(7, Length.meters), lruds[2]);
-		Assert.assertEquals(new UnitizedDouble<>(8, Length.meters), lruds[3]);
+		Assert.assertEquals(5, lruds[0], 0);
+		Assert.assertEquals(6, lruds[1], 0);
+		Assert.assertEquals(7, lruds[2], 0);
+		Assert.assertEquals(8, lruds[3], 0);
 
 		// row = new MutableSurveyRow().setTrip(trip).toImmutable();
 		// shot = parser.parse(row);
@@ -247,11 +273,15 @@ public class CalcProjectParserTests {
 
 	@Test
 	public void testLinkRow() {
-		CalcProjectParser parser = new CalcProjectParser();
+		ProjectParser parser = new ProjectParser();
+		Parsed2Calc p2c = new Parsed2Calc();
 
-		SurveyTrip trip = new SurveyTrip();
+		SurveyTrip trip = new MutableSurveyTrip()
+				.setBackAzimuthsCorrected(true)
+				.setBackInclinationsCorrected(true)
+				.toImmutable();
 
-		List<CalcShot> rows = Arrays.asList(
+		List<ParsedRow> parsed = Arrays.asList(
 				parser.parse(
 						new MutableSurveyRow().setTrip(trip).setFromStation("A1").setToStation("A2").toImmutable()),
 				parser.parse(
@@ -268,16 +298,15 @@ public class CalcProjectParserTests {
 				parser.parse(
 						new MutableSurveyRow().setTrip(trip).setFromStation("A3").setToStation("A2").toImmutable()));
 
+		List<CalcShot> rows = Lodash.map(parsed, p2c::convert);
+
 		Assert.assertEquals(rows.get(7), rows.get(1).overriddenBy);
 		Assert.assertEquals(rows.get(1), rows.get(7).overrides);
 
-		CalcProject project = parser.project;
+		CalcProject project = p2c.project;
 
-		Assert.assertEquals(8, project.rows.size());
 		Assert.assertEquals(6, project.shots.size());
 		Assert.assertEquals(6, project.stations.size());
-
-		Assert.assertEquals(rows, project.rows);
 
 		Map<ShotKey, CalcShot> shots = new HashMap<>();
 		shots.put(new ShotKey(null, "A1", null, "A2"), rows.get(0));

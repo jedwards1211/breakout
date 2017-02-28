@@ -5,11 +5,11 @@ import static org.andork.util.JavaScript.or;
 import java.util.Objects;
 
 public class ShotKey {
-	final String fromCave;
-	final String fromStation;
-	final String toCave;
-	final String toStation;
-	final int hashCode;
+	public final String fromCave;
+	public final String fromStation;
+	public final String toCave;
+	public final String toStation;
+	private final int hashCode;
 
 	public ShotKey(SurveyRow SurveyRow) {
 		this(SurveyRow.getFromCave(), SurveyRow.getFromStation(), SurveyRow.getToCave(), SurveyRow.getToStation());

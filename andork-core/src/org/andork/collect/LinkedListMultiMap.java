@@ -100,13 +100,17 @@ public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
 	}
 
 	public static <K, V> LinkedListMultiMap<K, V> newInstance() {
-		return new LinkedListMultiMap<K, V>();
+		return new LinkedListMultiMap<>();
 	}
 
 	private final Map<K, List<V>> kv;
 
 	public LinkedListMultiMap() {
-		kv = new HashMap<K, List<V>>();
+		kv = new HashMap<>();
+	}
+
+	public LinkedListMultiMap(int initialCapacity) {
+		kv = new HashMap<>(initialCapacity);
 	}
 
 	@Override
@@ -126,7 +130,7 @@ public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
 
 	@Override
 	public Set<Map.Entry<K, V>> entrySet() {
-		Set<Map.Entry<K, V>> result = new HashSet<Map.Entry<K, V>>();
+		Set<Map.Entry<K, V>> result = new HashSet<>();
 		for (Map.Entry<K, List<V>> entry : kv.entrySet()) {
 			for (V value : entry.getValue()) {
 				result.add(new Entry(entry.getKey(), value));
@@ -138,7 +142,7 @@ public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
 	@Override
 	public List<V> get(K key) {
 		List<V> result = kv.get(key);
-		return result == null ? new LinkedList<V>() : Collections.unmodifiableList(result);
+		return result == null ? new LinkedList<>() : Collections.unmodifiableList(result);
 	}
 
 	@Override
@@ -163,7 +167,7 @@ public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
 		List<V> values = kv.get(key);
 
 		if (values == null) {
-			values = new LinkedList<V>();
+			values = new LinkedList<>();
 			kv.put(key, values);
 		}
 		return values.add(value);
@@ -174,7 +178,7 @@ public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
 		List<V> m_values = kv.get(key);
 
 		if (m_values == null) {
-			m_values = new LinkedList<V>();
+			m_values = new LinkedList<>();
 			kv.put(key, m_values);
 		}
 		return m_values.addAll(values);
@@ -246,7 +250,7 @@ public class LinkedListMultiMap<K, V> implements ListMultiMap<K, V> {
 
 	@Override
 	public Collection<V> values() {
-		List<V> result = new LinkedList<V>();
+		List<V> result = new LinkedList<>();
 		for (List<V> values : kv.values()) {
 			result.addAll(values);
 		}
