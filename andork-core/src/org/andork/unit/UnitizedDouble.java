@@ -23,7 +23,7 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 	 */
 	@Override
 	public UnitizedDouble<T> add(UnitizedNumber<T> addend) {
-		return new UnitizedDouble<T>(value + addend.doubleValue(unit), unit);
+		return new UnitizedDouble<>(value + addend.doubleValue(unit), unit);
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 
 	@Override
 	public UnitizedDouble<T> negate() {
-		return new UnitizedDouble<T>(-value, unit);
+		return new UnitizedDouble<>(-value, unit);
 	}
 
 	/**
@@ -86,11 +86,37 @@ public class UnitizedDouble<T extends UnitType<T>> extends UnitizedNumber<T> {
 	 */
 	@Override
 	public UnitizedDouble<T> sub(UnitizedNumber<T> addend) {
-		return new UnitizedDouble<T>(value - addend.doubleValue(unit), unit);
+		return new UnitizedDouble<>(value - addend.doubleValue(unit), unit);
 	}
 
 	@Override
 	public UnitizedDouble<T> mul(Number multiplicand) {
-		return new UnitizedDouble<T>(value * multiplicand.doubleValue(), unit);
+		return new UnitizedDouble<>(value * multiplicand.doubleValue(), unit);
+	}
+
+	@Override
+	public boolean isNegative() {
+		return value < 0;
+	}
+
+	@Override
+	public boolean isPositive() {
+		return value > 0;
+	}
+
+	@Override
+	public boolean isZero() {
+		return value == 0;
+	}
+
+	@Override
+	public UnitizedDouble<T> mod(UnitizedNumber<T> modulus) {
+		double newValue = value % modulus.doubleValue(unit);
+		return newValue == value ? this : new UnitizedDouble<>(newValue, unit);
+	}
+
+	@Override
+	public UnitizedDouble<T> abs() {
+		return value < 0 ? negate() : this;
 	}
 }

@@ -5,16 +5,20 @@ import java.util.Map;
 import java.util.function.DoubleUnaryOperator;
 
 public class Angle extends UnitType<Angle> {
-	private static class AngleUnit extends Unit<Angle> {
+	public static class AngleUnit extends Unit<Angle> {
 		private final DoubleUnaryOperator toRadians;
 
 		private final DoubleUnaryOperator fromRadians;
 
-		public AngleUnit(Angle type, String id, DoubleUnaryOperator toRadians, DoubleUnaryOperator fromRadians) {
+		public AngleUnit(Angle type, String id, DoubleUnaryOperator toRadians, DoubleUnaryOperator fromRadians,
+				double range) {
 			super(type, id);
 			this.toRadians = toRadians;
 			this.fromRadians = fromRadians;
+			this.range = new UnitizedDouble<>(range, this);
 		}
+
+		public final UnitizedDouble<Angle> range;
 	}
 
 	public static final Angle type;
@@ -31,19 +35,19 @@ public class Angle extends UnitType<Angle> {
 		type = new Angle();
 		type.addUnit(degrees = new AngleUnit(type, "deg",
 				angle -> Math.PI * angle / 180.0,
-				angle -> angle * 180.0 / Math.PI));
+				angle -> angle * 180.0 / Math.PI, 360.0));
 		type.addUnit(radians = new AngleUnit(type, "rad",
 				DoubleUnaryOperator.identity(),
-				DoubleUnaryOperator.identity()));
+				DoubleUnaryOperator.identity(), Math.PI * 2.0));
 		type.addUnit(gradians = new AngleUnit(type, "grad",
 				angle -> Math.PI * angle / 200.0,
-				angle -> angle * 200.0 / Math.PI));
+				angle -> angle * 200.0 / Math.PI, 4000));
 		type.addUnit(percentGrade = new AngleUnit(type, "% grade",
 				angle -> Math.atan(angle / 100.0),
-				angle -> Math.tan(angle) * 100));
+				angle -> Math.tan(angle) * 100, Double.POSITIVE_INFINITY));
 		type.addUnit(milsNATO = new AngleUnit(type, "mil",
 				angle -> Math.PI * angle / 3200.0,
-				angle -> 3200.0 * angle / Math.PI));
+				angle -> 3200.0 * angle / Math.PI, 6400));
 
 		Map<Unit<Angle>, Double> degreeConversions = new HashMap<>();
 		degreeConversions.put(radians, Math.PI / 180.0);
@@ -107,7 +111,25 @@ public class Angle extends UnitType<Angle> {
 	}
 
 	public static UnitizedDouble<Angle> atan2(UnitizedNumber<Length> y, UnitizedNumber<Length> x) {
-		return new UnitizedDouble<Angle>(
+		return new UnitizedDouble<>(
 				Math.atan2(y.doubleValue(y.unit), x.doubleValue(y.unit)), Angle.radians);
+	}
+
+	public static UnitizedDouble<Angle> normalize(UnitizedDouble<Angle> a) {
+		UnitizedDouble<Angle> range = ((AngleUnit) a.unit).range;
+		return a.isNegative() ? a.mod(range).add(range) : a.mod(range);
+	}
+
+	public static UnitizedDouble<Angle> opposite(UnitizedDouble<Angle> a) {
+		UnitizedDouble<Angle> range = ((AngleUnit) a.unit).range;
+		return normalize(a.add(range.mul(0.5)));
+	}
+
+	public static UnitizedDouble<Angle> bisect(UnitizedDouble<Angle> a, UnitizedDouble<Angle> b) {
+		a = normalize(a);
+		b = normalize(b);
+		UnitizedDouble<Angle> r1 = a.add(b).mul(0.5);
+		UnitizedDouble<Angle> r2 = opposite(r1);
+		return r1.sub(a).abs().get(a.unit) < r2.sub(a).abs().get(a.unit) ? r1 : r2;
 	}
 }

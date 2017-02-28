@@ -25,13 +25,13 @@ public class Length extends UnitType<Length> {
 
 	static {
 		type = new Length();
-		type.addUnit(kilometers = new Unit<Length>(type, "km"));
-		type.addUnit(meters = new Unit<Length>(type, "m"));
-		type.addUnit(centimeters = new Unit<Length>(type, "cm"));
-		type.addUnit(miles = new Unit<Length>(type, "mi"));
-		type.addUnit(yards = new Unit<Length>(type, "yd"));
-		type.addUnit(feet = new Unit<Length>(type, "ft"));
-		type.addUnit(inches = new Unit<Length>(type, "in"));
+		type.addUnit(kilometers = new Unit<>(type, "km"));
+		type.addUnit(meters = new Unit<>(type, "m"));
+		type.addUnit(centimeters = new Unit<>(type, "cm"));
+		type.addUnit(miles = new Unit<>(type, "mi"));
+		type.addUnit(yards = new Unit<>(type, "yd"));
+		type.addUnit(feet = new Unit<>(type, "ft"));
+		type.addUnit(inches = new Unit<>(type, "in"));
 
 		metricUnits.add(kilometers);
 		metricUnits.add(meters);

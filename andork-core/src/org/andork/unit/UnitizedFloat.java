@@ -23,7 +23,7 @@ public class UnitizedFloat<T extends UnitType<T>> extends UnitizedNumber<T> {
 	 */
 	@Override
 	public UnitizedFloat<T> add(UnitizedNumber<T> addend) {
-		return new UnitizedFloat<T>(value + addend.floatValue(unit), unit);
+		return new UnitizedFloat<>(value + addend.floatValue(unit), unit);
 	}
 
 	@Override
@@ -81,7 +81,7 @@ public class UnitizedFloat<T extends UnitType<T>> extends UnitizedNumber<T> {
 
 	@Override
 	public UnitizedFloat<T> negate() {
-		return new UnitizedFloat<T>(-value, unit);
+		return new UnitizedFloat<>(-value, unit);
 	}
 
 	/**
@@ -94,11 +94,37 @@ public class UnitizedFloat<T extends UnitType<T>> extends UnitizedNumber<T> {
 	 */
 	@Override
 	public UnitizedFloat<T> sub(UnitizedNumber<T> addend) {
-		return new UnitizedFloat<T>(value - addend.floatValue(unit), unit);
+		return new UnitizedFloat<>(value - addend.floatValue(unit), unit);
 	}
 
 	@Override
 	public UnitizedFloat<T> mul(Number multiplicand) {
-		return new UnitizedFloat<T>(value * multiplicand.doubleValue(), unit);
+		return new UnitizedFloat<>(value * multiplicand.doubleValue(), unit);
+	}
+
+	@Override
+	public boolean isNegative() {
+		return value < 0;
+	}
+
+	@Override
+	public boolean isPositive() {
+		return value > 0;
+	}
+
+	@Override
+	public boolean isZero() {
+		return value == 0;
+	}
+
+	@Override
+	public UnitizedFloat<T> mod(UnitizedNumber<T> modulus) {
+		float newValue = value % modulus.floatValue(unit);
+		return newValue == value ? this : new UnitizedFloat<>(newValue, unit);
+	}
+
+	@Override
+	public UnitizedFloat<T> abs() {
+		return value < 0 ? negate() : this;
 	}
 }

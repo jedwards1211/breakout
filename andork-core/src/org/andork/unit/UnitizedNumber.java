@@ -27,6 +27,16 @@ public abstract class UnitizedNumber<T extends UnitType<T>> {
 
 	public abstract double doubleValue(Unit<T> unit);
 
+	public abstract boolean isNegative();
+
+	public abstract boolean isPositive();
+
+	public abstract boolean isZero();
+
+	public abstract UnitizedNumber<T> mod(UnitizedNumber<T> modulus);
+
+	public abstract UnitizedNumber<T> abs();
+
 	public float floatValue(Unit<T> unit) {
 		return (float) doubleValue(unit);
 	}

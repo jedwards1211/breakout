@@ -1,7 +1,6 @@
 package org.breakout.model;
 
 import static org.andork.util.JavaScript.isFinite;
-import static org.andork.util.JavaScript.or;
 import static org.andork.util.StringUtils.toStringOrNull;
 
 import java.text.SimpleDateFormat;
@@ -32,108 +31,6 @@ public class SurveyTableParser {
 		double backInclinationCorrection;
 	}
 
-	private static class ShotKey {
-		final String fromCave;
-		final String fromStation;
-		final String toCave;
-		final String toStation;
-
-		public ShotKey(SurveyRow SurveyRow) {
-			this(SurveyRow.getFromCave(), SurveyRow.getFromStation(), SurveyRow.getToCave(), SurveyRow.getToStation());
-		}
-
-		public ShotKey(String fromCave, String fromStation, String toCave, String toStation) {
-			super();
-			this.fromCave = or(fromCave, "");
-			this.fromStation = fromStation;
-			this.toCave = or(toCave, "");
-			this.toStation = toStation;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-
-			ShotKey other = (ShotKey) obj;
-
-			if (fromCave.equals(other.fromCave) && fromStation.equals(other.fromStation)) {
-				return toCave.equals(other.toCave) && toStation.equals(other.toStation);
-			}
-			// reverse is equal too
-			else if (fromCave.equals(other.toCave) && fromStation.equals(other.toStation)) {
-				return toCave.equals(other.fromCave) && toStation.equals(other.fromStation);
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			String fromCave = this.fromCave;
-			String fromStation = this.fromStation;
-			String toCave = this.toCave;
-			String toStation = this.toStation;
-
-			// alphabetize so that reverse of this shot has the same hash code
-			if (fromCave.compareTo(toCave) > 0 || fromStation.compareTo(toStation) > 0) {
-				// swap
-				fromCave = this.toCave;
-				fromStation = this.toStation;
-				toCave = this.fromCave;
-				toStation = this.fromStation;
-			}
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + fromCave.hashCode();
-			result = prime * result + fromStation.hashCode();
-			result = prime * result + toCave.hashCode();
-			result = prime * result + toStation.hashCode();
-			return result;
-		}
-	}
-
-	private static class StationKey {
-		final String cave;
-		final String station;
-
-		public StationKey(String cave, String station) {
-			this.cave = or(cave, "");
-			this.station = or(station, "");
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
-				return false;
-			}
-			StationKey other = (StationKey) obj;
-			return cave.equals(other.cave) && station.equals(other.station);
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + cave.hashCode();
-			result = prime * result + station.hashCode();
-			return result;
-		}
-
-	}
-
 	private static final SurveyTrip defaultTrip = new SurveyTrip();
 
 	private static final SimpleDateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
@@ -152,7 +49,7 @@ public class SurveyTableParser {
 		Map<StationKey, Station> stations = new LinkedHashMap<>();
 		Map<ShotKey, Shot> shots = new LinkedHashMap<>();
 
-		List<Shot> shotList = new ArrayList<Shot>();
+		List<Shot> shotList = new ArrayList<>();
 
 		IdentityHashMap<SurveyTrip, ParsedTripHeader> parsedTripHeaders = new IdentityHashMap<>();
 
