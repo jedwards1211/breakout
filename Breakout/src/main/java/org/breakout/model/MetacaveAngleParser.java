@@ -29,10 +29,18 @@ public class MetacaveAngleParser extends MetacaveMeasurementParser<Angle> {
 		severity = null;
 		message = null;
 
+		if (text == null) {
+			return null;
+		}
+		text = text.trim();
+		if (text.isEmpty()) {
+			return null;
+		}
+
 		Unit<Angle> unit;
 		UnitizedDouble<Angle> angle;
 
-		String[] parts = text.trim().toLowerCase().split("\\s+");
+		String[] parts = text.toLowerCase().split("\\s+");
 		if (parts.length == 0) {
 			return null;
 		}

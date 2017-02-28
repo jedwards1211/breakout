@@ -25,10 +25,18 @@ public class MetacaveLengthParser extends MetacaveMeasurementParser<Length> {
 		severity = null;
 		message = null;
 
+		if (text == null) {
+			return null;
+		}
+		text = text.trim();
+		if (text.isEmpty()) {
+			return null;
+		}
+
 		Unit<Length> unit;
 		UnitizedDouble<Length> length;
 
-		String[] parts = text.trim().toLowerCase().split("\\s+");
+		String[] parts = text.toLowerCase().split("\\s+");
 		if (parts.length == 0) {
 			return null;
 		}

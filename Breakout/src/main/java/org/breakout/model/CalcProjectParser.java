@@ -53,9 +53,7 @@ public class CalcProjectParser {
 	private <T, U extends UnitType<U>> UnitizedDouble<U> parse(T object, Property<T, String> property,
 			MetacaveMeasurementParser<U> parser, Unit<U> defaultUnit,
 			Severity missingSeverity) {
-		String text = property.get(object);
-		UnitizedDouble<U> result = text == null || text.isEmpty()
-				? null : parse(object, property, parser, defaultUnit);
+		UnitizedDouble<U> result = parse(object, property, parser, defaultUnit);
 		if (result == null && missingSeverity != null) {
 			messages.add(object, property, missingSeverity, "missing " + property.name());
 		}
@@ -110,7 +108,7 @@ public class CalcProjectParser {
 
 	public void parseDistance(SurveyRow row, CalcShot shot) {
 		UnitizedDouble<Length> distance = parse(row, SurveyRow.Properties.distance,
-				lengthParser, row.getTrip().getDistanceUnit(), null);
+				lengthParser, row.getTrip().getDistanceUnit());
 		if (distance != null) {
 			shot.distance = distance.add(shot.trip.distanceCorrection);
 		}
@@ -120,9 +118,9 @@ public class CalcProjectParser {
 		SurveyTrip trip = row.getTrip();
 
 		UnitizedDouble<Angle> frontAzimuth = parse(row, SurveyRow.Properties.frontAzimuth,
-				azimuthParser, trip.getFrontAzimuthUnit(), null);
+				azimuthParser, trip.getFrontAzimuthUnit());
 		UnitizedDouble<Angle> backAzimuth = parse(row, SurveyRow.Properties.backAzimuth,
-				azimuthParser, trip.getBackAzimuthUnit(), null);
+				azimuthParser, trip.getBackAzimuthUnit());
 
 		if (frontAzimuth != null) {
 			frontAzimuth = Angle.normalize(frontAzimuth.add(shot.trip.frontAzimuthCorrection));
@@ -150,9 +148,9 @@ public class CalcProjectParser {
 	public void parseInclination(SurveyRow row, CalcShot shot) {
 		SurveyTrip trip = row.getTrip();
 		UnitizedDouble<Angle> frontInclination = parse(row, SurveyRow.Properties.frontInclination,
-				inclinationParser, trip.getFrontInclinationUnit(), null);
+				inclinationParser, trip.getFrontInclinationUnit());
 		UnitizedDouble<Angle> backInclination = parse(row, SurveyRow.Properties.backInclination,
-				inclinationParser, trip.getBackInclinationUnit(), null);
+				inclinationParser, trip.getBackInclinationUnit());
 
 		if (frontInclination != null) {
 			frontInclination = frontInclination.add(shot.trip.frontInclinationCorrection);
@@ -214,11 +212,11 @@ public class CalcProjectParser {
 	public void parseNev(SurveyRow row, CalcShot shot) {
 		SurveyTrip trip = row.getTrip();
 		UnitizedDouble<Length> northing = parse(row, SurveyRow.Properties.northing,
-				lengthParser, trip.getDistanceUnit(), null);
+				lengthParser, trip.getDistanceUnit());
 		UnitizedDouble<Length> easting = parse(row, SurveyRow.Properties.easting,
-				lengthParser, trip.getDistanceUnit(), null);
+				lengthParser, trip.getDistanceUnit());
 		UnitizedDouble<Length> elevation = parse(row, SurveyRow.Properties.elevation,
-				lengthParser, trip.getDistanceUnit(), null);
+				lengthParser, trip.getDistanceUnit());
 
 		if (shot.fromStation != null) {
 			if (northing != null) {
