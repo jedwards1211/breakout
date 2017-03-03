@@ -1,5 +1,7 @@
 package org.breakout.model;
 
+import java.util.Date;
+
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
@@ -13,4 +15,5 @@ public class ParsedTrip {
 	public UnitizedDouble<Angle> backInclinationCorrection;
 	public boolean areBackAzimuthsCorrected;
 	public boolean areBackInclinationsCorrected;
+	public Date date;
 }

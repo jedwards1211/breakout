@@ -1,5 +1,7 @@
 package org.breakout.model;
 
+import static org.andork.util.JavaScript.truthy;
+
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
@@ -27,7 +29,7 @@ public class ParsedRow {
 	public UnitizedDouble<Length> elevation;
 
 	public ShotKey key() {
-		return fromStation != null && toStation != null
+		return truthy(fromStation) && truthy(toStation)
 				? new ShotKey(fromCave, fromStation, toCave, toStation)
 				: null;
 	}

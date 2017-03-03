@@ -24,6 +24,7 @@ public class Parsed2Calc {
 
 	public CalcShot convert(ParsedRow parsed) {
 		CalcShot shot = new CalcShot();
+		shot.date = parsed.trip.date;
 
 		convertDistance(parsed, shot);
 		convertAzimuth(parsed, shot);

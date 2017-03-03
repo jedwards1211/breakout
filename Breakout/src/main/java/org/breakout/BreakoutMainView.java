@@ -64,7 +64,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -156,7 +155,6 @@ import org.andork.jogl.old.BasicJOGLObject;
 import org.andork.math.misc.Fitting;
 import org.andork.math3d.Fitting3d;
 import org.andork.math3d.FittingFrustum;
-import org.andork.math3d.LineLineIntersection2d;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PickXform;
 import org.andork.math3d.PlanarHull3f;
@@ -186,14 +184,17 @@ import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
+import org.breakout.model.CalcShot;
 import org.breakout.model.ColorParam;
 import org.breakout.model.MetacaveExporter;
 import org.breakout.model.MetacaveImporter;
 import org.breakout.model.MutableSurveyRow;
+import org.breakout.model.Parsed2Calc;
+import org.breakout.model.ParsedRow;
 import org.breakout.model.ProjectModel;
+import org.breakout.model.ProjectParser;
 import org.breakout.model.RootModel;
-import org.breakout.model.Shot;
-import org.breakout.model.Station;
+import org.breakout.model.ShotKey;
 import org.breakout.model.Survey3dModel;
 import org.breakout.model.Survey3dModel.SelectionEditor;
 import org.breakout.model.Survey3dModel.Shot3d;
@@ -201,7 +202,6 @@ import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.SurveyTableParser;
 import org.breakout.model.SurveyTrip;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
@@ -275,12 +275,21 @@ public class BreakoutMainView {
 				LinearAxisConversion conversion = new FromEDT<LinearAxisConversion>() {
 					@Override
 					public LinearAxisConversion run() throws Throwable {
-						Shot shot = model3d.getOriginalShots().get(picked.picked.getNumber());
-						hintLabel.setText(String.format(
-								"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%.2f m</b>&emsp;Azm: <b>%.2f</b>"
-										+ "&emsp;Inc: <b>%.2f</b>&emsp;<i>%s</i></html>",
-								shot.from.name, shot.to.name,
-								shot.dist, Math.toDegrees(shot.azm), Math.toDegrees(shot.inc), shot.desc));
+						SurveyRow orig = sourceRows.get(picked.picked.key());
+						SurveyTrip trip = orig != null ? orig.getTrip() : null;
+						ParsedRow shot = parsedShots.get(picked.picked.key());
+						if (shot == null) {
+							hintLabel.setText("");
+						} else {
+							hintLabel.setText(String.format(
+									"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
+											+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i></html>",
+									shot.fromStation, shot.toStation,
+									shot.distance,
+									shot.frontAzimuth, shot.backAzimuth,
+									shot.frontInclination, shot.backInclination,
+									trip != null ? trip.getName() : ""));
+						}
 
 						LinearAxisConversion conversion = getProjectModel().get(ProjectModel.highlightRange);
 						LinearAxisConversion conversion2 = new LinearAxisConversion(conversion.invert(0.0), 1.0,
@@ -499,15 +508,11 @@ public class BreakoutMainView {
 			if (picked == null) {
 				surveyDrawer.table().clearSelection();
 			} else if (e.getClickCount() == 2) {
-				int index = picked.picked.getNumber();
-				int modelRow = rowOfShot(index);
-				if (modelRow >= 0) {
-					SurveyRow row = surveyDrawer.table().getModel().getListModel().getElementAt(modelRow);
-					if (row != null) {
-						String link = row.getTrip() == null ? null : row.getTrip().getSurveyNotes();
-						if (link != null) {
-							openSurveyNotes(link);
-						}
+				SurveyRow row = sourceRows.get(picked.picked.key());
+				if (row != null) {
+					String link = row.getTrip() == null ? null : row.getTrip().getSurveyNotes();
+					if (link != null) {
+						openSurveyNotes(link);
 					}
 				}
 			}
@@ -549,11 +554,9 @@ public class BreakoutMainView {
 
 			ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
 
-			int index = picked.picked.getNumber();
+			Integer modelRow = shotKeyToModelIndex.get(picked.picked.key());
 
-			int modelRow = rowOfShot(index);
-
-			if (modelRow >= 0) {
+			if (modelRow != null) {
 				if ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0) {
 					if (selModel.isSelectedIndex(modelRow)) {
 						selModel.removeSelectionInterval(modelRow, modelRow);
@@ -700,7 +703,7 @@ public class BreakoutMainView {
 				}
 
 				surveyDrawer.table().getModel().clear();
-				setShots(Collections.emptyList());
+				destroyCalculatedModel();
 				return true;
 			});
 
@@ -787,15 +790,13 @@ public class BreakoutMainView {
 
 			final Survey3dModel model3d = BreakoutMainView.this.model3d;
 
-			List<Survey3dModel.Shot3d> shot3ds = model3d.getShots();
-
 			final SelectionEditor editor = model3d.editSelection();
 
 			ListSelectionModel selModel = (ListSelectionModel) e.getSource();
 
 			if (e.getFirstIndex() < 0) {
-				for (Survey3dModel.Shot3d shot3d : shot3ds) {
-					editor.deselect(shot3d);
+				for (ShotKey key : calcShots.keySet()) {
+					editor.deselect(key);
 				}
 
 				miniSurveyDrawer.statsPanel().getModelBinder().set(StatsModel.spec.newObject());
@@ -805,42 +806,44 @@ public class BreakoutMainView {
 				MinAvgMaxCalc eastCalc = new MinAvgMaxCalc();
 				MinAvgMaxCalc depthCalc = new MinAvgMaxCalc();
 
-				QObject<StatsModel> statsModel = StatsModel.spec.newObject();
+				Consumer<float[]> addPoints = points -> {
+					if (points == null) {
+						return;
+					}
+					for (int i = 0; i < points.length; i += 3) {
+						if (Double.isFinite(points[i]) &&
+								Double.isFinite(points[i + 1]) &&
+								Double.isFinite(points[i + 2])) {
+							northCalc.add(-points[i + 2]);
+							eastCalc.add(points[i]);
+							depthCalc.add(-points[i + 1]);
+						}
+					}
+				};
 
 				for (int i = e.getFirstIndex(); i <= e.getLastIndex()
 						&& i < surveyDrawer.table().getModel().getRowCount(); i++) {
-					Shot shot = shotAtRow(i);
-					if (shot == null) {
+					ShotKey shotKey = modelIndexToShotKey.get(i);
+					if (shotKey == null) {
 						continue;
 					}
 
 					if (selModel.isSelectedIndex(i)) {
-						editor.select(shot3ds.get(shot.number));
-						if (!Double.isNaN(shot.dist)) {
-							distCalc.add(shot.dist);
-						}
-						if (shot.fromSplayPoints != null) {
-							for (float[] point : shot.fromSplayPoints) {
-								if (!Vecmath.hasNaNsOrInfinites(point)) {
-									northCalc.add(-point[2]);
-									eastCalc.add(point[0]);
-									depthCalc.add(-point[1]);
-								}
+						editor.select(shotKey);
+						CalcShot shot = calcShots.get(shotKey);
+						if (shot != null) {
+							if (!Double.isNaN(shot.distance)) {
+								distCalc.add(shot.distance);
 							}
-						}
-						if (shot.toSplayPoints != null) {
-							for (float[] point : shot.toSplayPoints) {
-								if (!Vecmath.hasNaNsOrInfinites(point)) {
-									northCalc.add(-point[2]);
-									eastCalc.add(point[0]);
-									depthCalc.add(-point[1]);
-								}
-							}
+							addPoints.accept(shot.fromSplayPoints);
+							addPoints.accept(shot.toSplayPoints);
 						}
 					} else {
-						editor.deselect(shot3ds.get(shot.number));
+						editor.deselect(shotKey);
 					}
 				}
+
+				QObject<StatsModel> statsModel = StatsModel.spec.newObject();
 
 				statsModel.set(StatsModel.numSelected, distCalc.count);
 				statsModel.set(StatsModel.totalDistance, distCalc.total);
@@ -855,27 +858,21 @@ public class BreakoutMainView {
 			rebuildTaskService.submit(task -> {
 				editor.commit();
 
-				List<Shot> origShots = new ArrayList<>();
-				Set<Survey3dModel.Shot3d> newSelectedShots = new HashSet<>();
-
-				model3d.addOriginalShotsTo(origShots);
-				model3d.addSelectedShotsTo(newSelectedShots);
-
 				float[] bounds = Rectmath.voidRectf(3);
 				float[] p = Rectmath.voidRectf(3);
 
-				for (Survey3dModel.Shot3d shot3d : newSelectedShots) {
-					Shot origShot = origShots.get(shot3d.getNumber());
-					p[0] = (float) Math.min(origShot.from.position[0], origShot.to.position[0]);
-					p[1] = (float) Math.min(origShot.from.position[1], origShot.to.position[1]);
-					p[2] = (float) Math.min(origShot.from.position[2], origShot.to.position[2]);
-					p[3] = (float) Math.max(origShot.from.position[0], origShot.to.position[0]);
-					p[4] = (float) Math.max(origShot.from.position[1], origShot.to.position[1]);
-					p[5] = (float) Math.max(origShot.from.position[2], origShot.to.position[2]);
+				for (ShotKey key : model3d.getSelectedShots()) {
+					CalcShot shot = calcShots.get(key);
+					p[0] = (float) Math.min(shot.fromStation.position[0], shot.toStation.position[0]);
+					p[1] = (float) Math.min(shot.fromStation.position[1], shot.toStation.position[1]);
+					p[2] = (float) Math.min(shot.fromStation.position[2], shot.toStation.position[2]);
+					p[3] = (float) Math.max(shot.fromStation.position[0], shot.toStation.position[0]);
+					p[4] = (float) Math.max(shot.fromStation.position[1], shot.toStation.position[1]);
+					p[5] = (float) Math.max(shot.fromStation.position[2], shot.toStation.position[2]);
 					Rectmath.union3(bounds, p, bounds);
 				}
 
-				if (!newSelectedShots.isEmpty()) {
+				if (!model3d.getSelectedShots().isEmpty()) {
 					// scale3( center , 0.5 / newSelectedShots.size( ) );
 					p[0] = (bounds[0] + bounds[3]) * 0.5f;
 					p[1] = (bounds[1] + bounds[4]) * 0.5f;
@@ -888,6 +885,120 @@ public class BreakoutMainView {
 				}
 
 				autoDrawable.display();
+			});
+		}
+	}
+
+	private class RebuildTask extends Task {
+		final ProjectParser parser = new ProjectParser();
+		final Parsed2Calc p2c = new Parsed2Calc();
+		final Map<ShotKey, Integer> shotKeyToModelIndex = new HashMap<>();
+		final Map<Integer, ShotKey> modelIndexToShotKey = new HashMap<>();
+		final Map<ShotKey, SurveyRow> sourceRows = new HashMap<>();
+		final Map<ShotKey, ParsedRow> parsedShots = new HashMap<>();
+		final Map<ShotKey, CalcShot> calcShots = new HashMap<>();
+
+		@Override
+		protected void execute() {
+			try {
+				OnEDT.onEDT(() -> taskListDrawer.holder().hold(this));
+				reallyExecute();
+			} finally {
+				OnEDT.onEDT(() -> taskListDrawer.holder().release(this));
+			}
+		}
+
+		@Override
+		public boolean isCancelable() {
+			return true;
+		}
+
+		protected void reallyExecute() {
+			parse();
+			calculate();
+			updateView();
+		}
+
+		void parse() {
+			Subtask parsingSubtask = new Subtask(this);
+			parsingSubtask.setStatus("Parsing shot data");
+			parsingSubtask.setIndeterminate(true);
+
+			SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
+			List<SurveyRow> rows = copy.getRows();
+
+			if (parsingSubtask.isCanceling()) {
+				return;
+			}
+
+			parsingSubtask.setIndeterminate(false);
+			parsingSubtask.setTotal(rows.size());
+			parsingSubtask.setCompleted(0);
+
+			int modelIndex = 0;
+			for (SurveyRow row : rows) {
+				ParsedRow parsed = parser.parse(row);
+				CalcShot shot = p2c.convert(parsed);
+				ShotKey key = parsed.key();
+				if (key != null) {
+					shotKeyToModelIndex.put(key, modelIndex);
+					modelIndexToShotKey.put(modelIndex, key);
+					sourceRows.put(key, row);
+					parsedShots.put(key, parsed);
+					calcShots.put(key, shot);
+				}
+				parsingSubtask.setCompleted(++modelIndex);
+			}
+
+			if (parsingSubtask.isCanceling()) {
+				return;
+			}
+			parsingSubtask.end();
+		}
+
+		void calculate() {
+
+		}
+
+		public void updateView() {
+			setStatus("Updating view...");
+			destroyCalculatedModel();
+			setStatus("Updating view: constructing new model...");
+
+			final Survey3dModel model = Survey3dModel.create(calcShots, 10, 3, 3, this);
+			if (isCanceling()) {
+				return;
+			}
+
+			setStatus("Updating view: installing new model...");
+
+			float[] bounds = Arrays.copyOf(model.getTree().getRoot().mbr(), 6);
+
+			bounds[1] = bounds[4] + 100;
+			bounds[4] = bounds[1] + 100;
+
+			SwingUtilities.invokeLater(() -> {
+				BreakoutMainView.this.shotKeyToModelIndex = shotKeyToModelIndex;
+				BreakoutMainView.this.modelIndexToShotKey = modelIndexToShotKey;
+				BreakoutMainView.this.sourceRows = sourceRows;
+				BreakoutMainView.this.parsedShots = parsedShots;
+				BreakoutMainView.this.calcShots = calcShots;
+				model3d = model;
+
+				model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
+
+				projectModelBinder.update(true);
+
+				float[] center = new float[3];
+				Rectmath.center(model.getTree().getRoot().mbr(), center);
+				orbiter.setCenter(center);
+				navigator.setCenter(center);
+
+				autoDrawable.invoke(false, drawable -> {
+					scene.add(model);
+					scene.initLater(model);
+					return false;
+				});
 			});
 		}
 	}
@@ -1051,8 +1162,11 @@ public class BreakoutMainView {
 
 	CameraView currentView;
 
-	List<Shot> shots = Collections.emptyList();
-	Map<Integer, Integer> shotNumberToRowIndexMap = CollectionUtils.newHashMap();
+	Map<ShotKey, Integer> shotKeyToModelIndex = Collections.emptyMap();
+	Map<Integer, ShotKey> modelIndexToShotKey = Collections.emptyMap();
+	Map<ShotKey, SurveyRow> sourceRows = Collections.emptyMap();
+	Map<ShotKey, ParsedRow> parsedShots = Collections.emptyMap();
+	Map<ShotKey, CalcShot> calcShots = Collections.emptyMap();
 
 	private static final FileRecoveryConfig fileRecoveryConfig = new FileRecoveryConfig() {};
 
@@ -1099,133 +1213,7 @@ public class BreakoutMainView {
 			1000, new DebounceOptions<Void>().executor(debouncer));
 
 	final DebouncedRunnable rebuild3dModel = Lodash.debounce(() -> {
-		rebuildTaskService.submit(new Task() {
-			@Override
-			protected void execute() {
-				try {
-					OnEDT.onEDT(() -> taskListDrawer.holder().hold(this));
-					reallyExecute();
-				} finally {
-					OnEDT.onEDT(() -> taskListDrawer.holder().release(this));
-				}
-			}
-
-			@Override
-			public boolean isCancelable() {
-				return true;
-			}
-
-			protected void reallyExecute() {
-				setTotal(1000);
-				Subtask copySubtask = new Subtask(this);
-				copySubtask.setStatus("Parsing shot data");
-				copySubtask.setIndeterminate(false);
-
-				SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
-
-				if (copySubtask.isCanceling()) {
-					return;
-				}
-
-				copySubtask.end();
-
-				Subtask parsingSubtask = new Subtask(this);
-				parsingSubtask.setStatus("Parsing shot data");
-				parsingSubtask.setIndeterminate(false);
-
-				final List<Shot> shots = SurveyTableParser.createShots(copy.getRows(), parsingSubtask);
-
-				if (parsingSubtask.isCanceling()) {
-					return;
-				}
-
-				new OnEDT() {
-					@Override
-					public void run() throws Throwable {
-						setShots(shots);
-					}
-				};
-
-				final List<Shot> nonNullShots = new ArrayList<>();
-
-				if (!shots.isEmpty()) {
-					Subtask calculatingSubtask = new Subtask(this);
-					calculatingSubtask.setStatus("calculating");
-					calculatingSubtask.setIndeterminate(true);
-
-					LinkedHashSet<Station> stations = new LinkedHashSet<>();
-
-					for (Shot shot : shots) {
-						if (shot != null) {
-							nonNullShots.add(shot);
-							stations.add(shot.from);
-							stations.add(shot.to);
-						}
-					}
-
-					Shot.computeConnected(stations);
-
-					LineLineIntersection2d llx = new LineLineIntersection2d();
-
-					for (Station station : stations) {
-						station.calcSplayPoints(llx);
-					}
-
-					calculatingSubtask.end();
-				}
-
-				updateModel(nonNullShots);
-			}
-
-			public void updateModel(List<Shot> shots) {
-				setStatus("Updating view...");
-
-				SwingUtilities.invokeLater(() -> {
-					if (model3d != null) {
-						final Survey3dModel model3d = BreakoutMainView.this.model3d;
-						BreakoutMainView.this.model3d = null;
-
-						autoDrawable.invoke(false, drawable -> {
-							scene.remove(model3d);
-							scene.disposeLater(model3d);
-							return false;
-						});
-					}
-				});
-
-				setStatus("Updating view: constructing new model...");
-
-				final Survey3dModel model = Survey3dModel.create(shots, 10, 3, 3, this);
-				if (isCanceling()) {
-					return;
-				}
-
-				setStatus("Updating view: installing new model...");
-
-				float[] bounds = Arrays.copyOf(model.getTree().getRoot().mbr(), 6);
-
-				bounds[1] = bounds[4] + 100;
-				bounds[4] = bounds[1] + 100;
-
-				SwingUtilities.invokeLater(() -> {
-					model3d = model;
-					model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
-
-					projectModelBinder.update(true);
-
-					float[] center = new float[3];
-					Rectmath.center(model.getTree().getRoot().mbr(), center);
-					orbiter.setCenter(center);
-					navigator.setCenter(center);
-
-					autoDrawable.invoke(false, drawable -> {
-						scene.add(model);
-						scene.initLater(model);
-						return false;
-					});
-				});
-			}
-		});
+		rebuildTaskService.submit(new RebuildTask());
 	}, 1000, new DebounceOptions<Void>().executor(debouncer));
 
 	public BreakoutMainView() {
@@ -1332,7 +1320,7 @@ public class BreakoutMainView {
 						selModel.clearSelection();
 					}
 					for (Shot3d shot3d : newSelected) {
-						int row = rowOfShot(shot3d.getNumber());
+						Integer row = shotKeyToModelIndex.get(shot3d.key());
 						if (toggle && selModel.isSelectedIndex(row)) {
 							selModel.removeSelectionInterval(row, row);
 						} else {
@@ -1787,10 +1775,13 @@ public class BreakoutMainView {
 					return;
 				}
 				List<float[]> vectors = new ArrayList<>();
-				for (Shot3d shot3d : getDefaultShotsForOperations()) {
-					Shot shot = getShot(shot3d);
+				for (ShotKey key : getDefaultShotsForOperations()) {
+					CalcShot shot = calcShots.get(key);
+					if (shot == null) {
+						continue;
+					}
 					float[] vector = new float[3];
-					Vecmath.sub3(shot.to.position, shot.from.position, vector);
+					Vecmath.sub3(shot.toStation.position, shot.fromStation.position, vector);
 
 					if (!Vecmath.hasNaNsOrInfinites(vector)) {
 						vectors.add(vector);
@@ -1930,13 +1921,20 @@ public class BreakoutMainView {
 	}
 
 	public void autoProfileMode() {
-		Set<Shot3d> shots = getDefaultShotsForOperations();
+		Set<ShotKey> shots = getDefaultShotsForOperations();
 		List<float[]> forFitting = new ArrayList<>();
-		for (Shot3d shot : shots) {
-			Shot origShot = getShot(shot);
-			forFitting
-					.add(new float[] { (float) origShot.from.position[0], (float) origShot.from.position[2] });
-			forFitting.add(new float[] { (float) origShot.to.position[0], (float) origShot.to.position[2] });
+		for (ShotKey key : shots) {
+			CalcShot shot = calcShots.get(key);
+			if (shot != null) {
+				forFitting.add(new float[] {
+						(float) shot.fromStation.position[0],
+						(float) shot.fromStation.position[2]
+				});
+				forFitting.add(new float[] {
+						(float) shot.toStation.position[0],
+						(float) shot.toStation.position[2]
+				});
+			}
 		}
 
 		float[] fit = Fitting.linearLeastSquares2f(forFitting);
@@ -1959,12 +1957,14 @@ public class BreakoutMainView {
 		changeView(forward, right, true, shots);
 	}
 
-	private void changeView(float[] forward, float[] right, boolean ortho, Set<Shot3d> shotsToFit) {
+	private void changeView(float[] forward, float[] right, boolean ortho, Set<ShotKey> shotsToFit) {
 		if (Vecmath.hasNaNsOrInfinites(forward) || Vecmath.hasNaNsOrInfinites(right)) {
 			throw new IllegalArgumentException("forward and right must not contain NaN or infinite values");
 		}
 
 		mouseLooper.removeMouseAdapter(mouseAdapterChain);
+
+		Survey3dModel model3d = this.model3d;
 
 		float[] up = new float[3];
 		Vecmath.cross(right, forward, up);
@@ -2025,7 +2025,8 @@ public class BreakoutMainView {
 				pickXform.calculate(projXform, renderer.getViewState().viewXform());
 				frustum.init(pickXform, 0.9f);
 
-				for (Shot3d shot : shotsToFit) {
+				for (ShotKey key : shotsToFit) {
+					Shot3d shot = model3d.getShot(key);
 					for (float[] coord : shot.coordIterable(endLocation)) {
 						frustum.addPoint(coord);
 					}
@@ -2103,7 +2104,7 @@ public class BreakoutMainView {
 		cameraAnimationQueue.add(finisher);
 	}
 
-	protected void changeView(Set<Shot3d> shotsToFit) {
+	protected void changeView(Set<ShotKey> shotsToFit) {
 		float[] forward = new float[3];
 		float[] right = new float[3];
 
@@ -2125,7 +2126,7 @@ public class BreakoutMainView {
 			return;
 		}
 
-		changeView(CollectionUtils.toHashSet(getShotsFromTable().map(shot -> model3d.getShot(shot.number))));
+		changeView(CollectionUtils.toHashSet(getShotsFromTable()));
 	}
 
 	protected void fitViewToSelected() {
@@ -2133,8 +2134,7 @@ public class BreakoutMainView {
 			return;
 		}
 
-		changeView(CollectionUtils.toHashSet(getSelectedShotsFromTable()
-				.map(shot -> model3d.getShot(shot.number))));
+		changeView(CollectionUtils.toHashSet(getSelectedShotsFromTable()));
 	}
 
 	protected void flyToFiltered(final AnnotatingJTable table) {
@@ -2209,25 +2209,6 @@ public class BreakoutMainView {
 		return canvas;
 	}
 
-	protected Set<Shot3d> getDefaultShotsForOperations() {
-		if (model3d == null) {
-			return Collections.emptySet();
-		}
-		Set<Shot3d> result = new HashSet<>();
-		getSelectedShotsFromTable().forEach(shot -> result.add(model3d.getShot(shot.number)));
-		if (result.size() < 2) {
-			result.clear();
-			PlanarHull3f hull = new PlanarHull3f();
-			renderer.getViewState().pickXform().exportViewVolume(hull, canvas.getWidth(), canvas.getHeight());
-			model3d.getShotsIn(hull, result);
-			if (result.isEmpty()) {
-				result.addAll(model3d.getShots());
-			}
-		}
-
-		return result;
-	}
-
 	public I18n getI18n() {
 		return i18n;
 	}
@@ -2276,21 +2257,36 @@ public class BreakoutMainView {
 		return scene;
 	}
 
-	protected Stream<Shot> getSelectedShotsFromTable() {
+	protected Stream<ShotKey> getSelectedShotsFromTable() {
 		SurveyTableModel model = surveyDrawer.table().getModel();
 		ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
-		return IntStream.range(0, model.getRowCount()).filter(i -> selModel.isSelectedIndex(i))
-				.mapToObj(i -> shotAtRow(i)).filter(o -> o != null);
-	}
-
-	public Shot getShot(Shot3d shot) {
-		return shotAtRow(rowOfShot(shot.getNumber()));
-	}
-
-	protected Stream<Shot> getShotsFromTable() {
-		SurveyTableModel model = surveyDrawer.table().getModel();
-		return IntStream.range(0, model.getRowCount()).mapToObj(i -> shotAtRow(i))
+		return IntStream.range(0, model.getRowCount())
+				.filter(selModel::isSelectedIndex)
+				.mapToObj(modelIndexToShotKey::get)
 				.filter(o -> o != null);
+	}
+
+	protected Stream<ShotKey> getShotsFromTable() {
+		SurveyTableModel model = surveyDrawer.table().getModel();
+		return IntStream.range(0, model.getRowCount())
+				.mapToObj(modelIndexToShotKey::get)
+				.filter(o -> o != null);
+	}
+
+	protected Set<ShotKey> getDefaultShotsForOperations() {
+		Set<ShotKey> result = new HashSet<>();
+		getSelectedShotsFromTable().forEach(result::add);
+		if (result.size() < 2) {
+			result.clear();
+			PlanarHull3f hull = new PlanarHull3f();
+			renderer.getViewState().pickXform().exportViewVolume(hull, canvas.getWidth(), canvas.getHeight());
+			model3d.getShotsIn(hull, result);
+			if (result.isEmpty()) {
+				result.addAll(calcShots.keySet());
+			}
+		}
+
+		return result;
 	}
 
 	public TaskListDrawer getTaskListDrawer() {
@@ -2488,24 +2484,8 @@ public class BreakoutMainView {
 		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations());
 	}
 
-	public void rebuildShotNumberToRowMap() {
-		shotNumberToRowIndexMap.clear();
-
-		for (int i = 0; i < shots.size(); i++) {
-			Shot shot = shots.get(i);
-			if (shot != null) {
-				shotNumberToRowIndexMap.put(shot.number, i);
-			}
-		}
-	}
-
 	protected void removeUnprotectedCameraAnimations() {
 		cameraAnimationQueue.removeAll(anim -> !protectedAnimations.containsKey(anim));
-	}
-
-	public int rowOfShot(int shotNumber) {
-		Integer row = shotNumberToRowIndexMap.get(shotNumber);
-		return row == null ? -1 : row;
 	}
 
 	private void saveProjection() {
@@ -2637,22 +2617,6 @@ public class BreakoutMainView {
 		}
 	}
 
-	public void setShots(List<Shot> shotList) {
-		shots = shotList;
-		rebuildShotNumberToRowMap();
-	}
-
-	public Shot shotAtRow(int rowIndex) {
-		SurveyTableModel model = surveyDrawer.table().getModel();
-		if (rowIndex < 0) {
-			throw new IndexOutOfBoundsException("row index out of bounds: " + rowIndex + " < 0");
-		}
-		if (rowIndex >= model.getRowCount()) {
-			throw new IndexOutOfBoundsException("row index out of bounds: " + rowIndex + " >= " + model.getRowCount());
-		}
-		return rowIndex < shots.size() ? shots.get(rowIndex) : null;
-	}
-
 	public void southFacingProfileMode() {
 		changeView(new float[] { 0, 0, 1 }, new float[] { -1, 0, 0 }, true, getDefaultShotsForOperations());
 	}
@@ -2732,6 +2696,26 @@ public class BreakoutMainView {
 
 	public boolean hasUnsavedChanges() {
 		return hasUnsavedChanges(getProjectModel());
+	}
+
+	private void destroyCalculatedModel() {
+		SwingUtilities.invokeLater(() -> {
+			BreakoutMainView.this.shotKeyToModelIndex = Collections.emptyMap();
+			BreakoutMainView.this.modelIndexToShotKey = Collections.emptyMap();
+			BreakoutMainView.this.sourceRows = Collections.emptyMap();
+			BreakoutMainView.this.parsedShots = Collections.emptyMap();
+			BreakoutMainView.this.calcShots = Collections.emptyMap();
+			if (BreakoutMainView.this.model3d != null) {
+				final Survey3dModel model3d = BreakoutMainView.this.model3d;
+				BreakoutMainView.this.model3d = null;
+
+				autoDrawable.invoke(false, drawable -> {
+					scene.remove(model3d);
+					scene.disposeLater(model3d);
+					return false;
+				});
+			}
+		});
 	}
 
 	public static boolean hasUnsavedChanges(QObject<ProjectModel> projectModel) {

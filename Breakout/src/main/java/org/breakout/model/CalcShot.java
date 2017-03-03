@@ -1,7 +1,6 @@
 package org.breakout.model;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Date;
 
 public class CalcShot {
 	public CalcShot overrides;
@@ -15,12 +14,27 @@ public class CalcShot {
 	public double azimuth;
 	public double inclination;
 
-	public List<float[]> fromSplayNormals = new ArrayList<>();
-	public List<float[]> toSplayNormals = new ArrayList<>();
+	public float[] fromSplayNormals;
+	public float[] toSplayNormals;
+
+	public float[] fromSplayPoints;
+	public float[] toSplayPoints;
+
+	public Date date;
 
 	public ShotKey key() {
 		return fromStation != null && toStation != null
 				? new ShotKey(fromStation.key(), toStation.key())
 				: null;
+	}
+
+	public CalcStation otherStation(CalcStation station) {
+		if (station == fromStation) {
+			return toStation;
+		}
+		if (station == toStation) {
+			return fromStation;
+		}
+		throw new IllegalArgumentException("station must be this shot's from or to station");
 	}
 }

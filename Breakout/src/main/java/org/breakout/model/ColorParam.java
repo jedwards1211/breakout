@@ -28,8 +28,8 @@ import org.andork.date.DateUtils;
 public enum ColorParam {
 	DEPTH("Depth", true), DISTANCE_ALONG_SHOTS("Distance (Along Shots)", true) {
 		@Override
-		public double calcTraversalDistance(Shot shot) {
-			return shot.dist;
+		public double calcTraversalDistance(CalcShot shot) {
+			return shot.distance;
 		}
 
 		@Override
@@ -39,12 +39,17 @@ public enum ColorParam {
 	},
 	PASSAGE_WIDTH("Passage Width", false) {
 		@Override
-		public float calcStationParam(Shot shot, Station station) {
-			CrossSection xSection = station == shot.from ? shot.fromXsection : shot.toXsection;
+		public float calcStationParam(CalcShot shot, CalcStation station) {
+			CalcCrossSection xSection = station.crossSections.get(
+					station == shot.fromStation ? shot.toStation : shot.fromStation);
+			if (xSection == null) {
+				return 0;
+			}
+			double[] m = xSection.measurements;
 			if (xSection.type == CrossSectionType.NSEW) {
-				return Math.max(xSection.dist[0] + xSection.dist[1], xSection.dist[2] + xSection.dist[3]);
+				return (float) Math.max(m[0] + m[1], m[2] + m[3]);
 			} else {
-				return xSection.dist[0] + xSection.dist[1];
+				return (float) (m[0] + m[1]);
 			}
 		}
 
@@ -55,12 +60,16 @@ public enum ColorParam {
 	},
 	PASSAGE_HEIGHT("Passage Height", false) {
 		@Override
-		public float calcStationParam(Shot shot, Station station) {
-			CrossSection xSection = station == shot.from ? shot.fromXsection : shot.toXsection;
+		public float calcStationParam(CalcShot shot, CalcStation station) {
+			CalcCrossSection xSection = station.crossSections.get(
+					station == shot.fromStation ? shot.toStation : shot.fromStation);
+			if (xSection == null) {
+				return 0;
+			}
 			if (xSection.type == CrossSectionType.NSEW) {
-				return (float) shot.dist;
+				return (float) shot.distance;
 			} else {
-				return xSection.dist[2] + xSection.dist[3];
+				return (float) (xSection.measurements[2] + xSection.measurements[3]);
 			}
 		}
 
@@ -72,7 +81,7 @@ public enum ColorParam {
 
 	PASSAGE_MIN("Min(Passage Width, Height)", false) {
 		@Override
-		public float calcStationParam(Shot shot, Station station) {
+		public float calcStationParam(CalcShot shot, CalcStation station) {
 			return Math.min(PASSAGE_WIDTH.calcStationParam(shot, station),
 					PASSAGE_HEIGHT.calcStationParam(shot, station));
 		}
@@ -84,7 +93,7 @@ public enum ColorParam {
 	},
 	PASSAGE_AREA("Passage Area", false) {
 		@Override
-		public float calcStationParam(Shot shot, Station station) {
+		public float calcStationParam(CalcShot shot, CalcStation station) {
 			return PASSAGE_WIDTH.calcStationParam(shot, station) + PASSAGE_HEIGHT.calcStationParam(shot, station);
 		}
 
@@ -93,10 +102,10 @@ public enum ColorParam {
 			return true;
 		}
 	},
-	SHOT_LENGTH("Shot Length", false) {
+	SHOT_LENGTH("CalcShot Length", false) {
 		@Override
-		public float calcStationParam(Shot shot, Station station) {
-			return (float) shot.dist;
+		public float calcStationParam(CalcShot shot, CalcStation station) {
+			return (float) shot.distance;
 		}
 
 		@Override
@@ -108,7 +117,7 @@ public enum ColorParam {
 		Calendar calendar = Calendar.getInstance();
 
 		@Override
-		public float calcStationParam(Shot shot, Station station) {
+		public float calcStationParam(CalcShot shot, CalcStation station) {
 			if (shot.date == null) {
 				return Float.NaN;
 			}
@@ -142,11 +151,11 @@ public enum ColorParam {
 		this.loIsBright = loIsBright;
 	}
 
-	public float calcStationParam(Shot shot, Station station) {
+	public float calcStationParam(CalcShot shot, CalcStation station) {
 		throw new UnsupportedOperationException();
 	}
 
-	public double calcTraversalDistance(Shot shot) {
+	public double calcTraversalDistance(CalcShot shot) {
 		throw new UnsupportedOperationException();
 	}
 

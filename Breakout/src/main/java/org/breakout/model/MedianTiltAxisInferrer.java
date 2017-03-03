@@ -31,18 +31,18 @@ import org.andork.math3d.Vecmath;
 public class MedianTiltAxisInferrer implements TiltAxisInferrer {
 
 	@Override
-	public float[] inferTiltAxis(Collection<? extends Shot> shots) {
+	public float[] inferTiltAxis(Collection<? extends CalcShot> shots) {
 		if (shots.isEmpty()) {
 			return new float[] { 0f, -1f, 0f };
 		}
 
-		List<Double> xyAngles = new ArrayList<Double>();
-		List<Double> zyAngles = new ArrayList<Double>();
+		List<Double> xyAngles = new ArrayList<>();
+		List<Double> zyAngles = new ArrayList<>();
 
-		for (Shot shot : shots) {
-			double x = shot.to.position[0] - shot.from.position[0];
-			double y = shot.to.position[1] - shot.from.position[1];
-			double z = shot.to.position[2] - shot.from.position[2];
+		for (CalcShot shot : shots) {
+			double x = shot.toStation.position[0] - shot.fromStation.position[0];
+			double y = shot.toStation.position[1] - shot.fromStation.position[1];
+			double z = shot.toStation.position[2] - shot.fromStation.position[2];
 
 			xyAngles.add(Math.atan2(Math.signum(x) * y, Math.abs(x)));
 			zyAngles.add(Math.atan2(Math.signum(z) * y, Math.abs(z)));
