@@ -26,7 +26,8 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 
 public class BufferHelper {
-	private final ArrayList<Object> result = new ArrayList<Object>();
+	private final ArrayList<Object> result = new ArrayList<>();
+	private int sizeInBytes;
 
 	public void clear() {
 		result.clear();
@@ -48,6 +49,7 @@ public class BufferHelper {
 		for (byte f : values) {
 			result.add(f);
 		}
+		sizeInBytes += values.length;
 		return this;
 	}
 
@@ -55,6 +57,7 @@ public class BufferHelper {
 		for (char f : values) {
 			result.add(f);
 		}
+		sizeInBytes += values.length * 2;
 		return this;
 	}
 
@@ -62,6 +65,7 @@ public class BufferHelper {
 		for (double f : values) {
 			result.add(f);
 		}
+		sizeInBytes += values.length * 8;
 		return this;
 	}
 
@@ -69,6 +73,7 @@ public class BufferHelper {
 		for (float f : values) {
 			result.add(f);
 		}
+		sizeInBytes += values.length * 4;
 		return this;
 	}
 
@@ -76,6 +81,7 @@ public class BufferHelper {
 		for (int f : values) {
 			result.add(f);
 		}
+		sizeInBytes += values.length * 4;
 		return this;
 	}
 
@@ -83,6 +89,7 @@ public class BufferHelper {
 		for (long f : values) {
 			result.add(f);
 		}
+		sizeInBytes += values.length * 8;
 		return this;
 	}
 
@@ -90,6 +97,7 @@ public class BufferHelper {
 		for (short f : values) {
 			result.add(f);
 		}
+		sizeInBytes += values.length * 2;
 		return this;
 	}
 
@@ -97,21 +105,12 @@ public class BufferHelper {
 		for (double d : values) {
 			result.add((float) d);
 		}
+		sizeInBytes += values.length * 4;
 		return this;
 	}
 
-	public BufferHelper putBytes(byte... values) {
-		for (byte f : values) {
-			result.add(f);
-		}
-		return this;
-	}
-
-	public BufferHelper putInts(int... values) {
-		for (int i : values) {
-			result.add(i);
-		}
-		return this;
+	public int sizeInBytes() {
+		return sizeInBytes;
 	}
 
 	public ByteBuffer toByteBuffer() {

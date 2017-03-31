@@ -77,6 +77,7 @@ public class ProjectParser {
 		parsed = new ParsedTrip();
 		trips.put(raw, parsed);
 
+		// TODO Date!
 		parsed.distanceCorrection = parse(raw, SurveyTrip.Properties.distanceCorrection,
 				lengthParser, raw.getDistanceUnit(), null, 0);
 		parsed.declination = parse(raw, SurveyTrip.Properties.declination,

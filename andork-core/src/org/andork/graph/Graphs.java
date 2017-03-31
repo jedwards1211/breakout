@@ -33,44 +33,38 @@ import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Stream;
 
+import org.andork.collect.PriorityEntry;
+
 public class Graphs {
-	public static class PriorityNode<N, P extends Comparable<P>> implements Comparable<PriorityNode<N, P>> {
-		public final N node;
-		public final P priority;
+	public static <Node extends Comparable<Node>, Id> void traverse(Stream<Node> startNodes,
+			Function<Node, Id> nodeId, Function<Node, Stream<Node>> visit, BooleanSupplier keepGoing) {
+		PriorityQueue<Node> unvisited = new PriorityQueue<>();
+		startNodes.forEach(n -> unvisited.add(n));
 
-		public PriorityNode(N node, P priority) {
-			super();
-			this.node = node;
-			this.priority = priority;
-		}
+		Set<Id> visited = new HashSet<>();
 
-		@Override
-		public int compareTo(PriorityNode<N, P> o) {
-			return priority.compareTo(o.priority);
+		while (!unvisited.isEmpty() && keepGoing.getAsBoolean()) {
+			Node node = unvisited.poll();
+			Id id = nodeId.apply(node);
+			if (visited.add(id)) {
+				visit.apply(node).forEach(n -> unvisited.add(n));
+			}
 		}
 	}
 
 	public static <Node extends Comparable<Node>, Id> void traverse(Stream<Node> startNodes,
 			Predicate<Node> nodeVisitor,
-			Function<Node, Id> nodeId, Function<Node, Stream<Node>> connected, BooleanSupplier keepGoing) {
-		PriorityQueue<Node> queue = new PriorityQueue<>();
-		startNodes.forEach(n -> queue.add(n));
-
-		Set<Id> visited = new HashSet<>();
-
-		while (!queue.isEmpty() && keepGoing.getAsBoolean()) {
-			Node node = queue.poll();
-			Id id = nodeId.apply(node);
-			if (!visited.add(id)) {
-				continue;
-			}
-
-			if (!nodeVisitor.test(node)) {
-				continue;
-			}
-
-			connected.apply(node).forEach(n -> queue.add(n));
-		}
+			Function<Node, Id> nodeId, Function<Node, Stream<Node>> getNeighbors, BooleanSupplier keepGoing) {
+		traverse(
+				startNodes,
+				nodeId,
+				n -> {
+					if (!nodeVisitor.test(n)) {
+						return Stream.empty();
+					}
+					return getNeighbors.apply(n);
+				},
+				keepGoing);
 	}
 
 	public static <Node extends Comparable<Node>, Id> void traverse(Stream<Node> startNodes,
@@ -114,12 +108,12 @@ public class Graphs {
 			Consumer<Runnable> bgRunner,
 			long bgPeriod,
 			BooleanSupplier keepGoing) {
-		traverse(startNodes.map(n -> new PriorityNode<>(n, initialPriority.applyAsDouble(n))),
+		traverse(startNodes.map(n -> new PriorityEntry<>(initialPriority.applyAsDouble(n), n)),
 				p -> true,
-				(PriorityNode<Node, Double> p) -> p.node,
-				p -> connectedEdges.apply(p.node, p.priority).map(
-						e -> new PriorityNode<>(nextNode.apply(p.node, e),
-								p.priority + edgeCost.applyAsDouble(e))),
+				p -> p.getValue(),
+				p -> connectedEdges.apply(p.getValue(), p.getKey()).map(
+						e -> new PriorityEntry<>(p.getKey() + edgeCost.applyAsDouble(e),
+								nextNode.apply(p.getValue(), e))),
 				bgRunner, bgPeriod, keepGoing);
 	}
 
@@ -132,12 +126,12 @@ public class Graphs {
 			Consumer<Runnable> bgRunner,
 			long bgPeriod,
 			BooleanSupplier keepGoing) {
-		traverse(startNodes.map(n -> new PriorityNode<>(n, initialPriority.applyAsDouble(n))),
-				(PriorityNode<Node, Double> p) -> nodeVisitor.test(p.node, p.priority),
-				p -> p.node,
-				p -> connectedEdges.apply(p.node).map(
-						e -> new PriorityNode<>(nextNode.apply(p.node, e),
-								p.priority + edgeCost.applyAsDouble(e))),
+		traverse(startNodes.map(n -> new PriorityEntry<>(initialPriority.applyAsDouble(n), n)),
+				(PriorityEntry<Double, Node> p) -> nodeVisitor.test(p.getValue(), p.getKey()),
+				p -> p.getValue(),
+				p -> connectedEdges.apply(p.getValue()).map(
+						e -> new PriorityEntry<>(p.getKey() + edgeCost.applyAsDouble(e),
+								nextNode.apply(p.getValue(), e))),
 				bgRunner, bgPeriod, keepGoing);
 	}
 
@@ -146,27 +140,55 @@ public class Graphs {
 			BiPredicate<Node, Double> nodeVisitor,
 			Function<Node, Stream<Node>> connected,
 			ToDoubleFunction<Node> nodeCost) {
-		traverse(startNodes.map(n -> new PriorityNode<Node, Double>(n, initialPriority.applyAsDouble(n))),
-				(PriorityNode<Node, Double> p) -> nodeVisitor.test(p.node, p.priority),
-				p -> p.node,
-				p -> connected.apply(p.node).map(
-						n -> new PriorityNode<Node, Double>(n, p.priority + nodeCost.applyAsDouble(p.node))),
+		traverse(startNodes.map(n -> new PriorityEntry<>(initialPriority.applyAsDouble(n), n)),
+				(PriorityEntry<Double, Node> p) -> nodeVisitor.test(p.getValue(), p.getKey()),
+				p -> p.getValue(),
+				p -> connected.apply(p.getValue()).map(
+						n -> new PriorityEntry<>(
+								p.getKey() + nodeCost.applyAsDouble(p.getValue()), n)),
 				() -> true);
 	}
 
-	public static <Node, Edge> void traverse2(Stream<Node> startNodes,
+	public static <Node, Edge> void traverse(Stream<Node> startNodes,
 			ToDoubleFunction<Node> initialPriority,
 			BiPredicate<Node, Double> nodeVisitor,
 			Function<Node, Stream<Edge>> connectedEdges,
 			ToDoubleFunction<Edge> edgeCost,
 			BiFunction<Node, Edge, Node> nextNode,
 			BooleanSupplier keepGoing) {
-		traverse(startNodes.map(n -> new PriorityNode<>(n, initialPriority.applyAsDouble(n))),
-				(PriorityNode<Node, Double> p) -> nodeVisitor.test(p.node, p.priority),
-				p -> p.node,
-				p -> connectedEdges.apply(p.node).map(
-						e -> new PriorityNode<>(nextNode.apply(p.node, e),
-								p.priority + edgeCost.applyAsDouble(e))),
+		traverse(startNodes.map(n -> new PriorityEntry<>(initialPriority.applyAsDouble(n), n)),
+				(PriorityEntry<Double, Node> p) -> nodeVisitor.test(p.getValue(), p.getKey()),
+				p -> p.getValue(),
+				p -> connectedEdges.apply(p.getValue()).map(
+						e -> new PriorityEntry<>(p.getKey() + edgeCost.applyAsDouble(e),
+								nextNode.apply(p.getValue(), e))),
 				keepGoing);
 	}
+
+	/**
+	 * Traverses edges using Dijkstra's algorithm
+	 *
+	 * @param startEdges
+	 *            the edges to start from
+	 * @param getEdgeLength
+	 *            function that gets the length of an edge
+	 * @param visitEdge
+	 *            function that takes the edge and returns a stream of its
+	 *            connected edges
+	 * @param keepGoing
+	 *            called at every step. if it returns false, the algorithm
+	 *            stops.
+	 */
+	public static <Edge> void traverseEdges(Stream<Edge> startEdges,
+			ToDoubleFunction<Edge> getEdgeLength,
+			Function<Edge, Stream<Edge>> visitEdge,
+			BooleanSupplier keepGoing) {
+		traverse(startEdges.map(edge -> new PriorityEntry<>(getEdgeLength.applyAsDouble(edge), edge)),
+				edge -> edge.getValue(),
+				edge -> visitEdge.apply(edge.getValue()).map(connected -> new PriorityEntry<>(
+						edge.getKey() + getEdgeLength.applyAsDouble(connected),
+						connected)),
+				keepGoing);
+	}
+
 }

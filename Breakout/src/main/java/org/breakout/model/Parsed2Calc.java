@@ -177,13 +177,13 @@ public class Parsed2Calc {
 	public void convertNev(ParsedRow parsed, CalcShot shot) {
 		if (shot.fromStation != null) {
 			if (parsed.northing != null) {
-				shot.fromStation.position[0] = parsed.northing.doubleValue(Length.meters);
+				shot.fromStation.position[0] = parsed.easting.doubleValue(Length.meters);
 			}
 			if (parsed.easting != null) {
-				shot.fromStation.position[1] = parsed.easting.doubleValue(Length.meters);
+				shot.fromStation.position[1] = parsed.elevation.doubleValue(Length.meters);
 			}
 			if (parsed.elevation != null) {
-				shot.fromStation.position[2] = parsed.elevation.doubleValue(Length.meters);
+				shot.fromStation.position[2] = -parsed.northing.doubleValue(Length.meters);
 			}
 		}
 	}

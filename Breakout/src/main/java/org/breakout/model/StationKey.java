@@ -37,4 +37,10 @@ public class StationKey {
 		return result;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("StationKey [cave=").append(cave).append(", station=").append(station).append("]");
+		return builder.toString();
+	}
 }

@@ -71,4 +71,13 @@ public class ShotKey {
 	public int hashCode() {
 		return hashCode;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ShotKey [fromCave=").append(fromCave).append(", fromStation=").append(fromStation)
+				.append(", toCave=").append(toCave).append(", toStation=").append(toStation).append(", hashCode=")
+				.append(hashCode).append("]");
+		return builder.toString();
+	}
 }

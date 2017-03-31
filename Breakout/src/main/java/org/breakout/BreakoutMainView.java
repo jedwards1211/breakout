@@ -64,6 +64,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -185,6 +186,9 @@ import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
 import org.breakout.model.CalcShot;
+import org.breakout.model.CalculateSplayNormals;
+import org.breakout.model.CalculateSplayPoints;
+import org.breakout.model.CalculateStationPositions;
 import org.breakout.model.ColorParam;
 import org.breakout.model.MetacaveExporter;
 import org.breakout.model.MetacaveImporter;
@@ -926,6 +930,7 @@ public class BreakoutMainView {
 
 			SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 			List<SurveyRow> rows = copy.getRows();
+			Iterator<SurveyRow> i = rows.iterator();
 
 			if (parsingSubtask.isCanceling()) {
 				return;
@@ -937,6 +942,10 @@ public class BreakoutMainView {
 
 			int modelIndex = 0;
 			for (SurveyRow row : rows) {
+				if (row == null || row.getTrip() == null || row.getTrip().getDistanceUnit() == null) {
+					modelIndex++;
+					continue;
+				}
 				ParsedRow parsed = parser.parse(row);
 				CalcShot shot = p2c.convert(parsed);
 				ShotKey key = parsed.key();
@@ -957,7 +966,9 @@ public class BreakoutMainView {
 		}
 
 		void calculate() {
-
+			CalculateStationPositions.calculateStationPositions(calcShots.values().stream());
+			CalculateSplayNormals.calculateSplayNormals(parsedShots, calcShots);
+			CalculateSplayPoints.calculateSplayPoints(calcShots.values());
 		}
 
 		public void updateView() {

@@ -41,7 +41,7 @@ public enum ColorParam {
 		@Override
 		public float calcStationParam(CalcShot shot, CalcStation station) {
 			CalcCrossSection xSection = station.crossSections.get(
-					station == shot.fromStation ? shot.toStation : shot.fromStation);
+					station == shot.fromStation ? shot.toStation.key() : shot.fromStation.key());
 			if (xSection == null) {
 				return 0;
 			}
@@ -62,7 +62,7 @@ public enum ColorParam {
 		@Override
 		public float calcStationParam(CalcShot shot, CalcStation station) {
 			CalcCrossSection xSection = station.crossSections.get(
-					station == shot.fromStation ? shot.toStation : shot.fromStation);
+					station == shot.fromStation ? shot.toStation.key() : shot.fromStation.key());
 			if (xSection == null) {
 				return 0;
 			}

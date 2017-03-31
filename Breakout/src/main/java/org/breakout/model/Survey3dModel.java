@@ -63,7 +63,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -257,8 +256,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					"}";
 		}
 
-		private String fragmentShader;
-
 		protected String createFragmentShaderCode() {
 			return "  float temp;"
 					+
@@ -415,10 +412,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	private static enum Direction {
-		FORWARD, BACKWARD;
-	}
-
 	private abstract class OneParamSegment3dDrawer extends BaseSegment3dDrawer {
 		private int u_loParam_location;
 		private int u_hiParam_location;
@@ -541,7 +534,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public static class Segment3d {
-		final ArrayList<Shot3d> shot3ds = new ArrayList<>();
+		final ArrayList<Shot3d> shot3ds;
 
 		final LinkedList<Segment3dDrawer> drawers = new LinkedList<>();
 
@@ -556,17 +549,70 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		int[] shotIndicesInVertexArrays;
 		int[] shotIndicesInFillIndices;
 
-		void addShot(Shot3d shot3d) {
-			shot3d.segment3d = this;
-			shot3d.indexInSegment = shot3ds.size();
-			shot3ds.add(shot3d);
+		Segment3d(ArrayList<Shot3d> shot3ds) {
+			this.shot3ds = shot3ds;
+			int i = 0;
+			for (Shot3d shot3d : shot3ds) {
+				shot3d.segment3d = this;
+				shot3d.indexInSegment = i++;
+			}
+			populateData();
+		}
+
+		void populateData() {
+			BufferHelper geomHelper = new BufferHelper();
+			stationAttrs = new JoglBuffer().buffer(createBuffer(shot3ds.size() * STATION_ATTR_BPS));
+
+			shotIndicesInVertexArrays = new int[shot3ds.size()];
+			shotIndicesInFillIndices = new int[shot3ds.size()];
+
+			List<Integer> fillIndicesList = new ArrayList<>();
+			List<Integer> lineIndicesList = new ArrayList<>();
+
+			for (Shot3d shot3d : shot3ds) {
+				shotIndicesInVertexArrays[shot3d.indexInSegment] = geomHelper.sizeInBytes() / GEOM_BPV;
+				shotIndicesInFillIndices[shot3d.indexInSegment] = fillIndicesList.size() * BPI;
+
+				CalcShot shot = shot3d.shot;
+				if (Vecmath.distance3(shot.fromStation.position, shot.toStation.position) > 500) {
+					System.err.println(shot.fromStation.name + ": " + Arrays.toString(shot.fromStation.position) + " - "
+							+ shot.toStation.name + ": " + Arrays.toString(shot.toStation.position));
+				}
+
+				putValues(geomHelper, shot.fromSplayPoints, shot.fromSplayNormals);
+				putValues(geomHelper, shot.toSplayPoints, shot.toSplayNormals);
+
+				for (int index : offset(shot3d.indexInSegment * GEOM_VPS, 0, 4, 2, 6, 1, 5, 3, 7, 0, 4)) {
+					fillIndicesList.add(index);
+					lineIndicesList.add(index);
+				}
+				fillIndicesList.add(RESTART_INDEX);
+			}
+
+			geometry = new JoglBuffer().buffer(geomHelper.toByteBuffer());
+
+			ByteBuffer fillIndicesBuffer = createBuffer(fillIndicesList.size() * BPI);
+			fillIndices = new JoglBuffer().buffer(fillIndicesBuffer);
+			for (Integer i : fillIndicesList) {
+				fillIndicesBuffer.putInt(i);
+			}
+			ByteBuffer lineIndicesBuffer = createBuffer(lineIndicesList.size() * BPI);
+			lineIndices = new JoglBuffer().buffer(lineIndicesBuffer);
+			for (Integer i : lineIndicesList) {
+				lineIndicesBuffer.putInt(i);
+			}
+
+			geometry.buffer().position(0);
+			stationAttrs.buffer().position(0);
+			fillIndices.buffer().position(0);
+			lineIndices.buffer().position(0);
 		}
 
 		void calcParam0(Survey3dModel model, ColorParam param) {
 			param0 = new JoglBuffer().buffer(createBuffer(shot3ds.size() * GEOM_VPS * 4));
 			param0.buffer().position(0);
 			for (Shot3d shot3d : shot3ds) {
-				CalcShot origShot = model.originalShots.get(shot3d.key);
+				CalcShot origShot = shot3d.shot;
 
 				if (!param.isStationMetric()) {
 					return;
@@ -593,16 +639,16 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			param0NeedsRebuffering.set(true);
 		}
 
-		void calcParam0(Survey3dModel model, Map<CalcStation, Double> stationValues) {
+		void calcParam0(Survey3dModel model, Map<StationKey, Double> stationValues) {
 			param0 = new JoglBuffer().buffer(createBuffer(shot3ds.size() * GEOM_VPS * 4));
 			param0.buffer().position(0);
 			for (Shot3d shot3d : shot3ds) {
-				CalcShot origShot = model.originalShots.get(shot3d.key);
-				Double fromValue = stationValues.get(origShot.fromStation);
+				CalcShot origShot = shot3d.shot;
+				Double fromValue = stationValues.get(origShot.fromStation.key());
 				if (fromValue == null) {
 					fromValue = Double.NaN;
 				}
-				Double toValue = stationValues.get(origShot.toStation);
+				Double toValue = stationValues.get(origShot.toStation.key());
 				if (toValue == null) {
 					toValue = Double.NaN;
 				}
@@ -677,47 +723,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			fillIndices.dispose(gl);
 			lineIndices.dispose(gl);
 		}
-
-		void populateData(ByteBuffer allGeomBuffer) {
-			geometry = new JoglBuffer().buffer(createBuffer(shot3ds.size() * GEOM_BPS));
-			stationAttrs = new JoglBuffer().buffer(createBuffer(shot3ds.size() * STATION_ATTR_BPS));
-
-			shotIndicesInVertexArrays = new int[shot3ds.size()];
-			shotIndicesInFillIndices = new int[shot3ds.size()];
-
-			List<Integer> fillIndicesList = new ArrayList<>();
-			List<Integer> lineIndicesList = new ArrayList<>();
-
-			int k = 0;
-			for (Shot3d shot3d : shot3ds) {
-				shotIndicesInVertexArrays[shot3d.indexInSegment] = geometry.buffer().position() / GEOM_BPV;
-				shotIndicesInFillIndices[shot3d.indexInSegment] = fillIndicesList.size() * BPI;
-
-				copyBytes(allGeomBuffer, geometry.buffer(), k++, GEOM_BPS);
-
-				for (int index : offset(shot3d.indexInSegment * GEOM_VPS, 0, 4, 2, 6, 1, 5, 3, 7, 0, 4)) {
-					fillIndicesList.add(index);
-					lineIndicesList.add(index);
-				}
-				fillIndicesList.add(RESTART_INDEX);
-			}
-
-			ByteBuffer fillIndicesBuffer = createBuffer(fillIndicesList.size() * BPI);
-			fillIndices = new JoglBuffer().buffer(fillIndicesBuffer);
-			for (Integer i : fillIndicesList) {
-				fillIndicesBuffer.putInt(i);
-			}
-			ByteBuffer lineIndicesBuffer = createBuffer(lineIndicesList.size() * BPI);
-			lineIndices = new JoglBuffer().buffer(lineIndicesBuffer);
-			for (Integer i : lineIndicesList) {
-				lineIndicesBuffer.putInt(i);
-			}
-
-			geometry.buffer().position(0);
-			stationAttrs.buffer().position(0);
-			fillIndices.buffer().position(0);
-			lineIndices.buffer().position(0);
-		}
 	}
 
 	private static interface Segment3dDrawer extends JoglResource {
@@ -772,15 +777,17 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public static class Shot3d {
 		ShotKey key;
+		CalcShot shot;
 
 		Segment3d segment3d;
 		int indexInSegment;
 
 		RfStarTree.Leaf<Shot3d> leaf;
 
-		Shot3d(ShotKey key) {
+		Shot3d(ShotKey key, CalcShot shot) {
 			super();
 			this.key = key;
+			this.shot = shot;
 		}
 
 		public void calcParamRange(Survey3dModel model, ColorParam param, float[] rangeInOut) {
@@ -1243,17 +1250,30 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		public float locationAlongShot;
 	}
 
+	/**
+	 * Bytes per vertex
+	 */
 	private static final int GEOM_BPV = 24;
-
+	/**
+	 * Vertices per shot
+	 */
 	private static final int GEOM_VPS = 8;
-
-	private static final int GEOM_BPS = GEOM_BPV * GEOM_VPS;
+	/**
+	 * Station attribute bytes per vertex
+	 */
 	private static final int STATION_ATTR_BPV = 12;
-
+	/**
+	 * Station attributes per shot
+	 */
 	private static final int STATION_ATTR_VPS = GEOM_VPS;
-
+	/**
+	 * Station attribute bytes per shot
+	 */
 	private static final int STATION_ATTR_BPS = STATION_ATTR_BPV
 			* STATION_ATTR_VPS;
+	/**
+	 * Bytes per index
+	 */
 	private static final int BPI = 4;
 	private static final int RESTART_INDEX = 0xffffffff;
 	private static final int[][] hullTriangleIndices = {
@@ -1265,22 +1285,22 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			{ 4, 7, 6 }, { 7, 4, 5 }
 	};
 
-	private static void addShots(Node<Shot3d> node, Segment3d segment3d) {
+	private static void addShots(Node<Shot3d> node, Collection<Shot3d> shot3ds) {
 		if (node instanceof Leaf) {
-			segment3d.addShot(((Leaf<Shot3d>) node).object());
+			shot3ds.add(((Leaf<Shot3d>) node).object());
 		} else if (node instanceof Branch) {
 			Branch<Shot3d> branch = (Branch<Shot3d>) node;
 			for (int i = 0; i < branch.numChildren(); i++) {
-				addShots(branch.childAt(i), segment3d);
+				addShots(branch.childAt(i), shot3ds);
 			}
 		}
 	}
 
-	private static void copyBytes(ByteBuffer src, ByteBuffer dest, int shotIndex, int bytesPerShot) {
-		src.clear();
-		src.position(shotIndex * bytesPerShot);
-		src.limit(src.position() + bytesPerShot);
-		dest.put(src);
+	private static ArrayList<Shot3d> getShots(Node<Shot3d> node) {
+		ArrayList<Shot3d> shot3ds = new ArrayList<>();
+		addShots(node, shot3ds);
+		shot3ds.trimToSize();
+		return shot3ds;
 	}
 
 	public static Survey3dModel create(Map<ShotKey, CalcShot> originalShots, int maxChildrenPerBranch, int minSplitSize,
@@ -1298,21 +1318,20 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		rootSubtask.setTotal(renderProportion + 5);
 
 		Map<ShotKey, Shot3d> shot3ds = new HashMap<>();
-		for (ShotKey key : originalShots.keySet()) {
-			shot3ds.put(key, new Shot3d(key));
+		for (Map.Entry<ShotKey, CalcShot> entry : originalShots.entrySet()) {
+			shot3ds.put(entry.getKey(), new Shot3d(entry.getKey(), entry.getValue()));
 		}
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		ByteBuffer geomBuffer = createInitialGeometry(originalShots, rootSubtask.beginSubtask(1));
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		RfStarTree<Shot3d> tree = createTree(shot3ds.values(), geomBuffer, maxChildrenPerBranch, minSplitSize,
+		RfStarTree<Shot3d> tree = createTree(shot3ds.values(), maxChildrenPerBranch, minSplitSize,
 				numToReinsert, rootSubtask.beginSubtask(1));
 		if (rootSubtask.isCanceling()) {
 			return null;
@@ -1327,22 +1346,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		Subtask renderSubtask = rootSubtask.beginSubtask(renderProportion);
-		renderSubtask.setStatus("sending data to graphics card");
-		renderSubtask.setTotal(segment3ds.size() * 2);
-
-		for (Segment3d segment3d : segment3ds) {
-			segment3d.populateData(geomBuffer);
-			if (renderSubtask.isCanceling()) {
-				return null;
-			}
-			renderSubtask.setCompleted(renderSubtask.getCompleted() + 1);
-		}
-		Survey3dModel model = new Survey3dModel(originalShots, shot3ds, tree, segment3ds, renderSubtask);
+		Survey3dModel model = new Survey3dModel(shot3ds, tree, segment3ds);
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
-		renderSubtask.end();
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + renderProportion);
 
 		return model;
@@ -1354,71 +1361,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return buffer;
 	}
 
-	private static void createFillIndices(ByteBuffer dest, int shotCount) {
-		for (int i = 0; i < shotCount; i++) {
-			for (int index : offset(i * GEOM_VPS,
-					0, 4, 2, 6, 2, 4,
-					2, 6, 1, 5, 1, 6,
-					1, 5, 3, 7, 3, 5,
-					3, 7, 0, 4, 0, 7)) {
-				dest.putInt(index);
-			}
-		}
-	}
-
-	private static ByteBuffer createInitialGeometry(Map<ShotKey, CalcShot> originalShots, Subtask task) {
-		task.setStatus("creating geometry");
-		task.setTotal(originalShots.size());
-
-		BufferHelper geomHelper = new BufferHelper();
-
-		int count = 0;
-		for (CalcShot shot : originalShots.values()) {
-			if (Vecmath.distance3(shot.fromStation.position, shot.toStation.position) > 200) {
-				System.err.println(shot.fromStation.name + ": " + Arrays.toString(shot.fromStation.position) + " - "
-						+ shot.toStation.name + ": " + Arrays.toString(shot.toStation.position));
-			}
-
-			putValues(geomHelper, shot.fromSplayPoints, shot.fromSplayNormals);
-			putValues(geomHelper, shot.toSplayPoints, shot.toSplayNormals);
-
-			if (count++ % 100 == 0 && task != null) {
-				if (task.isCanceling()) {
-					return null;
-				}
-				task.setCompleted(count);
-			}
-		}
-
-		task.end();
-		return geomHelper.toByteBuffer();
-	}
-
-	private static void createLineIndices(ByteBuffer dest, int shotCount) {
-		for (int i = 0; i < shotCount; i++) {
-			for (int index : offset(i * GEOM_VPS,
-					0, 4, 0, 2, 4, 2, 4, 6,
-					2, 6, 2, 1, 6, 1, 6, 5,
-					1, 5, 1, 3, 5, 3, 5, 7,
-					3, 7, 3, 0, 7, 0, 7, 4)) {
-				dest.putInt(index);
-			}
-		}
-	}
-
-	private static Segment3d createSegment(Node<Shot3d> node) {
-		Segment3d segment3d = new Segment3d();
-
-		addShots(node, segment3d);
-
-		segment3d.shot3ds.trimToSize();
-
-		return segment3d;
-	}
-
 	private static void createSegments(RfStarTree.Node<Shot3d> node, int segmentLevel, Set<Segment3d> result) {
 		if (node.level() == segmentLevel) {
-			result.add(createSegment(node));
+			result.add(new Segment3d(getShots(node)));
 		} else if (node instanceof RfStarTree.Branch) {
 			RfStarTree.Branch<Shot3d> branch = (RfStarTree.Branch<Shot3d>) node;
 			for (int i = 0; i < branch.numChildren(); i++) {
@@ -1438,27 +1383,34 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return result;
 	}
 
-	private static RfStarTree<Shot3d> createTree(Collection<Shot3d> shot3ds, ByteBuffer geomBuffer,
+	private static RfStarTree<Shot3d> createTree(Collection<Shot3d> shot3ds,
 			int maxChildrenPerBranch, int minSplitSize, int numToReinsert, Subtask task) {
 		RfStarTree<Shot3d> tree = new RfStarTree<>(3, maxChildrenPerBranch, minSplitSize, numToReinsert);
 
-		int numShots = geomBuffer.capacity() / GEOM_BPS;
-
 		task.setStatus("creating spatial index");
-		task.setTotal(numShots);
+		task.setTotal(shot3ds.size());
 
 		int s = 0;
-		for (Shot3d shot : shot3ds) {
+		for (Shot3d shot3d : shot3ds) {
 			float[] mbr = voidRectf(3);
 
-			int shotStart = s * GEOM_BPS;
+			CalcShot shot = shot3d.shot;
 
-			for (int v = 0; v < GEOM_VPS; v++) {
-				geomBuffer.position(shotStart + v * GEOM_BPV);
-				float x = geomBuffer.getFloat();
-				float y = geomBuffer.getFloat();
-				float z = geomBuffer.getFloat();
-
+			for (int i = 0; i < shot.fromSplayPoints.length; i += 3) {
+				float x = shot.fromSplayPoints[i];
+				float y = shot.fromSplayPoints[i + 1];
+				float z = shot.fromSplayPoints[i + 2];
+				mbr[0] = nmin(mbr[0], x);
+				mbr[1] = nmin(mbr[1], y);
+				mbr[2] = nmin(mbr[2], z);
+				mbr[3] = nmax(mbr[3], x);
+				mbr[4] = nmax(mbr[4], y);
+				mbr[5] = nmax(mbr[5], z);
+			}
+			for (int i = 0; i < shot.toSplayPoints.length; i += 3) {
+				float x = shot.toSplayPoints[i];
+				float y = shot.toSplayPoints[i + 1];
+				float z = shot.toSplayPoints[i + 2];
 				mbr[0] = nmin(mbr[0], x);
 				mbr[1] = nmin(mbr[1], y);
 				mbr[2] = nmin(mbr[2], z);
@@ -1467,8 +1419,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				mbr[5] = nmax(mbr[5], z);
 			}
 
-			shot.leaf = tree.createLeaf(mbr, shot);
-			tree.insert(shot.leaf);
+			shot3d.leaf = tree.createLeaf(mbr, shot3d);
+			tree.insert(shot3d.leaf);
 
 			s++;
 			if (s % 100 == 0 && task.isCanceling()) {
@@ -1539,8 +1491,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	final Map<ShotKey, CalcShot> originalShots;
-
 	final Map<ShotKey, Shot3d> shot3ds;
 
 	final RfStarTree<Shot3d> tree;
@@ -1592,10 +1542,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Uniform4fv glowColor;
 
-	private Survey3dModel(Map<ShotKey, CalcShot> originalShots, Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree,
-			Set<Segment3d> segment3ds, Subtask renderSubtask) {
+	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Segment3d> segment3ds) {
 		super();
-		this.originalShots = originalShots;
 		this.shot3ds = shot3ds;
 		this.tree = tree;
 		this.segment3ds = segment3ds;
@@ -1730,110 +1678,23 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return range;
 	}
 
-	public void calcDistFromSelected(Subtask subtask) {
-		final Map<CalcStation, Double> distances = new HashMap<>();
-
-		class PEntry implements Comparable<PEntry> {
-			public final double priority;
-			public final CalcStation station;
-
-			public PEntry(double priority, CalcStation station) {
-				super();
-				this.priority = priority;
-				this.station = station;
-			}
-
-			@Override
-			public int compareTo(PEntry o) {
-				return Double.compare(priority, o.priority);
-			}
-		}
-
-		PriorityQueue<PEntry> queue = new PriorityQueue<>();
-
-		for (ShotKey key : selectedShots) {
-			CalcShot origShot = originalShots.get(key);
-			distances.put(origShot.fromStation, 0.0);
-			distances.put(origShot.toStation, 0.0);
-			queue.add(new PEntry(0.0, origShot.fromStation));
-			queue.add(new PEntry(0.0, origShot.toStation));
-		}
-
-		while (!queue.isEmpty()) {
-			PEntry next = queue.poll();
-			for (CalcShot shot : next.station.shots.values()) {
-				CalcStation nextStation = shot.otherStation(next.station);
-				if (!distances.containsKey(nextStation)) {
-					double distance = next.priority + colorParam.calcTraversalDistance(shot);
-					distances.put(nextStation, distance);
-					queue.add(new PEntry(distance, nextStation));
-				}
-			}
-		}
-
-		if (subtask != null) {
-			subtask.setTotal(segment3ds.size());
-			subtask.setCompleted(0);
-			subtask.setIndeterminate(false);
-		}
-		final Iterator<Segment3d> segmentIterator = segment3ds.iterator();
-
-		int processed = 0;
-		while (segmentIterator.hasNext()) {
-			Segment3d segment3d = segmentIterator.next();
-			segment3d.calcParam0(Survey3dModel.this, distances);
-
-			if (processed++ % 100 == 0) {
-				if (subtask != null) {
-					if (subtask.isCanceling()) {
-						return;
-					}
-					subtask.setCompleted(processed);
-				}
-			}
-		}
-	}
-
 	public void calcDistFromShots(Set<ShotKey> shots, Subtask subtask) {
-		final Map<CalcStation, Double> distances = new HashMap<>();
+		final Map<StationKey, Double> distances = new HashMap<>();
 
-		class PEntry implements Comparable<PEntry> {
-			public final double priority;
-			public final CalcStation station;
-
-			public PEntry(double priority, CalcStation station) {
-				super();
-				this.priority = priority;
-				this.station = station;
-			}
-
-			@Override
-			public int compareTo(PEntry o) {
-				return Double.compare(priority, o.priority);
-			}
-		}
-
-		PriorityQueue<PEntry> queue = new PriorityQueue<>();
-
-		for (ShotKey key : shots) {
-			CalcShot origShot = originalShots.get(key);
-			distances.put(origShot.fromStation, 0.0);
-			distances.put(origShot.toStation, 0.0);
-			queue.add(new PEntry(0.0, origShot.fromStation));
-			queue.add(new PEntry(0.0, origShot.toStation));
-		}
-
-		while (!queue.isEmpty()) {
-			PEntry next = queue.poll();
-			for (CalcShot shot : next.station.shots.values()) {
-				CalcStation nextStation = shot.otherStation(next.station);
-				if (!distances.containsKey(nextStation)) {
-					double distance = next.priority + colorParam.calcTraversalDistance(shot);
-					distances.put(nextStation, distance);
-					queue.add(new PEntry(distance, nextStation));
-				}
-			}
-		}
+		Graphs.traverse(
+				shots.stream().flatMap(key -> {
+					CalcShot shot = shot3ds.get(key).shot;
+					return Stream.of(shot.fromStation, shot.toStation);
+				}),
+				station -> 0.0,
+				(station, distance) -> {
+					distances.put(station.key(), distance);
+					return true;
+				},
+				station -> station.shots.values().stream(),
+				(CalcShot shot) -> shot.distance,
+				(CalcStation station, CalcShot shot) -> station == shot.fromStation ? shot.toStation : shot.fromStation,
+				() -> !subtask.isCanceling());
 
 		if (subtask != null) {
 			subtask.setTotal(segment3ds.size());
@@ -1908,7 +1769,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			FloatBinaryOperator extentFunction) {
 		FloatHolder farthest = new FloatHolder(Float.NaN);
 
-		float[] testPoint = new float[3];
+		// float[] testPoint = new float[3];
 
 		RTraversal.traverse(getTree().getRoot(),
 				node -> {
@@ -2101,7 +1962,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		drawers.set(newDrawers);
 
 		if (colorParam.isTraversalMetric()) {
-			calcDistFromSelected(subtask);
+			calcDistFromShots(selectedShots, subtask);
 		}
 	}
 
@@ -2145,11 +2006,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		Set<Segment3d> newSegmentsWithGlow = new HashSet<>();
 
 		if (hoveredShot != null) {
-			CalcShot origShot = originalShots.get(hoveredShot.key);
+			CalcShot origShot = hoveredShot.shot;
 
 			final Function<CalcStation, Stream<CalcShot>> connected = station -> station.shots.values().stream();
 
-			Graphs.traverse2(Stream.<CalcStation>builder().add(origShot.fromStation).add(origShot.toStation).build(),
+			Graphs.traverse(Stream.<CalcStation>builder().add(origShot.fromStation).add(origShot.toStation).build(),
 					station -> (station == origShot.fromStation ? hoverLocation : 1 - hoverLocation)
 							* origShot.distance,
 					(station, priority) -> {
@@ -2177,7 +2038,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 						return glow > 0;
 					},
 					connected,
-					(CalcShot shot) -> shot.distance,
+					shot -> shot.distance,
 					(station, shot) -> station == shot.fromStation ? shot.toStation : shot.fromStation,
 					() -> subtask != null && !subtask.isCanceling());
 
