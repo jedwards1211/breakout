@@ -191,4 +191,20 @@ public class Graphs {
 				keepGoing);
 	}
 
+	/**
+	 * Traverses edges using Dijkstra's algorithm
+	 *
+	 * @param startEdges
+	 *            the edges to start from
+	 * @param getEdgeLength
+	 *            function that gets the length of an edge
+	 * @param visitEdge
+	 *            function that takes the edge and returns a stream of its
+	 *            connected edges
+	 */
+	public static <Edge> void traverseEdges(Stream<Edge> startEdges,
+			ToDoubleFunction<Edge> getEdgeLength,
+			Function<Edge, Stream<Edge>> visitEdge) {
+		traverseEdges(startEdges, getEdgeLength, visitEdge, () -> true);
+	}
 }

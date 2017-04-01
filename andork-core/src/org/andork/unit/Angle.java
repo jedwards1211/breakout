@@ -124,12 +124,4 @@ public class Angle extends UnitType<Angle> {
 		UnitizedDouble<Angle> range = ((AngleUnit) a.unit).range;
 		return normalize(a.add(range.mul(0.5)));
 	}
-
-	public static UnitizedDouble<Angle> bisect(UnitizedDouble<Angle> a, UnitizedDouble<Angle> b) {
-		a = normalize(a);
-		b = normalize(b);
-		UnitizedDouble<Angle> r1 = a.add(b).mul(0.5);
-		UnitizedDouble<Angle> r2 = opposite(r1);
-		return r1.sub(a).abs().get(a.unit) < r2.sub(a).abs().get(a.unit) ? r1 : r2;
-	}
 }

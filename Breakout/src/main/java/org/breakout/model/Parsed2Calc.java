@@ -1,5 +1,6 @@
 package org.breakout.model;
 
+import org.andork.math.misc.AngleUtils;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
@@ -59,7 +60,9 @@ public class Parsed2Calc {
 		}
 		if (frontAzimuth != null) {
 			if (backAzimuth != null) {
-				shot.azimuth = Angle.bisect(frontAzimuth, backAzimuth).doubleValue(Angle.radians);
+				shot.azimuth = AngleUtils.average(
+						frontAzimuth.doubleValue(Angle.radians),
+						backAzimuth.doubleValue(Angle.radians));
 			} else {
 				shot.azimuth = frontAzimuth.doubleValue(Angle.radians);
 			}
@@ -147,22 +150,29 @@ public class Parsed2Calc {
 		}
 
 		StationKey toKey = null;
+		double facingAzimuth = shot.azimuth;
 		if (shot.toStation != null) {
 			toKey = shot.toStation.key();
 		} else {
+			// go through all so that we get the most recent shot that matches
 			for (CalcShot other : shot.fromStation.shots.values()) {
-				StationKey key = other.fromStation.key();
 				if (other.toStation == shot.fromStation &&
-						!shot.fromStation.crossSections.containsKey(key)) {
-					toKey = key;
-					break;
+						!shot.fromStation.crossSections.containsKey(other.fromStation.key())) {
+					toKey = other.fromStation.key();
+					facingAzimuth = other.azimuth;
+				} else if (other.fromStation == shot.fromStation &&
+						!shot.fromStation.crossSections.containsKey(other.toStation.key())) {
+					toKey = other.toStation.key();
+					facingAzimuth = other.azimuth;
 				}
 			}
 		}
-		if (toKey != null) {
+		if (toKey != null && (parsed.left != null || parsed.right != null ||
+				parsed.up != null || parsed.down != null)) {
 			CalcCrossSection crossSection = new CalcCrossSection();
 
 			crossSection.type = parsed.crossSectionType;
+			crossSection.facingAzimuth = facingAzimuth;
 			crossSection.measurements = new double[] {
 					parsed.left != null ? parsed.left.doubleValue(Length.meters) : 0,
 					parsed.right != null ? parsed.right.doubleValue(Length.meters) : 0,

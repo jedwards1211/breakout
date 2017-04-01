@@ -64,7 +64,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -185,15 +184,15 @@ import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
+import org.breakout.model.CalcProject;
 import org.breakout.model.CalcShot;
-import org.breakout.model.CalculateSplayNormals;
-import org.breakout.model.CalculateSplayPoints;
-import org.breakout.model.CalculateStationPositions;
+import org.breakout.model.CalculateGeometry;
 import org.breakout.model.ColorParam;
 import org.breakout.model.MetacaveExporter;
 import org.breakout.model.MetacaveImporter;
 import org.breakout.model.MutableSurveyRow;
 import org.breakout.model.Parsed2Calc;
+import org.breakout.model.ParsedProject;
 import org.breakout.model.ParsedRow;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.ProjectParser;
@@ -281,7 +280,7 @@ public class BreakoutMainView {
 					public LinearAxisConversion run() throws Throwable {
 						SurveyRow orig = sourceRows.get(picked.picked.key());
 						SurveyTrip trip = orig != null ? orig.getTrip() : null;
-						ParsedRow shot = parsedShots.get(picked.picked.key());
+						ParsedRow shot = parsedProject.shots.get(picked.picked.key());
 						if (shot == null) {
 							hintLabel.setText("");
 						} else {
@@ -290,8 +289,10 @@ public class BreakoutMainView {
 											+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i></html>",
 									shot.fromStation, shot.toStation,
 									shot.distance,
-									shot.frontAzimuth, shot.backAzimuth,
-									shot.frontInclination, shot.backInclination,
+									shot.frontAzimuth != null ? shot.frontAzimuth : "--",
+									shot.backAzimuth != null ? shot.backAzimuth : "--",
+									shot.frontInclination != null ? shot.frontInclination : "--",
+									shot.backInclination != null ? shot.backInclination : "--",
 									trip != null ? trip.getName() : ""));
 						}
 
@@ -799,7 +800,7 @@ public class BreakoutMainView {
 			ListSelectionModel selModel = (ListSelectionModel) e.getSource();
 
 			if (e.getFirstIndex() < 0) {
-				for (ShotKey key : calcShots.keySet()) {
+				for (ShotKey key : calcProject.shots.keySet()) {
 					editor.deselect(key);
 				}
 
@@ -834,7 +835,7 @@ public class BreakoutMainView {
 
 					if (selModel.isSelectedIndex(i)) {
 						editor.select(shotKey);
-						CalcShot shot = calcShots.get(shotKey);
+						CalcShot shot = calcProject.shots.get(shotKey);
 						if (shot != null) {
 							if (!Double.isNaN(shot.distance)) {
 								distCalc.add(shot.distance);
@@ -866,7 +867,7 @@ public class BreakoutMainView {
 				float[] p = Rectmath.voidRectf(3);
 
 				for (ShotKey key : model3d.getSelectedShots()) {
-					CalcShot shot = calcShots.get(key);
+					CalcShot shot = calcProject.shots.get(key);
 					p[0] = (float) Math.min(shot.fromStation.position[0], shot.toStation.position[0]);
 					p[1] = (float) Math.min(shot.fromStation.position[1], shot.toStation.position[1]);
 					p[2] = (float) Math.min(shot.fromStation.position[2], shot.toStation.position[2]);
@@ -899,8 +900,6 @@ public class BreakoutMainView {
 		final Map<ShotKey, Integer> shotKeyToModelIndex = new HashMap<>();
 		final Map<Integer, ShotKey> modelIndexToShotKey = new HashMap<>();
 		final Map<ShotKey, SurveyRow> sourceRows = new HashMap<>();
-		final Map<ShotKey, ParsedRow> parsedShots = new HashMap<>();
-		final Map<ShotKey, CalcShot> calcShots = new HashMap<>();
 
 		@Override
 		protected void execute() {
@@ -919,7 +918,7 @@ public class BreakoutMainView {
 
 		protected void reallyExecute() {
 			parse();
-			calculate();
+			CalculateGeometry.calculateGeometry(p2c.project);
 			updateView();
 		}
 
@@ -930,7 +929,6 @@ public class BreakoutMainView {
 
 			SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 			List<SurveyRow> rows = copy.getRows();
-			Iterator<SurveyRow> i = rows.iterator();
 
 			if (parsingSubtask.isCanceling()) {
 				return;
@@ -947,15 +945,13 @@ public class BreakoutMainView {
 					continue;
 				}
 				ParsedRow parsed = parser.parse(row);
-				CalcShot shot = p2c.convert(parsed);
 				ShotKey key = parsed.key();
 				if (key != null) {
 					shotKeyToModelIndex.put(key, modelIndex);
 					modelIndexToShotKey.put(modelIndex, key);
 					sourceRows.put(key, row);
-					parsedShots.put(key, parsed);
-					calcShots.put(key, shot);
 				}
+				p2c.convert(parsed);
 				parsingSubtask.setCompleted(++modelIndex);
 			}
 
@@ -965,18 +961,12 @@ public class BreakoutMainView {
 			parsingSubtask.end();
 		}
 
-		void calculate() {
-			CalculateStationPositions.calculateStationPositions(calcShots.values().stream());
-			CalculateSplayNormals.calculateSplayNormals(parsedShots, calcShots);
-			CalculateSplayPoints.calculateSplayPoints(calcShots.values());
-		}
-
 		public void updateView() {
 			setStatus("Updating view...");
 			destroyCalculatedModel();
 			setStatus("Updating view: constructing new model...");
 
-			final Survey3dModel model = Survey3dModel.create(calcShots, 10, 3, 3, this);
+			final Survey3dModel model = Survey3dModel.create(p2c.project, 10, 3, 3, this);
 			if (isCanceling()) {
 				return;
 			}
@@ -992,8 +982,8 @@ public class BreakoutMainView {
 				BreakoutMainView.this.shotKeyToModelIndex = shotKeyToModelIndex;
 				BreakoutMainView.this.modelIndexToShotKey = modelIndexToShotKey;
 				BreakoutMainView.this.sourceRows = sourceRows;
-				BreakoutMainView.this.parsedShots = parsedShots;
-				BreakoutMainView.this.calcShots = calcShots;
+				parsedProject = parser.project;
+				calcProject = p2c.project;
 				model3d = model;
 
 				model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
@@ -1176,8 +1166,8 @@ public class BreakoutMainView {
 	Map<ShotKey, Integer> shotKeyToModelIndex = Collections.emptyMap();
 	Map<Integer, ShotKey> modelIndexToShotKey = Collections.emptyMap();
 	Map<ShotKey, SurveyRow> sourceRows = Collections.emptyMap();
-	Map<ShotKey, ParsedRow> parsedShots = Collections.emptyMap();
-	Map<ShotKey, CalcShot> calcShots = Collections.emptyMap();
+	ParsedProject parsedProject = new ParsedProject();
+	CalcProject calcProject = new CalcProject();
 
 	private static final FileRecoveryConfig fileRecoveryConfig = new FileRecoveryConfig() {};
 
@@ -1787,7 +1777,7 @@ public class BreakoutMainView {
 				}
 				List<float[]> vectors = new ArrayList<>();
 				for (ShotKey key : getDefaultShotsForOperations()) {
-					CalcShot shot = calcShots.get(key);
+					CalcShot shot = calcProject.shots.get(key);
 					if (shot == null) {
 						continue;
 					}
@@ -1935,7 +1925,7 @@ public class BreakoutMainView {
 		Set<ShotKey> shots = getDefaultShotsForOperations();
 		List<float[]> forFitting = new ArrayList<>();
 		for (ShotKey key : shots) {
-			CalcShot shot = calcShots.get(key);
+			CalcShot shot = calcProject.shots.get(key);
 			if (shot != null) {
 				forFitting.add(new float[] {
 						(float) shot.fromStation.position[0],
@@ -2293,7 +2283,7 @@ public class BreakoutMainView {
 			renderer.getViewState().pickXform().exportViewVolume(hull, canvas.getWidth(), canvas.getHeight());
 			model3d.getShotsIn(hull, result);
 			if (result.isEmpty()) {
-				result.addAll(calcShots.keySet());
+				result.addAll(calcProject.shots.keySet());
 			}
 		}
 
@@ -2714,8 +2704,8 @@ public class BreakoutMainView {
 			BreakoutMainView.this.shotKeyToModelIndex = Collections.emptyMap();
 			BreakoutMainView.this.modelIndexToShotKey = Collections.emptyMap();
 			BreakoutMainView.this.sourceRows = Collections.emptyMap();
-			BreakoutMainView.this.parsedShots = Collections.emptyMap();
-			BreakoutMainView.this.calcShots = Collections.emptyMap();
+			BreakoutMainView.this.parsedProject = new ParsedProject();
+			BreakoutMainView.this.calcProject = new CalcProject();
 			if (BreakoutMainView.this.model3d != null) {
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
 				BreakoutMainView.this.model3d = null;

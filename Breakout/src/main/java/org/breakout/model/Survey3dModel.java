@@ -1303,7 +1303,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return shot3ds;
 	}
 
-	public static Survey3dModel create(Map<ShotKey, CalcShot> originalShots, int maxChildrenPerBranch, int minSplitSize,
+	public static Survey3dModel create(CalcProject project, int maxChildrenPerBranch, int minSplitSize,
 			int numToReinsert, Task task) {
 		Subtask rootSubtask = null;
 		int renderProportion = 5;
@@ -1318,7 +1318,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		rootSubtask.setTotal(renderProportion + 5);
 
 		Map<ShotKey, Shot3d> shot3ds = new HashMap<>();
-		for (Map.Entry<ShotKey, CalcShot> entry : originalShots.entrySet()) {
+		for (Map.Entry<ShotKey, CalcShot> entry : project.shots.entrySet()) {
 			shot3ds.put(entry.getKey(), new Shot3d(entry.getKey(), entry.getValue()));
 		}
 		if (rootSubtask.isCanceling()) {

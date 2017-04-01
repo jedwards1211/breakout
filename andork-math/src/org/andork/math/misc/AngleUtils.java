@@ -63,4 +63,14 @@ public class AngleUtils {
 		}
 		return result;
 	}
+
+	public static double average(double... angles) {
+		double x = 0;
+		double y = 0;
+		for (double angle : angles) {
+			x += Math.cos(angle);
+			y += Math.sin(angle);
+		}
+		return Math.atan2(y, x);
+	}
 }

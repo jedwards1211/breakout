@@ -121,20 +121,26 @@ public class ProjectParser {
 				inclinationParser, trip.getFrontInclinationUnit());
 		parsed.backInclination = parse(raw, SurveyRow.Properties.backInclination,
 				inclinationParser, trip.getBackInclinationUnit());
+		parsed.crossSectionType = CrossSectionType.LRUD;
 		parsed.left = parse(raw, SurveyRow.Properties.left,
-				lengthParser, trip.getDistanceUnit(), Severity.WARNING, 0);
+				lengthParser, trip.getDistanceUnit(), Severity.WARNING);
 		parsed.right = parse(raw, SurveyRow.Properties.right,
-				lengthParser, trip.getDistanceUnit(), Severity.WARNING, 0);
+				lengthParser, trip.getDistanceUnit(), Severity.WARNING);
 		parsed.up = parse(raw, SurveyRow.Properties.up,
-				lengthParser, trip.getDistanceUnit(), Severity.WARNING, 0);
+				lengthParser, trip.getDistanceUnit(), Severity.WARNING);
 		parsed.down = parse(raw, SurveyRow.Properties.down,
-				lengthParser, trip.getDistanceUnit(), Severity.WARNING, 0);
+				lengthParser, trip.getDistanceUnit(), Severity.WARNING);
 		parsed.northing = parse(raw, SurveyRow.Properties.northing,
 				lengthParser, trip.getDistanceUnit());
 		parsed.easting = parse(raw, SurveyRow.Properties.easting,
 				lengthParser, trip.getDistanceUnit());
 		parsed.elevation = parse(raw, SurveyRow.Properties.elevation,
 				lengthParser, trip.getDistanceUnit());
+		project.rows.add(parsed);
+		ShotKey key = parsed.key();
+		if (key != null) {
+			project.shots.put(key, parsed);
+		}
 		return parsed;
 	}
 }
