@@ -149,23 +149,18 @@ public class CalculateGeometry {
 		// y axis (for coordinates at indices [1, 4, 7, 10]) points up
 		// z axis (for coordinates at indices [2, 5, 8, 11]) points **south**
 
-		/*
-		 * TODO this whole approach of computing the splay points from the splay
-		 * normals is totally wrong. Not only does it create zero length normals
-		 * when the measurements are zero, it creates non-unitary normals when
-		 * measurements are nonzero.
-		 */
-
 		switch (crossSection.type) {
 		case LRUD:
 			// Left
-			result[0] = (float) -(Math.cos(crossSection.facingAzimuth) * crossSection.measurements[0]);
-			result[2] = (float) -(Math.sin(crossSection.facingAzimuth) * crossSection.measurements[0]);
+			result[0] = (float) -Math.cos(crossSection.facingAzimuth);
+			result[2] = (float) -Math.sin(crossSection.facingAzimuth);
 			// Right
-			result[3] = (float) (Math.cos(crossSection.facingAzimuth) * crossSection.measurements[1]);
-			result[5] = (float) (Math.sin(crossSection.facingAzimuth) * crossSection.measurements[1]);
-			result[7] = (float) crossSection.measurements[2]; // Up
-			result[10] = (float) -crossSection.measurements[3]; // Down
+			result[3] = (float) Math.cos(crossSection.facingAzimuth);
+			result[5] = (float) Math.sin(crossSection.facingAzimuth);
+			// Up
+			result[7] = 1;
+			// Down
+			result[10] = -1;
 			break;
 		case NSEW:
 			result[2] = (float) -crossSection.measurements[0]; // North
@@ -191,6 +186,64 @@ public class CalculateGeometry {
 		}
 	}
 
+	static float[] createSplayPoints(CalcStation station, CalcCrossSection crossSection) {
+		if (crossSection == null) {
+			return new float[12];
+		}
+
+		// remember:
+		// x axis (for coordinates at indices [0, 3, 6, 9]) points east
+		// y axis (for coordinates at indices [1, 4, 7, 10]) points up
+		// z axis (for coordinates at indices [2, 5, 8, 11]) points **south**
+
+		double x = station.position[0];
+		double y = station.position[1];
+		double z = station.position[2];
+
+		switch (crossSection.type) {
+		case LRUD:
+			return new float[] {
+					// Left
+					(float) (x - Math.cos(crossSection.facingAzimuth) * crossSection.measurements[0]),
+					(float) y,
+					(float) (z - Math.sin(crossSection.facingAzimuth) * crossSection.measurements[0]),
+					// Right
+					(float) (x + Math.cos(crossSection.facingAzimuth) * crossSection.measurements[1]),
+					(float) y,
+					(float) (z + Math.sin(crossSection.facingAzimuth) * crossSection.measurements[1]),
+					// Up
+					(float) x,
+					(float) (y + crossSection.measurements[2]), // Up
+					(float) z,
+					// Down
+					(float) x,
+					(float) (y - crossSection.measurements[3]), // Down
+					(float) z
+			};
+		case NSEW:
+			return new float[] {
+					// North
+					(float) x,
+					(float) y,
+					(float) (z - crossSection.measurements[0]),
+					// South
+					(float) x,
+					(float) y,
+					(float) crossSection.measurements[1],
+					// East
+					(float) (x + crossSection.measurements[2]),
+					(float) y,
+					(float) z,
+					// West
+					(float) (x - crossSection.measurements[3]),
+					(float) y,
+					(float) z
+			};
+		}
+
+		return new float[12];
+	}
+
 	/**
 	 * Calculates the splay points (right now just the LRUD points) for all
 	 * shots from the station positions (from
@@ -199,18 +252,8 @@ public class CalculateGeometry {
 	 */
 	static void calculateSplayPoints(CalcProject project) {
 		for (CalcShot shot : project.shots.values()) {
-			shot.fromSplayPoints = new float[shot.fromSplayNormals.length];
-			for (int i = 0; i < shot.fromSplayNormals.length; i += 3) {
-				shot.fromSplayPoints[i] = (float) (shot.fromStation.position[0] + shot.fromSplayNormals[i]);
-				shot.fromSplayPoints[i + 1] = (float) (shot.fromStation.position[1] + shot.fromSplayNormals[i + 1]);
-				shot.fromSplayPoints[i + 2] = (float) (shot.fromStation.position[2] + shot.fromSplayNormals[i + 2]);
-			}
-			shot.toSplayPoints = new float[shot.toSplayNormals.length];
-			for (int i = 0; i < shot.toSplayNormals.length; i += 3) {
-				shot.toSplayPoints[i] = (float) (shot.toStation.position[0] + shot.toSplayNormals[i]);
-				shot.toSplayPoints[i + 1] = (float) (shot.toStation.position[1] + shot.toSplayNormals[i + 1]);
-				shot.toSplayPoints[i + 2] = (float) (shot.toStation.position[2] + shot.toSplayNormals[i + 2]);
-			}
+			shot.fromSplayPoints = createSplayPoints(shot.fromStation, shot.fromCrossSection);
+			shot.toSplayPoints = createSplayPoints(shot.toStation, shot.toCrossSection);
 		}
 	}
 
