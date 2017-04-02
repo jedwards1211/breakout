@@ -149,30 +149,11 @@ public class Parsed2Calc {
 			return;
 		}
 
-		StationKey toKey = null;
-		double facingAzimuth = shot.azimuth;
-		if (shot.toStation != null) {
-			toKey = shot.toStation.key();
-		} else {
-			// go through all so that we get the most recent shot that matches
-			for (CalcShot other : shot.fromStation.shots.values()) {
-				if (other.toStation == shot.fromStation &&
-						!shot.fromStation.crossSections.containsKey(other.fromStation.key())) {
-					toKey = other.fromStation.key();
-					facingAzimuth = other.azimuth;
-				} else if (other.fromStation == shot.fromStation &&
-						!shot.fromStation.crossSections.containsKey(other.toStation.key())) {
-					toKey = other.toStation.key();
-					facingAzimuth = other.azimuth;
-				}
-			}
-		}
-		if (toKey != null && (parsed.left != null || parsed.right != null ||
-				parsed.up != null || parsed.down != null)) {
+		if (parsed.left != null || parsed.right != null ||
+				parsed.up != null || parsed.down != null) {
 			CalcCrossSection crossSection = new CalcCrossSection();
 
 			crossSection.type = parsed.crossSectionType;
-			crossSection.facingAzimuth = facingAzimuth;
 			crossSection.measurements = new double[] {
 					parsed.left != null ? parsed.left.doubleValue(Length.meters) : 0,
 					parsed.right != null ? parsed.right.doubleValue(Length.meters) : 0,
@@ -180,7 +161,24 @@ public class Parsed2Calc {
 					parsed.down != null ? parsed.down.doubleValue(Length.meters) : 0,
 			};
 
-			shot.fromStation.crossSections.put(toKey, crossSection);
+			if (shot.toStation != null) {
+				shot.fromCrossSection = crossSection;
+				crossSection.facingAzimuth = shot.azimuth;
+			} else {
+				// go through all so that we get the most recent shot that
+				// matches
+				for (CalcShot other : shot.fromStation.shots.values()) {
+					if (other.toStation == shot.fromStation && other.toCrossSection == null) {
+						other.toCrossSection = crossSection;
+						crossSection.facingAzimuth = other.azimuth;
+						break;
+					} else if (other.fromStation == shot.fromStation && other.fromCrossSection == null) {
+						other.fromCrossSection = crossSection;
+						crossSection.facingAzimuth = other.azimuth;
+						break;
+					}
+				}
+			}
 		}
 	}
 

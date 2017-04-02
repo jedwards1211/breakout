@@ -40,8 +40,7 @@ public enum ColorParam {
 	PASSAGE_WIDTH("Passage Width", false) {
 		@Override
 		public float calcStationParam(CalcShot shot, CalcStation station) {
-			CalcCrossSection xSection = station.crossSections.get(
-					station == shot.fromStation ? shot.toStation.key() : shot.fromStation.key());
+			CalcCrossSection xSection = shot.getCrossSectionAt(station);
 			if (xSection == null) {
 				return 0;
 			}
@@ -61,8 +60,7 @@ public enum ColorParam {
 	PASSAGE_HEIGHT("Passage Height", false) {
 		@Override
 		public float calcStationParam(CalcShot shot, CalcStation station) {
-			CalcCrossSection xSection = station.crossSections.get(
-					station == shot.fromStation ? shot.toStation.key() : shot.fromStation.key());
+			CalcCrossSection xSection = shot.getCrossSectionAt(station);
 			if (xSection == null) {
 				return 0;
 			}

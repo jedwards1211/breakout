@@ -67,12 +67,11 @@ public class CalculateGeometry {
 		CalcShot prevShot = null;
 		Set<CalcCrossSection> joinedCrossSections = new HashSet<>();
 		for (CalcShot shot : project.shots.values()) {
-			CalcCrossSection fromCrossSection = shot.fromStation.crossSections.get(shot.toStation.key());
-			CalcCrossSection toCrossSection = shot.toStation.crossSections.get(shot.fromStation.key());
+			CalcCrossSection fromCrossSection = shot.fromCrossSection;
+			CalcCrossSection toCrossSection = shot.toCrossSection;
 			if (fromCrossSection != null) {
 				if (prevShot != null && prevShot.toStation == shot.fromStation) {
-					shot.fromStation.crossSections.put(prevShot.fromStation.key(),
-							fromCrossSection);
+					prevShot.toCrossSection = fromCrossSection;
 					joinedCrossSections.add(fromCrossSection);
 					fromCrossSection.facingAzimuth = AngleUtils.average(prevShot.azimuth, shot.azimuth);
 				} else {
@@ -80,8 +79,8 @@ public class CalculateGeometry {
 						if (other == shot) {
 							continue;
 						}
-						if (!other.toStation.crossSections.containsKey(other.fromStation.key())) {
-							other.toStation.crossSections.put(other.fromStation.key(), fromCrossSection);
+						if (other.toCrossSection == null) {
+							other.toCrossSection = fromCrossSection;
 							if (joinedCrossSections.add(fromCrossSection)) {
 								fromCrossSection.facingAzimuth = AngleUtils.average(other.azimuth, shot.azimuth);
 							}
@@ -95,24 +94,23 @@ public class CalculateGeometry {
 					if (otherShot == shot) {
 						continue;
 					}
-					CalcCrossSection otherCrossSection = otherShot.toStation.crossSections
-							.get(otherShot.fromStation.key());
+					CalcCrossSection otherCrossSection = otherShot.toCrossSection;
 					if (otherCrossSection != null && !joinedCrossSections.contains(otherCrossSection)) {
 						lastShot = otherShot;
 						fromCrossSection = otherCrossSection;
 					}
 				}
 				if (lastShot != null && fromCrossSection != null) {
-					shot.fromStation.crossSections.put(shot.toStation.key(), fromCrossSection);
+					shot.fromCrossSection = fromCrossSection;
 					if (joinedCrossSections.add(fromCrossSection)) {
 						fromCrossSection.facingAzimuth = AngleUtils.average(lastShot.azimuth, shot.azimuth);
 					}
 				}
 			}
 			if (prevShot != null && toCrossSection == null && prevShot.fromStation == shot.toStation) {
-				toCrossSection = prevShot.fromStation.crossSections.get(prevShot.toStation.key());
+				toCrossSection = prevShot.fromCrossSection;
 				if (toCrossSection != null) {
-					shot.toStation.crossSections.put(shot.fromStation.key(), toCrossSection);
+					shot.toCrossSection = toCrossSection;
 					if (joinedCrossSections.add(toCrossSection)) {
 						toCrossSection.facingAzimuth = AngleUtils.average(shot.azimuth, prevShot.azimuth);
 					}
@@ -122,17 +120,17 @@ public class CalculateGeometry {
 		}
 
 		for (CalcShot shot : project.shots.values()) {
-			CalcCrossSection fromCrossSection = shot.fromStation.crossSections.get(shot.toStation.key());
-			CalcCrossSection toCrossSection = shot.toStation.crossSections.get(shot.fromStation.key());
+			CalcCrossSection fromCrossSection = shot.fromCrossSection;
+			CalcCrossSection toCrossSection = shot.toCrossSection;
 			// TODO this shouldn't blindly copy the cross section. It should
 			// pick an appropriate facing azimuth based upon what else is at
 			// the junction, and adjust the cross section to keep uniform
 			// passage size with that new facing azimuth. E.g. NT46-NTW1
 			// in Fisher Ridge
 			if (fromCrossSection == null && toCrossSection != null) {
-				shot.fromStation.crossSections.put(shot.toStation.key(), toCrossSection);
+				shot.fromCrossSection = toCrossSection;
 			} else if (toCrossSection == null && fromCrossSection != null) {
-				shot.toStation.crossSections.put(shot.fromStation.key(), fromCrossSection);
+				shot.toCrossSection = fromCrossSection;
 			}
 		}
 	}
@@ -188,10 +186,8 @@ public class CalculateGeometry {
 	static void calculateSplayNormals(CalcProject project) {
 		for (Map.Entry<ShotKey, CalcShot> entry : project.shots.entrySet()) {
 			CalcShot shot = entry.getValue();
-			CalcCrossSection fromCrossSection = shot.fromStation.crossSections.get(shot.toStation.key());
-			CalcCrossSection toCrossSection = shot.toStation.crossSections.get(shot.fromStation.key());
-			shot.fromSplayNormals = createSplayNormals(fromCrossSection);
-			shot.toSplayNormals = createSplayNormals(toCrossSection);
+			shot.fromSplayNormals = createSplayNormals(shot.fromCrossSection);
+			shot.toSplayNormals = createSplayNormals(shot.toCrossSection);
 		}
 	}
 

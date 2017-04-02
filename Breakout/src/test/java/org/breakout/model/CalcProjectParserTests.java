@@ -161,7 +161,7 @@ public class CalcProjectParserTests {
 				.setTrip(trip).toImmutable();
 		ParsedRow parsed = parser.parse(row);
 		CalcShot shot = p2c.convert(parsed);
-		double[] lruds = shot.fromStation.crossSections.get(shot.toStation.key()).measurements;
+		double[] lruds = shot.fromCrossSection.measurements;
 		Assert.assertEquals(1, lruds[0], 0);
 		Assert.assertEquals(2, lruds[1], 0);
 		Assert.assertEquals(3, lruds[2], 0);
@@ -171,7 +171,7 @@ public class CalcProjectParserTests {
 				.setTrip(trip).toImmutable();
 		parsed = parser.parse(row);
 		p2c.convert(parsed);
-		lruds = shot.toStation.crossSections.get(shot.fromStation.key()).measurements;
+		lruds = shot.toCrossSection.measurements;
 		Assert.assertEquals(5, lruds[0], 0);
 		Assert.assertEquals(6, lruds[1], 0);
 		Assert.assertEquals(7, lruds[2], 0);
