@@ -1,5 +1,6 @@
 package org.breakout.model;
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
 
 import org.andork.model.Property;
@@ -75,7 +76,9 @@ public class ProjectParser {
 			return parsed;
 		}
 		parsed = new ParsedTrip();
+		parsed.rows = new ArrayList<>();
 		trips.put(raw, parsed);
+		project.trips.add(parsed);
 
 		// TODO Date!
 		parsed.distanceCorrection = parse(raw, SurveyTrip.Properties.distanceCorrection,
@@ -100,6 +103,7 @@ public class ProjectParser {
 		SurveyTrip trip = raw.getTrip();
 		ParsedRow parsed = new ParsedRow();
 		parsed.trip = parse(trip);
+		parsed.trip.rows.add(parsed);
 		parsed.fromCave = raw.getFromCave();
 		parsed.fromStation = raw.getFromStation();
 		parsed.toCave = raw.getToCave();

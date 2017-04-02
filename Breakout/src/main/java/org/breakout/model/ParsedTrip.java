@@ -1,6 +1,7 @@
 package org.breakout.model;
 
 import java.util.Date;
+import java.util.List;
 
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
@@ -16,4 +17,6 @@ public class ParsedTrip {
 	public boolean areBackAzimuthsCorrected;
 	public boolean areBackInclinationsCorrected;
 	public Date date;
+
+	public List<ParsedRow> rows;
 }

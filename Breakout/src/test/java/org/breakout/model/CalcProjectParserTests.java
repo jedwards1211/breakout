@@ -1,11 +1,10 @@
 package org.breakout.model;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.andork.func.Lodash;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
@@ -280,6 +279,10 @@ public class CalcProjectParserTests {
 				.setBackAzimuthsCorrected(true)
 				.setBackInclinationsCorrected(true)
 				.toImmutable();
+		SurveyTrip trip2 = new MutableSurveyTrip()
+				.setBackAzimuthsCorrected(true)
+				.setBackInclinationsCorrected(true)
+				.toImmutable();
 
 		List<ParsedRow> parsed = Arrays.asList(
 				parser.parse(
@@ -296,9 +299,9 @@ public class CalcProjectParserTests {
 				parser.parse(
 						new MutableSurveyRow().setTrip(trip).setFromStation("B2").setToStation("A1").toImmutable()),
 				parser.parse(
-						new MutableSurveyRow().setTrip(trip).setFromStation("A3").setToStation("A2").toImmutable()));
+						new MutableSurveyRow().setTrip(trip2).setFromStation("A3").setToStation("A2").toImmutable()));
 
-		List<CalcShot> rows = Lodash.map(parsed, p2c::convert);
+		p2c.convert(parser.project);
 
 		Assert.assertEquals(parsed.get(7), parsed.get(1).overriddenBy);
 		Assert.assertEquals(parsed.get(1), parsed.get(7).overrides);
@@ -308,32 +311,36 @@ public class CalcProjectParserTests {
 		Assert.assertEquals(6, project.shots.size());
 		Assert.assertEquals(6, project.stations.size());
 
-		Map<ShotKey, CalcShot> shots = new HashMap<>();
-		shots.put(new ShotKey(null, "A1", null, "A2"), rows.get(0));
-		shots.put(new ShotKey(null, "A3", null, "A4"), rows.get(2));
-		shots.put(new ShotKey(null, "A2", null, "B1"), rows.get(4));
-		shots.put(new ShotKey(null, "B1", null, "B2"), rows.get(5));
-		shots.put(new ShotKey(null, "B2", null, "A1"), rows.get(6));
-		shots.put(new ShotKey(null, "A2", null, "A3"), rows.get(7));
+		Assert.assertEquals(
+				new ShotKey(null, "A2", null, "A3"),
+				project.shots.get(new ShotKey(null, "A1", null, "A2")).next.key());
 
-		Assert.assertEquals(shots, project.shots);
+		Assert.assertEquals(
+				new HashSet<>(Arrays.asList(
+						new ShotKey(null, "A1", null, "A2"),
+						new ShotKey(null, "A2", null, "A3"),
+						new ShotKey(null, "A3", null, "A4"),
+						new ShotKey(null, "A2", null, "B1"),
+						new ShotKey(null, "B1", null, "B2"),
+						new ShotKey(null, "B2", null, "A1"))),
+				project.shots.keySet());
 
-		Map<StationKey, CalcStation> stations = new HashMap<>();
-		stations.put(new StationKey(null, "A1"), rows.get(0).fromStation);
-		stations.put(new StationKey(null, "A2"), rows.get(1).fromStation);
-		stations.put(new StationKey(null, "A3"), rows.get(2).fromStation);
-		stations.put(new StationKey(null, "A4"), rows.get(3).fromStation);
-		stations.put(new StationKey(null, "B1"), rows.get(5).fromStation);
-		stations.put(new StationKey(null, "B2"), rows.get(6).fromStation);
+		Assert.assertEquals(
+				new HashSet<>(Arrays.asList(
+						new StationKey(null, "A1"),
+						new StationKey(null, "A2"),
+						new StationKey(null, "A3"),
+						new StationKey(null, "A4"),
+						new StationKey(null, "B1"),
+						new StationKey(null, "B2"))),
+				project.stations.keySet());
 
-		Assert.assertEquals(stations, project.stations);
-
-		for (CalcShot shot : shots.values()) {
-			Assert.assertEquals(shot.fromStation.shots.get(new StationKey(null, shot.toStation.name)), shot);
-			Assert.assertEquals(shot.toStation.shots.get(new StationKey(null, shot.fromStation.name)), shot);
+		for (CalcShot shot : project.shots.values()) {
+			Assert.assertEquals(shot.fromStation.shots.get(shot.toKey()), shot);
+			Assert.assertEquals(shot.toStation.shots.get(shot.fromKey()), shot);
 		}
 
-		for (CalcStation station : stations.values()) {
+		for (CalcStation station : project.stations.values()) {
 			for (Map.Entry<StationKey, CalcShot> entry : station.shots.entrySet()) {
 				CalcShot shot = entry.getValue();
 				Assert.assertTrue(station == shot.fromStation || station == shot.toStation);

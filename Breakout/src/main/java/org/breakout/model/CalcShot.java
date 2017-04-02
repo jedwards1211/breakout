@@ -3,6 +3,9 @@ package org.breakout.model;
 import java.util.Date;
 
 public class CalcShot {
+	public CalcShot prev;
+	public CalcShot next;
+
 	public CalcStation fromStation;
 	public CalcStation toStation;
 
@@ -72,6 +75,14 @@ public class CalcShot {
 		throw new IllegalArgumentException("key must match fromStation or toStation");
 	}
 
+	public StationKey fromKey() {
+		return fromStation != null ? fromStation.key() : null;
+	}
+
+	public StationKey toKey() {
+		return toStation != null ? toStation.key() : null;
+	}
+
 	public ShotKey key() {
 		return fromStation != null && toStation != null
 				? new ShotKey(fromStation.key(), toStation.key())
@@ -89,5 +100,13 @@ public class CalcShot {
 			return fromStation;
 		}
 		throw new IllegalArgumentException("station must be fromStation or toStation");
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("CalcShot [fromStation=").append(fromStation).append(", toStation=").append(toStation)
+				.append("]");
+		return builder.toString();
 	}
 }

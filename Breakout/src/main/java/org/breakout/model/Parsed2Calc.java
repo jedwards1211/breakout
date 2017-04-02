@@ -1,5 +1,7 @@
 package org.breakout.model;
 
+import java.util.Objects;
+
 import org.andork.math.misc.AngleUtils;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
@@ -23,7 +25,36 @@ public class Parsed2Calc {
 		this.project = project;
 	}
 
-	public CalcShot convert(ParsedRow parsed) {
+	public void convert(ParsedProject project) {
+		for (ParsedTrip trip : project.trips) {
+			convert(trip);
+		}
+	}
+
+	void convert(ParsedTrip trip) {
+		ParsedRow prevRow = null;
+		CalcShot prevShot = null;
+		for (ParsedRow row : trip.rows) {
+			if (row.key() != null) {
+				CalcShot shot = convert(row);
+				if (prevRow != null && prevShot != null) {
+					if (Objects.equals(prevRow.toKey(), row.fromKey())) {
+						shot.prev = prevShot;
+						prevShot.next = shot;
+					} else if (Objects.equals(prevRow.fromKey(), row.toKey())) {
+						shot.next = prevShot;
+						prevShot.prev = shot;
+					}
+				}
+				prevShot = shot;
+			} else {
+				prevShot = null;
+			}
+			prevRow = row;
+		}
+	}
+
+	CalcShot convert(ParsedRow parsed) {
 		CalcShot shot = new CalcShot();
 		shot.date = parsed.trip.date;
 

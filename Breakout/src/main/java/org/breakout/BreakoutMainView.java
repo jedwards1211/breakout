@@ -951,9 +951,9 @@ public class BreakoutMainView {
 					modelIndexToShotKey.put(modelIndex, key);
 					sourceRows.put(key, row);
 				}
-				p2c.convert(parsed);
 				parsingSubtask.setCompleted(++modelIndex);
 			}
+			p2c.convert(parser.project);
 
 			if (parsingSubtask.isCanceling()) {
 				return;

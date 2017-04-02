@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ParsedProject {
+	public final List<ParsedTrip> trips = new ArrayList<>();
 	public final List<ParsedRow> rows = new ArrayList<>();
 	public final Map<ShotKey, ParsedRow> shots = new HashMap<>();
 	public final ParseMessages messages = new ParseMessages();

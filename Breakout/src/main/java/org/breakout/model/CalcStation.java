@@ -23,4 +23,11 @@ public class CalcStation {
 		}
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("CalcStation [cave=").append(cave).append(", name=").append(name).append("]");
+		return builder.toString();
+	}
 }
