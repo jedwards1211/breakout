@@ -300,8 +300,8 @@ public class CalcProjectParserTests {
 
 		List<CalcShot> rows = Lodash.map(parsed, p2c::convert);
 
-		Assert.assertEquals(rows.get(7), rows.get(1).overriddenBy);
-		Assert.assertEquals(rows.get(1), rows.get(7).overrides);
+		Assert.assertEquals(parsed.get(7), parsed.get(1).overriddenBy);
+		Assert.assertEquals(parsed.get(1), parsed.get(7).overrides);
 
 		CalcProject project = p2c.project;
 

@@ -139,6 +139,11 @@ public class ProjectParser {
 		project.rows.add(parsed);
 		ShotKey key = parsed.key();
 		if (key != null) {
+			parsed.overrides = project.shots.get(key);
+			if (parsed.overrides != null) {
+				parsed.overrides.overriddenBy = parsed;
+			}
+
 			project.shots.put(key, parsed);
 		}
 		return parsed;

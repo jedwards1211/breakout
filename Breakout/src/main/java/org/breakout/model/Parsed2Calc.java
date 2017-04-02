@@ -135,11 +135,6 @@ public class Parsed2Calc {
 
 			ShotKey shotKey = new ShotKey(fromKey, toKey);
 
-			shot.overrides = project.shots.get(shotKey);
-			if (shot.overrides != null) {
-				shot.overrides.overriddenBy = shot;
-			}
-
 			project.shots.put(shotKey, shot);
 		}
 	}

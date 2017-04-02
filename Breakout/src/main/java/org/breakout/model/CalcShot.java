@@ -3,9 +3,6 @@ package org.breakout.model;
 import java.util.Date;
 
 public class CalcShot {
-	public CalcShot overrides;
-	public CalcShot overriddenBy;
-
 	public CalcStation fromStation;
 	public CalcStation toStation;
 

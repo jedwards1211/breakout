@@ -28,6 +28,17 @@ public class ParsedRow {
 	public UnitizedDouble<Length> easting;
 	public UnitizedDouble<Length> elevation;
 
+	public ParsedRow overrides;
+	public ParsedRow overriddenBy;
+
+	public StationKey fromKey() {
+		return truthy(fromStation) ? new StationKey(fromCave, fromStation) : null;
+	}
+
+	public StationKey toKey() {
+		return truthy(toStation) ? new StationKey(toCave, toStation) : null;
+	}
+
 	public ShotKey key() {
 		return truthy(fromStation) && truthy(toStation)
 				? new ShotKey(fromCave, fromStation, toCave, toStation)
