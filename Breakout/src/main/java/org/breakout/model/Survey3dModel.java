@@ -62,6 +62,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,7 +72,7 @@ import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.collect.PriorityEntry;
 import org.andork.func.FloatBinaryOperator;
-import org.andork.graph.Graphs;
+import org.andork.graph.Dijkstra;
 import org.andork.jogl.BufferHelper;
 import org.andork.jogl.JoglBuffer;
 import org.andork.jogl.JoglDrawContext;
@@ -1013,22 +1014,20 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		}
 
-		public void setGlowA(float fromGlow, float toGlow) {
+		public void setGlow(float fromGlowA, float toGlowA, float fromGlowB, float toGlowB) {
 			ByteBuffer buffer = segment3d.stationAttrs.buffer();
 			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
 				buffer.putFloat(
 						(indexInVertices + vertexIndex) * STATION_ATTR_BPV,
-						shot.interpolateParamAtVertex(fromGlow, toGlow, vertexIndex));
+						shot.interpolateParamAtVertex(fromGlowA, toGlowA, vertexIndex));
+				buffer.putFloat(
+						(indexInVertices + vertexIndex) * STATION_ATTR_BPV + 4,
+						shot.interpolateParamAtVertex(fromGlowB, toGlowB, vertexIndex));
 			}
 		}
 
-		public void setGlowB(float fromGlow, float toGlow) {
-			ByteBuffer buffer = segment3d.stationAttrs.buffer();
-			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
-				buffer.putFloat(
-						(indexInVertices + vertexIndex) * STATION_ATTR_BPV + 4,
-						shot.interpolateParamAtVertex(fromGlow, toGlow, vertexIndex));
-			}
+		public void setGlow(float fromGlow, float toGlow) {
+			setGlow(fromGlow, toGlow, fromGlow, toGlow);
 		}
 
 		public void unionMbrInto(float[] mbr) {
@@ -1412,7 +1411,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	public void calcDistFromShots(Set<ShotKey> shots, Subtask subtask) {
 		final Map<StationKey, Double> distances = new HashMap<>();
 
-		Graphs.traverse(
+		Dijkstra.traverse(
 				shots.stream().flatMap(key -> {
 					CalcShot shot = shot3ds.get(key).shot;
 					return Stream.of(shot.fromStation, shot.toStation);
@@ -1698,35 +1697,36 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		if (hoveredShot != null) {
 			CalcShot origShot = hoveredShot.shot;
 
+			// Use Dijkstra's algorithm to go through all stations within glow distance
+			// and compute the glow amount at each of those stations
 			final Map<StationKey, Float> glowAtStations = new HashMap<>();
 			final Set<Shot3d> affectedShot3ds = new HashSet<>();
+			final PriorityQueue<PriorityEntry<Double, CalcStation>> unvisited = new PriorityQueue<>();
+			unvisited.add(new PriorityEntry<>(hoverLocation * origShot.distance, origShot.fromStation));
+			unvisited.add(new PriorityEntry<>(1 - hoverLocation * origShot.distance, origShot.toStation));
 
-			Graphs.traverse(
-					Stream.of(
-							new PriorityEntry<>(hoverLocation * origShot.distance, origShot.fromStation),
-							new PriorityEntry<>(1 - hoverLocation * origShot.distance, origShot.toStation)),
-					entry -> entry.getValue(),
-					entry -> {
-						double stationDistance = entry.getKey();
-						CalcStation station = entry.getValue();
-						float glowAtStation = (float) glowExtentConversion.convert(stationDistance);
-						glowAtStations.put(station.key(), glowAtStation);
-						if (glowAtStation <= 0) {
-							return Stream.empty();
-						}
-						for (CalcShot shot : station.shots.values()) {
-							Shot3d shot3d = shot3ds.get(shot.key());
-							if (shot3d != null) {
-								affectedShot3ds.add(shot3d);
-							}
-						}
-						return station.shots.values().stream()
-								.map(shot -> new PriorityEntry<>(
-										stationDistance + shot.distance,
-										shot.otherStation(station)))
-								.filter(p -> !glowAtStations.containsKey(p.getValue().key()));
-					},
-					() -> subtask != null && !subtask.isCanceling());
+			while (!unvisited.isEmpty() && (subtask == null || !subtask.isCanceling())) {
+				PriorityEntry<Double, CalcStation> entry = unvisited.poll();
+				CalcStation station = entry.getValue();
+				double distanceToStation = entry.getKey();
+
+				float glowAtStation = (float) glowExtentConversion.convert(distanceToStation);
+				glowAtStations.put(station.key(), glowAtStation);
+				if (glowAtStation <= 0) {
+					continue;
+				}
+				for (CalcShot nextShot : station.shots.values()) {
+					Shot3d shot3d = shot3ds.get(nextShot.key());
+					if (shot3d == null || !affectedShot3ds.add(shot3d)) {
+						continue;
+					}
+					CalcStation nextStation = nextShot.otherStation(station);
+					if (glowAtStations.containsKey(nextStation)) {
+						continue;
+					}
+					unvisited.add(new PriorityEntry<>(distanceToStation + nextShot.distance, nextStation));
+				}
+			}
 
 			for (Shot3d shot3d : affectedShot3ds) {
 				segmentsWithGlow.add(shot3d.segment3d);
@@ -1756,10 +1756,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			 * GlowA ...                      - 0.8
 			 */
 
-			hoveredShot.setGlowA(
+			hoveredShot.setGlow(
 					(float) glowExtentConversion.convert(hoverLocation * origShot.distance),
-					(float) glowExtentConversion.convert((hoverLocation - 1) * origShot.distance));
-			hoveredShot.setGlowB(
+					(float) glowExtentConversion.convert((hoverLocation - 1) * origShot.distance),
 					(float) glowExtentConversion.convert((1 - hoverLocation) * origShot.distance),
 					(float) glowExtentConversion.convert(-hoverLocation * origShot.distance));
 			affectedShot3ds.remove(hoveredShot);
@@ -1773,8 +1772,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				if (glowAtToStation == null) {
 					glowAtFromStation = 0f;
 				}
-				shot3d.setGlowA(glowAtFromStation, glowAtToStation);
-				shot3d.setGlowB(glowAtFromStation, glowAtToStation);
+				shot3d.setGlow(glowAtFromStation, glowAtToStation);
 			}
 		}
 

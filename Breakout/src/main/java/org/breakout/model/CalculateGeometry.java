@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import org.andork.graph.Graphs;
+import org.andork.graph.Dijkstra;
 import org.andork.math.misc.AngleUtils;
 
 /**
@@ -319,7 +319,7 @@ public class CalculateGeometry {
 	 * the shot/station ordering.
 	 */
 	static void calculateStationPositions(CalcProject project) {
-		Graphs.traverseEdges(
+		Dijkstra.traverseEdges(
 				project.shots.values().stream().filter(
 						shot -> shot.fromStation.hasPosition() || shot.toStation.hasPosition()),
 				shot -> shot.distance,

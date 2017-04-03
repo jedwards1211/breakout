@@ -35,7 +35,10 @@ import java.util.stream.Stream;
 
 import org.andork.collect.PriorityEntry;
 
-public class Graphs {
+/**
+ * A bunch of slightly different interfaces to Dijkstra's algorithm.
+ */
+public class Dijkstra {
 	public static <Node extends Comparable<Node>, Id> void traverse(Stream<Node> startNodes,
 			Function<Node, Id> nodeId, Function<Node, Stream<Node>> visit, BooleanSupplier keepGoing) {
 		PriorityQueue<Node> unvisited = new PriorityQueue<>();
