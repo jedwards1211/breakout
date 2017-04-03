@@ -65,11 +65,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
 import java.util.stream.Stream;
 
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
+import org.andork.collect.PriorityEntry;
 import org.andork.func.FloatBinaryOperator;
 import org.andork.graph.Graphs;
 import org.andork.jogl.BufferHelper;
@@ -1529,7 +1529,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public Set<Shot3d> getHoveredShots() {
-		return hoveredShot == null ? Collections.<Shot3d>emptySet() : Collections.singleton(hoveredShot);
+		return hoveredShot == null ? Collections.<Shot3d> emptySet() : Collections.singleton(hoveredShot);
 	}
 
 	public float[] getOrthoBounds(Set<ShotKey> shotsInView, float[] orthoRight, float[] orthoUp,
@@ -1698,40 +1698,125 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		if (hoveredShot != null) {
 			CalcShot origShot = hoveredShot.shot;
 
-			final Function<CalcStation, Stream<CalcShot>> connected = station -> station.shots.values().stream();
+			final Map<StationKey, Float> glowAtStations = new HashMap<>();
+			final Set<Shot3d> affectedShot3ds = new HashSet<>();
 
-			Graphs.traverse(Stream.<CalcStation>builder().add(origShot.fromStation).add(origShot.toStation).build(),
-					station -> (station == origShot.fromStation ? hoverLocation : 1 - hoverLocation)
-							* origShot.distance,
-					(station, priority) -> {
-						float glow = (float) glowExtentConversion.convert(priority);
-
-						connected.apply(station).forEach(
-								connectedShot -> {
-									Shot3d shot3d = shot3ds.get(connectedShot.key());
-
-									if (newSegmentsWithGlow.add(shot3d.segment3d)) {
-										segmentsWithGlow.add(shot3d.segment3d);
-										shot3d.segment3d.clearGlow();
-									}
-
-									float otherGlow = (float) glowExtentConversion
-											.convert(priority + connectedShot.distance);
-
-									if (station == connectedShot.fromStation) {
-										shot3d.setGlowA(glow, otherGlow);
-									} else {
-										shot3d.setGlowB(otherGlow, glow);
-									}
-
-									shot3d.segment3d.stationAttrsNeedRebuffering.set(true);
-								});
-						return glow > 0;
+			Graphs.traverse(
+					Stream.of(
+							new PriorityEntry<>(hoverLocation * origShot.distance, origShot.fromStation),
+							new PriorityEntry<>(1 - hoverLocation * origShot.distance, origShot.toStation)),
+					entry -> entry.getValue(),
+					entry -> {
+						double stationDistance = entry.getKey();
+						CalcStation station = entry.getValue();
+						float glowAtStation = (float) glowExtentConversion.convert(stationDistance);
+						glowAtStations.put(station.key(), glowAtStation);
+						if (glowAtStation <= 0) {
+							return Stream.empty();
+						}
+						for (CalcShot shot : station.shots.values()) {
+							Shot3d shot3d = shot3ds.get(shot.key());
+							if (shot3d != null) {
+								affectedShot3ds.add(shot3d);
+							}
+						}
+						return station.shots.values().stream()
+								.map(shot -> new PriorityEntry<>(
+										stationDistance + shot.distance,
+										shot.otherStation(station)))
+								.filter(p -> !glowAtStations.containsKey(p.getValue().key()));
 					},
-					connected,
-					shot -> shot.distance,
-					(station, shot) -> station == shot.fromStation ? shot.toStation : shot.fromStation,
 					() -> subtask != null && !subtask.isCanceling());
+
+			for (Shot3d shot3d : affectedShot3ds) {
+				segmentsWithGlow.add(shot3d.segment3d);
+				newSegmentsWithGlow.add(shot3d.segment3d);
+			}
+			for (Segment3d segment3d : newSegmentsWithGlow) {
+				segment3d.clearGlow();
+				segment3d.stationAttrsNeedRebuffering.set(true);
+			}
+
+			/*
+			 * The values set on the hoveredShot are a special case.
+			 * They will be something like shown below so that the
+			 * rendered glow (which is min of A and B) will peak at
+			 * the hoverLocation.
+			 *
+			 *             hoverLocation
+			 * From Station     |        To Station
+			 *       V          V           V
+			 *                            ...
+			 * GlowB ****              ...    - 1.1
+			 *           ****       ...
+			 *               ****...          - 1.0
+			 *                ...****
+			 *             ...       ****     - 0.9
+			 *          ...              ****
+			 * GlowA ...                      - 0.8
+			 */
+
+			hoveredShot.setGlowA(
+					(float) glowExtentConversion.convert(hoverLocation * origShot.distance),
+					(float) glowExtentConversion.convert((hoverLocation - 1) * origShot.distance));
+			hoveredShot.setGlowB(
+					(float) glowExtentConversion.convert((1 - hoverLocation) * origShot.distance),
+					(float) glowExtentConversion.convert(-hoverLocation * origShot.distance));
+			affectedShot3ds.remove(hoveredShot);
+
+			for (Shot3d shot3d : affectedShot3ds) {
+				Float glowAtFromStation = glowAtStations.get(shot3d.shot.fromStation.key());
+				Float glowAtToStation = glowAtStations.get(shot3d.shot.toStation.key());
+				if (glowAtFromStation == null) {
+					glowAtFromStation = 0f;
+				}
+				if (glowAtToStation == null) {
+					glowAtFromStation = 0f;
+				}
+				shot3d.setGlowA(glowAtFromStation, glowAtToStation);
+				shot3d.setGlowB(glowAtFromStation, glowAtToStation);
+			}
+
+			// Graphs.traverse(
+			// Stream.<CalcStation>builder().add(origShot.fromStation).add(origShot.toStation).build(),
+			// station -> (station == origShot.fromStation ? hoverLocation : 1 -
+			// hoverLocation)
+			// * origShot.distance,
+			// (station, priority) -> {
+			// float glowAtStation = (float)
+			// glowExtentConversion.convert(priority);
+			//
+			// connected.apply(station).forEach(
+			// connectedShot -> {
+			// Shot3d shot3d = shot3ds.get(connectedShot.key());
+			//
+			// if (newSegmentsWithGlow.add(shot3d.segment3d)) {
+			// segmentsWithGlow.add(shot3d.segment3d);
+			// shot3d.segment3d.clearGlow();
+			// }
+			//
+			// float glowAtOtherStation = (float) glowExtentConversion
+			// .convert(priority + connectedShot.distance);
+			//
+			// if (station == connectedShot.fromStation) {
+			// // shot3d.setGlowA(glowAtStation,
+			// // glowAtOtherStation);
+			// shot3d.setGlowA(glowAtOtherStation, glowAtStation);
+			// } else {
+			// shot3d.setGlowB(glowAtStation, glowAtOtherStation);
+			// // shot3d.setGlowB(glowAtOtherStation,
+			// // glowAtStation);
+			// }
+			//
+			// shot3d.segment3d.stationAttrsNeedRebuffering.set(true);
+			// });
+			// return glowAtStation > 0;
+			// },
+			// connected,
+			// shot -> shot.distance,
+			// (station, shot) -> station == shot.fromStation ? shot.toStation :
+			// shot.fromStation,
+			// () -> subtask != null && !subtask.isCanceling());
 		}
 
 		Iterator<Segment3d> segIter = segmentsWithGlow.iterator();

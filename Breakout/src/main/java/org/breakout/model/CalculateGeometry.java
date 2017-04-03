@@ -252,10 +252,7 @@ public class CalculateGeometry {
 			createVertices(shot.fromStation, shot.fromCrossSection, shot.vertices, 0);
 			createVertices(shot.toStation, shot.toCrossSection, shot.vertices, fromVertexCount * 3);
 			shot.polarities = new float[fromVertexCount + toVertexCount];
-			for (int i = 0; i < fromVertexCount; i++) {
-				shot.polarities[i] = 0;
-			}
-			for (int i = fromVertexCount; i < toVertexCount; i++) {
+			for (int i = fromVertexCount; i < shot.polarities.length; i++) {
 				shot.polarities[i] = 1;
 			}
 			if (fromVertexCount == 1 && toVertexCount == 1) {
