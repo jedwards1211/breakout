@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.andork.util.IterableUtils;
+import org.andork.util.Iterators;
 
 /**
  * Absolutely the easiest way to read a file or URL line-by-line:
@@ -63,10 +63,6 @@ public class InputStreamLineIterable implements Iterable<String> {
 		}).filter(m -> m != null);
 	}
 
-	public static Stream<Matcher> grep(String diamondArg, Pattern p) {
-		return grep(StreamSupport.stream(perlDiamond(diamondArg).spliterator(), false), p);
-	}
-
 	public static Stream<Path> grepFiles(String expr) {
 		int starIndex = expr.indexOf('*');
 		if (starIndex < 0) {
@@ -85,42 +81,6 @@ public class InputStreamLineIterable implements Iterable<String> {
 
 	public static InputStreamLineIterable linesOf(InputStream in) {
 		return new InputStreamLineIterable(in);
-	}
-
-	public static Iterable<String> perlDiamond(int startIndex, String... args) {
-		if (args.length - startIndex == 0) {
-			return new InputStreamLineIterable(System.in);
-		} else {
-			IterableChain<String> chain = new IterableChain<String>();
-			for (int i = startIndex; i < args.length; i++) {
-				try {
-					FileInputStream in = new FileInputStream(args[i]);
-					chain = chain.add(new InputStreamLineIterable(in));
-				} catch (Exception ex) {
-
-				}
-			}
-			return chain;
-		}
-	}
-
-	public static Iterable<String> perlDiamond(String... args) {
-		if (args.length == 0) {
-			return new InputStreamLineIterable(System.in);
-		} else {
-			IterableChain<String> chain = new IterableChain<String>();
-			for (String s : args) {
-				for (Path path : IterableUtils.iterable(grepFiles(s).iterator())) {
-					try {
-						FileInputStream in = new FileInputStream(path.toFile());
-						chain = chain.add(new InputStreamLineIterable(in));
-					} catch (Exception ex) {
-
-					}
-				}
-			}
-			return chain;
-		}
 	}
 
 	InputStream in;

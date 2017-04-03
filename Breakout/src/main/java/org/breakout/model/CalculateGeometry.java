@@ -2,11 +2,12 @@ package org.breakout.model;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.stream.Stream;
 
-import org.andork.graph.Dijkstra;
+import org.andork.collect.PriorityEntry;
 import org.andork.math.misc.AngleUtils;
+import org.andork.util.Iterators;
 
 /**
  * All of the routines to compute the passage geometry from the parsed
@@ -319,17 +320,25 @@ public class CalculateGeometry {
 	 * the shot/station ordering.
 	 */
 	static void calculateStationPositions(CalcProject project) {
-		Dijkstra.traverseEdges(
-				project.shots.values().stream().filter(
-						shot -> shot.fromStation.hasPosition() || shot.toStation.hasPosition()),
-				shot -> shot.distance,
-				shot -> {
-					calculateStationPositions(shot);
-					return Stream.concat(
-							shot.fromStation.shots.values().stream(),
-							shot.toStation.shots.values().stream());
-				},
-				() -> true);
+		PriorityQueue<PriorityEntry<Double, CalcShot>> queue = new PriorityQueue<>();
+		for (CalcShot shot : project.shots.values()) {
+			if (shot.fromStation.hasPosition() || shot.toStation.hasPosition()) {
+				queue.add(new PriorityEntry<>(0.0, shot));
+			}
+		}
+		while (!queue.isEmpty()) {
+			PriorityEntry<Double, CalcShot> entry = queue.poll();
+			double distance = entry.getKey();
+			CalcShot shot = entry.getValue();
+			calculateStationPositions(shot);
+			for (CalcShot nextShot : Iterators.concat(
+					shot.fromStation.shots.values(),
+					shot.toStation.shots.values())) {
+				if (!nextShot.fromStation.hasPosition() || !nextShot.toStation.hasPosition()) {
+					queue.add(new PriorityEntry<>(distance + shot.distance, nextShot));
+				}
+			}
+		}
 	}
 
 	static void calculateStationPositions(CalcShot shot) {

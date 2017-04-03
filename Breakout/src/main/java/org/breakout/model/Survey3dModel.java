@@ -66,13 +66,11 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.collect.PriorityEntry;
 import org.andork.func.FloatBinaryOperator;
-import org.andork.graph.Dijkstra;
 import org.andork.jogl.BufferHelper;
 import org.andork.jogl.JoglBuffer;
 import org.andork.jogl.JoglDrawContext;
@@ -96,7 +94,7 @@ import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.Task;
-import org.andork.util.IterableUtils;
+import org.andork.util.Iterators;
 import org.breakout.PickResult;
 import org.breakout.awt.ParamGradientMapPaint;
 import org.omg.CORBA.FloatHolder;
@@ -1409,34 +1407,37 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public void calcDistFromShots(Set<ShotKey> shots, Subtask subtask) {
-		final Map<StationKey, Double> distances = new HashMap<>();
+		final Map<StationKey, Double> distancesToStations = new HashMap<>();
+		PriorityQueue<PriorityEntry<Double, CalcStation>> queue = new PriorityQueue<>();
 
-		Dijkstra.traverse(
-				shots.stream().flatMap(key -> {
-					CalcShot shot = shot3ds.get(key).shot;
-					return Stream.of(shot.fromStation, shot.toStation);
-				}),
-				station -> 0.0,
-				(station, distance) -> {
-					distances.put(station.key(), distance);
-					return true;
-				},
-				station -> station.shots.values().stream(),
-				(CalcShot shot) -> shot.distance,
-				(CalcStation station, CalcShot shot) -> station == shot.fromStation ? shot.toStation : shot.fromStation,
-				() -> !subtask.isCanceling());
+		for (ShotKey key : shots) {
+			CalcShot shot = shot3ds.get(key).shot;
+			queue.add(new PriorityEntry<>(0.0, shot.fromStation));
+			queue.add(new PriorityEntry<>(0.0, shot.toStation));
+		}
+		while (!queue.isEmpty() && !subtask.isCanceling()) {
+			PriorityEntry<Double, CalcStation> entry = queue.poll();
+			double distanceToStation = entry.getKey();
+			CalcStation station = entry.getValue();
+			distancesToStations.put(station.key(), distanceToStation);
+			for (CalcShot shot : station.shots.values()) {
+				CalcStation nextStation = shot.otherStation(station);
+				if (distancesToStations.containsKey(nextStation.key())) {
+					continue;
+				}
+				queue.add(new PriorityEntry<>(distanceToStation + shot.distance, nextStation));
+			}
+		}
 
 		if (subtask != null) {
 			subtask.setTotal(segment3ds.size());
 			subtask.setCompleted(0);
 			subtask.setIndeterminate(false);
 		}
-		final Iterator<Segment3d> segmentIterator = segment3ds.iterator();
 
 		int processed = 0;
-		while (segmentIterator.hasNext()) {
-			Segment3d segment3d = segmentIterator.next();
-			segment3d.calcParam0(Survey3dModel.this, distances);
+		for (Segment3d segment3d : segment3ds) {
+			segment3d.calcParam0(Survey3dModel.this, distancesToStations);
 
 			if (processed++ % 100 == 0) {
 				if (subtask != null) {
@@ -1778,7 +1779,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		Iterator<Segment3d> segIter = segmentsWithGlow.iterator();
 
-		for (Segment3d segment3d : IterableUtils.iterable(segIter)) {
+		for (Segment3d segment3d : Iterators.iterable(segIter)) {
 			if (subtask != null && subtask.isCanceling()) {
 				return;
 			}
