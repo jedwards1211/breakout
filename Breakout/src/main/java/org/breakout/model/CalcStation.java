@@ -24,6 +24,10 @@ public class CalcStation {
 		return true;
 	}
 
+	public boolean isDeadEnd() {
+		return shots.size() == 1;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();

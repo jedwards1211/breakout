@@ -1,6 +1,5 @@
 package org.breakout.model;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -18,8 +17,7 @@ public class CalculateGeometry {
 		interpolateAzimuthsOfVerticalShots(project);
 		linkCrossSections(project);
 		calculateStationPositions(project);
-		calculateSplayNormals(project);
-		calculateSplayPoints(project);
+		calculateVertices(project);
 	}
 
 	public static double ALMOST_VERTICAL = Math.toRadians(89);
@@ -135,14 +133,23 @@ public class CalculateGeometry {
 		}
 	}
 
-	static float[] createSplayNormals(CalcCrossSection crossSection) {
+	static int getVertexCount(CalcCrossSection crossSection) {
 		if (crossSection == null) {
-			float[] result = new float[12];
-			Arrays.fill(result, 0f);
-			return result;
+			return 1;
 		}
 
-		float[] result = new float[crossSection.measurements.length * 3];
+		switch (crossSection.type) {
+		case LRUD:
+		case NSEW:
+			return 4;
+		}
+		return 1;
+	}
+
+	static void createNormals(CalcCrossSection crossSection, float[] normals, int startIndex) {
+		if (crossSection == null) {
+			return;
+		}
 
 		// remember:
 		// x axis (for coordinates at indices [0, 3, 6, 9]) points east
@@ -151,109 +158,157 @@ public class CalculateGeometry {
 
 		switch (crossSection.type) {
 		case LRUD:
-			// Left
-			result[0] = (float) -Math.cos(crossSection.facingAzimuth);
-			result[2] = (float) -Math.sin(crossSection.facingAzimuth);
-			// Right
-			result[3] = (float) Math.cos(crossSection.facingAzimuth);
-			result[5] = (float) Math.sin(crossSection.facingAzimuth);
 			// Up
-			result[7] = 1;
+			normals[startIndex + 1] = 1;
+			// Right
+			normals[startIndex + 3] = (float) Math.cos(crossSection.facingAzimuth);
+			normals[startIndex + 5] = (float) Math.sin(crossSection.facingAzimuth);
 			// Down
-			result[10] = -1;
+			normals[startIndex + 7] = -1;
+			// Left
+			normals[startIndex + 9] = (float) -Math.cos(crossSection.facingAzimuth);
+			normals[startIndex + 11] = (float) -Math.sin(crossSection.facingAzimuth);
 			break;
 		case NSEW:
-			result[2] = (float) -crossSection.measurements[0]; // North
-			result[5] = (float) crossSection.measurements[1]; // South
-			result[6] = (float) crossSection.measurements[2]; // East
-			result[9] = (float) -crossSection.measurements[3]; // West
+			normals[startIndex + 2] = (float) -crossSection.measurements[0]; // North
+			normals[startIndex + 3] = (float) crossSection.measurements[2]; // East
+			normals[startIndex + 8] = (float) crossSection.measurements[1]; // South
+			normals[startIndex + 9] = (float) -crossSection.measurements[3]; // West
 			break;
 		}
-
-		return result;
 	}
 
-	/**
-	 * After {@link #linkCrossSections(CalcProject)} is done, all shots should
-	 * have cross sections at the from and to stations, so we're ready to create
-	 * normals from the from/to stations to the cross sections' splay points.
-	 */
-	static void calculateSplayNormals(CalcProject project) {
-		for (Map.Entry<ShotKey, CalcShot> entry : project.shots.entrySet()) {
-			CalcShot shot = entry.getValue();
-			shot.fromSplayNormals = createSplayNormals(shot.fromCrossSection);
-			shot.toSplayNormals = createSplayNormals(shot.toCrossSection);
-		}
-	}
-
-	static float[] createSplayPoints(CalcStation station, CalcCrossSection crossSection) {
-		if (crossSection == null) {
-			return new float[12];
-		}
-
-		// remember:
-		// x axis (for coordinates at indices [0, 3, 6, 9]) points east
-		// y axis (for coordinates at indices [1, 4, 7, 10]) points up
-		// z axis (for coordinates at indices [2, 5, 8, 11]) points **south**
-
+	static void createVertices(CalcStation station, CalcCrossSection crossSection, float[] vertices, int startIndex) {
 		double x = station.position[0];
 		double y = station.position[1];
 		double z = station.position[2];
 
-		switch (crossSection.type) {
-		case LRUD:
-			return new float[] {
-					// Left
-					(float) (x - Math.cos(crossSection.facingAzimuth) * crossSection.measurements[0]),
-					(float) y,
-					(float) (z - Math.sin(crossSection.facingAzimuth) * crossSection.measurements[0]),
-					// Right
-					(float) (x + Math.cos(crossSection.facingAzimuth) * crossSection.measurements[1]),
-					(float) y,
-					(float) (z + Math.sin(crossSection.facingAzimuth) * crossSection.measurements[1]),
-					// Up
-					(float) x,
-					(float) (y + crossSection.measurements[2]), // Up
-					(float) z,
-					// Down
-					(float) x,
-					(float) (y - crossSection.measurements[3]), // Down
-					(float) z
-			};
-		case NSEW:
-			return new float[] {
-					// North
-					(float) x,
-					(float) y,
-					(float) (z - crossSection.measurements[0]),
-					// South
-					(float) x,
-					(float) y,
-					(float) crossSection.measurements[1],
-					// East
-					(float) (x + crossSection.measurements[2]),
-					(float) y,
-					(float) z,
-					// West
-					(float) (x - crossSection.measurements[3]),
-					(float) y,
-					(float) z
-			};
+		if (crossSection == null) {
+			vertices[startIndex++] = (float) x;
+			vertices[startIndex++] = (float) y;
+			vertices[startIndex++] = (float) z;
+			return;
 		}
 
-		return new float[12];
+		// remember:
+		// x axis (for coordinates at indices [0, 3, 6, 9]) points east
+		// y axis (for coordinates at indices [1, 4, 7, 10]) points up
+		// z axis (for coordinates at indices [2, 5, 8, 11]) points **south**
+
+		switch (crossSection.type) {
+		case LRUD:
+			// Up
+			vertices[startIndex++] = (float) x;
+			vertices[startIndex++] = (float) (y + crossSection.measurements[2]); // Up
+			vertices[startIndex++] = (float) z;
+			// Right
+			vertices[startIndex++] = (float) (x + Math.cos(crossSection.facingAzimuth) * crossSection.measurements[1]);
+			vertices[startIndex++] = (float) y;
+			vertices[startIndex++] = (float) (z + Math.sin(crossSection.facingAzimuth) * crossSection.measurements[1]);
+			// Down
+			vertices[startIndex++] = (float) x;
+			vertices[startIndex++] = (float) (y - crossSection.measurements[3]); // Down
+			vertices[startIndex++] = (float) z;
+			// Left
+			vertices[startIndex++] = (float) (x - Math.cos(crossSection.facingAzimuth) * crossSection.measurements[0]);
+			vertices[startIndex++] = (float) y;
+			vertices[startIndex++] = (float) (z - Math.sin(crossSection.facingAzimuth) * crossSection.measurements[0]);
+			break;
+		case NSEW:
+			// North
+			vertices[startIndex++] = (float) x;
+			vertices[startIndex++] = (float) y;
+			vertices[startIndex++] = (float) (z - crossSection.measurements[0]);
+			// East
+			vertices[startIndex++] = (float) (x + crossSection.measurements[2]);
+			vertices[startIndex++] = (float) y;
+			vertices[startIndex++] = (float) z;
+			// South
+			vertices[startIndex++] = (float) x;
+			vertices[startIndex++] = (float) y;
+			vertices[startIndex++] = (float) crossSection.measurements[1];
+			// West
+			vertices[startIndex++] = (float) (x - crossSection.measurements[3]);
+			vertices[startIndex++] = (float) y;
+			vertices[startIndex++] = (float) z;
+			break;
+		}
 	}
 
 	/**
-	 * Calculates the splay points (right now just the LRUD points) for all
-	 * shots from the station positions (from
-	 * {@link #calculateStationPositions(CalcProject)} and the splay normals
-	 * (from {@link #calculateSplayNormals(CalcProject)}).
+	 * Calculates the vertices (right now just the LRUD points) for all shots
+	 * from the station positions (from
+	 * {@link #calculateStationPositions(CalcProject)} and cross sections.
 	 */
-	static void calculateSplayPoints(CalcProject project) {
-		for (CalcShot shot : project.shots.values()) {
-			shot.fromSplayPoints = createSplayPoints(shot.fromStation, shot.fromCrossSection);
-			shot.toSplayPoints = createSplayPoints(shot.toStation, shot.toCrossSection);
+	static void calculateVertices(CalcProject project) {
+		for (Map.Entry<ShotKey, CalcShot> entry : project.shots.entrySet()) {
+			CalcShot shot = entry.getValue();
+			int fromVertexCount = getVertexCount(shot.fromCrossSection);
+			int toVertexCount = getVertexCount(shot.toCrossSection);
+			shot.normals = new float[(fromVertexCount + toVertexCount) * 3];
+			createNormals(shot.fromCrossSection, shot.normals, 0);
+			createNormals(shot.toCrossSection, shot.normals, fromVertexCount * 3);
+			shot.vertices = new float[(fromVertexCount + toVertexCount) * 3];
+			createVertices(shot.fromStation, shot.fromCrossSection, shot.vertices, 0);
+			createVertices(shot.toStation, shot.toCrossSection, shot.vertices, fromVertexCount * 3);
+			shot.polarities = new float[fromVertexCount + toVertexCount];
+			for (int i = 0; i < fromVertexCount; i++) {
+				shot.polarities[i] = 0;
+			}
+			for (int i = fromVertexCount; i < toVertexCount; i++) {
+				shot.polarities[i] = 1;
+			}
+			if (fromVertexCount == 1 && toVertexCount == 1) {
+				shot.indices = new int[0];
+			} else if (toVertexCount == 1) {
+				int[] indices = shot.indices = new int[fromVertexCount * 3];
+				int k = 0;
+				for (int i = 0; i < fromVertexCount; i++) {
+					indices[k++] = i;
+					indices[k++] = fromVertexCount;
+					indices[k++] = (i + 1) % fromVertexCount;
+				}
+			} else if (fromVertexCount == 1) {
+				int[] indices = shot.indices = new int[toVertexCount * 3];
+				int k = 0;
+				for (int i = 0; i < toVertexCount; i++) {
+					indices[k++] = i + 1;
+					indices[k++] = 0;
+					indices[k++] = (i + 1) % toVertexCount + 1;
+				}
+			} else if (fromVertexCount == toVertexCount) {
+				int triangleCount = fromVertexCount + toVertexCount;
+				if (shot.fromStation.isDeadEnd()) {
+					triangleCount += fromVertexCount - 2;
+				}
+				if (shot.toStation.isDeadEnd()) {
+					triangleCount += toVertexCount - 2;
+				}
+				int[] indices = shot.indices = new int[triangleCount * 3];
+				int k = 0;
+				for (int i = 0; i < fromVertexCount; i++) {
+					indices[k++] = i;
+					indices[k++] = i + fromVertexCount;
+					indices[k++] = (i + 1) % fromVertexCount;
+					indices[k++] = fromVertexCount + (i + 1) % toVertexCount;
+					indices[k++] = (i + 1) % fromVertexCount;
+					indices[k++] = i + fromVertexCount;
+				}
+				if (shot.fromStation.isDeadEnd()) {
+					for (int i = 2; i < fromVertexCount; i++) {
+						indices[k++] = 0;
+						indices[k++] = i - 1;
+						indices[k++] = i;
+					}
+				}
+				if (shot.toStation.isDeadEnd()) {
+					for (int i = 2; i < toVertexCount; i++) {
+						indices[k++] = fromVertexCount;
+						indices[k++] = fromVertexCount + i - 1;
+						indices[k++] = fromVertexCount + i;
+					}
+				}
+			}
 		}
 	}
 

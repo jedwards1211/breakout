@@ -14,15 +14,45 @@ public class CalcShot {
 	public double azimuth;
 	public double inclination;
 
-	public float[] fromSplayNormals;
-	public float[] toSplayNormals;
-
 	public CalcCrossSection fromCrossSection;
 	public CalcCrossSection toCrossSection;
-	public float[] fromSplayPoints;
-	public float[] toSplayPoints;
+
+	public float[] normals;
+	public float[] vertices;
+	/**
+	 * Polarity is my term for a number indicating which side of a shot a vertex
+	 * is on. There's one number in here corresponding to each vertex. It should
+	 * be 0 if the vertex is at or beyond {@link #fromStation}, 1 if the vertex
+	 * is at or beyond {@link #toStation}, or something between 0 and 1 if the
+	 * vertex is somewhere between the two (along the shot vector).
+	 */
+	public float[] polarities;
+	/**
+	 * Every 3 elements are the indices of triangle endpoints in
+	 * {@link #vertices}
+	 */
+	public int[] indices;
 
 	public Date date;
+
+	/**
+	 * Interpolates between a value at the from station and to station for a
+	 * vertex's polarity (position between the stations).
+	 * 
+	 * @param fromValue
+	 *            the value at {@link #fromStation}
+	 * @param toValue
+	 *            the value at {@link #toStation}
+	 * @param vertexIndex
+	 *            the index of the vertex (in {@link #vertices})
+	 * @return The interpolated value. For a vertex at the from station
+	 *         (polarity 0) it will be {@code fromValue}. For a vertex at the
+	 *         from station (polarity 1) it will be {@code toValue}. For a
+	 *         vertex halfway between (polarity 0.5) it will be the average.
+	 */
+	public float interpolateParamAtVertex(float fromValue, float toValue, int vertexIndex) {
+		return fromValue * (1 - polarities[vertexIndex]) + toValue * polarities[vertexIndex];
+	}
 
 	public CalcCrossSection getCrossSectionAt(CalcStation station) {
 		if (station == null) {

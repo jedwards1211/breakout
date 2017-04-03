@@ -840,8 +840,7 @@ public class BreakoutMainView {
 							if (!Double.isNaN(shot.distance)) {
 								distCalc.add(shot.distance);
 							}
-							addPoints.accept(shot.fromSplayPoints);
-							addPoints.accept(shot.toSplayPoints);
+							addPoints.accept(shot.vertices);
 						}
 					} else {
 						editor.deselect(shotKey);

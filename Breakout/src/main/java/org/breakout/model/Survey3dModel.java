@@ -36,13 +36,12 @@ import static com.jogamp.opengl.GL.GL_TEXTURE_MAG_FILTER;
 import static com.jogamp.opengl.GL.GL_TEXTURE_MIN_FILTER;
 import static com.jogamp.opengl.GL.GL_TEXTURE_WRAP_S;
 import static com.jogamp.opengl.GL.GL_TEXTURE_WRAP_T;
-import static com.jogamp.opengl.GL.GL_TRIANGLE_STRIP;
+import static com.jogamp.opengl.GL.GL_TRIANGLES;
 import static com.jogamp.opengl.GL.GL_UNSIGNED_BYTE;
 import static com.jogamp.opengl.GL.GL_UNSIGNED_INT;
 import static org.andork.math3d.Vecmath.setf;
 import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
-import static org.andork.spatial.Rectmath.rayIntersects;
 import static org.andork.spatial.Rectmath.voidRectf;
 
 import java.awt.Graphics2D;
@@ -88,9 +87,6 @@ import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.TwoPlaneIntersection3f;
 import org.andork.math3d.TwoPlaneIntersection3f.ResultType;
 import org.andork.math3d.Vecmath;
-import org.andork.spatial.RBranch;
-import org.andork.spatial.RLeaf;
-import org.andork.spatial.RNode;
 import org.andork.spatial.RTraversal;
 import org.andork.spatial.Rectmath;
 import org.andork.spatial.RfStarTree;
@@ -108,8 +104,6 @@ import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL2GL3;
-import com.jogamp.opengl.GL3;
 
 public class Survey3dModel implements JoglDrawable, JoglResource {
 
@@ -121,8 +115,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected void afterDraw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
 			super.afterDraw(segment3ds, context, gl, m, n);
-
-			gl.glDisable(GL2GL3.GL_PRIMITIVE_RESTART);
 		}
 
 		@Override
@@ -131,9 +123,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			super.beforeDraw(segment3ds, context, gl, m, n);
 			gl.glUniform3fv(u_axis_location, 1, depthAxis.value(), 0);
 			gl.glUniform3fv(u_origin_location, 1, depthOrigin.value(), 0);
-
-			gl.glEnable(GL2GL3.GL_PRIMITIVE_RESTART);
-			((GL3) gl).glPrimitiveRestartIndex(RESTART_INDEX);
 		}
 
 		@Override
@@ -162,7 +151,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, segment3d.lineIndices.id());
 			gl.glDrawElements(GL_LINES, segment3d.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, segment3d.fillIndices.id());
-			gl.glDrawElements(GL_TRIANGLE_STRIP, segment3d.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
+			gl.glDrawElements(GL_TRIANGLES, segment3d.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
 					0);
 		}
 
@@ -467,8 +456,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				float[] n) {
 			super.afterDraw(segment3ds, context, gl, m, n);
 			gl.glDisableVertexAttribArray(a_param0_location);
-
-			gl.glDisable(GL2GL3.GL_PRIMITIVE_RESTART);
 		}
 
 		@Override
@@ -477,9 +464,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			super.beforeDraw(segment3ds, context, gl, m, n);
 
 			gl.glEnableVertexAttribArray(a_param0_location);
-
-			gl.glEnable(GL2GL3.GL_PRIMITIVE_RESTART);
-			((GL3) gl).glPrimitiveRestartIndex(RESTART_INDEX);
 		}
 
 		@Override
@@ -520,7 +504,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, segment3d.lineIndices.id());
 			gl.glDrawElements(GL_LINES, segment3d.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, segment3d.fillIndices.id());
-			gl.glDrawElements(GL_TRIANGLE_STRIP, segment3d.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
+			gl.glDrawElements(GL_TRIANGLES, segment3d.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
 					0);
 		}
 
@@ -538,6 +522,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		final LinkedList<Segment3dDrawer> drawers = new LinkedList<>();
 
+		int vertexCount;
 		JoglBuffer geometry;
 		JoglBuffer stationAttrs;
 		final AtomicBoolean stationAttrsNeedRebuffering = new AtomicBoolean();
@@ -546,32 +531,20 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		JoglBuffer fillIndices;
 		JoglBuffer lineIndices;
 
-		int[] shotIndicesInVertexArrays;
-		int[] shotIndicesInFillIndices;
-
 		Segment3d(ArrayList<Shot3d> shot3ds) {
 			this.shot3ds = shot3ds;
-			int i = 0;
-			for (Shot3d shot3d : shot3ds) {
-				shot3d.segment3d = this;
-				shot3d.indexInSegment = i++;
-			}
 			populateData();
 		}
 
 		void populateData() {
 			BufferHelper geomHelper = new BufferHelper();
-			stationAttrs = new JoglBuffer().buffer(createBuffer(shot3ds.size() * STATION_ATTR_BPS));
-
-			shotIndicesInVertexArrays = new int[shot3ds.size()];
-			shotIndicesInFillIndices = new int[shot3ds.size()];
-
-			List<Integer> fillIndicesList = new ArrayList<>();
-			List<Integer> lineIndicesList = new ArrayList<>();
+			BufferHelper fillIndicesHelper = new BufferHelper();
+			BufferHelper lineIndicesHelper = new BufferHelper();
 
 			for (Shot3d shot3d : shot3ds) {
-				shotIndicesInVertexArrays[shot3d.indexInSegment] = geomHelper.sizeInBytes() / GEOM_BPV;
-				shotIndicesInFillIndices[shot3d.indexInSegment] = fillIndicesList.size() * BPI;
+				shot3d.segment3d = this;
+				shot3d.indexInVertices = geomHelper.sizeInBytes() / GEOM_BPV;
+				shot3d.indexInFillIndices = fillIndicesHelper.sizeInBytes() / BPI;
 
 				CalcShot shot = shot3d.shot;
 				if (Vecmath.distance3(shot.fromStation.position, shot.toStation.position) > 500) {
@@ -579,28 +552,19 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 							+ shot.toStation.name + ": " + Arrays.toString(shot.toStation.position));
 				}
 
-				putValues(geomHelper, shot.fromSplayPoints, shot.fromSplayNormals);
-				putValues(geomHelper, shot.toSplayPoints, shot.toSplayNormals);
+				putValues(geomHelper, shot.vertices, shot.normals);
 
-				for (int index : offset(shot3d.indexInSegment * GEOM_VPS, 0, 4, 2, 6, 1, 5, 3, 7, 0, 4)) {
-					fillIndicesList.add(index);
-					lineIndicesList.add(index);
+				for (int index : shot.indices) {
+					fillIndicesHelper.put(index + shot3d.indexInVertices);
+					lineIndicesHelper.put(index + shot3d.indexInVertices);
 				}
-				fillIndicesList.add(RESTART_INDEX);
 			}
+			vertexCount = geomHelper.sizeInBytes() / GEOM_BPV;
+			stationAttrs = new JoglBuffer().buffer(createBuffer(vertexCount * STATION_ATTR_BPV));
 
 			geometry = new JoglBuffer().buffer(geomHelper.toByteBuffer());
-
-			ByteBuffer fillIndicesBuffer = createBuffer(fillIndicesList.size() * BPI);
-			fillIndices = new JoglBuffer().buffer(fillIndicesBuffer);
-			for (Integer i : fillIndicesList) {
-				fillIndicesBuffer.putInt(i);
-			}
-			ByteBuffer lineIndicesBuffer = createBuffer(lineIndicesList.size() * BPI);
-			lineIndices = new JoglBuffer().buffer(lineIndicesBuffer);
-			for (Integer i : lineIndicesList) {
-				lineIndicesBuffer.putInt(i);
-			}
+			fillIndices = new JoglBuffer().buffer(fillIndicesHelper.toByteBuffer());
+			lineIndices = new JoglBuffer().buffer(lineIndicesHelper.toByteBuffer());
 
 			geometry.buffer().position(0);
 			stationAttrs.buffer().position(0);
@@ -609,7 +573,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		void calcParam0(Survey3dModel model, ColorParam param) {
-			param0 = new JoglBuffer().buffer(createBuffer(shot3ds.size() * GEOM_VPS * 4));
+			param0 = new JoglBuffer().buffer(createBuffer(vertexCount * 4));
 			param0.buffer().position(0);
 			for (Shot3d shot3d : shot3ds) {
 				CalcShot origShot = shot3d.shot;
@@ -627,20 +591,16 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					toValue = fromValue;
 				}
 
-				param0.buffer().putFloat(fromValue);
-				param0.buffer().putFloat(fromValue);
-				param0.buffer().putFloat(fromValue);
-				param0.buffer().putFloat(fromValue);
-				param0.buffer().putFloat(toValue);
-				param0.buffer().putFloat(toValue);
-				param0.buffer().putFloat(toValue);
-				param0.buffer().putFloat(toValue);
+				for (int i = 0; i < shot3d.vertexCount; i++) {
+					param0.buffer().putFloat(
+							shot3d.shot.interpolateParamAtVertex(fromValue, toValue, i));
+				}
 			}
 			param0NeedsRebuffering.set(true);
 		}
 
 		void calcParam0(Survey3dModel model, Map<StationKey, Double> stationValues) {
-			param0 = new JoglBuffer().buffer(createBuffer(shot3ds.size() * GEOM_VPS * 4));
+			param0 = new JoglBuffer().buffer(createBuffer(vertexCount * 4));
 			param0.buffer().position(0);
 			for (Shot3d shot3d : shot3ds) {
 				CalcShot origShot = shot3d.shot;
@@ -652,14 +612,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				if (toValue == null) {
 					toValue = Double.NaN;
 				}
-				param0.buffer().putFloat(fromValue.floatValue());
-				param0.buffer().putFloat(fromValue.floatValue());
-				param0.buffer().putFloat(fromValue.floatValue());
-				param0.buffer().putFloat(fromValue.floatValue());
-				param0.buffer().putFloat(toValue.floatValue());
-				param0.buffer().putFloat(toValue.floatValue());
-				param0.buffer().putFloat(toValue.floatValue());
-				param0.buffer().putFloat(toValue.floatValue());
+				for (int i = 0; i < shot3d.vertexCount; i++) {
+					param0.buffer().putFloat(
+							shot3d.shot.interpolateParamAtVertex(fromValue.floatValue(), toValue.floatValue(), i));
+				}
 			}
 			param0NeedsRebuffering.set(true);
 		}
@@ -780,7 +736,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		CalcShot shot;
 
 		Segment3d segment3d;
-		int indexInSegment;
+		int indexInVertices;
+		int vertexCount;
+		int indexInFillIndices;
+		int triangleCount;
 
 		RfStarTree.Leaf<Shot3d> leaf;
 
@@ -788,6 +747,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			super();
 			this.key = key;
 			this.shot = shot;
+			vertexCount = shot.vertices.length / 3;
 		}
 
 		public void calcParamRange(Survey3dModel model, ColorParam param, float[] rangeInOut) {
@@ -805,13 +765,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					}
 				}
 			} else {
-				int i = segment3d.shotIndicesInVertexArrays[indexInSegment];
-				boolean last = indexInSegment == segment3d.shot3ds.size() - 1;
+				int i = indexInVertices;
+				boolean last = indexInVertices + vertexCount == segment3d.vertexCount;
 
 				ByteBuffer param0buffer = segment3d.param0.buffer();
 
-				int maxIndex = last ? param0buffer.capacity() / 4
-						: segment3d.shotIndicesInVertexArrays[indexInSegment + 1];
+				int maxIndex = last ? param0buffer.capacity() / 4 : indexInVertices + vertexCount;
 
 				while (i < maxIndex) {
 					float f = param0buffer.getFloat(i * 4);
@@ -837,7 +796,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 						@Override
 						public boolean hasNext() {
-							return index < GEOM_VPS;
+							return index < vertexCount;
 						}
 
 						@Override
@@ -852,376 +811,224 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		public void getCoordinate(int i, float[] result) {
-			if (i < 0) {
-				throw new IllegalArgumentException("i must be > 0");
-			}
-			if (indexInSegment < segment3d.shotIndicesInVertexArrays.length - 1) {
-				if (i >= segment3d.shotIndicesInVertexArrays[indexInSegment + 1]) {
-					throw new IndexOutOfBoundsException("i is not in the bounds of this shot");
-				}
+			if (i < 0 || i >= vertexCount) {
+				throw new IllegalArgumentException("i must be between 0 and " + vertexCount);
 			}
 			ByteBuffer vertBuffer = segment3d.geometry.buffer();
-			int baseIndex = (segment3d.shotIndicesInVertexArrays[indexInSegment] + i) * GEOM_BPV;
+			int baseIndex = indexInVertices * GEOM_BPV;
 			result[0] = vertBuffer.getFloat(baseIndex);
 			result[1] = vertBuffer.getFloat(baseIndex + 4);
 			result[2] = vertBuffer.getFloat(baseIndex + 8);
 			vertBuffer.position(0);
 		}
 
-		public float getFromGlowA() {
-			return Survey3dModel.getFromGlowA(segment3d.stationAttrs.buffer(), indexInSegment);
-		}
-
-		public float getFromGlowB() {
-			return Survey3dModel.getFromGlowB(segment3d.stationAttrs.buffer(), indexInSegment);
-		}
-
-		public float getToGlowA() {
-			return Survey3dModel.getToGlowA(segment3d.stationAttrs.buffer(), indexInSegment);
-		}
-
-		public float getToGlowB() {
-			return Survey3dModel.getToGlowB(segment3d.stationAttrs.buffer(), indexInSegment);
-		}
-
 		public void pick(float[] coneOrigin, float[] coneDirection, float coneAngle, Shot3dPickContext c,
 				List<PickResult<Shot3d>> pickResults) {
 			Shot3dPickResult result = null;
 
-			ByteBuffer indexBuffer = segment3d.fillIndices.buffer();
-			ByteBuffer vertBuffer = segment3d.geometry.buffer();
-
-			int k = segment3d.shotIndicesInFillIndices[indexInSegment];
-			indexBuffer.position(k);
 			int i = 0;
+			float polarity0, polarity1, polarity2;
+			while (i < shot.indices.length) {
+				int vertexIndex = i++;
+				polarity0 = shot.polarities[vertexIndex];
+				int coordIndex = vertexIndex * 3;
+				c.p0[0] = shot.vertices[coordIndex];
+				c.p0[1] = shot.vertices[coordIndex + 1];
+				c.p0[2] = shot.vertices[coordIndex + 2];
+				vertexIndex = i++;
+				polarity1 = shot.polarities[vertexIndex];
+				coordIndex = vertexIndex * 3;
+				c.p1[0] = shot.vertices[coordIndex];
+				c.p1[1] = shot.vertices[coordIndex + 1];
+				c.p1[2] = shot.vertices[coordIndex + 2];
+				vertexIndex = i++;
+				polarity2 = shot.polarities[vertexIndex];
+				coordIndex = vertexIndex * 3;
+				c.p2[0] = shot.vertices[coordIndex];
+				c.p2[1] = shot.vertices[coordIndex + 1];
+				c.p2[2] = shot.vertices[coordIndex + 2];
 
-			int i0 = 0;
-			int i1 = 0;
-			int i2;
+				float uPolarity = polarity1 - polarity0;
+				float vPolarity = polarity2 - polarity0;
 
-			boolean last = indexInSegment == segment3d.shot3ds.size() - 1;
-			int maxIndex = last ? indexBuffer.capacity() : segment3d.shotIndicesInFillIndices[indexInSegment + 1];
-			while (k < maxIndex) {
-				i2 = indexBuffer.getInt();
-				k += 4;
-				if (i2 == RESTART_INDEX) {
-					i = 0;
-					continue;
-				}
-
-				if (i >= 2) {
-					boolean even = i % 2 == 0;
-
-					vertBuffer.position((even ? i0 : i2) * GEOM_BPV);
-					c.p0[0] = vertBuffer.getFloat();
-					c.p0[1] = vertBuffer.getFloat();
-					c.p0[2] = vertBuffer.getFloat();
-
-					vertBuffer.position(i1 * GEOM_BPV);
-					c.p1[0] = vertBuffer.getFloat();
-					c.p1[1] = vertBuffer.getFloat();
-					c.p1[2] = vertBuffer.getFloat();
-
-					vertBuffer.position((even ? i2 : i0) * GEOM_BPV);
-					c.p2[0] = vertBuffer.getFloat();
-					c.p2[1] = vertBuffer.getFloat();
-					c.p2[2] = vertBuffer.getFloat();
-
-					try {
-						c.lpx.lineFromRay(coneOrigin, coneDirection);
-						c.lpx.planeFromPoints(c.p0, c.p1, c.p2);
-						c.lpx.findIntersection();
-						if (c.lpx.isPointIntersection() && c.lpx.isOnRay() && c.lpx.isInTriangle()) {
-							if (result == null || result.lateralDistance > 0 || c.lpx.t < result.distance) {
+				try {
+					c.lpx.lineFromRay(coneOrigin, coneDirection);
+					c.lpx.planeFromPoints(c.p0, c.p1, c.p2);
+					c.lpx.findIntersection();
+					if (c.lpx.isPointIntersection() && c.lpx.isOnRay() && c.lpx.isInTriangle()) {
+						if (result == null || result.lateralDistance > 0 || c.lpx.t < result.distance) {
+							if (result == null) {
+								result = new Shot3dPickResult();
+							}
+							result.picked = this;
+							result.distance = c.lpx.t;
+							result.locationAlongShot = polarity0 + uPolarity * c.lpx.u + vPolarity * c.lpx.v;
+							result.lateralDistance = 0;
+							setf(result.location, c.lpx.result);
+						}
+					} else if (result == null || result.lateralDistance > 0) {
+						if (c.inConeTester.isLineSegmentInCone(c.p0, c.p1, coneOrigin, coneDirection,
+								coneAngle)) {
+							if (result == null || c.inConeTester.lateralDistance
+									* result.distance < result.lateralDistance * c.inConeTester.t) {
 								if (result == null) {
 									result = new Shot3dPickResult();
 								}
 								result.picked = this;
-								result.distance = c.lpx.t;
-								result.locationAlongShot = even ? c.lpx.u : 1 - c.lpx.u;
-								result.lateralDistance = 0;
-								setf(result.location, c.lpx.result);
+								result.distance = c.inConeTester.t;
+								result.lateralDistance = c.inConeTester.lateralDistance;
+								result.locationAlongShot = polarity0 * (1 - c.inConeTester.s) +
+										polarity1 * c.inConeTester.s;
+								Vecmath.interp3(c.p0, c.p1, c.inConeTester.s, result.location);
 							}
-						} else if (result == null || result.lateralDistance > 0) {
-							if (c.inConeTester.isLineSegmentInCone(c.p0, c.p1, coneOrigin, coneDirection,
-									coneAngle)) {
-								if (result == null || c.inConeTester.lateralDistance
-										* result.distance < result.lateralDistance * c.inConeTester.t) {
-									if (result == null) {
-										result = new Shot3dPickResult();
-									}
-									result.picked = this;
-									result.distance = c.inConeTester.t;
-									result.lateralDistance = c.inConeTester.lateralDistance;
-									result.locationAlongShot = even ? c.inConeTester.s : 1 - c.inConeTester.s;
-									Vecmath.interp3(c.p0, c.p1, c.inConeTester.s, result.location);
+						} else if (c.inConeTester.isLineSegmentInCone(c.p1, c.p2, coneOrigin, coneDirection,
+								coneAngle)) {
+							if (result == null || c.inConeTester.lateralDistance
+									* result.distance < result.lateralDistance * c.inConeTester.t) {
+								if (result == null) {
+									result = new Shot3dPickResult();
 								}
-							} else if (c.inConeTester.isLineSegmentInCone(c.p1, c.p2, coneOrigin, coneDirection,
-									coneAngle)) {
-								if (result == null || c.inConeTester.lateralDistance
-										* result.distance < result.lateralDistance * c.inConeTester.t) {
-									if (result == null) {
-										result = new Shot3dPickResult();
-									}
-									result.picked = this;
-									result.distance = c.inConeTester.t;
-									result.lateralDistance = c.inConeTester.lateralDistance;
-									result.locationAlongShot = even ? 1 - c.inConeTester.s : c.inConeTester.s;
-									Vecmath.interp3(c.p1, c.p2, c.inConeTester.s, result.location);
-								}
-							} else if (c.inConeTester.isLineSegmentInCone(c.p2, c.p0, coneOrigin, coneDirection,
-									coneAngle)) {
-								if (result == null || c.inConeTester.lateralDistance
-										* result.distance < result.lateralDistance * c.inConeTester.t) {
-									if (result == null) {
-										result = new Shot3dPickResult();
-									}
-									result.picked = this;
-									result.distance = c.inConeTester.t;
-									result.lateralDistance = c.inConeTester.lateralDistance;
-									result.locationAlongShot = i % 2;
-									Vecmath.interp3(c.p2, c.p0, c.inConeTester.s, result.location);
-								}
-							}
-						}
-					} catch (Exception ex) {
-
-					}
-				}
-
-				i0 = i1;
-				i1 = i2;
-
-				i++;
-			}
-
-			if (result != null) {
-				pickResults.add(result);
-			}
-
-			vertBuffer.position(0);
-			indexBuffer.position(0);
-		}
-
-		public void pick(float[] rayOrigin, float[] rayDirection, Shot3dPickContext c,
-				List<PickResult<Shot3d>> pickResults) {
-			Shot3dPickResult result = null;
-
-			ByteBuffer indexBuffer = segment3d.fillIndices.buffer();
-			ByteBuffer vertBuffer = segment3d.geometry.buffer();
-			indexBuffer.position(segment3d.shotIndicesInFillIndices[indexInSegment]);
-			int i = 0;
-
-			int i0 = 0;
-			int i1 = 0;
-			int i2;
-
-			boolean last = indexInSegment == segment3d.shot3ds.size() - 1;
-			int maxIndex = last ? indexBuffer.capacity() : segment3d.shotIndicesInFillIndices[indexInSegment + 1];
-			while (indexBuffer.position() < maxIndex) {
-				i2 = indexBuffer.getInt();
-				if (i2 == RESTART_INDEX) {
-					i = 0;
-					continue;
-				}
-
-				if (i >= 2) {
-					boolean even = i % 2 == 0;
-
-					vertBuffer.position((even ? i0 : i2) * GEOM_BPV);
-					c.p0[0] = vertBuffer.getFloat();
-					c.p0[1] = vertBuffer.getFloat();
-					c.p0[2] = vertBuffer.getFloat();
-
-					vertBuffer.position(i1 * GEOM_BPV);
-					c.p1[0] = vertBuffer.getFloat();
-					c.p1[1] = vertBuffer.getFloat();
-					c.p1[2] = vertBuffer.getFloat();
-
-					vertBuffer.position((even ? i2 : i0) * GEOM_BPV);
-					c.p2[0] = vertBuffer.getFloat();
-					c.p2[1] = vertBuffer.getFloat();
-					c.p2[2] = vertBuffer.getFloat();
-					try {
-						c.lpx.lineFromRay(rayOrigin, rayDirection);
-						c.lpx.planeFromPoints(c.p0, c.p1, c.p2);
-						c.lpx.findIntersection();
-						if (c.lpx.isPointIntersection() && c.lpx.isOnRay() && c.lpx.isInTriangle()) {
-							if (result == null || c.lpx.t < result.distance) {
-								result = new Shot3dPickResult();
 								result.picked = this;
-								result.distance = c.lpx.t;
-								result.locationAlongShot = i % 2 == 0 ? c.lpx.u : 1 - c.lpx.u;
-								setf(result.location, c.lpx.result);
+								result.distance = c.inConeTester.t;
+								result.lateralDistance = c.inConeTester.lateralDistance;
+								result.locationAlongShot = polarity1 * (1 - c.inConeTester.s) +
+										polarity2 * c.inConeTester.s;
+								Vecmath.interp3(c.p1, c.p2, c.inConeTester.s, result.location);
+							}
+						} else if (c.inConeTester.isLineSegmentInCone(c.p2, c.p0, coneOrigin, coneDirection,
+								coneAngle)) {
+							if (result == null || c.inConeTester.lateralDistance
+									* result.distance < result.lateralDistance * c.inConeTester.t) {
+								if (result == null) {
+									result = new Shot3dPickResult();
+								}
+								result.picked = this;
+								result.distance = c.inConeTester.t;
+								result.lateralDistance = c.inConeTester.lateralDistance;
+								result.locationAlongShot = polarity2 * (1 - c.inConeTester.s) +
+										polarity0 * c.inConeTester.s;
+								Vecmath.interp3(c.p2, c.p0, c.inConeTester.s, result.location);
 							}
 						}
-					} catch (Exception ex) {
-
 					}
+				} catch (Exception ex) {
+
 				}
-
-				i0 = i1;
-				i1 = i2;
-
-				i++;
 			}
 
 			if (result != null) {
 				pickResults.add(result);
 			}
-
-			vertBuffer.position(0);
-			indexBuffer.position(0);
 		}
 
 		public void pick(PlanarHull3f hull, Shot3dPickContext c, List<PickResult<Shot3d>> pickResults) {
 			Shot3dPickResult result = null;
 
-			ByteBuffer indexBuffer = segment3d.fillIndices.buffer();
-			ByteBuffer vertBuffer = segment3d.geometry.buffer();
-
-			int k = segment3d.shotIndicesInFillIndices[indexInSegment];
-			indexBuffer.position(k);
 			int i = 0;
+			float polarity0, polarity1, polarity2;
+			while (i < shot.indices.length) {
+				int vertexIndex = shot.indices[i++];
+				polarity0 = shot.polarities[vertexIndex];
+				int coordIndex = vertexIndex * 3;
+				c.p0[0] = shot.vertices[coordIndex];
+				c.p0[1] = shot.vertices[coordIndex + 1];
+				c.p0[2] = shot.vertices[coordIndex + 2];
+				vertexIndex = shot.indices[i++];
+				polarity1 = shot.polarities[vertexIndex];
+				coordIndex = vertexIndex * 3;
+				c.p1[0] = shot.vertices[coordIndex];
+				c.p1[1] = shot.vertices[coordIndex + 1];
+				c.p1[2] = shot.vertices[coordIndex + 2];
+				vertexIndex = shot.indices[i++];
+				polarity2 = shot.polarities[vertexIndex];
+				coordIndex = vertexIndex * 3;
+				c.p2[0] = shot.vertices[coordIndex];
+				c.p2[1] = shot.vertices[coordIndex + 1];
+				c.p2[2] = shot.vertices[coordIndex + 2];
 
-			int i0 = 0;
-			int i1 = 0;
-			int i2;
+				float uPolarity = polarity1 - polarity0;
+				float vPolarity = polarity2 - polarity0;
 
-			boolean last = indexInSegment == segment3d.shot3ds.size() - 1;
-			int maxIndex = last ? indexBuffer.capacity() : segment3d.shotIndicesInFillIndices[indexInSegment + 1];
-			while (k < maxIndex) {
-				i2 = indexBuffer.getInt();
-				k += 4;
-				if (i2 == RESTART_INDEX) {
-					i = 0;
-					continue;
-				}
-
-				if (i >= 2) {
-					boolean even = i % 2 == 0;
-
-					vertBuffer.position((even ? i0 : i2) * GEOM_BPV);
-					c.p0[0] = vertBuffer.getFloat();
-					c.p0[1] = vertBuffer.getFloat();
-					c.p0[2] = vertBuffer.getFloat();
-
-					vertBuffer.position(i1 * GEOM_BPV);
-					c.p1[0] = vertBuffer.getFloat();
-					c.p1[1] = vertBuffer.getFloat();
-					c.p1[2] = vertBuffer.getFloat();
-
-					vertBuffer.position((even ? i2 : i0) * GEOM_BPV);
-					c.p2[0] = vertBuffer.getFloat();
-					c.p2[1] = vertBuffer.getFloat();
-					c.p2[2] = vertBuffer.getFloat();
-
-					try {
-						c.lpx.lineFromPoints(hull.origins[4], hull.origins[5]);
-						c.lpx.planeFromPoints(c.p0, c.p1, c.p2);
-						c.lpx.findIntersection();
-						if (c.lpx.isPointIntersection() && c.lpx.isOnRay() && c.lpx.isInTriangle()
-								&& hull.containsPoint(c.lpx.result)) {
-							if (result == null || result.lateralDistance > 0 || c.lpx.t < result.distance) {
-								if (result == null) {
-									result = new Shot3dPickResult();
-								}
-								result.picked = this;
-								result.distance = c.lpx.t;
-								result.locationAlongShot = even ? c.lpx.u : 1 - c.lpx.u;
-								result.lateralDistance = 0;
-								setf(result.location, c.lpx.result);
-							}
-						} else if (result == null || result.lateralDistance > 0) {
-							for (int[] triangle : hullTriangleIndices) {
-								c.tpx.plane1FromPoints(c.p0, c.p1, c.p2);
-								c.tpx.plane2FromPoints(
-										hull.vertices[triangle[0]],
-										hull.vertices[triangle[1]],
-										hull.vertices[triangle[2]]);
-
-								c.tpx.twoTriangleIntersection();
-
-								if (c.tpx.intersectionType == ResultType.LINEAR_INTERSECTION) {
-									c.tpx.calcIntersectionPoint(c.tpx.t2[0], c.x0);
-									c.tpx.calcIntersectionPoint(c.tpx.t2[1], c.x1);
-
-									float distance0 = Vecmath.subDot3(c.x0, hull.origins[4], hull.normals[4]);
-									float distance1 = Vecmath.subDot3(c.x1, hull.origins[4], hull.normals[4]);
-
-									if (distance1 < distance0) {
-										distance0 = distance1;
-										setf(c.x0, c.x1);
-									}
-									float diagonal = Vecmath.distance3sq(hull.origins[4], c.x0);
-									float lateralDistance = (float) Math.sqrt(diagonal - distance0 * distance0);
-
-									if (result == null
-											|| lateralDistance * result.distance < result.lateralDistance * distance0) {
-										if (result == null) {
-											result = new Shot3dPickResult();
-										}
-										result.picked = this;
-										result.distance = distance0;
-										result.lateralDistance = lateralDistance;
-										result.locationAlongShot = k >= 4 ? 1 : 0;
-										setf(result.location, c.x0);
-									}
-								}
-							}
-						}
-					} catch (Exception ex) {
-					}
-				}
-
-				i0 = i1;
-				i1 = i2;
-
-				i++;
-			}
-			if (result == null) {
-				k = 0;
-				for (float[] coord : coordIterable()) {
-					if (hull.containsPoint(coord)) {
-						float distance = Vecmath.subDot3(coord, hull.origins[4], hull.normals[4]);
-						float diagonal = Vecmath.distance3sq(hull.origins[4], coord);
-						float lateralDistance = (float) Math.sqrt(diagonal - distance * distance);
-						if (result == null || lateralDistance * result.distance < result.lateralDistance * distance) {
+				try {
+					c.lpx.lineFromPoints(hull.origins[4], hull.origins[5]);
+					c.lpx.planeFromPoints(c.p0, c.p1, c.p2);
+					c.lpx.findIntersection();
+					if (c.lpx.isPointIntersection() && c.lpx.isOnRay() && c.lpx.isInTriangle()
+							&& hull.containsPoint(c.lpx.result)) {
+						if (result == null || result.lateralDistance > 0 || c.lpx.t < result.distance) {
 							if (result == null) {
 								result = new Shot3dPickResult();
 							}
 							result.picked = this;
-							result.distance = distance;
-							result.lateralDistance = lateralDistance;
-							result.locationAlongShot = k >= 4 ? 1 : 0;
-							setf(result.location, coord);
+							result.distance = c.lpx.t;
+							result.locationAlongShot = polarity0 + uPolarity * c.lpx.u + vPolarity * c.lpx.v;
+							result.lateralDistance = 0;
+							setf(result.location, c.lpx.result);
+						}
+					} else if (result == null || result.lateralDistance > 0) {
+						for (int[] triangle : hullTriangleIndices) {
+							c.tpx.plane1FromPoints(c.p0, c.p1, c.p2);
+							c.tpx.plane2FromPoints(
+									hull.vertices[triangle[0]],
+									hull.vertices[triangle[1]],
+									hull.vertices[triangle[2]]);
+
+							c.tpx.twoTriangleIntersection();
+
+							if (c.tpx.intersectionType == ResultType.LINEAR_INTERSECTION) {
+								c.tpx.calcIntersectionPoint(c.tpx.t2[0], c.x0);
+								c.tpx.calcIntersectionPoint(c.tpx.t2[1], c.x1);
+
+								float distance0 = Vecmath.subDot3(c.x0, hull.origins[4], hull.normals[4]);
+								float distance1 = Vecmath.subDot3(c.x1, hull.origins[4], hull.normals[4]);
+
+								if (distance1 < distance0) {
+									distance0 = distance1;
+									setf(c.x0, c.x1);
+								}
+								float diagonal = Vecmath.distance3sq(hull.origins[4], c.x0);
+								float lateralDistance = (float) Math.sqrt(diagonal - distance0 * distance0);
+
+								if (result == null
+										|| lateralDistance * result.distance < result.lateralDistance * distance0) {
+									if (result == null) {
+										result = new Shot3dPickResult();
+									}
+									result.picked = this;
+									result.distance = distance0;
+									result.lateralDistance = lateralDistance;
+									// TODO if only I had documented
+									// TwoPlaneIntersectionBetter...
+									result.locationAlongShot = 0.5f;
+									setf(result.location, c.x0);
+								}
+							}
 						}
 					}
-					k++;
+				} catch (Exception ex) {
 				}
 			}
 			if (result != null) {
 				pickResults.add(result);
 			}
-
-			vertBuffer.position(0);
-			indexBuffer.position(0);
 		}
 
-		public void setFromGlowA(float glow) {
-			Survey3dModel.setFromGlowA(segment3d.stationAttrs.buffer(), indexInSegment, glow);
+		public void setGlowA(float fromGlow, float toGlow) {
+			ByteBuffer buffer = segment3d.stationAttrs.buffer();
+			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+				buffer.putFloat(
+						(indexInVertices + vertexIndex) * STATION_ATTR_BPV,
+						shot.interpolateParamAtVertex(fromGlow, toGlow, vertexIndex));
+			}
 		}
 
-		public void setFromGlowB(float glow) {
-			Survey3dModel.setFromGlowB(segment3d.stationAttrs.buffer(), indexInSegment, glow);
-		}
-
-		public void setToGlowA(float glow) {
-			Survey3dModel.setToGlowA(segment3d.stationAttrs.buffer(), indexInSegment, glow);
-		}
-
-		public void setToGlowB(float glow) {
-			Survey3dModel.setToGlowB(segment3d.stationAttrs.buffer(), indexInSegment, glow);
+		public void setGlowB(float fromGlow, float toGlow) {
+			ByteBuffer buffer = segment3d.stationAttrs.buffer();
+			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
+				buffer.putFloat(
+						(indexInVertices + vertexIndex) * STATION_ATTR_BPV + 4,
+						shot.interpolateParamAtVertex(fromGlow, toGlow, vertexIndex));
+			}
 		}
 
 		public void unionMbrInto(float[] mbr) {
@@ -1230,6 +1037,16 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		public ShotKey key() {
 			return key;
+		}
+
+		void applySelectionHighlights() {
+			ByteBuffer buffer = segment3d.stationAttrs.buffer();
+			for (int i = 0; i < vertexCount; i++) {
+				int index = (indexInVertices + i) * STATION_ATTR_BPV + 8;
+				if (buffer.getFloat(index) != 1) {
+					buffer.putFloat(index, 2f);
+				}
+			}
 		}
 	}
 
@@ -1255,27 +1072,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	 */
 	private static final int GEOM_BPV = 24;
 	/**
-	 * Vertices per shot
-	 */
-	private static final int GEOM_VPS = 8;
-	/**
 	 * Station attribute bytes per vertex
 	 */
 	private static final int STATION_ATTR_BPV = 12;
 	/**
-	 * Station attributes per shot
-	 */
-	private static final int STATION_ATTR_VPS = GEOM_VPS;
-	/**
-	 * Station attribute bytes per shot
-	 */
-	private static final int STATION_ATTR_BPS = STATION_ATTR_BPV
-			* STATION_ATTR_VPS;
-	/**
 	 * Bytes per index
 	 */
 	private static final int BPI = 4;
-	private static final int RESTART_INDEX = 0xffffffff;
 	private static final int[][] hullTriangleIndices = {
 			{ 0, 6, 4 }, { 6, 0, 2 },
 			{ 2, 7, 6 }, { 7, 2, 3 },
@@ -1396,21 +1199,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			CalcShot shot = shot3d.shot;
 
-			for (int i = 0; i < shot.fromSplayPoints.length; i += 3) {
-				float x = shot.fromSplayPoints[i];
-				float y = shot.fromSplayPoints[i + 1];
-				float z = shot.fromSplayPoints[i + 2];
-				mbr[0] = nmin(mbr[0], x);
-				mbr[1] = nmin(mbr[1], y);
-				mbr[2] = nmin(mbr[2], z);
-				mbr[3] = nmax(mbr[3], x);
-				mbr[4] = nmax(mbr[4], y);
-				mbr[5] = nmax(mbr[5], z);
-			}
-			for (int i = 0; i < shot.toSplayPoints.length; i += 3) {
-				float x = shot.toSplayPoints[i];
-				float y = shot.toSplayPoints[i + 1];
-				float z = shot.toSplayPoints[i + 2];
+			for (int i = 0; i < shot.vertices.length; i += 3) {
+				float x = shot.vertices[i];
+				float y = shot.vertices[i + 1];
+				float z = shot.vertices[i + 2];
 				mbr[0] = nmin(mbr[0], x);
 				mbr[1] = nmin(mbr[1], y);
 				mbr[2] = nmin(mbr[2], z);
@@ -1433,61 +1225,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return tree;
 	}
 
-	private static float getFromGlowA(ByteBuffer buffer, int shotIndex) {
-		return buffer.getFloat(shotIndex * STATION_ATTR_BPS);
-	}
-
-	private static float getFromGlowB(ByteBuffer buffer, int shotIndex) {
-		return buffer.getFloat(shotIndex * STATION_ATTR_BPS + 4);
-	}
-
-	private static float getToGlowA(ByteBuffer buffer, int shotIndex) {
-		return buffer.getFloat(shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2);
-	}
-
-	private static float getToGlowB(ByteBuffer buffer, int shotIndex) {
-		return buffer.getFloat(shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4);
-	}
-
-	private static int[] offset(int offset, int... in) {
-		for (int i = 0; i < in.length; i++) {
-			in[i] += offset;
-		}
-		return in;
-	}
-
 	private static void putValues(BufferHelper geomHelper, float[] splayPoints, float[] splayNormals) {
 		for (int i = 0; i < splayPoints.length; i += 3) {
 			geomHelper.put(splayPoints[i], splayPoints[i + 1], splayPoints[i + 2]);
 			geomHelper.put(splayNormals[i], splayNormals[i + 1], splayNormals[i + 2]);
-		}
-	}
-
-	private static void setFromGlowA(ByteBuffer buffer, int shotIndex, float value) {
-		int index = shotIndex * STATION_ATTR_BPS;
-		for (int i = 0; i < STATION_ATTR_VPS / 2; i++) {
-			buffer.putFloat(index + i * STATION_ATTR_BPV, value);
-		}
-	}
-
-	private static void setFromGlowB(ByteBuffer buffer, int shotIndex, float value) {
-		int index = shotIndex * STATION_ATTR_BPS + 4;
-		for (int i = 0; i < STATION_ATTR_VPS / 2; i++) {
-			buffer.putFloat(index + i * STATION_ATTR_BPV, value);
-		}
-	}
-
-	private static void setToGlowA(ByteBuffer buffer, int shotIndex, float value) {
-		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2;
-		for (int i = 0; i < STATION_ATTR_VPS / 2; i++) {
-			buffer.putFloat(index + i * STATION_ATTR_BPV, value);
-		}
-	}
-
-	private static void setToGlowB(ByteBuffer buffer, int shotIndex, float value) {
-		int index = shotIndex * STATION_ATTR_BPS + STATION_ATTR_BPV * STATION_ATTR_VPS / 2 + 4;
-		for (int i = 0; i < STATION_ATTR_VPS / 2; i++) {
-			buffer.putFloat(index + i * STATION_ATTR_BPV, value);
 		}
 	}
 
@@ -1575,16 +1316,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		drawers.putAll(axialSegment3dDrawer, segment3ds);
 
 		this.drawers.set(drawers);
-	}
-
-	private void applySelectionHighlights(Shot3d shot3d) {
-		ByteBuffer buffer = shot3d.segment3d.stationAttrs.buffer();
-		for (int i = 0; i < STATION_ATTR_VPS; i++) {
-			int index = shot3d.indexInSegment * STATION_ATTR_BPS + 8 + i * STATION_ATTR_BPV;
-			if (buffer.getFloat(index) != 1) {
-				buffer.putFloat(index, 2f);
-			}
-		}
 	}
 
 	public float[] calcAutofitAllParamRange(Subtask subtask) {
@@ -1861,16 +1592,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	public void init(GL2ES2 gl) {
 	}
 
-	public void pickShots(float[] coneOrigin, float[] coneDirection, float coneAngle,
-			Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
-		pickShots(tree.getRoot(), coneOrigin, coneDirection, coneAngle, spc, pickResults);
-	}
-
-	public void pickShots(float[] rayOrigin, float[] rayDirection,
-			Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
-		pickShots(tree.getRoot(), rayOrigin, rayDirection, spc, pickResults);
-	}
-
 	public void pickShots(PlanarHull3f pickHull, Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
 		RTraversal.traverse(tree.getRoot(),
 				node -> pickHull.intersectsBox(node.mbr()),
@@ -1878,37 +1599,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					leaf.object().pick(pickHull, spc, pickResults);
 					return true;
 				});
-	}
-
-	private void pickShots(RNode<float[], Shot3d> node, float[] coneOrigin, float[] coneDirection,
-			float coneAngle,
-			Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
-		if (spc.inConeTester.boxIntersectsCone(node.mbr(), coneOrigin, coneDirection, coneAngle)) {
-			if (node instanceof RBranch) {
-				RBranch<float[], Shot3d> branch = (RBranch<float[], Shot3d>) node;
-				for (int i = 0; i < branch.numChildren(); i++) {
-					pickShots(branch.childAt(i), coneOrigin, coneDirection, coneAngle, spc, pickResults);
-				}
-			} else if (node instanceof RLeaf) {
-				Shot3d shot3d = ((RLeaf<float[], Shot3d>) node).object();
-				shot3d.pick(coneOrigin, coneDirection, coneAngle, spc, pickResults);
-			}
-		}
-	}
-
-	private void pickShots(RNode<float[], Shot3d> node, float[] rayOrigin, float[] rayDirection,
-			Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
-		if (rayIntersects(rayOrigin, rayDirection, node.mbr())) {
-			if (node instanceof RBranch) {
-				RBranch<float[], Shot3d> branch = (RBranch<float[], Shot3d>) node;
-				for (int i = 0; i < branch.numChildren(); i++) {
-					pickShots(branch.childAt(i), rayOrigin, rayDirection, spc, pickResults);
-				}
-			} else if (node instanceof RLeaf) {
-				Shot3d shot3d = ((RLeaf<float[], Shot3d>) node).object();
-				shot3d.pick(rayOrigin, rayDirection, spc, pickResults);
-			}
-		}
 	}
 
 	public void setAmbientLight(float ambientLight) {
@@ -2025,12 +1715,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 										shot3d.segment3d.clearGlow();
 									}
 
+									float otherGlow = (float) glowExtentConversion
+											.convert(priority + connectedShot.distance);
+
 									if (station == connectedShot.fromStation) {
-										shot3d.setFromGlowA(glow);
-										shot3d.setFromGlowB(glow);
+										shot3d.setGlowA(glow, otherGlow);
 									} else {
-										shot3d.setToGlowA(glow);
-										shot3d.setToGlowB(glow);
+										shot3d.setGlowB(otherGlow, glow);
 									}
 
 									shot3d.segment3d.stationAttrsNeedRebuffering.set(true);
@@ -2041,9 +1732,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					shot -> shot.distance,
 					(station, shot) -> station == shot.fromStation ? shot.toStation : shot.fromStation,
 					() -> subtask != null && !subtask.isCanceling());
-
-			hoveredShot.setFromGlowA(2 - hoveredShot.getFromGlowB());
-			hoveredShot.setToGlowA(2 - hoveredShot.getToGlowB());
 		}
 
 		Iterator<Segment3d> segIter = segmentsWithGlow.iterator();
@@ -2076,7 +1764,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		for (ShotKey key : selectedShots) {
 			Shot3d shot3d = shot3ds.get(key);
 			if (affectedSegments.contains(shot3d.segment3d)) {
-				applySelectionHighlights(shot3d);
+				shot3d.applySelectionHighlights();
 			}
 		}
 
