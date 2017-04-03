@@ -32,4 +32,32 @@ public class PriorityEntry<K extends Comparable<K>, V> implements Map.Entry<K, V
 		this.value = value;
 		return oldValue;
 	}
+
+	@Override
+	public int hashCode() {
+		return key.hashCode();
+	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		PriorityEntry other = (PriorityEntry) obj;
+		return key.equals(other.key) && value.equals(other.value);
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("PriorityEntry [key=").append(key).append(", value=").append(value).append("]");
+		return builder.toString();
+	}
 }
