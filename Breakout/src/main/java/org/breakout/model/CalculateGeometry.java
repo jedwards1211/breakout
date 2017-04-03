@@ -7,7 +7,7 @@ import java.util.Set;
 
 import org.andork.collect.PriorityEntry;
 import org.andork.math.misc.AngleUtils;
-import org.andork.util.Iterators;
+import org.andork.util.Iterables;
 
 /**
  * All of the routines to compute the passage geometry from the parsed
@@ -331,7 +331,7 @@ public class CalculateGeometry {
 			double distance = entry.getKey();
 			CalcShot shot = entry.getValue();
 			calculateStationPositions(shot);
-			for (CalcShot nextShot : Iterators.concat(
+			for (CalcShot nextShot : Iterables.concat(
 					shot.fromStation.shots.values(),
 					shot.toStation.shots.values())) {
 				if (!nextShot.fromStation.hasPosition() || !nextShot.toStation.hasPosition()) {

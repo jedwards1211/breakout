@@ -39,7 +39,6 @@ public class ShadeletTest {
 		GradientShadelet axisGradShadelet = new GradientShadelet();
 		DistParamShadelet distShadelet = new DistParamShadelet();
 		GradientShadelet distGradShadelet = new GradientShadelet();
-		GlowShadelet glowShadelet = new GlowShadelet();
 		SimpleLightingShadelet lightShadelet = new SimpleLightingShadelet();
 		IndexedHighlightShadelet highlightShadelet = new IndexedHighlightShadelet();
 
@@ -49,14 +48,11 @@ public class ShadeletTest {
 				.loValue("nearDist").hiValue("farDist")
 				.param(distShadelet.out()).loColorDeclaration(null);
 
-		glowShadelet.color("vec4(1.0, 1.0, 0.0, 1.0)");
-		glowShadelet.colorDeclaration(null);
-
 		lightShadelet.color("gl_FragColor").colorDeclaration(null).ambientAmt("0.3");
 		highlightShadelet.colorCount(10);
 
 		CombinedShadelet combShadelet = new CombinedShadelet(posShadelet, normShadelet,
-				axisShadelet, axisGradShadelet, distShadelet, distGradShadelet, glowShadelet, lightShadelet,
+				axisShadelet, axisGradShadelet, distShadelet, distGradShadelet, lightShadelet,
 				highlightShadelet);
 
 		System.out.println(Shadelet.prettyPrint(combShadelet.createVertexShaderCode()));

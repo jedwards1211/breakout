@@ -21,8 +21,6 @@
  *******************************************************************************/
 package org.andork.util;
 
-import static org.andork.collect.EnumerationIterator.iterable;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.jar.JarFile;
@@ -59,7 +57,7 @@ public class ClassFinder {
 
 				}
 				if (jar != null) {
-					for (ZipEntry entry : iterable(jar.entries())) {
+					for (ZipEntry entry : Iterables.of(jar.entries())) {
 						String name = entry.getName();
 						int extIndex = name.lastIndexOf(".class");
 						if (extIndex > 0) {

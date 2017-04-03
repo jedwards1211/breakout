@@ -94,7 +94,7 @@ import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
 import org.andork.swing.async.Subtask;
 import org.andork.swing.async.Task;
-import org.andork.util.Iterators;
+import org.andork.util.Iterables;
 import org.breakout.PickResult;
 import org.breakout.awt.ParamGradientMapPaint;
 import org.omg.CORBA.FloatHolder;
@@ -1726,7 +1726,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		Iterator<Segment3d> segIter = segmentsWithGlow.iterator();
 
-		for (Segment3d segment3d : Iterators.iterable(segIter)) {
+		for (Segment3d segment3d : Iterables.of(segIter)) {
 			if (subtask != null && subtask.isCanceling()) {
 				return;
 			}

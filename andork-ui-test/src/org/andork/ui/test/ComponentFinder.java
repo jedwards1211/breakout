@@ -49,13 +49,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 
 import org.andork.awt.CheckEDT;
-import org.andork.collect.ArrayIterator;
 import org.andork.collect.CollectionUtils;
-import org.andork.collect.CompoundComparator;
-import org.andork.collect.EasyIterator;
-import org.andork.collect.FilteringIterator;
-import org.andork.collect.InverseComparator;
 import org.andork.ui.test.ConfigurableStringComparator.Option;
+import org.andork.util.Comparators;
+import org.andork.util.EasyIterator;
+import org.andork.util.Iterables;
 import org.andork.util.Java7;
 
 /**
@@ -223,8 +221,8 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		@Override
 		public Iterator<Component> iterator() {
 			return new EasyIterator<Component>() {
-				private final Set<Component> visited = new HashSet<Component>();
-				private final Queue<Component> queue = new LinkedList<Component>();
+				private final Set<Component> visited = new HashSet<>();
+				private final Queue<Component> queue = new LinkedList<>();
 
 				private Iterator<? extends Component> wrappedIter = wrapped.iterator();
 
@@ -267,12 +265,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 
 		@Override
 		public Iterator<C> iterator() {
-			return new FilteringIterator<C>(wrapped.iterator()) {
-				@Override
-				protected boolean matches(C next) {
-					return FilteringComponentFinder.this.matches(next);
-				}
-			};
+			return Iterables.filter(wrapped, this::matches).iterator();
 		}
 
 		public abstract boolean matches(C comp);
@@ -288,7 +281,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 
 		@Override
 		public Iterator<Window> iterator() {
-			return new ArrayIterator<Window>(target.getOwnedWindows());
+			return Iterables.of(target.getOwnedWindows()).iterator();
 		}
 	}
 
@@ -459,7 +452,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	}
 
 	public static <C extends Component> SingletonComponentFinder<C> only(final C comp) {
-		return new SingletonComponentFinder<C>(comp);
+		return new SingletonComponentFinder<>(comp);
 	}
 
 	public static ComponentFinder<JRadioButton> radioButtonsIn(Component parent) {
@@ -520,7 +513,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	 * @return a {@link List} of all components found.
 	 */
 	public List<C> all() {
-		ArrayList<C> result = new ArrayList<C>();
+		ArrayList<C> result = new ArrayList<>();
 		addAllTo(result);
 		return result;
 	}
@@ -547,7 +540,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	}
 
 	public ComponentFinder<C> bottommost() {
-		return sort(new InverseComparator<C>(new ComponentCenterYComparator()));
+		return sort(Comparators.negate(new ComponentCenterYComparator()));
 	}
 
 	public ComponentFinder<C> closestTo(Component center) {
@@ -882,7 +875,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	}
 
 	public ComponentFinder<C> rightmost() {
-		return sort(new InverseComparator<C>(new ComponentCenterXComparator()));
+		return sort(Comparators.negate(new ComponentCenterXComparator()));
 	}
 
 	public ComponentFinder<C> rightOf(final Component c1) {
@@ -922,10 +915,10 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 	public SortingComponentFinder<C> sort(Comparator<? super C> comparator) {
 		if (this instanceof SortingComponentFinder) {
 			SortingComponentFinder<C> thisSorting = (SortingComponentFinder<C>) this;
-			return new SortingComponentFinder<C>(thisSorting.parent, new CompoundComparator(
+			return new SortingComponentFinder<>(thisSorting.parent, Comparators.combine(
 					thisSorting.comparator, comparator));
 		} else {
-			return new SortingComponentFinder<C>(this, comparator);
+			return new SortingComponentFinder<>(this, comparator);
 		}
 	}
 

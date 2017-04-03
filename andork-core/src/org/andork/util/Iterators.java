@@ -1,44 +1,26 @@
-/*******************************************************************************
- * Breakout Cave Survey Visualizer
- *
- * Copyright (C) 2014 James Edwards
- *
- * jedwards8 at fastmail dot fm
- *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free Software
- * Foundation; either version 2 of the License, or (at your option) any later
- * version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, write to the Free Software Foundation, Inc., 51
- * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
- *******************************************************************************/
 package org.andork.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.function.Predicate;
 
 public class Iterators {
-	public static <E> void addAll(Iterable<? extends E> iterable, Collection<E> collection) {
-		for (E elem : iterable) {
-			collection.add(elem);
+	public static <E> void addAll(Iterator<? extends E> iterator, Collection<E> collection) {
+		while (iterator.hasNext()) {
+			collection.add(iterator.next());
 		}
 	}
 
-	public static <E> Iterable<E> iterable(final Iterator<E> iterator) {
-		return () -> iterator;
-	}
-
-	public static Iterable<Float> range(final float start, final float end, final boolean includeEnd,
+	public static Iterator<Float> range(final float start, final float end, final boolean includeEnd,
 			final float step) {
-		return () -> new Iterator<Float>() {
+		return new Iterator<Float>() {
 			float next = start;
 
 			@Override
@@ -66,9 +48,9 @@ public class Iterators {
 		};
 	}
 
-	public static <E> ArrayList<E> toArrayList(Iterable<E> iterable) {
+	public static <E> ArrayList<E> toArrayList(Iterator<E> iterator) {
 		ArrayList<E> result = new ArrayList<>();
-		addAll(iterable, result);
+		addAll(iterator, result);
 		return result;
 	}
 
@@ -77,15 +59,15 @@ public class Iterators {
 	}
 
 	private static class ConcatIterator<E> implements Iterator<E> {
-		Iterable<? extends E>[] iterables;
+		Iterator<? extends E>[] iterators;
 		int index = 0;
 		Iterator<? extends E> forRemove;
 		Iterator<? extends E> current;
 
 		@SafeVarargs
-		public ConcatIterator(Iterable<? extends E>... iterables) {
-			this.iterables = iterables;
-			current = iterables.length > 0 ? iterables[0].iterator() : null;
+		public ConcatIterator(Iterator<? extends E>... iterators) {
+			this.iterators = iterators;
+			current = iterators.length > 0 ? iterators[0] : null;
 		}
 
 		@Override
@@ -97,8 +79,8 @@ public class Iterators {
 		public E next() {
 			E result = current.next();
 			forRemove = current;
-			if (!current.hasNext() && ++index < iterables.length) {
-				current = iterables[index].iterator();
+			if (!current.hasNext() && ++index < iterators.length) {
+				current = iterators[index];
 			}
 			return result;
 		}
@@ -113,7 +95,146 @@ public class Iterators {
 	}
 
 	@SafeVarargs
-	public static <E> Iterable<E> concat(Iterable<E>... iterables) {
-		return () -> new ConcatIterator<>(iterables);
+	public static <E> Iterator<E> concat(Iterator<? extends E>... iterators) {
+		return new ConcatIterator<>(iterators);
 	}
+
+	private static class ArrayIterator<E> implements Iterator<E> {
+		E[] array;
+		int index;
+
+		public ArrayIterator(E[] array) {
+			super();
+			this.array = array;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return index < array.length;
+		}
+
+		@Override
+		public E next() {
+			return array[index++];
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	@SafeVarargs
+	public static <E> Iterator<E> of(E... array) {
+		return new ArrayIterator<>(array);
+	}
+
+	private static class EnumerationIterator<T> implements Iterator<T> {
+		private final Enumeration<? extends T> enumeration;
+
+		public EnumerationIterator(Enumeration<? extends T> enumeration) {
+			super();
+			this.enumeration = enumeration;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return enumeration.hasMoreElements();
+		}
+
+		@Override
+		public T next() {
+			return enumeration.nextElement();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	public static <E> Iterator<E> of(Enumeration<? extends E> enumeration) {
+		return new EnumerationIterator<>(enumeration);
+	}
+
+	private static class FilteringIterator<T> extends EasyIterator<T> {
+		private final Iterator<? extends T> wrapped;
+		private final Predicate<? super T> predicate;
+
+		public FilteringIterator(Iterator<? extends T> wrapped, Predicate<? super T> predicate) {
+			this.wrapped = wrapped;
+			this.predicate = predicate;
+		}
+
+		@Override
+		protected final T nextOrNull() {
+			while (wrapped.hasNext()) {
+				T next = wrapped.next();
+				if (predicate.test(next)) {
+					return next;
+				}
+			}
+			return null;
+		}
+
+		@Override
+		public void remove() {
+			wrapped.remove();
+		}
+	}
+
+	public static <T> Iterator<T> filter(Iterator<? extends T> iterator, Predicate<? super T> predicate) {
+		return new FilteringIterator<>(iterator, predicate);
+	}
+
+	private static class LineIterator extends EasyIterator<String> {
+		private BufferedReader reader;
+
+		public LineIterator(Reader reader) {
+			if (reader instanceof BufferedReader) {
+				this.reader = (BufferedReader) reader;
+			} else {
+				try {
+					this.reader = new BufferedReader(reader);
+				} catch (Exception ex) {
+
+				}
+			}
+		}
+
+		@Override
+		public void finalize() {
+			try {
+				reader.close();
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+			reader = null;
+		}
+
+		@Override
+		protected String nextOrNull() {
+			String result = null;
+			if (reader != null) {
+				try {
+					result = reader.readLine();
+				} catch (IOException e) {
+				} finally {
+					if (result == null) {
+						finalize();
+					}
+				}
+			}
+			return result;
+		}
+	}
+
+	public static Iterator<String> linesOf(Reader reader) {
+		return new LineIterator(reader);
+	}
+
+	public static Iterator<String> linesOf(InputStream in) {
+		return new LineIterator(new InputStreamReader(in));
+	}
+
 }
