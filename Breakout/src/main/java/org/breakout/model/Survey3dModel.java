@@ -1776,47 +1776,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				shot3d.setGlowA(glowAtFromStation, glowAtToStation);
 				shot3d.setGlowB(glowAtFromStation, glowAtToStation);
 			}
-
-			// Graphs.traverse(
-			// Stream.<CalcStation>builder().add(origShot.fromStation).add(origShot.toStation).build(),
-			// station -> (station == origShot.fromStation ? hoverLocation : 1 -
-			// hoverLocation)
-			// * origShot.distance,
-			// (station, priority) -> {
-			// float glowAtStation = (float)
-			// glowExtentConversion.convert(priority);
-			//
-			// connected.apply(station).forEach(
-			// connectedShot -> {
-			// Shot3d shot3d = shot3ds.get(connectedShot.key());
-			//
-			// if (newSegmentsWithGlow.add(shot3d.segment3d)) {
-			// segmentsWithGlow.add(shot3d.segment3d);
-			// shot3d.segment3d.clearGlow();
-			// }
-			//
-			// float glowAtOtherStation = (float) glowExtentConversion
-			// .convert(priority + connectedShot.distance);
-			//
-			// if (station == connectedShot.fromStation) {
-			// // shot3d.setGlowA(glowAtStation,
-			// // glowAtOtherStation);
-			// shot3d.setGlowA(glowAtOtherStation, glowAtStation);
-			// } else {
-			// shot3d.setGlowB(glowAtStation, glowAtOtherStation);
-			// // shot3d.setGlowB(glowAtOtherStation,
-			// // glowAtStation);
-			// }
-			//
-			// shot3d.segment3d.stationAttrsNeedRebuffering.set(true);
-			// });
-			// return glowAtStation > 0;
-			// },
-			// connected,
-			// shot -> shot.distance,
-			// (station, shot) -> station == shot.fromStation ? shot.toStation :
-			// shot.fromStation,
-			// () -> subtask != null && !subtask.isCanceling());
 		}
 
 		Iterator<Segment3d> segIter = segmentsWithGlow.iterator();
