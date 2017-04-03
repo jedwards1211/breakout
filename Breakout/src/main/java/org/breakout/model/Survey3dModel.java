@@ -1315,32 +1315,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.drawers.set(drawers);
 	}
 
-	public float[] calcAutofitAllParamRange(Subtask subtask) {
-		if (subtask != null) {
-			subtask.setTotal(segment3ds.size());
-			subtask.setCompleted(0);
-			subtask.setIndeterminate(false);
-		}
-
-		final float[] range = { Float.MAX_VALUE, -Float.MAX_VALUE };
-
-		int completed = 0;
-		for (Segment3d segment3d : segment3ds) {
-			segment3d.calcParamRange(Survey3dModel.this, colorParam, range);
-
-			if (completed++ % 100 == 0) {
-				if (subtask != null) {
-					if (subtask.isCanceling()) {
-						return null;
-					}
-					subtask.setCompleted(completed);
-				}
-			}
-		}
-
-		return range;
-	}
-
 	public float[] calcAutofitParamRange(Collection<ShotKey> shots, Subtask subtask) {
 		if (subtask != null) {
 			subtask.setTotal(segment3ds.size());
@@ -1373,37 +1347,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public float[] calcAutofitParamRange(Subtask subtask) {
 		if (selectedShots.size() < 2 || colorParam == ColorParam.DISTANCE_ALONG_SHOTS) {
-			return calcAutofitAllParamRange(subtask);
+			return calcAutofitParamRange(shot3ds.keySet(), subtask);
 		} else {
-			return calcAutofitSelectedParamRange(subtask);
+			return calcAutofitParamRange(selectedShots, subtask);
 		}
-	}
-
-	public float[] calcAutofitSelectedParamRange(Subtask subtask) {
-		if (subtask != null) {
-			subtask.setTotal(segment3ds.size());
-			subtask.setCompleted(0);
-			subtask.setIndeterminate(false);
-		}
-
-		final float[] range = { Float.MAX_VALUE, -Float.MAX_VALUE };
-
-		int completed = 0;
-		for (ShotKey key : selectedShots) {
-			Shot3d shot3d = shot3ds.get(key);
-			shot3d.calcParamRange(Survey3dModel.this, colorParam, range);
-
-			if (completed++ % 100 == 0) {
-				if (subtask != null) {
-					if (subtask.isCanceling()) {
-						return null;
-					}
-					subtask.setCompleted(completed);
-				}
-			}
-		}
-
-		return range;
 	}
 
 	public void calcDistFromShots(Set<ShotKey> shots, Subtask subtask) {
