@@ -42,7 +42,7 @@ public class AutoClipOrthoProjection implements Projection {
 		float width = dc.width();
 		float height = dc.height();
 
-		float[] vi = dc.inverseViewXform();
+		float[] vi = dc.inverseViewMatrix();
 
 		float left, right, bottom, top;
 		if (vSpan / hSpan > height / width) {

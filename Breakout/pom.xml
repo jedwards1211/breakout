@@ -144,12 +144,6 @@
 			<groupId>org.jogamp.jogl</groupId>
 			<artifactId>jogl</artifactId>
 			<version>2.3.2</version>
-			<classifier>util-awt</classifier>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl</artifactId>
-			<version>2.3.2</version>
 			<classifier>gldesktop</classifier>
 		</dependency>
 		<dependency>

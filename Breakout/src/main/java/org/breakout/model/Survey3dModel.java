@@ -200,8 +200,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				float[] n) {
 			gl.glUniformMatrix4fv(m_location, 1, false, m, 0);
 			gl.glUniformMatrix3fv(n_location, 1, false, n, 0);
-			gl.glUniformMatrix4fv(v_location, 1, false, context.viewXform(), 0);
-			gl.glUniformMatrix4fv(p_location, 1, false, context.projXform(), 0);
+			gl.glUniformMatrix4fv(v_location, 1, false, context.viewMatrix(), 0);
+			gl.glUniformMatrix4fv(p_location, 1, false, context.projectionMatrix(), 0);
 
 			gl.glUniform1fv(u_ambient_location, 1, ambient.value(), 0);
 

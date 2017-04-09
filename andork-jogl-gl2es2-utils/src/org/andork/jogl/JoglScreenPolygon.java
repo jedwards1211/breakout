@@ -90,7 +90,7 @@ public class JoglScreenPolygon implements JoglDrawable, JoglResource {
 
 		gl.glUseProgram(program);
 
-		gl.glUniformMatrix4fv(screenXform_location, 1, false, context.screenXform(), 0);
+		gl.glUniformMatrix4fv(screenXform_location, 1, false, context.inverseViewportMatrix(), 0);
 
 		gl.glEnableVertexAttribArray(a_pos_location);
 

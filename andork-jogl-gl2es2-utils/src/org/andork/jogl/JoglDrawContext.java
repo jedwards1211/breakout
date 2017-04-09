@@ -24,15 +24,19 @@ package org.andork.jogl;
 public interface JoglDrawContext {
 	public int height();
 
-	public float[] inverseViewXform();
+	public float[] inverseViewMatrix();
 
-	public float[] pixelScale();
+	public float[] projectionMatrix();
 
-	public float[] projXform();
+	public float[] viewportMatrix();
 
-	public float[] screenXform();
+	public float[] inverseViewportMatrix();
 
-	public float[] viewXform();
+	public float[] viewMatrix();
+
+	public float[] worldToScreen();
+
+	public float[] screenToWorld();
 
 	public int width();
 }

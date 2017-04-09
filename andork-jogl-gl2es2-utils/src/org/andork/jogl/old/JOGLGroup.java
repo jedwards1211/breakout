@@ -64,7 +64,7 @@ public class JOGLGroup implements JOGLObject, JoglResource {
 
 	@Override
 	public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
-		draw(gl, m, n, context.viewXform(), context.projXform());
+		draw(gl, m, n, context.viewMatrix(), context.projectionMatrix());
 	}
 
 	@Override

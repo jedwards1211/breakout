@@ -1037,7 +1037,7 @@ public class BasicJOGLObject implements JOGLObject {
 
 	@Override
 	public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
-		draw(gl, m, n, context.viewXform(), context.projXform());
+		draw(gl, m, n, context.viewMatrix(), context.projectionMatrix());
 	}
 
 	public BasicJOGLObject drawMode(int drawMode) {

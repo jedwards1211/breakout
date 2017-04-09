@@ -21,6 +21,9 @@
  *******************************************************************************/
 package org.andork.jogl;
 
+import static org.andork.math3d.Vecmath.invAffine;
+import static org.andork.math3d.Vecmath.invertGeneral;
+import static org.andork.math3d.Vecmath.mmul;
 import static org.andork.math3d.Vecmath.newMat4f;
 import static org.andork.math3d.Vecmath.ortho;
 import static org.andork.math3d.Vecmath.setIdentity;
@@ -48,14 +51,29 @@ public class JoglViewState implements JoglDrawContext {
 	private final float[] p = newMat4f();
 
 	/**
-	 * Transforms from pixel space coordinates to clipping coordinates.
+	 * The inverse of the projection matrix.
 	 */
-	private final float[] screenXform = newMat4f();
+	private final float[] pi = newMat4f();
 
 	/**
-	 * The size of a pixel in clipping coordinates.
+	 * Transforms from screen coordinates to clipping coordinates.
 	 */
-	private final float[] pixelScale = new float[2];
+	private final float[] inverseViewport = newMat4f();
+
+	/**
+	 * Transforms from screen coordinates to clipping coordinates.
+	 */
+	private final float[] viewport = newMat4f();
+
+	/**
+	 * Transforms from model coordinates to screen coordinates.
+	 */
+	private final float[] worldToScreen = newMat4f();
+
+	/**
+	 * Transforms from screen coordinates to world coordinates.
+	 */
+	private final float[] screenToWorld = newMat4f();
 
 	/**
 	 * Transforms from screen coordinates to a ray in virtual world coordinates.
@@ -72,7 +90,7 @@ public class JoglViewState implements JoglDrawContext {
 	}
 
 	@Override
-	public float[] inverseViewXform() {
+	public float[] inverseViewMatrix() {
 		return vi;
 	}
 
@@ -86,18 +104,18 @@ public class JoglViewState implements JoglDrawContext {
 	}
 
 	@Override
-	public float[] pixelScale() {
-		return pixelScale;
-	}
-
-	@Override
-	public float[] projXform() {
+	public float[] projectionMatrix() {
 		return p;
 	}
 
 	@Override
-	public float[] screenXform() {
-		return screenXform;
+	public float[] viewportMatrix() {
+		return viewport;
+	}
+
+	@Override
+	public float[] inverseViewportMatrix() {
+		return inverseViewport;
 	}
 
 	/*
@@ -109,30 +127,46 @@ public class JoglViewState implements JoglDrawContext {
 		this.width = width;
 		this.height = height;
 
-		ortho(screenXform, 0, width, 0, height, 1, -1);
-		pixelScale[0] = screenXform[0];
-		pixelScale[1] = screenXform[5];
+		ortho(inverseViewport, 0, width, 0, height, 1, -1);
+		invAffine(inverseViewport, viewport);
 
 		if (settings != null) {
 			settings.getViewXform(v);
 			settings.getInvViewXform(vi);
 			settings.getProjection().calculate(this, p);
+			invertGeneral(p, pi);
 		} else {
 			setIdentity(v);
 			setIdentity(vi);
 			setIdentity(p);
+			setIdentity(pi);
 		}
+
+		mmul(p, v, worldToScreen);
+		mmul(viewport, worldToScreen, worldToScreen);
+		mmul(pi, inverseViewport, screenToWorld);
+		mmul(vi, screenToWorld, screenToWorld);
 
 		pickXform.calculate(p, v);
 	}
 
 	@Override
-	public float[] viewXform() {
+	public float[] viewMatrix() {
 		return v;
 	}
 
 	@Override
 	public int width() {
 		return width;
+	}
+
+	@Override
+	public float[] worldToScreen() {
+		return worldToScreen;
+	}
+
+	@Override
+	public float[] screenToWorld() {
+		return screenToWorld;
 	}
 }

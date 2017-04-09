@@ -207,7 +207,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 			JoglViewState viewState = context.getViewState();
 
 			float[] pv = Vecmath.newMat4f();
-			Vecmath.mmul(viewState.projXform(), viewState.viewXform(), pv);
+			Vecmath.mmul(viewState.projectionMatrix(), viewState.viewMatrix(), pv);
 
 			Set<Shot3d> newSelected = new HashSet<>();
 

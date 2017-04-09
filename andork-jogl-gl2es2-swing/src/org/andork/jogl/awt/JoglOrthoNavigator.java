@@ -137,8 +137,8 @@ public class JoglOrthoNavigator extends MouseAdapter {
 		viewState.pickXform().xform(lastEvent, -1, p0);
 		viewState.pickXform().xform(e, -1, p1);
 
-		mpmulAffine(viewState.viewXform(), p0);
-		mpmulAffine(viewState.viewXform(), p1);
+		mpmulAffine(viewState.viewMatrix(), p0);
+		mpmulAffine(viewState.viewMatrix(), p1);
 
 		float dx = p1[0] - p0[0];
 		float dy = p1[1] - p0[1];

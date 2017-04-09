@@ -105,7 +105,7 @@ public class TransparentTerrain implements JoglDrawable, JoglResource {
 		float bestDist = -1f;
 		int bestCorner = -1;
 
-		float[] vi = context.inverseViewXform();
+		float[] vi = context.inverseViewMatrix();
 
 		for (int i = 0; i < corners.length; i++) {
 			float dist = subDot3(vi, 12, corners[i], 0, vi, 8);
@@ -187,9 +187,9 @@ public class TransparentTerrain implements JoglDrawable, JoglResource {
 		int loc;
 
 		loc = gl.glGetUniformLocation(program, "p");
-		gl.glUniformMatrix4fv(loc, 1, false, context.projXform(), 0);
+		gl.glUniformMatrix4fv(loc, 1, false, context.projectionMatrix(), 0);
 		loc = gl.glGetUniformLocation(program, "v");
-		gl.glUniformMatrix4fv(loc, 1, false, context.viewXform(), 0);
+		gl.glUniformMatrix4fv(loc, 1, false, context.viewMatrix(), 0);
 		loc = gl.glGetUniformLocation(program, "m");
 		gl.glUniformMatrix4fv(loc, 1, false, m, 0);
 

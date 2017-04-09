@@ -139,6 +139,9 @@ import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
 import org.andork.jogl.InterpolationProjection;
 import org.andork.jogl.JoglBackgroundColor;
+import org.andork.jogl.JoglDrawContext;
+import org.andork.jogl.JoglDrawable;
+import org.andork.jogl.JoglResource;
 import org.andork.jogl.JoglScene;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.JoglViewState;
@@ -186,6 +189,7 @@ import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
 import org.breakout.model.CalcProject;
 import org.breakout.model.CalcShot;
+import org.breakout.model.CalcStation;
 import org.breakout.model.CalculateGeometry;
 import org.breakout.model.ColorParam;
 import org.breakout.model.MetacaveExporter;
@@ -224,6 +228,7 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
+import com.jogamp.opengl.util.awt.TextRenderer;
 
 public class BreakoutMainView {
 	private class AnimationViewSaver implements Animation {
@@ -997,9 +1002,47 @@ public class BreakoutMainView {
 				autoDrawable.invoke(false, drawable -> {
 					scene.add(model);
 					scene.initLater(model);
+					//					Text text = new Text();
+					//					scene.add(text);
+					//					scene.initLater(text);
+
 					return false;
 				});
 			});
+		}
+	}
+
+	private class Text implements JoglResource, JoglDrawable {
+		TextRenderer renderer;
+		float[] position = new float[3];
+
+		@Override
+		public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+			renderer.beginRendering(context.width(), context.height());
+			for (CalcStation station : calcProject.stations.values()) {
+				if (station.shots.size() > 2) {
+					position[0] = (float) station.position[0];
+					position[1] = (float) station.position[1];
+					position[2] = (float) station.position[2];
+					Vecmath.mpmul(context.worldToScreen(), position);
+					if (position[2] > 1) {
+						continue;
+					}
+					renderer.draw(station.name, (int) position[0], (int) position[1]);
+				}
+			}
+			renderer.endRendering();
+		}
+
+		@Override
+		public void dispose(GL2ES2 gl) {
+			renderer.dispose();
+		}
+
+		@Override
+		public void init(GL2ES2 gl) {
+			renderer = new TextRenderer(new Font("Arial", Font.BOLD, 10), true, true);
+			renderer.init();
 		}
 	}
 
@@ -1809,7 +1852,7 @@ public class BreakoutMainView {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				float[] axis = new float[3];
-				Vecmath.negate3(renderer.getViewState().inverseViewXform(), 8, axis, 0);
+				Vecmath.negate3(renderer.getViewState().inverseViewMatrix(), 8, axis, 0);
 				getProjectModel().set(ProjectModel.depthAxis, axis);
 			}
 		});
@@ -1949,7 +1992,7 @@ public class BreakoutMainView {
 		float[] forward = new float[] { (float) Math.sin(azimuth - Math.PI * 0.5), 0,
 				(float) -Math.cos(azimuth - Math.PI * 0.5) };
 
-		if (Vecmath.dot3(renderer.getViewState().inverseViewXform(), 8, forward, 0) > 0) {
+		if (Vecmath.dot3(renderer.getViewState().inverseViewMatrix(), 8, forward, 0) > 0) {
 			Vecmath.negate3(right);
 			Vecmath.negate3(forward);
 		}
@@ -1970,7 +2013,7 @@ public class BreakoutMainView {
 		Vecmath.cross(right, forward, up);
 
 		Projection newProjCalculator;
-		float[] vi = renderer.getViewState().inverseViewXform();
+		float[] vi = renderer.getViewState().inverseViewMatrix();
 		float[] endLocation = { vi[12], vi[13], vi[14] };
 
 		Animation finisher;
@@ -2022,7 +2065,7 @@ public class BreakoutMainView {
 				float[] projXform = newMat4f();
 				perspCalculator.calculate(renderer.getViewState(), projXform);
 				PickXform pickXform = new PickXform();
-				pickXform.calculate(projXform, renderer.getViewState().viewXform());
+				pickXform.calculate(projXform, renderer.getViewState().viewMatrix());
 				frustum.init(pickXform, 0.9f);
 
 				for (ShotKey key : shotsToFit) {
@@ -2049,7 +2092,7 @@ public class BreakoutMainView {
 		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation(autoDrawable,
 				renderer.getViewSettings(), 1750, 30);
 		float[] viewXform = newMat4f();
-		viewAnimation.setUpWithEndLocation(renderer.getViewState().viewXform(), endLocation, forward, right);
+		viewAnimation.setUpWithEndLocation(renderer.getViewState().viewMatrix(), endLocation, forward, right);
 
 		Projection currentProjCalculator = renderer.getViewSettings().getProjection();
 
@@ -2108,7 +2151,7 @@ public class BreakoutMainView {
 		float[] forward = new float[3];
 		float[] right = new float[3];
 
-		float[] vi = renderer.getViewState().inverseViewXform();
+		float[] vi = renderer.getViewState().inverseViewMatrix();
 
 		Vecmath.negate3(vi, 8, forward, 0);
 		Vecmath.getColumn3(vi, 0, right);
@@ -2443,8 +2486,8 @@ public class BreakoutMainView {
 		float[] forward = new float[3];
 		float[] right = new float[3];
 
-		Vecmath.negate3(renderer.getViewState().inverseViewXform(), 8, forward, 0);
-		Vecmath.getColumn3(renderer.getViewState().inverseViewXform(), 0, right);
+		Vecmath.negate3(renderer.getViewState().inverseViewMatrix(), 8, forward, 0);
+		Vecmath.getColumn3(renderer.getViewState().inverseViewMatrix(), 0, right);
 
 		changeView(forward, right, false, getDefaultShotsForOperations());
 	}
