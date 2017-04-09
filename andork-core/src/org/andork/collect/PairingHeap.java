@@ -1,10 +1,41 @@
 package org.andork.collect;
 
 import java.util.Map;
+import java.util.PriorityQueue;
 
 import org.andork.generic.Ref;
 
+/**
+ * A pairing heap is a type of heap data structure with relatively simple
+ * implementation and excellent practical amortized performance,
+ * <a href="http://www.cs.cmu.edu/~sleator/papers/pairing-heaps.pdf">introduced
+ * by Michael Fredman, Robert Sedgewick, Daniel Sleator, and Robert Tarjan in
+ * 1986</a>.<br>
+ * <br>
+ * Pairing heap insertion has constant time complexity, whereas Java's
+ * {@link PriorityQueue} has O(log n) insertion time complexity. Additionally,
+ * if you save a reference to a {@link PairingHeap.Entry} returned by
+ * {@link #insert(Comparable, Object) insert}, you can {@link Entry#remove()
+ * remove} it in constant time and {@linkplain Entry#decreaseKey(Comparable)
+ * decrease its key} in O(log n) time.
+ *
+ * @author Andy Edwards
+ *
+ * @param <K>
+ *            the type of entries' keys
+ * @param <V>
+ *            the type of entries' values
+ */
 public class PairingHeap<K extends Comparable<K>, V> {
+	/**
+	 * An entry in a priority heap. You can {@link #remove() remove} and
+	 * {@linkplain #decreaseKey(Comparable) decrease its key} directly.
+	 *
+	 * @param <K>
+	 *            the type of the key
+	 * @param <V>
+	 *            the type of the value
+	 */
 	public static class Entry<K extends Comparable<K>, V> implements Map.Entry<K, V> {
 		private K key;
 		private V value;
@@ -203,7 +234,11 @@ public class PairingHeap<K extends Comparable<K>, V> {
 			parent = null;
 			right = null;
 			if (prev != null) {
-				prev.right = next;
+				if (prev.right == this) {
+					prev.right = next;
+				} else {
+					prev.left = next;
+				}
 			}
 			if (next != null) {
 				next.parent = prev;
@@ -234,14 +269,23 @@ public class PairingHeap<K extends Comparable<K>, V> {
 	private Entry<K, V> root = null;
 	private int size = 0;
 
+	/**
+	 * @return true if and only if the heap contains at least one entry.
+	 */
 	public boolean isEmpty() {
 		return root == null;
 	}
 
+	/**
+	 * @return the number of entries in the heap.
+	 */
 	public int size() {
 		return size;
 	}
 
+	/**
+	 * Removes all entries from the heap.
+	 */
 	public void clear() {
 		if (root != null) {
 			root.heapRef.value = null;

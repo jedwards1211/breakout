@@ -1,7 +1,9 @@
 package org.andork.collect;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import org.junit.Assert;
@@ -35,8 +37,10 @@ public class PairingHeapTests {
 			entries.clear();
 		}
 
-		void insert(K key, V value) {
-			entries.add(new Entry<>(key, value));
+		Entry<K, V> insert(K key, V value) {
+			Entry<K, V> newEntry = new Entry<>(key, value);
+			entries.add(newEntry);
+			return newEntry;
 		}
 
 		void merge(Dumbheap<K, V> other) {
@@ -94,9 +98,13 @@ public class PairingHeapTests {
 	}
 
 	public void singleFuzzTest() {
+		int nextValue = 0;
+
 		Random rand = new Random();
 		PairingHeap<Integer, Integer> p = new PairingHeap<>();
 		Dumbheap<Integer, Integer> d = new Dumbheap<>();
+		Map<Integer, PairingHeap.Entry<Integer, Integer>> pEntries = new HashMap<>();
+		Map<Integer, Dumbheap.Entry<Integer, Integer>> dEntries = new HashMap<>();
 		PairingHeap.Entry<Integer, Integer> pe;
 		Dumbheap.Entry<Integer, Integer> de;
 		int i, j, key, value;
@@ -104,23 +112,48 @@ public class PairingHeapTests {
 			double r = Math.random();
 			if (r < 0.6) {
 				key = rand.nextInt(1000);
-				value = rand.nextInt(1000);
-				p.insert(key, value);
-				d.insert(key, value);
-			} else if (r < 0.9) {
+				value = nextValue++;
+				pEntries.put(value, p.insert(key, value));
+				dEntries.put(value, d.insert(key, value));
+			} else if (r < 0.8) {
 				if (!d.isEmpty()) {
 					pe = p.removeMin();
 					de = d.removeMin();
 					Assert.assertEquals(pe.getKey(), de.key);
+					pEntries.remove(pe.getValue());
+					dEntries.remove(de.value);
+				}
+			} else if (r < 0.9) {
+				if (!d.isEmpty()) {
+					int index = rand.nextInt(pEntries.size());
+					value = -1;
+					for (int v : pEntries.keySet()) {
+						if (index-- <= 0) {
+							value = v;
+							break;
+						}
+					}
+					if (value < 0) {
+						continue;
+					}
+					pe = pEntries.get(value);
+					de = dEntries.get(value);
+					if (de == null || de.key == 0) {
+						continue;
+					}
+					Assert.assertEquals(de.key, pe.getKey());
+					int newKey = rand.nextInt(de.key);
+					pe.decreaseKey(newKey);
+					de.key = newKey;
 				}
 			} else {
 				PairingHeap<Integer, Integer> op = new PairingHeap<>();
 				Dumbheap<Integer, Integer> od = new Dumbheap<>();
 				for (j = 0; j < rand.nextInt(100); j++) {
 					key = rand.nextInt(1000);
-					value = rand.nextInt(1000);
-					op.insert(key, value);
-					od.insert(key, value);
+					value = nextValue++;
+					pEntries.put(value, op.insert(key, value));
+					dEntries.put(value, od.insert(key, value));
 				}
 				p.merge(op);
 				d.merge(od);
@@ -145,7 +178,7 @@ public class PairingHeapTests {
 
 	@Test
 	public void fuzzTest() {
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 100; i++) {
 			singleFuzzTest();
 		}
 	}
