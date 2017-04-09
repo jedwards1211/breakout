@@ -106,29 +106,29 @@ import com.jogamp.opengl.GL2ES2;
 
 public class Survey3dModel implements JoglDrawable, JoglResource {
 
-	private class AxialSegment3dDrawer extends OneParamSegment3dDrawer {
+	private class AxialSectionRenderer extends OneParamSectionRenderer {
 		private int u_axis_location;
 		private int u_origin_location;
 
 		@Override
-		protected void afterDraw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+		protected void afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
-			super.afterDraw(segment3ds, context, gl, m, n);
+			super.afterDraw(sections, context, gl, m, n);
 		}
 
 		@Override
-		protected void beforeDraw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+		protected void beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
-			super.beforeDraw(segment3ds, context, gl, m, n);
+			super.beforeDraw(sections, context, gl, m, n);
 			gl.glUniform3fv(u_axis_location, 1, depthAxis.value(), 0);
 			gl.glUniform3fv(u_origin_location, 1, depthOrigin.value(), 0);
 		}
 
 		@Override
-		protected void beforeDraw(Segment3d segment3d, GL2ES2 gl, float[] m, float[] n) {
-			super.beforeDraw(segment3d, gl, m, n);
-			segment3d.lineIndices.init(gl);
-			segment3d.fillIndices.init(gl);
+		protected void beforeDraw(Section section, GL2ES2 gl, float[] m, float[] n) {
+			super.beforeDraw(section, gl, m, n);
+			section.lineIndices.init(gl);
+			section.fillIndices.init(gl);
 		}
 
 		@Override
@@ -146,11 +146,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		@Override
-		protected void doDraw(Segment3d segment3d, GL2ES2 gl) {
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, segment3d.lineIndices.id());
-			gl.glDrawElements(GL_LINES, segment3d.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, segment3d.fillIndices.id());
-			gl.glDrawElements(GL_TRIANGLES, segment3d.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
+		protected void doDraw(Section section, GL2ES2 gl) {
+			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
+			gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
+			gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
 					0);
 		}
 
@@ -164,7 +164,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	private abstract class BaseSegment3dDrawer implements Segment3dDrawer {
+	private abstract class BaseSectionRenderer implements SectionRenderer {
 		protected int program = 0;
 
 		protected int m_location;
@@ -184,7 +184,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int a_highlightIndex_location;
 		protected int u_highlightColors_location;
 
-		protected void afterDraw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+		protected void afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
 			gl.glDisable(GL_DEPTH_TEST);
 			gl.glDisableVertexAttribArray(a_pos_location);
@@ -196,7 +196,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 
-		protected void beforeDraw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+		protected void beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
 			gl.glUniformMatrix4fv(m_location, 1, false, m, 0);
 			gl.glUniformMatrix3fv(n_location, 1, false, n, 0);
@@ -220,18 +220,18 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glEnable(GL_DEPTH_TEST);
 		}
 
-		protected void beforeDraw(Segment3d segment3d, GL2ES2 gl, float[] m, float[] n) {
-			segment3d.geometry.init(gl);
-			segment3d.stationAttrs.init(gl);
-			if (segment3d.stationAttrsNeedRebuffering.compareAndSet(true, false)) {
-				segment3d.stationAttrs.rebuffer(gl);
+		protected void beforeDraw(Section section, GL2ES2 gl, float[] m, float[] n) {
+			section.geometry.init(gl);
+			section.stationAttrs.init(gl);
+			if (section.stationAttrsNeedRebuffering.compareAndSet(true, false)) {
+				section.stationAttrs.rebuffer(gl);
 			}
 
-			gl.glBindBuffer(GL_ARRAY_BUFFER, segment3d.geometry.id());
+			gl.glBindBuffer(GL_ARRAY_BUFFER, section.geometry.id());
 			gl.glVertexAttribPointer(a_pos_location, 3, GL_FLOAT, false, GEOM_BPV, 0);
 			gl.glVertexAttribPointer(a_norm_location, 3, GL_FLOAT, false, GEOM_BPV, 12);
 
-			gl.glBindBuffer(GL_ARRAY_BUFFER, segment3d.stationAttrs.id());
+			gl.glBindBuffer(GL_ARRAY_BUFFER, section.stationAttrs.id());
 			gl.glVertexAttribPointer(a_glow_location, 2, GL_FLOAT, false, STATION_ATTR_BPV, 0);
 			gl.glVertexAttribPointer(a_highlightIndex_location, 1, GL_FLOAT, false, STATION_ATTR_BPV, 8);
 		}
@@ -341,10 +341,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		}
 
-		protected abstract void doDraw(Segment3d segment3d, GL2ES2 gl);
+		protected abstract void doDraw(Section section, GL2ES2 gl);
 
 		@Override
-		public void draw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+		public void draw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
 			if (program <= 0) {
 				init(gl);
@@ -352,19 +352,19 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			gl.glUseProgram(program);
 
-			beforeDraw(segment3ds, context, gl, m, n);
+			beforeDraw(sections, context, gl, m, n);
 
-			for (Segment3d segment3d : segment3ds) {
-				draw(segment3d, context, gl, m, n);
+			for (Section section : sections) {
+				draw(section, context, gl, m, n);
 			}
 
-			afterDraw(segment3ds, context, gl, m, n);
+			afterDraw(sections, context, gl, m, n);
 		}
 
-		public void draw(Segment3d segment3d, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
-			beforeDraw(segment3d, gl, m, n);
+		public void draw(Section section, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+			beforeDraw(section, gl, m, n);
 
-			doDraw(segment3d, gl);
+			doDraw(section, gl);
 		}
 
 		@Override
@@ -400,15 +400,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	private abstract class OneParamSegment3dDrawer extends BaseSegment3dDrawer {
+	private abstract class OneParamSectionRenderer extends BaseSectionRenderer {
 		private int u_loParam_location;
 		private int u_hiParam_location;
 		private int u_paramSampler_location;
 
 		@Override
-		protected void beforeDraw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+		protected void beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
-			super.beforeDraw(segment3ds, context, gl, m, n);
+			super.beforeDraw(sections, context, gl, m, n);
 
 			gl.glActiveTexture(GL_TEXTURE0);
 			gl.glBindTexture(GL_TEXTURE_2D, paramTexture);
@@ -447,38 +447,38 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	private class Param0Segment3dDrawer extends OneParamSegment3dDrawer {
+	private class Param0SectionRenderer extends OneParamSectionRenderer {
 		private int a_param0_location;
 
 		@Override
-		protected void afterDraw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+		protected void afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
-			super.afterDraw(segment3ds, context, gl, m, n);
+			super.afterDraw(sections, context, gl, m, n);
 			gl.glDisableVertexAttribArray(a_param0_location);
 		}
 
 		@Override
-		protected void beforeDraw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+		protected void beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
-			super.beforeDraw(segment3ds, context, gl, m, n);
+			super.beforeDraw(sections, context, gl, m, n);
 
 			gl.glEnableVertexAttribArray(a_param0_location);
 		}
 
 		@Override
-		protected void beforeDraw(Segment3d segment3d, GL2ES2 gl, float[] m, float[] n) {
-			if (segment3d.param0 == null) {
+		protected void beforeDraw(Section section, GL2ES2 gl, float[] m, float[] n) {
+			if (section.param0 == null) {
 				return;
 			}
-			super.beforeDraw(segment3d, gl, m, n);
-			segment3d.param0.init(gl);
-			if (segment3d.param0NeedsRebuffering.compareAndSet(true, false)) {
-				segment3d.param0.rebuffer(gl);
+			super.beforeDraw(section, gl, m, n);
+			section.param0.init(gl);
+			if (section.param0NeedsRebuffering.compareAndSet(true, false)) {
+				section.param0.rebuffer(gl);
 			}
-			segment3d.lineIndices.init(gl);
-			segment3d.fillIndices.init(gl);
+			section.lineIndices.init(gl);
+			section.fillIndices.init(gl);
 
-			gl.glBindBuffer(GL_ARRAY_BUFFER, segment3d.param0.id());
+			gl.glBindBuffer(GL_ARRAY_BUFFER, section.param0.id());
 			gl.glVertexAttribPointer(a_param0_location, 1, GL_FLOAT, false, 4, 0);
 		}
 
@@ -496,14 +496,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		@Override
-		protected void doDraw(Segment3d segment3d, GL2ES2 gl) {
-			if (segment3d.param0 == null) {
+		protected void doDraw(Section section, GL2ES2 gl) {
+			if (section.param0 == null) {
 				return;
 			}
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, segment3d.lineIndices.id());
-			gl.glDrawElements(GL_LINES, segment3d.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, segment3d.fillIndices.id());
-			gl.glDrawElements(GL_TRIANGLES, segment3d.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
+			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
+			gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
+			gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
 					0);
 		}
 
@@ -516,10 +516,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	public static class Segment3d {
+	public static class Section {
 		final ArrayList<Shot3d> shot3ds;
 
-		final LinkedList<Segment3dDrawer> drawers = new LinkedList<>();
+		final LinkedList<SectionRenderer> drawers = new LinkedList<>();
 
 		int vertexCount;
 		JoglBuffer geometry;
@@ -530,7 +530,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		JoglBuffer fillIndices;
 		JoglBuffer lineIndices;
 
-		Segment3d(ArrayList<Shot3d> shot3ds) {
+		Section(ArrayList<Shot3d> shot3ds) {
 			this.shot3ds = shot3ds;
 			populateData();
 		}
@@ -541,7 +541,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			BufferHelper lineIndicesHelper = new BufferHelper();
 
 			for (Shot3d shot3d : shot3ds) {
-				shot3d.segment3d = this;
+				shot3d.section = this;
 				shot3d.indexInVertices = geomHelper.sizeInBytes() / GEOM_BPV;
 				shot3d.indexInFillIndices = fillIndicesHelper.sizeInBytes() / BPI;
 
@@ -680,8 +680,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	private static interface Segment3dDrawer extends JoglResource {
-		public void draw(Collection<Segment3d> segment3ds, JoglDrawContext context, GL2ES2 gl, float[] m,
+	private static interface SectionRenderer extends JoglResource {
+		public void draw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n);
 	}
 
@@ -734,7 +734,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		ShotKey key;
 		CalcShot shot;
 
-		Segment3d segment3d;
+		Section section;
 		int indexInVertices;
 		int vertexCount;
 		int indexInFillIndices;
@@ -765,9 +765,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				}
 			} else {
 				int i = indexInVertices;
-				boolean last = indexInVertices + vertexCount == segment3d.vertexCount;
+				boolean last = indexInVertices + vertexCount == section.vertexCount;
 
-				ByteBuffer param0buffer = segment3d.param0.buffer();
+				ByteBuffer param0buffer = section.param0.buffer();
 
 				int maxIndex = last ? param0buffer.capacity() / 4 : indexInVertices + vertexCount;
 
@@ -813,7 +813,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			if (i < 0 || i >= vertexCount) {
 				throw new IllegalArgumentException("i must be between 0 and " + vertexCount);
 			}
-			ByteBuffer vertBuffer = segment3d.geometry.buffer();
+			ByteBuffer vertBuffer = section.geometry.buffer();
 			int baseIndex = indexInVertices * GEOM_BPV;
 			result[0] = vertBuffer.getFloat(baseIndex);
 			result[1] = vertBuffer.getFloat(baseIndex + 4);
@@ -1013,7 +1013,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		public void setGlow(float fromGlowA, float toGlowA, float fromGlowB, float toGlowB) {
-			ByteBuffer buffer = segment3d.stationAttrs.buffer();
+			ByteBuffer buffer = section.stationAttrs.buffer();
 			for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++) {
 				buffer.putFloat(
 						(indexInVertices + vertexIndex) * STATION_ATTR_BPV,
@@ -1037,7 +1037,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		void applySelectionHighlights() {
-			ByteBuffer buffer = segment3d.stationAttrs.buffer();
+			ByteBuffer buffer = section.stationAttrs.buffer();
 			for (int i = 0; i < vertexCount; i++) {
 				int index = (indexInVertices + i) * STATION_ATTR_BPV + 8;
 				if (buffer.getFloat(index) != 1) {
@@ -1138,15 +1138,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		int segmentLevel = Math.min(tree.getRoot().level(), 3);
+		int sectionLevel = Math.min(tree.getRoot().level(), 3);
 
-		Set<Segment3d> segment3ds = createSegments(tree, segmentLevel, rootSubtask.beginSubtask(1));
+		Set<Section> sections = createSections(tree, sectionLevel, rootSubtask.beginSubtask(1));
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		Survey3dModel model = new Survey3dModel(shot3ds, tree, segment3ds);
+		Survey3dModel model = new Survey3dModel(shot3ds, tree, sections);
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
@@ -1161,23 +1161,23 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return buffer;
 	}
 
-	private static void createSegments(RfStarTree.Node<Shot3d> node, int segmentLevel, Set<Segment3d> result) {
-		if (node.level() == segmentLevel) {
-			result.add(new Segment3d(getShots(node)));
+	private static void createSections(RfStarTree.Node<Shot3d> node, int sectionLevel, Set<Section> result) {
+		if (node.level() == sectionLevel) {
+			result.add(new Section(getShots(node)));
 		} else if (node instanceof RfStarTree.Branch) {
 			RfStarTree.Branch<Shot3d> branch = (RfStarTree.Branch<Shot3d>) node;
 			for (int i = 0; i < branch.numChildren(); i++) {
-				createSegments(branch.childAt(i), segmentLevel, result);
+				createSections(branch.childAt(i), sectionLevel, result);
 			}
 		}
 	}
 
-	private static Set<Segment3d> createSegments(RfStarTree<Shot3d> tree, int segmentLevel, Subtask task) {
-		task.setStatus("creating render segments");
+	private static Set<Section> createSections(RfStarTree<Shot3d> tree, int sectionLevel, Subtask task) {
+		task.setStatus("creating render sections");
 		task.setIndeterminate(true);
-		Set<Segment3d> result = new HashSet<>();
+		Set<Section> result = new HashSet<>();
 
-		createSegments(tree.getRoot(), segmentLevel, result);
+		createSections(tree.getRoot(), sectionLevel, result);
 
 		task.end();
 		return result;
@@ -1233,15 +1233,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	final RfStarTree<Shot3d> tree;
 
-	final Set<Segment3d> segment3ds;
+	final Set<Section> sections;
 
 	ColorParam colorParam = ColorParam.DEPTH;
 
-	AxialSegment3dDrawer axialSegment3dDrawer = new AxialSegment3dDrawer();
+	AxialSectionRenderer axialSectionRenderer = new AxialSectionRenderer();
 
-	Param0Segment3dDrawer param0Segment3dDrawer = new Param0Segment3dDrawer();
+	Param0SectionRenderer param0SectionRenderer = new Param0SectionRenderer();
 
-	AtomicReference<MultiMap<Segment3dDrawer, Segment3d>> drawers = new AtomicReference<>();
+	AtomicReference<MultiMap<SectionRenderer, Section>> drawers = new AtomicReference<>();
 
 	final Set<ShotKey> selectedShots = new HashSet<>();
 	final Set<ShotKey> unmodifiableSelectedShots = Collections.unmodifiableSet(selectedShots);
@@ -1252,7 +1252,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	LinearAxisConversion glowExtentConversion;
 
-	final Set<Segment3d> segmentsWithGlow = new HashSet<>();
+	final Set<Section> sectionsWithGlow = new HashSet<>();
 
 	LinearGradientPaint paramPaint;
 
@@ -1280,11 +1280,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Uniform4fv glowColor;
 
-	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Segment3d> segment3ds) {
+	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections) {
 		super();
 		this.shot3ds = shot3ds;
 		this.tree = tree;
-		this.segment3ds = segment3ds;
+		this.sections = sections;
 
 		highlightColors = new Uniform4fv().name("u_highlightColors");
 		highlightColors.value(
@@ -1305,19 +1305,19 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		nearDist = new Uniform1fv().name("u_nearDist").value(0);
 		farDist = new Uniform1fv().name("u_farDist").value(1000);
 
-		for (Segment3d segment3d : segment3ds) {
-			segment3d.drawers.add(axialSegment3dDrawer);
+		for (Section section : sections) {
+			section.drawers.add(axialSectionRenderer);
 		}
 
-		MultiMap<Segment3dDrawer, Segment3d> drawers = LinkedHashSetMultiMap.newInstance();
-		drawers.putAll(axialSegment3dDrawer, segment3ds);
+		MultiMap<SectionRenderer, Section> drawers = LinkedHashSetMultiMap.newInstance();
+		drawers.putAll(axialSectionRenderer, sections);
 
 		this.drawers.set(drawers);
 	}
 
 	public float[] calcAutofitParamRange(Collection<ShotKey> shots, Subtask subtask) {
 		if (subtask != null) {
-			subtask.setTotal(segment3ds.size());
+			subtask.setTotal(sections.size());
 			subtask.setCompleted(0);
 			subtask.setIndeterminate(false);
 		}
@@ -1377,14 +1377,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		if (subtask != null) {
-			subtask.setTotal(segment3ds.size());
+			subtask.setTotal(sections.size());
 			subtask.setCompleted(0);
 			subtask.setIndeterminate(false);
 		}
 
 		int processed = 0;
-		for (Segment3d segment3d : segment3ds) {
-			segment3d.calcParam0(Survey3dModel.this, distancesToStations);
+		for (Section section : sections) {
+			section.calcParam0(Survey3dModel.this, distancesToStations);
 
 			if (processed++ % 100 == 0) {
 				if (subtask != null) {
@@ -1399,13 +1399,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	@Override
 	public void dispose(GL2ES2 gl) {
-		for (Segment3d segment3d : segment3ds) {
-			segment3d.dispose(gl);
+		for (Section section : sections) {
+			section.dispose(gl);
 		}
 
-		MultiMap<Segment3dDrawer, Segment3d> drawers = this.drawers.get();
+		MultiMap<SectionRenderer, Section> drawers = this.drawers.get();
 
-		for (Segment3dDrawer drawer : drawers.keySet()) {
+		for (SectionRenderer drawer : drawers.keySet()) {
 			drawer.dispose(gl);
 		}
 
@@ -1425,9 +1425,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			updateParamTexture(gl);
 			paramTextureNeedsUpdate = false;
 		}
-		MultiMap<Segment3dDrawer, Segment3d> drawers = this.drawers.get();
+		MultiMap<SectionRenderer, Section> drawers = this.drawers.get();
 
-		for (Segment3dDrawer drawer : drawers.keySet()) {
+		for (SectionRenderer drawer : drawers.keySet()) {
 			drawer.draw(drawers.get(drawer), context, gl, m, n);
 		}
 	}
@@ -1559,31 +1559,31 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.colorParam = colorParam;
 
 		if (subtask != null) {
-			subtask.setTotal(segment3ds.size());
+			subtask.setTotal(sections.size());
 			subtask.setCompleted(0);
 			subtask.setIndeterminate(false);
 		}
-		final Iterator<Segment3d> segmentIterator = segment3ds.iterator();
+		final Iterator<Section> sectionIterator = sections.iterator();
 
-		MultiMap<Segment3dDrawer, Segment3d> newDrawers = LinkedHashSetMultiMap.newInstance();
+		MultiMap<SectionRenderer, Section> newDrawers = LinkedHashSetMultiMap.newInstance();
 
 		int completed = 0;
-		while (segmentIterator.hasNext()) {
-			Segment3d segment3d = segmentIterator.next();
+		while (sectionIterator.hasNext()) {
+			Section section = sectionIterator.next();
 
-			segment3d.drawers.clear();
+			section.drawers.clear();
 
 			if (colorParam == ColorParam.DEPTH) {
-				segment3d.drawers.add(axialSegment3dDrawer);
+				section.drawers.add(axialSectionRenderer);
 			} else {
 				if (colorParam.isStationMetric()) {
-					segment3d.calcParam0(Survey3dModel.this, colorParam);
+					section.calcParam0(Survey3dModel.this, colorParam);
 				}
-				segment3d.drawers.add(param0Segment3dDrawer);
+				section.drawers.add(param0SectionRenderer);
 			}
 
-			for (Segment3dDrawer drawer : segment3d.drawers) {
-				newDrawers.put(drawer, segment3d);
+			for (SectionRenderer drawer : section.drawers) {
+				newDrawers.put(drawer, section);
 			}
 
 			if (completed++ % 100 == 0) {
@@ -1640,7 +1640,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.hoverLocation = hoverLocation;
 		this.glowExtentConversion = glowExtentConversion;
 
-		Set<Segment3d> newSegmentsWithGlow = new HashSet<>();
+		Set<Section> newSectionsWithGlow = new HashSet<>();
 
 		if (hoveredShot != null) {
 			CalcShot origShot = hoveredShot.shot;
@@ -1677,12 +1677,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 
 			for (Shot3d shot3d : affectedShot3ds) {
-				segmentsWithGlow.add(shot3d.segment3d);
-				newSegmentsWithGlow.add(shot3d.segment3d);
+				sectionsWithGlow.add(shot3d.section);
+				newSectionsWithGlow.add(shot3d.section);
 			}
-			for (Segment3d segment3d : newSegmentsWithGlow) {
-				segment3d.clearGlow();
-				segment3d.stationAttrsNeedRebuffering.set(true);
+			for (Section section : newSectionsWithGlow) {
+				section.clearGlow();
+				section.stationAttrsNeedRebuffering.set(true);
 			}
 
 			/*
@@ -1724,42 +1724,42 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		}
 
-		Iterator<Segment3d> segIter = segmentsWithGlow.iterator();
+		Iterator<Section> segIter = sectionsWithGlow.iterator();
 
-		for (Segment3d segment3d : Iterables.of(segIter)) {
+		for (Section section : Iterables.of(segIter)) {
 			if (subtask != null && subtask.isCanceling()) {
 				return;
 			}
-			if (!newSegmentsWithGlow.contains(segment3d)) {
+			if (!newSectionsWithGlow.contains(section)) {
 				segIter.remove();
-				segment3d.clearGlow();
-				segment3d.stationAttrsNeedRebuffering.set(true);
+				section.clearGlow();
+				section.stationAttrsNeedRebuffering.set(true);
 			}
 		}
 	}
 
 	private void updateHighlights(Collection<Shot3d> affectedShots) {
-		// find the segments that are affected by the affected shots
-		// (not just the segments containing those shots but segments containing
+		// find the sections that are affected by the affected shots
+		// (not just the sections containing those shots but sections containing
 		// shots within highlight distance from an affected shot)
-		Set<Segment3d> affectedSegments = new HashSet<>();
+		Set<Section> affectedSections = new HashSet<>();
 		for (Shot3d shot3d : affectedShots) {
-			affectedSegments.add(shot3d.segment3d);
+			affectedSections.add(shot3d.section);
 		}
 
-		for (Segment3d segment3d : affectedSegments) {
-			segment3d.clearHighlights();
+		for (Section section : affectedSections) {
+			section.clearHighlights();
 		}
 
 		for (ShotKey key : selectedShots) {
 			Shot3d shot3d = shot3ds.get(key);
-			if (affectedSegments.contains(shot3d.segment3d)) {
+			if (affectedSections.contains(shot3d.section)) {
 				shot3d.applySelectionHighlights();
 			}
 		}
 
-		for (Segment3d segment3d : affectedSegments) {
-			segment3d.stationAttrsNeedRebuffering.set(true);
+		for (Section section : affectedSections) {
+			section.stationAttrsNeedRebuffering.set(true);
 		}
 	}
 
