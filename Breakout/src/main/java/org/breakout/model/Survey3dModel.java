@@ -518,6 +518,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public static class Section {
 		final ArrayList<Shot3d> shot3ds;
+		final Set<CalcStation> stations;
 
 		final LinkedList<SectionRenderer> drawers = new LinkedList<>();
 
@@ -532,6 +533,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		Section(ArrayList<Shot3d> shot3ds) {
 			this.shot3ds = shot3ds;
+			stations = new HashSet<>();
+			for (Shot3d shot3d : shot3ds) {
+				stations.add(shot3d.shot.fromStation);
+				stations.add(shot3d.shot.toStation);
+			}
 			populateData();
 		}
 
