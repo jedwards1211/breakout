@@ -110,12 +110,12 @@ public class PairingHeapTests {
 		int i, j, key, value;
 		for (i = 0; i < 1000; i++) {
 			double r = Math.random();
-			if (r < 0.6) {
+			if (r < 0.5) {
 				key = rand.nextInt(1000);
 				value = nextValue++;
 				pEntries.put(value, p.insert(key, value));
 				dEntries.put(value, d.insert(key, value));
-			} else if (r < 0.8) {
+			} else if (r < 0.7) {
 				if (!d.isEmpty()) {
 					pe = p.removeMin();
 					de = d.removeMin();

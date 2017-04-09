@@ -15,9 +15,8 @@ import org.andork.generic.Ref;
  * Pairing heap insertion has constant time complexity, whereas Java's
  * {@link PriorityQueue} has O(log n) insertion time complexity. Additionally,
  * if you save a reference to a {@link PairingHeap.Entry} returned by
- * {@link #insert(Comparable, Object) insert}, you can {@link Entry#remove()
- * remove} it in constant time and {@linkplain Entry#decreaseKey(Comparable)
- * decrease its key} in O(log n) time.
+ * {@link #insert(Comparable, Object) insert}, you can
+ * {@linkplain Entry#decreaseKey(Comparable) decrease its key} in O(log n) time.
  *
  * @author Andy Edwards
  *
@@ -28,8 +27,8 @@ import org.andork.generic.Ref;
  */
 public class PairingHeap<K extends Comparable<K>, V> {
 	/**
-	 * An entry in a priority heap. You can {@link #remove() remove} and
-	 * {@linkplain #decreaseKey(Comparable) decrease its key} directly.
+	 * An entry in a priority heap. You can {@linkplain #decreaseKey(Comparable)
+	 * decrease its key} directly.
 	 *
 	 * @param <K>
 	 *            the type of the key
@@ -182,7 +181,7 @@ public class PairingHeap<K extends Comparable<K>, V> {
 		 *
 		 * @return the entry that takes this entry's place
 		 */
-		public void remove() {
+		private void remove() {
 			Entry<K, V> parent = this.parent;
 			boolean wasRight = parent != null && parent.right == this;
 			Entry<K, V> p = this.left;
