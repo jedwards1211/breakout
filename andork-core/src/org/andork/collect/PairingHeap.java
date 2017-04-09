@@ -2,15 +2,29 @@ package org.andork.collect;
 
 import java.util.Map;
 
+import org.andork.generic.Ref;
+
 public class PairingHeap<K extends Comparable<K>, V> {
-	public static class Node<K extends Comparable<K>, V> implements Map.Entry<K, V> {
+	public static class Entry<K extends Comparable<K>, V> implements Map.Entry<K, V> {
 		private K key;
 		private V value;
-		Node<K, V> parent;
-		Node<K, V> left;
-		Node<K, V> right;
+		/**
+		 * Using an indirect reference to the heap enables us to make
+		 * {@link #remove()} and {@link #decreaseKey(Comparable)} safe while
+		 * keeping {@link PairingHeap#clear()} a constant-time operation. All
+		 * nodes in the heap share the same {@code heapRef} instance.<br>
+		 * <br>
+		 * When a node is removed, we set its {@code heapRef} to {@code null},
+		 * but when the heap is cleared, we set the shared {@code heapRef.value}
+		 * to {@code null}, so that all nodes that were in the heap are
+		 * instantly marked as not belonging to a heap anymore.
+		 */
+		private Ref<PairingHeap<K, V>> heapRef;
+		Entry<K, V> parent;
+		Entry<K, V> left;
+		Entry<K, V> right;
 
-		public Node(K key, V value) {
+		public Entry(K key, V value) {
 			this.key = key;
 			this.value = value;
 		}
@@ -26,17 +40,17 @@ public class PairingHeap<K extends Comparable<K>, V> {
 		 *            empty heap)
 		 * @returns the root of the merged heap
 		 */
-		private Node<K, V> merge(Node<K, V> b) {
-			Node<K, V> a = this;
+		private Entry<K, V> merge(Entry<K, V> b) {
+			Entry<K, V> a = this;
 			if (b == null) {
 				return a;
 			}
 			if (a.key.compareTo(b.key) >= 0) {
-				Node<K, V> swap = a;
+				Entry<K, V> swap = a;
 				a = b;
 				b = swap;
 			}
-			Node<K, V> al = a.left;
+			Entry<K, V> al = a.left;
 			b.right = al;
 			if (al != null) {
 				al.parent = b;
@@ -47,15 +61,15 @@ public class PairingHeap<K extends Comparable<K>, V> {
 		}
 
 		/**
-		 * Used by deleteMin; splays the tree at this node.
+		 * Used by deleteMin; splays the tree at this entry.
 		 *
-		 * @return this or the node that was moved into its place
+		 * @return this or the entry that was moved into its place
 		 *
 		 *         See Fig.9 in
 		 *         http://www.cs.cmu.edu/~sleator/papers/pairing-heaps.pdf. I
-		 *         chose the node names according to it.
+		 *         chose the entry names according to it.
 		 */
-		private Node<K, V> link() {
+		private Entry<K, V> link() {
 			/*
 			 * Before:
 			 *   parent
@@ -86,13 +100,13 @@ public class PairingHeap<K extends Comparable<K>, V> {
 			 *    / \
 			 *   a   b
 			 */
-			Node<K, V> y = right;
+			Entry<K, V> y = right;
 			if (y == null) {
 				return this;
 			}
-			Node<K, V> a = left;
-			Node<K, V> b = y.left;
-			Node<K, V> c = y.right;
+			Entry<K, V> a = left;
+			Entry<K, V> b = y.left;
+			Entry<K, V> c = y.right;
 			if (this.key.compareTo(y.key) < 0) {
 				this.left = y;
 				y.parent = this;
@@ -106,7 +120,7 @@ public class PairingHeap<K extends Comparable<K>, V> {
 				}
 				return this;
 			} else {
-				Node<K, V> parent = this.parent;
+				Entry<K, V> parent = this.parent;
 				y.parent = parent;
 				if (parent != null) {
 					parent.right = y;
@@ -121,32 +135,43 @@ public class PairingHeap<K extends Comparable<K>, V> {
 			}
 		}
 
+		private void updateHeapAfterRemoval(Entry<K, V> replacement) {
+			if (heapRef != null && heapRef.value != null) {
+				heapRef.value.size--;
+				if (heapRef.value.root == this) {
+					heapRef.value.root = replacement;
+				}
+			}
+			heapRef = null;
+		}
+
 		/**
-		 * Removes this node from the heap and rearranges the children to
+		 * Removes this entry from the heap and rearranges the children to
 		 * amortize heap operations.
 		 *
-		 * @return the node that takes this node's place
+		 * @return the entry that takes this entry's place
 		 */
-		private Node<K, V> remove() {
-			Node<K, V> parent = this.parent;
+		public void remove() {
+			Entry<K, V> parent = this.parent;
 			boolean wasRight = parent != null && parent.right == this;
+			Entry<K, V> p = this.left;
 
-			// remove the root node
-			Node<K, V> p = this.left;
+			// remove the root entry
 			this.left = null;
 			if (p == null) {
-				return null;
+				updateHeapAfterRemoval(null);
+				return;
 			}
 			p.parent = null;
 
-			// walk down the right subtrees, calling link on each node.
+			// walk down the right subtrees, calling link on each entry.
 			// this essentially combines the children of this into pairs.
-			Node<K, V> r = p;
+			Entry<K, V> r = p;
 			while (r != null) {
 				p = r.link();
 				r = p.right;
 			}
-			// walk back up, again calling link on each node.
+			// walk back up, again calling link on each entry.
 			while (p.parent != null) {
 				p = p.parent.link();
 			}
@@ -159,41 +184,33 @@ public class PairingHeap<K extends Comparable<K>, V> {
 					parent.left = p;
 				}
 			}
-			return p;
+			updateHeapAfterRemoval(p);
 		}
 
-		/**
-		 * Decreases the key of a descendant of this node.
-		 *
-		 * @param descendant
-		 *            the descendant (may be this node itself).
-		 * @param newKey
-		 *            the new key for {@code descendant}.
-		 * @return the node that takes this node's place.
-		 */
-		private Node<K, V> decreaseKeyOfDescendant(Node<K, V> descendant, K newKey) {
-			int comparison = newKey.compareTo(descendant.key);
+		public void decreaseKey(K newKey) {
+			int comparison = newKey.compareTo(key);
 			if (comparison > 0) {
 				throw new IllegalArgumentException("newKey must be <= p.key");
 			}
 			if (comparison == 0) {
-				return this;
+				return;
 			}
-			descendant.key = newKey;
+			key = newKey;
 
 			// remove descendant subtree from its parent
-			Node<K, V> prev = descendant.parent;
-			Node<K, V> next = descendant.right;
-			descendant.parent = null;
-			descendant.right = null;
+			Entry<K, V> prev = parent;
+			Entry<K, V> next = right;
+			parent = null;
+			right = null;
 			if (prev != null) {
 				prev.right = next;
 			}
 			if (next != null) {
 				next.parent = prev;
 			}
-
-			return descendant == this ? this : merge(descendant);
+			if (heapRef != null && heapRef.value != null && this != heapRef.value.root) {
+				heapRef.value.root = heapRef.value.root.merge(this);
+			}
 		}
 
 		@Override
@@ -214,51 +231,71 @@ public class PairingHeap<K extends Comparable<K>, V> {
 		}
 	}
 
-	private Node<K, V> root = null;
+	private Entry<K, V> root = null;
 	private int size = 0;
-
-	public int size() {
-		return size;
-	}
 
 	public boolean isEmpty() {
 		return root == null;
 	}
 
+	public int size() {
+		return size;
+	}
+
 	public void clear() {
-		root = null;
-		size = 0;
+		if (root != null) {
+			root.heapRef.value = null;
+			root = null;
+			size = 0;
+		}
 	}
 
-	public Node<K, V> insert(K key, V value) {
-		Node<K, V> newNode = new Node<>(key, value);
-		root = root == null ? newNode : root.merge(newNode);
+	/**
+	 * Inserts the given key-value pair into the heap.
+	 *
+	 * @return the new {@link Entry}.
+	 */
+	public Entry<K, V> insert(K key, V value) {
+		Entry<K, V> newEntry = new Entry<>(key, value);
+		newEntry.heapRef = root == null ? new Ref<>(this) : root.heapRef;
+		root = root == null ? newEntry : root.merge(newEntry);
 		size++;
-		return newNode;
+		return newEntry;
 	}
 
+	/**
+	 * Merges another heap into this heap, then clears the other heap.
+	 */
 	public void merge(PairingHeap<K, V> other) {
+		if (other == this || other.root == null) {
+			return;
+		}
+		other.root.heapRef.value = this;
 		root = root == null ? other.root : root.merge(other.root);
 		size += other.size;
-		other.clear();
+		other.root = null;
+		other.size = 0;
 	}
 
-	public Node<K, V> findMin() {
+	/**
+	 * @return The {@link Entry} with the minimum {@link Entry#getKey() key}.
+	 */
+	public Entry<K, V> findMin() {
 		return root;
 	}
 
-	public Node<K, V> removeMin() {
-		Node<K, V> min = root;
+	/**
+	 * Removes and returns the {@link Entry} with the minimum
+	 * {@link Entry#getKey() key}.
+	 *
+	 * @return The entry (with the minimum {@link Entry#getKey() key}) that was
+	 *         removed.
+	 */
+	public Entry<K, V> removeMin() {
+		Entry<K, V> min = root;
 		if (root != null) {
-			root = root.remove();
-			size--;
+			root.remove();
 		}
 		return min;
-	}
-
-	public void decreaseKey(Node<K, V> node, K newKey) {
-		root = root == null
-				? node.decreaseKeyOfDescendant(node, newKey)
-				: root.decreaseKeyOfDescendant(node, newKey);
 	}
 }

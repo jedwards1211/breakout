@@ -70,16 +70,16 @@ public class PairingHeapTests {
 		}
 	}
 
-	static <K extends Comparable<K>, V> void sanityCheck(PairingHeap.Node<K, V> node, IntHolder size) {
+	static <K extends Comparable<K>, V> void sanityCheck(PairingHeap.Entry<K, V> Entry, IntHolder size) {
 		size.value++;
-		if (node.left != null) {
-			Assert.assertSame(node.left.parent, node);
-			Assert.assertTrue(node.getKey().compareTo(node.left.getKey()) <= 0);
-			sanityCheck(node.left, size);
+		if (Entry.left != null) {
+			Assert.assertSame(Entry.left.parent, Entry);
+			Assert.assertTrue(Entry.getKey().compareTo(Entry.left.getKey()) <= 0);
+			sanityCheck(Entry.left, size);
 		}
-		if (node.right != null) {
-			Assert.assertSame(node.right.parent, node);
-			sanityCheck(node.right, size);
+		if (Entry.right != null) {
+			Assert.assertSame(Entry.right.parent, Entry);
+			sanityCheck(Entry.right, size);
 		}
 	}
 
@@ -97,7 +97,7 @@ public class PairingHeapTests {
 		Random rand = new Random();
 		PairingHeap<Integer, Integer> p = new PairingHeap<>();
 		Dumbheap<Integer, Integer> d = new Dumbheap<>();
-		PairingHeap.Node<Integer, Integer> pe;
+		PairingHeap.Entry<Integer, Integer> pe;
 		Dumbheap.Entry<Integer, Integer> de;
 		int i, j, key, value;
 		for (i = 0; i < 1000; i++) {
