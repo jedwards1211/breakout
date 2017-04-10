@@ -1,5 +1,8 @@
 package org.breakout.model;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 
@@ -32,6 +35,13 @@ public class ProjectParser {
 	private final MetacaveInclinationParser inclinationParser = new MetacaveInclinationParser();
 
 	private final IdentityHashMap<SurveyTrip, ParsedTrip> trips = new IdentityHashMap<>();
+
+	private final DateFormat[] dateFormats = {
+			new SimpleDateFormat("yyyy/MM/dd"),
+			new SimpleDateFormat("yyyy-MM-dd"),
+			new SimpleDateFormat("MM/dd/yyyy"),
+			new SimpleDateFormat("MM-dd-yyyy")
+	};
 
 	private <T, U extends UnitType<U>> UnitizedDouble<U> parse(T object, Property<T, String> property,
 			MetacaveMeasurementParser<U> parser, Unit<U> defaultUnit) {
@@ -80,7 +90,6 @@ public class ProjectParser {
 		trips.put(raw, parsed);
 		project.trips.add(parsed);
 
-		// TODO Date!
 		parsed.distanceCorrection = parse(raw, SurveyTrip.Properties.distanceCorrection,
 				lengthParser, raw.getDistanceUnit(), null, 0);
 		parsed.declination = parse(raw, SurveyTrip.Properties.declination,
@@ -95,6 +104,21 @@ public class ProjectParser {
 				angleParser, raw.getBackInclinationUnit(), null, 0);
 		parsed.areBackAzimuthsCorrected = raw.areBackAzimuthsCorrected();
 		parsed.areBackInclinationsCorrected = raw.areBackInclinationsCorrected();
+		String dateText = raw.getDate();
+		if (dateText != null) {
+			dateText = dateText.trim();
+		}
+		if (raw.getDate() != null && !raw.getDate().isEmpty()) {
+			for (DateFormat format : dateFormats) {
+				try {
+					parsed.date = format.parse(dateText);
+					break;
+				} catch (ParseException ex) {
+					// ignore
+				}
+			}
+			project.messages.add(raw, SurveyTrip.date, Severity.ERROR, "invalid date");
+		}
 
 		return parsed;
 	}
