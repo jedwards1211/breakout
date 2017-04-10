@@ -1551,6 +1551,16 @@ public class BreakoutMainView {
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.ambientLight, projectModelBinder));
 
+		new BinderWrapper<Boolean>() {
+			@Override
+			protected void onValueChanged(final Boolean newValue) {
+				if (model3d != null && newValue != null) {
+					model3d.setShowStationLabels(newValue);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(RootModel.showStationLabels, rootModelBinder));
+
 		new BinderWrapper<LinearAxisConversion>() {
 			@Override
 			protected void onValueChanged(LinearAxisConversion range) {

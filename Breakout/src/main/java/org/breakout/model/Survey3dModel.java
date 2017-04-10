@@ -44,9 +44,13 @@ import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
 import static org.andork.spatial.Rectmath.voidRectf;
 
+import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.LinearGradientPaint;
 import java.awt.Point;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -103,9 +107,9 @@ import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.util.awt.TextRenderer;
 
 public class Survey3dModel implements JoglDrawable, JoglResource {
-
 	private class AxialSectionRenderer extends OneParamSectionRenderer {
 		private int u_axis_location;
 		private int u_origin_location;
@@ -516,11 +520,32 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	public static class Section {
-		final ArrayList<Shot3d> shot3ds;
-		final Set<CalcStation> stations;
+	public static class Label {
+		final float[] position;
+		float width;
+		float height;
+		float xOffset;
+		float yOffset;
+		final String text;
 
-		final LinkedList<SectionRenderer> drawers = new LinkedList<>();
+		public Label(CalcStation station) {
+			position = new float[] {
+					(float) station.position[0],
+					(float) station.position[1],
+					(float) station.position[2] };
+			text = station.name;
+		}
+	}
+
+	public static class Section {
+		final float[] mbr;
+		final ArrayList<Shot3d> shot3ds;
+		final Map<StationKey, Label> stationLabels;
+		final Map<Float, Set<StationKey>> stationsToLabel;
+		final List<Float> stationsToLabelSpacings;
+
+		final LinkedList<SectionRenderer> renderers = new LinkedList<>();
+		final float[] tempPoint = new float[3];
 
 		int vertexCount;
 		JoglBuffer geometry;
@@ -531,12 +556,27 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		JoglBuffer fillIndices;
 		JoglBuffer lineIndices;
 
-		Section(ArrayList<Shot3d> shot3ds) {
+		Section(float[] mbr, ArrayList<Shot3d> shot3ds, Map<Float, Set<StationKey>> stationsToLabel) {
+			this.mbr = mbr;
 			this.shot3ds = shot3ds;
-			stations = new HashSet<>();
+			stationLabels = new HashMap<>();
 			for (Shot3d shot3d : shot3ds) {
-				stations.add(shot3d.shot.fromStation);
-				stations.add(shot3d.shot.toStation);
+				CalcStation fromStation = shot3d.shot.fromStation;
+				CalcStation toStation = shot3d.shot.toStation;
+				if (!stationLabels.containsKey(fromStation.key())) {
+					stationLabels.put(fromStation.key(), new Label(fromStation));
+				}
+				if (!stationLabels.containsKey(toStation.key())) {
+					stationLabels.put(toStation.key(), new Label(toStation));
+				}
+			}
+			stationsToLabelSpacings = new ArrayList<>(stationsToLabel.keySet());
+			Collections.sort(stationsToLabelSpacings);
+			this.stationsToLabel = new HashMap<>();
+			for (Map.Entry<Float, Set<StationKey>> entry : stationsToLabel.entrySet()) {
+				Set<StationKey> stationsToLabelForSection = new HashSet<>(entry.getValue());
+				stationsToLabelForSection.retainAll(stationLabels.keySet());
+				this.stationsToLabel.put(entry.getKey(), stationsToLabelForSection);
 			}
 			populateData();
 		}
@@ -683,6 +723,58 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 			fillIndices.dispose(gl);
 			lineIndices.dispose(gl);
+		}
+
+		public void updateLabels(Font font, FontRenderContext frc) {
+			for (Map.Entry<StationKey, Label> entry : stationLabels.entrySet()) {
+				Label label = entry.getValue();
+				Rectangle2D bounds = font.getStringBounds(label.text, frc);
+				label.width = (float) bounds.getWidth();
+				label.height = (float) bounds.getHeight();
+				label.xOffset = (float) -bounds.getWidth() / 2;
+				label.yOffset = (float) -bounds.getHeight() / 2;
+			}
+		}
+
+		public void drawLabels(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n, TextRenderer textRenderer) {
+			float[] viewMatrix = context.viewMatrix();
+			float[] worldToScreen = context.worldToScreen();
+
+			double centerDistance = 0;
+			Arrays.fill(tempPoint, 0);
+			Vecmath.mpmul(context.inverseViewMatrix(), tempPoint);
+			if (!Rectmath.contains3(mbr, tempPoint)) {
+				tempPoint[0] = (mbr[0] + mbr[3]) * 0.5f;
+				tempPoint[1] = (mbr[1] + mbr[4]) * 0.5f;
+				tempPoint[2] = (mbr[2] + mbr[5]) * 0.5f;
+				Vecmath.mpmul(viewMatrix, tempPoint);
+				centerDistance = tempPoint[2];
+			}
+
+			float factor = 20;
+
+			Set<StationKey> stationsToLabel = stationLabels.keySet();
+			for (int i = stationsToLabelSpacings.size() - 1; i >= 0; i--) {
+				float spacing = stationsToLabelSpacings.get(i);
+				if (-centerDistance > spacing * factor) {
+					stationsToLabel = this.stationsToLabel.get(spacing);
+					break;
+				}
+			}
+			if (stationsToLabel == null) {
+				return;
+			}
+
+			for (StationKey key : stationsToLabel) {
+				Label label = stationLabels.get(key);
+				Vecmath.mpmul(worldToScreen, label.position, tempPoint);
+				if (tempPoint[2] > 1) {
+					continue;
+				}
+				textRenderer.draw(label.text,
+						(int) (tempPoint[0] + label.xOffset),
+						(int) (tempPoint[1] + label.yOffset));
+			}
 		}
 	}
 
@@ -1112,7 +1204,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	public static Survey3dModel create(CalcProject project, int maxChildrenPerBranch, int minSplitSize,
 			int numToReinsert, Task task) {
 		Subtask rootSubtask = null;
-		int renderProportion = 5;
+		int renderProportion = 6;
 
 		if (task != null) {
 			task.setTotal(1000);
@@ -1146,13 +1238,26 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		int sectionLevel = Math.min(tree.getRoot().level(), 3);
 
-		Set<Section> sections = createSections(tree, sectionLevel, rootSubtask.beginSubtask(1));
+		Map<Float, Set<StationKey>> stationsToLabel = computeStationsToLabel(
+				project.stations.values(), Arrays.asList(2f, 5f, 10f, 20f, 40f, 80f, 160f, 320f));
+
+		Set<Section> sections = createSections(tree, sectionLevel, stationsToLabel, rootSubtask.beginSubtask(1));
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		Survey3dModel model = new Survey3dModel(shot3ds, tree, sections);
+		Font labelFont = new Font("Arial", Font.PLAIN, 12);
+		FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
+		for (Section section : sections) {
+			section.updateLabels(labelFont, frc);
+		}
+		if (rootSubtask.isCanceling()) {
+			return null;
+		}
+		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
+
+		Survey3dModel model = new Survey3dModel(shot3ds, tree, sections, labelFont);
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
@@ -1167,23 +1272,26 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return buffer;
 	}
 
-	private static void createSections(RfStarTree.Node<Shot3d> node, int sectionLevel, Set<Section> result) {
+	private static void createSections(RfStarTree.Node<Shot3d> node, int sectionLevel,
+			Map<Float, Set<StationKey>> stationsToLabel, Set<Section> result) {
 		if (node.level() == sectionLevel) {
-			result.add(new Section(getShots(node)));
+			ArrayList<Shot3d> shot3ds = getShots(node);
+			result.add(new Section(node.mbr(), shot3ds, stationsToLabel));
 		} else if (node instanceof RfStarTree.Branch) {
 			RfStarTree.Branch<Shot3d> branch = (RfStarTree.Branch<Shot3d>) node;
 			for (int i = 0; i < branch.numChildren(); i++) {
-				createSections(branch.childAt(i), sectionLevel, result);
+				createSections(branch.childAt(i), sectionLevel, stationsToLabel, result);
 			}
 		}
 	}
 
-	private static Set<Section> createSections(RfStarTree<Shot3d> tree, int sectionLevel, Subtask task) {
+	private static Set<Section> createSections(RfStarTree<Shot3d> tree, int sectionLevel,
+			Map<Float, Set<StationKey>> stationsToLabel, Subtask task) {
 		task.setStatus("creating render sections");
 		task.setIndeterminate(true);
 		Set<Section> result = new HashSet<>();
 
-		createSections(tree.getRoot(), sectionLevel, result);
+		createSections(tree.getRoot(), sectionLevel, stationsToLabel, result);
 
 		task.end();
 		return result;
@@ -1235,11 +1343,77 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
+	private static float getLabelPriority(CalcStation station) {
+		float priority = 0;
+		// priority starts out as sum total of all the cross section measurements at a station,
+		// so that bigger passage is more likely to get labeled
+		for (CalcShot shot : station.shots.values()) {
+			CalcCrossSection crossSection = shot.getCrossSectionAt(station);
+			if (crossSection == null) {
+				continue;
+			}
+			for (double measurement : crossSection.measurements) {
+				priority += measurement;
+			}
+		}
+		// make junctions significantly more likely to get labeled
+		priority *= station.shots.size();
+		// make dead ends a bit more likely to get labeled
+		if (station.shots.size() == 1) {
+			priority *= 2.5;
+		}
+		return -priority;
+	}
+
+	private static Map<Float, Set<StationKey>> computeStationsToLabel(
+			Collection<CalcStation> stations, Collection<Float> spacings) {
+		Map<Float, Set<StationKey>> stationsToLabel = new HashMap<>();
+		Map<Float, RfStarTree<StationKey>> spatialIndexes = new HashMap<>();
+
+		for (float spacing : spacings) {
+			stationsToLabel.put(spacing, new HashSet<>());
+			spatialIndexes.put(spacing, new RfStarTree<>(3, 10, 3, 3));
+		}
+
+		PriorityQueue<PriorityEntry<Float, CalcStation>> queue = new PriorityQueue<>();
+		for (CalcStation station : stations) {
+			queue.add(new PriorityEntry<>(getLabelPriority(station), station));
+		}
+
+		float[] mbr = new float[6];
+
+		while (!queue.isEmpty()) {
+			CalcStation station = queue.poll().getValue();
+			double[] position = station.position;
+			for (Map.Entry<Float, RfStarTree<StationKey>> entry : spatialIndexes.entrySet()) {
+				float spacing = entry.getKey();
+				RfStarTree<StationKey> tree = entry.getValue();
+				mbr[0] = (float) position[0] - spacing;
+				mbr[1] = (float) position[1] - spacing;
+				mbr[2] = (float) position[2] - spacing;
+				mbr[3] = (float) position[0] + spacing;
+				mbr[4] = (float) position[1] + spacing;
+				mbr[5] = (float) position[2] + spacing;
+
+				if (!tree.containsLeafIntersecting(mbr)) {
+					tree.insert(new Leaf<>(Arrays.copyOf(mbr, 6), station.key()));
+					stationsToLabel.get(spacing).add(station.key());
+				}
+			}
+		}
+
+		return stationsToLabel;
+	}
+
 	final Map<ShotKey, Shot3d> shot3ds;
 
 	final RfStarTree<Shot3d> tree;
 
 	final Set<Section> sections;
+
+	final Font labelFont;
+
+	TextRenderer textRenderer;
 
 	ColorParam colorParam = ColorParam.DEPTH;
 
@@ -1247,7 +1421,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Param0SectionRenderer param0SectionRenderer = new Param0SectionRenderer();
 
-	AtomicReference<MultiMap<SectionRenderer, Section>> drawers = new AtomicReference<>();
+	AtomicReference<MultiMap<SectionRenderer, Section>> renderers = new AtomicReference<>();
 
 	final Set<ShotKey> selectedShots = new HashSet<>();
 	final Set<ShotKey> unmodifiableSelectedShots = Collections.unmodifiableSet(selectedShots);
@@ -1286,11 +1460,17 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Uniform4fv glowColor;
 
-	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections) {
+	boolean showStationLabels;
+
+	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections,
+			Font labelFont) {
 		super();
 		this.shot3ds = shot3ds;
 		this.tree = tree;
 		this.sections = sections;
+		this.labelFont = labelFont;
+
+		textRenderer = new TextRenderer(labelFont, true, false);
 
 		highlightColors = new Uniform4fv().name("u_highlightColors");
 		highlightColors.value(
@@ -1312,13 +1492,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		farDist = new Uniform1fv().name("u_farDist").value(1000);
 
 		for (Section section : sections) {
-			section.drawers.add(axialSectionRenderer);
+			section.renderers.add(axialSectionRenderer);
 		}
 
-		MultiMap<SectionRenderer, Section> drawers = LinkedHashSetMultiMap.newInstance();
-		drawers.putAll(axialSectionRenderer, sections);
+		MultiMap<SectionRenderer, Section> renderers = LinkedHashSetMultiMap.newInstance();
+		renderers.putAll(axialSectionRenderer, sections);
 
-		this.drawers.set(drawers);
+		this.renderers.set(renderers);
 	}
 
 	public float[] calcAutofitParamRange(Collection<ShotKey> shots, Subtask subtask) {
@@ -1409,10 +1589,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			section.dispose(gl);
 		}
 
-		MultiMap<SectionRenderer, Section> drawers = this.drawers.get();
+		MultiMap<SectionRenderer, Section> renderers = this.renderers.get();
 
-		for (SectionRenderer drawer : drawers.keySet()) {
-			drawer.dispose(gl);
+		for (SectionRenderer renderer : renderers.keySet()) {
+			renderer.dispose(gl);
 		}
 
 		disposeParamTexture(gl);
@@ -1431,10 +1611,20 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			updateParamTexture(gl);
 			paramTextureNeedsUpdate = false;
 		}
-		MultiMap<SectionRenderer, Section> drawers = this.drawers.get();
+		MultiMap<SectionRenderer, Section> renderers = this.renderers.get();
 
-		for (SectionRenderer drawer : drawers.keySet()) {
-			drawer.draw(drawers.get(drawer), context, gl, m, n);
+		for (SectionRenderer renderer : renderers.keySet()) {
+			renderer.draw(renderers.get(renderer), context, gl, m, n);
+		}
+
+		if (showStationLabels) {
+			textRenderer.beginRendering(context.width(), context.height());
+
+			for (Section section : sections) {
+				section.drawLabels(context, gl, m, n, textRenderer);
+			}
+
+			textRenderer.endRendering();
 		}
 	}
 
@@ -1543,6 +1733,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	@Override
 	public void init(GL2ES2 gl) {
+		textRenderer.init();
+		textRenderer.setUseVertexArrays(true);
 	}
 
 	public void pickShots(PlanarHull3f pickHull, Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
@@ -1571,25 +1763,25 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 		final Iterator<Section> sectionIterator = sections.iterator();
 
-		MultiMap<SectionRenderer, Section> newDrawers = LinkedHashSetMultiMap.newInstance();
+		MultiMap<SectionRenderer, Section> newRenderers = LinkedHashSetMultiMap.newInstance();
 
 		int completed = 0;
 		while (sectionIterator.hasNext()) {
 			Section section = sectionIterator.next();
 
-			section.drawers.clear();
+			section.renderers.clear();
 
 			if (colorParam == ColorParam.DEPTH) {
-				section.drawers.add(axialSectionRenderer);
+				section.renderers.add(axialSectionRenderer);
 			} else {
 				if (colorParam.isStationMetric()) {
 					section.calcParam0(Survey3dModel.this, colorParam);
 				}
-				section.drawers.add(param0SectionRenderer);
+				section.renderers.add(param0SectionRenderer);
 			}
 
-			for (SectionRenderer drawer : section.drawers) {
-				newDrawers.put(drawer, section);
+			for (SectionRenderer renderer : section.renderers) {
+				newRenderers.put(renderer, section);
 			}
 
 			if (completed++ % 100 == 0) {
@@ -1602,7 +1794,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		}
 
-		drawers.set(newDrawers);
+		renderers.set(newRenderers);
 
 		if (colorParam.isTraversalMetric()) {
 			calcDistFromShots(selectedShots, subtask);
@@ -1808,5 +2000,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, paramTextureImage.getWidth(), paramTextureImage.getHeight(),
 				0, GL_BGRA, GL_UNSIGNED_BYTE, paramTextureBuffer);
 		gl.glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	public void setShowStationLabels(boolean showStationLabels) {
+		this.showStationLabels = showStationLabels;
 	}
 }

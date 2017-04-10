@@ -75,13 +75,16 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<Boolean> showDataInSurveyTable = newAttribute(
 			Boolean.class,
 			"showDataInSurveyTable");
+	public static final Attribute<Boolean> showStationLabels = newAttribute(
+			Boolean.class,
+			"showStationLabels");
 
 	public static final RootModel instance = new RootModel();
 
 	public static final Bimapper<QObject<RootModel>, Object> defaultMapper;
 
 	static {
-		defaultMapper = new QObjectMapBimapper<RootModel>(instance)
+		defaultMapper = new QObjectMapBimapper<>(instance)
 				.map(swapFiles, QMapBimapper.newInstance(PathStringBimapper.instance, PathStringBimapper.instance))
 				.map(currentProjectFile, PathStringBimapper.instance)
 				.map(recentProjectFiles, QArrayListBimapper.newInstance(PathStringBimapper.instance))

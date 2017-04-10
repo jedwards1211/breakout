@@ -37,6 +37,7 @@ import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -144,6 +145,8 @@ public class SettingsDrawer extends Drawer {
 	JButton orbitToPlanButton;
 	JButton debugButton;
 
+	JCheckBox showStationLabelsCheckBox;
+
 	JLabel numSamplesLabel;
 	JSlider numSamplesSlider;
 
@@ -194,6 +197,9 @@ public class SettingsDrawer extends Drawer {
 	Binder<Float> ambientLightBinder = QObjectAttributeBinder.bind(
 			ProjectModel.ambientLight,
 			projectBinder);
+	Binder<Boolean> showStationLabelsBinder = QObjectAttributeBinder.bind(
+			RootModel.showStationLabels,
+			rootBinder);
 
 	UpdateStatusPanel updateStatusPanel;
 
@@ -267,6 +273,8 @@ public class SettingsDrawer extends Drawer {
 						RoundingFloat2IntegerBimapper.instance), ambientLightBinder));
 
 		JSliderValueBinder.bind(numSamplesSlider, desiredNumSamplesBinder);
+
+		ButtonSelectedBinder.bind(showStationLabelsCheckBox, showStationLabelsBinder);
 	}
 
 	private void createComponents(I18n i18n) {
@@ -382,6 +390,8 @@ public class SettingsDrawer extends Drawer {
 		fitViewToEverythingButton = new JButton("Fit to Everything");
 		orbitToPlanButton = new JButton("Orbit to Plan");
 
+		showStationLabelsCheckBox = new JCheckBox("Show Station Labels");
+
 		numSamplesLabel = new JLabel();
 		localizer.setText(numSamplesLabel, "numSamplesLabel.text.off");
 		numSamplesSlider = new JSlider(1, 1, 1);
@@ -455,6 +465,8 @@ public class SettingsDrawer extends Drawer {
 
 		w.put(ambientLightLabel).belowLast().west();
 		w.put(ambientLightSlider).belowLast().fillx();
+
+		w.put(showStationLabelsCheckBox).belowLast().fillx();
 
 		w.put(distColorationLabel).belowLast().west().addToInsets(10, 0, 0, 0);
 		w.put(distColorationAxisPanel).belowLast().fillx();
