@@ -28,6 +28,8 @@ import static org.andork.spatial.Rectmath.union;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class RfStarTree<T> implements SpatialIndex<float[], T> {
 	public static class Branch<T> extends Node<T> implements RBranch<float[], T> {
@@ -223,7 +225,7 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 			chooseSplitAxisComparators[axis] = new LowerUpperComparator(axis, dimension);
 		}
 
-		root = new Branch<T>(dimension, 1, maxChildrenPerBranch);
+		root = new Branch<>(dimension, 1, maxChildrenPerBranch);
 	}
 
 	float area(float[] mbr) {
@@ -390,7 +392,7 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 		if (mbr.length != dimension * 2) {
 			throw new IllegalArgumentException("mbr.length must equal " + dimension * 2);
 		}
-		return new Leaf<T>(mbr, object);
+		return new Leaf<>(mbr, object);
 	}
 
 	void doReinsert(Branch<T> overflowed, BitSet reinsertedLevels) {
@@ -421,7 +423,7 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 
 		if (overflowed == root) {
 			maxLevel++;
-			root = new Branch<T>(dimension, split[0].level + 1, maxChildrenPerBranch);
+			root = new Branch<>(dimension, split[0].level + 1, maxChildrenPerBranch);
 			addChild(root, split[0]);
 			addChild(root, split[1]);
 			root.recalcMbr();
@@ -520,8 +522,8 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 		int index = chooseSplitIndex(overflowed, axis);
 
 		Branch<T>[] result = new Branch[2];
-		result[0] = new Branch<T>(dimension, overflowed.level, maxChildrenPerBranch);
-		result[1] = new Branch<T>(dimension, overflowed.level, maxChildrenPerBranch);
+		result[0] = new Branch<>(dimension, overflowed.level, maxChildrenPerBranch);
+		result[1] = new Branch<>(dimension, overflowed.level, maxChildrenPerBranch);
 
 		result[0].numChildren = index;
 		result[1].numChildren = maxChildrenPerBranch + 1 - index;
@@ -541,5 +543,37 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 		result[1].recalcMbr();
 
 		return result;
+	}
+
+	/**
+	 * Determines if this R* Tree contains a leaf intersecting the given master
+	 * bounding rectangle.
+	 *
+	 * @param mbr
+	 *            the rectangle to intersect
+	 */
+	public boolean containsLeafIntersecting(float[] mbr) {
+		Queue<Node<T>> queue = new LinkedList<>();
+		if (root == null) {
+			return false;
+		}
+		queue.add(root);
+		while (!queue.isEmpty()) {
+			Node<T> node = queue.poll();
+			if (!Rectmath.intersects(mbr, node.mbr)) {
+				continue;
+			}
+			if (node instanceof Leaf) {
+				return true;
+			}
+			if (node instanceof Branch) {
+				for (Node<T> child : ((Branch<T>) node).children) {
+					if (child != null) {
+						queue.add(child);
+					}
+				}
+			}
+		}
+		return false;
 	}
 }
