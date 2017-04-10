@@ -127,7 +127,7 @@ public class JoglViewState implements JoglDrawContext {
 		this.width = width;
 		this.height = height;
 
-		ortho(inverseViewport, 0, width, 0, height, 1, -1);
+		ortho(inverseViewport, 0, width, 0, height, -1, 1);
 		invAffine(inverseViewport, viewport);
 
 		if (settings != null) {
