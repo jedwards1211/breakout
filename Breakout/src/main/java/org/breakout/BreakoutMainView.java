@@ -991,6 +991,7 @@ public class BreakoutMainView {
 				model3d = model;
 
 				model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
+				model.setShowStationLabels(getRootModel().get(RootModel.showStationLabels));
 
 				projectModelBinder.update(true);
 
@@ -1270,6 +1271,7 @@ public class BreakoutMainView {
 		scene.add(bgColor);
 
 		renderer = new DefaultJoglRenderer(scene, new GL3Framebuffer(), 1);
+		renderer.setDesiredUseStencilBuffer(true);
 
 		autoDrawable.addGLEventListener(renderer);
 

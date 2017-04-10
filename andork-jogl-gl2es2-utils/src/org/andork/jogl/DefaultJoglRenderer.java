@@ -26,6 +26,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected GL3Framebuffer framebuffer;
 
 	protected int desiredNumSamples = 1;
+	protected boolean desiredUseStencilBuffer = false;
 
 	protected float[] m = newMat4f();
 	protected float[] n = newMat3f();
@@ -61,7 +62,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 		if (framebuffer != null) {
 			GL3 gl3 = (GL3) gl;
 			renderingFbo = framebuffer.renderingFbo(gl3, drawable.getSurfaceWidth(), drawable.getSurfaceHeight(),
-					desiredNumSamples);
+					desiredNumSamples, desiredUseStencilBuffer);
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
 		}
 
@@ -153,5 +154,13 @@ public class DefaultJoglRenderer implements GLEventListener {
 
 	public void setViewSettings(JoglViewSettings viewSettings) {
 		this.viewSettings = viewSettings;
+	}
+
+	public boolean isDesiredUseStencilBuffer() {
+		return desiredUseStencilBuffer;
+	}
+
+	public void setDesiredUseStencilBuffer(boolean useStencilBuffer) {
+		desiredUseStencilBuffer = useStencilBuffer;
 	}
 }

@@ -106,6 +106,7 @@ import org.omg.CORBA.FloatHolder;
 import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
+import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.util.awt.TextRenderer;
 
@@ -151,8 +152,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		@Override
 		protected void doDraw(Section section, GL2ES2 gl) {
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
-			gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+			if (drawLines) {
+				gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
+				gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+			}
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
 			gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
 					0);
@@ -164,6 +167,132 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				super.init(gl);
 				u_axis_location = gl.glGetUniformLocation(program, "u_axis");
 				u_origin_location = gl.glGetUniformLocation(program, "u_origin");
+			}
+		}
+	}
+
+	private class CenterlineRenderer implements SectionRenderer {
+		protected int program = 0;
+
+		protected int m_location;
+		protected int v_location;
+		protected int p_location;
+		protected int a_pos_location;
+		protected int u_color_location;
+
+		protected String createFragmentShader() {
+			return "#version 330\n" +
+					createFragmentShaderVariables() +
+					"void main() {" +
+					createFragmentShaderCode() +
+					"}";
+		}
+
+		protected String createFragmentShaderCode() {
+			return "  if (v_dist > 200) discard;" +
+					"  color = u_color;";
+		}
+
+		protected String createFragmentShaderVariables() {
+			// lighting
+			return "uniform float u_ambient;" +
+
+			// distance coloration
+					"in float v_dist;" +
+
+					// color
+					"uniform vec4 u_color;" +
+
+					"out vec4 color;";
+
+		}
+
+		protected String createVertexShader() {
+			return "#version 330\n" +
+					createVertexShaderVariables() +
+					"void main() {" +
+					createVertexShaderCode() +
+					"}";
+		}
+
+		protected String createVertexShaderCode() {
+			return "  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
+					"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;";
+		}
+
+		protected String createVertexShaderVariables() {
+			return "uniform mat4 m;" +
+					"uniform mat4 v;" +
+					"uniform mat4 p;" +
+					"in vec3 a_pos;" +
+
+					// distance coloration
+					"out float v_dist;";
+		}
+
+		@Override
+		public void dispose(GL2ES2 gl) {
+			if (program > 0) {
+				gl.glDeleteProgram(program);
+				program = 0;
+			}
+		}
+
+		@Override
+		public void draw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
+				float[] n) {
+			if (program <= 0) {
+				init(gl);
+			}
+
+			gl.glUseProgram(program);
+
+			gl.glUniformMatrix4fv(m_location, 1, false, m, 0);
+			gl.glUniformMatrix4fv(v_location, 1, false, context.viewMatrix(), 0);
+			gl.glUniformMatrix4fv(p_location, 1, false, context.projectionMatrix(), 0);
+
+			gl.glUniform4fv(u_color_location, 1, centerlineColor.value(), 0);
+
+			gl.glEnableVertexAttribArray(a_pos_location);
+
+			gl.glEnable(GL_DEPTH_TEST);
+			gl.glEnable(GL.GL_STENCIL_TEST);
+			gl.glStencilFunc(GL.GL_ALWAYS, 1, 1);
+			gl.glStencilOp(GL.GL_KEEP, GL.GL_KEEP, GL.GL_REPLACE);
+
+			for (Section section : sections) {
+				section.centerlineGeometry.init(gl);
+
+				gl.glBindBuffer(GL_ARRAY_BUFFER, section.centerlineGeometry.id());
+				gl.glVertexAttribPointer(a_pos_location, 3, GL_FLOAT, false, 12, 0);
+
+				gl.glDrawArrays(GL_LINES, 0, section.shot3ds.size() * 2);
+			}
+
+			gl.glDisable(GL_DEPTH_TEST);
+			gl.glDisable(GL.GL_STENCIL_TEST);
+			gl.glDisableVertexAttribArray(a_pos_location);
+
+			gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
+		}
+
+		@Override
+		public void init(GL2ES2 gl) {
+			String vertShader, fragShader;
+
+			if (program <= 0) {
+				vertShader = createVertexShader();
+				fragShader = createFragmentShader();
+
+				program = JoglUtils.loadProgram(gl, vertShader, fragShader);
+
+				m_location = gl.glGetUniformLocation(program, "m");
+				v_location = gl.glGetUniformLocation(program, "v");
+				p_location = gl.glGetUniformLocation(program, "p");
+
+				a_pos_location = gl.glGetAttribLocation(program, "a_pos");
+
+				u_color_location = gl.glGetUniformLocation(program, "u_color");
 			}
 		}
 	}
@@ -408,6 +537,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		private int u_loParam_location;
 		private int u_hiParam_location;
 		private int u_paramSampler_location;
+		boolean drawLines = false;
 
 		@Override
 		protected void beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
@@ -504,8 +634,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			if (section.param0 == null) {
 				return;
 			}
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
-			gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+			if (drawLines) {
+				gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
+				gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+			}
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
 			gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT,
 					0);
@@ -548,6 +680,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		final float[] tempPoint = new float[3];
 
 		int vertexCount;
+		JoglBuffer centerlineGeometry;
 		JoglBuffer geometry;
 		JoglBuffer stationAttrs;
 		final AtomicBoolean stationAttrsNeedRebuffering = new AtomicBoolean();
@@ -585,6 +718,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			BufferHelper geomHelper = new BufferHelper();
 			BufferHelper fillIndicesHelper = new BufferHelper();
 			BufferHelper lineIndicesHelper = new BufferHelper();
+			BufferHelper centerlineGeomHelper = new BufferHelper();
 
 			for (Shot3d shot3d : shot3ds) {
 				shot3d.section = this;
@@ -598,6 +732,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				}
 
 				putValues(geomHelper, shot.vertices, shot.normals);
+				centerlineGeomHelper.putAsFloats(shot.fromStation.position);
+				centerlineGeomHelper.putAsFloats(shot.toStation.position);
 
 				for (int index : shot.indices) {
 					fillIndicesHelper.put(index + shot3d.indexInVertices);
@@ -610,11 +746,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			geometry = new JoglBuffer().buffer(geomHelper.toByteBuffer());
 			fillIndices = new JoglBuffer().buffer(fillIndicesHelper.toByteBuffer());
 			lineIndices = new JoglBuffer().buffer(lineIndicesHelper.toByteBuffer());
+			centerlineGeometry = new JoglBuffer().buffer(centerlineGeomHelper.toByteBuffer());
 
 			geometry.buffer().position(0);
 			stationAttrs.buffer().position(0);
 			fillIndices.buffer().position(0);
 			lineIndices.buffer().position(0);
+			centerlineGeometry.buffer().position(0);
 		}
 
 		void calcParam0(Survey3dModel model, ColorParam param) {
@@ -732,7 +870,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				label.width = (float) bounds.getWidth();
 				label.height = (float) bounds.getHeight();
 				label.xOffset = (float) -bounds.getWidth() / 2;
-				label.yOffset = (float) -bounds.getHeight() / 2;
+				label.yOffset = (float) bounds.getHeight() / 2;
 			}
 		}
 
@@ -768,7 +906,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			for (StationKey key : stationsToLabel) {
 				Label label = stationLabels.get(key);
 				Vecmath.mpmul(worldToScreen, label.position, tempPoint);
-				if (tempPoint[2] > 1) {
+				if (tempPoint[2] < -1) {
 					continue;
 				}
 				textRenderer.draw(label.text,
@@ -1421,6 +1559,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Param0SectionRenderer param0SectionRenderer = new Param0SectionRenderer();
 
+	CenterlineRenderer centerlineRenderer = new CenterlineRenderer();
+
 	AtomicReference<MultiMap<SectionRenderer, Section>> renderers = new AtomicReference<>();
 
 	final Set<ShotKey> selectedShots = new HashSet<>();
@@ -1443,6 +1583,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	boolean paramTextureNeedsUpdate;
 
 	Uniform4fv highlightColors;
+
+	Uniform4fv centerlineColor;
 
 	Uniform3fv depthAxis;
 
@@ -1478,6 +1620,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				0f, 1f, 1f, 0.5f,
 				0f, 1f, 1f, 0.5f);
 		highlightColors.count(3);
+
+		centerlineColor = new Uniform4fv();
+		centerlineColor.value(1f, 1f, 1f, 1f);
 
 		depthAxis = new Uniform3fv().name("u_axis").value(0f, -1f, 0f);
 		depthOrigin = new Uniform3fv().name("u_origin").value(0f, 0f, 0f);
@@ -1611,14 +1756,39 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			updateParamTexture(gl);
 			paramTextureNeedsUpdate = false;
 		}
-		MultiMap<SectionRenderer, Section> renderers = this.renderers.get();
+		//		MultiMap<SectionRenderer, Section> renderers = this.renderers.get();
 
-		for (SectionRenderer renderer : renderers.keySet()) {
-			renderer.draw(renderers.get(renderer), context, gl, m, n);
-		}
+		OneParamSectionRenderer renderer = colorParam == ColorParam.DEPTH
+				? axialSectionRenderer : param0SectionRenderer;
+
+		gl.glClear(GL.GL_STENCIL_BUFFER_BIT);
+
+		gl.glDisable(GL.GL_STENCIL_TEST);
+		gl.glEnable(GL.GL_CULL_FACE);
+		gl.glCullFace(GL.GL_FRONT);
+
+		//		for (SectionRenderer renderer : renderers.keySet()) {
+		//			renderer.draw(renderers.get(renderer), context, gl, m, n);
+		//		}
+
+		renderer.drawLines = false;
+		renderer.draw(sections, context, gl, m, n);
+		centerlineRenderer.draw(sections, context, gl, m, n);
+
+		gl.glEnable(GL.GL_STENCIL_TEST);
+		gl.glStencilFunc(GL.GL_EQUAL, 0, 1);
+		gl.glStencilOp(GL.GL_KEEP, GL.GL_KEEP, GL.GL_REPLACE);
+
+		gl.glEnable(GL.GL_CULL_FACE);
+		gl.glCullFace(GL.GL_BACK);
+		renderer.drawLines = true;
+		renderer.draw(sections, context, gl, m, n);
+
+		gl.glDisable(GL.GL_CULL_FACE);
+		gl.glDisable(GL.GL_STENCIL_TEST);
 
 		if (showStationLabels) {
-			textRenderer.beginRendering(context.width(), context.height());
+			textRenderer.beginRendering(context.width(), context.height(), false);
 
 			for (Section section : sections) {
 				section.drawLabels(context, gl, m, n, textRenderer);
@@ -1773,6 +1943,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			if (colorParam == ColorParam.DEPTH) {
 				section.renderers.add(axialSectionRenderer);
+				//				section.renderers.add(centerlineRenderer);
 			} else {
 				if (colorParam.isStationMetric()) {
 					section.calcParam0(Survey3dModel.this, colorParam);

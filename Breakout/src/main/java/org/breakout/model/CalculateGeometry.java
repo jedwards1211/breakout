@@ -263,16 +263,16 @@ public class CalculateGeometry {
 				int k = 0;
 				for (int i = 0; i < fromVertexCount; i++) {
 					indices[k++] = i;
-					indices[k++] = fromVertexCount;
 					indices[k++] = (i + 1) % fromVertexCount;
+					indices[k++] = fromVertexCount;
 				}
 			} else if (fromVertexCount == 1) {
 				int[] indices = shot.indices = new int[toVertexCount * 3];
 				int k = 0;
 				for (int i = 0; i < toVertexCount; i++) {
 					indices[k++] = i + 1;
-					indices[k++] = 0;
 					indices[k++] = (i + 1) % toVertexCount + 1;
+					indices[k++] = 0;
 				}
 			} else if (fromVertexCount == toVertexCount) {
 				int triangleCount = fromVertexCount + toVertexCount;
@@ -286,24 +286,24 @@ public class CalculateGeometry {
 				int k = 0;
 				for (int i = 0; i < fromVertexCount; i++) {
 					indices[k++] = i;
-					indices[k++] = i + fromVertexCount;
 					indices[k++] = (i + 1) % fromVertexCount;
+					indices[k++] = i + fromVertexCount;
 					indices[k++] = fromVertexCount + (i + 1) % toVertexCount;
-					indices[k++] = (i + 1) % fromVertexCount;
 					indices[k++] = i + fromVertexCount;
+					indices[k++] = (i + 1) % fromVertexCount;
 				}
 				if (shot.fromStation.isDeadEnd()) {
 					for (int i = 2; i < fromVertexCount; i++) {
 						indices[k++] = 0;
-						indices[k++] = i - 1;
 						indices[k++] = i;
+						indices[k++] = i - 1;
 					}
 				}
 				if (shot.toStation.isDeadEnd()) {
 					for (int i = 2; i < toVertexCount; i++) {
 						indices[k++] = fromVertexCount;
-						indices[k++] = fromVertexCount + i - 1;
 						indices[k++] = fromVertexCount + i;
+						indices[k++] = fromVertexCount + i - 1;
 					}
 				}
 			}

@@ -421,8 +421,9 @@ public class JoglExportImageDialog extends JDialog {
 			viewState.update(viewSettings, totalWidth, totalHeight);
 
 			GL3 gl3 = (GL3) gl;
-			int renderingFbo = framebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, desiredNumSamples);
-			int blitFbo = blitFramebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, 1);
+			int renderingFbo = framebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, desiredNumSamples,
+					desiredUseStencilBuffer);
+			int blitFbo = blitFramebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, 1, desiredUseStencilBuffer);
 
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
 
@@ -439,7 +440,7 @@ public class JoglExportImageDialog extends JDialog {
 			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, blitFbo);
 
 			BufferedImageInt tile = DirectDataBufferInt.createBufferedImage(tileWidth, tileHeight,
-					BufferedImage.TYPE_INT_ARGB, new Point(0, 0), new Hashtable<Object, Object>());
+					BufferedImage.TYPE_INT_ARGB, new Point(0, 0), new Hashtable<>());
 			DirectDataBufferInt tileBuffer = (DirectDataBufferInt) tile.getRaster().getDataBuffer();
 
 			gl.glReadPixels(0, 0, tileWidth, tileHeight, GL_BGRA, GL_UNSIGNED_BYTE, tileBuffer.getData());
@@ -543,7 +544,7 @@ public class JoglExportImageDialog extends JDialog {
 
 				JoglExportImageDialog dialog = new JoglExportImageDialog(null, new I18n());
 
-				Binder<QObject<JoglExportImageDialogModel>> binder = new DefaultBinder<QObject<JoglExportImageDialogModel>>();
+				Binder<QObject<JoglExportImageDialogModel>> binder = new DefaultBinder<>();
 				QObject<JoglExportImageDialogModel> model = JoglExportImageDialogModel.instance.newObject();
 
 				model.set(JoglExportImageDialogModel.outputDirectory, "screenshots");
@@ -642,7 +643,7 @@ public class JoglExportImageDialog extends JDialog {
 
 	boolean updating;
 
-	BinderWrapper<QObject<JoglExportImageDialogModel>> binder = new BinderWrapper<QObject<JoglExportImageDialogModel>>();
+	BinderWrapper<QObject<JoglExportImageDialogModel>> binder = new BinderWrapper<>();
 
 	QObjectAttributeBinder<String> outputDirectoryBinder = QObjectAttributeBinder
 			.bind(
@@ -784,7 +785,7 @@ public class JoglExportImageDialog extends JDialog {
 		resolutionLabel = new JLabel();
 		localizer.setText(resolutionLabel, "resolutionLabel.text");
 		resolutionSpinner = createBigDecimalSpinner(4, 2, new BigDecimal(50));
-		resolutionUnitSelector = new DefaultSelector<JoglExportImageDialogModel.ResolutionUnit>();
+		resolutionUnitSelector = new DefaultSelector<>();
 		resolutionUnitSelector.setAvailableValues(JoglExportImageDialogModel.ResolutionUnit.values());
 
 		printSizeHeaderLabel = new JLabel();
@@ -793,7 +794,7 @@ public class JoglExportImageDialog extends JDialog {
 		printWidthLabel = new JLabel();
 		localizer.setText(printWidthLabel, "widthLabel.text");
 		printWidthSpinner = createBigDecimalSpinner(4, 2, new BigDecimal(1));
-		printUnitSelector = new DefaultSelector<JoglExportImageDialogModel.PrintSizeUnit>();
+		printUnitSelector = new DefaultSelector<>();
 		printUnitSelector.setAvailableValues(JoglExportImageDialogModel.PrintSizeUnit.values());
 
 		printHeightLabel = new JLabel();
