@@ -24,6 +24,7 @@ package org.andork.awt.layout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Point;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -46,6 +47,12 @@ public class DrawerAutoshowController extends MouseAdapter {
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
+		if ((e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK |
+				InputEvent.BUTTON2_DOWN_MASK |
+				InputEvent.BUTTON3_DOWN_MASK)) != 0) {
+			return;
+		}
+
 		Component c = e.getComponent();
 
 		while (c != null && (!(c instanceof Container) ||
