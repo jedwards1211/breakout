@@ -886,7 +886,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		float minDistanceForSpacing(JoglDrawContext context, float spacing) {
 			// TODO: something view-dependent and less arbitrary
-			return spacing * 30;
+			return spacing * 40;
 		}
 
 		public void updateLabels(Font font, FontRenderContext frc) {
@@ -949,10 +949,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			} else {
 				float labelDistance = (float) Math.sqrt(labelDistanceSquared);
 				float pushedForwardDistance = labelDistance - label.pushForward;
-				float scaleFactor = pushedForwardDistance / labelDistance;
-				tempPoint[0] *= scaleFactor;
-				tempPoint[1] *= scaleFactor;
-				tempPoint[2] *= scaleFactor;
+				float pushForwardFactor = pushedForwardDistance / labelDistance;
+				tempPoint[0] *= pushForwardFactor;
+				tempPoint[1] *= pushForwardFactor;
+				tempPoint[2] *= pushForwardFactor;
 			}
 
 			Vecmath.mpmul(context.viewToScreen(), tempPoint);
@@ -960,13 +960,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				// label is outside of clipping bounds
 				return;
 			}
-			float x = tempPoint[0] + label.xOffset;
-			float y = tempPoint[1] + label.yOffset;
-			float[] labelMbr = {
-					x - label.width * scale / 2,
-					y,
-					x + label.width * scale / 2,
-					y + label.height * scale };
+			float x = tempPoint[0] + label.xOffset * scale;
+			float y = tempPoint[1] + label.yOffset * scale;
+			float[] labelMbr = { x, y, x + label.width * scale, y + label.height * scale };
 			if (labelTree.containsLeafIntersecting(labelMbr)) {
 				return;
 			} else {

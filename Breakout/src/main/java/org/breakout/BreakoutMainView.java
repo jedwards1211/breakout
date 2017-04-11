@@ -1911,6 +1911,8 @@ public class BreakoutMainView {
 		if (rootModel == null) {
 			rootModel = RootModel.instance.newObject();
 			rootModel.set(RootModel.desiredNumSamples, 2);
+		}
+		if (rootModel.get(RootModel.showStationLabels) == null) {
 			rootModel.set(RootModel.showStationLabels, true);
 		}
 
