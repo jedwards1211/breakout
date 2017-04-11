@@ -172,6 +172,52 @@ public class Rectmath {
 				r1[3] >= r2[0] && r1[4] >= r2[1] && r1[5] >= r2[2];
 	}
 
+	public static double minDistanceSquared3(double[] r, double[] p) {
+		double dx = p[0] < r[0]
+				? r[0] - p[0]
+				: p[0] <= r[3]
+						? 0
+						: p[0] - r[3];
+		double dy = p[1] < r[1]
+				? r[1] - p[1]
+				: p[1] <= r[4]
+						? 1
+						: p[1] - r[4];
+		double dz = p[2] < r[2]
+				? r[2] - p[2]
+				: p[2] <= r[5]
+						? 0
+						: p[2] - r[5];
+		return dx * dx + dy * dy + dz * dz;
+	}
+
+	public static double minDistance3(double[] r, double[] p) {
+		return Math.sqrt(minDistanceSquared3(r, p));
+	}
+
+	public static float minDistanceSquared3(float[] r, float[] p) {
+		float dx = p[0] < r[0]
+				? r[0] - p[0]
+				: p[0] <= r[3]
+						? 0
+						: p[0] - r[3];
+		float dy = p[1] < r[1]
+				? r[1] - p[1]
+				: p[1] <= r[4]
+						? 1
+						: p[1] - r[4];
+		float dz = p[2] < r[2]
+				? r[2] - p[2]
+				: p[2] <= r[5]
+						? 0
+						: p[2] - r[5];
+		return dx * dx + dy * dy + dz * dz;
+	}
+
+	public static float minDistance3(float[] r, float[] p) {
+		return (float) Math.sqrt(minDistanceSquared3(r, p));
+	}
+
 	public static double nmax(double a, double b) {
 		return a > b || Double.isNaN(b) ? a : b;
 	}

@@ -659,6 +659,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		float xOffset;
 		float yOffset;
 		float pushForward;
+		float maxSpacing;
 		final String text;
 
 		public Label(CalcStation station) {
@@ -719,9 +720,17 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			Collections.sort(stationsToLabelSpacings);
 			this.stationsToLabel = new HashMap<>();
 			for (Map.Entry<Float, Set<StationKey>> entry : stationsToLabel.entrySet()) {
+				float spacing = entry.getKey();
 				Set<StationKey> stationsToLabelForSection = new HashSet<>(entry.getValue());
 				stationsToLabelForSection.retainAll(stationLabels.keySet());
-				this.stationsToLabel.put(entry.getKey(), stationsToLabelForSection);
+				this.stationsToLabel.put(spacing, stationsToLabelForSection);
+				for (StationKey key : stationsToLabelForSection) {
+					Label stationLabel = stationLabels.get(key);
+					if (stationLabel == null) {
+						continue;
+					}
+					stationLabel.maxSpacing = Math.max(spacing, stationLabel.maxSpacing);
+				}
 			}
 			populateData();
 		}
@@ -875,6 +884,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			lineIndices.dispose(gl);
 		}
 
+		float minDistanceForSpacing(JoglDrawContext context, float spacing) {
+			// TODO: something view-dependent and less arbitrary
+			return spacing * 30;
+		}
+
 		public void updateLabels(Font font, FontRenderContext frc) {
 			for (Map.Entry<StationKey, Label> entry : stationLabels.entrySet()) {
 				Label label = entry.getValue();
@@ -886,66 +900,83 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		}
 
-		public void drawLabels(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n, TextRenderer textRenderer) {
-			float[] viewMatrix = context.viewMatrix();
-			float[] viewToScreen = context.viewToScreen();
-
-			double centerDistance = 0;
-			Arrays.fill(tempPoint, 0);
-			Vecmath.mpmul(context.inverseViewMatrix(), tempPoint);
-
-			tempPoint[0] = (mbr[0] + mbr[3]) * 0.5f;
-			tempPoint[1] = (mbr[1] + mbr[4]) * 0.5f;
-			tempPoint[2] = (mbr[2] + mbr[5]) * 0.5f;
-			Vecmath.mpmul(viewMatrix, tempPoint);
-			centerDistance = tempPoint[2];
-
-			float factor = 20;
+		public void drawLabels(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n, TextRenderer textRenderer,
+				RfStarTree<Void> labelTree, Set<StationKey> stationsToEmphasize) {
+			context.getViewPoint(tempPoint);
+			float minDistance = Rectmath.minDistance3(mbr, tempPoint);
 
 			Set<StationKey> stationsToLabel = stationLabels.keySet();
 			for (int i = stationsToLabelSpacings.size() - 1; i >= 0; i--) {
 				float spacing = stationsToLabelSpacings.get(i);
-				if (-centerDistance > spacing * factor) {
+				if (minDistance > minDistanceForSpacing(context, spacing)) {
 					stationsToLabel = this.stationsToLabel.get(spacing);
 					break;
 				}
 			}
-			if (stationsToLabel == null) {
+
+			for (StationKey key : stationsToEmphasize) {
+				if (!stationsToLabel.contains(key)) {
+					Label label = stationLabels.get(key);
+					if (label != null) {
+						drawLabel(label, context, gl, m, n, textRenderer, labelTree, true, 1f);
+					}
+				}
+			}
+			for (StationKey key : stationsToLabel) {
+				Label label = stationLabels.get(key);
+				boolean emphasize = stationsToEmphasize.contains(key);
+				drawLabel(label, context, gl, m, n, textRenderer, labelTree, emphasize, emphasize ? 1f : 0.5f);
+			}
+		}
+
+		void drawLabel(Label label, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
+				TextRenderer textRenderer,
+				RfStarTree<Void> labelTree, boolean force, float scale) {
+			Vecmath.mpmulAffine(context.viewMatrix(), label.position, tempPoint);
+			if (tempPoint[2] > 0) {
+				// label is behind camera
+				return;
+			}
+			float labelDistanceSquared = Vecmath.dot3(tempPoint, tempPoint);
+			float minDistanceForLabel = minDistanceForSpacing(context, label.maxSpacing);
+			if (labelDistanceSquared > minDistanceForLabel * minDistanceForLabel && !force) {
 				return;
 			}
 
-			for (StationKey key : stationsToLabel) {
-				Label label = stationLabels.get(key);
-				Vecmath.mpmulAffine(viewMatrix, label.position, tempPoint);
-				if (tempPoint[2] > 0) {
-					// label is behind camera
-					continue;
-				}
-				float labelDistanceSquared = Vecmath.dot3(tempPoint, tempPoint);
-				float z = Float.NaN;
-				if (labelDistanceSquared < label.pushForward * label.pushForward) {
-					z = 0.99999f;
-				} else {
-					float labelDistance = (float) Math.sqrt(labelDistanceSquared);
-					float pushedForwardDistance = labelDistance - label.pushForward;
-					float scaleFactor = pushedForwardDistance / labelDistance;
-					tempPoint[0] *= scaleFactor;
-					tempPoint[1] *= scaleFactor;
-					tempPoint[2] *= scaleFactor;
-				}
-
-				Vecmath.mpmul(viewToScreen, tempPoint);
-				if (tempPoint[2] < -1) {
-					// label is outside of clipping bounds
-					continue;
-				}
-				float x = tempPoint[0] + label.xOffset;
-				float y = tempPoint[1] + label.yOffset;
-				if (Float.isNaN(z)) {
-					z = tempPoint[2];
-				}
-				textRenderer.draw3D(label.text, x, y, z, 1);
+			float z = Float.NaN;
+			if (labelDistanceSquared < label.pushForward * label.pushForward) {
+				z = 0.99999f;
+			} else {
+				float labelDistance = (float) Math.sqrt(labelDistanceSquared);
+				float pushedForwardDistance = labelDistance - label.pushForward;
+				float scaleFactor = pushedForwardDistance / labelDistance;
+				tempPoint[0] *= scaleFactor;
+				tempPoint[1] *= scaleFactor;
+				tempPoint[2] *= scaleFactor;
 			}
+
+			Vecmath.mpmul(context.viewToScreen(), tempPoint);
+			if (tempPoint[2] < -1) {
+				// label is outside of clipping bounds
+				return;
+			}
+			float x = tempPoint[0] + label.xOffset;
+			float y = tempPoint[1] + label.yOffset;
+			float[] labelMbr = {
+					x - label.width * scale / 2,
+					y,
+					x + label.width * scale / 2,
+					y + label.height * scale };
+			if (labelTree.containsLeafIntersecting(labelMbr)) {
+				return;
+			} else {
+				Leaf<Void> leaf = new Leaf<>(labelMbr, null);
+				labelTree.insert(leaf);
+			}
+			if (Float.isNaN(z)) {
+				z = tempPoint[2];
+			}
+			textRenderer.draw3D(label.text, x, y, z, scale);
 		}
 	}
 
@@ -1410,7 +1441,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		int sectionLevel = Math.min(tree.getRoot().level(), 3);
 
 		Map<Float, Set<StationKey>> stationsToLabel = computeStationsToLabel(
-				project.stations.values(), Arrays.asList(2f, 5f, 10f, 20f, 40f, 80f, 160f, 320f));
+				project.stations.values(), Arrays.asList(5f, 10f, 20f, 40f, 80f, 160f, 320f));
+		stationsToLabel.put(2f, project.stations.keySet());
 
 		Set<Section> sections = createSections(tree, sectionLevel, stationsToLabel, rootSubtask.beginSubtask(1));
 		if (rootSubtask.isCanceling()) {
@@ -1418,11 +1450,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		Font labelFont = new Font("Arial", Font.BOLD, 12);
+		Font labelFont = new Font("Arial", Font.BOLD, 24);
 		FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
 		for (Section section : sections) {
 			section.updateLabels(labelFont, frc);
 		}
+
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
@@ -1819,8 +1852,16 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glEnable(GL.GL_DEPTH_TEST);
 			textRenderer.beginRendering(context.width(), context.height(), false);
 
+			RfStarTree<Void> labelTree = new RfStarTree<>(2, 10, 3, 3);
+			Set<StationKey> stationsToEmphasize = Collections.emptySet();
+			if (hoveredShot != null) {
+				stationsToEmphasize = new HashSet<>();
+				stationsToEmphasize.add(hoveredShot.shot.fromKey());
+				stationsToEmphasize.add(hoveredShot.shot.toKey());
+			}
+
 			for (Section section : sections) {
-				section.drawLabels(context, gl, m, n, textRenderer);
+				section.drawLabels(context, gl, m, n, textRenderer, labelTree, stationsToEmphasize);
 			}
 
 			textRenderer.endRendering();
