@@ -64,7 +64,6 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer {
 			"void main() {\n" +
 			"   float sample;\n" +
 			"   sample = texture(Texture,Coord0).r;\n" +
-			"   if (sample == 0) discard;\n" +
 			"   FragColor = Color * sample;\n" +
 			"}\n";
 
