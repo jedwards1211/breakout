@@ -139,7 +139,6 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 
 	public void clear() {
 		rows.clear();
-		fixEndRows();
 	}
 
 	@Override
@@ -169,15 +168,12 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	}
 
 	private void fixEndRows() {
-		int startOfEmptyRows = getRowCount();
+		int startOfEmptyRows = rows.size();
 		while (startOfEmptyRows > 0 && isEmpty(startOfEmptyRows - 1)) {
 			startOfEmptyRows--;
 		}
-
-		if (startOfEmptyRows == getRowCount()) {
-			rows.add(new SurveyRow());
-		} else if (startOfEmptyRows <= getRowCount() - 2) {
-			rows.subList(startOfEmptyRows, getRowCount() - 1).clear();
+		if (startOfEmptyRows <= rows.size()) {
+			rows.subList(startOfEmptyRows, rows.size()).clear();
 		}
 	}
 
@@ -200,22 +196,16 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	}
 
 	public void setRow(int index, SurveyRow SurveyRow) {
-		while (index >= getRowCount()) {
-			rows.add(new SurveyRow());
-		}
 		rows.set(index, SurveyRow);
-		if (index >= getRowCount() - 2) {
+		if (index == rows.size() - 1) {
 			fixEndRows();
 		}
 	}
 
 	@Override
-	public void setValueAt(Object aValue, int SurveyRow, int column) {
-		while (SurveyRow >= getRowCount()) {
-			rows.add(new SurveyRow());
-		}
-		Object prevValue = getValueAt(SurveyRow, column);
-		super.setValueAt(aValue, SurveyRow, column);
+	public void setValueAt(Object aValue, int row, int column) {
+		Object prevValue = getValueAt(row, column);
+		super.setValueAt(aValue, row, column);
 		if (prevValue == null || "".equals(prevValue) != (aValue == null || "".equals(aValue))) {
 			fixEndRows();
 		}
