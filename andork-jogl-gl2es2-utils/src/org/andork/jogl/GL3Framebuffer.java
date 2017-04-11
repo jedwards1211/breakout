@@ -36,32 +36,32 @@ public class GL3Framebuffer implements GL3Resource {
 	private long lastDisplay;
 
 	private int maxNumSamples = 0;
-	private int currentNumSamples = 1;
-	private boolean currentUseStencilBuffer = false;
-	private int renderingFboWidth;
-	private int renderingFboHeight;
+	private int numSamples = 1;
+	private boolean useStencilBuffer = false;
+	private int width;
+	private int height;
 
-	private int renderingFbo = -1;
-	private int renderingColorBuffer = -1;
-	private int renderingDepthBuffer = -1;
+	private int framebuffer = -1;
+	private int colorBuffer = -1;
+	private int depthBuffer = -1;
 
 	private void destroyOffscreenBuffers(GL3 gl) {
 		int[] temps = new int[2];
-		if (renderingFbo >= 0) {
-			temps[0] = renderingFbo;
+		if (framebuffer >= 0) {
+			temps[0] = framebuffer;
 			gl.glDeleteFramebuffers(1, temps, 0);
-			renderingFbo = -1;
+			framebuffer = -1;
 		}
 		int k = 0;
-		if (renderingColorBuffer >= 0) {
-			temps[k++] = renderingColorBuffer;
+		if (colorBuffer >= 0) {
+			temps[k++] = colorBuffer;
 		}
-		if (renderingDepthBuffer >= 0) {
-			temps[k++] = renderingDepthBuffer;
+		if (depthBuffer >= 0) {
+			temps[k++] = depthBuffer;
 		}
 		gl.glDeleteRenderbuffers(k, temps, 0);
-		renderingColorBuffer = -1;
-		renderingDepthBuffer = -1;
+		colorBuffer = -1;
+		depthBuffer = -1;
 	}
 
 	@Override
@@ -94,62 +94,62 @@ public class GL3Framebuffer implements GL3Resource {
 
 		GL3 gl3 = gl;
 
-		if (renderingFbo < 0 || renderingFboWidth < width || renderingFboHeight < height
-				|| targetNumSamples != currentNumSamples
-				|| desiredUseStencilBuffer != currentUseStencilBuffer
-				|| elapsed >= 1000 && (renderingFboWidth != width || renderingFboHeight != height)) {
+		if (framebuffer < 0 || this.width < width || this.height < height
+				|| targetNumSamples != numSamples
+				|| desiredUseStencilBuffer != useStencilBuffer
+				|| elapsed >= 1000 && (this.width != width || this.height != height)) {
 			destroyOffscreenBuffers(gl3);
 
 			int[] temps = new int[3];
-			renderingFboWidth = width;
-			renderingFboHeight = height;
+			this.width = width;
+			this.height = height;
 
 			gl3.glGenFramebuffers(1, temps, 0);
-			renderingFbo = temps[0];
-			gl3.glBindFramebuffer(GL.GL_FRAMEBUFFER, renderingFbo);
+			framebuffer = temps[0];
+			gl3.glBindFramebuffer(GL.GL_FRAMEBUFFER, framebuffer);
 
 			int numBuffers = 2;
 			gl3.glGenRenderbuffers(numBuffers, temps, 0);
-			renderingColorBuffer = temps[0];
-			renderingDepthBuffer = temps[1];
+			colorBuffer = temps[0];
+			depthBuffer = temps[1];
 
-			currentNumSamples = targetNumSamples;
-			currentUseStencilBuffer = desiredUseStencilBuffer;
+			numSamples = targetNumSamples;
+			useStencilBuffer = desiredUseStencilBuffer;
 
-			if (currentNumSamples > 1) {
-				gl3.glBindRenderbuffer(GL_RENDERBUFFER, renderingColorBuffer);
-				gl3.glRenderbufferStorageMultisample(GL_RENDERBUFFER, currentNumSamples, GL.GL_RGBA8,
-						renderingFboWidth, renderingFboHeight);
+			if (numSamples > 1) {
+				gl3.glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
+				gl3.glRenderbufferStorageMultisample(GL_RENDERBUFFER, numSamples, GL.GL_RGBA8,
+						width, height);
 
-				gl3.glBindRenderbuffer(GL_RENDERBUFFER, renderingDepthBuffer);
-				if (currentUseStencilBuffer) {
-					gl3.glRenderbufferStorageMultisample(GL_RENDERBUFFER, currentNumSamples,
-							GL.GL_DEPTH24_STENCIL8, renderingFboWidth, renderingFboHeight);
+				gl3.glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+				if (useStencilBuffer) {
+					gl3.glRenderbufferStorageMultisample(GL_RENDERBUFFER, numSamples,
+							GL.GL_DEPTH24_STENCIL8, width, height);
 				} else {
-					gl3.glRenderbufferStorageMultisample(GL_RENDERBUFFER, currentNumSamples,
-							GL.GL_DEPTH_COMPONENT24, renderingFboWidth, renderingFboHeight);
+					gl3.glRenderbufferStorageMultisample(GL_RENDERBUFFER, numSamples,
+							GL.GL_DEPTH_COMPONENT24, width, height);
 				}
 			} else {
-				gl3.glBindRenderbuffer(GL_RENDERBUFFER, renderingColorBuffer);
-				gl3.glRenderbufferStorage(GL_RENDERBUFFER, GL.GL_RGBA8, renderingFboWidth, renderingFboHeight);
+				gl3.glBindRenderbuffer(GL_RENDERBUFFER, colorBuffer);
+				gl3.glRenderbufferStorage(GL_RENDERBUFFER, GL.GL_RGBA8, width, height);
 
-				gl3.glBindRenderbuffer(GL_RENDERBUFFER, renderingDepthBuffer);
-				if (currentUseStencilBuffer) {
+				gl3.glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
+				if (useStencilBuffer) {
 					gl3.glRenderbufferStorage(GL_RENDERBUFFER, GL.GL_DEPTH24_STENCIL8,
-							renderingFboWidth, renderingFboHeight);
+							width, height);
 				} else {
 					gl3.glRenderbufferStorage(GL_RENDERBUFFER, GL.GL_DEPTH_COMPONENT24,
-							renderingFboWidth, renderingFboHeight);
+							width, height);
 				}
 			}
 
-			gl3.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderingColorBuffer);
-			if (currentUseStencilBuffer) {
+			gl3.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorBuffer);
+			if (useStencilBuffer) {
 				gl3.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL2ES3.GL_DEPTH_STENCIL_ATTACHMENT,
-						GL_RENDERBUFFER, renderingDepthBuffer);
+						GL_RENDERBUFFER, depthBuffer);
 			} else {
 				gl3.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-						GL_RENDERBUFFER, renderingDepthBuffer);
+						GL_RENDERBUFFER, depthBuffer);
 			}
 
 			int status = gl3.glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -195,6 +195,6 @@ public class GL3Framebuffer implements GL3Resource {
 			}
 		}
 
-		return renderingFbo;
+		return framebuffer;
 	}
 }

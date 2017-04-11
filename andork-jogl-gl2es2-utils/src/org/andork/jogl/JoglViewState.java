@@ -76,6 +76,16 @@ public class JoglViewState implements JoglDrawContext {
 	private final float[] screenToWorld = newMat4f();
 
 	/**
+	 * Transforms from screen coordinates to view coordinates.
+	 */
+	private final float[] screenToView = newMat4f();
+
+	/**
+	 * Transforms from view coordinates to screen coordinates.
+	 */
+	private final float[] viewToScreen = newMat4f();
+
+	/**
 	 * Transforms from screen coordinates to a ray in virtual world coordinates.
 	 */
 	private final PickXform pickXform = new PickXform();
@@ -142,10 +152,10 @@ public class JoglViewState implements JoglDrawContext {
 			setIdentity(pi);
 		}
 
-		mmul(p, v, worldToScreen);
-		mmul(viewport, worldToScreen, worldToScreen);
-		mmul(pi, inverseViewport, screenToWorld);
-		mmul(vi, screenToWorld, screenToWorld);
+		mmul(viewport, p, viewToScreen);
+		mmul(viewToScreen, v, worldToScreen);
+		mmul(pi, inverseViewport, screenToView);
+		mmul(vi, screenToView, screenToWorld);
 
 		pickXform.calculate(p, v);
 	}
@@ -168,5 +178,15 @@ public class JoglViewState implements JoglDrawContext {
 	@Override
 	public float[] screenToWorld() {
 		return screenToWorld;
+	}
+
+	@Override
+	public float[] viewToScreen() {
+		return viewToScreen;
+	}
+
+	@Override
+	public float[] screenToView() {
+		return screenToView;
 	}
 }

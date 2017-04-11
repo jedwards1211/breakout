@@ -1,55 +1,72 @@
 /*
  * Copyright 2012 JogAmp Community. All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, are
- * permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
  *
- *    1. Redistributions of source code must retain the above copyright notice, this list of
- *       conditions and the following disclaimer.
+ * 1. Redistributions of source code must retain the above copyright notice,
+ * this list of conditions and the following disclaimer.
  *
- *    2. Redistributions in binary form must reproduce the above copyright notice, this list
- *       of conditions and the following disclaimer in the documentation and/or other materials
- *       provided with the distribution.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY JogAmp Community ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
- * FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL JogAmp Community OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
- * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY JogAmp Community ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
+ * EVENT SHALL JogAmp Community OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * The views and conclusions contained in the software and documentation are those of the
- * authors and should not be interpreted as representing official policies, either expressed
- * or implied, of JogAmp Community.
+ * The views and conclusions contained in the software and documentation are
+ * those of the authors and should not be interpreted as representing official
+ * policies, either expressed or implied, of JogAmp Community.
  */
 package jogamp.opengl.util.awt.text;
 
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL3;
 
-
 /**
  * Utility for drawing glyphs with OpenGL 3.
  */
 /* @VisibleForTesting */
 /* @NotThreadSafe */
-public final class GlyphRendererGL3 extends AbstractGlyphRenderer
-{
+public final class GlyphRendererGL3 extends AbstractGlyphRenderer {
 
 	/**
 	 * Source code of vertex shader.
 	 */
 	/* @Nonnull */
-	private static final String VERT_SOURCE = "#version 140\n" + "uniform mat4 MVPMatrix;\n" + "in vec4 MCVertex;\n" + "in vec2 TexCoord0;\n" + "out vec2 Coord0;\n" + "void main() {\n" + "   gl_Position = MVPMatrix * MCVertex;\n" + "   Coord0 = TexCoord0;\n" + "}\n";
+	private static final String VERT_SOURCE = "#version 140\n" +
+			"uniform mat4 MVPMatrix;\n" +
+			"in vec4 MCVertex;\n" +
+			"in vec2 TexCoord0;\n" +
+			"out vec2 Coord0;\n" +
+			"void main() {\n" +
+			"   gl_Position = MVPMatrix * MCVertex;\n" +
+			"   Coord0 = TexCoord0;\n" +
+			"}\n";
 
 	/**
 	 * Source code of fragment shader.
 	 */
 	/* @Nonnull */
-	private static final String FRAG_SOURCE = "#version 140\n" + "uniform sampler2D Texture;\n" + "uniform vec4 Color=vec4(1,1,1,1);\n" + "in vec2 Coord0;\n" + "out vec4 FragColor;\n" + "void main() {\n" + "   float sample;\n" + "   sample = texture(Texture,Coord0).r;\n" + "   FragColor = Color * sample;\n" + "}\n";
+	private static final String FRAG_SOURCE = "#version 140\n" +
+			"uniform sampler2D Texture;\n" +
+			"uniform vec4 Color=vec4(1,1,1,1);\n" +
+			"in vec2 Coord0;\n" +
+			"out vec4 FragColor;\n" +
+			"void main() {\n" +
+			"   float sample;\n" +
+			"   sample = texture(Texture,Coord0).r;\n" +
+			"   if (sample == 0) discard;\n" +
+			"   FragColor = Color * sample;\n" +
+			"}\n";
 
 	/**
 	 * True if blending needs to be reset.
@@ -102,21 +119,19 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 	 *             if context is null
 	 */
 	/* @VisibleForTesting */
-	public GlyphRendererGL3(/* @Nonnull */ final GL3 gl)
-	{
+	public GlyphRendererGL3(/* @Nonnull */ final GL3 gl) {
 
 		Check.notNull(gl, "GL cannot be null");
 
-		this.program = ShaderLoader.loadProgram(gl, VERT_SOURCE, FRAG_SOURCE);
-		this.transform = new Mat4Uniform(gl, program, "MVPMatrix");
-		this.color = new Vec4Uniform(gl, program, "Color");
+		program = ShaderLoader.loadProgram(gl, VERT_SOURCE, FRAG_SOURCE);
+		transform = new Mat4Uniform(gl, program, "MVPMatrix");
+		color = new Vec4Uniform(gl, program, "Color");
 	}
 
 	@Override
 	protected void doBeginRendering(/* @Nonnull */ final GL gl, final boolean ortho,
-	/* @Nonnegative */ final int width,
-	/* @Nonnegative */ final int height, final boolean disableDepthTest)
-	{
+			/* @Nonnegative */ final int width,
+			/* @Nonnegative */ final int height, final boolean disableDepthTest) {
 
 		Check.notNull(gl, "GL cannot be null");
 		Check.argument(width >= 0, "Width cannot be negative");
@@ -129,29 +144,25 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 
 		// Check blending and depth test
 		restoreBlending = false;
-		if (!gl3.glIsEnabled(GL.GL_BLEND))
-		{
+		if (!gl3.glIsEnabled(GL.GL_BLEND)) {
 			gl3.glEnable(GL.GL_BLEND);
 			gl3.glBlendFunc(GL.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
 			restoreBlending = true;
 		}
 		restoreDepthTest = false;
-		if (disableDepthTest && gl3.glIsEnabled(GL.GL_DEPTH_TEST))
-		{
+		if (disableDepthTest && gl3.glIsEnabled(GL.GL_DEPTH_TEST)) {
 			gl3.glDisable(GL.GL_DEPTH_TEST);
 			restoreDepthTest = true;
 		}
 
 		// Check transform
-		if (ortho)
-		{
+		if (ortho) {
 			doSetTransformOrtho(gl, width, height);
 		}
 	}
 
 	@Override
-	protected QuadPipeline doCreateQuadPipeline(/* @Nonnull */ final GL gl)
-	{
+	protected QuadPipeline doCreateQuadPipeline(/* @Nonnull */ final GL gl) {
 
 		Check.notNull(gl, "GL cannot be null");
 
@@ -160,8 +171,7 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 	}
 
 	@Override
-	protected void doDispose(/* @Nonnull */ final GL gl)
-	{
+	protected void doDispose(/* @Nonnull */ final GL gl) {
 
 		Check.notNull(gl, "GL cannot be null");
 
@@ -172,8 +182,7 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 	}
 
 	@Override
-	protected void doEndRendering(/* @Nonnull */ final GL gl)
-	{
+	protected void doEndRendering(/* @Nonnull */ final GL gl) {
 
 		Check.notNull(gl, "GL cannot be null");
 
@@ -183,19 +192,16 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 		gl3.glUseProgram(0);
 
 		// Check blending and depth test
-		if (restoreBlending)
-		{
+		if (restoreBlending) {
 			gl3.glDisable(GL.GL_BLEND);
 		}
-		if (restoreDepthTest)
-		{
+		if (restoreDepthTest) {
 			gl3.glEnable(GL.GL_DEPTH_TEST);
 		}
 	}
 
 	@Override
-	protected void doSetColor(/* @Nonnull */ final GL gl, final float r, final float g, final float b, final float a)
-	{
+	protected void doSetColor(/* @Nonnull */ final GL gl, final float r, final float g, final float b, final float a) {
 
 		Check.notNull(gl, "GL cannot be null");
 
@@ -210,8 +216,7 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 
 	@Override
 	protected void doSetTransform3d(/* @Nonnull */ final GL gl,
-	/* @Nonnull */ final float[] value, final boolean transpose)
-	{
+			/* @Nonnull */ final float[] value, final boolean transpose) {
 
 		Check.notNull(gl, "GL cannot be null");
 		Check.notNull(value, "Value cannot be null");
@@ -224,9 +229,8 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 
 	@Override
 	protected void doSetTransformOrtho(/* @Nonnull */ final GL gl,
-	/* @Nonnegative */ final int width,
-	/* @Nonnegative */ final int height)
-	{
+			/* @Nonnegative */ final int width,
+			/* @Nonnegative */ final int height) {
 
 		Check.notNull(gl, "GL cannot be null");
 		Check.argument(width >= 0, "Width cannot be negative");
@@ -235,8 +239,7 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 		final GL3 gl3 = gl.getGL3();
 
 		// Recompute if width and height changed
-		if (width != lastWidth || height != lastHeight)
-		{
+		if (width != lastWidth || height != lastHeight) {
 			Projection.orthographic(transform.value, width, height);
 			transform.transpose = true;
 			transform.dirty = true;
@@ -245,22 +248,19 @@ public final class GlyphRendererGL3 extends AbstractGlyphRenderer
 		}
 
 		// Upload if made dirty anywhere
-		if (transform.dirty)
-		{
+		if (transform.dirty) {
 			transform.update(gl3);
 			transform.dirty = false;
 		}
 	}
 
 	@Override
-	public boolean getUseVertexArrays()
-	{
+	public boolean getUseVertexArrays() {
 		return useVertexArrays;
 	}
 
 	@Override
-	public void setUseVertexArrays(final boolean useVertexArrays)
-	{
+	public void setUseVertexArrays(final boolean useVertexArrays) {
 		this.useVertexArrays = useVertexArrays;
 	}
 }

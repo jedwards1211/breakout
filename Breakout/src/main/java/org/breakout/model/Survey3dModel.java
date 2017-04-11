@@ -658,6 +658,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		float height;
 		float xOffset;
 		float yOffset;
+		float pushForward;
 		final String text;
 
 		public Label(CalcStation station) {
@@ -666,6 +667,17 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					(float) station.position[1],
 					(float) station.position[2] };
 			text = station.name;
+			pushForward = 0;
+			for (CalcShot shot : station.shots.values()) {
+				pushForward = Math.max(pushForward, (float) shot.distance);
+				CalcCrossSection crossSection = shot.getCrossSectionAt(station);
+				if (crossSection == null || crossSection.measurements == null) {
+					continue;
+				}
+				for (double measurement : crossSection.measurements) {
+					pushForward = Math.max(pushForward, (float) measurement);
+				}
+			}
 		}
 	}
 
@@ -876,18 +888,17 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		public void drawLabels(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n, TextRenderer textRenderer) {
 			float[] viewMatrix = context.viewMatrix();
-			float[] worldToScreen = context.worldToScreen();
+			float[] viewToScreen = context.viewToScreen();
 
 			double centerDistance = 0;
 			Arrays.fill(tempPoint, 0);
 			Vecmath.mpmul(context.inverseViewMatrix(), tempPoint);
-			if (!Rectmath.contains3(mbr, tempPoint)) {
-				tempPoint[0] = (mbr[0] + mbr[3]) * 0.5f;
-				tempPoint[1] = (mbr[1] + mbr[4]) * 0.5f;
-				tempPoint[2] = (mbr[2] + mbr[5]) * 0.5f;
-				Vecmath.mpmul(viewMatrix, tempPoint);
-				centerDistance = tempPoint[2];
-			}
+
+			tempPoint[0] = (mbr[0] + mbr[3]) * 0.5f;
+			tempPoint[1] = (mbr[1] + mbr[4]) * 0.5f;
+			tempPoint[2] = (mbr[2] + mbr[5]) * 0.5f;
+			Vecmath.mpmul(viewMatrix, tempPoint);
+			centerDistance = tempPoint[2];
 
 			float factor = 20;
 
@@ -905,13 +916,35 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			for (StationKey key : stationsToLabel) {
 				Label label = stationLabels.get(key);
-				Vecmath.mpmul(worldToScreen, label.position, tempPoint);
-				if (tempPoint[2] < -1) {
+				Vecmath.mpmulAffine(viewMatrix, label.position, tempPoint);
+				if (tempPoint[2] > 0) {
+					// label is behind camera
 					continue;
 				}
-				textRenderer.draw(label.text,
-						(int) (tempPoint[0] + label.xOffset),
-						(int) (tempPoint[1] + label.yOffset));
+				float labelDistanceSquared = Vecmath.dot3(tempPoint, tempPoint);
+				float z = Float.NaN;
+				if (labelDistanceSquared < label.pushForward * label.pushForward) {
+					z = 0.99999f;
+				} else {
+					float labelDistance = (float) Math.sqrt(labelDistanceSquared);
+					float pushedForwardDistance = labelDistance - label.pushForward;
+					float scaleFactor = pushedForwardDistance / labelDistance;
+					tempPoint[0] *= scaleFactor;
+					tempPoint[1] *= scaleFactor;
+					tempPoint[2] *= scaleFactor;
+				}
+
+				Vecmath.mpmul(viewToScreen, tempPoint);
+				if (tempPoint[2] < -1) {
+					// label is outside of clipping bounds
+					continue;
+				}
+				float x = tempPoint[0] + label.xOffset;
+				float y = tempPoint[1] + label.yOffset;
+				if (Float.isNaN(z)) {
+					z = tempPoint[2];
+				}
+				textRenderer.draw3D(label.text, x, y, z, 1);
 			}
 		}
 	}
@@ -1385,7 +1418,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		Font labelFont = new Font("Arial", Font.PLAIN, 12);
+		Font labelFont = new Font("Arial", Font.BOLD, 12);
 		FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
 		for (Section section : sections) {
 			section.updateLabels(labelFont, frc);
@@ -1756,7 +1789,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			updateParamTexture(gl);
 			paramTextureNeedsUpdate = false;
 		}
-		//		MultiMap<SectionRenderer, Section> renderers = this.renderers.get();
 
 		OneParamSectionRenderer renderer = colorParam == ColorParam.DEPTH
 				? axialSectionRenderer : param0SectionRenderer;
@@ -1766,10 +1798,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glDisable(GL.GL_STENCIL_TEST);
 		gl.glEnable(GL.GL_CULL_FACE);
 		gl.glCullFace(GL.GL_FRONT);
-
-		//		for (SectionRenderer renderer : renderers.keySet()) {
-		//			renderer.draw(renderers.get(renderer), context, gl, m, n);
-		//		}
 
 		renderer.drawLines = false;
 		renderer.draw(sections, context, gl, m, n);
@@ -1788,6 +1816,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glDisable(GL.GL_STENCIL_TEST);
 
 		if (showStationLabels) {
+			gl.glEnable(GL.GL_DEPTH_TEST);
 			textRenderer.beginRendering(context.width(), context.height(), false);
 
 			for (Section section : sections) {
@@ -1795,6 +1824,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 
 			textRenderer.endRendering();
+			gl.glDisable(GL.GL_DEPTH_TEST);
 		}
 	}
 
