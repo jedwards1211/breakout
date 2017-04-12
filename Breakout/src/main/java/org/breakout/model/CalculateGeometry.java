@@ -55,6 +55,80 @@ public class CalculateGeometry {
 				shotsFaceOppositeDirections(shot1, shot2) ? Angles.opposite(shot2.azimuth) : shot2.azimuth);
 	}
 
+	static double hemisphereAzimuth(double azimuth) {
+		azimuth = Angles.positive(azimuth);
+		return azimuth > Math.PI ? azimuth - Math.PI : azimuth;
+	}
+
+	static double hemisphereAzimuth(CalcShot shot) {
+		return hemisphereAzimuth(shot.azimuth);
+	}
+
+	static double hemisphereAzimuth(CalcCrossSection section) {
+		return hemisphereAzimuth(section.facingAzimuth);
+	}
+
+	static double MAX_CROSS_SECTION_ALIGNMENT_DIFFERENCE = Math.PI / 4;
+
+	static CalcCrossSection findAlignedCrossSection(CalcShot shot, CalcStation station) {
+		double bestDifference = MAX_CROSS_SECTION_ALIGNMENT_DIFFERENCE;
+		CalcCrossSection alignedCrossSection = null;
+		for (CalcShot otherShot : station.shots.values()) {
+			CalcCrossSection otherCrossSection = otherShot.getCrossSectionAt(station);
+			if (otherCrossSection == null || otherCrossSection.type != CrossSectionType.LRUD) {
+				continue;
+			}
+			double difference = Math.min(
+					Angles.difference(shot.azimuth, otherCrossSection.facingAzimuth),
+					Angles.difference(Angles.opposite(shot.azimuth), otherCrossSection.facingAzimuth));
+			if (difference <= bestDifference) {
+				bestDifference = difference;
+				alignedCrossSection = Angles.difference(shot.azimuth,
+						otherCrossSection.facingAzimuth) > MAX_CROSS_SECTION_ALIGNMENT_DIFFERENCE
+								? otherCrossSection.rotateLRUDs180Degrees()
+								: otherCrossSection.clone();
+			}
+		}
+		return alignedCrossSection;
+	}
+
+	static void cloneCrossSectionFromOtherStation(CalcShot shot, CalcStation station) {
+		CalcCrossSection crossSection = shot.getCrossSectionAt(shot.otherStation(station));
+		if (crossSection == null) {
+			return;
+		}
+		crossSection = crossSection.clone();
+		crossSection.facingAzimuth = shot.azimuth;
+		for (CalcShot otherShot : station.shots.values()) {
+			CalcCrossSection otherCrossSection = otherShot.getCrossSectionAt(station);
+			if (otherCrossSection == null) {
+				continue;
+			}
+			if (otherCrossSection.type != crossSection.type) {
+				continue;
+			}
+			switch (crossSection.type) {
+			case LRUD:
+				// make sure up/down of cloned cross section are within max up/down
+				// of other cross sections at this station
+				crossSection.measurements[2] = Math.min(crossSection.measurements[2],
+						otherCrossSection.measurements[2]);
+				crossSection.measurements[3] = Math.min(crossSection.measurements[2],
+						otherCrossSection.measurements[2]);
+				break;
+			case NSEW:
+				// make sure NSEW of cloned cross section are within max NSEW
+				// of other cross sections at this station
+				for (int i = 0; i < 4; i++) {
+					crossSection.measurements[i] = Math.min(crossSection.measurements[i],
+							otherCrossSection.measurements[i]);
+				}
+				break;
+			}
+		}
+		shot.setCrossSectionAt(station, crossSection);
+	}
+
 	/**
 	 * If the cross sections of {@code shot1} and/or {@code shot2} at
 	 * {@code station} are missing, sets them, and ensures that they are aligned
@@ -63,7 +137,7 @@ public class CalculateGeometry {
 	 */
 	static void linkCrossSections(CalcShot shot1, CalcStation station, CalcShot shot2) {
 		boolean shotsFaceOppositeDirections = shotsFaceOppositeDirections(shot1, shot2);
-
+	
 		CalcCrossSection section1 = shot1.getCrossSectionAt(station);
 		CalcCrossSection section2 = shot2.getCrossSectionAt(station);
 		if (section1 != null && section2 != null) {
@@ -85,7 +159,7 @@ public class CalculateGeometry {
 			}
 			return;
 		}
-
+	
 		if (section1 == null && section2 == null) {
 			section1 = shot1.getCrossSectionAt(shot1.otherStation(station));
 			section2 = shot2.getCrossSectionAt(shot2.otherStation(station));
@@ -143,80 +217,6 @@ public class CalculateGeometry {
 		}
 		shot1.setCrossSectionAt(station, section1);
 		shot2.setCrossSectionAt(station, section2);
-	}
-
-	static double hemisphereAzimuth(double azimuth) {
-		azimuth = Angles.positive(azimuth);
-		return azimuth > Math.PI ? azimuth - Math.PI : azimuth;
-	}
-
-	static double hemisphereAzimuth(CalcShot shot) {
-		return hemisphereAzimuth(shot.azimuth);
-	}
-
-	static double hemisphereAzimuth(CalcCrossSection section) {
-		return hemisphereAzimuth(section.facingAzimuth);
-	}
-
-	static double MAX_CROSS_SECTION_ALIGNMENT_DIFFERENCE = Math.PI / 4;
-
-	static CalcCrossSection findAlignedCrossSection(CalcShot shot, CalcStation station) {
-		double bestDifference = MAX_CROSS_SECTION_ALIGNMENT_DIFFERENCE;
-		CalcCrossSection alignedCrossSection = null;
-		for (CalcShot otherShot : station.shots.values()) {
-			CalcCrossSection otherCrossSection = otherShot.getCrossSectionAt(station);
-			if (otherCrossSection == null) {
-				continue;
-			}
-			double difference = Math.min(
-					Angles.difference(shot.azimuth, otherCrossSection.facingAzimuth),
-					Angles.difference(Angles.opposite(shot.azimuth), otherCrossSection.facingAzimuth));
-			if (difference <= bestDifference) {
-				bestDifference = difference;
-				alignedCrossSection = Angles.difference(shot.azimuth,
-						otherCrossSection.facingAzimuth) > MAX_CROSS_SECTION_ALIGNMENT_DIFFERENCE
-								? otherCrossSection.rotateLRUDs180Degrees()
-								: otherCrossSection.clone();
-			}
-		}
-		return alignedCrossSection;
-	}
-
-	static void cloneCrossSectionFromOtherStation(CalcShot shot, CalcStation station) {
-		CalcCrossSection crossSection = shot.getCrossSectionAt(shot.otherStation(station));
-		if (crossSection == null) {
-			return;
-		}
-		crossSection = crossSection.clone();
-		crossSection.facingAzimuth = shot.azimuth;
-		for (CalcShot otherShot : station.shots.values()) {
-			CalcCrossSection otherCrossSection = otherShot.getCrossSectionAt(station);
-			if (otherCrossSection == null) {
-				continue;
-			}
-			if (otherCrossSection.type != crossSection.type) {
-				continue;
-			}
-			switch (crossSection.type) {
-			case LRUD:
-				// make sure up/down of cloned cross section are within max up/down
-				// of other cross sections at this station
-				crossSection.measurements[2] = Math.min(crossSection.measurements[2],
-						otherCrossSection.measurements[2]);
-				crossSection.measurements[3] = Math.min(crossSection.measurements[2],
-						otherCrossSection.measurements[2]);
-				break;
-			case NSEW:
-				// make sure NSEW of cloned cross section are within max NSEW
-				// of other cross sections at this station
-				for (int i = 0; i < 4; i++) {
-					crossSection.measurements[i] = Math.min(crossSection.measurements[i],
-							otherCrossSection.measurements[i]);
-				}
-				break;
-			}
-		}
-		shot.setCrossSectionAt(station, crossSection);
 	}
 
 	static void linkCrossSections(CalcStation station) {
