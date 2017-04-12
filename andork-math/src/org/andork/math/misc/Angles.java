@@ -22,6 +22,11 @@
 package org.andork.math.misc;
 
 public class Angles {
+	public static double difference(double angle0, double angle1) {
+		double difference = Math.abs(positive(angle0) - positive(angle1));
+		return difference < Math.PI ? difference : difference - Math.PI;
+	}
+
 	public static double positive(double angle) {
 		angle %= Math.PI * 2;
 		return angle >= 0 ? angle : angle + Math.PI * 2;
