@@ -2118,6 +2118,9 @@ public class BreakoutMainView {
 
 				for (ShotKey key : shotsToFit) {
 					Shot3d shot = model3d.getShot(key);
+					if (shot == null) {
+						continue;
+					}
 					for (float[] coord : shot.coordIterable(endLocation)) {
 						frustum.addPoint(coord);
 					}
