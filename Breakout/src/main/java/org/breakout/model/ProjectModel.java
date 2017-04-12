@@ -81,9 +81,15 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<QObject<JoglExportImageDialogModel>> exportImageDialogModel = newAttribute(
 			JoglExportImageDialogModel.instance,
 			"exportImageDialogModel");
+	public static final Attribute<Color> stationLabelColor = newAttribute(
+			Color.class,
+			"stationLabelColor");
 	public static final Attribute<Color> backgroundColor = newAttribute(
 			Color.class,
 			"backgroundColor");
+	public static final Attribute<Color> centerlineColor = newAttribute(
+			Color.class,
+			"centerlineColor");
 	public static final Attribute<Float> ambientLight = newAttribute(
 			Float.class,
 			"ambientLight");
@@ -102,7 +108,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Bimapper<QObject<ProjectModel>, Object> defaultMapper;
 
 	static {
-		defaultMapper = new QObjectMapBimapper<ProjectModel>(instance)
+		defaultMapper = new QObjectMapBimapper<>(instance)
 				.map(projCalculator, ProjectionCalculatorBimapper.instance)
 				.map(distRange, LinearAxisConversionMapBimapper.instance)
 				.map(
@@ -116,6 +122,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(taskListDrawer, DrawerModel.defaultMapper)
 				.map(exportImageDialogModel, JoglExportImageDialogModel.defaultMapper)
 				.map(backgroundColor, Color2HexStringBimapper.instance)
+				.map(stationLabelColor, Color2HexStringBimapper.instance)
+				.map(centerlineColor, Color2HexStringBimapper.instance)
 				.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance))
 				.exclude(hasUnsavedChanges);
 	}
@@ -136,6 +144,12 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.backgroundColor) == null) {
 			projectModel.set(ProjectModel.backgroundColor, Color.black);
+		}
+		if (projectModel.get(ProjectModel.stationLabelColor) == null) {
+			projectModel.set(ProjectModel.stationLabelColor, Color.white);
+		}
+		if (projectModel.get(ProjectModel.centerlineColor) == null) {
+			projectModel.set(ProjectModel.centerlineColor, Color.white);
 		}
 		if (projectModel.get(ProjectModel.distRange) == null) {
 			projectModel.set(ProjectModel.distRange, new LinearAxisConversion(0, 0, 20000, 200));

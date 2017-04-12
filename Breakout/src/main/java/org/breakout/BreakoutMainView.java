@@ -992,6 +992,8 @@ public class BreakoutMainView {
 
 				model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
 				model.setShowStationLabels(getRootModel().get(RootModel.showStationLabels));
+				model.setStationLabelColor(getProjectModel().get(ProjectModel.stationLabelColor));
+				model.setCenterlineColor(getProjectModel().get(ProjectModel.centerlineColor));
 
 				projectModelBinder.update(true);
 
@@ -1521,6 +1523,26 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.backgroundColor, projectModelBinder));
+
+		new BinderWrapper<Color>() {
+			@Override
+			protected void onValueChanged(Color stationLabelColor) {
+				if (model3d != null && stationLabelColor != null) {
+					model3d.setStationLabelColor(stationLabelColor);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelColor, projectModelBinder));
+
+		new BinderWrapper<Color>() {
+			@Override
+			protected void onValueChanged(Color centerlineColor) {
+				if (model3d != null && centerlineColor != null) {
+					model3d.setCenterlineColor(centerlineColor);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineColor, projectModelBinder));
 
 		new BinderWrapper<Integer>() {
 			@Override

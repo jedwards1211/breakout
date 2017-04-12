@@ -94,7 +94,6 @@ import com.andork.plot.PlotAxis.LabelPosition;
 import com.andork.plot.PlotAxis.Orientation;
 import com.andork.plot.PlotAxisController;
 
-@SuppressWarnings("serial")
 public class SettingsDrawer extends Drawer {
 	/**
 	 *
@@ -109,8 +108,13 @@ public class SettingsDrawer extends Drawer {
 	JSlider mouseSensitivitySlider;
 	JLabel mouseWheelSensitivityLabel;
 	JSlider mouseWheelSensitivitySlider;
-	JLabel bgColorLabel;
-	JXColorSelectionButton bgColorButton;
+	JLabel colorsLabel;
+	JLabel backgroundColorLabel;
+	JXColorSelectionButton backgroundColorButton;
+	JLabel stationLabelColorLabel;
+	JXColorSelectionButton stationLabelColorButton;
+	JLabel centerlineColorLabel;
+	JXColorSelectionButton centerlineColorButton;
 	JLabel ambientLightLabel;
 	JSlider ambientLightSlider;
 	JLabel distColorationLabel;
@@ -175,6 +179,12 @@ public class SettingsDrawer extends Drawer {
 	BinderWrapper<QObject<ProjectModel>> projectBinder = new BinderWrapper<>();
 	Binder<CameraView> cameraViewBinder = QObjectAttributeBinder.bind(
 			ProjectModel.cameraView,
+			projectBinder);
+	Binder<Color> stationLabelColorBinder = QObjectAttributeBinder.bind(
+			ProjectModel.stationLabelColor,
+			projectBinder);
+	Binder<Color> centerlineColorBinder = QObjectAttributeBinder.bind(
+			ProjectModel.centerlineColor,
 			projectBinder);
 	Binder<Color> backgroundColorBinder = QObjectAttributeBinder.bind(
 			ProjectModel.backgroundColor,
@@ -244,7 +254,9 @@ public class SettingsDrawer extends Drawer {
 	}
 
 	private void createBindings() {
-		ComponentBackgroundBinder.bind(bgColorButton, backgroundColorBinder);
+		ComponentBackgroundBinder.bind(backgroundColorButton, backgroundColorBinder);
+		ComponentBackgroundBinder.bind(stationLabelColorButton, stationLabelColorBinder);
+		ComponentBackgroundBinder.bind(centerlineColorButton, centerlineColorBinder);
 
 		ButtonSelectedBinder
 				.bind(viewButtonsPanel.getPlanButton(), bindEquals(CameraView.PLAN, cameraViewBinder));
@@ -286,10 +298,20 @@ public class SettingsDrawer extends Drawer {
 
 		Color darkColor = new Color(255 * 3 / 10, 255 * 3 / 10, 255 * 3 / 10);
 
-		bgColorLabel = new JLabel();
-		localizer.setText(bgColorLabel, "bgColorLabel.text");
+		colorsLabel = new JLabel();
+		localizer.setText(colorsLabel, "colorsLabel.text");
 
-		bgColorButton = new JXColorSelectionButton();
+		stationLabelColorLabel = new JLabel();
+		localizer.setText(stationLabelColorLabel, "stationLabelColorLabel.text");
+		stationLabelColorButton = new JXColorSelectionButton();
+
+		centerlineColorLabel = new JLabel();
+		localizer.setText(centerlineColorLabel, "centerlineColorLabel.text");
+		centerlineColorButton = new JXColorSelectionButton();
+
+		backgroundColorLabel = new JLabel();
+		localizer.setText(backgroundColorLabel, "backgroundColorLabel.text");
+		backgroundColorButton = new JXColorSelectionButton();
 
 		ambientLightLabel = new JLabel();
 		localizer.setText(ambientLightLabel, "ambientLightLabel.text");
@@ -458,10 +480,14 @@ public class SettingsDrawer extends Drawer {
 		w.put(mouseWheelSensitivityLabel).belowLast().west().addToInsets(0, 0, 0, 0);
 		w.put(mouseWheelSensitivitySlider).belowLast().fillx().north();
 
-		GridBagWizard bgPanel = GridBagWizard.quickPanel();
-		bgPanel.put(bgColorLabel).xy(0, 0).west();
-		bgPanel.put(bgColorButton).rightOfLast().west().weightx(1.0).insets(0, 10, 0, 0);
-		w.put(bgPanel.getTarget()).belowLast().fillx().addToInsets(10, 0, 0, 0);
+		//		w.put(colorsLabel).belowLast().fillx().addToInsets(0, 0, 0, 0);
+
+		GridBagWizard colorsPanel = GridBagWizard.quickPanel();
+		colorsPanel.put(backgroundColorLabel, stationLabelColorLabel, centerlineColorLabel).intoRow().y(0);
+		colorsPanel.put(backgroundColorButton).below(backgroundColorLabel).fillx(1.0).insets(0, 0, 0, 0);
+		colorsPanel.put(stationLabelColorButton).below(stationLabelColorLabel).fillx(1.0).insets(0, 0, 0, 0);
+		colorsPanel.put(centerlineColorButton).below(centerlineColorLabel).fillx(1.0).insets(0, 0, 0, 0);
+		w.put(colorsPanel.getTarget()).belowLast().fillx().addToInsets(5, 0, 5, 0);
 
 		w.put(ambientLightLabel).belowLast().west();
 		w.put(ambientLightSlider).belowLast().fillx();

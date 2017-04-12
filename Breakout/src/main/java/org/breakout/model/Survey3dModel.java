@@ -44,6 +44,7 @@ import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
 import static org.andork.spatial.Rectmath.voidRectf;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.LinearGradientPaint;
@@ -1666,6 +1667,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	boolean showStationLabels;
 
+	Color stationLabelColor;
+
 	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections,
 			Font labelFont) {
 		super();
@@ -1972,6 +1975,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	public void init(GL2ES2 gl) {
 		textRenderer.init();
 		textRenderer.setUseVertexArrays(true);
+		textRenderer.setColor(stationLabelColor);
 	}
 
 	public void pickShots(PlanarHull3f pickHull, Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
@@ -2242,5 +2246,20 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public void setShowStationLabels(boolean showStationLabels) {
 		this.showStationLabels = showStationLabels;
+	}
+
+	public void setStationLabelColor(Color stationLabelColor) {
+		this.stationLabelColor = stationLabelColor;
+		if (textRenderer != null) {
+			textRenderer.setColor(stationLabelColor);
+		}
+	}
+
+	public void setCenterlineColor(Color centerlineColor) {
+		this.centerlineColor.value(
+				centerlineColor.getRed() / 255.0f,
+				centerlineColor.getGreen() / 255.0f,
+				centerlineColor.getBlue() / 255.0f,
+				centerlineColor.getAlpha() / 255.0f);
 	}
 }
