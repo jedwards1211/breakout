@@ -7,6 +7,14 @@ public class CalcStation {
 	public String name;
 	public String cave;
 
+	public CalcStation() {
+
+	}
+
+	public CalcStation(String name) {
+		this.name = name;
+	}
+
 	public final double[] position = { Double.NaN, Double.NaN, Double.NaN };
 
 	public final Map<StationKey, CalcShot> shots = new LinkedHashMap<>();

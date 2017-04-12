@@ -195,8 +195,12 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 		return true;
 	}
 
-	public void setRow(int index, SurveyRow SurveyRow) {
-		rows.set(index, SurveyRow);
+	public void setRow(int index, SurveyRow row) {
+		if (index == rows.size()) {
+			rows.add(row);
+		} else {
+			rows.set(index, row);
+		}
 		if (index == rows.size() - 1) {
 			fixEndRows();
 		}

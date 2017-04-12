@@ -35,10 +35,21 @@ public class CalcShot {
 
 	public Date date;
 
+	public CalcShot() {
+
+	}
+
+	public CalcShot(CalcStation from, CalcStation to) {
+		fromStation = from;
+		toStation = to;
+		from.shots.put(toKey(), this);
+		to.shots.put(fromKey(), this);
+	}
+
 	/**
 	 * Interpolates between a value at the from station and to station for a
 	 * vertex's polarity (position between the stations).
-	 * 
+	 *
 	 * @param fromValue
 	 *            the value at {@link #fromStation}
 	 * @param toValue
@@ -88,8 +99,9 @@ public class CalcShot {
 			fromCrossSection = crossSection;
 		} else if (station == toStation) {
 			toCrossSection = crossSection;
+		} else {
+			throw new IllegalArgumentException("station must be fromStation or toStation");
 		}
-		throw new IllegalArgumentException("station must be fromStation or toStation");
 	}
 
 	public void setCrossSectionAt(StationKey key, CalcCrossSection crossSection) {
@@ -98,11 +110,11 @@ public class CalcShot {
 		}
 		if (fromStation != null && key.equals(fromStation.key())) {
 			fromCrossSection = crossSection;
-		}
-		if (toStation != null && key.equals(toStation.key())) {
+		} else if (toStation != null && key.equals(toStation.key())) {
 			toCrossSection = crossSection;
+		} else {
+			throw new IllegalArgumentException("key must match fromStation or toStation");
 		}
-		throw new IllegalArgumentException("key must match fromStation or toStation");
 	}
 
 	public StationKey fromKey() {

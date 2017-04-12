@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.andork.math.misc.Angles;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
@@ -72,6 +73,19 @@ public class CalcProjectParserTests {
 				new UnitizedDouble<>(3.54, Angle.gradians)
 						.add(new UnitizedDouble<>(2, Angle.degrees)).mul(0.5).doubleValue(Angle.radians),
 				shot.azimuth, 0.0);
+
+		row = new MutableSurveyRow()
+				.setFrontAzimuth("300")
+				.setBackAzimuth("298")
+				.setTrip(trip)
+				.toImmutable();
+
+		parsed = parser.parse(row);
+		shot = p2c.convert(parsed);
+		Assert.assertEquals(
+				new UnitizedDouble<>(300, Angle.gradians)
+						.add(new UnitizedDouble<>(298, Angle.degrees)).mul(0.5).doubleValue(Angle.radians),
+				Angles.positive(shot.azimuth), 0.0);
 
 		SurveyTrip trip2 = trip.setBackAzimuthCorrection("2.5");
 

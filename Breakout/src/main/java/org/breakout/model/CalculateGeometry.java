@@ -1,12 +1,12 @@
 package org.breakout.model;
 
-import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.Set;
 
 import org.andork.collect.PriorityEntry;
-import org.andork.math.misc.AngleUtils;
+import org.andork.math.misc.Angles;
 import org.andork.util.Iterables;
 
 /**
@@ -44,6 +44,103 @@ public class CalculateGeometry {
 		}
 	}
 
+	static double averageAzimuth(CalcShot shot1, CalcStation station, CalcShot shot2) {
+		boolean shotsFaceOppositeDirections = station == shot1.toStation != (station == shot2.fromStation);
+		return Angles.average(
+				shot1.azimuth,
+				shotsFaceOppositeDirections ? Angles.opposite(shot2.azimuth) : shot2.azimuth);
+	}
+
+	/**
+	 * If the cross sections of {@code shot1} and/or {@code shot2} at
+	 * {@code station} are missing, sets them, and ensures that they are aligned
+	 * and bisecting the shot angles (unless one station or the other had a
+	 * fixed {@link CalcCrossSection#facingAzimuth}).
+	 */
+	static void linkCrossSections(CalcShot shot1, CalcStation station, CalcShot shot2) {
+		boolean opposing = station == shot1.toStation != (station == shot2.fromStation);
+
+		CalcCrossSection section1 = shot1.getCrossSectionAt(station);
+		CalcCrossSection section2 = shot2.getCrossSectionAt(station);
+		if (section1 != null && section2 != null) {
+			if (Double.isNaN(section1.facingAzimuth)) {
+				if (Double.isNaN(section2.facingAzimuth)) {
+					section1.facingAzimuth = averageAzimuth(shot1, station, shot2);
+					section2.facingAzimuth = opposing
+							? Angles.opposite(section1.facingAzimuth)
+							: section1.facingAzimuth;
+				} else {
+					section1.facingAzimuth = opposing
+							? Angles.opposite(section2.facingAzimuth)
+							: section2.facingAzimuth;
+				}
+			} else {
+				section2.facingAzimuth = opposing
+						? Angles.opposite(section1.facingAzimuth)
+						: section1.facingAzimuth;
+			}
+			return;
+		}
+
+		if (section1 == null && section2 == null) {
+			section1 = shot1.getCrossSectionAt(shot1.otherStation(station));
+			section2 = shot2.getCrossSectionAt(shot2.otherStation(station));
+			if (section1 != null && section2 != null && section1.type == section2.type) {
+				CalcCrossSection average = new CalcCrossSection();
+				average.type = section1.type;
+				switch (section1.type) {
+				case LRUD:
+					average.measurements = new double[4];
+					if (opposing) {
+						average.measurements[0] = (section1.measurements[0] + section2.measurements[1]) * 0.5;
+						average.measurements[1] = (section1.measurements[1] + section2.measurements[0]) * 0.5;
+					} else {
+						average.measurements[0] = (section1.measurements[0] + section2.measurements[0]) * 0.5;
+						average.measurements[1] = (section1.measurements[1] + section2.measurements[1]) * 0.5;
+					}
+					average.measurements[2] = (section1.measurements[2] + section2.measurements[2]) * 0.5;
+					average.measurements[3] = (section1.measurements[3] + section2.measurements[3]) * 0.5;
+					break;
+				case NSEW:
+					average.measurements = new double[4];
+					for (int i = 0; i < 4; i++) {
+						average.measurements[i] = (section1.measurements[i] + section2.measurements[i]) * 0.5;
+					}
+					break;
+				}
+				section1 = average;
+				section2 = null;
+			} else if (section1 == null && section2 == null) {
+				section1 = new CalcCrossSection();
+				section1.measurements = new double[4];
+				Arrays.fill(section1.measurements, 0.05f);
+				section1.type = CrossSectionType.LRUD;
+			} else {
+				if (section1 != null) {
+					section1 = section1.clone();
+					section1.facingAzimuth = Double.NaN;
+				}
+				if (section2 != null) {
+					section2 = section2.clone();
+					section2.facingAzimuth = Double.NaN;
+				}
+			}
+		}
+		if (section1 != null && section2 == null) {
+			if (Double.isNaN(section1.facingAzimuth)) {
+				section1.facingAzimuth = averageAzimuth(shot1, station, shot2);
+			}
+			section2 = opposing ? section1.rotateLRUDs180Degrees() : section1.clone();
+		} else {
+			if (Double.isNaN(section2.facingAzimuth)) {
+				section2.facingAzimuth = averageAzimuth(shot2, station, shot1);
+			}
+			section1 = opposing ? section2.rotateLRUDs180Degrees() : section2.clone();
+		}
+		shot1.setCrossSectionAt(station, section1);
+		shot2.setCrossSectionAt(station, section2);
+	}
+
 	/**
 	 * The project passed will mostly only have cross sections assigned at from
 	 * stations. We need to figure out what the cross section at the to station
@@ -64,58 +161,24 @@ public class CalculateGeometry {
 		 * designation somehow
 		 */
 		CalcShot prevShot = null;
-		Set<CalcCrossSection> joinedCrossSections = new HashSet<>();
 		for (CalcShot shot : project.shots.values()) {
-			CalcCrossSection fromCrossSection = shot.fromCrossSection;
-			CalcCrossSection toCrossSection = shot.toCrossSection;
-			if (fromCrossSection != null) {
-				if (prevShot != null && prevShot.toStation == shot.fromStation) {
-					prevShot.toCrossSection = fromCrossSection;
-					joinedCrossSections.add(fromCrossSection);
-					fromCrossSection.facingAzimuth = AngleUtils.average(prevShot.azimuth, shot.azimuth);
-				} else {
-					for (CalcShot other : shot.fromStation.shots.values()) {
-						if (other == shot) {
-							continue;
-						}
-						if (other.toCrossSection == null) {
-							other.toCrossSection = fromCrossSection;
-							if (joinedCrossSections.add(fromCrossSection)) {
-								fromCrossSection.facingAzimuth = AngleUtils.average(other.azimuth, shot.azimuth);
-							}
-							break;
-						}
-					}
-				}
-			} else {
-				CalcShot lastShot = null;
-				for (CalcShot otherShot : shot.fromStation.shots.values()) {
-					if (otherShot == shot) {
-						continue;
-					}
-					CalcCrossSection otherCrossSection = otherShot.toCrossSection;
-					if (otherCrossSection != null && !joinedCrossSections.contains(otherCrossSection)) {
-						lastShot = otherShot;
-						fromCrossSection = otherCrossSection;
-					}
-				}
-				if (lastShot != null && fromCrossSection != null) {
-					shot.fromCrossSection = fromCrossSection;
-					if (joinedCrossSections.add(fromCrossSection)) {
-						fromCrossSection.facingAzimuth = AngleUtils.average(lastShot.azimuth, shot.azimuth);
-					}
-				}
-			}
-			if (prevShot != null && toCrossSection == null && prevShot.fromStation == shot.toStation) {
-				toCrossSection = prevShot.fromCrossSection;
-				if (toCrossSection != null) {
-					shot.toCrossSection = toCrossSection;
-					if (joinedCrossSections.add(toCrossSection)) {
-						toCrossSection.facingAzimuth = AngleUtils.average(shot.azimuth, prevShot.azimuth);
-					}
+			if (prevShot != null) {
+				if (prevShot.toStation == shot.fromStation) {
+					linkCrossSections(prevShot, shot.fromStation, shot);
+				} else if (prevShot.fromStation == shot.toStation) {
+					linkCrossSections(prevShot, shot.toStation, shot);
 				}
 			}
 			prevShot = shot;
+		}
+
+		for (CalcStation station : project.stations.values()) {
+			if (station.shots.size() == 2) {
+				Iterator<CalcShot> i = station.shots.values().iterator();
+				CalcShot shot1 = i.next();
+				CalcShot shot2 = i.next();
+				linkCrossSections(shot1, station, shot2);
+			}
 		}
 
 		for (CalcShot shot : project.shots.values()) {
@@ -127,9 +190,11 @@ public class CalculateGeometry {
 			// passage size with that new facing azimuth. E.g. NT46-NTW1
 			// in Fisher Ridge
 			if (fromCrossSection == null && toCrossSection != null) {
-				shot.fromCrossSection = toCrossSection;
+				shot.fromCrossSection = toCrossSection.clone();
+				shot.fromCrossSection.facingAzimuth = shot.azimuth;
 			} else if (toCrossSection == null && fromCrossSection != null) {
-				shot.toCrossSection = fromCrossSection;
+				shot.toCrossSection = fromCrossSection.clone();
+				shot.toCrossSection.facingAzimuth = shot.azimuth;
 			}
 		}
 	}

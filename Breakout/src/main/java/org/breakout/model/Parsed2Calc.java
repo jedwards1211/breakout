@@ -2,7 +2,7 @@ package org.breakout.model;
 
 import java.util.Objects;
 
-import org.andork.math.misc.AngleUtils;
+import org.andork.math.misc.Angles;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
@@ -91,7 +91,7 @@ public class Parsed2Calc {
 		}
 		if (frontAzimuth != null) {
 			if (backAzimuth != null) {
-				shot.azimuth = AngleUtils.average(
+				shot.azimuth = Angles.average(
 						frontAzimuth.doubleValue(Angle.radians),
 						backAzimuth.doubleValue(Angle.radians));
 			} else {
@@ -189,18 +189,15 @@ public class Parsed2Calc {
 
 			if (shot.toStation != null) {
 				shot.fromCrossSection = crossSection;
-				crossSection.facingAzimuth = shot.azimuth;
 			} else {
 				// go through all so that we get the most recent shot that
 				// matches
 				for (CalcShot other : shot.fromStation.shots.values()) {
 					if (other.toStation == shot.fromStation && other.toCrossSection == null) {
 						other.toCrossSection = crossSection;
-						crossSection.facingAzimuth = other.azimuth;
 						break;
 					} else if (other.fromStation == shot.fromStation && other.fromCrossSection == null) {
 						other.fromCrossSection = crossSection;
-						crossSection.facingAzimuth = other.azimuth;
 						break;
 					}
 				}
