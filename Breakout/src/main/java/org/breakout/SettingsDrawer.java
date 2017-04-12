@@ -28,16 +28,17 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Insets;
 import java.awt.LinearGradientPaint;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Properties;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -121,6 +122,17 @@ public class SettingsDrawer extends Drawer {
 	PlotAxis distColorationAxis;
 	PaintablePanel distColorationAxisPanel;
 
+	JLabel stationLabelsOffLabel;
+	JLabel lessStationLabelDensityLabel;
+	JLabel moreStationLabelDensityLabel;
+	JLabel stationLabelDensityLabel;
+	JSlider stationLabelDensitySlider;
+	JLabel centerlinesOffLabel;
+	JLabel lessCenterlineDistanceLabel;
+	JLabel moreCenterlineDistanceLabel;
+	JLabel centerlineDistanceLabel;
+	JSlider centerlineDistanceSlider;
+
 	JLabel colorParamLabel;
 	DefaultSelector<ColorParam> colorParamSelector;
 	JPanel colorParamButtonsPanel;
@@ -148,8 +160,6 @@ public class SettingsDrawer extends Drawer {
 	JButton fitViewToSelectedButton;
 	JButton orbitToPlanButton;
 	JButton debugButton;
-
-	JCheckBox showStationLabelsCheckBox;
 
 	JLabel numSamplesLabel;
 	JSlider numSamplesSlider;
@@ -180,8 +190,14 @@ public class SettingsDrawer extends Drawer {
 	Binder<CameraView> cameraViewBinder = QObjectAttributeBinder.bind(
 			ProjectModel.cameraView,
 			projectBinder);
+	Binder<Float> stationLabelDensityBinder = QObjectAttributeBinder.bind(
+			ProjectModel.stationLabelDensity,
+			projectBinder);
 	Binder<Color> stationLabelColorBinder = QObjectAttributeBinder.bind(
 			ProjectModel.stationLabelColor,
+			projectBinder);
+	Binder<Float> centerlineDistanceBinder = QObjectAttributeBinder.bind(
+			ProjectModel.centerlineDistance,
 			projectBinder);
 	Binder<Color> centerlineColorBinder = QObjectAttributeBinder.bind(
 			ProjectModel.centerlineColor,
@@ -207,9 +223,6 @@ public class SettingsDrawer extends Drawer {
 	Binder<Float> ambientLightBinder = QObjectAttributeBinder.bind(
 			ProjectModel.ambientLight,
 			projectBinder);
-	Binder<Boolean> showStationLabelsBinder = QObjectAttributeBinder.bind(
-			RootModel.showStationLabels,
-			rootBinder);
 
 	UpdateStatusPanel updateStatusPanel;
 
@@ -283,14 +296,17 @@ public class SettingsDrawer extends Drawer {
 		JSliderValueBinder.bind(ambientLightSlider,
 				BimapperBinder.bind(compose(new LinearFloatBimapper(0f, 0f, 1f, ambientLightSlider.getMaximum()),
 						RoundingFloat2IntegerBimapper.instance), ambientLightBinder));
+		JSliderValueBinder.bind(centerlineDistanceSlider,
+				BimapperBinder.bind(RoundingFloat2IntegerBimapper.instance, centerlineDistanceBinder));
+		JSliderValueBinder.bind(stationLabelDensitySlider,
+				BimapperBinder.bind(RoundingFloat2IntegerBimapper.instance, stationLabelDensityBinder));
 
 		JSliderValueBinder.bind(numSamplesSlider, desiredNumSamplesBinder);
-
-		ButtonSelectedBinder.bind(showStationLabelsCheckBox, showStationLabelsBinder);
 	}
 
 	private void createComponents(I18n i18n) {
 		titleLabel = new JLabel();
+		Font smallFont = titleLabel.getFont().deriveFont(titleLabel.getFont().getSize() * 0.8f);
 		titleLabel.setFont(titleLabel.getFont().deriveFont(titleLabel.getFont().getSize() * 1.5f));
 		localizer.setText(titleLabel, "titleLabel.text");
 
@@ -301,9 +317,39 @@ public class SettingsDrawer extends Drawer {
 		colorsLabel = new JLabel();
 		localizer.setText(colorsLabel, "colorsLabel.text");
 
+		stationLabelsOffLabel = new JLabel();
+		localizer.setText(stationLabelsOffLabel, "offLabel.text");
+		lessStationLabelDensityLabel = new JLabel();
+		localizer.setText(lessStationLabelDensityLabel, "lessLabel.text");
+		moreStationLabelDensityLabel = new JLabel();
+		localizer.setText(moreStationLabelDensityLabel, "moreLabel.text");
+		stationLabelDensityLabel = new JLabel();
+		localizer.setText(stationLabelDensityLabel, "stationLabelDensityLabel.text");
+		stationLabelDensitySlider = new JSlider(0, 300, 40);
+
 		stationLabelColorLabel = new JLabel();
 		localizer.setText(stationLabelColorLabel, "stationLabelColorLabel.text");
 		stationLabelColorButton = new JXColorSelectionButton();
+
+		centerlinesOffLabel = new JLabel();
+		localizer.setText(centerlinesOffLabel, "offLabel.text");
+		lessCenterlineDistanceLabel = new JLabel();
+		localizer.setText(lessCenterlineDistanceLabel, "closerLabel.text");
+		moreCenterlineDistanceLabel = new JLabel();
+		localizer.setText(moreCenterlineDistanceLabel, "fartherLabel.text");
+		centerlineDistanceLabel = new JLabel();
+		localizer.setText(centerlineDistanceLabel, "centerlineDistanceLabel.text");
+		centerlineDistanceSlider = new JSlider(0, 10000, 1000);
+
+		for (JLabel label : Arrays.asList(
+				stationLabelsOffLabel,
+				lessStationLabelDensityLabel,
+				moreStationLabelDensityLabel,
+				centerlinesOffLabel,
+				lessCenterlineDistanceLabel,
+				moreCenterlineDistanceLabel)) {
+			label.setFont(smallFont);
+		}
 
 		centerlineColorLabel = new JLabel();
 		localizer.setText(centerlineColorLabel, "centerlineColorLabel.text");
@@ -412,8 +458,6 @@ public class SettingsDrawer extends Drawer {
 		fitViewToEverythingButton = new JButton("Fit to Everything");
 		orbitToPlanButton = new JButton("Orbit to Plan");
 
-		showStationLabelsCheckBox = new JCheckBox("Show Station Labels");
-
 		numSamplesLabel = new JLabel();
 		localizer.setText(numSamplesLabel, "numSamplesLabel.text.off");
 		numSamplesSlider = new JSlider(1, 1, 1);
@@ -428,6 +472,7 @@ public class SettingsDrawer extends Drawer {
 		mainPanelScrollPane = new JScrollPane(mainPanel);
 		mainPanelScrollPane.setBorder(null);
 		mainPanelScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		mainPanelScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		mainPanelScrollPane.setOpaque(false);
 		mainPanelScrollPane.getViewport().setOpaque(false);
 		JScrollBar verticalScrollBar = mainPanelScrollPane.getVerticalScrollBar();
@@ -489,15 +534,7 @@ public class SettingsDrawer extends Drawer {
 		colorsPanel.put(centerlineColorButton).below(centerlineColorLabel).fillx(1.0).insets(0, 0, 0, 0);
 		w.put(colorsPanel.getTarget()).belowLast().fillx().addToInsets(5, 0, 5, 0);
 
-		w.put(ambientLightLabel).belowLast().west();
-		w.put(ambientLightSlider).belowLast().fillx();
-
-		w.put(showStationLabelsCheckBox).belowLast().fillx();
-
-		w.put(distColorationLabel).belowLast().west().addToInsets(10, 0, 0, 0);
-		w.put(distColorationAxisPanel).belowLast().fillx();
 		w.put(colorParamLabel).belowLast().west();
-
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel();
 		colorParamPanel.put(colorParamSelector.comboBox()).xy(0, 0).fillboth(1.0, 0.0)
 				.addToInsets(0, 5, 0, 0);
@@ -506,11 +543,11 @@ public class SettingsDrawer extends Drawer {
 		colorParamPanel.put(colorParamButtonsPanel).rightOfLast().filly(1.0);
 		colorParamPanel.put(fitParamColorationAxisButton).rightOfLast().filly();
 		colorParamPanel.put(flipParamColorationAxisButton).rightOfLast().filly();
-		w.put(colorParamPanel.getTarget()).belowLast().fillx().addToInsets(10, 0, 0, 0);
+		w.put(colorParamPanel.getTarget()).belowLast().fillx();
 		colorParamDetailsPanel.setLayout(colorParamDetailsLayout = new BetterCardLayout());
 		colorParamDetailsLayout.setSizeHidden(false);
 		w.put(colorParamDetailsPanel).belowLast().fillx();
-		w.put(paramColorationAxisPanel).belowLast().fillx();
+		w.put(paramColorationAxisPanel).belowLast().fillx().addToInsets(0, 0, 5, 0);
 
 		colorByDepthButtonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		colorByDepthButtonsPanel.add(inferDepthAxisTiltButton);
@@ -522,9 +559,34 @@ public class SettingsDrawer extends Drawer {
 		colorByDistanceButtonsPanel.add(recalcColorByDistanceButton);
 		colorParamButtonsPanel.add(colorByDistanceButtonsPanel, ColorParam.DISTANCE_ALONG_SHOTS);
 
-		w.put(glowDistLabel).belowLast().west().addToInsets(10, 0, 0, 0);
-		w.put(glowDistAxisPanel).belowLast().fillx();
-		w.put(numSamplesLabel).belowLast().west().addToInsets(10, 0, 0, 0);
+		w.put(glowDistLabel).belowLast().west();
+		w.put(glowDistAxisPanel).belowLast().fillx().addToInsets(0, 0, 5, 0);
+
+		w.put(distColorationLabel).belowLast().west();
+		w.put(distColorationAxisPanel).belowLast().fillx().addToInsets(0, 0, 10, 0);
+
+		w.put(ambientLightLabel).belowLast().west();
+		w.put(ambientLightSlider).belowLast().fillx();
+
+		w.put(stationLabelDensityLabel).belowLast().fillx();
+		GridBagWizard stationLabelDensityPanel = GridBagWizard.quickPanel();
+		stationLabelDensityPanel.put(stationLabelsOffLabel,
+				lessStationLabelDensityLabel, moreStationLabelDensityLabel).intoRow().y(0);
+		stationLabelDensityPanel.put(lessStationLabelDensityLabel).fillx(1.0).west().addToInsets(0, 20, 0, 0);
+		stationLabelDensityPanel.put(stationLabelDensitySlider)
+				.below(stationLabelsOffLabel, moreStationLabelDensityLabel).fillx();
+		w.put(stationLabelDensityPanel.getTarget()).belowLast().fillx();
+
+		w.put(centerlineDistanceLabel).belowLast().fillx();
+		GridBagWizard centerlineDistancePanel = GridBagWizard.quickPanel();
+		centerlineDistancePanel.put(centerlinesOffLabel,
+				lessCenterlineDistanceLabel, moreCenterlineDistanceLabel).intoRow().y(0);
+		centerlineDistancePanel.put(lessCenterlineDistanceLabel).fillx(1.0).west().addToInsets(0, 20, 0, 0);
+		centerlineDistancePanel.put(centerlineDistanceSlider)
+				.below(centerlinesOffLabel, moreCenterlineDistanceLabel).fillx();
+		w.put(centerlineDistancePanel.getTarget()).belowLast().fillx();
+
+		w.put(numSamplesLabel).belowLast().west();
 		w.put(numSamplesSlider).belowLast().fillx();
 
 		w.put(versionLabel).belowLast().south().weighty(1.0).fillx();

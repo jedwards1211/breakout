@@ -991,9 +991,10 @@ public class BreakoutMainView {
 				model3d = model;
 
 				model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
-				model.setShowStationLabels(getRootModel().get(RootModel.showStationLabels));
+				model.setStationLabelDensity(getProjectModel().get(ProjectModel.stationLabelDensity));
 				model.setStationLabelColor(getProjectModel().get(ProjectModel.stationLabelColor));
 				model.setCenterlineColor(getProjectModel().get(ProjectModel.centerlineColor));
+				model.setMaxCenterlineDistance(getProjectModel().get(ProjectModel.centerlineDistance));
 
 				projectModelBinder.update(true);
 
@@ -1524,6 +1525,16 @@ public class BreakoutMainView {
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.backgroundColor, projectModelBinder));
 
+		new BinderWrapper<Float>() {
+			@Override
+			protected void onValueChanged(Float stationLabelDensity) {
+				if (model3d != null && stationLabelDensity != null) {
+					model3d.setStationLabelDensity(stationLabelDensity);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelDensity, projectModelBinder));
+
 		new BinderWrapper<Color>() {
 			@Override
 			protected void onValueChanged(Color stationLabelColor) {
@@ -1533,6 +1544,16 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelColor, projectModelBinder));
+
+		new BinderWrapper<Float>() {
+			@Override
+			protected void onValueChanged(Float maxCenterlineDistance) {
+				if (model3d != null && maxCenterlineDistance != null) {
+					model3d.setMaxCenterlineDistance(maxCenterlineDistance);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineDistance, projectModelBinder));
 
 		new BinderWrapper<Color>() {
 			@Override
@@ -1574,16 +1595,6 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.ambientLight, projectModelBinder));
-
-		new BinderWrapper<Boolean>() {
-			@Override
-			protected void onValueChanged(final Boolean newValue) {
-				if (model3d != null && newValue != null) {
-					model3d.setShowStationLabels(newValue);
-					autoDrawable.display();
-				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.showStationLabels, rootModelBinder));
 
 		new BinderWrapper<LinearAxisConversion>() {
 			@Override

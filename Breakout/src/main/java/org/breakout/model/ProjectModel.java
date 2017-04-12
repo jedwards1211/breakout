@@ -81,12 +81,18 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<QObject<JoglExportImageDialogModel>> exportImageDialogModel = newAttribute(
 			JoglExportImageDialogModel.instance,
 			"exportImageDialogModel");
+	public static final Attribute<Float> stationLabelDensity = newAttribute(
+			Float.class,
+			"stationLabelDensity");
 	public static final Attribute<Color> stationLabelColor = newAttribute(
 			Color.class,
 			"stationLabelColor");
 	public static final Attribute<Color> backgroundColor = newAttribute(
 			Color.class,
 			"backgroundColor");
+	public static final Attribute<Float> centerlineDistance = newAttribute(
+			Float.class,
+			"centerlineDistance");
 	public static final Attribute<Color> centerlineColor = newAttribute(
 			Color.class,
 			"centerlineColor");
@@ -145,8 +151,14 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		if (projectModel.get(ProjectModel.backgroundColor) == null) {
 			projectModel.set(ProjectModel.backgroundColor, Color.black);
 		}
+		if (projectModel.get(ProjectModel.stationLabelDensity) == null) {
+			projectModel.set(ProjectModel.stationLabelDensity, 40f);
+		}
 		if (projectModel.get(ProjectModel.stationLabelColor) == null) {
 			projectModel.set(ProjectModel.stationLabelColor, Color.white);
+		}
+		if (projectModel.get(ProjectModel.centerlineDistance) == null) {
+			projectModel.set(ProjectModel.centerlineDistance, 1000.0f);
 		}
 		if (projectModel.get(ProjectModel.centerlineColor) == null) {
 			projectModel.set(ProjectModel.centerlineColor, Color.white);

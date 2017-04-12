@@ -180,6 +180,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int p_location;
 		protected int a_pos_location;
 		protected int u_color_location;
+		protected int u_maxCenterlineDistance_location;
 
 		protected String createFragmentShader() {
 			return "#version 330\n" +
@@ -190,22 +191,19 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		protected String createFragmentShaderCode() {
-			return "  if (v_dist > 200) discard;" +
+			return "  if (v_dist > u_maxCenterlineDistance) discard;" +
 					"  color = u_color;";
 		}
 
 		protected String createFragmentShaderVariables() {
 			// lighting
 			return "uniform float u_ambient;" +
-
-			// distance coloration
+					"uniform float u_maxCenterlineDistance;" +
+					// distance coloration
 					"in float v_dist;" +
-
 					// color
 					"uniform vec4 u_color;" +
-
 					"out vec4 color;";
-
 		}
 
 		protected String createVertexShader() {
@@ -253,6 +251,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glUniformMatrix4fv(p_location, 1, false, context.projectionMatrix(), 0);
 
 			gl.glUniform4fv(u_color_location, 1, centerlineColor.value(), 0);
+			gl.glUniform1fv(u_maxCenterlineDistance_location, 1, maxCenterlineDistance.value(), 0);
 
 			gl.glEnableVertexAttribArray(a_pos_location);
 
@@ -294,6 +293,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				a_pos_location = gl.glGetAttribLocation(program, "a_pos");
 
 				u_color_location = gl.glGetUniformLocation(program, "u_color");
+				u_maxCenterlineDistance_location = gl.glGetUniformLocation(program, "u_maxCenterlineDistance");
 			}
 		}
 	}
@@ -683,6 +683,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
+	static class LabelDrawingContext {
+		TextRenderer textRenderer;
+		RfStarTree<Void> labelTree;
+		Set<StationKey> stationsToEmphasize;
+		float textScale;
+		float density;
+	}
+
 	public static class Section {
 		final float[] mbr;
 		final ArrayList<Shot3d> shot3ds;
@@ -885,9 +893,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			lineIndices.dispose(gl);
 		}
 
-		float minDistanceForSpacing(JoglDrawContext context, float spacing) {
+		float minDistanceForSpacing(JoglDrawContext context, float spacing, float density) {
 			// TODO: something view-dependent and less arbitrary
-			return spacing * 40;
+			return spacing * density;
 		}
 
 		public void updateLabels(Font font, FontRenderContext frc) {
@@ -901,45 +909,45 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		}
 
-		public void drawLabels(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n, TextRenderer textRenderer,
-				RfStarTree<Void> labelTree, Set<StationKey> stationsToEmphasize) {
+		public void drawLabels(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
+				LabelDrawingContext labelContext) {
 			context.getViewPoint(tempPoint);
 			float minDistance = Rectmath.minDistance3(mbr, tempPoint);
 
 			Set<StationKey> stationsToLabel = stationLabels.keySet();
 			for (int i = stationsToLabelSpacings.size() - 1; i >= 0; i--) {
 				float spacing = stationsToLabelSpacings.get(i);
-				if (minDistance > minDistanceForSpacing(context, spacing)) {
+				if (minDistance > minDistanceForSpacing(context, spacing, labelContext.density)) {
 					stationsToLabel = this.stationsToLabel.get(spacing);
 					break;
 				}
 			}
 
-			for (StationKey key : stationsToEmphasize) {
+			for (StationKey key : labelContext.stationsToEmphasize) {
 				if (!stationsToLabel.contains(key)) {
 					Label label = stationLabels.get(key);
 					if (label != null) {
-						drawLabel(label, context, gl, m, n, textRenderer, labelTree, true, 1f);
+						drawLabel(label, context, gl, m, n, labelContext, true, labelContext.textScale * 1f);
 					}
 				}
 			}
 			for (StationKey key : stationsToLabel) {
 				Label label = stationLabels.get(key);
-				boolean emphasize = stationsToEmphasize.contains(key);
-				drawLabel(label, context, gl, m, n, textRenderer, labelTree, emphasize, emphasize ? 1f : 0.5f);
+				boolean emphasize = labelContext.stationsToEmphasize.contains(key);
+				drawLabel(label, context, gl, m, n, labelContext, emphasize,
+						labelContext.textScale * (emphasize ? 1f : 0.5f));
 			}
 		}
 
 		void drawLabel(Label label, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
-				TextRenderer textRenderer,
-				RfStarTree<Void> labelTree, boolean force, float scale) {
+				LabelDrawingContext labelContext, boolean force, float scale) {
 			Vecmath.mpmulAffine(context.viewMatrix(), label.position, tempPoint);
 			if (tempPoint[2] > 0) {
 				// label is behind camera
 				return;
 			}
 			float labelDistanceSquared = Vecmath.dot3(tempPoint, tempPoint);
-			float minDistanceForLabel = minDistanceForSpacing(context, label.maxSpacing);
+			float minDistanceForLabel = minDistanceForSpacing(context, label.maxSpacing, labelContext.density);
 			if (labelDistanceSquared > minDistanceForLabel * minDistanceForLabel && !force) {
 				return;
 			}
@@ -964,16 +972,16 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			float x = tempPoint[0] + label.xOffset * scale;
 			float y = tempPoint[1] + label.yOffset * scale;
 			float[] labelMbr = { x, y, x + label.width * scale, y + label.height * scale };
-			if (labelTree.containsLeafIntersecting(labelMbr)) {
+			if (labelContext.labelTree.containsLeafIntersecting(labelMbr)) {
 				return;
 			} else {
 				Leaf<Void> leaf = new Leaf<>(labelMbr, null);
-				labelTree.insert(leaf);
+				labelContext.labelTree.insert(leaf);
 			}
 			if (Float.isNaN(z)) {
 				z = tempPoint[2];
 			}
-			textRenderer.draw3D(label.text, x, y, z, scale);
+			labelContext.textRenderer.draw3D(label.text, x, y, z, scale);
 		}
 	}
 
@@ -1649,6 +1657,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Uniform4fv centerlineColor;
 
+	Uniform1fv maxCenterlineDistance;
+
 	Uniform3fv depthAxis;
 
 	Uniform3fv depthOrigin;
@@ -1665,7 +1675,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Uniform4fv glowColor;
 
-	boolean showStationLabels;
+	float stationLabelDensity;
 
 	Color stationLabelColor;
 
@@ -1686,8 +1696,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				0f, 1f, 1f, 0.5f);
 		highlightColors.count(3);
 
+		stationLabelDensity = 40;
+
 		centerlineColor = new Uniform4fv();
 		centerlineColor.value(1f, 1f, 1f, 1f);
+
+		maxCenterlineDistance = new Uniform1fv();
+		maxCenterlineDistance.value(1000f);
 
 		depthAxis = new Uniform3fv().name("u_axis").value(0f, -1f, 0f);
 		depthOrigin = new Uniform3fv().name("u_origin").value(0f, 0f, 0f);
@@ -1847,7 +1862,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glDisable(GL.GL_CULL_FACE);
 		gl.glDisable(GL.GL_STENCIL_TEST);
 
-		if (showStationLabels) {
+		if (stationLabelDensity > 0) {
 			gl.glEnable(GL.GL_DEPTH_TEST);
 			textRenderer.beginRendering(context.width(), context.height(), false);
 
@@ -1859,8 +1874,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				stationsToEmphasize.add(hoveredShot.shot.toKey());
 			}
 
+			LabelDrawingContext labelContext = new LabelDrawingContext();
+			labelContext.textRenderer = textRenderer;
+			labelContext.stationsToEmphasize = stationsToEmphasize;
+			labelContext.labelTree = labelTree;
+			labelContext.density = stationLabelDensity;
+			labelContext.textScale = 1f;
+
 			for (Section section : sections) {
-				section.drawLabels(context, gl, m, n, textRenderer, labelTree, stationsToEmphasize);
+				section.drawLabels(context, gl, m, n, labelContext);
 			}
 
 			textRenderer.endRendering();
@@ -2244,10 +2266,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	public void setShowStationLabels(boolean showStationLabels) {
-		this.showStationLabels = showStationLabels;
-	}
-
 	public void setStationLabelColor(Color stationLabelColor) {
 		this.stationLabelColor = stationLabelColor;
 		if (textRenderer != null) {
@@ -2261,5 +2279,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				centerlineColor.getGreen() / 255.0f,
 				centerlineColor.getBlue() / 255.0f,
 				centerlineColor.getAlpha() / 255.0f);
+	}
+
+	public void setStationLabelDensity(float stationLabelDensity) {
+		this.stationLabelDensity = stationLabelDensity;
+	}
+
+	public void setMaxCenterlineDistance(float maxCenterlineDistance) {
+		this.maxCenterlineDistance.value(maxCenterlineDistance);
 	}
 }
