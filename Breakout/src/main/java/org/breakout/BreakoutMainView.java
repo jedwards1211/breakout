@@ -991,10 +991,11 @@ public class BreakoutMainView {
 				model3d = model;
 
 				model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
-				model.setStationLabelDensity(getProjectModel().get(ProjectModel.stationLabelDensity));
-				model.setStationLabelColor(getProjectModel().get(ProjectModel.stationLabelColor));
-				model.setCenterlineColor(getProjectModel().get(ProjectModel.centerlineColor));
-				model.setMaxCenterlineDistance(getProjectModel().get(ProjectModel.centerlineDistance));
+				//				model.setStationLabelDensity(getProjectModel().get(ProjectModel.stationLabelDensity));
+				//				model.setStationLabelFontSize(getProjectModel().get(ProjectModel.stationLabelFontSize));
+				//				model.setStationLabelColor(getProjectModel().get(ProjectModel.stationLabelColor));
+				//				model.setCenterlineColor(getProjectModel().get(ProjectModel.centerlineColor));
+				//				model.setMaxCenterlineDistance(getProjectModel().get(ProjectModel.centerlineDistance));
 
 				projectModelBinder.update(true);
 
@@ -1534,6 +1535,16 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelDensity, projectModelBinder));
+
+		new BinderWrapper<Float>() {
+			@Override
+			protected void onValueChanged(Float stationLabelFontSize) {
+				if (model3d != null && stationLabelFontSize != null) {
+					model3d.setStationLabelFontSize(stationLabelFontSize);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelFontSize, projectModelBinder));
 
 		new BinderWrapper<Color>() {
 			@Override

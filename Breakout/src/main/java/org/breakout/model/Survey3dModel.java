@@ -927,7 +927,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				if (!stationsToLabel.contains(key)) {
 					Label label = stationLabels.get(key);
 					if (label != null) {
-						drawLabel(label, context, gl, m, n, labelContext, true, labelContext.textScale * 1f);
+						drawLabel(label, context, gl, m, n, labelContext, true, labelContext.textScale * 2f);
 					}
 				}
 			}
@@ -935,7 +935,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				Label label = stationLabels.get(key);
 				boolean emphasize = labelContext.stationsToEmphasize.contains(key);
 				drawLabel(label, context, gl, m, n, labelContext, emphasize,
-						labelContext.textScale * (emphasize ? 1f : 0.5f));
+						labelContext.textScale * (emphasize ? 2f : 1f));
 			}
 		}
 
@@ -1455,7 +1455,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
-		Font labelFont = new Font("Arial", Font.BOLD, 24);
+		Font labelFont = new Font("Arial", Font.BOLD, 72);
 		FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
 		for (Section section : sections) {
 			section.updateLabels(labelFont, frc);
@@ -1677,6 +1677,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	float stationLabelDensity;
 
+	float stationLabelFontSize;
+
 	Color stationLabelColor;
 
 	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections,
@@ -1687,7 +1689,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.sections = sections;
 		this.labelFont = labelFont;
 
-		textRenderer = new TextRenderer(labelFont, true, false);
+		textRenderer = new TextRenderer(labelFont, true, true, null, false);
 
 		highlightColors = new Uniform4fv().name("u_highlightColors");
 		highlightColors.value(
@@ -1696,6 +1698,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				0f, 1f, 1f, 0.5f);
 		highlightColors.count(3);
 
+		stationLabelFontSize = 12;
 		stationLabelDensity = 40;
 
 		centerlineColor = new Uniform4fv();
@@ -1879,7 +1882,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			labelContext.stationsToEmphasize = stationsToEmphasize;
 			labelContext.labelTree = labelTree;
 			labelContext.density = stationLabelDensity;
-			labelContext.textScale = 1f;
+			labelContext.textScale = stationLabelFontSize / labelFont.getSize();
 
 			for (Section section : sections) {
 				section.drawLabels(context, gl, m, n, labelContext);
@@ -2283,6 +2286,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public void setStationLabelDensity(float stationLabelDensity) {
 		this.stationLabelDensity = stationLabelDensity;
+	}
+
+	public void setStationLabelFontSize(float stationLabelFontSize) {
+		this.stationLabelFontSize = stationLabelFontSize;
 	}
 
 	public void setMaxCenterlineDistance(float maxCenterlineDistance) {

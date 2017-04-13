@@ -84,6 +84,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Float> stationLabelDensity = newAttribute(
 			Float.class,
 			"stationLabelDensity");
+	public static final Attribute<Float> stationLabelFontSize = newAttribute(
+			Float.class,
+			"stationLabelFontSize");
 	public static final Attribute<Color> stationLabelColor = newAttribute(
 			Color.class,
 			"stationLabelColor");
@@ -150,6 +153,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.backgroundColor) == null) {
 			projectModel.set(ProjectModel.backgroundColor, Color.black);
+		}
+		if (projectModel.get(ProjectModel.stationLabelFontSize) == null) {
+			projectModel.set(ProjectModel.stationLabelFontSize, 12f);
 		}
 		if (projectModel.get(ProjectModel.stationLabelDensity) == null) {
 			projectModel.set(ProjectModel.stationLabelDensity, 40f);

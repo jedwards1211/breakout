@@ -125,6 +125,8 @@ public class SettingsDrawer extends Drawer {
 	JLabel stationLabelsOffLabel;
 	JLabel lessStationLabelDensityLabel;
 	JLabel moreStationLabelDensityLabel;
+	JLabel stationLabelFontSizeLabel;
+	JSlider stationLabelFontSizeSlider;
 	JLabel stationLabelDensityLabel;
 	JSlider stationLabelDensitySlider;
 	JLabel centerlinesOffLabel;
@@ -189,6 +191,9 @@ public class SettingsDrawer extends Drawer {
 	BinderWrapper<QObject<ProjectModel>> projectBinder = new BinderWrapper<>();
 	Binder<CameraView> cameraViewBinder = QObjectAttributeBinder.bind(
 			ProjectModel.cameraView,
+			projectBinder);
+	Binder<Float> stationLabelFontSizeBinder = QObjectAttributeBinder.bind(
+			ProjectModel.stationLabelFontSize,
 			projectBinder);
 	Binder<Float> stationLabelDensityBinder = QObjectAttributeBinder.bind(
 			ProjectModel.stationLabelDensity,
@@ -300,6 +305,9 @@ public class SettingsDrawer extends Drawer {
 				BimapperBinder.bind(RoundingFloat2IntegerBimapper.instance, centerlineDistanceBinder));
 		JSliderValueBinder.bind(stationLabelDensitySlider,
 				BimapperBinder.bind(RoundingFloat2IntegerBimapper.instance, stationLabelDensityBinder));
+		JSliderValueBinder.bind(stationLabelFontSizeSlider,
+				BimapperBinder.bind(compose(new LinearFloatBimapper(10f, 0f),
+						RoundingFloat2IntegerBimapper.instance), stationLabelFontSizeBinder));
 
 		JSliderValueBinder.bind(numSamplesSlider, desiredNumSamplesBinder);
 	}
@@ -326,6 +334,10 @@ public class SettingsDrawer extends Drawer {
 		stationLabelDensityLabel = new JLabel();
 		localizer.setText(stationLabelDensityLabel, "stationLabelDensityLabel.text");
 		stationLabelDensitySlider = new JSlider(0, 300, 40);
+
+		stationLabelFontSizeLabel = new JLabel();
+		localizer.setText(stationLabelFontSizeLabel, "stationLabelFontSizeLabel.text");
+		stationLabelFontSizeSlider = new JSlider(80, 720, 120);
 
 		stationLabelColorLabel = new JLabel();
 		localizer.setText(stationLabelColorLabel, "stationLabelColorLabel.text");
@@ -567,6 +579,9 @@ public class SettingsDrawer extends Drawer {
 
 		w.put(ambientLightLabel).belowLast().west();
 		w.put(ambientLightSlider).belowLast().fillx();
+
+		w.put(stationLabelFontSizeLabel).belowLast().fillx();
+		w.put(stationLabelFontSizeSlider).belowLast().fillx();
 
 		w.put(stationLabelDensityLabel).belowLast().fillx();
 		GridBagWizard stationLabelDensityPanel = GridBagWizard.quickPanel();
