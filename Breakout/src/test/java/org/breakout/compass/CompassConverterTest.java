@@ -10,8 +10,8 @@ import org.andork.compass.LrudAssociation;
 import org.andork.compass.survey.CompassShot;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.compass.survey.CompassTripHeader;
-import org.breakout.model.SurveyRow;
-import org.breakout.model.SurveyTrip;
+import org.breakout.model.raw.SurveyRow;
+import org.breakout.model.raw.SurveyTrip;
 import org.junit.Assert;
 import org.junit.Test;
 

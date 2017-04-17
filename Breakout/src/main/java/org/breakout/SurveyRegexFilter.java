@@ -26,8 +26,8 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
-import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
+import org.breakout.model.raw.SurveyRow;
 
 public class SurveyRegexFilter extends RowFilter<TableModel, Integer> {
 	Pattern pattern;

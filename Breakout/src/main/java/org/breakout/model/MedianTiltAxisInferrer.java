@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.andork.math3d.Vecmath;
+import org.breakout.model.calc.CalcShot;
 
 public class MedianTiltAxisInferrer implements TiltAxisInferrer {
 

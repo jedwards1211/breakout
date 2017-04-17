@@ -4,6 +4,8 @@ import static org.andork.util.JavaScript.or;
 
 import java.util.Objects;
 
+import org.breakout.model.raw.SurveyRow;
+
 public class ShotKey {
 	public final String fromCave;
 	public final String fromStation;

@@ -24,6 +24,9 @@ package org.breakout.model;
 import java.util.Calendar;
 
 import org.andork.date.DateUtils;
+import org.breakout.model.calc.CalcCrossSection;
+import org.breakout.model.calc.CalcShot;
+import org.breakout.model.calc.CalcStation;
 
 public enum ColorParam {
 	DEPTH("Depth", true), DISTANCE_ALONG_SHOTS("Distance (Along Shots)", true) {

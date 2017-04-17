@@ -102,6 +102,10 @@ import org.andork.swing.async.Task;
 import org.andork.util.Iterables;
 import org.breakout.PickResult;
 import org.breakout.awt.ParamGradientMapPaint;
+import org.breakout.model.calc.CalcCrossSection;
+import org.breakout.model.calc.CalcProject;
+import org.breakout.model.calc.CalcShot;
+import org.breakout.model.calc.CalcStation;
 import org.omg.CORBA.FloatHolder;
 
 import com.andork.plot.LinearAxisConversion;

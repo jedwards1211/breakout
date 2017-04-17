@@ -29,6 +29,8 @@ import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.ListTableModel;
 import org.andork.util.StringUtils;
+import org.breakout.model.raw.SurveyRow;
+import org.breakout.model.raw.SurveyTrip;
 
 public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	public static class SurveyTableModelCopier extends AbstractTableModelCopier<SurveyTableModel> {

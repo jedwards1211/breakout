@@ -24,6 +24,7 @@ package org.breakout.model;
 import java.util.Collection;
 
 import org.andork.math3d.Vecmath;
+import org.breakout.model.calc.CalcShot;
 
 public class WeightedAverageTiltAxisInferrer implements TiltAxisInferrer {
 

@@ -34,8 +34,8 @@ import javax.swing.table.TableColumnModel;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.ListTableColumn;
 import org.andork.swing.table.ListTableModel;
-import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
+import org.breakout.model.raw.SurveyRow;
 
 public class SurveyTable extends AnnotatingJTable {
 	public static class Columns {

@@ -183,23 +183,13 @@ import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.RowFilterFactory;
 import org.andork.util.FileRecoveryConfig;
+import org.andork.util.JavaScript;
 import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
 import org.breakout.compass.ui.CompassParseResultsDialog;
-import org.breakout.model.CalcProject;
-import org.breakout.model.CalcShot;
-import org.breakout.model.CalcStation;
-import org.breakout.model.CalculateGeometry;
 import org.breakout.model.ColorParam;
-import org.breakout.model.MetacaveExporter;
-import org.breakout.model.MetacaveImporter;
-import org.breakout.model.MutableSurveyRow;
-import org.breakout.model.Parsed2Calc;
-import org.breakout.model.ParsedProject;
-import org.breakout.model.ParsedRow;
 import org.breakout.model.ProjectModel;
-import org.breakout.model.ProjectParser;
 import org.breakout.model.RootModel;
 import org.breakout.model.ShotKey;
 import org.breakout.model.Survey3dModel;
@@ -207,9 +197,21 @@ import org.breakout.model.Survey3dModel.SelectionEditor;
 import org.breakout.model.Survey3dModel.Shot3d;
 import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
-import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.SurveyTrip;
+import org.breakout.model.calc.CalcProject;
+import org.breakout.model.calc.CalcShot;
+import org.breakout.model.calc.CalcStation;
+import org.breakout.model.calc.CalculateGeometry;
+import org.breakout.model.calc.Parsed2Calc;
+import org.breakout.model.parsed.ParsedProject;
+import org.breakout.model.parsed.ParsedShot;
+import org.breakout.model.parsed.ParsedShotMeasurement;
+import org.breakout.model.parsed.ProjectParser;
+import org.breakout.model.raw.MetacaveExporter;
+import org.breakout.model.raw.MetacaveImporter;
+import org.breakout.model.raw.MutableSurveyRow;
+import org.breakout.model.raw.SurveyRow;
+import org.breakout.model.raw.SurveyTrip;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
 
@@ -285,19 +287,22 @@ public class BreakoutMainView {
 					public LinearAxisConversion run() throws Throwable {
 						SurveyRow orig = sourceRows.get(picked.picked.key());
 						SurveyTrip trip = orig != null ? orig.getTrip() : null;
-						ParsedRow shot = parsedProject.shots.get(picked.picked.key());
+						ShotKey key = picked.picked.key();
+						ParsedShot shot = parsedProject.shots.get(picked.picked.key());
 						if (shot == null) {
 							hintLabel.setText("");
 						} else {
 							hintLabel.setText(String.format(
 									"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
 											+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i></html>",
-									shot.fromStation, shot.toStation,
-									shot.distance,
-									shot.frontAzimuth != null ? shot.frontAzimuth : "--",
-									shot.backAzimuth != null ? shot.backAzimuth : "--",
-									shot.frontInclination != null ? shot.frontInclination : "--",
-									shot.backInclination != null ? shot.backInclination : "--",
+									key.fromStation, key.toStation,
+									ParsedShotMeasurement.getFirstDistance(shot.measurements),
+									JavaScript.or(ParsedShotMeasurement.getFirstFrontAzimuth(shot.measurements), "--"),
+									JavaScript.or(ParsedShotMeasurement.getFirstBackAzimuth(shot.measurements), "--"),
+									JavaScript.or(ParsedShotMeasurement.getFirstFrontInclination(shot.measurements),
+											"--"),
+									JavaScript.or(ParsedShotMeasurement.getFirstBackInclination(shot.measurements),
+											"--"),
 									trip != null ? trip.getName() : ""));
 						}
 
@@ -948,8 +953,7 @@ public class BreakoutMainView {
 					modelIndex++;
 					continue;
 				}
-				ParsedRow parsed = parser.parse(row);
-				ShotKey key = parsed.key();
+				ShotKey key = parser.parse(row);
 				if (key != null) {
 					shotKeyToModelIndex.put(key, modelIndex);
 					modelIndexToShotKey.put(modelIndex, key);

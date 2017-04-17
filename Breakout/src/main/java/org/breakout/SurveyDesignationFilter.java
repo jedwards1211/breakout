@@ -29,8 +29,8 @@ import java.util.regex.Pattern;
 import javax.swing.RowFilter;
 import javax.swing.table.TableModel;
 
-import org.breakout.model.SurveyRow;
 import org.breakout.model.SurveyTableModel;
+import org.breakout.model.raw.SurveyRow;
 
 public class SurveyDesignationFilter extends RowFilter<TableModel, Integer> {
 	private static class Segment {

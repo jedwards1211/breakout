@@ -20,10 +20,10 @@ import org.andork.compass.survey.CompassTripHeader;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
-import org.breakout.model.MutableSurveyRow;
-import org.breakout.model.MutableSurveyTrip;
-import org.breakout.model.SurveyRow;
-import org.breakout.model.SurveyTrip;
+import org.breakout.model.raw.MutableSurveyRow;
+import org.breakout.model.raw.MutableSurveyTrip;
+import org.breakout.model.raw.SurveyRow;
+import org.breakout.model.raw.SurveyTrip;
 
 public class CompassConverter {
 	private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");

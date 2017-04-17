@@ -23,6 +23,8 @@ package org.breakout.model;
 
 import java.util.Collection;
 
+import org.breakout.model.calc.CalcShot;
+
 public interface TiltAxisInferrer {
 	public float[] inferTiltAxis(Collection<? extends CalcShot> shots);
 }
