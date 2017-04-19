@@ -27,6 +27,32 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class RTraversal {
+	/**
+	 * Searches down through the nodes with the best (lowest) score at every
+	 * level, and returns the node with the best score found.
+	 */
+	public static <R, T, C extends Comparable<C>> RNode<R, T> traverse(RNode<R, T> node,
+			Function<RNode<R, T>, C> getScore) {
+		if (node instanceof RBranch) {
+			RNode<R, T> bestChild = null;
+			C bestScore = null;
+			RBranch<R, T> branch = (RBranch<R, T>) node;
+			for (int i = 0; i < branch.numChildren(); i++) {
+				RNode<R, T> child = branch.childAt(i);
+				C score = getScore.apply(child);
+				if (bestChild == null || score.compareTo(bestScore) < 0) {
+					bestChild = child;
+					bestScore = score;
+				}
+			}
+			if (bestChild != null) {
+				RNode<R, T> result = traverse(bestChild, getScore);
+				return getScore.apply(result).compareTo(getScore.apply(node)) <= 0 ? result : node;
+			}
+		}
+		return node;
+	}
+
 	public static <R, T, V> V traverse(RNode<R, T> node, Predicate<RNode<R, T>> onNodes,
 			Function<RLeaf<R, T>, V> onLeaves, Supplier<V> initialValue, BinaryOperator<V> combiner) {
 		if (onNodes.test(node)) {

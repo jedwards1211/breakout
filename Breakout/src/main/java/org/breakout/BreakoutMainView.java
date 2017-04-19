@@ -167,6 +167,8 @@ import org.andork.q.QLinkedHashMap;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
 import org.andork.q.QSpec;
+import org.andork.spatial.RNode;
+import org.andork.spatial.RTraversal;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.FromEDT;
@@ -548,7 +550,9 @@ public class BreakoutMainView {
 
 		@Override
 		public void mousePressed(MouseEvent e) {
-			if (e.getButton() != MouseEvent.BUTTON1) {
+			if (e.getButton() == MouseEvent.BUTTON1) {
+				pickCenterOfOrbit(e);
+			} else {
 				return;
 			}
 
@@ -593,6 +597,37 @@ public class BreakoutMainView {
 			}
 
 			autoDrawable.display();
+		}
+
+		void pickCenterOfOrbit(MouseEvent e) {
+			if (model3d == null) {
+				return;
+			}
+
+			float[] origin = new float[3];
+			float[] direction = new float[3];
+			float[] center = new float[3];
+			renderer.getViewState()
+					.pickXform()
+					.xform(e.getX(), e.getComponent().getHeight() - e.getY(), e.getComponent().getWidth(),
+							e.getComponent().getHeight(), origin, direction);
+
+			RNode<float[], Shot3d> bestNode = RTraversal.traverse(model3d.getTree().getRoot(), node -> {
+				if (!Rectmath.rayIntersects(origin, direction, node.mbr())) {
+					return Float.POSITIVE_INFINITY;
+				}
+				Rectmath.center(node.mbr(), center);
+				return Vecmath.distanceFromLine3sq(center, origin, direction);
+			});
+			if (bestNode == null) {
+				bestNode = model3d.getTree().getRoot();
+			}
+
+			Rectmath.center(bestNode.mbr(), center);
+			Vecmath.projPointOntoVector3(center, origin, direction, center);
+			Vecmath.add3(center, origin, center);
+
+			orbiter.setCenter(center);
 		}
 	}
 
@@ -2427,9 +2462,9 @@ public class BreakoutMainView {
 			mouseLooper.removeMouseAdapter(mouseAdapterChain);
 		}
 		mouseAdapterChain = new MouseAdapterChain();
+		mouseAdapterChain.addMouseAdapter(pickHandler);
 		mouseAdapterChain.addMouseAdapter(navigator);
 		mouseAdapterChain.addMouseAdapter(orbiter);
-		mouseAdapterChain.addMouseAdapter(pickHandler);
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
