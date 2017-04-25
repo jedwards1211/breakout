@@ -154,7 +154,6 @@ import org.andork.jogl.awt.anim.ProjXformAnimation;
 import org.andork.jogl.awt.anim.RandomViewOrbitAnimation;
 import org.andork.jogl.awt.anim.SpringViewOrbitAnimation;
 import org.andork.jogl.awt.anim.ViewXformAnimation;
-import org.andork.jogl.old.BasicJOGLObject;
 import org.andork.math.misc.Fitting;
 import org.andork.math3d.Fitting3d;
 import org.andork.math3d.FittingFrustum;
@@ -1084,9 +1083,10 @@ public class BreakoutMainView {
 		}
 
 		@Override
-		public void init(GL2ES2 gl) {
+		public boolean init(GL2ES2 gl) {
 			renderer = new TextRenderer(new Font("Arial", Font.BOLD, 10), true, true);
 			renderer.init();
+			return true;
 		}
 	}
 
@@ -1201,7 +1201,6 @@ public class BreakoutMainView {
 	Survey3dModel model3d;
 	float[] v = newMat4f();
 	int debugMbrCount = 0;
-	List<BasicJOGLObject> debugMbrs = new ArrayList<>();
 
 	Shot3dPickContext spc = new Shot3dPickContext();
 

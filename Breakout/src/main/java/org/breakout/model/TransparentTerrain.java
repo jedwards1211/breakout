@@ -220,9 +220,9 @@ public class TransparentTerrain implements JoglDrawable, JoglResource {
 	}
 
 	@Override
-	public void init(GL2ES2 gl) {
+	public boolean init(GL2ES2 gl) {
 		if (initialized) {
-			return;
+			return true;
 		}
 
 		initialized = true;
@@ -300,5 +300,7 @@ public class TransparentTerrain implements JoglDrawable, JoglResource {
 		counts.position(0);
 
 		indexPointers = PointerBuffer.allocateDirect(numCellRows * numCellCols);
+
+		return true;
 	}
 }

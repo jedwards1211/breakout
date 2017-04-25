@@ -138,9 +138,9 @@ public class JoglScreenPolygon implements JoglDrawable, JoglResource {
 	}
 
 	@Override
-	public void init(GL2ES2 gl) {
+	public boolean init(GL2ES2 gl) {
 		if (initialized || data[0] == null) {
-			return;
+			return true;
 		}
 		initialized = true;
 		dataChanged = true;
@@ -149,6 +149,7 @@ public class JoglScreenPolygon implements JoglDrawable, JoglResource {
 		}
 
 		gl.glGenBuffers(2, buffers, 0);
+		return true;
 	}
 
 	private void initProgram(GL2ES2 gl) {

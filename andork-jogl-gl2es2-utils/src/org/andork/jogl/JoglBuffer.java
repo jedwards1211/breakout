@@ -63,7 +63,7 @@ public class JoglBuffer implements JoglResource {
 	}
 
 	@Override
-	public void init(GL2ES2 gl) {
+	public boolean init(GL2ES2 gl) {
 		if (!initialized) {
 			int[] vbos = new int[1];
 			gl.glGenBuffers(1, vbos, 0);
@@ -71,6 +71,7 @@ public class JoglBuffer implements JoglResource {
 			initialized = true;
 			rebuffer(gl);
 		}
+		return true;
 	}
 
 	public void rebuffer(GL2ES2 gl) {

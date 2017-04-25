@@ -81,9 +81,9 @@ import org.andork.jogl.JoglBuffer;
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglResource;
-import org.andork.jogl.old.BasicJOGLObject.Uniform1fv;
-import org.andork.jogl.old.BasicJOGLObject.Uniform3fv;
-import org.andork.jogl.old.BasicJOGLObject.Uniform4fv;
+import org.andork.jogl.uniform.Uniform1fv;
+import org.andork.jogl.uniform.Uniform3fv;
+import org.andork.jogl.uniform.Uniform4fv;
 import org.andork.jogl.util.JoglUtils;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
@@ -130,8 +130,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected void beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
 			super.beforeDraw(sections, context, gl, m, n);
-			gl.glUniform3fv(u_axis_location, 1, depthAxis.value(), 0);
-			gl.glUniform3fv(u_origin_location, 1, depthOrigin.value(), 0);
+			depthAxis.put(gl, u_axis_location);
+			depthOrigin.put(gl, u_origin_location);
 		}
 
 		@Override
@@ -167,12 +167,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		@Override
-		public void init(GL2ES2 gl) {
+		public boolean init(GL2ES2 gl) {
 			if (program <= 0) {
 				super.init(gl);
 				u_axis_location = gl.glGetUniformLocation(program, "u_axis");
 				u_origin_location = gl.glGetUniformLocation(program, "u_origin");
 			}
+			return true;
 		}
 	}
 
@@ -254,8 +255,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glUniformMatrix4fv(v_location, 1, false, context.viewMatrix(), 0);
 			gl.glUniformMatrix4fv(p_location, 1, false, context.projectionMatrix(), 0);
 
-			gl.glUniform4fv(u_color_location, 1, centerlineColor.value(), 0);
-			gl.glUniform1fv(u_maxCenterlineDistance_location, 1, maxCenterlineDistance.value(), 0);
+			centerlineColor.put(gl, u_color_location);
+			maxCenterlineDistance.put(gl, u_maxCenterlineDistance_location);
 
 			gl.glEnableVertexAttribArray(a_pos_location);
 
@@ -281,7 +282,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		@Override
-		public void init(GL2ES2 gl) {
+		public boolean init(GL2ES2 gl) {
 			String vertShader, fragShader;
 
 			if (program <= 0) {
@@ -299,6 +300,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				u_color_location = gl.glGetUniformLocation(program, "u_color");
 				u_maxCenterlineDistance_location = gl.glGetUniformLocation(program, "u_maxCenterlineDistance");
 			}
+
+			return true;
 		}
 	}
 
@@ -341,14 +344,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glUniformMatrix4fv(v_location, 1, false, context.viewMatrix(), 0);
 			gl.glUniformMatrix4fv(p_location, 1, false, context.projectionMatrix(), 0);
 
-			gl.glUniform1fv(u_ambient_location, 1, ambient.value(), 0);
+			ambient.put(gl, u_ambient_location);
 
-			gl.glUniform1fv(u_nearDist_location, 1, nearDist.value(), 0);
-			gl.glUniform1fv(u_farDist_location, 1, farDist.value(), 0);
+			nearDist.put(gl, u_nearDist_location);
+			farDist.put(gl, u_farDist_location);
 
-			gl.glUniform4fv(u_glowColor_location, 1, glowColor.value(), 0);
+			glowColor.put(gl, u_glowColor_location);
 
-			gl.glUniform4fv(u_highlightColors_location, highlightColors.count(), highlightColors.value(), 0);
+			highlightColors.put(gl, u_highlightColors_location);
 
 			gl.glEnableVertexAttribArray(a_pos_location);
 			gl.glEnableVertexAttribArray(a_norm_location);
@@ -506,7 +509,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		@Override
-		public void init(GL2ES2 gl) {
+		public boolean init(GL2ES2 gl) {
 			String vertShader, fragShader;
 
 			if (program <= 0) {
@@ -535,6 +538,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 				u_highlightColors_location = gl.glGetUniformLocation(program, "u_highlightColors");
 			}
+
+			return true;
 		}
 	}
 
@@ -553,8 +558,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glBindTexture(GL_TEXTURE_2D, paramTexture);
 			gl.glUniform1i(u_paramSampler_location, 0);
 
-			gl.glUniform1fv(u_loParam_location, 1, loParam.value(), 0);
-			gl.glUniform1fv(u_hiParam_location, 1, hiParam.value(), 0);
+			loParam.put(gl, u_loParam_location);
+			hiParam.put(gl, u_hiParam_location);
 		}
 
 		@Override
@@ -575,7 +580,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		@Override
-		public void init(GL2ES2 gl) {
+		public boolean init(GL2ES2 gl) {
 			if (program <= 0) {
 				super.init(gl);
 
@@ -583,6 +588,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				u_hiParam_location = gl.glGetUniformLocation(program, "u_hiParam");
 				u_paramSampler_location = gl.glGetUniformLocation(program, "u_paramSampler");
 			}
+
+			return true;
 		}
 	}
 
@@ -649,11 +656,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		@Override
-		public void init(GL2ES2 gl) {
+		public boolean init(GL2ES2 gl) {
 			if (program <= 0) {
 				super.init(gl);
 				a_param0_location = gl.glGetAttribLocation(program, "a_param0");
 			}
+
+			return true;
 		}
 	}
 
@@ -1695,12 +1704,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		textRenderer = new TextRenderer(labelFont, true, true, null, false);
 
-		highlightColors = new Uniform4fv().name("u_highlightColors");
-		highlightColors.value(
-				0f, 0f, 0f, 0f,
-				0f, 1f, 1f, 0.5f,
-				0f, 1f, 1f, 0.5f);
-		highlightColors.count(3);
+		highlightColors = new Uniform4fv()
+				.value(
+						0f, 0f, 0f, 0f,
+						0f, 1f, 1f, 0.5f,
+						0f, 1f, 1f, 0.5f)
+				.count(3);
 
 		stationLabelFontSize = 12;
 		stationLabelDensity = 40;
@@ -1711,17 +1720,17 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		maxCenterlineDistance = new Uniform1fv();
 		maxCenterlineDistance.value(1000f);
 
-		depthAxis = new Uniform3fv().name("u_axis").value(0f, -1f, 0f);
-		depthOrigin = new Uniform3fv().name("u_origin").value(0f, 0f, 0f);
+		depthAxis = new Uniform3fv().value(0f, -1f, 0f);
+		depthOrigin = new Uniform3fv().value(0f, 0f, 0f);
 
-		glowColor = new Uniform4fv().name("u_glowColor").value(0f, 1f, 1f, 1f);
+		glowColor = new Uniform4fv().value(0f, 1f, 1f, 1f);
 
-		ambient = new Uniform1fv().name("u_ambient").value(0.5f);
+		ambient = new Uniform1fv().value(0.5f);
 
-		loParam = new Uniform1fv().name("u_loParam").value(0);
-		hiParam = new Uniform1fv().name("u_hiParam").value(1000);
-		nearDist = new Uniform1fv().name("u_nearDist").value(0);
-		farDist = new Uniform1fv().name("u_farDist").value(1000);
+		loParam = new Uniform1fv().value(0);
+		hiParam = new Uniform1fv().value(1000);
+		nearDist = new Uniform1fv().value(0);
+		farDist = new Uniform1fv().value(1000);
 
 		for (Section section : sections) {
 			section.renderers.add(axialSectionRenderer);
@@ -2001,10 +2010,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	@Override
-	public void init(GL2ES2 gl) {
+	public boolean init(GL2ES2 gl) {
 		textRenderer.init();
 		textRenderer.setUseVertexArrays(true);
 		textRenderer.setColor(stationLabelColor);
+
+		return true;
 	}
 
 	public void pickShots(PlanarHull3f pickHull, Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {

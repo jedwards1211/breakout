@@ -69,10 +69,11 @@ public abstract class JoglManagedResource implements JoglResource {
 	 * @see org.andork.jogl.neu.JoglResource#init(com.jogamp.opengl.GL2ES2)
 	 */
 	@Override
-	public final void init(GL2ES2 gl) {
+	public final boolean init(GL2ES2 gl) {
 		requireUninitialized();
 		initialized = true;
 		doInit(gl);
+		return true;
 	}
 
 	public final boolean isInitialized() {

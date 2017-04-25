@@ -27,6 +27,6 @@ public interface JoglResource {
 
 	public abstract void dispose(GL2ES2 gl);
 
-	public abstract void init(GL2ES2 gl);
+	public abstract boolean init(GL2ES2 gl);
 
 }
