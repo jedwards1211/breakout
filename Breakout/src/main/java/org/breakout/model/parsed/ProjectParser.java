@@ -172,7 +172,7 @@ public class ProjectParser {
 				MetacaveLengthParser::parse, trip.getDistanceUnit());
 		measurement.azimuth = parse(row, SurveyRow.Properties.frontAzimuth,
 				MetacaveAzimuthParser::parse, trip.getFrontAzimuthUnit());
-		measurement.inclination = parse(row, SurveyRow.Properties.backAzimuth,
+		measurement.inclination = parse(row, SurveyRow.Properties.frontInclination,
 				MetacaveAzimuthParser::parse, trip.getBackAzimuthUnit());
 		return measurement;
 	}
@@ -188,7 +188,7 @@ public class ProjectParser {
 				MetacaveLengthParser::parse, trip.getDistanceUnit());
 		measurement.azimuth = parse(row, SurveyRow.Properties.backAzimuth,
 				MetacaveAzimuthParser::parse, trip.getBackAzimuthUnit());
-		measurement.inclination = parse(row, SurveyRow.Properties.backAzimuth,
+		measurement.inclination = parse(row, SurveyRow.Properties.backInclination,
 				MetacaveAzimuthParser::parse, trip.getBackAzimuthUnit());
 		return measurement;
 	}
