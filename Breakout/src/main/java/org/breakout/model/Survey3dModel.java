@@ -1702,6 +1702,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	FlatColorProgram flatColorProgram = FlatColorProgram.INSTANCE;
 
+	boolean showSpatialIndex = false;
+
 	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections,
 			Font labelFont) {
 		super();
@@ -1918,16 +1920,19 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glDisable(GL.GL_DEPTH_TEST);
 		}
 
-		//		if (hoveredShot != null) {
-		//			gl.glEnable(GL.GL_DEPTH_TEST);
-		//			drawMBRsForNode(hoveredShot.leaf, context, gl, m, n);
-		//			gl.glDisable(GL.GL_DEPTH_TEST);
-		//		}
+		if (showSpatialIndex && hoveredShot != null) {
+			gl.glEnable(GL.GL_DEPTH_TEST);
+			drawMBRsForNode(hoveredShot.leaf, context, gl, m, n);
+			gl.glDisable(GL.GL_DEPTH_TEST);
+		}
 	}
 
 	/**
 	 * Draws a wireframe bounding box to {@link #lineRenderer}.
-	 * @param bbox a bounding box of the form [xmin, ymin, zmin, xmax, ymax, zmax]
+	 * 
+	 * @param bbox
+	 *            a bounding box of the form [xmin, ymin, zmin, xmax, ymax,
+	 *            zmax]
 	 */
 	void drawBoundingBox(float[] bbox) {
 		for (int x = 0; x < 6; x += 3) {
@@ -2387,5 +2392,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public void setMaxCenterlineDistance(float maxCenterlineDistance) {
 		this.maxCenterlineDistance.value(maxCenterlineDistance);
+	}
+	
+	public void setShowSpatialIndex(boolean showSpatialIndex) {
+		this.showSpatialIndex = showSpatialIndex;
 	}
 }

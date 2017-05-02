@@ -78,6 +78,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.swing.CellEditor;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -116,6 +117,7 @@ import org.andork.bind.DefaultBinder;
 import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
+import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.CollectionUtils;
 import org.andork.compass.CompassParseError;
 import org.andork.compass.plot.BeginSectionCommand;
@@ -1029,11 +1031,6 @@ public class BreakoutMainView {
 				model3d = model;
 
 				model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
-				//				model.setStationLabelDensity(getProjectModel().get(ProjectModel.stationLabelDensity));
-				//				model.setStationLabelFontSize(getProjectModel().get(ProjectModel.stationLabelFontSize));
-				//				model.setStationLabelColor(getProjectModel().get(ProjectModel.stationLabelColor));
-				//				model.setCenterlineColor(getProjectModel().get(ProjectModel.centerlineColor));
-				//				model.setMaxCenterlineDistance(getProjectModel().get(ProjectModel.centerlineDistance));
 
 				projectModelBinder.update(true);
 
@@ -1045,10 +1042,6 @@ public class BreakoutMainView {
 				autoDrawable.invoke(false, drawable -> {
 					scene.add(model);
 					scene.initLater(model);
-					//					Text text = new Text();
-					//					scene.add(text);
-					//					scene.initLater(text);
-
 					return false;
 				});
 			});
@@ -1614,6 +1607,16 @@ public class BreakoutMainView {
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineColor, projectModelBinder));
 
+		new BinderWrapper<Boolean>() {
+			@Override
+			protected void onValueChanged(Boolean showSpatialIndex) {
+				if (model3d != null && showSpatialIndex != null) {
+					model3d.setShowSpatialIndex(showSpatialIndex);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(RootModel.showSpatialIndex, rootModelBinder));
+
 		new BinderWrapper<Integer>() {
 			@Override
 			protected void onValueChanged(Integer newValue) {
@@ -1738,6 +1741,14 @@ public class BreakoutMainView {
 		exportMenu.add(new JMenuItem(exportImageAction));
 		fileMenu.add(exportMenu);
 
+		JMenu debugMenu = new JMenu();
+		menuBar.add(debugMenu);
+		JCheckBoxMenuItem showSpatialIndexItem = new JCheckBoxMenuItem();
+		new ButtonSelectedBinder(showSpatialIndexItem).bind(
+				new QObjectAttributeBinder<>(RootModel.showSpatialIndex)
+						.bind(rootModelBinder));
+		debugMenu.add(showSpatialIndexItem);
+
 		JMenuItem noRecentFilesItem = new JMenuItem();
 		noRecentFilesItem.setEnabled(false);
 
@@ -1768,6 +1779,9 @@ public class BreakoutMainView {
 					localizer.setText(exportMenu, "exportMenu.text");
 					localizer.setText(openRecentMenu, "openRecentMenu.text");
 					localizer.setText(noRecentFilesItem, "noRecentFilesItem.text");
+
+					localizer.setText(debugMenu, "debugMenu.text");
+					localizer.setText(showSpatialIndexItem, "showSpatialIndexItem.text");
 				}
 			});
 		});
@@ -1996,6 +2010,9 @@ public class BreakoutMainView {
 		}
 		if (rootModel.get(RootModel.showStationLabels) == null) {
 			rootModel.set(RootModel.showStationLabels, true);
+		}
+		if (rootModel.get(RootModel.showSpatialIndex) == null) {
+			rootModel.set(RootModel.showSpatialIndex, false);
 		}
 
 		setRootModel(rootModel);

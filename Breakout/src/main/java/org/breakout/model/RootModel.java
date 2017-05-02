@@ -78,6 +78,9 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<Boolean> showStationLabels = newAttribute(
 			Boolean.class,
 			"showStationLabels");
+	public static final Attribute<Boolean> showSpatialIndex = newAttribute(
+			Boolean.class,
+			"showSpatialIndex");
 
 	public static final RootModel instance = new RootModel();
 
