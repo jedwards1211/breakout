@@ -145,6 +145,10 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 			super();
 			this.mbr = mbr;
 		}
+		
+		public Node<T> parent() {
+			return parent;
+		}
 
 		public abstract int level();
 

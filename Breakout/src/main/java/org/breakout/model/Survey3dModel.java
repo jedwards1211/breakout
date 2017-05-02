@@ -81,10 +81,13 @@ import org.andork.jogl.JoglBuffer;
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglResource;
+import org.andork.jogl.shader.FlatColorProgram;
 import org.andork.jogl.uniform.Uniform1fv;
 import org.andork.jogl.uniform.Uniform3fv;
 import org.andork.jogl.uniform.Uniform4fv;
 import org.andork.jogl.util.JoglUtils;
+import org.andork.jogl.util.PipelinedRenderer;
+import org.andork.jogl.util.PipelinedRenderer.Options;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PlanarHull3f;
@@ -311,6 +314,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int m_location;
 		protected int v_location;
 		protected int p_location;
+
 		protected int n_location;
 		protected int a_pos_location;
 		protected int a_norm_location;
@@ -1694,6 +1698,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Color stationLabelColor;
 
+	PipelinedRenderer lineRenderer;
+
+	FlatColorProgram flatColorProgram = FlatColorProgram.INSTANCE;
+
 	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections,
 			Font labelFont) {
 		super();
@@ -1740,6 +1748,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		renderers.putAll(axialSectionRenderer, sections);
 
 		this.renderers.set(renderers);
+
+		lineRenderer = new PipelinedRenderer(new Options(true, GL.GL_LINES, 100).addAttribute(3, GL.GL_FLOAT, false));
 	}
 
 	public float[] calcAutofitParamRange(Collection<ShotKey> shots, Subtask subtask) {
@@ -1837,6 +1847,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		disposeParamTexture(gl);
+
+		lineRenderer.dispose(gl);
+		flatColorProgram.dispose(gl);
 	}
 
 	private void disposeParamTexture(GL2ES2 gl) {
@@ -1904,6 +1917,43 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			textRenderer.endRendering();
 			gl.glDisable(GL.GL_DEPTH_TEST);
 		}
+
+//		if (hoveredShot != null) {
+//			gl.glEnable(GL.GL_DEPTH_TEST);
+//			drawMBRsForNode(hoveredShot.leaf, context, gl, m, n);
+//			gl.glDisable(GL.GL_DEPTH_TEST);
+//		}
+	}
+
+	void drawMBR(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		flatColorProgram.use(gl, true);
+		flatColorProgram.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
+		centerlineColor.put(gl, flatColorProgram.colorLocation());
+
+		lineRenderer.setVertexAttribLocations(flatColorProgram.positionLocation());
+
+		lineRenderer.drawBBox(tree.getRoot().mbr());
+
+		lineRenderer.draw();
+
+		flatColorProgram.use(gl, false);
+	}
+
+	void drawMBRsForNode(RfStarTree.Node<?> node, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		flatColorProgram.use(gl, true);
+		flatColorProgram.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
+		centerlineColor.put(gl, flatColorProgram.colorLocation());
+
+		lineRenderer.setVertexAttribLocations(flatColorProgram.positionLocation());
+
+		while (node != null) {
+			lineRenderer.drawBBox(node.mbr());
+			node = node.parent();
+		}
+
+		lineRenderer.draw();
+
+		flatColorProgram.use(gl, false);
 	}
 
 	public SelectionEditor editSelection() {
@@ -2014,6 +2064,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		textRenderer.init();
 		textRenderer.setUseVertexArrays(true);
 		textRenderer.setColor(stationLabelColor);
+
+		lineRenderer.init(gl);
+		flatColorProgram.init(gl);
 
 		return true;
 	}

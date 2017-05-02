@@ -1,147 +1,241 @@
 package org.andork.jogl.util;
 
-import java.nio.FloatBuffer;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.andork.jogl.JoglResource;
+import org.andork.jogl.JoglManagedResource;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL2GL3;
 import com.jogamp.opengl.GLContext;
-import com.jogamp.opengl.fixedfunc.GLPointerFunc;
 
-public class PipelinedRenderer implements JoglResource {
-	public static class Options {
-		public int mode = GL.GL_POINTS;
-		public int coordsPerVertex = 3;
-		public int coordsPerTexcoord = 0;
-		public int numVerticesInBuffer = 100;
+public class PipelinedRenderer extends JoglManagedResource {
+	public static class VertexAttribute implements Cloneable {
+		public final int size;
+		public final int type;
+		public final boolean normalized;
+
+		public VertexAttribute(int size, int type, boolean normalized) {
+			super();
+			this.size = size;
+			this.type = type;
+			this.normalized = normalized;
+		}
+
+		public VertexAttribute clone() {
+			try {
+				return (VertexAttribute) super.clone();
+			} catch (CloneNotSupportedException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 
-	Options options;
-	int numPendingVertices = 0;
-	FloatBuffer texcoords;
-	FloatBuffer vertices;
-	boolean usingVBOs;
-	int vertexVbo;
-	int texcoordVbo;
+	public static class Options implements Cloneable {
+		public int mode;
+		public boolean usingVBOs;
+		public List<VertexAttribute> attributes;
+		public int numVerticesInBuffer;
 
-	boolean initialized = false;
+		public Options(boolean usingVBOs, int mode, int numVerticesInBuffer) {
+			this.usingVBOs = usingVBOs;
+			this.mode = mode;
+			this.numVerticesInBuffer = numVerticesInBuffer;
+			attributes = new ArrayList<>();
+		}
+		
+		public Options addAttribute(int size, int type, boolean normalized) {
+			attributes.add(new VertexAttribute(size, type, normalized));
+			return this;
+		}
+	
+		public Options clone() {
+			Options options;
+			try {
+				options = (Options) super.clone();
+			} catch (CloneNotSupportedException e) {
+				throw new RuntimeException(e);
+			}
+			options.attributes = new ArrayList<>();
+			for (VertexAttribute attribute : attributes) {
+				options.attributes.add(attribute.clone());
+			}
+			return options;
+		}
+	}
+
+	private Options options;
+	private ByteBuffer vertices;
+	private int vertexVbo;
+	private int bytesPerVertex;
+	private int[] vertexAttribOffsets;
+	private int[] vertexAttribLocations;
 
 	public PipelinedRenderer(Options options) {
-		this.options = options;
+		this.options = options.clone();
+		vertexAttribLocations = new int[options.attributes.size()];
+		vertexAttribOffsets = new int[options.attributes.size()];
 
+		bytesPerVertex = 0;
+		for (int i = 0; i < options.attributes.size(); i++) {
+			vertexAttribOffsets[i] = bytesPerVertex;
+			VertexAttribute attribute = options.attributes.get(i);
+			switch (attribute.type) {
+			case GL.GL_BYTE:
+			case GL.GL_UNSIGNED_BYTE:
+				bytesPerVertex += attribute.size;
+				break;
+			case GL.GL_SHORT:
+			case GL.GL_UNSIGNED_SHORT:
+				bytesPerVertex += 2 * attribute.size;
+				break;
+			case GL.GL_UNSIGNED_INT:
+			case GL.GL_FLOAT:
+				bytesPerVertex += 4 * attribute.size;
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown numeric type: attribute.type");
+			}
+		}
+	}
+	
+	public void setVertexAttribLocations(int... locations) {
+		System.arraycopy(locations, 0, vertexAttribLocations, 0, vertexAttribLocations.length);
 	}
 
-	public void glTexCoord2f(final float v, final float v1) {
-		texcoords.put(v);
-		texcoords.put(v1);
-	}
-
-	public void glVertex3f(final float inX, final float inY, final float inZ) {
-		vertices.put(inX);
-		vertices.put(inY);
-		vertices.put(inZ);
-
-		if (++numPendingVertices >= options.numVerticesInBuffer && initialized) {
+	public void put(byte... values) {
+		for (byte value : values) {
+			vertices.put(value);
+		}
+		if (!vertices.hasRemaining()) {
 			draw();
 		}
 	}
 
-	@Override
-	public void dispose(GL2ES2 gl) {
-		if (!initialized) {
-			return;
+	public void put(short... values) {
+		for (short value : values) {
+			vertices.putShort(value);
 		}
-		initialized = false;
+		if (!vertices.hasRemaining()) {
+			draw();
+		}
+	}
 
-		if (usingVBOs) {
-			int[] vbos = { vertexVbo, texcoordVbo };
+	public void put(int... values) {
+		for (int value : values) {
+			vertices.putInt(value);
+		}
+		if (!vertices.hasRemaining()) {
+			draw();
+		}
+	}
+
+	public void put(float... values) {
+		for (float value : values) {
+			vertices.putFloat(value);
+		}
+		if (!vertices.hasRemaining()) {
+			draw();
+		}
+	}
+	
+	public void drawBBox(float[] bbox) {
+		for (int x = 0; x < 6; x += 3) {
+			put(bbox[x], bbox[1], bbox[2]);
+			put(bbox[x], bbox[1], bbox[5]);
+			put(bbox[x], bbox[1], bbox[5]);
+			put(bbox[x], bbox[4], bbox[5]);
+			put(bbox[x], bbox[4], bbox[2]);
+			put(bbox[x], bbox[4], bbox[5]);
+			put(bbox[x], bbox[1], bbox[2]);
+			put(bbox[x], bbox[4], bbox[2]);
+		}
+		for (int y = 1; y < 6; y += 3) {
+			put(bbox[0], bbox[y], bbox[2]);
+			put(bbox[0], bbox[y], bbox[5]);
+			put(bbox[0], bbox[y], bbox[5]);
+			put(bbox[3], bbox[y], bbox[5]);
+			put(bbox[3], bbox[y], bbox[2]);
+			put(bbox[3], bbox[y], bbox[5]);
+			put(bbox[0], bbox[y], bbox[2]);
+			put(bbox[3], bbox[y], bbox[2]);
+		}	
+	}
+
+	@Override
+	public void doDispose(GL2ES2 gl) {
+		if (options.usingVBOs) {
+			int[] vbos = { vertexVbo };
 			int numBuffers = 1;
-			if (options.coordsPerTexcoord > 0) {
-				numBuffers++;
-			}
 			gl.glDeleteBuffers(numBuffers, IntBuffer.wrap(vbos));
 		}
 	}
 
 	@Override
-	public boolean init(GL2ES2 gl) {
-		if (initialized) {
-			return true;
-		}
-		vertices = Buffers.newDirectFloatBuffer(options.numVerticesInBuffer * options.coordsPerVertex * 4);
-		if (options.coordsPerTexcoord > 0) {
-			texcoords = Buffers.newDirectFloatBuffer(options.numVerticesInBuffer * options.coordsPerTexcoord * 4);
-		}
+	public boolean doInit(GL2ES2 gl) {
+		vertices = Buffers.newDirectByteBuffer(options.numVerticesInBuffer * bytesPerVertex);
 
 		try {
 			final int[] vbos = new int[2];
 			int numBuffers = 1;
-			if (options.coordsPerTexcoord > 0) {
-				numBuffers++;
-			}
 			gl.glGenBuffers(numBuffers, IntBuffer.wrap(vbos));
 
 			vertexVbo = vbos[0];
 			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexVbo);
 			gl.glBufferData(GL.GL_ARRAY_BUFFER, vertices.capacity(), null, GL2ES2.GL_STREAM_DRAW);
-
-			if (options.coordsPerTexcoord > 0) {
-				texcoordVbo = vbos[1];
-				gl.glBindBuffer(GL.GL_ARRAY_BUFFER, texcoordVbo);
-				gl.glBufferData(GL.GL_ARRAY_BUFFER, texcoords.capacity(), null, GL2ES2.GL_STREAM_DRAW);
-			}
 		} catch (final Exception e) {
-			usingVBOs = false;
+			options.usingVBOs = false;
 		}
 
-		initialized = true;
 		return true;
 	}
 
 	public void draw() {
-		if (numPendingVertices == 0) {
+		int numBytes = vertices.position();
+		if (numBytes == 0) {
 			return;
 		}
-
-		final GL2 gl = GLContext.getCurrentGL().getGL2();
-
 		vertices.rewind();
-		texcoords.rewind();
 
-		gl.glEnableClientState(GLPointerFunc.GL_VERTEX_ARRAY);
+		final GL2GL3 gl = GLContext.getCurrentGL().getGL2GL3();
 
-		if (usingVBOs) {
+		if (options.usingVBOs) {
 			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexVbo);
-			gl.glBufferSubData(GL.GL_ARRAY_BUFFER, 0,
-					numPendingVertices * options.coordsPerVertex * 4,
-					vertices); // upload only the new stuff
-			gl.glVertexPointer(3, GL.GL_FLOAT, 0, 0);
-		} else {
-			gl.glVertexPointer(3, GL.GL_FLOAT, 0, vertices);
+			gl.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, numBytes, vertices); // upload only the new stuff
 		}
-
-		gl.glEnableClientState(GLPointerFunc.GL_TEXTURE_COORD_ARRAY);
-
-		if (options.coordsPerTexcoord > 0) {
-			if (usingVBOs) {
-				gl.glBindBuffer(GL.GL_ARRAY_BUFFER, texcoordVbo);
-				gl.glBufferSubData(GL.GL_ARRAY_BUFFER, 0,
-						numPendingVertices * options.coordsPerTexcoord * 4,
-						texcoords); // upload only the new stuff
-				gl.glTexCoordPointer(2, GL.GL_FLOAT, 0, 0);
+		for (int i = 0; i < options.attributes.size(); i++) {
+			gl.glEnableVertexAttribArray(vertexAttribLocations[i]);
+			VertexAttribute attribute = options.attributes.get(i);
+			if (options.usingVBOs) {
+				gl.glVertexAttribPointer(
+						vertexAttribLocations[i],
+						attribute.size,
+						attribute.type,
+						attribute.normalized,
+						bytesPerVertex,
+						vertexAttribOffsets[i]);
 			} else {
-				gl.glTexCoordPointer(2, GL.GL_FLOAT, 0, texcoords);
+				vertices.position(vertexAttribOffsets[i]);
+				gl.getGL2().glVertexAttribPointer(
+						vertexAttribLocations[i],
+						attribute.size,
+						attribute.type,
+						attribute.normalized,
+						bytesPerVertex,
+						vertices);
 			}
 		}
 
-		gl.glDrawArrays(options.mode, 0, numPendingVertices);
+		gl.glDrawArrays(options.mode, 0, numBytes / bytesPerVertex);
+
+		for (int i = 0; i < vertexAttribLocations.length; i++) {
+			gl.glEnableVertexAttribArray(vertexAttribLocations[i]);
+		}
 
 		vertices.rewind();
-		texcoords.rewind();
-		numPendingVertices = 0;
 	}
 }
