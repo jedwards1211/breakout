@@ -1918,11 +1918,36 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glDisable(GL.GL_DEPTH_TEST);
 		}
 
-//		if (hoveredShot != null) {
-//			gl.glEnable(GL.GL_DEPTH_TEST);
-//			drawMBRsForNode(hoveredShot.leaf, context, gl, m, n);
-//			gl.glDisable(GL.GL_DEPTH_TEST);
-//		}
+		//		if (hoveredShot != null) {
+		//			gl.glEnable(GL.GL_DEPTH_TEST);
+		//			drawMBRsForNode(hoveredShot.leaf, context, gl, m, n);
+		//			gl.glDisable(GL.GL_DEPTH_TEST);
+		//		}
+	}
+
+	/**
+	 * Draws a wireframe bounding box to {@link #lineRenderer}.
+	 * @param bbox a bounding box of the form [xmin, ymin, zmin, xmax, ymax, zmax]
+	 */
+	void drawBoundingBox(float[] bbox) {
+		for (int x = 0; x < 6; x += 3) {
+			lineRenderer.put(bbox[x], bbox[1], bbox[2]);
+			lineRenderer.put(bbox[x], bbox[1], bbox[5]);
+			lineRenderer.put(bbox[x], bbox[4], bbox[2]);
+			lineRenderer.put(bbox[x], bbox[4], bbox[5]);
+		}
+		for (int y = 1; y < 6; y += 3) {
+			lineRenderer.put(bbox[0], bbox[y], bbox[2]);
+			lineRenderer.put(bbox[0], bbox[y], bbox[5]);
+			lineRenderer.put(bbox[3], bbox[y], bbox[2]);
+			lineRenderer.put(bbox[3], bbox[y], bbox[5]);
+		}
+		for (int z = 2; z < 6; z += 3) {
+			lineRenderer.put(bbox[0], bbox[1], bbox[z]);
+			lineRenderer.put(bbox[3], bbox[1], bbox[z]);
+			lineRenderer.put(bbox[0], bbox[4], bbox[z]);
+			lineRenderer.put(bbox[3], bbox[4], bbox[z]);
+		}
 	}
 
 	void drawMBR(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
@@ -1932,7 +1957,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		lineRenderer.setVertexAttribLocations(flatColorProgram.positionLocation());
 
-		lineRenderer.drawBBox(tree.getRoot().mbr());
+		drawBoundingBox(tree.getRoot().mbr());
 
 		lineRenderer.draw();
 
@@ -1947,7 +1972,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		lineRenderer.setVertexAttribLocations(flatColorProgram.positionLocation());
 
 		while (node != null) {
-			lineRenderer.drawBBox(node.mbr());
+			drawBoundingBox(node.mbr());
 			node = node.parent();
 		}
 

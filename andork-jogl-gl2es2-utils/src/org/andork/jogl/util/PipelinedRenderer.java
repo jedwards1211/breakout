@@ -47,12 +47,12 @@ public class PipelinedRenderer extends JoglManagedResource {
 			this.numVerticesInBuffer = numVerticesInBuffer;
 			attributes = new ArrayList<>();
 		}
-		
+
 		public Options addAttribute(int size, int type, boolean normalized) {
 			attributes.add(new VertexAttribute(size, type, normalized));
 			return this;
 		}
-	
+
 		public Options clone() {
 			Options options;
 			try {
@@ -102,7 +102,7 @@ public class PipelinedRenderer extends JoglManagedResource {
 			}
 		}
 	}
-	
+
 	public void setVertexAttribLocations(int... locations) {
 		System.arraycopy(locations, 0, vertexAttribLocations, 0, vertexAttribLocations.length);
 	}
@@ -142,29 +142,7 @@ public class PipelinedRenderer extends JoglManagedResource {
 			draw();
 		}
 	}
-	
-	public void drawBBox(float[] bbox) {
-		for (int x = 0; x < 6; x += 3) {
-			put(bbox[x], bbox[1], bbox[2]);
-			put(bbox[x], bbox[1], bbox[5]);
-			put(bbox[x], bbox[1], bbox[5]);
-			put(bbox[x], bbox[4], bbox[5]);
-			put(bbox[x], bbox[4], bbox[2]);
-			put(bbox[x], bbox[4], bbox[5]);
-			put(bbox[x], bbox[1], bbox[2]);
-			put(bbox[x], bbox[4], bbox[2]);
-		}
-		for (int y = 1; y < 6; y += 3) {
-			put(bbox[0], bbox[y], bbox[2]);
-			put(bbox[0], bbox[y], bbox[5]);
-			put(bbox[0], bbox[y], bbox[5]);
-			put(bbox[3], bbox[y], bbox[5]);
-			put(bbox[3], bbox[y], bbox[2]);
-			put(bbox[3], bbox[y], bbox[5]);
-			put(bbox[0], bbox[y], bbox[2]);
-			put(bbox[3], bbox[y], bbox[2]);
-		}	
-	}
+
 
 	@Override
 	public void doDispose(GL2ES2 gl) {
