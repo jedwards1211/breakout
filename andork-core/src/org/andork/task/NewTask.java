@@ -302,13 +302,19 @@ public abstract class NewTask<R> implements Callable<R> {
 				throw new IllegalStateException("already running");
 			}
 			thread = Thread.currentThread();
-			if (parent == null) {
+			if (parent != null) {
+				fireChanged = parent.fireChanged;
+			} else {
 				DebounceOptions<Void> debounceOptions = NewTask.debounceOptions.get();
 				if (debounceOptions != null) {
 					fireChanged = Lodash.throttle(() -> {
-						ChangeEvent event = new ChangeEvent(NewTask.this);
-						for (ChangeListener listener : listeners) {
-							listener.stateChanged(event);
+						NewTask<?> task = NewTask.this;
+						while (task != null) {
+							ChangeEvent event = new ChangeEvent(task);
+							for (ChangeListener listener : task.listeners) {
+								listener.stateChanged(event);
+							}
+							task = task.subtask;
 						}
 					}, 30, debounceOptions);
 				} else {
@@ -320,10 +326,14 @@ public abstract class NewTask<R> implements Callable<R> {
 	}
 
 	private void stop() {
+		boolean isRoot;
 		synchronized (this) {
 			thread = null;
+			isRoot = parent == null;
 		}
-		fireChanged.flush();
-		fireChanged.cancel();
+		if (isRoot) {
+			fireChanged.run();
+			fireChanged.flush();
+		}
 	}
 }
