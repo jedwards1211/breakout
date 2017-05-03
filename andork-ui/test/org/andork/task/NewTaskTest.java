@@ -15,29 +15,32 @@ public class NewTaskTest {
 		final NewTask<Integer> task = new NewTask<Integer>() {
 			@Override
 			public Integer work() throws Exception {
+				setTotal(100);
 				setStatus("outer task");
 
 				int k = 0;
 
 				for (int i = 0; i < 100; i++) {
 					final int startK = k;
-					k = callSubtask(0.01, new NewTask<Integer>() {
+					k = callSubtask(1, new NewTask<Integer>() {
 						@Override
 						public Integer work() throws Exception {
+							setTotal(100);
 							setStatus("inner task " + startK);
 
 							int k = startK;
 
 							for (int j = 0; j < 100; j++) {
 								k++;
-								setProgress((j + 1) / 100.0);
+								Thread.sleep(1);
+								increment();
 							}
 
 							return k;
 						}
 					});
 
-					setProgress((i + 1) / 100.0);
+					increment();
 				}
 
 				return k;

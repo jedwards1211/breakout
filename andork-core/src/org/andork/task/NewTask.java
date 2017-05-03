@@ -1,6 +1,5 @@
 package org.andork.task;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -31,11 +30,13 @@ public abstract class NewTask<R> implements Callable<R> {
 	private volatile NewTask<?> parent;
 	private volatile NewTask<?> subtask;
 
-	private volatile double subtaskProportion;
+	private volatile int subtaskProportion;
 	private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
 	private volatile String status;
 
-	private volatile double progress;
+	private volatile boolean indeterminate;
+	private volatile int completed;
+	private volatile int total;
 
 	private volatile boolean canceled;
 
@@ -60,11 +61,11 @@ public abstract class NewTask<R> implements Callable<R> {
 
 	/**
 	 * {@link #call() Call}s the given subtask.
-	 * @param proportion a finite number > 0
+	 * @param proportion a number > 0
 	 * @param subtask the subtask to {@link #call()}
 	 * @return the return value of {@code subtask.call()}
 	 * 
-	 * @throws IllegalArgumentException if {@code proportion} is not a finite number > 0
+	 * @throws IllegalArgumentException if {@code proportion} is <= 0
 	 * @throws IllegalStateException if any of the following apply:
 	 * <ul>
 	 * <li>this task is not currently running
@@ -74,9 +75,9 @@ public abstract class NewTask<R> implements Callable<R> {
 	 * </ul>
 	 * @throws Exception if {@code subtask.call()} threw an exception
 	 */
-	public final <R2> R2 callSubtask(double proportion, NewTask<R2> subtask) throws Exception {
-		if (!Double.isFinite(proportion) || proportion <= 0) {
-			throw new IllegalArgumentException("proportion must be a finite number > 0");
+	public final <R2> R2 callSubtask(int proportion, NewTask<R2> subtask) throws Exception {
+		if (proportion <= 0) {
+			throw new IllegalArgumentException("proportion must be > 0");
 		}
 		setSubtask(proportion, subtask);
 
@@ -112,10 +113,11 @@ public abstract class NewTask<R> implements Callable<R> {
 	 * @return the combined progress of this task and its subtasks.
 	 */
 	public double getCombinedProgress() {
+		if (indeterminate) return Double.NaN;
 		NewTask<?> subtask = this.subtask;
 		return subtask != null
-				? progress + subtaskProportion * subtask.getCombinedProgress()
-				: progress;
+				? (completed + subtaskProportion * subtask.getCombinedProgress()) / total
+				: getProgress();
 	}
 
 	/**
@@ -145,7 +147,7 @@ public abstract class NewTask<R> implements Callable<R> {
 		return subtask == null ? this : subtask.getDeepestSubtask();
 	}
 
-	public Double getDeepestSubtaskProgress() {
+	public double getDeepestSubtaskProgress() {
 		return getDeepestSubtask().getProgress();
 	}
 
@@ -161,7 +163,7 @@ public abstract class NewTask<R> implements Callable<R> {
 	 * @return the progress. {@code NaN} means progress is indeterminate.
 	 */
 	public double getProgress() {
-		return progress;
+		return indeterminate ? Double.NaN : (double) completed / total;
 	}
 
 	public String getStatus() {
@@ -188,17 +190,23 @@ public abstract class NewTask<R> implements Callable<R> {
 	public void removeChangeListener(ChangeListener listener) {
 		listeners.remove(listener);
 	}
+	
+	public void setCompleted(int completed) {
+		this.completed = completed;
+		fireChanged.run();
+	}
+	
+	public void increment() {
+		this.increment(1);
+	}
 
-	/**
-	 * Sets the progress and notifies listeners if it was changed.
-	 *
-	 * @param newProgress
-	 *            the new progress. Should be between 0 and 1 (but this is only
-	 *            convention) or {@code null} (which means progress is
-	 *            indeterminate).
-	 */
-	public void setProgress(double newProgress) {
-		progress = newProgress;
+	public void increment(int amount) {
+		this.completed += amount;
+		fireChanged.run();
+	}
+	
+	public void setTotal(int total) {
+		this.total = total;
 		fireChanged.run();
 	}
 
@@ -206,10 +214,15 @@ public abstract class NewTask<R> implements Callable<R> {
 		status = newStatus;
 		fireChanged.run();
 	}
+	
+	public void setIndeterminate(boolean indeterminate) {
+		this.indeterminate = indeterminate;
+		fireChanged.run();
+	}
 
 	/**
 	 * Clears the {@link #isCanceled() canceled} flag and
-	 * {@linkplain #setProgress(double) sets the progress} to 0.
+	 * {@linkplain #setCompleted(int) sets completed} to 0.
 	 * @throws IllegalStateException if this task is currently running
 	 */
 	public final void reset() {
@@ -217,12 +230,12 @@ public abstract class NewTask<R> implements Callable<R> {
 			if (thread != null) {
 				throw new IllegalStateException("task may not be reset while it's running");
 			}
-			progress = 0;
+			completed = 0;
 			canceled = false;
 		}
 	}
 
-	private void setSubtask(double proportion, NewTask<?> subtask) {
+	private void setSubtask(int proportion, NewTask<?> subtask) {
 		synchronized (this) {
 			if (thread == null) {
 				throw new IllegalStateException("a subtask may only be run when this task is running");
@@ -252,7 +265,6 @@ public abstract class NewTask<R> implements Callable<R> {
 			synchronized (subtask) {
 				subtask.parent = null;
 				subtask = null;
-				subtaskProportion = Double.NaN;
 			}
 		}
 		this.fireChanged.run();
