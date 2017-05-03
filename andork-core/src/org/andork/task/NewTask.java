@@ -223,7 +223,7 @@ public abstract class NewTask<R> implements Callable<R> {
 	public int getTotal() {
 		return total;
 	}
-	
+
 	public boolean isIndeterminate() {
 		return indeterminate;
 	}
@@ -296,6 +296,17 @@ public abstract class NewTask<R> implements Callable<R> {
 		this.fireChanged.run();
 	}
 
+	private void fireChanged() {
+		NewTask<?> task = NewTask.this;
+		while (task != null) {
+			ChangeEvent event = new ChangeEvent(task);
+			for (ChangeListener listener : task.listeners) {
+				listener.stateChanged(event);
+			}
+			task = task.subtask;
+		}
+	}
+
 	private void start() {
 		synchronized (this) {
 			if (thread != null) {
@@ -307,16 +318,7 @@ public abstract class NewTask<R> implements Callable<R> {
 			} else {
 				DebounceOptions<Void> debounceOptions = NewTask.debounceOptions.get();
 				if (debounceOptions != null) {
-					fireChanged = Lodash.throttle(() -> {
-						NewTask<?> task = NewTask.this;
-						while (task != null) {
-							ChangeEvent event = new ChangeEvent(task);
-							for (ChangeListener listener : task.listeners) {
-								listener.stateChanged(event);
-							}
-							task = task.subtask;
-						}
-					}, 30, debounceOptions);
+					fireChanged = Lodash.throttle(this::fireChanged, 30, debounceOptions);
 				} else {
 					fireChanged = DebouncedRunnable.noop();
 				}
