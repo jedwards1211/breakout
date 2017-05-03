@@ -54,7 +54,7 @@ public class Subtask {
 
 	public Subtask(Task parent) {
 		this.parent = parent;
-		proportion = 1;
+		proportion = parent.getTotal();
 	}
 
 	public Subtask beginSubtask(int proportion) {
@@ -72,7 +72,7 @@ public class Subtask {
 		if (parent instanceof Subtask) {
 			Subtask parentSubtask = (Subtask) parent;
 			parentSubtask.child = null;
-			parentSubtask.updateParent();
+			parentSubtask.setCompleted(parentSubtask.getCompleted() + proportion);
 		}
 	}
 
@@ -162,9 +162,17 @@ public class Subtask {
 				task.setStatus(status);
 			}
 			task.setIndeterminate(getIndeterminateRecursive());
-			task.setCompleted((int) Math.round(getCompletedRecursive() * task.getTotal()));
+			task.setCompleted((int) Math.round(getCompletedRecursive()));
 		} else if (parent instanceof Subtask) {
 			((Subtask) parent).updateParent();
 		}
+	}
+	
+	public void increment() {
+		increment(1);
+	}
+
+	public void increment(int amount) {
+		setCompleted(completed + amount);
 	}
 }

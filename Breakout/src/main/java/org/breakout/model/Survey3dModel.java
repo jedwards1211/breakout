@@ -915,7 +915,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			return spacing * density;
 		}
 
-		public void updateLabels(Font font, FontRenderContext frc) {
+		public void updateLabels(Font font, FontRenderContext frc, Subtask subtask) {
+			subtask.setTotal(stationLabels.size());
+			int i = 0;
 			for (Map.Entry<StationKey, Label> entry : stationLabels.entrySet()) {
 				Label label = entry.getValue();
 				Rectangle2D bounds = font.getStringBounds(label.text, frc);
@@ -923,7 +925,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				label.height = (float) bounds.getHeight();
 				label.xOffset = (float) -bounds.getWidth() / 2;
 				label.yOffset = (float) bounds.getHeight() / 2;
+				if ((++i % 50) == 0) {
+					subtask.setCompleted(i);
+				}
 			}
+			subtask.end();
 		}
 
 		public void drawLabels(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
@@ -1426,69 +1432,68 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public static Survey3dModel create(CalcProject project, int maxChildrenPerBranch, int minSplitSize,
-			int numToReinsert, Task task) {
-		Subtask rootSubtask = null;
-		int renderProportion = 6;
-
-		if (task != null) {
-			task.setTotal(1000);
-			rootSubtask = new Subtask(task);
-		} else {
+			int numToReinsert, Subtask rootSubtask) {
+		if (rootSubtask == null) {
 			rootSubtask = Subtask.dummySubtask();
 		}
 		rootSubtask.setStatus("Updating view");
-		rootSubtask.setTotal(renderProportion + 5);
+		rootSubtask.setTotal(5);
 
+		Subtask subtask = rootSubtask.beginSubtask(1);
+		subtask.setTotal(project.shots.size());
+		int i = 0;
 		Map<ShotKey, Shot3d> shot3ds = new HashMap<>();
 		for (Map.Entry<ShotKey, CalcShot> entry : project.shots.entrySet()) {
 			shot3ds.put(entry.getKey(), new Shot3d(entry.getKey(), entry.getValue()));
+			if ((++i % 50) == 0) {
+				subtask.setCompleted(i);
+				if (rootSubtask.isCanceling()) {
+					return null;
+				}
+			}
 		}
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
-		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
-
-		if (rootSubtask.isCanceling()) {
-			return null;
-		}
-		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
+		subtask.end();
 
 		RfStarTree<Shot3d> tree = createTree(shot3ds.values(), maxChildrenPerBranch, minSplitSize,
 				numToReinsert, rootSubtask.beginSubtask(1));
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
-		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
 		int sectionLevel = Math.min(tree.getRoot().level(), 3);
 
 		Map<Float, Set<StationKey>> stationsToLabel = computeStationsToLabel(
-				project.stations.values(), Arrays.asList(5f, 10f, 20f, 40f, 80f, 160f, 320f));
+				project.stations.values(), Arrays.asList(5f, 10f, 20f, 40f, 80f, 160f, 320f), 
+				rootSubtask.beginSubtask(1));
 		stationsToLabel.put(2f, project.stations.keySet());
 
 		Set<Section> sections = createSections(tree, sectionLevel, stationsToLabel, rootSubtask.beginSubtask(1));
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
-		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
 		Font labelFont = new Font("Arial", Font.BOLD, 72);
 		FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
+		subtask = rootSubtask.beginSubtask(1);
+		subtask.setTotal(sections.size());
 		for (Section section : sections) {
-			section.updateLabels(labelFont, frc);
+			section.updateLabels(labelFont, frc, subtask.beginSubtask(1));
+			subtask.increment();
 		}
-
+		subtask.end();
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
-		rootSubtask.setCompleted(rootSubtask.getCompleted() + 1);
 
 		Survey3dModel model = new Survey3dModel(shot3ds, tree, sections, labelFont);
 		if (rootSubtask.isCanceling()) {
 			return null;
 		}
-		rootSubtask.setCompleted(rootSubtask.getCompleted() + renderProportion);
 
+		rootSubtask.end();
 		return model;
 	}
 
@@ -1552,10 +1557,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			tree.insert(shot3d.leaf);
 
 			s++;
-			if (s % 100 == 0 && task.isCanceling()) {
-				return null;
+			if (s % 50 == 0) {
+				if (task.isCanceling()) {
+					return null;
+				}
+				task.setCompleted(s);
 			}
-			task.setCompleted(s);
 		}
 
 		task.end();
@@ -1592,7 +1599,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	private static Map<Float, Set<StationKey>> computeStationsToLabel(
-			Collection<CalcStation> stations, Collection<Float> spacings) {
+			Collection<CalcStation> stations, Collection<Float> spacings, Subtask subtask) {
 		Map<Float, Set<StationKey>> stationsToLabel = new HashMap<>();
 		Map<Float, RfStarTree<StationKey>> spatialIndexes = new HashMap<>();
 
@@ -1607,6 +1614,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		float[] mbr = new float[6];
+		
+		subtask.setTotal(queue.size());
+		int i = 0;
 
 		while (!queue.isEmpty()) {
 			CalcStation station = queue.poll().getValue();
@@ -1626,8 +1636,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					stationsToLabel.get(spacing).add(station.key());
 				}
 			}
+			if ((++i % 25) == 0) {
+				subtask.setCompleted(i);
+			}
 		}
 
+		subtask.end();
 		return stationsToLabel;
 	}
 

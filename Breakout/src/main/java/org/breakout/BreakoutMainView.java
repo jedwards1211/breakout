@@ -945,9 +945,11 @@ public class BreakoutMainView {
 		final Map<ShotKey, Integer> shotKeyToModelIndex = new HashMap<>();
 		final Map<Integer, ShotKey> modelIndexToShotKey = new HashMap<>();
 		final Map<ShotKey, SurveyRow> sourceRows = new HashMap<>();
+		final Subtask subtask = new Subtask(this);
 
 		@Override
 		protected void execute() {
+			subtask.setTotal(4);
 			try {
 				OnEDT.onEDT(() -> taskListDrawer.holder().hold(this));
 				reallyExecute();
@@ -968,7 +970,7 @@ public class BreakoutMainView {
 		}
 
 		void parse() {
-			Subtask parsingSubtask = new Subtask(this);
+			Subtask parsingSubtask = subtask.beginSubtask(1);
 			parsingSubtask.setStatus("Parsing shot data");
 			parsingSubtask.setIndeterminate(true);
 
@@ -995,14 +997,18 @@ public class BreakoutMainView {
 					modelIndexToShotKey.put(modelIndex, key);
 					sourceRows.put(key, row);
 				}
-				parsingSubtask.setCompleted(++modelIndex);
+				modelIndex++;
+				if ((modelIndex % 50) == 0) {
+					parsingSubtask.setCompleted(modelIndex);
+				}
 			}
-			p2c.convert(parser.project);
 
 			if (parsingSubtask.isCanceling()) {
 				return;
 			}
 			parsingSubtask.end();
+
+			p2c.convert(parser.project, subtask.beginSubtask(1));
 		}
 
 		public void updateView() {
@@ -1010,7 +1016,7 @@ public class BreakoutMainView {
 			destroyCalculatedModel();
 			setStatus("Updating view: constructing new model...");
 
-			final Survey3dModel model = Survey3dModel.create(p2c.project, 10, 3, 3, this);
+			final Survey3dModel model = Survey3dModel.create(p2c.project, 10, 3, 3, subtask.beginSubtask(2));
 			if (isCanceling()) {
 				return;
 			}

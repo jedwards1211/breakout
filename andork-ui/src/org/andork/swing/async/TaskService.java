@@ -22,7 +22,6 @@
 package org.andork.swing.async;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
@@ -32,48 +31,9 @@ public interface TaskService {
 
 	public HierarchicalBasicPropertyChangeSupport.External changeSupport();
 
-	public default <R> R fromThread(TaskSupplier<R> supplier) {
-		try {
-			return invokeAndGet(supplier);
-		} catch (Exception ex) {
-			throw new RuntimeException(ex);
-		}
-	}
-
 	public List<Task> getTasks();
 
 	public boolean hasTasks();
-
-	public default <R> R invokeAndGet(TaskSupplier<R> supplier) throws InterruptedException, ExecutionException {
-		FutureTask<R> task = new FutureTask<R>() {
-			@Override
-			protected R doGet() throws Exception {
-				return supplier.get(this);
-			}
-		};
-
-		return task.get();
-	}
-
-	public default void invokeAndWait(TaskRunnable task) throws InterruptedException, ExecutionException {
-		Task actualTask = new Task() {
-			@Override
-			protected void execute() throws Exception {
-				task.execute(this);
-			}
-		};
-
-		submit(actualTask);
-		actualTask.waitUntilHasFinished();
-	}
-
-	public default void onThread(TaskRunnable task) {
-		try {
-			invokeAndWait(task);
-		} catch (Exception ex) {
-			throw new RuntimeException(ex);
-		}
-	}
 
 	public void submit(Task task);
 
