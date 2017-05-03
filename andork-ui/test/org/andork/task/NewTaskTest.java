@@ -4,8 +4,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import org.andork.func.Lodash;
+import org.andork.func.Lodash.DebounceOptions;
+import org.andork.swing.async.SetTimeout;
 
 public class NewTaskTest {
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
@@ -13,7 +14,7 @@ public class NewTaskTest {
 
 		final NewTask<Integer> task = new NewTask<Integer>() {
 			@Override
-			public Integer doCall() throws Exception {
+			public Integer work() throws Exception {
 				setStatus("outer task");
 
 				int k = 0;
@@ -22,7 +23,7 @@ public class NewTaskTest {
 					final int startK = k;
 					k = callSubtask(0.01, new NewTask<Integer>() {
 						@Override
-						public Integer doCall() throws Exception {
+						public Integer work() throws Exception {
 							setStatus("inner task " + startK);
 
 							int k = startK;
@@ -43,12 +44,12 @@ public class NewTaskTest {
 			}
 		};
 
-		task.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent e) {
-				System.out.println("status: " + task.getCombinedStatus() + ", progress: "
-						+ task.getCombinedProgress());
-			}
+		executor.submit(() -> {
+			NewTask.debounceOptions.set(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
+		}).get();
+		
+		task.addChangeListener(e -> {
+			System.out.println(task.getCombinedStatus() + task.getCombinedProgress());
 		});
 
 		Integer result = executor.submit(task).get();

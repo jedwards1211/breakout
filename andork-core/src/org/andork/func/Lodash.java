@@ -24,7 +24,7 @@ import org.omg.CORBA.IntHolder;
  * Excellent stuff adapted from <a href="https://lodash.com/">Lodash</a>.
  */
 public class Lodash {
-	public static class DebounceOptions<O> {
+	public static class DebounceOptions<O> implements Cloneable {
 		private Long maxWait;
 		private boolean leading = false;
 		private boolean trailing = true;
@@ -59,6 +59,15 @@ public class Lodash {
 			this.setTimeout = (r, wait) -> (Future<O>) executor.schedule(r, wait, TimeUnit.MILLISECONDS);
 			return this;
 		}
+		
+		@SuppressWarnings("unchecked")
+		public DebounceOptions<O> clone() {
+			try {
+				return (DebounceOptions<O>) super.clone();
+			} catch (CloneNotSupportedException e) {
+				throw new RuntimeException(e);
+			}
+		}
 	}
 
 	public static interface Debounced<O> {
@@ -67,9 +76,50 @@ public class Lodash {
 		public void cancel(boolean mayInterruptIfRunning);
 
 		public O flush();
+		
+		public static <O> Debounced<O> noop() {
+			return noop(null);
+		}
+
+		public static <O> Debounced<O> noop(O flushValue) {
+			return new Debounced<O>() {
+				@Override
+				public void cancel() {
+				}
+
+				@Override
+				public void cancel(boolean mayInterruptIfRunning) {
+				}
+
+				@Override
+				public O flush() {
+					return flushValue;
+				}
+			};
+		}
 	}
 
 	public static interface DebouncedRunnable extends Runnable, Debounced<Void> {
+		public static DebouncedRunnable noop() {
+			return new DebouncedRunnable() {
+				@Override
+				public void cancel() {
+				}
+
+				@Override
+				public void cancel(boolean mayInterruptIfRunning) {
+				}
+
+				@Override
+				public Void flush() {
+					return null;
+				}
+
+				@Override
+				public void run() {
+				}
+			};
+		}
 	}
 
 	public static interface DebouncedBiFunction<A, B, O> extends BiFunction<A, B, O>, Debounced<O> {
@@ -263,6 +313,10 @@ public class Lodash {
 			}
 		}
 		return new Result();
+	}
+
+	public static DebouncedRunnable throttle(Runnable r, long wait, DebounceOptions<Void> options) {
+		return debounce(r, wait, options.clone().maxWait(wait));
 	}
 
 	public static <K, V> void forEach(Map<? extends K, ? extends V> c,
