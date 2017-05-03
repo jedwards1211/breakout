@@ -39,8 +39,6 @@ public class NewTaskTest {
 							return k;
 						}
 					});
-
-					increment();
 				}
 
 				return k;

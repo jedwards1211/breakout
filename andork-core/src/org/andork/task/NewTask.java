@@ -60,20 +60,28 @@ public abstract class NewTask<R> implements Callable<R> {
 	}
 
 	/**
-	 * {@link #call() Call}s the given subtask.
-	 * @param proportion a number > 0
-	 * @param subtask the subtask to {@link #call()}
+	 * {@link #call() Call}s the given subtask, and increments the progress by
+	 * {@code proportion} once it finishes.
+	 * 
+	 * @param proportion
+	 *            a number > 0
+	 * @param subtask
+	 *            the subtask to {@link #call()}
 	 * @return the return value of {@code subtask.call()}
 	 * 
-	 * @throws IllegalArgumentException if {@code proportion} is <= 0
-	 * @throws IllegalStateException if any of the following apply:
-	 * <ul>
-	 * <li>this task is not currently running
-	 * <li>this method is called from a different thread than this task is running on
-	 * <li>there is currently a subtask running
-	 * <li>the given subtask is currently running
-	 * </ul>
-	 * @throws Exception if {@code subtask.call()} threw an exception
+	 * @throws IllegalArgumentException
+	 *             if {@code proportion} is <= 0
+	 * @throws IllegalStateException
+	 *             if any of the following apply:
+	 *             <ul>
+	 *             <li>this task is not currently running
+	 *             <li>this method is called from a different thread than this
+	 *             task is running on
+	 *             <li>there is currently a subtask running
+	 *             <li>the given subtask is currently running
+	 *             </ul>
+	 * @throws Exception
+	 *             if {@code subtask.call()} threw an exception
 	 */
 	public final <R2> R2 callSubtask(int proportion, NewTask<R2> subtask) throws Exception {
 		if (proportion <= 0) {
@@ -90,9 +98,10 @@ public abstract class NewTask<R> implements Callable<R> {
 
 	/**
 	 * Cancels this task and its {@link #getParent() parent} task (if any).
-	 * After this {@link #isCanceled()} will return true until {@link #reset()} is called.
-	 * This does not interrupt the task; the {@link #work()} implementation should periodically
-	 * check {@link #isCanceled()} and abort if it returns {@code true}.
+	 * After this {@link #isCanceled()} will return true until {@link #reset()}
+	 * is called. This does not interrupt the task; the {@link #work()}
+	 * implementation should periodically check {@link #isCanceled()} and abort
+	 * if it returns {@code true}.
 	 */
 	public void cancel() {
 		NewTask<?> parent = this.parent;
@@ -110,10 +119,12 @@ public abstract class NewTask<R> implements Callable<R> {
 	public abstract R work() throws Exception;
 
 	/**
-	 * @return the combined progress of this task and its subtasks.
+	 * @return the combined progress of this task and its subtasks. {@code NaN}
+	 *         means progress is indeterminate.
 	 */
 	public double getCombinedProgress() {
-		if (indeterminate) return Double.NaN;
+		if (indeterminate)
+			return Double.NaN;
 		NewTask<?> subtask = this.subtask;
 		return subtask != null
 				? (completed + subtaskProportion * subtask.getCombinedProgress()) / total
@@ -186,16 +197,16 @@ public abstract class NewTask<R> implements Callable<R> {
 	public void addChangeListener(ChangeListener listener) {
 		listeners.add(listener);
 	}
-	
+
 	public void removeChangeListener(ChangeListener listener) {
 		listeners.remove(listener);
 	}
-	
+
 	public void setCompleted(int completed) {
 		this.completed = completed;
 		fireChanged.run();
 	}
-	
+
 	public void increment() {
 		this.increment(1);
 	}
@@ -204,7 +215,19 @@ public abstract class NewTask<R> implements Callable<R> {
 		this.completed += amount;
 		fireChanged.run();
 	}
+
+	public int getCompleted() {
+		return completed;
+	}
+
+	public int getTotal() {
+		return total;
+	}
 	
+	public boolean isIndeterminate() {
+		return indeterminate;
+	}
+
 	public void setTotal(int total) {
 		this.total = total;
 		fireChanged.run();
@@ -214,7 +237,7 @@ public abstract class NewTask<R> implements Callable<R> {
 		status = newStatus;
 		fireChanged.run();
 	}
-	
+
 	public void setIndeterminate(boolean indeterminate) {
 		this.indeterminate = indeterminate;
 		fireChanged.run();
@@ -223,7 +246,9 @@ public abstract class NewTask<R> implements Callable<R> {
 	/**
 	 * Clears the {@link #isCanceled() canceled} flag and
 	 * {@linkplain #setCompleted(int) sets completed} to 0.
-	 * @throws IllegalStateException if this task is currently running
+	 * 
+	 * @throws IllegalStateException
+	 *             if this task is currently running
 	 */
 	public final void reset() {
 		synchronized (this) {
@@ -266,6 +291,7 @@ public abstract class NewTask<R> implements Callable<R> {
 				subtask.parent = null;
 				subtask = null;
 			}
+			completed += subtaskProportion;
 		}
 		this.fireChanged.run();
 	}
