@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.Map;
 
 import org.andork.collect.CollectionUtils;
+import org.andork.reflect.ObjectTraverser;
 
 public class ObjectTraverserTest {
 

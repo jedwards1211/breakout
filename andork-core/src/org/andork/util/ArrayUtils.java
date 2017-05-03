@@ -450,7 +450,7 @@ public class ArrayUtils {
 	public static void swap(double[] a, int i0, int i1) {
 		double temp = a[i0];
 		a[i0] = a[i1];
-		a[i1] = a[i0];
+		a[i1] = temp;
 	}
 
 	public static <O, T extends Throwable> O[] throwableMap(double[] in, O[] out, ThrowingDoubleFunction<O, T> function)
@@ -479,9 +479,10 @@ public class ArrayUtils {
 
 	public static <T> T[] toArray(Iterable<? extends T> iterable, Class<T> componentType) {
 		int count = 0;
-		for (T t : iterable) {
+		for (@SuppressWarnings("unused") T t : iterable) {
 			count++;
 		}
+		@SuppressWarnings("unchecked")
 		T[] result = (T[]) Array.newInstance(componentType, count);
 		int k = 0;
 		for (T t : iterable) {
