@@ -350,7 +350,8 @@ public class BreakoutMainView {
 					projFiles.add(p);
 				}
 			}
-			setTotal(surveyFiles.size() + plotFiles.size() + projFiles.size());
+			setIndeterminate(false);
+			setCompleted(0);
 
 			showDialogLater();
 		}
@@ -369,15 +370,15 @@ public class BreakoutMainView {
 			final CompassSurveyParser parser = new CompassSurveyParser();
 			final CompassPlotParser plotParser = new CompassPlotParser();
 			final Map<String, SurveyRow> stationPositionRows = new HashMap<>();
-
+			
 			try {
 				int progress = 0;
 
 				for (Path file : projFiles) {
 					setStatus("Importing data from " + file + "...");
-					setCompleted(progress++);
 					CompassProject proj = new CompassProjectParser().parseProject(file);
 					surveyFiles.addAll(proj.getDataFiles());
+					setCompleted(progress++);
 				}
 
 				Set<Path> finalSurveyFiles = new HashSet<>();
@@ -390,23 +391,42 @@ public class BreakoutMainView {
 					finalPlotFiles.add(file.toRealPath().normalize());
 				}
 
-				setTotal(projFiles.size() + finalSurveyFiles.size() + finalPlotFiles.size());
+				final Subtask subtask = new Subtask(this);
+				subtask.setTotal(projFiles.size() + finalSurveyFiles.size() + finalPlotFiles.size());
 
 				for (Path file : finalSurveyFiles) {
 					setStatus("Importing data from " + file + "...");
-					setCompleted(progress++);
+					Subtask fileSubtask = subtask.beginSubtask(1);
+					fileSubtask.setTotal(2);
 					List<CompassTrip> trips = parser.parseCompassSurveyData(file);
-					rows.addAll(CompassConverter.convertFromCompass(trips));
+					if (fileSubtask.isCanceling()) {
+						return;
+					}
+					fileSubtask.increment();
+					rows.addAll(CompassConverter.convertFromCompass(trips, fileSubtask.beginSubtask(1)));
+					if (fileSubtask.isCanceling()) {
+						return;
+					}
+					fileSubtask.end();
 				}
 				newModel = new SurveyTableModel(rows);
 				newModel.setEditable(false);
 
 				for (Path file : finalPlotFiles) {
 					setStatus("Importing data from " + file + "...");
-					setCompleted(progress++);
+					Subtask fileSubtask = subtask.beginSubtask(1);
+					fileSubtask.setTotal(2);
+					List<CompassPlotCommand> commands = plotParser.parsePlot(file);
+					fileSubtask.increment();
+					if (fileSubtask.isCanceling()) {
+						return;
+					}
 
 					SurveyTrip trip = null;
-					for (CompassPlotCommand command : plotParser.parsePlot(file)) {
+					Subtask convertSubtask = fileSubtask.beginSubtask(1);
+					convertSubtask.setTotal(commands.size());
+					int i = 0;
+					for (CompassPlotCommand command : commands) {
 						if (command instanceof BeginSectionCommand) {
 							trip = new SurveyTrip();
 							trip.setCave(((BeginSectionCommand) command).getSectionName());
@@ -424,7 +444,18 @@ public class BreakoutMainView {
 									.toImmutable();
 							stationPositionRows.put(c.getStationName(), row);
 						}
+						if ((++i % 50) == 0) {
+							if (convertSubtask.isCanceling()) {
+								return;
+							}
+							convertSubtask.setCompleted(i);
+						}
 					}
+					convertSubtask.end();
+					if (fileSubtask.isCanceling()) {
+						return;
+					}
+					fileSubtask.end();
 				}
 
 				if (!stationPositionRows.isEmpty()) {
