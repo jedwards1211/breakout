@@ -30,50 +30,36 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeListener;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
-import org.andork.event.BasicPropertyChangeListener;
-import org.andork.swing.async.Task.State;
+import org.andork.task.Task;
 
-@SuppressWarnings("serial")
 public class TaskPane extends JPanel {
-	private class ModelChangeHandler implements BasicPropertyChangeListener {
-		private long lastUpdate;
-
-		@Override
-		public void propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
-			long time = System.currentTimeMillis();
-			if (time - lastUpdate > 10) {
-				modelToView();
-			}
-			lastUpdate = time;
-		}
-	}
-
 	/**
 	 *
 	 */
 	private static final long serialVersionUID = 6326522185648746138L;
 
-	Task task;
+	private final ChangeListener changeHandler = e -> modelToView();
+
+	Task<?> task;
 	JLabel statusLabel;
 	JProgressBar progressBar;
 
 	JButton cancelButton;
 
-	private final ModelChangeHandler modelChangeHandler = new ModelChangeHandler();
-
 	public TaskPane() {
 		init();
 	}
 
-	public TaskPane(Task child) {
+	public TaskPane(Task<?> child) {
 		this();
 		setTask(child);
 	}
 
-	public Task getTask() {
+	public Task<?> getTask() {
 		return task;
 	}
 
@@ -84,12 +70,9 @@ public class TaskPane extends JPanel {
 
 		progressBar.setPreferredSize(new Dimension(400, cancelButton.getPreferredSize().height));
 
-		cancelButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (task != null) {
-					task.cancel();
-				}
+		cancelButton.addActionListener(e -> {
+			if (task != null) {
+				task.cancel();
 			}
 		});
 
@@ -107,22 +90,22 @@ public class TaskPane extends JPanel {
 
 	protected void modelToView() {
 		statusLabel.setText(task == null ? null : task.getStatus());
-		progressBar.setIndeterminate(task == null ? true : task.isIndeterminate());
-		progressBar.setMaximum(task == null ? 0 : task.getTotal());
-		progressBar.setValue(task == null ? 0 : task.getCompleted());
-		cancelButton.setEnabled(task == null ? false : task.isCancelable() && task.getState() != State.CANCELING
-				&& task.getState() != State.CANCELED);
-		cancelButton.setText(task != null && task.getState() == State.CANCELING ? "Canceling..." : "Cancel");
+		double progress = task == null ? 0 : task.getCombinedProgress();
+		progressBar.setIndeterminate(task == null ? true : !Double.isFinite(progress));
+		progressBar.setMaximum(task == null ? 0 : 1000000);
+		progressBar.setValue(task == null ? 0 : (int) Math.floor(progress * 1000000));
+		cancelButton.setEnabled(task == null ? false : !task.isCanceled());
+		cancelButton.setText(task != null && task.isCanceled() ? "Canceling..." : "Cancel");
 	}
 
-	public void setTask(Task task) {
+	public void setTask(Task<?> task) {
 		if (this.task != task) {
 			if (this.task != null) {
-				this.task.changeSupport().removePropertyChangeListener(modelChangeHandler);
+				this.task.removeChangeListener(changeHandler);
 			}
 			this.task = task;
 			if (task != null) {
-				task.changeSupport().addPropertyChangeListener(modelChangeHandler);
+				task.addChangeListener(changeHandler);
 			}
 
 			modelToView();

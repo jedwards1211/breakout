@@ -34,7 +34,7 @@ import org.andork.awt.layout.Side;
 import org.andork.event.HierarchicalBasicPropertyChangeAdapter;
 import org.andork.swing.SpinnerButtonUI;
 import org.andork.swing.async.TaskList;
-import org.andork.swing.async.TaskService;
+import org.andork.task.TaskService;
 
 @SuppressWarnings("serial")
 public class TaskListDrawer extends Drawer {

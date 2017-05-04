@@ -4,7 +4,7 @@ import java.awt.Component;
 
 import org.andork.awt.layout.DrawerHolder;
 
-public abstract class DrawerPinningTask extends SelfReportingTask {
+public abstract class DrawerPinningTask<R> extends SelfReportingTask<R> {
 	private DrawerHolder drawerHolder;
 
 	public DrawerPinningTask(Component dialogParent, DrawerHolder drawerHolder) {
@@ -13,15 +13,13 @@ public abstract class DrawerPinningTask extends SelfReportingTask {
 	}
 
 	@Override
-	protected final void duringDialog() throws Exception {
+	protected final R work() throws Exception {
 		try {
 			drawerHolder.hold(this);
-			reallyDuringDialog();
+			return super.work();
 		} finally {
 			drawerHolder.release(this);
 		}
 
 	}
-
-	protected abstract void reallyDuringDialog() throws Exception;
 }

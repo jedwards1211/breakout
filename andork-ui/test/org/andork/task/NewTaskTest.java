@@ -12,7 +12,7 @@ public class NewTaskTest {
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
 
-		final NewTask<Integer> task = new NewTask<Integer>() {
+		final Task<Integer> task = new Task<Integer>() {
 			@Override
 			public Integer work() throws Exception {
 				setTotal(100);
@@ -22,7 +22,7 @@ public class NewTaskTest {
 
 				for (int i = 0; i < 100; i++) {
 					final int startK = k;
-					k = callSubtask(1, new NewTask<Integer>() {
+					k = callSubtask(1, new Task<Integer>() {
 						@Override
 						public Integer work() throws Exception {
 							setTotal(100);
@@ -46,7 +46,7 @@ public class NewTaskTest {
 		};
 
 		executor.submit(() -> {
-			NewTask.debounceOptions.set(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
+			Task.debounceOptions.set(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
 		}).get();
 		
 		task.addChangeListener(e -> {

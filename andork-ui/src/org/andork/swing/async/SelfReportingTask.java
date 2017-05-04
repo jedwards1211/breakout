@@ -30,7 +30,9 @@ import javax.swing.JDialog;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-public abstract class SelfReportingTask extends Task {
+import org.andork.task.Task;
+
+public abstract class SelfReportingTask<R> extends Task<R> {
 	protected Component dialogParent;
 	protected JDialog dialog;
 
@@ -40,7 +42,8 @@ public abstract class SelfReportingTask extends Task {
 	}
 
 	public SelfReportingTask(String status, Component dialogParent) {
-		super(status);
+		super();
+		setStatus(status);
 		this.dialogParent = dialogParent;
 	}
 
@@ -54,14 +57,14 @@ public abstract class SelfReportingTask extends Task {
 		return dialog;
 	}
 
-	protected abstract void duringDialog() throws Exception;
+	protected abstract R workDuringDialog() throws Exception;
 
 	@Override
-	protected void execute() throws Exception {
+	protected R work() throws Exception {
 		showDialogLater();
 
 		try {
-			duringDialog();
+			return workDuringDialog();
 		} finally {
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override

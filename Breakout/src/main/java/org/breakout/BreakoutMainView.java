@@ -141,9 +141,6 @@ import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
 import org.andork.jogl.InterpolationProjection;
 import org.andork.jogl.JoglBackgroundColor;
-import org.andork.jogl.JoglDrawContext;
-import org.andork.jogl.JoglDrawable;
-import org.andork.jogl.JoglResource;
 import org.andork.jogl.JoglScene;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.JoglViewState;
@@ -177,14 +174,14 @@ import org.andork.swing.OnEDT;
 import org.andork.swing.SmartComboTableRowFilter;
 import org.andork.swing.async.DrawerPinningTask;
 import org.andork.swing.async.SelfReportingTask;
-import org.andork.swing.async.SingleThreadedTaskService;
-import org.andork.swing.async.Subtask;
-import org.andork.swing.async.Task;
+import org.andork.swing.async.SetTimeout;
 import org.andork.swing.async.TaskList;
-import org.andork.swing.async.TaskService;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
 import org.andork.swing.table.RowFilterFactory;
+import org.andork.task.ExecutorTaskService;
+import org.andork.task.Task;
+import org.andork.task.TaskService;
 import org.andork.util.FileRecoveryConfig;
 import org.andork.util.JavaScript;
 import org.andork.util.RecoverableFileOutputStream;
@@ -203,7 +200,6 @@ import org.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.calc.CalcProject;
 import org.breakout.model.calc.CalcShot;
-import org.breakout.model.calc.CalcStation;
 import org.breakout.model.calc.CalculateGeometry;
 import org.breakout.model.calc.Parsed2Calc;
 import org.breakout.model.parsed.ParsedProject;
@@ -233,7 +229,6 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
-import com.jogamp.opengl.util.awt.TextRenderer;
 
 public class BreakoutMainView {
 	private class AnimationViewSaver implements Animation {
@@ -266,23 +261,20 @@ public class BreakoutMainView {
 		}
 	}
 
-	private class HoverUpdater extends Task {
+	private class HoverUpdater extends Task<Void> {
 		Survey3dModel model3d;
 		MouseEvent e;
 
 		public HoverUpdater(Survey3dModel model3d, MouseEvent e) {
-			super("Updating mouseover glow...");
+			super();
+			setStatus("Updating mouseover glow...");
 			this.model3d = model3d;
 			this.e = e;
 		}
 
 		@Override
-		protected void execute() throws Exception {
+		protected Void work() throws Exception {
 			final Shot3dPickResult picked = pick(model3d, e, hoverUpdaterSpc);
-
-			Subtask subtask = new Subtask(this);
-			Subtask glowSubtask = subtask.beginSubtask(1);
-			glowSubtask.setStatus("Updating mouseover glow");
 
 			if (picked != null) {
 				LinearAxisConversion conversion = new FromEDT<LinearAxisConversion>() {
@@ -315,24 +307,20 @@ public class BreakoutMainView {
 						return conversion2;
 					}
 				}.result();
-
-				model3d.updateGlow(picked.picked, picked.locationAlongShot, conversion, glowSubtask);
+				runSubtask(1, glowSubtask -> model3d.updateGlow(picked.picked, picked.locationAlongShot, conversion,
+						glowSubtask));
 			} else {
-				OnEDT.onEDT(() -> hintLabel.setText(" "));
-				model3d.updateGlow(null, null, null, glowSubtask);
+				runSubtask(1, glowSubtask -> model3d.updateGlow(null, null, null, glowSubtask));
 			}
-			if (!isCanceling()) {
+
+			if (!isCanceled()) {
 				autoDrawable.display();
 			}
-		}
-
-		@Override
-		public boolean isCancelable() {
-			return true;
+			return null;
 		}
 	}
 
-	private class ImportCompassTask extends DrawerPinningTask {
+	private class ImportCompassTask extends DrawerPinningTask<Void> {
 		final List<Path> surveyFiles = new ArrayList<>();
 		final List<Path> plotFiles = new ArrayList<>();
 		final List<Path> projFiles = new ArrayList<>();
@@ -364,13 +352,13 @@ public class BreakoutMainView {
 		}
 
 		@Override
-		protected void reallyDuringDialog() throws Exception {
+		protected Void workDuringDialog() throws Exception {
 			List<SurveyRow> rows = new ArrayList<>();
 			final SurveyTableModel newModel;
 			final CompassSurveyParser parser = new CompassSurveyParser();
 			final CompassPlotParser plotParser = new CompassPlotParser();
 			final Map<String, SurveyRow> stationPositionRows = new HashMap<>();
-			
+
 			try {
 				int progress = 0;
 
@@ -391,71 +379,52 @@ public class BreakoutMainView {
 					finalPlotFiles.add(file.toRealPath().normalize());
 				}
 
-				final Subtask subtask = new Subtask(this);
-				subtask.setTotal(projFiles.size() + finalSurveyFiles.size() + finalPlotFiles.size());
+				setTotal(projFiles.size() + finalSurveyFiles.size() + finalPlotFiles.size());
 
 				for (Path file : finalSurveyFiles) {
 					setStatus("Importing data from " + file + "...");
-					Subtask fileSubtask = subtask.beginSubtask(1);
-					fileSubtask.setTotal(2);
-					List<CompassTrip> trips = parser.parseCompassSurveyData(file);
-					if (fileSubtask.isCanceling()) {
-						return;
-					}
-					fileSubtask.increment();
-					rows.addAll(CompassConverter.convertFromCompass(trips, fileSubtask.beginSubtask(1)));
-					if (fileSubtask.isCanceling()) {
-						return;
-					}
-					fileSubtask.end();
+					runSubtask(1, fileSubtask -> {
+						fileSubtask.setTotal(2);
+						List<CompassTrip> trips = parser.parseCompassSurveyData(file);
+						fileSubtask.increment();
+						runSubtask(1, subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
+					});
 				}
 				newModel = new SurveyTableModel(rows);
 				newModel.setEditable(false);
 
 				for (Path file : finalPlotFiles) {
 					setStatus("Importing data from " + file + "...");
-					Subtask fileSubtask = subtask.beginSubtask(1);
-					fileSubtask.setTotal(2);
-					List<CompassPlotCommand> commands = plotParser.parsePlot(file);
-					fileSubtask.increment();
-					if (fileSubtask.isCanceling()) {
-						return;
-					}
+					runSubtask(1, fileSubtask -> {
+						fileSubtask.setTotal(2);
+						List<CompassPlotCommand> commands = plotParser.parsePlot(file);
+						fileSubtask.increment();
 
-					SurveyTrip trip = null;
-					Subtask convertSubtask = fileSubtask.beginSubtask(1);
-					convertSubtask.setTotal(commands.size());
-					int i = 0;
-					for (CompassPlotCommand command : commands) {
-						if (command instanceof BeginSectionCommand) {
-							trip = new SurveyTrip();
-							trip.setCave(((BeginSectionCommand) command).getSectionName());
-						} else if (command instanceof DrawSurveyCommand) {
-							DrawSurveyCommand c = (DrawSurveyCommand) command;
-							if (falsy(c.getStationName())) {
-								continue;
+						fileSubtask.runSubtask(1, convertSubtask -> {
+							SurveyTrip trip = null;
+							convertSubtask.setTotal(commands.size());
+							for (CompassPlotCommand command : commands) {
+								if (command instanceof BeginSectionCommand) {
+									trip = new SurveyTrip();
+									trip.setCave(((BeginSectionCommand) command).getSectionName());
+								} else if (command instanceof DrawSurveyCommand) {
+									DrawSurveyCommand c = (DrawSurveyCommand) command;
+									if (falsy(c.getStationName())) {
+										continue;
+									}
+									SurveyRow row = new MutableSurveyRow()
+											.setTrip(trip)
+											.setFromStation(c.getStationName())
+											.setNorthing(toString(c.getLocation().getNorthing()))
+											.setEasting(toString(c.getLocation().getEasting()))
+											.setElevation(toString(c.getLocation().getVertical()))
+											.toImmutable();
+									stationPositionRows.put(c.getStationName(), row);
+								}
+								convertSubtask.increment();
 							}
-							SurveyRow row = new MutableSurveyRow()
-									.setTrip(trip)
-									.setFromStation(c.getStationName())
-									.setNorthing(toString(c.getLocation().getNorthing()))
-									.setEasting(toString(c.getLocation().getEasting()))
-									.setElevation(toString(c.getLocation().getVertical()))
-									.toImmutable();
-							stationPositionRows.put(c.getStationName(), row);
-						}
-						if ((++i % 50) == 0) {
-							if (convertSubtask.isCanceling()) {
-								return;
-							}
-							convertSubtask.setCompleted(i);
-						}
-					}
-					convertSubtask.end();
-					if (fileSubtask.isCanceling()) {
-						return;
-					}
-					fileSubtask.end();
+						});
+					});
 				}
 
 				if (!stationPositionRows.isEmpty()) {
@@ -482,7 +451,7 @@ public class BreakoutMainView {
 					}
 				};
 
-				return;
+				return null;
 			}
 
 			new OnEDT() {
@@ -516,6 +485,7 @@ public class BreakoutMainView {
 					rebuild3dModel.run();
 				}
 			};
+			return null;
 		}
 	}
 
@@ -571,7 +541,7 @@ public class BreakoutMainView {
 		public void mouseMoved(MouseEvent e) {
 			if (model3d != null) {
 				HoverUpdater updater = new HoverUpdater(model3d, e);
-				for (Task task : rebuildTaskService.getTasks()) {
+				for (Task<?> task : rebuildTaskService.getTasks()) {
 					if (task instanceof HoverUpdater) {
 						task.cancel();
 					}
@@ -679,14 +649,15 @@ public class BreakoutMainView {
 
 	}
 
-	private class NewProjectTask extends Task {
+	private class NewProjectTask extends Task<Void> {
 		private NewProjectTask() {
-			super("Creating New Project...");
+			super();
+			setStatus("Creating New Project...");
 			setIndeterminate(true);
 		}
 
 		@Override
-		protected void execute() throws Exception {
+		protected Void work() throws Exception {
 			new OnEDT() {
 				@Override
 				public void run() throws Throwable {
@@ -723,10 +694,11 @@ public class BreakoutMainView {
 			};
 
 			rebuild3dModel.run();
+			return null;
 		}
 	}
 
-	private class OpenProjectTask extends DrawerPinningTask {
+	private class OpenProjectTask extends DrawerPinningTask<Void> {
 		Path newProjectFile;
 		QObject<ProjectModel> projectModel;
 
@@ -774,7 +746,7 @@ public class BreakoutMainView {
 		}
 
 		@Override
-		protected void reallyDuringDialog() throws Exception {
+		protected Void workDuringDialog() throws Exception {
 			boolean changed = FromEDT.fromEDT(() -> {
 				QObject<RootModel> rootModel = getRootModel();
 				rootModel.set(RootModel.currentProjectFile, newProjectFile);
@@ -790,7 +762,7 @@ public class BreakoutMainView {
 			});
 
 			if (!changed) {
-				return;
+				return null;
 			}
 
 			File fileToLoad = newProjectFile.toFile();
@@ -800,7 +772,7 @@ public class BreakoutMainView {
 			}
 			SurveyTableModel surveyModel = loadSurvey(fileToLoad, backupFile);
 			if (surveyModel == null) {
-				return;
+				return null;
 			}
 
 			Path swapFile = getSwapFile(newProjectFile);
@@ -843,6 +815,8 @@ public class BreakoutMainView {
 					saveProject();
 				}
 			});
+
+			return null;
 		}
 	}
 
@@ -970,85 +944,71 @@ public class BreakoutMainView {
 		}
 	}
 
-	private class RebuildTask extends Task {
+	private class RebuildTask extends Task<Void> {
 		final ProjectParser parser = new ProjectParser();
 		final Parsed2Calc p2c = new Parsed2Calc();
 		final Map<ShotKey, Integer> shotKeyToModelIndex = new HashMap<>();
 		final Map<Integer, ShotKey> modelIndexToShotKey = new HashMap<>();
 		final Map<ShotKey, SurveyRow> sourceRows = new HashMap<>();
-		final Subtask subtask = new Subtask(this);
 
 		@Override
-		protected void execute() {
-			subtask.setTotal(4);
+		protected Void work() throws Exception {
+			setTotal(4);
 			try {
 				OnEDT.onEDT(() -> taskListDrawer.holder().hold(this));
-				reallyExecute();
+				parse();
+				CalculateGeometry.calculateGeometry(p2c.project);
+				updateView();
 			} finally {
 				OnEDT.onEDT(() -> taskListDrawer.holder().release(this));
 			}
+			return null;
 		}
 
-		@Override
-		public boolean isCancelable() {
-			return true;
-		}
+		void parse() throws Exception {
+			runSubtask(1, parsingSubtask -> {
+				parsingSubtask.setStatus("Parsing shot data");
+				parsingSubtask.setIndeterminate(true);
 
-		protected void reallyExecute() {
-			parse();
-			CalculateGeometry.calculateGeometry(p2c.project);
-			updateView();
-		}
+				SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
+				List<SurveyRow> rows = copy.getRows();
 
-		void parse() {
-			Subtask parsingSubtask = subtask.beginSubtask(1);
-			parsingSubtask.setStatus("Parsing shot data");
-			parsingSubtask.setIndeterminate(true);
+				if (parsingSubtask.isCanceled()) {
+					return;
+				}
 
-			SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
-			List<SurveyRow> rows = copy.getRows();
+				parsingSubtask.setIndeterminate(false);
+				parsingSubtask.setTotal(rows.size());
+				parsingSubtask.setCompleted(0);
 
-			if (parsingSubtask.isCanceling()) {
-				return;
-			}
-
-			parsingSubtask.setIndeterminate(false);
-			parsingSubtask.setTotal(rows.size());
-			parsingSubtask.setCompleted(0);
-
-			int modelIndex = 0;
-			for (SurveyRow row : rows) {
-				if (row == null || row.getTrip() == null || row.getTrip().getDistanceUnit() == null) {
+				int modelIndex = 0;
+				for (SurveyRow row : rows) {
+					if (row == null || row.getTrip() == null || row.getTrip().getDistanceUnit() == null) {
+						modelIndex++;
+						continue;
+					}
+					ShotKey key = parser.parse(row);
+					if (key != null) {
+						shotKeyToModelIndex.put(key, modelIndex);
+						modelIndexToShotKey.put(modelIndex, key);
+						sourceRows.put(key, row);
+					}
 					modelIndex++;
-					continue;
-				}
-				ShotKey key = parser.parse(row);
-				if (key != null) {
-					shotKeyToModelIndex.put(key, modelIndex);
-					modelIndexToShotKey.put(modelIndex, key);
-					sourceRows.put(key, row);
-				}
-				modelIndex++;
-				if ((modelIndex % 50) == 0) {
 					parsingSubtask.setCompleted(modelIndex);
 				}
-			}
+			});
 
-			if (parsingSubtask.isCanceling()) {
-				return;
-			}
-			parsingSubtask.end();
-
-			p2c.convert(parser.project, subtask.beginSubtask(1));
+			runSubtask(1, subtask -> p2c.convert(parser.project, subtask));
 		}
 
-		public void updateView() {
+		public void updateView() throws Exception {
 			setStatus("Updating view...");
 			destroyCalculatedModel();
 			setStatus("Updating view: constructing new model...");
 
-			final Survey3dModel model = Survey3dModel.create(p2c.project, 10, 3, 3, subtask.beginSubtask(2));
-			if (isCanceling()) {
+			final Survey3dModel model = callSubtask(2,
+					subtask -> Survey3dModel.create(p2c.project, 10, 3, 3, subtask));
+			if (isCanceled()) {
 				return;
 			}
 
@@ -1085,41 +1045,6 @@ public class BreakoutMainView {
 		}
 	}
 
-	private class Text implements JoglResource, JoglDrawable {
-		TextRenderer renderer;
-		float[] position = new float[3];
-
-		@Override
-		public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
-			renderer.beginRendering(context.width(), context.height());
-			for (CalcStation station : calcProject.stations.values()) {
-				if (station.shots.size() > 2) {
-					position[0] = (float) station.position[0];
-					position[1] = (float) station.position[1];
-					position[2] = (float) station.position[2];
-					Vecmath.mpmul(context.worldToScreen(), position);
-					if (position[2] > 1) {
-						continue;
-					}
-					renderer.draw(station.name, (int) position[0], (int) position[1]);
-				}
-			}
-			renderer.endRendering();
-		}
-
-		@Override
-		public void dispose(GL2ES2 gl) {
-			renderer.dispose();
-		}
-
-		@Override
-		public boolean init(GL2ES2 gl) {
-			renderer = new TextRenderer(new Font("Arial", Font.BOLD, 10), true, true);
-			renderer.init();
-			return true;
-		}
-	}
-
 	private static Shot3dPickContext hoverUpdaterSpc = new Shot3dPickContext();
 
 	private static final int SCANNED_NOTES_SEARCH_DEPTH = 10;
@@ -1143,9 +1068,9 @@ public class BreakoutMainView {
 			1e7f);
 
 	final ScheduledExecutorService debouncer = Executors.newSingleThreadScheduledExecutor();
-	final TaskService rebuildTaskService = new SingleThreadedTaskService();
-	final TaskService sortTaskService = new SingleThreadedTaskService();
-	final TaskService ioTaskService = new SingleThreadedTaskService();
+	final TaskService rebuildTaskService = ExecutorTaskService.newSingleThreadedTaskService();
+	final TaskService sortTaskService = ExecutorTaskService.newSingleThreadedTaskService();
+	final TaskService ioTaskService = ExecutorTaskService.newSingleThreadedTaskService();
 
 	public void shutdown() {
 		if (hasUnsavedChanges()) {
@@ -1295,9 +1220,9 @@ public class BreakoutMainView {
 			return;
 		}
 
-		ioTaskService.submit(new Task() {
+		ioTaskService.submit(new Task<Void>() {
 			@Override
-			protected void execute() throws Exception {
+			protected Void work() throws Exception {
 				QObject<S> model = FromEDT.fromEDT(() -> m.deepClone());
 				setStatus("Saving settings...");
 				setIndeterminate(true);
@@ -1316,6 +1241,7 @@ public class BreakoutMainView {
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
+				return null;
 			}
 		});
 	}
@@ -1364,16 +1290,10 @@ public class BreakoutMainView {
 		hintLabel.setText(" ");
 		hintLabel.setVerticalAlignment(SwingConstants.TOP);
 
-		final Consumer<Runnable> sortRunner = r -> {
-			Task task = new Task("Sorting survey table...") {
-				@Override
-				protected void execute() {
-					r.run();
-				}
-			};
-
-			sortTaskService.submit(task);
-		};
+		final Consumer<Runnable> sortRunner = r -> sortTaskService.submit(task -> {
+			task.setStatus("Sorting survey table...");
+			r.run();
+		});
 
 		OnEDT.onEDT(() -> {
 			surveyDrawer = new SurveyDrawer(sortRunner);
@@ -1472,6 +1392,10 @@ public class BreakoutMainView {
 				target.validate();
 			}
 		});
+
+		rebuildTaskService.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
+		sortTaskService.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
+		ioTaskService.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
 
 		taskListDrawer = new TaskListDrawer();
 		taskListDrawer.addTaskService(rebuildTaskService);
@@ -1735,25 +1659,13 @@ public class BreakoutMainView {
 			protected void onValueChanged(final ColorParam colorParam) {
 				if (colorParam != null && model3d != null) {
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
-					Task task = new Task() {
-						@Override
-						protected void execute() throws Exception {
-							Subtask rootSubtask = new Subtask(this);
-							rootSubtask.setTotal(1);
-							rootSubtask.setIndeterminate(false);
 
-							Subtask subtask = rootSubtask.beginSubtask(1);
-							subtask.setIndeterminate(false);
-							subtask.setStatus("Recoloring");
-							model3d.setColorParam(colorParam, subtask);
-							rootSubtask.setCompleted(1);
-							subtask.end();
-
-							autoDrawable.display();
-						}
-					};
-					task.setTotal(1000);
-					rebuildTaskService.submit(task);
+					rebuildTaskService.submit(task -> {
+						task.setTotal(1);
+						task.setStatus("Recoloring");
+						model3d.setColorParam(colorParam, task);
+						autoDrawable.display();
+					});
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder));
@@ -1846,34 +1758,27 @@ public class BreakoutMainView {
 
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
 
-				rebuildTaskService.submit(new Task() {
-					@Override
-					protected void execute() throws Exception {
-						setTotal(1000);
-						Subtask rootSubtask = new Subtask(this);
-						rootSubtask.setTotal(1);
-						Subtask calcSubtask = rootSubtask.beginSubtask(1);
-						float[] range = model3d.calcAutofitParamRange(getDefaultShotsForOperations(), calcSubtask);
-						rootSubtask.setCompleted(1);
-						calcSubtask.end();
+				rebuildTaskService.submit(task -> {
+					task.setTotal(1);
+					float[] range = task.callSubtask(1, calcSubtask -> 
+						model3d.calcAutofitParamRange(getDefaultShotsForOperations(), calcSubtask));
 
-						if (range == null ||
-								!Float.isFinite(range[0]) || !Float.isFinite(range[1]) ||
-								range[0] == -Float.MAX_VALUE || range[1] == -Float.MIN_VALUE) {
-							return;
-						}
-
-						ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
-						if (!colorParam.isLoBright()) {
-							float swap = range[0];
-							range[0] = range[1];
-							range[1] = swap;
-						}
-						LinearAxisConversion conversion = new LinearAxisConversion(range[0], 0.0, range[1],
-								settingsDrawer.getParamColorationAxis().getViewSpan());
-
-						paramRangeBinder.set(conversion);
+					if (range == null ||
+							!Float.isFinite(range[0]) || !Float.isFinite(range[1]) ||
+							range[0] == -Float.MAX_VALUE || range[1] == -Float.MIN_VALUE) {
+						return;
 					}
+
+					ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
+					if (!colorParam.isLoBright()) {
+						float swap = range[0];
+						range[0] = range[1];
+						range[1] = swap;
+					}
+					LinearAxisConversion conversion = new LinearAxisConversion(range[0], 0.0, range[1],
+							settingsDrawer.getParamColorationAxis().getViewSpan());
+
+					paramRangeBinder.set(conversion);
 				});
 			}
 		});
@@ -1897,19 +1802,10 @@ public class BreakoutMainView {
 					return;
 				}
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
-				rebuildTaskService.submit(new Task() {
-					@Override
-					protected void execute() throws Exception {
-						setTotal(1000);
-						Subtask rootSubtask = new Subtask(this);
-						rootSubtask.setTotal(1);
-						Subtask calcSubtask = rootSubtask.beginSubtask(1);
-						model3d.calcDistFromShots(getDefaultShotsForOperations(), calcSubtask);
-						autoDrawable.display();
-
-						rootSubtask.setCompleted(1);
-						calcSubtask.end();
-					}
+				rebuildTaskService.submit(task -> {
+					task.setStatus("Recalculating color by distance");
+					model3d.calcDistFromShots(getDefaultShotsForOperations(), task);
+					autoDrawable.display();
 				});
 			}
 		});
@@ -2597,9 +2493,9 @@ public class BreakoutMainView {
 				}
 				if (dirs != null) {
 					final QArrayList<File> finalDirs = dirs;
-					ioTaskService.submit(new SelfReportingTask(mainPanel) {
+					ioTaskService.submit(new SelfReportingTask<Void>(mainPanel) {
 						@Override
-						protected void duringDialog() throws Exception {
+						protected Void workDuringDialog() throws Exception {
 							setStatus("Searching for file: " + link + "...");
 							setIndeterminate(true);
 
@@ -2612,19 +2508,15 @@ public class BreakoutMainView {
 													return path.toString().endsWith(link);
 												}, FileVisitOption.FOLLOW_LINKS)
 										.findFirst();
-								if (foundFile.isPresent() && !isCanceled() && !isCanceling()) {
+								if (foundFile.isPresent() && !isCanceled() && !isCanceled()) {
 									SwingUtilities.invokeLater(() -> openSurveyNotes(foundFile.get().toFile()));
-									return;
+									return null;
 								}
 							}
-							if (!isCanceled() && !isCanceling()) {
+							if (!isCanceled() && !isCanceled()) {
 								SwingUtilities.invokeLater(() -> openSurveyNotes(file));
 							}
-						}
-
-						@Override
-						public boolean isCancelable() {
-							return true;
+							return null;
 						}
 					});
 					return;
@@ -2852,34 +2744,32 @@ public class BreakoutMainView {
 	}
 
 	public void saveProjectToFile(Path projectFile) {
-		ioTaskService.submit(new Task("Saving project to " + projectFile + "...") {
-			@Override
-			protected void execute() throws Exception {
-				setIndeterminate(true);
+		ioTaskService.submit(task -> {
+			task.setStatus("Saving project to " + projectFile);
+			task.setIndeterminate(true);
 
-				SurveyTableModel surveyModel = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
-				QObject<ProjectModel> projectModel = getProjectModel();
+			SurveyTableModel surveyModel = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
+			QObject<ProjectModel> projectModel = getProjectModel();
 
-				if (projectFile == null || surveyModel == null) {
-					return;
+			if (projectFile == null || surveyModel == null) {
+				return;
+			}
+
+			try (Writer out = new OutputStreamWriter(
+					new RecoverableFileOutputStream(projectFile.toFile(), fileRecoveryConfig))) {
+				if (!Files.exists(projectFile.getParent())) {
+					projectFile.getParent().toFile().mkdirs();
 				}
-
-				try (Writer out = new OutputStreamWriter(
-						new RecoverableFileOutputStream(projectFile.toFile(), fileRecoveryConfig))) {
-					if (!Files.exists(projectFile.getParent())) {
-						projectFile.getParent().toFile().mkdirs();
-					}
-					MetacaveExporter exporter = new MetacaveExporter();
-					exporter.export(surveyModel.getRows());
-					JsonObject json = exporter.getRoot();
-					Gson gson = new Gson();
-					json.add("breakout", gson.toJsonTree(
-							ProjectModel.defaultMapper.map(projectModel), Object.class));
-					gson.toJson(json, out);
-					getProjectModel().set(ProjectModel.hasUnsavedChanges, false);
-				} catch (Exception ex) {
-					ex.printStackTrace();
-				}
+				MetacaveExporter exporter = new MetacaveExporter();
+				exporter.export(surveyModel.getRows());
+				JsonObject json = exporter.getRoot();
+				Gson gson = new Gson();
+				json.add("breakout", gson.toJsonTree(
+						ProjectModel.defaultMapper.map(projectModel), Object.class));
+				gson.toJson(json, out);
+				getProjectModel().set(ProjectModel.hasUnsavedChanges, false);
+			} catch (Exception ex) {
+				ex.printStackTrace();
 			}
 		});
 	}

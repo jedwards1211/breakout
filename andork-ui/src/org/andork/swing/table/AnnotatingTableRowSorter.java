@@ -37,7 +37,7 @@ import javax.swing.table.TableStringConverter;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.FromEDT;
 import org.andork.swing.OnEDT;
-import org.andork.swing.async.Subtask;
+import org.andork.task.Task;
 
 /**
  * An implementation of <code>RowSorter</code> that provides sorting and
@@ -156,7 +156,7 @@ public class AnnotatingTableRowSorter<M extends TableModel> extends AnnotatingRo
 			return result;
 		}
 
-		public void copyInBackground(final M src, final M dest, final int step, Subtask subtask) {
+		public void copyInBackground(final M src, final M dest, final int step, Task<?> subtask) {
 			class ChangeHandler implements TableModelListener {
 				boolean changed = false;
 
@@ -198,7 +198,7 @@ public class AnnotatingTableRowSorter<M extends TableModel> extends AnnotatingRo
 					}.result();
 					row = progress[0];
 					if (subtask != null) {
-						if (subtask.isCanceling()) {
+						if (subtask.isCanceled()) {
 							return;
 						}
 						subtask.setTotal(progress[1]);

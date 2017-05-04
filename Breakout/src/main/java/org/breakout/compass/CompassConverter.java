@@ -5,7 +5,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -18,7 +17,7 @@ import org.andork.compass.LrudAssociation;
 import org.andork.compass.survey.CompassShot;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.compass.survey.CompassTripHeader;
-import org.andork.swing.async.Subtask;
+import org.andork.task.Task;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
@@ -30,19 +29,15 @@ import org.breakout.model.raw.SurveyTrip;
 public class CompassConverter {
 	private static DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
-	public static List<SurveyRow> convertFromCompass(List<CompassTrip> compassTrips, Subtask subtask) {
+	public static List<SurveyRow> convertFromCompass(List<CompassTrip> compassTrips, Task<?> subtask) {
 		List<SurveyRow> shots = new ArrayList<SurveyRow>();
 
 		subtask.setTotal(compassTrips.size());
 		for (CompassTrip compassTrip : compassTrips) {
 			shots.addAll(convertShots(compassTrip));
 			subtask.increment();
-			if (subtask.isCanceling()) {
-				return Collections.emptyList();
-			}
 		}
 
-		subtask.end();
 		return shots;
 	}
 

@@ -25,28 +25,34 @@ import java.awt.Dimension;
 
 import javax.swing.JScrollPane;
 
+import org.andork.func.Lodash.DebounceOptions;
 import org.andork.swing.QuickTestFrame;
+import org.andork.task.ExecutorTaskService;
+import org.andork.task.Task;
+import org.andork.task.TaskService;
 
 public class TaskPaneTest {
-	static class TestTask extends Task {
+	static class TestTask extends Task<Void> {
 		public TestTask(String status) {
 			setIndeterminate(false);
 			setStatus(status);
 			setCompleted(0);
-			setTotal(10);
+			setTotal(100);
 		}
 
 		@Override
-		protected void execute() throws Exception {
-			for (int i = 0; i < 10 && getState() != State.CANCELING; i++) {
+		protected Void work() throws Exception {
+			for (int i = 0; i < 100; i++) {
 				setCompleted(i);
-				Thread.sleep(3000);
+				Thread.sleep(100);
 			}
+			return null;
 		}
 	}
 
 	public static void main(String[] args) throws Exception {
-		SingleThreadedTaskService service = new SingleThreadedTaskService();
+		TaskService service = ExecutorTaskService.newSingleThreadedTaskService();
+		service.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
 		TaskList taskList = new TaskList();
 		taskList.addService(service);
 		JScrollPane taskListScrollPane = new JScrollPane(taskList);
@@ -54,7 +60,7 @@ public class TaskPaneTest {
 
 		QuickTestFrame.frame(taskListScrollPane).setVisible(true);
 
-		for (int i = 0; i < 50; i++) {
+		for (int i = 0; i < 10; i++) {
 			TestTask task = new TestTask("Task " + i);
 			service.submit(task);
 

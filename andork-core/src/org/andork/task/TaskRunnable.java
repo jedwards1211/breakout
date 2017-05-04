@@ -19,22 +19,9 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.swing.async;
+package org.andork.task;
 
-import java.util.concurrent.ExecutionException;
-
-public abstract class FutureTask<R> extends Task {
-	private R result;
-
-	protected abstract R doGet() throws Exception;
-
-	@Override
-	protected final void execute() throws Exception {
-		result = doGet();
-	}
-
-	public R get() throws InterruptedException, ExecutionException {
-		waitUntilHasFinished();
-		return result;
-	}
+@FunctionalInterface
+public interface TaskRunnable {
+	public void work(Task<?> task) throws Exception;
 }

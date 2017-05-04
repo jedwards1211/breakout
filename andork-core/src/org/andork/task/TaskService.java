@@ -19,29 +19,31 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.swing.async;
+package org.andork.task;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
+import org.andork.func.Lodash.DebounceOptions;
 
 public interface TaskService {
-	public void cancel(Task task);
+	public void setDebounceOptions(DebounceOptions<Void> options);
 
 	public HierarchicalBasicPropertyChangeSupport.External changeSupport();
 
-	public List<Task> getTasks();
+	public List<Task<?>> getTasks();
 
 	public boolean hasTasks();
 
-	public void submit(Task task);
+	public void submit(Task<?> task);
 
 	public default void submit(TaskRunnable task) {
-		submit(new Task() {
+		submit(new Task<Void>() {
 			@Override
-			protected void execute() throws Exception {
-				task.execute(this);
+			protected Void work() throws Exception {
+				task.work(this);
+				return null;
 			}
 		});
 	}
@@ -50,5 +52,5 @@ public interface TaskService {
 
 	public abstract boolean awaitTermination(long timeout, TimeUnit timeUnit) throws InterruptedException;
 
-	public abstract List<Task> shutdownNow();
+	public abstract List<Task<?>> shutdownNow();
 }

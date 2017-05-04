@@ -1,6 +1,6 @@
 package org.breakout.model.calc;
 
-import org.andork.swing.async.Subtask;
+import org.andork.task.Task;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
@@ -34,45 +34,27 @@ public class Parsed2Calc {
 		this.project = project;
 	}
 
-	public void convert(ParsedProject project, Subtask subtask) {
-		subtask.setTotal(project.caves.size());
+	public void convert(ParsedProject project, Task<?> task) throws Exception {
+		task.setTotal(project.caves.size());
 		for (ParsedCave cave : project.caves.values()) {
-			convert(cave, subtask.beginSubtask(1));
-			subtask.increment();
-			if (subtask.isCanceling()) {
-				return;
-			}
+			task.runSubtask(1, subtask -> convert(cave, subtask));
 		}
-		subtask.end();
 	}
 
-	void convert(ParsedCave cave, Subtask subtask) {
-		subtask.setTotal(2);
-		Subtask tripTask = subtask.beginSubtask(1);
-		tripTask.setTotal(cave.trips.size());
-		for (ParsedTrip trip : cave.trips) {
-			convert(trip);
-			tripTask.increment();
-			if (tripTask.isCanceling()) {
-				return;
+	void convert(ParsedCave cave, Task<?> task) throws Exception {
+		task.runSubtasks(tripTask -> {
+			tripTask.setTotal(cave.trips.size());
+			for (ParsedTrip trip : cave.trips) {
+				convert(trip);
+				tripTask.increment();
 			}
-		}
-		tripTask.end();
-
-		Subtask fixedStationTask = subtask.beginSubtask(1);
-		fixedStationTask.setTotal(cave.fixedStations.size());
-		int i = 0;
-		for (ParsedFixedStation fixedStation : cave.fixedStations.values()) {
-			convert(fixedStation);
-			if ((++i % 50) == 0) {
-				if (fixedStationTask.isCanceling()) {
-					return;
-				}
-				fixedStationTask.setCompleted(i);
+		}, fixedStationTask -> {
+			fixedStationTask.setTotal(cave.fixedStations.size());
+			for (ParsedFixedStation fixedStation : cave.fixedStations.values()) {
+				convert(fixedStation);
+				fixedStationTask.increment();
 			}
-		}
-		fixedStationTask.end();
-		subtask.end();
+		});
 	}
 
 	void convert(ParsedFixedStation fixedStation) {

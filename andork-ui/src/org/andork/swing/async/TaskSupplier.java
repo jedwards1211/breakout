@@ -21,6 +21,8 @@
  *******************************************************************************/
 package org.andork.swing.async;
 
+import org.andork.task.Task;
+
 @FunctionalInterface
 public interface TaskSupplier<T> {
 	public T get(Task task) throws Exception;

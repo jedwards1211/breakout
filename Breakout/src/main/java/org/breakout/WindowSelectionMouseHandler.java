@@ -42,7 +42,7 @@ import org.andork.spatial.EdgeTrees;
 import org.andork.spatial.RBranch;
 import org.andork.spatial.RTraversal;
 import org.andork.spatial.RfStarTree;
-import org.andork.swing.async.TaskService;
+import org.andork.task.TaskService;
 import org.andork.util.Reparam;
 import org.breakout.model.Survey3dModel;
 import org.breakout.model.Survey3dModel.Shot3d;

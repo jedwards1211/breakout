@@ -89,6 +89,7 @@ import org.andork.bind.ui.ISelectorSelectionBinder;
 import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.bind.ui.JSpinnerValueBinder;
 import org.andork.format.Format;
+import org.andork.func.Lodash.DebounceOptions;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
 import org.andork.jogl.JoglScene;
@@ -99,8 +100,7 @@ import org.andork.q.QObject;
 import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
-import org.andork.swing.async.SingleThreadedTaskService;
-import org.andork.swing.async.TaskService;
+import org.andork.swing.async.SetTimeout;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.event.EasyDocumentListener;
 import org.andork.swing.selector.DefaultSelector;
@@ -111,6 +111,9 @@ import org.andork.swing.text.PatternDocumentFilter;
 import org.andork.swing.text.Patterns;
 import org.andork.swing.text.SimpleFormatter;
 import org.andork.swing.text.SimpleSpinnerEditor;
+import org.andork.task.ExecutorTaskService;
+import org.andork.task.TaskCanceledException;
+import org.andork.task.TaskService;
 import org.andork.util.StringUtils;
 
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
@@ -123,7 +126,6 @@ import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
 
-@SuppressWarnings("serial")
 public class JoglExportImageDialog extends JDialog {
 	private class CanvasHolderLayout implements LayoutManager {
 		@Override
@@ -181,7 +183,7 @@ public class JoglExportImageDialog extends JDialog {
 		}
 	}
 
-	private class CaptureTask extends SelfReportingTask {
+	private class CaptureTask extends SelfReportingTask<Void> {
 		public static final int MAX_TILE_WIDTH = 1024;
 
 		public static final int MAX_TILE_HEIGHT = 1024;
@@ -195,7 +197,7 @@ public class JoglExportImageDialog extends JDialog {
 		}
 
 		@Override
-		protected void duringDialog() throws Exception {
+		protected Void workDuringDialog() throws Exception {
 			OnEDT.onEDT(() -> {
 				dialog.setTitle("Exporting...");
 
@@ -264,8 +266,8 @@ public class JoglExportImageDialog extends JDialog {
 				}
 			});
 
-			if (outputFile == null || tileWidths == null || tileHeights == null || isCanceling()) {
-				return;
+			if (outputFile == null || tileWidths == null || tileHeights == null || isCanceled()) {
+				return null;
 			}
 
 			setStatus("Rendering image...");
@@ -278,19 +280,17 @@ public class JoglExportImageDialog extends JDialog {
 			try {
 				renderer.startCapture(this);
 				while (getCompleted() < getTotal()) {
-					if (isCanceling()) {
-						return;
-					}
-
 					canvas.invoke(true, gl -> {
 						return true;
 					});
-					setCompleted(getCompleted() + 1);
+					increment();
 				}
 
-				if (isCanceling()) {
-					return;
+				if (isCanceled()) {
+					return null;
 				}
+			} catch (TaskCanceledException e) {
+				return null;
 			} catch (OutOfMemoryError e) {
 				e.printStackTrace();
 				OnEDT.onEDT(() -> {
@@ -298,7 +298,7 @@ public class JoglExportImageDialog extends JDialog {
 							e.getClass().getSimpleName() + ": " + e.getLocalizedMessage(), "Export Failed",
 							JOptionPane.ERROR_MESSAGE);
 				});
-				return;
+				return null;
 			} finally {
 				capturedImage = renderer.endCapture();
 			}
@@ -306,7 +306,7 @@ public class JoglExportImageDialog extends JDialog {
 			setStatus("Saving image to " + outputFile + "...");
 			setIndeterminate(true);
 
-			if (!isCanceling()) {
+			if (!isCanceled()) {
 				try {
 					ImageIO.write(capturedImage, "png", outputFile);
 
@@ -328,21 +328,17 @@ public class JoglExportImageDialog extends JDialog {
 					});
 				}
 			}
-		}
-
-		@Override
-		public boolean isCancelable() {
-			return true;
+			return null;
 		}
 	}
 
-	private class NEWTInitializer extends SelfReportingTask {
+	private class NEWTInitializer extends SelfReportingTask<Void> {
 		public NEWTInitializer() {
 			super("Initializing preview...", JoglExportImageDialog.this);
 		}
 
 		@Override
-		protected void duringDialog() throws Exception {
+		protected Void workDuringDialog() throws Exception {
 			final GLProfile glp = GLProfile.get(GLProfile.GL3);
 			final GLCapabilities caps = new GLCapabilities(glp);
 			if (canvas == null) {
@@ -362,6 +358,7 @@ public class JoglExportImageDialog extends JDialog {
 			}
 			canvasHolder.add(canvas);
 			canvasHolder.revalidate();
+			return null;
 		}
 	}
 
@@ -399,8 +396,8 @@ public class JoglExportImageDialog extends JDialog {
 				return;
 			}
 
-			int tileX = captureTask.getCompleted() / captureTask.tileHeights.length;
-			int tileY = captureTask.getCompleted() % captureTask.tileHeights.length;
+			int tileX = (int) captureTask.getCompleted() / captureTask.tileHeights.length;
+			int tileY = (int) captureTask.getCompleted() % captureTask.tileHeights.length;
 
 			int tileWidth = captureTask.tileWidths[tileX];
 			int tileHeight = captureTask.tileHeights[tileY];
@@ -447,7 +444,7 @@ public class JoglExportImageDialog extends JDialog {
 
 			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
-			if (captureTask.isCanceling()) {
+			if (captureTask.isCanceled()) {
 				return;
 			}
 
@@ -485,8 +482,8 @@ public class JoglExportImageDialog extends JDialog {
 			super.drawScene(drawable);
 
 			if (captureTask != null) {
-				int tileX = captureTask.getCompleted() / captureTask.tileWidths.length;
-				int tileY = captureTask.getCompleted() % captureTask.tileHeights.length;
+				int tileX = (int) captureTask.getCompleted() / captureTask.tileWidths.length;
+				int tileY = (int) captureTask.getCompleted() % captureTask.tileHeights.length;
 
 				int tileWidth = captureTask.tileWidths[tileX];
 				int tileHeight = captureTask.tileHeights[tileY];
@@ -1153,7 +1150,8 @@ public class JoglExportImageDialog extends JDialog {
 			}
 		};
 
-		taskService = new SingleThreadedTaskService();
+		taskService = ExecutorTaskService.newSingleThreadedTaskService();
+		taskService.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
 	}
 
 	private void scaleUnits(BigDecimal factor) {

@@ -22,23 +22,25 @@ import org.andork.util.StringUtils;
  * @param <R>
  *            the task result type.
  */
-public abstract class NewTask<R> implements Callable<R> {
+public abstract class Task<R> implements Callable<R> {
 	public static final ThreadLocal<DebounceOptions<Void>> debounceOptions = new ThreadLocal<>();
 
 	private volatile Thread thread;
 	private volatile DebouncedRunnable fireChanged = DebouncedRunnable.noop();
-	private volatile NewTask<?> parent;
-	private volatile NewTask<?> subtask;
+	private volatile Task<?> parent;
+	private volatile Task<?> subtask;
 
-	private volatile int subtaskProportion;
+	private volatile long subtaskProportion;
 	private final List<ChangeListener> listeners = new CopyOnWriteArrayList<>();
+	private volatile Runnable onceCanceled;
 	private volatile String status;
 
-	private volatile boolean indeterminate;
-	private volatile int completed;
-	private volatile int total;
+	private volatile boolean indeterminate = false;
+	private volatile long completed = 0;
+	private volatile long total = 1;
 
-	private volatile boolean canceled;
+	private volatile boolean canceled = false;
+	private volatile long startTime;
 
 	/**
 	 * Runs this task. It must not be running before this call is made.
@@ -51,7 +53,20 @@ public abstract class NewTask<R> implements Callable<R> {
 	 */
 	@Override
 	public final R call() throws Exception {
-		start();
+		return call(null);
+	}
+
+	/**
+	 * Runs this task. It must not be running before this call is made.
+	 *
+	 * @return the result of calling {@link #work()}.
+	 * @throws IllegalStateException
+	 *             if this task is already running.
+	 * @throws Exception
+	 *             if {@link #work()} threw it
+	 */
+	public final R call(DebounceOptions<Void> debounceOptions) throws Exception {
+		start(debounceOptions);
 		try {
 			return work();
 		} finally {
@@ -83,7 +98,7 @@ public abstract class NewTask<R> implements Callable<R> {
 	 * @throws Exception
 	 *             if {@code subtask.call()} threw an exception
 	 */
-	public final <R2> R2 callSubtask(int proportion, NewTask<R2> subtask) throws Exception {
+	public final <R2> R2 callSubtask(long proportion, Task<R2> subtask) throws Exception {
 		if (proportion <= 0) {
 			throw new IllegalArgumentException("proportion must be > 0");
 		}
@@ -95,7 +110,36 @@ public abstract class NewTask<R> implements Callable<R> {
 			clearSubtask();
 		}
 	}
-
+		
+	public final void runSubtask(long proportion, TaskRunnable runnable) throws Exception {
+		callSubtask(proportion, new Task<Void>() {
+			@Override
+			protected Void work() throws Exception {
+				runnable.work(this);
+				return null;
+			}
+		});
+	}
+	
+	public final void runSubtasks(TaskRunnable... runnables) throws Exception {
+		setIndeterminate(false);
+		setTotal(runnables.length);
+		
+		for (TaskRunnable runnable : runnables) {
+			runSubtask(1, runnable);
+		}
+	}
+	
+	
+	public final <V> V callSubtask(long proportion, TaskCallable<V> callable) throws Exception {
+		return callSubtask(proportion, new Task<V>() {
+			@Override
+			protected V work() throws Exception {
+				return callable.work(this);
+			}
+		});
+	}
+	
 	/**
 	 * Cancels this task and its {@link #getParent() parent} task (if any).
 	 * After this {@link #isCanceled()} will return true until {@link #reset()}
@@ -104,11 +148,29 @@ public abstract class NewTask<R> implements Callable<R> {
 	 * if it returns {@code true}.
 	 */
 	public void cancel() {
-		NewTask<?> parent = this.parent;
+		Task<?> parent = this.parent;
 		if (parent != null) {
 			parent.cancel();
 		} else {
+			canceled = true;
 			fireChanged.run();
+		}
+		Runnable onceCanceled;
+		synchronized (this) {
+			onceCanceled = this.onceCanceled;
+			this.onceCanceled = null;
+		}
+		if (onceCanceled != null) {
+			onceCanceled.run();
+		}
+	}
+
+	public void onceCanceled(Runnable r) {
+		synchronized (this) {
+			if (onceCanceled != null) {
+				throw new IllegalStateException("a onceCanceled listener has already been registered");
+			}
+			onceCanceled = r;
 		}
 	}
 
@@ -116,7 +178,7 @@ public abstract class NewTask<R> implements Callable<R> {
 	 * Called by {@link #run()} (which safely sets the state of this task before
 	 * and after).
 	 */
-	public abstract R work() throws Exception;
+	protected abstract R work() throws Exception;
 
 	/**
 	 * @return the combined progress of this task and its subtasks. {@code NaN}
@@ -125,7 +187,7 @@ public abstract class NewTask<R> implements Callable<R> {
 	public double getCombinedProgress() {
 		if (indeterminate)
 			return Double.NaN;
-		NewTask<?> subtask = this.subtask;
+		Task<?> subtask = this.subtask;
 		return subtask != null
 				? (completed + subtaskProportion * subtask.getCombinedProgress()) / total
 				: getProgress();
@@ -135,7 +197,7 @@ public abstract class NewTask<R> implements Callable<R> {
 	 * @return the combined status of this task and its subtasks.
 	 */
 	public String getCombinedStatus() {
-		NewTask<?> subtask = this.subtask;
+		Task<?> subtask = this.subtask;
 		String status = this.status;
 		if (subtask != null) {
 			String subtaskStatus = subtask.getCombinedStatus();
@@ -153,8 +215,8 @@ public abstract class NewTask<R> implements Callable<R> {
 		return status + "...";
 	}
 
-	public NewTask<?> getDeepestSubtask() {
-		NewTask<?> subtask = this.subtask;
+	public Task<?> getDeepestSubtask() {
+		Task<?> subtask = this.subtask;
 		return subtask == null ? this : subtask.getDeepestSubtask();
 	}
 
@@ -166,7 +228,7 @@ public abstract class NewTask<R> implements Callable<R> {
 		return getDeepestSubtask().getStatus();
 	}
 
-	public NewTask<?> getParent() {
+	public Task<?> getParent() {
 		return parent;
 	}
 
@@ -181,12 +243,12 @@ public abstract class NewTask<R> implements Callable<R> {
 		return status;
 	}
 
-	public NewTask<?> getSubtask() {
+	public Task<?> getSubtask() {
 		return subtask;
 	}
 
 	public boolean isCanceled() {
-		NewTask<?> parent = this.parent;
+		Task<?> parent = this.parent;
 		return canceled || (parent != null && parent.isCanceled());
 	}
 
@@ -202,7 +264,10 @@ public abstract class NewTask<R> implements Callable<R> {
 		listeners.remove(listener);
 	}
 
-	public void setCompleted(int completed) {
+	public void setCompleted(long completed) {
+		if (canceled) {
+			throw new TaskCanceledException();
+		}
 		this.completed = completed;
 		fireChanged.run();
 	}
@@ -211,16 +276,16 @@ public abstract class NewTask<R> implements Callable<R> {
 		this.increment(1);
 	}
 
-	public void increment(int amount) {
+	public void increment(long amount) {
 		this.completed += amount;
 		fireChanged.run();
 	}
 
-	public int getCompleted() {
+	public long getCompleted() {
 		return completed;
 	}
 
-	public int getTotal() {
+	public long getTotal() {
 		return total;
 	}
 
@@ -228,7 +293,7 @@ public abstract class NewTask<R> implements Callable<R> {
 		return indeterminate;
 	}
 
-	public void setTotal(int total) {
+	public void setTotal(long total) {
 		this.total = total;
 		fireChanged.run();
 	}
@@ -243,24 +308,11 @@ public abstract class NewTask<R> implements Callable<R> {
 		fireChanged.run();
 	}
 
-	/**
-	 * Clears the {@link #isCanceled() canceled} flag and
-	 * {@linkplain #setCompleted(int) sets completed} to 0.
-	 * 
-	 * @throws IllegalStateException
-	 *             if this task is currently running
-	 */
-	public final void reset() {
-		synchronized (this) {
-			if (thread != null) {
-				throw new IllegalStateException("task may not be reset while it's running");
-			}
-			completed = 0;
-			canceled = false;
-		}
+	public long startTime() {
+		return startTime;
 	}
 
-	private void setSubtask(int proportion, NewTask<?> subtask) {
+	private void setSubtask(long proportion, Task<?> subtask) {
 		synchronized (this) {
 			if (thread == null) {
 				throw new IllegalStateException("a subtask may only be run when this task is running");
@@ -297,7 +349,7 @@ public abstract class NewTask<R> implements Callable<R> {
 	}
 
 	private void fireChanged() {
-		NewTask<?> task = NewTask.this;
+		Task<?> task = Task.this;
 		while (task != null) {
 			ChangeEvent event = new ChangeEvent(task);
 			for (ChangeListener listener : task.listeners) {
@@ -307,16 +359,22 @@ public abstract class NewTask<R> implements Callable<R> {
 		}
 	}
 
-	private void start() {
+	private void start(DebounceOptions<Void> debounceOptions) {
 		synchronized (this) {
+			if (canceled) {
+				throw new IllegalStateException("already canceled");
+			}
 			if (thread != null) {
 				throw new IllegalStateException("already running");
 			}
+			startTime = System.currentTimeMillis();
 			thread = Thread.currentThread();
 			if (parent != null) {
 				fireChanged = parent.fireChanged;
 			} else {
-				DebounceOptions<Void> debounceOptions = NewTask.debounceOptions.get();
+				if (debounceOptions == null) {
+					debounceOptions = Task.debounceOptions.get();
+				}
 				if (debounceOptions != null) {
 					fireChanged = Lodash.throttle(this::fireChanged, 30, debounceOptions);
 				} else {
@@ -331,6 +389,7 @@ public abstract class NewTask<R> implements Callable<R> {
 		boolean isRoot;
 		synchronized (this) {
 			thread = null;
+			onceCanceled = null;
 			isRoot = parent == null;
 		}
 		if (isRoot) {

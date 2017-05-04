@@ -25,7 +25,6 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,36 +36,40 @@ import javax.swing.Scrollable;
 
 import org.andork.collect.CollectionUtils;
 import org.andork.event.HierarchicalBasicPropertyChangeAdapter;
+import org.andork.swing.OnEDT;
+import org.andork.task.Task;
+import org.andork.task.TaskService;
 
-@SuppressWarnings("serial")
 public class TaskList extends JPanel implements Scrollable {
 	private class ModelChangeHandler extends HierarchicalBasicPropertyChangeAdapter {
 		@Override
 		public void childrenChanged(Object source, ChangeType changeType, Object... children) {
-			switch (changeType) {
-			case ALL_CHILDREN_CHANGED:
-				rebuild();
-				break;
-			case CHILDREN_ADDED:
-				for (Object o : children) {
-					Task task = (Task) o;
-					TaskPane taskPane = new TaskPane(task);
-					taskMap.put(task, taskPane);
-					add(taskPane);
-				}
-				revalidate();
-				break;
-			case CHILDREN_REMOVED:
-				for (Object o : children) {
-					Task task = (Task) o;
-					TaskPane taskPane = taskMap.remove(task);
-					if (taskPane != null) {
-						taskPane.setTask(null);
-						remove(taskPane);
+			OnEDT.onEDT(() -> {
+				switch (changeType) {
+				case ALL_CHILDREN_CHANGED:
+					rebuild();
+					break;
+				case CHILDREN_ADDED:
+					for (Object o : children) {
+						Task<?> task = (Task<?>) o;
+						TaskPane taskPane = new TaskPane(task);
+						taskMap.put(task, taskPane);
+						add(taskPane);
 					}
+					revalidate();
+					break;
+				case CHILDREN_REMOVED:
+					for (Object o : children) {
+						Task<?> task = (Task<?>) o;
+						TaskPane taskPane = taskMap.remove(task);
+						if (taskPane != null) {
+							taskPane.setTask(null);
+							remove(taskPane);
+						}
+					}
+					break;
 				}
-				break;
-			}
+			});
 		}
 	}
 
@@ -76,7 +79,7 @@ public class TaskList extends JPanel implements Scrollable {
 	private static final long serialVersionUID = -5692418634705030121L;
 	final Set<TaskService> services = new HashSet<TaskService>();
 
-	LinkedHashMap<Task, TaskPane> taskMap = CollectionUtils.newLinkedHashMap();
+	LinkedHashMap<Task<?>, TaskPane> taskMap = CollectionUtils.newLinkedHashMap();
 
 	private ModelChangeHandler modelChangeHandler = new ModelChangeHandler();
 
@@ -98,13 +101,11 @@ public class TaskList extends JPanel implements Scrollable {
 
 	@Override
 	public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
 	public boolean getScrollableTracksViewportHeight() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -128,21 +129,18 @@ public class TaskList extends JPanel implements Scrollable {
 		}
 		removeAll();
 
-		List<Task> tasks = new ArrayList<Task>();
+		List<Task<?>> tasks = new ArrayList<Task<?>>();
 
 		for (TaskService service : services) {
 			tasks.addAll(service.getTasks());
 		}
 
-		Collections.sort(tasks, new Comparator<Task>() {
-			@Override
-			public int compare(Task o1, Task o2) {
-				long l = o1.getCreationTimestamp() - o2.getCreationTimestamp();
-				return l > 0 ? 1 : l == 0 ? 0 : -1;
-			}
+		Collections.sort(tasks, (o1, o2) -> {
+			long l = o1.startTime() - o2.startTime();
+			return l > 0 ? 1 : l == 0 ? 0 : -1;
 		});
 
-		for (Task task : tasks) {
+		for (Task<?> task : tasks) {
 			TaskPane pane = new TaskPane(task);
 			taskMap.put(task, pane);
 			add(pane);
