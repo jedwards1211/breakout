@@ -89,7 +89,7 @@ public class TaskPane extends JPanel {
 	}
 
 	protected void modelToView() {
-		statusLabel.setText(task == null ? null : task.getStatus());
+		statusLabel.setText(task == null ? null : task.getCombinedStatus());
 		double progress = task == null ? 0 : task.getCombinedProgress();
 		progressBar.setIndeterminate(task == null ? true : !Double.isFinite(progress));
 		progressBar.setMaximum(task == null ? 0 : 1000000);

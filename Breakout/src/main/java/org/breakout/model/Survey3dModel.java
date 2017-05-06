@@ -1428,7 +1428,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public static Survey3dModel create(CalcProject project, int maxChildrenPerBranch, int minSplitSize,
 			int numToReinsert, Task<?> task) throws Exception {
-		task.setStatus("Updating view");
+		task.setStatus("creating 3D model");
 		task.setTotal(5);
 
 		Map<ShotKey, Shot3d> shot3ds = new HashMap<>();

@@ -953,7 +953,8 @@ public class BreakoutMainView {
 
 		@Override
 		protected Void work() throws Exception {
-			setTotal(4);
+			setTotal(5);
+			setStatus("Updating view");
 			try {
 				OnEDT.onEDT(() -> taskListDrawer.holder().hold(this));
 				parse();
@@ -967,7 +968,7 @@ public class BreakoutMainView {
 
 		void parse() throws Exception {
 			runSubtask(1, parsingSubtask -> {
-				parsingSubtask.setStatus("Parsing shot data");
+				parsingSubtask.setStatus("parsing shot data");
 				parsingSubtask.setIndeterminate(true);
 
 				SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
@@ -1002,44 +1003,44 @@ public class BreakoutMainView {
 		}
 
 		public void updateView() throws Exception {
-			setStatus("Updating view...");
 			destroyCalculatedModel();
-			setStatus("Updating view: constructing new model...");
 
-			final Survey3dModel model = callSubtask(2,
-					subtask -> Survey3dModel.create(p2c.project, 10, 3, 3, subtask));
+			final Survey3dModel model = callSubtask(2, subtask -> 
+				Survey3dModel.create(p2c.project, 10, 3, 3, subtask));
 			if (isCanceled()) {
 				return;
 			}
 
-			setStatus("Updating view: installing new model...");
+			runSubtask(1, subtask -> {
+				subtask.setIndeterminate(true);
+				subtask.setStatus("installing model");
+				float[] bounds = Arrays.copyOf(model.getTree().getRoot().mbr(), 6);
 
-			float[] bounds = Arrays.copyOf(model.getTree().getRoot().mbr(), 6);
+				bounds[1] = bounds[4] + 100;
+				bounds[4] = bounds[1] + 100;
 
-			bounds[1] = bounds[4] + 100;
-			bounds[4] = bounds[1] + 100;
+				SwingUtilities.invokeLater(() -> {
+					BreakoutMainView.this.shotKeyToModelIndex = shotKeyToModelIndex;
+					BreakoutMainView.this.modelIndexToShotKey = modelIndexToShotKey;
+					BreakoutMainView.this.sourceRows = sourceRows;
+					parsedProject = parser.project;
+					calcProject = p2c.project;
+					model3d = model;
 
-			SwingUtilities.invokeLater(() -> {
-				BreakoutMainView.this.shotKeyToModelIndex = shotKeyToModelIndex;
-				BreakoutMainView.this.modelIndexToShotKey = modelIndexToShotKey;
-				BreakoutMainView.this.sourceRows = sourceRows;
-				parsedProject = parser.project;
-				calcProject = p2c.project;
-				model3d = model;
+					model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
 
-				model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
+					projectModelBinder.update(true);
 
-				projectModelBinder.update(true);
+					float[] center = new float[3];
+					Rectmath.center(model.getTree().getRoot().mbr(), center);
+					orbiter.setCenter(center);
+					navigator.setCenter(center);
 
-				float[] center = new float[3];
-				Rectmath.center(model.getTree().getRoot().mbr(), center);
-				orbiter.setCenter(center);
-				navigator.setCenter(center);
-
-				autoDrawable.invoke(false, drawable -> {
-					scene.add(model);
-					scene.initLater(model);
-					return false;
+					autoDrawable.invoke(false, drawable -> {
+						scene.add(model);
+						scene.initLater(model);
+						return false;
+					});
 				});
 			});
 		}
@@ -1760,8 +1761,8 @@ public class BreakoutMainView {
 
 				rebuildTaskService.submit(task -> {
 					task.setTotal(1);
-					float[] range = task.callSubtask(1, calcSubtask -> 
-						model3d.calcAutofitParamRange(getDefaultShotsForOperations(), calcSubtask));
+					float[] range = task.callSubtask(1,
+							calcSubtask -> model3d.calcAutofitParamRange(getDefaultShotsForOperations(), calcSubtask));
 
 					if (range == null ||
 							!Float.isFinite(range[0]) || !Float.isFinite(range[1]) ||
