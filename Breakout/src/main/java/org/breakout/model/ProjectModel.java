@@ -40,6 +40,9 @@ import org.andork.q.QMapBimapper;
 import org.andork.q.QObject;
 import org.andork.q.QObjectMapBimapper;
 import org.andork.q.QSpec;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
 import org.breakout.CameraView;
 
 import com.andork.plot.LinearAxisConversion;
@@ -111,6 +114,12 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Boolean> hasUnsavedChanges = newAttribute(
 			Boolean.class,
 			"hasUnsavedChanges");
+	public static final Attribute<Unit<Length>> displayLengthUnit = newAttribute(
+			Unit.class,
+			"displayLengthUnit");
+	public static final Attribute<Unit<Angle>> displayAngleUnit = newAttribute(
+			Unit.class,
+			"displayAngleUnit");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -134,6 +143,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(stationLabelColor, Color2HexStringBimapper.instance)
 				.map(centerlineColor, Color2HexStringBimapper.instance)
 				.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance))
+				.map(displayLengthUnit, Unit2StringBimapper.length)
+				.map(displayAngleUnit, Unit2StringBimapper.angle)
 				.exclude(hasUnsavedChanges);
 	}
 
@@ -202,6 +213,12 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.taskListDrawer) == null) {
 			projectModel.set(ProjectModel.taskListDrawer, DrawerModel.instance.newObject());
+		}
+		if (projectModel.get(ProjectModel.displayLengthUnit) == null) {
+			projectModel.set(ProjectModel.displayLengthUnit, Length.meters);
+		}
+		if (projectModel.get(ProjectModel.displayAngleUnit) == null) {
+			projectModel.set(ProjectModel.displayAngleUnit, Angle.degrees);
 		}
 	}
 }

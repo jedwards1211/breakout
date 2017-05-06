@@ -79,7 +79,7 @@ public class MiniSurveyDrawer extends Drawer {
 
 		highlightButton.setSelected(true);
 
-		statsPanel = new StatsPanel(new DefaultBinder<>());
+		statsPanel = new StatsPanel();
 		statsPanel.setBorder(new EmptyBorder(5, 5, 5, 0));
 	}
 

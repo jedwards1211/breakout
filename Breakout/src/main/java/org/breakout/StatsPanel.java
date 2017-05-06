@@ -22,6 +22,7 @@
 package org.breakout;
 
 import java.awt.Font;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
 
@@ -33,12 +34,17 @@ import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.bind.BimapperBinder;
 import org.andork.bind.Binder;
+import org.andork.bind.BinderWrapper;
+import org.andork.bind.DefaultBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ComponentTextBinder;
-import org.andork.func.DoubleStringBimapper;
 import org.andork.func.IntegerStringBimapper;
 import org.andork.q.QObject;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
+import org.andork.unit.UnitizedNumber;
 import org.breakout.StatsModel.MinAvgMax;
+import org.breakout.awt.UnitizedNumber2StringBinder;
 
 public class StatsPanel extends JPanel {
 	private class MinAvgMaxLabels {
@@ -61,14 +67,23 @@ public class StatsPanel extends JPanel {
 
 		private void initBindings() {
 			new ComponentTextBinder(min).bind(
-					new BimapperBinder<>(new DoubleStringBimapper(decimalFormat)).bind(
-							new QObjectAttributeBinder<>(MinAvgMax.min).bind(modelBinder)));
+					new UnitizedNumber2StringBinder<>(
+							Length.type,
+							new QObjectAttributeBinder<>(MinAvgMax.min).bind(modelBinder),
+							lengthUnitBinder,
+							numberFormatBinder));
 			new ComponentTextBinder(avg).bind(
-					new BimapperBinder<>(new DoubleStringBimapper(decimalFormat)).bind(
-							new QObjectAttributeBinder<>(MinAvgMax.avg).bind(modelBinder)));
+					new UnitizedNumber2StringBinder<>(
+							Length.type,
+							new QObjectAttributeBinder<>(MinAvgMax.avg).bind(modelBinder),
+							lengthUnitBinder,
+							numberFormatBinder));
 			new ComponentTextBinder(max).bind(
-					new BimapperBinder<>(new DoubleStringBimapper(decimalFormat)).bind(
-							new QObjectAttributeBinder<>(MinAvgMax.max).bind(modelBinder)));
+					new UnitizedNumber2StringBinder<>(
+							Length.type,
+							new QObjectAttributeBinder<>(MinAvgMax.max).bind(modelBinder),
+							lengthUnitBinder,
+							numberFormatBinder));
 		}
 	}
 
@@ -76,13 +91,15 @@ public class StatsPanel extends JPanel {
 	 *
 	 */
 	private static final long serialVersionUID = -3169874702144088188L;
+	BinderWrapper<Unit<Length>> lengthUnitBinder;
+	BinderWrapper<NumberFormat> numberFormatBinder;
 	Binder<QObject<StatsModel>> modelBinder;
 	Binder<QObject<MinAvgMax>> distBinder;
 	Binder<QObject<MinAvgMax>> northBinder;
 	Binder<QObject<MinAvgMax>> eastBinder;
 	Binder<QObject<MinAvgMax>> depthBinder;
 	QObjectAttributeBinder<Integer> numSelectedBinder;
-	QObjectAttributeBinder<Double> totalDistanceBinder;
+	QObjectAttributeBinder<UnitizedNumber<Length>> totalDistanceBinder;
 
 	NumberFormat decimalFormat;
 	JLabel numSelectedCaptionLabel;
@@ -95,13 +112,27 @@ public class StatsPanel extends JPanel {
 
 	MinAvgMaxLabels depthLabels;
 
-	public StatsPanel(Binder<QObject<StatsModel>> modelBinder) {
-		this.modelBinder = modelBinder;
+	public StatsPanel() {
+		this.modelBinder = new DefaultBinder<>();
+		this.lengthUnitBinder = new BinderWrapper<>();
+		NumberFormat format = DecimalFormat.getInstance();
+		format.setMinimumFractionDigits(1);
+		format.setMaximumFractionDigits(1);
+		format.setGroupingUsed(true);
+		this.numberFormatBinder = new BinderWrapper<>(DefaultBinder.bind(format));
 		init();
 	}
 
 	public Binder<QObject<StatsModel>> getModelBinder() {
 		return modelBinder;
+	}
+
+	public BinderWrapper<Unit<Length>> lengthUnitBinder() {
+		return lengthUnitBinder;
+	}
+
+	public BinderWrapper<NumberFormat> numberFormatBinder() {
+		return numberFormatBinder;
 	}
 
 	private void init() {
@@ -133,7 +164,11 @@ public class StatsPanel extends JPanel {
 		new ComponentTextBinder(numSelectedLabel).bind(new BimapperBinder<>(IntegerStringBimapper.instance).bind(
 				numSelectedBinder));
 		new ComponentTextBinder(totalDistanceLabel).bind(
-				new BimapperBinder<>(new DoubleStringBimapper(decimalFormat)).bind(totalDistanceBinder));
+				new UnitizedNumber2StringBinder<>(
+						Length.type,
+						totalDistanceBinder,
+						lengthUnitBinder,
+						numberFormatBinder));
 
 		GridBagWizard gbw = GridBagWizard.create(this);
 

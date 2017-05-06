@@ -59,6 +59,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -182,6 +184,10 @@ import org.andork.swing.table.RowFilterFactory;
 import org.andork.task.ExecutorTaskService;
 import org.andork.task.Task;
 import org.andork.task.TaskService;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
+import org.andork.unit.UnitizedDouble;
 import org.andork.util.FileRecoveryConfig;
 import org.andork.util.JavaScript;
 import org.andork.util.RecoverableFileOutputStream;
@@ -287,17 +293,41 @@ public class BreakoutMainView {
 						if (shot == null) {
 							hintLabel.setText("");
 						} else {
+							UnitizedDouble<Length> distance = ParsedShotMeasurement.getFirstDistance(shot.measurements);
+							UnitizedDouble<Angle> frontAzimuth = ParsedShotMeasurement.getFirstFrontAzimuth(shot.measurements);
+							UnitizedDouble<Angle> backAzimuth = ParsedShotMeasurement.getFirstBackAzimuth(shot.measurements);
+							UnitizedDouble<Angle> frontInclination = ParsedShotMeasurement.getFirstFrontInclination(shot.measurements);
+							UnitizedDouble<Angle> backInclination = ParsedShotMeasurement.getFirstBackInclination(shot.measurements);
+							
+							QObject<ProjectModel> projectModel = getProjectModel();
+							Unit<Length> lengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
+							Unit<Angle> angleUnit = projectModel.get(ProjectModel.displayAngleUnit);
+							
+							NumberFormat format = DecimalFormat.getInstance();
+							format.setMaximumFractionDigits(1);
+							format.setMinimumFractionDigits(1);
+							format.setGroupingUsed(false);
+							
+							String formattedDistance = distance == null 
+									? "--" : distance.in(lengthUnit).toString(format);
+							String formattedFrontAzimuth = frontAzimuth == null 
+									? "--" : frontAzimuth.in(angleUnit).toString(format);
+							String formattedBackAzimuth = backAzimuth == null 
+									? "--" : backAzimuth.in(angleUnit).toString(format);
+							String formattedFrontInclination = frontInclination == null 
+									? "--" : frontInclination.in(angleUnit).toString(format);
+							String formattedBackInclination = backInclination == null 
+									? "--" : backInclination.in(angleUnit).toString(format);
+
 							hintLabel.setText(String.format(
 									"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
 											+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i></html>",
 									key.fromStation, key.toStation,
-									ParsedShotMeasurement.getFirstDistance(shot.measurements),
-									JavaScript.or(ParsedShotMeasurement.getFirstFrontAzimuth(shot.measurements), "--"),
-									JavaScript.or(ParsedShotMeasurement.getFirstBackAzimuth(shot.measurements), "--"),
-									JavaScript.or(ParsedShotMeasurement.getFirstFrontInclination(shot.measurements),
-											"--"),
-									JavaScript.or(ParsedShotMeasurement.getFirstBackInclination(shot.measurements),
-											"--"),
+									formattedDistance,
+									formattedFrontAzimuth,
+									formattedBackAzimuth,
+									formattedFrontInclination,
+									formattedBackInclination,
 									trip != null ? trip.getName() : ""));
 						}
 
@@ -506,11 +536,11 @@ public class BreakoutMainView {
 			return total / count;
 		}
 
-		public QObject<MinAvgMax> toModel() {
+		public QObject<MinAvgMax> toModel(Unit<Length> unit) {
 			QObject<MinAvgMax> result = MinAvgMax.spec.newObject();
-			result.set(MinAvgMax.min, min);
-			result.set(MinAvgMax.avg, getAvg());
-			result.set(MinAvgMax.max, max);
+			result.set(MinAvgMax.min, new UnitizedDouble<>(min, unit));
+			result.set(MinAvgMax.avg, new UnitizedDouble<>(getAvg(), unit));
+			result.set(MinAvgMax.max, new UnitizedDouble<>(max, unit));
 			return result;
 		}
 	}
@@ -901,11 +931,11 @@ public class BreakoutMainView {
 				QObject<StatsModel> statsModel = StatsModel.spec.newObject();
 
 				statsModel.set(StatsModel.numSelected, distCalc.count);
-				statsModel.set(StatsModel.totalDistance, distCalc.total);
-				statsModel.set(StatsModel.distStats, distCalc.toModel());
-				statsModel.set(StatsModel.northStats, northCalc.toModel());
-				statsModel.set(StatsModel.eastStats, eastCalc.toModel());
-				statsModel.set(StatsModel.depthStats, depthCalc.toModel());
+				statsModel.set(StatsModel.totalDistance, Length.meters(distCalc.total));
+				statsModel.set(StatsModel.distStats, distCalc.toModel(Length.meters));
+				statsModel.set(StatsModel.northStats, northCalc.toModel(Length.meters));
+				statsModel.set(StatsModel.eastStats, eastCalc.toModel(Length.meters));
+				statsModel.set(StatsModel.depthStats, depthCalc.toModel(Length.meters));
 
 				miniSurveyDrawer.statsPanel().getModelBinder().set(statsModel);
 			}
@@ -1669,6 +1699,9 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder));
+
+		miniSurveyDrawer.statsPanel().lengthUnitBinder().bind(
+				QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
 
 		menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu();
