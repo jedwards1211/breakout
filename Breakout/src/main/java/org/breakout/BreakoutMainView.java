@@ -1005,8 +1005,7 @@ public class BreakoutMainView {
 		public void updateView() throws Exception {
 			destroyCalculatedModel();
 
-			final Survey3dModel model = callSubtask(2, subtask -> 
-				Survey3dModel.create(p2c.project, 10, 3, 3, subtask));
+			final Survey3dModel model = callSubtask(2, subtask -> Survey3dModel.create(p2c.project, 10, 3, 3, subtask));
 			if (isCanceled()) {
 				return;
 			}
@@ -1762,7 +1761,7 @@ public class BreakoutMainView {
 				rebuildTaskService.submit(task -> {
 					task.setTotal(1);
 					float[] range = task.callSubtask(1,
-							calcSubtask -> model3d.calcAutofitParamRange(getDefaultShotsForOperations(), calcSubtask));
+							calcSubtask -> model3d.calcAutofitParamRange(getDefaultShotsForOperations(2), calcSubtask));
 
 					if (range == null ||
 							!Float.isFinite(range[0]) || !Float.isFinite(range[1]) ||
@@ -1804,8 +1803,19 @@ public class BreakoutMainView {
 				}
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
 				rebuildTaskService.submit(task -> {
+					task.setTotal(4);
 					task.setStatus("Recalculating color by distance");
-					model3d.calcDistFromShots(getDefaultShotsForOperations(), task);
+					Set<ShotKey> selectedShots = new HashSet<>();
+					getSelectedShotsFromTable().forEach(selectedShots::add);
+					Set<ShotKey> shotsFromView = getShotsInView();
+					Set<ShotKey> startShots = selectedShots.isEmpty() ? shotsFromView : selectedShots;
+					task.runSubtask(3,
+							recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
+					
+					Set<ShotKey> rangeShots = startShots == shotsFromView
+							? calcProject.shots.keySet() : shotsFromView;
+					task.runSubtask(1,
+							rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
 					autoDrawable.display();
 				});
 			}
@@ -1860,7 +1870,7 @@ public class BreakoutMainView {
 					return;
 				}
 				List<float[]> vectors = new ArrayList<>();
-				for (ShotKey key : getDefaultShotsForOperations()) {
+				for (ShotKey key : getDefaultShotsForOperations(3)) {
 					CalcShot shot = calcProject.shots.get(key);
 					if (shot == null) {
 						continue;
@@ -2009,43 +2019,6 @@ public class BreakoutMainView {
 					JOptionPane.ERROR_MESSAGE);
 		}
 		return false;
-	}
-
-	public void autoProfileMode() {
-		Set<ShotKey> shots = getDefaultShotsForOperations();
-		List<float[]> forFitting = new ArrayList<>();
-		for (ShotKey key : shots) {
-			CalcShot shot = calcProject.shots.get(key);
-			if (shot != null) {
-				forFitting.add(new float[] {
-						(float) shot.fromStation.position[0],
-						(float) shot.fromStation.position[2]
-				});
-				forFitting.add(new float[] {
-						(float) shot.toStation.position[0],
-						(float) shot.toStation.position[2]
-				});
-			}
-		}
-
-		float[] fit = Fitting.linearLeastSquares2f(forFitting);
-
-		if (Vecmath.hasNaNsOrInfinites(fit)) {
-			return;
-		}
-
-		double azimuth = Math.atan2(1, -fit[0]);
-
-		float[] right = new float[] { (float) Math.sin(azimuth), 0, (float) -Math.cos(azimuth) };
-		float[] forward = new float[] { (float) Math.sin(azimuth - Math.PI * 0.5), 0,
-				(float) -Math.cos(azimuth - Math.PI * 0.5) };
-
-		if (Vecmath.dot3(renderer.getViewState().inverseViewMatrix(), 8, forward, 0) > 0) {
-			Vecmath.negate3(right);
-			Vecmath.negate3(forward);
-		}
-
-		changeView(forward, right, true, shots);
 	}
 
 	private void changeView(float[] forward, float[] right, boolean ortho, Set<ShotKey> shotsToFit) {
@@ -2211,10 +2184,6 @@ public class BreakoutMainView {
 				shotsToFit);
 	}
 
-	public void eastFacingProfileMode() {
-		changeView(new float[] { 1, 0, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations());
-	}
-
 	protected void fitViewToEverything() {
 		if (model3d == null) {
 			return;
@@ -2366,21 +2335,29 @@ public class BreakoutMainView {
 				.mapToObj(modelIndexToShotKey::get)
 				.filter(o -> o != null);
 	}
+	
+	protected Set<ShotKey> getShotsInView() {
+		Set<ShotKey> result = new HashSet<>();
+		PlanarHull3f hull = new PlanarHull3f();
+		renderer.getViewState().pickXform().exportViewVolume(hull, canvas.getWidth(), canvas.getHeight());
+		model3d.getShotsIn(hull, result);
+		if (result.isEmpty()) {
+			result.addAll(calcProject.shots.keySet());
+		}
+		return result;
+	}
 
-	protected Set<ShotKey> getDefaultShotsForOperations() {
+	protected Set<ShotKey> getDefaultShotsForOperations(int minimumNumShots) {
 		Set<ShotKey> result = new HashSet<>();
 		getSelectedShotsFromTable().forEach(result::add);
-		if (result.size() < 2) {
-			result.clear();
-			PlanarHull3f hull = new PlanarHull3f();
-			renderer.getViewState().pickXform().exportViewVolume(hull, canvas.getWidth(), canvas.getHeight());
-			model3d.getShotsIn(hull, result);
-			if (result.isEmpty()) {
-				result.addAll(calcProject.shots.keySet());
-			}
+		if (result.size() >= minimumNumShots) {
+			return result;
 		}
-
-		return result;
+		result = getShotsInView();
+		if (result.size() >= minimumNumShots) {
+			return result;
+		}
+		return calcProject.shots.keySet();
 	}
 
 	public TaskListDrawer getTaskListDrawer() {
@@ -2418,10 +2395,6 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
-	}
-
-	public void northFacingProfileMode() {
-		changeView(new float[] { 0, 0, -1 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations());
 	}
 
 	/**
@@ -2536,7 +2509,7 @@ public class BreakoutMainView {
 		Vecmath.negate3(renderer.getViewState().inverseViewMatrix(), 8, forward, 0);
 		Vecmath.getColumn3(renderer.getViewState().inverseViewMatrix(), 0, right);
 
-		changeView(forward, right, false, getDefaultShotsForOperations());
+		changeView(forward, right, false, getDefaultShotsForOperations(1));
 	}
 
 	private Shot3dPickResult pick(Survey3dModel model3d, MouseEvent e, Shot3dPickContext spc) {
@@ -2571,7 +2544,7 @@ public class BreakoutMainView {
 	}
 
 	public void planMode() {
-		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations());
+		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(1));
 	}
 
 	protected void removeUnprotectedCameraAnimations() {
@@ -2707,12 +2680,57 @@ public class BreakoutMainView {
 		}
 	}
 
+	public void northFacingProfileMode() {
+		changeView(new float[] { 0, 0, -1 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(1));
+	}
+
 	public void southFacingProfileMode() {
-		changeView(new float[] { 0, 0, 1 }, new float[] { -1, 0, 0 }, true, getDefaultShotsForOperations());
+		changeView(new float[] { 0, 0, 1 }, new float[] { -1, 0, 0 }, true, getDefaultShotsForOperations(1));
 	}
 
 	public void westFacingProfileMode() {
-		changeView(new float[] { -1, 0, 0 }, new float[] { 0, 0, -1 }, true, getDefaultShotsForOperations());
+		changeView(new float[] { -1, 0, 0 }, new float[] { 0, 0, -1 }, true, getDefaultShotsForOperations(1));
+	}
+
+	public void eastFacingProfileMode() {
+		changeView(new float[] { 1, 0, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(1));
+	}
+
+	public void autoProfileMode() {
+		Set<ShotKey> shots = getDefaultShotsForOperations(1);
+		List<float[]> forFitting = new ArrayList<>();
+		for (ShotKey key : shots) {
+			CalcShot shot = calcProject.shots.get(key);
+			if (shot != null) {
+				forFitting.add(new float[] {
+						(float) shot.fromStation.position[0],
+						(float) shot.fromStation.position[2]
+				});
+				forFitting.add(new float[] {
+						(float) shot.toStation.position[0],
+						(float) shot.toStation.position[2]
+				});
+			}
+		}
+
+		float[] fit = Fitting.linearLeastSquares2f(forFitting);
+
+		if (Vecmath.hasNaNsOrInfinites(fit)) {
+			return;
+		}
+
+		double azimuth = Math.atan2(1, -fit[0]);
+
+		float[] right = new float[] { (float) Math.sin(azimuth), 0, (float) -Math.cos(azimuth) };
+		float[] forward = new float[] { (float) Math.sin(azimuth - Math.PI * 0.5), 0,
+				(float) -Math.cos(azimuth - Math.PI * 0.5) };
+
+		if (Vecmath.dot3(renderer.getViewState().inverseViewMatrix(), 8, forward, 0) > 0) {
+			Vecmath.negate3(right);
+			Vecmath.negate3(forward);
+		}
+
+		changeView(forward, right, true, shots);
 	}
 
 	public Path getCurrentProjectFile() {
