@@ -37,6 +37,7 @@ import java.util.Properties;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -45,6 +46,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.ListCellRenderer;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -83,6 +85,9 @@ import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
 import org.andork.swing.selector.DefaultSelector;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
 import org.breakout.model.ColorParam;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
@@ -116,6 +121,11 @@ public class SettingsDrawer extends Drawer {
 	JXColorSelectionButton stationLabelColorButton;
 	JLabel centerlineColorLabel;
 	JXColorSelectionButton centerlineColorButton;
+
+	JLabel displayUnitsLabel;
+	DefaultSelector<Unit<Length>> displayLengthUnitSelector;
+	DefaultSelector<Unit<Angle>> displayAngleUnitSelector;
+
 	JLabel ambientLightLabel;
 	JSlider ambientLightSlider;
 	JLabel distColorationLabel;
@@ -228,6 +238,12 @@ public class SettingsDrawer extends Drawer {
 	Binder<Float> ambientLightBinder = QObjectAttributeBinder.bind(
 			ProjectModel.ambientLight,
 			projectBinder);
+	Binder<Unit<Length>> displayLengthUnitBinder = QObjectAttributeBinder.bind(
+			ProjectModel.displayLengthUnit,
+			projectBinder);
+	Binder<Unit<Angle>> displayAngleUnitBinder = QObjectAttributeBinder.bind(
+			ProjectModel.displayAngleUnit,
+			projectBinder);
 
 	UpdateStatusPanel updateStatusPanel;
 
@@ -310,6 +326,9 @@ public class SettingsDrawer extends Drawer {
 						RoundingFloat2IntegerBimapper.instance), stationLabelFontSizeBinder));
 
 		JSliderValueBinder.bind(numSamplesSlider, desiredNumSamplesBinder);
+
+		ISelectorSelectionBinder.bind(displayLengthUnitSelector, displayLengthUnitBinder);
+		ISelectorSelectionBinder.bind(displayAngleUnitSelector, displayAngleUnitBinder);
 	}
 
 	private void createComponents(I18n i18n) {
@@ -370,6 +389,15 @@ public class SettingsDrawer extends Drawer {
 		backgroundColorLabel = new JLabel();
 		localizer.setText(backgroundColorLabel, "backgroundColorLabel.text");
 		backgroundColorButton = new JXColorSelectionButton();
+		
+		displayUnitsLabel = new JLabel();
+		localizer.setText(displayUnitsLabel, "displayUnitsLabel.text");
+
+		displayLengthUnitSelector = new DefaultSelector<>();
+		displayLengthUnitSelector.setAvailableValues(Length.meters, Length.feet);
+
+		displayAngleUnitSelector = new DefaultSelector<>();
+		displayAngleUnitSelector.setAvailableValues(Angle.degrees, Angle.gradians, Angle.milsNATO);
 
 		ambientLightLabel = new JLabel();
 		localizer.setText(ambientLightLabel, "ambientLightLabel.text");
@@ -545,6 +573,11 @@ public class SettingsDrawer extends Drawer {
 		colorsPanel.put(stationLabelColorButton).below(stationLabelColorLabel).fillx(1.0).insets(0, 0, 0, 0);
 		colorsPanel.put(centerlineColorButton).below(centerlineColorLabel).fillx(1.0).insets(0, 0, 0, 0);
 		w.put(colorsPanel.getTarget()).belowLast().fillx().addToInsets(5, 0, 5, 0);
+
+		GridBagWizard unitsPanel = GridBagWizard.quickPanel();
+		unitsPanel.put(displayLengthUnitSelector.comboBox(), displayAngleUnitSelector.comboBox())
+				.y(0).intoRow().fillx(1.0);
+		w.put(unitsPanel.getTarget()).belowLast().fillx();
 
 		w.put(colorParamLabel).belowLast().west();
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel();

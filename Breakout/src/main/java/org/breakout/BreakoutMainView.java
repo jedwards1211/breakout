@@ -294,29 +294,33 @@ public class BreakoutMainView {
 							hintLabel.setText("");
 						} else {
 							UnitizedDouble<Length> distance = ParsedShotMeasurement.getFirstDistance(shot.measurements);
-							UnitizedDouble<Angle> frontAzimuth = ParsedShotMeasurement.getFirstFrontAzimuth(shot.measurements);
-							UnitizedDouble<Angle> backAzimuth = ParsedShotMeasurement.getFirstBackAzimuth(shot.measurements);
-							UnitizedDouble<Angle> frontInclination = ParsedShotMeasurement.getFirstFrontInclination(shot.measurements);
-							UnitizedDouble<Angle> backInclination = ParsedShotMeasurement.getFirstBackInclination(shot.measurements);
-							
+							UnitizedDouble<Angle> frontAzimuth = ParsedShotMeasurement
+									.getFirstFrontAzimuth(shot.measurements);
+							UnitizedDouble<Angle> backAzimuth = ParsedShotMeasurement
+									.getFirstBackAzimuth(shot.measurements);
+							UnitizedDouble<Angle> frontInclination = ParsedShotMeasurement
+									.getFirstFrontInclination(shot.measurements);
+							UnitizedDouble<Angle> backInclination = ParsedShotMeasurement
+									.getFirstBackInclination(shot.measurements);
+
 							QObject<ProjectModel> projectModel = getProjectModel();
 							Unit<Length> lengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
 							Unit<Angle> angleUnit = projectModel.get(ProjectModel.displayAngleUnit);
-							
+
 							NumberFormat format = DecimalFormat.getInstance();
 							format.setMaximumFractionDigits(1);
 							format.setMinimumFractionDigits(1);
 							format.setGroupingUsed(false);
-							
-							String formattedDistance = distance == null 
+
+							String formattedDistance = distance == null
 									? "--" : distance.in(lengthUnit).toString(format);
-							String formattedFrontAzimuth = frontAzimuth == null 
+							String formattedFrontAzimuth = frontAzimuth == null
 									? "--" : frontAzimuth.in(angleUnit).toString(format);
-							String formattedBackAzimuth = backAzimuth == null 
+							String formattedBackAzimuth = backAzimuth == null
 									? "--" : backAzimuth.in(angleUnit).toString(format);
-							String formattedFrontInclination = frontInclination == null 
+							String formattedFrontInclination = frontInclination == null
 									? "--" : frontInclination.in(angleUnit).toString(format);
-							String formattedBackInclination = backInclination == null 
+							String formattedBackInclination = backInclination == null
 									? "--" : backInclination.in(angleUnit).toString(format);
 
 							hintLabel.setText(String.format(
@@ -929,13 +933,14 @@ public class BreakoutMainView {
 				}
 
 				QObject<StatsModel> statsModel = StatsModel.spec.newObject();
-
-				statsModel.set(StatsModel.numSelected, distCalc.count);
-				statsModel.set(StatsModel.totalDistance, Length.meters(distCalc.total));
-				statsModel.set(StatsModel.distStats, distCalc.toModel(Length.meters));
-				statsModel.set(StatsModel.northStats, northCalc.toModel(Length.meters));
-				statsModel.set(StatsModel.eastStats, eastCalc.toModel(Length.meters));
-				statsModel.set(StatsModel.depthStats, depthCalc.toModel(Length.meters));
+				if (distCalc.count > 0) {
+					statsModel.set(StatsModel.numSelected, distCalc.count);
+					statsModel.set(StatsModel.totalDistance, Length.meters(distCalc.total));
+					statsModel.set(StatsModel.distStats, distCalc.toModel(Length.meters));
+					statsModel.set(StatsModel.northStats, northCalc.toModel(Length.meters));
+					statsModel.set(StatsModel.eastStats, eastCalc.toModel(Length.meters));
+					statsModel.set(StatsModel.depthStats, depthCalc.toModel(Length.meters));
+				}
 
 				miniSurveyDrawer.statsPanel().getModelBinder().set(statsModel);
 			}
@@ -1844,7 +1849,7 @@ public class BreakoutMainView {
 					Set<ShotKey> startShots = selectedShots.isEmpty() ? shotsFromView : selectedShots;
 					task.runSubtask(3,
 							recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
-					
+
 					Set<ShotKey> rangeShots = startShots == shotsFromView
 							? calcProject.shots.keySet() : shotsFromView;
 					task.runSubtask(1,
@@ -2368,7 +2373,7 @@ public class BreakoutMainView {
 				.mapToObj(modelIndexToShotKey::get)
 				.filter(o -> o != null);
 	}
-	
+
 	protected Set<ShotKey> getShotsInView() {
 		Set<ShotKey> result = new HashSet<>();
 		PlanarHull3f hull = new PlanarHull3f();
