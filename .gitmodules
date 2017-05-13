@@ -1,0 +1,9 @@
+[submodule "unitized"]
+	path = unitized
+	url = https://github.com/jedwards1211/unitized
+[submodule "compass-parser"]
+	path = compass-parser
+	url = https://github.com/jedwards1211/compass-parser-java
+[submodule "segment"]
+	path = segment
+	url = http://github.com/jedwards1211/segment-java

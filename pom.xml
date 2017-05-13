@@ -3,10 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.andork</groupId>
   <artifactId>breakout-parent</artifactId>
-  <version>1.0.0-alpha.4</version>
+  <version>1.0.0-alpha.5</version>
   <packaging>pom</packaging>
 
   <modules>
+    <module>unitized</module>
     <module>andork-core</module>
     <module>andork-jogl-gl2es2-swing</module>
     <module>andork-jogl-gl2es2-utils</module>
