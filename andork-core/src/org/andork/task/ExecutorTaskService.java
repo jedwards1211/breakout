@@ -6,10 +6,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import org.andork.event.BasicPropertyChangeSupport.External;
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
@@ -62,23 +60,22 @@ public class ExecutorTaskService implements TaskService {
 	}
 
 	@Override
-	public void submit(Task<?> task) {
+	public <V> Future<V> submit(Task<V> task) {
 		addTask(task);
-		task.onceCanceled(() -> {
-			if (!task.isRunning()) {
-				removeTask(task);
-			}
-		});
-		executor.submit(() -> {
+		final Future<V> future = executor.submit(() -> {
 			try {
 				return task.call(debounceOptions);
-			} catch (TaskCanceledException ex) {
-				// ignore
-				return null;
 			} finally {
 				removeTask(task);
 			}
 		});
+		task.onceCanceled(() -> {
+			if (future != null) future.cancel(false);
+			if (!task.isRunning()) {
+				removeTask(task);
+			}
+		});
+		return future;
 	}
 
 	@Override

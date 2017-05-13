@@ -70,6 +70,42 @@ public class Lodash {
 		}
 	}
 
+	public static class DebounceOptions2<O> implements Cloneable {
+		private Long maxWait;
+		private boolean leading = false;
+		private boolean trailing = true;
+		private ScheduledExecutorService executor;
+	
+		public DebounceOptions2<O> maxWait(long maxWait) {
+			this.maxWait = maxWait;
+			return this;
+		}
+	
+		public DebounceOptions2<O> leading(boolean leading) {
+			this.leading = leading;
+			return this;
+		}
+	
+		public DebounceOptions2<O> trailing(boolean trailing) {
+			this.trailing = trailing;
+			return this;
+		}
+
+		public DebounceOptions2<O> executor(ScheduledExecutorService executor) {
+			this.executor = executor;
+			return this;
+		}
+		
+		@SuppressWarnings("unchecked")
+		public DebounceOptions2<O> clone() {
+			try {
+				return (DebounceOptions2<O>) super.clone();
+			} catch (CloneNotSupportedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+	}
+
 	public static interface Debounced<O> {
 		public void cancel();
 
@@ -317,6 +353,11 @@ public class Lodash {
 
 	public static DebouncedRunnable throttle(Runnable r, long wait, DebounceOptions<Void> options) {
 		return debounce(r, wait, options.clone().maxWait(wait));
+	}
+	
+	public static <A, B, O> DebouncedBiFunction<A, B, O> throttle(BiFunction<A, B, O> fn, long wait,
+			DebounceOptions<O> options) {
+		return debounce(fn, wait, options.clone().maxWait(wait));
 	}
 
 	public static <K, V> void forEach(Map<? extends K, ? extends V> c,

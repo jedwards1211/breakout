@@ -22,6 +22,7 @@
 package org.andork.task;
 
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
@@ -36,10 +37,10 @@ public interface TaskService {
 
 	public boolean hasTasks();
 
-	public void submit(Task<?> task);
+	public <V> Future<V> submit(Task<V> task);
 
-	public default void submit(TaskRunnable task) {
-		submit(new Task<Void>() {
+	public default Future<Void> submit(TaskRunnable task) {
+		return submit(new Task<Void>() {
 			@Override
 			protected Void work() throws Exception {
 				task.work(this);

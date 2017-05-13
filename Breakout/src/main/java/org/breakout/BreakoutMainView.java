@@ -184,12 +184,12 @@ import org.andork.swing.table.RowFilterFactory;
 import org.andork.task.ExecutorTaskService;
 import org.andork.task.Task;
 import org.andork.task.TaskService;
+import org.andork.task.Throttler;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 import org.andork.util.FileRecoveryConfig;
-import org.andork.util.JavaScript;
 import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.compass.CompassConverter;
@@ -574,13 +574,7 @@ public class BreakoutMainView {
 		@Override
 		public void mouseMoved(MouseEvent e) {
 			if (model3d != null) {
-				HoverUpdater updater = new HoverUpdater(model3d, e);
-				for (Task<?> task : rebuildTaskService.getTasks()) {
-					if (task instanceof HoverUpdater) {
-						task.cancel();
-					}
-				}
-				rebuildTaskService.submit(updater);
+				updateHover.submit(() -> rebuildTaskService.submit(new HoverUpdater(model3d, e)).get());
 			}
 		}
 
@@ -1102,10 +1096,11 @@ public class BreakoutMainView {
 			(float) Math.PI / 2, 1f,
 			1e7f);
 
-	final ScheduledExecutorService debouncer = Executors.newSingleThreadScheduledExecutor();
+	final ScheduledExecutorService rebuildScheduler = Executors.newSingleThreadScheduledExecutor();
 	final TaskService rebuildTaskService = ExecutorTaskService.newSingleThreadedTaskService();
 	final TaskService sortTaskService = ExecutorTaskService.newSingleThreadedTaskService();
-	final TaskService ioTaskService = ExecutorTaskService.newSingleThreadedTaskService();
+	final ScheduledExecutorService ioService = Executors.newSingleThreadScheduledExecutor();
+	final TaskService ioTaskService = new ExecutorTaskService(ioService);
 
 	public void shutdown() {
 		if (hasUnsavedChanges()) {
@@ -1123,7 +1118,6 @@ public class BreakoutMainView {
 				return;
 			}
 		}
-		debouncer.shutdown();
 		rebuildTaskService.shutdownNow();
 		sortTaskService.shutdownNow();
 		ioTaskService.shutdown();
@@ -1141,7 +1135,6 @@ public class BreakoutMainView {
 			@Override
 			public void run() {
 				try {
-					debouncer.awaitTermination(30, TimeUnit.SECONDS);
 					ioTaskService.awaitTermination(30, TimeUnit.SECONDS);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
@@ -1283,15 +1276,17 @@ public class BreakoutMainView {
 
 	final DebouncedRunnable saveRootModel = Lodash.debounce(
 			() -> saveModel(getRootModel(), rootFile, RootModel.defaultMapper),
-			1000, new DebounceOptions<Void>().executor(debouncer));
+			1000, new DebounceOptions<Void>().executor(ioService));
 
 	final DebouncedRunnable saveSwap = Lodash.debounce(
 			() -> saveModel(getProjectModel(), getCurrentSwapFile(), ProjectModel.defaultMapper),
-			1000, new DebounceOptions<Void>().executor(debouncer));
+			1000, new DebounceOptions<Void>().executor(ioService));
 
 	final DebouncedRunnable rebuild3dModel = Lodash.debounce(() -> {
 		rebuildTaskService.submit(new RebuildTask());
-	}, 1000, new DebounceOptions<Void>().executor(debouncer));
+	}, 1000, new DebounceOptions<Void>().executor(rebuildScheduler));
+	
+	final Throttler<Void> updateHover = new Throttler<>(0);
 
 	public BreakoutMainView() {
 		final GLProfile glp = GLProfile.get(GLProfile.GL3);
