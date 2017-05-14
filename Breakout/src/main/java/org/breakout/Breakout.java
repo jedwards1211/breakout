@@ -24,8 +24,9 @@ package org.breakout;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Image;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
@@ -35,7 +36,67 @@ import org.andork.swing.OnEDT;
 import org.andork.swing.SplashFrame;
 
 public class Breakout {
-	public static void main(String[] args) {
+	private static SplashFrame splash;
+	private static Image splashImage;
+	private static BreakoutMainFrame frame;
+
+	public static void main(String[] args) throws InterruptedException, ExecutionException {
+		checkJavaVersion();
+
+		System.setProperty("apple.laf.useScreenMenuBar", "true");
+		System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Breakout");
+
+		try {
+			splashImage = ImageIO.read(Breakout.class.getResource("splash.png"));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		OnEDT.onEDT(() -> {
+			try {
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			splash = new SplashFrame();
+			splash.setTitle("Breakout");
+
+			splash.getImagePanel().setImage(splashImage);
+			splash.getStatusLabel().setForeground(Color.WHITE);
+			splash.getStatusLabel().setText("Initializing 3D View...");
+			splash.getProgressBar().setIndeterminate(true);
+
+			splash.pack();
+			splash.setLocationRelativeTo(null);
+			splash.setVisible(true);
+		});
+
+		ExecutorService loader = Executors.newSingleThreadExecutor(r -> {
+			Thread thread = new Thread(r);
+			thread.setName("BreakoutMainView loader");
+			thread.setDaemon(true);
+			return thread;
+		});
+		BreakoutMainView view = loader.submit(() -> new BreakoutMainView()).get();
+		loader.shutdown();
+
+		OnEDT.onEDT(() -> {
+			if (!splash.isVisible()) {
+				// user closed splash; exit
+				return;
+			}
+			frame = new BreakoutMainFrame(view);
+			frame.setTitle("Breakout");
+			frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+			splash.setVisible(false);
+		});
+		// unfortunately, making the frame visible on the EDT causes buggy behavior with the drawers due to some
+		// obscure bug in JOGL (or jogl-awt)
+		frame.setVisible(true);
+	}
+
+	private static void checkJavaVersion() {
 		String[] versionPieces = System.getProperty("java.version").split("\\.");
 		int v0 = Integer.valueOf(versionPieces[0]);
 		int v1 = Integer.valueOf(versionPieces[1]);
@@ -47,71 +108,6 @@ public class Breakout {
 							"<html>FisherRidgeForever requires Java version 1.6+ to run.<br>Please download and install Java 1.6 or a later version.</html>",
 							"Fisher Ridge Forever", JOptionPane.ERROR_MESSAGE);
 			System.exit(1);
-		}
-
-		BlockingQueue<Runnable> runnables = new LinkedBlockingQueue<>();
-
-		System.setProperty("apple.laf.useScreenMenuBar", "true");
-		System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Breakout");
-
-		OnEDT.onEDT(() -> {
-			Image image = null;
-
-			try {
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			final SplashFrame splash = new SplashFrame();
-			splash.setTitle("Breakout");
-
-			final Thread loaderThread = new Thread(() -> {
-				final BreakoutMainView view = new BreakoutMainView();
-				OnEDT.onEDT(() -> {
-					if (splash.isVisible()) // i.e. user didn't change their
-											// mind and close the splash
-					{
-						BreakoutMainFrame frame = new BreakoutMainFrame(view);
-						frame.setTitle("Breakout");
-						frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-						runnables.put(() -> {
-							// unfortunately the positioning of GLCanvas and
-							// NewtCanvasAWT bug out
-							// if the frame is set visible on the EDT...
-							frame.setVisible(true);
-							splash.setVisible(false);
-						});
-					}
-				});
-			}, "BreakoutMainView loader");
-
-			loaderThread.setDaemon(true);
-			loaderThread.start();
-
-			try {
-				image = ImageIO.read(Breakout.class.getResource("splash.png"));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			splash.getImagePanel().setImage(image);
-			splash.getStatusLabel().setForeground(Color.WHITE);
-			splash.getStatusLabel().setText("Initializing 3D View...");
-			splash.getProgressBar().setIndeterminate(true);
-
-			splash.pack();
-			splash.setLocationRelativeTo(null);
-			splash.setVisible(true);
-		});
-
-		while (true) {
-			try {
-				runnables.take().run();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				break;
-			}
 		}
 	}
 }

@@ -106,6 +106,12 @@ public class MultipleGradientFillBorder {
 			return new FillBorder() {
 				@Override
 				public Paint getPaint(Component c, Graphics g, int x, int y, int width, int height) {
+					if (width <= 0) {
+						width = 1;
+					}
+					if (height <= 0) {
+						height = 1;
+					}
 					return new LinearGradientPaint(from.getPoint1(c, g, x, y, width, height),
 							getPoint2(c, g, x, y, width, height), fractions, colors);
 				}
@@ -116,6 +122,12 @@ public class MultipleGradientFillBorder {
 			return new FillBorder() {
 				@Override
 				public Paint getPaint(Component c, Graphics g, int x, int y, int width, int height) {
+					if (width <= 0) {
+						width = 1;
+					}
+					if (height <= 0) {
+						height = 1;
+					}
 					return new LinearGradientPaint(from.getPoint1(c, g, x, y, width, height),
 							getPoint2(c, g, x, y, width, height), fractions, colors, cycleMethod);
 				}
