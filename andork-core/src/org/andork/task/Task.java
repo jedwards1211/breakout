@@ -7,9 +7,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.andork.func.Lodash;
-import org.andork.func.Lodash.DebounceOptions;
-import org.andork.func.Lodash.DebouncedRunnable;
 import org.andork.util.StringUtils;
 
 /**
@@ -23,10 +20,7 @@ import org.andork.util.StringUtils;
  *            the task result type.
  */
 public abstract class Task<R> implements Callable<R> {
-	public static final ThreadLocal<DebounceOptions<Void>> debounceOptions = new ThreadLocal<>();
-
 	private volatile Thread thread;
-	private volatile DebouncedRunnable fireChanged = DebouncedRunnable.noop();
 	private volatile Task<?> parent;
 	private volatile Task<?> subtask;
 
@@ -42,19 +36,9 @@ public abstract class Task<R> implements Callable<R> {
 	private volatile boolean canceled = false;
 	private volatile long startTime;
 
-	/**
-	 * Runs this task. It must not be running before this call is made.
-	 *
-	 * @return the result of calling {@link #work()}.
-	 * @throws IllegalStateException
-	 *             if this task is already running.
-	 * @throws Exception
-	 *             if {@link #work()} threw it
-	 */
-	@Override
-	public final R call() throws Exception {
-		return call(null);
-	}
+	private volatile long lastFireChangedTime = 0;
+
+	private final ChangeListener childChangeListener = e -> fireChanged();
 
 	/**
 	 * Runs this task. It must not be running before this call is made.
@@ -65,8 +49,8 @@ public abstract class Task<R> implements Callable<R> {
 	 * @throws Exception
 	 *             if {@link #work()} threw it
 	 */
-	public final R call(DebounceOptions<Void> debounceOptions) throws Exception {
-		start(debounceOptions);
+	public final R call() throws Exception {
+		start();
 		try {
 			return work();
 		} finally {
@@ -110,7 +94,7 @@ public abstract class Task<R> implements Callable<R> {
 			clearSubtask();
 		}
 	}
-		
+
 	public final void runSubtask(long proportion, TaskRunnable runnable) throws Exception {
 		callSubtask(proportion, new Task<Void>() {
 			@Override
@@ -120,17 +104,16 @@ public abstract class Task<R> implements Callable<R> {
 			}
 		});
 	}
-	
+
 	public final void runSubtasks(TaskRunnable... runnables) throws Exception {
 		setIndeterminate(false);
 		setTotal(runnables.length);
-		
+
 		for (TaskRunnable runnable : runnables) {
 			runSubtask(1, runnable);
 		}
 	}
-	
-	
+
 	public final <V> V callSubtask(long proportion, TaskCallable<V> callable) throws Exception {
 		return callSubtask(proportion, new Task<V>() {
 			@Override
@@ -139,7 +122,7 @@ public abstract class Task<R> implements Callable<R> {
 			}
 		});
 	}
-	
+
 	/**
 	 * Cancels this task and its {@link #getParent() parent} task (if any).
 	 * After this {@link #isCanceled()} will return true until {@link #reset()}
@@ -148,21 +131,21 @@ public abstract class Task<R> implements Callable<R> {
 	 * if it returns {@code true}.
 	 */
 	public void cancel() {
-		Task<?> parent = this.parent;
-		if (parent != null) {
-			parent.cancel();
-		} else {
-			canceled = true;
-			fireChanged.run();
-		}
+		Task<?> parent;
 		Runnable onceCanceled;
 		synchronized (this) {
+			canceled = true;
+			parent = this.parent;
 			onceCanceled = this.onceCanceled;
 			this.onceCanceled = null;
+		}
+		if (parent != null) {
+			parent.cancel();
 		}
 		if (onceCanceled != null) {
 			onceCanceled.run();
 		}
+		forceFireChanged();
 	}
 
 	public void onceCanceled(Runnable r) {
@@ -269,7 +252,7 @@ public abstract class Task<R> implements Callable<R> {
 			throw new TaskCanceledException();
 		}
 		this.completed = completed;
-		fireChanged.run();
+		fireChanged();
 	}
 
 	public void increment() {
@@ -278,7 +261,7 @@ public abstract class Task<R> implements Callable<R> {
 
 	public void increment(long amount) {
 		this.completed += amount;
-		fireChanged.run();
+		fireChanged();
 	}
 
 	public long getCompleted() {
@@ -295,17 +278,17 @@ public abstract class Task<R> implements Callable<R> {
 
 	public void setTotal(long total) {
 		this.total = total;
-		fireChanged.run();
+		fireChanged();
 	}
 
 	public void setStatus(String newStatus) {
 		status = newStatus;
-		fireChanged.run();
+		fireChanged();
 	}
 
 	public void setIndeterminate(boolean indeterminate) {
 		this.indeterminate = indeterminate;
-		fireChanged.run();
+		fireChanged();
 	}
 
 	public long startTime() {
@@ -333,11 +316,14 @@ public abstract class Task<R> implements Callable<R> {
 				this.subtask = subtask;
 				subtask.parent = this;
 			}
+
+			subtask.addChangeListener(childChangeListener);
 		}
-		fireChanged.run();
+		forceFireChanged();
 	}
 
 	private void clearSubtask() {
+		subtask.removeChangeListener(childChangeListener);
 		synchronized (this) {
 			synchronized (subtask) {
 				subtask.parent = null;
@@ -345,21 +331,27 @@ public abstract class Task<R> implements Callable<R> {
 			}
 			completed += subtaskProportion;
 		}
-		this.fireChanged.run();
+		fireChanged();
 	}
 
+	private final ChangeEvent changeEvent = new ChangeEvent(this);
+
 	private void fireChanged() {
-		Task<?> task = Task.this;
-		while (task != null) {
-			ChangeEvent event = new ChangeEvent(task);
-			for (ChangeListener listener : task.listeners) {
-				listener.stateChanged(event);
+		long time = System.currentTimeMillis();
+		if (time - lastFireChangedTime >= 30) {
+			lastFireChangedTime = time;
+			for (ChangeListener listener : listeners) {
+				listener.stateChanged(changeEvent);
 			}
-			task = task.subtask;
 		}
 	}
 
-	private void start(DebounceOptions<Void> debounceOptions) {
+	private void forceFireChanged() {
+		lastFireChangedTime = 0; // force fireChanged() to go through
+		fireChanged();
+	}
+
+	private void start() {
 		synchronized (this) {
 			if (canceled) {
 				throw new IllegalStateException("already canceled");
@@ -369,20 +361,8 @@ public abstract class Task<R> implements Callable<R> {
 			}
 			startTime = System.currentTimeMillis();
 			thread = Thread.currentThread();
-			if (parent != null) {
-				fireChanged = parent.fireChanged;
-			} else {
-				if (debounceOptions == null) {
-					debounceOptions = Task.debounceOptions.get();
-				}
-				if (debounceOptions != null) {
-					fireChanged = Lodash.throttle(this::fireChanged, 30, debounceOptions);
-				} else {
-					fireChanged = DebouncedRunnable.noop();
-				}
-			}
 		}
-		fireChanged.run();
+		forceFireChanged();
 	}
 
 	private void stop() {
@@ -393,8 +373,7 @@ public abstract class Task<R> implements Callable<R> {
 			isRoot = parent == null;
 		}
 		if (isRoot) {
-			fireChanged.run();
-			fireChanged.flush();
+			forceFireChanged();
 		}
 	}
 }

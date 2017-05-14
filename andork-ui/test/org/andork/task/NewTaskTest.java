@@ -4,10 +4,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.andork.func.Lodash;
-import org.andork.func.Lodash.DebounceOptions;
-import org.andork.swing.async.SetTimeout;
-
 public class NewTaskTest {
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
 		ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -32,7 +28,7 @@ public class NewTaskTest {
 
 							for (int j = 0; j < 100; j++) {
 								k++;
-								Thread.sleep(1);
+							Thread.sleep(1);
 								increment();
 							}
 
@@ -45,10 +41,6 @@ public class NewTaskTest {
 			}
 		};
 
-		executor.submit(() -> {
-			Task.debounceOptions.set(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
-		}).get();
-		
 		task.addChangeListener(e -> {
 			System.out.println(task.getCombinedStatus() + task.getCombinedProgress());
 		});

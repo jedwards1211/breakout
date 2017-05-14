@@ -25,7 +25,6 @@ import java.awt.Dimension;
 
 import javax.swing.JScrollPane;
 
-import org.andork.func.Lodash.DebounceOptions;
 import org.andork.swing.QuickTestFrame;
 import org.andork.task.ExecutorTaskService;
 import org.andork.task.Task;
@@ -52,7 +51,6 @@ public class TaskPaneTest {
 
 	public static void main(String[] args) throws Exception {
 		TaskService service = ExecutorTaskService.newSingleThreadedTaskService();
-		service.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
 		TaskList taskList = new TaskList();
 		taskList.addService(service);
 		JScrollPane taskListScrollPane = new JScrollPane(taskList);

@@ -89,7 +89,6 @@ import org.andork.bind.ui.ISelectorSelectionBinder;
 import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.bind.ui.JSpinnerValueBinder;
 import org.andork.format.Format;
-import org.andork.func.Lodash.DebounceOptions;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
 import org.andork.jogl.JoglScene;
@@ -100,7 +99,6 @@ import org.andork.q.QObject;
 import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
-import org.andork.swing.async.SetTimeout;
 import org.andork.swing.border.InnerGradientBorder;
 import org.andork.swing.event.EasyDocumentListener;
 import org.andork.swing.selector.DefaultSelector;
@@ -1151,7 +1149,6 @@ public class JoglExportImageDialog extends JDialog {
 		};
 
 		taskService = ExecutorTaskService.newSingleThreadedTaskService();
-		taskService.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
 	}
 
 	private void scaleUnits(BigDecimal factor) {

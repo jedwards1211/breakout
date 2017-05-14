@@ -19,14 +19,8 @@ public class ExecutorTaskService implements TaskService {
 	final List<Task<?>> unmodifiableTasks = Collections.unmodifiableList(tasks);
 	final HierarchicalBasicPropertyChangeSupport changeSupport = new HierarchicalBasicPropertyChangeSupport();
 
-	DebounceOptions<Void> debounceOptions;
-
 	public static ExecutorTaskService newSingleThreadedTaskService() {
 		return new ExecutorTaskService(Executors.newSingleThreadExecutor());
-	}
-
-	public void setDebounceOptions(DebounceOptions<Void> options) {
-		debounceOptions = options;
 	}
 
 	@Override
@@ -64,7 +58,7 @@ public class ExecutorTaskService implements TaskService {
 		addTask(task);
 		final Future<V> future = executor.submit(() -> {
 			try {
-				return task.call(debounceOptions);
+				return task.call();
 			} finally {
 				removeTask(task);
 			}

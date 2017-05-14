@@ -177,7 +177,6 @@ import org.andork.swing.OnEDT;
 import org.andork.swing.SmartComboTableRowFilter;
 import org.andork.swing.async.DrawerPinningTask;
 import org.andork.swing.async.SelfReportingTask;
-import org.andork.swing.async.SetTimeout;
 import org.andork.swing.async.TaskList;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingJTables;
@@ -1423,10 +1422,6 @@ public class BreakoutMainView {
 				target.validate();
 			}
 		});
-
-		rebuildTaskService.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
-		sortTaskService.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
-		ioTaskService.setDebounceOptions(new DebounceOptions<Void>().setTimeout(SetTimeout::setTimeout));
 
 		taskListDrawer = new TaskListDrawer();
 		taskListDrawer.addTaskService(rebuildTaskService);

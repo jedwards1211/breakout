@@ -29,8 +29,6 @@ import org.andork.event.HierarchicalBasicPropertyChangeSupport;
 import org.andork.func.Lodash.DebounceOptions;
 
 public interface TaskService {
-	public void setDebounceOptions(DebounceOptions<Void> options);
-
 	public HierarchicalBasicPropertyChangeSupport.External changeSupport();
 
 	public List<Task<?>> getTasks();
