@@ -1058,6 +1058,7 @@ public class BreakoutMainView {
 					model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
 
 					projectModelBinder.update(true);
+					rootModelBinder.update(true);
 
 					float[] center = new float[3];
 					Rectmath.center(model.getTree().getRoot().mbr(), center);
