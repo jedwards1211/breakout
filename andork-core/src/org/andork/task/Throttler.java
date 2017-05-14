@@ -23,9 +23,14 @@ public class Throttler<V> {
 		this(wait, Executors.newSingleThreadScheduledExecutor());
 	}
 
-	public Throttler(long wait, ScheduledExecutorService executor) {
-		this.scheduler = (callable, delay) -> executor.schedule(callable, delay, TimeUnit.MILLISECONDS);
+	public Throttler(long wait, Scheduler<V> scheduler) {
 		this.wait = wait;
+		this.scheduler = scheduler;
+	}
+
+	public Throttler(long wait, ScheduledExecutorService executor) {
+		this.wait = wait;
+		this.scheduler = (callable, delay) -> executor.schedule(callable, delay, TimeUnit.MILLISECONDS);
 	}
 
 	public Future<V> submit(Callable<V> callable) {
