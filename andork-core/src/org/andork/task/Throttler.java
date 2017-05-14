@@ -7,7 +7,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class Throttler<V> {
-	private final ScheduledExecutorService executor;
+	@FunctionalInterface
+	public static interface Scheduler<V> {
+		public Future<V> schedule(Callable<V> callable, long delay);
+	}
+
+	private final Scheduler<V> scheduler;
 	private final long wait;
 
 	private volatile long lastCallTime = 0;
@@ -19,21 +24,21 @@ public class Throttler<V> {
 	}
 
 	public Throttler(long wait, ScheduledExecutorService executor) {
-		this.executor = executor;
+		this.scheduler = (callable, delay) -> executor.schedule(callable, delay, TimeUnit.MILLISECONDS);
 		this.wait = wait;
 	}
-	
+
 	public Future<V> submit(Callable<V> callable) {
 		nextCallable = callable;
 		if (nextFuture != null) {
 			return nextFuture;
 		} else {
 			long delay = Math.max(0, lastCallTime + wait - System.currentTimeMillis());
-			return nextFuture = executor.schedule(() -> {
+			return nextFuture = scheduler.schedule(() -> {
 				nextFuture = null;
 				lastCallTime = System.currentTimeMillis();
 				return nextCallable.call();
-			}, delay, TimeUnit.MILLISECONDS);
+			}, delay);
 		}
 	}
 }
