@@ -139,6 +139,7 @@ import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
 import org.andork.func.Lodash.DebounceOptions;
 import org.andork.func.Lodash.DebouncedRunnable;
+import org.andork.generic.Ref;
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
@@ -586,6 +587,9 @@ public class BreakoutMainView {
 					pickCenterOfOrbit(e);
 				}
 			} else {
+				if (e.getButton() == MouseEvent.BUTTON3) {
+					pickMoveFactor(e);
+				}
 				return;
 			}
 
@@ -659,6 +663,33 @@ public class BreakoutMainView {
 			Vecmath.add3(center, origin, center);
 
 			orbiter.setCenter(center);
+		}
+
+		void pickMoveFactor(MouseEvent e) {
+			if (model3d == null) {
+				return;
+			}
+
+			float[] origin = new float[3];
+			float[] direction = new float[3];
+			renderer.getViewState()
+					.pickXform()
+					.xform(e.getX(), e.getComponent().getHeight() - e.getY(), e.getComponent().getWidth(),
+							e.getComponent().getHeight(), origin, direction);
+
+			Ref<Float> distanceSquared = new Ref<>();
+			RNode<float[], Shot3d> closestNode = RTraversal.closestLeafNode(model3d.getTree().getRoot(),
+					origin,
+					(node, p) -> Rectmath.distanceToClosestCornerSquared3(node.mbr(), p),
+					(node, p) -> Rectmath.distanceToFarthestCornerSquared3(node.mbr(), p),
+					null, distanceSquared);
+			if (closestNode == null) {
+				return;
+			}
+
+			float distance = (float) Math.sqrt(distanceSquared.value);
+			float sensitivity = getRootModel().get(RootModel.mouseSensitivity);
+			navigator.setMoveFactor(sensitivity * distance / 10000);
 		}
 	}
 

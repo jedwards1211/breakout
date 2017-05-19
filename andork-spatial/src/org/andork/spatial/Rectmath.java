@@ -218,6 +218,52 @@ public class Rectmath {
 		return (float) Math.sqrt(minDistanceSquared3(r, p));
 	}
 
+	/**
+	 * @param r a 2-dimensional bounding rectangle
+	 * @param p a 2-dimensional point
+	 * @return the distance squared between {@code p} and the closest corner of {@code r}
+	 */
+	public static float distanceToClosestCornerSquared2(float[] r, float[] p) {
+		float dx = Math.min(Math.abs(p[0] - r[0]), Math.abs(p[0] - r[2]));
+		float dy = Math.min(Math.abs(p[1] - r[1]), Math.abs(p[1] - r[3]));
+		return dx * dx + dy * dy;
+	}	
+
+	/**
+	 * @param r a 3-dimensional bounding rectangle
+	 * @param p a 3-dimensional point
+	 * @return the distance squared between {@code p} and the closest corner of {@code r}
+	 */
+	public static float distanceToClosestCornerSquared3(float[] r, float[] p) {
+		float dx = Math.min(Math.abs(p[0] - r[0]), Math.abs(p[0] - r[3]));
+		float dy = Math.min(Math.abs(p[1] - r[1]), Math.abs(p[1] - r[4]));
+		float dz = Math.min(Math.abs(p[2] - r[2]), Math.abs(p[2] - r[5]));
+		return dx * dx + dy * dy + dz * dz;
+	}
+	
+	/**
+	 * @param r a 2-dimensional bounding rectangle
+	 * @param p a 2-dimensional point
+	 * @return the distance squared between {@code p} and the farthest corner of {@code r}
+	 */
+	public static float distanceToFarthestCornerSquared2(float[] r, float[] p) {
+		float dx = Math.max(Math.abs(p[0] - r[0]), Math.abs(p[0] - r[2]));
+		float dy = Math.max(Math.abs(p[1] - r[1]), Math.abs(p[1] - r[3]));
+		return dx * dx + dy * dy;
+	}
+
+	/**
+	 * @param r a 3-dimensional bounding rectangle
+	 * @param p a 3-dimensional point
+	 * @return the distance squared between {@code p} and the farthest corner of {@code r}
+	 */
+	public static float distanceToFarthestCornerSquared3(float[] r, float[] p) {
+		float dx = Math.max(Math.abs(p[0] - r[0]), Math.abs(p[0] - r[3]));
+		float dy = Math.max(Math.abs(p[1] - r[1]), Math.abs(p[1] - r[4]));
+		float dz = Math.max(Math.abs(p[2] - r[2]), Math.abs(p[2] - r[5]));
+		return dx * dx + dy * dy + dz * dz;
+	}
+
 	public static double nmax(double a, double b) {
 		return a > b || Double.isNaN(b) ? a : b;
 	}

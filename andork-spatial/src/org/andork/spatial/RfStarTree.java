@@ -115,6 +115,13 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 		public T object() {
 			return object;
 		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("Leaf [object=").append(object).append(", mbr=").append(Arrays.toString(mbr)).append("]");
+			return builder.toString();
+		}
 	}
 
 	static class LowerUpperComparator implements Comparator<Node<?>> {
