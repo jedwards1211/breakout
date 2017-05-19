@@ -15,6 +15,7 @@ public class Throttler<V> {
 	private final Scheduler<V> scheduler;
 	private final long wait;
 
+	private final Object lock = new Object();
 	private volatile long lastCallTime = 0;
 	private volatile Callable<V> nextCallable;
 	private volatile Future<V> nextFuture;
@@ -34,16 +35,22 @@ public class Throttler<V> {
 	}
 
 	public Future<V> submit(Callable<V> callable) {
-		nextCallable = callable;
-		if (nextFuture != null) {
-			return nextFuture;
-		} else {
-			long delay = Math.max(0, lastCallTime + wait - System.currentTimeMillis());
-			return nextFuture = scheduler.schedule(() -> {
-				nextFuture = null;
-				lastCallTime = System.currentTimeMillis();
-				return nextCallable.call();
-			}, delay);
+		synchronized (lock) {
+			nextCallable = callable;
+			if (nextFuture != null) {
+				return nextFuture;
+			} else {
+				long delay = Math.max(0, lastCallTime + wait - System.currentTimeMillis());
+				return nextFuture = scheduler.schedule(() -> {
+					Callable<V> nextCallable;
+					synchronized (lock) {
+						nextCallable = Throttler.this.nextCallable;
+						nextFuture = null;
+						lastCallTime = System.currentTimeMillis();
+					}
+					return nextCallable.call();
+				}, delay);
+			}
 		}
 	}
 }
