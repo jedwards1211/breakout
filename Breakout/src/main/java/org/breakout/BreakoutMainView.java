@@ -687,7 +687,7 @@ public class BreakoutMainView {
 				return;
 			}
 
-			float distance = (float) Math.sqrt(distanceSquared.value);
+			float distance = (float) Math.max(10.0, Math.sqrt(distanceSquared.value));
 			float sensitivity = getRootModel().get(RootModel.mouseSensitivity);
 			navigator.setMoveFactor(sensitivity * distance / 10000);
 		}
@@ -2012,15 +2012,8 @@ public class BreakoutMainView {
 
 		if (rootModel == null) {
 			rootModel = RootModel.instance.newObject();
-			rootModel.set(RootModel.desiredNumSamples, 2);
 		}
-		if (rootModel.get(RootModel.showStationLabels) == null) {
-			rootModel.set(RootModel.showStationLabels, true);
-		}
-		if (rootModel.get(RootModel.showSpatialIndex) == null) {
-			rootModel.set(RootModel.showSpatialIndex, false);
-		}
-
+		RootModel.setDefaults(rootModel);
 		setRootModel(rootModel);
 
 		if (!recoverBackupIfNecessary(rootModel)) {

@@ -121,4 +121,22 @@ public final class RootModel extends QSpec<RootModel> {
 		}
 		return directory;
 	}
+	
+	public static void setDefaults(QObject<RootModel> rootModel) {
+		if (rootModel.get(RootModel.desiredNumSamples) == null) {
+			rootModel.set(RootModel.desiredNumSamples, 2);
+		}
+		if (rootModel.get(RootModel.mouseSensitivity) == null) {
+			rootModel.set(RootModel.mouseSensitivity, 15);
+		}
+		if (rootModel.get(RootModel.mouseWheelSensitivity) == null) {
+			rootModel.set(RootModel.mouseWheelSensitivity, 5);
+		}
+		if (rootModel.get(RootModel.showStationLabels) == null) {
+			rootModel.set(RootModel.showStationLabels, true);
+		}
+		if (rootModel.get(RootModel.showSpatialIndex) == null) {
+			rootModel.set(RootModel.showSpatialIndex, false);
+		}
+	}
 }
