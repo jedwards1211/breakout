@@ -3,7 +3,7 @@ package org.andork.spatial;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.andork.generic.Ref;
+import org.andork.ref.Ref;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -27,7 +27,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import org.andork.generic.Ref;
+import org.andork.ref.Ref;
 
 public class RTraversal {
 	/**

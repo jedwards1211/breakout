@@ -25,8 +25,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import org.andork.generic.Factory;
+import java.util.function.Supplier;
 
 public class MultiMaps {
 	public static <K, V, C extends Collection<? super V>> C get(Map<K, C> m, K key, C emptyCollection) {
@@ -35,10 +34,10 @@ public class MultiMaps {
 	}
 
 	public static <K, V, C extends Collection<? super V>> int put(Map<K, C> m, K key, V value,
-			Factory<? extends C> collectionFactory) {
+			Supplier<? extends C> collectionFactory) {
 		C c = m.get(key);
 		if (c == null) {
-			c = collectionFactory.newInstance();
+			c = collectionFactory.get();
 			m.put(key, c);
 		}
 		c.add(value);

@@ -139,7 +139,6 @@ import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
 import org.andork.func.Lodash.DebounceOptions;
 import org.andork.func.Lodash.DebouncedRunnable;
-import org.andork.generic.Ref;
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
@@ -169,6 +168,7 @@ import org.andork.q.QLinkedHashMap;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
 import org.andork.q.QSpec;
+import org.andork.ref.Ref;
 import org.andork.spatial.RNode;
 import org.andork.spatial.RTraversal;
 import org.andork.spatial.Rectmath;
@@ -666,7 +666,7 @@ public class BreakoutMainView {
 		}
 
 		void pickMoveFactor(MouseEvent e) {
-			if (model3d == null) {
+			if (model3d == null || model3d.getTree().getRoot().numChildren() == 0) {
 				return;
 			}
 

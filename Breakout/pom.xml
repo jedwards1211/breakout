@@ -196,6 +196,11 @@
 			<artifactId>unitized</artifactId>
 			<version>1.1.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.andork</groupId>
+			<artifactId>ref</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 	<profiles>
 		<profile>

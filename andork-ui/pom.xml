@@ -45,5 +45,10 @@
   		<version>4.12</version>
   		<scope>test</scope>
   	</dependency>
+  	<dependency>
+  		<groupId>org.andork</groupId>
+  		<artifactId>ref</artifactId>
+  		<version>1.0.0</version>
+  	</dependency>
   </dependencies>
 </project>

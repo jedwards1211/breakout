@@ -26,7 +26,7 @@ import java.util.concurrent.Callable;
 
 import javax.swing.SwingUtilities;
 
-import org.andork.generic.Ref;
+import org.andork.ref.Ref;
 
 /**
  * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)}
