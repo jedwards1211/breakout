@@ -579,8 +579,12 @@ public class BreakoutMainView {
 
 		@Override
 		public void mousePressed(MouseEvent e) {
+			ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
+
 			if (e.getButton() == MouseEvent.BUTTON1) {
-				pickCenterOfOrbit(e);
+				if (selModel.getMinSelectionIndex() < 0) {
+					pickCenterOfOrbit(e);
+				}
 			} else {
 				return;
 			}
@@ -599,8 +603,6 @@ public class BreakoutMainView {
 			if (picked == null) {
 				return;
 			}
-
-			ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
 
 			Integer modelRow = shotKeyToModelIndex.get(picked.picked.key());
 
@@ -1285,7 +1287,7 @@ public class BreakoutMainView {
 	final DebouncedRunnable rebuild3dModel = Lodash.debounce(() -> {
 		rebuildTaskService.submit(new RebuildTask());
 	}, 1000, new DebounceOptions<Void>().executor(rebuildScheduler));
-	
+
 	final Throttler<Void> updateHover = new Throttler<>(0);
 
 	public BreakoutMainView() {
