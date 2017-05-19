@@ -130,7 +130,7 @@ public final class RootModel extends QSpec<RootModel> {
 			rootModel.set(RootModel.mouseSensitivity, 15);
 		}
 		if (rootModel.get(RootModel.mouseWheelSensitivity) == null) {
-			rootModel.set(RootModel.mouseWheelSensitivity, 5);
+			rootModel.set(RootModel.mouseWheelSensitivity, 100);
 		}
 		if (rootModel.get(RootModel.showStationLabels) == null) {
 			rootModel.set(RootModel.showStationLabels, true);
