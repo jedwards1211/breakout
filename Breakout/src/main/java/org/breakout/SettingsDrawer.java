@@ -352,7 +352,7 @@ public class SettingsDrawer extends Drawer {
 		localizer.setText(moreStationLabelDensityLabel, "moreLabel.text");
 		stationLabelDensityLabel = new JLabel();
 		localizer.setText(stationLabelDensityLabel, "stationLabelDensityLabel.text");
-		stationLabelDensitySlider = new JSlider(0, 300, 40);
+		stationLabelDensitySlider = new JSlider(0, 600, 40);
 
 		stationLabelFontSizeLabel = new JLabel();
 		localizer.setText(stationLabelFontSizeLabel, "stationLabelFontSizeLabel.text");
