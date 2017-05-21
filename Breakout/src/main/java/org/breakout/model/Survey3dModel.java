@@ -1895,8 +1895,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	void drawBoundingBox(float[] bbox) {
 		for (int x = 0; x < 6; x += 3) {
 			lineRenderer.put(bbox[x], bbox[1], bbox[2]);
-			lineRenderer.put(bbox[x], bbox[1], bbox[5]);
 			lineRenderer.put(bbox[x], bbox[4], bbox[2]);
+			lineRenderer.put(bbox[x], bbox[1], bbox[5]);
 			lineRenderer.put(bbox[x], bbox[4], bbox[5]);
 		}
 		for (int y = 1; y < 6; y += 3) {
