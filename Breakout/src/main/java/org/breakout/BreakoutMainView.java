@@ -665,9 +665,9 @@ public class BreakoutMainView {
 			orbiter.setCenter(center);
 		}
 
-		void pickMoveFactor(MouseEvent e) {
+		float getDistanceToClosestNode(MouseEvent e) {
 			if (model3d == null || model3d.getTree().getRoot().numChildren() == 0) {
-				return;
+				return Float.NaN;
 			}
 
 			float[] origin = new float[3];
@@ -684,12 +684,40 @@ public class BreakoutMainView {
 					(node, p) -> Rectmath.distanceToFarthestCornerSquared3(node.mbr(), p),
 					null, distanceSquared);
 			if (closestNode == null) {
-				return;
+				return Float.NaN;
 			}
 
-			float distance = (float) Math.max(10.0, Math.sqrt(distanceSquared.value));
-			float sensitivity = getRootModel().get(RootModel.mouseSensitivity);
-			navigator.setMoveFactor(sensitivity * distance / 10000);
+			return (float) Math.max(10.0, Math.sqrt(distanceSquared.value));
+		}
+
+		void pickMoveFactor(MouseEvent e) {
+			float distance = getDistanceToClosestNode(e);
+			if (Float.isNaN(distance)) {
+				return;
+			}
+			float mouseSensitivity = getRootModel().get(RootModel.mouseSensitivity);
+			float multiplier = Math.min(1, distance / 10000);
+			navigator.setMoveFactor(mouseSensitivity * multiplier);
+		}
+
+		long lastPickWheelFactor = 0;
+
+		void pickWheelFactor(MouseEvent e) {
+			long time = System.currentTimeMillis();
+			if (time - lastPickWheelFactor < 50) {
+				return;
+			}
+			float distance = getDistanceToClosestNode(e);
+			if (Float.isNaN(distance)) {
+				return;
+			}
+			float wheelSensitivity = getRootModel().get(RootModel.mouseWheelSensitivity);
+			navigator.setWheelFactor(wheelSensitivity * distance / 10000);
+		}
+
+		@Override
+		public void mouseWheelMoved(MouseWheelEvent e) {
+			pickWheelFactor(e);
 		}
 	}
 
