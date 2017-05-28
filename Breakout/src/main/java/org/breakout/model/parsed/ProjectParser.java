@@ -106,6 +106,7 @@ public class ProjectParser {
 			dateText = dateText.trim();
 		}
 		if (raw.getDate() != null && !raw.getDate().isEmpty()) {
+			parsed.date = new ParsedField<>(Severity.ERROR, "invalid date");
 			for (DateFormat format : dateFormats) {
 				try {
 					parsed.date = new ParsedField<>(format.parse(dateText));
@@ -114,7 +115,6 @@ public class ProjectParser {
 					// ignore
 				}
 			}
-			parsed.date = new ParsedField<>(Severity.ERROR, "invalid date");
 		}
 
 		return parsed;
