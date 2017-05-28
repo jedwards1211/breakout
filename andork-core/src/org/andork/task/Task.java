@@ -248,7 +248,7 @@ public abstract class Task<R> implements Callable<R> {
 	}
 
 	public void setCompleted(long completed) {
-		if (canceled) {
+		if (isCanceled()) {
 			throw new TaskCanceledException();
 		}
 		this.completed = completed;
@@ -260,8 +260,7 @@ public abstract class Task<R> implements Callable<R> {
 	}
 
 	public void increment(long amount) {
-		this.completed += amount;
-		fireChanged();
+		setCompleted(completed + amount);
 	}
 
 	public long getCompleted() {
