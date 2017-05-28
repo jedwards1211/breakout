@@ -421,7 +421,7 @@ public class BreakoutMainView {
 						fileSubtask.setTotal(2);
 						List<CompassTrip> trips = parser.parseCompassSurveyData(file);
 						fileSubtask.increment();
-						runSubtask(1, subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
+						fileSubtask.runSubtask(1, subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
 					});
 				}
 				newModel = new SurveyTableModel(rows);
