@@ -1096,6 +1096,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 				while (i < maxIndex) {
 					float f = param0buffer.getFloat(i * 4);
+					if (f == 0) {
+						Thread.dumpStack();
+					}
 					if (Float.isFinite(f)) {
 						rangeInOut[0] = Math.min(rangeInOut[0], f);
 						rangeInOut[1] = Math.max(rangeInOut[1], f);
@@ -1429,7 +1432,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	public static Survey3dModel create(CalcProject project, int maxChildrenPerBranch, int minSplitSize,
 			int numToReinsert, Task<?> task) throws Exception {
 		task.setStatus("creating 3D model");
-		task.setTotal(5);
+		task.setTotal(6);
 
 		Map<ShotKey, Shot3d> shot3ds = new HashMap<>();
 		task.runSubtask(1, subtask -> {
@@ -1463,6 +1466,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		});
 
 		Survey3dModel model = new Survey3dModel(shot3ds, tree, sections, labelFont);
+		task.runSubtask(1, subtask -> model.calcColorParam(subtask));
+		
 		return task.isCanceled() ? null : model;
 	}
 
@@ -2078,6 +2083,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 		this.colorParam = colorParam;
 
+		calcColorParam(subtask);
+	}
+
+	void calcColorParam(Task<?> subtask) throws Exception {
 		subtask.setTotal(sections.size());
 		final Iterator<Section> sectionIterator = sections.iterator();
 
