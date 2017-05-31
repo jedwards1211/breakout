@@ -1,0 +1,51 @@
+java.io.FileNotFoundException: http://helloandy.xyz/breakout/version/latest/version.properties
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1836)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1441)
+	at org.breakout.update.UpdateStatusPanelController.lambda$0(UpdateStatusPanelController.java:228)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+java.io.FileNotFoundException: http://helloandy.xyz/breakout/version/latest/version.properties
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:422)
+	at sun.net.www.protocol.http.HttpURLConnection$10.run(HttpURLConnection.java:1890)
+	at sun.net.www.protocol.http.HttpURLConnection$10.run(HttpURLConnection.java:1885)
+	at java.security.AccessController.doPrivileged(Native Method)
+	at sun.net.www.protocol.http.HttpURLConnection.getChainedException(HttpURLConnection.java:1884)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1457)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1441)
+	at org.breakout.update.UpdateStatusPanelController.lambda$0(UpdateStatusPanelController.java:295)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.run(FutureTask.java:266)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+Caused by: java.io.FileNotFoundException: http://helloandy.xyz/breakout/version/latest/version.properties
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1836)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1441)
+	at org.breakout.update.UpdateStatusPanelController.lambda$0(UpdateStatusPanelController.java:228)
+	... 5 more
+May 31, 2017 5:55:31 PM org.andork.util.RecoverableFileOutputStream <init>
+INFO: opened .breakout/settings.json.tmp
+May 31, 2017 5:55:31 PM org.andork.util.RecoverableFileOutputStream close
+INFO: flushed .breakout/settings.json.tmp
+May 31, 2017 5:55:31 PM org.andork.util.RecoverableFileOutputStream close
+INFO: closed .breakout/settings.json.tmp
+May 31, 2017 5:55:31 PM org.andork.util.RecoverableFileOutputStream close
+INFO: moved .breakout/settings.json -> .breakout/~settings.json
+May 31, 2017 5:55:31 PM org.andork.util.RecoverableFileOutputStream close
+INFO: moved .breakout/settings.json.tmp -> .breakout/settings.json
+May 31, 2017 5:55:44 PM org.andork.util.RecoverableFileOutputStream <init>
+INFO: opened .breakout/central-kentucky.metacave.json-0.json.tmp
+May 31, 2017 5:55:44 PM org.andork.util.RecoverableFileOutputStream close
+INFO: flushed .breakout/central-kentucky.metacave.json-0.json.tmp
+May 31, 2017 5:55:44 PM org.andork.util.RecoverableFileOutputStream close
+INFO: closed .breakout/central-kentucky.metacave.json-0.json.tmp
+May 31, 2017 5:55:44 PM org.andork.util.RecoverableFileOutputStream close
+INFO: moved .breakout/central-kentucky.metacave.json-0.json -> .breakout/~central-kentucky.metacave.json-0.json
+May 31, 2017 5:55:44 PM org.andork.util.RecoverableFileOutputStream close
+INFO: moved .breakout/central-kentucky.metacave.json-0.json.tmp -> .breakout/central-kentucky.metacave.json-0.json

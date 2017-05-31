@@ -24,14 +24,21 @@ package org.breakout;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Image;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
-import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
+import org.andork.io.MultiplexOutputStream;
+import org.andork.io.WriterOutputStream;
+import org.andork.logging.LoggerWriter;
 import org.andork.swing.OnEDT;
 import org.andork.swing.SplashFrame;
 
@@ -40,8 +47,22 @@ public class Breakout {
 	private static Image splashImage;
 	private static BreakoutMainFrame frame;
 
-	public static void main(String[] args) throws InterruptedException, ExecutionException {
-		checkJavaVersion();
+	public static void main(String[] args)
+			throws InterruptedException, ExecutionException, SecurityException, IOException {
+		try {
+			if (System.getProperty("java.util.logging.config.file") == null) {
+				LogManager.getLogManager().readConfiguration(Breakout.class.getResourceAsStream("logging.properties"));
+			}
+
+			System.setOut(new PrintStream(new MultiplexOutputStream(
+					System.out,
+					new WriterOutputStream(new LoggerWriter(Logger.getLogger("System.out"), Level.INFO)))));
+			System.setErr(new PrintStream(new MultiplexOutputStream(
+					System.err,
+					new WriterOutputStream(new LoggerWriter(Logger.getLogger("System.err"), Level.WARNING)))));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 
 		System.setProperty("apple.laf.useScreenMenuBar", "true");
 		System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Breakout");
@@ -94,20 +115,5 @@ public class Breakout {
 		// unfortunately, making the frame visible on the EDT causes buggy behavior with the drawers due to some
 		// obscure bug in JOGL (or jogl-awt)
 		frame.setVisible(true);
-	}
-
-	private static void checkJavaVersion() {
-		String[] versionPieces = System.getProperty("java.version").split("\\.");
-		int v0 = Integer.valueOf(versionPieces[0]);
-		int v1 = Integer.valueOf(versionPieces[1]);
-
-		if (v0 == 1 && v1 < 6) {
-			JOptionPane
-					.showMessageDialog(
-							null,
-							"<html>FisherRidgeForever requires Java version 1.6+ to run.<br>Please download and install Java 1.6 or a later version.</html>",
-							"Fisher Ridge Forever", JOptionPane.ERROR_MESSAGE);
-			System.exit(1);
-		}
 	}
 }

@@ -1,11 +1,5 @@
-/bin
-/build
-/dist
+/target/
 .settings
 .breakout
-/screenshots
-_.breakout
-/update/
-/target/
-defaultProject-survey.txt
 dependency-reduced-pom.xml
+console.log

@@ -1,0 +1,11 @@
+/bin
+/build
+/dist
+.settings
+.breakout
+/screenshots
+_.breakout
+/update/
+/target/
+defaultProject-survey.txt
+dependency-reduced-pom.xml
