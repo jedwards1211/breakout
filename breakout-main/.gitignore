@@ -2,7 +2,8 @@
 /build
 /dist
 .settings
-.breakout
+.breakout*
+breakout.log*
 /screenshots
 _.breakout
 /update/

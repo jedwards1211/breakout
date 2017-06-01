@@ -111,20 +111,22 @@ public class Breakout {
 		try {
 			if (System.getProperty("java.util.logging.config.file") == null) {
 				LogManager.getLogManager().readConfiguration(Breakout.class.getResourceAsStream("logging.properties"));
+			} else {
+				LogManager.getLogManager().readConfiguration();
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 		
-		try {
-			System.setOut(new PrintStream(new MultiplexOutputStream(
-					System.out,
-					new LoggerPrintStream(Logger.getLogger("System.out"), Level.INFO, true))));
-			System.setErr(new PrintStream(new MultiplexOutputStream(
-					System.err,
-					new LoggerPrintStream(Logger.getLogger("System.err"), Level.WARNING, true))));
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		String handlers = LogManager.getLogManager().getProperty("handlers");
+
+		if (handlers != null && !handlers.contains("java.util.logging.ConsoleHandler")) {
+			try {
+				System.setOut(new LoggerPrintStream(Logger.getLogger("System.out"), Level.INFO, true));
+				System.setErr(new LoggerPrintStream(Logger.getLogger("System.err"), Level.WARNING, true));
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
 		}
 	}
 }
