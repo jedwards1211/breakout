@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Image;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,9 +33,9 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-import org.andork.io.MultiplexOutputStream;
 import org.andork.logging.LoggerPrintStream;
 import org.andork.swing.OnEDT;
 import org.andork.swing.SplashFrame;
@@ -45,13 +44,14 @@ public class Breakout {
 	private static SplashFrame splash;
 	private static Image splashImage;
 	private static BreakoutMainFrame frame;
+	
+	private static final Logger logger = Logger.getLogger(Breakout.class.getName());
 
 	private Breakout() {
 
 	}
 
-	public static void main(String[] args)
-			throws InterruptedException, ExecutionException, SecurityException, IOException {
+	public static void main(String[] args) {
 		configureLogging();
 
 		System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -60,14 +60,14 @@ public class Breakout {
 		try {
 			splashImage = ImageIO.read(Breakout.class.getResource("splash.png"));
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(Level.WARNING, "Failed to load splash image", e);
 		}
 
 		OnEDT.onEDT(() -> {
 			try {
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 			} catch (Exception e) {
-				e.printStackTrace();
+				logger.log(Level.WARNING, "Failed to set system look and feel", e);
 			}
 
 			splash = new SplashFrame();
@@ -89,7 +89,17 @@ public class Breakout {
 			thread.setDaemon(true);
 			return thread;
 		});
-		BreakoutMainView view = loader.submit(() -> new BreakoutMainView()).get();
+		BreakoutMainView view;
+		try {
+			view = loader.submit(() -> new BreakoutMainView()).get();
+		} catch (InterruptedException | ExecutionException e) {
+			logger.log(Level.SEVERE, "Failed to create main view", e);
+			JOptionPane.showMessageDialog(
+					null, "Failed to create main view: " + e.getLocalizedMessage(),
+					"Fatal Error", JOptionPane.ERROR_MESSAGE);
+			System.exit(1);
+			return;
+		}
 		loader.shutdown();
 
 		OnEDT.onEDT(() -> {

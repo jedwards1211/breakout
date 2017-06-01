@@ -2068,6 +2068,8 @@ public class BreakoutMainView {
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to get autoupdate properties", e);
 		}
+		
+		throw new RuntimeException("TEST");
 	}
 
 	public boolean recoverBackupIfNecessary(QObject<RootModel> rootModel) {
