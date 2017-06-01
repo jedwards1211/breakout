@@ -1,5 +1,5 @@
 /target/
 .settings
-.breakout
+.breakout*
 dependency-reduced-pom.xml
 breakout.log*

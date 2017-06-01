@@ -37,8 +37,7 @@ import javax.imageio.ImageIO;
 import javax.swing.UIManager;
 
 import org.andork.io.MultiplexOutputStream;
-import org.andork.io.WriterOutputStream;
-import org.andork.logging.LoggerWriter;
+import org.andork.logging.LoggerPrintStream;
 import org.andork.swing.OnEDT;
 import org.andork.swing.SplashFrame;
 
@@ -47,22 +46,13 @@ public class Breakout {
 	private static Image splashImage;
 	private static BreakoutMainFrame frame;
 
+	private Breakout() {
+
+	}
+
 	public static void main(String[] args)
 			throws InterruptedException, ExecutionException, SecurityException, IOException {
-		try {
-			if (System.getProperty("java.util.logging.config.file") == null) {
-				LogManager.getLogManager().readConfiguration(Breakout.class.getResourceAsStream("logging.properties"));
-			}
-
-			System.setOut(new PrintStream(new MultiplexOutputStream(
-					System.out,
-					new WriterOutputStream(new LoggerWriter(Logger.getLogger("System.out"), Level.INFO)))));
-			System.setErr(new PrintStream(new MultiplexOutputStream(
-					System.err,
-					new WriterOutputStream(new LoggerWriter(Logger.getLogger("System.err"), Level.WARNING)))));
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
+		configureLogging();
 
 		System.setProperty("apple.laf.useScreenMenuBar", "true");
 		System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Breakout");
@@ -115,5 +105,26 @@ public class Breakout {
 		// unfortunately, making the frame visible on the EDT causes buggy behavior with the drawers due to some
 		// obscure bug in JOGL (or jogl-awt)
 		frame.setVisible(true);
+	}
+
+	private static void configureLogging() {
+		try {
+			if (System.getProperty("java.util.logging.config.file") == null) {
+				LogManager.getLogManager().readConfiguration(Breakout.class.getResourceAsStream("logging.properties"));
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		
+		try {
+			System.setOut(new PrintStream(new MultiplexOutputStream(
+					System.out,
+					new LoggerPrintStream(Logger.getLogger("System.out"), Level.INFO, true))));
+			System.setErr(new PrintStream(new MultiplexOutputStream(
+					System.err,
+					new LoggerPrintStream(Logger.getLogger("System.err"), Level.WARNING, true))));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
 	}
 }

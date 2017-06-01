@@ -76,6 +76,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -237,6 +239,8 @@ import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
 
 public class BreakoutMainView {
+	private static final Logger logger = Logger.getLogger(BreakoutMainView.class.getName());
+
 	private class AnimationViewSaver implements Animation {
 		@Override
 		public long animate(long animTime) {
@@ -475,7 +479,7 @@ public class BreakoutMainView {
 					});
 				}
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				logger.log(Level.SEVERE, "Failed to import compass data", ex);
 				new OnEDT() {
 					@Override
 					public void run() throws Throwable {
@@ -810,7 +814,7 @@ public class BreakoutMainView {
 				importer.importMetacave(json);
 				return new SurveyTableModel(importer.getRows());
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				logger.log(Level.SEVERE, "Failed to load survey", ex);
 				if (!file.equals(backupFile) && backupFile != null && backupFile.exists()) {
 					int option = FromEDT.fromEDT(() -> JOptionPane.showConfirmDialog(
 							mainPanel,
@@ -835,6 +839,8 @@ public class BreakoutMainView {
 
 		@Override
 		protected Void workDuringDialog() throws Exception {
+			logger.info("Opening file: " + newProjectFile);
+
 			boolean changed = FromEDT.fromEDT(() -> {
 				QObject<RootModel> rootModel = getRootModel();
 				rootModel.set(RootModel.currentProjectFile, newProjectFile);
@@ -1198,7 +1204,6 @@ public class BreakoutMainView {
 				try {
 					ioTaskService.awaitTermination(30, TimeUnit.SECONDS);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
 					System.exit(1);
 				}
 				System.exit(0);
@@ -1328,7 +1333,7 @@ public class BreakoutMainView {
 					w.write(System.lineSeparator());
 					w.flush();
 				} catch (Exception ex) {
-					ex.printStackTrace();
+					logger.log(Level.SEVERE, "Failed to save settings", ex);
 				}
 				return null;
 			}
@@ -2061,7 +2066,7 @@ public class BreakoutMainView {
 
 			updateStatusPanelController.checkForUpdate();
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(Level.WARNING, "Failed to get autoupdate properties", e);
 		}
 	}
 
@@ -2094,7 +2099,7 @@ public class BreakoutMainView {
 				}
 			}
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to recover backup file", ex);
 			JOptionPane.showMessageDialog(
 					SwingUtilities.getWindowAncestor(mainPanel),
 					ex.getLocalizedMessage(),
@@ -2513,7 +2518,7 @@ public class BreakoutMainView {
 		try {
 			Desktop.getDesktop().open(file);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to open survey notes", e);
 			JOptionPane.showMessageDialog(mainPanel, "Failed to open file '" + file + "': " + e,
 					"Error", JOptionPane.ERROR_MESSAGE);
 		}
@@ -2527,7 +2532,7 @@ public class BreakoutMainView {
 			return;
 		} catch (MalformedURLException e) {
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to open survey notes", e);
 			JOptionPane.showMessageDialog(mainPanel, "Failed to open URL " + uri + ": " + e,
 					"Error", JOptionPane.ERROR_MESSAGE);
 		}
@@ -2581,7 +2586,7 @@ public class BreakoutMainView {
 				openSurveyNotes(file);
 			}
 		} catch (Exception e1) {
-			e1.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to open survey notes", e1);
 		}
 	}
 
@@ -2735,7 +2740,7 @@ public class BreakoutMainView {
 		try (Reader reader = new FileReader(file)) {
 			return mapper.unmap(new Gson().fromJson(reader, Object.class));
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.log(Level.SEVERE, "Failed to load model", ex);
 			if (showError) {
 				OnEDT.onEDT(new ExceptionRunnable() {
 					@Override
@@ -2871,7 +2876,7 @@ public class BreakoutMainView {
 				gson.toJson(json, out);
 				getProjectModel().set(ProjectModel.hasUnsavedChanges, false);
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				logger.log(Level.SEVERE, "Failed to save project", ex);
 			}
 		});
 	}
