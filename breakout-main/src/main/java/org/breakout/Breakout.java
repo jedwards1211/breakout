@@ -24,7 +24,6 @@ package org.breakout;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Image;
-import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -44,7 +43,7 @@ public class Breakout {
 	private static SplashFrame splash;
 	private static Image splashImage;
 	private static BreakoutMainFrame frame;
-	
+
 	private static final Logger logger = Logger.getLogger(Breakout.class.getName());
 
 	private Breakout() {
@@ -54,6 +53,9 @@ public class Breakout {
 	public static void main(String[] args) {
 		configureLogging();
 
+		logger.info("Launching...");
+
+		System.setProperty("apple.eawt.quitStrategy", "CLOSE_ALL_WINDOWS");
 		System.setProperty("apple.laf.useScreenMenuBar", "true");
 		System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Breakout");
 
@@ -97,24 +99,33 @@ public class Breakout {
 			JOptionPane.showMessageDialog(
 					null, "Failed to create main view: " + e.getLocalizedMessage(),
 					"Fatal Error", JOptionPane.ERROR_MESSAGE);
+			logger.info("exiting with code 1");
 			System.exit(1);
 			return;
 		}
 		loader.shutdown();
 
-		OnEDT.onEDT(() -> {
-			if (!splash.isVisible()) {
-				// user closed splash; exit
-				return;
-			}
-			frame = new BreakoutMainFrame(view);
-			frame.setTitle("Breakout");
-			frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-			splash.setVisible(false);
-		});
-		// unfortunately, making the frame visible on the EDT causes buggy behavior with the drawers due to some
-		// obscure bug in JOGL (or jogl-awt)
-		frame.setVisible(true);
+		try {
+			OnEDT.onEDT(() -> {
+				if (!splash.isVisible()) {
+					// user closed splash; exit
+					logger.info("User closed splash");
+					logger.info("exiting with code 0");
+					System.exit(0);
+					return;
+				}
+				frame = new BreakoutMainFrame(view);
+				frame.setTitle("Breakout");
+				frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+				splash.setVisible(false);
+			});
+			// unfortunately, making the frame visible on the EDT causes buggy behavior with the drawers due to some
+			// obscure bug in JOGL (or jogl-awt)
+			frame.setVisible(true);
+			logger.info("opened main window");
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, "Failed to create or open main window", ex);
+		}
 	}
 
 	private static void configureLogging() {
@@ -127,7 +138,7 @@ public class Breakout {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-		
+
 		String handlers = LogManager.getLogManager().getProperty("handlers");
 
 		if (handlers != null && !handlers.contains("java.util.logging.ConsoleHandler")) {

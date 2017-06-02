@@ -396,11 +396,14 @@ public class BreakoutMainView {
 			final CompassSurveyParser parser = new CompassSurveyParser();
 			final CompassPlotParser plotParser = new CompassPlotParser();
 			final Map<String, SurveyRow> stationPositionRows = new HashMap<>();
+			
+			logger.info("importing compass data...");
 
 			try {
 				int progress = 0;
 
 				for (Path file : projFiles) {
+					logger.info(() -> "importing compass data from " + file + "...");
 					setStatus("Importing data from " + file + "...");
 					CompassProject proj = new CompassProjectParser().parseProject(file);
 					surveyFiles.addAll(proj.getDataFiles());
@@ -420,18 +423,21 @@ public class BreakoutMainView {
 				setTotal(projFiles.size() + finalSurveyFiles.size() + finalPlotFiles.size());
 
 				for (Path file : finalSurveyFiles) {
+					logger.info(() -> "importing compass data from " + file + "...");
 					setStatus("Importing data from " + file + "...");
 					runSubtask(1, fileSubtask -> {
 						fileSubtask.setTotal(2);
 						List<CompassTrip> trips = parser.parseCompassSurveyData(file);
 						fileSubtask.increment();
-						fileSubtask.runSubtask(1, subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
+						fileSubtask.runSubtask(1,
+								subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
 					});
 				}
 				newModel = new SurveyTableModel(rows);
 				newModel.setEditable(false);
 
 				for (Path file : finalPlotFiles) {
+					logger.info(() -> "importing compass data from " + file + "...");
 					setStatus("Importing data from " + file + "...");
 					runSubtask(1, fileSubtask -> {
 						fileSubtask.setTotal(2);
@@ -512,6 +518,7 @@ public class BreakoutMainView {
 					dialog.setVisible(true);
 
 					if (newModel == null || newModel.getRowCount() == 0) {
+						logger.info("no shots found in imported compass data");
 						return;
 					}
 
@@ -519,6 +526,9 @@ public class BreakoutMainView {
 						SurveyTableModel model = surveyDrawer.table().getModel();
 						model.clear();
 						model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, model.getRowCount());
+						logger.info(() -> "imported " + newModel.getRowCount() + " shots from compass data");
+					} else {
+						logger.info("user canceled compass import");
 					}
 					rebuild3dModel.run();
 				}
@@ -753,6 +763,8 @@ public class BreakoutMainView {
 			new OnEDT() {
 				@Override
 				public void run() throws Throwable {
+					logger.info("creating new project...");
+
 					QObject<RootModel> rootModel = getRootModel();
 					rootModel.set(RootModel.currentProjectFile, null);
 
@@ -782,6 +794,8 @@ public class BreakoutMainView {
 					} else {
 						installOrthoMouseAdapters();
 					}
+
+					logger.info("done creating new project");
 				}
 			};
 
@@ -839,9 +853,9 @@ public class BreakoutMainView {
 
 		@Override
 		protected Void workDuringDialog() throws Exception {
-			logger.info("Opening file: " + newProjectFile);
+			logger.info(() -> "Opening file: " + newProjectFile + "...");
 
-			boolean changed = FromEDT.fromEDT(() -> {
+			OnEDT.onEDT(() -> {
 				QObject<RootModel> rootModel = getRootModel();
 				rootModel.set(RootModel.currentProjectFile, newProjectFile);
 				markProjectRecentlyVisited(newProjectFile);
@@ -852,12 +866,7 @@ public class BreakoutMainView {
 
 				surveyDrawer.table().getModel().clear();
 				destroyCalculatedModel();
-				return true;
 			});
-
-			if (!changed) {
-				return null;
-			}
 
 			File fileToLoad = newProjectFile.toFile();
 			File backupFile = fileRecoveryConfig.getBackupFile(fileToLoad);
@@ -866,6 +875,7 @@ public class BreakoutMainView {
 			}
 			SurveyTableModel surveyModel = loadSurvey(fileToLoad, backupFile);
 			if (surveyModel == null) {
+				logger.info("no survey found");
 				return null;
 			}
 
@@ -910,6 +920,7 @@ public class BreakoutMainView {
 				}
 			});
 
+			logger.info(() -> "done opening file: " + newProjectFile);
 			return null;
 		}
 	}
@@ -1048,6 +1059,7 @@ public class BreakoutMainView {
 
 		@Override
 		protected Void work() throws Exception {
+			logger.info("rebuilding 3D model...");
 			setTotal(5);
 			setStatus("Updating view");
 			try {
@@ -1055,6 +1067,10 @@ public class BreakoutMainView {
 				parse();
 				CalculateGeometry.calculateGeometry(p2c.project);
 				updateView();
+				logger.info("done rebuilding 3D model");
+			} catch (Exception ex) {
+				logger.log(Level.SEVERE, "failed to rebuild 3D model", ex);
+				throw ex;
 			} finally {
 				OnEDT.onEDT(() -> taskListDrawer.holder().release(this));
 			}
@@ -1170,7 +1186,9 @@ public class BreakoutMainView {
 	final TaskService ioTaskService = new ExecutorTaskService(ioService);
 
 	public void shutdown() {
+		logger.info("Shutting down...");
 		if (hasUnsavedChanges()) {
+			logger.info("there are unsaved changes");
 			int choice = JOptionPane.showConfirmDialog(
 					SwingUtilities.getWindowAncestor(getMainPanel()),
 					"Do you want to save changes?",
@@ -1179,9 +1197,14 @@ public class BreakoutMainView {
 					JOptionPane.WARNING_MESSAGE);
 			switch (choice) {
 			case JOptionPane.YES_OPTION:
+				logger.info("user chose to save changes");
 				saveProject();
 				break;
+			case JOptionPane.NO_OPTION:
+				logger.info("user chose to discard unsaved changes");
+				break;
 			case JOptionPane.CANCEL_OPTION:
+				logger.info("user chose to cancel shutdown");
 				return;
 			}
 		}
@@ -1202,10 +1225,20 @@ public class BreakoutMainView {
 			@Override
 			public void run() {
 				try {
-					ioTaskService.awaitTermination(30, TimeUnit.SECONDS);
+					logger.info("waiting for ioTaskService to terminate");
+					final int seconds = 60;
+					boolean terminated = ioTaskService.awaitTermination(seconds, TimeUnit.SECONDS);
+					if (!terminated) {
+						logger.severe(() -> "ioTaskService didn't terminate within " + seconds + " seconds!");
+					} else {
+						logger.info(() -> "ioTaskService terminated successfully!");
+					}
 				} catch (InterruptedException e) {
+					logger.log(Level.SEVERE, "interrupted while waiting for ioTaskService to terminate", e);
+					logger.info("exiting with code 1");
 					System.exit(1);
 				}
+				logger.info("exiting with code 0");
 				System.exit(0);
 			}
 		};
@@ -2851,6 +2884,7 @@ public class BreakoutMainView {
 	}
 
 	public void saveProjectToFile(Path projectFile) {
+		logger.info(() -> "Saving project to " + projectFile + "...");
 		ioTaskService.submit(task -> {
 			task.setStatus("Saving project to " + projectFile);
 			task.setIndeterminate(true);
