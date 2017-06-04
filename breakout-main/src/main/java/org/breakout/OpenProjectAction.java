@@ -34,10 +34,6 @@ import org.breakout.model.RootModel;
 
 @SuppressWarnings("serial")
 public class OpenProjectAction extends AbstractAction {
-	/**
-	 *
-	 */
-	private static final long serialVersionUID = 5743235627547741557L;
 
 	BreakoutMainView mainView;
 

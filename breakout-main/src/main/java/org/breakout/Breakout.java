@@ -24,6 +24,13 @@ package org.breakout;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Image;
+import java.io.FileInputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,18 +47,43 @@ import org.andork.swing.OnEDT;
 import org.andork.swing.SplashFrame;
 
 public class Breakout {
+	private static final Path rootDirectory;
+	private static final Path backupDirectory;
+	private static final Path rootSettingsFile;
+	private static Path logDirectory;
 	private static SplashFrame splash;
 	private static Image splashImage;
 	private static BreakoutMainFrame frame;
 
 	private static final Logger logger = Logger.getLogger(Breakout.class.getName());
 
+	static {
+		if (System.getProperty("rootDirectory") != null) {
+			rootDirectory = Paths.get(System.getProperty("rootDirectory"));
+		} else {
+			if (System.getProperty("os.name").toLowerCase().contains("win")) {
+				rootDirectory = Paths.get(System.getProperty("AppData")).resolve("Breakout");
+			} else {
+				rootDirectory = Paths.get(System.getProperty("user.home")).resolve(".breakout");
+			}
+		}
+		rootSettingsFile = rootDirectory.resolve("settings.json");
+		backupDirectory = rootDirectory.resolve("backup");
+	}
+
 	private Breakout() {
 
 	}
 
 	public static void main(String[] args) {
+		createRootDirectory();
 		configureLogging();
+		createBackupDirectory();
+
+		logger.info(() -> "rootDirectory:    " + rootDirectory);
+		logger.info(() -> "rootSettingsFile: " + rootSettingsFile);
+		logger.info(() -> "backupDirectory:  " + backupDirectory);
+		logger.info(() -> "logDirectory:     " + logDirectory);
 
 		logger.info("Launching...");
 
@@ -128,19 +160,73 @@ public class Breakout {
 		}
 	}
 
-	private static void configureLogging() {
+	public static Path getRootDirectory() {
+		return rootDirectory;
+	}
+
+	public static Path getBackupDirectory() {
+		return backupDirectory;
+	}
+
+	public static Path getRootSettingsFile() {
+		return rootSettingsFile;
+	}
+
+	public static Path getLogDirectory() {
+		return logDirectory;
+	}
+
+	private static void createRootDirectory() {
 		try {
-			if (System.getProperty("java.util.logging.config.file") == null) {
-				LogManager.getLogManager().readConfiguration(Breakout.class.getResourceAsStream("logging.properties"));
-			} else {
-				LogManager.getLogManager().readConfiguration();
-			}
+			Files.createDirectories(rootDirectory);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
 
+	private static void createBackupDirectory() {
+		try {
+			Files.createDirectories(backupDirectory);
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, "failed to create backup directory", ex);
+		}
+	}
+	
+	
+
+	private static void configureLogging() {
+		try {
+			Properties props = new Properties();
+			if (System.getProperty("java.util.logging.config.file") != null) {
+				props.load(new FileInputStream(System.getProperty("java.util.logging.config.file")));
+			} else {
+				props.load(Breakout.class.getResourceAsStream("logging.properties"));
+			}
+	
+			String logfile = props.getProperty("java.util.logging.FileHandler.pattern");
+			if (logfile != null && Paths.get(logfile).isAbsolute()) {
+				logDirectory = Paths.get(logfile).getParent();
+			} else {
+				logDirectory = rootDirectory.resolve("log");
+				Files.createDirectories(logDirectory);
+				if (logfile != null) {
+					props.setProperty(
+							"java.util.logging.FileHandler.pattern",
+							logDirectory.resolve(logfile).toString());
+				}
+			}
+	
+			PipedInputStream configStream = new PipedInputStream();
+			PipedOutputStream out = new PipedOutputStream(configStream);
+			props.store(out, null);
+			out.close();
+			LogManager.getLogManager().readConfiguration(configStream);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	
 		String handlers = LogManager.getLogManager().getProperty("handlers");
-
+	
 		if (handlers != null && !handlers.contains("java.util.logging.ConsoleHandler")) {
 			try {
 				System.setOut(new LoggerPrintStream(Logger.getLogger("System.out"), Level.INFO, true));

@@ -66,10 +66,9 @@ public class BreakoutMainFrame extends JFrame {
 	}
 
 	private void updateTitle() {
-		Path rootDirectory = mainView.getRootDirectory();
-		Path currentProjectFile = mainView.getRootModel() == null
-				? null : mainView.getRootModel().get(RootModel.currentProjectFile);
-		setTitle(currentProjectFile == null ? "Breakout" : "Breakout - " +
-				rootDirectory.resolve(currentProjectFile).normalize().toString());
+		Path currentProjectFile = mainView.getCurrentProjectFile();
+		setTitle(currentProjectFile != null
+				? "Breakout - " + currentProjectFile.normalize().toString()
+				: "Breakout");
 	}
 }

@@ -48,10 +48,9 @@ public class OpenRecentProjectAction extends AbstractAction {
 	public OpenRecentProjectAction(final BreakoutMainView mainView, Path recentProjectFile) {
 		super();
 		this.mainView = mainView;
-		this.recentProjectFile = mainView.getRootDirectory().toAbsolutePath()
-				.resolve(recentProjectFile).normalize();
+		this.recentProjectFile = recentProjectFile;
 
-		putValue(NAME, this.recentProjectFile.toString());
+		putValue(NAME, recentProjectFile.toString());
 	}
 
 	@Override

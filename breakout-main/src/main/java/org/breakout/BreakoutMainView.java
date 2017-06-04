@@ -396,7 +396,7 @@ public class BreakoutMainView {
 			final CompassSurveyParser parser = new CompassSurveyParser();
 			final CompassPlotParser plotParser = new CompassPlotParser();
 			final Map<String, SurveyRow> stationPositionRows = new HashMap<>();
-			
+
 			logger.info("importing compass data...");
 
 			try {
@@ -1291,8 +1291,6 @@ public class BreakoutMainView {
 	final float[] p0 = new float[3];
 	final float[] p1 = new float[3];
 	final float[] p2 = new float[3];
-	File rootFile;
-	Path rootDirectory;
 
 	final Binder<QObject<RootModel>> rootModelBinder = new DefaultBinder<>();
 
@@ -1315,6 +1313,7 @@ public class BreakoutMainView {
 	NewProjectAction newProjectAction = new NewProjectAction(this);
 	SaveProjectAction saveProjectAction = new SaveProjectAction(this);
 	SaveProjectAsAction saveProjectAsAction = new SaveProjectAsAction(this);
+	OpenLogDirectoryAction openLogDirectoryAction = new OpenLogDirectoryAction(i18n);
 
 	EditSurveyScanPathsAction editSurveyScanPathsAction = new EditSurveyScanPathsAction(this);
 
@@ -1374,7 +1373,7 @@ public class BreakoutMainView {
 	}
 
 	final DebouncedRunnable saveRootModel = Lodash.debounce(
-			() -> saveModel(getRootModel(), rootFile, RootModel.defaultMapper),
+			() -> saveModel(getRootModel(), Breakout.getRootSettingsFile(), RootModel.defaultMapper),
 			1000, new DebounceOptions<Void>().executor(ioService));
 
 	final DebouncedRunnable saveSwap = Lodash.debounce(
@@ -1820,21 +1819,23 @@ public class BreakoutMainView {
 
 		JMenu debugMenu = new JMenu();
 		menuBar.add(debugMenu);
+		JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
+		debugMenu.add(openLogDirectoryMenuItem);
 		JCheckBoxMenuItem showSpatialIndexItem = new JCheckBoxMenuItem();
 		new ButtonSelectedBinder(showSpatialIndexItem).bind(
 				new QObjectAttributeBinder<>(RootModel.showSpatialIndex)
 						.bind(rootModelBinder));
 		debugMenu.add(showSpatialIndexItem);
 
-		JMenuItem noRecentFilesItem = new JMenuItem();
-		noRecentFilesItem.setEnabled(false);
+		JMenuItem noRecentFilesMenuItem = new JMenuItem();
+		noRecentFilesMenuItem.setEnabled(false);
 
 		new BinderWrapper<QArrayList<Path>>() {
 			@Override
 			protected void onValueChanged(QArrayList<Path> newValue) {
 				openRecentMenu.removeAll();
 				if (newValue == null || newValue.isEmpty()) {
-					openRecentMenu.add(noRecentFilesItem);
+					openRecentMenu.add(noRecentFilesMenuItem);
 				} else {
 					for (Path file : newValue) {
 						openRecentMenu.add(new JMenuItem(
@@ -1855,10 +1856,10 @@ public class BreakoutMainView {
 					localizer.setText(importMenu, "importMenu.text");
 					localizer.setText(exportMenu, "exportMenu.text");
 					localizer.setText(openRecentMenu, "openRecentMenu.text");
-					localizer.setText(noRecentFilesItem, "noRecentFilesItem.text");
+					localizer.setText(noRecentFilesMenuItem, "noRecentFilesMenuItem.text");
 
 					localizer.setText(debugMenu, "debugMenu.text");
-					localizer.setText(showSpatialIndexItem, "showSpatialIndexItem.text");
+					localizer.setText(showSpatialIndexItem, "showSpatialIndexMenuItem.text");
 				}
 			});
 		});
@@ -2060,21 +2061,7 @@ public class BreakoutMainView {
 			return true;
 		});
 
-		String rootFilePath = System.getProperty("rootFile");
-
-		if (rootFilePath == null) {
-			File rootDir = new File(".breakout");
-			rootFile = new File(rootDir, "settings.json");
-			if (!rootFile.exists()) {
-				rootDir.mkdir();
-			}
-		} else {
-			rootFile = new File(rootFilePath);
-		}
-
-		rootDirectory = rootFile.toPath().getParent();
-
-		QObject<RootModel> rootModel = loadRootModel(rootFile);
+		QObject<RootModel> rootModel = loadRootModel(Breakout.getRootSettingsFile());
 
 		if (rootModel == null) {
 			rootModel = RootModel.instance.newObject();
@@ -2344,6 +2331,7 @@ public class BreakoutMainView {
 			@Override
 			public long animate(long animTime) {
 				table.getModelSelectionModel().clearSelection();
+				@SuppressWarnings("unchecked")
 				AnnotatingRowSorter<TableModel, Integer> rowSorter = (AnnotatingRowSorter<TableModel, Integer>) table
 						.getAnnotatingRowSorter();
 				if (rowSorter.getRowFilter() != null) {
@@ -2419,14 +2407,6 @@ public class BreakoutMainView {
 
 	public Binder<QObject<ProjectModel>> getProjectModelBinder() {
 		return projectModelBinder;
-	}
-
-	public Path getRootDirectory() {
-		return rootDirectory;
-	}
-
-	public File getRootFile() {
-		return rootFile;
 	}
 
 	public QObject<RootModel> getRootModel() {
@@ -2725,10 +2705,10 @@ public class BreakoutMainView {
 			int index = -1;
 			do {
 				swapFile = Paths.get(surveyFile.getFileName() + "-" + (++index) + ".json");
-			} while (Files.exists(rootDirectory.resolve(swapFile)));
+			} while (Files.exists(Breakout.getBackupDirectory().resolve(swapFile)));
 			swapFiles.put(surveyFile, swapFile);
 		}
-		return rootDirectory.resolve(swapFile);
+		return Breakout.getBackupDirectory().resolve(swapFile);
 	}
 
 	private final BasicPropertyChangeListener projectModelChangeHandler = new BasicPropertyChangeListener() {
@@ -2759,6 +2739,10 @@ public class BreakoutMainView {
 			saveRootModel.run();
 		}
 	};
+
+	private QObject<RootModel> loadRootModel(Path path) {
+		return loadRootModel(path.toFile());
+	}
 
 	private QObject<RootModel> loadRootModel(File file) {
 		return loadModel(file, RootModel.defaultMapper, false);
@@ -2856,13 +2840,10 @@ public class BreakoutMainView {
 
 	public Path getCurrentProjectFile() {
 		QObject<RootModel> rootModel = getRootModel();
-		if (rootModel == null || rootFile == null) {
+		if (rootModel == null) {
 			return null;
 		}
-		Path file = rootModel.get(RootModel.currentProjectFile);
-		return file == null
-				? null
-				: rootFile.toPath().getParent().toAbsolutePath().resolve(file).normalize();
+		return rootModel.get(RootModel.currentProjectFile);
 	}
 
 	public Path getCurrentSwapFile() {
