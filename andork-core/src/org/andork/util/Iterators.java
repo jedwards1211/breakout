@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class Iterators {
@@ -237,4 +238,33 @@ public class Iterators {
 		return new LineIterator(new InputStreamReader(in));
 	}
 
+	private static class MapIterator<I, O> implements Iterator<O> {
+		private final Iterator<I> in;
+		private final Function<I, O> iteratee;
+		
+		public MapIterator(Iterator<I> in, Function<I, O> iteratee) {
+			super();
+			this.in = in;
+			this.iteratee = iteratee;
+		}
+
+		@Override
+		public void remove() {
+			in.remove();
+		}
+
+		@Override
+		public boolean hasNext() {
+			return in.hasNext();
+		}
+
+		@Override
+		public O next() {
+			return iteratee.apply(in.next());
+		}
+	}
+	
+	public static <I, O> Iterator<O> map(Iterator<I> in, Function<I, O> iteratee) {
+		return new MapIterator<>(in, iteratee);
+	}
 }

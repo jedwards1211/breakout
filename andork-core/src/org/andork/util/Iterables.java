@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class Iterables {
@@ -112,5 +113,9 @@ public class Iterables {
 
 	public static Iterable<String> linesOf(InputStream in) {
 		return () -> Iterators.linesOf(new InputStreamReader(in));
+	}
+	
+	public static <I, O> Iterable<O> map(Iterable<I> in, Function<I, O> iteratee) {
+		return () -> Iterators.map(in.iterator(), iteratee);
 	}
 }
