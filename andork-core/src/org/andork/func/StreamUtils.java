@@ -21,8 +21,6 @@
  *******************************************************************************/
 package org.andork.func;
 
-import static org.andork.func.StreamIterable.iterable;
-
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
@@ -31,7 +29,7 @@ public class StreamUtils {
 		T first = null;
 		T previous = null;
 
-		for (T t : iterable(stream)) {
+		for (T t : (Iterable<T>) stream::iterator) {
 			if (first == null) {
 				first = t;
 			} else {

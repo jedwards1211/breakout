@@ -34,7 +34,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 import javax.swing.Scrollable;
 
-import org.andork.collect.CollectionUtils;
 import org.andork.event.HierarchicalBasicPropertyChangeAdapter;
 import org.andork.swing.OnEDT;
 import org.andork.task.Task;
@@ -79,7 +78,7 @@ public class TaskList extends JPanel implements Scrollable {
 	private static final long serialVersionUID = -5692418634705030121L;
 	final Set<TaskService> services = new HashSet<TaskService>();
 
-	LinkedHashMap<Task<?>, TaskPane> taskMap = CollectionUtils.newLinkedHashMap();
+	LinkedHashMap<Task<?>, TaskPane> taskMap = new LinkedHashMap<Task<?>, TaskPane>();
 
 	private ModelChangeHandler modelChangeHandler = new ModelChangeHandler();
 

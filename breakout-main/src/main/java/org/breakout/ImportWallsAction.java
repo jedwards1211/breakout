@@ -32,8 +32,8 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.andork.awt.I18n.Localizer;
+import org.andork.collect.Iterables;
 import org.andork.swing.OnEDT;
-import org.andork.util.Iterables;
 import org.breakout.model.RootModel;
 
 public class ImportWallsAction extends AbstractAction {

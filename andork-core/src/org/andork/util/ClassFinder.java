@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
+import org.andork.collect.Iterables;
 import org.andork.collect.Visitor;
 
 public class ClassFinder {

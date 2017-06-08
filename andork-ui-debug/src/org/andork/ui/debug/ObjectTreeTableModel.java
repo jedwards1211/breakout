@@ -54,7 +54,7 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 
-import org.andork.collect.CollectionUtils;
+import org.andork.collect.HashSets;
 import org.andork.reflect.DefaultTypeFormatter;
 import org.andork.reflect.ReflectionUtils;
 import org.andork.reflect.TypeFormatter;
@@ -1031,7 +1031,7 @@ public class ObjectTreeTableModel implements TreeTableModel {
 	}
 
 	protected void init() {
-		leafClasses = CollectionUtils.<Class<?>> asHashSet(
+		leafClasses = HashSets.<Class<?>> of(
 				boolean.class, Boolean.class, byte.class, Byte.class, short.class, Short.class,
 				char.class, Character.class, int.class, Integer.class, float.class, Float.class,
 				long.class, Long.class, double.class, Double.class, BigInteger.class,

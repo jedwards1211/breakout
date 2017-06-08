@@ -24,9 +24,9 @@ package org.andork.util;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
-import org.andork.collect.CollectionUtils;
 import org.andork.reflect.ObjectTraverser;
 
 public class ObjectTraverserTest {
@@ -135,9 +135,9 @@ public class ObjectTraverserTest {
 	}
 
 	public static void main(String[] args) {
-		Map<Date, Map<Double, String>> optionHash = CollectionUtils.newHashMap();
+		Map<Date, Map<Double, String>> optionHash = new HashMap<Date, Map<Double,String>>();
 
-		Map<Double, String> strikeMap = CollectionUtils.newHashMap();
+		Map<Double, String> strikeMap = new HashMap<Double, String>();
 
 		strikeMap.put(750.0, "GOOG 01/18/2014 750.00 C");
 

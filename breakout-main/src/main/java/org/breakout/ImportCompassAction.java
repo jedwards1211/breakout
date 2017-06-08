@@ -23,8 +23,6 @@ package org.breakout;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.nio.file.Paths;
-import java.util.Arrays;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -32,8 +30,8 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.andork.awt.I18n.Localizer;
+import org.andork.collect.ArrayLists;
 import org.andork.swing.OnEDT;
-import org.andork.util.Iterables;
 import org.breakout.model.RootModel;
 
 public class ImportCompassAction extends AbstractAction {
@@ -78,9 +76,7 @@ public class ImportCompassAction extends AbstractAction {
 		mainView.getRootModel().set(
 				RootModel.currentCompassImportDirectory, fileChooser.getCurrentDirectory());
 
-		mainView.ioTaskService().<Void> submit(
-				new ImportCompassTask(mainView,
-						Iterables.map(Arrays.asList(fileChooser.getSelectedFiles()),
-								file -> file.toPath())));
+		mainView.ioTaskService().submit(new ImportCompassTask(mainView,
+				ArrayLists.map(fileChooser.getSelectedFiles(), file -> file.toPath())));
 	}
 }

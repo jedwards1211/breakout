@@ -1,4 +1,4 @@
-package org.andork.util;
+package org.andork.collect;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,6 +11,8 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import org.andork.util.EasyIterator;
 
 public class Iterators {
 	public static <E> void addAll(Iterator<? extends E> iterator, Collection<E> collection) {
@@ -239,10 +241,10 @@ public class Iterators {
 	}
 
 	private static class MapIterator<I, O> implements Iterator<O> {
-		private final Iterator<I> in;
-		private final Function<I, O> iteratee;
+		private final Iterator<? extends I> in;
+		private final Function<? super I, ? extends O> iteratee;
 		
-		public MapIterator(Iterator<I> in, Function<I, O> iteratee) {
+		public MapIterator(Iterator<? extends I> in, Function<? super I, ? extends O> iteratee) {
 			super();
 			this.in = in;
 			this.iteratee = iteratee;
@@ -264,7 +266,19 @@ public class Iterators {
 		}
 	}
 	
-	public static <I, O> Iterator<O> map(Iterator<I> in, Function<I, O> iteratee) {
+	public static <I, O> Iterator<O> map(Iterator<? extends I> in, Function<? super I, ? extends O> iteratee) {
 		return new MapIterator<>(in, iteratee);
+	}
+	
+	public static<I, O> Iterator<O> map(I[] in, Function<? super I, ? extends O> iteratee) {
+		return map(of(in), iteratee);
+	}
+	
+	public static <E> void removeAll(Iterator<? extends E> i, Predicate<? super E> p) {
+		while (i.hasNext()) {
+			if (p.test(i.next())) {
+				i.remove();
+			}
+		}
 	}
 }

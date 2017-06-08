@@ -29,7 +29,7 @@ import java.util.function.Predicate;
 import javax.swing.Timer;
 
 import org.andork.awt.CheckEDT;
-import org.andork.collect.CollectionUtils;
+import org.andork.collect.Iterables;
 
 public class AnimationQueue {
 	private class TimerHandler implements ActionListener {
@@ -102,8 +102,8 @@ public class AnimationQueue {
 
 	public void removeAll(Predicate<Animation> p) {
 		CheckEDT.checkEDT();
-		CollectionUtils.removeAll(queue, p);
-		CollectionUtils.removeAll(pendingAdd, p);
+		Iterables.removeAll(queue, p);
+		Iterables.removeAll(pendingAdd, p);
 		if (queue.isEmpty() && pendingAdd.isEmpty()) {
 			timer.stop();
 			lastAnimTime = 0;

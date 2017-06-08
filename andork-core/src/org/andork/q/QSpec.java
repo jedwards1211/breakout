@@ -29,7 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.andork.collect.CollectionUtils;
+import org.andork.collect.ArrayLists;
 import org.andork.reflect.ReflectionUtils;
 
 public abstract class QSpec<S extends QSpec<S>> {
@@ -113,7 +113,7 @@ public abstract class QSpec<S extends QSpec<S>> {
 		for (Attribute<?> attr : attrIterable) {
 			attributesByName.put(attr.getName(), attr);
 		}
-		ArrayList<Attribute<?>> attrList = CollectionUtils.toArrayList(attrIterable);
+		ArrayList<Attribute<?>> attrList = ArrayLists.of(attrIterable);
 		attrList.trimToSize();
 		attributeList = Collections.unmodifiableList(attrList);
 		attributes = attributeList.toArray(new Attribute[attributeList.size()]);

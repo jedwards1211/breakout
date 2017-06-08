@@ -56,7 +56,7 @@ import javax.swing.text.Keymap;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
-import org.andork.collect.CollectionUtils;
+import org.andork.collect.ArrayLists;
 import org.andork.collect.StringTrieMap;
 import org.andork.collect.Visitor;
 import org.andork.util.ClassFinder;
@@ -173,7 +173,7 @@ public class ClassChooserPane extends JPanel {
 			}
 
 			final DefaultListModel model = new DefaultListModel();
-			for (ClassInfo match : CollectionUtils.toSortedArrayList(matches, new ClassNameSorter())) {
+			for (ClassInfo match : ArrayLists.sortedOf(matches, new ClassNameSorter())) {
 				model.addElement(match);
 			}
 

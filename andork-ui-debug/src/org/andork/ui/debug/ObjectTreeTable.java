@@ -80,7 +80,6 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 
 import org.andork.awt.GridBagWizard;
-import org.andork.collect.CollectionUtils;
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.LinkedListMultiMap;
 import org.andork.collect.MultiMap;
@@ -531,7 +530,7 @@ public class ObjectTreeTable extends JXTreeTable {
 
 	protected ValueCellRenderer booleanValueCellRenderer;
 
-	protected final Map<Class<?>, Format<?>> leafFormats = CollectionUtils.newHashMap();
+	protected final Map<Class<?>, Format<?>> leafFormats = new HashMap<Class<?>, Format<?>>();
 
 	protected final LinkedListMultiMap<Class<?>, Object> enumlikeTypes = LinkedListMultiMap.newInstance();
 

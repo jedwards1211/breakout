@@ -49,11 +49,11 @@ import javax.swing.SwingUtilities;
 import javax.swing.text.JTextComponent;
 
 import org.andork.awt.CheckEDT;
-import org.andork.collect.CollectionUtils;
+import org.andork.collect.ArrayLists;
+import org.andork.collect.Iterables;
 import org.andork.ui.test.ConfigurableStringComparator.Option;
 import org.andork.util.Comparators;
 import org.andork.util.EasyIterator;
-import org.andork.util.Iterables;
 import org.andork.util.Java7;
 
 /**
@@ -331,7 +331,7 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 
 		@Override
 		public Iterator<C> iterator() {
-			return CollectionUtils.toSortedArrayList(parent, comparator).iterator();
+			return ArrayLists.sortedOf(parent, comparator).iterator();
 		}
 	}
 
@@ -498,7 +498,9 @@ public abstract class ComponentFinder<C extends Component> implements Iterable<C
 		new DoSwing() {
 			@Override
 			public void run() {
-				CollectionUtils.addAll(collection, ComponentFinder.this);
+				for (C component : ComponentFinder.this) {
+					collection.add(component);
+				}
 			}
 		};
 	}

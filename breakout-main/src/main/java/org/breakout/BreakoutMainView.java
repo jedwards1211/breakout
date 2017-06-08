@@ -119,7 +119,7 @@ import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
-import org.andork.collect.CollectionUtils;
+import org.andork.collect.HashSets;
 import org.andork.concurrent.Throttler;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.SourcePath;
@@ -2105,7 +2105,7 @@ public class BreakoutMainView {
 			return;
 		}
 
-		changeView(CollectionUtils.toHashSet(getShotsFromTable()));
+		changeView(HashSets.of(getShotsFromTable()));
 	}
 
 	protected void fitViewToSelected() {
@@ -2113,7 +2113,7 @@ public class BreakoutMainView {
 			return;
 		}
 
-		changeView(CollectionUtils.toHashSet(getSelectedShotsFromTable()));
+		changeView(HashSets.of(getSelectedShotsFromTable()));
 	}
 
 	protected void flyToFiltered(final AnnotatingJTable table) {

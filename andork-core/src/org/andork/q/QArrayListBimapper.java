@@ -23,7 +23,7 @@ package org.andork.q;
 
 import java.util.List;
 
-import org.andork.collect.CollectionUtils;
+import org.andork.collect.ArrayLists;
 import org.andork.func.Bimapper;
 import org.andork.func.Lodash;
 
@@ -41,7 +41,7 @@ public class QArrayListBimapper<I, O> implements Bimapper<QArrayList<I>, List<O>
 
 	@Override
 	public List<O> map(QArrayList<I> in) {
-		return in == null ? null : CollectionUtils.toArrayList(Lodash.map(in, e -> elemBimapper.map(e)));
+		return in == null ? null : ArrayLists.of(Lodash.map(in, e -> elemBimapper.map(e)));
 	}
 
 	@Override

@@ -28,7 +28,6 @@ import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
-import org.andork.util.Iterables;
 import org.breakout.compass.CompassConverter;
 import org.breakout.importui.ImportError;
 import org.breakout.importui.ImportResultsDialog;

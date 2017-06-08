@@ -19,7 +19,7 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.util;
+package org.andork.collect;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -115,7 +115,15 @@ public class Iterables {
 		return () -> Iterators.linesOf(new InputStreamReader(in));
 	}
 	
-	public static <I, O> Iterable<O> map(Iterable<I> in, Function<I, O> iteratee) {
+	public static <I, O> Iterable<O> map(Iterable<? extends I> in, Function<? super I, ? extends O> iteratee) {
 		return () -> Iterators.map(in.iterator(), iteratee);
+	}
+	
+	public static <I, O> Iterable<O> map(I[] in, Function<? super I, ? extends O> iteratee) {
+		return () -> Iterators.map(in, iteratee);
+	}
+
+	public static <E> void removeAll(Iterable<? extends E> i, Predicate<? super E> p) {
+		Iterators.removeAll(i.iterator(), p);
 	}
 }
