@@ -81,6 +81,6 @@ public class ImportCompassAction extends AbstractAction {
 		mainView.ioTaskService().<Void> submit(
 				new ImportCompassTask(mainView,
 						Iterables.map(Arrays.asList(fileChooser.getSelectedFiles()),
-								file -> Paths.get(file.toString()))));
+								file -> file.toPath())));
 	}
 }
