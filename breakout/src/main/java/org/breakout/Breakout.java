@@ -4,10 +4,10 @@ import java.lang.reflect.Method;
 
 import javax.swing.JOptionPane;
 
-public class BreakoutLauncher {
+public class Breakout {
 	public static void main(String[] args) throws Exception {
 		checkJavaVersion();
-		Class breakout = Class.forName("org.breakout.Breakout");
+		Class breakout = Class.forName("org.breakout.BreakoutMain");
 		Method main = breakout.getMethod("main", new Class[] { String[].class });
 		main.invoke(null, new Object[] { args });
 	}

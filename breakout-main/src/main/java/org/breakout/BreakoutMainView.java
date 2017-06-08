@@ -1180,7 +1180,7 @@ public class BreakoutMainView {
 	}
 
 	final DebouncedRunnable saveRootModel = Lodash.debounce(
-			() -> saveModel(getRootModel(), Breakout.getRootSettingsFile(), RootModel.defaultMapper),
+			() -> saveModel(getRootModel(), BreakoutMain.getRootSettingsFile(), RootModel.defaultMapper),
 			1000, new DebounceOptions<Void>().executor(ioService));
 
 	final DebouncedRunnable saveSwap = Lodash.debounce(
@@ -1869,7 +1869,7 @@ public class BreakoutMainView {
 			return true;
 		});
 
-		QObject<RootModel> rootModel = loadRootModel(Breakout.getRootSettingsFile());
+		QObject<RootModel> rootModel = loadRootModel(BreakoutMain.getRootSettingsFile());
 
 		if (rootModel == null) {
 			rootModel = RootModel.instance.newObject();
@@ -2513,10 +2513,10 @@ public class BreakoutMainView {
 			int index = -1;
 			do {
 				swapFile = Paths.get(surveyFile.getFileName() + "-" + (++index) + ".json");
-			} while (Files.exists(Breakout.getBackupDirectory().resolve(swapFile)));
+			} while (Files.exists(BreakoutMain.getBackupDirectory().resolve(swapFile)));
 			swapFiles.put(surveyFile, swapFile);
 		}
-		return Breakout.getBackupDirectory().resolve(swapFile);
+		return BreakoutMain.getBackupDirectory().resolve(swapFile);
 	}
 
 	private final BasicPropertyChangeListener projectModelChangeHandler = new BasicPropertyChangeListener() {

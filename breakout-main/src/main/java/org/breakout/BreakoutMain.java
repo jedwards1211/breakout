@@ -46,7 +46,7 @@ import org.andork.logging.LoggerPrintStream;
 import org.andork.swing.OnEDT;
 import org.andork.swing.SplashFrame;
 
-public class Breakout {
+public class BreakoutMain {
 	private static final Path rootDirectory;
 	private static final Path backupDirectory;
 	private static final Path rootSettingsFile;
@@ -55,7 +55,7 @@ public class Breakout {
 	private static Image splashImage;
 	private static BreakoutMainFrame frame;
 
-	private static final Logger logger = Logger.getLogger(Breakout.class.getName());
+	private static final Logger logger = Logger.getLogger(BreakoutMain.class.getName());
 
 	static {
 		if (System.getProperty("rootDirectory") != null) {
@@ -71,7 +71,7 @@ public class Breakout {
 		backupDirectory = rootDirectory.resolve("backup");
 	}
 
-	private Breakout() {
+	private BreakoutMain() {
 
 	}
 
@@ -92,7 +92,7 @@ public class Breakout {
 		System.setProperty("com.apple.mrj.application.apple.menu.about.name", "Breakout");
 
 		try {
-			splashImage = ImageIO.read(Breakout.class.getResource("splash.png"));
+			splashImage = ImageIO.read(BreakoutMain.class.getResource("splash.png"));
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to load splash image", e);
 		}
@@ -200,7 +200,7 @@ public class Breakout {
 			if (System.getProperty("java.util.logging.config.file") != null) {
 				props.load(new FileInputStream(System.getProperty("java.util.logging.config.file")));
 			} else {
-				props.load(Breakout.class.getResourceAsStream("logging.properties"));
+				props.load(BreakoutMain.class.getResourceAsStream("logging.properties"));
 			}
 	
 			String logfile = props.getProperty("java.util.logging.FileHandler.pattern");

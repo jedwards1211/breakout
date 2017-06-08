@@ -28,7 +28,7 @@ public class OpenLogDirectoryAction extends AbstractAction {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		try {
-			Desktop.getDesktop().open(Breakout.getLogDirectory().toFile());
+			Desktop.getDesktop().open(BreakoutMain.getLogDirectory().toFile());
 		} catch (Exception ex) {
 			logger.log(Level.SEVERE, "failed to open log directory", ex);
 		}
