@@ -60,6 +60,9 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<File> currentCompassImportDirectory = newAttribute(
 			File.class,
 			"currentCompassImportDirectory");
+	public static final Attribute<File> currentWallsImportDirectory = newAttribute(
+			File.class,
+			"currentWallsImportDirectory");
 	public static final Attribute<Integer> desiredNumSamples = newAttribute(
 			Integer.class,
 			"desiredNumSamples");
@@ -93,6 +96,7 @@ public final class RootModel extends QSpec<RootModel> {
 				.map(recentProjectFiles, QArrayListBimapper.newInstance(PathStringBimapper.instance))
 				.map(currentProjectFileChooserDirectory, FileStringBimapper.instance)
 				.map(currentCompassImportDirectory, FileStringBimapper.instance)
+				.map(currentWallsImportDirectory, FileStringBimapper.instance)
 				.exclude(currentProjectFile);
 	}
 
@@ -116,6 +120,14 @@ public final class RootModel extends QSpec<RootModel> {
 
 	public static File getCurrentCompassImportDirectory(QObject<RootModel> model) {
 		File directory = model.get(currentCompassImportDirectory);
+		if (directory == null) {
+			return getCurrentProjectFileChooserDirectory(model);
+		}
+		return directory;
+	}
+
+	public static File getCurrentWallsImportDirectory(QObject<RootModel> model) {
+		File directory = model.get(currentWallsImportDirectory);
 		if (directory == null) {
 			return getCurrentProjectFileChooserDirectory(model);
 		}

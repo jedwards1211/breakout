@@ -1,4 +1,4 @@
-package org.breakout.compass.ui;
+package org.breakout.importui;
 
 import java.awt.Toolkit;
 import java.awt.event.ActionListener;
@@ -20,24 +20,24 @@ import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
 import org.andork.awt.I18n.I18nUpdater;
 import org.andork.awt.I18n.Localizer;
-import org.andork.compass.CompassParseError;
 import org.andork.swing.OnEDT;
 import org.breakout.SurveyTable;
 import org.breakout.SurveyTable.Aspect;
 import org.breakout.model.SurveyTableModel;
 
-public class CompassParseResultsDialog extends JDialog {
+public class ImportResultsDialog extends JDialog {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args) {
 		OnEDT.onEDT(() -> {
-			CompassParseResultsDialog dialog = new CompassParseResultsDialog(new I18n());
+			ImportResultsDialog dialog = new ImportResultsDialog(new I18n(), "title.compass");
 			dialog.setSize(Toolkit.getDefaultToolkit().getScreenSize());
 			dialog.setVisible(true);
 		});
 	}
 
-	CompassParseErrorsPane errorsPane;
+	final String titleKey;
+	ImportErrorsPane errorsPane;
 	SurveyTable surveyTable;
 	JScrollPane surveyTableScroller;
 	JTabbedPane tabbedPane;
@@ -47,10 +47,10 @@ public class CompassParseResultsDialog extends JDialog {
 	JRadioButton shotsButton;
 	JRadioButton nevButton;
 
-	final I18nUpdater<CompassParseResultsDialog> i18nUpdater = new I18nUpdater<CompassParseResultsDialog>() {
+	final I18nUpdater<ImportResultsDialog> i18nUpdater = new I18nUpdater<ImportResultsDialog>() {
 		@Override
-		public void updateI18n(Localizer localizer, CompassParseResultsDialog localizedObject) {
-			setTitle(localizer.getString("title"));
+		public void updateI18n(Localizer localizer, ImportResultsDialog localizedObject) {
+			setTitle(localizer.getString(titleKey));
 			tabbedPane.setTitleAt(0, localizer.getString("errorsTab.title"));
 			tabbedPane.setTitleAt(1, localizer.getString("dataTab.title"));
 			cancelButton.setText(localizer.getString("cancelButton.text"));
@@ -58,10 +58,11 @@ public class CompassParseResultsDialog extends JDialog {
 		}
 	};
 
-	public CompassParseResultsDialog(I18n i18n) {
-		Localizer localizer = i18n.forClass(CompassParseResultsDialog.class);
+	public ImportResultsDialog(I18n i18n, String titleKey) {
+		Localizer localizer = i18n.forClass(ImportResultsDialog.class);
+		this.titleKey = titleKey;
 
-		errorsPane = new CompassParseErrorsPane();
+		errorsPane = new ImportErrorsPane();
 		surveyTable = new SurveyTable();
 		surveyTable.setAspect(Aspect.SHOTS);
 		JScrollPane surveyTableScroller = new JScrollPane(surveyTable);
@@ -119,12 +120,12 @@ public class CompassParseResultsDialog extends JDialog {
 		importButton.addActionListener(listener);
 	}
 
-	public CompassParseResultsDialog setErrors(List<CompassParseError> errors) {
+	public ImportResultsDialog setErrors(List<ImportError> errors) {
 		errorsPane.setErrors(errors);
 		return this;
 	}
 
-	public CompassParseResultsDialog setSurveyTableModel(SurveyTableModel model) {
+	public ImportResultsDialog setSurveyTableModel(SurveyTableModel model) {
 		surveyTable.setModel(model);
 		return this;
 	}

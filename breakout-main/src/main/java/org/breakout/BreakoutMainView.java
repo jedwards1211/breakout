@@ -1126,6 +1126,7 @@ public class BreakoutMainView {
 	OpenProjectAction openProjectAction = new OpenProjectAction(this);
 
 	ImportCompassAction importCompassAction = new ImportCompassAction(this);
+	ImportWallsAction importWallsAction = new ImportWallsAction(this);
 
 	ExportImageAction exportImageAction = new ExportImageAction(this);
 
@@ -1618,6 +1619,7 @@ public class BreakoutMainView {
 		fileMenu.add(new JSeparator());
 		JMenu importMenu = new JMenu();
 		importMenu.add(new JMenuItem(importCompassAction));
+		importMenu.add(new JMenuItem(importWallsAction));
 		fileMenu.add(importMenu);
 		JMenu exportMenu = new JMenu();
 		exportMenu.add(new JMenuItem(exportImageAction));

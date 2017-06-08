@@ -1,4 +1,4 @@
-package org.breakout.compass.ui;
+package org.breakout.importui;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -27,24 +27,23 @@ import javax.swing.table.TableCellRenderer;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.IconScaler;
-import org.andork.compass.CompassParseError;
-import org.andork.compass.CompassParseError.Severity;
 import org.andork.segment.Segment;
 import org.andork.swing.QuickTestFrame;
 import org.andork.swing.table.ListTableColumn;
 import org.andork.swing.table.ListTableModel;
 import org.andork.swing.table.ListTableModel.Column;
 import org.andork.swing.table.ListTableModel.ColumnBuilder;
+import org.breakout.importui.ImportError.Severity;
 
 @SuppressWarnings("serial")
-public class CompassParseErrorsPane extends JSplitPane {
+public class ImportErrorsPane extends JSplitPane {
 	public static void main(String[] args) {
-		CompassParseErrorsPane pane = new CompassParseErrorsPane();
+		ImportErrorsPane pane = new ImportErrorsPane();
 
-		List<CompassParseError> errors = new ArrayList<CompassParseError>();
-		errors.add(new CompassParseError(Severity.ERROR, "this is a test",
+		List<ImportError> errors = new ArrayList<ImportError>();
+		errors.add(new ImportError(Severity.ERROR, "this is a test",
 				new Segment("blah blah blah", "file.txt", 0, 5)));
-		errors.add(new CompassParseError(Severity.WARNING, "test 2",
+		errors.add(new ImportError(Severity.WARNING, "test 2",
 				new Segment("blah blah blah", "fileb.txt", 2, 6)));
 		pane.setErrors(errors);
 
@@ -58,7 +57,7 @@ public class CompassParseErrorsPane extends JSplitPane {
 
 	final JScrollPane contextAreaScroller;
 
-	public CompassParseErrorsPane() {
+	public ImportErrorsPane() {
 		super(JSplitPane.VERTICAL_SPLIT);
 
 		summaryLabel = new JLabel();
@@ -89,7 +88,7 @@ public class CompassParseErrorsPane extends JSplitPane {
 					contextArea.setText(null);
 				} else {
 					@SuppressWarnings("unchecked")
-					ListTableModel<CompassParseError> model = (ListTableModel<CompassParseError>) table.getModel();
+					ListTableModel<ImportError> model = (ListTableModel<ImportError>) table.getModel();
 					contextArea.setText(
 							model.getRowAt(table.getSelectedRow()).getSegment().underlineInContext());
 				}
@@ -99,12 +98,12 @@ public class CompassParseErrorsPane extends JSplitPane {
 
 	static class ErrorTableColumnModel extends DefaultTableColumnModel {
 		public static class Columns {
-			private static <V> ListTableColumn<CompassParseError, V> column(
-					ListTableModel.Column<CompassParseError, V> modelColumn) {
+			private static <V> ListTableColumn<ImportError, V> column(
+					ListTableModel.Column<ImportError, V> modelColumn) {
 				return new ListTableColumn<>(modelColumn);
 			}
 
-			public static ListTableColumn<CompassParseError, Severity> severity = column(ErrorTableColumns.severity)
+			public static ListTableColumn<ImportError, Severity> severity = column(ErrorTableColumns.severity)
 					.headerValue("")
 					.renderer(new DefaultTableCellRenderer() {
 						final Map<String, ImageIcon> icons = new HashMap<>();
@@ -130,15 +129,15 @@ public class CompassParseErrorsPane extends JSplitPane {
 							return label;
 						}
 					}).maxWidth(35);
-			public static ListTableColumn<CompassParseError, String> message = column(ErrorTableColumns.message)
+			public static ListTableColumn<ImportError, String> message = column(ErrorTableColumns.message)
 					.headerValue("Problem");
-			public static ListTableColumn<CompassParseError, Object> source = column(ErrorTableColumns.source)
+			public static ListTableColumn<ImportError, Object> source = column(ErrorTableColumns.source)
 					.headerValue("File");
-			public static ListTableColumn<CompassParseError, Integer> line = column(ErrorTableColumns.line)
+			public static ListTableColumn<ImportError, Integer> line = column(ErrorTableColumns.line)
 					.headerValue("Line")
 					.maxWidth(50)
 					.renderer(numberCellRenderer);
-			public static ListTableColumn<CompassParseError, Integer> col = column(ErrorTableColumns.col)
+			public static ListTableColumn<ImportError, Integer> col = column(ErrorTableColumns.col)
 					.headerValue("Column")
 					.maxWidth(50)
 					.renderer(numberCellRenderer);
@@ -160,14 +159,14 @@ public class CompassParseErrorsPane extends JSplitPane {
 	}
 
 	public static class ErrorTableColumns {
-		public static final Column<CompassParseError, Severity> severity;
-		public static final Column<CompassParseError, String> message;
-		public static final Column<CompassParseError, Object> source;
-		public static final Column<CompassParseError, Integer> line;
-		public static final Column<CompassParseError, Integer> col;
+		public static final Column<ImportError, Severity> severity;
+		public static final Column<ImportError, String> message;
+		public static final Column<ImportError, Object> source;
+		public static final Column<ImportError, Integer> line;
+		public static final Column<ImportError, Integer> col;
 
-		static <V> ColumnBuilder<CompassParseError, V> column(Class<V> columnClass) {
-			return new ColumnBuilder<CompassParseError, V>().columnClass(columnClass);
+		static <V> ColumnBuilder<ImportError, V> column(Class<V> columnClass) {
+			return new ColumnBuilder<ImportError, V>().columnClass(columnClass);
 		}
 
 		static {
@@ -178,11 +177,11 @@ public class CompassParseErrorsPane extends JSplitPane {
 			col = column(Integer.class).getter(e -> e.getSegment().startCol).create();
 		}
 
-		static List<Column<CompassParseError, ?>> list = Arrays.asList(
+		static List<Column<ImportError, ?>> list = Arrays.asList(
 				severity, message, source, line, col);
 	}
 
-	public void setErrors(List<CompassParseError> errors) {
+	public void setErrors(List<ImportError> errors) {
 		if (errors == null) {
 			table.setModel(new DefaultTableModel());
 			summaryLabel.setText(null);
@@ -194,10 +193,10 @@ public class CompassParseErrorsPane extends JSplitPane {
 				.append(numErrors != 1 ? "s, " : ", ").append(numWarnings).append(" Warning")
 				.append(numWarnings != 1 ? "s" : "").toString());
 
-		if (errors == ListTableModel.<CompassParseError> getList(table.getModel())) {
+		if (errors == ListTableModel.<ImportError> getList(table.getModel())) {
 			return;
 		}
-		ListTableModel<CompassParseError> model = new ListTableModel<>(ErrorTableColumns.list, errors);
+		ListTableModel<ImportError> model = new ListTableModel<>(ErrorTableColumns.list, errors);
 		model.setEditable(false);
 		table.setModel(model);
 		ListTableColumn.updateModelIndices(table);

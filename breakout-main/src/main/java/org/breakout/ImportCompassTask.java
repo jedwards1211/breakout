@@ -1,5 +1,7 @@
 package org.breakout;
 
+import static org.andork.util.JavaScript.falsy;
+
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.Toolkit;
@@ -26,14 +28,14 @@ import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
+import org.andork.util.Iterables;
 import org.breakout.compass.CompassConverter;
-import org.breakout.compass.ui.CompassParseResultsDialog;
+import org.breakout.importui.ImportError;
+import org.breakout.importui.ImportResultsDialog;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.raw.MutableSurveyRow;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
-
-import static org.andork.util.JavaScript.falsy;
 
 class ImportCompassTask extends SelfReportingTask<Void> {
 	private static final Logger logger = Logger.getLogger(ImportCompassTask.class.getSimpleName());
@@ -182,10 +184,14 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 
 			@Override
 			public void run() throws Throwable {
-				CompassParseResultsDialog dialog = new CompassParseResultsDialog(ImportCompassTask.this.mainView.i18n);
-				List<CompassParseError> errors = new ArrayList<>();
-				errors.addAll(parser.getErrors());
-				errors.addAll(plotParser.getErrors());
+				ImportResultsDialog dialog = new ImportResultsDialog(ImportCompassTask.this.mainView.i18n, "title.compass");
+				List<ImportError> errors = new ArrayList<>();
+				for (CompassParseError error : parser.getErrors()) {
+					errors.add(new ImportError(error));
+				}
+				for (CompassParseError error : plotParser.getErrors()) {
+					errors.add(new ImportError(error));
+				}
 				dialog.setErrors(errors);
 				dialog.setSurveyTableModel(newModel);
 				dialog.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
