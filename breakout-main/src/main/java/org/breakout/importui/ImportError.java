@@ -43,9 +43,7 @@ public class ImportError {
 	}
 
 	public ImportError(WallsMessage message) {
-		this(convertSeverity(message.severity), message.message,
-				new Segment(message.context, message.source, message.startLine, 0)
-						.substring(message.startColumn));
+		this(convertSeverity(message.severity), message.message, message.segment);
 	}
 
 	private static Severity convertSeverity(String severity) {

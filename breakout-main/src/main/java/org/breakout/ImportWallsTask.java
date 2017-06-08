@@ -75,7 +75,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 
 			for (Path file : projFiles) {
 				logger.info(() -> "importing walls data from " + file + "...");
-				setStatus("Importing data from " + file + "...");
+				setStatus("Importing data from " + file);
 				WallsProjectParser parser = new WallsProjectParser();
 				try {
 					WallsProjectBook rootBook = parser.parseFile(file.toString());
@@ -91,18 +91,13 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 				setCompleted(progress++);
 			}
 
-			Set<Path> finalPlotFiles = new HashSet<>();
-			for (Path file : plotFiles) {
-				finalPlotFiles.add(file.toRealPath().normalize());
-			}
-
-			setTotal(projFiles.size() + surveyFiles.size() + finalPlotFiles.size());
+			setTotal(projFiles.size() + surveyFiles.size());
 
 			for (Map.Entry<Path, WallsProjectEntry> entry : surveyFiles.entrySet()) {
 				Path file = entry.getKey();
 				WallsProjectEntry surveyEntry = entry.getValue();
 				logger.info(() -> "importing walls data from " + file + "...");
-				setStatus("Importing data from " + file + "...");
+				setStatus("Importing data from " + file);
 				runSubtask(1, fileSubtask -> {
 					fileSubtask.setTotal(2);
 					WallsSurveyParser parser = new WallsSurveyParser();
