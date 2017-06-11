@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>breakout</artifactId>
-	<version>1.0.0-alpha.7</version>
+	<version>1.0.0-alpha.8</version>
 	<name>Breakout launcher</name>
 	<description>displays friendly error if user is running an older version of Java, otherwise runs Breakout</description>
 	<build>
@@ -33,7 +33,7 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>org.breakout.BreakoutLauncher</mainClass>
+									<mainClass>org.breakout.Breakout</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>breakout-main</artifactId>
-			<version>1.0.0-alpha.7</version>
+			<version>1.0.0-alpha.8</version>
   		</dependency>
 	</dependencies>
 </project>
