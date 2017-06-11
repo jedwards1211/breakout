@@ -56,7 +56,7 @@ public class ImportWallsAction extends AbstractAction {
 				fileChooser = new JFileChooser();
 				fileChooser.setMultiSelectionEnabled(true);
 				fileChooser.setAcceptAllFileFilterUsed(true);
-				FileFilter datFilter = new FileNameExtensionFilter("Walls Files (*.srv, *.wpj)", "srv", "wpj");
+				FileFilter datFilter = new FileNameExtensionFilter("Walls Files (*.srv, *.wpj, *.lst)", "srv", "wpj", "lst");
 				fileChooser.addChoosableFileFilter(datFilter);
 				fileChooser.setFileFilter(datFilter);
 			}

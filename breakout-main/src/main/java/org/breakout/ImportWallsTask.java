@@ -3,6 +3,7 @@ package org.breakout;
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -24,6 +25,8 @@ import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
 import org.andork.unit.UnitizedNumber;
 import org.andork.walls.WallsMessage;
+import org.andork.walls.lst.StationPosition;
+import org.andork.walls.lst.WallsStationReportParser;
 import org.andork.walls.srv.AbstractWallsVisitor;
 import org.andork.walls.srv.FixedStation;
 import org.andork.walls.srv.Vector;
@@ -48,7 +51,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 
 	private final BreakoutMainView mainView;
 	private final Map<Path, WallsProjectEntry> surveyFiles = new HashMap<>();
-	private final List<Path> plotFiles = new ArrayList<>();
+	private final List<Path> stationReportFiles = new ArrayList<>();
 	private final List<Path> projFiles = new ArrayList<>();
 	private boolean doImport;
 	private final List<ImportError> errors = new ArrayList<>();
@@ -64,6 +67,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 	private final List<MutableSurveyRow> rowsInCurrentTrip = new ArrayList<>();
 	private final Map<String, MutableSurveyRow> rowsByFromStationName = new HashMap<>();
 	private final List<FixedStation> fixedStations = new ArrayList<>();
+	private List<StationPosition> stationPositions;
 
 	private void endCurrentTrip() {
 		if (!rowsInCurrentTrip.isEmpty()) {
@@ -144,24 +148,6 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 				currentTrip.setName(name);
 			}
 			currentTripName = name;
-		}
-	}
-
-	private void applyFixedStationPositions() {
-		for (FixedStation station : fixedStations) {
-			if (!UnitizedNumber.isFinite(station.north) &&
-					!UnitizedNumber.isFinite(station.east) &&
-					!UnitizedNumber.isFinite(station.elevation)) {
-				continue;
-			}
-			String stationName = station.units.processStationName(station.name);
-			MutableSurveyRow row = rowsByFromStationName.get(stationName);
-			if (row == null) {
-				continue;
-			}
-			row.setNorthing(Objects.toString(station.north, null));
-			row.setEasting(Objects.toString(station.east, null));
-			row.setUp(Objects.toString(station.north, null));
 		}
 	}
 
@@ -254,8 +240,8 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			String s = p.toString().toLowerCase();
 			if (s.endsWith(".srv")) {
 				surveyFiles.put(p, null);
-			} else if (s.endsWith(".plt")) {
-				plotFiles.add(p);
+			} else if (s.endsWith(".lst")) {
+				stationReportFiles.add(p);
 			} else if (s.endsWith(".wpj")) {
 				projFiles.add(p);
 			}
@@ -279,53 +265,13 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 		logger.info("importing walls data...");
 
 		try {
-			for (Path file : projFiles) {
-				currentFile = file;
-				logger.info(() -> "importing walls data from " + file + "...");
-				setStatus("Importing data from " + file);
-				WallsProjectParser parser = new WallsProjectParser();
-				try {
-					WallsProjectBook rootBook = parser.parseFile(file.toString());
-					if (rootBook == null) {
-						throw new RuntimeException("Failed to parse " + file);
-					}
-					putSurveyFiles(rootBook);
-				} finally {
-					for (WallsMessage message : parser.getMessages()) {
-						errors.add(new ImportError(message));
-					}
-				}
-				increment();
-			}
-
-			setTotal(projFiles.size() + surveyFiles.size());
-
-			for (Map.Entry<Path, WallsProjectEntry> entry : surveyFiles.entrySet()) {
-				Path file = entry.getKey();
-				currentFile = file;
-				WallsProjectEntry surveyEntry = entry.getValue();
-
-				logger.info(() -> "importing walls data from " + file + "...");
-				setStatus("Importing data from " + file);
-
-				awaitingTripNameComment = true;
-				try {
-					WallsSurveyParser parser = new WallsSurveyParser();
-					parser.setVisitor(wallsVisitor);
-					if (surveyEntry != null) {
-						setCurrentTripName(surveyEntry.absolutePath().getFileName().toString());
-						parser.parseSurveyEntry(surveyEntry);
-					} else {
-						setCurrentTripName(file.getFileName().toString());
-						parser.parseFile(file.toFile());
-					}
-				} finally {
-					endCurrentTrip();
-				}
-				increment();
-			}
+			parseProjectFiles();
+			setTotal(projFiles.size() + surveyFiles.size() + stationReportFiles.size());
+			parseSurveyFiles();
+			parseStationReportFiles();
 
 			applyFixedStationPositions();
+			applyReportStationPositions();
 
 		} catch (Exception ex) {
 			if (ex instanceof SegmentParseException) {
@@ -374,5 +320,99 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 		});
 
 		return null;
+	}
+
+	private void parseProjectFiles() throws IOException {
+		for (Path file : projFiles) {
+			currentFile = file;
+			logger.info(() -> "importing walls data from " + file + "...");
+			setStatus("Importing data from " + file);
+			WallsProjectParser parser = new WallsProjectParser();
+			try {
+				WallsProjectBook rootBook = parser.parseFile(file.toString());
+				if (rootBook == null) {
+					throw new RuntimeException("Failed to parse " + file);
+				}
+				putSurveyFiles(rootBook);
+			} finally {
+				for (WallsMessage message : parser.getMessages()) {
+					errors.add(new ImportError(message));
+				}
+			}
+			increment();
+		}
+	}
+
+	private void parseSurveyFiles() throws SegmentParseException, IOException {
+		for (Map.Entry<Path, WallsProjectEntry> entry : surveyFiles.entrySet()) {
+			Path file = entry.getKey();
+			currentFile = file;
+			WallsProjectEntry surveyEntry = entry.getValue();
+
+			logger.info(() -> "importing walls data from " + file + "...");
+			setStatus("Importing data from " + file);
+
+			awaitingTripNameComment = true;
+			try {
+				WallsSurveyParser parser = new WallsSurveyParser();
+				parser.setVisitor(wallsVisitor);
+				if (surveyEntry != null) {
+					setCurrentTripName(surveyEntry.absolutePath().getFileName().toString());
+					parser.parseSurveyEntry(surveyEntry);
+				} else {
+					setCurrentTripName(file.getFileName().toString());
+					parser.parseFile(file.toFile());
+				}
+			} finally {
+				endCurrentTrip();
+			}
+			increment();
+		}
+	}
+
+	private void parseStationReportFiles() throws IOException {
+		WallsStationReportParser parser = new WallsStationReportParser();
+
+		for (Path file : stationReportFiles) {
+			logger.info(() -> "importing walls data from " + file + "...");
+			setStatus("Importing data from " + file);
+
+			parser.parseFile(file);
+
+			increment();
+		}
+
+		stationPositions = parser.getReport().stationPositions;
+	}
+
+	private void applyFixedStationPositions() {
+		for (FixedStation station : fixedStations) {
+			if (!UnitizedNumber.isFinite(station.north) &&
+					!UnitizedNumber.isFinite(station.east) &&
+					!UnitizedNumber.isFinite(station.elevation)) {
+				continue;
+			}
+			String stationName = station.units.processStationName(station.name);
+			MutableSurveyRow row = rowsByFromStationName.get(stationName);
+			if (row == null) {
+				continue;
+			}
+			if (station.north != null) row.setNorthing(station.north.toString());
+			if (station.east != null) row.setEasting(station.east.toString());
+			if (station.elevation != null) row.setElevation(station.elevation.toString());
+		}
+	}
+
+	private void applyReportStationPositions() {
+		for (StationPosition station : stationPositions) {
+			String stationName = station.getNameWithPrefix();
+			MutableSurveyRow row = rowsByFromStationName.get(stationName);
+			if (row == null) {
+				continue;
+			}
+			if (Double.isFinite(station.north)) row.setNorthing(String.valueOf(station.north));
+			if (Double.isFinite(station.east)) row.setEasting(String.valueOf(station.east));
+			if (Double.isFinite(station.up)) row.setElevation(String.valueOf(station.up));
+		}
 	}
 }

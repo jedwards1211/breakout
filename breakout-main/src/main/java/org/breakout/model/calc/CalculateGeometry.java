@@ -535,6 +535,11 @@ public class CalculateGeometry {
 	}
 
 	static void calculateStationPositions(CalcShot shot) {
+		if (!Double.isFinite(shot.distance) ||
+				!Double.isFinite(shot.azimuth) ||
+				!Double.isFinite(shot.inclination)) {
+			return;
+		}
 		double xOffs = shot.distance * Math.cos(shot.inclination) * Math.sin(shot.azimuth);
 		double yOffs = shot.distance * Math.sin(shot.inclination);
 		double zOffs = shot.distance * Math.cos(shot.inclination) * -Math.cos(shot.azimuth);
