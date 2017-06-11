@@ -21,6 +21,8 @@
  *******************************************************************************/
 package org.andork.format;
 
+import java.util.Objects;
+
 import org.andork.util.StringUtils;
 
 public class IntegerFormat implements Format<Integer> {
@@ -28,7 +30,7 @@ public class IntegerFormat implements Format<Integer> {
 
 	@Override
 	public String format(Integer t) {
-		return StringUtils.toStringOrNull(t);
+		return Objects.toString(t, null);
 	}
 
 	@Override

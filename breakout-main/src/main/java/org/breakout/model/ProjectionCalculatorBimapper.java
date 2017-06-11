@@ -24,6 +24,7 @@ package org.breakout.model;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.andork.func.Bimapper;
 import org.andork.jogl.AutoClipOrthoProjection;
@@ -31,7 +32,6 @@ import org.andork.jogl.PerspectiveProjection;
 import org.andork.jogl.Projection;
 import org.andork.math3d.Vecmath;
 import org.andork.util.ArrayUtils;
-import org.andork.util.StringUtils;
 
 public class ProjectionCalculatorBimapper implements Bimapper<Projection, Object> {
 	public static final ProjectionCalculatorBimapper instance = new ProjectionCalculatorBimapper();
@@ -90,7 +90,7 @@ public class ProjectionCalculatorBimapper implements Bimapper<Projection, Object
 
 		if (out instanceof Map) {
 			Map<Object, Object> map = (Map<Object, Object>) out;
-			String type = StringUtils.toStringOrNull(map.get("type"));
+			String type = Objects.toString(map.get("type"), null);
 			if ("perspective".equals(type)) {
 				return unmapPerspective(map);
 			} else if ("ortho".equals(type)) {

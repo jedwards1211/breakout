@@ -21,6 +21,8 @@
  *******************************************************************************/
 package org.andork.format;
 
+import java.util.Objects;
+
 import org.andork.util.StringUtils;
 
 public class DoubleFormat implements Format<Double> {
@@ -28,7 +30,7 @@ public class DoubleFormat implements Format<Double> {
 
 	@Override
 	public String format(Double t) {
-		return StringUtils.toStringOrNull(t);
+		return Objects.toString(t, null);
 	}
 
 	@Override

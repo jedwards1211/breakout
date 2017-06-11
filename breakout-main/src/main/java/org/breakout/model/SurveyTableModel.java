@@ -67,7 +67,9 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 		public static final Column<SurveyRow, String> surveyors = new ColumnBuilder<SurveyRow, String>()
 				.columnName("Surveyors")
 				.columnClass(String.class)
-				.getter(r -> r.getTrip() == null ? null : StringUtils.join("; ", r.getTrip().getSurveyors()))
+				.getter(r -> r.getTrip() == null || r.getTrip().getSurveyors() == null
+						? null
+						: StringUtils.join("; ", r.getTrip().getSurveyors()))
 				.setter((row, surveyors) -> {
 					return row.withMutations(r -> {
 						List<String> parsed = Arrays.asList(surveyors.split("\\s*;\\s*"));

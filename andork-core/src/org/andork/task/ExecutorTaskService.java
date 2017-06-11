@@ -59,6 +59,9 @@ public class ExecutorTaskService implements TaskService {
 		final Future<V> future = executor.submit(() -> {
 			try {
 				return task.call();
+			} catch (Throwable t) {
+				t.printStackTrace();
+				throw t;
 			} finally {
 				removeTask(task);
 			}

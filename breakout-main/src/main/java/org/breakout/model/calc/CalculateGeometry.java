@@ -512,6 +512,13 @@ public class CalculateGeometry {
 				queue.add(new PriorityEntry<>(0.0, shot));
 			}
 		}
+		if (queue.isEmpty()) {
+			for (CalcShot shot : project.shots.values()) {
+				Arrays.fill(shot.fromStation.position, 0);
+				queue.add(new PriorityEntry<>(0.0, shot));
+				break;
+			}
+		}
 		while (!queue.isEmpty()) {
 			PriorityEntry<Double, CalcShot> entry = queue.poll();
 			double distance = entry.getKey();
@@ -520,7 +527,7 @@ public class CalculateGeometry {
 			for (CalcShot nextShot : Iterables.concat(
 					shot.fromStation.shots.values(),
 					shot.toStation.shots.values())) {
-				if (!nextShot.fromStation.hasPosition() || !nextShot.toStation.hasPosition()) {
+				if ((!nextShot.fromStation.hasPosition() || !nextShot.toStation.hasPosition()) && Double.isFinite(shot.distance)) {
 					queue.add(new PriorityEntry<>(distance + shot.distance, nextShot));
 				}
 			}

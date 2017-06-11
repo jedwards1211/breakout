@@ -183,10 +183,6 @@ public class StringUtils {
 		return s;
 	}
 
-	public static String toStringOrNull(Object o) {
-		return o == null ? null : o.toString();
-	}
-
 	public static int unescapedIndexOf(String s, char c, char escape) {
 		boolean inEscape = false;
 		for (int i = 0; i < s.length(); i++) {
