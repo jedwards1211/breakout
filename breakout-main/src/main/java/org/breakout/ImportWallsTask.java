@@ -410,9 +410,9 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			if (row == null) {
 				continue;
 			}
-			if (Double.isFinite(station.north)) row.setNorthing(String.valueOf(station.north));
-			if (Double.isFinite(station.east)) row.setEasting(String.valueOf(station.east));
-			if (Double.isFinite(station.up)) row.setElevation(String.valueOf(station.up));
+			if (Double.isFinite(station.north)) row.setNorthing(station.north + " m");
+			if (Double.isFinite(station.east)) row.setEasting(station.east + " m");
+			if (Double.isFinite(station.up)) row.setElevation(station.up + " m");
 		}
 	}
 }
