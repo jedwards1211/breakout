@@ -36,9 +36,7 @@ public class PerspectiveProjection implements Projection {
 	}
 
 	@Override
-	public void calculate(JoglDrawContext dc, float[] pOut) {
-		float width = dc.width();
-		float height = dc.height();
-		perspective(pOut, fovAngle, width / height, zNear, zFar);
+	public void calculate(float[] pOut, JoglDrawContext dc, int width, int height) {
+		perspective(pOut, fovAngle, width / (float) height, zNear, zFar);
 	}
 }

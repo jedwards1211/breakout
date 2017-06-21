@@ -89,6 +89,8 @@ public class JoglViewState implements JoglDrawContext {
 	 * Transforms from screen coordinates to a ray in virtual world coordinates.
 	 */
 	private final PickXform pickXform = new PickXform();
+	
+	private Projection projection;
 
 	public JoglViewState() {
 		update(new JoglViewSettings(), 100, 100);
@@ -136,16 +138,19 @@ public class JoglViewState implements JoglDrawContext {
 	public void update(JoglViewSettings settings, int width, int height) {
 		this.width = width;
 		this.height = height;
-
+		
 		ortho(inverseViewport, 0, width, 0, height, -1, 1);
 		invAffine(inverseViewport, viewport);
 
 		if (settings != null) {
+			projection = settings.getProjection();
+
 			settings.getViewXform(v);
 			settings.getInvViewXform(vi);
-			settings.getProjection().calculate(this, p);
+			settings.getProjection().calculate(p, this, width, height);
 			invertGeneral(p, pi);
 		} else {
+			projection = new PerspectiveProjection((float) Math.PI, 1e-6f, 1e4f);
 			setIdentity(v);
 			setIdentity(vi);
 			setIdentity(p);
@@ -188,5 +193,10 @@ public class JoglViewState implements JoglDrawContext {
 	@Override
 	public float[] screenToView() {
 		return screenToView;
+	}
+
+	@Override
+	public Projection projection() {
+		return projection;
 	}
 }

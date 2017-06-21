@@ -43,6 +43,8 @@ public interface JoglDrawContext {
 	public float[] screenToView();
 
 	public int width();
+	
+	public Projection projection();
 
 	public default void getViewPoint(float[] out) {
 		float[] vi = inverseViewMatrix();

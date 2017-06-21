@@ -1,0 +1,16 @@
+#version 330
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+uniform mat3 n;
+in vec3 a_position;
+in vec3 a_normal;
+out vec3 v_position;
+out vec3 v_normal;
+
+void main() {
+	gl_Position = p * v * m * vec4(a_position, 1.0);
+	v_position = a_position;
+	v_normal = (v * vec4(normalize(n * a_normal), 0.0)).xyz;
+}

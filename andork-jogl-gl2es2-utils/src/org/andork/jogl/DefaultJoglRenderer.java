@@ -31,7 +31,6 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected float[] m = newMat4f();
 	protected float[] n = newMat3f();
 
-	protected boolean useWindowBoundsForViewport = false;
 	protected int width;
 	protected int height;
 
@@ -124,19 +123,6 @@ public class DefaultJoglRenderer implements GLEventListener {
 	@Override
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
-
-		if (useWindowBoundsForViewport && drawable instanceof Component) {
-			Component canvas = (Component) drawable;
-			Window window = SwingUtilities.getWindowAncestor(canvas);
-			if (window != null) {
-				this.width = window.getWidth();
-				this.height = window.getHeight();
-				Rectangle bounds = SwingUtilities.convertRectangle(canvas, canvas.getBounds(), window);
-				gl.glViewport(-bounds.x / 2, bounds.y / 2 + bounds.height - window.getHeight(), this.width,
-						this.height);
-				return;
-			}
-		}
 
 		this.width = width;
 		this.height = height;

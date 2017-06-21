@@ -43,9 +43,9 @@ public class InterpolationProjection implements Projection {
 	}
 
 	@Override
-	public void calculate(JoglDrawContext dc, float[] pOut) {
-		a.calculate(dc, aOut);
-		b.calculate(dc, bOut);
+	public void calculate(float[] pOut, JoglDrawContext dc, int width, int height) {
+		a.calculate(aOut, dc, width, height);
+		b.calculate(bOut, dc, width, height);
 		Vecmath.interp(aOut, bOut, f, pOut);
 	}
 }

@@ -22,5 +22,9 @@
 package org.andork.jogl;
 
 public interface Projection {
-	public void calculate(JoglDrawContext drawContext, float[] pOut);
+	public default void calculate(float[] pOut, JoglDrawContext drawContext) {
+		calculate(pOut, drawContext, drawContext.width(), drawContext.height());
+	}
+	
+	public void calculate(float[] pOut, JoglDrawContext drawContext, int width, int height);
 }

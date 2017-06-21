@@ -196,6 +196,7 @@ import org.breakout.model.calc.CalcProject;
 import org.breakout.model.calc.CalcShot;
 import org.breakout.model.calc.CalculateGeometry;
 import org.breakout.model.calc.Parsed2Calc;
+import org.breakout.model.compass.Compass;
 import org.breakout.model.parsed.ParsedProject;
 import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
@@ -952,10 +953,14 @@ public class BreakoutMainView {
 					Rectmath.center(model.getTree().getRoot().mbr(), center);
 					orbiter.setCenter(center);
 					navigator.setCenter(center);
+					
+					Compass compass = new Compass();
 
 					autoDrawable.invoke(false, drawable -> {
 						scene.add(model);
 						scene.initLater(model);
+						scene.add(compass);
+						scene.initLater(compass);
 						return false;
 					});
 				});
@@ -2000,7 +2005,7 @@ public class BreakoutMainView {
 			if (model3d != null) {
 				FittingFrustum frustum = new FittingFrustum();
 				float[] projXform = newMat4f();
-				perspCalculator.calculate(renderer.getViewState(), projXform);
+				perspCalculator.calculate(projXform, renderer.getViewState());
 				PickXform pickXform = new PickXform();
 				pickXform.calculate(projXform, renderer.getViewState().viewMatrix());
 				frustum.init(pickXform, 0.9f);

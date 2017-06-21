@@ -7,13 +7,12 @@ import java.util.List;
 
 import org.andork.jogl.JoglManagedResource;
 
-import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL2GL3;
 import com.jogamp.opengl.GLContext;
 
-public class PipelinedRenderer extends JoglManagedResource {
+public class StaticRenderer extends JoglManagedResource {
 	public static class VertexAttribute implements Cloneable {
 		public final int size;
 		public final int type;
@@ -39,12 +38,10 @@ public class PipelinedRenderer extends JoglManagedResource {
 		public int mode;
 		public boolean usingVBOs;
 		public List<VertexAttribute> attributes;
-		public int numVerticesInBuffer;
 
-		public Options(boolean usingVBOs, int mode, int numVerticesInBuffer) {
+		public Options(boolean usingVBOs, int mode) {
 			this.usingVBOs = usingVBOs;
 			this.mode = mode;
-			this.numVerticesInBuffer = numVerticesInBuffer;
 			attributes = new ArrayList<>();
 		}
 
@@ -68,14 +65,16 @@ public class PipelinedRenderer extends JoglManagedResource {
 		}
 	}
 
-	private Options options;
-	private ByteBuffer vertices;
+	private final Options options;
+	private final ByteBuffer vertices;
+	private final int numVertices;
 	private int vertexVbo;
 	private int bytesPerVertex;
 	private int[] vertexAttribOffsets;
 	private int[] vertexAttribLocations;
 
-	public PipelinedRenderer(Options options) {
+	public StaticRenderer(ByteBuffer vertices, Options options) {
+		this.vertices = vertices;
 		this.options = options.clone();
 		vertexAttribLocations = new int[options.attributes.size()];
 		vertexAttribOffsets = new int[options.attributes.size()];
@@ -101,48 +100,14 @@ public class PipelinedRenderer extends JoglManagedResource {
 				throw new IllegalArgumentException("Unknown numeric type: attribute.type");
 			}
 		}
+		
+		numVertices = vertices.capacity() / bytesPerVertex;
 	}
 
 	public void setVertexAttribLocations(int... locations) {
-		System.arraycopy(locations, 0, vertexAttribLocations, 0, vertexAttribLocations.length);
+		System.arraycopy(locations, 0, vertexAttribLocations, 0,
+				Math.min(locations.length, vertexAttribLocations.length));
 	}
-
-	public void put(byte... values) {
-		for (byte value : values) {
-			vertices.put(value);
-		}
-		if (!vertices.hasRemaining()) {
-			draw();
-		}
-	}
-
-	public void put(short... values) {
-		for (short value : values) {
-			vertices.putShort(value);
-		}
-		if (!vertices.hasRemaining()) {
-			draw();
-		}
-	}
-
-	public void put(int... values) {
-		for (int value : values) {
-			vertices.putInt(value);
-		}
-		if (!vertices.hasRemaining()) {
-			draw();
-		}
-	}
-
-	public void put(float... values) {
-		for (float value : values) {
-			vertices.putFloat(value);
-		}
-		if (!vertices.hasRemaining()) {
-			draw();
-		}
-	}
-
 
 	@Override
 	public void doDispose(GL2ES2 gl) {
@@ -155,8 +120,6 @@ public class PipelinedRenderer extends JoglManagedResource {
 
 	@Override
 	public boolean doInit(GL2ES2 gl) {
-		vertices = Buffers.newDirectByteBuffer(options.numVerticesInBuffer * bytesPerVertex);
-
 		try {
 			final int[] vbos = new int[2];
 			int numBuffers = 1;
@@ -164,7 +127,7 @@ public class PipelinedRenderer extends JoglManagedResource {
 
 			vertexVbo = vbos[0];
 			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexVbo);
-			gl.glBufferData(GL.GL_ARRAY_BUFFER, vertices.capacity(), null, GL2ES2.GL_STREAM_DRAW);
+			gl.glBufferData(GL.GL_ARRAY_BUFFER, vertices.capacity(), vertices, GL2ES2.GL_STATIC_DRAW);
 		} catch (final Exception e) {
 			options.usingVBOs = false;
 		}
@@ -173,17 +136,10 @@ public class PipelinedRenderer extends JoglManagedResource {
 	}
 
 	public void draw() {
-		int numBytes = vertices.position();
-		if (numBytes == 0) {
-			return;
-		}
-		vertices.rewind();
-
 		final GL2GL3 gl = GLContext.getCurrentGL().getGL2GL3();
 
 		if (options.usingVBOs) {
 			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexVbo);
-			gl.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, numBytes, vertices); // upload only the new stuff
 		}
 		for (int i = 0; i < options.attributes.size(); i++) {
 			gl.glEnableVertexAttribArray(vertexAttribLocations[i]);
@@ -208,7 +164,7 @@ public class PipelinedRenderer extends JoglManagedResource {
 			}
 		}
 
-		gl.glDrawArrays(options.mode, 0, numBytes / bytesPerVertex);
+		gl.glDrawArrays(options.mode, 0, numVertices);
 
 		for (int i = 0; i < vertexAttribLocations.length; i++) {
 			gl.glDisableVertexAttribArray(vertexAttribLocations[i]);

@@ -38,10 +38,7 @@ public class AutoClipOrthoProjection implements Projection {
 	public final float[] farClipPoint = { Float.NaN, Float.NaN, Float.NaN };
 
 	@Override
-	public void calculate(JoglDrawContext dc, float[] pOut) {
-		float width = dc.width();
-		float height = dc.height();
-
+	public void calculate(float[] pOut, JoglDrawContext dc, int width, int height) {
 		float[] vi = dc.inverseViewMatrix();
 
 		float left, right, bottom, top;
