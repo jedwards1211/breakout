@@ -9,6 +9,7 @@ out vec4 color;
 void main() {
 	float diffuse = dot(v_normal, vec3(0.0, 0.0, 1.0));
 	float light = u_ambient + diffuse * (1.0 - u_ambient);
+	if (v_position.y < 0) light *= 0.5;
 	
 	vec3 base_color = mix(vec3(0.9, 0.9, 0.9), vec3(1, 0, 0), clamp(-v_position.z * 2, 0, 1));
 	
