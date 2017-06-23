@@ -954,7 +954,7 @@ public class BreakoutMainView {
 					orbiter.setCenter(center);
 					navigator.setCenter(center);
 					
-					Compass compass = new Compass();
+					compass = new Compass();
 
 					autoDrawable.invoke(false, drawable -> {
 						scene.add(model);
@@ -1092,6 +1092,7 @@ public class BreakoutMainView {
 
 	SettingsDrawer settingsDrawer;
 	Survey3dModel model3d;
+	Compass compass;
 	float[] v = newMat4f();
 	int debugMbrCount = 0;
 
@@ -2734,6 +2735,8 @@ public class BreakoutMainView {
 				autoDrawable.invoke(false, drawable -> {
 					scene.remove(model3d);
 					scene.disposeLater(model3d);
+					scene.remove(compass);
+					scene.disposeLater(compass);
 					return false;
 				});
 			}
