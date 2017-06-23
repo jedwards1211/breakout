@@ -413,7 +413,7 @@ public class JoglExportImageDialog extends JDialog {
 
 			gl.glViewport(viewportX, viewportY, totalWidth, totalHeight);
 
-			viewState.update(viewSettings, totalWidth, totalHeight);
+			viewState.update(viewSettings, viewportX, viewportY, totalWidth, totalHeight);
 
 			GL3 gl3 = (GL3) gl;
 			int renderingFbo = framebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, desiredNumSamples,

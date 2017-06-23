@@ -31,6 +31,8 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected float[] m = newMat4f();
 	protected float[] n = newMat3f();
 
+	protected int x;
+	protected int y;
 	protected int width;
 	protected int height;
 
@@ -65,7 +67,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
 		}
 
-		viewState.update(viewSettings, width, height);
+		viewState.update(viewSettings, x, y, width, height);
 
 		drawScene(drawable);
 
@@ -124,6 +126,8 @@ public class DefaultJoglRenderer implements GLEventListener {
 	public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
 
+		this.x = x;
+		this.y = y;
 		this.width = width;
 		this.height = height;
 
@@ -149,4 +153,5 @@ public class DefaultJoglRenderer implements GLEventListener {
 	public void setDesiredUseStencilBuffer(boolean useStencilBuffer) {
 		desiredUseStencilBuffer = useStencilBuffer;
 	}
+
 }

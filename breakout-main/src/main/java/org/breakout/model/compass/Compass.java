@@ -1,33 +1,65 @@
 package org.breakout.model.compass;
 
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglManagedResource;
+import org.andork.jogl.JoglViewSettings;
+import org.andork.jogl.JoglViewState;
 import org.andork.jogl.util.StaticRenderer;
 import org.andork.math3d.Vecmath;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.util.awt.TextRenderer;
 
 public class Compass extends JoglManagedResource implements JoglDrawable {
 	CompassProgram program;
 	ByteBuffer vertices;
 	StaticRenderer renderer;
+	TextRenderer textRenderer;
 	float[] projectionMatrix = Vecmath.newMat4f();
 	float[] viewMatrix = Vecmath.newMat4f();
 	float[] modelMatrix = Vecmath.newMat4f();
+	float[] labelModelMatrix = Vecmath.newMat4f();
+	float[] pvmMatrix = Vecmath.newMat4f();
 	float[] normalMatrix = Vecmath.newMat3f();
+	float[] labelScreenPosition = new float[3];
+	Font labelFont;
+	FontRenderContext fontRenderContext;
+	
+	static final Map<String, float[]> directions = new HashMap<>();
+	static {
+		directions.put("N", new float[] { 0, 0, -1} );
+		directions.put("S", new float[] { 0, 0, 1} );
+		directions.put("E", new float[] { 1, 0, 0} );
+		directions.put("W", new float[] { -1, 0, 0} );
+	}
 	
 	public Compass() {
 		viewMatrix[12] = 0;
 		viewMatrix[13] = 0;
-		viewMatrix[14] = -2f;
+		viewMatrix[14] = -2.5f;
 		
 		modelMatrix[5] = 0.3f;
+		float labelFactor = 1.2f;
+		labelModelMatrix[0] = modelMatrix[0] * labelFactor;
+		labelModelMatrix[5] = modelMatrix[5] * labelFactor;
+		labelModelMatrix[10] = modelMatrix[10] * labelFactor;
 		Vecmath.invAffineToTranspose3x3(modelMatrix, normalMatrix);
+
+		labelFont = new Font("Arial", Font.BOLD, 12);
+		fontRenderContext = new FontRenderContext(new AffineTransform(), true, true);
 	}
 
 	@Override
@@ -38,13 +70,24 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		boolean depthTestWasEnabled = gl.glIsEnabled(GL.GL_DEPTH_TEST);
 		if (!depthTestWasEnabled) gl.glEnable(GL.GL_DEPTH_TEST);
 		
-		int size = Math.max(context.width(), context.height()) / 8;
-		gl.glViewport(context.width() - size, 0, size, size);
-		context.projection().calculate(projectionMatrix, context, size, size);
+		JoglViewState newContext = new JoglViewState();	
+
+		int size = Math.max(context.width(), context.height()) / 7;
+		int x = context.width() - size;
+		int y = 0;
+		gl.glViewport(x, y, size, size);
+		JoglViewSettings settings = new JoglViewSettings();
+		settings.copy(context.settings());
+		settings.setViewXform(viewMatrix);
+		newContext.update(settings, x, y, size, size);
 
 		Vecmath.mcopyAffine(context.viewMatrix(), viewMatrix);
 		program.use(gl, true);
-		program.putMatrices(gl, projectionMatrix, viewMatrix, modelMatrix, normalMatrix);
+		program.putMatrices(gl,
+				newContext.projectionMatrix(), 
+				newContext.viewMatrix(),
+				modelMatrix, 
+				normalMatrix);
 		program.putAmbient(gl, 0.5f);
 		renderer.setVertexAttribLocations(program.positionLocation(), program.normalLocation());
 		renderer.draw();
@@ -52,6 +95,33 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		program.use(gl, false);
 		gl.glViewport(0, 0, context.width(), context.height());
 		
+		boolean blendWasEnabled = gl.glIsEnabled(GL.GL_BLEND);
+		if (!blendWasEnabled) {
+			gl.glEnable(GL.GL_BLEND);
+		}
+		
+		textRenderer.beginRendering(context.width(), context.height(), false);
+		
+		for (Map.Entry<String, float[]> direction : directions.entrySet()) {
+			String text = direction.getKey();
+			float[] position = direction.getValue();
+			
+			Vecmath.mpmulAffine(labelModelMatrix, position, labelScreenPosition);
+			Vecmath.mpmulAffine(newContext.viewMatrix(), labelScreenPosition);
+			Vecmath.mpmul(newContext.viewToScreen(), labelScreenPosition);
+
+			LineMetrics metrics = labelFont.getLineMetrics(text, fontRenderContext);
+			Rectangle2D bounds = labelFont.getStringBounds(text, fontRenderContext);
+			labelScreenPosition[0] -= bounds.getWidth() / 2;
+			labelScreenPosition[1] -= metrics.getAscent() / 2;
+			textRenderer.draw3D(text, labelScreenPosition[0], labelScreenPosition[1], labelScreenPosition[2], 1);
+		}
+		
+		textRenderer.endRendering();
+
+		if (!blendWasEnabled) {
+			gl.glDisable(GL.GL_BLEND);
+		}
 		if (!cullFaceWasEnabled) {
 			gl.glDisable(GL.GL_CULL_FACE);
 		}
@@ -85,6 +155,12 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		options.addAttribute(3, GL.GL_FLOAT, false);
 		renderer = new StaticRenderer(vertices, options);
 		renderer.init(gl);
+		
+		textRenderer = new TextRenderer(labelFont, true, true, null, false);
+		textRenderer.init();
+		textRenderer.setUseVertexArrays(true);
+		textRenderer.setColor(Color.WHITE);
+
 		return true;
 	}
 
@@ -95,6 +171,8 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		vertices = null;
 		renderer.dispose(gl);
 		renderer = null;
+		textRenderer.dispose();
+		textRenderer = null;
 	}
 
 }

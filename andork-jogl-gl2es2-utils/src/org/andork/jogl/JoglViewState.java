@@ -91,9 +91,11 @@ public class JoglViewState implements JoglDrawContext {
 	private final PickXform pickXform = new PickXform();
 	
 	private Projection projection;
+	
+	private JoglViewSettings settings;
 
 	public JoglViewState() {
-		update(new JoglViewSettings(), 100, 100);
+		update(new JoglViewSettings(), 0, 0, 100, 100);
 	}
 
 	@Override
@@ -135,11 +137,12 @@ public class JoglViewState implements JoglDrawContext {
 	 *
 	 * @see org.andork.jogl.neu2.JoglCamera#updatePickXform()
 	 */
-	public void update(JoglViewSettings settings, int width, int height) {
+	public void update(JoglViewSettings settings, int x, int y, int width, int height) {
+		this.settings = settings;
 		this.width = width;
 		this.height = height;
 		
-		ortho(inverseViewport, 0, width, 0, height, -1, 1);
+		ortho(inverseViewport, x, x + width, y, y + height, -1, 1);
 		invAffine(inverseViewport, viewport);
 
 		if (settings != null) {
@@ -163,6 +166,10 @@ public class JoglViewState implements JoglDrawContext {
 		mmul(vi, screenToView, screenToWorld);
 
 		pickXform.calculate(p, v);
+	}
+	
+	public JoglViewSettings settings() {
+		return settings;
 	}
 
 	@Override

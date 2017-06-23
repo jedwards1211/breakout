@@ -59,4 +59,6 @@ public interface JoglDrawContext {
 		out[1] = vi[13];
 		out[2] = vi[14];
 	}
+	
+	public JoglViewSettings settings();
 }
