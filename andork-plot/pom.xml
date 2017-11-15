@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.andork</groupId>
   <artifactId>andork-plot</artifactId>
-  <version>1.0.0-alpha.9</version>
+  <version>1.0.0-alpha.10</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
@@ -35,7 +35,7 @@
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-ui</artifactId>
-  		<version>1.0.0-alpha.9</version>
+  		<version>1.0.0-alpha.10</version>
   	</dependency>
   </dependencies>
 </project>

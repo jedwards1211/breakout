@@ -61,11 +61,14 @@ public class BreakoutMain {
 		if (System.getProperty("rootDirectory") != null) {
 			rootDirectory = Paths.get(System.getProperty("rootDirectory"));
 		} else {
-			if (System.getProperty("os.name").toLowerCase().contains("win")) {
-				rootDirectory = Paths.get(System.getProperty("AppData")).resolve("Breakout");
-			} else {
-				rootDirectory = Paths.get(System.getProperty("user.home")).resolve(".breakout");
+			Path homePath;
+			try {
+				homePath = Paths.get(System.getProperty("user.home"));
+			} catch (Exception ex) {
+				logger.log(Level.SEVERE, "Failed to get user home directory!", ex);
+				homePath = Paths.get(System.getProperty("user.dir"));
 			}
+			rootDirectory = homePath.resolve(".breakout");
 		}
 		rootSettingsFile = rootDirectory.resolve("settings.json");
 		backupDirectory = rootDirectory.resolve("backup");
@@ -191,8 +194,6 @@ public class BreakoutMain {
 			logger.log(Level.SEVERE, "failed to create backup directory", ex);
 		}
 	}
-	
-	
 
 	private static void configureLogging() {
 		try {
@@ -202,7 +203,7 @@ public class BreakoutMain {
 			} else {
 				props.load(BreakoutMain.class.getResourceAsStream("logging.properties"));
 			}
-	
+
 			String logfile = props.getProperty("java.util.logging.FileHandler.pattern");
 			if (logfile != null && Paths.get(logfile).isAbsolute()) {
 				logDirectory = Paths.get(logfile).getParent();
@@ -215,7 +216,7 @@ public class BreakoutMain {
 							logDirectory.resolve(logfile).toString());
 				}
 			}
-	
+
 			PipedInputStream configStream = new PipedInputStream();
 			PipedOutputStream out = new PipedOutputStream(configStream);
 			props.store(out, null);
@@ -224,9 +225,9 @@ public class BreakoutMain {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-	
+
 		String handlers = LogManager.getLogManager().getProperty("handlers");
-	
+
 		if (handlers != null && !handlers.contains("java.util.logging.ConsoleHandler")) {
 			try {
 				System.setOut(new LoggerPrintStream(Logger.getLogger("System.out"), Level.INFO, true));
