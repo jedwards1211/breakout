@@ -142,6 +142,7 @@ public class Parsed2Calc {
 
 	public void convertInclination(ParsedShot parsed, ParsedTrip trip, CalcShot shot) {
 		double total = 0.0;
+		int count = 0;
 		for (ParsedShotMeasurement measurement : parsed.measurements) {
 			UnitizedDouble<Angle> inclination = ParsedField.getValue(measurement.inclination);
 			if (inclination == null) {
@@ -154,8 +155,9 @@ public class Parsed2Calc {
 					? trip.backInclinationCorrection.value
 					: trip.frontInclinationCorrection.value);
 			total += inclination.doubleValue(Angle.radians);
+			count++;
 		}
-		shot.inclination = total / parsed.measurements.size();
+		shot.inclination = total / count;
 	}
 
 	public void link(ParsedStation parsedFromStation, ParsedShot parsed, ParsedStation parsedToStation, CalcShot shot) {
