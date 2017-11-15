@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,6 +29,8 @@ import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
+import org.andork.unit.Length;
+import org.andork.unit.UnitizedDouble;
 import org.breakout.compass.CompassConverter;
 import org.breakout.importui.ImportError;
 import org.breakout.importui.ImportResultsDialog;
@@ -68,6 +71,17 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 			return null;
 		}
 		return o.toString();
+	}
+
+	static String feetToTripDistanceUnit(String feetMeasurement, SurveyRow row) {
+		if (feetMeasurement == null)
+			return feetMeasurement;
+		double rawValue = Double.valueOf(feetMeasurement);
+		if (!Double.isFinite(rawValue))
+			return "";
+		return String.valueOf(
+				new UnitizedDouble<>(rawValue, Length.feet)
+						.doubleValue(row.getTrip().getDistanceUnit()));
 	}
 
 	@Override
@@ -159,9 +173,9 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 						return row;
 					}
 					return row.withMutations(r -> {
-						r.setNorthing(posRow.getNorthing());
-						r.setEasting(posRow.getEasting());
-						r.setElevation(posRow.getElevation());
+						r.setNorthing(feetToTripDistanceUnit(posRow.getNorthing(), row));
+						r.setEasting(feetToTripDistanceUnit(posRow.getEasting(), row));
+						r.setElevation(feetToTripDistanceUnit(posRow.getElevation(), row));
 					});
 				});
 			}
@@ -183,7 +197,8 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 
 			@Override
 			public void run() throws Throwable {
-				ImportResultsDialog dialog = new ImportResultsDialog(ImportCompassTask.this.mainView.i18n, "title.compass");
+				ImportResultsDialog dialog = new ImportResultsDialog(ImportCompassTask.this.mainView.i18n,
+						"title.compass");
 				List<ImportError> errors = new ArrayList<>();
 				for (CompassParseError error : parser.getErrors()) {
 					errors.add(new ImportError(error));
