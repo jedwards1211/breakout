@@ -1034,7 +1034,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 			for (ShotKey shotKey : deselected) {
 				selectedShots.remove(shotKey);
-				affectedShots.put(shotKey, shot3ds.get(shotKey));
+				Shot3d shot3d = shot3ds.get(shotKey);
+				if (shot3d != null) {
+					affectedShots.put(shotKey, shot3d);
+				}
 			}
 
 			updateHighlights(affectedShots.values());
