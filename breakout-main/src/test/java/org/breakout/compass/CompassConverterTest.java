@@ -158,7 +158,7 @@ public class CompassConverterTest {
 		header.setDate(new Date(2016 - 1900, 11, 11));
 		SurveyTrip trip = CompassConverter.convertTripHeader(header);
 		Assert.assertEquals("Fisher Ridge", trip.getCave());
-		Assert.assertEquals("The secret connection", trip.getName());
+		Assert.assertEquals("MAM (The secret connection)", trip.getName());
 		Assert.assertEquals("2016/12/11", trip.getDate());
 		Assert.assertEquals(Arrays.asList("Sean Lewis", "Andy Edwards", "Ronnie Harrison"),
 				trip.getSurveyors());
