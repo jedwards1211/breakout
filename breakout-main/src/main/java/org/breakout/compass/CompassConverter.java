@@ -104,7 +104,17 @@ public class CompassConverter {
 	public static SurveyTrip convertTripHeader(CompassTripHeader compassTripHeader) {
 		MutableSurveyTrip trip = new MutableSurveyTrip();
 		trip.setCave(compassTripHeader.getCaveName());
-		trip.setName(compassTripHeader.getComment());
+
+		String tripName = compassTripHeader.getSurveyName();
+		if (tripName != null) tripName = tripName.trim();
+		String comment = compassTripHeader.getComment();
+		if (comment != null) comment = comment.trim();
+
+		if (comment != null && !comment.isEmpty()) {
+			if (tripName == null || tripName.isEmpty()) tripName = comment;
+			else tripName += " (" + compassTripHeader.getComment() + ")";
+		}
+		trip.setName(tripName);
 		trip.setDate(toString(compassTripHeader.getDate()));
 		trip.setSurveyors(convertTeam(compassTripHeader.getTeam()));
 
