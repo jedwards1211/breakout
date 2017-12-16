@@ -1,5 +1,10 @@
 package org.breakout.model.calc;
 
+import static org.breakout.util.StationNames.getSurveyDesignation;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Optional;
+
 import org.andork.task.Task;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
@@ -24,6 +29,8 @@ import org.breakout.model.parsed.ParsedTrip;
  */
 public class Parsed2Calc {
 	public final CalcProject project;
+	
+	final Map<ParsedTrip, CalcTrip> trips = new IdentityHashMap<>();
 
 	public Parsed2Calc() {
 		this(new CalcProject());
@@ -42,22 +49,30 @@ public class Parsed2Calc {
 	}
 
 	void convert(ParsedCave cave, Task<?> task) throws Exception {
+		String caveName = ParsedField.hasValue(cave.name) ? cave.name.value : "";
+		CalcCave calcCave = project.caves.get(caveName);
+		if (calcCave == null) {
+			calcCave = new CalcCave();
+			calcCave.name = caveName;
+			project.caves.put(calcCave.name, calcCave);
+		}
+		final CalcCave finalCalcCave = calcCave;
 		task.runSubtasks(tripTask -> {
 			tripTask.setTotal(cave.trips.size());
 			for (ParsedTrip trip : cave.trips) {
-				convert(trip);
+				convert(trip, finalCalcCave);
 				tripTask.increment();
 			}
 		}, fixedStationTask -> {
 			fixedStationTask.setTotal(cave.fixedStations.size());
 			for (ParsedFixedStation fixedStation : cave.fixedStations.values()) {
-				convert(fixedStation);
+				convert(fixedStation, finalCalcCave);
 				fixedStationTask.increment();
 			}
 		});
 	}
 
-	void convert(ParsedFixedStation fixedStation) {
+	void convert(ParsedFixedStation fixedStation, CalcCave cave) {
 		CalcStation station = project.stations.get(fixedStation.key());
 		if (station == null) {
 			return;
@@ -76,7 +91,14 @@ public class Parsed2Calc {
 		}
 	}
 
-	void convert(ParsedTrip trip) {
+	void convert(ParsedTrip trip, CalcCave cave) {
+		CalcTrip calcTrip = trips.get(trip);
+		if (calcTrip == null) {
+			calcTrip = new CalcTrip();
+			calcTrip.cave = cave;
+			trips.put(trip, calcTrip);
+		}
+		cave.trips.add(calcTrip);
 		for (int i = 0; i < trip.shots.size(); i++) {
 			ParsedShot parsedShot = trip.shots.get(i);
 			if (parsedShot == null) {
@@ -84,7 +106,17 @@ public class Parsed2Calc {
 			}
 			ParsedStation parsedFromStation = trip.stations.get(i);
 			ParsedStation parsedToStation = trip.stations.get(i + 1);
-			convert(parsedFromStation, parsedShot, parsedToStation, trip);
+			CalcShot calcShot = convert(parsedFromStation, parsedShot, parsedToStation, trip);
+			calcTrip.shots.put(calcShot.key(), calcShot);
+			calcShot.trip = calcTrip;
+			if (calcShot.fromStation != null) {
+				cave.stationsBySurveyDesignation.put(
+						getSurveyDesignation(calcShot.fromStation.name), calcShot.fromStation);
+			}
+			if (calcShot.toStation != null) {
+				cave.stationsBySurveyDesignation.put(
+						getSurveyDesignation(calcShot.toStation.name), calcShot.toStation);
+			}
 		}
 	}
 

@@ -6,6 +6,8 @@ import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 
 public class CalcShot {
+	public CalcTrip trip;
+
 	public CalcShot prev;
 	public CalcShot next;
 

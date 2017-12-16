@@ -19,7 +19,7 @@ public class CalcStation {
 
 	public final double[] position = { Double.NaN, Double.NaN, Double.NaN };
 
-	public final Map<StationKey, CalcShot> shots = new LinkedHashMap<>();
+	public final Map<StationKey, CalcShot> shots = new LinkedHashMap<>(3);
 
 	public StationKey key() {
 		return new StationKey(cave, name);
