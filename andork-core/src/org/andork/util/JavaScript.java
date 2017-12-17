@@ -45,7 +45,7 @@ public class JavaScript {
 
 	public static boolean truthy(Object o) {
 		return o != null && !o.equals(false) && !o.equals("") && !o.equals(0) &&
-				(!(o instanceof Number) || Double.isNaN(((Number) o).doubleValue()));
+				(!(o instanceof Number) || !Double.isNaN(((Number) o).doubleValue()));
 	}
 
 	/**
