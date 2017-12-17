@@ -183,6 +183,7 @@ import org.andork.util.FileRecoveryConfig;
 import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.model.ColorParam;
+import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.model.ShotKey;
@@ -191,6 +192,7 @@ import org.breakout.model.Survey3dModel.SelectionEditor;
 import org.breakout.model.Survey3dModel.Shot3d;
 import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
+import org.breakout.model.Survey3dModel.UpdateGlowOptions;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.calc.CalcProject;
 import org.breakout.model.calc.CalcShot;
@@ -272,70 +274,93 @@ public class BreakoutMainView {
 		protected Void work() throws Exception {
 			final Shot3dPickResult picked = pick(model3d, e, hoverUpdaterSpc);
 
-			if (picked != null) {
-				LinearAxisConversion conversion = new FromEDT<LinearAxisConversion>() {
-					@Override
-					public LinearAxisConversion run() throws Throwable {
-						SurveyRow orig = sourceRows.get(picked.picked.key());
-						SurveyTrip trip = orig != null ? orig.getTrip() : null;
-						ShotKey key = picked.picked.key();
-						ParsedShot shot = parsedProject.shots.get(picked.picked.key());
-						if (shot == null) {
-							hintLabel.setText("");
-						} else {
-							UnitizedDouble<Length> distance = ParsedShotMeasurement.getFirstDistance(shot.measurements);
-							UnitizedDouble<Angle> frontAzimuth = ParsedShotMeasurement
-									.getFirstFrontAzimuth(shot.measurements);
-							UnitizedDouble<Angle> backAzimuth = ParsedShotMeasurement
-									.getFirstBackAzimuth(shot.measurements);
-							UnitizedDouble<Angle> frontInclination = ParsedShotMeasurement
-									.getFirstFrontInclination(shot.measurements);
-							UnitizedDouble<Angle> backInclination = ParsedShotMeasurement
-									.getFirstBackInclination(shot.measurements);
+			HighlightMode highlightMode = getProjectModel().get(ProjectModel.highlightMode);
+			final boolean hightlightSameTrip = highlightMode == HighlightMode.SAME_TRIP;
+			final boolean hightlightSameSurveyDesignation = highlightMode == HighlightMode.SAME_DESIGNATION;
+			
+			final LinearAxisConversion conversion = picked == null ? null : new FromEDT<LinearAxisConversion>() {
+				@Override
+				public LinearAxisConversion run() throws Throwable {
+					SurveyRow orig = sourceRows.get(picked.picked.key());
+					SurveyTrip trip = orig != null ? orig.getTrip() : null;
+					ShotKey key = picked.picked.key();
+					ParsedShot shot = parsedProject.shots.get(picked.picked.key());
+					if (shot == null) {
+						hintLabel.setText("");
+					} else {
+						UnitizedDouble<Length> distance = ParsedShotMeasurement.getFirstDistance(shot.measurements);
+						UnitizedDouble<Angle> frontAzimuth = ParsedShotMeasurement
+								.getFirstFrontAzimuth(shot.measurements);
+						UnitizedDouble<Angle> backAzimuth = ParsedShotMeasurement
+								.getFirstBackAzimuth(shot.measurements);
+						UnitizedDouble<Angle> frontInclination = ParsedShotMeasurement
+								.getFirstFrontInclination(shot.measurements);
+						UnitizedDouble<Angle> backInclination = ParsedShotMeasurement
+								.getFirstBackInclination(shot.measurements);
 
-							QObject<ProjectModel> projectModel = getProjectModel();
-							Unit<Length> lengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
-							Unit<Angle> angleUnit = projectModel.get(ProjectModel.displayAngleUnit);
+						QObject<ProjectModel> projectModel = getProjectModel();
+						Unit<Length> lengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
+						Unit<Angle> angleUnit = projectModel.get(ProjectModel.displayAngleUnit);
 
-							NumberFormat format = DecimalFormat.getInstance();
-							format.setMaximumFractionDigits(1);
-							format.setMinimumFractionDigits(1);
-							format.setGroupingUsed(false);
+						NumberFormat format = DecimalFormat.getInstance();
+						format.setMaximumFractionDigits(1);
+						format.setMinimumFractionDigits(1);
+						format.setGroupingUsed(false);
 
-							String formattedDistance = distance == null
-									? "--" : distance.in(lengthUnit).toString(format);
-							String formattedFrontAzimuth = frontAzimuth == null
-									? "--" : frontAzimuth.in(angleUnit).toString(format);
-							String formattedBackAzimuth = backAzimuth == null
-									? "--" : backAzimuth.in(angleUnit).toString(format);
-							String formattedFrontInclination = frontInclination == null
-									? "--" : frontInclination.in(angleUnit).toString(format);
-							String formattedBackInclination = backInclination == null
-									? "--" : backInclination.in(angleUnit).toString(format);
+						String formattedDistance = distance == null
+								? "--" : distance.in(lengthUnit).toString(format);
+						String formattedFrontAzimuth = frontAzimuth == null
+								? "--" : frontAzimuth.in(angleUnit).toString(format);
+						String formattedBackAzimuth = backAzimuth == null
+								? "--" : backAzimuth.in(angleUnit).toString(format);
+						String formattedFrontInclination = frontInclination == null
+								? "--" : frontInclination.in(angleUnit).toString(format);
+						String formattedBackInclination = backInclination == null
+								? "--" : backInclination.in(angleUnit).toString(format);
 
-							hintLabel.setText(String.format(
-									"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
-											+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i></html>",
-									key.fromStation, key.toStation,
-									formattedDistance,
-									formattedFrontAzimuth,
-									formattedBackAzimuth,
-									formattedFrontInclination,
-									formattedBackInclination,
-									trip != null ? trip.getName() : ""));
+						hintLabel.setText(String.format(
+								"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
+										+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i></html>",
+								key.fromStation, key.toStation,
+								formattedDistance,
+								formattedFrontAzimuth,
+								formattedBackAzimuth,
+								formattedFrontInclination,
+								formattedBackInclination,
+								trip != null ? trip.getName() : ""));
+					}
+
+					LinearAxisConversion conversion = getProjectModel().get(ProjectModel.highlightRange);
+					LinearAxisConversion conversion2 = new LinearAxisConversion(conversion.invert(0.0), 1.0,
+							conversion.invert(settingsDrawer.getGlowDistAxis().getViewSpan()), 0.0);
+					return conversion2;
+				}
+			}.result();
+
+			runSubtask(1, glowSubtask -> model3d.updateGlow(
+					picked == null ? null : picked.picked,
+					picked == null ? null : picked.locationAlongShot,
+					new UpdateGlowOptions() {
+						@Override
+						public boolean highlightSameTrip() {
+							return hightlightSameTrip;
 						}
 
-						LinearAxisConversion conversion = getProjectModel().get(ProjectModel.highlightRange);
-						LinearAxisConversion conversion2 = new LinearAxisConversion(conversion.invert(0.0), 1.0,
-								conversion.invert(settingsDrawer.getGlowDistAxis().getViewSpan()), 0.0);
-						return conversion2;
-					}
-				}.result();
-				runSubtask(1, glowSubtask -> model3d.updateGlow(picked.picked, picked.locationAlongShot, conversion,
-						glowSubtask));
-			} else {
-				runSubtask(1, glowSubtask -> model3d.updateGlow(null, null, null, glowSubtask));
-			}
+						@Override
+						public boolean highlightSameSurveyDesignation() {
+							return hightlightSameSurveyDesignation;
+						}
+
+						@Override
+						public LinearAxisConversion glowExtentConversion() {
+							return conversion;
+						}
+
+						@Override
+						public Task<?> task() {
+							return glowSubtask;
+						}
+					}));
 
 			if (!isCanceled()) {
 				autoDrawable.display();
@@ -953,7 +978,7 @@ public class BreakoutMainView {
 					Rectmath.center(model.getTree().getRoot().mbr(), center);
 					orbiter.setCenter(center);
 					navigator.setCenter(center);
-					
+
 					compass = new Compass();
 
 					autoDrawable.invoke(false, drawable -> {
@@ -2282,7 +2307,7 @@ public class BreakoutMainView {
 	public JoglViewSettings getViewSettings() {
 		return renderer.getViewSettings();
 	}
-	
+
 	public TaskService ioTaskService() {
 		return ioTaskService;
 	}

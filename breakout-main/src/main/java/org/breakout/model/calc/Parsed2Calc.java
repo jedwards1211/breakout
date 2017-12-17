@@ -29,7 +29,7 @@ import org.breakout.model.parsed.ParsedTrip;
  */
 public class Parsed2Calc {
 	public final CalcProject project;
-	
+
 	final Map<ParsedTrip, CalcTrip> trips = new IdentityHashMap<>();
 
 	public Parsed2Calc() {
@@ -107,7 +107,9 @@ public class Parsed2Calc {
 			ParsedStation parsedFromStation = trip.stations.get(i);
 			ParsedStation parsedToStation = trip.stations.get(i + 1);
 			CalcShot calcShot = convert(parsedFromStation, parsedShot, parsedToStation, trip);
-			calcTrip.shots.put(calcShot.key(), calcShot);
+			if (calcShot.key() != null) {
+				calcTrip.shots.put(calcShot.key(), calcShot);
+			}
 			calcShot.trip = calcTrip;
 			if (calcShot.fromStation != null) {
 				cave.stationsBySurveyDesignation.put(

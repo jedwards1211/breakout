@@ -69,6 +69,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<LinearAxisConversion> highlightRange = newAttribute(
 			LinearAxisConversion.class,
 			"highlightRange");
+	public static final Attribute<HighlightMode> highlightMode = newAttribute(
+			HighlightMode.class,
+			"highlightMode");
 	public static final Attribute<QObject<DrawerModel>> settingsDrawer = newAttribute(
 			DrawerModel.instance,
 			"settingsDrawer");
@@ -134,6 +137,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 						QMapBimapper.newInstance(EnumBimapper.newInstance(ColorParam.class),
 								LinearAxisConversionMapBimapper.instance))
 				.map(highlightRange, LinearAxisConversionMapBimapper.instance)
+				.map(highlightMode, EnumBimapper.newInstance(HighlightMode.class))
 				.map(settingsDrawer, DrawerModel.defaultMapper)
 				.map(surveyDrawer, DrawerModel.defaultMapper)
 				.map(miniSurveyDrawer, DrawerModel.defaultMapper)
@@ -201,6 +205,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.highlightRange) == null) {
 			projectModel.set(ProjectModel.highlightRange, new LinearAxisConversion(0, 0, 1000, 200));
+		}
+		if (projectModel.get(ProjectModel.highlightMode) == null) {
+			projectModel.set(ProjectModel.highlightMode, HighlightMode.NEARBY);
 		}
 		if (projectModel.get(ProjectModel.surveyDrawer) == null) {
 			projectModel.set(ProjectModel.surveyDrawer, DrawerModel.instance.newObject());

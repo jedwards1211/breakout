@@ -82,4 +82,12 @@ public class ShotKey {
 				.append(hashCode).append("]");
 		return builder.toString();
 	}
+	
+	public StationKey fromKey() {
+		return new StationKey(fromCave, fromStation);
+	}
+	
+	public StationKey toKey() {
+		return new StationKey(toCave, toStation);
+	}
 }

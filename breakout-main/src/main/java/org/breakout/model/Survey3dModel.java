@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.breakout.model;
 
+import static org.breakout.util.StationNames.getSurveyDesignation;
 import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER;
 import static com.jogamp.opengl.GL.GL_BGRA;
 import static com.jogamp.opengl.GL.GL_CLAMP_TO_EDGE;
@@ -43,6 +44,7 @@ import static org.andork.math3d.Vecmath.setf;
 import static org.andork.spatial.Rectmath.nmax;
 import static org.andork.spatial.Rectmath.nmin;
 import static org.andork.spatial.Rectmath.voidRectf;
+import static org.andork.util.JavaScript.or;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -72,7 +74,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.andork.collect.Iterables;
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.collect.PriorityEntry;
@@ -104,10 +105,12 @@ import org.andork.spatial.RfStarTree.Node;
 import org.andork.task.Task;
 import org.breakout.PickResult;
 import org.breakout.awt.ParamGradientMapPaint;
+import org.breakout.model.calc.CalcCave;
 import org.breakout.model.calc.CalcCrossSection;
 import org.breakout.model.calc.CalcProject;
 import org.breakout.model.calc.CalcShot;
 import org.breakout.model.calc.CalcStation;
+import org.breakout.model.calc.CalcTrip;
 import org.omg.CORBA.FloatHolder;
 
 import com.andork.plot.LinearAxisConversion;
@@ -1468,9 +1471,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		});
 
-		Survey3dModel model = new Survey3dModel(shot3ds, tree, sections, labelFont);
+		Survey3dModel model = new Survey3dModel(project, shot3ds, tree, sections, labelFont);
 		task.runSubtask(1, subtask -> model.calcColorParam(subtask));
-		
+
 		return task.isCanceled() ? null : model;
 	}
 
@@ -1609,6 +1612,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return stationsToLabel;
 	}
 
+	final CalcProject project;
+
 	final Map<ShotKey, Shot3d> shot3ds;
 
 	final RfStarTree<Shot3d> tree;
@@ -1638,7 +1643,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	LinearAxisConversion glowExtentConversion;
 
-	final Set<Section> sectionsWithGlow = new HashSet<>();
+	Set<Section> sectionsWithGlow = new HashSet<>();
 
 	LinearGradientPaint paramPaint;
 
@@ -1682,9 +1687,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	boolean showSpatialIndex = false;
 
-	private Survey3dModel(Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections,
+	private Survey3dModel(
+			CalcProject project,
+			Map<ShotKey, Shot3d> shot3ds, RfStarTree<Shot3d> tree, Set<Section> sections,
 			Font labelFont) {
 		super();
+		this.project = project;
 		this.shot3ds = shot3ds;
 		this.tree = tree;
 		this.sections = sections;
@@ -2155,68 +2163,76 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	public void updateGlow(Shot3d hoveredShot, Float hoverLocation, LinearAxisConversion glowExtentConversion,
-			Task<?> task) {
+	public static interface UpdateGlowOptions {
+		boolean highlightSameTrip();
+
+		boolean highlightSameSurveyDesignation();
+
+		LinearAxisConversion glowExtentConversion();
+
+		Task<?> task();
+	}
+
+	public void updateGlow(Shot3d hoveredShot, Float hoverLocation, UpdateGlowOptions options) {
 		this.hoveredShot = hoveredShot;
 		this.hoverLocation = hoverLocation;
-		this.glowExtentConversion = glowExtentConversion;
+		this.glowExtentConversion = options.glowExtentConversion();
+
+		final Task<?> task = options.task();
 
 		task.setStatus("Updating mouseover glow");
 		task.setIndeterminate(true);
 
-		Set<Section> newSectionsWithGlow = new HashSet<>();
+		final Set<Shot3d> affectedShot3ds = new HashSet<>();
+		final Map<StationKey, Float> glowAtStations = new HashMap<>();
 
 		if (hoveredShot != null) {
 			CalcShot origShot = hoveredShot.shot;
 
-			// Use Dijkstra's algorithm to go through all stations within glow distance
-			// and compute the glow amount at each of those stations
-			final Map<StationKey, Float> glowAtStations = new HashMap<>();
-			final Set<Shot3d> affectedShot3ds = new HashSet<>();
-			final PriorityQueue<PriorityEntry<Double, CalcStation>> unvisited = new PriorityQueue<>();
-			unvisited.add(new PriorityEntry<>(hoverLocation * origShot.distance, origShot.fromStation));
-			unvisited.add(new PriorityEntry<>(1 - hoverLocation * origShot.distance, origShot.toStation));
-
-			while (!unvisited.isEmpty() && !task.isCanceled()) {
-				PriorityEntry<Double, CalcStation> entry = unvisited.poll();
-				CalcStation station = entry.getValue();
-				double distanceToStation = entry.getKey();
-
-				float glowAtStation = (float) glowExtentConversion.convert(distanceToStation);
-				glowAtStations.put(station.key(), glowAtStation);
-				if (glowAtStation <= 0) {
-					continue;
+			if (options.highlightSameTrip() || options.highlightSameSurveyDesignation()) {
+				if (options.highlightSameTrip()) {
+					CalcTrip trip = origShot.trip;
+					addGlowForTrip(trip, glowAtStations, affectedShot3ds, task);
 				}
-				for (CalcShot nextShot : station.shots.values()) {
-					Shot3d shot3d = shot3ds.get(nextShot.key());
-					if (shot3d == null || !affectedShot3ds.add(shot3d)) {
-						continue;
-					}
-					CalcStation nextStation = nextShot.otherStation(station);
-					if (glowAtStations.containsKey(nextStation)) {
-						continue;
-					}
-					unvisited.add(new PriorityEntry<>(distanceToStation + nextShot.distance, nextStation));
+				if (options.highlightSameSurveyDesignation()) {
+					addGlowForSameSurveyDesignation(origShot, glowAtStations, affectedShot3ds, task);
 				}
+			} else {
+				addGlowForNearbyStations(origShot, hoverLocation, glowAtStations, affectedShot3ds, task);
 			}
+		}
 
-			if (task.isCanceled()) {
-				return;
-			}
+		if (task.isCanceled()) {
+			return;
+		}
 
-			for (Shot3d shot3d : affectedShot3ds) {
-				sectionsWithGlow.add(shot3d.section);
-				newSectionsWithGlow.add(shot3d.section);
-			}
-			for (Section section : newSectionsWithGlow) {
-				section.clearGlow();
-				section.stationAttrsNeedRebuffering.set(true);
-			}
+		Set<Section> newSectionsWithGlow = new HashSet<>();
 
-			if (task.isCanceled()) {
-				return;
-			}
+		for (Shot3d shot3d : affectedShot3ds) {
+			newSectionsWithGlow.add(shot3d.section);
+		}
 
+		if (task.isCanceled()) {
+			return;
+		}
+
+		for (Section section : sectionsWithGlow) {
+			section.clearGlow();
+			section.stationAttrsNeedRebuffering.set(true);
+		}
+		for (Section section : newSectionsWithGlow) {
+			section.clearGlow();
+			section.stationAttrsNeedRebuffering.set(true);
+		}
+
+		sectionsWithGlow = newSectionsWithGlow;
+
+		if (task.isCanceled()) {
+			return;
+		}
+	
+		if (hoveredShot != null && 
+				!options.highlightSameTrip() && !options.highlightSameSurveyDesignation()) {
 			/*
 			 * The values set on the hoveredShot are a special case.
 			 * They will be something like shown below so that the
@@ -2236,40 +2252,116 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			 * GlowA ...                      - 0.8
 			 */
 
+			CalcShot origShot = hoveredShot.shot;
+
 			hoveredShot.setGlow(
 					(float) glowExtentConversion.convert(hoverLocation * origShot.distance),
 					(float) glowExtentConversion.convert((hoverLocation - 1) * origShot.distance),
 					(float) glowExtentConversion.convert((1 - hoverLocation) * origShot.distance),
 					(float) glowExtentConversion.convert(-hoverLocation * origShot.distance));
 			affectedShot3ds.remove(hoveredShot);
-
-			for (Shot3d shot3d : affectedShot3ds) {
-				if (task.isCanceled()) {
-					return;
-				}
-
-				Float glowAtFromStation = glowAtStations.get(shot3d.shot.fromStation.key());
-				Float glowAtToStation = glowAtStations.get(shot3d.shot.toStation.key());
-				if (glowAtFromStation == null) {
-					glowAtFromStation = 0f;
-				}
-				if (glowAtToStation == null) {
-					glowAtFromStation = 0f;
-				}
-				shot3d.setGlow(glowAtFromStation, glowAtToStation);
-			}
 		}
 
-		Iterator<Section> segIter = sectionsWithGlow.iterator();
-
-		for (Section section : Iterables.of(segIter)) {
+		for (Shot3d shot3d : affectedShot3ds) {
 			if (task.isCanceled()) {
 				return;
 			}
-			if (!newSectionsWithGlow.contains(section)) {
-				segIter.remove();
-				section.clearGlow();
-				section.stationAttrsNeedRebuffering.set(true);
+			Float glowAtFromStation = glowAtStations.get(shot3d.shot.fromStation.key());
+			Float glowAtToStation = glowAtStations.get(shot3d.shot.toStation.key());
+			if (glowAtFromStation == null) {
+				glowAtFromStation = 0f;
+			}
+			if (glowAtToStation == null) {
+				glowAtToStation = 0f;
+			}
+			shot3d.setGlow(glowAtFromStation, glowAtToStation);
+		}
+	}
+
+	private void addGlowForNearbyStations(CalcShot origShot, Float hoverLocation,
+			final Map<StationKey, Float> glowAtStations, final Set<Shot3d> affectedShot3ds, final Task<?> task) {
+		// Use Dijkstra's algorithm to go through all stations within glow distance
+		// and compute the glow amount at each of those stations
+		final PriorityQueue<PriorityEntry<Double, CalcStation>> unvisited = new PriorityQueue<>();
+		unvisited.add(new PriorityEntry<>(hoverLocation * origShot.distance, origShot.fromStation));
+		unvisited.add(new PriorityEntry<>(1 - hoverLocation * origShot.distance, origShot.toStation));
+
+		while (!unvisited.isEmpty() && !task.isCanceled()) {
+			PriorityEntry<Double, CalcStation> entry = unvisited.poll();
+			CalcStation station = entry.getValue();
+			double distanceToStation = entry.getKey();
+
+			float glowAtStation = (float) glowExtentConversion.convert(distanceToStation);
+			glowAtStations.put(station.key(), glowAtStation);
+			if (glowAtStation <= 0) {
+				continue;
+			}
+			for (CalcShot nextShot : station.shots.values()) {
+				Shot3d shot3d = shot3ds.get(nextShot.key());
+				if (shot3d == null || !affectedShot3ds.add(shot3d)) {
+					continue;
+				}
+				CalcStation nextStation = nextShot.otherStation(station);
+				if (glowAtStations.containsKey(nextStation)) {
+					continue;
+				}
+				unvisited.add(new PriorityEntry<>(distanceToStation + nextShot.distance, nextStation));
+			}
+		}
+	}
+	
+	private void addAffectedShot3ds(CalcStation station, Set<Shot3d> affectedShot3ds) {
+		for (CalcShot shot : station.shots.values()) {
+			Shot3d shot3d = shot3ds.get(shot.key());
+			if (shot3d != null) {
+				affectedShot3ds.add(shot3d);
+			}
+		}
+	}
+
+	private void addGlowForSameSurveyDesignation(CalcShot origShot, final Map<StationKey, Float> glowAtStations,
+			Set<Shot3d> affectedShot3ds, final Task<?> task) {
+		String fromCaveName = or(origShot.fromStation.cave, "");
+		CalcCave fromCave = project.caves.get(fromCaveName);
+		if (fromCave != null) {
+			for (CalcStation station : fromCave.stationsBySurveyDesignation
+					.get(getSurveyDesignation(origShot.fromStation.name))) {
+				if (task.isCanceled()) {
+					break;
+				}
+				glowAtStations.put(station.key(), 1f);
+				addAffectedShot3ds(station, affectedShot3ds);
+			}
+		}
+
+		String toCaveName = or(origShot.toStation.cave, "");
+		CalcCave toCave = project.caves.get(toCaveName);
+		if (toCave != null && toCave != fromCave) {
+			for (CalcStation station : toCave.stationsBySurveyDesignation
+					.get(getSurveyDesignation(origShot.toStation.name))) {
+				if (task.isCanceled()) {
+					break;
+				}
+				glowAtStations.put(station.key(), 1f);
+				addAffectedShot3ds(station, affectedShot3ds);
+			}
+		}
+	}
+
+	private void addGlowForTrip(CalcTrip trip, final Map<StationKey, Float> glowAtStations,
+			final Set<Shot3d> affectedShot3ds, final Task<?> task) {
+		for (ShotKey key : trip.shots.keySet()) {
+			if (task.isCanceled()) {
+				break;
+			}
+			if (key == null) {
+				Thread.dumpStack();
+			}
+			glowAtStations.put(key.fromKey(), 1f);
+			glowAtStations.put(key.toKey(), 1f);
+			Shot3d shot3d = shot3ds.get(key);
+			if (shot3d != null) {
+				affectedShot3ds.add(shot3d);
 			}
 		}
 	}

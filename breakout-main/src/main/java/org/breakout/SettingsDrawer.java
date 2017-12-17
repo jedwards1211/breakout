@@ -33,11 +33,11 @@ import java.awt.Insets;
 import java.awt.LinearGradientPaint;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -46,7 +46,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.ListCellRenderer;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -77,6 +76,7 @@ import org.andork.func.RoundingFloat2IntegerBimapper;
 import org.andork.plot.PlotAxisConversionBinder;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
+import org.andork.swing.CellRenderers;
 import org.andork.swing.OnEDT;
 import org.andork.swing.PaintablePanel;
 import org.andork.swing.border.FillBorder;
@@ -89,6 +89,7 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.breakout.model.ColorParam;
+import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.update.UpdateStatusPanel;
@@ -163,6 +164,9 @@ public class SettingsDrawer extends Drawer {
 
 	JPanel colorByDistanceButtonsPanel;
 	JButton recalcColorByDistanceButton;
+	
+	JLabel highlightModeLabel;
+	DefaultSelector<HighlightMode> highlightModeSelector;
 
 	JLabel glowDistLabel;
 	PlotAxis glowDistAxis;
@@ -234,6 +238,9 @@ public class SettingsDrawer extends Drawer {
 			paramRangesBinder);
 	Binder<LinearAxisConversion> highlightRangeBinder = QObjectAttributeBinder.bind(
 			ProjectModel.highlightRange,
+			projectBinder);
+	Binder<HighlightMode> highlightModeBinder = QObjectAttributeBinder.bind(
+			ProjectModel.highlightMode,
 			projectBinder);
 	Binder<Float> ambientLightBinder = QObjectAttributeBinder.bind(
 			ProjectModel.ambientLight,
@@ -313,6 +320,7 @@ public class SettingsDrawer extends Drawer {
 		BetterCardLayoutBinder.bind(colorParamDetailsPanel, colorParamDetailsLayout, colorParamBinder);
 		BetterCardLayoutBinder.bind(colorParamButtonsPanel, colorParamButtonsLayout, colorParamBinder);
 		PlotAxisConversionBinder.bind(paramColorationAxis, paramRangeBinder);
+		ISelectorSelectionBinder.bind(highlightModeSelector, highlightModeBinder);
 		PlotAxisConversionBinder.bind(glowDistAxis, highlightRangeBinder);
 		JSliderValueBinder.bind(ambientLightSlider,
 				BimapperBinder.bind(compose(new LinearFloatBimapper(0f, 0f, 1f, ambientLightSlider.getMaximum()),
@@ -466,6 +474,15 @@ public class SettingsDrawer extends Drawer {
 		recalcColorByDistanceButton = new JButton(new ImageIcon(getClass().getResource("refresh.png")));
 		recalcColorByDistanceButton.setMargin(new Insets(2, 2, 2, 2));
 		localizer.setToolTipText(recalcColorByDistanceButton, "recalcColorByDistanceButton.tooltip");
+		
+		highlightModeLabel = new JLabel();
+		localizer.setText(highlightModeLabel, "highlightModeLabel.text");
+		
+		highlightModeSelector = new DefaultSelector<>();
+		highlightModeSelector.setAvailableValues(HighlightMode.values());
+		highlightModeSelector.comboBox().setRenderer(CellRenderers.map(
+				value -> localizer.getString("highlightModeSelector.text." + Objects.toString(value)),
+				highlightModeSelector.comboBox().getRenderer()));
 
 		glowDistLabel = new JLabel();
 		localizer.setText(glowDistLabel, "glowDistLabel.text");
@@ -603,6 +620,9 @@ public class SettingsDrawer extends Drawer {
 		colorByDistanceButtonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		colorByDistanceButtonsPanel.add(recalcColorByDistanceButton);
 		colorParamButtonsPanel.add(colorByDistanceButtonsPanel, ColorParam.DISTANCE_ALONG_SHOTS);
+		
+		w.put(highlightModeLabel).belowLast().west();
+		w.put(highlightModeSelector.comboBox()).belowLast().fillx().addToInsets(0, 0, 5, 0);
 
 		w.put(glowDistLabel).belowLast().west();
 		w.put(glowDistAxisPanel).belowLast().fillx().addToInsets(0, 0, 5, 0);
