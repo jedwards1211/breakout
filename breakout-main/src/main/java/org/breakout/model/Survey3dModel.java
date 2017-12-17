@@ -2321,7 +2321,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	private void addGlowForSameSurveyDesignation(CalcShot origShot, final Map<StationKey, Float> glowAtStations,
 			Set<Shot3d> affectedShot3ds, final Task<?> task) {
-		String fromCaveName = or(origShot.fromStation.cave, "");
+		String fromCaveName = or(origShot.fromStation.cave, origShot.trip.cave.name, "");
 		CalcCave fromCave = project.caves.get(fromCaveName);
 		if (fromCave != null) {
 			for (CalcStation station : fromCave.stationsBySurveyDesignation
@@ -2334,7 +2334,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		}
 
-		String toCaveName = or(origShot.toStation.cave, "");
+		String toCaveName = or(origShot.toStation.cave, origShot.trip.cave.name, "");
 		CalcCave toCave = project.caves.get(toCaveName);
 		if (toCave != null && toCave != fromCave) {
 			for (CalcStation station : toCave.stationsBySurveyDesignation

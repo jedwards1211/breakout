@@ -15,6 +15,7 @@ import org.andork.model.Property;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
+import org.andork.util.StringUtils;
 import org.breakout.model.CrossSectionType;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
@@ -80,9 +81,14 @@ public class ProjectParser {
 		}
 		parsed = new ParsedTrip();
 		trips.put(raw, parsed);
-		ParsedCave cave = project.caves.get(raw.getCave());
+		String caveName = raw.getCave();
+		if (caveName == null) {
+			caveName = "";
+		}
+		ParsedCave cave = project.caves.get(caveName);
 		if (cave == null) {
 			cave = new ParsedCave();
+			cave.name = new ParsedField<>(caveName);
 			project.caves.put(raw.getCave(), cave);
 		}
 		cave.trips.add(parsed);

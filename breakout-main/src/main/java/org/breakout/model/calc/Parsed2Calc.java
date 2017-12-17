@@ -1,9 +1,9 @@
 package org.breakout.model.calc;
 
 import static org.breakout.util.StationNames.getSurveyDesignation;
+
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.andork.task.Task;
 import org.andork.unit.Angle;
