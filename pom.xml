@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>breakout-parent</artifactId>
-	<version>1.0.0-alpha.12</version>
+	<version>1.0.0-alpha.13</version>
 	<packaging>pom</packaging>
 
 	<modules>
