@@ -2321,11 +2321,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	private void addGlowForSameSurveyDesignation(CalcShot origShot, final Map<StationKey, Float> glowAtStations,
 			Set<Shot3d> affectedShot3ds, final Task<?> task) {
+		String fromSurveyDesignation = getSurveyDesignation(origShot.fromStation.name);
 		String fromCaveName = or(origShot.fromStation.cave, origShot.trip.cave.name, "");
 		CalcCave fromCave = project.caves.get(fromCaveName);
 		if (fromCave != null) {
-			for (CalcStation station : fromCave.stationsBySurveyDesignation
-					.get(getSurveyDesignation(origShot.fromStation.name))) {
+			for (CalcStation station : fromCave.stationsBySurveyDesignation.get(fromSurveyDesignation)) {
 				if (task.isCanceled()) {
 					break;
 				}
@@ -2334,11 +2334,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 		}
 
+		String toSurveyDesignation = getSurveyDesignation(origShot.toStation.name);
 		String toCaveName = or(origShot.toStation.cave, origShot.trip.cave.name, "");
 		CalcCave toCave = project.caves.get(toCaveName);
-		if (toCave != null && toCave != fromCave) {
-			for (CalcStation station : toCave.stationsBySurveyDesignation
-					.get(getSurveyDesignation(origShot.toStation.name))) {
+		if (toCave != null && (toCave != fromCave) || !fromSurveyDesignation.equals(toSurveyDesignation)) {
+			for (CalcStation station : toCave.stationsBySurveyDesignation.get(toSurveyDesignation)) {
 				if (task.isCanceled()) {
 					break;
 				}
