@@ -103,6 +103,7 @@ import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
 import org.andork.task.Task;
+import org.andork.util.StringUtils;
 import org.breakout.PickResult;
 import org.breakout.awt.ParamGradientMapPaint;
 import org.breakout.model.calc.CalcCave;
@@ -1081,9 +1082,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				z = 0.99999f;
 			}
 			String text = emphasize
-				? label.station.name + "\n" + leadText(label.station.leads)
+				? leadText(label.station.name, label.station.leads)
 				: label.text;
-			String[] lines = text.split("\r\n|\r|\n");
+			String[] lines = text.split("\r\n?|\n");
 			for (String line : lines) {
 				labelContext.textRenderer.draw3D(line, x, y, z, scale);
 				y -= label.height / 2;
@@ -1091,13 +1092,24 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	private static String leadText(List<Lead> leads) {
+	private static String leadText(String stationName, List<Lead> leads) {
 		if (leads == null) return "";
 		StringBuilder builder = new StringBuilder();
+		builder.append(leads.size() == 1
+				? "Lead at "
+				: leads.size() + " leads at ")
+			.append(stationName)
+			.append(":");
+		int i = 1;
 		for (Lead lead : leads) {
-			if (builder.length() > 0) builder.append('\n');
-			builder.append("LEAD: ")
-				.append(lead.description);
+			builder.append('\n');
+			String wrapped = StringUtils.wrap(lead.description, 55);
+			if (leads.size() > 1) {
+				builder.append("[").append(i++).append("] ")
+					.append(wrapped.replaceAll("(\r\n?|\n)", "$1     "));
+			} else {
+				builder.append(wrapped);
+			}
 		}
 		return builder.toString();
 	}

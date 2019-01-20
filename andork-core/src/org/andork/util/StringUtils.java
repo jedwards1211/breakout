@@ -24,10 +24,14 @@ package org.andork.util;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.andork.func.CharPredicate;
 
 public class StringUtils {
+	public static final Pattern newlinePattern = Pattern.compile("\r\n?|\n");
+
 	public static String escape(String s, char escape) {
 		StringBuilder sb = new StringBuilder();
 
@@ -198,6 +202,36 @@ public class StringUtils {
 			}
 		}
 		return -1;
+	}
+
+	public static final Pattern wrapLocationPattern = Pattern.compile("(\r\n?|\n)|\\s+|$");
+	
+	public static String wrap(String s, int columns) {
+		StringBuilder result = new StringBuilder();
+		int i = 0;
+		int lineStart = i;
+		Matcher m = wrapLocationPattern.matcher(s);
+		while (i < s.length()) {
+			int next = Math.min(s.length(), i + columns);
+			int end = next;
+			m.region(i, s.length());
+			while (m.find()) {
+				if (m.start() > lineStart + columns) {
+					break;
+				}
+				end = m.start();
+				next = m.end();
+				if (m.group(1) != null) {
+					lineStart = m.end();
+				}
+			}
+			if (result.length() > 0) {
+				result.append('\n');
+			}
+			result.append(s.substring(i, end));
+			lineStart = i = next;
+		}
+		return result.toString();
 	}
 
 	private StringUtils() {
