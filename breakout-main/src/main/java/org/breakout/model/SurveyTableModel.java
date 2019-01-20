@@ -29,6 +29,7 @@ import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.ListTableModel;
 import org.andork.util.StringUtils;
+import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 
@@ -128,6 +129,7 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	private static final long serialVersionUID = -2919165714804950483L;
 
 	private final List<SurveyRow> rows;
+	private List<SurveyLead> leads;
 
 	public SurveyTableModel() {
 		super(Columns.list, new ArrayList<SurveyRow>());
@@ -147,7 +149,9 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 
 	@Override
 	public SurveyTableModel clone() {
-		return new SurveyTableModel(new ArrayList<>(rows));
+		SurveyTableModel result = new SurveyTableModel(new ArrayList<>(rows));
+		result.setLeads(leads != null ? new ArrayList<>(leads) : null);
+		return result;
 	}
 
 	public void copyRowsFrom(SurveyTableModel src, int srcStart, int srcEnd, int myStart) {
@@ -217,5 +221,13 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 		if (prevValue == null || "".equals(prevValue) != (aValue == null || "".equals(aValue))) {
 			fixEndRows();
 		}
+	}
+
+	public List<SurveyLead> getLeads() {
+		return leads;
+	}
+
+	public void setLeads(List<SurveyLead> leads) {
+		this.leads = leads;
 	}
 }

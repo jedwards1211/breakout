@@ -123,6 +123,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Unit<Angle>> displayAngleUnit = newAttribute(
 			Unit.class,
 			"displayAngleUnit");
+	public static final Attribute<Boolean> showLeadLabels = newAttribute(
+			Boolean.class,
+			"showLeadLabels");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -226,6 +229,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.displayAngleUnit) == null) {
 			projectModel.set(ProjectModel.displayAngleUnit, Angle.degrees);
+		}
+		if (projectModel.get(ProjectModel.showLeadLabels) == null) {
+			projectModel.set(ProjectModel.showLeadLabels, true);
 		}
 	}
 }

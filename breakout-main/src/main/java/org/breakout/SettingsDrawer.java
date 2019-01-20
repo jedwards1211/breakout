@@ -40,6 +40,7 @@ import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -140,6 +141,7 @@ public class SettingsDrawer extends Drawer {
 	JSlider stationLabelFontSizeSlider;
 	JLabel stationLabelDensityLabel;
 	JSlider stationLabelDensitySlider;
+	JCheckBox showLeadLabelsCheckBox;
 	JLabel centerlinesOffLabel;
 	JLabel lessCenterlineDistanceLabel;
 	JLabel moreCenterlineDistanceLabel;
@@ -211,6 +213,9 @@ public class SettingsDrawer extends Drawer {
 			projectBinder);
 	Binder<Float> stationLabelDensityBinder = QObjectAttributeBinder.bind(
 			ProjectModel.stationLabelDensity,
+			projectBinder);
+	Binder<Boolean> showLeadLabelsBinder = QObjectAttributeBinder.bind(
+			ProjectModel.showLeadLabels,
 			projectBinder);
 	Binder<Color> stationLabelColorBinder = QObjectAttributeBinder.bind(
 			ProjectModel.stationLabelColor,
@@ -332,6 +337,8 @@ public class SettingsDrawer extends Drawer {
 		JSliderValueBinder.bind(stationLabelFontSizeSlider,
 				BimapperBinder.bind(compose(new LinearFloatBimapper(10f, 0f),
 						RoundingFloat2IntegerBimapper.instance), stationLabelFontSizeBinder));
+		ButtonSelectedBinder
+			.bind(showLeadLabelsCheckBox, showLeadLabelsBinder);
 
 		JSliderValueBinder.bind(numSamplesSlider, desiredNumSamplesBinder);
 
@@ -369,6 +376,9 @@ public class SettingsDrawer extends Drawer {
 		stationLabelColorLabel = new JLabel();
 		localizer.setText(stationLabelColorLabel, "stationLabelColorLabel.text");
 		stationLabelColorButton = new JXColorSelectionButton();
+		
+		showLeadLabelsCheckBox = new JCheckBox();
+		localizer.setText(showLeadLabelsCheckBox, "showLeadLabelsCheckBox.text");
 
 		centerlinesOffLabel = new JLabel();
 		localizer.setText(centerlinesOffLabel, "offLabel.text");
@@ -644,6 +654,8 @@ public class SettingsDrawer extends Drawer {
 		stationLabelDensityPanel.put(stationLabelDensitySlider)
 				.below(stationLabelsOffLabel, moreStationLabelDensityLabel).fillx();
 		w.put(stationLabelDensityPanel.getTarget()).belowLast().fillx();
+
+		w.put(showLeadLabelsCheckBox).belowLast().fillx();
 
 		w.put(centerlineDistanceLabel).belowLast().fillx();
 		GridBagWizard centerlineDistancePanel = GridBagWizard.quickPanel();

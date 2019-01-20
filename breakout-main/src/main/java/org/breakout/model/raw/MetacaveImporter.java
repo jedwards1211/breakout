@@ -109,7 +109,7 @@ public class MetacaveImporter {
 	}
 
 	private final List<MutableSurveyRow> rows = new ArrayList<>();
-
+	private final List<SurveyLead> leads = new ArrayList<>();
 	private final IdentityHashMap<JsonObject, SurveyTrip> trips = new IdentityHashMap<>();
 
 	public List<SurveyRow> getRows() {
@@ -118,13 +118,16 @@ public class MetacaveImporter {
 		for (MutableSurveyRow row : rows) {
 			if (row == null) {
 				final MutableSurveyRow finalLastRow = lastRow;
-				row = new MutableSurveyRow()
-						.setTrip(finalLastRow == null ? null : finalLastRow.getTrip());
+				row = new MutableSurveyRow().setTrip(finalLastRow == null ? null : finalLastRow.getTrip());
 			}
 			result.add(row.toImmutable());
 			lastRow = row;
 		}
 		return result;
+	}
+
+	public List<SurveyLead> getLeads() {
+		return new ArrayList<>(leads);
 	}
 
 	public void importMetacave(InputStream stream) throws IOException {
@@ -139,13 +142,7 @@ public class MetacaveImporter {
 		caves.entrySet().forEach(e -> {
 			String caveName = e.getKey();
 			JsonObject cave = e.getValue().getAsJsonObject();
-			JsonArray trips = cave.getAsJsonArray("trips");
-			if (trips == null) {
-				return;
-			}
-			for (int i = 0; i < trips.size(); i++) {
-				importTrip(trips.get(i).getAsJsonObject(), caveName);
-			}
+			importCave(cave, caveName);
 		});
 	}
 
@@ -162,6 +159,21 @@ public class MetacaveImporter {
 	private void importMetacave(Reader reader) {
 		JsonObject obj = new JsonParser().parse(new JsonReader(reader)).getAsJsonObject();
 		importMetacave(obj);
+	}
+
+	public void importCave(JsonObject cave, String caveName) {
+		JsonArray trips = cave.getAsJsonArray("trips");
+		if (trips != null) {
+			for (int i = 0; i < trips.size(); i++) {
+				importTrip(trips.get(i).getAsJsonObject(), caveName);
+			}
+		}
+		JsonArray leads = cave.getAsJsonArray("leads");
+		if (leads != null) {
+			for (int i = 0; i < leads.size(); i++) {
+				importLead(leads.get(i).getAsJsonObject(), caveName);
+			}
+		}
 	}
 
 	public SurveyTrip importTrip(JsonObject obj, String caveName) {
@@ -258,9 +270,8 @@ public class MetacaveImporter {
 				}
 			}
 
-			if (fromStation != null && fromStation.has("station") &&
-					shot != null && shot.size() > 0 &&
-					toStation != null && toStation.has("station")) {
+			if (fromStation != null && fromStation.has("station") && shot != null && shot.size() > 0
+					&& toStation != null && toStation.has("station")) {
 
 				JsonArray measurements = shot.getAsJsonArray("measurements");
 				if (measurements != null && measurements.size() > 0) {
@@ -319,5 +330,15 @@ public class MetacaveImporter {
 			// TODO: isAboveGround
 			// TODO: depth
 		}
+	}
+	
+	public SurveyLead importLead(JsonObject obj, String caveName) {
+		MutableSurveyLead lead = new MutableSurveyLead();
+		lead.setCave(caveName);
+		lead.setStation(getAsString(obj, "station"));
+		lead.setDescription(getAsString(obj, "description"));
+		SurveyLead result = lead.toImmutable();
+		leads.add(result);
+		return result;
 	}
 }

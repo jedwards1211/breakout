@@ -87,7 +87,7 @@ public class SaveProjectAsAction extends AbstractAction {
 			if (projectFile.exists()) {
 				choice = JOptionPane.showConfirmDialog(mainView.getMainPanel(),
 						new MultilineLabelHolder(localizer.getFormattedString("projectFileAlreadyExistsDialog.message",
-								projectFile.getName())).setWidth(600),
+								projectFile.getName())),
 						localizer.getString("projectFileAlreadyExistsDialog.title"),
 						JOptionPane.YES_NO_CANCEL_OPTION);
 				switch (choice) {

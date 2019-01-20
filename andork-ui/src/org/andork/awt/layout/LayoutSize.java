@@ -24,6 +24,8 @@ package org.andork.awt.layout;
 import java.awt.Component;
 import java.awt.Dimension;
 
+import javax.swing.text.View;
+
 public enum LayoutSize {
 	MINIMUM {
 		@Override
@@ -39,6 +41,11 @@ public enum LayoutSize {
 		@Override
 		public void set(Component comp, Dimension size) {
 			comp.setMinimumSize(size);
+		}
+
+		@Override
+		public float getSpan(View view, int axis) {
+			return view.getMinimumSpan(axis);
 		}
 	},
 	PREFERRED {
@@ -56,6 +63,11 @@ public enum LayoutSize {
 		public void set(Component comp, Dimension size) {
 			comp.setPreferredSize(size);
 		}
+
+		@Override
+		public float getSpan(View view, int axis) {
+			return view.getPreferredSpan(axis);
+		}
 	},
 	MAXIMUM {
 		@Override
@@ -71,6 +83,11 @@ public enum LayoutSize {
 		@Override
 		public void set(Component comp, Dimension size) {
 			comp.setMaximumSize(size);
+		}
+
+		@Override
+		public float getSpan(View view, int axis) {
+			return view.getMaximumSpan(axis);
 		}
 	},
 	ACTUAL {
@@ -88,6 +105,11 @@ public enum LayoutSize {
 		public void set(Component comp, Dimension size) {
 			comp.setSize(size);
 		}
+
+		@Override
+		public float getSpan(View view, int axis) {
+			return view.getContainer().getHeight();
+		}
 	};
 
 	public abstract Dimension get(Component comp);
@@ -95,4 +117,6 @@ public enum LayoutSize {
 	public abstract boolean isSet(Component comp);
 
 	public abstract void set(Component comp, Dimension size);
+
+	public abstract float getSpan(View view, int axis);
 }

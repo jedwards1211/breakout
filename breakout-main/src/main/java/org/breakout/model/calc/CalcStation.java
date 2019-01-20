@@ -1,9 +1,12 @@
 package org.breakout.model.calc;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.breakout.model.StationKey;
+import org.breakout.model.parsed.Lead;
 
 public class CalcStation {
 	public String name;
@@ -20,6 +23,7 @@ public class CalcStation {
 	public final double[] position = { Double.NaN, Double.NaN, Double.NaN };
 
 	public final Map<StationKey, CalcShot> shots = new LinkedHashMap<>(3);
+	public List<Lead> leads;
 
 	public StationKey key() {
 		return new StationKey(cave, name);

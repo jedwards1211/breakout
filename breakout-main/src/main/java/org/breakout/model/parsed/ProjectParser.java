@@ -15,11 +15,11 @@ import org.andork.model.Property;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
-import org.andork.util.StringUtils;
 import org.breakout.model.CrossSectionType;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 import org.breakout.model.parsed.ParseMessage.Severity;
+import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 
@@ -73,6 +73,16 @@ public class ProjectParser {
 		ParsedField<UnitizedDouble<U>> result = parse(object, property, parser, defaultUnit, missingSeverity);
 		return result != null ? result : new ParsedField<>(new UnitizedDouble<>(defaultValue, defaultUnit));
 	}
+	
+	private ParsedCave ensureCave(String caveName) {
+		ParsedCave cave = project.caves.get(caveName);
+		if (cave == null) {
+			cave = new ParsedCave();
+			cave.name = new ParsedField<>(caveName);
+			project.caves.put(caveName, cave);
+		}
+		return cave;
+	}
 
 	public ParsedTrip parse(SurveyTrip raw) {
 		ParsedTrip parsed = trips.get(raw);
@@ -85,12 +95,7 @@ public class ProjectParser {
 		if (caveName == null) {
 			caveName = "";
 		}
-		ParsedCave cave = project.caves.get(caveName);
-		if (cave == null) {
-			cave = new ParsedCave();
-			cave.name = new ParsedField<>(caveName);
-			project.caves.put(raw.getCave(), cave);
-		}
+		ParsedCave cave = ensureCave(caveName);
 		cave.trips.add(parsed);
 
 		parsed.distanceCorrection = parse(raw, SurveyTrip.Properties.distanceCorrection,
@@ -296,5 +301,13 @@ public class ProjectParser {
 		}
 
 		return null;
+	}
+	
+	public void parse(SurveyLead lead) {
+		if (lead.getCave() == null || lead.getStation() == null) return;
+		ParsedCave cave = ensureCave(lead.getCave());
+		Lead parsed = new Lead();
+		parsed.description = lead.getDescription();
+		cave.addLead(lead.getStation(), parsed);
 	}
 }

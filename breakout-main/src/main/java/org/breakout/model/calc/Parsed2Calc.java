@@ -2,7 +2,9 @@ package org.breakout.model.calc;
 
 import static org.breakout.util.StationNames.getSurveyDesignation;
 
+import java.util.Arrays;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.andork.task.Task;
@@ -11,6 +13,7 @@ import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
+import org.breakout.model.parsed.Lead;
 import org.breakout.model.parsed.ParsedCave;
 import org.breakout.model.parsed.ParsedCrossSection;
 import org.breakout.model.parsed.ParsedField;
@@ -69,7 +72,18 @@ public class Parsed2Calc {
 				convert(fixedStation, finalCalcCave);
 				fixedStationTask.increment();
 			}
+		}, leadTask -> {
+			leadTask.setTotal(cave.leads.size());
+			for (Map.Entry<String, List<Lead>> e : cave.leads.entrySet()) {
+				convert(new StationKey(caveName, e.getKey()), e.getValue());
+				leadTask.increment();
+			}
 		});
+	}
+	
+	void convert(StationKey stationKey, List<Lead> leads) {
+		CalcStation station = project.stations.get(stationKey);
+		if (station != null) station.leads = leads;
 	}
 
 	void convert(ParsedFixedStation fixedStation, CalcCave cave) {

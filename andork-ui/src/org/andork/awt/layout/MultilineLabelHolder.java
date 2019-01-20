@@ -32,7 +32,6 @@ import javax.swing.JPanel;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 
-@SuppressWarnings("serial")
 public class MultilineLabelHolder extends JPanel {
 	private class Layout implements LayoutManager {
 
@@ -47,14 +46,12 @@ public class MultilineLabelHolder extends JPanel {
 
 		private Dimension layoutSize(Container parent, LayoutSize sizeType) {
 			Dimension size = sizeType.get(label);
-			if (size.width <= width) {
-				return size;
-			}
 			View view = (View) label.getClientProperty(BasicHTML.propertyKey);
 			if (view != null) {
-				view.setSize(width, 0);
-				size.height = (int) Math.ceil(view.getPreferredSpan(View.Y_AXIS));
+				view.setSize(parent.getWidth(), 0);
+				size.height = (int) Math.ceil(sizeType.getSpan(view, View.Y_AXIS));
 			}
+			size.width = parent.getWidth();
 			return size;
 		}
 
@@ -100,13 +97,4 @@ public class MultilineLabelHolder extends JPanel {
 		this(new JLabel(wrapText(text)));
 	}
 
-	@Override
-	public int getWidth() {
-		return width;
-	}
-
-	public MultilineLabelHolder setWidth(int width) {
-		this.width = width;
-		return this;
-	}
 }

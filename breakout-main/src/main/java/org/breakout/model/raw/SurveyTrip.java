@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 11/29/2016, 1:39:13 PM.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-1-20 01:15:04.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -333,6 +333,7 @@ public final class SurveyTrip {
 		
 	}
 	 
+	
 
 	private final PersistentHashMap<String, Object> data;
 	

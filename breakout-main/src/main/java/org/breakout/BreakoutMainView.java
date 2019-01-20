@@ -37,6 +37,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.ItemEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -92,6 +93,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -119,6 +121,7 @@ import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
+import org.andork.collect.ArrayLists;
 import org.andork.collect.HashSets;
 import org.andork.concurrent.Throttler;
 import org.andork.event.BasicPropertyChangeListener;
@@ -181,6 +184,7 @@ import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 import org.andork.util.FileRecoveryConfig;
 import org.andork.util.RecoverableFileOutputStream;
+import org.andork.util.StringUtils;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.model.ColorParam;
 import org.breakout.model.HighlightMode;
@@ -199,12 +203,14 @@ import org.breakout.model.calc.CalcShot;
 import org.breakout.model.calc.CalculateGeometry;
 import org.breakout.model.calc.Parsed2Calc;
 import org.breakout.model.compass.Compass;
+import org.breakout.model.parsed.Lead;
 import org.breakout.model.parsed.ParsedProject;
 import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
 import org.breakout.model.parsed.ProjectParser;
 import org.breakout.model.raw.MetacaveExporter;
 import org.breakout.model.raw.MetacaveImporter;
+import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 import org.breakout.update.UpdateStatusPanelController;
@@ -229,7 +235,7 @@ import com.jogamp.opengl.awt.GLCanvas;
 public class BreakoutMainView {
 	private static final Logger logger = Logger.getLogger(BreakoutMainView.class.getName());
 
-	private class AnimationViewSaver implements Animation {
+	class AnimationViewSaver implements Animation {
 		@Override
 		public long animate(long animTime) {
 			saveViewXform();
@@ -317,17 +323,39 @@ public class BreakoutMainView {
 								? "--" : frontInclination.in(angleUnit).toString(format);
 						String formattedBackInclination = backInclination == null
 								? "--" : backInclination.in(angleUnit).toString(format);
-
-						hintLabel.setText(String.format(
+						
+						CalcShot calcShot = calcProject.shots.get(picked.picked.key());
+						List<Lead> leads = null;
+						String pickedStationName = "";
+						if (calcShot != null) {
+							pickedStationName = picked.locationAlongShot < 0.5f
+								? calcShot.fromStation.name
+								: calcShot.toStation.name;
+							leads = picked.locationAlongShot < 0.5f
+								? calcShot.fromStation.leads
+								: calcShot.toStation.leads;
+						}
+						final String finalPickedStationName = pickedStationName;
+						
+						String formattedLeads = leads != null && !leads.isEmpty()
+							? StringUtils.join("", ArrayLists.map(leads, lead -> 
+								String.format("<br>Lead at %s: %s", finalPickedStationName, lead.description)))
+							: "";
+						
+						String hintText = String.format(
 								"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
-										+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i></html>",
+										+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i>%s</html>",
 								key.fromStation, key.toStation,
 								formattedDistance,
 								formattedFrontAzimuth,
 								formattedBackAzimuth,
 								formattedFrontInclination,
 								formattedBackInclination,
-								trip != null ? trip.getName() : ""));
+								trip != null ? trip.getName() : "",
+								formattedLeads);
+
+						hintLabel.setText(hintText);
+						hintLabel.invalidate();
 					}
 
 					LinearAxisConversion conversion = getProjectModel().get(ProjectModel.highlightRange);
@@ -658,7 +686,9 @@ public class BreakoutMainView {
 				}
 				MetacaveImporter importer = new MetacaveImporter();
 				importer.importMetacave(json);
-				return new SurveyTableModel(importer.getRows());
+				SurveyTableModel model = new SurveyTableModel(importer.getRows());
+				model.setLeads(importer.getLeads());
+				return model;
 			} catch (Exception ex) {
 				logger.log(Level.SEVERE, "Failed to load survey", ex);
 				if (!file.equals(backupFile) && backupFile != null && backupFile.exists()) {
@@ -725,6 +755,8 @@ public class BreakoutMainView {
 				if (surveyModel != null && surveyModel.getRowCount() > 0) {
 					surveyDrawer.table().getModel()
 							.copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
+					surveyDrawer.table().getModel()
+							.setLeads(surveyModel.getLeads());
 					rebuild3dModel.run();
 				}
 
@@ -916,13 +948,15 @@ public class BreakoutMainView {
 
 				SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 				List<SurveyRow> rows = copy.getRows();
+				List<SurveyLead> leads = copy.getLeads();
+				if (leads == null) leads = Collections.emptyList();
 
 				if (parsingSubtask.isCanceled()) {
 					return;
 				}
 
 				parsingSubtask.setIndeterminate(false);
-				parsingSubtask.setTotal(rows.size());
+				parsingSubtask.setTotal(rows.size() + leads.size());
 				parsingSubtask.setCompleted(0);
 
 				int modelIndex = 0;
@@ -939,6 +973,14 @@ public class BreakoutMainView {
 					}
 					modelIndex++;
 					parsingSubtask.setCompleted(modelIndex);
+				}
+				for (SurveyLead lead : leads) {
+					if (lead == null) {
+						modelIndex++;
+						continue;
+					}
+					parser.parse(lead);
+					parsingSubtask.setCompleted(++modelIndex);
 				}
 			});
 
@@ -1151,6 +1193,9 @@ public class BreakoutMainView {
 	SaveProjectAction saveProjectAction = new SaveProjectAction(this);
 	SaveProjectAsAction saveProjectAsAction = new SaveProjectAsAction(this);
 	OpenLogDirectoryAction openLogDirectoryAction = new OpenLogDirectoryAction(i18n);
+	OrbitToPlanAction orbitToPlanAction = new OrbitToPlanAction(this);
+	FitViewToEverythingAction fitViewToEverythingAction = new FitViewToEverythingAction(this);
+	FitViewToSelectedAction fitViewToSelectedAction = new FitViewToSelectedAction(this);
 
 	EditSurveyScanPathsAction editSurveyScanPathsAction = new EditSurveyScanPathsAction(this);
 
@@ -1489,7 +1534,7 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelDensity, projectModelBinder));
-
+		
 		new BinderWrapper<Float>() {
 			@Override
 			protected void onValueChanged(Float stationLabelFontSize) {
@@ -1499,6 +1544,16 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelFontSize, projectModelBinder));
+
+		new BinderWrapper<Boolean>() {
+			@Override
+			protected void onValueChanged(Boolean showLeadLabels) {
+				if (model3d != null && showLeadLabels != null) {
+					model3d.setShowLeadLabels(showLeadLabels);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.showLeadLabels, projectModelBinder));
 
 		new BinderWrapper<Color>() {
 			@Override
@@ -1703,19 +1758,8 @@ public class BreakoutMainView {
 			});
 		});
 
-		settingsDrawer.getFitViewToSelectedButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				fitViewToSelected();
-			}
-		});
-
-		settingsDrawer.getFitViewToEverythingButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				fitViewToEverything();
-			}
-		});
+		settingsDrawer.getFitViewToSelectedButton().setAction(fitViewToSelectedAction);
+		settingsDrawer.getFitViewToEverythingButton().setAction(fitViewToEverythingAction);
 
 		settingsDrawer.getFitParamColorationAxisButton().addActionListener(new ActionListener() {
 			@Override
@@ -1794,29 +1838,13 @@ public class BreakoutMainView {
 			autoDrawable.display();
 		});
 
-		settingsDrawer.getOrbitToPlanButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (model3d == null) {
-					return;
-				}
-
-				float[] center = new float[3];
-				orbiter.getCenter(center);
-
-				if (Vecmath.hasNaNsOrInfinites(center)) {
-					model3d.getCenter(center);
-				}
-
-				float[] v = newMat4f();
-				renderer.getViewSettings().getViewXform(v);
-
-				removeUnprotectedCameraAnimations();
-				cameraAnimationQueue.add(new SpringViewOrbitAnimation(autoDrawable, renderer.getViewSettings(),
-						center, 0f, (float) -Math.PI * .5f, .1f, .05f, 30));
-				cameraAnimationQueue.add(new AnimationViewSaver());
-			}
-		});
+		settingsDrawer.getOrbitToPlanButton().setAction(orbitToPlanAction);
+		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_O, 0), "orbitToPlan");
+		mainPanel.getActionMap().put("orbitToPlan", orbitToPlanAction);
+		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_E, 0), "fitViewToEverything");
+		mainPanel.getActionMap().put("fitViewToEverything", fitViewToEverythingAction);
+		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0), "fitViewToSelected");
+		mainPanel.getActionMap().put("fitViewToSelected", fitViewToSelectedAction);
 
 		ViewButtonsPanel viewButtonsPanel = settingsDrawer.getViewButtonsPanel();
 		for (CameraView view : CameraView.values()) {
