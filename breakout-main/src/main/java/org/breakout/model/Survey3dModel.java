@@ -103,6 +103,8 @@ import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
 import org.andork.task.Task;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
 import org.andork.util.StringUtils;
 import org.breakout.PickResult;
 import org.breakout.awt.ParamGradientMapPaint;
@@ -121,6 +123,8 @@ import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.util.awt.TextRenderer;
+
+import jogamp.opengl.glu.nurbs.DisplayList;
 
 public class Survey3dModel implements JoglDrawable, JoglResource {
 	private class AxialSectionRenderer extends OneParamSectionRenderer {
@@ -717,6 +721,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		float textScale;
 		float density;
 		boolean showLeadLabels;
+		Unit<Length> displayLengthUnit;
 	}
 
 	public static class Section {
@@ -1082,7 +1087,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				z = 0.99999f;
 			}
 			String text = emphasize
-				? leadText(label.station.name, label.station.leads)
+				? leadText(label.station.name, label.station.leads, labelContext.displayLengthUnit)
 				: label.text;
 			String[] lines = text.split("\r\n?|\n");
 			for (String line : lines) {
@@ -1092,7 +1097,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	private static String leadText(String stationName, List<Lead> leads) {
+	private static String leadText(String stationName, List<Lead> leads, Unit<Length> displayLengthUnit) {
 		if (leads == null) return "";
 		StringBuilder builder = new StringBuilder();
 		builder.append(leads.size() == 1
@@ -1103,7 +1108,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		int i = 1;
 		for (Lead lead : leads) {
 			builder.append('\n');
-			String wrapped = StringUtils.wrap(lead.description, 55);
+			StringBuilder description = new StringBuilder();
+			String size = lead.describeSize(displayLengthUnit);
+			if (size != null) description.append('[').append(size).append("] ");
+			description.append(lead.description);
+			String wrapped = StringUtils.wrap(description.toString(), 55);
 			if (leads.size() > 1) {
 				builder.append("[").append(i++).append("] ")
 					.append(wrapped.replaceAll("(\r\n?|\n)", "$1     "));
@@ -1796,6 +1805,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	FlatColorProgram flatColorProgram = FlatColorProgram.INSTANCE;
 
 	boolean showSpatialIndex = false;
+	
+	Unit<Length> displayLengthUnit = Length.meters;
 
 	private Survey3dModel(
 			CalcProject project,
@@ -1996,6 +2007,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			labelContext.density = stationLabelDensity;
 			labelContext.textScale = stationLabelFontSize / labelFont.getSize();
 			labelContext.showLeadLabels = showLeadLabels;
+			labelContext.displayLengthUnit = displayLengthUnit;
 
 			for (Section section : sections) {
 				section.drawLabels(context, gl, m, n, labelContext);
@@ -2576,5 +2588,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public void setShowSpatialIndex(boolean showSpatialIndex) {
 		this.showSpatialIndex = showSpatialIndex;
+	}
+
+	public Unit<Length> getDisplayLengthUnit() {
+		return displayLengthUnit;
+	}
+
+	public void setDisplayLengthUnit(Unit<Length> displayLengthUnit) {
+		this.displayLengthUnit = displayLengthUnit;
 	}
 }

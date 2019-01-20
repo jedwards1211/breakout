@@ -1689,6 +1689,15 @@ public class BreakoutMainView {
 
 		miniSurveyDrawer.statsPanel().lengthUnitBinder().bind(
 				QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
+		
+		new BinderWrapper<Unit<Length>>() {
+			@Override
+			protected void onValueChanged(final Unit<Length> displayLengthUnit) {
+				final Survey3dModel model3d = BreakoutMainView.this.model3d;
+				model3d.setDisplayLengthUnit(displayLengthUnit);
+				autoDrawable.display();
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
 
 		menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu();

@@ -16,5 +16,13 @@ module.exports = {
       type: 'String',
       description: 'the description of the lead',
     },
+    width: {
+      type: 'String',
+      description: 'the width of the lead',
+    },
+    height: {
+      type: 'String',
+      description: 'the height of the lead',
+    },
   },
 }

@@ -337,6 +337,8 @@ public class MetacaveImporter {
 		lead.setCave(caveName);
 		lead.setStation(getAsString(obj, "station"));
 		lead.setDescription(getAsString(obj, "description"));
+		lead.setWidth(getMeasurement(obj.get("width")));
+		lead.setHeight(getMeasurement(obj.get("height")));
 		SurveyLead result = lead.toImmutable();
 		leads.add(result);
 		return result;

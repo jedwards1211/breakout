@@ -12,6 +12,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 import org.andork.model.Property;
+import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
@@ -308,6 +309,10 @@ public class ProjectParser {
 		ParsedCave cave = ensureCave(lead.getCave());
 		Lead parsed = new Lead();
 		parsed.description = lead.getDescription();
+		parsed.width = parse(lead, SurveyLead.Properties.width,
+				MetacaveLengthParser::parse, Length.feet);
+		parsed.height = parse(lead, SurveyLead.Properties.height,
+				MetacaveLengthParser::parse, Length.feet);
 		cave.addLead(lead.getStation(), parsed);
 	}
 }

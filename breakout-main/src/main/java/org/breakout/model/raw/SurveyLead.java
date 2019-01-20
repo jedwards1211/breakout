@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-1-20 01:15:04.
+ * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-1-20 14:07:48.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -31,6 +31,16 @@ public final class SurveyLead {
 	 * Key for the description of the lead.
 	 */
 	public static final String description = "description";
+	
+	/**
+	 * Key for the width of the lead.
+	 */
+	public static final String width = "width";
+	
+	/**
+	 * Key for the height of the lead.
+	 */
+	public static final String height = "height";
 	
 	
 	static final PersistentHashMap<String, Object> initialData = PersistentHashMap.emptyMap();
@@ -76,6 +86,26 @@ public final class SurveyLead {
 			"description", String.class,
 			r -> r.get(SurveyLead.description),
 			(m, v) -> m.set(SurveyLead.description, v)
+		);
+		
+
+		/**
+		 * the width of the lead
+		 */
+		public static final DefaultProperty<SurveyLead, String> width = create(
+			"width", String.class,
+			r -> r.get(SurveyLead.width),
+			(m, v) -> m.set(SurveyLead.width, v)
+		);
+		
+
+		/**
+		 * the height of the lead
+		 */
+		public static final DefaultProperty<SurveyLead, String> height = create(
+			"height", String.class,
+			r -> r.get(SurveyLead.height),
+			(m, v) -> m.set(SurveyLead.height, v)
 		);
 		
 	}
@@ -159,6 +189,20 @@ public final class SurveyLead {
 		return get(description);
 	}
 	
+	/**
+	 * @return the width of the lead.
+	 */
+	public String getWidth() {
+		return get(width);
+	}
+	
+	/**
+	 * @return the height of the lead.
+	 */
+	public String getHeight() {
+		return get(height);
+	}
+	
 	
 	/**
 	 * Sets name of cave the lead is in.
@@ -193,6 +237,28 @@ public final class SurveyLead {
 		return set(SurveyLead.description, description);
 	}
 	
+	/**
+	 * Sets the width of the lead.
+	 *
+	 * @param width - the new value for the width of the lead
+	 * 
+	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the new {@code width}.
+	 */
+	public SurveyLead setWidth(String width) {
+		return set(SurveyLead.width, width);
+	}
+	
+	/**
+	 * Sets the height of the lead.
+	 *
+	 * @param height - the new value for the height of the lead
+	 * 
+	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the new {@code height}.
+	 */
+	public SurveyLead setHeight(String height) {
+		return set(SurveyLead.height, height);
+	}
+	
 	
 	/**
 	 * Updates name of cave the lead is in.
@@ -225,6 +291,28 @@ public final class SurveyLead {
 	 */
 	public SurveyLead updateDescription(Function<String, String> updater) {
 		return update(description, updater);
+	}
+	
+	/**
+	 * Updates the width of the lead.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code width} and returns the new value for {@code width}.
+	 * 
+	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the updated {@code width}.
+	 */
+	public SurveyLead updateWidth(Function<String, String> updater) {
+		return update(width, updater);
+	}
+	
+	/**
+	 * Updates the height of the lead.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code height} and returns the new value for {@code height}.
+	 * 
+	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the updated {@code height}.
+	 */
+	public SurveyLead updateHeight(Function<String, String> updater) {
+		return update(height, updater);
 	}
 	
 	

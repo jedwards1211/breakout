@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-1-20 01:15:04.
+ * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-1-20 14:07:48.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -107,6 +107,20 @@ public final class MutableSurveyLead {
 		return get(SurveyLead.description);
 	}
 	
+	/**
+	 * @return the width of the lead.
+	 */
+	public String getWidth() {
+		return get(SurveyLead.width);
+	}
+	
+	/**
+	 * @return the height of the lead.
+	 */
+	public String getHeight() {
+		return get(SurveyLead.height);
+	}
+	
 	
 	/**
 	 * Sets name of cave the lead is in.
@@ -141,6 +155,28 @@ public final class MutableSurveyLead {
 		return set(SurveyLead.description, description);
 	}
 	
+	/**
+	 * Sets the width of the lead.
+	 *
+	 * @param width - the new value for the width of the lead
+	 * 
+	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the new {@code width}.
+	 */
+	public MutableSurveyLead setWidth(String width) {
+		return set(SurveyLead.width, width);
+	}
+	
+	/**
+	 * Sets the height of the lead.
+	 *
+	 * @param height - the new value for the height of the lead
+	 * 
+	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the new {@code height}.
+	 */
+	public MutableSurveyLead setHeight(String height) {
+		return set(SurveyLead.height, height);
+	}
+	
 	
 	/**
 	 * Updates name of cave the lead is in.
@@ -173,6 +209,28 @@ public final class MutableSurveyLead {
 	 */
 	public MutableSurveyLead updateDescription(Function<String, String> updater) {
 		return update(SurveyLead.description, updater);
+	}
+	
+	/**
+	 * Updates the width of the lead.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code width} and returns the new value for {@code width}.
+	 * 
+	 * @return this {@code MutableSurveyLead} if {@code width} is unchanged, or a copy with the updated {@code width}.
+	 */
+	public MutableSurveyLead updateWidth(Function<String, String> updater) {
+		return update(SurveyLead.width, updater);
+	}
+	
+	/**
+	 * Updates the height of the lead.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code height} and returns the new value for {@code height}.
+	 * 
+	 * @return this {@code MutableSurveyLead} if {@code height} is unchanged, or a copy with the updated {@code height}.
+	 */
+	public MutableSurveyLead updateHeight(Function<String, String> updater) {
+		return update(SurveyLead.height, updater);
 	}
 	
 	
