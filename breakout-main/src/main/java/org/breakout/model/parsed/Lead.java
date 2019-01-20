@@ -16,9 +16,16 @@ public class Lead {
 	public String describeSize(Unit<Length> unit) {
 		UnitizedDouble<Length> width = ParsedField.getValue(this.width);
 		UnitizedDouble<Length> height = ParsedField.getValue(this.height);
-		if (width == null || height == null)
-			return null;
-		return String.format("%sw %sh", sizeFormat.format(width.doubleValue(unit)),
-				sizeFormat.format(height.doubleValue(unit)));
+		StringBuilder builder = new StringBuilder();
+		if (width != null) {
+			builder.append(sizeFormat.format(width.doubleValue(unit)))
+				.append('w');
+		}
+		if (height != null) {
+			if (builder.length() > 0) builder.append(' ');
+			builder.append(sizeFormat.format(height.doubleValue(unit)))
+				.append('h');
+		}
+		return builder.length() > 0 ? builder.toString() : null;
 	}
 }

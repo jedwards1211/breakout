@@ -14,6 +14,9 @@ public class LeadTests {
 		Assert.assertEquals("6.7w 1.1h", lead.describeSize(Length.meters));
 		
 		lead.width = null;
+		Assert.assertEquals("1.1h", lead.describeSize(Length.meters));
+		
+		lead.height = null;
 		Assert.assertEquals(null, lead.describeSize(Length.meters));
 	}
 }
