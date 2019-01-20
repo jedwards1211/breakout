@@ -76,6 +76,7 @@ public class StringUtilsTest {
 			.toString();
 		
 		String expected = StringUtils.join("\n",
+			"foo",
 			text.substring(4, 24),
 			text.substring(24, 44),
 			text.substring(44)
