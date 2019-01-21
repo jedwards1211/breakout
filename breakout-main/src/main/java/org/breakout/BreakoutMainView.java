@@ -1694,8 +1694,10 @@ public class BreakoutMainView {
 			@Override
 			protected void onValueChanged(final Unit<Length> displayLengthUnit) {
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
-				model3d.setDisplayLengthUnit(displayLengthUnit);
-				autoDrawable.display();
+				if (model3d != null) {
+					model3d.setDisplayLengthUnit(displayLengthUnit);
+					autoDrawable.display();
+				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
 
