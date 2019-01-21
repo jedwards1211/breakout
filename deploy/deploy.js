@@ -1,21 +1,21 @@
 var fs = require('fs');
 var Promise = require('bluebird');
 var path = require('path');
-var shell = require('shelljs');
 var request = require('superagent-bluebird-promise');
 var apiSettings = require('./github-api.json');
+var {execSync} = require('child_process');
 
 var username = apiSettings.username;
 var token = apiSettings.token;
 
-shell.cd('..');
-var version = shell.exec("mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version " + 
-  "| grep -Ev '(^\\[|Download\\w+:)'").output.trim();
+process.chdir(path.resolve(__dirname, '..'));
+var version = execSync("mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version " + 
+  "| grep -Ev '(^\\[|Download\\w+:)'").toString('utf8').trim();
 var jarName = 'breakout-' + version + '.jar';
 var jarFile = path.join(__dirname, '../Breakout/target', jarName);
 version = 'v' + version;
 
-shell.echo('deploying Breakout ' + version);
+console.log('deploying Breakout ' + version);
 
 function streamToPromise(stream) {
     return new Promise(function(resolve, reject) {
