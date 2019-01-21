@@ -22,6 +22,8 @@
 package org.andork.jogl;
 
 public interface JoglDrawContext {
+	public float devicePixelRatio();
+
 	public int height();
 
 	public float[] inverseViewMatrix();

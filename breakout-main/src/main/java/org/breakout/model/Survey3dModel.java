@@ -79,6 +79,7 @@ import org.andork.collect.MultiMap;
 import org.andork.collect.PriorityEntry;
 import org.andork.func.FloatBinaryOperator;
 import org.andork.jogl.BufferHelper;
+import org.andork.jogl.DevicePixelRatio;
 import org.andork.jogl.JoglBuffer;
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
@@ -717,11 +718,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	static class LabelDrawingContext {
 		TextRenderer textRenderer;
 		RfStarTree<Void> labelTree;
+		RfStarTree<StationKey> leadLabelTree;
 		Set<StationKey> stationsToEmphasize;
 		float textScale;
 		float density;
 		boolean showLeadLabels;
 		Unit<Length> displayLengthUnit;
+		public StationKey hoveredStation;
 	}
 
 	public static class Section {
@@ -956,7 +959,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				label.width = (float) bounds.getWidth();
 				label.height = (float) bounds.getHeight();
 				label.xOffset = (float) -bounds.getWidth() / 2;
-				label.yOffset = 0;
+				label.yOffset = (float) -bounds.getHeight() / 3;
 				task.increment();
 			}
 		}
@@ -965,16 +968,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				LabelDrawingContext labelContext) {
 			context.getViewPoint(tempPoint);
 			float minDistance = Rectmath.minDistance3(mbr, tempPoint);
-
-			if (labelContext.showLeadLabels) {
-				for (Map.Entry<StationKey, Label> entry : leadLabels.entrySet()) {
-					StationKey key = entry.getKey();
-					Label label = entry.getValue();
-					boolean emphasize = labelContext.stationsToEmphasize.contains(key);
-					drawLeadLabel(label, context, gl, m, n, labelContext, emphasize,
-							labelContext.textScale);
-				}
-			}
 
 			if (labelContext.density > 0) {
 				Set<StationKey> stationsToLabel = stationLabels.keySet();
@@ -1002,6 +995,18 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 							labelContext.textScale * (emphasize ? 2f : 1f));
 				}
 			}
+
+			if (labelContext.showLeadLabels) {
+				for (Map.Entry<StationKey, Label> entry : leadLabels.entrySet()) {
+					StationKey key = entry.getKey();
+					Label label = entry.getValue();
+					boolean emphasize = labelContext.stationsToEmphasize.contains(key);
+					boolean detail = key.equals(labelContext.hoveredStation);
+					drawLeadLabel(label, context, gl, m, n, labelContext, emphasize, detail,
+							labelContext.textScale);
+				}
+			}
+
 		}
 
 		void drawLabel(Label label, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
@@ -1050,7 +1055,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		void drawLeadLabel(Label label, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
-				LabelDrawingContext labelContext, boolean emphasize, float scale) {
+				LabelDrawingContext labelContext, boolean emphasize, boolean detail, float scale) {
 			Vecmath.mpmulAffine(context.viewMatrix(), label.position, tempPoint);
 			if (tempPoint[2] > 0) {
 				// label is behind camera
@@ -1080,19 +1085,21 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			float[] labelMbr = { x, y, x + label.width * scale, y + label.height * scale };
 			Leaf<Void> leaf = new Leaf<>(labelMbr, null);
 			labelContext.labelTree.insert(leaf);
+			Leaf<StationKey> leadLeaf = new Leaf<>(labelMbr, label.station.key( ));
+			labelContext.leadLabelTree.insert( leadLeaf );
 			if (Float.isNaN(z)) {
 				z = tempPoint[2];
 			}
-			if (emphasize) {
+			if (emphasize || detail) {
 				z = 0.99999f;
 			}
-			String text = emphasize
+			String text = detail
 				? leadText(label.station.name, label.station.leads, labelContext.displayLengthUnit)
 				: label.text;
 			String[] lines = text.split("\r\n?|\n");
 			for (String line : lines) {
 				labelContext.textRenderer.draw3D(line, x, y, z, scale);
-				y -= label.height / 2;
+				y -= label.height * scale;
 			}
 		}
 	}
@@ -1735,6 +1742,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	final RfStarTree<Shot3d> tree;
 
+	RfStarTree<StationKey> leadLabelTree = null;
+	
 	final Set<Section> sections;
 
 	final Font labelFont;
@@ -1757,6 +1766,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	Shot3d hoveredShot;
 
 	Float hoverLocation;
+	
+	StationKey hoveredStation;
 
 	LinearAxisConversion glowExtentConversion;
 
@@ -1993,6 +2004,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			textRenderer.beginRendering(context.width(), context.height(), false);
 
 			RfStarTree<Void> labelTree = new RfStarTree<>(2, 10, 3, 3);
+			leadLabelTree = new RfStarTree<>(2, 10, 3, 3);
 			Set<StationKey> stationsToEmphasize = Collections.emptySet();
 			if (hoveredShot != null) {
 				stationsToEmphasize = new HashSet<>();
@@ -2004,10 +2016,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			labelContext.textRenderer = textRenderer;
 			labelContext.stationsToEmphasize = stationsToEmphasize;
 			labelContext.labelTree = labelTree;
+			labelContext.leadLabelTree = leadLabelTree;
 			labelContext.density = stationLabelDensity;
-			labelContext.textScale = stationLabelFontSize / labelFont.getSize();
+			labelContext.textScale = stationLabelFontSize / labelFont.getSize() * context.devicePixelRatio( );
 			labelContext.showLeadLabels = showLeadLabels;
 			labelContext.displayLengthUnit = displayLengthUnit;
+			labelContext.hoveredStation = hoveredStation;
 
 			for (Section section : sections) {
 				section.drawLabels(context, gl, m, n, labelContext);
@@ -2197,7 +2211,29 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		return true;
 	}
-
+	
+	public void pickLeadStations(float x, float y, List<PickResult<StationKey>> pickResults) {
+		RTraversal.traverse(leadLabelTree.getRoot(),
+			node -> Rectmath.contains2(node.mbr( ), x, y),
+			leaf -> {
+				float[] mbr = leaf.mbr();
+				if (!Rectmath.contains2(mbr, x, y)) {
+					return true;
+				}
+				PickResult<StationKey> pickResult = new PickResult<>();
+				pickResult.location[0] = (mbr[0] + mbr[2]) / 2;
+				pickResult.location[1] = (mbr[1] + mbr[3]) / 2;
+				pickResult.location[2] = 0;
+				pickResult.lateralDistance = Vecmath.distance3(
+					pickResult.location,
+					x, y, pickResult.location[2]);
+				pickResult.distance = pickResult.lateralDistance;
+				pickResult.picked = leaf.object();
+				pickResults.add(pickResult);
+				return true;
+			});
+	}
+	
 	public void pickShots(PlanarHull3f pickHull, Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
 		RTraversal.traverse(tree.getRoot(),
 				node -> pickHull.intersectsBox(node.mbr()),
@@ -2294,6 +2330,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		LinearAxisConversion glowExtentConversion();
 
 		Task<?> task();
+	}
+	
+	public void setHoveredStation(StationKey hoveredStation) {
+		this.hoveredStation = hoveredStation;
 	}
 
 	public void updateGlow(Shot3d hoveredShot, Float hoverLocation, UpdateGlowOptions options) {

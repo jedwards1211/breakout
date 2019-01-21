@@ -31,6 +31,11 @@ public class Rectmath {
 			out[i] = (r[i] + r[i + out.length]) * 0.5f;
 		}
 	}
+	
+	public static boolean contains2(float[] r, float... p) {
+		return p[0] >= r[0] && p[0] <= r[2] &&
+				p[1] >= r[1] && p[1] <= r[3];
+	}
 
 	public static boolean contains3(double[] r, double[] p) {
 		return p[0] >= r[0] && p[0] <= r[3] &&

@@ -35,6 +35,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected int y;
 	protected int width;
 	protected int height;
+	protected float devicePixelRatio = 1f;
 
 	public DefaultJoglRenderer(GL3Framebuffer framebuffer, int desiredNumSamples) {
 		super();
@@ -67,7 +68,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
 		}
 
-		viewState.update(viewSettings, x, y, width, height);
+		viewState.update(viewSettings, x, y, width, height, devicePixelRatio);
 
 		drawScene(drawable);
 
@@ -130,6 +131,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 		this.y = y;
 		this.width = width;
 		this.height = height;
+		this.devicePixelRatio = DevicePixelRatio.getDevicePixelRatio( drawable );
 
 		gl.glViewport(x, y, width, height);
 	}

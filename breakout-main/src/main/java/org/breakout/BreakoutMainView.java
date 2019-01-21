@@ -134,6 +134,7 @@ import org.andork.func.Lodash.DebounceOptions;
 import org.andork.func.Lodash.DebouncedRunnable;
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.DefaultJoglRenderer;
+import org.andork.jogl.DevicePixelRatio;
 import org.andork.jogl.GL3Framebuffer;
 import org.andork.jogl.InterpolationProjection;
 import org.andork.jogl.JoglBackgroundColor;
@@ -191,6 +192,7 @@ import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.model.ShotKey;
+import org.breakout.model.StationKey;
 import org.breakout.model.Survey3dModel;
 import org.breakout.model.Survey3dModel.SelectionEditor;
 import org.breakout.model.Survey3dModel.Shot3d;
@@ -278,7 +280,19 @@ public class BreakoutMainView {
 
 		@Override
 		protected Void work() throws Exception {
-			final Shot3dPickResult picked = pick(model3d, e, hoverUpdaterSpc);
+			List<PickResult<StationKey>> leadStationPickResults = new ArrayList<>();
+			float devicePixelRatio = DevicePixelRatio.getDevicePixelRatio(autoDrawable);
+			float x = e.getX() * devicePixelRatio;
+			float y = autoDrawable.getSurfaceHeight() - e.getY() * devicePixelRatio;
+			model3d.pickLeadStations(x, y, leadStationPickResults);
+			
+			Optional<PickResult<StationKey>> closest = leadStationPickResults.stream().min(
+				(a, b) -> Float.compare(a.lateralDistance, b.lateralDistance));
+			model3d.setHoveredStation(closest.map(c -> c.picked).orElse(null));
+
+			final Shot3dPickResult picked = leadStationPickResults.isEmpty()
+				? pick(model3d, e, hoverUpdaterSpc)
+				: null;
 
 			HighlightMode highlightMode = getProjectModel().get(ProjectModel.highlightMode);
 			final boolean hightlightSameTrip = highlightMode == HighlightMode.SAME_TRIP;
@@ -364,7 +378,7 @@ public class BreakoutMainView {
 					return conversion2;
 				}
 			}.result();
-
+			
 			runSubtask(1, glowSubtask -> model3d.updateGlow(
 					picked == null ? null : picked.picked,
 					picked == null ? null : picked.locationAlongShot,
@@ -2505,7 +2519,7 @@ public class BreakoutMainView {
 		if (model3d != null) {
 			List<PickResult<Shot3d>> pickResults = new ArrayList<>();
 			model3d.pickShots(hull, spc, pickResults);
-
+			
 			PickResult<Shot3d> best = null;
 
 			for (PickResult<Shot3d> result : pickResults) {

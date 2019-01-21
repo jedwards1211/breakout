@@ -295,7 +295,7 @@ public class Vecmath {
 		return Math.sqrt(dx * dx + dy * dy + dz * dz);
 	}
 
-	public static float distance3(float[] a, float[] b) {
+	public static float distance3(float[] a, float... b) {
 		float dx = a[0] - b[0];
 		float dy = a[1] - b[1];
 		float dz = a[2] - b[2];

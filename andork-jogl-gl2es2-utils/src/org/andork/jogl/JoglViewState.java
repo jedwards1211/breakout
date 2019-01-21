@@ -34,6 +34,8 @@ public class JoglViewState implements JoglDrawContext {
 	private int width;
 
 	private int height;
+	
+	private float devicePixelRatio;
 
 	/**
 	 * The view matrix.
@@ -132,15 +134,20 @@ public class JoglViewState implements JoglDrawContext {
 		return inverseViewport;
 	}
 
+	public void update(JoglViewSettings settings, int x, int y, int width, int height) {
+		update(settings, x, y, width, height, 1f);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 *
 	 * @see org.andork.jogl.neu2.JoglCamera#updatePickXform()
 	 */
-	public void update(JoglViewSettings settings, int x, int y, int width, int height) {
+	public void update(JoglViewSettings settings, int x, int y, int width, int height, float devicePixelRatio) {
 		this.settings = settings;
 		this.width = width;
 		this.height = height;
+		this.devicePixelRatio = devicePixelRatio;
 		
 		ortho(inverseViewport, x, x + width, y, y + height, -1, 1);
 		invAffine(inverseViewport, viewport);
@@ -205,5 +212,11 @@ public class JoglViewState implements JoglDrawContext {
 	@Override
 	public Projection projection() {
 		return projection;
+	}
+
+	@Override
+	public float devicePixelRatio( )
+	{
+		return devicePixelRatio;
 	}
 }
