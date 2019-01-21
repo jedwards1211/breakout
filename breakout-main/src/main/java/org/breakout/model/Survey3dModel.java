@@ -2213,6 +2213,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 	
 	public void pickLeadStations(float x, float y, List<PickResult<StationKey>> pickResults) {
+		if (leadLabelTree == null) {
+			return;
+		}
 		RTraversal.traverse(leadLabelTree.getRoot(),
 			node -> Rectmath.contains2(node.mbr( ), x, y),
 			leaf -> {
