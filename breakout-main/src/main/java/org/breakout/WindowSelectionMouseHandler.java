@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.andork.func.StreamUtils;
+import org.andork.jogl.DevicePixelRatio;
 import org.andork.jogl.JoglScene;
 import org.andork.jogl.JoglScreenPolygon;
 import org.andork.jogl.JoglViewState;
@@ -95,9 +96,10 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 	@Override
 	public void mouseMoved(MouseEvent e) {
 		if (!points.isEmpty()) {
+			float dpr = DevicePixelRatio.getDevicePixelRatio( context.getDrawable( ) );
 			float[] last = points.get(points.size() - 1);
-			last[0] = e.getX();
-			last[1] = context.getDrawable().getSurfaceHeight() - e.getY();
+			last[0] = e.getX() * dpr;
+			last[1] = context.getDrawable().getSurfaceHeight() - e.getY() * dpr;
 			context.getDrawable().invoke(true, drawable -> {
 				selectionPolygon.setPoints(points);
 				return false;
@@ -116,7 +118,11 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 		if (e.getButton() != MouseEvent.BUTTON1) {
 			return;
 		}
-		points.add(new float[] { e.getX(), context.getDrawable().getSurfaceHeight() - e.getY() });
+		float dpr = DevicePixelRatio.getDevicePixelRatio( context.getDrawable( ) );
+		points.add(new float[] {
+			e.getX() * dpr,
+			context.getDrawable().getSurfaceHeight() - e.getY() * dpr
+		});
 		context.getDrawable().invoke(false, drawable -> {
 			selectionPolygon.setPoints(points);
 			return false;
@@ -231,8 +237,9 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 	}
 
 	public void start(MouseEvent e) {
-		points.add(new float[] { e.getX(), context.getDrawable().getSurfaceHeight() - e.getY() });
-		points.add(new float[] { e.getX(), context.getDrawable().getSurfaceHeight() - e.getY() });
+		float dpr = DevicePixelRatio.getDevicePixelRatio( context.getDrawable( ) );
+		points.add(new float[] { e.getX() * dpr, context.getDrawable().getSurfaceHeight() - e.getY() * dpr });
+		points.add(new float[] { e.getX() * dpr, context.getDrawable().getSurfaceHeight() - e.getY() * dpr });
 		context.getDrawable().invoke(false, drawable -> {
 			selectionPolygon.setPoints(points);
 			context.getScene().add(selectionPolygon);
