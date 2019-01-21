@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.andork</groupId>
   <artifactId>andork-ui</artifactId>
-  <version>1.0.0-alpha.13</version>
+  <version>1.0.0-alpha.14</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
     <testSourceDirectory>test</testSourceDirectory>
@@ -37,7 +37,7 @@
   	<dependency>
   		<groupId>org.andork</groupId>
   		<artifactId>andork-core</artifactId>
-  		<version>1.0.0-alpha.13</version>
+  		<version>1.0.0-alpha.14</version>
   	</dependency>
   	<dependency>
   		<groupId>junit</groupId>
