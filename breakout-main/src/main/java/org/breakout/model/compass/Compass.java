@@ -112,9 +112,9 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 
 			LineMetrics metrics = labelFont.getLineMetrics(text, fontRenderContext);
 			Rectangle2D bounds = labelFont.getStringBounds(text, fontRenderContext);
-			labelScreenPosition[0] -= bounds.getWidth() / 2;
-			labelScreenPosition[1] -= metrics.getAscent() / 2;
-			textRenderer.draw3D(text, labelScreenPosition[0], labelScreenPosition[1], labelScreenPosition[2], 1);
+			labelScreenPosition[0] -= bounds.getWidth() * context.devicePixelRatio( ) / 2;
+			labelScreenPosition[1] -= metrics.getAscent() * context.devicePixelRatio( ) / 2;
+			textRenderer.draw3D(text, labelScreenPosition[0], labelScreenPosition[1], labelScreenPosition[2], context.devicePixelRatio( ));
 		}
 		
 		textRenderer.endRendering();
