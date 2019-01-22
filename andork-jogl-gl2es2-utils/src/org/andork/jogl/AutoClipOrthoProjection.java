@@ -42,7 +42,7 @@ public class AutoClipOrthoProjection implements Projection {
 		float[] vi = dc.inverseViewMatrix();
 
 		float left, right, bottom, top;
-		if (vSpan / hSpan > height / width) {
+		if (vSpan / hSpan > (float) height / width) {
 			top = vSpan / 2;
 			bottom = -top;
 			right = top * width / height;
@@ -64,6 +64,9 @@ public class AutoClipOrthoProjection implements Projection {
 		}
 		if (useFarClipPoint) {
 			zFar = subDot3(vi, 12, farClipPoint, 0, vi, 8);
+		}
+		if (zFar == zNear) {
+			zFar += 1;
 		}
 
 		ortho(pOut, left, right, bottom, top, zNear, zFar);
