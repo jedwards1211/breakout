@@ -1270,7 +1270,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				throw new IllegalArgumentException("i must be between 0 and " + vertexCount);
 			}
 			ByteBuffer vertBuffer = section.geometry.buffer();
-			int baseIndex = indexInVertices * GEOM_BPV;
+			int baseIndex = (indexInVertices + i) * GEOM_BPV;
 			result[0] = vertBuffer.getFloat(baseIndex);
 			result[1] = vertBuffer.getFloat(baseIndex + 4);
 			result[2] = vertBuffer.getFloat(baseIndex + 8);
@@ -2108,65 +2108,40 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		center[2] = (mbr[2] + mbr[5]) * 0.5f;
 	}
 
-	private float getFarthestExtent(Set<ShotKey> shotsInView, float[] shotsInViewMbr, float[] direction,
-			FloatBinaryOperator extentFunction) {
-		FloatHolder farthest = new FloatHolder(Float.NaN);
-
-		// float[] testPoint = new float[3];
-
-		RTraversal.traverse(getTree().getRoot(),
-				node -> {
-					if (!Rectmath.intersects3(shotsInViewMbr, node.mbr())) {
-						return false;
-					}
-					// return Rectmath.findCorner3( node.mbr( ) , testPoint ,
-					// corner -> {
-					// float dist = Vecmath.dot3( corner , direction );
-					// return farthest.value != extentFunction.applyAsFloat(
-					// farthest.value , dist ) ? true : null;
-					// } ) != null;
-					return true;
-				},
-				leaf -> {
-					if (shotsInView.contains(leaf.object().key)) {
-						for (float[] coord : leaf.object().coordIterable()) {
-							float dist = Vecmath.dot3(coord, direction);
-							farthest.value = extentFunction.applyAsFloat(farthest.value, dist);
-						}
-					}
-					return true;
-				});
-
-		return farthest.value;
-	}
-
 	public Set<Shot3d> getHoveredShots() {
 		return hoveredShot == null ? Collections.<Shot3d> emptySet() : Collections.singleton(hoveredShot);
 	}
 
 	public float[] getOrthoBounds(Set<ShotKey> shotsInView, float[] orthoRight, float[] orthoUp,
 			float[] orthoForward) {
-		float[] result = new float[6];
-
-		float[] shotsInViewMbr = Rectmath.voidRectf(3);
+		float[] result = {
+			Float.POSITIVE_INFINITY,
+			Float.POSITIVE_INFINITY,
+			Float.POSITIVE_INFINITY,
+			Float.NEGATIVE_INFINITY,
+			Float.NEGATIVE_INFINITY,
+			Float.NEGATIVE_INFINITY
+		};
 
 		for (ShotKey key : shotsInView) {
 			Shot3d shot = shot3ds.get(key);
-			if (shot != null) {
-				shot.unionMbrInto(shotsInViewMbr);
+			if (shot == null) continue;
+			for (float[] coord : shot.coordIterable()) {
+				float right = Vecmath.dot3(coord, orthoRight);
+				float up = Vecmath.dot3(coord, orthoUp);
+				float forward = Vecmath.dot3(coord, orthoForward);
+				if (right < result[0]) result[0] = right;
+				if (right > result[3]) result[3] = right;
+				if (up < result[1]) result[1] = up;
+				if (up > result[4]) result[4] = up;
+				if (forward < result[2]) result[2] = forward;
+				if (forward > result[5]) result[5] = forward;
 			}
 		}
 
-		FloatBinaryOperator minFunc = (a, b) -> Float.isNaN(a) || b < a ? b : a;
-		FloatBinaryOperator maxFunc = (a, b) -> Float.isNaN(a) || b > a ? b : a;
-
-		result[0] = getFarthestExtent(shotsInView, shotsInViewMbr, orthoRight, minFunc);
-		result[1] = getFarthestExtent(shotsInView, shotsInViewMbr, orthoUp, minFunc);
-		result[2] = getFarthestExtent(shotsInView, shotsInViewMbr, orthoForward, minFunc);
-		result[3] = getFarthestExtent(shotsInView, shotsInViewMbr, orthoRight, maxFunc);
-		result[4] = getFarthestExtent(shotsInView, shotsInViewMbr, orthoUp, maxFunc);
-		result[5] = getFarthestExtent(shotsInView, shotsInViewMbr, orthoForward, maxFunc);
-
+		for (int i = 0; i < result.length; i++) {
+			if (Float.isInfinite(result[i])) result[i] = Float.NaN;
+		}
 		return result;
 	}
 
@@ -2468,7 +2443,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					continue;
 				}
 				CalcStation nextStation = nextShot.otherStation(station);
-				if (glowAtStations.containsKey(nextStation)) {
+				if (glowAtStations.containsKey(nextStation.key())) {
 					continue;
 				}
 				unvisited.add(new PriorityEntry<>(distanceToStation + nextShot.distance, nextStation));
