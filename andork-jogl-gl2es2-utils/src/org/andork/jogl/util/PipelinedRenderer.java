@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.andork.jogl.JoglManagedResource;
+import org.andork.jogl.shader.AttribLocation;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
@@ -105,6 +106,12 @@ public class PipelinedRenderer extends JoglManagedResource {
 
 	public void setVertexAttribLocations(int... locations) {
 		System.arraycopy(locations, 0, vertexAttribLocations, 0, vertexAttribLocations.length);
+	}
+	
+	public void setVertexAttribLocations(AttribLocation... locations) {
+		for (int i = 0; i < locations.length; i++) {
+			vertexAttribLocations[i] = locations[i].location();
+		}
 	}
 
 	public void put(byte... values) {

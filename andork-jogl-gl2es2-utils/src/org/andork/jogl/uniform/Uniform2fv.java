@@ -1,5 +1,7 @@
 package org.andork.jogl.uniform;
 
+import org.andork.jogl.shader.Uniform2fvLocation;
+
 import com.jogamp.opengl.GL2ES2;
 
 public class Uniform2fv implements Uniform {
@@ -29,5 +31,9 @@ public class Uniform2fv implements Uniform {
 	public Uniform2fv value_offset(int value_offset) {
 		this.value_offset = value_offset;
 		return this;
+	}
+
+	public void put(GL2ES2 gl, Uniform2fvLocation location) {
+		put(gl, location.location());
 	}
 }

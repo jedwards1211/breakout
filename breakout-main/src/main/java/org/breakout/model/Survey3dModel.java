@@ -861,13 +861,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			float y1 = y - (label.height - label.lineHeight) * scale - padding;
 
 			FlatColorScreenProgram program = FlatColorScreenProgram.INSTANCE;
-			program.use(gl, true);
-			program.putMatrices(gl, context.inverseViewportMatrix());
+			program.use(gl);
+			program.screenXform.put(gl, context.inverseViewportMatrix());
 
 			Uniform4fv leadDetailFillColor = labelContext.leadDetailFillColor;
-			leadDetailFillColor.put(gl, program.colorLocation());
+			leadDetailFillColor.put(gl, program.color);
 			PipelinedRenderer triangleRenderer = labelContext.triangleRenderer;
-			triangleRenderer.setVertexAttribLocations(program.positionLocation());
+			triangleRenderer.setVertexAttribLocations(program.position);
 			triangleRenderer.put(x0, y0, 0);
 			triangleRenderer.put(x1, y0, 0);
 			triangleRenderer.put(x1, y1, 0);
@@ -877,9 +877,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			triangleRenderer.draw();
 			
 			Uniform4fv leadDetailOutlineColor = labelContext.leadDetailOutlineColor;
-			leadDetailOutlineColor.put(gl, program.colorLocation());
+			leadDetailOutlineColor.put(gl, program.color);
 			PipelinedRenderer lineRenderer = labelContext.lineRenderer;
-			lineRenderer.setVertexAttribLocations(program.positionLocation());
+			lineRenderer.setVertexAttribLocations(program.position);
 			lineRenderer.put(x0, y0, 0);
 			lineRenderer.put(x1, y0, 0);
 			lineRenderer.put(x1, y0, 0);
@@ -890,7 +890,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			lineRenderer.put(x0, y0, 0);
 			lineRenderer.draw();
 
-			program.use(gl, false);
+			program.done(gl);
 
 			labelContext.textRenderer.beginRendering(context.width(), context.height(), false);
 
@@ -2134,26 +2134,26 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	void drawMBR(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 		FlatColorProgram flatColorProgram = FlatColorProgram.INSTANCE;
-		flatColorProgram.use(gl, true);
+		flatColorProgram.use(gl);
 		flatColorProgram.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
-		centerlineColor.put(gl, flatColorProgram.colorLocation());
+		centerlineColor.put(gl, flatColorProgram.color);
 
-		lineRenderer.setVertexAttribLocations(flatColorProgram.positionLocation());
+		lineRenderer.setVertexAttribLocations(flatColorProgram.position);
 
 		drawBoundingBox(tree.getRoot().mbr());
 
 		lineRenderer.draw();
 
-		flatColorProgram.use(gl, false);
+		flatColorProgram.done(gl);
 	}
 
 	void drawMBRsForNode(RfStarTree.Node<?> node, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 		FlatColorProgram flatColorProgram = FlatColorProgram.INSTANCE;
 		flatColorProgram.use(gl, true);
 		flatColorProgram.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
-		centerlineColor.put(gl, flatColorProgram.colorLocation());
+		centerlineColor.put(gl, flatColorProgram.color);
 
-		lineRenderer.setVertexAttribLocations(flatColorProgram.positionLocation());
+		lineRenderer.setVertexAttribLocations(flatColorProgram.position);
 
 		while (node != null) {
 			drawBoundingBox(node.mbr());
