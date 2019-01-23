@@ -31,6 +31,15 @@ import org.andork.func.CharPredicate;
 
 public class StringUtils {
 	public static final Pattern newlinePattern = Pattern.compile("\r\n?|\n");
+	
+	public static int lineCount(String s) {
+		int count = 1;
+		Matcher m = newlinePattern.matcher(s);
+		while (m.find()) {
+			count++;
+		}
+		return count;
+	}
 
 	public static String escape(String s, char escape) {
 		StringBuilder sb = new StringBuilder();

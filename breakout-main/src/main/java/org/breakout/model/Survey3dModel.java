@@ -74,6 +74,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.andork.awt.FontMetricsUtils;
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.collect.PriorityEntry;
@@ -84,7 +85,9 @@ import org.andork.jogl.JoglBuffer;
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglResource;
+import org.andork.jogl.JoglScreenPolygon;
 import org.andork.jogl.shader.FlatColorProgram;
+import org.andork.jogl.shader.FlatColorScreenProgram;
 import org.andork.jogl.uniform.Uniform1fv;
 import org.andork.jogl.uniform.Uniform3fv;
 import org.andork.jogl.uniform.Uniform4fv;
@@ -683,6 +686,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		final float[] position;
 		float width;
 		float height;
+		float lineHeight;
 		float xOffset;
 		float yOffset;
 		float pushForward;
@@ -713,6 +717,37 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				}
 			}
 		}
+
+		public void updateBounds(Font font, FontRenderContext frc) {
+			Rectangle2D bounds = FontMetricsUtils.getMultilineStringBounds(text, font, frc);
+			width = (float) bounds.getWidth();
+			lineHeight = (float) font.getStringBounds(text, frc).getHeight();
+			height = (float) bounds.getHeight();
+			xOffset = (float) -bounds.getWidth() / 2;
+			yOffset = (float) bounds.getHeight() / 2;
+		}
+	}
+	
+	public static class LeadLabels {
+		Label icon;
+		Label description;
+		
+		public LeadLabels(CalcStation station) {
+			icon = new Label(station, "?");
+			description = new Label(station, leadText(station.name, station.leads, Length.feet));
+		}
+		
+		public Iterable<Label> labels() {
+			return Arrays.asList(icon, description);
+		}
+
+		public void updateBounds(Font font, FontRenderContext frc) {
+			icon.updateBounds(font, frc);
+			description.updateBounds(font, frc);
+			icon.yOffset = -icon.lineHeight / 3;
+			description.xOffset = 0;
+			description.yOffset = 0;
+		}
 	}
 
 	static class LabelDrawingContext {
@@ -724,14 +759,18 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		float density;
 		boolean showLeadLabels;
 		Unit<Length> displayLengthUnit;
-		public StationKey hoveredStation;
+		StationKey hoveredStation;
+		PipelinedRenderer lineRenderer;
+		PipelinedRenderer triangleRenderer;
+		Uniform4fv leadDetailOutlineColor;
+		Uniform4fv leadDetailFillColor;
 	}
 
 	public static class Section {
 		final float[] mbr;
 		final ArrayList<Shot3d> shot3ds;
 		final Map<StationKey, Label> stationLabels;
-		final Map<StationKey, Label> leadLabels;
+		final Map<StationKey, LeadLabels> leadLabels;
 		final Map<Float, Set<StationKey>> stationsToLabel;
 		final List<Float> stationsToLabelSpacings;
 
@@ -763,10 +802,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					stationLabels.put(toStation.key(), new Label(toStation));
 				}
 				if (fromStation.leads != null && !fromStation.leads.isEmpty() && !leadLabels.containsKey(fromStation.key())) {
-					leadLabels.put(fromStation.key(), new Label(fromStation, "?"));
+					leadLabels.put(fromStation.key(), new LeadLabels(fromStation));
 				}
 				if (toStation.leads != null && !toStation.leads.isEmpty() && !leadLabels.containsKey(toStation.key())) {
-					leadLabels.put(toStation.key(), new Label(toStation, "?"));
+					leadLabels.put(toStation.key(), new LeadLabels(toStation));
 				}
 			}
 			stationsToLabelSpacings = new ArrayList<>(stationsToLabel.keySet());
@@ -944,22 +983,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		public void updateLabels(Font font, FontRenderContext frc, Task<?> task) {
 			task.setTotal(stationLabels.size());
-			for (Map.Entry<StationKey, Label> entry : stationLabels.entrySet()) {
-				Label label = entry.getValue();
-				Rectangle2D bounds = font.getStringBounds(label.text, frc);
-				label.width = (float) bounds.getWidth();
-				label.height = (float) bounds.getHeight();
-				label.xOffset = (float) -bounds.getWidth() / 2;
-				label.yOffset = (float) bounds.getHeight() / 2;
+			for (Label label : stationLabels.values()) {
+				label.updateBounds(font, frc);
 				task.increment();
 			}
-			for (Map.Entry<StationKey, Label> entry : leadLabels.entrySet()) {
-				Label label = entry.getValue();
-				Rectangle2D bounds = font.getStringBounds(label.text, frc);
-				label.width = (float) bounds.getWidth();
-				label.height = (float) bounds.getHeight();
-				label.xOffset = (float) -bounds.getWidth() / 2;
-				label.yOffset = (float) -bounds.getHeight() / 3;
+			for (LeadLabels labels : leadLabels.values()) {
+				labels.updateBounds(font, frc);
 				task.increment();
 			}
 		}
@@ -997,12 +1026,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 
 			if (labelContext.showLeadLabels) {
-				for (Map.Entry<StationKey, Label> entry : leadLabels.entrySet()) {
+				for (Map.Entry<StationKey, LeadLabels> entry : leadLabels.entrySet()) {
 					StationKey key = entry.getKey();
-					Label label = entry.getValue();
+					LeadLabels labels = entry.getValue();
 					boolean emphasize = labelContext.stationsToEmphasize.contains(key);
 					boolean detail = key.equals(labelContext.hoveredStation);
-					drawLeadLabel(label, context, gl, m, n, labelContext, emphasize, detail,
+					drawLeadLabel(labels, context, gl, m, n, labelContext, emphasize, detail,
 							labelContext.textScale);
 				}
 			}
@@ -1011,36 +1040,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		void drawLabel(Label label, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
 				LabelDrawingContext labelContext, boolean force, float scale) {
-			Vecmath.mpmulAffine(context.viewMatrix(), label.position, tempPoint);
-			if (tempPoint[2] > 0) {
-				// label is behind camera
-				return;
-			}
-			float labelDistanceSquared = Vecmath.dot3(tempPoint, tempPoint);
-			float minDistanceForLabel = minDistanceForSpacing(context, label.maxSpacing, labelContext.density);
-			if (labelDistanceSquared > minDistanceForLabel * minDistanceForLabel && !force) {
-				return;
-			}
+			float[] labelOrigin = getLabelOrigin(label, context, force, scale);
+			if (labelOrigin == null) return;
+			float x = labelOrigin[0];
+			float y = labelOrigin[1];
+			float z = labelOrigin[2];
 
-			float z = Float.NaN;
-			if (labelDistanceSquared < label.pushForward * label.pushForward) {
-				z = 0.99999f;
-			} else {
-				float labelDistance = (float) Math.sqrt(labelDistanceSquared);
-				float pushedForwardDistance = labelDistance - label.pushForward;
-				float pushForwardFactor = pushedForwardDistance / labelDistance;
-				tempPoint[0] *= pushForwardFactor;
-				tempPoint[1] *= pushForwardFactor;
-				tempPoint[2] *= pushForwardFactor;
-			}
-
-			Vecmath.mpmul(context.viewToScreen(), tempPoint);
-			if (tempPoint[2] < -1) {
-				// label is outside of clipping bounds
-				return;
-			}
-			float x = tempPoint[0] + label.xOffset * scale;
-			float y = tempPoint[1] + label.yOffset * scale;
 			float[] labelMbr = { x, y, x + label.width * scale, y + label.height * scale };
 			if (labelContext.labelTree.containsLeafIntersecting(labelMbr)) {
 				return;
@@ -1048,18 +1053,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				Leaf<Void> leaf = new Leaf<>(labelMbr, null);
 				labelContext.labelTree.insert(leaf);
 			}
-			if (Float.isNaN(z)) {
-				z = tempPoint[2];
-			}
+
 			labelContext.textRenderer.draw3D(label.text, x, y, z, scale);
 		}
-
-		void drawLeadLabel(Label label, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
-				LabelDrawingContext labelContext, boolean emphasize, boolean detail, float scale) {
+		
+		float[] getLabelOrigin(Label label, JoglDrawContext context, boolean emphasize, float scale) {
 			Vecmath.mpmulAffine(context.viewMatrix(), label.position, tempPoint);
 			if (tempPoint[2] > 0) {
 				// label is behind camera
-				return;
+				return null;
 			}
 			float labelDistanceSquared = Vecmath.dot3(tempPoint, tempPoint);
 		
@@ -1078,29 +1080,107 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			Vecmath.mpmul(context.viewToScreen(), tempPoint);
 			if (tempPoint[2] < -1) {
 				// label is outside of clipping bounds
-				return;
+				return null;
 			}
-			float x = tempPoint[0] + label.xOffset * scale;
-			float y = tempPoint[1] + label.yOffset * scale;
+			tempPoint[0] += label.xOffset * scale;
+			tempPoint[1] += label.yOffset * scale;
+			if (!Float.isNaN(z)) {
+				tempPoint[2] = z;
+			}
+			if (emphasize) {
+				tempPoint[2] = 0.99999f;
+			}
+			return tempPoint;
+		}
+
+		void drawLeadLabel(LeadLabels labels, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
+				LabelDrawingContext labelContext, boolean emphasize, boolean detail, float scale) {
+			Label label = labels.icon;
+
+			float[] labelOrigin = getLabelOrigin(label, context, emphasize || detail, scale);
+			if (labelOrigin == null) return;
+			float x = labelOrigin[0];
+			float y = labelOrigin[1];
+			float z = labelOrigin[2];
+
 			float[] labelMbr = { x, y, x + label.width * scale, y + label.height * scale };
 			Leaf<Void> leaf = new Leaf<>(labelMbr, null);
 			labelContext.labelTree.insert(leaf);
 			Leaf<StationKey> leadLeaf = new Leaf<>(labelMbr, label.station.key( ));
 			labelContext.leadLabelTree.insert( leadLeaf );
-			if (Float.isNaN(z)) {
-				z = tempPoint[2];
-			}
-			if (emphasize || detail) {
-				z = 0.99999f;
-			}
-			String text = detail
-				? leadText(label.station.name, label.station.leads, labelContext.displayLengthUnit)
-				: label.text;
+		
+			String text = label.text;
 			String[] lines = text.split("\r\n?|\n");
+
 			for (String line : lines) {
 				labelContext.textRenderer.draw3D(line, x, y, z, scale);
 				y -= label.height * scale;
 			}
+		}
+		
+		public void drawHoveredLead(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
+				LabelDrawingContext labelContext) {
+			LeadLabels labels = leadLabels.get(labelContext.hoveredStation);
+			if (labels == null) return;
+
+			Label label = labels.description;
+			String text = label.text;
+			String[] lines = text.split("\r\n?|\n");
+
+			float scale = labelContext.textScale;
+
+			float[] labelOrigin = getLabelOrigin(label, context, true, scale);
+			
+			float padding = 5 * context.devicePixelRatio();
+
+			if (labelOrigin == null) return;
+			float x = labelOrigin[0] + labels.icon.width * scale * 2;
+			float y = labelOrigin[1];
+			float x0 = x - padding;
+			float y0 = y + label.lineHeight * scale;
+			float x1 = x + label.width * scale + padding;
+			float y1 = y - (label.height - label.lineHeight) * scale - padding;
+
+			FlatColorScreenProgram program = FlatColorScreenProgram.INSTANCE;
+			program.use(gl, true);
+			program.putMatrices(gl, context.inverseViewportMatrix());
+
+			Uniform4fv leadDetailFillColor = labelContext.leadDetailFillColor;
+			leadDetailFillColor.put(gl, program.colorLocation());
+			PipelinedRenderer triangleRenderer = labelContext.triangleRenderer;
+			triangleRenderer.setVertexAttribLocations(program.positionLocation());
+			triangleRenderer.put(x0, y0, 0);
+			triangleRenderer.put(x1, y0, 0);
+			triangleRenderer.put(x1, y1, 0);
+			triangleRenderer.put(x0, y0, 0);
+			triangleRenderer.put(x0, y1, 0);
+			triangleRenderer.put(x1, y1, 0);
+			triangleRenderer.draw();
+			
+			Uniform4fv leadDetailOutlineColor = labelContext.leadDetailOutlineColor;
+			leadDetailOutlineColor.put(gl, program.colorLocation());
+			PipelinedRenderer lineRenderer = labelContext.lineRenderer;
+			lineRenderer.setVertexAttribLocations(program.positionLocation());
+			lineRenderer.put(x0, y0, 0);
+			lineRenderer.put(x1, y0, 0);
+			lineRenderer.put(x1, y0, 0);
+			lineRenderer.put(x1, y1, 0);
+			lineRenderer.put(x1, y1, 0);
+			lineRenderer.put(x0, y1, 0);
+			lineRenderer.put(x0, y1, 0);
+			lineRenderer.put(x0, y0, 0);
+			lineRenderer.draw();
+
+			program.use(gl, false);
+
+			labelContext.textRenderer.beginRendering(context.width(), context.height(), false);
+
+			for (String line : lines) {
+				labelContext.textRenderer.draw3D(line, x, y, 0, scale);
+				y -= label.lineHeight * scale;
+			}
+
+			labelContext.textRenderer.endRendering();
 		}
 	}
 
@@ -1812,8 +1892,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	Color stationLabelColor;
 
 	PipelinedRenderer lineRenderer;
-
-	FlatColorProgram flatColorProgram = FlatColorProgram.INSTANCE;
+	PipelinedRenderer triangleRenderer;
 
 	boolean showSpatialIndex = false;
 	
@@ -1870,6 +1949,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.renderers.set(renderers);
 
 		lineRenderer = new PipelinedRenderer(new Options(true, GL.GL_LINES, 100).addAttribute(3, GL.GL_FLOAT, false));
+		triangleRenderer = new PipelinedRenderer(new Options(true, GL.GL_TRIANGLES, 100).addAttribute(3, GL.GL_FLOAT, false));
 	}
 
 	public float[] calcAutofitParamRange(Collection<ShotKey> shots, Task<?> subtask) {
@@ -1957,7 +2037,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		disposeParamTexture(gl);
 
 		lineRenderer.dispose(gl);
-		flatColorProgram.dispose(gl);
+		triangleRenderer.dispose(gl);
+		FlatColorProgram.INSTANCE.dispose(gl);
+		FlatColorScreenProgram.INSTANCE.dispose(gl);
 	}
 
 	private void disposeParamTexture(GL2ES2 gl) {
@@ -2000,9 +2082,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glDisable(GL.GL_STENCIL_TEST);
 
 		if (stationLabelDensity > 0 || showLeadLabels) {
-			gl.glEnable(GL.GL_DEPTH_TEST);
-			textRenderer.beginRendering(context.width(), context.height(), false);
-
 			RfStarTree<Void> labelTree = new RfStarTree<>(2, 10, 3, 3);
 			leadLabelTree = new RfStarTree<>(2, 10, 3, 3);
 			Set<StationKey> stationsToEmphasize = Collections.emptySet();
@@ -2022,6 +2101,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			labelContext.showLeadLabels = showLeadLabels;
 			labelContext.displayLengthUnit = displayLengthUnit;
 			labelContext.hoveredStation = hoveredStation;
+			labelContext.lineRenderer = lineRenderer;
+			labelContext.triangleRenderer = triangleRenderer;
+			labelContext.leadDetailOutlineColor= new Uniform4fv().value(1f, 1f, 1f, 0.5f);
+			labelContext.leadDetailFillColor = new Uniform4fv().value(0f, 0f, 0f, 0.7f);
+
+
+			gl.glEnable(GL.GL_DEPTH_TEST);
+			textRenderer.beginRendering(context.width(), context.height(), false);
 
 			for (Section section : sections) {
 				section.drawLabels(context, gl, m, n, labelContext);
@@ -2029,6 +2116,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			textRenderer.endRendering();
 			gl.glDisable(GL.GL_DEPTH_TEST);
+
+			if (hoveredStation != null) {
+				gl.glEnable(GL.GL_BLEND);
+				for (Section section : sections) {
+					section.drawHoveredLead(context, gl, m, n, labelContext);
+				}
+				gl.glDisable(GL.GL_BLEND);
+			}
 		}
 
 		if (showSpatialIndex && hoveredShot != null) {
@@ -2067,6 +2162,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	void drawMBR(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		FlatColorProgram flatColorProgram = FlatColorProgram.INSTANCE;
 		flatColorProgram.use(gl, true);
 		flatColorProgram.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
 		centerlineColor.put(gl, flatColorProgram.colorLocation());
@@ -2081,6 +2177,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	void drawMBRsForNode(RfStarTree.Node<?> node, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		FlatColorProgram flatColorProgram = FlatColorProgram.INSTANCE;
 		flatColorProgram.use(gl, true);
 		flatColorProgram.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
 		centerlineColor.put(gl, flatColorProgram.colorLocation());
@@ -2182,7 +2279,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		textRenderer.setColor(stationLabelColor);
 
 		lineRenderer.init(gl);
-		flatColorProgram.init(gl);
+		triangleRenderer.init(gl);
+		FlatColorProgram.INSTANCE.init(gl);
+		FlatColorScreenProgram.INSTANCE.init(gl);
 
 		return true;
 	}
