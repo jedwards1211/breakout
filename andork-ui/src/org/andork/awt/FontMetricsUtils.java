@@ -10,7 +10,10 @@ public class FontMetricsUtils {
 	}
 	
 	public static Rectangle2D getMultilineStringBounds(String s, Font font, FontRenderContext frc) {
-		String[] lines = s.split("\r\n?|\n");
+		return getMultilineStringBounds(s.split("\r\n?|\n"), font, frc);
+	}
+
+	public static Rectangle2D getMultilineStringBounds(String[] lines, Font font, FontRenderContext frc) {
 		Rectangle2D bounds = font.getStringBounds(lines[0], frc);
 		for (int i = 1; i < lines.length; i++) {
 			Rectangle2D nextBounds = font.getStringBounds(lines[i], frc);
@@ -23,5 +26,4 @@ public class FontMetricsUtils {
 		}
 		return bounds;
 	}
-
 }

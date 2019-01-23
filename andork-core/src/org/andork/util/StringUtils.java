@@ -216,6 +216,8 @@ public class StringUtils {
 	public static final Pattern wrapLocationPattern = Pattern.compile("(\r\n?|\n)|\\s+|$");
 	
 	public static String wrap(String s, int columns) {
+		if (columns < 10) throw new IllegalArgumentException("columns must be >= 10");
+
 		StringBuilder result = new StringBuilder();
 		int i = 0;
 		int lineStart = i;
