@@ -80,7 +80,7 @@ public class BreakoutMain {
 
 	public static void main(String[] args) {
 		createRootDirectory();
-//		configureLogging();
+		configureLogging();
 		createBackupDirectory();
 
 		logger.info(() -> "rootDirectory:    " + rootDirectory);
