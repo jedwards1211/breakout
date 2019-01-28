@@ -58,7 +58,7 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		labelModelMatrix[10] = modelMatrix[10] * labelFactor;
 		Vecmath.invAffineToTranspose3x3(modelMatrix, normalMatrix);
 
-		labelFont = new Font("Arial", Font.BOLD, 12);
+		labelFont = new Font("Arial", Font.BOLD, 24);
 		fontRenderContext = new FontRenderContext(new AffineTransform(), true, true);
 	}
 
@@ -112,9 +112,10 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 
 			LineMetrics metrics = labelFont.getLineMetrics(text, fontRenderContext);
 			Rectangle2D bounds = labelFont.getStringBounds(text, fontRenderContext);
-			labelScreenPosition[0] -= bounds.getWidth() * context.devicePixelRatio( ) / 2;
-			labelScreenPosition[1] -= metrics.getAscent() * context.devicePixelRatio( ) / 2;
-			textRenderer.draw3D(text, labelScreenPosition[0], labelScreenPosition[1], labelScreenPosition[2], context.devicePixelRatio( ));
+			float scale = 0.5f;
+			labelScreenPosition[0] -= bounds.getWidth() * context.devicePixelRatio( ) / 2 * scale;
+			labelScreenPosition[1] -= metrics.getAscent() * context.devicePixelRatio( ) / 2 * scale;
+			textRenderer.draw3D(text, labelScreenPosition[0], labelScreenPosition[1], labelScreenPosition[2], context.devicePixelRatio( ) * scale);
 		}
 		
 		textRenderer.endRendering();
