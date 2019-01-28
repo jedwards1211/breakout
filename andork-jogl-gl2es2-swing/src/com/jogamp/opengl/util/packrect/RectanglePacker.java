@@ -55,10 +55,6 @@ public class RectanglePacker {
   private Object backingStore;
   private LevelSet levels;
   private final float EXPANSION_FACTOR;
-  private static final float SHRINK_FACTOR = 0.3f;
-
-  private final int initialWidth;
-  private final int initialHeight;
 
   private int maxWidth  = -1;
   private int maxHeight = -1;
@@ -74,7 +70,6 @@ public class RectanglePacker {
       return this == obj;
     }
   }
-  private static final Comparator<Rect> rectHComparator = new RectHComparator();
 
   public RectanglePacker(final BackingStoreManager manager,
                          final int initialWidth,
@@ -88,8 +83,6 @@ public class RectanglePacker {
                          final float expansionFactor) {
     this.manager = manager;
     levels = new LevelSet(initialWidth, initialHeight);
-    this.initialWidth = initialWidth;
-    this.initialHeight = initialHeight;
     EXPANSION_FACTOR = expansionFactor;
   }
 
@@ -120,37 +113,37 @@ public class RectanglePacker {
       this method will throw a RuntimeException. */
   public void add(final Rect rect) throws RuntimeException {
     // Allocate backing store if we don't have any yet
-    if (backingStore == null)
-      backingStore = manager.allocateBackingStore(levels.w(), levels.h());
+    getBackingStore();
 
-    int attemptNumber = 0;
-    boolean tryAgain = false;
-
-    do {
-      // Try to allocate
-      if (levels.add(rect))
-        return;
-
-      if (manager.canCompact()) {
-        // Try to allocate with horizontal compaction
-        if (levels.compactAndAdd(rect, backingStore, manager))
-          return;
-        // Let the manager have a chance at potentially evicting some entries
-        tryAgain = manager.preExpand(rect, attemptNumber++);
-      } else {
-        tryAgain = manager.additionFailed(rect, attemptNumber++);
-      }
-    } while (tryAgain);
-
-    if (!manager.canCompact()) {
-      throw new RuntimeException("BackingStoreManager does not support compaction or expansion, and didn't clear space for new rectangle");
+    if (!levels.add(rect)) {
+        manager.flush();
+        int newWidth = Math.max((int) (levels.w() * (1.0f + EXPANSION_FACTOR)), rect.w());
+        int newHeight = Math.max((int) (levels.h() * (1.0f + EXPANSION_FACTOR)), rect.h());
+        if (newWidth > maxWidth) {
+        	if (rect.w() > maxWidth) {
+				throw new RuntimeException("Rect is wider than maxWidth");
+        	}
+        	newWidth = maxWidth;
+        }
+        if (newHeight > maxHeight) {
+        	if (rect.h() > maxHeight) {
+				throw new RuntimeException("Rect is taller than maxHeight");
+        	}
+        	newHeight = maxHeight;
+        }
+        if (newWidth != levels.w() || newHeight != levels.h()) {
+        	levels = new LevelSet(newWidth, newHeight);
+        	// reallocate backing store
+        	backingStore = null;
+        	getBackingStore();
+        } else {
+        	levels.clear();
+        }
+        if (!levels.add(rect)) {
+        	throw new RuntimeException("Failed to add rect after flushing");
+        }
+        
     }
-
-    compactImpl(rect);
-
-    // Retry the addition of the incoming rectangle
-    add(rect);
-    // Done
   }
 
   /** Removes the given rectangle from this RectanglePacker. */
@@ -170,134 +163,6 @@ public class RectanglePacker {
       indicates that it may be profitable to perform a compaction. */
   public float verticalFragmentationRatio() {
     return levels.verticalFragmentationRatio();
-  }
-
-  /** Forces a compaction cycle, which typically results in allocating
-      a new backing store and copying all entries to it. */
-  public void compact() {
-    compactImpl(null);
-  }
-
-  // The "cause" rect may be null
-  private void compactImpl(final Rect cause) {
-    // Have to either expand, compact or both. Need to figure out what
-    // direction to go. Prefer to expand vertically. Expand
-    // horizontally only if rectangle being added is too wide. FIXME:
-    // may want to consider rebalancing the width and height to be
-    // more equal if it turns out we keep expanding in the vertical
-    // direction.
-    boolean done = false;
-    int newWidth = levels.w();
-    int newHeight = levels.h();
-    LevelSet nextLevelSet = null;
-    int attemptNumber = 0;
-    boolean needAdditionFailureNotification = false;
-
-    while (!done) {
-      if (cause != null) {
-        if (cause.w() > newWidth) {
-          newWidth = cause.w();
-        } else {
-          newHeight = (int) (newHeight * (1.0f + EXPANSION_FACTOR));
-        }
-      }
-
-      // Clamp to maximum values
-      needAdditionFailureNotification = false;
-      if (maxWidth > 0 && newWidth > maxWidth) {
-        newWidth = maxWidth;
-        needAdditionFailureNotification = true;
-      }
-      if (maxHeight > 0 && newHeight > maxHeight) {
-        newHeight = maxHeight;
-        needAdditionFailureNotification = true;
-      }
-
-      nextLevelSet = new LevelSet(newWidth, newHeight);
-
-      // Make copies of all existing rectangles
-      final List<Rect> newRects = new ArrayList<Rect>();
-      for (final Iterator<Level> i1 = levels.iterator(); i1.hasNext(); ) {
-        final Level level = i1.next();
-        for (final Iterator<Rect> i2 = level.iterator(); i2.hasNext(); ) {
-          final Rect cur = i2.next();
-          final Rect newRect = new Rect(0, 0, cur.w(), cur.h(), null);
-          cur.setNextLocation(newRect);
-          // Hook up the reverse mapping too for easier replacement
-          newRect.setNextLocation(cur);
-          newRects.add(newRect);
-        }
-      }
-      // Sort them by decreasing height (note: this isn't really
-      // guaranteed to improve the chances of a successful layout)
-      Collections.sort(newRects, rectHComparator);
-      // Try putting all of these rectangles into the new level set
-      done = true;
-      for (final Iterator<Rect> iter = newRects.iterator(); iter.hasNext(); ) {
-        if (!nextLevelSet.add(iter.next())) {
-          done = false;
-          break;
-        }
-      }
-
-      if (done && cause != null) {
-        // Try to add the new rectangle as well
-        if (nextLevelSet.add(cause)) {
-          // We're OK
-        } else {
-          done = false;
-        }
-      }
-
-      // Don't send addition failure notifications if we're only doing
-      // a compaction
-      if (!done && needAdditionFailureNotification && cause != null) {
-        manager.additionFailed(cause, attemptNumber);
-      }
-      ++attemptNumber;
-    }
-
-    // See whether the implicit compaction that just occurred has
-    // yielded excess empty space.
-    if (nextLevelSet.getUsedHeight() > 0 &&
-        nextLevelSet.getUsedHeight() < nextLevelSet.h() * SHRINK_FACTOR) {
-      int shrunkHeight = Math.max(initialHeight,
-                                  (int) (nextLevelSet.getUsedHeight() * (1.0f + EXPANSION_FACTOR)));
-      if (maxHeight > 0 && shrunkHeight > maxHeight) {
-        shrunkHeight = maxHeight;
-      }
-      nextLevelSet.setHeight(shrunkHeight);
-    }
-
-    // If we temporarily added the new rectangle to the new LevelSet,
-    // take it out since we don't "really" add it here but in add(), above
-    if (cause != null) {
-      nextLevelSet.remove(cause);
-    }
-
-    // OK, now we have a new layout and a mapping from the old to the
-    // new locations of rectangles on the backing store. Allocate a
-    // new backing store, move the contents over and deallocate the
-    // old one.
-    final Object newBackingStore = manager.allocateBackingStore(nextLevelSet.w(),
-                                                          nextLevelSet.h());
-    manager.beginMovement(backingStore, newBackingStore);
-    for (final Iterator<Level> i1 = levels.iterator(); i1.hasNext(); ) {
-      final Level level = i1.next();
-      for (final Iterator<Rect> i2 = level.iterator(); i2.hasNext(); ) {
-        final Rect cur = i2.next();
-        manager.move(backingStore, cur,
-                     newBackingStore, cur.getNextLocation());
-      }
-    }
-    // Replace references to temporary rectangles with original ones
-    nextLevelSet.updateRectangleReferences();
-    manager.endMovement(backingStore, newBackingStore);
-    // Now delete the old backing store
-    manager.deleteBackingStore(backingStore);
-    // Update to new versions of backing store and LevelSet
-    backingStore = newBackingStore;
-    levels = nextLevelSet;
   }
 
   /** Clears all Rects contained in this RectanglePacker. */

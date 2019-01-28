@@ -112,27 +112,6 @@ public class LevelSet {
     return false;
   }
 
-  /** Allocates the given Rectangle, performing compaction of a Level
-      if necessary. This is the correct fallback path to {@link
-      #add(Rect)} above. Returns true if allocated successfully, false
-      otherwise (indicating the need to expand the backing store). */
-  public boolean compactAndAdd(final Rect rect,
-                               final Object backingStore,
-                               final BackingStoreManager manager) {
-    for (int i = levels.size() - 1; i >= 0; --i) {
-      final Level level = levels.get(i);
-      if (level.couldAllocateIfCompacted(rect)) {
-        level.compact(backingStore, manager);
-        final boolean res = level.add(rect);
-        if (!res)
-          throw new RuntimeException("Unexpected failure to add after compaction");
-        return true;
-      }
-    }
-
-    return false;
-  }
-
   /** Indicates whether it's legal to trivially increase the height of
       the given Level. This is only possible if it's the last Level
       added and there's enough room in the backing store. */

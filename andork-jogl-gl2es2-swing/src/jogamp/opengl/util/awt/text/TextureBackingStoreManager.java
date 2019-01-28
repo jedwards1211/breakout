@@ -27,14 +27,13 @@
  */
 package jogamp.opengl.util.awt.text;
 
-import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GLContext;
-import com.jogamp.opengl.util.packrect.BackingStoreManager;
-import com.jogamp.opengl.util.packrect.Rect;
-
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.jogamp.opengl.GL;
+import com.jogamp.opengl.GLContext;
+import com.jogamp.opengl.util.packrect.BackingStoreManager;
 
 import jogamp.opengl.util.awt.text.TextureBackingStore.EventListener;
 import jogamp.opengl.util.awt.text.TextureBackingStore.EventType;
@@ -114,35 +113,17 @@ final class TextureBackingStoreManager implements BackingStoreManager {
     }
 
     /**
-     * Performs an action when a rectangle cannot be added.
-     *
-     * <p>
-     * Will happen if the backing store ever reaches its maximum size, which in this case is
-     * dictated by the maximum texture size supported by the video card.  Fires an event of type
-     * {@link EventType.FAILURE} so that an observer of the backing store can decide what to
-     * actually do.
-     *
-     * @param cause Rectangle that could not be added
-     * @param attempt Number of times it has been tried so far
-     * @return False if can do nothing more to free space
-     * @throws NullPointerException if cause is null
+     * Flushes all currently drawn text to the graphics card
      */
     @Override
-    public boolean additionFailed(/*@Nonnull*/ final Rect cause, final int attempt) {
-
-        Check.notNull(cause, "Cause cannot be null");
-
+    public void flush() {
         // Print debugging information
         if (DEBUG) {
-            System.err.println("*** Addition failed! ***");
+            System.err.println("*** Flushing backing store ***");
         }
 
         // Pass event to observers
-        fireEvent(EventType.FAILURE);
-        if (attempt == 0) {
-            return true;
-        }
-        return false;
+        fireEvent(EventType.AUTOMATIC_FLUSH);
     }
 
     /**
@@ -195,27 +176,6 @@ final class TextureBackingStoreManager implements BackingStoreManager {
     }
 
     /**
-     * Starts a copy from an old backing store to a new one.
-     *
-     * @param obs Backing store being copied from
-     * @param nbs Backing store being copied to
-     */
-    @Override
-    public void beginMovement(final Object obs, final Object nbs) {
-        // empty
-    }
-
-    /**
-     * Determines if a backing store can be compacted.
-     *
-     * @return True if backing store can be compacted
-     */
-    @Override
-    public boolean canCompact() {
-        return true;
-    }
-
-    /**
      * Disposes of a backing store.
      *
      * <p>
@@ -238,30 +198,6 @@ final class TextureBackingStoreManager implements BackingStoreManager {
     }
 
     /**
-     * Finishes a copy from an old backing store to a new one.
-     *
-     * <p>
-     * Marks all of the new backing store dirty.  The next time it is updated all of the new data
-     * will be copied to the texture.
-     *
-     * @param obs Backing store being copied from
-     * @param nbs Backing store being copied to
-     * @throws NullPointerException if new backing store is null
-     * @throws ClassCastException if new backing store is not a {@code TextureBackingStore}
-     */
-    @Override
-    public void endMovement(final Object obs, /*@Nonnull*/ final Object nbs) {
-
-        Check.notNull(nbs, "Backing store cannot be null");
-
-        // Mark the entire backing store as dirty
-        final TextureBackingStore ntbs = (TextureBackingStore) nbs;
-        final int width = ntbs.getWidth();
-        final int height = ntbs.getHeight();
-        ntbs.mark(0, 0, width, height);
-    }
-
-    /**
      * Sends an event to all listeners.
      *
      * @param type Type of event to send, assumed not null
@@ -278,84 +214,6 @@ final class TextureBackingStoreManager implements BackingStoreManager {
      */
     final boolean getUseSmoothing() {
         return smooth;
-    }
-
-    /**
-     * Copies part of an old backing store to a new one.
-     *
-     * <p>
-     * This method is normally called when a backing store runs out of room and needs to be
-     * resized, but it can also be called when a backing store is compacted.  In that case {@code
-     * obs} will be equal to {@code nbs}.  This situation may need to be handled differently.
-     *
-     * @param obs Old backing store being copied from
-     * @param ol Area of old backing store to copy
-     * @param nbs New backing store being copied to
-     * @param nl Area of new backing store to copy to
-     * @throws NullPointerException if either backing store or area is null
-     * @throws ClassCastException if either backing store is not the right type
-     */
-    @Override
-    public void move(/*@Nonnull*/ final Object obs,
-                     /*@Nonnull*/ final Rect ol,
-                     /*@Nonnull*/ final Object nbs,
-                     /*@Nonnull*/ final Rect nl) {
-
-        Check.notNull(obs, "Old backing store cannot be null");
-        Check.notNull(ol, "Old location cannot be null");
-        Check.notNull(nbs, "New backing store cannot be null");
-        Check.notNull(nl, "New location cannot be null");
-
-        final TextureBackingStore otbs = (TextureBackingStore) obs;
-        final TextureBackingStore ntbs = (TextureBackingStore) nbs;
-
-        if (otbs == ntbs) {
-            otbs.getGraphics().copyArea(
-                    ol.x(), ol.y(),
-                    ol.w(), ol.h(),
-                    nl.x() - ol.x(),
-                    nl.y() - ol.y());
-        } else {
-            ntbs.getGraphics().drawImage(
-                    otbs.getImage(),
-                    nl.x(), nl.y(),
-                    nl.x() + nl.w(),
-                    nl.y() + nl.h(),
-                    ol.x(), ol.y(),
-                    ol.x() + ol.w(),
-                    ol.y() + ol.h(),
-                    null);
-        }
-    }
-
-    /**
-     * Performs an action when a store needs to be expanded.
-     *
-     * <p>
-     * Fires an event of type {@link EventType.REALLOCATE} so that an observer of the backing store
-     * can decide what to actually do.  This will only happen on the first attempt.
-     *
-     * @param cause Rectangle that is being added
-     * @param attempt Number of times it has been tried so far
-     * @return True if packer should retry addition
-     * @throws NullPointerException if cause is null
-     */
-    @Override
-    public boolean preExpand(/*@Nonnull*/ final Rect cause, final int attempt) {
-
-        Check.notNull(cause, "Cause cannot be null");
-
-        // Print debugging information
-        if (DEBUG) {
-            System.err.println("In preExpand: attempt number " + attempt);
-        }
-
-        // Pass event to observers
-        if (attempt == 0) {
-            fireEvent(EventType.REALLOCATE);
-            return true;
-        }
-        return false;
     }
 
     /**

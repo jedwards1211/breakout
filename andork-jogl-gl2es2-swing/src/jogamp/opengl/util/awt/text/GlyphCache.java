@@ -27,19 +27,18 @@
  */
 package jogamp.opengl.util.awt.text;
 
+import java.awt.Font;
+import java.awt.font.FontRenderContext;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.jogamp.opengl.GL;
-import com.jogamp.opengl.GLException;
 import com.jogamp.opengl.util.awt.TextRenderer.RenderDelegate;
 import com.jogamp.opengl.util.packrect.BackingStoreManager;
 import com.jogamp.opengl.util.packrect.Rect;
 import com.jogamp.opengl.util.packrect.RectVisitor;
 import com.jogamp.opengl.util.packrect.RectanglePacker;
 import com.jogamp.opengl.util.texture.TextureCoords;
-
-import java.awt.Font;
-import java.awt.font.FontRenderContext;
-import java.util.ArrayList;
-import java.util.List;
 
 
 /**
@@ -85,17 +84,6 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
     /*@Nonnegative*/
     private static final int FONT_SIZE_MULTIPLIER = 5;
 
-    /**
-     * How much fragmentation to allow before compacting.
-     */
-    /*@Nonnegative*/
-    private static final float MAX_VERTICAL_FRAGMENTATION = 0.7f;
-
-    /**
-     * Number of render cycles before clearing unused entries.
-     */
-    /*@Nonnegative*/
-    private static final int CYCLES_PER_FLUSH = 100;
 
     /**
      * Minimum size of backing store in pixels.
@@ -136,11 +124,6 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
     /*@CheckForNull*/
     private TextureBackingStore backingStore;
 
-    /**
-     * Times cache has been used.
-     */
-    /*@Nonnegative*/
-    private int numRenderCycles = 0;
 
     /**
      * True if done initializing.
@@ -195,7 +178,7 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
 
         // Set up if first time rendering
         if (!ready) {
-            setMaxSize(gl);
+        	this.setMaxSize(gl);
             ready = true;
         }
 
@@ -203,13 +186,10 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
         final TextureBackingStore bs = getBackingStore();
         bs.bind(gl, GL.GL_TEXTURE0);
     }
-
-    /**
-     * Clears all the texture coordinates stored in glyphs.
-     */
-    private void clearTextureCoordinates() {
-
-        log("Clearing texture coordinates");
+    
+    private void clearGlyphs() {
+    	
+        log("Clearing glyphs");
 
         packer.visit(new RectVisitor() {
 
@@ -217,56 +197,9 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
             public void visit(/*@Nonnull*/ final Rect rect) {
                 final Glyph glyph = ((TextData) rect.getUserData()).glyph;
                 glyph.coordinates = null;
+                glyph.location = null;
             }
         });
-    }
-
-    /**
-     * Clears entries that haven't been used in awhile.
-     */
-    private void clearUnusedEntries() {
-
-        log("Trying to clear unused entries...");
-
-        // Find rectangles in backing store that haven't been used recently
-        final List<Rect> deadRects = new ArrayList<Rect>();
-        packer.visit(new RectVisitor() {
-
-            @Override
-            public void visit(/*@Nonnull*/ final Rect rect) {
-                final TextData data = (TextData) rect.getUserData();
-                if (data.used()) {
-                    data.clearUsed();
-                } else {
-                    deadRects.add(rect);
-                }
-            }
-        });
-
-        // Remove each of those rectangles
-        final TextureBackingStore bs = getBackingStore();
-        for (final Rect rect : deadRects) {
-            packer.remove(rect);
-            final Glyph glyph = ((TextData) rect.getUserData()).glyph;
-            glyph.location = null;
-            fireEvent(EventType.CLEAN, glyph);
-            log("Cleared rectangle for glyph: %s", glyph);
-            if (DEBUG) {
-                bs.clear(rect.x(), rect.y(), rect.w(), rect.h());
-            }
-        }
-
-        // If we removed dead rectangles this cycle, try to do a compaction
-        final float frag = packer.verticalFragmentationRatio();
-        if (!deadRects.isEmpty() && (frag > MAX_VERTICAL_FRAGMENTATION)) {
-            log("Compacting due to fragmentation %s", frag);
-            packer.compact();
-        }
-
-        // Force the backing store to update
-        if (DEBUG) {
-            bs.mark(0, 0, bs.getWidth(), bs.getHeight());
-        }
     }
 
     /**
@@ -378,17 +311,8 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
      * @throws NullPointerException if context is null
      */
     public void endRendering(/*@Nonnull*/ final GL gl) {
-
         Check.notNull(gl, "Context cannot be null");
-
         update(gl);
-
-        // Check if reached render cycle limit
-        if (++numRenderCycles >= CYCLES_PER_FLUSH) {
-            numRenderCycles = 0;
-            log("Reached cycle limit.");
-            clearUnusedEntries();
-        }
     }
 
     /**
@@ -593,13 +517,6 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
         }
     }
 
-    private static void log(/*@Nonnull*/ final String message,
-                            /*@CheckForNull*/ final Object arg) {
-        if (DEBUG) {
-            System.err.println(String.format(message, arg));
-        }
-    }
-
     /**
      * Marks a glyph's location as used.
      *
@@ -652,12 +569,12 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
         Check.notNull(type, "Event type cannot be null");
 
         switch (type) {
-        case REALLOCATE:
-            onBackingStoreReallocate();
-            break;
         case FAILURE:
             onBackingStoreFailure();
             break;
+        case AUTOMATIC_FLUSH:
+        	onBackingStoreAutomaticFlush();
+        	break;
         }
     }
 
@@ -670,29 +587,11 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
     }
 
     /**
-     * Handles when a backing store is reallocated.
-     *
-     * <p>
-     * First notifies observers, then tries to remove any unused entries, and finally erases the
-     * texture coordinates of each entry since the width and height of the total texture has
-     * changed.  Note that since the backing store is just expanded without moving any entries,
-     * only the texture coordinates need to be recalculated.  The locations will still be the same.
-     *
-     * <p>
-     * This heuristic and the fact that it clears the used bit of all entries seems to cause
-     * cycling of entries in some situations, where the backing store becomes small compared to the
-     * amount of text on the screen (see the TextFlow demo) and the entries continually cycle in
-     * and out of the backing store, decreasing performance.  If we added a little age information
-     * to the entries, and only cleared out entries above a certain age, this behavior would be
-     * eliminated.  However, it seems the system usually stabilizes itself, so for now we'll just
-     * keep things simple.  Note that if we don't clear the used bit here, the backing store tends
-     * to increase very quickly to its maximum size, at least with the TextFlow demo when the text
-     * is being continually re-laid out.
+     * Responds to the backing store failing (reallocation).
      */
-    private void onBackingStoreReallocate() {
-        fireEvent(EventType.REALLOCATE, null);
-        clearUnusedEntries();
-        clearTextureCoordinates();
+    private void onBackingStoreAutomaticFlush() {
+        fireEvent(EventType.AUTOMATIC_FLUSH, null);
+        clearGlyphs();
     }
 
     /**
@@ -787,11 +686,11 @@ public final class GlyphCache implements TextureBackingStore.EventListener {
          * Unused entries were removed from cache.
          */
         CLEAN,
-
+        
         /**
-         * Backing store changed size.
+         * Backing store is full and drawn text must be flushed to graphics card.
          */
-        REALLOCATE;
+        AUTOMATIC_FLUSH;
     }
 
     /**

@@ -180,24 +180,6 @@ public class Level {
     return (freeListWidth >= rect.w());
   }
 
-  public void compact(final Object backingStore, final BackingStoreManager manager) {
-    Collections.sort(rects, rectXComparator);
-    int nextCompactionDest = 0;
-    manager.beginMovement(backingStore, backingStore);
-    for (final Iterator<Rect> iter = rects.iterator(); iter.hasNext(); ) {
-      final Rect cur = iter.next();
-      if (cur.x() != nextCompactionDest) {
-        manager.move(backingStore, cur,
-                     backingStore, new Rect(nextCompactionDest, cur.y(), cur.w(), cur.h(), null));
-        cur.setPosition(nextCompactionDest, cur.y());
-      }
-      nextCompactionDest += cur.w();
-    }
-    nextAddX = nextCompactionDest;
-    freeList.clear();
-    manager.endMovement(backingStore, backingStore);
-  }
-
   public Iterator<Rect> iterator() {
     return rects.iterator();
   }

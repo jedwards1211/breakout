@@ -416,13 +416,13 @@ final class TextureBackingStore {
     enum EventType {
 
         /**
-         * Backing store being resized.
-         */
-        REALLOCATE,
-
-        /**
          * Backing store could not be resized.
          */
-        FAILURE;
+        FAILURE,
+        
+        /**
+         * Backing store is full and drawn text needs to be flushed to the graphics card.
+         */
+        AUTOMATIC_FLUSH;
     }
 }

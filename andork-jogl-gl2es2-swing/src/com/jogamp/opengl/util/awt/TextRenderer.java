@@ -1058,7 +1058,7 @@ public final class TextRenderer {
 			Check.notNull(type, "Event type cannot be null");
 
 			switch (type) {
-			case REALLOCATE:
+			case AUTOMATIC_FLUSH:
 				flush();
 				break;
 			case CLEAR:
