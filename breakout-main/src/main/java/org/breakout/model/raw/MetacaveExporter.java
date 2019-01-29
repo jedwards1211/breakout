@@ -287,12 +287,6 @@ public class MetacaveExporter {
 	}
 	
 	public JsonObject export(SurveyLead lead) {
-		JsonObject cave = ensureCave(lead.getCave());
-		JsonArray leads = cave.getAsJsonArray("leads");
-		if (leads == null) {
-			leads = new JsonArray();
-			cave.add("leads", leads);
-		}
 		JsonObject converted = new JsonObject();
 		converted.addProperty("station", lead.getStation());
 		converted.addProperty("description", lead.getDescription());
@@ -301,6 +295,14 @@ public class MetacaveExporter {
 		}
 		if (lead.getHeight() != null) {
 			converted.add("height", convertMeasurementString(lead.getHeight()));
+		}
+		if (lead.getCave() == null) return converted;
+		JsonObject cave = ensureCave(lead.getCave());
+		if (cave == null) return converted;
+		JsonArray leads = cave.getAsJsonArray("leads");
+		if (leads == null) {
+			leads = new JsonArray();
+			cave.add("leads", leads);
 		}
 		leads.add(converted);
 		return converted;
