@@ -271,8 +271,10 @@ public class MetacaveExporter {
 	}
 	
 	public void exportLeads(List<SurveyLead> leads) {
-		for (SurveyLead lead : leads) {
-			export(lead);
+		if (leads != null) {
+			for (SurveyLead lead : leads) {
+				export(lead);
+			}
 		}
 	}
 	
