@@ -103,7 +103,7 @@ public class CompassConverter {
 
 	public static SurveyTrip convertTripHeader(CompassTripHeader compassTripHeader) {
 		MutableSurveyTrip trip = new MutableSurveyTrip();
-//		trip.setCave(compassTripHeader.getCaveName());
+		trip.setCave(compassTripHeader.getCaveName());
 
 		String tripName = compassTripHeader.getSurveyName();
 		if (tripName != null) tripName = tripName.trim();

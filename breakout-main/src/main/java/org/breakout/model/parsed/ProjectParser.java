@@ -24,6 +24,8 @@ import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 
+import javafx.css.ParsedValue;
+
 /**
  * Parses SurveyRows and SurveyTrips into graph of CalcStations, CalcShots, and
  * CalcTrips. Station positions and passage walls can then be calculated on the
@@ -247,7 +249,7 @@ public class ProjectParser {
 
 		if (fromStation != null) {
 			ParsedNEVLocation location = parseNEVLocation(raw, trip);
-			if (location != null) {
+			if (location != null && cave != null) {
 				ParsedFixedStation station = new ParsedFixedStation();
 				station.cave = fromStation.cave;
 				station.name = fromStation.name;
