@@ -2778,7 +2778,7 @@ public class BreakoutMainView {
 					projectFile.getParent().toFile().mkdirs();
 				}
 				MetacaveExporter exporter = new MetacaveExporter();
-				exporter.export(surveyModel.getRows());
+				exporter.export(surveyModel);
 				JsonObject json = exporter.getRoot();
 				Gson gson = new Gson();
 				json.add("breakout", gson.toJsonTree(

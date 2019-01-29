@@ -20,6 +20,7 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.util.Java7.Objects;
+import org.breakout.model.SurveyTableModel;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -101,6 +102,11 @@ public class MetacaveExporter {
 		export(rows);
 		new Gson().toJson(root, w);
 		w.flush();
+	}
+	
+	public void export(SurveyTableModel model) {
+		export(model.getRows());
+		exportLeads(model.getLeads());
 	}
 
 	public void export(List<SurveyRow> rows) {
@@ -211,7 +217,7 @@ public class MetacaveExporter {
 			}
 		}
 	}
-
+	
 	public JsonObject export(SurveyTrip _trip) {
 		SurveyTrip trip = _trip == null ? defaultTrip : _trip;
 		JsonObject exported = trips.get(trip);
@@ -220,12 +226,7 @@ public class MetacaveExporter {
 			trips.put(trip, exported);
 
 			String caveName = or(trip.getCave(), "");
-			JsonObject cave = (JsonObject) caves.get(caveName);
-			if (cave == null) {
-				cave = new JsonObject();
-				cave.add("trips", new JsonArray());
-				caves.add(caveName, cave);
-			}
+			JsonObject cave = ensureCave(caveName);
 			((JsonArray) cave.get("trips")).add(exported);
 
 			addProperty(exported, "name", trip.getName());
@@ -257,6 +258,51 @@ public class MetacaveExporter {
 			exported.add("survey", new JsonArray());
 		}
 		return exported;
+	}
+
+	private JsonObject ensureCave(String caveName) {
+		JsonObject cave = (JsonObject) caves.get(caveName);
+		if (cave == null) {
+			cave = new JsonObject();
+			cave.add("trips", new JsonArray());
+			caves.add(caveName, cave);
+		}
+		return cave;
+	}
+	
+	public void exportLeads(List<SurveyLead> leads) {
+		for (SurveyLead lead : leads) {
+			export(lead);
+		}
+	}
+	
+	private static JsonArray convertMeasurementString(String str) {
+		JsonArray result = new JsonArray();
+		for (String s : str.split("\\s+")) {
+			result.add(s);
+		}
+		return result;
+	}
+	
+	public JsonObject export(SurveyLead lead) {
+		JsonObject cave = ensureCave(lead.getCave());
+		JsonArray leads = cave.getAsJsonArray("leads");
+		if (leads == null) {
+			leads = new JsonArray();
+			cave.add("leads", leads);
+		}
+		JsonObject converted = new JsonObject();
+		converted.addProperty("station", lead.getStation());
+		converted.addProperty("description", lead.getDescription());
+		if (lead.getWidth() != null) {
+			converted.add("width", convertMeasurementString(lead.getWidth()));
+		}
+		if (lead.getHeight() != null) {
+			converted.add("height", convertMeasurementString(lead.getHeight()));
+		}
+		leads.add(converted);
+		return converted;
+
 	}
 
 	public JsonObject getRoot() {
