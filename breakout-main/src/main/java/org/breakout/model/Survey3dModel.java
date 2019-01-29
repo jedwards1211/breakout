@@ -1835,6 +1835,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	Uniform1fv hiParam;
 
 	Uniform4fv glowColor;
+	
+	Uniform4fv backgroundColor;
 
 	float stationLabelDensity;
 	
@@ -1884,6 +1886,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		depthOrigin = new Uniform3fv().value(0f, 0f, 0f);
 
 		glowColor = new Uniform4fv().value(0f, 1f, 1f, 1f);
+		backgroundColor = new Uniform4fv().value(0f, 0f, 0f, 1f);
 
 		ambient = new Uniform1fv().value(0.5f);
 
@@ -2055,8 +2058,18 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			labelContext.hoveredStation = hoveredStation;
 			labelContext.lineRenderer = lineRenderer;
 			labelContext.triangleRenderer = triangleRenderer;
-			labelContext.leadDetailOutlineColor= new Uniform4fv().value(1f, 1f, 1f, 0.5f);
-			labelContext.leadDetailFillColor = new Uniform4fv().value(0f, 0f, 0f, 0.7f);
+			labelContext.leadDetailOutlineColor = new Uniform4fv().value(
+				stationLabelColor.getRed() / 255f,
+				stationLabelColor.getGreen() / 255f,
+				stationLabelColor.getBlue() / 255f,
+				stationLabelColor.getAlpha() / 255f
+			);
+			labelContext.leadDetailFillColor = new Uniform4fv().value(
+				backgroundColor.value()[0],
+				backgroundColor.value()[1],
+				backgroundColor.value()[2],
+				.7f
+			);
 
 			if (!stationsToEmphasize.isEmpty()) {
 				textRenderer.beginRendering(context.width(), context.height(), false);
@@ -2684,5 +2697,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public void setDisplayLengthUnit(Unit<Length> displayLengthUnit) {
 		this.displayLengthUnit = displayLengthUnit;
+	}
+	
+	public void setBackgroundColor(Color color) {
+		backgroundColor.value(
+			color.getRed() / 255f,
+			color.getGreen() / 255f,
+			color.getBlue() / 255f,
+			color.getAlpha() / 255f
+		);
 	}
 }

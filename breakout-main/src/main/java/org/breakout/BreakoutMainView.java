@@ -1534,6 +1534,9 @@ public class BreakoutMainView {
 				if (bgColor != null) {
 					BreakoutMainView.this.bgColor.set(bgColor.getRed() / 255f, bgColor.getGreen() / 255f,
 							bgColor.getBlue() / 255f, 1f);
+					if (model3d != null) {
+						model3d.setBackgroundColor(bgColor);
+					}
 					autoDrawable.display();
 				}
 			}
