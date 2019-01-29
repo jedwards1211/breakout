@@ -19,6 +19,7 @@ public class CalculateGeometry {
 	public static void calculateGeometry(CalcProject project) {
 		interpolateAzimuthsOfVerticalShots(project);
 		linkCrossSections(project);
+		offsetToZero(project);
 		calculateStationPositions(project);
 		calculateVertices(project);
 	}
@@ -495,6 +496,27 @@ public class CalculateGeometry {
 			}
 		}
 	}
+	
+	static void offsetToZero(CalcProject project) {
+		double[] zeroOffset = new double[] { 0, 0, 0 };
+		boolean found = false;
+
+		for (CalcStation station : project.stations.values()) {
+			if (station.hasPosition()) {
+				zeroOffset = Arrays.copyOf(station.position, 3);
+				found = true;
+				break;
+			}
+		}
+		
+		if (!found) return;
+			
+		for (CalcStation station : project.stations.values()) {
+			for (int i = 0; i < 3; i++) {
+				station.position[i] -= zeroOffset[i];
+			}
+		}
+	}
 
 	/**
 	 * Calculates the position of all the stations that aren't already fixed.
@@ -502,7 +524,7 @@ public class CalculateGeometry {
 	 * at all, it just naively computes the position of one station to the next
 	 * based upon the shot measurements. It uses Dijkstra's algorithm to
 	 * traverse through the stations from nearest to a fixed station to farthest
-	 * from a fixed station, so at least it's deterministic and unaffected by
+	 * from a fixed station, so at least it's deterministic and mostly unaffected by
 	 * the shot/station ordering.
 	 */
 	static void calculateStationPositions(CalcProject project) {
