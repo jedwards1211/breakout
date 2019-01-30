@@ -2848,5 +2848,19 @@ public class BreakoutMainView {
 			model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
 		});
 		rebuild3dModel.run();
+		rebuild3dModel.flush();
+		rebuildTaskService.submit(task -> {
+			task.setStatus("Set Initial View");
+			OnEDT.onEDT(() -> {
+				renderer.getViewSettings().setViewXform(new float[] {
+					1, 0, 0, 0,	
+					0, 0, 1, 0,
+					0, -1, 0, 0,
+					0, 0, 0, 1
+				});
+				autoDrawable.display();
+				fitViewToEverything();
+			});
+		});
 	}
 }
