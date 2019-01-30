@@ -34,5 +34,13 @@ public class AnglesTest {
 				Math.toRadians(120),
 				Angles.difference(Math.toRadians(150 - 720), Math.toRadians(30 + 720)),
 				1e-12);
+		Assert.assertEquals(
+				Math.toRadians(10),
+				Angles.difference(Math.toRadians(355), Math.toRadians(5)),
+				1e-12);
+		Assert.assertEquals(
+				Math.toRadians(10),
+				Angles.difference(Math.toRadians(5), Math.toRadians(355)),
+				1e-12);
 	}
 }
