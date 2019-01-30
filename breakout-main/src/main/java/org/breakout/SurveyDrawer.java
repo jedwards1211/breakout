@@ -28,6 +28,7 @@ import java.awt.event.ItemListener;
 import java.util.function.Consumer;
 
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
@@ -62,6 +63,8 @@ public class SurveyDrawer extends Drawer {
 	JRadioButton shotsButton;
 	JRadioButton nevButton;
 	JRadioButton tripButton;
+	
+	JButton setCaveButton;
 
 	JToggleButton editButton;
 
@@ -84,6 +87,9 @@ public class SurveyDrawer extends Drawer {
 		surveyTableSetup = new DefaultAnnotatingJTableSetup(surveyTable, sortRunner);
 		((AnnotatingTableRowSorter<SurveyTableModel>) surveyTableSetup.table.getAnnotatingRowSorter())
 				.setModelCopier(new SurveyTableModelCopier());
+		
+		setCaveButton = new JButton("Set Cave...");
+		setCaveButton.setVisible(false);
 
 		shotsButton = new JRadioButton("Shots");
 		nevButton = new JRadioButton("NEV");
@@ -97,10 +103,12 @@ public class SurveyDrawer extends Drawer {
 		editButton.setMargin(new Insets(0, 0, 0, 0));
 		editButton.addItemListener(e -> {
 			SurveyTableModel model = surveyTable.getModel();
+			boolean editing = e.getStateChange() == ItemEvent.SELECTED;
 			if (model != null) {
-				model.setEditable(e.getStateChange() == ItemEvent.SELECTED);
+				model.setEditable(editing);
 			}
-			editButton.setText(e.getStateChange() == ItemEvent.SELECTED ? "Done" : "Edit");
+			setCaveButton.setVisible(editing);
+			editButton.setText(editing ? "Done" : "Edit");
 		});
 
 		delegate().dockingSide(Side.BOTTOM);
@@ -114,8 +122,9 @@ public class SurveyDrawer extends Drawer {
 		gbw.put(searchField).rightOfLast().fillboth(1.0, 0.0);
 		gbw.put(highlightButton).rightOfLast().west().insets(2, 5, 0, 0);
 		gbw.put(filterButton).rightOfLast().west().insets(2, 5, 0, 0);
-		gbw.put(shotsButton).rightOfLast().filly(0.0);
+		gbw.put(setCaveButton).rightOfLast().filly(0.0);
 		gbw.put(new JSeparator(SwingConstants.VERTICAL)).rightOfLast().filly(0.0);
+		gbw.put(shotsButton).rightOfLast().filly(0.0);
 		gbw.put(nevButton).rightOfLast().filly(0.0);
 		gbw.put(tripButton).rightOfLast().filly(0.0);
 		gbw.put(editButton).rightOfLast().filly(0.0);
@@ -160,6 +169,10 @@ public class SurveyDrawer extends Drawer {
 
 	public JToggleButton editButton() {
 		return editButton;
+	}
+	
+	public JButton setCaveButton() {
+		return setCaveButton;
 	}
 
 	public SurveyTable table() {

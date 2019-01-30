@@ -1219,6 +1219,8 @@ public class BreakoutMainView {
 	ImportWallsAction importWallsAction = new ImportWallsAction(this);
 
 	ExportImageAction exportImageAction = new ExportImageAction(this);
+	
+	SetCaveOnRowsAction setCaveOnRowsAction = new SetCaveOnRowsAction(this);
 
 	final WeakHashMap<Animation, Object> protectedAnimations = new WeakHashMap<>();
 
@@ -1441,6 +1443,7 @@ public class BreakoutMainView {
 				rebuild3dModel.run();
 			}
 		});
+		surveyDrawer.setCaveButton().setAction(setCaveOnRowsAction);
 
 		surveyDrawer.addTo(mainPanel);
 
@@ -2318,6 +2321,10 @@ public class BreakoutMainView {
 		return scene;
 	}
 
+	public SurveyTable getSurveyTable() {
+		return surveyDrawer.table();
+	}
+
 	protected Stream<ShotKey> getSelectedShotsFromTable() {
 		SurveyTableModel model = surveyDrawer.table().getModel();
 		ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
@@ -2364,6 +2371,10 @@ public class BreakoutMainView {
 
 	public JoglViewSettings getViewSettings() {
 		return renderer.getViewSettings();
+	}
+
+	public TaskService sortTaskService() {
+		return sortTaskService;
 	}
 
 	public TaskService ioTaskService() {
