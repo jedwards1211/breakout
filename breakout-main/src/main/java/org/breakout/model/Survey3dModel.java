@@ -1250,6 +1250,21 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					}
 				}
 			} else {
+				if (param.isStationMetric()) {
+					float value;
+					value = param.calcStationParam(shot, shot.fromStation);
+					if (Float.isFinite(value)) {
+						rangeInOut[0] = Math.min(rangeInOut[0], value);
+						rangeInOut[1] = Math.max(rangeInOut[1], value);
+					}
+					value = param.calcStationParam(shot, shot.toStation);
+					if (Float.isFinite(value)) {
+						rangeInOut[0] = Math.min(rangeInOut[0], value);
+						rangeInOut[1] = Math.max(rangeInOut[1], value);
+					}
+					return;
+				}
+
 				int i = indexInVertices;
 				boolean last = indexInVertices + vertexCount == section.vertexCount;
 
@@ -1259,9 +1274,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 				while (i < maxIndex) {
 					float f = param0buffer.getFloat(i * 4);
-					if (f == 0) {
-						Thread.dumpStack();
-					}
 					if (Float.isFinite(f)) {
 						rangeInOut[0] = Math.min(rangeInOut[0], f);
 						rangeInOut[1] = Math.max(rangeInOut[1], f);

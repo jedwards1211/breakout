@@ -39,6 +39,8 @@ public class CalcShot {
 	public int[] indices;
 
 	public Date date;
+	
+	public boolean hasSurveyNotes;
 
 	public CalcShot() {
 

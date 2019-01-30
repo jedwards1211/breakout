@@ -19,6 +19,7 @@ public class ParsedTrip {
 	public boolean areBackAzimuthsCorrected;
 	public boolean areBackInclinationsCorrected;
 	public ParsedField<Date> date;
+	public boolean hasSurveyNotes;
 
 	public final List<ParsedStation> stations = new ArrayList<>();
 	public final List<ParsedShot> shots = new ArrayList<>();

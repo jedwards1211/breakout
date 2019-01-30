@@ -16,6 +16,7 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
+import org.andork.util.StringUtils;
 import org.breakout.model.CrossSectionType;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
@@ -101,6 +102,7 @@ public class ProjectParser {
 		ParsedCave cave = ensureCave(caveName);
 		cave.trips.add(parsed);
 
+		parsed.hasSurveyNotes = !StringUtils.isNullOrEmpty(raw.getSurveyNotes());
 		parsed.distanceCorrection = parse(raw, SurveyTrip.Properties.distanceCorrection,
 				MetacaveLengthParser::parse, raw.getDistanceUnit(), null, 0);
 		parsed.declination = parse(raw, SurveyTrip.Properties.declination,

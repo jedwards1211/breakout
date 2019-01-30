@@ -130,6 +130,17 @@ public enum ColorParam {
 		public boolean isStationMetric() {
 			return true;
 		}
+	},
+	HAS_SURVEY_NOTES("Has Survey Notes", false) {
+		@Override
+		public float calcStationParam(CalcShot shot, CalcStation station) {
+			return shot.hasSurveyNotes ? 1f : 0f;
+		}
+
+		@Override
+		public boolean isStationMetric() {
+			return true;
+		}
 	};
 
 	private static final Calendar cal1800;
