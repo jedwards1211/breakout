@@ -2028,7 +2028,7 @@ public class BreakoutMainView {
 		}
 		return false;
 	}
-
+	
 	private void changeView(float[] forward, float[] right, boolean ortho, Set<ShotKey> shotsToFit) {
 		if (Vecmath.hasNaNsOrInfinites(forward) || Vecmath.hasNaNsOrInfinites(right)) {
 			throw new IllegalArgumentException("forward and right must not contain NaN or infinite values");
@@ -2111,8 +2111,12 @@ public class BreakoutMainView {
 			}
 
 			finisher = l -> {
+				float[] newViewXform = Vecmath.newMat4f();
+				Vecmath.viewFrom(right, up, endLocation, newViewXform);
+				renderer.getViewSettings().setViewXform(newViewXform);
 				renderer.getViewSettings().setProjection(perspCalculator);
 				saveProjection();
+				saveViewXform();
 
 				installPerspectiveMouseAdapters();
 
@@ -2852,14 +2856,40 @@ public class BreakoutMainView {
 		rebuildTaskService.submit(task -> {
 			task.setStatus("Set Initial View");
 			OnEDT.onEDT(() -> {
-				renderer.getViewSettings().setViewXform(new float[] {
-					1, 0, 0, 0,	
-					0, 0, 1, 0,
-					0, -1, 0, 0,
-					0, 0, 0, 1
-				});
+				settingsDrawer.getFitParamColorationAxisButton().doClick();
+
+				float[] viewXform = Vecmath.newMat4f();
+				float[] right = {1, 0, 0};
+				float[] up = {0, 0, -1};
+				float[] endLocation = {0, 0, 0};
+
+				if (model3d != null) {
+					Vecmath.viewFrom(right, up, endLocation, viewXform);
+
+					FittingFrustum frustum = new FittingFrustum();
+					float[] projXform = newMat4f();
+					perspCalculator.calculate(projXform, renderer.getViewState());
+					PickXform pickXform = new PickXform();
+					pickXform.calculate(projXform, viewXform);
+					frustum.init(pickXform, 0.9f);
+
+					getShotsFromTable().forEach(key -> {
+						Shot3d shot = model3d.getShot(key);
+						if (shot != null) {
+							for (float[] coord : shot.coordIterable(endLocation)) {
+								frustum.addPoint(coord);
+							}
+						}
+					});
+
+					frustum.calculateOrigin(endLocation);
+				}
+
+				Vecmath.viewFrom(right, up, endLocation, viewXform);
+				renderer.getViewSettings().setViewXform(viewXform);
+				renderer.getViewSettings().setProjection(perspCalculator);
+				installPerspectiveMouseAdapters();
 				autoDrawable.display();
-				fitViewToEverything();
 			});
 		});
 	}

@@ -3978,4 +3978,13 @@ public class Vecmath {
 		out[1] = y;
 		out[2] = z;
 	}
+	
+	public static void viewFrom(float[] right, float[] up, float[] location, float[] out) {
+		Vecmath.normalize3(right, 0, out, 0);
+		Vecmath.normalize3(up, 0, out, 4);
+		cross(out, 0, out, 4, out, 8);
+		setColumn3(out, 3, location);
+		out[15] = 1;
+		invAffine(out);
+	}
 }
