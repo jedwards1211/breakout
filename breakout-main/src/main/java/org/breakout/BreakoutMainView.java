@@ -1304,6 +1304,7 @@ public class BreakoutMainView {
 
 		orbiter = new JoglOrbiter(autoDrawable, renderer.getViewSettings());
 		orthoNavigator = new JoglOrthoNavigator(autoDrawable, renderer.getViewState(), renderer.getViewSettings());
+		orthoNavigator.setSensitivity(0.01f);
 
 		hintLabel = new JLabel("A");
 		hintLabel.setForeground(Color.WHITE);
@@ -1629,6 +1630,7 @@ public class BreakoutMainView {
 				if (newValue != null) {
 					float sensitivity = newValue / 5f;
 					navigator.setWheelFactor(sensitivity);
+					orthoNavigator.setWheelFactor(sensitivity);
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder));

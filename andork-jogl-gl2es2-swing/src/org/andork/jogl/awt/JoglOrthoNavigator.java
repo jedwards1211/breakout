@@ -33,6 +33,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 
+import javax.swing.SwingUtilities;
+
 import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.JoglViewState;
@@ -64,6 +66,9 @@ public class JoglOrthoNavigator extends MouseAdapter {
 	final float[] p0 = new float[3];
 	final float[] p1 = new float[3];
 	final float[] p2 = new float[3];
+
+	boolean zoomQueued = false;
+	float queuedWheelRotation;
 
 	public JoglOrthoNavigator(GLAutoDrawable drawable, JoglViewState viewState, JoglViewSettings viewSettings) {
 		super();
@@ -215,29 +220,39 @@ public class JoglOrthoNavigator extends MouseAdapter {
 		if (!active) {
 			return;
 		}
+		queuedWheelRotation += e.getPreciseWheelRotation();
+		
+		if (zoomQueued) return;
+		if (!zoomQueued) {
+			zoomQueued = true;
+			SwingUtilities.invokeLater(() -> {
+				float distance = queuedWheelRotation * wheelFactor * sensitivity;
+				queuedWheelRotation = 0f;
+				zoomQueued = false;
+			
+				viewSettings.getViewXform(v);
+				Vecmath.invAffine(v, vi);
 
-		viewSettings.getViewXform(v);
-		Vecmath.invAffine(v, vi);
+				if (e.isControlDown()) {
+					distance /= 10;
+				}
 
-		float distance = e.getWheelRotation() * wheelFactor * sensitivity;
+				if (e.isShiftDown()) {
+					vi[12] += vi[8] * distance;
+					vi[13] += vi[9] * distance;
+					vi[14] += vi[10] * distance;
+					Vecmath.invAffine(vi, v);
+					viewSettings.setViewXform(v);
+				} else {
+					calcZoom(e, (float) Math.pow(1.1f, distance));
+				}
 
-		if (e.isControlDown()) {
-			distance /= 10;
+				if (callDisplay) {
+					drawable.display();
+				}	
+			});
 		}
 
-		if (e.isShiftDown()) {
-			vi[12] += vi[8] * distance;
-			vi[13] += vi[9] * distance;
-			vi[14] += vi[10] * distance;
-			Vecmath.invAffine(vi, v);
-			viewSettings.setViewXform(v);
-		} else {
-			calcZoom(e, (float) Math.pow(1.1f, distance));
-		}
-
-		if (callDisplay) {
-			drawable.display();
-		}
 	}
 
 	public void setActive(boolean active) {
