@@ -327,11 +327,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		protected String createFragmentShaderCode() {
-			return "  float temp;"
+			return "  if (v_clipPosition < u_clipNear || v_clipPosition > u_clipFar) discard;"
 					+
-					"  temp = dot(v_Position, u_clipAxis);"
-					+
-					"  if (temp < u_clipNear || temp > u_clipFar) discard;"
+					"  float temp;"
 					+
 					"  vec4 indexedHighlight;"
 					+
@@ -377,8 +375,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					"in float v_highlightIndex;" +
 
 					"out vec4 color;" +
-					"in vec3 v_Position;" +
-					"uniform vec3 u_clipAxis;" +
+					"in float v_clipPosition;" +
 					"uniform float u_clipNear;" +
 					"uniform float u_clipFar;";
 
@@ -394,7 +391,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		protected String createVertexShaderCode() {
 			return "  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
-					" v_Position = a_pos;" +
+					" v_clipPosition = dot(u_clipAxis, a_pos);" +
 					"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
 					"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
 					"  v_glow = a_glow;" +
@@ -422,7 +419,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					// highlights
 					"in float a_highlightIndex;" +
 					"out float v_highlightIndex;" +
-					"out vec3 v_Position;";
+					
+					// clip
+					"uniform vec3 u_clipAxis;" +
+					"out float v_clipPosition;";
 		}
 
 		@Override
