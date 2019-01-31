@@ -116,6 +116,7 @@ import org.breakout.model.calc.CalcShot;
 import org.breakout.model.calc.CalcStation;
 import org.breakout.model.calc.CalcTrip;
 import org.breakout.model.parsed.Lead;
+import org.breakout.model.shader.CenterlineProgram;
 
 import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
@@ -187,87 +188,29 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	private class CenterlineRenderer implements SectionRenderer {
-		protected int program = 0;
-
-		protected int m_location;
-		protected int v_location;
-		protected int p_location;
-		protected int a_pos_location;
-		protected int u_color_location;
-		protected int u_maxCenterlineDistance_location;
-
-		protected String createFragmentShader() {
-			return "#version 330\n" +
-					createFragmentShaderVariables() +
-					"void main() {" +
-					createFragmentShaderCode() +
-					"}";
-		}
-
-		protected String createFragmentShaderCode() {
-			return "  if (v_dist > u_maxCenterlineDistance) discard;" +
-					"  color = u_color;";
-		}
-
-		protected String createFragmentShaderVariables() {
-			// lighting
-			return "uniform float u_ambient;" +
-					"uniform float u_maxCenterlineDistance;" +
-					// distance coloration
-					"in float v_dist;" +
-					// color
-					"uniform vec4 u_color;" +
-					"out vec4 color;";
-		}
-
-		protected String createVertexShader() {
-			return "#version 330\n" +
-					createVertexShaderVariables() +
-					"void main() {" +
-					createVertexShaderCode() +
-					"}";
-		}
-
-		protected String createVertexShaderCode() {
-			return "  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
-					"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;";
-		}
-
-		protected String createVertexShaderVariables() {
-			return "uniform mat4 m;" +
-					"uniform mat4 v;" +
-					"uniform mat4 p;" +
-					"in vec3 a_pos;" +
-
-					// distance coloration
-					"out float v_dist;";
+		@Override
+		public boolean init(GL2ES2 gl) {
+			CenterlineProgram.INSTANCE.init(gl);
+			return true;
 		}
 
 		@Override
 		public void dispose(GL2ES2 gl) {
-			if (program > 0) {
-				gl.glDeleteProgram(program);
-				program = 0;
-			}
+			CenterlineProgram.INSTANCE.dispose(gl);
 		}
 
 		@Override
 		public void draw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
-			if (program <= 0) {
-				init(gl);
-			}
+			CenterlineProgram program = CenterlineProgram.INSTANCE;
+			program.use(gl);
 
-			gl.glUseProgram(program);
+			program.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
 
-			gl.glUniformMatrix4fv(m_location, 1, false, m, 0);
-			gl.glUniformMatrix4fv(v_location, 1, false, context.viewMatrix(), 0);
-			gl.glUniformMatrix4fv(p_location, 1, false, context.projectionMatrix(), 0);
+			centerlineColor.put(gl, program.color);
+			maxCenterlineDistance.put(gl, program.maxCenterlineDistance);
 
-			centerlineColor.put(gl, u_color_location);
-			maxCenterlineDistance.put(gl, u_maxCenterlineDistance_location);
-
-			gl.glEnableVertexAttribArray(a_pos_location);
+			program.position.enableArray(gl);
 
 			gl.glEnable(GL_DEPTH_TEST);
 			gl.glEnable(GL.GL_STENCIL_TEST);
@@ -278,39 +221,17 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				section.centerlineGeometry.init(gl);
 
 				gl.glBindBuffer(GL_ARRAY_BUFFER, section.centerlineGeometry.id());
-				gl.glVertexAttribPointer(a_pos_location, 3, GL_FLOAT, false, 12, 0);
+				gl.glVertexAttribPointer(program.position.location(), 3, GL_FLOAT, false, 12, 0);
 
 				gl.glDrawArrays(GL_LINES, 0, section.shot3ds.size() * 2);
 			}
 
 			gl.glDisable(GL_DEPTH_TEST);
 			gl.glDisable(GL.GL_STENCIL_TEST);
-			gl.glDisableVertexAttribArray(a_pos_location);
+			program.position.disableArray(gl);
 
 			gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
-		}
-
-		@Override
-		public boolean init(GL2ES2 gl) {
-			String vertShader, fragShader;
-
-			if (program <= 0) {
-				vertShader = createVertexShader();
-				fragShader = createFragmentShader();
-
-				program = JoglUtils.loadProgram(gl, vertShader, fragShader);
-
-				m_location = gl.glGetUniformLocation(program, "m");
-				v_location = gl.glGetUniformLocation(program, "v");
-				p_location = gl.glGetUniformLocation(program, "p");
-
-				a_pos_location = gl.glGetAttribLocation(program, "a_pos");
-
-				u_color_location = gl.glGetUniformLocation(program, "u_color");
-				u_maxCenterlineDistance_location = gl.glGetUniformLocation(program, "u_maxCenterlineDistance");
-			}
-
-			return true;
+			program.use(gl, false);
 		}
 	}
 
@@ -2006,6 +1927,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		lineRenderer.dispose(gl);
 		triangleRenderer.dispose(gl);
+		centerlineRenderer.dispose(gl);
 		FlatColorProgram.INSTANCE.dispose(gl);
 		FlatColorScreenProgram.INSTANCE.dispose(gl);
 	}
@@ -2278,6 +2200,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		triangleRenderer.init(gl);
 		FlatColorProgram.INSTANCE.init(gl);
 		FlatColorScreenProgram.INSTANCE.init(gl);
+		
+		centerlineRenderer.init(gl);
 
 		return true;
 	}

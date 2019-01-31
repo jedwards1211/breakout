@@ -45,6 +45,7 @@ public abstract class ManagedShaderProgram extends JoglManagedResource {
 
 			return result;
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			doDispose(gl);
 			return false;
 		}
