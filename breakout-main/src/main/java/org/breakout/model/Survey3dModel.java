@@ -91,6 +91,7 @@ import org.andork.jogl.uniform.Uniform4fv;
 import org.andork.jogl.util.JoglUtils;
 import org.andork.jogl.util.PipelinedRenderer;
 import org.andork.jogl.util.PipelinedRenderer.Options;
+import org.andork.math3d.Clip3f;
 import org.andork.math3d.InConeTester3f;
 import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PlanarHull3f;
@@ -211,6 +212,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			maxCenterlineDistance.put(gl, program.maxCenterlineDistance);
 
 			program.position.enableArray(gl);
+			program.clipLocations.put(gl, clip);
 
 			gl.glEnable(GL_DEPTH_TEST);
 			gl.glEnable(GL.GL_STENCIL_TEST);
@@ -255,6 +257,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		protected int a_highlightIndex_location;
 		protected int u_highlightColors_location;
+		
+		protected int u_clipAxis_location;
+		protected int u_clipNear_location;
+		protected int u_clipFar_location;
 
 		protected void afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m,
 				float[] n) {
@@ -274,7 +280,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glUniformMatrix3fv(n_location, 1, false, n, 0);
 			gl.glUniformMatrix4fv(v_location, 1, false, context.viewMatrix(), 0);
 			gl.glUniformMatrix4fv(p_location, 1, false, context.projectionMatrix(), 0);
-
+			
 			ambient.put(gl, u_ambient_location);
 
 			nearDist.put(gl, u_nearDist_location);
@@ -288,6 +294,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glEnableVertexAttribArray(a_norm_location);
 			gl.glEnableVertexAttribArray(a_glow_location);
 			gl.glEnableVertexAttribArray(a_highlightIndex_location);
+			
+			gl.glUniform3fv(u_clipAxis_location, 1, clip.axis(), 0);
+			gl.glUniform1f(u_clipNear_location, clip.near());
+			gl.glUniform1f(u_clipFar_location, clip.far());
 
 			gl.glEnable(GL_DEPTH_TEST);
 		}
@@ -318,6 +328,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		protected String createFragmentShaderCode() {
 			return "  float temp;"
+					+
+					"  temp = dot(v_Position, u_clipAxis);"
+					+
+					"  if (temp < u_clipNear || temp > u_clipFar) discard;"
 					+
 					"  vec4 indexedHighlight;"
 					+
@@ -362,7 +376,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					"uniform vec4 u_highlightColors[3];" +
 					"in float v_highlightIndex;" +
 
-					"out vec4 color;";
+					"out vec4 color;" +
+					"in vec3 v_Position;" +
+					"uniform vec3 u_clipAxis;" +
+					"uniform float u_clipNear;" +
+					"uniform float u_clipFar;";
 
 		}
 
@@ -376,6 +394,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		protected String createVertexShaderCode() {
 			return "  gl_Position = p * v * m * vec4(a_pos, 1.0);" +
+					" v_Position = a_pos;" +
 					"  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;" +
 					"  v_dist = -(v * m * vec4(a_pos, 1.0)).z;" +
 					"  v_glow = a_glow;" +
@@ -402,7 +421,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 					// highlights
 					"in float a_highlightIndex;" +
-					"out float v_highlightIndex;";
+					"out float v_highlightIndex;" +
+					"out vec3 v_Position;";
 		}
 
 		@Override
@@ -468,6 +488,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				u_glowColor_location = gl.glGetUniformLocation(program, "u_glowColor");
 
 				u_highlightColors_location = gl.glGetUniformLocation(program, "u_highlightColors");
+
+				u_clipAxis_location = gl.glGetUniformLocation(program, "u_clipAxis");
+				u_clipNear_location = gl.glGetUniformLocation(program, "u_clipNear");
+				u_clipFar_location = gl.glGetUniformLocation(program, "u_clipFar");
 			}
 
 			return true;
@@ -644,11 +668,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		/**
 		 * @param context
+		 * @param labelContext TODO
 		 * @param scale
 		 * @param result the origin will be stored in this
 		 * @return true if the label is on screen, false otherwise
 		 */
-		boolean getOrigin(JoglDrawContext context, float scale, float[] result) {
+		boolean getOrigin(JoglDrawContext context, LabelDrawingContext labelContext, float scale, float[] result) {
+			if (!labelContext.clip.contains(position)) {
+				return false;
+			}
 			Vecmath.mpmulAffine(context.viewMatrix(), position, result);
 			if (result[2] > 0) {
 				// label is behind camera
@@ -682,7 +710,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		float[] draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n, LabelDrawingContext labelContext, boolean force, float scale) {
-			if (!getOrigin(context, scale, labelContext.tempPoint)) return null;
+			if (!getOrigin(context, labelContext, scale, labelContext.tempPoint)) return null;
 			float x = labelContext.tempPoint[0];
 			float y = labelContext.tempPoint[1];
 			float z = labelContext.tempPoint[2];
@@ -770,7 +798,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			float scale = labelContext.textScale;
 
-			if (!label.getOrigin(context, scale, labelContext.tempPoint)) return;
+			if (!label.getOrigin(context, labelContext, scale, labelContext.tempPoint)) return;
 			float x = labelContext.tempPoint[0] + icon.width * scale * 2;
 			float y = labelContext.tempPoint[1];
 			
@@ -839,6 +867,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		PipelinedRenderer triangleRenderer;
 		Uniform4fv leadDetailOutlineColor;
 		Uniform4fv leadDetailFillColor;
+		Clip3f clip;
 	}
 
 	private static class Section {
@@ -1785,6 +1814,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	boolean showSpatialIndex = false;
 	
 	Unit<Length> displayLengthUnit = Length.meters;
+	
+	Clip3f clip = new Clip3f(new float[] {0,  -1,  0}, -Float.MAX_VALUE, Float.MAX_VALUE);
 
 	private Survey3dModel(
 			CalcProject project,
@@ -2004,6 +2035,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				backgroundColor.value()[2],
 				.7f
 			);
+			labelContext.clip = clip;
 
 			if (!stationsToEmphasize.isEmpty()) {
 				textRenderer.beginRendering(context.width(), context.height(), false);

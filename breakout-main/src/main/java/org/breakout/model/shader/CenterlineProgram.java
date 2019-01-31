@@ -18,6 +18,7 @@ public class CenterlineProgram extends ManagedShaderProgram {
 	public final AttribLocation position = new AttribLocation("a_pos");
 	public final Uniform4fvLocation color = new Uniform4fvLocation("u_color");
 	public final Uniform1fvLocation maxCenterlineDistance = new Uniform1fvLocation("u_maxCenterlineDistance");
+	public final ClipLocations clipLocations = new ClipLocations();
 
 	public static final CenterlineProgram INSTANCE = new CenterlineProgram();
 	
@@ -28,7 +29,10 @@ public class CenterlineProgram extends ManagedShaderProgram {
 			projectionMatrix,
 			position,
 			color,
-			maxCenterlineDistance
+			maxCenterlineDistance,
+			clipLocations.clipAxis,
+			clipLocations.clipNear,
+			clipLocations.clipFar
 		);
 	}
 

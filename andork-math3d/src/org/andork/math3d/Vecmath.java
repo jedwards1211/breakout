@@ -739,7 +739,7 @@ public class Vecmath {
 		}
 		return false;
 	}
-
+	
 	public static void interp(float[] a, float[] b, float f, float[] out) {
 		for (int i = 0; i < a.length; i++) {
 			out[i] = (1 - f) * a[i] + f * b[i];
@@ -3206,6 +3206,16 @@ public class Vecmath {
 		out[2] = a[2] * f;
 	}
 
+	public static void scale3(float[] a, double f) {
+		scale3(a, f, a);
+	}
+
+	public static void scale3(float[] a, double f, float[] out) {
+		out[0] = (float) (a[0] * f);
+		out[1] = (float) (a[1] * f);
+		out[2] = (float) (a[2] * f);
+	}
+
 	public static void scaleAdd3(double a, double[] b, double[] c, double[] out) {
 		out[0] = a * b[0] + c[0];
 		out[1] = a * b[1] + c[1];
@@ -3226,6 +3236,16 @@ public class Vecmath {
 		out[1] = a * b[1] + c[1];
 		out[2] = a * b[2] + c[2];
 	}
+	
+	/**
+	 * Computes out = a * b + c
+	 */
+	public static void scaleAdd3(double a, float[] b, float[] c, float[] out) {
+		out[0] = (float) (a * b[0] + c[0]);
+		out[1] = (float) (a * b[1] + c[1]);
+		out[2] = (float) (a * b[2] + c[2]);
+	}
+
 
 	/**
 	 * Computes out = a * b + c
@@ -3986,5 +4006,43 @@ public class Vecmath {
 		setColumn3(out, 3, location);
 		out[15] = 1;
 		invAffine(out);
+	}
+	
+	/**
+	 * Interpolates between one unit vector and another by rotation instead of
+	 * componentwise interpolation.  For instance if a = y axis, b = x axis,
+	 * and f = 0.5, out is a rotated halfway toward b (45 degrees about the z axis).
+	 * @param a The starting vector
+	 * @param b The ending vector
+	 * @param f the interpolation amount.  0 = a, 1 = b, 0.5 = halfway inbetween
+	 * @param out the array to store the output vector in
+	 */
+	public static void interpRot3(float[] a, float[] b, float f, float[] out) {
+		if (f == 0) {
+			setf(out, a);
+			return;
+		}
+		if (f == 1) {
+			setf(out, b);
+			return;
+		}
+		double angle = Math.acos(dot3(a, b)) * f;
+		double sin = Math.sin(angle);
+		double cos = Math.cos(angle);
+
+		float ax = a[0];
+		float ay = a[1];
+		float az = a[2];
+		cross(a, b, out);
+		// now out = a x b
+
+		cross(out, ax, ay, az, out);
+		normalize3(out);
+		// now out = || (a x b) x a ||
+		// (a vector perpendicular to a in the same plane as a & b)
+
+		out[0] = (float) (cos * ax + sin * out[0]);
+		out[1] = (float) (cos * ay + sin * out[1]);
+		out[2] = (float) (cos * az + sin * out[2]);
 	}
 }

@@ -26,7 +26,7 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ColumnMajorVecmathTest {
+public class RowMajorVecmathTest {
 	public double[] createTestMatrix() {
 		double[] mat = RowMajorVecmath.newMat4d();
 
@@ -83,4 +83,5 @@ public class ColumnMajorVecmathTest {
 	//
 	// Assert.assertArrayEquals( mat , copy , 0.0 );
 	// }
+
 }

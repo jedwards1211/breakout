@@ -8,7 +8,10 @@ in vec3 a_pos;
 // distance coloration
 out float v_dist;
 
+out vec3 v_pos;
+
 void main() {
+  v_pos = a_pos;
   gl_Position = p * v * m * vec4(a_pos, 1.0);
   v_dist = -(v * m * vec4(a_pos, 1.0)).z;
 }
