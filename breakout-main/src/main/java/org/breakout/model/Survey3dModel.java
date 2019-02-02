@@ -2675,4 +2675,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			color.getAlpha() / 255f
 		);
 	}
+
+	public void setClip(Clip3f clip) {
+		this.clip = clip;
+	}
+
+	public Clip3f getClip() {
+		return clip;
+	}
 }

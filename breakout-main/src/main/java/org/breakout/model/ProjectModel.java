@@ -31,6 +31,7 @@ import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
 import org.andork.jogl.Projection;
 import org.andork.jogl.awt.JoglExportImageDialogModel;
+import org.andork.math3d.Clip3f;
 import org.andork.math3d.Vecmath;
 import org.andork.q.QArrayList;
 import org.andork.q.QArrayListBimapper;
@@ -126,6 +127,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Boolean> showLeadLabels = newAttribute(
 			Boolean.class,
 			"showLeadLabels");
+	public static final Attribute<Clip3f> clip = newAttribute(
+			Clip3f.class,
+			"clip");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -152,6 +156,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance))
 				.map(displayLengthUnit, Unit2StringBimapper.length)
 				.map(displayAngleUnit, Unit2StringBimapper.angle)
+				.map(clip, Clip3fBimapper.instance)
 				.exclude(hasUnsavedChanges);
 	}
 
@@ -232,6 +237,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.showLeadLabels) == null) {
 			projectModel.set(ProjectModel.showLeadLabels, true);
+		}
+		if (projectModel.get(ProjectModel.clip) == null) {
+			projectModel.set(ProjectModel.clip, new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
 		}
 	}
 }

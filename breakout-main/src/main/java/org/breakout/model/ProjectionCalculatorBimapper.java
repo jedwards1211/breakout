@@ -22,15 +22,13 @@
 package org.breakout.model;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import org.andork.func.Bimapper;
-import org.andork.jogl.AutoClipOrthoProjection;
+import org.andork.jogl.OrthoProjection;
 import org.andork.jogl.PerspectiveProjection;
 import org.andork.jogl.Projection;
-import org.andork.math3d.Vecmath;
 import org.andork.util.ArrayUtils;
 
 public class ProjectionCalculatorBimapper implements Bimapper<Projection, Object> {
@@ -43,19 +41,13 @@ public class ProjectionCalculatorBimapper implements Bimapper<Projection, Object
 	private ProjectionCalculatorBimapper() {
 	}
 
-	public Map<Object, Object> map(AutoClipOrthoProjection in) {
+	public Map<Object, Object> map(OrthoProjection in) {
 		Map<Object, Object> result = new LinkedHashMap<>();
 		result.put("type", "ortho");
 		result.put("hSpan", in.hSpan);
 		result.put("vSpan", in.vSpan);
-		result.put("center", ArrayUtils.toArrayList(in.center));
-		result.put("radius", in.radius);
-		if (in.useNearClipPoint) {
-			result.put("nearClipPoint", ArrayUtils.toArrayList(in.nearClipPoint));
-		}
-		if (in.useFarClipPoint) {
-			result.put("farClipPoint", ArrayUtils.toArrayList(in.farClipPoint));
-		}
+		result.put("zNear", in.zNear);
+		result.put("zFar", in.zFar);
 		return result;
 	}
 
@@ -76,8 +68,8 @@ public class ProjectionCalculatorBimapper implements Bimapper<Projection, Object
 
 		if (in instanceof PerspectiveProjection) {
 			return map((PerspectiveProjection) in);
-		} else if (in instanceof AutoClipOrthoProjection) {
-			return map((AutoClipOrthoProjection) in);
+		} else if (in instanceof OrthoProjection) {
+			return map((OrthoProjection) in);
 		}
 		throw new IllegalArgumentException("Unsupported type: " + in.getClass());
 	}
@@ -101,21 +93,16 @@ public class ProjectionCalculatorBimapper implements Bimapper<Projection, Object
 		throw new IllegalArgumentException("Invalid type: " + out.getClass());
 	}
 
-	public AutoClipOrthoProjection unmapOrtho(Map<Object, Object> map) {
-		AutoClipOrthoProjection result = new AutoClipOrthoProjection();
-		result.hSpan = getFloat(map, "hSpan");
-		result.vSpan = getFloat(map, "vSpan");
-		Vecmath.setf(result.center, ArrayUtils.toFloatArray2((List<Number>) map.get("center")));
-		result.radius = getFloat(map, "radius");
-		result.useNearClipPoint = map.containsKey("nearClipPoint");
-		if (result.useNearClipPoint) {
-			Vecmath.setf(result.nearClipPoint, ArrayUtils.toFloatArray2((List<Number>) map.get("nearClipPoint")));
-		}
-		result.useFarClipPoint = map.containsKey("farClipPoint");
-		if (result.useFarClipPoint) {
-			Vecmath.setf(result.farClipPoint, ArrayUtils.toFloatArray2((List<Number>) map.get("farClipPoint")));
-		}
-		return result;
+	public OrthoProjection unmapOrtho(Map<Object, Object> map) {
+		// previous versions using AutoClipOrthoProjection didn't write these fields
+		Number zNear = (Number) map.get("zNear");
+		Number zFar = (Number) map.get("zFar");
+		return new OrthoProjection(
+			getFloat(map, "hSpan"),
+			getFloat(map, "vSpan"),
+			zNear != null ? zNear.floatValue() : 1,
+			zFar != null ? zFar.floatValue() : 1e7f
+		);
 	}
 
 	public PerspectiveProjection unmapPerspective(Map<Object, Object> map) {

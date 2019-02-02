@@ -30,8 +30,9 @@ public class OrthoProjection implements Projection {
 	public float hSpan;
 	public float vSpan;
 
-	public OrthoProjection(float hSpan, float zNear, float zFar) {
+	public OrthoProjection(float hSpan, float vSpan, float zNear, float zFar) {
 		this.hSpan = hSpan;
+		this.vSpan = vSpan;
 		this.zNear = zNear;
 		this.zFar = zFar;
 	}

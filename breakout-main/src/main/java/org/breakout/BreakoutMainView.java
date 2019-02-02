@@ -132,7 +132,6 @@ import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
 import org.andork.func.Lodash.DebounceOptions;
 import org.andork.func.Lodash.DebouncedRunnable;
-import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.DevicePixelRatio;
 import org.andork.jogl.GL3Framebuffer;
@@ -141,6 +140,7 @@ import org.andork.jogl.JoglBackgroundColor;
 import org.andork.jogl.JoglScene;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.JoglViewState;
+import org.andork.jogl.OrthoProjection;
 import org.andork.jogl.PerspectiveProjection;
 import org.andork.jogl.Projection;
 import org.andork.jogl.awt.JoglOrbiter;
@@ -151,6 +151,7 @@ import org.andork.jogl.awt.anim.RandomViewOrbitAnimation;
 import org.andork.jogl.awt.anim.SpringViewOrbitAnimation;
 import org.andork.jogl.awt.anim.ViewXformAnimation;
 import org.andork.math.misc.Fitting;
+import org.andork.math3d.Clip3f;
 import org.andork.math3d.Fitting3d;
 import org.andork.math3d.FittingFrustum;
 import org.andork.math3d.LinePlaneIntersection3f;
@@ -1005,6 +1006,7 @@ public class BreakoutMainView {
 			destroyCalculatedModel();
 
 			final Survey3dModel model = callSubtask(2, subtask -> Survey3dModel.create(p2c.project, 10, 3, 3, subtask));
+			model.setClip(getProjectModel().get(ProjectModel.clip));
 			if (isCanceled()) {
 				return;
 			}
@@ -1066,10 +1068,9 @@ public class BreakoutMainView {
 	JoglOrthoNavigator orthoNavigator;
 
 	I18n i18n = new I18n();
-
+	
 	PerspectiveProjection perspCalculator = new PerspectiveProjection(
-			(float) Math.PI / 2, 1f,
-			1e7f);
+			(float) Math.PI / 2, 1f, 1e7f);
 
 	final ScheduledExecutorService rebuildScheduler = Executors.newSingleThreadScheduledExecutor();
 	final TaskService rebuildTaskService = ExecutorTaskService.newSingleThreadedTaskService();
@@ -2041,19 +2042,15 @@ public class BreakoutMainView {
 		float[] up = new float[3];
 		Vecmath.cross(right, forward, up);
 
-		Projection newProjCalculator;
+		Projection newProjCalculator = null;
+		Clip3f newClip = null;
 		float[] vi = renderer.getViewState().inverseViewMatrix();
 		float[] endLocation = { vi[12], vi[13], vi[14] };
 
 		Animation finisher;
 
 		if (ortho) {
-			AutoClipOrthoProjection orthoCalculator = new AutoClipOrthoProjection();
-			newProjCalculator = orthoCalculator;
-			orbiter.getCenter(orthoCalculator.center);
-
 			if (model3d != null) {
-				orthoCalculator.radius = Rectmath.radius3(model3d.getTree().getRoot().mbr());
 				float[] orthoBounds = model3d.getOrthoBounds(shotsToFit, right, up, forward);
 				Rectmath.scaleFromCenter3(orthoBounds, 1 / 0.9f, 1 / 0.9f, 1f, orthoBounds);
 
@@ -2068,18 +2065,26 @@ public class BreakoutMainView {
 
 				Rectmath.center(orthoBounds, endOrthoLocation);
 				endOrthoLocation[2] = orthoBounds[2];
-				Vecmath.combine(orthoCalculator.nearClipPoint, endOrthoLocation, right, up, forward);
 				endOrthoLocation[2] = orthoBounds[5];
-				Vecmath.combine(orthoCalculator.farClipPoint, endOrthoLocation, right, up, forward);
 
-				orthoCalculator.hSpan = orthoBounds[3] - orthoBounds[0];
-				orthoCalculator.vSpan = orthoBounds[4] - orthoBounds[1];
+				float hSpan = orthoBounds[3] - orthoBounds[0];
+				float vSpan = orthoBounds[4] - orthoBounds[1];
+				newProjCalculator = new OrthoProjection(hSpan, vSpan, 1f, 1e6f);
+				newClip = new Clip3f(forward, orthoBounds[2], orthoBounds[5]);
 			}
+			
+			final Projection finalNewProjection = newProjCalculator;
+			final Clip3f finalClip = newClip;
 
 			finisher = l -> {
-				orthoCalculator.useNearClipPoint = orthoCalculator.useFarClipPoint = true;
-				renderer.getViewSettings().setProjection(orthoCalculator);
-				saveProjection();
+				if (finalNewProjection != null) {
+					renderer.getViewSettings().setProjection(finalNewProjection);
+					saveProjection();
+				}
+				if (finalClip != null && model3d != null) {
+					model3d.setClip(finalClip);
+					saveClip();
+				}
 
 				installOrthoMouseAdapters();
 
@@ -2137,9 +2142,8 @@ public class BreakoutMainView {
 
 		FloatUnaryOperator viewReparam = f -> 1 - (1 - f) * (1 - f);
 		FloatUnaryOperator projReparam;
-		if (currentProjCalculator instanceof AutoClipOrthoProjection) {
-			AutoClipOrthoProjection currentOrthoCalc = (AutoClipOrthoProjection) currentProjCalculator;
-			currentOrthoCalc.useNearClipPoint = currentOrthoCalc.useFarClipPoint = false;
+		if (currentProjCalculator instanceof OrthoProjection) {
+			OrthoProjection currentOrthoCalc = (OrthoProjection) currentProjCalculator;
 			if (ortho) {
 				projReparam = viewReparam;
 			} else {
@@ -2170,6 +2174,10 @@ public class BreakoutMainView {
 		}
 
 		removeUnprotectedCameraAnimations();
+		if (model3d != null) {
+			model3d.setClip(new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
+			saveClip();
+		}
 		cameraAnimationQueue.add(new ProjXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, false,
 				f -> {
 					calc.f = projReparam.applyAsFloat(f);
@@ -2566,6 +2574,12 @@ public class BreakoutMainView {
 
 	private void saveProjection() {
 		getProjectModel().set(ProjectModel.projCalculator, renderer.getViewSettings().getProjection());
+	}
+
+	private void saveClip() {
+		if (model3d != null) {
+			getProjectModel().set(ProjectModel.clip, model3d.getClip());
+		}
 	}
 
 	private void saveViewXform() {

@@ -35,9 +35,9 @@ import java.awt.event.MouseWheelEvent;
 
 import javax.swing.SwingUtilities;
 
-import org.andork.jogl.AutoClipOrthoProjection;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.JoglViewState;
+import org.andork.jogl.OrthoProjection;
 import org.andork.math3d.Vecmath;
 
 import com.jogamp.opengl.GLAutoDrawable;
@@ -88,7 +88,7 @@ public class JoglOrthoNavigator extends MouseAdapter {
 		scaleAdd3(factor, p0, p2, p0);
 		scaleAdd3(factor, p1, p2, p1);
 
-		AutoClipOrthoProjection orthoCalc = (AutoClipOrthoProjection) viewSettings.getProjection();
+		OrthoProjection orthoCalc = (OrthoProjection) viewSettings.getProjection();
 		orthoCalc.hSpan = Math.abs(dot3(p0, 0, vi, 0) - dot3(p1, 0, vi, 0));
 		orthoCalc.vSpan = Math.abs(dot3(p0, 0, vi, 4) - dot3(p1, 0, vi, 4));
 
