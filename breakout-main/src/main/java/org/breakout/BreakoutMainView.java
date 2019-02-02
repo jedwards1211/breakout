@@ -1165,6 +1165,7 @@ public class BreakoutMainView {
 	DrawerAutoshowController autoshowController;
 	OtherMouseHandler otherMouseHandler;
 	WindowSelectionMouseHandler windowSelectionMouseHandler;
+	ClipMouseHandler clipMouseHandler;
 	TableSelectionHandler selectionHandler;
 
 	RowFilterFactory<String, TableModel, Integer> rowFilterFactory;
@@ -1308,6 +1309,29 @@ public class BreakoutMainView {
 		orbiter = new JoglOrbiter(autoDrawable, renderer.getViewSettings());
 		orthoNavigator = new JoglOrthoNavigator(autoDrawable, renderer.getViewState(), renderer.getViewSettings());
 		orthoNavigator.setSensitivity(0.01f);
+		
+		clipMouseHandler = new ClipMouseHandler(new ClipMouseHandler.Context() {
+			@Override
+			public void saveClip() {
+				BreakoutMainView.this.saveClip();
+			}
+			
+			@Override
+			public Survey3dModel getSurvey3dModel() {
+				return model3d;
+			}
+			
+			@Override
+			public GLAutoDrawable getDrawable() {
+				return autoDrawable;
+			}
+
+			@Override
+			public JoglViewState getViewState() {
+				return renderer.getViewState();
+			}
+		});
+		clipMouseHandler.setSensitivity(0.01f);
 
 		hintLabel = new JLabel("A");
 		hintLabel.setForeground(Color.WHITE);
@@ -1407,6 +1431,7 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(pickHandler);
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
+		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
 
 		mainPanel = new JPanel();
 		mainPanel.setLayout(new DelegatingLayoutManager() {
@@ -1635,6 +1660,7 @@ public class BreakoutMainView {
 					float sensitivity = newValue / 5f;
 					navigator.setWheelFactor(sensitivity);
 					orthoNavigator.setWheelFactor(sensitivity);
+					clipMouseHandler.setWheelFactor(sensitivity);
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder));
@@ -2402,6 +2428,7 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(pickHandler);
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
+		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
 	}
 
@@ -2415,6 +2442,7 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(orbiter);
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
+		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
 	}
 

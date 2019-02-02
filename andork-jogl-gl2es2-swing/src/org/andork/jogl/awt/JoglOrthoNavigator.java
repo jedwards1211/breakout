@@ -217,7 +217,7 @@ public class JoglOrthoNavigator extends MouseAdapter {
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		if (!active) {
+		if (!active || e.isAltDown() || e.isShiftDown()) {
 			return;
 		}
 		queuedWheelRotation += e.getPreciseWheelRotation();

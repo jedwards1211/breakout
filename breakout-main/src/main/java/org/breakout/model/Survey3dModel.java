@@ -2154,6 +2154,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		center[1] = (mbr[1] + mbr[4]) * 0.5f;
 		center[2] = (mbr[2] + mbr[5]) * 0.5f;
 	}
+	
+	public float[] getMbr() {
+		return Arrays.copyOf(tree.getRoot().mbr(), 6);
+	}
 
 	public Set<Shot3d> getHoveredShots() {
 		return hoveredShot == null ? Collections.<Shot3d> emptySet() : Collections.singleton(hoveredShot);

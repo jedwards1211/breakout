@@ -57,6 +57,10 @@ public final class Clip3f implements Cloneable {
 		float rf = 1 - f;
 		return new Clip3f(axis, a.near * rf + b.near * f, a.far * rf + b.far * f);
 	}
+	
+	public Clip3f flip() {
+		return new Clip3f(new float[] {-axis[0], -axis[1], -axis[2]}, -near, -far);
+	}
 
 	public float[] axis() {
 		return Arrays.copyOf(axis, 3);
@@ -81,5 +85,16 @@ public final class Clip3f implements Cloneable {
 
 	public Clip3f setFar(float far) {
 		return (far == this.far) ? this : new Clip3f(axis, near, far) ;
+	}
+	
+	public void getNearFarOfMbr(float[] mbr, float[] out) {
+		float nearx = mbr[axis[0] < 0 ? 3 : 0];
+		float neary = mbr[axis[1] < 0 ? 4 : 1];
+		float nearz = mbr[axis[2] < 0 ? 5 : 2];
+		float farx = mbr[axis[0] < 0 ? 0 : 3];
+		float fary = mbr[axis[1] < 0 ? 1 : 4];
+		float farz = mbr[axis[2] < 0 ? 2 : 5];
+		out[0] = axis[0] * nearx + axis[1] * neary + axis[2] * nearz;
+		out[1] = axis[0] * farx + axis[1] * fary + axis[2] * farz;
 	}
 }
