@@ -1,7 +1,5 @@
 package org.breakout.importui;
 
-import java.util.zip.InflaterInputStream;
-
 import org.andork.compass.CompassParseError;
 import org.andork.segment.Segment;
 import org.andork.segment.SegmentParseException;

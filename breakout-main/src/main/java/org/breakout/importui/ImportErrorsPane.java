@@ -1,16 +1,23 @@
 package org.breakout.importui;
 
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
@@ -37,6 +44,8 @@ import org.breakout.importui.ImportError.Severity;
 
 @SuppressWarnings("serial")
 public class ImportErrorsPane extends JSplitPane {
+	private static final Logger logger = Logger.getLogger(ImportErrorsPane.class.getName());
+
 	public static void main(String[] args) {
 		ImportErrorsPane pane = new ImportErrorsPane();
 
@@ -92,6 +101,30 @@ public class ImportErrorsPane extends JSplitPane {
 					contextArea.setText(
 							model.getRowAt(table.getSelectedRow()).getSegment().underlineInContext());
 				}
+			}
+		});
+		table.addMouseListener(new MouseAdapter() {
+			@SuppressWarnings("unchecked")
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() != 2) return;
+				int row = table.rowAtPoint(e.getPoint());
+				if (row < 0) return;
+				
+				row = table.convertRowIndexToModel(row);
+				
+				ListTableModel<ImportError> model = (ListTableModel<ImportError>) table.getModel();
+				Object source = model.getRowAt(row).getSegment().source;
+				if (source == null) return;
+				File file = new File(String.valueOf(source));
+
+				try {
+					Desktop.getDesktop().open(file);
+				} catch (Exception ex) {
+					logger.log(Level.SEVERE, "Failed to open survey notes", ex);
+					JOptionPane.showMessageDialog(null, "Failed to open file '" + file + "': " + ex,
+							"Error", JOptionPane.ERROR_MESSAGE);
+				}					
 			}
 		});
 	}
@@ -173,8 +206,8 @@ public class ImportErrorsPane extends JSplitPane {
 			severity = column(Severity.class).getter(e -> e.getSeverity()).create();
 			message = column(String.class).getter(e -> e.getMessage()).create();
 			source = column(Object.class).getter(e -> e.getSegment().source).create();
-			line = column(Integer.class).getter(e -> e.getSegment().startLine).create();
-			col = column(Integer.class).getter(e -> e.getSegment().startCol).create();
+			line = column(Integer.class).getter(e -> e.getSegment().startLine + 1).create();
+			col = column(Integer.class).getter(e -> e.getSegment().startCol + 1).create();
 		}
 
 		static List<Column<ImportError, ?>> list = Arrays.asList(
