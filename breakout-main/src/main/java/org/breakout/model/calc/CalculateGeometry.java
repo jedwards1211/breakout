@@ -291,6 +291,37 @@ public class CalculateGeometry {
 		for (CalcStation station : project.stations.values()) {
 			linkCrossSections(station);
 		}
+		
+		for (CalcShot shot : project.shots.values()) {
+			if (shot.fromCrossSection == null && !shot.fromStation.isDeadEnd()) {
+				shot.fromCrossSection = new CalcCrossSection(
+					CrossSectionType.LRUD,
+					new double[] { 0.05, 0.05, 0.05, 0.05 },
+					shot.azimuth);
+				getMinUpDown(shot, shot.fromStation, shot.fromCrossSection);
+			}
+			if (shot.toCrossSection == null && !shot.toStation.isDeadEnd()) {
+				shot.toCrossSection = new CalcCrossSection(
+					CrossSectionType.LRUD,
+					new double[] { 0.05, 0.05, 0.05, 0.05 },
+					shot.azimuth);
+				getMinUpDown(shot, shot.toStation, shot.toCrossSection);
+			}
+		}
+	}
+
+	private static void getMinUpDown(CalcShot shot, CalcStation station, CalcCrossSection out) {
+		for (CalcShot otherShot : station.shots.values()) {
+			if (otherShot == shot) continue;
+			CalcCrossSection otherCrossSection = otherShot.getCrossSectionAt(station);
+			if (otherCrossSection == null || otherCrossSection.type != out.type) continue;
+			for (int i = 2; i < 4; i++) {
+				if (Double.isNaN(out.measurements[i]) ||
+					otherCrossSection.measurements[i] < out.measurements[i]) {
+					out.measurements[i] = otherCrossSection.measurements[i];
+				}
+			}
+		}
 	}
 
 	static int getVertexCount(CalcCrossSection crossSection) {
@@ -436,6 +467,10 @@ public class CalculateGeometry {
 	}
 
 	static void calculateVertices(CalcShot shot) {
+		if ("CARR:T6*".equals(shot.fromStation.name) &&
+			"CARR:T7*".equals(shot.toStation.name)) {
+			Thread.dumpStack();
+		}
 		int fromVertexCount = getVertexCount(shot.fromCrossSection);
 		int toVertexCount = getVertexCount(shot.toCrossSection);
 		boolean flipLR = shot.fromCrossSection != null &&
