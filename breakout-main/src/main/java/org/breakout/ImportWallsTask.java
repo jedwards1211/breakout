@@ -24,6 +24,7 @@ import org.andork.segment.SegmentParseException;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
 import org.andork.unit.UnitizedNumber;
+import org.andork.util.StringUtils;
 import org.andork.walls.WallsMessage;
 import org.andork.walls.lst.StationPosition;
 import org.andork.walls.lst.WallsStationReportParser;
@@ -253,6 +254,13 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 	}
 
 	private void putSurveyFiles(WallsProjectEntry entry) {
+		if (entry.isDetatched()) {
+			wallsVisitor.message(new WallsMessage(
+				"warning",
+				"Entry is detached and won't be imported: " + StringUtils.join(" -> ", entry.titlePath()),
+				entry.statusSegment()));
+			return;
+		}
 		if (entry.isSurvey()) {
 			surveyFiles.put(entry.absolutePath(), entry);
 		} else if (entry instanceof WallsProjectBook) {
