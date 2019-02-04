@@ -438,10 +438,9 @@ public class CalculateGeometry {
 	static void calculateVertices(CalcShot shot) {
 		int fromVertexCount = getVertexCount(shot.fromCrossSection);
 		int toVertexCount = getVertexCount(shot.toCrossSection);
-		boolean flipLR = Angles.difference(
-			shot.fromCrossSection.facingAzimuth,
-			shot.toCrossSection.facingAzimuth
-		) > Math.PI / 2;
+		boolean flipLR = shot.fromCrossSection != null &&
+			shot.toCrossSection != null &&
+			Angles.difference(shot.fromCrossSection.facingAzimuth, shot.toCrossSection.facingAzimuth) > Math.PI / 2;
 		shot.normals = new float[(fromVertexCount + toVertexCount) * 3];
 		createNormals(shot.fromCrossSection, shot.normals, 0, flipLR);
 		createNormals(shot.toCrossSection, shot.normals, fromVertexCount * 3, false);
