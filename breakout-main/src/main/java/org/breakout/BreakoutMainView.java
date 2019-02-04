@@ -2142,12 +2142,16 @@ public class BreakoutMainView {
 			}
 
 			finisher = l -> {
-				float[] newViewXform = Vecmath.newMat4f();
-				Vecmath.viewFrom(right, up, endLocation, newViewXform);
-				renderer.getViewSettings().setViewXform(newViewXform);
-				renderer.getViewSettings().setProjection(perspCalculator);
+				try {
+					float[] newViewXform = Vecmath.newMat4f();
+					Vecmath.viewFrom(right, up, endLocation, newViewXform);
+					renderer.getViewSettings().setViewXform(newViewXform);
+					renderer.getViewSettings().setProjection(perspCalculator);
+					saveViewXform();
+				} catch (Exception ex) {
+					logger.log(Level.SEVERE, "Failed to change view xform", ex);
+				}
 				saveProjection();
-				saveViewXform();
 
 				installPerspectiveMouseAdapters();
 
