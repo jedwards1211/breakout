@@ -180,7 +180,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 				if (vector.units.getVectorType() == VectorType.RECTANGULAR) {
 					vector.deriveCtFromRect();
 				} else {
-					vector.applyHeightCorrections();
+					vector.applyHeightCorrections(this);
 				}
 			} catch (SegmentParseException e) {
 				errors.add(new ImportError(e));
