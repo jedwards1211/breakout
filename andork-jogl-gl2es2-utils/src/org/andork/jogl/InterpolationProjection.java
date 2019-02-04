@@ -48,4 +48,12 @@ public class InterpolationProjection implements Projection {
 		b.calculate(bOut, dc, width, height);
 		Vecmath.interp(aOut, bOut, f, pOut);
 	}
+
+	@Override
+	public Projection resize(float hSpan, float vSpan, float zNear, float zFar) {
+		return new InterpolationProjection(
+			a.resize(hSpan, vSpan, zNear, zFar),
+			b.resize(hSpan, vSpan, zNear, zFar),
+			f);
+	}
 }

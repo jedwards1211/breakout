@@ -39,4 +39,9 @@ public class PerspectiveProjection implements Projection {
 	public void calculate(float[] pOut, JoglDrawContext dc, int width, int height) {
 		perspective(pOut, fovAngle, width / (float) height, zNear, zFar);
 	}
+
+	@Override
+	public Projection resize(float hSpan, float vSpan, float zNear, float zFar) {
+		return new PerspectiveProjection(fovAngle, zNear, zFar);
+	}
 }

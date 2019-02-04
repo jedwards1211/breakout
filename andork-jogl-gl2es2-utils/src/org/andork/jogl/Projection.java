@@ -27,4 +27,6 @@ public interface Projection {
 	}
 	
 	public void calculate(float[] pOut, JoglDrawContext drawContext, int width, int height);
+	
+	public Projection resize(float hSpan, float vSpan, float zNear, float zFar);
 }

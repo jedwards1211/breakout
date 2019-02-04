@@ -53,4 +53,9 @@ public class OrthoProjection implements Projection {
 		}
 		Vecmath.ortho(pOut, left, right, bottom, top, zNear, zFar);
 	}
+
+	@Override
+	public Projection resize(float hSpan, float vSpan, float zNear, float zFar) {
+		return new OrthoProjection(hSpan, vSpan, zNear, zFar);
+	}
 }

@@ -78,6 +78,7 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		gl.glViewport(x, y, size, size);
 		JoglViewSettings settings = new JoglViewSettings();
 		settings.copy(context.settings());
+		settings.setProjection(context.projection().resize(5, 5, 0.1f, 100));
 		settings.setViewXform(viewMatrix);
 		newContext.update(settings, x, y, size, size);
 
