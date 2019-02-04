@@ -22,6 +22,7 @@
 		<module>compass-parser</module>
 		<module>breakout-main</module>
 		<module>breakout</module>
+		<module>dewalls-java</module>
 	</modules>
 
 	<build>

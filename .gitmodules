@@ -7,3 +7,6 @@
 [submodule "segment"]
 	path = segment
 	url = http://github.com/jedwards1211/segment-java
+[submodule "dewalls-java"]
+	path = dewalls-java
+	url = https://github.com/wallscavesurvey/dewalls-java
