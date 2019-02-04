@@ -153,22 +153,22 @@ public class FittingFrustum {
 
 	public void addPoint(float x, float y, float z) {
 		float dl = x * left[0] + y * left[1] + z * left[2];
-		if (Float.isNaN(left[3]) || dl > left[3]) {
+		if (Float.isFinite(dl) && (Float.isNaN(left[3]) || dl > left[3])) {
 			left[3] = dl;
 		}
 
 		float dr = x * right[0] + y * right[1] + z * right[2];
-		if (Float.isNaN(right[3]) || dr > right[3]) {
+		if (Float.isFinite(dr) && (Float.isNaN(right[3]) || dr > right[3])) {
 			right[3] = dr;
 		}
 
 		float dt = x * top[0] + y * top[1] + z * top[2];
-		if (Float.isNaN(top[3]) || dt > top[3]) {
+		if (Float.isFinite(dt) && (Float.isNaN(top[3]) || dt > top[3])) {
 			top[3] = dt;
 		}
 
 		float db = x * bottom[0] + y * bottom[1] + z * bottom[2];
-		if (Float.isNaN(bottom[3]) || db > bottom[3]) {
+		if (Float.isFinite(db) && (Float.isNaN(bottom[3]) || db > bottom[3])) {
 			bottom[3] = db;
 		}
 	}
