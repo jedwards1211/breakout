@@ -79,6 +79,7 @@ public class ProjectParser {
 	}
 	
 	private ParsedCave ensureCave(String caveName) {
+		if (caveName == null) caveName = "";
 		ParsedCave cave = project.caves.get(caveName);
 		if (cave == null) {
 			cave = new ParsedCave();
@@ -96,9 +97,6 @@ public class ProjectParser {
 		parsed = new ParsedTrip();
 		trips.put(raw, parsed);
 		String caveName = raw.getCave();
-		if (caveName == null) {
-			caveName = "";
-		}
 		ParsedCave cave = ensureCave(caveName);
 		cave.trips.add(parsed);
 
@@ -231,7 +229,7 @@ public class ProjectParser {
 	public ShotKey parse(SurveyRow raw) {
 		SurveyTrip trip = raw.getTrip();
 		ParsedTrip parsedTrip = parse(trip);
-		ParsedCave cave = project.caves.get(trip.getCave());
+		ParsedCave cave = ensureCave(trip.getCave());
 
 		ParsedStation fromStation = parsedTrip.stations.isEmpty()
 				? null
