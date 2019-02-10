@@ -94,8 +94,14 @@ class Shell extends React.Component {
   openDrawer = () => this.setState({ drawerOpen: true })
   closeDrawer = () => this.setState({ drawerOpen: false })
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.children !== this.props.children && this.content) {
+      this.content.scrollTop = 0
+    }
+  }
+
   render() {
-    const { classes, children } = this.props
+    const { classes, children, router } = this.props
 
     const drawer = (
       <div className={classes.drawerRoot}>
@@ -180,7 +186,9 @@ class Shell extends React.Component {
               </Typography>
             </Toolbar>
           </AppBar>
-          <div className={classes.content}>{children}</div>
+          <div key={router.pathname} className={classes.content}>
+            {children}
+          </div>
         </main>
       </div>
     )

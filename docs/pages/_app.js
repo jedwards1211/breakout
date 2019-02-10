@@ -10,7 +10,7 @@ import getPageContext from '../src/getPageContext'
 
 import Shell from '../src/Shell'
 
-class MyApp extends App {
+class BreakoutDocsApp extends App {
   constructor() {
     super()
     this.pageContext = getPageContext()
@@ -25,7 +25,7 @@ class MyApp extends App {
   }
 
   render() {
-    const { Component, pageProps } = this.props
+    const { Component, router, pageProps } = this.props
     return (
       <Container>
         <Head>
@@ -44,7 +44,7 @@ class MyApp extends App {
           >
             {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
             <CssBaseline />
-            <Shell>
+            <Shell router={router}>
               {/* Pass pageContext to the _document though the renderPage enhancer
                   to render collected styles on server-side. */}
               <Component pageContext={this.pageContext} {...pageProps} />
@@ -56,4 +56,4 @@ class MyApp extends App {
   }
 }
 
-export default MyApp
+export default BreakoutDocsApp
