@@ -53,3 +53,10 @@ If you are satisfied with the imported data, click **Add to Current Project**.
 You will see a progress bar at the top of the window that indicates it is
 parsing the survey data and creating the 3D model. Once it is finished, if
 everything goes well, the data should appear in the 3D view.
+
+## Save Breakout File
+
+If you save the imported data in Breakout's format, it will be easier to reopen
+next time you launch the program. Go to **File > Save** and choose a file in the
+Save dialog. This file will then appear in the **File > Recent Files** list for
+quick access.
