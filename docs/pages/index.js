@@ -4,6 +4,7 @@ import withStyles from '@material-ui/core/styles/withStyles'
 
 const homeStyles = theme => ({
   logo: {
+    width: 600,
     maxWidth: '100%',
   },
 })

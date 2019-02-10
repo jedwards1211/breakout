@@ -99,7 +99,11 @@ class Shell extends React.Component {
 
     const drawer = (
       <div className={classes.drawerRoot}>
-        <AppBar color="primary" className={classes.drawerAppBar}>
+        <AppBar
+          position="static"
+          color="primary"
+          className={classes.drawerAppBar}
+        >
           <Toolbar>
             <Hidden smUp>
               <IconButton
@@ -153,7 +157,7 @@ class Shell extends React.Component {
           </Hidden>
         </nav>
         <main className={classes.main}>
-          <AppBar position="fixed" color="primary" className={classes.appBar}>
+          <AppBar position="static" color="primary" className={classes.appBar}>
             <Toolbar>
               <Hidden smUp>
                 <IconButton
