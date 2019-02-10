@@ -23,7 +23,6 @@ mouse to the left side of the window) and the survey drawer (opened by moving
 the mouse to the bottom of the window):
 
 ![Search Drawer](/static/search/search-drawer.png)
-
 ![Survey Drawer](/static/search/survey-drawer.png)
 
 ## Enter search terms
@@ -34,10 +33,15 @@ to the highlighted results.
 
 ![Highlighted Results](/static/search/highlight-results.png)
 
-If you select the **Filter** option above the table, it will show only matching
-shots:
+### Highlight / Filter
 
-![Filtered Results](/static/search/filter-results.png)
+When the **Highlight** option is selected, matching shots will be highlighted in
+the table below. If you select the **Filter** option above the table, it will
+show only matching shots:
+
+|                                                              |                                                        |
+| ------------------------------------------------------------ | ------------------------------------------------------ |
+| ![Highlighted Results](/static/search/highlight-results.png) | ![Filtered Results](/static/search/filter-results.png) |
 
 ## Fly to Results
 
