@@ -8,6 +8,8 @@ import CssBaseline from '@material-ui/core/CssBaseline'
 import JssProvider from 'react-jss/lib/JssProvider'
 import getPageContext from '../src/getPageContext'
 
+import Shell from '../src/Shell'
+
 class MyApp extends App {
   constructor() {
     super()
@@ -27,7 +29,7 @@ class MyApp extends App {
     return (
       <Container>
         <Head>
-          <title>My page</title>
+          <title>Breakout</title>
         </Head>
         {/* Wrap every page in Jss and Theme providers */}
         <JssProvider
@@ -42,9 +44,11 @@ class MyApp extends App {
           >
             {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
             <CssBaseline />
-            {/* Pass pageContext to the _document though the renderPage enhancer
-                to render collected styles on server-side. */}
-            <Component pageContext={this.pageContext} {...pageProps} />
+            <Shell>
+              {/* Pass pageContext to the _document though the renderPage enhancer
+                  to render collected styles on server-side. */}
+              <Component pageContext={this.pageContext} {...pageProps} />
+            </Shell>
           </MuiThemeProvider>
         </JssProvider>
       </Container>
