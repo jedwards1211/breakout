@@ -1,0 +1,6 @@
+.eslintcache
+.next
+.nyc_output
+coverage
+es
+node_modules
