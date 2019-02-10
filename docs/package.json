@@ -14,15 +14,15 @@
     "lint": "eslint src pages --cache",
     "lint:fix": "eslint --fix src pages --cache",
     "lint:watch": "esw --watch src pages --cache",
-    "prettier": "prettier --write src/**/*.js pages/**/*.js",
-    "prettier:check": "prettier --list-different src/**/*.js pages/**/*.js",
+    "prettier": "prettier --write **/*.js",
+    "prettier:check": "prettier --list-different **/*.js",
     "dev": "next",
     "build": "next build",
     "start": "next start"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && npm run lint && flow",
+      "pre-commit": "lint-staged && npm run lint",
       "commit-msg": "commitlint -e $GIT_PARAMS",
       "pre-push": "npm test"
     }

@@ -11,7 +11,7 @@ const homeStyles = theme => ({
 })
 
 const Home = ({ classes }) => (
-  <Paper className={classes.root}>This is a test!</Paper>
+  <Paper className={classes.root}>This is a test! {process.env.TEST}</Paper>
 )
 
 export default withStyles(homeStyles)(Home)

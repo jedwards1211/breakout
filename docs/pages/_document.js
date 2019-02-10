@@ -1,7 +1,24 @@
+/* eslint-env node */
+
 import React from 'react'
 import PropTypes from 'prop-types'
 import Document, { Head, Main, NextScript } from 'next/document'
 import flush from 'styled-jsx/server'
+
+const environmentVars = ['TEST']
+const environmentScript = `
+window.process = window.process || {}
+process.env = process.env || {}
+process.browser = true
+${environmentVars
+  .map(
+    name =>
+      `process.env[${JSON.stringify(name)}] = ${JSON.stringify(
+        process.env[name] || ''
+      )}`
+  )
+  .join('\n')}
+`
 
 class MyDocument extends Document {
   render() {
@@ -29,6 +46,7 @@ class MyDocument extends Document {
           />
         </Head>
         <body>
+          <script dangerouslySetInnerHTML={{ __html: environmentScript }} />
           <Main />
           <NextScript />
         </body>
