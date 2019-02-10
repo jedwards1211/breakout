@@ -121,11 +121,11 @@ class Shell extends React.Component {
           </Toolbar>
         </AppBar>
         <List className={classes.drawerList}>
-          <ListItem button component={Link} href="/importCompass" passHref>
-            <ListItemText>Import Compass Data</ListItemText>
-          </ListItem>
           <ListItem button component={Link} href="/importWalls" passHref>
             <ListItemText>Import Walls Data</ListItemText>
+          </ListItem>
+          <ListItem button component={Link} href="/findingStations" passHref>
+            <ListItemText>Finding Stations</ListItemText>
           </ListItem>
         </List>
       </div>

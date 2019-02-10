@@ -9,6 +9,7 @@ const environmentVars = ['TEST']
 const environmentScript = `
 window.process = window.process || {}
 process.env = process.env || {}
+process.cwd = function cwd() { return '/' }
 process.browser = true
 ${environmentVars
   .map(
@@ -18,6 +19,12 @@ ${environmentVars
       )}`
   )
   .join('\n')}
+`
+
+const staticCss = `
+body {
+  font-family: "Roboto";
+}
 `
 
 class MyDocument extends Document {
@@ -44,6 +51,7 @@ class MyDocument extends Document {
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500"
           />
+          <style dangerouslySetInnerHTML={{ __html: staticCss }} />
         </Head>
         <body>
           <script dangerouslySetInnerHTML={{ __html: environmentScript }} />
