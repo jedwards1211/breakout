@@ -17,6 +17,10 @@ import List from '@material-ui/core/List'
 import Hidden from '@material-ui/core/Hidden'
 import SidebarLinks from './SidebarLinks'
 import { withRouter } from 'next/router'
+import GitHub from './icons/GitHub'
+import repo from './repo'
+
+import Tooltip from '@material-ui/core/Tooltip'
 
 const drawerWidth = 250
 const appBarGradient = 'linear-gradient(#ba2b50, #700344)'
@@ -49,6 +53,10 @@ const styles = theme => ({
   menuButton: {
     marginLeft: -12,
     marginRight: 20,
+  },
+  gitHubButton: {
+    marginLeft: 20,
+    marginRight: -12,
   },
   drawer: {
     [theme.breakpoints.up('sm')]: {
@@ -177,6 +185,16 @@ class Shell extends React.Component {
               >
                 Breakout <Hidden xsDown>Cave Survey Visualizer</Hidden>
               </Typography>
+              <Tooltip title="GitHub repository">
+                <IconButton
+                  color="inherit"
+                  component={Link}
+                  href={`https://github.com/${repo.owner}/${repo.repo}`}
+                  className={classes.gitHubButton}
+                >
+                  <GitHub />
+                </IconButton>
+              </Tooltip>
             </Toolbar>
           </AppBar>
           <div key={router.pathname} className={classes.content}>

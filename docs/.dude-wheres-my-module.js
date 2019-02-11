@@ -1,6 +1,6 @@
 module.exports = async function configure() {
   const path = require('path')
-  const { promisify } = require('util')
+  const { promisify } = require('es6-promisify')
   const glob = promisify(require('glob'))
 
   const nodeModulesDir = path.join(__dirname, 'node_modules')
