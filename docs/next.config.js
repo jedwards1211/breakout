@@ -1,6 +1,7 @@
 /* eslint-env node */
 
 module.exports = {
+  target: 'serverless',
   webpack: config => {
     config.node = config.node || {}
     config.node.process = false

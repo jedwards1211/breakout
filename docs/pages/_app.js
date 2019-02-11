@@ -29,7 +29,7 @@ class BreakoutDocsApp extends App {
     return (
       <Container>
         <Head>
-          <title>Breakout</title>
+          <title>Breakout Cave Survey Visualizer</title>
         </Head>
         {/* Wrap every page in Jss and Theme providers */}
         <JssProvider
