@@ -216,7 +216,7 @@ public class DefaultNavigator extends MouseAdapter {
 
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
-		if (!active || e.isAltDown() || e.isShiftDown()) {
+		if (!active || e.isAltDown()) {
 			return;
 		}
 
