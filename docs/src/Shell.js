@@ -16,6 +16,7 @@ import Drawer from '@material-ui/core/Drawer'
 import List from '@material-ui/core/List'
 import Hidden from '@material-ui/core/Hidden'
 import SidebarLinks from './SidebarLinks'
+import { withRouter } from 'next/router'
 
 const drawerWidth = 250
 const appBarGradient = 'linear-gradient(#ba2b50, #700344)'
@@ -73,8 +74,10 @@ const styles = theme => ({
   content: {
     flexGrow: 1,
     padding: theme.spacing.unit,
+    paddingTop: 0,
     [theme.breakpoints.up('sm')]: {
       padding: theme.spacing.unit * 3,
+      paddingTop: 0,
     },
     overflow: 'auto',
   },
@@ -89,8 +92,9 @@ class Shell extends React.Component {
   closeDrawer = () => this.setState({ drawerOpen: false })
 
   componentDidUpdate(prevProps) {
-    if (prevProps.children !== this.props.children && this.content) {
-      this.content.scrollTop = 0
+    if (prevProps.router.pathname !== this.props.router.pathname) {
+      if (this.content) this.content.scrollTop = 0
+      this.closeDrawer()
     }
   }
 
@@ -184,4 +188,4 @@ class Shell extends React.Component {
   }
 }
 
-export default withStyles(styles)(Shell)
+export default withStyles(styles)(withRouter(Shell))

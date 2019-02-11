@@ -12,41 +12,25 @@ const styles = ({ palette }) => ({
   },
 })
 
-const SidebarLinks = ({ classes: { activeLink } }) => (
+const SidebarLink = withStyles(styles)(({ classes, href, text }) => (
+  <ListItem
+    button
+    component={Link}
+    href={href}
+    activeClassName={classes.activeLink}
+  >
+    <ListItemText>{text}</ListItemText>
+  </ListItem>
+))
+
+const SidebarLinks = () => (
   <React.Fragment>
-    <ListItem
-      button
-      component={Link}
-      href="/importWalls"
-      activeClassName={activeLink}
-    >
-      <ListItemText>Import Walls Data</ListItemText>
-    </ListItem>
-    <ListItem
-      button
-      component={Link}
-      href="/changingViews"
-      activeClassName={activeLink}
-    >
-      <ListItemText>Changing Views</ListItemText>
-    </ListItem>
-    <ListItem
-      button
-      component={Link}
-      href="/navigation"
-      activeClassName={activeLink}
-    >
-      <ListItemText>Navigation</ListItemText>
-    </ListItem>
-    <ListItem
-      button
-      component={Link}
-      href="/findingStations"
-      activeClassName={activeLink}
-    >
-      <ListItemText>Finding Stations</ListItemText>
-    </ListItem>
+    <SidebarLink href="/download" text="Download" />
+    <SidebarLink href="/importWalls" text="Import Walls Data" />
+    <SidebarLink href="/changingViews" text="Changing Views" />
+    <SidebarLink href="/navigation" text="Navigation" />
+    <SidebarLink href="/findingStations" text="Finding Stations" />
   </React.Fragment>
 )
 
-export default withStyles(styles)(SidebarLinks)
+export default SidebarLinks

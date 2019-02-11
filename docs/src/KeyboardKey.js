@@ -9,11 +9,12 @@ const styles = theme => ({
     border: '1px solid currentColor',
     textAlign: 'center',
     minWidth: theme.spacing.unit * 4,
+    backgroundColor: theme.palette.grey[200],
   },
 })
 
 const KeyboardKey = ({ classes, children }) => (
-  <div className={classes.root}>{children}</div>
+  <span className={classes.root}>{children}</span>
 )
 
 export default withStyles(styles)(KeyboardKey)

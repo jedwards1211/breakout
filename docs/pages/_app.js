@@ -25,7 +25,7 @@ class BreakoutDocsApp extends App {
   }
 
   render() {
-    const { Component, router, pageProps } = this.props
+    const { Component, pageProps } = this.props
     return (
       <Container>
         <Head>
@@ -44,7 +44,7 @@ class BreakoutDocsApp extends App {
           >
             {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
             <CssBaseline />
-            <Shell router={router}>
+            <Shell>
               {/* Pass pageContext to the _document though the renderPage enhancer
                   to render collected styles on server-side. */}
               <Component pageContext={this.pageContext} {...pageProps} />

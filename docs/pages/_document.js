@@ -21,15 +21,18 @@ ${environmentVars
   .join('\n')}
 `
 
-const staticCss = `
-body {
-  font-family: "Roboto";
-}
-`
-
 class MyDocument extends Document {
   render() {
     const { pageContext } = this.props
+
+    const staticCss = `
+body {
+  font-family: "Roboto";
+}
+a {
+  text-decoration: none;
+}
+`
 
     return (
       <html lang="en" dir="ltr">

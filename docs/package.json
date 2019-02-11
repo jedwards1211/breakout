@@ -46,7 +46,9 @@
   "dependencies": {
     "@material-ui/core": "^3.9.2",
     "@material-ui/icons": "^3.0.2",
+    "@octokit/rest": "^16.15.0",
     "jss": "^9.8.7",
+    "lodash": "^4.17.11",
     "next": "^7.0.3",
     "react": "^16.8.1",
     "react-dom": "^16.8.1",

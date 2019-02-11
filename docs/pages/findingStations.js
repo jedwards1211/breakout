@@ -11,6 +11,7 @@ const styles = theme => ({
     display: 'block',
     margin: theme.spacing.unit * 4,
     zoom: '50%',
+    maxWidth: '90%',
   },
   highlightFilterTable: {
     '& td': {
