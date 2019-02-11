@@ -5,23 +5,17 @@
 
 import * as React from 'react'
 import Link from './Link'
-
 import AppBar from '@material-ui/core/AppBar'
 import IconButton from '@material-ui/core/IconButton'
 import MenuIcon from '@material-ui/icons/Menu'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
 import withStyles from '@material-ui/core/styles/withStyles'
-
 import CloseIcon from '@material-ui/icons/Close'
 import Drawer from '@material-ui/core/Drawer'
-
 import List from '@material-ui/core/List'
-
-import ListItem from '@material-ui/core/ListItem'
-import ListItemText from '@material-ui/core/ListItemText'
-
 import Hidden from '@material-ui/core/Hidden'
+import SidebarLinks from './SidebarLinks'
 
 const drawerWidth = 250
 const appBarGradient = 'linear-gradient(#ba2b50, #700344)'
@@ -127,12 +121,7 @@ class Shell extends React.Component {
           </Toolbar>
         </AppBar>
         <List className={classes.drawerList}>
-          <ListItem button component={Link} href="/importWalls" passHref>
-            <ListItemText>Import Walls Data</ListItemText>
-          </ListItem>
-          <ListItem button component={Link} href="/findingStations" passHref>
-            <ListItemText>Finding Stations</ListItemText>
-          </ListItem>
+          <SidebarLinks />
         </List>
       </div>
     )

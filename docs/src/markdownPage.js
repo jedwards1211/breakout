@@ -5,12 +5,14 @@ import withStyles from '@material-ui/core/styles/withStyles'
 
 const imageStyles = theme => ({
   root: {
+    maxWidth: '90%',
     margin: theme.spacing.unit * 4,
+    zoom: '50%',
   },
 })
 
 const ImageRenderer = withStyles(imageStyles)(({ classes, ...props }) => (
-  <img {...props} className={classes.root} width="50%" height="50%" />
+  <img {...props} className={classes.root} />
 ))
 
 const renderers = {
