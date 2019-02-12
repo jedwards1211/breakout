@@ -7,7 +7,8 @@
   },
   "env": {
     "es6": true,
-    "commonjs": true
+    "commonjs": true,
+    "shared-node-browser": true
   },
   "globals": {
     "process": false

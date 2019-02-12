@@ -7,8 +7,11 @@ import { MuiThemeProvider } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
 import JssProvider from 'react-jss/lib/JssProvider'
 import getPageContext from '../src/getPageContext'
-
 import Shell from '../src/Shell'
+import { create } from 'jss'
+import preset from 'jss-preset-default'
+
+const jss = create(preset())
 
 class BreakoutDocsApp extends App {
   constructor() {
@@ -33,6 +36,7 @@ class BreakoutDocsApp extends App {
         </Head>
         {/* Wrap every page in Jss and Theme providers */}
         <JssProvider
+          jss={jss}
           registry={this.pageContext.sheetsRegistry}
           generateClassName={this.pageContext.generateClassName}
         >

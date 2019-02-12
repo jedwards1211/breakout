@@ -22,6 +22,8 @@ import repo from './repo'
 
 import Tooltip from '@material-ui/core/Tooltip'
 
+import NProgress from './NProgress'
+
 const drawerWidth = 250
 const appBarGradient = 'linear-gradient(#ba2b50, #700344)'
 
@@ -107,7 +109,7 @@ class Shell extends React.Component {
   }
 
   render() {
-    const { classes, children, router } = this.props
+    const { theme, classes, children, router } = this.props
 
     const drawer = (
       <div className={classes.drawerRoot}>
@@ -201,9 +203,10 @@ class Shell extends React.Component {
             {children}
           </div>
         </main>
+        <NProgress color={theme.palette.secondary.main} />
       </div>
     )
   }
 }
 
-export default withStyles(styles)(withRouter(Shell))
+export default withStyles(styles, { withTheme: true })(withRouter(Shell))

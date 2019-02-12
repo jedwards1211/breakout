@@ -25,15 +25,6 @@ class MyDocument extends Document {
   render() {
     const { pageContext } = this.props
 
-    const staticCss = `
-body {
-  font-family: "Roboto";
-}
-a {
-  text-decoration: none;
-}
-`
-
     return (
       <html lang="en" dir="ltr">
         <Head>
@@ -54,7 +45,7 @@ a {
             rel="stylesheet"
             href="https://fonts.googleapis.com/css?family=Roboto:300,400,500"
           />
-          <style dangerouslySetInnerHTML={{ __html: staticCss }} />
+          <link rel="stylesheet" type="text/css" href="/static/index.css" />
         </Head>
         <body>
           <script dangerouslySetInnerHTML={{ __html: environmentScript }} />
