@@ -12,7 +12,6 @@ import { withRouter } from 'next/router'
 
 import Button from '@material-ui/core/Button'
 import Link from '../src/Link'
-
 import TableHead from '@material-ui/core/TableHead'
 
 const styles = theme => ({
@@ -46,7 +45,7 @@ const styles = theme => ({
 
 const sharedRows = [['Zoom', 'Scroll', 'Zooms in toward/out from mouse cursor']]
 
-const orthoRows = [['Move', 'Left Click + Drag'], ...sharedRows]
+const orthoRows = [['Move', 'Click + Drag'], ...sharedRows]
 
 const perspectiveRows = [
   ['Move', 'Right Click + Drag'],
@@ -101,7 +100,7 @@ const selectionRows = [
   [
     'Select/unselect additional shots',
     <span key="ctrl">
-      Hold <KeyboardKey>Ctrl</KeyboardKey> + Click on a shot
+      <KeyboardKey>Ctrl</KeyboardKey> + Click on a shot
     </span>,
   ],
   [
