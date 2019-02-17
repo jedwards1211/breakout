@@ -26,6 +26,7 @@ const SidebarLink = withStyles(styles)(({ classes, href, text }) => (
 const SidebarLinks = () => (
   <React.Fragment>
     <SidebarLink href="/download" text="Download" />
+    <SidebarLink href="/importCompass" text="Import Compass Data" />
     <SidebarLink href="/importWalls" text="Import Walls Data" />
     <SidebarLink href="/changingViews" text="Changing Views" />
     <SidebarLink href="/navigation" text="Navigation" />
