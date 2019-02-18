@@ -5,14 +5,15 @@ import static org.andork.util.JavaScript.falsy;
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.Toolkit;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -23,10 +24,19 @@ import org.andork.compass.plot.BeginSectionCommand;
 import org.andork.compass.plot.CompassPlotCommand;
 import org.andork.compass.plot.CompassPlotParser;
 import org.andork.compass.plot.DrawSurveyCommand;
-import org.andork.compass.project.CompassProject;
+import org.andork.compass.project.CommentDirective;
 import org.andork.compass.project.CompassProjectParser;
+import org.andork.compass.project.CompassProjectVisitor;
+import org.andork.compass.project.DatumDirective;
+import org.andork.compass.project.FileDirective;
+import org.andork.compass.project.FlagsDirective;
+import org.andork.compass.project.LinkStation;
+import org.andork.compass.project.LocationDirective;
+import org.andork.compass.project.UTMConvergenceDirective;
+import org.andork.compass.project.UTMZoneDirective;
 import org.andork.compass.survey.CompassSurveyParser;
 import org.andork.compass.survey.CompassTrip;
+import org.andork.segment.Segment;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
 import org.andork.unit.Length;
@@ -34,6 +44,7 @@ import org.andork.unit.UnitizedDouble;
 import org.breakout.compass.CompassConverter;
 import org.breakout.importui.ImportError;
 import org.breakout.importui.ImportResultsDialog;
+import org.breakout.importui.ImportError.Severity;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.raw.MutableSurveyRow;
 import org.breakout.model.raw.SurveyRow;
@@ -45,6 +56,7 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 	final List<Path> surveyFiles = new ArrayList<>();
 	final List<Path> plotFiles = new ArrayList<>();
 	final List<Path> projFiles = new ArrayList<>();
+	final List<ImportError> errors = new ArrayList<>();
 	boolean doImport;
 
 	ImportCompassTask(BreakoutMainView mainView, Iterable<Path> compassFiles) {
@@ -100,8 +112,55 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 			for (Path file : projFiles) {
 				logger.info(() -> "importing compass data from " + file + "...");
 				setStatus("Importing data from " + file + "...");
-				CompassProject proj = new CompassProjectParser().parseProject(file);
-				surveyFiles.addAll(proj.getDataFiles());
+				new CompassProjectParser(new CompassProjectVisitor() {
+					@Override
+					public void utmZone(UTMZoneDirective utmZone) {
+					}
+					
+					@Override
+					public void utmConvergence(UTMConvergenceDirective utmConvergence) {
+					}
+					
+					@Override
+					public void location(LocationDirective location) {
+					}
+					
+					@Override
+					public void flags(FlagsDirective flags) {
+						// TODO handle this
+					}
+					
+					@Override
+					public void file(Segment name, FileDirective surveyFile) {
+						Path surveyPath = file.getParent().resolve(Paths.get(surveyFile.file));
+						if (Files.notExists(surveyPath)) {
+							errors.add(new ImportError(
+									Severity.ERROR,
+									"Survey file doesn't exist: " + surveyFile.file,
+									name));
+							return;
+						}
+						surveyFiles.add(surveyPath);
+						if (surveyFile.linkStations != null) {
+							for (LinkStation station : surveyFile.linkStations) {
+								if (station.location == null) continue;
+								MutableSurveyRow stationPositionRow = new MutableSurveyRow();
+								stationPositionRow.setFromStation(station.name);
+								stationPositionRow.setEasting(station.location.easting.toString());
+								stationPositionRow.setNorthing(station.location.northing.toString());
+								stationPositionRow.setElevation(station.location.elevation.toString());
+							}
+						}
+					}
+					
+					@Override
+					public void datum(DatumDirective datum) {
+					}
+					
+					@Override
+					public void comment(CommentDirective comment) {
+					}
+				}).parse(file);
 				setCompleted(progress++);
 			}
 
@@ -199,7 +258,6 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 			public void run() throws Throwable {
 				ImportResultsDialog dialog = new ImportResultsDialog(ImportCompassTask.this.mainView.i18n,
 						"title.compass");
-				List<ImportError> errors = new ArrayList<>();
 				for (CompassParseError error : parser.getErrors()) {
 					errors.add(new ImportError(error));
 				}
