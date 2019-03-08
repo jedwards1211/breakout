@@ -1209,6 +1209,9 @@ public class BreakoutMainView {
 	SaveProjectAction saveProjectAction = new SaveProjectAction(this);
 	SaveProjectAsAction saveProjectAsAction = new SaveProjectAsAction(this);
 	OpenLogDirectoryAction openLogDirectoryAction = new OpenLogDirectoryAction(i18n);
+	ExportStlAction exportBinaryStlAction = new ExportStlAction(this, ExportStlAction.Mode.Binary);
+	ExportStlAction exportAsciiStlAction = new ExportStlAction(this, ExportStlAction.Mode.ASCII);
+
 	OrbitToPlanAction orbitToPlanAction = new OrbitToPlanAction(this);
 	FitViewToEverythingAction fitViewToEverythingAction = new FitViewToEverythingAction(this);
 	FitViewToSelectedAction fitViewToSelectedAction = new FitViewToSelectedAction(this);
@@ -1769,6 +1772,8 @@ public class BreakoutMainView {
 		fileMenu.add(importMenu);
 		JMenu exportMenu = new JMenu();
 		exportMenu.add(new JMenuItem(exportImageAction));
+		exportMenu.add(new JMenuItem(exportBinaryStlAction));
+		exportMenu.add(new JMenuItem(exportAsciiStlAction));
 		fileMenu.add(exportMenu);
 
 		JMenu debugMenu = new JMenu();

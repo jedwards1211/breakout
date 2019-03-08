@@ -3778,6 +3778,26 @@ public class Vecmath {
 	/**
 	 * Computes (b - a) x (c - a).
 	 */
+	public static void threePointNormal(float[] a, int ai, float[] b, int bi, float[] c, int ci, float[] out, int outi) {
+		float b0 = b[bi] - a[ai];
+		float b1 = b[bi + 1] - a[ai + 1];
+		float b2 = b[bi + 2] - a[ai + 2];
+		float c0 = c[ci] - a[ai];
+		float c1 = c[ci + 1] - a[ai + 1];
+		float c2 = c[ci + 2] - a[ai + 2];
+
+		float x = b1 * c2 - b2 * c1;
+		float y = b2 * c0 - b0 * c2;
+		float z = b0 * c1 - b1 * c0;
+
+		out[outi] = x;
+		out[outi + 1] = y;
+		out[outi + 2] = z;
+	}
+	
+	/**
+	 * Computes (b - a) x (c - a).
+	 */
 	public static void threePointNormal(float[] a, float[] b, float[] c, float[] out) {
 		float b0 = b[0] - a[0];
 		float b1 = b[1] - a[1];
