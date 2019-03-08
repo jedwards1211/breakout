@@ -28,8 +28,6 @@ import static org.andork.spatial.Rectmath.union;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.Queue;
 
 public class RfStarTree<T> implements SpatialIndex<float[], T> {
 	public static class Branch<T> extends Node<T> implements RBranch<float[], T> {
@@ -555,6 +553,23 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 
 		return result;
 	}
+	
+	private static boolean containsLeafIntersecting(Node<?> node, float[] mbr) {
+		if (!Rectmath.intersects(mbr, node.mbr)) {
+			return false;
+		}
+		if (node instanceof Leaf) {
+			return true;
+		}
+		if (node instanceof Branch) {
+			for (Node<?> child : ((Branch<?>) node).children) {
+				if (child != null && containsLeafIntersecting(child, mbr)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Determines if this R* Tree contains a leaf intersecting the given master
@@ -564,27 +579,9 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 	 *            the rectangle to intersect
 	 */
 	public boolean containsLeafIntersecting(float[] mbr) {
-		Queue<Node<T>> queue = new LinkedList<>();
 		if (root == null) {
 			return false;
 		}
-		queue.add(root);
-		while (!queue.isEmpty()) {
-			Node<T> node = queue.poll();
-			if (!Rectmath.intersects(mbr, node.mbr)) {
-				continue;
-			}
-			if (node instanceof Leaf) {
-				return true;
-			}
-			if (node instanceof Branch) {
-				for (Node<T> child : ((Branch<T>) node).children) {
-					if (child != null) {
-						queue.add(child);
-					}
-				}
-			}
-		}
-		return false;
+		return containsLeafIntersecting(root, mbr);
 	}
 }
