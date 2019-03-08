@@ -1,7 +1,6 @@
 package org.breakout.model.parsed;
 
-import static org.andork.util.JavaScript.falsy;
-import static org.andork.util.JavaScript.truthy;
+import static org.andork.util.StringUtils.isNullOrEmpty;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -16,7 +15,6 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
-import org.andork.util.StringUtils;
 import org.breakout.model.CrossSectionType;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
@@ -24,8 +22,6 @@ import org.breakout.model.parsed.ParseMessage.Severity;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
-
-import javafx.css.ParsedValue;
 
 /**
  * Parses SurveyRows and SurveyTrips into graph of CalcStations, CalcShots, and
@@ -100,7 +96,7 @@ public class ProjectParser {
 		ParsedCave cave = ensureCave(caveName);
 		cave.trips.add(parsed);
 
-		parsed.hasSurveyNotes = !StringUtils.isNullOrEmpty(raw.getSurveyNotes());
+		parsed.hasSurveyNotes = !isNullOrEmpty(raw.getSurveyNotes());
 		parsed.distanceCorrection = parse(raw, SurveyTrip.Properties.distanceCorrection,
 				MetacaveLengthParser::parse, raw.getDistanceUnit(), null, 0);
 		parsed.declination = parse(raw, SurveyTrip.Properties.declination,
@@ -135,7 +131,7 @@ public class ProjectParser {
 	}
 
 	private ParsedStation parseFromStation(SurveyRow raw, SurveyTrip trip) {
-		if (falsy(raw.getFromStation())) {
+		if (isNullOrEmpty(raw.getFromStation())) {
 			return null;
 		}
 		ParsedStation result = new ParsedStation();
@@ -148,7 +144,7 @@ public class ProjectParser {
 	}
 
 	private ParsedStation parseToStation(SurveyRow raw, SurveyTrip trip) {
-		if (falsy(raw.getToStation())) {
+		if (isNullOrEmpty(raw.getToStation())) {
 			return null;
 		}
 		ParsedStation result = new ParsedStation();
@@ -160,8 +156,8 @@ public class ProjectParser {
 
 	@SuppressWarnings("unchecked")
 	private ParsedCrossSection parseCrossSection(SurveyRow raw, SurveyTrip trip) {
-		if (falsy(raw.getLeft()) && falsy(raw.getRight()) &&
-				falsy(raw.getUp()) && falsy(raw.getDown())) {
+		if (isNullOrEmpty(raw.getLeft()) && isNullOrEmpty(raw.getRight()) &&
+				isNullOrEmpty(raw.getUp()) && isNullOrEmpty(raw.getDown())) {
 			return null;
 		}
 		ParsedCrossSection result = new ParsedCrossSection();
@@ -176,8 +172,8 @@ public class ProjectParser {
 	}
 
 	private ParsedShotMeasurement parseFrontsights(SurveyRow row, SurveyTrip trip) {
-		if (falsy(row.getDistance()) &&
-				falsy(row.getFrontAzimuth()) && falsy(row.getFrontInclination())) {
+		if (isNullOrEmpty(row.getDistance()) &&
+				isNullOrEmpty(row.getFrontAzimuth()) && isNullOrEmpty(row.getFrontInclination())) {
 			return null;
 		}
 		ParsedShotMeasurement measurement = new ParsedShotMeasurement();
@@ -192,8 +188,8 @@ public class ProjectParser {
 	}
 
 	private ParsedShotMeasurement parseBacksights(SurveyRow row, SurveyTrip trip) {
-		if (falsy(row.getDistance()) &&
-				falsy(row.getBackAzimuth()) && falsy(row.getBackInclination())) {
+		if (isNullOrEmpty(row.getDistance()) &&
+				isNullOrEmpty(row.getBackAzimuth()) && isNullOrEmpty(row.getBackInclination())) {
 			return null;
 		}
 		ParsedShotMeasurement measurement = new ParsedShotMeasurement();
@@ -208,6 +204,11 @@ public class ProjectParser {
 	}
 
 	private ParsedNEVLocation parseNEVLocation(SurveyRow raw, SurveyTrip trip) {
+		if (isNullOrEmpty(raw.getNorthing()) &&
+			isNullOrEmpty(raw.getEasting()) &&
+			isNullOrEmpty(raw.getElevation())) {
+			return null;
+		}
 		ParsedNEVLocation location = new ParsedNEVLocation();
 		location.northing = parse(raw, SurveyRow.Properties.northing,
 				MetacaveLengthParser::parse, trip.getDistanceUnit());
@@ -219,11 +220,11 @@ public class ProjectParser {
 	}
 
 	public String getString(String field) {
-		return truthy(field) ? field : null;
+		return !isNullOrEmpty(field) ? field : null;
 	}
 
 	public String getString(ParsedField<String> field) {
-		return field != null && truthy(field.value) ? field.value : null;
+		return field != null && !isNullOrEmpty(field.value) ? field.value : null;
 	}
 
 	public ShotKey parse(SurveyRow raw) {
