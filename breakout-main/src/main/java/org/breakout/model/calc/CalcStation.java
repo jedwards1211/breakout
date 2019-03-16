@@ -1,6 +1,5 @@
 package org.breakout.model.calc;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +20,8 @@ public class CalcStation {
 
 	public final double[] position = { Double.NaN, Double.NaN, Double.NaN };
 
-	public final Map<StationKey, CalcShot> shots = new LinkedHashMap<>(3);
+	public Map<StationKey, CalcShot> shots;
+	public int numShots = 0;
 	public List<Lead> leads;
 
 	public StationKey key() {

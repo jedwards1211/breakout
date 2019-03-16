@@ -2,15 +2,20 @@ package org.breakout.model.calc;
 
 import static org.breakout.util.StationNames.getSurveyDesignation;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import org.andork.collect.SmallArrayMap;
 import org.andork.task.Task;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
+import org.andork.util.StringUtils;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 import org.breakout.model.parsed.Lead;
@@ -45,10 +50,27 @@ public class Parsed2Calc {
 	}
 
 	public void convert(ParsedProject project, Task<?> task) throws Exception {
-		task.setTotal(project.caves.size());
+		task.setTotal(project.caves.size() + 2);
 		for (ParsedCave cave : project.caves.values()) {
 			task.runSubtask(1, subtask -> convert(cave, subtask));
 		}
+		task.runSubtask(1, stationTask -> {
+			stationTask.setTotal(this.project.stations.size());
+			for (CalcStation station : this.project.stations.values()) {
+				station.shots = station.numShots > 5
+					? new LinkedHashMap<>(station.numShots)
+					: new SmallArrayMap<>(station.numShots);
+				stationTask.increment();
+			}
+		});
+		task.runSubtask(1, shotTask -> {
+			shotTask.setTotal(this.project.shots.size());
+			for (CalcShot shot : this.project.shots.values()) {
+				shot.fromStation.shots.put(shot.toStation.key(), shot);
+				shot.toStation.shots.put(shot.fromStation.key(), shot);
+				shotTask.increment();
+			}
+		});
 	}
 
 	void convert(ParsedCave cave, Task<?> task) throws Exception {
@@ -239,8 +261,8 @@ public class Parsed2Calc {
 		}
 
 		if (fromKey != null && toKey != null) {
-			shot.fromStation.shots.put(toKey, shot);
-			shot.toStation.shots.put(fromKey, shot);
+			shot.fromStation.numShots++;
+			shot.toStation.numShots++;
 
 			ShotKey shotKey = new ShotKey(fromKey, toKey);
 
