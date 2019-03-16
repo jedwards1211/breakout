@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-1-20 01:15:04.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-16 16:23:05.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -185,14 +185,28 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
-	 * @return distance east relative to coordinate origin.
+	 * @return from station's latitude.
+	 */
+	public String getLatitude() {
+		return get(SurveyRow.latitude);
+	}
+	
+	/**
+	 * @return from station's longitude.
+	 */
+	public String getLongitude() {
+		return get(SurveyRow.longitude);
+	}
+	
+	/**
+	 * @return from station's distance east relative to coordinate origin.
 	 */
 	public String getEasting() {
 		return get(SurveyRow.easting);
 	}
 	
 	/**
-	 * @return distance east relative to coordinate origin.
+	 * @return from station's distance east relative to coordinate origin.
 	 */
 	public String getElevation() {
 		return get(SurveyRow.elevation);
@@ -368,9 +382,31 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
-	 * Sets distance east relative to coordinate origin.
+	 * Sets from station's latitude.
 	 *
-	 * @param easting - the new value for distance east relative to coordinate origin
+	 * @param latitude - the new value for from station's latitude
+	 * 
+	 * @return this {@code SurveyRow} if {@code latitude} is unchanged, or a copy with the new {@code latitude}.
+	 */
+	public MutableSurveyRow setLatitude(String latitude) {
+		return set(SurveyRow.latitude, latitude);
+	}
+	
+	/**
+	 * Sets from station's longitude.
+	 *
+	 * @param longitude - the new value for from station's longitude
+	 * 
+	 * @return this {@code SurveyRow} if {@code longitude} is unchanged, or a copy with the new {@code longitude}.
+	 */
+	public MutableSurveyRow setLongitude(String longitude) {
+		return set(SurveyRow.longitude, longitude);
+	}
+	
+	/**
+	 * Sets from station's distance east relative to coordinate origin.
+	 *
+	 * @param easting - the new value for from station's distance east relative to coordinate origin
 	 * 
 	 * @return this {@code SurveyRow} if {@code easting} is unchanged, or a copy with the new {@code easting}.
 	 */
@@ -379,9 +415,9 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
-	 * Sets distance east relative to coordinate origin.
+	 * Sets from station's distance east relative to coordinate origin.
 	 *
-	 * @param elevation - the new value for distance east relative to coordinate origin
+	 * @param elevation - the new value for from station's distance east relative to coordinate origin
 	 * 
 	 * @return this {@code SurveyRow} if {@code elevation} is unchanged, or a copy with the new {@code elevation}.
 	 */
@@ -567,7 +603,29 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
-	 * Updates distance east relative to coordinate origin.
+	 * Updates from station's latitude.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code latitude} and returns the new value for {@code latitude}.
+	 * 
+	 * @return this {@code MutableSurveyRow} if {@code latitude} is unchanged, or a copy with the updated {@code latitude}.
+	 */
+	public MutableSurveyRow updateLatitude(Function<String, String> updater) {
+		return update(SurveyRow.latitude, updater);
+	}
+	
+	/**
+	 * Updates from station's longitude.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code longitude} and returns the new value for {@code longitude}.
+	 * 
+	 * @return this {@code MutableSurveyRow} if {@code longitude} is unchanged, or a copy with the updated {@code longitude}.
+	 */
+	public MutableSurveyRow updateLongitude(Function<String, String> updater) {
+		return update(SurveyRow.longitude, updater);
+	}
+	
+	/**
+	 * Updates from station's distance east relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code easting} and returns the new value for {@code easting}.
 	 * 
@@ -578,7 +636,7 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
-	 * Updates distance east relative to coordinate origin.
+	 * Updates from station's distance east relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code elevation} and returns the new value for {@code elevation}.
 	 * 

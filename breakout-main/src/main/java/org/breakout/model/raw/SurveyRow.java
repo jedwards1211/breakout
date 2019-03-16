@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-1-20 01:15:04.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-16 16:23:05.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -91,12 +91,22 @@ public final class SurveyRow {
 	public static final String northing = "northing";
 	
 	/**
-	 * Key for distance east relative to coordinate origin.
+	 * Key for from station's latitude.
+	 */
+	public static final String latitude = "latitude";
+	
+	/**
+	 * Key for from station's longitude.
+	 */
+	public static final String longitude = "longitude";
+	
+	/**
+	 * Key for from station's distance east relative to coordinate origin.
 	 */
 	public static final String easting = "easting";
 	
 	/**
-	 * Key for distance east relative to coordinate origin.
+	 * Key for from station's distance east relative to coordinate origin.
 	 */
 	public static final String elevation = "elevation";
 	
@@ -268,7 +278,27 @@ public final class SurveyRow {
 		
 
 		/**
-		 * distance east relative to coordinate origin
+		 * from station's latitude
+		 */
+		public static final DefaultProperty<SurveyRow, String> latitude = create(
+			"latitude", String.class,
+			r -> r.get(SurveyRow.latitude),
+			(m, v) -> m.set(SurveyRow.latitude, v)
+		);
+		
+
+		/**
+		 * from station's longitude
+		 */
+		public static final DefaultProperty<SurveyRow, String> longitude = create(
+			"longitude", String.class,
+			r -> r.get(SurveyRow.longitude),
+			(m, v) -> m.set(SurveyRow.longitude, v)
+		);
+		
+
+		/**
+		 * from station's distance east relative to coordinate origin
 		 */
 		public static final DefaultProperty<SurveyRow, String> easting = create(
 			"easting", String.class,
@@ -278,7 +308,7 @@ public final class SurveyRow {
 		
 
 		/**
-		 * distance east relative to coordinate origin
+		 * from station's distance east relative to coordinate origin
 		 */
 		public static final DefaultProperty<SurveyRow, String> elevation = create(
 			"elevation", String.class,
@@ -498,14 +528,28 @@ public final class SurveyRow {
 	}
 	
 	/**
-	 * @return distance east relative to coordinate origin.
+	 * @return from station's latitude.
+	 */
+	public String getLatitude() {
+		return get(latitude);
+	}
+	
+	/**
+	 * @return from station's longitude.
+	 */
+	public String getLongitude() {
+		return get(longitude);
+	}
+	
+	/**
+	 * @return from station's distance east relative to coordinate origin.
 	 */
 	public String getEasting() {
 		return get(easting);
 	}
 	
 	/**
-	 * @return distance east relative to coordinate origin.
+	 * @return from station's distance east relative to coordinate origin.
 	 */
 	public String getElevation() {
 		return get(elevation);
@@ -681,9 +725,31 @@ public final class SurveyRow {
 	}
 	
 	/**
-	 * Sets distance east relative to coordinate origin.
+	 * Sets from station's latitude.
 	 *
-	 * @param easting - the new value for distance east relative to coordinate origin
+	 * @param latitude - the new value for from station's latitude
+	 * 
+	 * @return this {@code SurveyRow} if {@code latitude} is unchanged, or a copy with the new {@code latitude}.
+	 */
+	public SurveyRow setLatitude(String latitude) {
+		return set(SurveyRow.latitude, latitude);
+	}
+	
+	/**
+	 * Sets from station's longitude.
+	 *
+	 * @param longitude - the new value for from station's longitude
+	 * 
+	 * @return this {@code SurveyRow} if {@code longitude} is unchanged, or a copy with the new {@code longitude}.
+	 */
+	public SurveyRow setLongitude(String longitude) {
+		return set(SurveyRow.longitude, longitude);
+	}
+	
+	/**
+	 * Sets from station's distance east relative to coordinate origin.
+	 *
+	 * @param easting - the new value for from station's distance east relative to coordinate origin
 	 * 
 	 * @return this {@code SurveyRow} if {@code easting} is unchanged, or a copy with the new {@code easting}.
 	 */
@@ -692,9 +758,9 @@ public final class SurveyRow {
 	}
 	
 	/**
-	 * Sets distance east relative to coordinate origin.
+	 * Sets from station's distance east relative to coordinate origin.
 	 *
-	 * @param elevation - the new value for distance east relative to coordinate origin
+	 * @param elevation - the new value for from station's distance east relative to coordinate origin
 	 * 
 	 * @return this {@code SurveyRow} if {@code elevation} is unchanged, or a copy with the new {@code elevation}.
 	 */
@@ -880,7 +946,29 @@ public final class SurveyRow {
 	}
 	
 	/**
-	 * Updates distance east relative to coordinate origin.
+	 * Updates from station's latitude.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code latitude} and returns the new value for {@code latitude}.
+	 * 
+	 * @return this {@code SurveyRow} if {@code latitude} is unchanged, or a copy with the updated {@code latitude}.
+	 */
+	public SurveyRow updateLatitude(Function<String, String> updater) {
+		return update(latitude, updater);
+	}
+	
+	/**
+	 * Updates from station's longitude.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code longitude} and returns the new value for {@code longitude}.
+	 * 
+	 * @return this {@code SurveyRow} if {@code longitude} is unchanged, or a copy with the updated {@code longitude}.
+	 */
+	public SurveyRow updateLongitude(Function<String, String> updater) {
+		return update(longitude, updater);
+	}
+	
+	/**
+	 * Updates from station's distance east relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code easting} and returns the new value for {@code easting}.
 	 * 
@@ -891,7 +979,7 @@ public final class SurveyRow {
 	}
 	
 	/**
-	 * Updates distance east relative to coordinate origin.
+	 * Updates from station's distance east relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code elevation} and returns the new value for {@code elevation}.
 	 * 

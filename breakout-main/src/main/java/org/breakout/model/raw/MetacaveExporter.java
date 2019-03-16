@@ -1,5 +1,6 @@
 package org.breakout.model.raw;
 
+import static org.andork.util.StringUtils.*;
 import static org.andork.util.JavaScript.falsy;
 import static org.andork.util.JavaScript.or;
 import static org.andork.util.JavaScript.truthy;
@@ -79,6 +80,7 @@ public class MetacaveExporter {
 	private final JsonObject caves = new JsonObject();
 
 	private final IdentityHashMap<SurveyTrip, JsonObject> trips = new IdentityHashMap<>();
+	private final IdentityHashMap<SurveyTrip, JsonObject> fixedStationGroups = new IdentityHashMap<>();
 
 	public MetacaveExporter() {
 		root.add("caves", caves);
@@ -115,106 +117,137 @@ public class MetacaveExporter {
 			export(row, rowIndex++);
 		}
 	}
+	
+	private boolean hasShot(SurveyRow row) {
+		// TODO: splays && LRUD-only rows
+		return !isNullOrEmpty(row.getFromStation()) && !isNullOrEmpty(row.getToStation()) &&
+				!isNullOrEmpty(row.getDistance());
+	}
+	
+	private boolean hasFixedStation(SurveyRow row) {
+		return !isNullOrEmpty(row.getFromStation()) && (
+			!isNullOrEmpty(row.getLatitude()) ||
+			!isNullOrEmpty(row.getLongitude()) ||
+			!isNullOrEmpty(row.getNorthing()) ||
+			!isNullOrEmpty(row.getEasting()) ||
+			!isNullOrEmpty(row.getElevation()));
+	}
 
 	public void export(SurveyRow row, int rowIndex) {
 		if (row == null) {
 			return;
 		}
-		// TODO: splays && LRUD-only rows
-		if (falsy(row.getFromStation()) && falsy(row.getToStation())) {
+		boolean hasShot = hasShot(row);
+		boolean hasFixedStation = hasFixedStation(row);
+		if (!hasShot && !hasFixedStation) {
 			return;
 		}
 
-		JsonObject trip = export(row.getTrip());
-		JsonArray survey = trip.getAsJsonArray("survey");
+		if (hasShot) {
+			JsonObject trip = export(row.getTrip());
+			JsonArray survey = trip.getAsJsonArray("survey");
 
-		JsonObject lastFromStation = survey.size() < 3 ? emptyObject : survey.get(survey.size() - 3).getAsJsonObject();
-		JsonObject lastToStation = survey.size() < 1 ? emptyObject : survey.get(survey.size() - 1).getAsJsonObject();
+			JsonObject lastFromStation = survey.size() < 3 ? emptyObject : survey.get(survey.size() - 3).getAsJsonObject();
+			JsonObject lastToStation = survey.size() < 1 ? emptyObject : survey.get(survey.size() - 1).getAsJsonObject();
 
-		JsonArray measurements = null;
+			JsonArray measurements = null;
 
-		if (Objects.equals(row.getOverrideFromCave(), getAsString(lastFromStation, "cave")) &&
-				Objects.equals(row.getFromStation(), getAsString(lastFromStation, "station")) &&
-				Objects.equals(row.getOverrideToCave(), getAsString(lastToStation, "cave")) &&
-				Objects.equals(row.getToStation(), getAsString(lastToStation, "station"))) {
-			// same from and to station;
-			// prepare to add measurements to the last shot
-			measurements = survey.get(survey.size() - 2).getAsJsonObject().getAsJsonArray("measurements");
-		} else {
-			// if the last station doesn't match the from station of this shot,
-			// insert an empty (non) shot and a new from station
-			JsonObject fromStation = null;
-			if (Objects.equals(row.getOverrideFromCave(), getAsString(lastToStation, "cave")) &&
-					Objects.equals(row.getFromStation(), getAsString(lastToStation, "station"))) {
-				fromStation = lastToStation;
-			} else if (survey.size() != 0) {
-				// insert empty shot
-				survey.add(new JsonObject());
+			if (Objects.equals(row.getOverrideFromCave(), getAsString(lastFromStation, "cave")) &&
+					Objects.equals(row.getFromStation(), getAsString(lastFromStation, "station")) &&
+					Objects.equals(row.getOverrideToCave(), getAsString(lastToStation, "cave")) &&
+					Objects.equals(row.getToStation(), getAsString(lastToStation, "station"))) {
+				// same from and to station;
+				// prepare to add measurements to the last shot
+				measurements = survey.get(survey.size() - 2).getAsJsonObject().getAsJsonArray("measurements");
+			} else {
+				// if the last station doesn't match the from station of this shot,
+				// insert an empty (non) shot and a new from station
+				JsonObject fromStation = null;
+				if (Objects.equals(row.getOverrideFromCave(), getAsString(lastToStation, "cave")) &&
+						Objects.equals(row.getFromStation(), getAsString(lastToStation, "station"))) {
+					fromStation = lastToStation;
+				} else if (survey.size() != 0) {
+					// insert empty shot
+					survey.add(new JsonObject());
+				}
+				if (fromStation == null) {
+					fromStation = new JsonObject();
+					addProperty(fromStation, "cave", row.getOverrideFromCave());
+					addProperty(fromStation, "station", row.getFromStation());
+					survey.add(fromStation);
+				}
+				// add lruds to from station
+				if (!fromStation.has("lrud")) {
+					JsonArray lrud = new JsonArray();
+					lrud.add(row.getLeft());
+					lrud.add(row.getRight());
+					lrud.add(row.getUp());
+					lrud.add(row.getDown());
+					fromStation.add("lrud", lrud);
+					fromStation.addProperty("breakoutRow", rowIndex);
+				}
+
+				if (truthy(row.getToStation())) {
+					// insert shot
+					measurements = new JsonArray();
+					JsonObject shot = new JsonObject();
+					shot.add("measurements", measurements);
+					survey.add(shot);
+
+					// insert to station
+					JsonObject toStation = new JsonObject();
+					addProperty(toStation, "cave", row.getOverrideToCave());
+					addProperty(toStation, "station", row.getToStation());
+					survey.add(toStation);
+				} else if (truthy(or(
+						row.getDistance(), row.getFrontAzimuth(), row.getFrontInclination(), row.getBackAzimuth(),
+						row.getBackInclination()))) {
+					measurements = new JsonArray();
+					fromStation.add("splays", measurements);
+				}
 			}
-			if (fromStation == null) {
-				fromStation = new JsonObject();
-				addProperty(fromStation, "cave", row.getOverrideFromCave());
-				addProperty(fromStation, "station", row.getFromStation());
-				survey.add(fromStation);
-			}
-			// add lruds to from station
-			if (!fromStation.has("lrud")) {
-				JsonArray lrud = new JsonArray();
-				lrud.add(row.getLeft());
-				lrud.add(row.getRight());
-				lrud.add(row.getUp());
-				lrud.add(row.getDown());
-				fromStation.add("lrud", lrud);
-				fromStation.addProperty("breakoutRow", rowIndex);
-			}
-			// add calculated location to from station
-			if (!fromStation.has("nev")) {
-				JsonArray nev = new JsonArray();
-				nev.add(row.getNorthing());
-				nev.add(row.getEasting());
-				nev.add(row.getElevation());
-				fromStation.add("nev", nev);
-			}
 
-			if (truthy(row.getToStation())) {
-				// insert shot
-				measurements = new JsonArray();
-				JsonObject shot = new JsonObject();
-				shot.add("measurements", measurements);
-				survey.add(shot);
+			// add frontsight measurements
+			if (measurements != null) {
+				JsonObject fs = new JsonObject();
+				addProperty(fs, "dir", "fs");
+				fs.addProperty("breakoutRow", rowIndex);
+				addProperty(fs, "dist", row.getDistance());
+				addProperty(fs, "azm", row.getFrontAzimuth());
+				addProperty(fs, "inc", row.getFrontInclination());
+				measurements.add(fs);
 
-				// insert to station
-				JsonObject toStation = new JsonObject();
-				addProperty(toStation, "cave", row.getOverrideToCave());
-				addProperty(toStation, "station", row.getToStation());
-				survey.add(toStation);
-			} else if (truthy(or(
-					row.getDistance(), row.getFrontAzimuth(), row.getFrontInclination(), row.getBackAzimuth(),
-					row.getBackInclination()))) {
-				measurements = new JsonArray();
-				fromStation.add("splays", measurements);
+				// add backsight measurements
+				if (truthy(row.getBackAzimuth()) || truthy(row.getBackInclination())) {
+					JsonObject bs = new JsonObject();
+					addProperty(bs, "dir", "bs");
+					bs.addProperty("breakoutRow", rowIndex);
+					addProperty(bs, "azm", row.getBackAzimuth());
+					addProperty(bs, "inc", row.getBackInclination());
+					measurements.add(bs);
+				}
 			}
 		}
-
-		// add frontsight measurements
-		if (measurements != null) {
-			JsonObject fs = new JsonObject();
-			addProperty(fs, "dir", "fs");
-			fs.addProperty("breakoutRow", rowIndex);
-			addProperty(fs, "dist", row.getDistance());
-			addProperty(fs, "azm", row.getFrontAzimuth());
-			addProperty(fs, "inc", row.getFrontInclination());
-			measurements.add(fs);
-
-			// add backsight measurements
-			if (truthy(row.getBackAzimuth()) || truthy(row.getBackInclination())) {
-				JsonObject bs = new JsonObject();
-				addProperty(bs, "dir", "bs");
-				bs.addProperty("breakoutRow", rowIndex);
-				addProperty(bs, "azm", row.getBackAzimuth());
-				addProperty(bs, "inc", row.getBackInclination());
-				measurements.add(bs);
+		if (hasFixedStation) {
+			JsonObject fixedStationGroup = exportFixedStationGroup(row.getTrip());
+			JsonObject stations = fixedStationGroup.getAsJsonObject("stations");
+			JsonObject fixedStation = new JsonObject();
+			if (!isNullOrEmpty(row.getLatitude())) {
+				fixedStation.addProperty("lat", row.getLatitude());
 			}
+			if (!isNullOrEmpty(row.getLongitude())) {
+				fixedStation.addProperty("long", row.getLongitude());
+			}
+			if (!isNullOrEmpty(row.getEasting())) {
+				fixedStation.addProperty("east", row.getEasting());
+			}
+			if (!isNullOrEmpty(row.getNorthing())) {
+				fixedStation.addProperty("north", row.getNorthing());
+			}
+			if (!isNullOrEmpty(row.getElevation())) {
+				fixedStation.addProperty("elev", row.getElevation());
+			}
+			stations.add(row.getFromStation(), fixedStation);
 		}
 	}
 	
@@ -256,6 +289,35 @@ public class MetacaveExporter {
 			addProperty(exported, "incFsCorrection", trip.getFrontInclinationCorrection());
 			addProperty(exported, "incBsCorrection", trip.getBackInclinationCorrection());
 			exported.add("survey", new JsonArray());
+		}
+		return exported;
+	}
+	
+	public JsonObject exportFixedStationGroup(SurveyTrip _trip) {
+		SurveyTrip trip = _trip == null ? defaultTrip : _trip;
+		JsonObject exported = fixedStationGroups.get(trip);
+		if (exported == null) {
+			exported = new JsonObject();
+			fixedStationGroups.put(trip, exported);
+
+			String caveName = or(trip.getCave(), "");
+			JsonObject cave = ensureCave(caveName);
+			if (!cave.has("fixedStations")) {
+				cave.add("fixedStations", new JsonArray());
+			}
+			((JsonArray) cave.get("fixedStations")).add(exported);
+
+			addLengthUnitProperty(exported, "distUnit", trip.getDistanceUnit());
+			if (!isNullOrEmpty(trip.getDatum())) {
+				exported.addProperty("datum", trip.getDatum());
+			}
+			if (!isNullOrEmpty(trip.getEllipsoid())) {
+				exported.addProperty("ellipsoid", trip.getEllipsoid());
+			}
+			if (!isNullOrEmpty(trip.getUtmZone()) && trip.getUtmZone().matches("^\\d+$")) {
+				exported.addProperty("utmZone", Integer.valueOf(trip.getUtmZone()));
+			}
+			exported.add("stations", new JsonObject());
 		}
 		return exported;
 	}

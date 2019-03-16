@@ -386,10 +386,6 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 				}
 			}
 
-			if (node.children[bestIndex] instanceof Leaf) {
-				System.out.println("TEST");
-			}
-
 			node = (Branch<T>) node.children[bestIndex];
 		}
 

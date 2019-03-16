@@ -23,10 +23,13 @@ import org.andork.segment.Segment;
 import org.andork.segment.SegmentParseException;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
 import org.andork.unit.UnitizedNumber;
 import org.andork.util.StringUtils;
 import org.andork.walls.WallsMessage;
 import org.andork.walls.lst.StationPosition;
+import org.andork.walls.lst.WallsStationReport;
 import org.andork.walls.lst.WallsStationReportParser;
 import org.andork.walls.srv.AbstractWallsVisitor;
 import org.andork.walls.srv.FixedStation;
@@ -68,8 +71,6 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 	private final List<MutableSurveyRow> rowsInCurrentTrip = new ArrayList<>();
 	private final Map<String, MutableSurveyRow> rowsByFromStationName = new HashMap<>();
 	private final List<FixedStation> fixedStations = new ArrayList<>();
-	private List<StationPosition> stationPositions;
-
 	private void endCurrentTrip() {
 		if (!rowsInCurrentTrip.isEmpty()) {
 			ensureCurrentTrip();
@@ -278,8 +279,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			parseSurveyFiles();
 			parseStationReportFiles();
 
-			applyFixedStationPositions();
-			applyReportStationPositions();
+//			applyFixedStationPositions();
 
 		} catch (Exception ex) {
 			if (ex instanceof SegmentParseException) {
@@ -320,7 +320,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			}
 
 			if (doImport) {
-				mainView.setSurveyRowsFrom(newModel);
+				mainView.addSurveyRowsFrom(newModel);
 				logger.info(() -> "imported " + newModel.getRowCount() + " shots from walls data");
 			} else {
 				logger.info("user canceled walls import");
@@ -390,7 +390,32 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			increment();
 		}
 
-		stationPositions = parser.getReport().stationPositions;
+		WallsStationReport report = parser.getReport();
+		SurveyTrip trip = new MutableSurveyTrip()
+			.setDatum(report.datum)
+			.setUtmZone(String.valueOf(report.utmZone))
+			.setName(null)
+			.setDistanceUnit(Length.meters)
+			.setAngleUnit(Angle.degrees)
+			.setOverrideFrontAzimuthUnit(Angle.degrees)
+			.setOverrideBackAzimuthUnit(Angle.degrees)
+			.setOverrideFrontInclinationUnit(Angle.degrees)
+			.setOverrideBackInclinationUnit(Angle.degrees)
+			.setBackAzimuthsCorrected(true)
+			.setBackInclinationsCorrected(true)
+			.toImmutable();
+		
+		for (StationPosition station : report.stationPositions) {
+			MutableSurveyRow row = new MutableSurveyRow();
+			row.setTrip(trip);
+			row.setFromStation(station.getNameWithPrefix());
+			if (Double.isFinite(station.north)) row.setNorthing((report.utmSouth
+					? 1000000 - station.north
+					: station.north) + " m");
+			if (Double.isFinite(station.east)) row.setEasting(station.east + " m");
+			if (Double.isFinite(station.up)) row.setElevation(station.up + " m");
+			rows.add(row);
+		}
 	}
 
 	private void applyFixedStationPositions() {
@@ -408,19 +433,6 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			if (station.north != null) row.setNorthing(station.north.toString());
 			if (station.east != null) row.setEasting(station.east.toString());
 			if (station.elevation != null) row.setElevation(station.elevation.toString());
-		}
-	}
-
-	private void applyReportStationPositions() {
-		for (StationPosition station : stationPositions) {
-			String stationName = station.getNameWithPrefix();
-			MutableSurveyRow row = rowsByFromStationName.get(stationName);
-			if (row == null) {
-				continue;
-			}
-			if (Double.isFinite(station.north)) row.setNorthing(station.north + " m");
-			if (Double.isFinite(station.east)) row.setEasting(station.east + " m");
-			if (Double.isFinite(station.up)) row.setElevation(station.up + " m");
 		}
 	}
 }

@@ -41,6 +41,11 @@
 	</build>
 	<dependencies>
 		<dependency>
+			<groupId>org.osgeo</groupId>
+			<artifactId>proj4j</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>com.github.krukow</groupId>
 			<artifactId>clj-ds</artifactId>
 			<version>0.0.4</version>

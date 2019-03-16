@@ -105,6 +105,7 @@ import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
 import org.andork.task.Task;
+import org.andork.tilebelt.Tilebelt;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.util.StringUtils;
@@ -118,6 +119,8 @@ import org.breakout.model.calc.CalcStation;
 import org.breakout.model.calc.CalcTrip;
 import org.breakout.model.parsed.Lead;
 import org.breakout.model.shader.CenterlineProgram;
+import org.breakout.proj4.Proj4Utils;
+import org.osgeo.proj4j.ProjCoordinate;
 
 import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;
@@ -1572,7 +1575,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				subtask -> createTree(shot3ds.values(), maxChildrenPerBranch, minSplitSize, numToReinsert, subtask));
 
 		int sectionLevel = Math.min(tree.getRoot().level(), 3);
-
 		Map<Float, Set<StationKey>> stationsToLabel = task.callSubtask(1, subtask -> computeStationsToLabel(
 				project.stations.values(), Arrays.asList(5f, 10f, 20f, 40f, 80f, 160f, 320f),
 				subtask));
@@ -1801,7 +1803,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	Uniform4fv backgroundColor;
 
 	float stationLabelDensity;
-	
+
 	float stationLabelFontSize;
 	
 	boolean showLeadLabels;
@@ -1827,6 +1829,19 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.tree = tree;
 		this.sections = sections;
 		this.labelFont = labelFont;
+		
+		if (project.coordinateReferenceSystem != null) {
+			float[] mbr = tree.getRoot().mbr();
+			ProjCoordinate min = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[0] + project.zeroOffset[0], -mbr[2] - project.zeroOffset[2], mbr[1] + project.zeroOffset[1]), project.coordinateReferenceSystem);
+			ProjCoordinate max = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[3] + project.zeroOffset[0], -mbr[5] - project.zeroOffset[2], mbr[4] + project.zeroOffset[1]), project.coordinateReferenceSystem);
+			System.out.println(min);
+			System.out.println(max);
+			for (int z = 0; z < 17; z++) {
+				System.out.println(Arrays.toString(Tilebelt.pointToTile(min.x, min.y, z)));
+				System.out.println(Arrays.toString(Tilebelt.pointToTile(min.x, min.y, z)));
+			}
+			System.out.println(Arrays.toString(Tilebelt.bboxToTile(new double[] {min.x, min.y, max.x, max.y})));
+		}
 
 		textRenderer = new TextRenderer(labelFont, true, true, null, false);
 

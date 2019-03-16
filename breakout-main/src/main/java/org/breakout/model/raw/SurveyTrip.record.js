@@ -40,6 +40,9 @@ module.exports = {
 		frontInclinationCorrection: {type: 'String', description: 'correction for frontsight inclinations'},
 		backAzimuthCorrection: {type: 'String', description: 'correction for backsight azimuths'},
 		backInclinationCorrection: {type: 'String', description: 'correction for backsight inclinations'},
+		datum: {type: 'String', description: 'the geodetic datum for fixed station locations'},
+		ellipsoid: {type: 'String', description: 'the reference ellipsoid for fixed station locations'},
+		utmZone: {type: 'String', description: 'the UTM zone for fixed station locations'},
 	},
 	extraCode: `
 	public Unit<Angle> getFrontAzimuthUnit() {

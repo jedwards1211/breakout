@@ -2896,11 +2896,10 @@ public class BreakoutMainView {
 		return Boolean.TRUE.equals(projectModel.get(ProjectModel.hasUnsavedChanges));
 	}
 
-	public void setSurveyRowsFrom(SurveyTableModel newModel) {
+	public void addSurveyRowsFrom(SurveyTableModel newModel) {
 		OnEDT.onEDT(() -> {
 			SurveyTableModel model = surveyDrawer.table().getModel();
-			model.clear();
-			model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, 0);
+			model.copyRowsFrom(newModel, 0, newModel.getRowCount() - 1, model.getRowCount());
 		});
 		rebuild3dModel.run();
 		rebuild3dModel.flush();

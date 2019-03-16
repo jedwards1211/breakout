@@ -8,7 +8,6 @@ import java.util.Map;
 public class ParsedCave {
 	public final List<ParseMessage> messages = new ArrayList<>();
 	public ParsedField<String> name;
-	public final Map<String, ParsedFixedStation> fixedStations = new HashMap<>();
 	public final Map<String, List<Lead>> leads = new HashMap<>();
 	public final List<ParsedTrip> trips = new ArrayList<>();
 

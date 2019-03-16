@@ -2,7 +2,9 @@ package org.breakout.model.parsed;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
@@ -20,6 +22,10 @@ public class ParsedTrip {
 	public boolean areBackInclinationsCorrected;
 	public ParsedField<Date> date;
 	public boolean hasSurveyNotes;
+	public ParsedField<String> datum;
+	public ParsedField<String> ellipsoid;
+	public ParsedField<Integer> utmZone;
+	public final Map<String, ParsedFixedStation> fixedStations = new HashMap<>();
 
 	public final List<ParsedStation> stations = new ArrayList<>();
 	public final List<ParsedShot> shots = new ArrayList<>();

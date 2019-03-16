@@ -60,13 +60,21 @@ module.exports = {
       type: 'String',
       description: 'distance north relative to coordinate origin',
     },
+    latitude: {
+      type: 'String',
+      description: "from station's latitude",
+    },
+    longitude: {
+      type: 'String',
+      description: "from station's longitude",
+    },
     easting: {
       type: 'String',
-      description: 'distance east relative to coordinate origin',
+      description: "from station's distance east relative to coordinate origin",
     },
     elevation: {
       type: 'String',
-      description: 'distance east relative to coordinate origin',
+      description: "from station's distance east relative to coordinate origin",
     },
     comment: {
       type: 'String',

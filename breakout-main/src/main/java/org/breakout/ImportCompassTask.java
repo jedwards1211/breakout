@@ -281,7 +281,7 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 				}
 
 				if (doImport) {
-					mainView.setSurveyRowsFrom(newModel);
+					mainView.addSurveyRowsFrom(newModel);
 					logger.info(() -> "imported " + newModel.getRowCount() + " shots from compass data");
 				} else {
 					logger.info("user canceled compass import");

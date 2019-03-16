@@ -23,12 +23,18 @@ import org.breakout.model.parsed.ParsedCave;
 import org.breakout.model.parsed.ParsedCrossSection;
 import org.breakout.model.parsed.ParsedField;
 import org.breakout.model.parsed.ParsedFixedStation;
+import org.breakout.model.parsed.ParsedLatLonLocation;
 import org.breakout.model.parsed.ParsedNEVLocation;
 import org.breakout.model.parsed.ParsedProject;
 import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
 import org.breakout.model.parsed.ParsedStation;
 import org.breakout.model.parsed.ParsedTrip;
+import org.osgeo.proj4j.BasicCoordinateTransform;
+import org.osgeo.proj4j.CRSFactory;
+import org.osgeo.proj4j.CoordinateReferenceSystem;
+import org.osgeo.proj4j.CoordinateTransform;
+import org.osgeo.proj4j.ProjCoordinate;
 
 /**
  * Parses ParsedRows and SurveyTrips into graph of CalcStations, CalcShots, and
@@ -39,6 +45,11 @@ public class Parsed2Calc {
 	public final CalcProject project;
 
 	final Map<ParsedTrip, CalcTrip> trips = new IdentityHashMap<>();
+	int numFixedStations = 0;
+	final Map<String, List<ParsedFixedStation>> fixedStationsByCrs = new HashMap<>();
+
+	private static final CRSFactory crsFactory = new CRSFactory();
+	private static final ProjCoordinate projCoord = new ProjCoordinate();
 
 	public Parsed2Calc() {
 		this(new CalcProject());
@@ -50,7 +61,7 @@ public class Parsed2Calc {
 	}
 
 	public void convert(ParsedProject project, Task<?> task) throws Exception {
-		task.setTotal(project.caves.size() + 2);
+		task.setTotal(project.caves.size() + 3);
 		for (ParsedCave cave : project.caves.values()) {
 			task.runSubtask(1, subtask -> convert(cave, subtask));
 		}
@@ -71,6 +82,44 @@ public class Parsed2Calc {
 				shotTask.increment();
 			}
 		});
+		task.runSubtask(1, fixedStationTask -> {
+			Optional<Map.Entry<String, List<ParsedFixedStation>>> _majorityCrs = fixedStationsByCrs.entrySet().stream().max(
+				(a, b) -> a.getValue().size() - b.getValue().size()
+			);
+			if (!_majorityCrs.isPresent()) return;
+			String majorityCrsParams = _majorityCrs.get().getKey();
+			CoordinateReferenceSystem toCrs = null;
+			if (!StringUtils.isNullOrEmpty(majorityCrsParams)) {
+				toCrs = crsFactory.createFromParameters(null, majorityCrsParams);
+				this.project.coordinateReferenceSystem = toCrs;
+			}
+
+			if (fixedStationsByCrs.size() == 1) {
+				for (List<ParsedFixedStation> stations : fixedStationsByCrs.values()) {
+					for (ParsedFixedStation station : stations) {
+						convert(station);
+						fixedStationTask.increment();
+					}
+				}
+				return;
+			}
+
+
+			fixedStationsByCrs.entrySet().forEach(e -> 
+				numFixedStations += majorityCrsParams.equals(e.getKey()) ? 0 : e.getValue().size());
+
+			fixedStationTask.setTotal(numFixedStations);
+			for (Map.Entry<String, List<ParsedFixedStation>> entry : fixedStationsByCrs.entrySet()) {
+				if (entry.getKey().isEmpty() || majorityCrsParams.equals(entry.getKey())) continue;
+				CoordinateReferenceSystem fromCrs = crsFactory.createFromParameters(null, entry.getKey());
+				CoordinateTransform xform = new BasicCoordinateTransform(fromCrs, toCrs);
+				CoordinateTransform geoXform = new BasicCoordinateTransform(fromCrs.createGeographic(), toCrs);
+				for (ParsedFixedStation station : entry.getValue()) {
+					convert(station, xform, geoXform);
+					fixedStationTask.increment();
+				}
+			}
+		});
 	}
 
 	void convert(ParsedCave cave, Task<?> task) throws Exception {
@@ -88,12 +137,6 @@ public class Parsed2Calc {
 				convert(trip, finalCalcCave);
 				tripTask.increment();
 			}
-		}, fixedStationTask -> {
-			fixedStationTask.setTotal(cave.fixedStations.size());
-			for (ParsedFixedStation fixedStation : cave.fixedStations.values()) {
-				convert(fixedStation, finalCalcCave);
-				fixedStationTask.increment();
-			}
 		}, leadTask -> {
 			leadTask.setTotal(cave.leads.size());
 			for (Map.Entry<String, List<Lead>> e : cave.leads.entrySet()) {
@@ -108,7 +151,7 @@ public class Parsed2Calc {
 		if (station != null) station.leads = leads;
 	}
 
-	void convert(ParsedFixedStation fixedStation, CalcCave cave) {
+	void convert(ParsedFixedStation fixedStation) {
 		CalcStation station = project.stations.get(fixedStation.key());
 		if (station == null) {
 			return;
@@ -124,6 +167,56 @@ public class Parsed2Calc {
 			if (ParsedField.hasValue(nev.elevation)) {
 				station.position[1] = nev.elevation.value.doubleValue(Length.meters);
 			}
+		}
+	}
+
+	void convert(ParsedFixedStation fixedStation, CoordinateTransform xform, CoordinateTransform geoXform) {
+		CalcStation station = project.stations.get(fixedStation.key());
+		if (station == null) {
+			return;
+		}
+		if (fixedStation.location instanceof ParsedNEVLocation) {
+			ParsedNEVLocation nev = (ParsedNEVLocation) fixedStation.location;
+			if (ParsedField.hasValue(nev.northing)) {
+				projCoord.y = nev.northing.value.doubleValue(Length.meters);
+			} else {
+				projCoord.y = Double.NaN;
+			}
+			if (ParsedField.hasValue(nev.easting)) {
+				projCoord.x = nev.easting.value.doubleValue(Length.meters);
+			} else {
+				projCoord.x = Double.NaN;
+			}
+			if (ParsedField.hasValue(nev.elevation)) {
+				projCoord.z = nev.elevation.value.doubleValue(Length.meters);
+			} else {
+				projCoord.z = Double.NaN;
+			}
+			xform.transform(projCoord, projCoord);
+			station.position[0] = projCoord.x;
+			station.position[1] = projCoord.z;
+			station.position[2] = -projCoord.y;
+		} else if (fixedStation.location instanceof ParsedLatLonLocation) {
+			ParsedLatLonLocation loc = (ParsedLatLonLocation) fixedStation.location;
+			if (ParsedField.hasValue(loc.latitude)) {
+				projCoord.y = loc.latitude.value.doubleValue(Angle.degrees);
+			} else {
+				projCoord.y = Double.NaN;
+			}
+			if (ParsedField.hasValue(loc.longitude)) {
+				projCoord.x = loc.longitude.value.doubleValue(Angle.degrees);
+			} else {
+				projCoord.x = Double.NaN;
+			}
+			if (ParsedField.hasValue(loc.elevation)) {
+				projCoord.z = loc.elevation.value.doubleValue(Length.meters);
+			} else {
+				projCoord.z = Double.NaN;
+			}
+			geoXform.transform(projCoord, projCoord);
+			station.position[0] = projCoord.x;
+			station.position[1] = projCoord.z;
+			station.position[2] = -projCoord.y;			
 		}
 	}
 
@@ -156,6 +249,23 @@ public class Parsed2Calc {
 				cave.stationsBySurveyDesignation.put(
 						getSurveyDesignation(calcShot.toStation.name), calcShot.toStation);
 			}
+		}
+		String crs = ParsedField.hasValue(trip.datum)
+			? (ParsedField.hasValue(trip.utmZone)
+					? "+proj=utm +zone=" + trip.utmZone.value
+					: "") +
+				" +datum=" + trip.datum.value +
+				(ParsedField.hasValue(trip.ellipsoid) 
+					? " +ellps=" + trip.ellipsoid.value
+					: "")
+			: "";
+		for (ParsedFixedStation station : trip.fixedStations.values()) {
+			List<ParsedFixedStation> stations = fixedStationsByCrs.get(crs);
+			if (stations == null) {
+				stations = new ArrayList<>();
+				fixedStationsByCrs.put(crs, stations);
+			}
+			stations.add(station);
 		}
 	}
 

@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.function.BiFunction;
 
 import org.andork.model.Property;
+import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitType;
@@ -115,7 +116,7 @@ public class ProjectParser {
 		if (dateText != null) {
 			dateText = dateText.trim();
 		}
-		if (raw.getDate() != null && !raw.getDate().isEmpty()) {
+		if (!isNullOrEmpty(raw.getDate())) {
 			parsed.date = new ParsedField<>(Severity.ERROR, "invalid date");
 			for (DateFormat format : dateFormats) {
 				try {
@@ -124,6 +125,22 @@ public class ProjectParser {
 				} catch (ParseException ex) {
 					// ignore
 				}
+			}
+		}
+		if (!isNullOrEmpty(raw.getDatum())) {
+			parsed.datum = new ParsedField<>(raw.getDatum());
+		}
+		if (!isNullOrEmpty(raw.getEllipsoid())) {
+			parsed.ellipsoid = new ParsedField<>(raw.getEllipsoid());
+		}
+		if (!isNullOrEmpty(raw.getUtmZone())) {
+			try {
+				parsed.utmZone = new ParsedField<>(Integer.valueOf(raw.getUtmZone()));
+				if (parsed.utmZone.value < 1 || parsed.utmZone.value > 60) {
+					parsed.utmZone = new ParsedField<>(Severity.ERROR, "UTM zone out of range");
+				}
+			} catch (Exception ex) {
+				parsed.utmZone = new ParsedField<>(Severity.ERROR, "invalid UTM zone");
 			}
 		}
 
@@ -202,6 +219,23 @@ public class ProjectParser {
 				MetacaveAzimuthParser::parse, trip.getBackAzimuthUnit());
 		return measurement;
 	}
+	
+
+	private ParsedLatLonLocation parseLatLonLocation(SurveyRow raw, SurveyTrip trip) {
+		if (isNullOrEmpty(raw.getLatitude()) &&
+			isNullOrEmpty(raw.getLongitude()) &&
+			isNullOrEmpty(raw.getElevation())) {
+			return null;
+		}
+		ParsedLatLonLocation location = new ParsedLatLonLocation();
+		location.latitude = parse(raw, SurveyRow.Properties.latitude,
+				MetacaveAngleParser::parse, Angle.degrees);
+		location.longitude = parse(raw, SurveyRow.Properties.longitude,
+				MetacaveAngleParser::parse, Angle.degrees);
+		location.elevation = parse(raw, SurveyRow.Properties.elevation,
+				MetacaveLengthParser::parse, trip.getDistanceUnit());
+		return location;
+	}
 
 	private ParsedNEVLocation parseNEVLocation(SurveyRow raw, SurveyTrip trip) {
 		if (isNullOrEmpty(raw.getNorthing()) &&
@@ -250,12 +284,13 @@ public class ProjectParser {
 
 		if (fromStation != null) {
 			ParsedNEVLocation location = parseNEVLocation(raw, trip);
-			if (location != null && cave != null) {
+			ParsedLatLonLocation latLonLocation = parseLatLonLocation(raw, trip);
+			if ((location != null || latLonLocation != null) && cave != null) {
 				ParsedFixedStation station = new ParsedFixedStation();
 				station.cave = fromStation.cave;
 				station.name = fromStation.name;
-				station.location = location;
-				cave.fixedStations.put(station.name.value, station);
+				station.location = location != null ? location : latLonLocation;
+				parsedTrip.fixedStations.put(station.name.value, station);
 			}
 
 			if (fromStation.crossSection == null) {

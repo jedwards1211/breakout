@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-1-20 01:15:04.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-3-16 16:23:05.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -223,6 +223,27 @@ public final class MutableSurveyTrip {
 		return get(SurveyTrip.backInclinationCorrection);
 	}
 	
+	/**
+	 * @return the geodetic datum for fixed station locations.
+	 */
+	public String getDatum() {
+		return get(SurveyTrip.datum);
+	}
+	
+	/**
+	 * @return the reference ellipsoid for fixed station locations.
+	 */
+	public String getEllipsoid() {
+		return get(SurveyTrip.ellipsoid);
+	}
+	
+	/**
+	 * @return the UTM zone for fixed station locations.
+	 */
+	public String getUtmZone() {
+		return get(SurveyTrip.utmZone);
+	}
+	
 	
 	/**
 	 * Sets cave name.
@@ -433,6 +454,39 @@ public final class MutableSurveyTrip {
 		return set(SurveyTrip.backInclinationCorrection, backInclinationCorrection);
 	}
 	
+	/**
+	 * Sets the geodetic datum for fixed station locations.
+	 *
+	 * @param datum - the new value for the geodetic datum for fixed station locations
+	 * 
+	 * @return this {@code SurveyTrip} if {@code datum} is unchanged, or a copy with the new {@code datum}.
+	 */
+	public MutableSurveyTrip setDatum(String datum) {
+		return set(SurveyTrip.datum, datum);
+	}
+	
+	/**
+	 * Sets the reference ellipsoid for fixed station locations.
+	 *
+	 * @param ellipsoid - the new value for the reference ellipsoid for fixed station locations
+	 * 
+	 * @return this {@code SurveyTrip} if {@code ellipsoid} is unchanged, or a copy with the new {@code ellipsoid}.
+	 */
+	public MutableSurveyTrip setEllipsoid(String ellipsoid) {
+		return set(SurveyTrip.ellipsoid, ellipsoid);
+	}
+	
+	/**
+	 * Sets the UTM zone for fixed station locations.
+	 *
+	 * @param utmZone - the new value for the UTM zone for fixed station locations
+	 * 
+	 * @return this {@code SurveyTrip} if {@code utmZone} is unchanged, or a copy with the new {@code utmZone}.
+	 */
+	public MutableSurveyTrip setUtmZone(String utmZone) {
+		return set(SurveyTrip.utmZone, utmZone);
+	}
+	
 	
 	/**
 	 * Updates cave name.
@@ -641,6 +695,39 @@ public final class MutableSurveyTrip {
 	 */
 	public MutableSurveyTrip updateBackInclinationCorrection(Function<String, String> updater) {
 		return update(SurveyTrip.backInclinationCorrection, updater);
+	}
+	
+	/**
+	 * Updates the geodetic datum for fixed station locations.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code datum} and returns the new value for {@code datum}.
+	 * 
+	 * @return this {@code MutableSurveyTrip} if {@code datum} is unchanged, or a copy with the updated {@code datum}.
+	 */
+	public MutableSurveyTrip updateDatum(Function<String, String> updater) {
+		return update(SurveyTrip.datum, updater);
+	}
+	
+	/**
+	 * Updates the reference ellipsoid for fixed station locations.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code ellipsoid} and returns the new value for {@code ellipsoid}.
+	 * 
+	 * @return this {@code MutableSurveyTrip} if {@code ellipsoid} is unchanged, or a copy with the updated {@code ellipsoid}.
+	 */
+	public MutableSurveyTrip updateEllipsoid(Function<String, String> updater) {
+		return update(SurveyTrip.ellipsoid, updater);
+	}
+	
+	/**
+	 * Updates the UTM zone for fixed station locations.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code utmZone} and returns the new value for {@code utmZone}.
+	 * 
+	 * @return this {@code MutableSurveyTrip} if {@code utmZone} is unchanged, or a copy with the updated {@code utmZone}.
+	 */
+	public MutableSurveyTrip updateUtmZone(Function<String, String> updater) {
+		return update(SurveyTrip.utmZone, updater);
 	}
 	
 	

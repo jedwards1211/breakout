@@ -1,22 +1,24 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-1-20 01:15:04.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-3-16 16:23:05.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
 package org.breakout.model.raw;
 
-import java.util.List;
-import org.andork.unit.Unit;
-import org.andork.unit.Angle;
-import org.andork.unit.Length;
 import static org.andork.util.JavaScript.or;
+
+import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.Objects;
-import com.github.krukow.clj_lang.PersistentHashMap;
-import com.github.krukow.clj_ds.TransientMap;
+
 import org.andork.model.DefaultProperty;
-import java.util.function.BiConsumer;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
+
+import com.github.krukow.clj_ds.TransientMap;
+import com.github.krukow.clj_lang.PersistentHashMap;
 
 /**
  *
@@ -117,6 +119,21 @@ public final class SurveyTrip {
 	 * Key for correction for backsight inclinations.
 	 */
 	public static final String backInclinationCorrection = "backInclinationCorrection";
+	
+	/**
+	 * Key for the geodetic datum for fixed station locations.
+	 */
+	public static final String datum = "datum";
+	
+	/**
+	 * Key for the reference ellipsoid for fixed station locations.
+	 */
+	public static final String ellipsoid = "ellipsoid";
+	
+	/**
+	 * Key for the UTM zone for fixed station locations.
+	 */
+	public static final String utmZone = "utmZone";
 	
 	
 	static final PersistentHashMap<String, Object> initialData;
@@ -331,6 +348,36 @@ public final class SurveyTrip {
 			(m, v) -> m.set(SurveyTrip.backInclinationCorrection, v)
 		);
 		
+
+		/**
+		 * the geodetic datum for fixed station locations
+		 */
+		public static final DefaultProperty<SurveyTrip, String> datum = create(
+			"datum", String.class,
+			r -> r.get(SurveyTrip.datum),
+			(m, v) -> m.set(SurveyTrip.datum, v)
+		);
+		
+
+		/**
+		 * the reference ellipsoid for fixed station locations
+		 */
+		public static final DefaultProperty<SurveyTrip, String> ellipsoid = create(
+			"ellipsoid", String.class,
+			r -> r.get(SurveyTrip.ellipsoid),
+			(m, v) -> m.set(SurveyTrip.ellipsoid, v)
+		);
+		
+
+		/**
+		 * the UTM zone for fixed station locations
+		 */
+		public static final DefaultProperty<SurveyTrip, String> utmZone = create(
+			"utmZone", String.class,
+			r -> r.get(SurveyTrip.utmZone),
+			(m, v) -> m.set(SurveyTrip.utmZone, v)
+		);
+		
 	}
 	 
 	
@@ -522,6 +569,27 @@ public final class SurveyTrip {
 	 */
 	public String getBackInclinationCorrection() {
 		return get(backInclinationCorrection);
+	}
+	
+	/**
+	 * @return the geodetic datum for fixed station locations.
+	 */
+	public String getDatum() {
+		return get(datum);
+	}
+	
+	/**
+	 * @return the reference ellipsoid for fixed station locations.
+	 */
+	public String getEllipsoid() {
+		return get(ellipsoid);
+	}
+	
+	/**
+	 * @return the UTM zone for fixed station locations.
+	 */
+	public String getUtmZone() {
+		return get(utmZone);
 	}
 	
 	
@@ -734,6 +802,39 @@ public final class SurveyTrip {
 		return set(SurveyTrip.backInclinationCorrection, backInclinationCorrection);
 	}
 	
+	/**
+	 * Sets the geodetic datum for fixed station locations.
+	 *
+	 * @param datum - the new value for the geodetic datum for fixed station locations
+	 * 
+	 * @return this {@code SurveyTrip} if {@code datum} is unchanged, or a copy with the new {@code datum}.
+	 */
+	public SurveyTrip setDatum(String datum) {
+		return set(SurveyTrip.datum, datum);
+	}
+	
+	/**
+	 * Sets the reference ellipsoid for fixed station locations.
+	 *
+	 * @param ellipsoid - the new value for the reference ellipsoid for fixed station locations
+	 * 
+	 * @return this {@code SurveyTrip} if {@code ellipsoid} is unchanged, or a copy with the new {@code ellipsoid}.
+	 */
+	public SurveyTrip setEllipsoid(String ellipsoid) {
+		return set(SurveyTrip.ellipsoid, ellipsoid);
+	}
+	
+	/**
+	 * Sets the UTM zone for fixed station locations.
+	 *
+	 * @param utmZone - the new value for the UTM zone for fixed station locations
+	 * 
+	 * @return this {@code SurveyTrip} if {@code utmZone} is unchanged, or a copy with the new {@code utmZone}.
+	 */
+	public SurveyTrip setUtmZone(String utmZone) {
+		return set(SurveyTrip.utmZone, utmZone);
+	}
+	
 	
 	/**
 	 * Updates cave name.
@@ -942,6 +1043,39 @@ public final class SurveyTrip {
 	 */
 	public SurveyTrip updateBackInclinationCorrection(Function<String, String> updater) {
 		return update(backInclinationCorrection, updater);
+	}
+	
+	/**
+	 * Updates the geodetic datum for fixed station locations.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code datum} and returns the new value for {@code datum}.
+	 * 
+	 * @return this {@code SurveyTrip} if {@code datum} is unchanged, or a copy with the updated {@code datum}.
+	 */
+	public SurveyTrip updateDatum(Function<String, String> updater) {
+		return update(datum, updater);
+	}
+	
+	/**
+	 * Updates the reference ellipsoid for fixed station locations.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code ellipsoid} and returns the new value for {@code ellipsoid}.
+	 * 
+	 * @return this {@code SurveyTrip} if {@code ellipsoid} is unchanged, or a copy with the updated {@code ellipsoid}.
+	 */
+	public SurveyTrip updateEllipsoid(Function<String, String> updater) {
+		return update(ellipsoid, updater);
+	}
+	
+	/**
+	 * Updates the UTM zone for fixed station locations.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code utmZone} and returns the new value for {@code utmZone}.
+	 * 
+	 * @return this {@code SurveyTrip} if {@code utmZone} is unchanged, or a copy with the updated {@code utmZone}.
+	 */
+	public SurveyTrip updateUtmZone(Function<String, String> updater) {
+		return update(utmZone, updater);
 	}
 	
 	

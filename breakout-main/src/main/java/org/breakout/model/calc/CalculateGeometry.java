@@ -144,11 +144,6 @@ public class CalculateGeometry {
 	static void linkCrossSections(CalcShot shot1, CalcStation station, CalcShot shot2) {
 		boolean shotsFaceOppositeDirections = shotsFaceOppositeDirections(shot1, shot2);
 		
-		ShotKey testKey = new ShotKey("Fisher Ridge Cave System", "KP1", "Fisher Ridge Cave System", "KN94");
-		if (shot1.key().equals(testKey) || shot2.key().equals(testKey)) {
-			System.out.println("TEST");
-		}
-
 		CalcCrossSection section1 = shot1.getCrossSectionAt(station);
 		CalcCrossSection section2 = shot2.getCrossSectionAt(station);
 		if (section1 != null && section2 != null) {
@@ -552,12 +547,11 @@ public class CalculateGeometry {
 	}
 	
 	static void offsetToZero(CalcProject project) {
-		double[] zeroOffset = new double[] { 0, 0, 0 };
 		boolean found = false;
 
 		for (CalcStation station : project.stations.values()) {
 			if (station.hasPosition()) {
-				zeroOffset = Arrays.copyOf(station.position, 3);
+				System.arraycopy(station.position, 0, project.zeroOffset, 0, 3);
 				found = true;
 				break;
 			}
@@ -567,7 +561,7 @@ public class CalculateGeometry {
 			
 		for (CalcStation station : project.stations.values()) {
 			for (int i = 0; i < 3; i++) {
-				station.position[i] -= zeroOffset[i];
+				station.position[i] -= project.zeroOffset[i];
 			}
 		}
 	}

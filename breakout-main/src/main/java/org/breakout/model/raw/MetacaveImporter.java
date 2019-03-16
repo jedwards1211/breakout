@@ -1,5 +1,7 @@
 package org.breakout.model.raw;
 
+import static org.andork.util.StringUtils.isNullOrEmpty;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -156,7 +158,7 @@ public class MetacaveImporter {
 		}
 	}
 
-	private void importMetacave(Reader reader) {
+	public void importMetacave(Reader reader) {
 		JsonObject obj = new JsonParser().parse(new JsonReader(reader)).getAsJsonObject();
 		importMetacave(obj);
 	}
@@ -172,6 +174,12 @@ public class MetacaveImporter {
 		if (leads != null) {
 			for (int i = 0; i < leads.size(); i++) {
 				importLead(leads.get(i).getAsJsonObject(), caveName);
+			}
+		}
+		JsonArray fixedStations = cave.getAsJsonArray("fixedStations");
+		if (fixedStations != null) {
+			for (int i = 0; i < fixedStations.size(); i++) {
+				importFixedStationGroup(fixedStations.get(i).getAsJsonObject(), caveName);
 			}
 		}
 	}
@@ -342,5 +350,55 @@ public class MetacaveImporter {
 		SurveyLead result = lead.toImmutable();
 		leads.add(result);
 		return result;
+	}
+	
+	public SurveyTrip importFixedStationGroup(JsonObject obj, String caveName) {
+		SurveyTrip trip = importFixedStationGroupHeader(obj, caveName);
+		importFixedStations(trip, obj.getAsJsonObject("stations"));
+		return trip;
+	}
+
+	public SurveyTrip importFixedStationGroupHeader(JsonObject obj, String caveName) {
+		SurveyTrip trip = trips.get(obj);
+		if (trip == null) {
+			MutableSurveyTrip t = new MutableSurveyTrip();
+			t.setCave(caveName);
+			if (obj.has("distUnit")) {
+				t.setDistanceUnit(metacaveLengthUnits.get(obj.get("distUnit").getAsString()));
+			}
+			t.setBackAzimuthsCorrected(true);
+			t.setBackInclinationsCorrected(true);
+			t.setDatum(getAsString(obj, "datum"));
+			t.setEllipsoid(getAsString(obj, "ellipsoid"));
+			t.setUtmZone(getAsString(obj, "utmZone"));
+			trip = t.toImmutable();
+			trips.put(obj, trip);
+		}
+		return trip;
+	}
+
+	public void importFixedStations(SurveyTrip trip, JsonObject stations) {
+		for (Map.Entry<String, JsonElement> station : stations.entrySet()) {
+			MutableSurveyRow row = new MutableSurveyRow();
+			row.setTrip(trip);
+			row.setFromStation(station.getKey());
+			JsonObject props = station.getValue().getAsJsonObject();
+			if (props.has("lat")) {
+				row.setLatitude(getAsString(props, "lat"));
+			}
+			if (props.has("long")) {
+				row.setLongitude(getAsString(props, "long"));
+			}
+			if (props.has("north")) {
+				row.setNorthing(getMeasurement(props.get("north")));
+			}
+			if (props.has("east")) {
+				row.setEasting(getMeasurement(props.get("east")));
+			}
+			if (props.has("elev")) {
+				row.setElevation(getMeasurement(props.get("elev")));
+			}
+			rows.add(row);
+		}
 	}
 }
