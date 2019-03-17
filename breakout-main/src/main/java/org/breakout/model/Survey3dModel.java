@@ -1832,8 +1832,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		
 		if (project.coordinateReferenceSystem != null) {
 			float[] mbr = tree.getRoot().mbr();
-			ProjCoordinate min = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[0] + project.zeroOffset[0], -mbr[2] - project.zeroOffset[2], mbr[1] + project.zeroOffset[1]), project.coordinateReferenceSystem);
-			ProjCoordinate max = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[3] + project.zeroOffset[0], -mbr[5] - project.zeroOffset[2], mbr[4] + project.zeroOffset[1]), project.coordinateReferenceSystem);
+			ProjCoordinate min = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[0], -mbr[2], mbr[1]), project.coordinateReferenceSystem);
+			ProjCoordinate max = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[3], -mbr[5], mbr[4]), project.coordinateReferenceSystem);
 			System.out.println(min);
 			System.out.println(max);
 			for (int z = 0; z < 17; z++) {

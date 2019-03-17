@@ -8,14 +8,12 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.andork.collect.SmallArrayMap;
 import org.andork.task.Task;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
-import org.andork.util.StringUtils;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 import org.breakout.model.parsed.Lead;
@@ -30,11 +28,15 @@ import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
 import org.breakout.model.parsed.ParsedStation;
 import org.breakout.model.parsed.ParsedTrip;
+import org.breakout.proj4.IdentityCoordinateTransform;
+import org.breakout.proj4.ToGeocentricCoordinateTransform;
 import org.osgeo.proj4j.BasicCoordinateTransform;
 import org.osgeo.proj4j.CRSFactory;
 import org.osgeo.proj4j.CoordinateReferenceSystem;
 import org.osgeo.proj4j.CoordinateTransform;
 import org.osgeo.proj4j.ProjCoordinate;
+import org.osgeo.proj4j.datum.Ellipsoid;
+import org.osgeo.proj4j.datum.GeocentricConverter;
 
 /**
  * Parses ParsedRows and SurveyTrips into graph of CalcStations, CalcShots, and
@@ -83,41 +85,51 @@ public class Parsed2Calc {
 			}
 		});
 		task.runSubtask(1, fixedStationTask -> {
-			Optional<Map.Entry<String, List<ParsedFixedStation>>> _majorityCrs = fixedStationsByCrs.entrySet().stream().max(
-				(a, b) -> a.getValue().size() - b.getValue().size()
-			);
-			if (!_majorityCrs.isPresent()) return;
-			String majorityCrsParams = _majorityCrs.get().getKey();
-			CoordinateReferenceSystem toCrs = null;
-			if (!StringUtils.isNullOrEmpty(majorityCrsParams)) {
-				toCrs = crsFactory.createFromParameters(null, majorityCrsParams);
-				this.project.coordinateReferenceSystem = toCrs;
-			}
+			fixedStationTask.setStatus("performing coordinate conversions");
 
-			if (fixedStationsByCrs.size() == 1) {
-				for (List<ParsedFixedStation> stations : fixedStationsByCrs.values()) {
-					for (ParsedFixedStation station : stations) {
-						convert(station);
-						fixedStationTask.increment();
-					}
+			if (fixedStationsByCrs.size() == 1 && fixedStationsByCrs.keySet().iterator().next().isEmpty()) {
+				List<ParsedFixedStation> stations = fixedStationsByCrs.values().iterator().next();
+				fixedStationTask.setTotal(stations.size() + 1);
+				double[] avgNev = fixedStationTask.callSubtask(1,
+					avgTask -> getAverageNEV(stations, avgTask));
+				CoordinateReferenceSystem toCrs = crsFactory.createFromParameters(null,
+					"+proj=aeqd" + 
+					" +x_0=" + avgNev[0] +
+					" +y_0=" + avgNev[1] +
+					" +ellps=WGS84");
+				CoordinateReferenceSystem fromCrs = crsFactory.createFromParameters(null,
+					"+proj=aeqd +ellps=WGS84");
+				
+				CoordinateTransform xform = new BasicCoordinateTransform(fromCrs, toCrs);
+				CoordinateTransform geoXform = new BasicCoordinateTransform(fromCrs.createGeographic(), toCrs);
+
+				for (ParsedFixedStation station : stations) {
+					convert(station, xform, geoXform);
+					fixedStationTask.increment();
 				}
 				return;
 			}
 
+			fixedStationTask.setTotal(fixedStationsByCrs.size() + 1);
 
-			fixedStationsByCrs.entrySet().forEach(e -> 
-				numFixedStations += majorityCrsParams.equals(e.getKey()) ? 0 : e.getValue().size());
+			ProjCoordinate avgLatLong = fixedStationTask.callSubtask(1,
+				avgTask -> getAverageLatLong(fixedStationsByCrs, avgTask));
 
-			fixedStationTask.setTotal(numFixedStations);
+			CoordinateReferenceSystem toCrs = crsFactory.createFromParameters(null,
+				"+proj=aeqd" +
+				" +lat_0=" + avgLatLong.y +
+				" +lon_0=" + avgLatLong.x +
+				" +ellps=WGS84");
+			this.project.coordinateReferenceSystem = toCrs;
+
 			for (Map.Entry<String, List<ParsedFixedStation>> entry : fixedStationsByCrs.entrySet()) {
-				if (entry.getKey().isEmpty() || majorityCrsParams.equals(entry.getKey())) continue;
 				CoordinateReferenceSystem fromCrs = crsFactory.createFromParameters(null, entry.getKey());
 				CoordinateTransform xform = new BasicCoordinateTransform(fromCrs, toCrs);
 				CoordinateTransform geoXform = new BasicCoordinateTransform(fromCrs.createGeographic(), toCrs);
 				for (ParsedFixedStation station : entry.getValue()) {
 					convert(station, xform, geoXform);
-					fixedStationTask.increment();
 				}
+				fixedStationTask.increment();
 			}
 		});
 	}
@@ -150,6 +162,137 @@ public class Parsed2Calc {
 		CalcStation station = project.stations.get(stationKey);
 		if (station != null) station.leads = leads;
 	}
+	
+	double[] getAverageNEV(List<ParsedFixedStation> stations, Task<?> task) {
+		task.setTotal(stations.size());
+			
+		int i = 0;
+		double[] x = new double[stations.size()];
+		double[] y = new double[stations.size()];
+		double[] z = new double[stations.size()];
+
+		ProjCoordinate projCoord = new ProjCoordinate();
+
+		for (ParsedFixedStation station : stations) {
+			if (station.location instanceof ParsedNEVLocation) {
+				getLocation(station, projCoord, IdentityCoordinateTransform.INSTANCE, IdentityCoordinateTransform.INSTANCE);
+			}
+			if (Double.isFinite(projCoord.x) &&
+				Double.isFinite(projCoord.y) &&
+				Double.isFinite(projCoord.z)) {
+				x[i] = projCoord.x;
+				y[i] = projCoord.y;
+				z[i] = projCoord.z;
+				i++;
+			}
+			task.increment();
+		}
+		
+		return new double[] {
+			average(x, 0, i),
+			average(y, 0, i),
+			average(z, 0, i),
+		};
+	}
+
+	ProjCoordinate getAverageLatLong(Map<String, List<ParsedFixedStation>> stations, Task<?> task) {
+		int numFixedStations = stations.values().stream()
+			.map(group -> group.size())
+			.reduce(0, (total, next) -> total + next);
+
+		task.setTotal(numFixedStations);
+			
+		int i = 0;
+		double[] x = new double[numFixedStations];
+		double[] y = new double[numFixedStations];
+		double[] z = new double[numFixedStations];
+		
+		ProjCoordinate projCoord = new ProjCoordinate();
+
+		for (Map.Entry<String, List<ParsedFixedStation>> entry : stations.entrySet()) {
+			CoordinateReferenceSystem sourceCrs = crsFactory.createFromParameters(null, entry.getKey());
+			ToGeocentricCoordinateTransform sourceToGeocentric = new ToGeocentricCoordinateTransform(sourceCrs);
+			CoordinateReferenceSystem sourceGeodeticCrs = sourceCrs.createGeographic();
+			ToGeocentricCoordinateTransform sourceGeodeticToGeocentric = new ToGeocentricCoordinateTransform(sourceGeodeticCrs);
+			for (ParsedFixedStation station : entry.getValue()) {
+				getLocation(station, projCoord, sourceToGeocentric, sourceGeodeticToGeocentric);
+				if (Double.isFinite(projCoord.x) &&
+					Double.isFinite(projCoord.y) &&
+					Double.isFinite(projCoord.z)) {
+					x[i] = projCoord.x;
+					y[i] = projCoord.y;
+					z[i] = projCoord.z;
+					i++;
+				}
+				task.increment();
+			}
+		}	
+		
+		projCoord.x = average(x, 0, i);
+		projCoord.y = average(y, 0, i);
+		projCoord.z = average(z, 0, i);
+		
+		GeocentricConverter converter = new GeocentricConverter(Ellipsoid.WGS84);
+		converter.convertGeocentricToGeodetic(projCoord);
+		projCoord.x = Math.toDegrees(projCoord.x);
+		projCoord.y = Math.toDegrees(projCoord.y);
+		
+		return projCoord;
+	}
+	
+	static double average(double[] arr, int start, int end) {
+		int n = end - start;
+		if (n < 1000) {
+			double total = 0;
+			for (int i = start; i < end; i++) {
+				total += arr[i];
+			}
+			return total / n;
+		}
+		int mid = (start + end) / 2;
+		return (average(arr, start, mid) + average(arr, mid, end)) / 2;
+	}
+	
+	static ProjCoordinate getLocation(ParsedFixedStation fixedStation, ProjCoordinate projCoord, CoordinateTransform xform, CoordinateTransform geoXform) {
+		if (fixedStation.location instanceof ParsedNEVLocation) {
+			ParsedNEVLocation nev = (ParsedNEVLocation) fixedStation.location;
+			if (ParsedField.hasValue(nev.northing)) {
+				projCoord.y = nev.northing.value.doubleValue(Length.meters);
+			} else {
+				projCoord.y = Double.NaN;
+			}
+			if (ParsedField.hasValue(nev.easting)) {
+				projCoord.x = nev.easting.value.doubleValue(Length.meters);
+			} else {
+				projCoord.x = Double.NaN;
+			}
+			if (ParsedField.hasValue(nev.elevation)) {
+				projCoord.z = nev.elevation.value.doubleValue(Length.meters);
+			} else {
+				projCoord.z = Double.NaN;
+			}
+			xform.transform(projCoord, projCoord);
+		} else if (fixedStation.location instanceof ParsedLatLonLocation) {
+			ParsedLatLonLocation loc = (ParsedLatLonLocation) fixedStation.location;
+			if (ParsedField.hasValue(loc.latitude)) {
+				projCoord.y = loc.latitude.value.doubleValue(Angle.degrees);
+			} else {
+				projCoord.y = Double.NaN;
+			}
+			if (ParsedField.hasValue(loc.longitude)) {
+				projCoord.x = loc.longitude.value.doubleValue(Angle.degrees);
+			} else {
+				projCoord.x = Double.NaN;
+			}
+			if (ParsedField.hasValue(loc.elevation)) {
+				projCoord.z = loc.elevation.value.doubleValue(Length.meters);
+			} else {
+				projCoord.z = Double.NaN;
+			}
+			geoXform.transform(projCoord, projCoord);
+		}
+		return projCoord;
+	}
 
 	void convert(ParsedFixedStation fixedStation) {
 		CalcStation station = project.stations.get(fixedStation.key());
@@ -175,49 +318,10 @@ public class Parsed2Calc {
 		if (station == null) {
 			return;
 		}
-		if (fixedStation.location instanceof ParsedNEVLocation) {
-			ParsedNEVLocation nev = (ParsedNEVLocation) fixedStation.location;
-			if (ParsedField.hasValue(nev.northing)) {
-				projCoord.y = nev.northing.value.doubleValue(Length.meters);
-			} else {
-				projCoord.y = Double.NaN;
-			}
-			if (ParsedField.hasValue(nev.easting)) {
-				projCoord.x = nev.easting.value.doubleValue(Length.meters);
-			} else {
-				projCoord.x = Double.NaN;
-			}
-			if (ParsedField.hasValue(nev.elevation)) {
-				projCoord.z = nev.elevation.value.doubleValue(Length.meters);
-			} else {
-				projCoord.z = Double.NaN;
-			}
-			xform.transform(projCoord, projCoord);
-			station.position[0] = projCoord.x;
-			station.position[1] = projCoord.z;
-			station.position[2] = -projCoord.y;
-		} else if (fixedStation.location instanceof ParsedLatLonLocation) {
-			ParsedLatLonLocation loc = (ParsedLatLonLocation) fixedStation.location;
-			if (ParsedField.hasValue(loc.latitude)) {
-				projCoord.y = loc.latitude.value.doubleValue(Angle.degrees);
-			} else {
-				projCoord.y = Double.NaN;
-			}
-			if (ParsedField.hasValue(loc.longitude)) {
-				projCoord.x = loc.longitude.value.doubleValue(Angle.degrees);
-			} else {
-				projCoord.x = Double.NaN;
-			}
-			if (ParsedField.hasValue(loc.elevation)) {
-				projCoord.z = loc.elevation.value.doubleValue(Length.meters);
-			} else {
-				projCoord.z = Double.NaN;
-			}
-			geoXform.transform(projCoord, projCoord);
-			station.position[0] = projCoord.x;
-			station.position[1] = projCoord.z;
-			station.position[2] = -projCoord.y;			
-		}
+		getLocation(fixedStation, projCoord, xform, geoXform);
+		station.position[0] = projCoord.x;
+		station.position[1] = projCoord.z;
+		station.position[2] = -projCoord.y;
 	}
 
 	void convert(ParsedTrip trip, CalcCave cave) {

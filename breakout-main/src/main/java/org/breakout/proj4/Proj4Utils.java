@@ -5,6 +5,7 @@ import org.osgeo.proj4j.CRSFactory;
 import org.osgeo.proj4j.CoordinateReferenceSystem;
 import org.osgeo.proj4j.CoordinateTransform;
 import org.osgeo.proj4j.ProjCoordinate;
+import org.osgeo.proj4j.datum.GeocentricConverter;
 
 public class Proj4Utils {
 
@@ -82,5 +83,24 @@ public class Proj4Utils {
 		String sys
 	) {
 		return convertToGeographic(coord, factory.createFromParameters(null, sys));
+	}
+	
+	public static ProjCoordinate convertToGeocentric(
+		ProjCoordinate coord,
+		CoordinateReferenceSystem fromSys
+	) {
+		convertToGeographic(coord, fromSys);
+		coord.x = Math.toRadians(coord.x);
+		coord.y = Math.toRadians(coord.y);
+		GeocentricConverter converter = new GeocentricConverter(fromSys.getProjection().getEllipsoid());
+		converter.convertGeodeticToGeocentric(coord);
+		return coord;
+	}
+
+	public static ProjCoordinate convertToGeocentric(
+		ProjCoordinate coord,
+		String fromSys
+	) {
+		return convertToGeocentric(coord, factory.createFromParameters(null, fromSys));
 	}
 }

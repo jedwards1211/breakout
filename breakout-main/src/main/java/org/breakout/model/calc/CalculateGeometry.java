@@ -19,7 +19,6 @@ public class CalculateGeometry {
 	public static void calculateGeometry(CalcProject project) {
 		interpolateAzimuthsOfVerticalShots(project);
 		linkCrossSections(project);
-		offsetToZero(project);
 		calculateStationPositions(project);
 		calculateVertices(project);
 	}
@@ -462,10 +461,6 @@ public class CalculateGeometry {
 	}
 
 	static void calculateVertices(CalcShot shot) {
-		if ("CARR:T6*".equals(shot.fromStation.name) &&
-			"CARR:T7*".equals(shot.toStation.name)) {
-			Thread.dumpStack();
-		}
 		int fromVertexCount = getVertexCount(shot.fromCrossSection);
 		int toVertexCount = getVertexCount(shot.toCrossSection);
 		boolean flipLR = shot.fromCrossSection != null &&
@@ -542,26 +537,6 @@ public class CalculateGeometry {
 					indices[k++] = fromVertexCount + i;
 					indices[k++] = fromVertexCount + i - 1;
 				}
-			}
-		}
-	}
-	
-	static void offsetToZero(CalcProject project) {
-		boolean found = false;
-
-		for (CalcStation station : project.stations.values()) {
-			if (station.hasPosition()) {
-				System.arraycopy(station.position, 0, project.zeroOffset, 0, 3);
-				found = true;
-				break;
-			}
-		}
-		
-		if (!found) return;
-			
-		for (CalcStation station : project.stations.values()) {
-			for (int i = 0; i < 3; i++) {
-				station.position[i] -= project.zeroOffset[i];
 			}
 		}
 	}

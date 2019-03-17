@@ -12,6 +12,5 @@ public class CalcProject {
 	public final Map<String, CalcCave> caves = new HashMap<>();
 	public final Map<ShotKey, CalcShot> shots = new LinkedHashMap<>();
 	public final Map<StationKey, CalcStation> stations = new LinkedHashMap<>();
-	public final double[] zeroOffset = new double[3];
 	public CoordinateReferenceSystem coordinateReferenceSystem;
 }

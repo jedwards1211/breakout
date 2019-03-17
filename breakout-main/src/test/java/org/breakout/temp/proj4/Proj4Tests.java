@@ -36,5 +36,24 @@ public class Proj4Tests {
 				"+proj=utm +zone=14 +ellps=WGS84"
 			)
 		);
+		System.out.println(
+			Proj4Utils.convert(
+				new ProjCoordinate(35,28,0),
+				"+proj=latlong +datum=WGS84 +ellps=WGS84",
+				"+proj=aeqd +datum=WGS84 +ellps=WGS84 +lon_0=34 +lat_0=27"
+			)
+		);
+		System.out.println(
+			Proj4Utils.convertToGeocentric(
+				new ProjCoordinate(-96.81386583126447, 18.032105013826563, 422.78),
+				"+proj=latlong +datum=WGS84 +ellps=WGS84"
+			)
+		);
+		System.out.println(
+			Proj4Utils.convertToGeocentric(
+				new ProjCoordinate(731433.68,1995104.72,422.78),
+				"+proj=utm +zone=14 +ellps=WGS84"
+			)
+		);
 	}
 }
