@@ -187,10 +187,10 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 						Texture satellite = TextureIO.newTexture(
 							new ByteArrayInputStream(satelliteData),
 							false, "png");
-						newTiles.add(new ManagedTile(
-							new TerrainTile(terrain,
-								new CoordinateConverter(terrain.getWidth(), tileId)),
-							satellite));
+						TerrainTile terrainTile = new TerrainTile(terrain,
+							new CoordinateConverter(terrain.getWidth(), tileId));
+						terrainTile.usePrecomputedIndexPointers();
+						newTiles.add(new ManagedTile(terrainTile, satellite));
 						return true;
 					} catch (Exception e) {
 						e.printStackTrace();
