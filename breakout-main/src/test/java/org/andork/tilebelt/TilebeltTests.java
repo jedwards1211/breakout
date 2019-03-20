@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.Arrays;
 
+import org.breakout.mabox.Tilebelt;
 import org.junit.Test;
 
 public class TilebeltTests {

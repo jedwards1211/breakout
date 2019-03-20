@@ -1,8 +1,12 @@
 package org.breakout.temp.proj4;
 
 import org.breakout.proj4.Proj4Utils;
+import org.breakout.proj4.WebMercatorProjection;
 import org.junit.Test;
+import org.osgeo.proj4j.CoordinateReferenceSystem;
 import org.osgeo.proj4j.ProjCoordinate;
+import org.osgeo.proj4j.datum.Datum;
+import org.osgeo.proj4j.datum.Ellipsoid;
 
 public class Proj4Tests {
 	@Test
@@ -53,6 +57,14 @@ public class Proj4Tests {
 			Proj4Utils.convertToGeocentric(
 				new ProjCoordinate(731433.68,1995104.72,422.78),
 				"+proj=utm +zone=14 +ellps=WGS84"
+			)
+		);
+		WebMercatorProjection webmerc = new WebMercatorProjection(null, null);
+		System.out.println(
+			Proj4Utils.convert(
+				new ProjCoordinate(-90,-85, 0),
+				"+proj=latlong +datum=WGS84 +ellps=WGS84",
+				new CoordinateReferenceSystem(null, new String[0], Datum.WGS84, webmerc)
 			)
 		);
 	}

@@ -1,0 +1,32 @@
+#version 330
+
+uniform mat4 m;
+uniform mat4 v;
+uniform mat4 p;
+in vec3 a_position;
+
+// lighting
+in vec3 a_normal;
+uniform mat3 n;
+uniform vec3 u_lightDirection;
+uniform float u_ambient;
+out float v_lightAmount;
+
+// satellite imagery
+in vec2 a_texcoord;
+out vec2 v_texcoord;
+
+// clip
+uniform vec3 u_clipAxis;
+out float v_clipPosition;
+
+void main() {
+	gl_Position = p * v * m * vec4(a_position, 1.0);
+
+	v_lightAmount = dot(normalize(n * a_normal), normalize(u_lightDirection));
+	v_lightAmount = u_ambient + v_lightAmount * (1.0 - u_ambient);
+	
+	v_texcoord = a_texcoord;
+	
+	v_clipPosition = dot(u_clipAxis, a_position);
+}

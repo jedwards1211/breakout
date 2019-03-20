@@ -85,6 +85,10 @@ public class Parsed2Calc {
 			}
 		});
 		task.runSubtask(1, fixedStationTask -> {
+			if (fixedStationsByCrs.isEmpty()) {
+				return;
+			}
+
 			fixedStationTask.setStatus("performing coordinate conversions");
 
 			if (fixedStationsByCrs.size() == 1 && fixedStationsByCrs.keySet().iterator().next().isEmpty()) {

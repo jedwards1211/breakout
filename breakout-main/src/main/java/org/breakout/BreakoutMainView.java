@@ -70,8 +70,10 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -188,6 +190,8 @@ import org.andork.util.FileRecoveryConfig;
 import org.andork.util.RecoverableFileOutputStream;
 import org.andork.util.StringUtils;
 import org.breakout.StatsModel.MinAvgMax;
+import org.breakout.mabox.MapboxClient;
+import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
@@ -1038,10 +1042,20 @@ public class BreakoutMainView {
 					navigator.setCenter(center);
 
 					compass = new Compass();
+					
+					if (calcProject.coordinateReferenceSystem != null) {
+						terrain = new AutoTerrain(
+							mapbox, fetchService,
+							autoDrawable, calcProject.coordinateReferenceSystem, model.getMbr());
+					}
 
 					autoDrawable.invoke(false, drawable -> {
 						scene.add(model);
 						scene.initLater(model);
+						if (terrain != null) {
+							scene.add(terrain);
+							scene.initLater(terrain);
+						}
 						scene.add(compass);
 						scene.initLater(compass);
 						return false;
@@ -1054,6 +1068,8 @@ public class BreakoutMainView {
 	private static Shot3dPickContext hoverUpdaterSpc = new Shot3dPickContext();
 
 	private static final int SCANNED_NOTES_SEARCH_DEPTH = 10;
+	
+	MapboxClient mapbox;
 
 	JMenuBar menuBar;
 
@@ -1077,6 +1093,15 @@ public class BreakoutMainView {
 	final TaskService sortTaskService = ExecutorTaskService.newSingleThreadedTaskService();
 	final ScheduledExecutorService ioService = Executors.newSingleThreadScheduledExecutor();
 	final TaskService ioTaskService = new ExecutorTaskService(ioService);
+	final ExecutorService fetchService = Executors.newCachedThreadPool(new ThreadFactory() {
+		@Override
+		public Thread newThread(Runnable r) {
+			Thread thread = new Thread(r);
+			thread.setDaemon(true);
+			thread.setName("Fetcher");
+			return thread;
+		}
+	});
 
 	public void shutdown() {
 		logger.info("Shutting down...");
@@ -1175,6 +1200,7 @@ public class BreakoutMainView {
 
 	SettingsDrawer settingsDrawer;
 	Survey3dModel model3d;
+	AutoTerrain terrain;
 	Compass compass;
 	float[] v = newMat4f();
 	int debugMbrCount = 0;
@@ -1291,6 +1317,8 @@ public class BreakoutMainView {
 	final Throttler<Void> updateHover = new Throttler<>(0);
 
 	public BreakoutMainView() {
+		mapbox = new MapboxClient(System.getenv("MAPBOX_ACCESS_TOKEN"));
+
 		final GLProfile glp = GLProfile.get(GLProfile.GL3);
 		final GLCapabilities caps = new GLCapabilities(glp);
 		autoDrawable = canvas = new GLCanvas(caps);
@@ -1299,7 +1327,7 @@ public class BreakoutMainView {
 		scene = new JoglScene();
 		bgColor = new JoglBackgroundColor();
 		scene.add(bgColor);
-
+		
 		renderer = new DefaultJoglRenderer(scene, new GL3Framebuffer(), 1);
 		renderer.setDesiredUseStencilBuffer(true);
 
@@ -1315,8 +1343,13 @@ public class BreakoutMainView {
 		
 		clipMouseHandler = new ClipMouseHandler(new ClipMouseHandler.Context() {
 			@Override
-			public void saveClip() {
-				BreakoutMainView.this.saveClip();
+			public void setClip(Clip3f clip) {
+				getProjectModel().set(ProjectModel.clip, clip);
+			}
+			
+			@Override
+			public Clip3f getClip() {
+				return getProjectModel().get(ProjectModel.clip);
 			}
 			
 			@Override
@@ -1752,6 +1785,20 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
+		
+		new BinderWrapper<Clip3f>() {
+			@Override
+			protected void onValueChanged(final Clip3f clip) {
+				final Survey3dModel model3d = BreakoutMainView.this.model3d;
+				if (model3d != null) {
+					model3d.setClip(clip);
+				}
+				if (terrain != null) {
+					terrain.setClip(clip);
+				}
+				autoDrawable.display();
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.clip, projectModelBinder));
 
 		menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu();
@@ -2113,8 +2160,7 @@ public class BreakoutMainView {
 					saveProjection();
 				}
 				if (finalClip != null && model3d != null) {
-					model3d.setClip(finalClip);
-					saveClip();
+					getProjectModel().set(ProjectModel.clip, finalClip);
 				}
 
 				installOrthoMouseAdapters();
@@ -2209,10 +2255,8 @@ public class BreakoutMainView {
 		}
 
 		removeUnprotectedCameraAnimations();
-		if (model3d != null) {
-			model3d.setClip(new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
-			saveClip();
-		}
+		getProjectModel().set(ProjectModel.clip,
+			new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
 		cameraAnimationQueue.add(new ProjXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, false,
 				f -> {
 					calc.f = projReparam.applyAsFloat(f);
@@ -2613,12 +2657,6 @@ public class BreakoutMainView {
 		getProjectModel().set(ProjectModel.projCalculator, renderer.getViewSettings().getProjection());
 	}
 
-	private void saveClip() {
-		if (model3d != null) {
-			getProjectModel().set(ProjectModel.clip, model3d.getClip());
-		}
-	}
-
 	private void saveViewXform() {
 		float[] viewXform = Vecmath.newMat4f();
 		renderer.getViewSettings().getViewXform(viewXform);
@@ -2884,6 +2922,10 @@ public class BreakoutMainView {
 				autoDrawable.invoke(false, drawable -> {
 					scene.remove(model3d);
 					scene.disposeLater(model3d);
+					if (terrain != null) {
+						scene.remove(terrain);
+						scene.disposeLater(terrain);
+					}
 					scene.remove(compass);
 					scene.disposeLater(compass);
 					return false;

@@ -47,6 +47,18 @@ public class Proj4Utils {
 	) {
 		return convertToGeographic(coord, sys, coord);
 	}
+	
+	public static ProjCoordinate convert(
+		ProjCoordinate fromCoord,
+		String fromSys,
+		CoordinateReferenceSystem toSys
+	) {
+		return convert(
+			fromCoord,
+			factory.createFromParameters(null, fromSys),
+			toSys
+		);
+	}
 
 	public static ProjCoordinate convert(
 		ProjCoordinate fromCoord,

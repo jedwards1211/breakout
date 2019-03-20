@@ -105,12 +105,12 @@ import org.andork.spatial.RfStarTree.Branch;
 import org.andork.spatial.RfStarTree.Leaf;
 import org.andork.spatial.RfStarTree.Node;
 import org.andork.task.Task;
-import org.andork.tilebelt.Tilebelt;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.util.StringUtils;
 import org.breakout.PickResult;
 import org.breakout.awt.ParamGradientMapPaint;
+import org.breakout.mabox.Tilebelt;
 import org.breakout.model.calc.CalcCave;
 import org.breakout.model.calc.CalcCrossSection;
 import org.breakout.model.calc.CalcProject;
@@ -1829,19 +1829,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.tree = tree;
 		this.sections = sections;
 		this.labelFont = labelFont;
-		
-		if (project.coordinateReferenceSystem != null) {
-			float[] mbr = tree.getRoot().mbr();
-			ProjCoordinate min = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[0], -mbr[2], mbr[1]), project.coordinateReferenceSystem);
-			ProjCoordinate max = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[3], -mbr[5], mbr[4]), project.coordinateReferenceSystem);
-			System.out.println(min);
-			System.out.println(max);
-			for (int z = 0; z < 17; z++) {
-				System.out.println(Arrays.toString(Tilebelt.pointToTile(min.x, min.y, z)));
-				System.out.println(Arrays.toString(Tilebelt.pointToTile(min.x, min.y, z)));
-			}
-			System.out.println(Arrays.toString(Tilebelt.bboxToTile(new double[] {min.x, min.y, max.x, max.y})));
-		}
+
 
 		textRenderer = new TextRenderer(labelFont, true, true, null, false);
 

@@ -38,7 +38,8 @@ public class ClipMouseHandler extends MouseAdapter {
 	public static interface Context {
 		public GLAutoDrawable getDrawable();
 		public Survey3dModel getSurvey3dModel();
-		public void saveClip();
+		public Clip3f getClip();
+		public void setClip(Clip3f clip);
 		public JoglViewState getViewState();
 	}
 
@@ -69,16 +70,14 @@ public class ClipMouseHandler extends MouseAdapter {
 			Survey3dModel model3d = context.getSurvey3dModel();
 			if (model3d == null) return;
 			
-			final Clip3f clip = Vecmath.dot3(model3d.getClip().axis(), forward) < 0
-				? model3d.getClip().flip()
-				: model3d.getClip();
+			final Clip3f clip = Vecmath.dot3(context.getClip().axis(), forward) < 0
+				? context.getClip().flip()
+				: context.getClip();
 
 			float distance = (float) rotation * wheelFactor * sensitivity;
 			
 			clip.getNearFarOfMbr(model3d.getMbr(), nearFar);
-			model3d.setClip(clip.setNear(Math.max(nearFar[0], clip.near()) + distance));
-			
-			context.saveClip();
+			context.setClip(clip.setNear(Math.max(nearFar[0], clip.near()) + distance));
 			context.getDrawable().display();	
 		});
 		farAggregator = new WheelEventAggregator(rotation -> {
@@ -88,16 +87,14 @@ public class ClipMouseHandler extends MouseAdapter {
 			Survey3dModel model3d = context.getSurvey3dModel();
 			if (model3d == null) return;
 			
-			final Clip3f clip = Vecmath.dot3(model3d.getClip().axis(), forward) < 0
-				? model3d.getClip().flip()
-				: model3d.getClip();
+			final Clip3f clip = Vecmath.dot3(context.getClip().axis(), forward) < 0
+				? context.getClip().flip()
+				: context.getClip();
 
 			float distance = (float) rotation * wheelFactor * sensitivity;
 			
 			clip.getNearFarOfMbr(model3d.getMbr(), nearFar);
-			model3d.setClip(clip.setFar(Math.min(nearFar[1], clip.far()) + distance));
-			
-			context.saveClip();
+			context.setClip(clip.setFar(Math.min(nearFar[1], clip.far()) + distance));
 			context.getDrawable().display();	
 		});
 	}
