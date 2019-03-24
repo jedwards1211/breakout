@@ -7,6 +7,7 @@ import org.osgeo.proj4j.CoordinateReferenceSystem;
 import org.osgeo.proj4j.ProjCoordinate;
 import org.osgeo.proj4j.datum.Datum;
 import org.osgeo.proj4j.datum.Ellipsoid;
+import org.osgeo.proj4j.proj.TransverseMercatorProjection;
 
 public class Proj4Tests {
 	@Test
@@ -67,5 +68,10 @@ public class Proj4Tests {
 				new CoordinateReferenceSystem(null, new String[0], Datum.WGS84, webmerc)
 			)
 		);
+		
+		System.out.println('V' - 'A' + 1);
+		System.out.println(TransverseMercatorProjection.getRowFromNearestParallel(Math.toRadians(-81)));
+		System.out.println(TransverseMercatorProjection.getRowFromNearestParallel(Math.toRadians(-72)));
+		System.out.println(TransverseMercatorProjection.getZoneFromNearestMeridian(Math.toRadians(3 + 1 * 2)));
 	}
 }
