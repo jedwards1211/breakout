@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 public class StationSet {
 	public StationSet(String str) {
+		designations.put("", new NumericDesignation(""));
 		add(str);
 	}
 	
@@ -123,17 +124,6 @@ public class StationSet {
 	private final Map<String, Designation<?>> designations = new HashMap<>();
 	private String stringRep = null;
 	
-	public static String getSuffix(String station) {
-		if (station.isEmpty()) return "";
-		int i = station.length() - 1;
-		if (Character.isDigit(station.charAt(i))) {
-			while (i > 0 && Character.isDigit(station.charAt(i - 1))) i--;
-		} else {
-			while (i > 0 && !Character.isDigit(station.charAt(i - 1))) i--;
-		}
-		return i == 0 ? "" : station.substring(i);
-	}
-	
 	private static final Pattern designationPattern = Pattern.compile(
 		"(?<=^|\\s|,)([^-,\\s]+)(-(\\d+|[^-,\\s]+))?(?=$|\\s|,)"
 	);
@@ -150,6 +140,10 @@ public class StationSet {
 			String upperBoundStr = m.group(3);
 			String designationStr = group1.substring(0, group1.length() - lowerBoundStr.length());
 			if (lowerBoundStr.isEmpty()) lowerBoundStr = null;
+			if (upperBoundStr != null && lowerBoundStr == null) {
+				lowerBoundStr = designationStr;
+				designationStr = "";
+			}
 			if (lowerBoundStr != null && upperBoundStr == null) {
 				upperBoundStr = lowerBoundStr;
 			}
@@ -182,10 +176,24 @@ public class StationSet {
 				designation.addRange(lowerBoundStr, upperBoundStr);
 			}
 		}
+	}	
+
+	public static String getSuffix(String station) {
+		if (station.isEmpty()) return "";
+		int i = station.length() - 1;
+		if (Character.isDigit(station.charAt(i))) {
+			while (i > 0 && Character.isDigit(station.charAt(i - 1))) i--;
+		} else {
+			while (i > 0 && !Character.isDigit(station.charAt(i - 1))) i--;
+		}
+		return i == 0 ? "" : station.substring(i);
 	}
 	
 	public boolean contains(String station) {
 		String suffix = getSuffix(station);
+		if (suffix.isEmpty() && designations.get("").containsStringSuffix(station)) {
+			return true;
+		}
 		String designationStr = station.substring(0, station.length() - suffix.length());
 		Designation<?> designation = designations.get(designationStr);
 		return designation != null && designation.containsStringSuffix(suffix);

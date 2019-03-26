@@ -11,13 +11,17 @@ import org.junit.Test;
 public class StationSetTests {
 	@Test
 	public void testToString() {
-		assertEquals("AB2-5 AB7-9 AB9C-E B3 B'3 JK", new StationSet("JK AB2-5 B3,AB7-9 AB9C-E B'3,").toString());
+		assertEquals("2-12 AB2-5 AB7-9 AB9C-E B3 B'3 JK", new StationSet("JK AB2-5 B3,AB7-9 2-12 AB9C-E B'3,").toString());
 	}
 	
 	@Test
 	public void testContains() {
-		StationSet set = new StationSet("JK AB2-5 B3 B'3 AB7-9 AB9C-E");
+		StationSet set = new StationSet("JK AB2-5 B3 B'3 AB7-9 2-12 AB9C-E");
 		for (String station : Arrays.asList(
+				"2",
+				"3",
+				"11",
+				"12",
 				"JK",
 				"JK1",
 				"JK2",
@@ -40,6 +44,10 @@ public class StationSetTests {
 		assertTrue(set.contains("AB5"));
 		
 		for (String station : Arrays.asList(
+				"1",
+				"0",
+				"13",
+				"14",
 				"AB1", 
 				"AB6", 
 				"AB10", 
