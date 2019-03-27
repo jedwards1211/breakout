@@ -192,6 +192,9 @@ public class MetacaveExporter {
 					measurements = new JsonArray();
 					JsonObject shot = new JsonObject();
 					shot.add("measurements", measurements);
+					if (truthy(row.getOverrideSurveyNotes())) {
+						shot.addProperty("surveyNotesFile", row.getOverrideSurveyNotes());
+					}
 					survey.add(shot);
 
 					// insert to station

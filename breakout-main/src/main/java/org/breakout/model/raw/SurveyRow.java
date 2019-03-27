@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-16 16:23:05.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-26 22:29:09.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -114,6 +114,11 @@ public final class SurveyRow {
 	 * Key for any user comment.
 	 */
 	public static final String comment = "comment";
+	
+	/**
+	 * Key for survey notes file (if one file can't be associated with the entire trip).
+	 */
+	public static final String overrideSurveyNotes = "overrideSurveyNotes";
 	
 	/**
 	 * Key for trip this row belongs to.
@@ -328,6 +333,16 @@ public final class SurveyRow {
 		
 
 		/**
+		 * survey notes file (if one file can't be associated with the entire trip)
+		 */
+		public static final DefaultProperty<SurveyRow, String> overrideSurveyNotes = create(
+			"overrideSurveyNotes", String.class,
+			r -> r.get(SurveyRow.overrideSurveyNotes),
+			(m, v) -> m.set(SurveyRow.overrideSurveyNotes, v)
+		);
+		
+
+		/**
 		 * trip this row belongs to
 		 */
 		public static final DefaultProperty<SurveyRow, SurveyTrip> trip = create(
@@ -366,8 +381,11 @@ public final class SurveyRow {
 			"date", String.class, SurveyTrip.Properties.date);
 		public static DefaultProperty<SurveyRow, List<String>> surveyors = createTripProperty(
 			"surveyors", List.class, SurveyTrip.Properties.surveyors);
-		public static DefaultProperty<SurveyRow, String> surveyNotes = createTripProperty(
-			"surveyNotes", String.class, SurveyTrip.Properties.surveyNotes);
+		public static DefaultProperty<SurveyRow, String> surveyNotes = create(
+			"surveyNotes", String.class,
+			r -> r.getSurveyNotes(),
+			(r, surveyNotes) -> r.setOverrideSurveyNotes(surveyNotes)
+		);
 	
 	}
 	 
@@ -560,6 +578,13 @@ public final class SurveyRow {
 	 */
 	public String getComment() {
 		return get(comment);
+	}
+	
+	/**
+	 * @return survey notes file (if one file can't be associated with the entire trip).
+	 */
+	public String getOverrideSurveyNotes() {
+		return get(overrideSurveyNotes);
 	}
 	
 	/**
@@ -777,6 +802,17 @@ public final class SurveyRow {
 	 */
 	public SurveyRow setComment(String comment) {
 		return set(SurveyRow.comment, comment);
+	}
+	
+	/**
+	 * Sets survey notes file (if one file can't be associated with the entire trip).
+	 *
+	 * @param overrideSurveyNotes - the new value for survey notes file (if one file can't be associated with the entire trip)
+	 * 
+	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the new {@code overrideSurveyNotes}.
+	 */
+	public SurveyRow setOverrideSurveyNotes(String overrideSurveyNotes) {
+		return set(SurveyRow.overrideSurveyNotes, overrideSurveyNotes);
 	}
 	
 	/**
@@ -1001,6 +1037,17 @@ public final class SurveyRow {
 	}
 	
 	/**
+	 * Updates survey notes file (if one file can't be associated with the entire trip).
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code overrideSurveyNotes} and returns the new value for {@code overrideSurveyNotes}.
+	 * 
+	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the updated {@code overrideSurveyNotes}.
+	 */
+	public SurveyRow updateOverrideSurveyNotes(Function<String, String> updater) {
+		return update(overrideSurveyNotes, updater);
+	}
+	
+	/**
 	 * Updates trip this row belongs to.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code trip} and returns the new value for {@code trip}.
@@ -1018,6 +1065,10 @@ public final class SurveyRow {
 
 	public String getToCave() {
 		return or(getOverrideToCave(), getTrip() == null ? null : getTrip().getCave());
+	}
+	
+	public String getSurveyNotes() {
+		return or(getOverrideSurveyNotes(), getTrip() == null ? null : getTrip().getSurveyNotes());
 	}
 	
 }

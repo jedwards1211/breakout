@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-16 16:23:05.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-26 22:29:09.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -220,6 +220,13 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
+	 * @return survey notes file (if one file can't be associated with the entire trip).
+	 */
+	public String getOverrideSurveyNotes() {
+		return get(SurveyRow.overrideSurveyNotes);
+	}
+	
+	/**
 	 * @return trip this row belongs to.
 	 */
 	public SurveyTrip getTrip() {
@@ -434,6 +441,17 @@ public final class MutableSurveyRow {
 	 */
 	public MutableSurveyRow setComment(String comment) {
 		return set(SurveyRow.comment, comment);
+	}
+	
+	/**
+	 * Sets survey notes file (if one file can't be associated with the entire trip).
+	 *
+	 * @param overrideSurveyNotes - the new value for survey notes file (if one file can't be associated with the entire trip)
+	 * 
+	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the new {@code overrideSurveyNotes}.
+	 */
+	public MutableSurveyRow setOverrideSurveyNotes(String overrideSurveyNotes) {
+		return set(SurveyRow.overrideSurveyNotes, overrideSurveyNotes);
 	}
 	
 	/**
@@ -655,6 +673,17 @@ public final class MutableSurveyRow {
 	 */
 	public MutableSurveyRow updateComment(Function<String, String> updater) {
 		return update(SurveyRow.comment, updater);
+	}
+	
+	/**
+	 * Updates survey notes file (if one file can't be associated with the entire trip).
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code overrideSurveyNotes} and returns the new value for {@code overrideSurveyNotes}.
+	 * 
+	 * @return this {@code MutableSurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the updated {@code overrideSurveyNotes}.
+	 */
+	public MutableSurveyRow updateOverrideSurveyNotes(Function<String, String> updater) {
+		return update(SurveyRow.overrideSurveyNotes, updater);
 	}
 	
 	/**

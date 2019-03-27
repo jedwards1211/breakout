@@ -80,6 +80,10 @@ module.exports = {
       type: 'String',
       description: 'any user comment',
     },
+    overrideSurveyNotes: {
+      type: 'String',
+      description: "survey notes file (if one file can't be associated with the entire trip)",
+    },
     trip: {
       type: 'SurveyTrip',
       description: 'trip this row belongs to',
@@ -97,6 +101,10 @@ module.exports = {
 
   public String getToCave() {
     return or(getOverrideToCave(), getTrip() == null ? null : getTrip().getCave());
+  }
+  
+  public String getSurveyNotes() {
+  	return or(getOverrideSurveyNotes(), getTrip() == null ? null : getTrip().getSurveyNotes());
   }
   `,
   extraProperties: `
@@ -129,8 +137,11 @@ module.exports = {
       "date", String.class, SurveyTrip.Properties.date);
     public static DefaultProperty<SurveyRow, List<String>> surveyors = createTripProperty(
       "surveyors", List.class, SurveyTrip.Properties.surveyors);
-    public static DefaultProperty<SurveyRow, String> surveyNotes = createTripProperty(
-      "surveyNotes", String.class, SurveyTrip.Properties.surveyNotes);
+    public static DefaultProperty<SurveyRow, String> surveyNotes = create(
+			"surveyNotes", String.class,
+			r -> r.getSurveyNotes(),
+			(r, surveyNotes) -> r.setOverrideSurveyNotes(surveyNotes)
+		);
   `,
   extraMutableCode: `
 	public MutableSurveyRow ensureTrip() {

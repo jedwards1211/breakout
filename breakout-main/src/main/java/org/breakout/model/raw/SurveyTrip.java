@@ -1,24 +1,22 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-3-16 16:23:05.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-3-26 22:29:09.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
 package org.breakout.model.raw;
 
-import static org.andork.util.JavaScript.or;
-
 import java.util.List;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
-import org.andork.model.DefaultProperty;
+import org.andork.unit.Unit;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
-import org.andork.unit.Unit;
-
-import com.github.krukow.clj_ds.TransientMap;
+import static org.andork.util.JavaScript.or;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.Objects;
 import com.github.krukow.clj_lang.PersistentHashMap;
+import com.github.krukow.clj_ds.TransientMap;
+import org.andork.model.DefaultProperty;
+import java.util.function.BiConsumer;
 
 /**
  *

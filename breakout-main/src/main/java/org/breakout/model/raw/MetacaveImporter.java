@@ -72,6 +72,10 @@ public class MetacaveImporter {
 		JsonElement elem = obj.get(property);
 		return elem.isJsonNull() ? null : elem.getAsString();
 	}
+	
+	private static String intern(String s) {
+		return s != null ? s.intern() : s;
+	}
 
 	private static String getMeasurement(JsonElement elem) {
 		if (elem == null || elem.isJsonNull()) {
@@ -257,11 +261,14 @@ public class MetacaveImporter {
 				if (row == null) {
 					row = new MutableSurveyRow();
 					row.setTrip(trip);
-					row.setOverrideFromCave(getAsString(fromStation, "cave"));
-					row.setFromStation(getAsString(fromStation, "station"));
+					row.setOverrideFromCave(intern(getAsString(fromStation, "cave")));
+					row.setFromStation(intern(getAsString(fromStation, "station")));
 					if (shot != null && shot.size() > 0 && toStation != null) {
-						row.setOverrideToCave(getAsString(toStation, "cave"));
-						row.setToStation(getAsString(toStation, "station"));
+						row.setOverrideToCave(intern(getAsString(toStation, "cave")));
+						row.setToStation(intern(getAsString(toStation, "station")));
+						if (shot.has("surveyNotesFile")) {
+							row.setOverrideSurveyNotes(intern(getAsString(shot, "surveyNotesFile")));
+						}
 					}
 					rows.set(rowIndex, row);
 				}
@@ -314,7 +321,7 @@ public class MetacaveImporter {
 
 				// TODO: excludeDist
 			}
-
+		
 			if (fromStation.has("lrud")) {
 				MutableSurveyRow lrudRow = getRow.apply(fromStation);
 				JsonArray lrud = fromStation.getAsJsonArray("lrud");

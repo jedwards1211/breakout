@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-3-16 16:23:05.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-3-26 22:29:09.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
