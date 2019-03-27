@@ -6,8 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.breakout.model.ShotKey;
 
 public class StationSet {
 	public StationSet(String str) {
@@ -87,6 +90,9 @@ public class StationSet {
 			}
 			return builder.toString();
 		}
+
+		public abstract void forEachStation(Consumer<String> consumer);
+		public abstract void forEachShot(String caveName, Consumer<ShotKey> consumer);
 	}
 	
 	public static class NumericDesignation extends Designation<Integer> {
@@ -103,6 +109,30 @@ public class StationSet {
 		Integer[] allocateRange(int size) {
 			return new Integer[size];
 		}
+	
+		public void forEachStation(Consumer<String> consumer) {
+			for (Integer[] range: ranges) {
+				if (range.length == 0) {
+					consumer.accept(designation);
+				} else if (range.length == 2) {
+					for (int i = range[0]; i <= range[1]; i++) {
+						consumer.accept(designation + i);
+					}
+				}
+			}
+		}
+		
+		public void forEachShot(String caveName, Consumer<ShotKey> consumer) {
+			for (Integer[] range: ranges) {
+				if (range.length == 2) {
+					for (int i = range[0]; i < range[1]; i++) {
+						consumer.accept(new ShotKey(
+							caveName, designation + i,
+							caveName, designation + (i + 1)));
+					}
+				}
+			}			
+		}
 	}
 	
 	public static class AlphabeticDesignation extends Designation<String> {
@@ -118,6 +148,40 @@ public class StationSet {
 		@Override
 		String[] allocateRange(int size) {
 			return new String[size];
+		}
+		
+		public void forEachStation(Consumer<String> consumer) {
+			for (String[] range : ranges) {
+				if (range.length == 0) {
+					consumer.accept(designation);
+				} else if (range.length == 2) {
+					if (range[0].length() != 1 || range[1].length() != 1) {
+						return;
+					}
+					char from = range[0].charAt(0);
+					char to = range[1].charAt(0);
+					for (char i = from; i <= to; i++) {
+						consumer.accept(designation + i);
+					}
+				}
+			}
+		}
+		
+		public void forEachShot(String caveName, Consumer<ShotKey> consumer) {
+			for (String[] range : ranges) {
+				if (range.length == 2) {
+					if (range[0].length() != 1 || range[1].length() != 1) {
+						return;
+					}
+					char from = range[0].charAt(0);
+					char to = range[1].charAt(0);
+					for (char i = from; i < to; i++) {
+						consumer.accept(new ShotKey(
+							caveName, designation + i,
+							caveName, designation + (char) (i + 1)));
+					}
+				}
+			}			
 		}
 	}
 	
@@ -209,5 +273,17 @@ public class StationSet {
 			builder.append(designations.get(key));
 		}
 		return stringRep = builder.toString();
+	}
+	
+	public void forEachStation(Consumer<String> consumer) {
+		for (Designation<?> designation : designations.values()) {
+			designation.forEachStation(consumer);
+		}
+	}
+	
+	public void forEachShot(String caveName, Consumer<ShotKey> consumer) {
+		for (Designation<?> designation : designations.values()) {
+			designation.forEachShot(caveName, consumer);
+		}
 	}
 }
