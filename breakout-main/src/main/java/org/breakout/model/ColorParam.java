@@ -134,7 +134,7 @@ public enum ColorParam {
 	HAS_SURVEY_NOTES("Has Survey Notes", false) {
 		@Override
 		public float calcStationParam(CalcShot shot, CalcStation station) {
-			return shot.hasSurveyNotes ? 1f : 0f;
+			return shot.hasSurveyNotes() ? 1f : 0f;
 		}
 
 		@Override

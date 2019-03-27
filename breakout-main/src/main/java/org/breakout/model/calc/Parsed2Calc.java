@@ -344,7 +344,9 @@ public class Parsed2Calc {
 			ParsedStation parsedFromStation = trip.stations.get(i);
 			ParsedStation parsedToStation = trip.stations.get(i + 1);
 			CalcShot calcShot = convert(parsedFromStation, parsedShot, parsedToStation, trip);
-			calcShot.hasSurveyNotes = trip.hasSurveyNotes;
+			calcShot.setHasSurveyNotes(parsedShot.hasSurveyNotes());
+			calcShot.setExcludeDistance(parsedShot.isExcludeDistance());
+			calcShot.setExcludeFromPlotting(parsedShot.isExcludeFromPlotting());
 			if (calcShot.key() != null) {
 				calcTrip.shots.put(calcShot.key(), calcShot);
 			}

@@ -97,7 +97,6 @@ public class ProjectParser {
 		ParsedCave cave = ensureCave(caveName);
 		cave.trips.add(parsed);
 
-		parsed.hasSurveyNotes = !isNullOrEmpty(raw.getSurveyNotes());
 		parsed.distanceCorrection = parse(raw, SurveyTrip.Properties.distanceCorrection,
 				MetacaveLengthParser::parse, raw.getDistanceUnit(), null, 0);
 		parsed.declination = parse(raw, SurveyTrip.Properties.declination,
@@ -319,6 +318,7 @@ public class ProjectParser {
 			fromStation.splays.add(splay);
 		} else if (fromStation != null && toStation != null) {
 			ParsedShot shot = new ParsedShot();
+			shot.setHasSurveyNotes(!isNullOrEmpty(raw.getSurveyNotes()));
 			shot.measurements = new ArrayList<>(2);
 			if (frontsights != null) {
 				shot.measurements.add(frontsights);

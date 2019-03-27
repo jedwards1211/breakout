@@ -456,7 +456,7 @@ public class BreakoutMainView {
 			} else if (e.getClickCount() == 2) {
 				SurveyRow row = sourceRows.get(picked.picked.key());
 				if (row != null) {
-					String link = row.getTrip() == null ? null : row.getTrip().getSurveyNotes();
+					String link = row.getSurveyNotes();
 					if (link != null) {
 						openSurveyNotes(link);
 					}
@@ -1250,6 +1250,7 @@ public class BreakoutMainView {
 	ImportWallsAction importWallsAction = new ImportWallsAction(this);
 
 	ExportImageAction exportImageAction = new ExportImageAction(this);
+	LinkSurveyNotesAction linkSurveyNotesAction = new LinkSurveyNotesAction(this);
 	
 	SetCaveOnRowsAction setCaveOnRowsAction = new SetCaveOnRowsAction(this);
 
@@ -1313,6 +1314,11 @@ public class BreakoutMainView {
 	final DebouncedRunnable rebuild3dModel = Lodash.debounce(() -> {
 		rebuildTaskService.submit(new RebuildTask());
 	}, 1000, new DebounceOptions<Void>().executor(rebuildScheduler));
+	
+	public void rebuild3dModelIfNotEditing() {
+		if (editingSurvey) return;
+		rebuild3dModel.run();
+	}
 
 	final Throttler<Void> updateHover = new Throttler<>(0);
 
@@ -1496,6 +1502,7 @@ public class BreakoutMainView {
 		surveyDrawer.editButton().setSelected(false);
 		surveyDrawer.editButton().addItemListener(e -> {
 			editingSurvey = e.getStateChange() == ItemEvent.SELECTED;
+			linkSurveyNotesAction.setEnabled(!editingSurvey);
 			if (e.getStateChange() == ItemEvent.DESELECTED) {
 				CellEditor editor = surveyDrawer.table().getCellEditor();
 				if (editor != null) {
@@ -1822,6 +1829,8 @@ public class BreakoutMainView {
 		exportMenu.add(new JMenuItem(exportBinaryStlAction));
 		exportMenu.add(new JMenuItem(exportAsciiStlAction));
 		fileMenu.add(exportMenu);
+		fileMenu.add(new JSeparator());
+		fileMenu.add(new JMenuItem(linkSurveyNotesAction));
 
 		JMenu debugMenu = new JMenu();
 		menuBar.add(debugMenu);
@@ -2581,7 +2590,12 @@ public class BreakoutMainView {
 								Optional<Path> foundFile = Files
 										.find(dir.toPath(), SCANNED_NOTES_SEARCH_DEPTH,
 												(Path path, BasicFileAttributes attrs) -> {
-													return path.toString().endsWith(link);
+													String pathStr = path.toString();
+													int beforeIndex = pathStr.length() - link.length() - 1;
+													return pathStr.endsWith(link) &&
+														(beforeIndex < 0 ||
+														pathStr.charAt(beforeIndex) == '/' ||
+														pathStr.charAt(beforeIndex) == '\\');
 												}, FileVisitOption.FOLLOW_LINKS)
 										.findFirst();
 								if (foundFile.isPresent() && !isCanceled() && !isCanceled()) {

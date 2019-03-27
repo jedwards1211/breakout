@@ -1,5 +1,6 @@
 package org.andork.task;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -292,6 +293,32 @@ public abstract class Task<R> implements Callable<R> {
 
 	public long startTime() {
 		return startTime;
+	}
+	
+	public static interface Iteratee<E> {
+		public void accept(E elem) throws Exception;
+	}
+	
+	public <E> void forEach(E[] array, Iteratee<E> iteratee) throws Exception {
+		setIndeterminate(false);
+		setCompleted(0);
+		setTotal(array.length);
+		for (E elem : array) {
+			if (isCanceled()) return;
+			iteratee.accept(elem);
+			increment();
+		}
+	}
+	
+	public <E> void forEach(Collection<E> collection, Iteratee<E> iteratee) throws Exception {
+		setIndeterminate(false);
+		setCompleted(0);
+		setTotal(collection.size());
+		for (E elem : collection) {
+			if (isCanceled()) return;
+			iteratee.accept(elem);
+			increment();
+		}
 	}
 
 	private void setSubtask(long proportion, Task<?> subtask) {

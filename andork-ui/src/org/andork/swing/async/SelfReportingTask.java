@@ -31,6 +31,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import org.andork.task.Task;
+import org.andork.task.TaskCallable;
+import org.andork.task.TaskRunnable;
 
 public abstract class SelfReportingTask<R> extends Task<R> {
 	protected Component dialogParent;
@@ -45,6 +47,25 @@ public abstract class SelfReportingTask<R> extends Task<R> {
 		super();
 		setStatus(status);
 		this.dialogParent = dialogParent;
+	}
+	
+	public static void callSelfReportingSubtask(Task<?> parent, int proportion, Component dialogParent, TaskRunnable runnable) throws Exception {
+		parent.callSubtask(proportion, new SelfReportingTask<Void>(dialogParent) {
+			@Override
+			protected Void workDuringDialog() throws Exception {
+				runnable.work(this);
+				return null;
+			}
+		});
+	}
+	
+	public static <R> R callSelfReportingSubtask(Task<?> parent, int proportion, Component dialogParent, TaskCallable<R> callable) throws Exception {
+		return parent.callSubtask(proportion, new SelfReportingTask<R>(dialogParent) {
+			@Override
+			protected R workDuringDialog() throws Exception {
+				return callable.work(this);
+			}
+		});
 	}
 
 	protected JDialog createDialog(final Window owner) {

@@ -21,7 +21,6 @@ public class ParsedTrip {
 	public boolean areBackAzimuthsCorrected;
 	public boolean areBackInclinationsCorrected;
 	public ParsedField<Date> date;
-	public boolean hasSurveyNotes;
 	public ParsedField<String> datum;
 	public ParsedField<String> ellipsoid;
 	public ParsedField<Integer> utmZone;

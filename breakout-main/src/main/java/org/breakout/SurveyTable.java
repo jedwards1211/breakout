@@ -124,7 +124,7 @@ public class SurveyTable extends AnnotatingJTable {
 	private Aspect aspect = Aspect.SHOTS;
 
 	public enum Aspect {
-		SHOTS, NEV, TRIP,
+		SHOTS, NEV, TRIP, LINK_SURVEY_NOTES;
 	}
 
 	public SurveyTable() {
@@ -187,7 +187,9 @@ public class SurveyTable extends AnnotatingJTable {
 				columns = new Columns();
 			}
 
-			addColumn(columns.fromCave);
+			if (aspect != Aspect.LINK_SURVEY_NOTES) {
+				addColumn(columns.fromCave);
+			}
 			addColumn(columns.fromStation);
 			switch (aspect) {
 			case SHOTS:
@@ -204,6 +206,11 @@ public class SurveyTable extends AnnotatingJTable {
 				addColumn(columns.up);
 				addColumn(columns.down);
 				addColumn(columns.comment);
+				break;
+			case LINK_SURVEY_NOTES:
+				addColumn(columns.toStation);
+				addColumn(columns.tripName);
+				addColumn(columns.surveyNotes);
 				break;
 			case NEV:
 				addColumn(columns.northing);
