@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-26 22:29:09.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-29 23:25:27.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -124,6 +124,16 @@ public final class SurveyRow {
 	 * Key for trip this row belongs to.
 	 */
 	public static final String trip = "trip";
+	
+	/**
+	 * Key for whether to exclude this shot from the total cave length.
+	 */
+	public static final String excludeDistance = "excludeDistance";
+	
+	/**
+	 * Key for whether to exclude this shot from plotting.
+	 */
+	public static final String excludeFromPlotting = "excludeFromPlotting";
 	
 	
 	static final PersistentHashMap<String, Object> initialData = PersistentHashMap.emptyMap();
@@ -349,6 +359,26 @@ public final class SurveyRow {
 			"trip", SurveyTrip.class,
 			r -> r.get(SurveyRow.trip),
 			(m, v) -> m.set(SurveyRow.trip, v)
+		);
+		
+
+		/**
+		 * whether to exclude this shot from the total cave length
+		 */
+		public static final DefaultProperty<SurveyRow, Boolean> excludeDistance = create(
+			"excludeDistance", Boolean.class,
+			r -> r.get(SurveyRow.excludeDistance),
+			(m, v) -> m.set(SurveyRow.excludeDistance, v)
+		);
+		
+
+		/**
+		 * whether to exclude this shot from plotting
+		 */
+		public static final DefaultProperty<SurveyRow, Boolean> excludeFromPlotting = create(
+			"excludeFromPlotting", Boolean.class,
+			r -> r.get(SurveyRow.excludeFromPlotting),
+			(m, v) -> m.set(SurveyRow.excludeFromPlotting, v)
 		);
 		
 
@@ -594,6 +624,20 @@ public final class SurveyRow {
 		return get(trip);
 	}
 	
+	/**
+	 * @return whether to exclude this shot from the total cave length.
+	 */
+	public Boolean isExcludeDistance() {
+		return get(excludeDistance);
+	}
+	
+	/**
+	 * @return whether to exclude this shot from plotting.
+	 */
+	public Boolean isExcludeFromPlotting() {
+		return get(excludeFromPlotting);
+	}
+	
 	
 	/**
 	 * Sets name of cave from station is in, if different from trip.
@@ -826,6 +870,28 @@ public final class SurveyRow {
 		return set(SurveyRow.trip, trip);
 	}
 	
+	/**
+	 * Sets whether to exclude this shot from the total cave length.
+	 *
+	 * @param excludeDistance - the new value for whether to exclude this shot from the total cave length
+	 * 
+	 * @return this {@code SurveyRow} if {@code excludeDistance} is unchanged, or a copy with the new {@code excludeDistance}.
+	 */
+	public SurveyRow setExcludeDistance(Boolean excludeDistance) {
+		return set(SurveyRow.excludeDistance, excludeDistance);
+	}
+	
+	/**
+	 * Sets whether to exclude this shot from plotting.
+	 *
+	 * @param excludeFromPlotting - the new value for whether to exclude this shot from plotting
+	 * 
+	 * @return this {@code SurveyRow} if {@code excludeFromPlotting} is unchanged, or a copy with the new {@code excludeFromPlotting}.
+	 */
+	public SurveyRow setExcludeFromPlotting(Boolean excludeFromPlotting) {
+		return set(SurveyRow.excludeFromPlotting, excludeFromPlotting);
+	}
+	
 	
 	/**
 	 * Updates name of cave from station is in, if different from trip.
@@ -1056,6 +1122,28 @@ public final class SurveyRow {
 	 */
 	public SurveyRow updateTrip(Function<SurveyTrip, SurveyTrip> updater) {
 		return update(trip, updater);
+	}
+	
+	/**
+	 * Updates whether to exclude this shot from the total cave length.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code excludeDistance} and returns the new value for {@code excludeDistance}.
+	 * 
+	 * @return this {@code SurveyRow} if {@code excludeDistance} is unchanged, or a copy with the updated {@code excludeDistance}.
+	 */
+	public SurveyRow updateExcludeDistance(Function<Boolean, Boolean> updater) {
+		return update(excludeDistance, updater);
+	}
+	
+	/**
+	 * Updates whether to exclude this shot from plotting.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code excludeFromPlotting} and returns the new value for {@code excludeFromPlotting}.
+	 * 
+	 * @return this {@code SurveyRow} if {@code excludeFromPlotting} is unchanged, or a copy with the updated {@code excludeFromPlotting}.
+	 */
+	public SurveyRow updateExcludeFromPlotting(Function<Boolean, Boolean> updater) {
+		return update(excludeFromPlotting, updater);
 	}
 	
 	

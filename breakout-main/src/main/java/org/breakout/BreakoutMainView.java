@@ -1946,7 +1946,7 @@ public class BreakoutMainView {
 							recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
 
 					Set<ShotKey> rangeShots = startShots == shotsFromView
-							? calcProject.shots.keySet() : shotsFromView;
+							? calcProject.getPlottedShotKeys() : shotsFromView;
 					task.runSubtask(1,
 							rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
 					autoDrawable.display();
@@ -2447,7 +2447,7 @@ public class BreakoutMainView {
 		renderer.getViewState().pickXform().exportViewVolume(hull, canvas.getWidth(), canvas.getHeight());
 		model3d.getShotsIn(hull, result);
 		if (result.isEmpty()) {
-			result.addAll(calcProject.shots.keySet());
+			calcProject.getPlottedShotKeys(result);
 		}
 		return result;
 	}
@@ -2462,7 +2462,7 @@ public class BreakoutMainView {
 		if (result.size() >= minimumNumShots) {
 			return result;
 		}
-		return calcProject.shots.keySet();
+		return calcProject.getPlottedShotKeys();
 	}
 
 	public TaskListDrawer getTaskListDrawer() {

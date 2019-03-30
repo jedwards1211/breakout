@@ -1566,7 +1566,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		task.runSubtask(1, subtask -> {
 			subtask.setTotal(project.shots.size());
 			for (Map.Entry<ShotKey, CalcShot> entry : project.shots.entrySet()) {
-				shot3ds.put(entry.getKey(), new Shot3d(entry.getKey(), entry.getValue()));
+				if (!entry.getValue().isExcludeFromPlotting()) {
+					shot3ds.put(entry.getKey(), new Shot3d(entry.getKey(), entry.getValue()));
+				}
 				subtask.increment();
 			}
 		});

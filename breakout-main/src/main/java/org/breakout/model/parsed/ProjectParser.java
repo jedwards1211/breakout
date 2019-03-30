@@ -6,6 +6,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -42,12 +43,23 @@ public class ProjectParser {
 	}
 
 	private final IdentityHashMap<SurveyTrip, ParsedTrip> trips = new IdentityHashMap<>();
-	private final DateFormat[] dateFormats = {
+	private static final DateFormat[] dateFormats = {
 			new SimpleDateFormat("yyyy/MM/dd"),
 			new SimpleDateFormat("yyyy-MM-dd"),
 			new SimpleDateFormat("MM/dd/yyyy"),
 			new SimpleDateFormat("MM-dd-yyyy")
 	};
+	
+	public static Date parseDate(String s) {
+		for (DateFormat format : dateFormats) {
+			try {
+				return format.parse(s);
+			} catch (Exception e) {
+				// ignore
+			}
+		}
+		return null;
+	}
 
 	private static <T, U extends UnitType<U>> ParsedField<UnitizedDouble<U>> parse(
 			T object, Property<T, String> property,
@@ -116,15 +128,10 @@ public class ProjectParser {
 			dateText = dateText.trim();
 		}
 		if (!isNullOrEmpty(raw.getDate())) {
-			parsed.date = new ParsedField<>(Severity.ERROR, "invalid date");
-			for (DateFormat format : dateFormats) {
-				try {
-					parsed.date = new ParsedField<>(format.parse(dateText));
-					break;
-				} catch (ParseException ex) {
-					// ignore
-				}
-			}
+			Date parsedDate = parseDate(dateText);
+			parsed.date = parsedDate != null
+				? new ParsedField<>(parsedDate)
+				: new ParsedField<>(Severity.ERROR, "invalid date");
 		}
 		if (!isNullOrEmpty(raw.getDatum())) {
 			parsed.datum = new ParsedField<>(raw.getDatum());

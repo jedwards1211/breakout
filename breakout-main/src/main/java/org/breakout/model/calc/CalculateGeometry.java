@@ -272,7 +272,7 @@ public class CalculateGeometry {
 		 */
 		CalcShot prevShot = null;
 		for (CalcShot shot : project.shots.values()) {
-			if (prevShot != null) {
+			if (prevShot != null && !prevShot.isExcludeFromPlotting() && !shot.isExcludeFromPlotting()) {
 				if (prevShot.toStation == shot.fromStation) {
 					linkCrossSections(prevShot, shot.fromStation, shot);
 				} else if (prevShot.fromStation == shot.toStation) {
@@ -287,6 +287,8 @@ public class CalculateGeometry {
 		}
 		
 		for (CalcShot shot : project.shots.values()) {
+			if (shot.isExcludeFromPlotting()) continue;
+
 			if (shot.fromCrossSection == null && !shot.fromStation.isDeadEnd()) {
 				shot.fromCrossSection = new CalcCrossSection(
 					CrossSectionType.LRUD,
@@ -461,6 +463,8 @@ public class CalculateGeometry {
 	}
 
 	static void calculateVertices(CalcShot shot) {
+		if (shot.isExcludeFromPlotting()) return;
+
 		int fromVertexCount = getVertexCount(shot.fromCrossSection);
 		int toVertexCount = getVertexCount(shot.toCrossSection);
 		boolean flipLR = shot.fromCrossSection != null &&

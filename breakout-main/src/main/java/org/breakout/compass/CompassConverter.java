@@ -52,6 +52,7 @@ public class CompassConverter {
 			return tripShots;
 		}
 		for (CompassShot compassShot : compassTrip.getShots()) {
+			if (compassShot.isExcludedFromAllProcessing()) continue;
 			MutableSurveyRow shot = new MutableSurveyRow();
 			shot.setTrip(trip);
 			shot.setFromStation(compassShot.getFromStationName());
@@ -61,6 +62,8 @@ public class CompassConverter {
 			shot.setBackAzimuth(toString(compassShot.getBacksightAzimuth()));
 			shot.setFrontInclination(toString(compassShot.getFrontsightInclination()));
 			shot.setBackInclination(toString(compassShot.getBacksightInclination()));
+			shot.setExcludeDistance(compassShot.isExcludedFromLength());
+			shot.setExcludeFromPlotting(compassShot.isExcludedFromPlotting());
 			tripShots.add(shot.toImmutable());
 		}
 
@@ -80,8 +83,9 @@ public class CompassConverter {
 		}
 		Iterator<CompassShot> compassShotIter = compassShots.iterator();
 		while (tripShotIter.hasNext() && compassShotIter.hasNext()) {
-			SurveyRow shot = tripShotIter.next();
 			CompassShot compassShot = compassShotIter.next();
+			if (compassShot.isExcludedFromAllProcessing()) continue;
+			SurveyRow shot = tripShotIter.next();
 			tripShotIter.set(shot.withMutations(s -> {
 				s.setLeft(toString(LengthUnit.convert(compassShot.getLeft(), lengthUnit)));
 				s.setRight(toString(LengthUnit.convert(compassShot.getRight(), lengthUnit)));

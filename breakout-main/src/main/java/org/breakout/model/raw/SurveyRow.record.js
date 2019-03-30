@@ -88,6 +88,14 @@ module.exports = {
       type: 'SurveyTrip',
       description: 'trip this row belongs to',
     },
+    excludeDistance: {
+      type: 'Boolean',
+      description: 'whether to exclude this shot from the total cave length',
+    },
+    excludeFromPlotting: {
+      type: 'Boolean',
+      description: 'whether to exclude this shot from plotting',
+    },
   },
   extraImports: [
     'java.util.List',

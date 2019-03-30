@@ -195,6 +195,12 @@ public class MetacaveExporter {
 					if (truthy(row.getOverrideSurveyNotes())) {
 						shot.addProperty("surveyNotesFile", row.getOverrideSurveyNotes());
 					}
+					if (row.isExcludeDistance()) {
+						shot.addProperty("excludeDist", true);
+					}
+					if (row.isExcludeFromPlotting()) {
+						shot.addProperty("excludeFromPlot", true);
+					}
 					survey.add(shot);
 
 					// insert to station

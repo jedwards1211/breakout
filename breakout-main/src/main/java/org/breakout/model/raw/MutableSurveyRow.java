@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-26 22:29:09.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-29 23:25:27.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
  
@@ -231,6 +231,20 @@ public final class MutableSurveyRow {
 	 */
 	public SurveyTrip getTrip() {
 		return get(SurveyRow.trip);
+	}
+	
+	/**
+	 * @return whether to exclude this shot from the total cave length.
+	 */
+	public Boolean isExcludeDistance() {
+		return get(SurveyRow.excludeDistance);
+	}
+	
+	/**
+	 * @return whether to exclude this shot from plotting.
+	 */
+	public Boolean isExcludeFromPlotting() {
+		return get(SurveyRow.excludeFromPlotting);
 	}
 	
 	
@@ -465,6 +479,28 @@ public final class MutableSurveyRow {
 		return set(SurveyRow.trip, trip);
 	}
 	
+	/**
+	 * Sets whether to exclude this shot from the total cave length.
+	 *
+	 * @param excludeDistance - the new value for whether to exclude this shot from the total cave length
+	 * 
+	 * @return this {@code SurveyRow} if {@code excludeDistance} is unchanged, or a copy with the new {@code excludeDistance}.
+	 */
+	public MutableSurveyRow setExcludeDistance(Boolean excludeDistance) {
+		return set(SurveyRow.excludeDistance, excludeDistance);
+	}
+	
+	/**
+	 * Sets whether to exclude this shot from plotting.
+	 *
+	 * @param excludeFromPlotting - the new value for whether to exclude this shot from plotting
+	 * 
+	 * @return this {@code SurveyRow} if {@code excludeFromPlotting} is unchanged, or a copy with the new {@code excludeFromPlotting}.
+	 */
+	public MutableSurveyRow setExcludeFromPlotting(Boolean excludeFromPlotting) {
+		return set(SurveyRow.excludeFromPlotting, excludeFromPlotting);
+	}
+	
 	
 	/**
 	 * Updates name of cave from station is in, if different from trip.
@@ -695,6 +731,28 @@ public final class MutableSurveyRow {
 	 */
 	public MutableSurveyRow updateTrip(Function<SurveyTrip, SurveyTrip> updater) {
 		return update(SurveyRow.trip, updater);
+	}
+	
+	/**
+	 * Updates whether to exclude this shot from the total cave length.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code excludeDistance} and returns the new value for {@code excludeDistance}.
+	 * 
+	 * @return this {@code MutableSurveyRow} if {@code excludeDistance} is unchanged, or a copy with the updated {@code excludeDistance}.
+	 */
+	public MutableSurveyRow updateExcludeDistance(Function<Boolean, Boolean> updater) {
+		return update(SurveyRow.excludeDistance, updater);
+	}
+	
+	/**
+	 * Updates whether to exclude this shot from plotting.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code excludeFromPlotting} and returns the new value for {@code excludeFromPlotting}.
+	 * 
+	 * @return this {@code MutableSurveyRow} if {@code excludeFromPlotting} is unchanged, or a copy with the updated {@code excludeFromPlotting}.
+	 */
+	public MutableSurveyRow updateExcludeFromPlotting(Function<Boolean, Boolean> updater) {
+		return update(SurveyRow.excludeFromPlotting, updater);
 	}
 	
 	

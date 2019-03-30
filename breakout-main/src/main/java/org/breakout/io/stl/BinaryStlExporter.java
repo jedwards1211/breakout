@@ -29,6 +29,10 @@ public class BinaryStlExporter {
 			task.setTotal(project.shots.size());
 		}
 		for (CalcShot shot : project.shots.values()) {
+			if (shot.isExcludeFromPlotting()) {
+				if (task != null) task.increment();
+				continue;
+			}
 			for (int i = 0; i < shot.indices.length; i += 3) {
 				int i0 = shot.indices[i] * 3;
 				int i1 = shot.indices[i + 1] * 3;

@@ -49,13 +49,13 @@ public class MetacaveImporter {
 		}
 		return metacaveAngleUnits.get(obj.get(property).getAsString());
 	}
-
-	private static boolean getAsBoolean(JsonObject obj, String property) {
+	
+	private static boolean getAsBoolean(JsonObject obj, String property, boolean defaultValue) {
 		if (!obj.has(property)) {
-			return false;
+			return defaultValue;
 		}
 		JsonElement elem = obj.get(property);
-		return elem.isJsonNull() ? null : obj.get(property).getAsBoolean();
+		return elem.isJsonNull() ? defaultValue : obj.get(property).getAsBoolean();		
 	}
 
 	private static Integer getAsInteger(JsonObject obj, String property) {
@@ -219,8 +219,8 @@ public class MetacaveImporter {
 			if (obj.has("angleUnit")) {
 				t.setAngleUnit(metacaveAngleUnits.get(obj.get("angleUnit").getAsString()));
 			}
-			t.setBackAzimuthsCorrected(getAsBoolean(obj, "azmBacksightsCorrected"));
-			t.setBackInclinationsCorrected(getAsBoolean(obj, "incBacksightsCorrected"));
+			t.setBackAzimuthsCorrected(getAsBoolean(obj, "azmBacksightsCorrected", false));
+			t.setBackInclinationsCorrected(getAsBoolean(obj, "incBacksightsCorrected", false));
 			t.setDeclination(getAsString(obj, "declination"));
 			t.setOverrideFrontAzimuthUnit(getAngleUnit(obj, "azmFsUnit"));
 			t.setOverrideBackAzimuthUnit(getAngleUnit(obj, "azmBsUnit"));
@@ -319,7 +319,11 @@ public class MetacaveImporter {
 					getRow.apply(shot); // adds row as side effect
 				}
 
-				// TODO: excludeDist
+				boolean excludeDistance = getAsBoolean(shot, "excludeDist", false);
+				if (excludeDistance) getRow.apply(shot).setExcludeDistance(true);
+
+				boolean excludeFromPlot = getAsBoolean(shot, "excludeFromPlot", false);
+				if (excludeFromPlot) getRow.apply(shot).setExcludeFromPlotting(true);
 			}
 		
 			if (fromStation.has("lrud")) {
