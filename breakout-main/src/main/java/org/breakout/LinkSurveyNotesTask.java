@@ -10,7 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -33,6 +33,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
+import org.andork.collect.HashSetMultiMap;
+import org.andork.collect.MultiMap;
 import org.andork.swing.FromEDT;
 import org.andork.swing.JOptionPaneBuilder;
 import org.andork.swing.OnEDT;
@@ -56,6 +58,8 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		setTotal(3);
 	}
 	
+	private static final Pattern lettersNumbersPattern = Pattern.compile("^([\\p{L}]+)(\\d+)$");
+		
 	class Info {
 		private final Set<String> caveSet = new HashSet<>();
 		private int i;
@@ -64,6 +68,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		public List<String> caves;
 		public final List<SurveyRow> allShots = new ArrayList<>();
 		public final Map<StationKey, SurveyRow> stationRows = new HashMap<>();
+		public final MultiMap<StationKey, SurveyRow> stationRowsByDesignation = new HashSetMultiMap<>();
 
 		public final Map<SurveyTrip, Map<Path, Integer>> potentialTripLinks = new HashMap<>();
 		public List<Path> linkedFiles = new ArrayList<>();
@@ -85,6 +90,11 @@ public class LinkSurveyNotesTask extends Task<Void> {
 				}
 			}
 			stationRows.put(key, row);
+			
+			Matcher m = lettersNumbersPattern.matcher(key.station);
+			if (m.find()) {
+				stationRowsByDesignation.put(new StationKey(key.cave, m.group(1)), row);
+			}
 		}
 
 		public void addPotentialTripLink(SurveyTrip trip, Path file, Integer stationCount) {
@@ -212,7 +222,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 					String fileName = file.getFileName().toString();
 					Set<String> stations;
 					try {
-						 stations = LechuguillaStationSets.parse(fileName.replace("^[^A-Z]+|\\.[^.]*$", ""));
+						 stations = LechuguillaStationSets.parse(fileName.replaceAll("^[^A-Z]+|\\.[^.]*$", ""));
 					} catch (Exception e) {
 						return;
 					}
@@ -222,9 +232,17 @@ public class LinkSurveyNotesTask extends Task<Void> {
 					stations.forEach(station -> {
 						StationKey key = new StationKey(caveName, station);
 						SurveyRow existing = info.stationRows.get(key);
-						if (existing == null || !isNullOrEmpty(existing.getSurveyNotes())) return;
-						if (existing.getTrip() != null) {
+						if (existing != null && existing.getTrip() != null) {
 							increment(trips, existing.getTrip());
+							return;
+						}
+						Collection<SurveyRow> rows = info.stationRowsByDesignation.get(key);
+						if (rows != null) {
+							for (SurveyRow row : rows) {
+								if (row != null && row.getTrip() != null) {
+									increment(trips, row.getTrip());
+								}
+							}
 						}
 					});
 					
