@@ -35,10 +35,12 @@ import javax.swing.event.TableModelListener;
 
 import org.andork.collect.HashSetMultiMap;
 import org.andork.collect.MultiMap;
+import org.andork.q.QArrayList;
 import org.andork.swing.FromEDT;
 import org.andork.swing.JOptionPaneBuilder;
 import org.andork.swing.OnEDT;
 import org.andork.task.Task;
+import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
@@ -348,6 +350,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 							model.getRow(index)
 								.setOverrideSurveyNotes(row.getSurveyNotes()));
 					}
+
 				});
 				if (subtask.isCanceled()) return;
 				subtask.setCompleted(end);
@@ -355,6 +358,18 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		});
 	}
 	
+	private void addSearchDirectoryToProject(File directory) {
+		OnEDT.onEDT(() -> {
+			QArrayList<File> surveyScanPaths = mainView.getProjectModel().get(ProjectModel.surveyScanPaths);
+			if (surveyScanPaths == null) {
+				surveyScanPaths = new QArrayList<File>();
+			}
+			if (!surveyScanPaths.contains(directory)) {
+				surveyScanPaths.add(directory);
+			}
+		});
+	}
+
 	private final Matcher extensionMatcher =
 		Pattern.compile("\\.(bmp|jpe?g|png|pdf|e?ps|xps|gif|tiff?|[we]mf)$", Pattern.CASE_INSENSITIVE)
 		.matcher("");
@@ -400,6 +415,8 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		
 		rows = confirmResults(rows);
 		if (rows == null) return null;
+					
+		addSearchDirectoryToProject(directory);
 		
 		mergeIntoProject(rows);
 		mainView.rebuild3dModel.run();
