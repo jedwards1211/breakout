@@ -1,8 +1,8 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-29 23:25:27.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-4-1 12:03:57.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
- 
+
 package org.breakout.model.raw;
 
 import java.util.List;
@@ -142,7 +142,7 @@ public final class SurveyRow {
 	public static final class Properties {
 		public static <V> DefaultProperty<SurveyRow, V> create(
 				String name, Class<? super V> valueClass,
-				Function<? super SurveyRow, ? extends V> getter, 
+				Function<? super SurveyRow, ? extends V> getter,
 				BiConsumer<MutableSurveyRow, ? super V> setter) {
 			return new DefaultProperty<SurveyRow, V>(
 				name, valueClass, getter, (m, v) -> {
@@ -150,7 +150,7 @@ public final class SurveyRow {
 				}
 			);
 		}
-		
+
 		
 		/**
 		 * name of cave from station is in, if different from trip
@@ -418,11 +418,11 @@ public final class SurveyRow {
 		);
 	
 	}
-	 
+	
 	
 
 	private final PersistentHashMap<String, Object> data;
-	
+
 	SurveyRow(PersistentHashMap<String, Object> data) {
 		this.data = data;
 	}
@@ -440,10 +440,16 @@ public final class SurveyRow {
 		mutator.accept(mutable);
 		return mutable.dataEquals(data) ? this : mutable.toImmutable();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T get(String key) {
 		return (T) data.get(key);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T get(String key, T defaultValue) {
+		T result = (T) data.get(key);
+		return result != null ? result : defaultValue;
 	}
 
 	public SurveyRow set(String key, Object newValue) {
@@ -475,7 +481,7 @@ public final class SurveyRow {
 		}
 		return false;
 	}
-	
+
 	
 	/**
 	 * @return name of cave from station is in, if different from trip.
@@ -628,14 +634,14 @@ public final class SurveyRow {
 	 * @return whether to exclude this shot from the total cave length.
 	 */
 	public Boolean isExcludeDistance() {
-		return get(excludeDistance);
+		return get(excludeDistance, false);
 	}
 	
 	/**
 	 * @return whether to exclude this shot from plotting.
 	 */
 	public Boolean isExcludeFromPlotting() {
-		return get(excludeFromPlotting);
+		return get(excludeFromPlotting, false);
 	}
 	
 	
@@ -643,7 +649,7 @@ public final class SurveyRow {
 	 * Sets name of cave from station is in, if different from trip.
 	 *
 	 * @param overrideFromCave - the new value for name of cave from station is in, if different from trip
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideFromCave} is unchanged, or a copy with the new {@code overrideFromCave}.
 	 */
 	public SurveyRow setOverrideFromCave(String overrideFromCave) {
@@ -654,7 +660,7 @@ public final class SurveyRow {
 	 * Sets from station name.
 	 *
 	 * @param fromStation - the new value for from station name
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code fromStation} is unchanged, or a copy with the new {@code fromStation}.
 	 */
 	public SurveyRow setFromStation(String fromStation) {
@@ -665,7 +671,7 @@ public final class SurveyRow {
 	 * Sets name of cave of to station is in, if different to trip.
 	 *
 	 * @param overrideToCave - the new value for name of cave of to station is in, if different to trip
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideToCave} is unchanged, or a copy with the new {@code overrideToCave}.
 	 */
 	public SurveyRow setOverrideToCave(String overrideToCave) {
@@ -676,7 +682,7 @@ public final class SurveyRow {
 	 * Sets to station name.
 	 *
 	 * @param toStation - the new value for to station name
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code toStation} is unchanged, or a copy with the new {@code toStation}.
 	 */
 	public SurveyRow setToStation(String toStation) {
@@ -687,7 +693,7 @@ public final class SurveyRow {
 	 * Sets distance between from and to station.
 	 *
 	 * @param distance - the new value for distance between from and to station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code distance} is unchanged, or a copy with the new {@code distance}.
 	 */
 	public SurveyRow setDistance(String distance) {
@@ -698,7 +704,7 @@ public final class SurveyRow {
 	 * Sets azimuth toward to station at from station.
 	 *
 	 * @param frontAzimuth - the new value for azimuth toward to station at from station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code frontAzimuth} is unchanged, or a copy with the new {@code frontAzimuth}.
 	 */
 	public SurveyRow setFrontAzimuth(String frontAzimuth) {
@@ -709,7 +715,7 @@ public final class SurveyRow {
 	 * Sets azimuth toward from station at to station.
 	 *
 	 * @param backAzimuth - the new value for azimuth toward from station at to station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code backAzimuth} is unchanged, or a copy with the new {@code backAzimuth}.
 	 */
 	public SurveyRow setBackAzimuth(String backAzimuth) {
@@ -720,7 +726,7 @@ public final class SurveyRow {
 	 * Sets inclination toward to station at from station.
 	 *
 	 * @param frontInclination - the new value for inclination toward to station at from station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code frontInclination} is unchanged, or a copy with the new {@code frontInclination}.
 	 */
 	public SurveyRow setFrontInclination(String frontInclination) {
@@ -731,7 +737,7 @@ public final class SurveyRow {
 	 * Sets inclination toward from station at to station.
 	 *
 	 * @param backInclination - the new value for inclination toward from station at to station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code backInclination} is unchanged, or a copy with the new {@code backInclination}.
 	 */
 	public SurveyRow setBackInclination(String backInclination) {
@@ -742,7 +748,7 @@ public final class SurveyRow {
 	 * Sets distance between from station and left wall.
 	 *
 	 * @param left - the new value for distance between from station and left wall
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code left} is unchanged, or a copy with the new {@code left}.
 	 */
 	public SurveyRow setLeft(String left) {
@@ -753,7 +759,7 @@ public final class SurveyRow {
 	 * Sets distance between from station and right wall.
 	 *
 	 * @param right - the new value for distance between from station and right wall
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code right} is unchanged, or a copy with the new {@code right}.
 	 */
 	public SurveyRow setRight(String right) {
@@ -764,7 +770,7 @@ public final class SurveyRow {
 	 * Sets distance between from station and ceiling.
 	 *
 	 * @param up - the new value for distance between from station and ceiling
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code up} is unchanged, or a copy with the new {@code up}.
 	 */
 	public SurveyRow setUp(String up) {
@@ -775,7 +781,7 @@ public final class SurveyRow {
 	 * Sets distance between from station and floor.
 	 *
 	 * @param down - the new value for distance between from station and floor
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code down} is unchanged, or a copy with the new {@code down}.
 	 */
 	public SurveyRow setDown(String down) {
@@ -786,7 +792,7 @@ public final class SurveyRow {
 	 * Sets distance north relative to coordinate origin.
 	 *
 	 * @param northing - the new value for distance north relative to coordinate origin
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code northing} is unchanged, or a copy with the new {@code northing}.
 	 */
 	public SurveyRow setNorthing(String northing) {
@@ -797,7 +803,7 @@ public final class SurveyRow {
 	 * Sets from station's latitude.
 	 *
 	 * @param latitude - the new value for from station's latitude
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code latitude} is unchanged, or a copy with the new {@code latitude}.
 	 */
 	public SurveyRow setLatitude(String latitude) {
@@ -808,7 +814,7 @@ public final class SurveyRow {
 	 * Sets from station's longitude.
 	 *
 	 * @param longitude - the new value for from station's longitude
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code longitude} is unchanged, or a copy with the new {@code longitude}.
 	 */
 	public SurveyRow setLongitude(String longitude) {
@@ -819,7 +825,7 @@ public final class SurveyRow {
 	 * Sets from station's distance east relative to coordinate origin.
 	 *
 	 * @param easting - the new value for from station's distance east relative to coordinate origin
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code easting} is unchanged, or a copy with the new {@code easting}.
 	 */
 	public SurveyRow setEasting(String easting) {
@@ -830,7 +836,7 @@ public final class SurveyRow {
 	 * Sets from station's distance east relative to coordinate origin.
 	 *
 	 * @param elevation - the new value for from station's distance east relative to coordinate origin
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code elevation} is unchanged, or a copy with the new {@code elevation}.
 	 */
 	public SurveyRow setElevation(String elevation) {
@@ -841,7 +847,7 @@ public final class SurveyRow {
 	 * Sets any user comment.
 	 *
 	 * @param comment - the new value for any user comment
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code comment} is unchanged, or a copy with the new {@code comment}.
 	 */
 	public SurveyRow setComment(String comment) {
@@ -852,7 +858,7 @@ public final class SurveyRow {
 	 * Sets survey notes file (if one file can't be associated with the entire trip).
 	 *
 	 * @param overrideSurveyNotes - the new value for survey notes file (if one file can't be associated with the entire trip)
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the new {@code overrideSurveyNotes}.
 	 */
 	public SurveyRow setOverrideSurveyNotes(String overrideSurveyNotes) {
@@ -863,7 +869,7 @@ public final class SurveyRow {
 	 * Sets trip this row belongs to.
 	 *
 	 * @param trip - the new value for trip this row belongs to
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code trip} is unchanged, or a copy with the new {@code trip}.
 	 */
 	public SurveyRow setTrip(SurveyTrip trip) {
@@ -874,7 +880,7 @@ public final class SurveyRow {
 	 * Sets whether to exclude this shot from the total cave length.
 	 *
 	 * @param excludeDistance - the new value for whether to exclude this shot from the total cave length
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code excludeDistance} is unchanged, or a copy with the new {@code excludeDistance}.
 	 */
 	public SurveyRow setExcludeDistance(Boolean excludeDistance) {
@@ -885,7 +891,7 @@ public final class SurveyRow {
 	 * Sets whether to exclude this shot from plotting.
 	 *
 	 * @param excludeFromPlotting - the new value for whether to exclude this shot from plotting
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code excludeFromPlotting} is unchanged, or a copy with the new {@code excludeFromPlotting}.
 	 */
 	public SurveyRow setExcludeFromPlotting(Boolean excludeFromPlotting) {
@@ -897,7 +903,7 @@ public final class SurveyRow {
 	 * Updates name of cave from station is in, if different from trip.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideFromCave} and returns the new value for {@code overrideFromCave}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideFromCave} is unchanged, or a copy with the updated {@code overrideFromCave}.
 	 */
 	public SurveyRow updateOverrideFromCave(Function<String, String> updater) {
@@ -908,7 +914,7 @@ public final class SurveyRow {
 	 * Updates from station name.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code fromStation} and returns the new value for {@code fromStation}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code fromStation} is unchanged, or a copy with the updated {@code fromStation}.
 	 */
 	public SurveyRow updateFromStation(Function<String, String> updater) {
@@ -919,7 +925,7 @@ public final class SurveyRow {
 	 * Updates name of cave of to station is in, if different to trip.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideToCave} and returns the new value for {@code overrideToCave}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideToCave} is unchanged, or a copy with the updated {@code overrideToCave}.
 	 */
 	public SurveyRow updateOverrideToCave(Function<String, String> updater) {
@@ -930,7 +936,7 @@ public final class SurveyRow {
 	 * Updates to station name.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code toStation} and returns the new value for {@code toStation}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code toStation} is unchanged, or a copy with the updated {@code toStation}.
 	 */
 	public SurveyRow updateToStation(Function<String, String> updater) {
@@ -941,7 +947,7 @@ public final class SurveyRow {
 	 * Updates distance between from and to station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code distance} and returns the new value for {@code distance}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code distance} is unchanged, or a copy with the updated {@code distance}.
 	 */
 	public SurveyRow updateDistance(Function<String, String> updater) {
@@ -952,7 +958,7 @@ public final class SurveyRow {
 	 * Updates azimuth toward to station at from station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code frontAzimuth} and returns the new value for {@code frontAzimuth}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code frontAzimuth} is unchanged, or a copy with the updated {@code frontAzimuth}.
 	 */
 	public SurveyRow updateFrontAzimuth(Function<String, String> updater) {
@@ -963,7 +969,7 @@ public final class SurveyRow {
 	 * Updates azimuth toward from station at to station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code backAzimuth} and returns the new value for {@code backAzimuth}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code backAzimuth} is unchanged, or a copy with the updated {@code backAzimuth}.
 	 */
 	public SurveyRow updateBackAzimuth(Function<String, String> updater) {
@@ -974,7 +980,7 @@ public final class SurveyRow {
 	 * Updates inclination toward to station at from station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code frontInclination} and returns the new value for {@code frontInclination}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code frontInclination} is unchanged, or a copy with the updated {@code frontInclination}.
 	 */
 	public SurveyRow updateFrontInclination(Function<String, String> updater) {
@@ -985,7 +991,7 @@ public final class SurveyRow {
 	 * Updates inclination toward from station at to station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code backInclination} and returns the new value for {@code backInclination}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code backInclination} is unchanged, or a copy with the updated {@code backInclination}.
 	 */
 	public SurveyRow updateBackInclination(Function<String, String> updater) {
@@ -996,7 +1002,7 @@ public final class SurveyRow {
 	 * Updates distance between from station and left wall.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code left} and returns the new value for {@code left}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code left} is unchanged, or a copy with the updated {@code left}.
 	 */
 	public SurveyRow updateLeft(Function<String, String> updater) {
@@ -1007,7 +1013,7 @@ public final class SurveyRow {
 	 * Updates distance between from station and right wall.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code right} and returns the new value for {@code right}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code right} is unchanged, or a copy with the updated {@code right}.
 	 */
 	public SurveyRow updateRight(Function<String, String> updater) {
@@ -1018,7 +1024,7 @@ public final class SurveyRow {
 	 * Updates distance between from station and ceiling.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code up} and returns the new value for {@code up}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code up} is unchanged, or a copy with the updated {@code up}.
 	 */
 	public SurveyRow updateUp(Function<String, String> updater) {
@@ -1029,7 +1035,7 @@ public final class SurveyRow {
 	 * Updates distance between from station and floor.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code down} and returns the new value for {@code down}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code down} is unchanged, or a copy with the updated {@code down}.
 	 */
 	public SurveyRow updateDown(Function<String, String> updater) {
@@ -1040,7 +1046,7 @@ public final class SurveyRow {
 	 * Updates distance north relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code northing} and returns the new value for {@code northing}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code northing} is unchanged, or a copy with the updated {@code northing}.
 	 */
 	public SurveyRow updateNorthing(Function<String, String> updater) {
@@ -1051,7 +1057,7 @@ public final class SurveyRow {
 	 * Updates from station's latitude.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code latitude} and returns the new value for {@code latitude}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code latitude} is unchanged, or a copy with the updated {@code latitude}.
 	 */
 	public SurveyRow updateLatitude(Function<String, String> updater) {
@@ -1062,7 +1068,7 @@ public final class SurveyRow {
 	 * Updates from station's longitude.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code longitude} and returns the new value for {@code longitude}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code longitude} is unchanged, or a copy with the updated {@code longitude}.
 	 */
 	public SurveyRow updateLongitude(Function<String, String> updater) {
@@ -1073,7 +1079,7 @@ public final class SurveyRow {
 	 * Updates from station's distance east relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code easting} and returns the new value for {@code easting}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code easting} is unchanged, or a copy with the updated {@code easting}.
 	 */
 	public SurveyRow updateEasting(Function<String, String> updater) {
@@ -1084,7 +1090,7 @@ public final class SurveyRow {
 	 * Updates from station's distance east relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code elevation} and returns the new value for {@code elevation}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code elevation} is unchanged, or a copy with the updated {@code elevation}.
 	 */
 	public SurveyRow updateElevation(Function<String, String> updater) {
@@ -1095,7 +1101,7 @@ public final class SurveyRow {
 	 * Updates any user comment.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code comment} and returns the new value for {@code comment}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code comment} is unchanged, or a copy with the updated {@code comment}.
 	 */
 	public SurveyRow updateComment(Function<String, String> updater) {
@@ -1106,7 +1112,7 @@ public final class SurveyRow {
 	 * Updates survey notes file (if one file can't be associated with the entire trip).
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideSurveyNotes} and returns the new value for {@code overrideSurveyNotes}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the updated {@code overrideSurveyNotes}.
 	 */
 	public SurveyRow updateOverrideSurveyNotes(Function<String, String> updater) {
@@ -1117,7 +1123,7 @@ public final class SurveyRow {
 	 * Updates trip this row belongs to.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code trip} and returns the new value for {@code trip}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code trip} is unchanged, or a copy with the updated {@code trip}.
 	 */
 	public SurveyRow updateTrip(Function<SurveyTrip, SurveyTrip> updater) {
@@ -1128,7 +1134,7 @@ public final class SurveyRow {
 	 * Updates whether to exclude this shot from the total cave length.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code excludeDistance} and returns the new value for {@code excludeDistance}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code excludeDistance} is unchanged, or a copy with the updated {@code excludeDistance}.
 	 */
 	public SurveyRow updateExcludeDistance(Function<Boolean, Boolean> updater) {
@@ -1139,7 +1145,7 @@ public final class SurveyRow {
 	 * Updates whether to exclude this shot from plotting.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code excludeFromPlotting} and returns the new value for {@code excludeFromPlotting}.
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code excludeFromPlotting} is unchanged, or a copy with the updated {@code excludeFromPlotting}.
 	 */
 	public SurveyRow updateExcludeFromPlotting(Function<Boolean, Boolean> updater) {

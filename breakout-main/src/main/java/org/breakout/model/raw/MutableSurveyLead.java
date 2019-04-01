@@ -1,8 +1,8 @@
 /**
- * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-3-29 23:25:27.
+ * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-4-1 12:03:57.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
- 
+
 package org.breakout.model.raw;
 
 import com.github.krukow.clj_ds.TransientMap;
@@ -46,7 +46,13 @@ public final class MutableSurveyLead {
 	public <T> T get(String key) {
 		return (T) persist().get(key);
 	}
-	
+
+	@SuppressWarnings("unchecked")
+	public <T> T get(String key, T defaultValue) {
+		T result = (T) persist().get(key);
+		return result != null ? result : defaultValue;
+	}
+
 	private static boolean equals(Object a, Object b) {
 		if (a instanceof Number || b instanceof Number ||
 			a instanceof String || b instanceof String) {
@@ -83,7 +89,7 @@ public final class MutableSurveyLead {
 		data.minus(key);
 		return this;
 	}
-	
+
 	
 	
 	/**
@@ -126,7 +132,7 @@ public final class MutableSurveyLead {
 	 * Sets name of cave the lead is in.
 	 *
 	 * @param cave - the new value for name of cave the lead is in
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code cave} is unchanged, or a copy with the new {@code cave}.
 	 */
 	public MutableSurveyLead setCave(String cave) {
@@ -137,7 +143,7 @@ public final class MutableSurveyLead {
 	 * Sets the name of the nearest station.
 	 *
 	 * @param station - the new value for the name of the nearest station
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code station} is unchanged, or a copy with the new {@code station}.
 	 */
 	public MutableSurveyLead setStation(String station) {
@@ -148,7 +154,7 @@ public final class MutableSurveyLead {
 	 * Sets the description of the lead.
 	 *
 	 * @param description - the new value for the description of the lead
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code description} is unchanged, or a copy with the new {@code description}.
 	 */
 	public MutableSurveyLead setDescription(String description) {
@@ -159,7 +165,7 @@ public final class MutableSurveyLead {
 	 * Sets the width of the lead.
 	 *
 	 * @param width - the new value for the width of the lead
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the new {@code width}.
 	 */
 	public MutableSurveyLead setWidth(String width) {
@@ -170,7 +176,7 @@ public final class MutableSurveyLead {
 	 * Sets the height of the lead.
 	 *
 	 * @param height - the new value for the height of the lead
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the new {@code height}.
 	 */
 	public MutableSurveyLead setHeight(String height) {
@@ -182,7 +188,7 @@ public final class MutableSurveyLead {
 	 * Updates name of cave the lead is in.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code cave} and returns the new value for {@code cave}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyLead} if {@code cave} is unchanged, or a copy with the updated {@code cave}.
 	 */
 	public MutableSurveyLead updateCave(Function<String, String> updater) {
@@ -193,7 +199,7 @@ public final class MutableSurveyLead {
 	 * Updates the name of the nearest station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code station} and returns the new value for {@code station}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyLead} if {@code station} is unchanged, or a copy with the updated {@code station}.
 	 */
 	public MutableSurveyLead updateStation(Function<String, String> updater) {
@@ -204,7 +210,7 @@ public final class MutableSurveyLead {
 	 * Updates the description of the lead.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code description} and returns the new value for {@code description}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyLead} if {@code description} is unchanged, or a copy with the updated {@code description}.
 	 */
 	public MutableSurveyLead updateDescription(Function<String, String> updater) {
@@ -215,7 +221,7 @@ public final class MutableSurveyLead {
 	 * Updates the width of the lead.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code width} and returns the new value for {@code width}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyLead} if {@code width} is unchanged, or a copy with the updated {@code width}.
 	 */
 	public MutableSurveyLead updateWidth(Function<String, String> updater) {
@@ -226,7 +232,7 @@ public final class MutableSurveyLead {
 	 * Updates the height of the lead.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code height} and returns the new value for {@code height}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyLead} if {@code height} is unchanged, or a copy with the updated {@code height}.
 	 */
 	public MutableSurveyLead updateHeight(Function<String, String> updater) {

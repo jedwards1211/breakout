@@ -90,10 +90,12 @@ module.exports = {
     },
     excludeDistance: {
       type: 'Boolean',
+      defaultValue: 'false',
       description: 'whether to exclude this shot from the total cave length',
     },
     excludeFromPlotting: {
       type: 'Boolean',
+      defaultValue: 'false',
       description: 'whether to exclude this shot from plotting',
     },
   },

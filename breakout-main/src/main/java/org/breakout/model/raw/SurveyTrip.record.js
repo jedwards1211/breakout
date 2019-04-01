@@ -26,11 +26,13 @@ module.exports = {
 		overrideBackInclinationUnit: {type: 'Unit<Angle>', description: 'default backsight inclination unit'},
 		backAzimuthsCorrected: {
 			type: 'boolean', 
+			defaultValue: 'false',
 			description: 'whether backsight azimuths are corrected',
 			getterName: 'areBackAzimuthsCorrected',
 		},
 		backInclinationsCorrected: {
 			type: 'boolean', 
+			defaultValue: 'false',
 			description: 'whether backsight inclinations are corrected',
 			getterName: 'areBackInclinationsCorrected',
 		},

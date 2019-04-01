@@ -1,8 +1,8 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-3-29 23:25:27.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 2019-4-1 12:03:57.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
- 
+
 package org.breakout.model.raw;
 
 import java.util.List;
@@ -147,7 +147,7 @@ public final class SurveyTrip {
 	public static final class Properties {
 		public static <V> DefaultProperty<SurveyTrip, V> create(
 				String name, Class<? super V> valueClass,
-				Function<? super SurveyTrip, ? extends V> getter, 
+				Function<? super SurveyTrip, ? extends V> getter,
 				BiConsumer<MutableSurveyTrip, ? super V> setter) {
 			return new DefaultProperty<SurveyTrip, V>(
 				name, valueClass, getter, (m, v) -> {
@@ -155,7 +155,7 @@ public final class SurveyTrip {
 				}
 			);
 		}
-		
+
 		
 		/**
 		 * cave name
@@ -377,11 +377,11 @@ public final class SurveyTrip {
 		);
 		
 	}
-	 
+	
 	
 
 	private final PersistentHashMap<String, Object> data;
-	
+
 	SurveyTrip(PersistentHashMap<String, Object> data) {
 		this.data = data;
 	}
@@ -399,10 +399,16 @@ public final class SurveyTrip {
 		mutator.accept(mutable);
 		return mutable.dataEquals(data) ? this : mutable.toImmutable();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T get(String key) {
 		return (T) data.get(key);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T get(String key, T defaultValue) {
+		T result = (T) data.get(key);
+		return result != null ? result : defaultValue;
 	}
 
 	public SurveyTrip set(String key, Object newValue) {
@@ -434,7 +440,7 @@ public final class SurveyTrip {
 		}
 		return false;
 	}
-	
+
 	
 	/**
 	 * @return cave name.
@@ -517,14 +523,14 @@ public final class SurveyTrip {
 	 * @return whether backsight azimuths are corrected.
 	 */
 	public boolean areBackAzimuthsCorrected() {
-		return get(backAzimuthsCorrected);
+		return get(backAzimuthsCorrected, false);
 	}
 	
 	/**
 	 * @return whether backsight inclinations are corrected.
 	 */
 	public boolean areBackInclinationsCorrected() {
-		return get(backInclinationsCorrected);
+		return get(backInclinationsCorrected, false);
 	}
 	
 	/**
@@ -595,7 +601,7 @@ public final class SurveyTrip {
 	 * Sets cave name.
 	 *
 	 * @param cave - the new value for cave name
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code cave} is unchanged, or a copy with the new {@code cave}.
 	 */
 	public SurveyTrip setCave(String cave) {
@@ -606,7 +612,7 @@ public final class SurveyTrip {
 	 * Sets trip name.
 	 *
 	 * @param name - the new value for trip name
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code name} is unchanged, or a copy with the new {@code name}.
 	 */
 	public SurveyTrip setName(String name) {
@@ -617,7 +623,7 @@ public final class SurveyTrip {
 	 * Sets trip date.
 	 *
 	 * @param date - the new value for trip date
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code date} is unchanged, or a copy with the new {@code date}.
 	 */
 	public SurveyTrip setDate(String date) {
@@ -628,7 +634,7 @@ public final class SurveyTrip {
 	 * Sets survey notes file path.
 	 *
 	 * @param surveyNotes - the new value for survey notes file path
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code surveyNotes} is unchanged, or a copy with the new {@code surveyNotes}.
 	 */
 	public SurveyTrip setSurveyNotes(String surveyNotes) {
@@ -639,7 +645,7 @@ public final class SurveyTrip {
 	 * Sets surveyor names.
 	 *
 	 * @param surveyors - the new value for surveyor names
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code surveyors} is unchanged, or a copy with the new {@code surveyors}.
 	 */
 	public SurveyTrip setSurveyors(List<String> surveyors) {
@@ -650,7 +656,7 @@ public final class SurveyTrip {
 	 * Sets default length unit.
 	 *
 	 * @param distanceUnit - the new value for default length unit
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code distanceUnit} is unchanged, or a copy with the new {@code distanceUnit}.
 	 */
 	public SurveyTrip setDistanceUnit(Unit<Length> distanceUnit) {
@@ -661,7 +667,7 @@ public final class SurveyTrip {
 	 * Sets default angle unit.
 	 *
 	 * @param angleUnit - the new value for default angle unit
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code angleUnit} is unchanged, or a copy with the new {@code angleUnit}.
 	 */
 	public SurveyTrip setAngleUnit(Unit<Angle> angleUnit) {
@@ -672,7 +678,7 @@ public final class SurveyTrip {
 	 * Sets default frontsight azimuth unit.
 	 *
 	 * @param overrideFrontAzimuthUnit - the new value for default frontsight azimuth unit
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code overrideFrontAzimuthUnit} is unchanged, or a copy with the new {@code overrideFrontAzimuthUnit}.
 	 */
 	public SurveyTrip setOverrideFrontAzimuthUnit(Unit<Angle> overrideFrontAzimuthUnit) {
@@ -683,7 +689,7 @@ public final class SurveyTrip {
 	 * Sets default backsight azimuth unit.
 	 *
 	 * @param overrideBackAzimuthUnit - the new value for default backsight azimuth unit
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code overrideBackAzimuthUnit} is unchanged, or a copy with the new {@code overrideBackAzimuthUnit}.
 	 */
 	public SurveyTrip setOverrideBackAzimuthUnit(Unit<Angle> overrideBackAzimuthUnit) {
@@ -694,7 +700,7 @@ public final class SurveyTrip {
 	 * Sets default frontsight inclination unit.
 	 *
 	 * @param overrideFrontInclinationUnit - the new value for default frontsight inclination unit
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code overrideFrontInclinationUnit} is unchanged, or a copy with the new {@code overrideFrontInclinationUnit}.
 	 */
 	public SurveyTrip setOverrideFrontInclinationUnit(Unit<Angle> overrideFrontInclinationUnit) {
@@ -705,7 +711,7 @@ public final class SurveyTrip {
 	 * Sets default backsight inclination unit.
 	 *
 	 * @param overrideBackInclinationUnit - the new value for default backsight inclination unit
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code overrideBackInclinationUnit} is unchanged, or a copy with the new {@code overrideBackInclinationUnit}.
 	 */
 	public SurveyTrip setOverrideBackInclinationUnit(Unit<Angle> overrideBackInclinationUnit) {
@@ -716,7 +722,7 @@ public final class SurveyTrip {
 	 * Sets whether backsight azimuths are corrected.
 	 *
 	 * @param backAzimuthsCorrected - the new value for whether backsight azimuths are corrected
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code backAzimuthsCorrected} is unchanged, or a copy with the new {@code backAzimuthsCorrected}.
 	 */
 	public SurveyTrip setBackAzimuthsCorrected(boolean backAzimuthsCorrected) {
@@ -727,7 +733,7 @@ public final class SurveyTrip {
 	 * Sets whether backsight inclinations are corrected.
 	 *
 	 * @param backInclinationsCorrected - the new value for whether backsight inclinations are corrected
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code backInclinationsCorrected} is unchanged, or a copy with the new {@code backInclinationsCorrected}.
 	 */
 	public SurveyTrip setBackInclinationsCorrected(boolean backInclinationsCorrected) {
@@ -738,7 +744,7 @@ public final class SurveyTrip {
 	 * Sets magnetic declination.
 	 *
 	 * @param declination - the new value for magnetic declination
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code declination} is unchanged, or a copy with the new {@code declination}.
 	 */
 	public SurveyTrip setDeclination(String declination) {
@@ -749,7 +755,7 @@ public final class SurveyTrip {
 	 * Sets correction for shot distances.
 	 *
 	 * @param distanceCorrection - the new value for correction for shot distances
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code distanceCorrection} is unchanged, or a copy with the new {@code distanceCorrection}.
 	 */
 	public SurveyTrip setDistanceCorrection(String distanceCorrection) {
@@ -760,7 +766,7 @@ public final class SurveyTrip {
 	 * Sets correction for frontsight azimuths.
 	 *
 	 * @param frontAzimuthCorrection - the new value for correction for frontsight azimuths
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code frontAzimuthCorrection} is unchanged, or a copy with the new {@code frontAzimuthCorrection}.
 	 */
 	public SurveyTrip setFrontAzimuthCorrection(String frontAzimuthCorrection) {
@@ -771,7 +777,7 @@ public final class SurveyTrip {
 	 * Sets correction for frontsight inclinations.
 	 *
 	 * @param frontInclinationCorrection - the new value for correction for frontsight inclinations
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code frontInclinationCorrection} is unchanged, or a copy with the new {@code frontInclinationCorrection}.
 	 */
 	public SurveyTrip setFrontInclinationCorrection(String frontInclinationCorrection) {
@@ -782,7 +788,7 @@ public final class SurveyTrip {
 	 * Sets correction for backsight azimuths.
 	 *
 	 * @param backAzimuthCorrection - the new value for correction for backsight azimuths
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code backAzimuthCorrection} is unchanged, or a copy with the new {@code backAzimuthCorrection}.
 	 */
 	public SurveyTrip setBackAzimuthCorrection(String backAzimuthCorrection) {
@@ -793,7 +799,7 @@ public final class SurveyTrip {
 	 * Sets correction for backsight inclinations.
 	 *
 	 * @param backInclinationCorrection - the new value for correction for backsight inclinations
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code backInclinationCorrection} is unchanged, or a copy with the new {@code backInclinationCorrection}.
 	 */
 	public SurveyTrip setBackInclinationCorrection(String backInclinationCorrection) {
@@ -804,7 +810,7 @@ public final class SurveyTrip {
 	 * Sets the geodetic datum for fixed station locations.
 	 *
 	 * @param datum - the new value for the geodetic datum for fixed station locations
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code datum} is unchanged, or a copy with the new {@code datum}.
 	 */
 	public SurveyTrip setDatum(String datum) {
@@ -815,7 +821,7 @@ public final class SurveyTrip {
 	 * Sets the reference ellipsoid for fixed station locations.
 	 *
 	 * @param ellipsoid - the new value for the reference ellipsoid for fixed station locations
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code ellipsoid} is unchanged, or a copy with the new {@code ellipsoid}.
 	 */
 	public SurveyTrip setEllipsoid(String ellipsoid) {
@@ -826,7 +832,7 @@ public final class SurveyTrip {
 	 * Sets the UTM zone for fixed station locations.
 	 *
 	 * @param utmZone - the new value for the UTM zone for fixed station locations
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code utmZone} is unchanged, or a copy with the new {@code utmZone}.
 	 */
 	public SurveyTrip setUtmZone(String utmZone) {
@@ -838,7 +844,7 @@ public final class SurveyTrip {
 	 * Updates cave name.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code cave} and returns the new value for {@code cave}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code cave} is unchanged, or a copy with the updated {@code cave}.
 	 */
 	public SurveyTrip updateCave(Function<String, String> updater) {
@@ -849,7 +855,7 @@ public final class SurveyTrip {
 	 * Updates trip name.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code name} and returns the new value for {@code name}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code name} is unchanged, or a copy with the updated {@code name}.
 	 */
 	public SurveyTrip updateName(Function<String, String> updater) {
@@ -860,7 +866,7 @@ public final class SurveyTrip {
 	 * Updates trip date.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code date} and returns the new value for {@code date}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code date} is unchanged, or a copy with the updated {@code date}.
 	 */
 	public SurveyTrip updateDate(Function<String, String> updater) {
@@ -871,7 +877,7 @@ public final class SurveyTrip {
 	 * Updates survey notes file path.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code surveyNotes} and returns the new value for {@code surveyNotes}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code surveyNotes} is unchanged, or a copy with the updated {@code surveyNotes}.
 	 */
 	public SurveyTrip updateSurveyNotes(Function<String, String> updater) {
@@ -882,7 +888,7 @@ public final class SurveyTrip {
 	 * Updates surveyor names.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code surveyors} and returns the new value for {@code surveyors}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code surveyors} is unchanged, or a copy with the updated {@code surveyors}.
 	 */
 	public SurveyTrip updateSurveyors(Function<List<String>, List<String>> updater) {
@@ -893,7 +899,7 @@ public final class SurveyTrip {
 	 * Updates default length unit.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code distanceUnit} and returns the new value for {@code distanceUnit}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code distanceUnit} is unchanged, or a copy with the updated {@code distanceUnit}.
 	 */
 	public SurveyTrip updateDistanceUnit(Function<Unit<Length>, Unit<Length>> updater) {
@@ -904,7 +910,7 @@ public final class SurveyTrip {
 	 * Updates default angle unit.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code angleUnit} and returns the new value for {@code angleUnit}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code angleUnit} is unchanged, or a copy with the updated {@code angleUnit}.
 	 */
 	public SurveyTrip updateAngleUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
@@ -915,7 +921,7 @@ public final class SurveyTrip {
 	 * Updates default frontsight azimuth unit.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideFrontAzimuthUnit} and returns the new value for {@code overrideFrontAzimuthUnit}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code overrideFrontAzimuthUnit} is unchanged, or a copy with the updated {@code overrideFrontAzimuthUnit}.
 	 */
 	public SurveyTrip updateOverrideFrontAzimuthUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
@@ -926,7 +932,7 @@ public final class SurveyTrip {
 	 * Updates default backsight azimuth unit.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideBackAzimuthUnit} and returns the new value for {@code overrideBackAzimuthUnit}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code overrideBackAzimuthUnit} is unchanged, or a copy with the updated {@code overrideBackAzimuthUnit}.
 	 */
 	public SurveyTrip updateOverrideBackAzimuthUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
@@ -937,7 +943,7 @@ public final class SurveyTrip {
 	 * Updates default frontsight inclination unit.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideFrontInclinationUnit} and returns the new value for {@code overrideFrontInclinationUnit}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code overrideFrontInclinationUnit} is unchanged, or a copy with the updated {@code overrideFrontInclinationUnit}.
 	 */
 	public SurveyTrip updateOverrideFrontInclinationUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
@@ -948,7 +954,7 @@ public final class SurveyTrip {
 	 * Updates default backsight inclination unit.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideBackInclinationUnit} and returns the new value for {@code overrideBackInclinationUnit}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code overrideBackInclinationUnit} is unchanged, or a copy with the updated {@code overrideBackInclinationUnit}.
 	 */
 	public SurveyTrip updateOverrideBackInclinationUnit(Function<Unit<Angle>, Unit<Angle>> updater) {
@@ -959,7 +965,7 @@ public final class SurveyTrip {
 	 * Updates whether backsight azimuths are corrected.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code backAzimuthsCorrected} and returns the new value for {@code backAzimuthsCorrected}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code backAzimuthsCorrected} is unchanged, or a copy with the updated {@code backAzimuthsCorrected}.
 	 */
 	public SurveyTrip updateBackAzimuthsCorrected(Function<Boolean, Boolean> updater) {
@@ -970,7 +976,7 @@ public final class SurveyTrip {
 	 * Updates whether backsight inclinations are corrected.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code backInclinationsCorrected} and returns the new value for {@code backInclinationsCorrected}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code backInclinationsCorrected} is unchanged, or a copy with the updated {@code backInclinationsCorrected}.
 	 */
 	public SurveyTrip updateBackInclinationsCorrected(Function<Boolean, Boolean> updater) {
@@ -981,7 +987,7 @@ public final class SurveyTrip {
 	 * Updates magnetic declination.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code declination} and returns the new value for {@code declination}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code declination} is unchanged, or a copy with the updated {@code declination}.
 	 */
 	public SurveyTrip updateDeclination(Function<String, String> updater) {
@@ -992,7 +998,7 @@ public final class SurveyTrip {
 	 * Updates correction for shot distances.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code distanceCorrection} and returns the new value for {@code distanceCorrection}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code distanceCorrection} is unchanged, or a copy with the updated {@code distanceCorrection}.
 	 */
 	public SurveyTrip updateDistanceCorrection(Function<String, String> updater) {
@@ -1003,7 +1009,7 @@ public final class SurveyTrip {
 	 * Updates correction for frontsight azimuths.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code frontAzimuthCorrection} and returns the new value for {@code frontAzimuthCorrection}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code frontAzimuthCorrection} is unchanged, or a copy with the updated {@code frontAzimuthCorrection}.
 	 */
 	public SurveyTrip updateFrontAzimuthCorrection(Function<String, String> updater) {
@@ -1014,7 +1020,7 @@ public final class SurveyTrip {
 	 * Updates correction for frontsight inclinations.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code frontInclinationCorrection} and returns the new value for {@code frontInclinationCorrection}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code frontInclinationCorrection} is unchanged, or a copy with the updated {@code frontInclinationCorrection}.
 	 */
 	public SurveyTrip updateFrontInclinationCorrection(Function<String, String> updater) {
@@ -1025,7 +1031,7 @@ public final class SurveyTrip {
 	 * Updates correction for backsight azimuths.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code backAzimuthCorrection} and returns the new value for {@code backAzimuthCorrection}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code backAzimuthCorrection} is unchanged, or a copy with the updated {@code backAzimuthCorrection}.
 	 */
 	public SurveyTrip updateBackAzimuthCorrection(Function<String, String> updater) {
@@ -1036,7 +1042,7 @@ public final class SurveyTrip {
 	 * Updates correction for backsight inclinations.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code backInclinationCorrection} and returns the new value for {@code backInclinationCorrection}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code backInclinationCorrection} is unchanged, or a copy with the updated {@code backInclinationCorrection}.
 	 */
 	public SurveyTrip updateBackInclinationCorrection(Function<String, String> updater) {
@@ -1047,7 +1053,7 @@ public final class SurveyTrip {
 	 * Updates the geodetic datum for fixed station locations.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code datum} and returns the new value for {@code datum}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code datum} is unchanged, or a copy with the updated {@code datum}.
 	 */
 	public SurveyTrip updateDatum(Function<String, String> updater) {
@@ -1058,7 +1064,7 @@ public final class SurveyTrip {
 	 * Updates the reference ellipsoid for fixed station locations.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code ellipsoid} and returns the new value for {@code ellipsoid}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code ellipsoid} is unchanged, or a copy with the updated {@code ellipsoid}.
 	 */
 	public SurveyTrip updateEllipsoid(Function<String, String> updater) {
@@ -1069,7 +1075,7 @@ public final class SurveyTrip {
 	 * Updates the UTM zone for fixed station locations.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code utmZone} and returns the new value for {@code utmZone}.
-	 * 
+	 *
 	 * @return this {@code SurveyTrip} if {@code utmZone} is unchanged, or a copy with the updated {@code utmZone}.
 	 */
 	public SurveyTrip updateUtmZone(Function<String, String> updater) {

@@ -1,8 +1,8 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-3-29 23:25:27.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-4-1 12:03:57.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
- 
+
 package org.breakout.model.raw;
 
 import com.github.krukow.clj_ds.TransientMap;
@@ -46,7 +46,13 @@ public final class MutableSurveyRow {
 	public <T> T get(String key) {
 		return (T) persist().get(key);
 	}
-	
+
+	@SuppressWarnings("unchecked")
+	public <T> T get(String key, T defaultValue) {
+		T result = (T) persist().get(key);
+		return result != null ? result : defaultValue;
+	}
+
 	private static boolean equals(Object a, Object b) {
 		if (a instanceof Number || b instanceof Number ||
 			a instanceof String || b instanceof String) {
@@ -83,7 +89,7 @@ public final class MutableSurveyRow {
 		data.minus(key);
 		return this;
 	}
-	
+
 	
 	
 	/**
@@ -237,14 +243,14 @@ public final class MutableSurveyRow {
 	 * @return whether to exclude this shot from the total cave length.
 	 */
 	public Boolean isExcludeDistance() {
-		return get(SurveyRow.excludeDistance);
+		return get(SurveyRow.excludeDistance, false);
 	}
 	
 	/**
 	 * @return whether to exclude this shot from plotting.
 	 */
 	public Boolean isExcludeFromPlotting() {
-		return get(SurveyRow.excludeFromPlotting);
+		return get(SurveyRow.excludeFromPlotting, false);
 	}
 	
 	
@@ -252,7 +258,7 @@ public final class MutableSurveyRow {
 	 * Sets name of cave from station is in, if different from trip.
 	 *
 	 * @param overrideFromCave - the new value for name of cave from station is in, if different from trip
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideFromCave} is unchanged, or a copy with the new {@code overrideFromCave}.
 	 */
 	public MutableSurveyRow setOverrideFromCave(String overrideFromCave) {
@@ -263,7 +269,7 @@ public final class MutableSurveyRow {
 	 * Sets from station name.
 	 *
 	 * @param fromStation - the new value for from station name
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code fromStation} is unchanged, or a copy with the new {@code fromStation}.
 	 */
 	public MutableSurveyRow setFromStation(String fromStation) {
@@ -274,7 +280,7 @@ public final class MutableSurveyRow {
 	 * Sets name of cave of to station is in, if different to trip.
 	 *
 	 * @param overrideToCave - the new value for name of cave of to station is in, if different to trip
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideToCave} is unchanged, or a copy with the new {@code overrideToCave}.
 	 */
 	public MutableSurveyRow setOverrideToCave(String overrideToCave) {
@@ -285,7 +291,7 @@ public final class MutableSurveyRow {
 	 * Sets to station name.
 	 *
 	 * @param toStation - the new value for to station name
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code toStation} is unchanged, or a copy with the new {@code toStation}.
 	 */
 	public MutableSurveyRow setToStation(String toStation) {
@@ -296,7 +302,7 @@ public final class MutableSurveyRow {
 	 * Sets distance between from and to station.
 	 *
 	 * @param distance - the new value for distance between from and to station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code distance} is unchanged, or a copy with the new {@code distance}.
 	 */
 	public MutableSurveyRow setDistance(String distance) {
@@ -307,7 +313,7 @@ public final class MutableSurveyRow {
 	 * Sets azimuth toward to station at from station.
 	 *
 	 * @param frontAzimuth - the new value for azimuth toward to station at from station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code frontAzimuth} is unchanged, or a copy with the new {@code frontAzimuth}.
 	 */
 	public MutableSurveyRow setFrontAzimuth(String frontAzimuth) {
@@ -318,7 +324,7 @@ public final class MutableSurveyRow {
 	 * Sets azimuth toward from station at to station.
 	 *
 	 * @param backAzimuth - the new value for azimuth toward from station at to station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code backAzimuth} is unchanged, or a copy with the new {@code backAzimuth}.
 	 */
 	public MutableSurveyRow setBackAzimuth(String backAzimuth) {
@@ -329,7 +335,7 @@ public final class MutableSurveyRow {
 	 * Sets inclination toward to station at from station.
 	 *
 	 * @param frontInclination - the new value for inclination toward to station at from station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code frontInclination} is unchanged, or a copy with the new {@code frontInclination}.
 	 */
 	public MutableSurveyRow setFrontInclination(String frontInclination) {
@@ -340,7 +346,7 @@ public final class MutableSurveyRow {
 	 * Sets inclination toward from station at to station.
 	 *
 	 * @param backInclination - the new value for inclination toward from station at to station
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code backInclination} is unchanged, or a copy with the new {@code backInclination}.
 	 */
 	public MutableSurveyRow setBackInclination(String backInclination) {
@@ -351,7 +357,7 @@ public final class MutableSurveyRow {
 	 * Sets distance between from station and left wall.
 	 *
 	 * @param left - the new value for distance between from station and left wall
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code left} is unchanged, or a copy with the new {@code left}.
 	 */
 	public MutableSurveyRow setLeft(String left) {
@@ -362,7 +368,7 @@ public final class MutableSurveyRow {
 	 * Sets distance between from station and right wall.
 	 *
 	 * @param right - the new value for distance between from station and right wall
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code right} is unchanged, or a copy with the new {@code right}.
 	 */
 	public MutableSurveyRow setRight(String right) {
@@ -373,7 +379,7 @@ public final class MutableSurveyRow {
 	 * Sets distance between from station and ceiling.
 	 *
 	 * @param up - the new value for distance between from station and ceiling
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code up} is unchanged, or a copy with the new {@code up}.
 	 */
 	public MutableSurveyRow setUp(String up) {
@@ -384,7 +390,7 @@ public final class MutableSurveyRow {
 	 * Sets distance between from station and floor.
 	 *
 	 * @param down - the new value for distance between from station and floor
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code down} is unchanged, or a copy with the new {@code down}.
 	 */
 	public MutableSurveyRow setDown(String down) {
@@ -395,7 +401,7 @@ public final class MutableSurveyRow {
 	 * Sets distance north relative to coordinate origin.
 	 *
 	 * @param northing - the new value for distance north relative to coordinate origin
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code northing} is unchanged, or a copy with the new {@code northing}.
 	 */
 	public MutableSurveyRow setNorthing(String northing) {
@@ -406,7 +412,7 @@ public final class MutableSurveyRow {
 	 * Sets from station's latitude.
 	 *
 	 * @param latitude - the new value for from station's latitude
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code latitude} is unchanged, or a copy with the new {@code latitude}.
 	 */
 	public MutableSurveyRow setLatitude(String latitude) {
@@ -417,7 +423,7 @@ public final class MutableSurveyRow {
 	 * Sets from station's longitude.
 	 *
 	 * @param longitude - the new value for from station's longitude
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code longitude} is unchanged, or a copy with the new {@code longitude}.
 	 */
 	public MutableSurveyRow setLongitude(String longitude) {
@@ -428,7 +434,7 @@ public final class MutableSurveyRow {
 	 * Sets from station's distance east relative to coordinate origin.
 	 *
 	 * @param easting - the new value for from station's distance east relative to coordinate origin
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code easting} is unchanged, or a copy with the new {@code easting}.
 	 */
 	public MutableSurveyRow setEasting(String easting) {
@@ -439,7 +445,7 @@ public final class MutableSurveyRow {
 	 * Sets from station's distance east relative to coordinate origin.
 	 *
 	 * @param elevation - the new value for from station's distance east relative to coordinate origin
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code elevation} is unchanged, or a copy with the new {@code elevation}.
 	 */
 	public MutableSurveyRow setElevation(String elevation) {
@@ -450,7 +456,7 @@ public final class MutableSurveyRow {
 	 * Sets any user comment.
 	 *
 	 * @param comment - the new value for any user comment
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code comment} is unchanged, or a copy with the new {@code comment}.
 	 */
 	public MutableSurveyRow setComment(String comment) {
@@ -461,7 +467,7 @@ public final class MutableSurveyRow {
 	 * Sets survey notes file (if one file can't be associated with the entire trip).
 	 *
 	 * @param overrideSurveyNotes - the new value for survey notes file (if one file can't be associated with the entire trip)
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the new {@code overrideSurveyNotes}.
 	 */
 	public MutableSurveyRow setOverrideSurveyNotes(String overrideSurveyNotes) {
@@ -472,7 +478,7 @@ public final class MutableSurveyRow {
 	 * Sets trip this row belongs to.
 	 *
 	 * @param trip - the new value for trip this row belongs to
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code trip} is unchanged, or a copy with the new {@code trip}.
 	 */
 	public MutableSurveyRow setTrip(SurveyTrip trip) {
@@ -483,7 +489,7 @@ public final class MutableSurveyRow {
 	 * Sets whether to exclude this shot from the total cave length.
 	 *
 	 * @param excludeDistance - the new value for whether to exclude this shot from the total cave length
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code excludeDistance} is unchanged, or a copy with the new {@code excludeDistance}.
 	 */
 	public MutableSurveyRow setExcludeDistance(Boolean excludeDistance) {
@@ -494,7 +500,7 @@ public final class MutableSurveyRow {
 	 * Sets whether to exclude this shot from plotting.
 	 *
 	 * @param excludeFromPlotting - the new value for whether to exclude this shot from plotting
-	 * 
+	 *
 	 * @return this {@code SurveyRow} if {@code excludeFromPlotting} is unchanged, or a copy with the new {@code excludeFromPlotting}.
 	 */
 	public MutableSurveyRow setExcludeFromPlotting(Boolean excludeFromPlotting) {
@@ -506,7 +512,7 @@ public final class MutableSurveyRow {
 	 * Updates name of cave from station is in, if different from trip.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideFromCave} and returns the new value for {@code overrideFromCave}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code overrideFromCave} is unchanged, or a copy with the updated {@code overrideFromCave}.
 	 */
 	public MutableSurveyRow updateOverrideFromCave(Function<String, String> updater) {
@@ -517,7 +523,7 @@ public final class MutableSurveyRow {
 	 * Updates from station name.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code fromStation} and returns the new value for {@code fromStation}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code fromStation} is unchanged, or a copy with the updated {@code fromStation}.
 	 */
 	public MutableSurveyRow updateFromStation(Function<String, String> updater) {
@@ -528,7 +534,7 @@ public final class MutableSurveyRow {
 	 * Updates name of cave of to station is in, if different to trip.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideToCave} and returns the new value for {@code overrideToCave}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code overrideToCave} is unchanged, or a copy with the updated {@code overrideToCave}.
 	 */
 	public MutableSurveyRow updateOverrideToCave(Function<String, String> updater) {
@@ -539,7 +545,7 @@ public final class MutableSurveyRow {
 	 * Updates to station name.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code toStation} and returns the new value for {@code toStation}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code toStation} is unchanged, or a copy with the updated {@code toStation}.
 	 */
 	public MutableSurveyRow updateToStation(Function<String, String> updater) {
@@ -550,7 +556,7 @@ public final class MutableSurveyRow {
 	 * Updates distance between from and to station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code distance} and returns the new value for {@code distance}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code distance} is unchanged, or a copy with the updated {@code distance}.
 	 */
 	public MutableSurveyRow updateDistance(Function<String, String> updater) {
@@ -561,7 +567,7 @@ public final class MutableSurveyRow {
 	 * Updates azimuth toward to station at from station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code frontAzimuth} and returns the new value for {@code frontAzimuth}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code frontAzimuth} is unchanged, or a copy with the updated {@code frontAzimuth}.
 	 */
 	public MutableSurveyRow updateFrontAzimuth(Function<String, String> updater) {
@@ -572,7 +578,7 @@ public final class MutableSurveyRow {
 	 * Updates azimuth toward from station at to station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code backAzimuth} and returns the new value for {@code backAzimuth}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code backAzimuth} is unchanged, or a copy with the updated {@code backAzimuth}.
 	 */
 	public MutableSurveyRow updateBackAzimuth(Function<String, String> updater) {
@@ -583,7 +589,7 @@ public final class MutableSurveyRow {
 	 * Updates inclination toward to station at from station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code frontInclination} and returns the new value for {@code frontInclination}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code frontInclination} is unchanged, or a copy with the updated {@code frontInclination}.
 	 */
 	public MutableSurveyRow updateFrontInclination(Function<String, String> updater) {
@@ -594,7 +600,7 @@ public final class MutableSurveyRow {
 	 * Updates inclination toward from station at to station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code backInclination} and returns the new value for {@code backInclination}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code backInclination} is unchanged, or a copy with the updated {@code backInclination}.
 	 */
 	public MutableSurveyRow updateBackInclination(Function<String, String> updater) {
@@ -605,7 +611,7 @@ public final class MutableSurveyRow {
 	 * Updates distance between from station and left wall.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code left} and returns the new value for {@code left}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code left} is unchanged, or a copy with the updated {@code left}.
 	 */
 	public MutableSurveyRow updateLeft(Function<String, String> updater) {
@@ -616,7 +622,7 @@ public final class MutableSurveyRow {
 	 * Updates distance between from station and right wall.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code right} and returns the new value for {@code right}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code right} is unchanged, or a copy with the updated {@code right}.
 	 */
 	public MutableSurveyRow updateRight(Function<String, String> updater) {
@@ -627,7 +633,7 @@ public final class MutableSurveyRow {
 	 * Updates distance between from station and ceiling.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code up} and returns the new value for {@code up}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code up} is unchanged, or a copy with the updated {@code up}.
 	 */
 	public MutableSurveyRow updateUp(Function<String, String> updater) {
@@ -638,7 +644,7 @@ public final class MutableSurveyRow {
 	 * Updates distance between from station and floor.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code down} and returns the new value for {@code down}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code down} is unchanged, or a copy with the updated {@code down}.
 	 */
 	public MutableSurveyRow updateDown(Function<String, String> updater) {
@@ -649,7 +655,7 @@ public final class MutableSurveyRow {
 	 * Updates distance north relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code northing} and returns the new value for {@code northing}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code northing} is unchanged, or a copy with the updated {@code northing}.
 	 */
 	public MutableSurveyRow updateNorthing(Function<String, String> updater) {
@@ -660,7 +666,7 @@ public final class MutableSurveyRow {
 	 * Updates from station's latitude.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code latitude} and returns the new value for {@code latitude}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code latitude} is unchanged, or a copy with the updated {@code latitude}.
 	 */
 	public MutableSurveyRow updateLatitude(Function<String, String> updater) {
@@ -671,7 +677,7 @@ public final class MutableSurveyRow {
 	 * Updates from station's longitude.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code longitude} and returns the new value for {@code longitude}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code longitude} is unchanged, or a copy with the updated {@code longitude}.
 	 */
 	public MutableSurveyRow updateLongitude(Function<String, String> updater) {
@@ -682,7 +688,7 @@ public final class MutableSurveyRow {
 	 * Updates from station's distance east relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code easting} and returns the new value for {@code easting}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code easting} is unchanged, or a copy with the updated {@code easting}.
 	 */
 	public MutableSurveyRow updateEasting(Function<String, String> updater) {
@@ -693,7 +699,7 @@ public final class MutableSurveyRow {
 	 * Updates from station's distance east relative to coordinate origin.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code elevation} and returns the new value for {@code elevation}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code elevation} is unchanged, or a copy with the updated {@code elevation}.
 	 */
 	public MutableSurveyRow updateElevation(Function<String, String> updater) {
@@ -704,7 +710,7 @@ public final class MutableSurveyRow {
 	 * Updates any user comment.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code comment} and returns the new value for {@code comment}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code comment} is unchanged, or a copy with the updated {@code comment}.
 	 */
 	public MutableSurveyRow updateComment(Function<String, String> updater) {
@@ -715,7 +721,7 @@ public final class MutableSurveyRow {
 	 * Updates survey notes file (if one file can't be associated with the entire trip).
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code overrideSurveyNotes} and returns the new value for {@code overrideSurveyNotes}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the updated {@code overrideSurveyNotes}.
 	 */
 	public MutableSurveyRow updateOverrideSurveyNotes(Function<String, String> updater) {
@@ -726,7 +732,7 @@ public final class MutableSurveyRow {
 	 * Updates trip this row belongs to.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code trip} and returns the new value for {@code trip}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code trip} is unchanged, or a copy with the updated {@code trip}.
 	 */
 	public MutableSurveyRow updateTrip(Function<SurveyTrip, SurveyTrip> updater) {
@@ -737,7 +743,7 @@ public final class MutableSurveyRow {
 	 * Updates whether to exclude this shot from the total cave length.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code excludeDistance} and returns the new value for {@code excludeDistance}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code excludeDistance} is unchanged, or a copy with the updated {@code excludeDistance}.
 	 */
 	public MutableSurveyRow updateExcludeDistance(Function<Boolean, Boolean> updater) {
@@ -748,7 +754,7 @@ public final class MutableSurveyRow {
 	 * Updates whether to exclude this shot from plotting.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code excludeFromPlotting} and returns the new value for {@code excludeFromPlotting}.
-	 * 
+	 *
 	 * @return this {@code MutableSurveyRow} if {@code excludeFromPlotting} is unchanged, or a copy with the updated {@code excludeFromPlotting}.
 	 */
 	public MutableSurveyRow updateExcludeFromPlotting(Function<Boolean, Boolean> updater) {

@@ -1,8 +1,8 @@
 /**
- * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-3-29 23:25:27.
+ * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-4-1 12:03:57.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
- 
+
 package org.breakout.model.raw;
 
 import java.util.function.Consumer;
@@ -49,7 +49,7 @@ public final class SurveyLead {
 	public static final class Properties {
 		public static <V> DefaultProperty<SurveyLead, V> create(
 				String name, Class<? super V> valueClass,
-				Function<? super SurveyLead, ? extends V> getter, 
+				Function<? super SurveyLead, ? extends V> getter,
 				BiConsumer<MutableSurveyLead, ? super V> setter) {
 			return new DefaultProperty<SurveyLead, V>(
 				name, valueClass, getter, (m, v) -> {
@@ -57,7 +57,7 @@ public final class SurveyLead {
 				}
 			);
 		}
-		
+
 		
 		/**
 		 * name of cave the lead is in
@@ -109,11 +109,11 @@ public final class SurveyLead {
 		);
 		
 	}
-	 
+	
 	
 
 	private final PersistentHashMap<String, Object> data;
-	
+
 	SurveyLead(PersistentHashMap<String, Object> data) {
 		this.data = data;
 	}
@@ -131,10 +131,16 @@ public final class SurveyLead {
 		mutator.accept(mutable);
 		return mutable.dataEquals(data) ? this : mutable.toImmutable();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public <T> T get(String key) {
 		return (T) data.get(key);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> T get(String key, T defaultValue) {
+		T result = (T) data.get(key);
+		return result != null ? result : defaultValue;
 	}
 
 	public SurveyLead set(String key, Object newValue) {
@@ -166,7 +172,7 @@ public final class SurveyLead {
 		}
 		return false;
 	}
-	
+
 	
 	/**
 	 * @return name of cave the lead is in.
@@ -208,7 +214,7 @@ public final class SurveyLead {
 	 * Sets name of cave the lead is in.
 	 *
 	 * @param cave - the new value for name of cave the lead is in
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code cave} is unchanged, or a copy with the new {@code cave}.
 	 */
 	public SurveyLead setCave(String cave) {
@@ -219,7 +225,7 @@ public final class SurveyLead {
 	 * Sets the name of the nearest station.
 	 *
 	 * @param station - the new value for the name of the nearest station
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code station} is unchanged, or a copy with the new {@code station}.
 	 */
 	public SurveyLead setStation(String station) {
@@ -230,7 +236,7 @@ public final class SurveyLead {
 	 * Sets the description of the lead.
 	 *
 	 * @param description - the new value for the description of the lead
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code description} is unchanged, or a copy with the new {@code description}.
 	 */
 	public SurveyLead setDescription(String description) {
@@ -241,7 +247,7 @@ public final class SurveyLead {
 	 * Sets the width of the lead.
 	 *
 	 * @param width - the new value for the width of the lead
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the new {@code width}.
 	 */
 	public SurveyLead setWidth(String width) {
@@ -252,7 +258,7 @@ public final class SurveyLead {
 	 * Sets the height of the lead.
 	 *
 	 * @param height - the new value for the height of the lead
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the new {@code height}.
 	 */
 	public SurveyLead setHeight(String height) {
@@ -264,7 +270,7 @@ public final class SurveyLead {
 	 * Updates name of cave the lead is in.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code cave} and returns the new value for {@code cave}.
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code cave} is unchanged, or a copy with the updated {@code cave}.
 	 */
 	public SurveyLead updateCave(Function<String, String> updater) {
@@ -275,7 +281,7 @@ public final class SurveyLead {
 	 * Updates the name of the nearest station.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code station} and returns the new value for {@code station}.
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code station} is unchanged, or a copy with the updated {@code station}.
 	 */
 	public SurveyLead updateStation(Function<String, String> updater) {
@@ -286,7 +292,7 @@ public final class SurveyLead {
 	 * Updates the description of the lead.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code description} and returns the new value for {@code description}.
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code description} is unchanged, or a copy with the updated {@code description}.
 	 */
 	public SurveyLead updateDescription(Function<String, String> updater) {
@@ -297,7 +303,7 @@ public final class SurveyLead {
 	 * Updates the width of the lead.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code width} and returns the new value for {@code width}.
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the updated {@code width}.
 	 */
 	public SurveyLead updateWidth(Function<String, String> updater) {
@@ -308,7 +314,7 @@ public final class SurveyLead {
 	 * Updates the height of the lead.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code height} and returns the new value for {@code height}.
-	 * 
+	 *
 	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the updated {@code height}.
 	 */
 	public SurveyLead updateHeight(Function<String, String> updater) {
