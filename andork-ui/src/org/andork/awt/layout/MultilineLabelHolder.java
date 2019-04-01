@@ -48,10 +48,9 @@ public class MultilineLabelHolder extends JPanel {
 			Dimension size = sizeType.get(label);
 			View view = (View) label.getClientProperty(BasicHTML.propertyKey);
 			if (view != null) {
-				view.setSize(parent.getWidth(), 0);
+				view.setSize(Math.max(parent.getWidth(), size.width), 0);
 				size.height = (int) Math.ceil(sizeType.getSpan(view, View.Y_AXIS));
 			}
-			size.width = parent.getWidth();
 			return size;
 		}
 
@@ -97,4 +96,13 @@ public class MultilineLabelHolder extends JPanel {
 		this(new JLabel(wrapText(text)));
 	}
 
+	public MultilineLabelHolder minWidth(int minWidth) {
+		label.setMinimumSize(new Dimension(minWidth, label.getMinimumSize().height));
+		return this;
+	}
+
+	public MultilineLabelHolder preferredWidth(int preferredWidth) {
+		label.setPreferredSize(new Dimension(preferredWidth, label.getPreferredSize().height));
+		return this;
+	}
 }

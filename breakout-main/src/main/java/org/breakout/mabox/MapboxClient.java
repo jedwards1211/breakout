@@ -88,4 +88,8 @@ public class MapboxClient {
 	public BufferedImage getTile(String mapId, int zoom, long x, long y, boolean highDpi, ImageTileFormat format) throws IOException {
 		return ImageIO.read(fetcher.open(getTileURL(mapId, zoom, x, y, highDpi, format)));
 	}
+
+	public void setAccessToken(String accessToken) {
+		this.accessToken = accessToken;
+	}
 }

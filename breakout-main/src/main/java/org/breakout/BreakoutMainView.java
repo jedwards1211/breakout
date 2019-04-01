@@ -51,6 +51,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
@@ -113,6 +114,7 @@ import org.andork.awt.event.MouseAdapterWrapper;
 import org.andork.awt.layout.DelegatingLayoutManager;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.DrawerAutoshowController;
+import org.andork.awt.layout.MultilineLabelHolder;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.SideConstraint;
 import org.andork.awt.layout.SideConstraintLayoutDelegate;
@@ -171,6 +173,7 @@ import org.andork.spatial.RTraversal;
 import org.andork.spatial.Rectmath;
 import org.andork.swing.AnnotatingRowSorter;
 import org.andork.swing.FromEDT;
+import org.andork.swing.JOptionPaneBuilder;
 import org.andork.swing.OnEDT;
 import org.andork.swing.SmartComboTableRowFilter;
 import org.andork.swing.async.DrawerPinningTask;
@@ -1047,6 +1050,8 @@ public class BreakoutMainView {
 						terrain = new AutoTerrain(
 							mapbox, fetchService,
 							autoDrawable, calcProject.coordinateReferenceSystem, model.getMbr());
+					} else {
+						terrain = null;
 					}
 
 					autoDrawable.invoke(false, drawable -> {
@@ -1055,7 +1060,6 @@ public class BreakoutMainView {
 						if (terrain != null) {
 							terrain.setVisible(getProjectModel().get(ProjectModel.showTerrain));
 							scene.add(terrain);
-							scene.initLater(terrain);
 						}
 						scene.add(compass);
 						scene.initLater(compass);
@@ -1324,7 +1328,7 @@ public class BreakoutMainView {
 	final Throttler<Void> updateHover = new Throttler<>(0);
 
 	public BreakoutMainView() {
-		mapbox = new MapboxClient(System.getenv("MAPBOX_ACCESS_TOKEN"));
+		mapbox = new MapboxClient(null);
 
 		final GLProfile glp = GLProfile.get(GLProfile.GL3);
 		final GLCapabilities caps = new GLCapabilities(glp);
@@ -1649,7 +1653,47 @@ public class BreakoutMainView {
 		new BinderWrapper<Boolean>() {
 			@Override
 			protected void onValueChanged(Boolean showTerrain) {
-				if (terrain != null && showTerrain != null) {
+				if (showTerrain == null) showTerrain = false;
+				if (showTerrain) { 
+					Localizer localizer = i18n.forClass(BreakoutMainView.class);
+					rebuildTaskService.submit(task -> OnEDT.onEDT(() -> {
+						if (!calcProject.shots.isEmpty() && calcProject.coordinateReferenceSystem == null) {
+							new JOptionPaneBuilder()
+								.message(new MultilineLabelHolder(
+									localizer.getString("showTerrain.noGeoReferenceDialog.message"))
+									.preferredWidth(400))
+								.showDialog(mainPanel, localizer.getString("showTerrain.noGeoReferenceDialog.title"));
+							return;
+						}
+					}));
+					if (getRootModel().get(RootModel.mapboxAccessToken) == null) {
+						JXHyperlink mapboxLink = new JXHyperlink();
+						try {
+							mapboxLink.setURI(new URI("https://account.mapbox.com/"));
+						} catch (URISyntaxException e) {
+							e.printStackTrace();
+						}
+						Object accessToken = new JOptionPaneBuilder()
+							.okCancel()
+							.message(
+								new MultilineLabelHolder(
+									localizer.getString("showTerrain.mapboxAccessTokenDialog.message"))
+									.preferredWidth(400),
+								mapboxLink,
+								new MultilineLabelHolder(
+									localizer.getString("showTerrain.mapboxAccessTokenDialog.inputLabel"))
+									.preferredWidth(400)
+							)
+							.showInputDialog(mainPanel, localizer.getString("showTerrain.mapboxAccessTokenDialog.title"));
+						
+						if (accessToken == null) {
+							return;
+						}
+						getRootModel().set(RootModel.mapboxAccessToken, accessToken.toString().trim());
+					}
+				}
+					
+				if (terrain != null) {
 					terrain.setVisible(showTerrain);
 					autoDrawable.display();
 				}
@@ -1685,6 +1729,17 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineColor, projectModelBinder));
+		
+		new BinderWrapper<String>() {
+			@Override
+			protected void onValueChanged(String accessToken) {
+				mapbox.setAccessToken(accessToken);
+				if (terrain != null) {
+					terrain.reload();
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(RootModel.mapboxAccessToken, rootModelBinder));
 
 		new BinderWrapper<Boolean>() {
 			@Override

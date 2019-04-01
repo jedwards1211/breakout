@@ -85,6 +85,7 @@ public class Parsed2Calc {
 			}
 		});
 		task.runSubtask(1, fixedStationTask -> {
+			this.project.coordinateReferenceSystem = null;
 			if (fixedStationsByCrs.isEmpty()) {
 				return;
 			}

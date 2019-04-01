@@ -119,7 +119,7 @@ public class ExportStlAction extends AbstractAction {
 			if (outputFile.exists()) {
 				choice = JOptionPane.showConfirmDialog(mainView.getMainPanel(),
 						new MultilineLabelHolder(localizer.getFormattedString("outputFileAlreadyExistsDialog.message",
-								outputFile.getName())),
+								outputFile.getName())).preferredWidth(400),
 						localizer.getFormattedString("outputFileAlreadyExistsDialog.title", mode.name()),
 						JOptionPane.YES_NO_CANCEL_OPTION);
 				switch (choice) {

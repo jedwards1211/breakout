@@ -84,6 +84,9 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<Boolean> showSpatialIndex = newAttribute(
 			Boolean.class,
 			"showSpatialIndex");
+	public static final Attribute<String> mapboxAccessToken = newAttribute(
+			String.class,
+			"mapboxAccessToken");
 
 	public static final RootModel instance = new RootModel();
 

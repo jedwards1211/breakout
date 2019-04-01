@@ -8,7 +8,7 @@ import javax.swing.JOptionPane;
 
 @SuppressWarnings("serial")
 public class JOptionPaneBuilder extends JOptionPane {
-	public JOptionPaneBuilder message(Object message) {
+	public JOptionPaneBuilder message(Object... message) {
 		setMessage(message);
 		return this;
 	}

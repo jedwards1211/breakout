@@ -11,6 +11,7 @@ import org.andork.io.InputStreamUtils;
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglManagedResource;
+import org.andork.jogl.JoglResource;
 import org.andork.math3d.Clip3f;
 import org.breakout.mabox.MapboxClient;
 import org.breakout.mabox.MapboxClient.ImageTileFormat;
@@ -30,7 +31,7 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureIO;
 
-public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
+public class AutoTerrain implements JoglDrawable, JoglResource {
 	class ManagedTile extends JoglManagedResource implements JoglDrawable {
 		TerrainTile tile;
 		final TerrainProgram program = TerrainProgram.INSTANCE;
@@ -116,6 +117,8 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 	List<ManagedTile> tiles = new ArrayList<>();
 	
 	boolean visible = false;
+	boolean initialized = false;
+	boolean reloadRequested = false;
 	
 	class CoordinateConverter implements Consumer<float[]> {
 		int tileSize;
@@ -162,8 +165,18 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 
 	@Override
 	public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
-		if (!visible) return;
-
+		if (!visible) {
+			dispose(gl);
+			return;
+		}
+		
+		if (reloadRequested) {
+			reloadRequested = false;
+			dispose(gl);
+		}
+		
+		init(gl);
+		
 		for (ManagedTile tile : newTiles) {
 			tile.init(gl);
 			tiles.add(tile);
@@ -174,8 +187,10 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 		}
 	}
 
-	@Override
-	protected boolean doInit(GL2ES2 gl) {
+	public boolean init(GL2ES2 gl) {
+		if (initialized) return true;
+		initialized = true;
+		
 		List<long[]> tiles = new ArrayList<>();
 		ProjCoordinate min = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[0], -mbr[2], mbr[1]), coordinateReferenceSystem);
 		ProjCoordinate max = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[3], -mbr[5], mbr[4]), coordinateReferenceSystem);
@@ -218,8 +233,9 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 		return true;
 	}
 
-	@Override
-	protected void doDispose(GL2ES2 gl) {
+	public void dispose(GL2ES2 gl) {
+		if (!initialized) return;
+		initialized = false;
 		for (ManagedTile tile : tiles) {
 			tile.dispose(gl);
 		}
@@ -235,5 +251,9 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 
 	public void setVisible(Boolean visible) {
 		this.visible = visible;
+	}
+
+	public void reload() {
+		reloadRequested = true;
 	}
 }
