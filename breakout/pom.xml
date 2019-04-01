@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>breakout</artifactId>
-	<version>1.0.0-alpha.20</version>
+	<version>1.0.0-alpha.21</version>
 	<name>Breakout launcher</name>
 	<description>displays friendly error if user is running an older version of Java, otherwise runs Breakout</description>
 	<build>
@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>breakout-main</artifactId>
-			<version>1.0.0-alpha.20</version>
+			<version>1.0.0-alpha.21</version>
   		</dependency>
 	</dependencies>
 </project>

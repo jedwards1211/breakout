@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>andork-jogl-gl2es2-utils</artifactId>
-	<version>1.0.0-alpha.20</version>
+	<version>1.0.0-alpha.21</version>
 	<build>
 		<sourceDirectory>src</sourceDirectory>
 		<resources>
@@ -49,7 +49,7 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-math3d</artifactId>
-			<version>1.0.0-alpha.20</version>
+			<version>1.0.0-alpha.21</version>
 		</dependency>
 	</dependencies>
 </project>
