@@ -127,6 +127,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Boolean> showLeadLabels = newAttribute(
 			Boolean.class,
 			"showLeadLabels");
+	public static final Attribute<Boolean> showTerrain = newAttribute(
+			Boolean.class,
+			"showTerrain");
 	public static final Attribute<Clip3f> clip = newAttribute(
 			Clip3f.class,
 			"clip");
@@ -237,6 +240,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.showLeadLabels) == null) {
 			projectModel.set(ProjectModel.showLeadLabels, true);
+		}
+		if (projectModel.get(ProjectModel.showTerrain) == null) {
+			projectModel.set(ProjectModel.showTerrain, false);
 		}
 		if (projectModel.get(ProjectModel.clip) == null) {
 			projectModel.set(ProjectModel.clip, new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));

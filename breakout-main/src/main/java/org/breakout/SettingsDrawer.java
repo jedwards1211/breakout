@@ -147,6 +147,7 @@ public class SettingsDrawer extends Drawer {
 	JLabel moreCenterlineDistanceLabel;
 	JLabel centerlineDistanceLabel;
 	JSlider centerlineDistanceSlider;
+	JCheckBox showTerrainCheckBox;
 
 	JLabel colorParamLabel;
 	DefaultSelector<ColorParam> colorParamSelector;
@@ -225,6 +226,9 @@ public class SettingsDrawer extends Drawer {
 			projectBinder);
 	Binder<Color> centerlineColorBinder = QObjectAttributeBinder.bind(
 			ProjectModel.centerlineColor,
+			projectBinder);
+	Binder<Boolean> showTerrainBinder = QObjectAttributeBinder.bind(
+			ProjectModel.showTerrain,
 			projectBinder);
 	Binder<Color> backgroundColorBinder = QObjectAttributeBinder.bind(
 			ProjectModel.backgroundColor,
@@ -339,6 +343,8 @@ public class SettingsDrawer extends Drawer {
 						RoundingFloat2IntegerBimapper.instance), stationLabelFontSizeBinder));
 		ButtonSelectedBinder
 			.bind(showLeadLabelsCheckBox, showLeadLabelsBinder);
+		ButtonSelectedBinder
+			.bind(showTerrainCheckBox, showTerrainBinder);
 
 		JSliderValueBinder.bind(numSamplesSlider, desiredNumSamplesBinder);
 
@@ -389,6 +395,9 @@ public class SettingsDrawer extends Drawer {
 		centerlineDistanceLabel = new JLabel();
 		localizer.setText(centerlineDistanceLabel, "centerlineDistanceLabel.text");
 		centerlineDistanceSlider = new JSlider(0, 10000, 1000);
+		
+		showTerrainCheckBox = new JCheckBox();
+		localizer.setText(showTerrainCheckBox, "showTerrainCheckBox.text");
 
 		for (JLabel label : Arrays.asList(
 				stationLabelsOffLabel,
@@ -665,6 +674,8 @@ public class SettingsDrawer extends Drawer {
 		centerlineDistancePanel.put(centerlineDistanceSlider)
 				.below(centerlinesOffLabel, moreCenterlineDistanceLabel).fillx();
 		w.put(centerlineDistancePanel.getTarget()).belowLast().fillx();
+		
+		w.put(showTerrainCheckBox).belowLast().fillx();
 
 		w.put(numSamplesLabel).belowLast().west();
 		w.put(numSamplesSlider).belowLast().fillx();

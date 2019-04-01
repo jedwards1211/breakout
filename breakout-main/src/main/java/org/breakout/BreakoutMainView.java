@@ -1053,6 +1053,7 @@ public class BreakoutMainView {
 						scene.add(model);
 						scene.initLater(model);
 						if (terrain != null) {
+							terrain.setVisible(getProjectModel().get(ProjectModel.showTerrain));
 							scene.add(terrain);
 							scene.initLater(terrain);
 						}
@@ -1644,6 +1645,16 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.showLeadLabels, projectModelBinder));
+		
+		new BinderWrapper<Boolean>() {
+			@Override
+			protected void onValueChanged(Boolean showTerrain) {
+				if (terrain != null && showTerrain != null) {
+					terrain.setVisible(showTerrain);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.showTerrain, projectModelBinder));
 
 		new BinderWrapper<Color>() {
 			@Override

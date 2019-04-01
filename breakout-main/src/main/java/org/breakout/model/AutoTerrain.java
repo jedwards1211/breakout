@@ -115,6 +115,8 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 	List<ManagedTile> newTiles = new ArrayList<>();
 	List<ManagedTile> tiles = new ArrayList<>();
 	
+	boolean visible = false;
+	
 	class CoordinateConverter implements Consumer<float[]> {
 		int tileSize;
 		long[] tile;
@@ -160,6 +162,8 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 
 	@Override
 	public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		if (!visible) return;
+
 		for (ManagedTile tile : newTiles) {
 			tile.init(gl);
 			tiles.add(tile);
@@ -172,35 +176,45 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 
 	@Override
 	protected boolean doInit(GL2ES2 gl) {
-		fetchService.submit(() -> {
-			ProjCoordinate min = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[0], -mbr[2], mbr[1]), coordinateReferenceSystem);
-			ProjCoordinate max = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[3], -mbr[5], mbr[4]), coordinateReferenceSystem);
-			long[] tileId = Tilebelt.bboxToTile(new double[] {min.x, min.y, max.x, max.y});
-			
-			try {
-				BufferedImage terrain = mapbox.getTile(
-					MapboxClient.TERRAIN_RGB, tileId, false, ImageTileFormat.PNGRAW);
-				final byte[] satelliteData = InputStreamUtils.readAllBytes(mapbox.getTileStream(
-					MapboxClient.SATELLITE, tileId, false, ImageTileFormat.PNGRAW));
-				autoDrawable.invoke(true, drawable -> {
-					try {
-						Texture satellite = TextureIO.newTexture(
-							new ByteArrayInputStream(satelliteData),
-							false, "png");
-						TerrainTile terrainTile = new TerrainTile(terrain,
-							new CoordinateConverter(terrain.getWidth(), tileId));
-						terrainTile.usePrecomputedIndexPointers();
-						newTiles.add(new ManagedTile(terrainTile, satellite));
-						return true;
-					} catch (Exception e) {
-						e.printStackTrace();
-						return false;
-					}
-				});
-			} catch (Exception e) {
-				e.printStackTrace();
+		List<long[]> tiles = new ArrayList<>();
+		ProjCoordinate min = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[0], -mbr[2], mbr[1]), coordinateReferenceSystem);
+		ProjCoordinate max = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[3], -mbr[5], mbr[4]), coordinateReferenceSystem);
+		long[] rootTile = Tilebelt.bboxToTile(new double[] {min.x, min.y, max.x, max.y});
+		
+		for (long[] child : Tilebelt.getChildren(rootTile)) {
+			for (long[] grandchild : Tilebelt.getChildren(child)) {
+				tiles.add(grandchild);
 			}
-		});
+		}
+		
+		for (long[] tileId : tiles) {
+			fetchService.submit(() -> {
+				
+				try {
+					BufferedImage terrain = mapbox.getTile(
+						MapboxClient.TERRAIN_RGB, tileId, false, ImageTileFormat.PNGRAW);
+					final byte[] satelliteData = InputStreamUtils.readAllBytes(mapbox.getTileStream(
+						MapboxClient.SATELLITE, tileId, false, ImageTileFormat.PNGRAW));
+					autoDrawable.invoke(true, drawable -> {
+						try {
+							Texture satellite = TextureIO.newTexture(
+								new ByteArrayInputStream(satelliteData),
+								false, "png");
+							TerrainTile terrainTile = new TerrainTile(terrain,
+								new CoordinateConverter(terrain.getWidth(), tileId));
+							terrainTile.usePrecomputedIndexPointers();
+							newTiles.add(new ManagedTile(terrainTile, satellite));
+							return true;
+						} catch (Exception e) {
+							e.printStackTrace();
+							return false;
+						}
+					});
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			});
+		}
 		return true;
 	}
 
@@ -217,5 +231,9 @@ public class AutoTerrain extends JoglManagedResource implements JoglDrawable {
 
 	public void setClip(Clip3f clip) {
 		this.clip = clip;
+	}
+
+	public void setVisible(Boolean visible) {
+		this.visible = visible;
 	}
 }
