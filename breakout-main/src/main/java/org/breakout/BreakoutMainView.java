@@ -1246,6 +1246,7 @@ public class BreakoutMainView {
 	OrbitToPlanAction orbitToPlanAction = new OrbitToPlanAction(this);
 	FitViewToEverythingAction fitViewToEverythingAction = new FitViewToEverythingAction(this);
 	FitViewToSelectedAction fitViewToSelectedAction = new FitViewToSelectedAction(this);
+	FindAction findAction = new FindAction(this);
 
 	EditSurveyScanPathsAction editSurveyScanPathsAction = new EditSurveyScanPathsAction(this);
 
@@ -1897,6 +1898,10 @@ public class BreakoutMainView {
 		fileMenu.add(exportMenu);
 		fileMenu.add(new JSeparator());
 		fileMenu.add(new JMenuItem(linkSurveyNotesAction));
+		
+		JMenu editMenu = new JMenu();
+		menuBar.add(editMenu);
+		editMenu.add(new JMenuItem(findAction));
 
 		JMenu debugMenu = new JMenu();
 		menuBar.add(debugMenu);
@@ -1934,6 +1939,7 @@ public class BreakoutMainView {
 				@Override
 				public void updateI18n(Localizer localizer, JMenuBar localizedObject) {
 					localizer.setText(fileMenu, "fileMenu.text");
+					localizer.setText(editMenu, "editMenu.text");
 					localizer.setText(importMenu, "importMenu.text");
 					localizer.setText(exportMenu, "exportMenu.text");
 					localizer.setText(openRecentMenu, "openRecentMenu.text");
@@ -2381,18 +2387,6 @@ public class BreakoutMainView {
 
 		removeUnprotectedCameraAnimations();
 
-		if (getProjectModel().get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
-			float[] center = new float[3];
-			orbiter.getCenter(center);
-
-			if (Vecmath.hasNaNsOrInfinites(center)) {
-				model3d.getCenter(center);
-			}
-			cameraAnimationQueue.add(new SpringViewOrbitAnimation(autoDrawable, renderer.getViewSettings(),
-					center,
-					0f, (float) -Math.PI / 4, .1f, .05f, 30));
-			cameraAnimationQueue.add(new AnimationViewSaver());
-		}
 		cameraAnimationQueue.add(new Animation() {
 			@Override
 			public long animate(long animTime) {
@@ -2404,36 +2398,26 @@ public class BreakoutMainView {
 					table.selectAll();
 				} else {
 					ListSelectionModel selectionModel = table.getSelectionModel();
-					int intervalStart = -1;
-					for (int row = 0; row < rowSorter.getViewRowCount(); row++) {
-						if (rowSorter.getAnnotation(row) != null) {
-							if (intervalStart < 0) {
-								intervalStart = row;
+					selectionModel.setValueIsAdjusting(true);
+					try {
+						int intervalStart = -1;
+						for (int row = 0; row < rowSorter.getViewRowCount(); row++) {
+							if (rowSorter.getAnnotation(row) != null) {
+								if (intervalStart < 0) {
+									intervalStart = row;
+								}
+							} else if (intervalStart >= 0) {
+								selectionModel.addSelectionInterval(intervalStart, row - 1);
+								intervalStart = -1;
 							}
-						} else if (intervalStart >= 0) {
-							selectionModel.addSelectionInterval(intervalStart, row - 1);
-							intervalStart = -1;
 						}
+					} finally {
+						selectionModel.setValueIsAdjusting(false);
 					}
 				}
 
 				fitViewToSelected();
 
-				if (getProjectModel().get(ProjectModel.cameraView) != CameraView.PERSPECTIVE) {
-					return 0;
-				}
-				rebuildTaskService.submit(task -> SwingUtilities.invokeLater(() -> {
-
-					float[] center = new float[3];
-					orbiter.getCenter(center);
-
-					if (Vecmath.hasNaNsOrInfinites(center)) {
-						model3d.getCenter(center);
-					}
-
-					cameraAnimationQueue.add(new RandomViewOrbitAnimation(autoDrawable, renderer.getViewSettings(),
-							center, 0.0005f, (float) -Math.PI / 4, (float) -Math.PI / 9, 30, 60000));
-				}));
 				return 0;
 			}
 		});
