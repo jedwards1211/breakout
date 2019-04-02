@@ -29,7 +29,6 @@ import java.util.stream.Stream;
 
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
-import javax.swing.DefaultRowSorter;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -43,7 +42,6 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableModel;
-import javax.swing.table.TableRowSorter;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n.I18nUpdater;
