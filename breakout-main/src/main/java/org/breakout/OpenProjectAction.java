@@ -22,13 +22,16 @@
 package org.breakout;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
+import javax.swing.KeyStroke;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.andork.awt.I18n.Localizer;
+import org.andork.awt.KeyEvents;
 import org.andork.swing.OnEDT;
 import org.breakout.model.RootModel;
 
@@ -46,6 +49,7 @@ public class OpenProjectAction extends AbstractAction {
 		new OnEDT() {
 			@Override
 			public void run() throws Throwable {
+				putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_O, KeyEvents.CTRL_OR_META_DOWN_MASK));
 				Localizer localizer = mainView.getI18n().forClass(OpenProjectAction.this.getClass());
 				localizer.setName(OpenProjectAction.this, "name");
 

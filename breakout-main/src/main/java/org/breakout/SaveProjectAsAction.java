@@ -22,15 +22,18 @@
 package org.breakout;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.KeyStroke;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.andork.awt.I18n;
 import org.andork.awt.I18n.Localizer;
+import org.andork.awt.KeyEvents;
 import org.andork.awt.layout.MultilineLabelHolder;
 import org.andork.swing.JFileChooserUtils;
 import org.andork.swing.OnEDT;
@@ -53,6 +56,7 @@ public class SaveProjectAsAction extends AbstractAction {
 		new OnEDT() {
 			@Override
 			public void run() throws Throwable {
+				putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvents.CTRL_OR_META_DOWN_MASK | KeyEvent.SHIFT_DOWN_MASK));
 				Localizer localizer = mainView.getI18n().forClass(SaveProjectAsAction.this.getClass());
 				localizer.setName(SaveProjectAsAction.this, "name");
 

@@ -22,10 +22,13 @@
 package org.breakout;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 import javax.swing.AbstractAction;
+import javax.swing.KeyStroke;
 
 import org.andork.awt.I18n.Localizer;
+import org.andork.awt.KeyEvents;
 import org.andork.swing.OnEDT;
 
 public class SaveProjectAction extends AbstractAction {
@@ -40,6 +43,7 @@ public class SaveProjectAction extends AbstractAction {
 		super();
 		this.mainView = mainView;
 		OnEDT.onEDT(() -> {
+			putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_S, KeyEvents.CTRL_OR_META_DOWN_MASK));
 			Localizer localizer = mainView.getI18n().forClass(SaveProjectAction.this.getClass());
 			localizer.setName(SaveProjectAction.this, "name");
 		});
