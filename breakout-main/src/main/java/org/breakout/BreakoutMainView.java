@@ -879,7 +879,7 @@ public class BreakoutMainView {
 						editor.select(shotKey);
 						CalcShot shot = calcProject.shots.get(shotKey);
 						if (shot != null) {
-							if (!Double.isNaN(shot.distance)) {
+							if (!Double.isNaN(shot.distance) && !shot.isExcludeDistance()) {
 								distCalc.add(shot.distance);
 							}
 							addPoints.accept(shot.vertices);
