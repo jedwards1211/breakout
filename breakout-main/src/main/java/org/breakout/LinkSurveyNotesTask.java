@@ -3,6 +3,7 @@ package org.breakout;
 import static org.andork.swing.async.SelfReportingTask.callSelfReportingSubtask;
 import static org.andork.util.StringUtils.isNullOrEmpty;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.io.File;
 import java.nio.file.FileVisitOption;
@@ -10,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -25,20 +27,36 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultRowSorter;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
+import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 
+import org.andork.awt.GridBagWizard;
+import org.andork.awt.I18n.I18nUpdater;
+import org.andork.awt.I18n.Localizer;
 import org.andork.collect.HashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.q.QArrayList;
 import org.andork.swing.FromEDT;
 import org.andork.swing.JOptionPaneBuilder;
 import org.andork.swing.OnEDT;
+import org.andork.swing.table.ListTableModel;
+import org.andork.swing.table.ListTableModel.Column;
+import org.andork.swing.table.ListTableModel.ColumnBuilder;
 import org.andork.task.Task;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
@@ -55,12 +73,17 @@ public class LinkSurveyNotesTask extends Task<Void> {
 
 	public LinkSurveyNotesTask(BreakoutMainView mainView) {
 		this.mainView = mainView;
-		setStatus("Link Survey Notes");
+		localizer = mainView.getI18n().forClass(LinkSurveyNotesTask.class);
+		setStatus(localizer.getString("status.root"));
 		setIndeterminate(false);
 		setTotal(3);
 	}
 	
 	private static final Pattern lettersNumbersPattern = Pattern.compile("^([\\p{L}]+)(\\d+)$");
+	private final Localizer localizer;
+
+	private String cave = null;
+	private File searchDirectory = null;
 		
 	class Info {
 		private final Set<String> caveSet = new HashSet<>();
@@ -132,7 +155,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 
 		try {
 			callSelfReportingSubtask(this, 1, mainView.getMainPanel(), task -> {
-				task.setStatus("analyzing data");
+				task.setStatus(localizer.getString("status.analyzing"));
 				while (info.i < info.total) {
 					task.setCompleted(info.i);
 					int end = Math.min(info.total, info.i + 1000);
@@ -172,36 +195,62 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			!isNullOrEmpty(row.getDistance());
 	}
 	
-	private String selectCave(List<String> caves) {
-		return FromEDT.fromEDT(() -> {
-			JComboBox<String> comboBox = new JComboBox<>(
-				new ListComboBoxModel<>(caves)
-			);
-			int choice = new JOptionPaneBuilder()
-				.message(comboBox)
-				.okCancel()
-				.question()
-				.showDialog(mainView.getMainPanel(), "Select Cave");
-			if (choice != JOptionPane.OK_OPTION) return null;
-			return (String) comboBox.getSelectedItem();
-		}); 
-	}
+	private void selectOptions(Info info) {
+		searchDirectory = null;
+
+		JPanel panel = new JPanel();
+		GridBagWizard w = GridBagWizard.create(panel);
+		
+		JLabel fileChooserLabel = new JLabel();
+		localizer.setText(fileChooserLabel, "optionsDialog.fileChooserLabel.text");
+
+		JFileChooser fileChooser = new JFileChooser(mainView.getRootModel().get(RootModel.currentWallsImportDirectory));
+		fileChooser.setControlButtonsAreShown(false);
+		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		
+		JLabel caveLabel = new JLabel();
+		localizer.setText(caveLabel, "optionsDialog.caveLabel.text");
+		
+		List<String> caves = info.caves;
+		@SuppressWarnings("unchecked")
+		JComboBox<String> caveComboBox = new JComboBox<>(
+			new ListComboBoxModel<>(caves)
+		);
+		if (!caves.isEmpty()) caveComboBox.setSelectedIndex(0);
+		caveComboBox.setEnabled(caves.size() > 1);
+		
+		Box namingSchemeBox = Box.createVerticalBox();
+		ButtonGroup namingSchemeGroup = new ButtonGroup();
+		JLabel namingSchemeLabel = new JLabel();
+		localizer.setText(namingSchemeLabel, "namingSchemeLabel.text");
+		namingSchemeBox.add(namingSchemeLabel);
+		JToggleButton lechSchemeButton = new JToggleButton();
+		localizer.setText(lechSchemeButton, "lechSchemeButton.text");
+		namingSchemeBox.add(lechSchemeButton);
+		namingSchemeGroup.add(lechSchemeButton);
+		
+		lechSchemeButton.setSelected(true);
+		
+		w.put(caveLabel).xy(0, 0).fillx(0);
+		w.put(caveComboBox).below(caveLabel).fillx(0);
+		w.put(namingSchemeBox).below(caveComboBox).fillboth(0, 0);
+		w.put(fileChooserLabel).rightOf(caveLabel).fillx(1).insets(0, 20, 0, 0);
+		w.put(fileChooser).below(fileChooserLabel).height(2).fillboth(1, 1).sameInsets(fileChooserLabel);
+		
+		int choice = new JOptionPaneBuilder()
+			.message(panel)
+			.okCancel()
+			.showDialog(mainView.getMainPanel(), localizer.getString("optionsDialog.title"));
 	
-	private File selectSearchDirectory() {
-		return FromEDT.fromEDT(() -> {
-			JFileChooser fileChooser = new JFileChooser(mainView.getRootModel().get(RootModel.currentWallsImportDirectory));
-			fileChooser.setDialogTitle("Select Search Directory");
-			fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-			int result = fileChooser.showDialog(mainView.getMainPanel(), "Select");
-			return result == JFileChooser.APPROVE_OPTION
-				? fileChooser.getSelectedFile()
-				: null;
-		});
+		if (choice != JOptionPane.OK_OPTION) return;
+		
+		cave = caveComboBox.getSelectedItem().toString();
+		searchDirectory = fileChooser.getCurrentDirectory();
 	}
 	
 	private List<SurveyRow> findSurveyNotes(Path directory, String caveName, Info info) throws Exception {
 		return callSelfReportingSubtask(this, 1, mainView.getMainPanel(), subtask -> {
-			subtask.setStatus("scanning files");
+			subtask.setStatus(localizer.getString("status.scanning"));
 			subtask.setIndeterminate(true);
 			
 			final Matcher leadsMatcher = Pattern.compile("\\blead", Pattern.CASE_INSENSITIVE).matcher("");
@@ -220,7 +269,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 				subtask.onceCanceled(files::close);
 
 				files.forEach(file -> {
-					subtask.setStatus("scanning " + file);
+					subtask.setStatus(localizer.getFormattedString("status.scanningFile", file.toString()));
 					String fileName = file.getFileName().toString();
 					Set<String> stations;
 					try {
@@ -301,29 +350,48 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		m.put(key, value + 1);
 	}
 	
-	private List<SurveyRow> confirmResults(List<SurveyRow> rows) {
+	private List<SurveyRow> confirmResults(List<SurveyRow> rows, Info info) {
 		return FromEDT.fromEDT(() -> {
-			SurveyTableModel resultsModel = new SurveyTableModel(rows);
-			SurveyTable resultsTable = new SurveyTable();
-			resultsTable.setAspect(SurveyTable.Aspect.LINK_SURVEY_NOTES);
-			resultsTable.setModel(resultsModel);
+			JTabbedPane tabs = new JTabbedPane();
+
+			final I18nUpdater<LinkSurveyNotesTask> i18nUpdater = new I18nUpdater<LinkSurveyNotesTask>() {
+				@Override
+				public void updateI18n(Localizer localizer, LinkSurveyNotesTask localizedObject) {
+					tabs.setTitleAt(0, localizer.getString("resultsDialog.tabs.data.title"));
+					tabs.setTitleAt(1, localizer.getString("resultsDialog.tabs.linkedFiles.title"));
+					tabs.setTitleAt(2, localizer.getString("resultsDialog.tabs.unlinkedFiles.title"));
+				}
+			};
+
+
+			SurveyTableModel dataModel = new SurveyTableModel(rows);
+			SurveyTable dataTable = new SurveyTable();
+			dataTable.setAspect(SurveyTable.Aspect.LINK_SURVEY_NOTES);
+			dataTable.setModel(dataModel);
 			
-			JScrollPane tableScroller = new JScrollPane(resultsTable);
-			tableScroller.setPreferredSize(new Dimension(800, 600));
+			JScrollPane dataTableScroller = new JScrollPane(dataTable);
 			
-			final String accept = "Add To Project";
-			final String cancel = "Cancel";
+			tabs.addTab("Data", dataTableScroller);
+			tabs.addTab("Linked Files", createFileTable(info.linkedFiles));
+			tabs.addTab("Unlinked Files", createFileTable(info.unlinkedFiles));
+
+			tabs.setPreferredSize(new Dimension(800, 600));
+			
+			localizer.register(LinkSurveyNotesTask.this, i18nUpdater);
+			
+			final String accept = localizer.getString("confirmDialog.acceptButton.text");
+			final String cancel = localizer.getString("confirmDialog.cancelButton.text");
 			int choice = new JOptionPaneBuilder()
-				.message(tableScroller)
+				.message(tabs)
 				.defaultOption()
 				.options(accept, cancel)
 				.initialValue(accept)
-				.showDialog(mainView.getMainPanel(), "Link Results");
+				.showDialog(mainView.getMainPanel(), localizer.getString("confirmDialog.title"));
 		
-			if (choice == JOptionPane.CANCEL_OPTION) return null;
+			if (choice != 0) return null;
 			
-			ListSelectionModel selModel = resultsTable.getModelSelectionModel();
-			if (resultsTable.getSelectedRowCount() == 0) return rows;
+			ListSelectionModel selModel = dataTable.getModelSelectionModel();
+			if (dataTable.getSelectedRowCount() == 0) return rows;
 			List<SurveyRow> result = new ArrayList<>(rows);
 			Iterator<SurveyRow> iter = result.iterator();
 			for (int i = 0; iter.hasNext(); iter.next(), i++) {
@@ -333,9 +401,30 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		});
 	}
 	
+	private Component createFileTable(List<Path> files) {
+		List<Column<Path, Path>> columns = Arrays.asList(
+			new ColumnBuilder<Path, Path>()
+				.columnClass(Path.class)
+				.columnName(localizer.getString("fileTable.columns.directory.name"))
+				.getter(p -> p.getParent())
+				.create(),
+			new ColumnBuilder<Path, Path>()
+				.columnClass(Path.class)
+				.columnName(localizer.getString("fileTable.columns.file.name"))
+				.getter(p -> p.getFileName())
+				.create()
+		);
+		TableModel tableModel = new ListTableModel<>(columns, files);
+		JTable table = new JTable();
+		table.setAutoCreateColumnsFromModel(true);
+		table.setAutoCreateRowSorter(true);
+		table.setModel(tableModel);
+		return new JScrollPane(table);
+	}
+	
 	private void mergeIntoProject(List<SurveyRow> rows) throws Exception {
 		callSelfReportingSubtask(this, 1, mainView.getMainPanel(), (Task<?> subtask) -> {
-			subtask.setStatus("adding linked survey notes to project");
+			subtask.setStatus(localizer.getString("status.merging"));
 			subtask.setTotal(rows.size());
 			
 			while (subtask.getCompleted() < rows.size()) {
@@ -378,28 +467,17 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	protected Void work() throws Exception {
 		Info info = getInfo();
 		if (isCanceled()) return null;
-		List<String> caves = info.caves;
 
-		String cave;
-		if (caves.size() < 2) {
-			cave = caves.size() > 0
-				? caves.iterator().next()
-				: null;
-		} else {
-			cave = selectCave(caves);
-			if (cave == null) return null;
-		}
-		
-		File directory = selectSearchDirectory();
-		if (directory == null) return null;
+		OnEDT.onEDT(() -> selectOptions(info));
+		if (searchDirectory == null) return null;
 
-		List<SurveyRow> rows = findSurveyNotes(directory.toPath(), cave, info);
+		List<SurveyRow> rows = findSurveyNotes(searchDirectory.toPath(), cave, info);
 		if (isCanceled()) return null;
 		if (rows.isEmpty()) {
 			OnEDT.onEDT(() -> {
 				JOptionPane.showMessageDialog(
 					mainView.getMainPanel(),
-					"The search was unable to automatically link any files.");
+					localizer.getString("message.nothingFound"));
 			});
 			return null;
 		}
@@ -407,16 +485,10 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		Collections.sort(info.linkedFiles);
 		Collections.sort(info.unlinkedFiles);
 		
-		System.out.println("Linked Files:");
-		info.linkedFiles.forEach(file -> System.out.println("  " + file));
-
-		System.out.println("\nUnlinked Files:");
-		info.unlinkedFiles.forEach(file -> System.out.println("  " + file));
-		
-		rows = confirmResults(rows);
+		rows = confirmResults(rows, info);
 		if (rows == null) return null;
 					
-		addSearchDirectoryToProject(directory);
+		addSearchDirectoryToProject(searchDirectory);
 		
 		mergeIntoProject(rows);
 		mainView.rebuild3dModel.run();

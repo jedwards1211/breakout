@@ -195,6 +195,16 @@ public class ListTableModel<E> extends AbstractTableModel {
 	public List<? extends Column<? super E, ?>> getColumns() {
 		return columns; // already unmodifiable
 	}
+	
+	@Override
+	public String getColumnName(int column) {
+		return columns.get(column).getColumnName();
+	}
+
+	@Override
+	public Class<?> getColumnClass(int columnIndex) {
+		return columns.get(columnIndex).getColumnClass();
+	}
 
 	@Override
 	public int getColumnCount() {
