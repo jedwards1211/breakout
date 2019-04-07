@@ -33,7 +33,9 @@ import org.osgeo.proj4j.datum.Datum;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.util.texture.Texture;
+import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 
 public class AutoTerrain implements JoglDrawable, JoglResource {
@@ -263,18 +265,16 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 		}
 		
 		for (long[] tileId : tiles) {
+			GLProfile profile = gl.getGLProfile();
 			fetchService.submit(() -> {
-				
 				try {
+					TextureData textureData = TextureIO.newTextureData(profile, mapbox.getTileStream(
+						MapboxClient.SATELLITE, tileId, false, ImageTileFormat.PNGRAW), false, "png");
 					BufferedImage terrain = mapbox.getTile(
 						MapboxClient.TERRAIN_RGB, tileId, false, ImageTileFormat.PNGRAW);
-					final byte[] satelliteData = InputStreamUtils.readAllBytes(mapbox.getTileStream(
-						MapboxClient.SATELLITE, tileId, false, ImageTileFormat.PNGRAW));
 					autoDrawable.invoke(true, drawable -> {
 						try {
-							Texture satellite = TextureIO.newTexture(
-								new ByteArrayInputStream(satelliteData),
-								false, "png");
+							Texture satellite = TextureIO.newTexture(textureData);
 							TerrainTile terrainTile = new TerrainTile(terrain,
 								new CoordinateConverter(terrain.getWidth(), tileId));
 							newTiles.add(new ManagedTile(tileId, terrainTile, satellite));
