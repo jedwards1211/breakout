@@ -13,9 +13,6 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import org.andork.jogl.JoglDrawContext;
@@ -24,10 +21,8 @@ import org.andork.jogl.JoglResource;
 import org.andork.jogl.shader.AttribLocation;
 import org.andork.math3d.Vecmath;
 
-import com.jogamp.common.nio.PointerBuffer;
 import com.jogamp.nativewindow.util.Dimension;
 import com.jogamp.opengl.GL2ES2;
-import com.jogamp.opengl.GL3;
 
 public class TerrainTile implements JoglDrawable, JoglResource {
 	public TerrainTile(BufferedImage heightmap, Consumer<float[]> transform) {
@@ -148,8 +143,7 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 
 	private boolean initialized;
 	private ByteBuffer vertexData;
-	private IntBuffer counts;
-	private PointerBuffer indexPointers;
+	private IntBuffer indices;
 	private int[] vbo = new int[1];
 	private int[] ebo = new int[1];
 
@@ -157,42 +151,50 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 	public AttribLocation normalLocation;
 	public AttribLocation texcoordLocation;
 
-	private Map<Integer, PointerBuffer> precomputedIndexPointers;
-
-	private static Map<Dimension, Map<Integer, PointerBuffer>> precomputedIndexPointersCache = new HashMap<>();
-
-	private static  Map<Integer, PointerBuffer> precomputeIndexPointers(Dimension size) {
-		Map<Integer, PointerBuffer> result = precomputedIndexPointersCache.get(size);
-		if (result == null) {
-			result = new HashMap<Integer, PointerBuffer>();
-			result.put(0 + (1 << 2), calcOrder(size, 0, 1));
-			result.put(1 + (0 << 2), calcOrder(size, 1, 0));
-			result.put(0 + (2 << 2), calcOrder(size, 0, 2));
-			result.put(2 + (0 << 2), calcOrder(size, 2, 0));
-			result.put(3 + (1 << 2), calcOrder(size, 3, 1));
-			result.put(1 + (3 << 2), calcOrder(size, 1, 3));
-			result.put(3 + (2 << 2), calcOrder(size, 3, 2));
-			result.put(2 + (3 << 2), calcOrder(size, 2, 3));
-			precomputedIndexPointersCache.put(size, result);
+	/**
+	 * @return {@code true} iff any of the terrain is in front of the camera.
+	 */
+	private boolean calcOrder(JoglDrawContext context) {
+		float bestDist = -Float.MAX_VALUE;
+		float secondBestDist = -Float.MAX_VALUE;
+		int bestCorner = -1;
+		int secondBestCorner = -1;
+	
+		float[] vi = context.inverseViewMatrix();
+	
+		for (int i = 0; i < corners.length; i++) {
+			float dist = subDot3(vi, 12, corners[i], 0, vi, 8);
+			if (dist > bestDist) {
+				secondBestDist = bestDist;
+				secondBestCorner = bestCorner;
+				bestDist = dist;
+				bestCorner = i;
+			} else if (dist > secondBestDist) {
+				secondBestDist = dist;
+				secondBestCorner = i;
+			}
 		}
-		return result;
-	}
+		
+		if (bestDist < 0f) {
+			return false;
+		}
+		
+		if (bestCorner == lastBestCorner && secondBestCorner == lastSecondBestCorner) {
+			return false;
+		}
 	
-	public void usePrecomputedIndexPointers() {
-		precomputedIndexPointers = precomputeIndexPointers(size);
-	}
+		calcOrder(size, bestCorner, secondBestCorner, indices);
 	
-	private static PointerBuffer calcOrder(Dimension size, int corner0, int corner1) {
-		int numCellRows = size.getHeight() - 1;
-		int numCellCols = size.getWidth() - 1;
-		PointerBuffer indexPointers = PointerBuffer.allocateDirect(numCellRows * numCellCols);
-		calcOrder(size, corner0, corner1, indexPointers);
-		return indexPointers;
+		lastBestCorner = bestCorner;
+		lastSecondBestCorner = secondBestCorner;
+		return true;
 	}
 
-	private static void calcOrder(Dimension size, int corner0, int corner1, PointerBuffer indexPointers) {
-		int numCellRows = size.getHeight() - 1;
-		int numCellCols = size.getWidth() - 1;
+	private void calcOrder(Dimension size, int corner0, int corner1, IntBuffer indices) {
+		int numVertexRows = size.getHeight();
+		int numVertexCols = size.getWidth();
+		int numCellRows = numVertexRows - 1;
+		int numCellCols = numVertexCols - 1;
 	
 		int firstRow;
 		int lastRow;
@@ -203,42 +205,73 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 	
 		if (corner0 < 2) {
 			firstRow = 0;
-			rowStep = numCellCols * 6;
-			lastRow = rowStep * (numCellRows - 1);
+			lastRow = numCellRows;
+			rowStep = 1;
 		} else {
-			rowStep = -numCellCols * 6;
-			firstRow = -rowStep * (numCellRows - 1);
-			lastRow = 0;
+			firstRow = numCellRows - 1;
+			lastRow = -1;
+			rowStep = -1;
 		}
 	
 		if ((corner0 & 0x1) == 0) {
 			firstCol = 0;
-			colStep = 6;
-			lastCol = (numCellCols - 1) * 6;
+			lastCol = numCellCols;
+			colStep = 1;
 		} else {
-			firstCol = (numCellCols - 1) * 6;
-			colStep = -6;
-			lastCol = 0;
+			firstCol = numCellCols - 1;
+			lastCol = -1;
+			colStep = -1;
 		}
 		
-		indexPointers.position(0);
-	
+		indices.position(0);
+		
 		if ((corner0 < 2) == (corner1 < 2)) {
-			for (int row = firstRow; lastRow > firstRow ? row <= lastRow : row >= lastRow; row += rowStep) {
-				for (int col = firstCol; lastCol > firstCol ? col <= lastCol : col >= lastCol; col += colStep) {
-					indexPointers.put((row + col) * 4);
+			for (int row = firstRow; row != lastRow; row += rowStep) {
+				int rowStart = row * numVertexCols;
+				int nextRowStart = rowStart + numVertexCols;
+				for (int col = firstCol; col != lastCol; col += colStep) {
+					if (fold[row][col]) {
+						indices.put(rowStart + col);
+						indices.put(nextRowStart + col + 1);
+						indices.put(nextRowStart + col);
+						indices.put(nextRowStart + col + 1);
+						indices.put(rowStart + col);
+						indices.put(rowStart + col + 1);				
+					} else {
+						indices.put(rowStart + col + 1);
+						indices.put(nextRowStart + col);
+						indices.put(rowStart + col);
+						indices.put(nextRowStart + col);
+						indices.put(rowStart + col + 1);
+						indices.put(nextRowStart + col + 1);
+					}
 				}
 			}
 		} else {
-			for (int col = firstCol; lastCol > firstCol ? col <= lastCol : col >= lastCol; col += colStep) {
-				for (int row = firstRow; lastRow > firstRow ? row <= lastRow : row >= lastRow; row += rowStep) {
-					indexPointers.put((row + col) * 4);
+			for (int col = firstCol; col != lastCol; col += colStep) {
+				for (int row = firstRow; row != lastRow; row += rowStep) {
+					int rowStart = row * numVertexCols;
+					int nextRowStart = rowStart + numVertexCols;
+					if (fold[row][col]) {
+						indices.put(rowStart + col);
+						indices.put(nextRowStart + col + 1);
+						indices.put(nextRowStart + col);
+						indices.put(nextRowStart + col + 1);
+						indices.put(rowStart + col);
+						indices.put(rowStart + col + 1);				
+					} else {
+						indices.put(rowStart + col + 1);
+						indices.put(nextRowStart + col);
+						indices.put(rowStart + col);
+						indices.put(nextRowStart + col);
+						indices.put(rowStart + col + 1);
+						indices.put(nextRowStart + col + 1);
+					}
 				}
-			}
-	
+			}	
 		}
-	
-		indexPointers.position(0);
+
+		indices.position(0);
 	}
 
 	@Override
@@ -270,7 +303,7 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 
 		ByteBuffer b = ByteBuffer.allocateDirect(numCellRows * numCellCols * 24);
 		b.order(ByteOrder.nativeOrder());
-		IntBuffer indices = b.asIntBuffer();
+		indices = b.asIntBuffer();
 	
 		for (int row = 0; row < numCellRows; row++) {
 			int rowStart = row * numVertexCols;
@@ -301,71 +334,14 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 		gl.glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.capacity() * 4, indices, GL_STATIC_DRAW);
 		gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-		b = ByteBuffer.allocateDirect(numCellRows * numCellCols * 4);
-		b.order(ByteOrder.nativeOrder());
-		counts = b.asIntBuffer();
-		while (counts.hasRemaining()) {
-			counts.put(6);
-		}
-		counts.position(0);
-
-		if (precomputedIndexPointers == null) {
-			indexPointers = PointerBuffer.allocateDirect(numCellRows * numCellCols);
-		}
-
 		return true;
 	}
 	
-	/**
-	 * @return {@code true} iff any of the terrain is in front of the camera.
-	 */
-	private boolean calcOrder(JoglDrawContext context) {
-		float bestDist = -Float.MAX_VALUE;
-		float secondBestDist = -Float.MAX_VALUE;
-		int bestCorner = -1;
-		int secondBestCorner = -1;
-	
-		float[] vi = context.inverseViewMatrix();
-	
-		for (int i = 0; i < corners.length; i++) {
-			float dist = subDot3(vi, 12, corners[i], 0, vi, 8);
-			if (dist > bestDist) {
-				secondBestDist = bestDist;
-				secondBestCorner = bestCorner;
-				bestDist = dist;
-				bestCorner = i;
-			} else if (dist > secondBestDist) {
-				secondBestDist = dist;
-				secondBestCorner = i;
-			}
-		}
-		
-		if (bestDist < 0f) {
-			return false;
-		}
-		
-		if (precomputedIndexPointers != null) {
-			indexPointers = precomputedIndexPointers.get(bestCorner + (secondBestCorner << 2));
-			return true;
-		}
-		
-		if (bestCorner == lastBestCorner && secondBestCorner == lastSecondBestCorner) {
-			return true;
-		}
-
-		calcOrder(size, bestCorner, secondBestCorner, indexPointers);
-	
-		lastBestCorner = bestCorner;
-		lastSecondBestCorner = secondBestCorner;
-		return true;
-	}
-
 	@Override
 	public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
-		if (!initialized || !calcOrder(context) || indexPointers == null) {
+		if (!initialized) {
 			return;
 		}
-	
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 		if (positionLocation == null) {
 			throw new RuntimeException("positionLocation must not be null");
@@ -377,12 +353,14 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 		if (texcoordLocation != null) {
 			gl.glVertexAttribPointer(texcoordLocation.location(), 2, GL_FLOAT, false, BYTES_PER_VERTEX, 24);
 		}
-	
+
 		gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo[0]);
-	
-		((GL3) gl).glMultiDrawElements(
-			GL_TRIANGLES, counts, GL_UNSIGNED_INT, indexPointers,
-			(size.getWidth() - 1) * (size.getHeight() - 1));
+		if (calcOrder(context)) {
+			gl.glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.capacity() * 4, indices, GL_STATIC_DRAW);
+		}
+
+		gl.glDrawElements(
+			GL_TRIANGLES, (size.getWidth() - 1) * (size.getHeight() - 1) * 6, GL_UNSIGNED_INT, 0);
 	
 		gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
