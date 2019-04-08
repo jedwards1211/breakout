@@ -110,7 +110,6 @@ import org.andork.unit.Unit;
 import org.andork.util.StringUtils;
 import org.breakout.PickResult;
 import org.breakout.awt.ParamGradientMapPaint;
-import org.breakout.mabox.Tilebelt;
 import org.breakout.model.calc.CalcCave;
 import org.breakout.model.calc.CalcCrossSection;
 import org.breakout.model.calc.CalcProject;
@@ -119,8 +118,6 @@ import org.breakout.model.calc.CalcStation;
 import org.breakout.model.calc.CalcTrip;
 import org.breakout.model.parsed.Lead;
 import org.breakout.model.shader.CenterlineProgram;
-import org.breakout.proj4.Proj4Utils;
-import org.osgeo.proj4j.ProjCoordinate;
 
 import com.andork.plot.LinearAxisConversion;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt;

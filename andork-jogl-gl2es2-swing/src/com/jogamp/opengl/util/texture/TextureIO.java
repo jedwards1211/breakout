@@ -58,6 +58,7 @@ import java.util.List;
 import com.jogamp.nativewindow.util.Dimension;
 import com.jogamp.nativewindow.util.DimensionImmutable;
 import com.jogamp.nativewindow.util.PixelFormat;
+import com.jogamp.nativewindow.util.PixelRectangle;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2;
 import com.jogamp.opengl.GL2ES3;
@@ -1409,4 +1410,27 @@ public class TextureIO {
 
         return arg.toLowerCase();
     }
+
+	public static TextureData getTextureData(GLProfile glp, PixelRectangle image) {
+	    final GLPixelAttributes glpa = new GLPixelAttributes(glp, image.getPixelformat(), false /* pack */);
+	    int pixelFormat = glpa.format;
+	    int internalFormat;
+		final boolean hasAlpha = 4 == glpa.pfmt.comp.bytesPerPixel();
+		if(glp.isGL2ES3()) {
+			internalFormat = hasAlpha ? GL.GL_RGBA8 : GL.GL_RGB8;
+		} else {
+			internalFormat = hasAlpha ? GL.GL_RGBA : GL.GL_RGB;
+		}
+	    return new TextureData(glp, internalFormat,
+	                           image.getSize().getWidth(),
+	                           image.getSize().getHeight(),
+	                           0,
+	                           pixelFormat,
+	                           glpa.type,
+	                           false,
+	                           false,
+	                           false,
+	                           image.getPixels(),
+	                           null);
+	}
 }

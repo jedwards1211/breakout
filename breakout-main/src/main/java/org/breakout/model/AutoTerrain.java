@@ -2,8 +2,8 @@ package org.breakout.model;
 
 import static org.andork.math3d.Vecmath.subDot3;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -12,12 +12,12 @@ import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
-import org.andork.io.InputStreamUtils;
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglManagedResource;
 import org.andork.jogl.JoglResource;
 import org.andork.math3d.Clip3f;
+import org.andork.nativewindow.util.PixelRectangles;
 import org.breakout.mabox.MapboxClient;
 import org.breakout.mabox.MapboxClient.ImageTileFormat;
 import org.breakout.mabox.Tilebelt;
@@ -30,10 +30,16 @@ import org.osgeo.proj4j.CoordinateTransform;
 import org.osgeo.proj4j.ProjCoordinate;
 import org.osgeo.proj4j.datum.Datum;
 
+import com.jogamp.common.nio.Buffers;
+import com.jogamp.nativewindow.util.Dimension;
+import com.jogamp.nativewindow.util.DimensionImmutable;
+import com.jogamp.nativewindow.util.PixelFormat;
+import com.jogamp.nativewindow.util.PixelRectangle;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.util.PNGPixelRect;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
@@ -268,15 +274,14 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 			GLProfile profile = gl.getGLProfile();
 			fetchService.submit(() -> {
 				try {
-					TextureData textureData = TextureIO.newTextureData(profile, mapbox.getTileStream(
-						MapboxClient.SATELLITE, tileId, false, ImageTileFormat.PNGRAW), false, "png");
-					BufferedImage terrain = mapbox.getTile(
-						MapboxClient.TERRAIN_RGB, tileId, false, ImageTileFormat.PNGRAW);
+					TextureData textureData = TextureIO.getTextureData(profile, getTileData(MapboxClient.SATELLITE, tileId, false));
+					PixelRectangle terrain = getTileData(MapboxClient.TERRAIN_RGB, tileId, false);
+
 					autoDrawable.invoke(true, drawable -> {
 						try {
 							Texture satellite = TextureIO.newTexture(textureData);
 							TerrainTile terrainTile = new TerrainTile(terrain,
-								new CoordinateConverter(terrain.getWidth(), tileId));
+								new CoordinateConverter(terrain.getSize().getWidth() - 1, tileId));
 							newTiles.add(new ManagedTile(tileId, terrainTile, satellite));
 							return true;
 						} catch (Exception e) {
@@ -451,5 +456,43 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 			}
 			return tiles;
 		}
+	}
+	
+	public final PixelRectangle getTileData(String mapId, long[] tileId, boolean highDpi) throws IOException {
+        PNGPixelRect main = PNGPixelRect.read(mapbox.getTileStream(
+				mapId, tileId, highDpi, ImageTileFormat.PNGRAW), null, true /* directBuffer */, 0 /* destMinStrideInBytes */, true /* destIsGLOriented */);
+        tileId[0]++;
+        PNGPixelRect right = PNGPixelRect.read(mapbox.getTileStream(
+				mapId, tileId, highDpi, ImageTileFormat.PNGRAW), null, true /* directBuffer */, 0 /* destMinStrideInBytes */, true /* destIsGLOriented */);
+        tileId[1]++;
+        PNGPixelRect belowRight = PNGPixelRect.read(mapbox.getTileStream(
+				mapId, tileId, highDpi, ImageTileFormat.PNGRAW), null, true /* directBuffer */, 0 /* destMinStrideInBytes */, true /* destIsGLOriented */);
+        tileId[0]--;
+        PNGPixelRect below = PNGPixelRect.read(mapbox.getTileStream(
+				mapId, tileId, highDpi, ImageTileFormat.PNGRAW), null, true /* directBuffer */, 0 /* destMinStrideInBytes */, true /* destIsGLOriented */);
+        tileId[1]--;
+        
+        DimensionImmutable size = main.getSize();
+        
+        int newWidth = size.getWidth() + 1;
+        int newHeight = size.getHeight() + 1;
+        
+        PixelFormat format = main.getPixelformat();
+        int newStride = format.comp.bytesPerPixel() * newWidth;
+
+        final ByteBuffer destPixels = Buffers.newDirectByteBuffer(newStride * newHeight);
+        
+        PixelRectangle result = new PixelRectangle.GenericPixelRect(main.getPixelformat(),
+        	new Dimension(newWidth, newHeight),
+        	newStride,
+        	main.isGLOriented(),
+        	destPixels);
+        
+        PixelRectangles.copy(main, 0, 0, result, 0, 0, size.getWidth(), size.getHeight());
+        PixelRectangles.copy(right, 0, 0, result, size.getWidth(), 0, 1, size.getHeight());
+        PixelRectangles.copy(belowRight, 0, 0, result, size.getWidth(), size.getHeight(), 1, 1);
+        PixelRectangles.copy(below, 0, 0, result, 0, size.getHeight(), size.getWidth(), 1);
+	
+        return result;
 	}
 }

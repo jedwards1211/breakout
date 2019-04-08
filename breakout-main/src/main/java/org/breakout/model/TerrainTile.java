@@ -20,47 +20,27 @@ import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglResource;
 import org.andork.jogl.shader.AttribLocation;
 import org.andork.math3d.Vecmath;
+import org.andork.nativewindow.util.PixelRectangles;
 
 import com.jogamp.nativewindow.util.Dimension;
+import com.jogamp.nativewindow.util.PixelRectangle;
 import com.jogamp.opengl.GL2ES2;
 
 public class TerrainTile implements JoglDrawable, JoglResource {
-	public TerrainTile(BufferedImage heightmap, Consumer<float[]> transform) {
-		int numVertexCols = heightmap.getWidth();
-		int numVertexRows = heightmap.getHeight();
+	public TerrainTile(float[][][] vertices) {
+		int numVertexRows = vertices.length;
+		int numVertexCols = vertices[0].length;
 		size = new Dimension(numVertexCols, numVertexRows);
 
 		int numCellRows = numVertexRows - 1;
 		int numCellCols = numVertexCols - 1;
-		
-		float[][][] vertices = new float[numVertexRows][numVertexCols][3];
-		
-		int x, y;
-		for (y = 0; y < numVertexRows; y++) {
-			float[][] row = vertices[y];
-			for (x = 0; x < numVertexCols; x++) {
-				float[] vertex = row[x];
-				vertex[0] = x;
-				vertex[1] = y;
-				vertex[2] = (heightmap.getRGB(x, y) & 0xffffff) * 0.1f - 10000f;
-			}
-		}
-		
-		if (transform != null) {
-			for (y = 0; y < numVertexCols; y++) {
-				float[][] row = vertices[y];
-				for (x = 0; x < numVertexRows; x++) {
-					float[] vertex = row[x];
-					transform.accept(vertex);
-				}
-			}
-		}
 		
 		setf(corners[0], vertices[0][0]);
 		setf(corners[1], vertices[0][numCellCols]);
 		setf(corners[2], vertices[numCellRows][0]);
 		setf(corners[3], vertices[numCellRows][numCellCols]);
 		
+		int y, x;
 		float[] xz = new float[3];
 		float[] yz = new float[3];
 		float[][][] normals = new float[numVertexRows][numVertexCols][3];
@@ -84,10 +64,9 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 		
 		double texcoordXinc = 1.0 / numVertexRows;
 		double texcoordYinc = 1.0 / numVertexCols;
-		float texcoordX = 0;
-		float texcoordY = 0;
-		for (y = 0, texcoordY = 1f; y < numVertexRows; y++, texcoordY -= texcoordYinc) {
-			for (x = 0, texcoordX = 0; x < numVertexCols; x++, texcoordX += texcoordXinc) {
+		float texcoordY, texcoordX;
+		for (y = 0, texcoordY = 1 - 0.5f / numVertexCols; y < numVertexRows; y++, texcoordY -= texcoordYinc) {
+			for (x = 0, texcoordX = 0.5f / numVertexRows; x < numVertexCols; x++, texcoordX += texcoordXinc) {
 				float[] vertex = vertices[y][x];
 				float[] normal = normals[y][x];
 				b.putFloat(vertex[0]);
@@ -111,7 +90,75 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 				fold[y][x] = Vecmath.dot3(normals[y][x], normals[y + 1][x + 1]) >=
 					Vecmath.dot3(normals[y + 1][x], normals[y][x + 1]);
 			}
+		}		
+	}
+	
+	public static float[][][] createVertices(BufferedImage heightmap, Consumer<float[]> transform) {
+		int numVertexCols = heightmap.getWidth();
+		int numVertexRows = heightmap.getHeight();
+		
+		float[][][] vertices = new float[numVertexRows][numVertexCols][3];
+		
+		int x, y;
+		for (y = 0; y < numVertexRows; y++) {
+			float[][] row = vertices[y];
+			for (x = 0; x < numVertexCols; x++) {
+				float[] vertex = row[x];
+				vertex[0] = x;
+				vertex[1] = y;
+				vertex[2] = (heightmap.getRGB(x, y) & 0xffffff) * 0.1f - 10000f;
+			}
 		}
+		
+		if (transform != null) {
+			for (y = 0; y < numVertexCols; y++) {
+				float[][] row = vertices[y];
+				for (x = 0; x < numVertexRows; x++) {
+					float[] vertex = row[x];
+					transform.accept(vertex);
+				}
+			}
+		}	
+
+		return vertices;
+	}
+
+	public static float[][][] createVertices(PixelRectangle heightmap, Consumer<float[]> transform) {
+		int numVertexCols = heightmap.getSize().getWidth();
+		int numVertexRows = heightmap.getSize().getHeight();
+		
+		float[][][] vertices = new float[numVertexRows][numVertexCols][3];
+		
+		int x, y;
+		for (y = 0; y < numVertexRows; y++) {
+			float[][] row = vertices[y];
+			for (x = 0; x < numVertexCols; x++) {
+				float[] vertex = row[x];
+				vertex[0] = x;
+				vertex[1] = y;
+				vertex[2] = (PixelRectangles.getARGB(heightmap, x, y) & 0xffffff) * 0.1f - 10000f;
+			}
+		}
+		
+		if (transform != null) {
+			for (y = 0; y < numVertexCols; y++) {
+				float[][] row = vertices[y];
+				for (x = 0; x < numVertexRows; x++) {
+					float[] vertex = row[x];
+					transform.accept(vertex);
+				}
+			}
+		}	
+
+		return vertices;
+	}
+
+	public TerrainTile(BufferedImage heightmap, Consumer<float[]> transform) {
+		this(createVertices(heightmap, transform));
+	}
+
+	public TerrainTile(PixelRectangle heightmap, Consumer<float[]> transform) {
+		this(createVertices(heightmap, transform));
 	}
 	
 	private Dimension size;
