@@ -37,6 +37,7 @@ import com.jogamp.nativewindow.util.PixelFormat;
 import com.jogamp.nativewindow.util.PixelRectangle;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.util.PNGPixelRect;
@@ -90,7 +91,8 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 	
 			gl.glEnable(GL.GL_DEPTH_TEST);
 			gl.glEnable(GL.GL_BLEND);
-			gl.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+			gl.glBlendFunc(GL3.GL_ONE, GL.GL_ONE_MINUS_SRC_ALPHA);
+			gl.glBlendEquation(GL3.GL_FUNC_ADD);
 	
 			program.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m, n);
 			program.position.enableArray(gl);
@@ -98,7 +100,7 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 			program.texcoord.enableArray(gl);
 			program.lightDirection.put(gl, 0, 1, 1);
 			program.ambient.put(gl, 0.5f);
-			program.alpha.put(gl, 0.7f);
+			program.alpha.put(gl, 0.5f);
 			program.putClip(gl, clip);
 			gl.glActiveTexture(GL.GL_TEXTURE0);
 			if (texture != null) {
@@ -264,9 +266,19 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 			rootConverter.accept(corner);
 		}
 		
-		for (long[] child : Tilebelt.getChildren(rootTile)) {
-			for (long[] grandchild : Tilebelt.getChildren(child)) {
-				tiles.add(grandchild);
+		int zoom;
+		long[] minTile = null;
+		long[] maxTile = null;
+		for (zoom = 15; zoom >= 7; zoom--) {
+			minTile = Tilebelt.pointToTile(min.x, min.y, zoom);
+			maxTile = Tilebelt.pointToTile(max.x, max.y, zoom);
+			long numTiles = (maxTile[0] - minTile[0] + 1) * (maxTile[1] - minTile[1] + 1);
+			if (numTiles <= 64) break;
+		}
+		
+		for (long x = minTile[0]; x <= maxTile[0]; x++) {
+			for (long y = minTile[1]; y <= maxTile[1]; y++) {
+				tiles.add(new long[] {x, y, zoom});
 			}
 		}
 		
