@@ -1,6 +1,7 @@
 package org.breakout.model.calc;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -572,11 +573,21 @@ public class CalculateGeometry {
 			PriorityEntry<Double, CalcShot> entry = queue.poll();
 			double distance = entry.getKey();
 			CalcShot shot = entry.getValue();
+			boolean hadFromStationPosition = shot.fromStation.hasPosition();
+			boolean hadToStationPosition = shot.toStation.hasPosition();
 			calculateStationPositions(shot);
-			for (CalcShot nextShot : Iterables.concat(
-					shot.fromStation.shots.values(),
-					shot.toStation.shots.values())) {
-				if ((!nextShot.fromStation.hasPosition() || !nextShot.toStation.hasPosition()) && Double.isFinite(shot.distance)) {
+			boolean addedFromStationPosition = !hadFromStationPosition && shot.fromStation.hasPosition();
+			boolean addedToStationPosition = !hadToStationPosition && shot.toStation.hasPosition();
+			Iterable<CalcShot> nextShots =
+				addedFromStationPosition && addedToStationPosition
+					? Iterables.concat(shot.fromStation.shots.values(), shot.toStation.shots.values())
+					: addedFromStationPosition ? shot.fromStation.shots.values()
+					: addedToStationPosition ? shot.toStation.shots.values()
+					: Collections.emptyList();
+			for (CalcShot nextShot : nextShots) {
+				if (nextShot != shot &&
+					(!nextShot.fromStation.hasPosition() || !nextShot.toStation.hasPosition()) &&
+					Double.isFinite(shot.distance)) {
 					queue.add(new PriorityEntry<>(distance + shot.distance, nextShot));
 				}
 			}
@@ -592,6 +603,9 @@ public class CalculateGeometry {
 		double xOffs = shot.distance * Math.cos(shot.inclination) * Math.sin(shot.azimuth);
 		double yOffs = shot.distance * Math.sin(shot.inclination);
 		double zOffs = shot.distance * Math.cos(shot.inclination) * -Math.cos(shot.azimuth);
+		if (!Double.isFinite(xOffs) || !Double.isFinite(yOffs) || !Double.isFinite(zOffs)) {
+			return;
+		}
 		if (shot.fromStation.hasPosition() && !shot.toStation.hasPosition()) {
 			shot.toStation.position[0] = shot.fromStation.position[0] + xOffs;
 			shot.toStation.position[1] = shot.fromStation.position[1] + yOffs;
