@@ -1112,12 +1112,11 @@ public class BreakoutMainView {
 		logger.info("Shutting down...");
 		if (hasUnsavedChanges()) {
 			logger.info("there are unsaved changes");
-			int choice = JOptionPane.showConfirmDialog(
-					SwingUtilities.getWindowAncestor(getMainPanel()),
-					"Do you want to save changes?",
-					"Unsaved Changes",
-					JOptionPane.YES_NO_CANCEL_OPTION,
-					JOptionPane.WARNING_MESSAGE);
+			int choice = new JOptionPaneBuilder()
+				.message("Do you want to save changes?")
+				.yesNoCancel()
+				.warning()
+				.showDialog(mainPanel, "Unsaved Changes");
 			switch (choice) {
 			case JOptionPane.YES_OPTION:
 				logger.info("user chose to save changes");
@@ -1126,7 +1125,7 @@ public class BreakoutMainView {
 			case JOptionPane.NO_OPTION:
 				logger.info("user chose to discard unsaved changes");
 				break;
-			case JOptionPane.CANCEL_OPTION:
+			default:
 				logger.info("user chose to cancel shutdown");
 				return;
 			}
