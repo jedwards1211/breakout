@@ -179,10 +179,12 @@ public class Parsed2Calc {
 		ProjCoordinate projCoord = new ProjCoordinate();
 
 		for (ParsedFixedStation station : stations) {
+			boolean gotLocation = false;
 			if (station.location instanceof ParsedNEVLocation) {
-				getLocation(station, projCoord, IdentityCoordinateTransform.INSTANCE, IdentityCoordinateTransform.INSTANCE);
+				gotLocation = getLocation(station, projCoord, IdentityCoordinateTransform.INSTANCE, IdentityCoordinateTransform.INSTANCE);
 			}
-			if (Double.isFinite(projCoord.x) &&
+			if (gotLocation &&
+				Double.isFinite(projCoord.x) &&
 				Double.isFinite(projCoord.y) &&
 				Double.isFinite(projCoord.z)) {
 				x[i] = projCoord.x;
@@ -220,8 +222,8 @@ public class Parsed2Calc {
 			CoordinateReferenceSystem sourceGeodeticCrs = sourceCrs.createGeographic();
 			ToGeocentricCoordinateTransform sourceGeodeticToGeocentric = new ToGeocentricCoordinateTransform(sourceGeodeticCrs);
 			for (ParsedFixedStation station : entry.getValue()) {
-				getLocation(station, projCoord, sourceToGeocentric, sourceGeodeticToGeocentric);
-				if (Double.isFinite(projCoord.x) &&
+				if (getLocation(station, projCoord, sourceToGeocentric, sourceGeodeticToGeocentric) &&
+					Double.isFinite(projCoord.x) &&
 					Double.isFinite(projCoord.y) &&
 					Double.isFinite(projCoord.z)) {
 					x[i] = projCoord.x;
@@ -258,7 +260,7 @@ public class Parsed2Calc {
 		return (average(arr, start, mid) + average(arr, mid, end)) / 2;
 	}
 	
-	static ProjCoordinate getLocation(ParsedFixedStation fixedStation, ProjCoordinate projCoord, CoordinateTransform xform, CoordinateTransform geoXform) {
+	static boolean getLocation(ParsedFixedStation fixedStation, ProjCoordinate projCoord, CoordinateTransform xform, CoordinateTransform geoXform) {
 		if (fixedStation.location instanceof ParsedNEVLocation) {
 			ParsedNEVLocation nev = (ParsedNEVLocation) fixedStation.location;
 			if (ParsedField.hasValue(nev.northing)) {
@@ -277,6 +279,7 @@ public class Parsed2Calc {
 				projCoord.z = Double.NaN;
 			}
 			xform.transform(projCoord, projCoord);
+			return true;
 		} else if (fixedStation.location instanceof ParsedLatLonLocation) {
 			ParsedLatLonLocation loc = (ParsedLatLonLocation) fixedStation.location;
 			if (ParsedField.hasValue(loc.latitude)) {
@@ -295,27 +298,9 @@ public class Parsed2Calc {
 				projCoord.z = Double.NaN;
 			}
 			geoXform.transform(projCoord, projCoord);
+			return true;
 		}
-		return projCoord;
-	}
-
-	void convert(ParsedFixedStation fixedStation) {
-		CalcStation station = project.stations.get(fixedStation.key());
-		if (station == null) {
-			return;
-		}
-		if (fixedStation.location instanceof ParsedNEVLocation) {
-			ParsedNEVLocation nev = (ParsedNEVLocation) fixedStation.location;
-			if (ParsedField.hasValue(nev.northing)) {
-				station.position[2] = -nev.northing.value.doubleValue(Length.meters);
-			}
-			if (ParsedField.hasValue(nev.easting)) {
-				station.position[0] = nev.easting.value.doubleValue(Length.meters);
-			}
-			if (ParsedField.hasValue(nev.elevation)) {
-				station.position[1] = nev.elevation.value.doubleValue(Length.meters);
-			}
-		}
+		return false;
 	}
 
 	void convert(ParsedFixedStation fixedStation, CoordinateTransform xform, CoordinateTransform geoXform) {
@@ -323,10 +308,11 @@ public class Parsed2Calc {
 		if (station == null) {
 			return;
 		}
-		getLocation(fixedStation, projCoord, xform, geoXform);
-		station.position[0] = projCoord.x;
-		station.position[1] = projCoord.z;
-		station.position[2] = -projCoord.y;
+		if (getLocation(fixedStation, projCoord, xform, geoXform)) {
+			station.position[0] = projCoord.x;
+			station.position[1] = projCoord.z;
+			station.position[2] = -projCoord.y;
+		}
 	}
 
 	void convert(ParsedTrip trip, CalcCave cave) {
