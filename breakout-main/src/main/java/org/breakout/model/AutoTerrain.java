@@ -1,7 +1,5 @@
 package org.breakout.model;
 
-import static org.andork.math3d.Vecmath.subDot3;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -18,9 +16,11 @@ import org.andork.jogl.JoglManagedResource;
 import org.andork.jogl.JoglResource;
 import org.andork.math3d.Clip3f;
 import org.andork.nativewindow.util.PixelRectangles;
+import org.andork.util.ArrayUtils;
 import org.breakout.mabox.MapboxClient;
 import org.breakout.mabox.MapboxClient.ImageTileFormat;
 import org.breakout.mabox.Tilebelt;
+import org.breakout.model.TerrainTile.PaintOrder;
 import org.breakout.model.shader.TerrainProgram;
 import org.breakout.proj4.Proj4Utils;
 import org.breakout.proj4.WebMercatorProjection;
@@ -250,21 +250,12 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 		initialized = true;
 		
 		List<long[]> tiles = new ArrayList<>();
-		ProjCoordinate min = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[0], -mbr[2], mbr[1]), coordinateReferenceSystem);
-		ProjCoordinate max = Proj4Utils.convertToGeographic(new ProjCoordinate(mbr[3], -mbr[5], mbr[4]), coordinateReferenceSystem);
-		long[] rootTile = Tilebelt.bboxToTile(new double[] {min.x, min.y, max.x, max.y});
-		
-		final int tileSize = 256;
-		CoordinateConverter rootConverter = new CoordinateConverter(tileSize, rootTile);
-		corners = new float[][] {
-			{0, 0, 0},
-			{0, tileSize, 0},
-			{tileSize, tileSize, 0},
-			{tileSize, 0, 0}
-		};
-		for (float[] corner : corners) {
-			rootConverter.accept(corner);
-		}
+		CoordinateReferenceSystem geographic = coordinateReferenceSystem.createGeographic();
+		CoordinateTransform toGeographic = new BasicCoordinateTransform(coordinateReferenceSystem, geographic);
+		CoordinateTransform fromGeographic = new BasicCoordinateTransform(geographic, coordinateReferenceSystem);
+		ProjCoordinate min = Proj4Utils.convert(toGeographic, new ProjCoordinate(mbr[0], -mbr[2], mbr[1]));
+		ProjCoordinate max = Proj4Utils.convert(toGeographic, new ProjCoordinate(mbr[3], -mbr[5], mbr[4]));
+
 		
 		int zoom;
 		long[] minTile = null;
@@ -275,6 +266,27 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 			long numTiles = (maxTile[0] - minTile[0] + 1) * (maxTile[1] - minTile[1] + 1);
 			if (numTiles <= 64) break;
 		}
+
+		double[][] cornerBBoxes = {
+			Tilebelt.tileToBBox(minTile),
+			Tilebelt.tileToBBox(new long[] {maxTile[0], minTile[1], zoom}),
+			Tilebelt.tileToBBox(new long[] {minTile[0], maxTile[1], zoom}),
+			Tilebelt.tileToBBox(maxTile),
+		};
+		
+		ProjCoordinate[] cornerCoords = {
+			new ProjCoordinate(cornerBBoxes[0][0], cornerBBoxes[0][3], 0),
+			new ProjCoordinate(cornerBBoxes[1][2], cornerBBoxes[1][3], 0),
+			new ProjCoordinate(cornerBBoxes[2][0], cornerBBoxes[2][1], 0),
+			new ProjCoordinate(cornerBBoxes[3][2], cornerBBoxes[3][1], 0),
+		};
+		for (ProjCoordinate corner : cornerCoords) {
+			fromGeographic.transform(corner, corner);
+		}		
+		
+		corners = ArrayUtils.map(cornerCoords, new float[4][], coord -> new float[] {
+			(float) coord.x, (float) coord.z, (float) -coord.y
+		});
 		
 		for (long x = minTile[0]; x <= maxTile[0]; x++) {
 			for (long y = minTile[1]; y <= maxTile[1]; y++) {
@@ -336,47 +348,21 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 		reloadRequested = true;
 	}
 	
-	private int lastBestCorner = -1;
-	private int lastSecondBestCorner = -1;
 	private ManagedTileComparator tileComparator = null;
 	
+	private PaintOrder paintOrder = null;
+	private PaintOrder nextPaintOrder = new PaintOrder();
+	
 	private boolean calcOrder(JoglDrawContext context) {
-		float bestDist = -Float.MAX_VALUE;
-		float secondBestDist = -Float.MAX_VALUE;
-		int bestCorner = -1;
-		int secondBestCorner = -1;
-	
-		float[] vi = context.inverseViewMatrix();
-	
-		for (int i = 0; i < corners.length; i++) {
-			float dist = subDot3(vi, 12, corners[i], 0, vi, 8);
-			if (dist > bestDist) {
-				secondBestDist = bestDist;
-				secondBestCorner = bestCorner;
-				bestDist = dist;
-				bestCorner = i;
-			} else if (dist > secondBestDist) {
-				secondBestDist = dist;
-				secondBestCorner = i;
-			}
-		}
+		if (nextPaintOrder.compute(context, corners).equals(paintOrder)) return false;
 		
-		if (bestDist < 0f) {
-			return false;
-		}
+		if (paintOrder == null) paintOrder = new PaintOrder();
+		PaintOrder swap = paintOrder;
+		paintOrder = nextPaintOrder;
+		nextPaintOrder = swap;
 		
-		if (bestCorner == lastBestCorner && secondBestCorner == lastSecondBestCorner) {
-			return false;
-		}
-
-		lastBestCorner = bestCorner;
-		lastSecondBestCorner = secondBestCorner;
-		
-		boolean yFirst = (bestCorner < 2) == (secondBestCorner < 2);
-		boolean yDescending = bestCorner < 2;
-		boolean xDescending = (bestCorner & 0x1) == 0;
-		
-		tileComparator = new ManagedTileComparator(yFirst, xDescending, yDescending);
+		tileComparator = new ManagedTileComparator(
+			paintOrder.rowsFirst, paintOrder.colsDescending, paintOrder.rowsDescending);
 		return true;
 	}
 	

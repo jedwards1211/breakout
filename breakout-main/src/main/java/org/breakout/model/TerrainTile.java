@@ -13,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import org.andork.jogl.JoglDrawContext;
@@ -177,8 +178,8 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 	 * 2------3  Row m
 	 */
 	private float[][] corners = new float[4][3];
-	private int lastBestCorner = -1;
-	private int lastSecondBestCorner = -1;
+	private PaintOrder paintOrder = null;
+	private PaintOrder nextPaintOrder = new PaintOrder();
 	/**
 	 * Which diagonal to use when breaking up each cell into triangles.
 	 * fold[x][y] is true -- use diagonal (x, y) - (x+1, y+1)
@@ -202,123 +203,54 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 	 * @return {@code true} iff any of the terrain is in front of the camera.
 	 */
 	private boolean calcOrder(JoglDrawContext context) {
-		float bestDist = -Float.MAX_VALUE;
-		float secondBestDist = -Float.MAX_VALUE;
-		int bestCorner = -1;
-		int secondBestCorner = -1;
-	
-		float[] vi = context.inverseViewMatrix();
-	
-		for (int i = 0; i < corners.length; i++) {
-			float dist = subDot3(vi, 12, corners[i], 0, vi, 8);
-			if (dist > bestDist) {
-				secondBestDist = bestDist;
-				secondBestCorner = bestCorner;
-				bestDist = dist;
-				bestCorner = i;
-			} else if (dist > secondBestDist) {
-				secondBestDist = dist;
-				secondBestCorner = i;
-			}
-		}
-		
-		if (bestDist < 0f) {
-			return false;
-		}
-		
-		if (bestCorner == lastBestCorner && secondBestCorner == lastSecondBestCorner) {
-			return false;
-		}
-	
-		calcOrder(size, bestCorner, secondBestCorner, indices);
-	
-		lastBestCorner = bestCorner;
-		lastSecondBestCorner = secondBestCorner;
-		return true;
-	}
+		if (nextPaintOrder.compute(context, corners).equals(paintOrder)) return false;
+		if (paintOrder == null) paintOrder = new PaintOrder();
 
-	private void calcOrder(Dimension size, int corner0, int corner1, IntBuffer indices) {
+		PaintOrder swap = paintOrder;
+		paintOrder = nextPaintOrder;
+		nextPaintOrder = swap;
+			
 		int numVertexRows = size.getHeight();
 		int numVertexCols = size.getWidth();
 		int numCellRows = numVertexRows - 1;
 		int numCellCols = numVertexCols - 1;
 	
-		int firstRow;
-		int lastRow;
-		int rowStep;
-		int firstCol;
-		int lastCol;
-		int colStep;
-	
-		if (corner0 < 2) {
-			firstRow = 0;
-			lastRow = numCellRows;
-			rowStep = 1;
-		} else {
-			firstRow = numCellRows - 1;
-			lastRow = -1;
-			rowStep = -1;
-		}
-	
-		if ((corner0 & 0x1) == 0) {
-			firstCol = 0;
-			lastCol = numCellCols;
-			colStep = 1;
-		} else {
-			firstCol = numCellCols - 1;
-			lastCol = -1;
-			colStep = -1;
-		}
 		
-		indices.position(0);
-		
-		if ((corner0 < 2) == (corner1 < 2)) {
-			for (int row = firstRow; row != lastRow; row += rowStep) {
-				int rowStart = row * numVertexCols;
-				int nextRowStart = rowStart + numVertexCols;
-				for (int col = firstCol; col != lastCol; col += colStep) {
-					if (fold[row][col]) {
-						indices.put(rowStart + col);
-						indices.put(nextRowStart + col + 1);
-						indices.put(nextRowStart + col);
-						indices.put(nextRowStart + col + 1);
-						indices.put(rowStart + col);
-						indices.put(rowStart + col + 1);				
-					} else {
-						indices.put(rowStart + col + 1);
-						indices.put(nextRowStart + col);
-						indices.put(rowStart + col);
-						indices.put(nextRowStart + col);
-						indices.put(rowStart + col + 1);
-						indices.put(nextRowStart + col + 1);
-					}
+		paintOrder.iterate(numCellRows, numCellCols, new PaintOrder.Iteratee() {
+			int rowStart;
+			int nextRowStart;
+			boolean[] colFold;
+
+			@Override
+			public void row(int row) {
+				rowStart = row * numVertexCols;
+				nextRowStart = rowStart + numVertexCols;
+				colFold = fold[row];
+			}
+
+			@Override
+			public void cell(int row, int col) {
+				if (colFold[col]) {
+					indices.put(rowStart + col);
+					indices.put(nextRowStart + col + 1);
+					indices.put(nextRowStart + col);
+					indices.put(nextRowStart + col + 1);
+					indices.put(rowStart + col);
+					indices.put(rowStart + col + 1);				
+				} else {
+					indices.put(rowStart + col + 1);
+					indices.put(nextRowStart + col);
+					indices.put(rowStart + col);
+					indices.put(nextRowStart + col);
+					indices.put(rowStart + col + 1);
+					indices.put(nextRowStart + col + 1);
 				}
 			}
-		} else {
-			for (int col = firstCol; col != lastCol; col += colStep) {
-				for (int row = firstRow; row != lastRow; row += rowStep) {
-					int rowStart = row * numVertexCols;
-					int nextRowStart = rowStart + numVertexCols;
-					if (fold[row][col]) {
-						indices.put(rowStart + col);
-						indices.put(nextRowStart + col + 1);
-						indices.put(nextRowStart + col);
-						indices.put(nextRowStart + col + 1);
-						indices.put(rowStart + col);
-						indices.put(rowStart + col + 1);				
-					} else {
-						indices.put(rowStart + col + 1);
-						indices.put(nextRowStart + col);
-						indices.put(rowStart + col);
-						indices.put(nextRowStart + col);
-						indices.put(rowStart + col + 1);
-						indices.put(nextRowStart + col + 1);
-					}
-				}
-			}	
-		}
+		});
 
 		indices.position(0);
+		
+		return true;
 	}
 
 	@Override
@@ -351,35 +283,8 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 		ByteBuffer b = ByteBuffer.allocateDirect(numCellRows * numCellCols * 24);
 		b.order(ByteOrder.nativeOrder());
 		indices = b.asIntBuffer();
-	
-		for (int row = 0; row < numCellRows; row++) {
-			int rowStart = row * numVertexCols;
-			int nextRowStart = rowStart + numVertexCols;
-			for (int col = 0; col < numCellCols; col++) {
-				if (fold[row][col]) {
-					indices.put(rowStart + col);
-					indices.put(nextRowStart + col + 1);
-					indices.put(nextRowStart + col);
-					indices.put(nextRowStart + col + 1);
-					indices.put(rowStart + col);
-					indices.put(rowStart + col + 1);				
-				} else {
-					indices.put(rowStart + col + 1);
-					indices.put(nextRowStart + col);
-					indices.put(rowStart + col);
-					indices.put(nextRowStart + col);
-					indices.put(rowStart + col + 1);
-					indices.put(nextRowStart + col + 1);
-				}
-			}
-		}
-
-		indices.position(0);
 
 		gl.glGenBuffers(1, ebo, 0);
-		gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo[0]);
-		gl.glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.capacity() * 4, indices, GL_STATIC_DRAW);
-		gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		return true;
 	}
@@ -411,6 +316,163 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 	
 		gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+	
+	/**
+	 * Computes back-to-front paint order for cells of a grid.
+	 */
+	public static class PaintOrder {
+		/**
+		 * If {@code true}, the outer loop should iterate over rows;
+		 * if {@code false} the outer loop should iterate over columns.
+		 */
+		public boolean rowsFirst;
+		/**
+		 * If {@code true}, should iterate from the last row to the first row;
+		 * otherwise, should iterate from first to last.
+		 */
+		public boolean rowsDescending;
+		/**
+		 * If {@code true}, should iterate from the last col to the first col;
+		 * otherwise, should iterate from first to last.
+		 */
+		public boolean colsDescending;
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(colsDescending, rowsDescending, rowsFirst);
+		}
+	
+		/**
+		 * Computes the paint order given the corners of the grid, where:
+		 * 
+		 * <ul>
+		 * <li>{@code corners[0]} is row 0, col 0
+		 * <li>{@code corners[1]} is row 0, col n
+		 * <li>{@code corners[2]} is row m, col 0
+		 * <li>{@code corners[3]} is row m, col n
+		 * </ul>
+		 * 
+		 * <pre>
+		 * C      C
+		 * o      o
+		 * l      l
+		 * 
+		 * 0      n
+		 * 
+		 * 0------1  Row 0
+		 * |      |
+		 * |      |
+		 * |      |
+		 * 2------3  Row m
+		 * </pre>
+		 */
+		public PaintOrder compute(JoglDrawContext context, float[][] corners) {
+			float farthestDist = -Float.MAX_VALUE;
+			float secondFarthestDist = -Float.MAX_VALUE;
+			int farthestCorner = -1;
+			int secondFarthestCorner = -1;
+		
+			float[] vi = context.inverseViewMatrix();
+		
+			for (int i = 0; i < corners.length; i++) {
+				float dist = subDot3(vi, 12, corners[i], 0, vi, 8);
+				if (dist > farthestDist) {
+					secondFarthestDist = farthestDist;
+					secondFarthestCorner = farthestCorner;
+					farthestDist = dist;
+					farthestCorner = i;
+				} else if (dist > secondFarthestDist) {
+					secondFarthestDist = dist;
+					secondFarthestCorner = i;
+				}
+
+			}
+			
+			rowsFirst = (farthestCorner < 2) == (secondFarthestCorner < 2);
+			rowsDescending = farthestCorner >= 2;
+			colsDescending = (farthestCorner & 0x1) == 1;
+			
+			return this;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			PaintOrder other = (PaintOrder) obj;
+			return colsDescending == other.colsDescending && rowsDescending == other.rowsDescending
+					&& rowsFirst == other.rowsFirst;
+		}
+		
+		public String toString() {
+			return "PaintOrder[first=" + (rowsFirst ? "rows" : "cols") +
+				" rows=" + (rowsDescending ? "descending" : "ascending") +
+				" cols=" + (colsDescending ? "descending" : "ascending") + "]";
+		}
+	
+		public static abstract class Iteratee {
+			public void row(int row) {}
+			public void col(int col) {}
+			public void cell(int row, int col) {}
+		}
+		
+		/**
+		 * Iterates over the cells of the grid in the current computed order.
+		 * @param numRows the number of rows
+		 * @param numCols the number of columns
+		 * @param iteratee the visitor to call on each row/column/cell
+		 */
+		public void iterate(int numRows, int numCols, Iteratee iteratee) {
+			int firstRow;
+			int lastRow;
+			int rowStep;
+			int firstCol;
+			int lastCol;
+			int colStep;
+
+			if (rowsDescending) {
+				firstRow = numRows - 1;
+				lastRow = -1;
+				rowStep = -1;
+			} else {
+				firstRow = 0;
+				lastRow = numRows;
+				rowStep = 1;
+			}
+		
+			if (colsDescending) {
+				firstCol = numCols - 1;
+				lastCol = -1;
+				colStep = -1;
+			} else {
+				firstCol = 0;
+				lastCol = numCols;
+				colStep = 1;
+			}
+			
+			if (rowsFirst) {
+				for (int row = firstRow; row != lastRow; row += rowStep) {
+					iteratee.row(row);
+					for (int col = firstCol; col != lastCol; col += colStep) {
+						iteratee.col(col);
+						iteratee.cell(row, col);
+					}
+				}
+			} else {
+				for (int col = firstCol; col != lastCol; col += colStep) {
+					iteratee.col(col);
+					for (int row = firstRow; row != lastRow; row += rowStep) {
+						iteratee.row(row);
+						iteratee.cell(row, col);
+					}
+				}
+			}
+		}
 	}
 }
 

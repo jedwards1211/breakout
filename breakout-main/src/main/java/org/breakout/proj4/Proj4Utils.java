@@ -19,6 +19,12 @@ public class Proj4Utils {
 	private static CRSFactory factory = new CRSFactory();
 	
 	public static ProjCoordinate convert(
+			CoordinateTransform xform,
+			ProjCoordinate coord) {
+		return xform.transform(coord, coord);
+	}
+
+	public static ProjCoordinate convert(
 		ProjCoordinate fromCoord,
 		CoordinateReferenceSystem fromSys,
 		ProjCoordinate toCoord,
