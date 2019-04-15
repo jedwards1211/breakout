@@ -270,6 +270,11 @@ public class Vecmath {
 				m[4] * (m[1] * m[10] - m[9] * m[2]) +
 				m[8] * (m[1] * m[6] - m[5] * m[2]);
 	}
+	
+	public static float det3(float a, float b, float c, float d, float e, float f, float g, float h, float i) {
+		// rule of Sarrus
+		return a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h;
+	}
 
 	public static double distance3(double[] a, double[] b) {
 		double dx = a[0] - b[0];
@@ -4064,5 +4069,109 @@ public class Vecmath {
 		out[0] = (float) (cos * ax + sin * out[0]);
 		out[1] = (float) (cos * ay + sin * out[1]);
 		out[2] = (float) (cos * az + sin * out[2]);
+	}
+	
+	public static class Circumsphere {
+		public final float[] center = new float[3];
+		public float radiusSquared;
+
+		@Override
+		public String toString() {
+			return "Circumsphere [center=" + Arrays.toString(center) + ", radiusSquared=" + radiusSquared + "]";
+		}
+	}
+
+	/**
+	 * Computes the circumsphere of a tetrahedron with vertices A, B, C, and D.
+	 * If the vertices are coplanar, the output center/radiusSquared will be NaN.
+	 * @param A
+	 * @param B
+	 * @param C
+	 * @param D
+	 * @param out the {@link Circumsphere} to set to the output.
+	 */
+	public static void circumsphere(float[] A, float[] B, float[] C, float [] D, Circumsphere out) {
+		float Ca = det3(
+			B[0], B[1], B[2],
+			C[0], C[1], C[2],
+			D[0], D[1], D[2]);
+		float Cb = det3(
+			A[0], A[1], A[2],
+			C[0], C[1], C[2],
+			D[0], D[1], D[2]);
+		float Cc = det3(
+			A[0], A[1], A[2],
+			B[0], B[1], B[2],
+			D[0], D[1], D[2]);
+		float Cd = det3(
+			A[0], A[1], A[2],
+			B[0], B[1], B[2],
+			C[0], C[1], C[2]);
+		float a = Ca - Cb + Cc - Cd;
+		
+		if (a == 0) {
+			Arrays.fill(out.center, Float.NaN);
+			out.radiusSquared = Float.NaN;
+			return;
+		}
+
+		float A2 = dot3(A, A);
+		float B2 = dot3(B, B);
+		float C2 = dot3(C, C);
+		float D2 = dot3(D, D);
+
+		float b = A2 * Ca - B2 * Cb + C2 * Cc - D2 * Cd;
+
+		
+		float Sx = (
+			det3(B2, B[1], B[2],
+				C2, C[1], C[2],
+				D2, D[1], D[2]) -
+			det3(A2, A[1], A[2],
+				C2, C[1], C[2],
+				D2, D[1], D[2]) +
+			det3(A2, A[1], A[2],
+				B2, B[1], B[2],
+				D2, D[1], D[2]) -
+			det3(A2, A[1], A[2],
+				B2, B[1], B[2],
+				C2, C[1], C[2])
+			) / 2;
+		float Sy = (
+			det3(B[0], B2, B[2],
+				C[0], C2, C[2],
+				D[0], D2, D[2]) -
+			det3(A[0], A2, A[2],
+				C[0], C2, C[2],
+				D[0], D2, D[2]) +
+			det3(A[0], A2, A[2],
+				B[0], B2, B[2],
+				D[0], D2, D[2]) -
+			det3(A[0], A2, A[2],
+				B[0], B2, B[2],
+				C[0], C2, C[2])
+			) / 2;
+		float Sz = (
+			det3(B2, B[0], B[1],
+				C2, C[0], C[1],
+				D2, D[0], D[1]) -
+			det3(A2, A[0], A[1],
+				C2, C[0], C[1],
+				D2, D[0], D[1]) +
+			det3(A2, A[0], A[1],
+				B2, B[0], B[1],
+				D2, D[0], D[1]) -
+			det3(A2, A[0], A[1],
+				B2, B[0], B[1],
+				C2, C[0], C[1])
+			) / 2;
+		
+		out.center[0] = Sx / a;
+		out.center[1] = Sy / a;
+		out.center[2] = Sz / a;
+		
+		float S2 = Sx * Sx + Sy * Sy + Sz * Sz;
+		
+		out.radiusSquared = (float) b / a + S2 / (a * a);
 	}
 }
