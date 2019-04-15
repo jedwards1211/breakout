@@ -324,6 +324,13 @@ public class Vecmath {
 		return dx * dx + dy * dy + dz * dz;
 	}
 
+	public static float distance2sq(float[] a, float[] b) {
+		float dx = a[0] - b[0];
+		float dy = a[1] - b[1];
+
+		return dx * dx + dy * dy;
+	}
+
 	/**
 	 * @param p
 	 *            a 3-dimensional point.
@@ -4071,6 +4078,67 @@ public class Vecmath {
 		out[2] = (float) (cos * az + sin * out[2]);
 	}
 	
+	public static class Circumcircle {
+		public final float[] center = new float[2];
+		public float radiusSquared;
+
+		@Override
+		public String toString() {
+			return "Circumcircle [center=" + Arrays.toString(center) + ", radiusSquared=" + radiusSquared + "]";
+		}
+		
+		public boolean contains(float[] point) {
+			return distance2sq(point, center) <= radiusSquared;
+		}
+	}
+	
+
+	/**
+	 * Computes the circumcircle of a triangle with vertices A, B, and C.
+	 * If the vertices are colinear, the output center/radiusSquared will be NaN.
+	 * @param A
+	 * @param B
+	 * @param C
+	 * @param out the {@link Circumcircle} (of dimension 2) to set to the output.
+	 */	
+	public static void circumcircle(float[] A, float[] B, float[] C, Circumcircle out) {
+		float a = det3(
+			A[0], A[1], 1,
+			B[0], B[1], 1,
+			C[0], C[1], 1);
+	
+		if (a == 0) {
+			Arrays.fill(out.center, Float.NaN);
+			out.radiusSquared = Float.NaN;
+			return;
+		}
+		
+		float A2 = A[0] * A[0] + A[1] * A[1];
+		float B2 = B[0] * B[0] + B[1] * B[1];
+		float C2 = C[0] * C[0] + C[1] * C[1];
+		
+		float b = det3(
+			A[0], A[1], A2,
+			B[0], B[1], B2,
+			C[0], C[1], C2);
+		
+		float Sx = det3(
+			A2, A[1], 1,
+			B2, B[1], 1,
+			C2, C[1], 1) / 2;
+		float Sy = det3(
+			A[0], A2, 1,
+			B[0], B2, 1,
+			C[0], C2, 1) / 2;
+		
+		out.center[0] = Sx / a;
+		out.center[1] = Sy / a;
+		
+		float S2 = Sx * Sx + Sy * Sy;
+		
+		out.radiusSquared = (float) b / a + S2 / (a * a);
+	}
+
 	public static class Circumsphere {
 		public final float[] center = new float[3];
 		public float radiusSquared;
@@ -4078,6 +4146,10 @@ public class Vecmath {
 		@Override
 		public String toString() {
 			return "Circumsphere [center=" + Arrays.toString(center) + ", radiusSquared=" + radiusSquared + "]";
+		}
+		
+		public boolean contains(float[] point) {
+			return distance3sq(point, center) <= radiusSquared;
 		}
 	}
 

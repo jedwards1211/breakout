@@ -1,5 +1,6 @@
 package org.andork.math3d;
 
+import org.andork.math3d.Vecmath.Circumcircle;
 import org.andork.math3d.Vecmath.Circumsphere;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,6 +42,38 @@ public class VecmathTest {
 		assertInterpRot3(a, b, 1, b);
 		assertInterpRot3(b, a, 0, b);
 		assertInterpRot3(b, a, 1, a);
+	}
+	
+	@Test
+	public void testCircumcircle() {
+		Circumcircle out = new Circumcircle();
+		float[] A = {1, 1};
+		float[] B = {0, 1};
+		float[] C = {1, 0};
+		Vecmath.circumcircle(A, B, C, out);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(A, out.center), 1e-6f);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(B, out.center), 1e-6f);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(C, out.center), 1e-6f);
+		Vecmath.circumcircle(B, A, C, out);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(A, out.center), 1e-6f);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(B, out.center), 1e-6f);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(C, out.center), 1e-6f);
+		Vecmath.circumcircle(B, C, A, out);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(A, out.center), 1e-6f);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(B, out.center), 1e-6f);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(C, out.center), 1e-6f);
+		Vecmath.circumcircle(C, B, A, out);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(A, out.center), 1e-6f);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(B, out.center), 1e-6f);
+		Assert.assertEquals(out.radiusSquared, Vecmath.distance2sq(C, out.center), 1e-6f);
+		
+		float[] E = {0, 0, 0};
+		float[] F = {1, 0, 0};
+		float[] G = {2, 0, 0};
+		Vecmath.circumcircle(E, F, G, out);
+		Assert.assertTrue(Float.isNaN(out.center[0]));
+		Assert.assertTrue(Float.isNaN(out.center[1]));
+		Assert.assertTrue(Float.isNaN(out.radiusSquared));
 	}
 	
 	@Test
