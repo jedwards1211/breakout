@@ -271,6 +271,24 @@ public class Vecmath {
 				m[8] * (m[1] * m[6] - m[5] * m[2]);
 	}
 	
+	/**
+	 * Computes the determinant of a 3x3 matrix
+	 * <pre>
+	 * | a b c |
+	 * | d e f |
+	 * | g h i |
+	 * </pre>
+	 * @param a 
+	 * @param b
+	 * @param c
+	 * @param d
+	 * @param e
+	 * @param f
+	 * @param g
+	 * @param h
+	 * @param i
+	 * @return the determinant
+	 */
 	public static float det3(float a, float b, float c, float d, float e, float f, float g, float h, float i) {
 		// rule of Sarrus
 		return a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h;
@@ -4153,6 +4171,7 @@ public class Vecmath {
 		}
 	}
 
+	
 	/**
 	 * Computes the circumsphere of a tetrahedron with vertices A, B, C, and D.
 	 * If the vertices are coplanar, the output center/radiusSquared will be NaN.
@@ -4160,9 +4179,13 @@ public class Vecmath {
 	 * @param B
 	 * @param C
 	 * @param D
-	 * @param out the {@link Circumsphere} to set to the output.
+	 * @param out the {@link Circumsphere} (of dimension 3) to set to the output.
 	 */
 	public static void circumsphere(float[] A, float[] B, float[] C, float [] D, Circumsphere out) {
+		// the cofactor expansions of the 4x4 determinants are done manually here, because most of the
+		// determinants have a column of 1s, hence we can avoid 4 unnecessary multiplications.  Also,
+		// a and b have the same cofactors.
+
 		float Ca = det3(
 			B[0], B[1], B[2],
 			C[0], C[1], C[2],
