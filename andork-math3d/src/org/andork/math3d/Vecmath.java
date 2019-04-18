@@ -278,20 +278,33 @@ public class Vecmath {
 	 * | d e f |
 	 * | g h i |
 	 * </pre>
-	 * @param a 
-	 * @param b
-	 * @param c
-	 * @param d
-	 * @param e
-	 * @param f
-	 * @param g
-	 * @param h
-	 * @param i
+
 	 * @return the determinant
 	 */
 	public static float det3(float a, float b, float c, float d, float e, float f, float g, float h, float i) {
 		// rule of Sarrus
 		return a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h;
+	}
+	/**
+	 * Computes the determinant of a 4x4 matrix
+	 * <pre>
+	 * | a1 a2 a3 a4 |
+	 * | b1 b2 b3 b4 |
+	 * | c1 c2 c3 c4 |
+	 * | d1 d2 d3 d4 |
+	 * </pre>
+
+	 * @return the determinant
+	 */	
+	public static float det4(
+		float a1, float a2, float a3, float a4,
+		float b1, float b2, float b3, float b4,
+		float c1, float c2, float c3, float c4,
+		float d1, float d2, float d3, float d4) {
+		return a1 * det3(b2, b3, b4, c2, c3, c4, d2, d3, d4)
+			- a2 * det3(b1, b3, b4, c1, c3, c4, d1, d3, d4)
+			+ a3 * det3(b1, b2, b4, c1, c2, c4, d1, d2, d4)
+			- a4 * det3(b1, b2, b3, c1, c2, c3, d1, d2, d3);
 	}
 
 	public static double distance3(double[] a, double[] b) {
@@ -4024,14 +4037,7 @@ public class Vecmath {
 	 * the result in {@code out}.
 	 */
 	public static void vvproj3(double[] a, double[] b, double[] out) {
-		double aDotB = dot3(a, b);
-		double bDotB = dot3(b, b);
-		double x = b[0] * aDotB / bDotB;
-		double y = b[1] * aDotB / bDotB;
-		double z = b[2] * aDotB / bDotB;
-		out[0] = x;
-		out[1] = y;
-		out[2] = z;
+		scale3(b, dot3(a, b) / dot3(b, b), out);
 	}
 
 	/**
@@ -4039,14 +4045,15 @@ public class Vecmath {
 	 * the result in {@code out}.
 	 */
 	public static void vvproj3(float[] a, float[] b, float[] out) {
-		float aDotB = dot3(a, b);
-		float bDotB = dot3(b, b);
-		float x = b[0] * aDotB / bDotB;
-		float y = b[1] * aDotB / bDotB;
-		float z = b[2] * aDotB / bDotB;
-		out[0] = x;
-		out[1] = y;
-		out[2] = z;
+		scale3(b, dot3(a, b) / dot3(b, b), out);
+	}
+	
+	/**
+	 * Rejects 3-dimensional vector {@code a} onto vector {@code b}, storing
+	 * the result in {@code out}.
+	 */
+	public static void vvreject3(float[] a, float[] b, float[] out) {
+		scaleAdd3(-dot3(a, b) / dot3(b, b), b, a, out);
 	}
 	
 	public static void viewFrom(float[] right, float[] up, float[] location, float[] out) {
@@ -4094,179 +4101,5 @@ public class Vecmath {
 		out[0] = (float) (cos * ax + sin * out[0]);
 		out[1] = (float) (cos * ay + sin * out[1]);
 		out[2] = (float) (cos * az + sin * out[2]);
-	}
-	
-	public static class Circumcircle {
-		public final float[] center = new float[2];
-		public float radiusSquared;
-
-		@Override
-		public String toString() {
-			return "Circumcircle [center=" + Arrays.toString(center) + ", radiusSquared=" + radiusSquared + "]";
-		}
-		
-		public boolean contains(float[] point) {
-			return distance2sq(point, center) <= radiusSquared;
-		}
-	}
-	
-
-	/**
-	 * Computes the circumcircle of a triangle with vertices A, B, and C.
-	 * If the vertices are colinear, the output center/radiusSquared will be NaN.
-	 * @param A
-	 * @param B
-	 * @param C
-	 * @param out the {@link Circumcircle} (of dimension 2) to set to the output.
-	 */	
-	public static void circumcircle(float[] A, float[] B, float[] C, Circumcircle out) {
-		float a = det3(
-			A[0], A[1], 1,
-			B[0], B[1], 1,
-			C[0], C[1], 1);
-	
-		if (a == 0) {
-			Arrays.fill(out.center, Float.NaN);
-			out.radiusSquared = Float.NaN;
-			return;
-		}
-		
-		float A2 = A[0] * A[0] + A[1] * A[1];
-		float B2 = B[0] * B[0] + B[1] * B[1];
-		float C2 = C[0] * C[0] + C[1] * C[1];
-		
-		float b = det3(
-			A[0], A[1], A2,
-			B[0], B[1], B2,
-			C[0], C[1], C2);
-		
-		float Sx = det3(
-			A2, A[1], 1,
-			B2, B[1], 1,
-			C2, C[1], 1) / 2;
-		float Sy = det3(
-			A[0], A2, 1,
-			B[0], B2, 1,
-			C[0], C2, 1) / 2;
-		
-		out.center[0] = Sx / a;
-		out.center[1] = Sy / a;
-		
-		float S2 = Sx * Sx + Sy * Sy;
-		
-		out.radiusSquared = (float) b / a + S2 / (a * a);
-	}
-
-	public static class Circumsphere {
-		public final float[] center = new float[3];
-		public float radiusSquared;
-
-		@Override
-		public String toString() {
-			return "Circumsphere [center=" + Arrays.toString(center) + ", radiusSquared=" + radiusSquared + "]";
-		}
-		
-		public boolean contains(float[] point) {
-			return distance3sq(point, center) <= radiusSquared;
-		}
-	}
-
-	
-	/**
-	 * Computes the circumsphere of a tetrahedron with vertices A, B, C, and D.
-	 * If the vertices are coplanar, the output center/radiusSquared will be NaN.
-	 * @param A
-	 * @param B
-	 * @param C
-	 * @param D
-	 * @param out the {@link Circumsphere} (of dimension 3) to set to the output.
-	 */
-	public static void circumsphere(float[] A, float[] B, float[] C, float [] D, Circumsphere out) {
-		// the cofactor expansions of the 4x4 determinants are done manually here, because most of the
-		// determinants have a column of 1s, hence we can avoid 4 unnecessary multiplications.  Also,
-		// a and b have the same cofactors.
-
-		float Ca = det3(
-			B[0], B[1], B[2],
-			C[0], C[1], C[2],
-			D[0], D[1], D[2]);
-		float Cb = det3(
-			A[0], A[1], A[2],
-			C[0], C[1], C[2],
-			D[0], D[1], D[2]);
-		float Cc = det3(
-			A[0], A[1], A[2],
-			B[0], B[1], B[2],
-			D[0], D[1], D[2]);
-		float Cd = det3(
-			A[0], A[1], A[2],
-			B[0], B[1], B[2],
-			C[0], C[1], C[2]);
-		float a = Ca - Cb + Cc - Cd;
-		
-		if (a == 0) {
-			Arrays.fill(out.center, Float.NaN);
-			out.radiusSquared = Float.NaN;
-			return;
-		}
-
-		float A2 = dot3(A, A);
-		float B2 = dot3(B, B);
-		float C2 = dot3(C, C);
-		float D2 = dot3(D, D);
-
-		float b = A2 * Ca - B2 * Cb + C2 * Cc - D2 * Cd;
-
-		
-		float Sx = (
-			det3(B2, B[1], B[2],
-				C2, C[1], C[2],
-				D2, D[1], D[2]) -
-			det3(A2, A[1], A[2],
-				C2, C[1], C[2],
-				D2, D[1], D[2]) +
-			det3(A2, A[1], A[2],
-				B2, B[1], B[2],
-				D2, D[1], D[2]) -
-			det3(A2, A[1], A[2],
-				B2, B[1], B[2],
-				C2, C[1], C[2])
-			) / 2;
-		float Sy = (
-			det3(B[0], B2, B[2],
-				C[0], C2, C[2],
-				D[0], D2, D[2]) -
-			det3(A[0], A2, A[2],
-				C[0], C2, C[2],
-				D[0], D2, D[2]) +
-			det3(A[0], A2, A[2],
-				B[0], B2, B[2],
-				D[0], D2, D[2]) -
-			det3(A[0], A2, A[2],
-				B[0], B2, B[2],
-				C[0], C2, C[2])
-			) / 2;
-		float Sz = (
-			det3(B2, B[0], B[1],
-				C2, C[0], C[1],
-				D2, D[0], D[1]) -
-			det3(A2, A[0], A[1],
-				C2, C[0], C[1],
-				D2, D[0], D[1]) +
-			det3(A2, A[0], A[1],
-				B2, B[0], B[1],
-				D2, D[0], D[1]) -
-			det3(A2, A[0], A[1],
-				B2, B[0], B[1],
-				C2, C[0], C[1])
-			) / 2;
-		
-		out.center[0] = Sx / a;
-		out.center[1] = Sy / a;
-		out.center[2] = Sz / a;
-		
-		float S2 = Sx * Sx + Sy * Sy + Sz * Sz;
-		
-		out.radiusSquared = (float) b / a + S2 / (a * a);
 	}
 }
