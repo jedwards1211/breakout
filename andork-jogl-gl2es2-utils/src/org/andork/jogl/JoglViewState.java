@@ -30,6 +30,8 @@ import static org.andork.math3d.Vecmath.setIdentity;
 
 import org.andork.math3d.PickXform;
 
+import com.jogamp.opengl.math.geom.Frustum;
+
 public class JoglViewState implements JoglDrawContext {
 	private int width;
 
@@ -56,6 +58,8 @@ public class JoglViewState implements JoglDrawContext {
 	 * The inverse of the projection matrix.
 	 */
 	private final float[] pi = newMat4f();
+	
+	private final float[] pv = newMat4f();
 
 	/**
 	 * Transforms from screen coordinates to clipping coordinates.
@@ -95,6 +99,9 @@ public class JoglViewState implements JoglDrawContext {
 	private Projection projection;
 	
 	private JoglViewSettings settings;
+	
+	private Frustum frustum = new Frustum();
+	private boolean frustumUpToDate = false;
 
 	public JoglViewState() {
 		update(new JoglViewSettings(), 0, 0, 100, 100);
@@ -124,11 +131,15 @@ public class JoglViewState implements JoglDrawContext {
 		return p;
 	}
 
+	public float[] pv() {
+		return pv;
+	}
+
 	@Override
 	public float[] viewportMatrix() {
 		return viewport;
 	}
-
+	
 	@Override
 	public float[] inverseViewportMatrix() {
 		return inverseViewport;
@@ -149,6 +160,8 @@ public class JoglViewState implements JoglDrawContext {
 		this.height = height;
 		this.devicePixelRatio = devicePixelRatio;
 		
+		frustumUpToDate = false;
+		
 		ortho(inverseViewport, x, x + width, y, y + height, -1, 1);
 		invAffine(inverseViewport, viewport);
 
@@ -166,6 +179,8 @@ public class JoglViewState implements JoglDrawContext {
 			setIdentity(p);
 			setIdentity(pi);
 		}
+		
+		mmul(p, v, pv);
 
 		mmul(viewport, p, viewToScreen);
 		mmul(viewToScreen, v, worldToScreen);
@@ -218,5 +233,15 @@ public class JoglViewState implements JoglDrawContext {
 	public float devicePixelRatio( )
 	{
 		return devicePixelRatio;
+	}
+	
+	@Override
+	public Frustum frustum( )
+	{
+		if (!frustumUpToDate) {
+			frustum.updateByPMV(pv, 0);
+			frustumUpToDate = true;
+		}
+		return frustum;
 	}
 }

@@ -28,7 +28,7 @@ public class BoundingSpheresTest {
 	public void testTwoPoints() {
 		Assert.assertArrayEquals(
 			ritterBoundingSphere(new float[][] {{0, 0, 0}, {1, 1, 1}}),
-			new float[] { 0.5f, 0.5f, 0.5f, 0.75f },
+			new float[] { 0.5f, 0.5f, 0.5f, 0.8660254f },
 			0f);	
 	}
 	
@@ -36,7 +36,7 @@ public class BoundingSpheresTest {
 	public void testThreePointsEasy() {
 		Assert.assertArrayEquals(
 			ritterBoundingSphere(new float[][] {{0, 0, 0}, {1, 1, 1}, {0.6f, 0.4f, 0.3f}}),
-			new float[] { 0.5f, 0.5f, 0.5f, 0.75f },
+			new float[] { 0.5f, 0.5f, 0.5f, 0.8660254f },
 			0f);
 	}
 	
@@ -55,12 +55,13 @@ public class BoundingSpheresTest {
 				farthestPoint = point;
 			}
 		}
-		if (farthestDist > sphere[3]) {
+		if (farthestDist > sphere[3] * sphere[3]) {
 			Assert.fail("expected farthest point " + Arrays.toString(farthestPoint) + 
-				" distance squared " + farthestDist +
-				" to be inside sphere " + Arrays.toString(sphere));
+				" distance sq " + farthestDist +
+				" to be inside sphere " + Arrays.toString(sphere) +
+				" radius sq " + sphere[3] * sphere[3]);
 		}
-		if (farthestDist < sphere[3] * 0.99) {
+		if (farthestDist < sphere[3] * sphere[3] * 0.99 * 0.99) {
 			Assert.fail("expected farthest point " + Arrays.toString(farthestPoint) + 
 				" distance squared " + farthestDist +
 				" to be within 1% of " + Arrays.toString(sphere));

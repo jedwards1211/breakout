@@ -281,4 +281,33 @@ public class Iterators {
 			}
 		}
 	}
+	
+	private static class Flatten2Iterator<T> implements Iterator<T> {
+		Iterator<Iterable<T>> outer;
+		Iterator<T> inner;
+		
+		public Flatten2Iterator(Iterator<Iterable<T>> outer) {
+			this.outer = outer;
+		}
+
+		@Override
+		public boolean hasNext() {
+			if (inner != null && inner.hasNext()) return true;
+			while (outer.hasNext()) {
+				inner = outer.next().iterator();
+				if (inner.hasNext()) return true;
+			}
+			return false;
+		}
+
+		@Override
+		public T next() {
+			hasNext();
+			return inner.next();
+		}
+	}
+	
+	public static <T> Iterator<T> flatten(Iterator<Iterable<T>> iterator) {
+		return new Flatten2Iterator<T>(iterator);
+	}
 }

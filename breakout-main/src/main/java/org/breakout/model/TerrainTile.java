@@ -13,6 +13,7 @@ import java.awt.image.BufferedImage;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -22,16 +23,60 @@ import org.andork.jogl.JoglResource;
 import org.andork.jogl.shader.AttribLocation;
 import org.andork.math3d.Vecmath;
 import org.andork.nativewindow.util.PixelRectangles;
+import org.andork.spatial.BoundingSpheres;
 
 import com.jogamp.nativewindow.util.Dimension;
 import com.jogamp.nativewindow.util.PixelRectangle;
 import com.jogamp.opengl.GL2ES2;
 
 public class TerrainTile implements JoglDrawable, JoglResource {
+	private static class VertexIterator implements Iterator<float[]> {
+		float[][][] vertices;
+		int row = 0;
+		int col = 0;
+		
+		public VertexIterator(float[][][] vertices) {
+			super();
+			this.vertices = vertices;
+		}
+
+		@Override
+		public boolean hasNext() {
+			return row < vertices.length - 1
+				|| (row == vertices.length - 1 && col < vertices[row].length);
+		}
+
+		@Override
+		public float[] next() {
+			float[] result = vertices[row][col];
+			col++;
+			if (col == vertices[row].length) {
+				row++;
+				col = 0;
+			}
+			return result;
+		}
+	}
+	
+	private static class VertexIterable implements Iterable<float[]> {
+		float[][][] vertices;
+		
+		public VertexIterable(float[][][] vertices) {
+			this.vertices = vertices;
+		}
+
+		@Override
+		public Iterator<float[]> iterator() {
+			return new VertexIterator(vertices);
+		}
+	}
+
 	public TerrainTile(float[][][] vertices) {
 		int numVertexRows = vertices.length;
 		int numVertexCols = vertices[0].length;
 		size = new Dimension(numVertexCols, numVertexRows);
+		
+		BoundingSpheres.ritterBoundingSphere(new VertexIterable(vertices), boundingSphere);
 
 		int numCellRows = numVertexRows - 1;
 		int numCellCols = numVertexCols - 1;
@@ -164,6 +209,8 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 	
 	private Dimension size;
 	
+	private float[] boundingSphere = new float[4];
+	
 	/**
 	 * C      C
 	 * o	  o
@@ -294,6 +341,10 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 		if (!initialized) {
 			return;
 		}
+		if (context.frustum().isSphereOutside(boundingSphere, boundingSphere[3])) {
+			return;
+		}
+
 		gl.glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 		if (positionLocation == null) {
 			throw new RuntimeException("positionLocation must not be null");

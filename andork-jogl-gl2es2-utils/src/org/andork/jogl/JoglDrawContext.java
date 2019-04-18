@@ -21,6 +21,8 @@
  *******************************************************************************/
 package org.andork.jogl;
 
+import com.jogamp.opengl.math.geom.Frustum;
+
 public interface JoglDrawContext {
 	public float devicePixelRatio();
 
@@ -63,4 +65,6 @@ public interface JoglDrawContext {
 	}
 	
 	public JoglViewSettings settings();
+	
+	public Frustum frustum();
 }

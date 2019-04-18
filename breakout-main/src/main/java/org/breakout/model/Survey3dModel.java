@@ -75,6 +75,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.andork.awt.FontMetricsUtils;
+import org.andork.collect.Iterables;
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.MultiMap;
 import org.andork.collect.PriorityEntry;
@@ -98,6 +99,7 @@ import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.TwoPlaneIntersection3f;
 import org.andork.math3d.TwoPlaneIntersection3f.ResultType;
 import org.andork.math3d.Vecmath;
+import org.andork.spatial.BoundingSpheres;
 import org.andork.spatial.RTraversal;
 import org.andork.spatial.Rectmath;
 import org.andork.spatial.RfStarTree;
@@ -870,8 +872,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		Clip3f clip;
 	}
 
+
 	private static class Section {
 		final float[] mbr;
+		final float[] boundingSphere = new float[4];
 		final ArrayList<Shot3d> shot3ds;
 		final Map<StationKey, Label> stationLabels;
 		final Map<StationKey, LeadLabels> leadLabels;
@@ -936,6 +940,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			BufferHelper fillIndicesHelper = new BufferHelper();
 			BufferHelper lineIndicesHelper = new BufferHelper();
 			BufferHelper centerlineGeomHelper = new BufferHelper();
+			
+			BoundingSpheres.ritterBoundingSphere(
+				Iterables.flatten(
+					Iterables.map(shot3ds, s -> Iterables.of(s.shot.vertices))),
+				this.boundingSphere);
 
 			for (Shot3d shot3d : shot3ds) {
 				shot3d.section = this;
@@ -1064,6 +1073,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				labels.updateBounds(font, frc);
 				task.increment(3);
 			}
+		}
+		
+		boolean isOutsideFrustum(JoglDrawContext context) {
+			return context.frustum().isSphereOutside(boundingSphere, boundingSphere[3]);
 		}
 		
 		void drawLeadLabels(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n,
@@ -1978,6 +1991,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			updateParamTexture(gl);
 			paramTextureNeedsUpdate = false;
 		}
+		
+		List<Section> sectionsInView = new ArrayList<>();
+		for (Section section : sections) {
+			if (!section.isOutsideFrustum(context)) {
+				sectionsInView.add(section);
+			}
+		}
 
 		OneParamSectionRenderer renderer = colorParam == ColorParam.DEPTH
 				? axialSectionRenderer : param0SectionRenderer;
@@ -1989,8 +2009,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glCullFace(GL.GL_FRONT);
 
 		renderer.drawLines = false;
-		renderer.draw(sections, context, gl, m, n);
-		centerlineRenderer.draw(sections, context, gl, m, n);
+		renderer.draw(sectionsInView, context, gl, m, n);
+		centerlineRenderer.draw(sectionsInView, context, gl, m, n);
 
 		gl.glEnable(GL.GL_STENCIL_TEST);
 		gl.glStencilFunc(GL.GL_EQUAL, 0, 1);
@@ -1999,7 +2019,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glEnable(GL.GL_CULL_FACE);
 		gl.glCullFace(GL.GL_BACK);
 		renderer.drawLines = true;
-		renderer.draw(sections, context, gl, m, n);
+		renderer.draw(sectionsInView, context, gl, m, n);
 
 		gl.glDisable(GL.GL_CULL_FACE);
 		gl.glDisable(GL.GL_STENCIL_TEST);
@@ -2041,7 +2061,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			if (!stationsToEmphasize.isEmpty()) {
 				textRenderer.beginRendering(context.width(), context.height(), false);
-				for (Section section : sections) {
+				for (Section section : sectionsInView) {
 					section.drawEmphasizedLabels(context, gl, m, n, labelContext);
 				}
 				textRenderer.endRendering();
@@ -2051,7 +2071,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				gl.glEnable(GL.GL_DEPTH_TEST);
 				textRenderer.beginRendering(context.width(), context.height(), false);
 
-				for (Section section : sections) {
+				for (Section section : sectionsInView) {
 					section.drawLeadLabels(context, gl, m, n, labelContext);
 				}
 				textRenderer.endRendering();
@@ -2062,7 +2082,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				gl.glEnable(GL.GL_DEPTH_TEST);
 				textRenderer.beginRendering(context.width(), context.height(), false);
 
-				for (Section section : sections) {
+				for (Section section : sectionsInView) {
 					section.drawLabels(context, gl, m, n, labelContext);
 				}
 				textRenderer.endRendering();
@@ -2071,7 +2091,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			if (showLeadLabels && hoveredStation != null) {
 				gl.glEnable(GL.GL_BLEND);
-				for (Section section : sections) {
+				for (Section section : sectionsInView) {
 					section.drawHoveredLead(context, gl, m, n, labelContext);
 				}
 				gl.glDisable(GL.GL_BLEND);

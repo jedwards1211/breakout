@@ -126,4 +126,8 @@ public class Iterables {
 	public static <E> void removeAll(Iterable<? extends E> i, Predicate<? super E> p) {
 		Iterators.removeAll(i.iterator(), p);
 	}
+	
+	public static <T> Iterable<T> flatten(Iterable<Iterable<T>> iterable) {
+		return () -> Iterators.flatten(iterable.iterator());
+	}
 }

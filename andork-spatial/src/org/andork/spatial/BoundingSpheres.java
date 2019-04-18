@@ -9,19 +9,6 @@ public class BoundingSpheres {
 	}
 	
 	/**
-	 * Determines if a sphere contains a point.
-	 * @param sphere the sphere in form [(center) x, y, z, radiusSquared]
-	 * @param point the point in form [x, y, z]
-	 * @return {@code true} iff the point is inside the sphere
-	 */
-	public static boolean contains(float[] sphere, float[] point) {
-		float dx = point[0] - sphere[0];
-		float dy = point[1] - sphere[1];
-		float dz = point[2] - sphere[2];
-		return dx * dx + dy * dy + dz * dz <= point[3];
-	}
-
-	/**
 	 * Computes the bounding sphere of the given points using Jack Ritter's algorithm.
 	 * Not the exact smallest bounding sphere but, much more practical speed than exact
 	 * methods.
@@ -49,7 +36,7 @@ public class BoundingSpheres {
 	 * Not the exact smallest bounding sphere but, much more practical speed than exact
 	 * methods.
 	 * @param points the points to get the bounding sphere of
-	 * @param out the array to store the output sphere in, in the form [(center) x, y, z, radiusSquared]
+	 * @param out the array to store the output sphere in, in the form [(center) x, y, z, radius]
 	 * @return {@code out}, for convenience
 	 */
 	public static float[] ritterBoundingSphere(float[][] points, float[] out) {
@@ -61,7 +48,7 @@ public class BoundingSpheres {
 	 * Not the exact smallest bounding sphere but, much more practical speed than exact
 	 * methods.
 	 * @param points the points to get the bounding sphere of
-	 * @param out the array to store the output sphere in, in the form [(center) x, y, z, radiusSquared]
+	 * @param out the array to store the output sphere in, in the form [(center) x, y, z, radius]
 	 * @return {@code out}, for convenience
 	 */
 	public static float[] ritterBoundingSphere(Iterable<float[]> points, float[] out) {
@@ -146,21 +133,27 @@ public class BoundingSpheres {
 			}
 		}
 		
-		if (enlarged) {
-			// correct for floating point error
-			for (float[] point : points) {
-				float dx = point[0] - (float) x;
-				float dy = point[1] - (float) y;
-				float dz = point[2] - (float) z;
-				float dsq = dx * dx + dy * dy + dz * dz;
-				if (dsq > rsq) rsq = dsq;
+		float rOut = (float) r;
+
+		// correct for floating point error
+		for (float[] point : points) {
+			float dx = point[0] - (float) x;
+			float dy = point[1] - (float) y;
+			float dz = point[2] - (float) z;
+			float dsq = dx * dx + dy * dy + dz * dz;
+			if (dsq > rsq) {
+				rsq = dsq;
+				rOut = (float) Math.sqrt(rsq);
+			}
+			while ((float) dsq > rOut * rOut) {
+				rOut += Math.ulp(rOut);
 			}
 		}
 		
 		out[0] = (float) x;
 		out[1] = (float) y;
 		out[2] = (float) z;
-		out[3] = (float) rsq;
+		out[3] = rOut;
 		
 		return out;
 	}
