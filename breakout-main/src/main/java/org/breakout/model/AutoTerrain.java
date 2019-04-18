@@ -260,11 +260,28 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 		int zoom;
 		long[] minTile = null;
 		long[] maxTile = null;
+		long maxNumTiles = 64;
 		for (zoom = 15; zoom >= 7; zoom--) {
 			minTile = Tilebelt.pointToTile(min.x, min.y, zoom);
 			maxTile = Tilebelt.pointToTile(max.x, max.y, zoom);
 			long numTiles = (maxTile[0] - minTile[0] + 1) * (maxTile[1] - minTile[1] + 1);
-			if (numTiles <= 64) break;
+			if (numTiles <= maxNumTiles) break;
+		}
+		
+		if (maxTile[0] - minTile[0] < maxTile[1] - minTile[1]) {
+			while (maxTile[0] - minTile[0] < maxTile[1] - minTile[1]) {
+				long moreNumTiles = (maxTile[0] - minTile[0] + 3) * (maxTile[1] - minTile[1] + 1);
+				if (moreNumTiles > maxNumTiles) break;
+				minTile[0]--;
+				maxTile[0]++;
+			}
+		}
+	
+		while (maxTile[1] - minTile[1] < maxTile[0] - minTile[0]) {
+			long moreNumTiles = (maxTile[1] - minTile[1] + 3) * (maxTile[0] - minTile[0] + 1);
+			if (moreNumTiles > maxNumTiles) break;
+			minTile[1]--;
+			maxTile[1]++;
 		}
 
 		double[][] cornerBBoxes = {
