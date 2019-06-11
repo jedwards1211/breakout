@@ -24,12 +24,21 @@ package org.breakout.model;
 import java.util.Calendar;
 
 import org.andork.date.DateUtils;
+import org.andork.unit.Area;
+import org.andork.unit.Length;
+import org.andork.unit.UnitType;
 import org.breakout.model.calc.CalcCrossSection;
 import org.breakout.model.calc.CalcShot;
 import org.breakout.model.calc.CalcStation;
 
 public enum ColorParam {
-	DEPTH("Depth", true), DISTANCE_ALONG_SHOTS("Distance (Along Shots)", true) {
+	DEPTH("Depth", true) {
+		@Override
+		public UnitType<?> getUnitType() {
+			return Length.type;
+		}
+	},
+	DISTANCE_ALONG_SHOTS("Distance (Along Shots)", true) {
 		@Override
 		public double calcTraversalDistance(CalcShot shot) {
 			return shot.distance;
@@ -38,6 +47,11 @@ public enum ColorParam {
 		@Override
 		public boolean isTraversalMetric() {
 			return true;
+		}
+		
+		@Override
+		public UnitType<?> getUnitType() {
+			return Length.type;
 		}
 	},
 	PASSAGE_WIDTH("Passage Width", false) {
@@ -59,6 +73,11 @@ public enum ColorParam {
 		public boolean isStationMetric() {
 			return true;
 		}
+		
+		@Override
+		public UnitType<?> getUnitType() {
+			return Length.type;
+		}
 	},
 	PASSAGE_HEIGHT("Passage Height", false) {
 		@Override
@@ -78,6 +97,11 @@ public enum ColorParam {
 		public boolean isStationMetric() {
 			return true;
 		}
+		
+		@Override
+		public UnitType<?> getUnitType() {
+			return Length.type;
+		}
 	},
 
 	PASSAGE_MIN("Min(Passage Width, Height)", false) {
@@ -91,16 +115,26 @@ public enum ColorParam {
 		public boolean isStationMetric() {
 			return true;
 		}
+		
+		@Override
+		public UnitType<?> getUnitType() {
+			return Length.type;
+		}
 	},
 	PASSAGE_AREA("Passage Area", false) {
 		@Override
 		public float calcStationParam(CalcShot shot, CalcStation station) {
-			return PASSAGE_WIDTH.calcStationParam(shot, station) + PASSAGE_HEIGHT.calcStationParam(shot, station);
+			return PASSAGE_WIDTH.calcStationParam(shot, station) * PASSAGE_HEIGHT.calcStationParam(shot, station) / 2;
 		}
 
 		@Override
 		public boolean isStationMetric() {
 			return true;
+		}
+		
+		@Override
+		public UnitType<?> getUnitType() {
+			return Area.type;
 		}
 	},
 	SHOT_LENGTH("CalcShot Length", false) {
@@ -112,6 +146,11 @@ public enum ColorParam {
 		@Override
 		public boolean isStationMetric() {
 			return true;
+		}
+		
+		@Override
+		public UnitType<?> getUnitType() {
+			return Length.type;
 		}
 	},
 	DATE("Date (days since 1800)", false) {
@@ -185,6 +224,10 @@ public enum ColorParam {
 
 	public boolean isTraversalMetric() {
 		return false;
+	}
+	
+	public UnitType<?> getUnitType() {
+		return null;
 	}
 
 	@Override
