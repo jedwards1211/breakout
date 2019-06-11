@@ -23,6 +23,7 @@ package org.andork.jogl;
 
 import static com.jogamp.opengl.GL.GL_ARRAY_BUFFER;
 import static com.jogamp.opengl.GL.GL_BLEND;
+import static com.jogamp.opengl.GL.GL_DEPTH_TEST;
 import static com.jogamp.opengl.GL.GL_DYNAMIC_DRAW;
 import static com.jogamp.opengl.GL.GL_FLOAT;
 import static com.jogamp.opengl.GL.GL_LINE_LOOP;
@@ -94,6 +95,8 @@ public class JoglScreenPolygon implements JoglDrawable, JoglResource {
 
 		gl.glEnableVertexAttribArray(a_pos_location);
 
+		boolean depthEnabled = gl.glIsEnabled(GL_DEPTH_TEST);
+		gl.glDisable(GL_DEPTH_TEST);
 		gl.glEnable(GL_BLEND);
 		gl.glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -127,6 +130,7 @@ public class JoglScreenPolygon implements JoglDrawable, JoglResource {
 
 		// //////////////////////////////
 
+		if (depthEnabled) gl.glEnable(GL_DEPTH_TEST);
 		gl.glDisable(GL_BLEND);
 		gl.glDisableVertexAttribArray(a_pos_location);
 
