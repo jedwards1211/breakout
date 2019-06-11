@@ -24,6 +24,7 @@ import org.andork.jogl.shader.AttribLocation;
 import org.andork.math3d.Vecmath;
 import org.andork.nativewindow.util.PixelRectangles;
 import org.andork.spatial.BoundingSpheres;
+import org.andork.spatial.Rectmath;
 
 import com.jogamp.nativewindow.util.Dimension;
 import com.jogamp.nativewindow.util.PixelRectangle;
@@ -77,6 +78,9 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 		size = new Dimension(numVertexCols, numVertexRows);
 		
 		BoundingSpheres.ritterBoundingSphere(new VertexIterable(vertices), boundingSphere);
+		for (float[] vertex : new VertexIterable(vertices)) {
+			Rectmath.punion3(mbr, vertex, mbr);
+		}
 
 		int numCellRows = numVertexRows - 1;
 		int numCellCols = numVertexCols - 1;
@@ -210,6 +214,7 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 	private Dimension size;
 	
 	private float[] boundingSphere = new float[4];
+	private float[] mbr = Rectmath.voidRectf(3);
 	
 	/**
 	 * C      C
@@ -245,6 +250,14 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 	public AttribLocation positionLocation;
 	public AttribLocation normalLocation;
 	public AttribLocation texcoordLocation;
+	
+	public float[] boundingSphere() {
+		return boundingSphere;
+	}
+	
+	public float[] mbr() {
+		return mbr;
+	}
 
 	/**
 	 * @return {@code true} iff any of the terrain is in front of the camera.

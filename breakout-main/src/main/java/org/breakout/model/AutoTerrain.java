@@ -16,6 +16,7 @@ import org.andork.jogl.JoglManagedResource;
 import org.andork.jogl.JoglResource;
 import org.andork.math3d.Clip3f;
 import org.andork.nativewindow.util.PixelRectangles;
+import org.andork.spatial.Rectmath;
 import org.andork.util.ArrayUtils;
 import org.breakout.mabox.MapboxClient;
 import org.breakout.mabox.MapboxClient.ImageTileFormat;
@@ -130,6 +131,19 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 	CoordinateReferenceSystem coordinateReferenceSystem;
 	float[] mbr;
 	float[][] corners;
+
+	float[] fullMbr = Rectmath.voidRectf(3);
+	
+	public float[] getFullMbr() {
+		if (Rectmath.isVoid(fullMbr)) {
+			for (TileGroup group : tileGroups.values()) {
+				for (ManagedTile tile : group.tiles) {
+					Rectmath.union3(fullMbr, tile.tile.mbr(), fullMbr);
+				}
+			}
+		}
+		return fullMbr;
+	}
 	
 	List<ManagedTile> newTiles = new ArrayList<>();
 	SortedMap<Integer, TileGroup> tileGroups = new TreeMap<>(new Comparator<Integer>() {
@@ -201,6 +215,9 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 		
 		init(gl);
 		
+		if (!newTiles.isEmpty()) {
+			Rectmath.makeVoid(fullMbr);
+		}
 		for (ManagedTile tile : newTiles) {
 			tile.init(gl);
 			int z = (int) tile.id[2];
@@ -347,6 +364,7 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 			}
 		}
 		tileGroups.clear();
+		Rectmath.makeVoid(fullMbr);
 	}
 	
 	public Clip3f getClip() {

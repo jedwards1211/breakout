@@ -24,8 +24,6 @@ package org.breakout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseWheelEvent;
 
-import javax.swing.SwingUtilities;
-
 import org.andork.awt.event.WheelEventAggregator;
 import org.andork.jogl.JoglViewState;
 import org.andork.math3d.Clip3f;
@@ -37,7 +35,7 @@ import com.jogamp.opengl.GLAutoDrawable;
 public class ClipMouseHandler extends MouseAdapter {
 	public static interface Context {
 		public GLAutoDrawable getDrawable();
-		public Survey3dModel getSurvey3dModel();
+		public float[] getSceneMbr();
 		public Clip3f getClip();
 		public void setClip(Clip3f clip);
 		public JoglViewState getViewState();
@@ -67,8 +65,7 @@ public class ClipMouseHandler extends MouseAdapter {
 			JoglViewState viewState = context.getViewState();
 			Vecmath.negate3(viewState.inverseViewMatrix(), 8, forward, 0);
 			
-			Survey3dModel model3d = context.getSurvey3dModel();
-			if (model3d == null) return;
+			float[] sceneMbr = context.getSceneMbr();
 			
 			final Clip3f clip = Vecmath.dot3(context.getClip().axis(), forward) < 0
 				? context.getClip().flip()
@@ -76,16 +73,15 @@ public class ClipMouseHandler extends MouseAdapter {
 
 			float distance = (float) rotation * wheelFactor * sensitivity;
 			
-			clip.getNearFarOfMbr(model3d.getMbr(), nearFar);
+			clip.getNearFarOfMbr(sceneMbr, nearFar);
 			context.setClip(clip.setNear(Math.max(nearFar[0], clip.near()) + distance));
 			context.getDrawable().display();	
 		});
 		farAggregator = new WheelEventAggregator(rotation -> {
 			JoglViewState viewState = context.getViewState();
 			Vecmath.negate3(viewState.inverseViewMatrix(), 8, forward, 0);
-			
-			Survey3dModel model3d = context.getSurvey3dModel();
-			if (model3d == null) return;
+
+			float[] sceneMbr = context.getSceneMbr();
 			
 			final Clip3f clip = Vecmath.dot3(context.getClip().axis(), forward) < 0
 				? context.getClip().flip()
@@ -93,7 +89,7 @@ public class ClipMouseHandler extends MouseAdapter {
 
 			float distance = (float) rotation * wheelFactor * sensitivity;
 			
-			clip.getNearFarOfMbr(model3d.getMbr(), nearFar);
+			clip.getNearFarOfMbr(sceneMbr, nearFar);
 			context.setClip(clip.setFar(Math.min(nearFar[1], clip.far()) + distance));
 			context.getDrawable().display();	
 		});

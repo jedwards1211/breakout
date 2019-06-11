@@ -556,6 +556,14 @@ public class Rectmath {
 		rout[4] = nmax(r1[4], r2[4]);
 		rout[5] = nmax(r1[5], r2[5]);
 	}
+	
+	public static boolean isVoid(float[] r) {
+		return Float.isNaN(r[0]);
+	}
+	
+	public static void makeVoid(float[] r) {
+		Arrays.fill(r, Float.NaN);
+	}
 
 	public static double[] voidRectd(int dimension) {
 		double[] r = new double[dimension * 2];
@@ -599,6 +607,23 @@ public class Rectmath {
 		float y = r[4] - r[1];
 		float z = r[5] - r[2];
 		return x * y * z;
+	}
+	
+	/**
+	 * Unions a bounding sphere into a bounding rectangle
+	 * @param r the bounding rectangle
+	 * @param s the bounding sphere [x, y, z, r]
+	 * @param out the output bounding rectangle
+	 * @return out
+	 */
+	public static float[] rsunion3(float[] r, float[] s, float[] out) {
+		out[0] = nmin(r[0], s[0] - s[3]);
+		out[1] = nmin(r[1], s[1] - s[3]);
+		out[2] = nmin(r[2], s[2] - s[3]);
+		out[3] = nmax(r[3], s[1] + s[3]);
+		out[4] = nmax(r[4], s[2] + s[3]);
+		out[5] = nmax(r[5], s[3] + s[3]);
+		return out;
 	}
 
 	private Rectmath() {

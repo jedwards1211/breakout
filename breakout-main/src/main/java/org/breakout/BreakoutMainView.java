@@ -151,8 +151,6 @@ import org.andork.jogl.awt.JoglOrbiter;
 import org.andork.jogl.awt.JoglOrthoNavigator;
 import org.andork.jogl.awt.anim.GeneralViewXformOrbitAnimation;
 import org.andork.jogl.awt.anim.ProjXformAnimation;
-import org.andork.jogl.awt.anim.RandomViewOrbitAnimation;
-import org.andork.jogl.awt.anim.SpringViewOrbitAnimation;
 import org.andork.jogl.awt.anim.ViewXformAnimation;
 import org.andork.math.misc.Fitting;
 import org.andork.math3d.Clip3f;
@@ -1363,9 +1361,8 @@ public class BreakoutMainView {
 				return getProjectModel().get(ProjectModel.clip);
 			}
 			
-			@Override
-			public Survey3dModel getSurvey3dModel() {
-				return model3d;
+			public float[] getSceneMbr() {
+				return BreakoutMainView.this.getSceneMbr();
 			}
 			
 			@Override
@@ -2148,6 +2145,15 @@ public class BreakoutMainView {
 			logger.log(Level.WARNING, "Failed to get autoupdate properties", e);
 		}
 	}
+	
+	float[] sceneMbr = Rectmath.voidRectf(3);
+
+	protected float[] getSceneMbr() {
+		Rectmath.makeVoid(sceneMbr);
+		if (model3d != null) Rectmath.union3(sceneMbr, model3d.getMbr(), sceneMbr);
+		if (terrain != null) Rectmath.union3(sceneMbr, terrain.getFullMbr(), sceneMbr);
+		return sceneMbr;
+	}
 
 	public boolean recoverBackupIfNecessary(QObject<RootModel> rootModel) {
 		try {
@@ -2229,6 +2235,10 @@ public class BreakoutMainView {
 				float vSpan = orthoBounds[4] - orthoBounds[1];
 				newProjCalculator = new OrthoProjection(hSpan, vSpan, 1f, 1e6f);
 				newClip = new Clip3f(forward, orthoBounds[2], orthoBounds[5]);
+			}
+			// if plan view, don't clip
+			if (forward[0] == 0 && forward[1] == -1 && forward[2] == 0) {
+				newClip = new Clip3f(forward, -Float.MAX_VALUE, Float.MAX_VALUE);
 			}
 			
 			final Projection finalNewProjection = newProjCalculator;
