@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.BiFunction;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
@@ -62,11 +63,13 @@ import org.andork.awt.I18n.Localizer;
 import org.andork.awt.layout.BetterCardLayout;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
+import org.andork.bind.BiFunctionBinder;
 import org.andork.bind.BimapperBinder;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
+import org.andork.bind.TriFunctionBinder;
 import org.andork.bind.ui.BetterCardLayoutBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.bind.ui.ComponentBackgroundBinder;
@@ -87,8 +90,10 @@ import org.andork.swing.border.MultipleGradientFillBorder;
 import org.andork.swing.border.OverrideInsetsBorder;
 import org.andork.swing.selector.DefaultSelector;
 import org.andork.unit.Angle;
+import org.andork.unit.Area;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
+import org.andork.unit.UnitizedDouble;
 import org.breakout.model.ColorParam;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
@@ -260,6 +265,75 @@ public class SettingsDrawer extends Drawer {
 	Binder<Unit<Angle>> displayAngleUnitBinder = QObjectAttributeBinder.bind(
 			ProjectModel.displayAngleUnit,
 			projectBinder);
+	Binder<LinearAxisConversion> displayParamRangeBinder = new TriFunctionBinder<LinearAxisConversion, Unit<Length>, ColorParam, LinearAxisConversion>(
+		(LinearAxisConversion paramConversion, Unit<Length> lengthUnit, ColorParam colorParam) -> {
+			if (paramConversion == null) return null;
+			if (lengthUnit == null || colorParam == null || colorParam.getUnitType() == null) return paramConversion;
+			Unit systemUnit = Length.meters;
+			Unit displayUnit = Length.meters;
+			if (colorParam.getUnitType() == Length.type) {
+				displayUnit = lengthUnit;
+			}
+			else if (colorParam.getUnitType() == Area.type) {
+				systemUnit = Area.square(systemUnit);
+				displayUnit = Area.square(lengthUnit);
+			}
+			return new LinearAxisConversion(
+				new UnitizedDouble<>(paramConversion.invert(0), systemUnit).get(displayUnit),
+				0,
+				new UnitizedDouble<>(paramConversion.invert(1), systemUnit).get(displayUnit),
+				1
+			);
+		},
+		(LinearAxisConversion paramConversion, Unit<Length> lengthUnit, ColorParam colorParam) -> {
+			if (paramConversion == null) return null;
+			if (lengthUnit == null || colorParam == null || colorParam.getUnitType() == null) return paramConversion;
+			Unit systemUnit = Length.meters;
+			Unit displayUnit = Length.meters;
+			if (colorParam.getUnitType() == Length.type) {
+				displayUnit = lengthUnit;
+			}
+			else if (colorParam.getUnitType() == Area.type) {
+				systemUnit = Area.square(systemUnit);
+				displayUnit = Area.square(lengthUnit);
+			}
+			return new LinearAxisConversion(
+				new UnitizedDouble<>(paramConversion.invert(0), displayUnit).get(systemUnit),
+				0,
+				new UnitizedDouble<>(paramConversion.invert(1), displayUnit).get(systemUnit),
+				1
+			);
+		}
+	).bind(paramRangeBinder, displayLengthUnitBinder, colorParamBinder);
+	Binder<LinearAxisConversion> displayHighlightRangeBinder = new BiFunctionBinder<LinearAxisConversion, Unit<Length>, LinearAxisConversion>(
+		axisConversionToDisplay,
+		axisConversionToSystem
+	).bind(highlightRangeBinder, displayLengthUnitBinder);
+	Binder<LinearAxisConversion> displayDistRangeBinder = new BiFunctionBinder<LinearAxisConversion, Unit<Length>, LinearAxisConversion>(
+		axisConversionToDisplay,
+		axisConversionToSystem
+	).bind(distRangeBinder, displayLengthUnitBinder);
+	
+	private static final BiFunction<LinearAxisConversion, Unit<Length>, LinearAxisConversion> axisConversionToDisplay = (distRange, displayLengthUnit) -> {
+		if (distRange == null) return null;
+		if (displayLengthUnit == null) return distRange;
+		return new LinearAxisConversion(
+			Length.meters(distRange.invert(0)).get(displayLengthUnit),
+			0,
+			Length.meters(distRange.invert(1)).get(displayLengthUnit),
+			1
+		);
+	};
+	private static final BiFunction<LinearAxisConversion, Unit<Length>, LinearAxisConversion> axisConversionToSystem = (displayDistRange, displayLengthUnit) -> {
+		if (displayDistRange == null) return null;
+		if (displayLengthUnit == null) return displayDistRange;
+		return new LinearAxisConversion(
+			new UnitizedDouble<>(displayDistRange.invert(0), displayLengthUnit).get(Length.meters),
+			0,
+			new UnitizedDouble<>(displayDistRange.invert(1), displayLengthUnit).get(Length.meters),
+			1
+		);
+	};
 
 	UpdateStatusPanel updateStatusPanel;
 
@@ -324,13 +398,13 @@ public class SettingsDrawer extends Drawer {
 				bindEquals(CameraView.AUTO_PROFILE, cameraViewBinder));
 		JSliderValueBinder.bind(mouseSensitivitySlider, mouseSensitivityBinder);
 		JSliderValueBinder.bind(mouseWheelSensitivitySlider, mouseWheelSensitivityBinder);
-		PlotAxisConversionBinder.bind(distColorationAxis, distRangeBinder);
+		PlotAxisConversionBinder.bind(distColorationAxis, displayDistRangeBinder);
 		ISelectorSelectionBinder.bind(colorParamSelector, colorParamBinder);
 		BetterCardLayoutBinder.bind(colorParamDetailsPanel, colorParamDetailsLayout, colorParamBinder);
 		BetterCardLayoutBinder.bind(colorParamButtonsPanel, colorParamButtonsLayout, colorParamBinder);
-		PlotAxisConversionBinder.bind(paramColorationAxis, paramRangeBinder);
+		PlotAxisConversionBinder.bind(paramColorationAxis, displayParamRangeBinder);
 		ISelectorSelectionBinder.bind(highlightModeSelector, highlightModeBinder);
-		PlotAxisConversionBinder.bind(glowDistAxis, highlightRangeBinder);
+		PlotAxisConversionBinder.bind(glowDistAxis, displayHighlightRangeBinder);
 		JSliderValueBinder.bind(ambientLightSlider,
 				BimapperBinder.bind(compose(new LinearFloatBimapper(0f, 0f, 1f, ambientLightSlider.getMaximum()),
 						RoundingFloat2IntegerBimapper.instance), ambientLightBinder));
