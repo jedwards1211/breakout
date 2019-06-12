@@ -35,6 +35,7 @@ import org.andork.q.QObject;
 import org.andork.q.QObjectMapBimapper;
 import org.andork.q.QSpec;
 import org.breakout.BreakoutMainView;
+import org.breakout.SearchMode;
 
 public final class RootModel extends QSpec<RootModel> {
 	/**
@@ -87,6 +88,9 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<String> mapboxAccessToken = newAttribute(
 			String.class,
 			"mapboxAccessToken");
+	public static final Attribute<SearchMode> searchMode = newAttribute(
+			SearchMode.class,
+			"searchMode");
 
 	public static final RootModel instance = new RootModel();
 
@@ -152,6 +156,9 @@ public final class RootModel extends QSpec<RootModel> {
 		}
 		if (rootModel.get(RootModel.showSpatialIndex) == null) {
 			rootModel.set(RootModel.showSpatialIndex, false);
+		}
+		if (rootModel.get(RootModel.searchMode) == null) {
+			rootModel.set(RootModel.searchMode, SearchMode.AUTO);
 		}
 	}
 }

@@ -98,6 +98,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowFilter;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
@@ -1393,12 +1394,12 @@ public class BreakoutMainView {
 		});
 
 		OnEDT.onEDT(() -> {
-			surveyDrawer = new SurveyDrawer(sortRunner);
+			surveyDrawer = new SurveyDrawer(sortRunner, i18n);
 
-			rowFilterFactory = text -> new SmartComboTableRowFilter(Arrays.asList(
-					new SurveyDesignationFilter(text),
-					new SurveyorFilter(text),
-					new DescriptionFilter(text)));
+			rowFilterFactory = text -> {
+				SearchMode searchMode = getRootModel().get(RootModel.searchMode);
+				return createRowFilter(text, searchMode);
+			};
 
 			AnnotatingJTables.connectSearchFieldAndRadioButtons(
 					surveyDrawer.table(), surveyDrawer.searchField().textComponent,
@@ -1526,7 +1527,7 @@ public class BreakoutMainView {
 
 			miniSurveyDrawer.table().setModel(surveyDrawer.table().getModel());
 			miniSurveyDrawer.table().setModelSelectionModel(surveyDrawer.table().getModelSelectionModel());
-
+		
 			AnnotatingJTables.connectSearchFieldAndRadioButtons(
 					miniSurveyDrawer.table(),
 					miniSurveyDrawer.searchField().textComponent,
@@ -1928,6 +1929,25 @@ public class BreakoutMainView {
 
 		}.bind(new HierarchicalChangeBinder<QArrayList<Path>>()
 				.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder)));
+		
+		new BinderWrapper<SearchMode>() {
+			@Override
+			protected void onValueChanged(SearchMode mode) {
+				surveyDrawer.searchOptionsButton().setSearchMode(mode);
+				surveyDrawer.searchField().textComponent.setText(
+					surveyDrawer.searchField().textComponent.getText());
+				miniSurveyDrawer.searchOptionsButton().setSearchMode(mode);
+				miniSurveyDrawer.searchField().textComponent.setText(
+					miniSurveyDrawer.searchField().textComponent.getText());
+			}
+		}.bind(new QObjectAttributeBinder<>(RootModel.searchMode).bind(rootModelBinder));
+		
+		surveyDrawer.searchOptionsButton().menu().addChangeListener(l -> {
+			getRootModel().set(RootModel.searchMode, surveyDrawer.searchOptionsButton().getSearchMode());
+		});
+		miniSurveyDrawer.searchOptionsButton().menu().addChangeListener(l -> {
+			getRootModel().set(RootModel.searchMode, miniSurveyDrawer.searchOptionsButton().getSearchMode());
+		});
 
 		OnEDT.onEDT(() -> {
 			Localizer localizer = i18n.forClass(BreakoutMainView.class);
@@ -2143,6 +2163,19 @@ public class BreakoutMainView {
 			updateStatusPanelController.checkForUpdate();
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to get autoupdate properties", e);
+		}
+	}
+
+	private static RowFilter<TableModel, Integer> createRowFilter(String text, SearchMode searchMode) {
+		switch (searchMode) {
+		case STATION_REGEX: return new SurveyRegexFilter(text);
+		case SURVEY_DESIGNATION: return new SurveyDesignationFilter(text);
+		case SURVEY_TEAM: return new SurveyorFilter(text);
+		case TRIP_DESCRIPTION: return new DescriptionFilter(text);
+		default: return new SmartComboTableRowFilter(Arrays.asList(
+			new SurveyDesignationFilter(text),
+			new SurveyorFilter(text),
+			new DescriptionFilter(text)));
 		}
 	}
 	

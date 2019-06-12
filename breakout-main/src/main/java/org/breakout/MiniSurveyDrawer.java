@@ -13,7 +13,6 @@ import javax.swing.table.DefaultTableColumnModel;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.I18n;
 import org.andork.awt.layout.Drawer;
-import org.andork.bind.DefaultBinder;
 import org.andork.swing.TextComponentWithHintAndClear;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.AnnotatingTableRowSorter;
@@ -30,6 +29,7 @@ public class MiniSurveyDrawer extends Drawer {
 	private AnnotatingJTable table;
 	private DefaultAnnotatingJTableSetup tableSetup;
 
+	private SearchOptionsButton searchOptionsButton;
 	private TextComponentWithHintAndClear searchField;
 	private JRadioButton filterButton;
 	private JRadioButton highlightButton;
@@ -37,8 +37,12 @@ public class MiniSurveyDrawer extends Drawer {
 	private StatsPanel statsPanel;
 
 	public MiniSurveyDrawer(I18n i18n, Consumer<Runnable> sortRunner) {
-		initComponents(sortRunner);
+		initComponents(i18n, sortRunner);
 		initLayout();
+	}
+	
+	public SearchOptionsButton searchOptionsButton() {
+		return searchOptionsButton;
 	}
 
 	public TextComponentWithHintAndClear searchField() {
@@ -53,7 +57,7 @@ public class MiniSurveyDrawer extends Drawer {
 		return highlightButton;
 	}
 
-	private void initComponents(Consumer<Runnable> sortRunner) {
+	private void initComponents(I18n i18n, Consumer<Runnable> sortRunner) {
 		content = new JPanel();
 
 		DefaultTableColumnModel quickTableColumnModel = new DefaultTableColumnModel();
@@ -69,7 +73,9 @@ public class MiniSurveyDrawer extends Drawer {
 		((AnnotatingTableRowSorter<SurveyTableModel>) table.getAnnotatingRowSorter())
 				.setModelCopier(new SurveyTableModelCopier());
 
+		searchOptionsButton = new SearchOptionsButton(i18n);
 		searchField = new TextComponentWithHintAndClear("Enter search terms");
+		searchField.getAdornments().add(searchOptionsButton);
 		highlightButton = new JRadioButton("Highlight");
 		filterButton = new JRadioButton("Filter");
 

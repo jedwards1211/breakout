@@ -38,6 +38,7 @@ import javax.swing.SwingConstants;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.awt.I18n;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
 import org.andork.swing.TextComponentWithHintAndClear;
@@ -54,6 +55,7 @@ public class SurveyDrawer extends Drawer {
 	private static final long serialVersionUID = -8494125520077495833L;
 	JLabel searchLabel;
 	TextComponentWithHintAndClear searchField;
+	SearchOptionsButton searchOptionsButton;
 	JRadioButton filterButton;
 	JRadioButton highlightButton;
 
@@ -68,11 +70,13 @@ public class SurveyDrawer extends Drawer {
 
 	JToggleButton editButton;
 
-	public SurveyDrawer(Consumer<Runnable> sortRunner) {
+	public SurveyDrawer(Consumer<Runnable> sortRunner, I18n i18n) {
 		setPreferredSize(new Dimension(800, 250));
 
 		searchLabel = new JLabel("Search: ");
+		searchOptionsButton = new SearchOptionsButton(i18n);
 		searchField = new TextComponentWithHintAndClear("Enter search terms");
+		searchField.getAdornments().add(searchOptionsButton);
 		filterButton = new JRadioButton("Filter");
 		highlightButton = new JRadioButton("Highlight");
 
@@ -153,6 +157,10 @@ public class SurveyDrawer extends Drawer {
 		tripButton.addItemListener(aspectListener);
 
 		shotsButton.setSelected(true);
+	}
+	
+	public SearchOptionsButton searchOptionsButton() {
+		return searchOptionsButton;
 	}
 
 	public TextComponentWithHintAndClear searchField() {

@@ -27,6 +27,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -45,6 +46,7 @@ public class TextComponentWithHintAndClear extends JPanel {
 	public final JTextComponent textComponent;
 	private JButton clearButton;
 	private JLabel hintLabel;
+	private Box adornments;
 
 	public TextComponentWithHintAndClear(JTextComponent textComponent, String hint) {
 		this.textComponent = textComponent;
@@ -56,13 +58,15 @@ public class TextComponentWithHintAndClear extends JPanel {
 		hintLabel.setForeground(Color.LIGHT_GRAY);
 		hintLabel.setFont(hintLabel.getFont().deriveFont(Font.ITALIC));
 		hintLabel.setOpaque(false);
-
+		
 		textComponent.setLayout(new BorderLayout());
 		textComponent.add(hintLabel, BorderLayout.WEST);
 
 		setLayout(new BorderLayout());
 		add(textComponent, BorderLayout.CENTER);
-		add(clearButton, BorderLayout.EAST);
+		adornments = Box.createHorizontalBox();
+		adornments.add(clearButton);
+		add(adornments, BorderLayout.EAST);
 
 		setBorder(textComponent.getBorder());
 		setBackground(textComponent.getBackground());
@@ -88,6 +92,10 @@ public class TextComponentWithHintAndClear extends JPanel {
 
 	public TextComponentWithHintAndClear(String hint) {
 		this(new JTextField(), hint);
+	}
+	
+	public Box getAdornments() {
+		return adornments;
 	}
 
 	private void updateHintLabelVisible() {
