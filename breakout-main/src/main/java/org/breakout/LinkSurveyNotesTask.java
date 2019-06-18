@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -67,6 +69,7 @@ import org.breakout.model.raw.SurveyTrip;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 
 public class LinkSurveyNotesTask extends Task<Void> {
+	private static final Logger logger = Logger.getLogger(ImportCompassTask.class.getSimpleName());
 	private BreakoutMainView mainView;
 
 	public LinkSurveyNotesTask(BreakoutMainView mainView) {
@@ -242,7 +245,8 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	
 		if (choice != JOptionPane.OK_OPTION) return;
 		
-		cave = caveComboBox.getSelectedItem().toString();
+		Object selCave = caveComboBox.getSelectedItem();
+		cave = selCave != null ? selCave.toString() : null;
 		searchDirectory = fileChooser.getCurrentDirectory();
 	}
 	
@@ -463,34 +467,45 @@ public class LinkSurveyNotesTask extends Task<Void> {
 
 	@Override
 	protected Void work() throws Exception {
-		Info info = getInfo();
-		if (isCanceled()) return null;
+		try {
+			Info info = getInfo();
+			if (isCanceled()) return null;
 
-		OnEDT.onEDT(() -> selectOptions(info));
-		if (searchDirectory == null) return null;
+			OnEDT.onEDT(() -> selectOptions(info));
+			if (searchDirectory == null) return null;
 
-		List<SurveyRow> rows = findSurveyNotes(searchDirectory.toPath(), cave, info);
-		if (isCanceled()) return null;
-		if (rows.isEmpty()) {
-			OnEDT.onEDT(() -> {
-				JOptionPane.showMessageDialog(
-					mainView.getMainPanel(),
-					localizer.getString("message.nothingFound"));
-			});
+			List<SurveyRow> rows = findSurveyNotes(searchDirectory.toPath(), cave, info);
+			if (isCanceled()) return null;
+			if (rows.isEmpty()) {
+				OnEDT.onEDT(() -> {
+					JOptionPane.showMessageDialog(
+						mainView.getMainPanel(),
+						localizer.getString("message.nothingFound"));
+				});
+				return null;
+			}
+			
+			Collections.sort(info.linkedFiles);
+			Collections.sort(info.unlinkedFiles);
+			
+			rows = confirmResults(rows, info);
+			if (rows == null) return null;
+						
+			addSearchDirectoryToProject(searchDirectory);
+			
+			mergeIntoProject(rows);
+			mainView.rebuild3dModel.run();
+			
 			return null;
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, "Failed to link survey notes", ex);
+			OnEDT.onEDT(() -> {
+				JOptionPane.showMessageDialog(this.mainView.getMainPanel(),
+						ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
+						"Failed to link survey notes", JOptionPane.ERROR_MESSAGE);
+			});
 		}
-		
-		Collections.sort(info.linkedFiles);
-		Collections.sort(info.unlinkedFiles);
-		
-		rows = confirmResults(rows, info);
-		if (rows == null) return null;
-					
-		addSearchDirectoryToProject(searchDirectory);
-		
-		mergeIntoProject(rows);
-		mainView.rebuild3dModel.run();
-		
+
 		return null;
 	}
 }
