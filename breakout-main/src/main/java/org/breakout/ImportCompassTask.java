@@ -142,7 +142,6 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 		final SurveyTableModel newModel;
 		final CompassSurveyParser parser = new CompassSurveyParser();
 		final CompassPlotParser plotParser = new CompassPlotParser();
-		final Map<String, SurveyRow> stationPositionRows = new HashMap<>();
 		final Map<Path, SurveyLocation> surveyLocations = new HashMap<>();
 		final Map<Path, SurveyTrip> surveyLocationTrips = new HashMap<>();
 		final Map<String, Path> stationToSurvey = new HashMap<>();
@@ -225,6 +224,11 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 					@Override
 					public void datum(DatumDirective datum) {
 						currentLocation = currentLocation.setDatum(datum.datum);
+						if (datum.datum != null && (
+								!datumMap.containsKey(datum.datum) ||
+								!ellipsoidMap.containsKey(datum.datum))) {
+							errors.add(new ImportError(Severity.ERROR, "datum not supported: " + datum.datum, null));
+						}
 					}
 					
 					@Override
@@ -275,20 +279,6 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 					fileSubtask.increment();
 					
 					fileSubtask.runSubtask(1, convertSubtask -> {
-						SurveyTrip noLocationTrip = new MutableSurveyTrip()
-							.setDatum(null)
-							.setEllipsoid(null)
-							.setUtmZone(null)
-							.setName(null)
-							.setDistanceUnit(Length.feet)
-							.setAngleUnit(Angle.degrees)
-							.setOverrideFrontAzimuthUnit(Angle.degrees)
-							.setOverrideBackAzimuthUnit(Angle.degrees)
-							.setOverrideFrontInclinationUnit(Angle.degrees)
-							.setOverrideBackInclinationUnit(Angle.degrees)
-							.setBackAzimuthsCorrected(true)
-							.setBackInclinationsCorrected(true)
-							.toImmutable(); 
 						convertSubtask.setTotal(commands.size());
 
 						String datum = null;
@@ -341,7 +331,8 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 									}
 								}
 								if (trip == null) {
-									trip = noLocationTrip;
+									convertSubtask.increment();
+									continue;
 								}
 								
 								BigDecimal northing = c.getLocation().getNorthing();
@@ -367,24 +358,8 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 					});
 				});
 			}
-		} catch (Exception ex) {
-			logger.log(Level.SEVERE, "Failed to import compass data", ex);
-			new OnEDT() {
-				@Override
-				public void run() throws Throwable {
-					JOptionPane.showMessageDialog(ImportCompassTask.this.mainView.getMainPanel(),
-							ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
-							"Failed to import compass data", JOptionPane.ERROR_MESSAGE);
-				}
-			};
 
-			return null;
-		}
-
-		new OnEDT() {
-
-			@Override
-			public void run() throws Throwable {
+			OnEDT.onEDT(() -> {
 				ImportResultsDialog dialog = new ImportResultsDialog(ImportCompassTask.this.mainView.i18n,
 						"title.compass");
 				for (CompassParseError error : parser.getErrors()) {
@@ -415,8 +390,16 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 				} else {
 					logger.info("user canceled compass import");
 				}
-			}
-		};
+			});
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, "Failed to import compass data", ex);
+			OnEDT.onEDT(() -> {
+				JOptionPane.showMessageDialog(ImportCompassTask.this.mainView.getMainPanel(),
+						ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
+						"Failed to import compass data", JOptionPane.ERROR_MESSAGE);
+			});
+		}
+
 		return null;
 	}
 }
