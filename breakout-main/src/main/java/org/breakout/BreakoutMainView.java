@@ -955,6 +955,12 @@ public class BreakoutMainView {
 				logger.info("done rebuilding 3D model");
 			} catch (Exception ex) {
 				logger.log(Level.SEVERE, "failed to rebuild 3D model", ex);
+				OnEDT.onEDT(() -> {
+					new JOptionPaneBuilder()
+						.error()
+						.message(ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage())
+						.showDialog(mainPanel, "Failed to rebuild 3D model");
+				});
 				throw ex;
 			} finally {
 				OnEDT.onEDT(() -> taskListDrawer.holder().release(this));
