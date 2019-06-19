@@ -2238,8 +2238,6 @@ public class BreakoutMainView {
 			throw new IllegalArgumentException("forward and right must not contain NaN or infinite values");
 		}
 
-		mouseLooper.removeMouseAdapter(mouseAdapterChain);
-
 		Survey3dModel model3d = this.model3d;
 
 		float[] up = new float[3];
@@ -2255,6 +2253,9 @@ public class BreakoutMainView {
 		if (ortho) {
 			if (model3d != null) {
 				float[] orthoBounds = model3d.getOrthoBounds(shotsToFit, right, up, forward);
+				if (Vecmath.hasNaNsOrInfinites(orthoBounds)) {
+					orthoBounds = model3d.getOrthoBounds(calcProject.getPlottedShotKeys(), right, up, forward);
+				}
 				Rectmath.scaleFromCenter3(orthoBounds, 1 / 0.9f, 1 / 0.9f, 1f, orthoBounds);
 
 				float[] endOrthoLocation = new float[3];
@@ -2284,12 +2285,16 @@ public class BreakoutMainView {
 			final Clip3f finalClip = newClip;
 
 			finisher = l -> {
-				if (finalNewProjection != null) {
-					renderer.getViewSettings().setProjection(finalNewProjection);
-					saveProjection();
-				}
-				if (finalClip != null && model3d != null) {
-					getProjectModel().set(ProjectModel.clip, finalClip);
+				try {
+					if (finalNewProjection != null) {
+						renderer.getViewSettings().setProjection(finalNewProjection);
+						saveProjection();
+					}
+					if (finalClip != null && model3d != null) {
+						getProjectModel().set(ProjectModel.clip, finalClip);
+					}
+				} catch (Exception ex) {
+					logger.log(Level.SEVERE, "Failed to change view xform", ex);
 				}
 
 				installOrthoMouseAdapters();
@@ -2383,19 +2388,25 @@ public class BreakoutMainView {
 			}
 		}
 
-		removeUnprotectedCameraAnimations();
-		getProjectModel().set(ProjectModel.clip,
-			new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
-		cameraAnimationQueue.add(new ProjXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, false,
-				f -> {
-					calc.f = projReparam.applyAsFloat(f);
-					return calc;
-				}).also(new ViewXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, true, f -> {
-					viewAnimation.calcViewXform(viewReparam.applyAsFloat(f), viewXform);
-					return viewXform;
-				})));
-		finisher = finisher.also(new AnimationViewSaver());
-		protectedAnimations.put(finisher, null);
+		mouseLooper.removeMouseAdapter(mouseAdapterChain);
+
+		try {
+			removeUnprotectedCameraAnimations();
+			getProjectModel().set(ProjectModel.clip,
+				new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
+			cameraAnimationQueue.add(new ProjXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, false,
+					f -> {
+						calc.f = projReparam.applyAsFloat(f);
+						return calc;
+					}).also(new ViewXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, true, f -> {
+						viewAnimation.calcViewXform(viewReparam.applyAsFloat(f), viewXform);
+						return viewXform;
+					})));
+			finisher = finisher.also(new AnimationViewSaver());
+			protectedAnimations.put(finisher, null);
+		} catch (Exception ex) {
+			logger.log(Level.SEVERE, "Failed to animate view xform", ex);
+		}
 		cameraAnimationQueue.add(finisher);
 	}
 
