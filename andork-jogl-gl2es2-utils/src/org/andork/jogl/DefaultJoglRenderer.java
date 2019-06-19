@@ -7,12 +7,6 @@ import static com.jogamp.opengl.GL.GL_READ_FRAMEBUFFER;
 import static org.andork.math3d.Vecmath.newMat3f;
 import static org.andork.math3d.Vecmath.newMat4f;
 
-import java.awt.Component;
-import java.awt.Rectangle;
-import java.awt.Window;
-
-import javax.swing.SwingUtilities;
-
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.GL3;
@@ -77,7 +71,6 @@ public class DefaultJoglRenderer implements GLEventListener {
 
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, renderingFbo);
-			gl3.glDrawBuffer(GL_BACK);
 			gl3.glBlitFramebuffer(0, 0, drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), 0, 0,
 					drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), GL.GL_COLOR_BUFFER_BIT, GL_NEAREST);
 		}
@@ -94,7 +87,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 
 	protected void drawScene(GLAutoDrawable drawable) {
 		if (scene != null) {
-			scene.draw(viewState, (GL2ES2) drawable.getGL(), m, n);
+			scene.draw(viewState, drawable.getGL().getGL2ES2(), m, n);
 		}
 	}
 
