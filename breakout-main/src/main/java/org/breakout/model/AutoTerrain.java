@@ -301,6 +301,25 @@ public class AutoTerrain implements JoglDrawable, JoglResource {
 			maxTile[1]++;
 		}
 
+		
+		while ((maxTile[0] - minTile[0] + 2) * (maxTile[1] - minTile[1] + 1) < maxNumTiles ||
+				(maxTile[0] - minTile[0] + 1) * (maxTile[1] - minTile[1] + 2) < maxNumTiles) {
+			if ((maxTile[0] - minTile[0] + 3) * (maxTile[1] - minTile[1] + 1) < maxNumTiles) {
+				minTile[0]--;
+				maxTile[0]++;
+			}
+			else if ((maxTile[0] - minTile[0] + 2) * (maxTile[1] - minTile[1] + 1) < maxNumTiles) {
+				minTile[0]--;
+			}
+			if ((maxTile[0] - minTile[0] + 1) * (maxTile[1] - minTile[1] + 3) < maxNumTiles) {
+				minTile[1]--;
+				maxTile[1]++;
+			}
+			else if ((maxTile[0] - minTile[0] + 1) * (maxTile[1] - minTile[1] + 2) < maxNumTiles) {
+				minTile[1]--;
+			}
+		}
+
 		double[][] cornerBBoxes = {
 			Tilebelt.tileToBBox(minTile),
 			Tilebelt.tileToBBox(new long[] {maxTile[0], minTile[1], zoom}),
