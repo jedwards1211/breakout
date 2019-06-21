@@ -6,7 +6,10 @@ import static org.andork.util.StringUtils.isNullOrEmpty;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -22,11 +25,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
@@ -85,6 +89,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	private final Localizer localizer;
 
 	private boolean caseSensitive = true;
+	private boolean linkDirectories = false;
 	private String cave = null;
 	private File searchDirectory = null;
 		
@@ -101,6 +106,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		public final Map<SurveyTrip, Map<Path, Integer>> potentialTripLinks = new HashMap<>();
 		public List<Path> linkedFiles = new ArrayList<>();
 		public List<Path> unlinkedFiles = new ArrayList<>();
+		public Set<Path> unlinkedFilesSet = new HashSet<>();
 		
 		public void addCave(String cave) {
 			if (cave != null) caveSet.add(cave);
@@ -253,6 +259,29 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		
 		wizardPanel.addCard(GridBagWizard.wrap(namingSchemeBox));
 
+		Box linkDirectoriesBox = Box.createVerticalBox();
+		JLabel linkDirectoriesLabel = new JLabel();
+		localizer.setText(linkDirectoriesLabel, "optionsDialog.linkDirectoriesLabel.text");
+		linkDirectoriesBox.add(linkDirectoriesLabel);
+		ButtonGroup linkDirectoriesGroup = new ButtonGroup();
+		JToggleButton linkDirectoriesButton = new JToggleButton();
+		JToggleButton dontLinkDirectoriesButton = new JToggleButton();
+		localizer.setText(dontLinkDirectoriesButton, "optionsDialog.dontLinkDirectoriesButton.text");
+		localizer.setText(linkDirectoriesButton, "optionsDialog.linkDirectoriesButton.text");
+		linkDirectoriesBox.add(dontLinkDirectoriesButton);
+		linkDirectoriesBox.add(linkDirectoriesButton);
+		linkDirectoriesGroup.add(linkDirectoriesButton);
+		linkDirectoriesGroup.add(dontLinkDirectoriesButton);
+		linkDirectoriesButton.addActionListener(e -> {
+			linkDirectories = true;
+			wizardPanel.next();
+		});
+		dontLinkDirectoriesButton.addActionListener(e -> {
+			linkDirectories = false;
+			wizardPanel.next();
+		});
+		wizardPanel.addCard(GridBagWizard.wrap(linkDirectoriesBox));
+
 		Box caseSensitiveBox = Box.createVerticalBox();
 		JLabel caseSensitiveLabel = new JLabel();
 		localizer.setText(caseSensitiveLabel, "optionsDialog.caseSensitiveLabel.text");
@@ -260,10 +289,10 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		ButtonGroup caseSensitivityGroup = new ButtonGroup();
 		JToggleButton caseSensitiveButton = new JToggleButton();
 		JToggleButton caseInsensitiveButton = new JToggleButton();
-		localizer.setText(caseSensitiveButton, "caseSensitiveButton.text");
-		localizer.setText(caseInsensitiveButton, "caseInsensitiveButton.text");
-		caseSensitiveBox.add(caseSensitiveButton);
+		localizer.setText(caseSensitiveButton, "optionsDialog.caseSensitiveButton.text");
+		localizer.setText(caseInsensitiveButton, "optionsDialog.caseInsensitiveButton.text");
 		caseSensitiveBox.add(caseInsensitiveButton);
+		caseSensitiveBox.add(caseSensitiveButton);
 		caseSensitivityGroup.add(caseSensitiveButton);
 		caseSensitivityGroup.add(caseInsensitiveButton);
 		caseSensitiveButton.addActionListener(e -> {
@@ -302,27 +331,49 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			subtask.setIndeterminate(true);
 			
 			final Matcher leadsMatcher = Pattern.compile("\\blead", Pattern.CASE_INSENSITIVE).matcher("");
+			
+			Files.walkFileTree(directory, Collections.singleton(FileVisitOption.FOLLOW_LINKS), 10, new FileVisitor<Path>() {
+				Stack<Boolean> hasChildDirs = new Stack<>();
+				Stack<Boolean> hasFiles = new Stack<>();
 
-			try (Stream<Path> files = Files.find(
-				directory, 10,
-				(Path path, BasicFileAttributes attrs) -> {
+				@Override
+				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+					if (!hasChildDirs.isEmpty() && !hasChildDirs.peek()) {
+						hasChildDirs.pop();
+						hasChildDirs.push(true);
+					}
+					hasChildDirs.push(false);
+					hasFiles.push(false);
+					return FileVisitResult.CONTINUE;
+				}
+				
+				public boolean fileMatches(Path path) {
 					String fileName = path.getFileName().toString();
 					if (fileName.startsWith(".") || leadsMatcher.reset(fileName).find()) {
 						return false;
 					}
 					return extensionMatcher.reset(fileName).find();
-				},
-				FileVisitOption.FOLLOW_LINKS)) {
-				
-				subtask.onceCanceled(files::close);
+				}
 
-				files.forEach(file -> {
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					if (fileMatches(file)) {
+						if (!hasFiles.isEmpty() && !hasFiles.peek()) {
+							hasFiles.pop();
+							hasFiles.push(true);
+						}
+						addPath(file);
+					}
+					return FileVisitResult.CONTINUE;
+				}
+				
+				public void addPath(Path file) {
 					subtask.setStatus(localizer.getFormattedString("status.scanningFile", file.toString()));
 					String fileName = file.getFileName().toString();
 					if (!caseSensitive) fileName = fileName.toUpperCase();
 					Set<String> stations;
 					try {
-						 stations = LechuguillaStationSets.parse(fileName.replaceAll("^[^A-Z]+|\\.[^.]*$", ""));
+						 stations = LechuguillaStationSets.parse(fileName.replaceAll("^[^A-Z]+|\\.[^.]*|\\b\\d{2}(\\d{2})?([-/_])\\d\\d?\\2\\d\\d?\\b$", ""));
 					} catch (Exception e) {
 						return;
 					}
@@ -349,19 +400,40 @@ public class LinkSurveyNotesTask extends Task<Void> {
 					SurveyTrip bestMatch = getHighestCountKey(trips);
 					if (bestMatch != null) {
 						info.addPotentialTripLink(bestMatch, file, trips.get(bestMatch));
-						info.linkedFiles.add(file);
-					} else {
-						info.unlinkedFiles.add(file);
 					}
-				});
-			}
+					info.unlinkedFilesSet.add(file);
+				}
+
+				@Override
+				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+					return FileVisitResult.CONTINUE;
+				}
+
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					boolean hadChildDirs = hasChildDirs.pop();
+					boolean hadFiles = hasFiles.pop();
+					if (linkDirectories && !hadChildDirs && hadFiles) {
+						addPath(dir);
+					}
+					return FileVisitResult.CONTINUE;
+				}
+			});
 			
 			IdentityHashMap<SurveyTrip, SurveyTrip> newTrips = new IdentityHashMap<>();
 
 			info.potentialTripLinks.forEach((trip, paths) -> {
-				Path notesFile = getHighestCountKey(paths);
-				if (notesFile != null) newTrips.put(trip, trip.setSurveyNotes(notesFile.getFileName().toString()));
+				Path notesFile = getHighestCountKey(paths, p -> !paths.containsKey(p.getParent()));
+				if (notesFile != null) {
+					newTrips.put(trip, trip.setSurveyNotes(notesFile.getFileName().toString()));
+					info.linkedFiles.add(notesFile);
+					info.unlinkedFilesSet.remove(notesFile);
+				}
 			});
+			
+			info.unlinkedFiles.addAll(info.unlinkedFilesSet);
+			Collections.sort(info.linkedFiles);
+			Collections.sort(info.unlinkedFiles);
 			
 			List<SurveyRow> result = new ArrayList<>();
 			
@@ -378,10 +450,15 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	}
 	
 	private static <K> K getHighestCountKey(Map<K, Integer> m) {
+		return getHighestCountKey(m, k -> true);
+	}
+
+	private static <K> K getHighestCountKey(Map<K, Integer> m, Predicate<K> p) {
 		K result = null;
 		int bestCount = -1;
 		
 		for (Map.Entry<K, Integer> e : m.entrySet()) {
+			if (!p.test(e.getKey())) continue;
 			if (result == null || e.getValue() > bestCount) {
 				result = e.getKey();
 				if (e.getValue() == null) {
@@ -533,9 +610,6 @@ public class LinkSurveyNotesTask extends Task<Void> {
 				});
 				return null;
 			}
-			
-			Collections.sort(info.linkedFiles);
-			Collections.sort(info.unlinkedFiles);
 			
 			rows = confirmResults(rows, info);
 			if (rows == null) return null;
