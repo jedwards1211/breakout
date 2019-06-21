@@ -13,4 +13,12 @@ public enum HighlightMode {
 	 * Only stations with the same survey designation as the hovered stations will be highlighted
 	 */
 	SAME_DESIGNATION,
+	/**
+	 * Shots along the best route (based upon LRUDs) to selected shots will be highlighted
+	 */
+	DIRECTIONS,
+	/**
+	 * Shots along the shortest route to selected shots will be highlighted
+	 */
+	DIRECTIONS_SHORTEST_ROUTE,
 }

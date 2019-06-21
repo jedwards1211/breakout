@@ -302,8 +302,6 @@ public class BreakoutMainView {
 				: null;
 
 			HighlightMode highlightMode = getProjectModel().get(ProjectModel.highlightMode);
-			final boolean hightlightSameTrip = highlightMode == HighlightMode.SAME_TRIP;
-			final boolean hightlightSameSurveyDesignation = highlightMode == HighlightMode.SAME_DESIGNATION;
 			
 			final LinearAxisConversion conversion = picked == null ? null : new FromEDT<LinearAxisConversion>() {
 				@Override
@@ -391,13 +389,8 @@ public class BreakoutMainView {
 					picked == null ? null : picked.locationAlongShot,
 					new UpdateGlowOptions() {
 						@Override
-						public boolean highlightSameTrip() {
-							return hightlightSameTrip;
-						}
-
-						@Override
-						public boolean highlightSameSurveyDesignation() {
-							return hightlightSameSurveyDesignation;
+						public HighlightMode highlightMode() {
+							return highlightMode;
 						}
 
 						@Override

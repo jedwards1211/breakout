@@ -77,6 +77,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.andork.awt.FontMetricsUtils;
 import org.andork.collect.Iterables;
 import org.andork.collect.LinkedHashSetMultiMap;
+import org.andork.collect.LinkedPriorityEntry;
 import org.andork.collect.MultiMap;
 import org.andork.collect.PriorityEntry;
 import org.andork.jogl.BufferHelper;
@@ -2378,9 +2379,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public static interface UpdateGlowOptions {
-		boolean highlightSameTrip();
-
-		boolean highlightSameSurveyDesignation();
+		HighlightMode highlightMode();
 
 		LinearAxisConversion glowExtentConversion();
 
@@ -2403,19 +2402,27 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		final Set<Shot3d> affectedShot3ds = new HashSet<>();
 		final Map<StationKey, Float> glowAtStations = new HashMap<>();
+		
+		HighlightMode highlightMode = options.highlightMode();
 
 		if (hoveredShot != null) {
 			CalcShot origShot = hoveredShot.shot;
-
-			if (options.highlightSameTrip() || options.highlightSameSurveyDesignation()) {
-				if (options.highlightSameTrip()) {
-					CalcTrip trip = origShot.trip;
-					addGlowForTrip(trip, glowAtStations, affectedShot3ds, task);
+			
+			switch (highlightMode) {
+			case SAME_TRIP:
+				CalcTrip trip = origShot.trip;
+				addGlowForTrip(trip, glowAtStations, affectedShot3ds, task);
+				break;
+			case SAME_DESIGNATION:
+				addGlowForSameSurveyDesignation(origShot, glowAtStations, affectedShot3ds, task);
+				break;
+			case DIRECTIONS:
+			case DIRECTIONS_SHORTEST_ROUTE:
+				if (!selectedShots.isEmpty()) {
+					addGlowForDirections(highlightMode, origShot, hoverLocation, glowAtStations, affectedShot3ds, task);
+					break;
 				}
-				if (options.highlightSameSurveyDesignation()) {
-					addGlowForSameSurveyDesignation(origShot, glowAtStations, affectedShot3ds, task);
-				}
-			} else {
+			default:
 				addGlowForNearbyStations(origShot, hoverLocation, glowAtStations, affectedShot3ds, task);
 			}
 		}
@@ -2449,8 +2456,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			return;
 		}
 	
-		if (hoveredShot != null && 
-				!options.highlightSameTrip() && !options.highlightSameSurveyDesignation()) {
+		if (hoveredShot != null && highlightMode == HighlightMode.NEARBY) {
 			/*
 			 * The values set on the hoveredShot are a special case.
 			 * They will be something like shown below so that the
@@ -2493,6 +2499,87 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				glowAtToStation = 0f;
 			}
 			shot3d.setGlow(glowAtFromStation, glowAtToStation);
+		}
+	}
+
+	private void addGlowForDirections(HighlightMode highlightMode, CalcShot origShot, Float hoverLocation2, Map<StationKey, Float> glowAtStations,
+			Set<Shot3d> affectedShot3ds, Task<?> task) {
+		final Set<StationKey> visited = new HashSet<>();
+		final Set<ShotKey> found = new HashSet<>();
+		final PriorityQueue<LinkedPriorityEntry<Double, CalcStation>> queue = new PriorityQueue<>();
+		queue.add(new LinkedPriorityEntry<>(hoverLocation * origShot.distance, origShot.fromStation, null));
+		queue.add(new LinkedPriorityEntry<>(1 - hoverLocation * origShot.distance, origShot.toStation, null));
+
+		while (!queue.isEmpty() && !task.isCanceled()) {
+			LinkedPriorityEntry<Double, CalcStation> entry = queue.poll();
+			CalcStation station = entry.getValue();
+			double distanceToStation = entry.getKey();
+
+			for (CalcShot nextShot : station.shots.values()) {
+				ShotKey shotKey = nextShot.key();
+				if (selectedShots.contains(shotKey)) {
+					LinkedPriorityEntry<Double, CalcStation> to = entry;
+					glowAtStations.put(to.getValue().key(), 1f);
+					LinkedPriorityEntry<Double, CalcStation> from = to.source;
+					while (from != null) {
+						Shot3d shot3d = shot3ds.get(new ShotKey(from.getValue().key(), to.getValue().key()));
+						if (!affectedShot3ds.add(shot3d)) break;
+						glowAtStations.put(from.getValue().key(), 1f);
+						to = from;
+						from = from.source;
+					}
+					found.add(shotKey);
+					if (found.size() >= selectedShots.size()) return;
+				}
+				Shot3d shot3d = shot3ds.get(shotKey);
+				if (shot3d == null) {
+					continue;
+				}
+				CalcStation nextStation = nextShot.otherStation(station);
+				if (!visited.add(nextStation.key())) {
+					continue;
+				}
+				queue.add(new LinkedPriorityEntry<>(
+					distanceToStation + distanceForDirections(nextShot, highlightMode),
+					nextStation,
+					entry));
+			}
+		}
+	}
+
+	private double distanceForDirections(CalcShot nextShot, HighlightMode highlightMode) {
+		if (highlightMode == HighlightMode.DIRECTIONS) {
+			double distance = nextShot.distance;
+			if (Math.abs(nextShot.inclination) > Math.PI / 2 * 7/9) {
+				double verticalDist = nextShot.toStation.position[1] - nextShot.fromStation.position[1];
+				if (verticalDist >= 2.5) {
+					distance = 10 * verticalDist;
+				} else if (verticalDist <= -2.5) {
+					distance = 5 * -verticalDist;
+				}
+			}
+			return distance
+				* crossSectionMultiplierForDirections(nextShot.fromCrossSection)
+				* crossSectionMultiplierForDirections(nextShot.toCrossSection);
+		}
+		return nextShot.distance;
+	}
+
+	private double crossSectionMultiplierForDirections(CalcCrossSection x) {
+		switch (x.type) {
+		case LRUD:
+			double w = Math.max(0.1, x.measurements[0] + x.measurements[1]);
+			double h = Math.max(0.1, x.measurements[2] + x.measurements[3]);
+			if (w >= 6 || h >= 6) return Math.max(1 / w, 1 / h);
+			return 1 / (w * h);
+		case NSEW:
+			double lon = x.measurements[0] + x.measurements[1];
+			double lat = x.measurements[2] + x.measurements[3];
+			if (lat >= 12 && lon >= 12) return 1 / 12;
+			if (lat >= 6 || lon >= 6) return Math.max(1 / lat, 1 / lon);
+			return 1 / (lat * lon);
+		default:
+			return 100;
 		}
 	}
 
