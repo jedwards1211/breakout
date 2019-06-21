@@ -93,6 +93,17 @@ public class LechuguillaStationSetsTests {
 	}
 
 	@Test
+	public void lechTest002b() {
+		assertStations("EYG1 EYA 2018-3-4",
+			"EYG1",
+			"EYA",
+			"2018",
+			"3",
+			"4"
+		);
+	}
+
+	@Test
 	public void lechTest003() {
 		
 		assertStations("BIG1-5 FKK27 FLD21A-F,23",

@@ -11,7 +11,7 @@ public class LechuguillaStationSets {
 	}
 
 	private static final Pattern stationPattern = Pattern.compile("[^-,\\s]+");
-
+	private static final Pattern nonDigitPattern = Pattern.compile("\\D");
 	
 	public static Set<String> parse(String stations) {
 		// fix for typo in R-EY1A-6A (what they meant was REY1A-6A)
@@ -28,7 +28,8 @@ public class LechuguillaStationSets {
 			String nextStation = m.group();
 			if (prevStation != null && prevEnd + 1 == m.start() && (
 				stations.charAt(prevEnd) == '-' || stations.charAt(prevEnd) == ',' ||
-				!isLetter(nextStation.charAt(0)) || nextStation.length() == 1)) {
+				(!isLetter(nextStation.charAt(0)) && hasNonDigit(nextStation)) ||
+				nextStation.length() == 1)) {
 				
 				int prevIndex = getSpliceIndex(prevStation, nextStation);
 				int nextIndex = 0;
@@ -60,15 +61,17 @@ public class LechuguillaStationSets {
 							? parseInt(prevStation, prevIndex)
 							: 1;
 						int nextNum = parseInt(nextStation, nextIndex);
-						// this ensures that EY56A-3 is treated as EY56A EY56A1-3 instead of
-						// EY56A EY3
-						if (prevNum > nextNum) {
-							prevNum = 1;
-							prevIndex = prevStation.length();
-							prefix = prevStation;
-						}
-						for (int num = prevNum; num <= nextNum; num++) {
-							result.add(prefix + num + suffix);
+						if (prevNum < nextNum || !Character.isDigit(prevStation.charAt(prevStation.length() - 1))) {
+							// this ensures that EY56A-3 is treated as EY56A EY56A1-3 instead of
+							// EY56A EY3
+							if (prevNum > nextNum) {
+								prevNum = 1;
+								prevIndex = prevStation.length();
+								prefix = prevStation;
+							}
+							for (int num = prevNum; num <= nextNum; num++) {
+								result.add(prefix + num + suffix);
+							}
 						}
 					} else if (isLetter(prevStation.charAt(prevIndex)) &&
 							isLetter(nextStation.charAt(nextIndex)) &&
@@ -105,6 +108,13 @@ public class LechuguillaStationSets {
 		return i;
 	}
 	
+	private static boolean hasNonDigit(String s) {
+		for (int i = 0; i < s.length(); i++) {
+			if (!Character.isDigit(s.charAt(i))) return true;
+		}
+		return false;
+	}
+	
 	private static int parseInt(String s, int i) {
 		int result = 0;
 		while (i < s.length() && isDigit(s.charAt(i))) {
@@ -130,6 +140,7 @@ public class LechuguillaStationSets {
 	}
 	
 	private static int getSpliceIndex(String prevStation, String nextStation) {
+		if (!hasNonDigit(prevStation) && !hasNonDigit(nextStation)) return 0;
 		CharType targetCharType = getCharType(nextStation.charAt(0));
 		int i = prevStation.length() - 1;
 		while (i > 0 && getCharType(prevStation.charAt(i)) != targetCharType) i--;
