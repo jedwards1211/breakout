@@ -28,6 +28,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
@@ -2917,7 +2918,19 @@ public class GridBagWizard {
 		this.target = target;
 		layout = (GridBagLayout) target.getLayout();
 	}
-
+	
+	public static Container wrap(Component comp) {
+		GridBagWizard w = quickPanel();
+		w.put(comp).x(0).y(0).weight(1, 1);
+		return w.getTarget();
+	}
+	
+	public static Container wrap(Component comp, Consumer<Constrainer> customizer) {
+		GridBagWizard w = quickPanel();
+		customizer.accept(w.put(comp).x(0).y(0).weight(1, 1));
+		return w.getTarget();
+	}
+	
 	/**
 	 * Gets the {@link GridBagConstraints#anchor anchor} set for a given
 	 * component or {@link IConstrainer}.

@@ -23,8 +23,12 @@ package org.andork.awt.layout;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
+
+import javax.swing.JPanel;
 
 public class LayoutUtils {
 	public static Rectangle calculateInnerArea(Component comp, LayoutSize size) {

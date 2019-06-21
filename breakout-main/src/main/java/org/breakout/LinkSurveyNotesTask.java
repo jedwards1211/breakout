@@ -21,7 +21,6 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -31,11 +30,10 @@ import java.util.stream.Stream;
 
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
-import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
@@ -54,10 +52,13 @@ import org.andork.q.QArrayList;
 import org.andork.swing.FromEDT;
 import org.andork.swing.JOptionPaneBuilder;
 import org.andork.swing.OnEDT;
+import org.andork.swing.WizardPanel;
+import org.andork.swing.filechooser.DirectoryFileFilter;
 import org.andork.swing.table.ListTableModel;
 import org.andork.swing.table.ListTableModel.Column;
 import org.andork.swing.table.ListTableModel.ColumnBuilder;
 import org.andork.task.Task;
+import org.andork.util.Comparables;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.model.ShotKey;
@@ -83,6 +84,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	private static final Pattern lettersNumbersPattern = Pattern.compile("^([\\p{L}]+)(\\d+)$");
 	private final Localizer localizer;
 
+	private boolean caseSensitive = true;
 	private String cave = null;
 	private File searchDirectory = null;
 		
@@ -108,7 +110,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			SurveyRow existing = stationRows.get(key);
 			if (existing != null) {
 				if (existing.getTrip() == row.getTrip()) return;
-				if (Objects.compare(
+				if (Comparables.compareNullsLast(
 					ProjectParser.parseDate(row.getTrip().getDate()),
 					ProjectParser.parseDate(existing.getTrip().getDate()),
 					Date::compareTo) >= 0) {
@@ -130,6 +132,19 @@ public class LinkSurveyNotesTask extends Task<Void> {
 				potentialTripLinks.put(trip, counts);
 			}
 			counts.put(file, stationCount);
+		}
+
+		public void buildRowIndex() {
+			for (SurveyRow row : allShots) {
+				String fromStation = row.getFromStation();
+				String toStation = row.getToStation();
+				if (!caseSensitive) {
+					fromStation = fromStation.toUpperCase();
+					toStation = toStation.toUpperCase();
+				}
+				addStationRow(new StationKey(row.getFromCave(), fromStation), row);
+				addStationRow(new StationKey(row.getToCave(), toStation), row);
+			}
 		}
 	}
 	
@@ -167,10 +182,6 @@ public class LinkSurveyNotesTask extends Task<Void> {
 							if (isNullOrEmpty(row.getSurveyNotes())) {
 								info.addCave(row.getFromCave());
 								info.addCave(row.getToCave());
-								if (isShot(row)) {
-									info.addStationRow(new StationKey(row.getFromCave(), row.getFromStation()), row);
-									info.addStationRow(new StationKey(row.getToCave(), row.getToStation()), row);
-								}
 							}
 						}
 					});
@@ -198,27 +209,32 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	
 	private void selectOptions(Info info) {
 		searchDirectory = null;
-
-		JPanel panel = new JPanel();
-		GridBagWizard w = GridBagWizard.create(panel);
 		
-		JLabel fileChooserLabel = new JLabel();
-		localizer.setText(fileChooserLabel, "optionsDialog.fileChooserLabel.text");
-
-		JFileChooser fileChooser = new JFileChooser(mainView.getRootModel().get(RootModel.currentWallsImportDirectory));
-		fileChooser.setControlButtonsAreShown(false);
-		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		WizardPanel wizardPanel = new WizardPanel(mainView.getI18n());
+		wizardPanel.setUseNextButton(false);
 		
-		JLabel caveLabel = new JLabel();
-		localizer.setText(caveLabel, "optionsDialog.caveLabel.text");
-		
+		GridBagWizard w;
+			
 		List<String> caves = info.caves;
-		@SuppressWarnings("unchecked")
-		JComboBox<String> caveComboBox = new JComboBox<>(
-			new ListComboBoxModel<>(caves)
-		);
-		if (!caves.isEmpty()) caveComboBox.setSelectedIndex(0);
-		caveComboBox.setEnabled(caves.size() > 1);
+		if (!caves.isEmpty()) {
+			w = GridBagWizard.quickPanel();
+			JLabel caveLabel = new JLabel();
+	localizer.setText(caveLabel, "optionsDialog.caveLabel.text");
+			
+			JList<String> caveList = new JList<>(new ListComboBoxModel<>(caves));
+			ListSelectionModel selModel = caveList.getSelectionModel();
+			selModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			selModel.addListSelectionListener(e -> {
+				if (e.getValueIsAdjusting()) return;
+				cave = caveList.getSelectedValue();
+				wizardPanel.next();
+			});
+			w.put(caveLabel).xy(0, 0).fillx(1);
+			w.put(caveList).below(caveLabel).fillboth(1, 1).insets(10, 0, 0, 0);
+			wizardPanel.addCard(w.getTarget());
+		} else {
+			cave = null;
+		}
 		
 		Box namingSchemeBox = Box.createVerticalBox();
 		ButtonGroup namingSchemeGroup = new ButtonGroup();
@@ -230,24 +246,54 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		namingSchemeBox.add(lechSchemeButton);
 		namingSchemeGroup.add(lechSchemeButton);
 		
-		lechSchemeButton.setSelected(true);
+		lechSchemeButton.setSelected(false);
+		lechSchemeButton.addActionListener(e -> {
+			wizardPanel.next();
+		});
 		
-		w.put(caveLabel).xy(0, 0).fillx(0);
-		w.put(caveComboBox).below(caveLabel).fillx(0);
-		w.put(namingSchemeBox).below(caveComboBox).fillboth(0, 0);
-		w.put(fileChooserLabel).rightOf(caveLabel).fillx(1).insets(0, 20, 0, 0);
+		wizardPanel.addCard(GridBagWizard.wrap(namingSchemeBox));
+
+		Box caseSensitiveBox = Box.createVerticalBox();
+		JLabel caseSensitiveLabel = new JLabel();
+		localizer.setText(caseSensitiveLabel, "optionsDialog.caseSensitiveLabel.text");
+		caseSensitiveBox.add(caseSensitiveLabel);
+		ButtonGroup caseSensitivityGroup = new ButtonGroup();
+		JToggleButton caseSensitiveButton = new JToggleButton();
+		JToggleButton caseInsensitiveButton = new JToggleButton();
+		localizer.setText(caseSensitiveButton, "caseSensitiveButton.text");
+		localizer.setText(caseInsensitiveButton, "caseInsensitiveButton.text");
+		caseSensitiveBox.add(caseSensitiveButton);
+		caseSensitiveBox.add(caseInsensitiveButton);
+		caseSensitivityGroup.add(caseSensitiveButton);
+		caseSensitivityGroup.add(caseInsensitiveButton);
+		caseSensitiveButton.addActionListener(e -> {
+			caseSensitive = true;
+			wizardPanel.next();
+		});
+		caseInsensitiveButton.addActionListener(e -> {
+			caseSensitive = false;
+			wizardPanel.next();
+		});
+		wizardPanel.addCard(GridBagWizard.wrap(caseSensitiveBox));
+
+		JLabel fileChooserLabel = new JLabel();
+		localizer.setText(fileChooserLabel, "optionsDialog.fileChooserLabel.text");
+
+		JFileChooser fileChooser = new JFileChooser(mainView.getRootModel().get(RootModel.currentWallsImportDirectory));
+		fileChooser.setControlButtonsAreShown(false);
+		fileChooser.setMultiSelectionEnabled(false);
+		DirectoryFileFilter.install(fileChooser);
+		
+		w = GridBagWizard.quickPanel();
+		w.put(fileChooserLabel).xy(0, 0).fillx(1).insets(0, 20, 0, 0);
 		w.put(fileChooser).below(fileChooserLabel).height(2).fillboth(1, 1).sameInsets(fileChooserLabel);
 		
-		int choice = new JOptionPaneBuilder()
-			.message(panel)
-			.okCancel()
-			.showDialog(mainView.getMainPanel(), localizer.getString("optionsDialog.title"));
-	
+		wizardPanel.addCard(w.getTarget());
+		
+		int choice = wizardPanel.showDialog(mainView.getMainPanel(), localizer.getString("optionsDialog.title"));
 		if (choice != JOptionPane.OK_OPTION) return;
 		
-		Object selCave = caveComboBox.getSelectedItem();
-		cave = selCave != null ? selCave.toString() : null;
-		searchDirectory = fileChooser.getCurrentDirectory();
+		searchDirectory = DirectoryFileFilter.getSelectedDirectory(fileChooser);
 	}
 	
 	private List<SurveyRow> findSurveyNotes(Path directory, String caveName, Info info) throws Exception {
@@ -273,6 +319,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 				files.forEach(file -> {
 					subtask.setStatus(localizer.getFormattedString("status.scanningFile", file.toString()));
 					String fileName = file.getFileName().toString();
+					if (!caseSensitive) fileName = fileName.toUpperCase();
 					Set<String> stations;
 					try {
 						 stations = LechuguillaStationSets.parse(fileName.replaceAll("^[^A-Z]+|\\.[^.]*$", ""));
@@ -473,7 +520,9 @@ public class LinkSurveyNotesTask extends Task<Void> {
 
 			OnEDT.onEDT(() -> selectOptions(info));
 			if (searchDirectory == null) return null;
-
+			
+			info.buildRowIndex();
+			
 			List<SurveyRow> rows = findSurveyNotes(searchDirectory.toPath(), cave, info);
 			if (isCanceled()) return null;
 			if (rows.isEmpty()) {

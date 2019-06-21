@@ -143,6 +143,7 @@ public class BetterCardLayout implements LayoutManager2 {
 	 */
 	@Override
 	public void addLayoutComponent(Component comp, Object key) {
+		if (key == null) key = vector.size();
 		synchronized (comp.getTreeLock()) {
 			if (!vector.isEmpty()) {
 				comp.setVisible(false);
@@ -201,6 +202,10 @@ public class BetterCardLayout implements LayoutManager2 {
 				parent.validate();
 			}
 		}
+	}
+	
+	public int getCurrentCardIndex() {
+		return currentCard;
 	}
 
 	public Object getCurrentCardKey() {
