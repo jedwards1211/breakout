@@ -5,6 +5,8 @@ import static org.andork.util.StringUtils.isNullOrEmpty;
 
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -34,6 +36,7 @@ import java.util.regex.Pattern;
 
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -63,6 +66,7 @@ import org.andork.swing.table.ListTableModel.Column;
 import org.andork.swing.table.ListTableModel.ColumnBuilder;
 import org.andork.task.Task;
 import org.andork.util.Comparables;
+import org.andork.util.StringUtils;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.model.ShotKey;
@@ -213,6 +217,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			!isNullOrEmpty(row.getDistance());
 	}
 	
+	@SuppressWarnings("serial")
 	private void selectOptions(Info info) {
 		searchDirectory = null;
 		
@@ -222,18 +227,35 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		GridBagWizard w;
 			
 		List<String> caves = info.caves;
-		if (!caves.isEmpty()) {
+		if (caves.size() > 1) {
 			w = GridBagWizard.quickPanel();
 			JLabel caveLabel = new JLabel();
 	localizer.setText(caveLabel, "optionsDialog.caveLabel.text");
 			
 			JList<String> caveList = new JList<>(new ListComboBoxModel<>(caves));
+			caveList.setCellRenderer(new DefaultListCellRenderer() {
+				@Override
+				public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+						boolean isSelected, boolean cellHasFocus) {
+					return super.getListCellRendererComponent(
+						list,
+						StringUtils.isNullOrEmpty(value) ? "(no cave)" : value,
+						index, isSelected, cellHasFocus);
+				}
+			});
 			ListSelectionModel selModel = caveList.getSelectionModel();
 			selModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			selModel.addListSelectionListener(e -> {
 				if (e.getValueIsAdjusting()) return;
 				cave = caveList.getSelectedValue();
-				wizardPanel.next();
+			});
+			caveList.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					if (caveList.getSelectedValue() != null) {
+						wizardPanel.next();
+					}
+				}
 			});
 			w.put(caveLabel).xy(0, 0).fillx(1);
 			w.put(caveList).below(caveLabel).fillboth(1, 1).insets(10, 0, 0, 0);
