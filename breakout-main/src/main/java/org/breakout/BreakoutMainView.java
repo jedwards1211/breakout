@@ -2007,7 +2007,7 @@ public class BreakoutMainView {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				PlotAxis axis = settingsDrawer.getParamColorationAxis();
-				LinearAxisConversion conversion = axis.getAxisConversion();
+				LinearAxisConversion conversion = paramRangeBinder.get();
 				double start = conversion.invert(0.0);
 				double end = conversion.invert(axis.getViewSpan());
 				LinearAxisConversion newConversion = new LinearAxisConversion(end, 0.0, start, axis.getViewSpan());
