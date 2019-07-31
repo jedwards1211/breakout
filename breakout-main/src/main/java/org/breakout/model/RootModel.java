@@ -42,68 +42,38 @@ public final class RootModel extends QSpec<RootModel> {
 	 * the path to the current project file, relative to the current
 	 * {@linkplain BreakoutMainView#getRootDirectory() root settings directory}.
 	 */
-	public static final Attribute<Path> currentProjectFile = newAttribute(
-			Path.class,
-			"currentProjectFile");
+	public static final Attribute<Path> currentProjectFile = newAttribute(Path.class, "currentProjectFile");
 	/**
 	 * the paths to recent project files, relative to the current
 	 * {@linkplain BreakoutMainView#getRootDirectory() root settings directory}.
 	 */
-	public static final Attribute<QArrayList<Path>> recentProjectFiles = newAttribute(
-			QArrayList.class,
-			"recentProjectFiles");
-	public static final Attribute<QHashMap<Path, Path>> swapFiles = newAttribute(
-			QHashMap.class,
-			"swapFiles");
-	public static final Attribute<File> currentProjectFileChooserDirectory = newAttribute(
-			File.class,
-			"currentProjectFileChooserDirectory");
-	public static final Attribute<File> currentCompassImportDirectory = newAttribute(
-			File.class,
-			"currentCompassImportDirectory");
-	public static final Attribute<File> currentWallsImportDirectory = newAttribute(
-			File.class,
-			"currentWallsImportDirectory");
-	public static final Attribute<Integer> desiredNumSamples = newAttribute(
-			Integer.class,
-			"desiredNumSamples");
-	public static final Attribute<Integer> mouseSensitivity = newAttribute(
-			Integer.class,
-			"mouseSensitivity");
-	public static final Attribute<Integer> mouseWheelSensitivity = newAttribute(
-			Integer.class,
-			"mouseWheelSensitivity");
-	public static final Attribute<Boolean> doNotShowNewProjectInfoDialog = newAttribute(
-			Boolean.class,
-			"doNotShowNewProjectInfoDialog");
-	public static final Attribute<Boolean> showDataInSurveyTable = newAttribute(
-			Boolean.class,
-			"showDataInSurveyTable");
-	public static final Attribute<Boolean> showStationLabels = newAttribute(
-			Boolean.class,
-			"showStationLabels");
-	public static final Attribute<Boolean> showSpatialIndex = newAttribute(
-			Boolean.class,
-			"showSpatialIndex");
-	public static final Attribute<String> mapboxAccessToken = newAttribute(
-			String.class,
-			"mapboxAccessToken");
-	public static final Attribute<SearchMode> searchMode = newAttribute(
-			SearchMode.class,
-			"searchMode");
+	public static final Attribute<QArrayList<Path>> recentProjectFiles =
+		newAttribute(QArrayList.class, "recentProjectFiles");
+	public static final Attribute<QHashMap<Path, Path>> swapFiles = newAttribute(QHashMap.class, "swapFiles");
+	public static final Attribute<File> currentProjectFileChooserDirectory =
+		newAttribute(File.class, "currentProjectFileChooserDirectory");
+	public static final Attribute<Integer> desiredNumSamples = newAttribute(Integer.class, "desiredNumSamples");
+	public static final Attribute<Integer> mouseSensitivity = newAttribute(Integer.class, "mouseSensitivity");
+	public static final Attribute<Integer> mouseWheelSensitivity = newAttribute(Integer.class, "mouseWheelSensitivity");
+	public static final Attribute<Boolean> doNotShowNewProjectInfoDialog =
+		newAttribute(Boolean.class, "doNotShowNewProjectInfoDialog");
+	public static final Attribute<Boolean> showDataInSurveyTable = newAttribute(Boolean.class, "showDataInSurveyTable");
+	public static final Attribute<Boolean> showStationLabels = newAttribute(Boolean.class, "showStationLabels");
+	public static final Attribute<Boolean> showSpatialIndex = newAttribute(Boolean.class, "showSpatialIndex");
+	public static final Attribute<String> mapboxAccessToken = newAttribute(String.class, "mapboxAccessToken");
+	public static final Attribute<SearchMode> searchMode = newAttribute(SearchMode.class, "searchMode");
 
 	public static final RootModel instance = new RootModel();
 
 	public static final Bimapper<QObject<RootModel>, Object> defaultMapper;
 
 	static {
-		defaultMapper = new QObjectMapBimapper<>(instance)
+		defaultMapper =
+			new QObjectMapBimapper<>(instance)
 				.map(swapFiles, QMapBimapper.newInstance(PathStringBimapper.instance, PathStringBimapper.instance))
 				.map(currentProjectFile, PathStringBimapper.instance)
 				.map(recentProjectFiles, QArrayListBimapper.newInstance(PathStringBimapper.instance))
 				.map(currentProjectFileChooserDirectory, FileStringBimapper.instance)
-				.map(currentCompassImportDirectory, FileStringBimapper.instance)
-				.map(currentWallsImportDirectory, FileStringBimapper.instance)
 				.exclude(currentProjectFile);
 	}
 
@@ -125,22 +95,6 @@ public final class RootModel extends QSpec<RootModel> {
 		return directory;
 	}
 
-	public static File getCurrentCompassImportDirectory(QObject<RootModel> model) {
-		File directory = model.get(currentCompassImportDirectory);
-		if (directory == null) {
-			return getCurrentProjectFileChooserDirectory(model);
-		}
-		return directory;
-	}
-
-	public static File getCurrentWallsImportDirectory(QObject<RootModel> model) {
-		File directory = model.get(currentWallsImportDirectory);
-		if (directory == null) {
-			return getCurrentProjectFileChooserDirectory(model);
-		}
-		return directory;
-	}
-	
 	public static void setDefaults(QObject<RootModel> rootModel) {
 		if (rootModel.get(RootModel.desiredNumSamples) == null) {
 			rootModel.set(RootModel.desiredNumSamples, 2);

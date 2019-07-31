@@ -24,5 +24,10 @@ module.exports = {
       type: 'String',
       description: 'the height of the lead',
     },
+    done: {
+      type: 'Boolean',
+      description: 'whether the lead is done or not',
+      defaultValue: 'false',
+    }
   },
 }

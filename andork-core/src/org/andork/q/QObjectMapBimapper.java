@@ -23,6 +23,7 @@ package org.andork.q;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -63,24 +64,37 @@ public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<
 			}
 			if (valueClass == Boolean.class) {
 				attrBimappers[i] = BooleanBimapper.instance;
-			} else if (valueClass == Integer.class) {
+			}
+			else if (valueClass == Integer.class) {
 				attrBimappers[i] = IntegerBimapper.instance;
-			} else if (valueClass == Long.class) {
+			}
+			else if (valueClass == Long.class) {
 				attrBimappers[i] = LongBimapper.instance;
-			} else if (valueClass == Float.class) {
+			}
+			else if (valueClass == Float.class) {
 				attrBimappers[i] = FloatBimapper.instance;
-			} else if (valueClass == float[].class) {
+			}
+			else if (valueClass == float[].class) {
 				attrBimappers[i] = FloatArray2ListBimapper.instance;
-			} else if (valueClass.isEnum()) {
+			}
+			else if (valueClass.isEnum()) {
 				attrBimappers[i] = EnumBimapper.newInstance((Class<Enum>) valueClass);
-			} else if (valueClass == Double.class) {
+			}
+			else if (valueClass == Double.class) {
 				attrBimappers[i] = DoubleBimapper.instance;
-			} else if (valueClass == BigInteger.class) {
+			}
+			else if (valueClass == BigInteger.class) {
 				attrBimappers[i] = BigIntegerBimapper.instance;
-			} else if (valueClass == BigDecimal.class) {
+			}
+			else if (valueClass == BigDecimal.class) {
 				attrBimappers[i] = BigDecimalBimapper.instance;
 			}
 		}
+	}
+
+	public QObjectMapBimapper(QObjectMapBimapper<S> other) {
+		this(other.spec);
+		attrBimappers = Arrays.copyOf(other.attrBimappers, other.attrBimappers.length);
 	}
 
 	public QObjectMapBimapper(S spec, Bimapper... attrBimappers) {
@@ -111,7 +125,9 @@ public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<
 			Attribute<?> attribute = spec.attributeAt(i);
 			if (in.has(attribute) && attrBimappers[i] != EXCLUDED) {
 				Object value = in.get(attribute);
-				result.put(attribute.getName(),
+				result
+					.put(
+						attribute.getName(),
 						value == null || attrBimappers[i] == null ? value : attrBimappers[i].map(value));
 
 			}
@@ -131,9 +147,12 @@ public class QObjectMapBimapper<S extends QSpec<S>> implements Bimapper<QObject<
 			if (m.containsKey(attribute.getName()) && attrBimappers[i] != EXCLUDED) {
 				Object value = m.get(attribute.getName());
 				try {
-					result.set(attribute,
+					result
+						.set(
+							attribute,
 							value == null || attrBimappers[i] == null ? value : attrBimappers[i].unmap(value));
-				} catch (Throwable t) {
+				}
+				catch (Throwable t) {
 					LOGGER.log(Level.WARNING, "Failed to set attribute: " + attribute, t);
 				}
 			}

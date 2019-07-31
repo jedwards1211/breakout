@@ -68,7 +68,6 @@ import org.andork.task.Task;
 import org.andork.util.Comparables;
 import org.andork.util.StringUtils;
 import org.breakout.model.ProjectModel;
-import org.breakout.model.RootModel;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 import org.breakout.model.SurveyTableModel;
@@ -88,7 +87,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		setIndeterminate(false);
 		setTotal(3);
 	}
-	
+
 	private static final Pattern lettersNumbersPattern = Pattern.compile("^([\\p{L}]+)(\\d+)$");
 	private final Localizer localizer;
 
@@ -96,7 +95,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	private boolean linkDirectories = false;
 	private String cave = null;
 	private File searchDirectory = null;
-		
+
 	class Info {
 		private final Set<String> caveSet = new HashSet<>();
 		private int i;
@@ -111,24 +110,27 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		public List<Path> linkedFiles = new ArrayList<>();
 		public List<Path> unlinkedFiles = new ArrayList<>();
 		public Set<Path> unlinkedFilesSet = new HashSet<>();
-		
+
 		public void addCave(String cave) {
-			if (cave != null) caveSet.add(cave);
+			if (cave != null)
+				caveSet.add(cave);
 		}
-		
+
 		public void addStationRow(StationKey key, SurveyRow row) {
 			SurveyRow existing = stationRows.get(key);
 			if (existing != null) {
-				if (existing.getTrip() == row.getTrip()) return;
-				if (Comparables.compareNullsLast(
-					ProjectParser.parseDate(row.getTrip().getDate()),
-					ProjectParser.parseDate(existing.getTrip().getDate()),
-					Date::compareTo) >= 0) {
+				if (existing.getTrip() == row.getTrip())
+					return;
+				if (Comparables
+					.compareNullsLast(
+						ProjectParser.parseDate(row.getTrip().getDate()),
+						ProjectParser.parseDate(existing.getTrip().getDate()),
+						Date::compareTo) >= 0) {
 					return;
 				}
 			}
 			stationRows.put(key, row);
-			
+
 			Matcher m = lettersNumbersPattern.matcher(key.station);
 			if (m.find()) {
 				stationRowsByDesignation.put(new StationKey(key.cave, m.group(1)), row);
@@ -157,7 +159,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			}
 		}
 	}
-	
+
 	private Info getInfo() throws Exception {
 		Info info = new Info();
 
@@ -176,8 +178,10 @@ public class LinkSurveyNotesTask extends Task<Void> {
 				info.total = model.getRowCount();
 			}
 		};
-		
-		OnEDT.onEDT(() -> { model.addTableModelListener(changeListener); });
+
+		OnEDT.onEDT(() -> {
+			model.addTableModelListener(changeListener);
+		});
 
 		try {
 			callSelfReportingSubtask(this, 1, mainView.getMainPanel(), task -> {
@@ -188,65 +192,77 @@ public class LinkSurveyNotesTask extends Task<Void> {
 					OnEDT.onEDT(() -> {
 						while (info.i < end) {
 							SurveyRow row = model.getRow(info.i++);
-							if (isShot(row)) info.allShots.add(row);
+							if (isShot(row))
+								info.allShots.add(row);
 							if (isNullOrEmpty(row.getSurveyNotes())) {
 								info.addCave(row.getFromCave());
 								info.addCave(row.getToCave());
 							}
 						}
 					});
-					if (task.isCanceled()) return;
+					if (task.isCanceled())
+						return;
 					task.setCompleted(end);
 				}
 			});
-			
-			if (isCanceled()) return info;
-			
+
+			if (isCanceled())
+				return info;
+
 			info.caves = new ArrayList<>(info.caveSet);
 			Collections.sort(info.caves);
 
 			return info;
 		} finally {
-			OnEDT.onEDT(() -> { model.removeTableModelListener(changeListener); });
+			OnEDT.onEDT(() -> {
+				model.removeTableModelListener(changeListener);
+			});
 		}
 	}
-	
+
 	private boolean isShot(SurveyRow row) {
-		return !isNullOrEmpty(row.getFromStation()) &&
-			!isNullOrEmpty(row.getToStation()) &&
-			!isNullOrEmpty(row.getDistance());
+		return !isNullOrEmpty(row.getFromStation())
+			&& !isNullOrEmpty(row.getToStation())
+			&& !isNullOrEmpty(row.getDistance());
 	}
-	
+
 	@SuppressWarnings("serial")
 	private void selectOptions(Info info) {
 		searchDirectory = null;
-		
+
 		WizardPanel wizardPanel = new WizardPanel(mainView.getI18n());
 		wizardPanel.setUseNextButton(false);
-		
+
 		GridBagWizard w;
-			
+
 		List<String> caves = info.caves;
 		if (caves.size() > 1) {
 			w = GridBagWizard.quickPanel();
 			JLabel caveLabel = new JLabel();
-	localizer.setText(caveLabel, "optionsDialog.caveLabel.text");
-			
+			localizer.setText(caveLabel, "optionsDialog.caveLabel.text");
+
 			JList<String> caveList = new JList<>(new ListComboBoxModel<>(caves));
 			caveList.setCellRenderer(new DefaultListCellRenderer() {
 				@Override
-				public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-						boolean isSelected, boolean cellHasFocus) {
+				public Component getListCellRendererComponent(
+					JList<?> list,
+					Object value,
+					int index,
+					boolean isSelected,
+					boolean cellHasFocus) {
 					return super.getListCellRendererComponent(
 						list,
 						StringUtils.isNullOrEmpty(value) ? "(no cave)" : value,
-						index, isSelected, cellHasFocus);
+						index,
+						isSelected,
+						cellHasFocus);
 				}
 			});
 			ListSelectionModel selModel = caveList.getSelectionModel();
 			selModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			selModel.addListSelectionListener(e -> {
-				if (e.getValueIsAdjusting()) return;
+				if (e.getValueIsAdjusting())
+					return;
 				cave = caveList.getSelectedValue();
 			});
 			caveList.addMouseListener(new MouseAdapter() {
@@ -260,10 +276,11 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			w.put(caveLabel).xy(0, 0).fillx(1);
 			w.put(caveList).below(caveLabel).fillboth(1, 1).insets(10, 0, 0, 0);
 			wizardPanel.addCard(w.getTarget());
-		} else {
+		}
+		else {
 			cave = null;
 		}
-		
+
 		Box namingSchemeBox = Box.createVerticalBox();
 		ButtonGroup namingSchemeGroup = new ButtonGroup();
 		JLabel namingSchemeLabel = new JLabel();
@@ -273,12 +290,12 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		localizer.setText(lechSchemeButton, "lechSchemeButton.text");
 		namingSchemeBox.add(lechSchemeButton);
 		namingSchemeGroup.add(lechSchemeButton);
-		
+
 		lechSchemeButton.setSelected(false);
 		lechSchemeButton.addActionListener(e -> {
 			wizardPanel.next();
 		});
-		
+
 		wizardPanel.addCard(GridBagWizard.wrap(namingSchemeBox));
 
 		Box linkDirectoriesBox = Box.createVerticalBox();
@@ -330,118 +347,136 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		JLabel fileChooserLabel = new JLabel();
 		localizer.setText(fileChooserLabel, "optionsDialog.fileChooserLabel.text");
 
-		JFileChooser fileChooser = new JFileChooser(mainView.getRootModel().get(RootModel.currentWallsImportDirectory));
+		JFileChooser fileChooser =
+			new JFileChooser(mainView.getFileChooserDirectory(ProjectModel.linkSurveyNotesDirectory));
 		fileChooser.setControlButtonsAreShown(false);
 		fileChooser.setMultiSelectionEnabled(false);
 		DirectoryFileFilter.install(fileChooser);
-		
+
 		w = GridBagWizard.quickPanel();
 		w.put(fileChooserLabel).xy(0, 0).fillx(1).insets(0, 20, 0, 0);
 		w.put(fileChooser).below(fileChooserLabel).height(2).fillboth(1, 1).sameInsets(fileChooserLabel);
-		
+
 		wizardPanel.addCard(w.getTarget());
-		
+
 		int choice = wizardPanel.showDialog(mainView.getMainPanel(), localizer.getString("optionsDialog.title"));
-		if (choice != JOptionPane.OK_OPTION) return;
-		
+		if (choice != JOptionPane.OK_OPTION)
+			return;
+
 		searchDirectory = DirectoryFileFilter.getSelectedDirectory(fileChooser);
+
+		mainView.getProjectModel().set(ProjectModel.linkSurveyNotesDirectory, searchDirectory);
 	}
-	
+
 	private List<SurveyRow> findSurveyNotes(Path directory, String caveName, Info info) throws Exception {
 		return callSelfReportingSubtask(this, 1, mainView.getMainPanel(), subtask -> {
 			subtask.setStatus(localizer.getString("status.scanning"));
 			subtask.setIndeterminate(true);
-			
+
 			final Matcher leadsMatcher = Pattern.compile("\\blead", Pattern.CASE_INSENSITIVE).matcher("");
-			
-			Files.walkFileTree(directory, Collections.singleton(FileVisitOption.FOLLOW_LINKS), 10, new FileVisitor<Path>() {
-				Stack<Boolean> hasChildDirs = new Stack<>();
-				Stack<Boolean> hasFiles = new Stack<>();
 
-				@Override
-				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-					if (!hasChildDirs.isEmpty() && !hasChildDirs.peek()) {
-						hasChildDirs.pop();
-						hasChildDirs.push(true);
-					}
-					hasChildDirs.push(false);
-					hasFiles.push(false);
-					return FileVisitResult.CONTINUE;
-				}
-				
-				public boolean fileMatches(Path path) {
-					String fileName = path.getFileName().toString();
-					if (fileName.startsWith(".") || leadsMatcher.reset(fileName).find()) {
-						return false;
-					}
-					return extensionMatcher.reset(fileName).find();
-				}
+			Files
+				.walkFileTree(
+					directory,
+					Collections.singleton(FileVisitOption.FOLLOW_LINKS),
+					10,
+					new FileVisitor<Path>() {
+						Stack<Boolean> hasChildDirs = new Stack<>();
+						Stack<Boolean> hasFiles = new Stack<>();
 
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					if (fileMatches(file)) {
-						if (!hasFiles.isEmpty() && !hasFiles.peek()) {
-							hasFiles.pop();
-							hasFiles.push(true);
-						}
-						addPath(file);
-					}
-					return FileVisitResult.CONTINUE;
-				}
-				
-				public void addPath(Path file) {
-					subtask.setStatus(localizer.getFormattedString("status.scanningFile", file.toString()));
-					String fileName = file.getFileName().toString();
-					if (!caseSensitive) fileName = fileName.toUpperCase();
-					Set<String> stations;
-					try {
-						 stations = LechuguillaStationSets.parse(fileName.replaceAll("^[^A-Z]+|\\.[^.]*|\\b\\d{2}(\\d{2})?([-/_])\\d\\d?\\2\\d\\d?\\b$", ""));
-					} catch (Exception e) {
-						return;
-					}
-					
-					Map<SurveyTrip, Integer> trips = new HashMap<>();
-					
-					stations.forEach(station -> {
-						StationKey key = new StationKey(caveName, station);
-						SurveyRow existing = info.stationRows.get(key);
-						if (existing != null && existing.getTrip() != null) {
-							increment(trips, existing.getTrip());
-							return;
-						}
-						Collection<SurveyRow> rows = info.stationRowsByDesignation.get(key);
-						if (rows != null) {
-							for (SurveyRow row : rows) {
-								if (row != null && row.getTrip() != null) {
-									increment(trips, row.getTrip());
-								}
+						@Override
+						public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+							throws IOException {
+							if (!hasChildDirs.isEmpty() && !hasChildDirs.peek()) {
+								hasChildDirs.pop();
+								hasChildDirs.push(true);
 							}
+							hasChildDirs.push(false);
+							hasFiles.push(false);
+							return FileVisitResult.CONTINUE;
+						}
+
+						public boolean fileMatches(Path path) {
+							String fileName = path.getFileName().toString();
+							if (fileName.startsWith(".") || leadsMatcher.reset(fileName).find()) {
+								return false;
+							}
+							return extensionMatcher.reset(fileName).find();
+						}
+
+						@Override
+						public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+							if (fileMatches(file)) {
+								if (!hasFiles.isEmpty() && !hasFiles.peek()) {
+									hasFiles.pop();
+									hasFiles.push(true);
+								}
+								addPath(file);
+							}
+							return FileVisitResult.CONTINUE;
+						}
+
+						public void addPath(Path file) {
+							subtask.setStatus(localizer.getFormattedString("status.scanningFile", file.toString()));
+							String fileName = file.getFileName().toString();
+							if (!caseSensitive)
+								fileName = fileName.toUpperCase();
+							Set<String> stations;
+							try {
+								stations =
+									LechuguillaStationSets
+										.parse(
+											fileName
+												.replaceAll(
+													"^[^A-Z]+|\\.[^.]*|\\b\\d{2}(\\d{2})?([-/_])\\d\\d?\\2\\d\\d?\\b$",
+													""));
+							}
+							catch (Exception e) {
+								return;
+							}
+
+							Map<SurveyTrip, Integer> trips = new HashMap<>();
+
+							stations.forEach(station -> {
+								StationKey key = new StationKey(caveName, station);
+								SurveyRow existing = info.stationRows.get(key);
+								if (existing != null && existing.getTrip() != null) {
+									increment(trips, existing.getTrip());
+									return;
+								}
+								Collection<SurveyRow> rows = info.stationRowsByDesignation.get(key);
+								if (rows != null) {
+									for (SurveyRow row : rows) {
+										if (row != null && row.getTrip() != null) {
+											increment(trips, row.getTrip());
+										}
+									}
+								}
+							});
+
+							SurveyTrip bestMatch = getHighestCountKey(trips);
+							if (bestMatch != null) {
+								info.addPotentialTripLink(bestMatch, file, trips.get(bestMatch));
+							}
+							info.unlinkedFilesSet.add(file);
+						}
+
+						@Override
+						public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+							return FileVisitResult.CONTINUE;
+						}
+
+						@Override
+						public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+							boolean hadChildDirs = hasChildDirs.pop();
+							boolean hadFiles = hasFiles.pop();
+							if (linkDirectories && !hadChildDirs && hadFiles) {
+								addPath(dir);
+							}
+							return FileVisitResult.CONTINUE;
 						}
 					});
-					
-					SurveyTrip bestMatch = getHighestCountKey(trips);
-					if (bestMatch != null) {
-						info.addPotentialTripLink(bestMatch, file, trips.get(bestMatch));
-					}
-					info.unlinkedFilesSet.add(file);
-				}
 
-				@Override
-				public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-					return FileVisitResult.CONTINUE;
-				}
-
-				@Override
-				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					boolean hadChildDirs = hasChildDirs.pop();
-					boolean hadFiles = hasFiles.pop();
-					if (linkDirectories && !hadChildDirs && hadFiles) {
-						addPath(dir);
-					}
-					return FileVisitResult.CONTINUE;
-				}
-			});
-			
 			IdentityHashMap<SurveyTrip, SurveyTrip> newTrips = new IdentityHashMap<>();
 
 			info.potentialTripLinks.forEach((trip, paths) -> {
@@ -452,15 +487,16 @@ public class LinkSurveyNotesTask extends Task<Void> {
 					info.unlinkedFilesSet.remove(notesFile);
 				}
 			});
-			
+
 			info.unlinkedFiles.addAll(info.unlinkedFilesSet);
 			Collections.sort(info.linkedFiles);
 			Collections.sort(info.unlinkedFiles);
-			
+
 			List<SurveyRow> result = new ArrayList<>();
-			
+
 			info.allShots.forEach(row -> {
-				if (row.getTrip() == null) return;
+				if (row.getTrip() == null)
+					return;
 				SurveyTrip newTrip = newTrips.get(row.getTrip());
 				if (newTrip != null) {
 					result.add(row.setTrip(newTrip));
@@ -470,7 +506,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			return result;
 		});
 	}
-	
+
 	private static <K> K getHighestCountKey(Map<K, Integer> m) {
 		return getHighestCountKey(m, k -> true);
 	}
@@ -478,9 +514,10 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	private static <K> K getHighestCountKey(Map<K, Integer> m, Predicate<K> p) {
 		K result = null;
 		int bestCount = -1;
-		
+
 		for (Map.Entry<K, Integer> e : m.entrySet()) {
-			if (!p.test(e.getKey())) continue;
+			if (!p.test(e.getKey()))
+				continue;
 			if (result == null || e.getValue() > bestCount) {
 				result = e.getKey();
 				if (e.getValue() == null) {
@@ -491,13 +528,14 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		}
 		return result;
 	}
-	
+
 	private static <K> void increment(Map<K, Integer> m, K key) {
 		Integer value = m.get(key);
-		if (value == null) value = 0;
+		if (value == null)
+			value = 0;
 		m.put(key, value + 1);
 	}
-	
+
 	private List<SurveyRow> confirmResults(List<SurveyRow> rows, Info info) {
 		return FromEDT.fromEDT(() -> {
 			JTabbedPane tabs = new JTabbedPane();
@@ -511,57 +549,61 @@ public class LinkSurveyNotesTask extends Task<Void> {
 				}
 			};
 
-
 			SurveyTableModel dataModel = new SurveyTableModel(rows);
 			SurveyTable dataTable = new SurveyTable();
 			dataTable.setAspect(SurveyTable.Aspect.LINK_SURVEY_NOTES);
 			dataTable.setModel(dataModel);
-			
+
 			JScrollPane dataTableScroller = new JScrollPane(dataTable);
-			
+
 			tabs.addTab("Data", dataTableScroller);
 			tabs.addTab("Linked Files", createFileTable(info.linkedFiles));
 			tabs.addTab("Unlinked Files", createFileTable(info.unlinkedFiles));
 
 			tabs.setPreferredSize(new Dimension(800, 600));
-			
+
 			localizer.register(LinkSurveyNotesTask.this, i18nUpdater);
-			
+
 			final String accept = localizer.getString("confirmDialog.acceptButton.text");
 			final String cancel = localizer.getString("confirmDialog.cancelButton.text");
-			int choice = new JOptionPaneBuilder()
-				.message(tabs)
-				.defaultOption()
-				.options(accept, cancel)
-				.initialValue(accept)
-				.showDialog(mainView.getMainPanel(), localizer.getString("confirmDialog.title"));
-		
-			if (choice != 0) return null;
-			
+			int choice =
+				new JOptionPaneBuilder()
+					.message(tabs)
+					.defaultOption()
+					.options(accept, cancel)
+					.initialValue(accept)
+					.showDialog(mainView.getMainPanel(), localizer.getString("confirmDialog.title"));
+
+			if (choice != 0)
+				return null;
+
 			ListSelectionModel selModel = dataTable.getModelSelectionModel();
-			if (dataTable.getSelectedRowCount() == 0) return rows;
+			if (dataTable.getSelectedRowCount() == 0)
+				return rows;
 			List<SurveyRow> result = new ArrayList<>(rows);
 			Iterator<SurveyRow> iter = result.iterator();
 			for (int i = 0; iter.hasNext(); iter.next(), i++) {
-				if (!selModel.isSelectedIndex(i)) iter.remove();
+				if (!selModel.isSelectedIndex(i))
+					iter.remove();
 			}
 			return result;
 		});
 	}
-	
+
 	private Component createFileTable(List<Path> files) {
-		List<Column<Path, Path>> columns = Arrays.asList(
-			new ColumnBuilder<Path, Path>()
-				.columnClass(Path.class)
-				.columnName(localizer.getString("fileTable.columns.directory.name"))
-				.getter(p -> p.getParent())
-				.create(),
-			new ColumnBuilder<Path, Path>()
-				.columnClass(Path.class)
-				.columnName(localizer.getString("fileTable.columns.file.name"))
-				.getter(p -> p.getFileName())
-				.create()
-		);
+		List<Column<Path, Path>> columns =
+			Arrays
+				.asList(
+					new ColumnBuilder<Path, Path>()
+						.columnClass(Path.class)
+						.columnName(localizer.getString("fileTable.columns.directory.name"))
+						.getter(p -> p.getParent())
+						.create(),
+					new ColumnBuilder<Path, Path>()
+						.columnClass(Path.class)
+						.columnName(localizer.getString("fileTable.columns.file.name"))
+						.getter(p -> p.getFileName())
+						.create());
 		TableModel tableModel = new ListTableModel<>(columns, files);
 		JTable table = new JTable();
 		table.setAutoCreateColumnsFromModel(true);
@@ -569,12 +611,12 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		table.setModel(tableModel);
 		return new JScrollPane(table);
 	}
-	
+
 	private void mergeIntoProject(List<SurveyRow> rows) throws Exception {
 		callSelfReportingSubtask(this, 1, mainView.getMainPanel(), (Task<?> subtask) -> {
 			subtask.setStatus(localizer.getString("status.merging"));
 			subtask.setTotal(rows.size());
-			
+
 			while (subtask.getCompleted() < rows.size()) {
 				int end = (int) Math.min(rows.size(), subtask.getCompleted() + 1000);
 				OnEDT.onEDT(() -> {
@@ -582,19 +624,19 @@ public class LinkSurveyNotesTask extends Task<Void> {
 					for (int i = (int) subtask.getCompleted(); i < end; i++) {
 						SurveyRow row = rows.get(i);
 						Integer index = mainView.shotKeyToModelIndex.get(new ShotKey(row));
-						if (index == null) return;
-						model.setRow(index,
-							model.getRow(index)
-								.setOverrideSurveyNotes(row.getSurveyNotes()));
+						if (index == null)
+							return;
+						model.setRow(index, model.getRow(index).setOverrideSurveyNotes(row.getSurveyNotes()));
 					}
 
 				});
-				if (subtask.isCanceled()) return;
+				if (subtask.isCanceled())
+					return;
 				subtask.setCompleted(end);
 			}
 		});
 	}
-	
+
 	private void addSearchDirectoryToProject(File directory) {
 		OnEDT.onEDT(() -> {
 			QArrayList<File> surveyScanPaths = mainView.getProjectModel().get(ProjectModel.surveyScanPaths);
@@ -608,46 +650,51 @@ public class LinkSurveyNotesTask extends Task<Void> {
 	}
 
 	private final Matcher extensionMatcher =
-		Pattern.compile("\\.(bmp|jpe?g|png|pdf|e?ps|xps|gif|tiff?|[we]mf)$", Pattern.CASE_INSENSITIVE)
-		.matcher("");
+		Pattern.compile("\\.(bmp|jpe?g|png|pdf|e?ps|xps|gif|tiff?|[we]mf)$", Pattern.CASE_INSENSITIVE).matcher("");
 
 	@Override
 	protected Void work() throws Exception {
 		try {
 			Info info = getInfo();
-			if (isCanceled()) return null;
+			if (isCanceled())
+				return null;
 
 			OnEDT.onEDT(() -> selectOptions(info));
-			if (searchDirectory == null) return null;
-			
+			if (searchDirectory == null)
+				return null;
+
 			info.buildRowIndex();
-			
+
 			List<SurveyRow> rows = findSurveyNotes(searchDirectory.toPath(), cave, info);
-			if (isCanceled()) return null;
+			if (isCanceled())
+				return null;
 			if (rows.isEmpty()) {
 				OnEDT.onEDT(() -> {
-					JOptionPane.showMessageDialog(
-						mainView.getMainPanel(),
-						localizer.getString("message.nothingFound"));
+					JOptionPane.showMessageDialog(mainView.getMainPanel(), localizer.getString("message.nothingFound"));
 				});
 				return null;
 			}
-			
+
 			rows = confirmResults(rows, info);
-			if (rows == null) return null;
-						
+			if (rows == null)
+				return null;
+
 			addSearchDirectoryToProject(searchDirectory);
-			
+
 			mergeIntoProject(rows);
 			mainView.rebuild3dModel.run();
-			
+
 			return null;
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to link survey notes", ex);
 			OnEDT.onEDT(() -> {
-				JOptionPane.showMessageDialog(this.mainView.getMainPanel(),
+				JOptionPane
+					.showMessageDialog(
+						this.mainView.getMainPanel(),
 						ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
-						"Failed to link survey notes", JOptionPane.ERROR_MESSAGE);
+						"Failed to link survey notes",
+						JOptionPane.ERROR_MESSAGE);
 			});
 		}
 

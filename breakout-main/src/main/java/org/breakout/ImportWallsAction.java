@@ -22,7 +22,6 @@
 package org.breakout;
 
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 
@@ -34,7 +33,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.andork.awt.I18n.Localizer;
 import org.andork.collect.Iterables;
 import org.andork.swing.OnEDT;
-import org.breakout.model.RootModel;
+import org.breakout.model.ProjectModel;
 
 public class ImportWallsAction extends AbstractAction {
 	private static final long serialVersionUID = 8950696926766549483L;
@@ -56,7 +55,8 @@ public class ImportWallsAction extends AbstractAction {
 				fileChooser = new JFileChooser();
 				fileChooser.setMultiSelectionEnabled(true);
 				fileChooser.setAcceptAllFileFilterUsed(true);
-				FileFilter datFilter = new FileNameExtensionFilter("Walls Files (*.srv, *.wpj, *.lst)", "srv", "wpj", "lst");
+				FileFilter datFilter =
+					new FileNameExtensionFilter("Walls Files (*.srv, *.wpj, *.lst)", "srv", "wpj", "lst");
 				fileChooser.addChoosableFileFilter(datFilter);
 				fileChooser.setFileFilter(datFilter);
 			}
@@ -65,8 +65,7 @@ public class ImportWallsAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		File directory = RootModel.getCurrentWallsImportDirectory(mainView.getRootModel());
-		fileChooser.setCurrentDirectory(directory);
+		fileChooser.setCurrentDirectory(mainView.getFileChooserDirectory(ProjectModel.wallsImportDirectory));
 
 		int choice = fileChooser.showOpenDialog(mainView.getMainPanel());
 
@@ -74,12 +73,13 @@ public class ImportWallsAction extends AbstractAction {
 			return;
 		}
 
-		mainView.getRootModel().set(
-				RootModel.currentWallsImportDirectory, fileChooser.getCurrentDirectory());
+		mainView.getProjectModel().set(ProjectModel.wallsImportDirectory, fileChooser.getCurrentDirectory());
 
-		mainView.ioTaskService().<Void> submit(
-				new ImportWallsTask(mainView,
-						Iterables.map(Arrays.asList(fileChooser.getSelectedFiles()),
-								file -> Paths.get(file.toString()))));
+		mainView
+			.ioTaskService()
+			.<Void>submit(
+				new ImportWallsTask(
+					mainView,
+					Iterables.map(Arrays.asList(fileChooser.getSelectedFiles()), file -> Paths.get(file.toString()))));
 	}
 }

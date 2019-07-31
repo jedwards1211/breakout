@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyLead.record.js} by java-record-generator on 2019-4-1 12:03:57.
+ * Generated from {@code SurveyLead.record.js} by java-record-generator on 7/28/2019, 3:49:32 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
@@ -127,6 +127,13 @@ public final class MutableSurveyLead {
 		return get(SurveyLead.height);
 	}
 	
+	/**
+	 * @return whether the lead is done or not.
+	 */
+	public Boolean isDone() {
+		return get(SurveyLead.done, false);
+	}
+	
 	
 	/**
 	 * Sets name of cave the lead is in.
@@ -183,6 +190,17 @@ public final class MutableSurveyLead {
 		return set(SurveyLead.height, height);
 	}
 	
+	/**
+	 * Sets whether the lead is done or not.
+	 *
+	 * @param done - the new value for whether the lead is done or not
+	 *
+	 * @return this {@code SurveyLead} if {@code done} is unchanged, or a copy with the new {@code done}.
+	 */
+	public MutableSurveyLead setDone(Boolean done) {
+		return set(SurveyLead.done, done);
+	}
+	
 	
 	/**
 	 * Updates name of cave the lead is in.
@@ -237,6 +255,17 @@ public final class MutableSurveyLead {
 	 */
 	public MutableSurveyLead updateHeight(Function<String, String> updater) {
 		return update(SurveyLead.height, updater);
+	}
+	
+	/**
+	 * Updates whether the lead is done or not.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code done} and returns the new value for {@code done}.
+	 *
+	 * @return this {@code MutableSurveyLead} if {@code done} is unchanged, or a copy with the updated {@code done}.
+	 */
+	public MutableSurveyLead updateDone(Function<Boolean, Boolean> updater) {
+		return update(SurveyLead.done, updater);
 	}
 	
 	

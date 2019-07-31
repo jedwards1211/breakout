@@ -55,8 +55,9 @@ public class OpenProjectAction extends AbstractAction {
 
 				fileChooser = new JFileChooser();
 				fileChooser.setAcceptAllFileFilterUsed(false);
-				fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Metacave File (*.mcj, *.json)",
-						"mcj", "json"));
+				fileChooser
+					.addChoosableFileFilter(
+						new FileNameExtensionFilter("Metacave File (*.mcj, *.json)", "mcj", "json"));
 			}
 		};
 	}
@@ -71,9 +72,6 @@ public class OpenProjectAction extends AbstractAction {
 		if (choice != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
-
-		mainView.getRootModel()
-				.set(RootModel.currentProjectFileChooserDirectory, fileChooser.getCurrentDirectory());
 
 		File file = fileChooser.getSelectedFile();
 		mainView.openProject(file.toPath());

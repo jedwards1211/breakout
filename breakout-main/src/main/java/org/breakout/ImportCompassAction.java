@@ -22,7 +22,6 @@
 package org.breakout;
 
 import java.awt.event.ActionEvent;
-import java.io.File;
 
 import javax.swing.AbstractAction;
 import javax.swing.JFileChooser;
@@ -32,7 +31,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.andork.awt.I18n.Localizer;
 import org.andork.collect.ArrayLists;
 import org.andork.swing.OnEDT;
-import org.breakout.model.RootModel;
+import org.breakout.model.ProjectModel;
 
 public class ImportCompassAction extends AbstractAction {
 	private static final long serialVersionUID = 8950696926766549483L;
@@ -54,8 +53,8 @@ public class ImportCompassAction extends AbstractAction {
 				fileChooser = new JFileChooser();
 				fileChooser.setMultiSelectionEnabled(true);
 				fileChooser.setAcceptAllFileFilterUsed(true);
-				FileFilter datFilter = new FileNameExtensionFilter("Compass Files (*.mak, *.dat, *.plt)", "mak", "dat",
-						"plt");
+				FileFilter datFilter =
+					new FileNameExtensionFilter("Compass Files (*.mak, *.dat, *.plt)", "mak", "dat", "plt");
 				fileChooser.addChoosableFileFilter(datFilter);
 				fileChooser.setFileFilter(datFilter);
 			}
@@ -64,8 +63,7 @@ public class ImportCompassAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		File directory = RootModel.getCurrentCompassImportDirectory(mainView.getRootModel());
-		fileChooser.setCurrentDirectory(directory);
+		fileChooser.setCurrentDirectory(mainView.getFileChooserDirectory(ProjectModel.compassImportDirectory));
 
 		int choice = fileChooser.showOpenDialog(mainView.getMainPanel());
 
@@ -73,10 +71,11 @@ public class ImportCompassAction extends AbstractAction {
 			return;
 		}
 
-		mainView.getRootModel().set(
-				RootModel.currentCompassImportDirectory, fileChooser.getCurrentDirectory());
+		mainView.getProjectModel().set(ProjectModel.compassImportDirectory, fileChooser.getCurrentDirectory());
 
-		mainView.ioTaskService().submit(new ImportCompassTask(mainView,
-				ArrayLists.map(fileChooser.getSelectedFiles(), file -> file.toPath())));
+		mainView
+			.ioTaskService()
+			.submit(
+				new ImportCompassTask(mainView, ArrayLists.map(fileChooser.getSelectedFiles(), file -> file.toPath())));
 	}
 }

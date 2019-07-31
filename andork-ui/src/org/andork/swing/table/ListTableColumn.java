@@ -3,7 +3,9 @@ package org.andork.swing.table;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.JLabel;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
@@ -42,6 +44,14 @@ public class ListTableColumn<R, V> extends TableColumn {
 
 	public ListTableColumn<R, V> renderer(TableCellRenderer renderer) {
 		setCellRenderer(renderer);
+		return this;
+	}
+
+	public ListTableColumn<R, V> alignRight() {
+		TableCellRenderer renderer = getCellRenderer();
+		if (renderer instanceof JLabel) {
+			((JLabel) renderer).setHorizontalAlignment(SwingConstants.RIGHT);
+		}
 		return this;
 	}
 

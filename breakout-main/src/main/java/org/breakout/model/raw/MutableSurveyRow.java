@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 2019-4-1 12:03:57.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 7/28/2019, 3:35:00 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 

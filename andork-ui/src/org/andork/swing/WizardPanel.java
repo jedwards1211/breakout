@@ -31,12 +31,12 @@ public class WizardPanel extends JComponent {
 		GridBagWizard w = GridBagWizard.create(this);
 		w.put(cardPanel).xy(0, 0).fillboth(1, 1).insets(10, 10, 0, 10);
 		w.put(buttons).belowLast().fillx(1).insets(10, 10, 10, 10);
-		
+
 		buttons.backButton.addActionListener(e -> {
 			back();
 		});
 	}
-	
+
 	public boolean isUseNextButton() {
 		return useNextButton;
 	}
@@ -47,74 +47,89 @@ public class WizardPanel extends JComponent {
 
 	protected void update() {
 		buttons.backButton.setVisible(cardPanel.getCurrentCardIndex() > 0);
-		buttons.nextButton.setVisible(useNextButton && cardPanel.getCurrentCardIndex() < cardPanel.getComponentCount() - 1);
+		buttons.nextButton
+			.setVisible(useNextButton && cardPanel.getCurrentCardIndex() < cardPanel.getComponentCount() - 1);
 		buttons.okButton.setVisible(cardPanel.getCurrentCardIndex() == cardPanel.getComponentCount() - 1);
 	}
-	
+
 	public void next() {
 		cardPanel.next();
 		update();
 	}
-	
+
 	public void back() {
 		cardPanel.previous();
 		update();
 	}
-	
+
 	public void addCard(Component card) {
 		cardPanel.add(card);
 		update();
 	}
-	
+
+	public static interface Customization {
+		public void customize(JDialog dialog, ActionListener okListener, ActionListener cancelListener);
+	}
+
 	/**
 	 * Shows this WizardPanel in a dialog.
+	 * 
 	 * @param parentComponent
 	 * @param title
-	 * @return JOptionPane.OK_OPTION if the user clicked okay, otherwise JOptionPane.CANCEL_OPTION.
+	 * @return JOptionPane.OK_OPTION if the user clicked okay, otherwise
+	 *         JOptionPane.CANCEL_OPTION.
 	 */
-	public int showDialog(Component parentComponent, String title) {
-        final JDialog dialog;
+	public int showDialog(Component parentComponent, String title, Customization customization) {
+		final JDialog dialog;
 
-        Window window = SwingUtilities.getWindowAncestor(parentComponent);
-        if (window instanceof Frame) {
-            dialog = new JDialog((Frame)window, title, true);
-        } else {
-            dialog = new JDialog((Dialog)window, title, true);
-        }
+		Window window = SwingUtilities.getWindowAncestor(parentComponent);
+		if (window instanceof Frame) {
+			dialog = new JDialog((Frame) window, title, true);
+		}
+		else {
+			dialog = new JDialog((Dialog) window, title, true);
+		}
 
-        dialog.setComponentOrientation(this.getComponentOrientation());
-        dialog.setResizable(false);
-        dialog.getContentPane().setLayout(new BorderLayout());
-        dialog.getContentPane().add(this, BorderLayout.CENTER);
-        dialog.pack();
-        dialog.setLocationRelativeTo(parentComponent);
-        
-        Ref<Integer> option = new Ref<>(JOptionPane.CANCEL_OPTION);
-        
-        ActionListener cancelListener = e -> {
-        	dialog.setVisible(false);
-        };
-        ActionListener okListener = e -> {
-        	option.value = JOptionPane.OK_OPTION;
-        	dialog.setVisible(false);
-        };
-        
-        dialog.addWindowListener(new WindowAdapter() {
-            @Override
+		dialog.setComponentOrientation(this.getComponentOrientation());
+		dialog.setResizable(false);
+		dialog.getContentPane().setLayout(new BorderLayout());
+		dialog.getContentPane().add(this, BorderLayout.CENTER);
+		dialog.pack();
+		dialog.setLocationRelativeTo(parentComponent);
+
+		Ref<Integer> option = new Ref<>(JOptionPane.CANCEL_OPTION);
+
+		ActionListener cancelListener = e -> {
+			dialog.setVisible(false);
+		};
+		ActionListener okListener = e -> {
+			option.value = JOptionPane.OK_OPTION;
+			dialog.setVisible(false);
+		};
+
+		dialog.addWindowListener(new WindowAdapter() {
+			@Override
 			public void windowOpened(WindowEvent e) {
-            	buttons.okButton.addActionListener(okListener);
-            	buttons.cancelButton.addActionListener(cancelListener);
+				buttons.okButton.addActionListener(okListener);
+				buttons.cancelButton.addActionListener(cancelListener);
 			}
 
-            @Override
+			@Override
 			public void windowClosing(WindowEvent we) {
-            	buttons.okButton.removeActionListener(okListener);
-            	buttons.cancelButton.removeActionListener(cancelListener);
-            }
-        });
-        
-        dialog.setVisible(true);
-        
-        return option.value;
+				buttons.okButton.removeActionListener(okListener);
+				buttons.cancelButton.removeActionListener(cancelListener);
+			}
+		});
+		if (customization != null) {
+			customization.customize(dialog, okListener, cancelListener);
+		}
+
+		dialog.setVisible(true);
+
+		return option.value;
+	}
+
+	public int showDialog(Component parentComponent, String title) {
+		return showDialog(parentComponent, title, null);
 	}
 }

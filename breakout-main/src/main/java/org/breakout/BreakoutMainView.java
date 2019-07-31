@@ -292,17 +292,15 @@ public class BreakoutMainView {
 			float x = e.getX() * devicePixelRatio;
 			float y = autoDrawable.getSurfaceHeight() - e.getY() * devicePixelRatio;
 			model3d.pickLeadStations(x, y, leadStationPickResults);
-			
-			Optional<PickResult<StationKey>> closest = leadStationPickResults.stream().min(
-				(a, b) -> Float.compare(a.lateralDistance, b.lateralDistance));
+
+			Optional<PickResult<StationKey>> closest =
+				leadStationPickResults.stream().min((a, b) -> Float.compare(a.lateralDistance, b.lateralDistance));
 			model3d.setHoveredStation(closest.map(c -> c.picked).orElse(null));
 
-			final Shot3dPickResult picked = leadStationPickResults.isEmpty()
-				? pick(model3d, e, hoverUpdaterSpc)
-				: null;
+			final Shot3dPickResult picked = leadStationPickResults.isEmpty() ? pick(model3d, e, hoverUpdaterSpc) : null;
 
 			HighlightMode highlightMode = getProjectModel().get(ProjectModel.highlightMode);
-			
+
 			final LinearAxisConversion conversion = picked == null ? null : new FromEDT<LinearAxisConversion>() {
 				@Override
 				public LinearAxisConversion run() throws Throwable {
@@ -312,16 +310,17 @@ public class BreakoutMainView {
 					ParsedShot shot = parsedProject.shots.get(picked.picked.key());
 					if (shot == null) {
 						hintLabel.setText("");
-					} else {
+					}
+					else {
 						UnitizedDouble<Length> distance = ParsedShotMeasurement.getFirstDistance(shot.measurements);
-						UnitizedDouble<Angle> frontAzimuth = ParsedShotMeasurement
-								.getFirstFrontAzimuth(shot.measurements);
-						UnitizedDouble<Angle> backAzimuth = ParsedShotMeasurement
-								.getFirstBackAzimuth(shot.measurements);
-						UnitizedDouble<Angle> frontInclination = ParsedShotMeasurement
-								.getFirstFrontInclination(shot.measurements);
-						UnitizedDouble<Angle> backInclination = ParsedShotMeasurement
-								.getFirstBackInclination(shot.measurements);
+						UnitizedDouble<Angle> frontAzimuth =
+							ParsedShotMeasurement.getFirstFrontAzimuth(shot.measurements);
+						UnitizedDouble<Angle> backAzimuth =
+							ParsedShotMeasurement.getFirstBackAzimuth(shot.measurements);
+						UnitizedDouble<Angle> frontInclination =
+							ParsedShotMeasurement.getFirstFrontInclination(shot.measurements);
+						UnitizedDouble<Angle> backInclination =
+							ParsedShotMeasurement.getFirstBackInclination(shot.measurements);
 
 						QObject<ProjectModel> projectModel = getProjectModel();
 						Unit<Length> lengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
@@ -332,77 +331,94 @@ public class BreakoutMainView {
 						format.setMinimumFractionDigits(1);
 						format.setGroupingUsed(false);
 
-						String formattedDistance = distance == null
-								? "--" : distance.in(lengthUnit).toString(format);
-						String formattedFrontAzimuth = frontAzimuth == null
-								? "--" : frontAzimuth.in(angleUnit).toString(format);
-						String formattedBackAzimuth = backAzimuth == null
-								? "--" : backAzimuth.in(angleUnit).toString(format);
-						String formattedFrontInclination = frontInclination == null
-								? "--" : frontInclination.in(angleUnit).toString(format);
-						String formattedBackInclination = backInclination == null
-								? "--" : backInclination.in(angleUnit).toString(format);
-						
+						String formattedDistance = distance == null ? "--" : distance.in(lengthUnit).toString(format);
+						String formattedFrontAzimuth =
+							frontAzimuth == null ? "--" : frontAzimuth.in(angleUnit).toString(format);
+						String formattedBackAzimuth =
+							backAzimuth == null ? "--" : backAzimuth.in(angleUnit).toString(format);
+						String formattedFrontInclination =
+							frontInclination == null ? "--" : frontInclination.in(angleUnit).toString(format);
+						String formattedBackInclination =
+							backInclination == null ? "--" : backInclination.in(angleUnit).toString(format);
+
 						CalcShot calcShot = calcProject.shots.get(picked.picked.key());
 						List<Lead> leads = null;
 						String pickedStationName = "";
 						if (calcShot != null) {
-							pickedStationName = picked.locationAlongShot < 0.5f
-								? calcShot.fromStation.name
-								: calcShot.toStation.name;
-							leads = picked.locationAlongShot < 0.5f
-								? calcShot.fromStation.leads
-								: calcShot.toStation.leads;
+							pickedStationName =
+								picked.locationAlongShot < 0.5f ? calcShot.fromStation.name : calcShot.toStation.name;
+							leads =
+								picked.locationAlongShot < 0.5f ? calcShot.fromStation.leads : calcShot.toStation.leads;
 						}
 						final String finalPickedStationName = pickedStationName;
-						
-						String formattedLeads = leads != null && !leads.isEmpty()
-							? StringUtils.join("", ArrayLists.map(leads, lead -> 
-								String.format("<br>Lead at %s: %s", finalPickedStationName, lead.description)))
-							: "";
-						
-						String hintText = String.format(
-								"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
+
+						String formattedLeads =
+							leads != null && !leads.isEmpty()
+								? StringUtils
+									.join(
+										"",
+										ArrayLists
+											.map(
+												leads,
+												lead -> String
+													.format(
+														"<br>Lead at %s: %s",
+														finalPickedStationName,
+														lead.description)))
+								: "";
+
+						String hintText =
+							String
+								.format(
+									"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
 										+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i>%s</html>",
-								key.fromStation, key.toStation,
-								formattedDistance,
-								formattedFrontAzimuth,
-								formattedBackAzimuth,
-								formattedFrontInclination,
-								formattedBackInclination,
-								trip != null ? trip.getName() : "",
-								formattedLeads);
+									key.fromStation,
+									key.toStation,
+									formattedDistance,
+									formattedFrontAzimuth,
+									formattedBackAzimuth,
+									formattedFrontInclination,
+									formattedBackInclination,
+									trip != null ? trip.getName() : "",
+									formattedLeads);
 
 						hintLabel.setText(hintText);
 						hintLabel.invalidate();
 					}
 
 					LinearAxisConversion conversion = getProjectModel().get(ProjectModel.highlightRange);
-					LinearAxisConversion conversion2 = new LinearAxisConversion(conversion.invert(0.0), 1.0,
-							conversion.invert(settingsDrawer.getGlowDistAxis().getViewSpan()), 0.0);
+					LinearAxisConversion conversion2 =
+						new LinearAxisConversion(
+							conversion.invert(0.0),
+							1.0,
+							conversion.invert(settingsDrawer.getGlowDistAxis().getViewSpan()),
+							0.0);
 					return conversion2;
 				}
 			}.result();
-			
-			runSubtask(1, glowSubtask -> model3d.updateGlow(
-					picked == null ? null : picked.picked,
-					picked == null ? null : picked.locationAlongShot,
-					new UpdateGlowOptions() {
-						@Override
-						public HighlightMode highlightMode() {
-							return highlightMode;
-						}
 
-						@Override
-						public LinearAxisConversion glowExtentConversion() {
-							return conversion;
-						}
+			runSubtask(
+				1,
+				glowSubtask -> model3d
+					.updateGlow(
+						picked == null ? null : picked.picked,
+						picked == null ? null : picked.locationAlongShot,
+						new UpdateGlowOptions() {
+							@Override
+							public HighlightMode highlightMode() {
+								return highlightMode;
+							}
 
-						@Override
-						public Task<?> task() {
-							return glowSubtask;
-						}
-					}));
+							@Override
+							public LinearAxisConversion glowExtentConversion() {
+								return conversion;
+							}
+
+							@Override
+							public Task<?> task() {
+								return glowSubtask;
+							}
+						}));
 
 			if (!isCanceled()) {
 				autoDrawable.display();
@@ -448,7 +464,8 @@ public class BreakoutMainView {
 
 			if (picked == null) {
 				surveyDrawer.table().clearSelection();
-			} else if (e.getClickCount() == 2) {
+			}
+			else if (e.getClickCount() == 2) {
 				SurveyRow row = sourceRows.get(picked.picked.key());
 				if (row != null) {
 					String link = row.getSurveyNotes();
@@ -474,7 +491,8 @@ public class BreakoutMainView {
 				if (selModel.getMinSelectionIndex() < 0) {
 					pickCenterOfOrbit(e);
 				}
-			} else {
+			}
+			else {
 				if (e.getButton() == MouseEvent.BUTTON3) {
 					pickMoveFactor(e);
 				}
@@ -502,10 +520,12 @@ public class BreakoutMainView {
 				if ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0) {
 					if (selModel.isSelectedIndex(modelRow)) {
 						selModel.removeSelectionInterval(modelRow, modelRow);
-					} else {
+					}
+					else {
 						selModel.addSelectionInterval(modelRow, modelRow);
 					}
-				} else {
+				}
+				else {
 					selModel.setSelectionInterval(modelRow, modelRow);
 				}
 
@@ -530,10 +550,16 @@ public class BreakoutMainView {
 			float[] origin = new float[3];
 			float[] direction = new float[3];
 			float[] center = new float[3];
-			renderer.getViewState()
-					.pickXform()
-					.xform(e.getX(), e.getComponent().getHeight() - e.getY(), e.getComponent().getWidth(),
-							e.getComponent().getHeight(), origin, direction);
+			renderer
+				.getViewState()
+				.pickXform()
+				.xform(
+					e.getX(),
+					e.getComponent().getHeight() - e.getY(),
+					e.getComponent().getWidth(),
+					e.getComponent().getHeight(),
+					origin,
+					direction);
 
 			RNode<float[], Shot3d> bestNode = RTraversal.traverse(model3d.getTree().getRoot(), node -> {
 				if (!Rectmath.rayIntersects(origin, direction, node.mbr())) {
@@ -560,17 +586,27 @@ public class BreakoutMainView {
 
 			float[] origin = new float[3];
 			float[] direction = new float[3];
-			renderer.getViewState()
-					.pickXform()
-					.xform(e.getX(), e.getComponent().getHeight() - e.getY(), e.getComponent().getWidth(),
-							e.getComponent().getHeight(), origin, direction);
+			renderer
+				.getViewState()
+				.pickXform()
+				.xform(
+					e.getX(),
+					e.getComponent().getHeight() - e.getY(),
+					e.getComponent().getWidth(),
+					e.getComponent().getHeight(),
+					origin,
+					direction);
 
 			Ref<Float> distanceSquared = new Ref<>();
-			RNode<float[], Shot3d> closestNode = RTraversal.closestLeafNode(model3d.getTree().getRoot(),
-					origin,
-					(node, p) -> Rectmath.distanceToClosestCornerSquared3(node.mbr(), p),
-					(node, p) -> Rectmath.distanceToFarthestCornerSquared3(node.mbr(), p),
-					null, distanceSquared);
+			RNode<float[], Shot3d> closestNode =
+				RTraversal
+					.closestLeafNode(
+						model3d.getTree().getRoot(),
+						origin,
+						(node, p) -> Rectmath.distanceToClosestCornerSquared3(node.mbr(), p),
+						(node, p) -> Rectmath.distanceToFarthestCornerSquared3(node.mbr(), p),
+						null,
+						distanceSquared);
 			if (closestNode == null) {
 				return Float.NaN;
 			}
@@ -665,7 +701,8 @@ public class BreakoutMainView {
 
 					if (projectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
 						installPerspectiveMouseAdapters();
-					} else {
+					}
+					else {
 						installOrthoMouseAdapters();
 					}
 
@@ -695,23 +732,32 @@ public class BreakoutMainView {
 			try (FileReader reader = new FileReader(file)) {
 				JsonObject json = new JsonParser().parse(new JsonReader(reader)).getAsJsonObject();
 				if (json.has("breakout")) {
-					projectModel = ProjectModel.defaultMapper.unmap(
-							new Gson().fromJson(json.get("breakout"), Object.class));
+					projectModel =
+						ProjectModel.defaultMapper.unmap(new Gson().fromJson(json.get("breakout"), Object.class));
 				}
 				MetacaveImporter importer = new MetacaveImporter();
 				importer.importMetacave(json);
 				SurveyTableModel model = new SurveyTableModel(importer.getRows());
 				model.setLeads(importer.getLeads());
 				return model;
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				logger.log(Level.SEVERE, "Failed to load survey", ex);
 				if (!file.equals(backupFile) && backupFile != null && backupFile.exists()) {
-					int option = FromEDT.fromEDT(() -> JOptionPane.showConfirmDialog(
-							mainPanel,
-							"<html>Failed to load survey " + ex.getLocalizedMessage() +
-									"<br>A backup exists at " + backupFile +
-									"; do you want to try to recover it?</html>",
-							"Error", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE));
+					int option =
+						FromEDT
+							.fromEDT(
+								() -> JOptionPane
+									.showConfirmDialog(
+										mainPanel,
+										"<html>Failed to load survey "
+											+ ex.getLocalizedMessage()
+											+ "<br>A backup exists at "
+											+ backupFile
+											+ "; do you want to try to recover it?</html>",
+										"Error",
+										JOptionPane.YES_NO_OPTION,
+										JOptionPane.ERROR_MESSAGE));
 					if (option == JOptionPane.NO_OPTION) {
 						return null;
 					}
@@ -719,9 +765,12 @@ public class BreakoutMainView {
 				}
 
 				OnEDT.onEDT(() -> {
-					JOptionPane.showMessageDialog(mainPanel,
+					JOptionPane
+						.showMessageDialog(
+							mainPanel,
 							"Failed to load survey: " + ex.getLocalizedMessage(),
-							"Error", JOptionPane.ERROR_MESSAGE);
+							"Error",
+							JOptionPane.ERROR_MESSAGE);
 				});
 				return null;
 			}
@@ -734,6 +783,7 @@ public class BreakoutMainView {
 			OnEDT.onEDT(() -> {
 				QObject<RootModel> rootModel = getRootModel();
 				rootModel.set(RootModel.currentProjectFile, newProjectFile);
+				rootModel.set(RootModel.currentProjectFileChooserDirectory, newProjectFile.getParent().toFile());
 				markProjectRecentlyVisited(newProjectFile);
 
 				if (getProjectModel() != null) {
@@ -757,7 +807,7 @@ public class BreakoutMainView {
 
 			Path swapFile = getSwapFile(newProjectFile);
 			if (Files.exists(swapFile)) {
-				projectModel = loadProjectModel(swapFile.toFile());
+				projectModel = loadModel(swapFile.toFile(), ProjectModel.swapMapper, false);
 			}
 
 			if (projectModel == null) {
@@ -767,10 +817,8 @@ public class BreakoutMainView {
 
 			OnEDT.onEDT(() -> {
 				if (surveyModel != null && surveyModel.getRowCount() > 0) {
-					surveyDrawer.table().getModel()
-							.copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
-					surveyDrawer.table().getModel()
-							.setLeads(surveyModel.getLeads());
+					surveyDrawer.table().getModel().copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
+					surveyDrawer.table().getModel().setLeads(surveyModel.getLeads());
 					rebuild3dModel.run();
 				}
 
@@ -789,7 +837,8 @@ public class BreakoutMainView {
 
 				if (projectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
 					installPerspectiveMouseAdapters();
-				} else {
+				}
+				else {
 					installOrthoMouseAdapters();
 				}
 
@@ -839,7 +888,8 @@ public class BreakoutMainView {
 				}
 
 				miniSurveyDrawer.statsPanel().getModelBinder().set(StatsModel.spec.newObject());
-			} else {
+			}
+			else {
 				MinAvgMaxCalc distCalc = new MinAvgMaxCalc();
 				MinAvgMaxCalc northCalc = new MinAvgMaxCalc();
 				MinAvgMaxCalc eastCalc = new MinAvgMaxCalc();
@@ -850,9 +900,9 @@ public class BreakoutMainView {
 						return;
 					}
 					for (int i = 0; i < points.length; i += 3) {
-						if (Double.isFinite(points[i]) &&
-								Double.isFinite(points[i + 1]) &&
-								Double.isFinite(points[i + 2])) {
+						if (Double.isFinite(points[i])
+							&& Double.isFinite(points[i + 1])
+							&& Double.isFinite(points[i + 2])) {
 							northCalc.add(-points[i + 2]);
 							eastCalc.add(points[i]);
 							depthCalc.add(-points[i + 1]);
@@ -861,7 +911,7 @@ public class BreakoutMainView {
 				};
 
 				for (int i = e.getFirstIndex(); i <= e.getLastIndex()
-						&& i < surveyDrawer.table().getModel().getRowCount(); i++) {
+					&& i < surveyDrawer.table().getModel().getRowCount(); i++) {
 					ShotKey shotKey = modelIndexToShotKey.get(i);
 					if (shotKey == null) {
 						continue;
@@ -876,7 +926,8 @@ public class BreakoutMainView {
 							}
 							addPoints.accept(shot.vertices);
 						}
-					} else {
+					}
+					else {
 						editor.deselect(shotKey);
 					}
 				}
@@ -946,7 +997,8 @@ public class BreakoutMainView {
 				CalculateGeometry.calculateGeometry(p2c.project);
 				updateView();
 				logger.info("done rebuilding 3D model");
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				logger.log(Level.SEVERE, "failed to rebuild 3D model", ex);
 				OnEDT.onEDT(() -> {
 					new JOptionPaneBuilder()
@@ -969,7 +1021,8 @@ public class BreakoutMainView {
 				SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 				List<SurveyRow> rows = copy.getRows();
 				List<SurveyLead> leads = copy.getLeads();
-				if (leads == null) leads = Collections.emptyList();
+				if (leads == null)
+					leads = Collections.emptyList();
 
 				if (parsingSubtask.isCanceled()) {
 					return;
@@ -1043,12 +1096,17 @@ public class BreakoutMainView {
 					navigator.setCenter(center);
 
 					compass = new Compass();
-					
+
 					if (calcProject.coordinateReferenceSystem != null) {
-						terrain = new AutoTerrain(
-							mapbox, fetchService,
-							autoDrawable, calcProject.coordinateReferenceSystem, model.getMbr());
-					} else {
+						terrain =
+							new AutoTerrain(
+								mapbox,
+								fetchService,
+								autoDrawable,
+								calcProject.coordinateReferenceSystem,
+								model.getMbr());
+					}
+					else {
 						terrain = null;
 					}
 
@@ -1071,7 +1129,7 @@ public class BreakoutMainView {
 	private static Shot3dPickContext hoverUpdaterSpc = new Shot3dPickContext();
 
 	private static final int SCANNED_NOTES_SEARCH_DEPTH = 10;
-	
+
 	MapboxClient mapbox;
 
 	JMenuBar menuBar;
@@ -1087,9 +1145,8 @@ public class BreakoutMainView {
 	JoglOrthoNavigator orthoNavigator;
 
 	I18n i18n = new I18n();
-	
-	PerspectiveProjection perspCalculator = new PerspectiveProjection(
-			(float) Math.PI / 2, 1f, 1e7f);
+
+	PerspectiveProjection perspCalculator = new PerspectiveProjection((float) Math.PI / 2, 1f, 1e7f);
 
 	final ScheduledExecutorService rebuildScheduler = Executors.newSingleThreadScheduledExecutor();
 	final TaskService rebuildTaskService = ExecutorTaskService.newSingleThreadedTaskService();
@@ -1110,11 +1167,12 @@ public class BreakoutMainView {
 		logger.info("Shutting down...");
 		if (hasUnsavedChanges()) {
 			logger.info("there are unsaved changes");
-			int choice = new JOptionPaneBuilder()
-				.message("Do you want to save changes?")
-				.yesNoCancel()
-				.warning()
-				.showDialog(mainPanel, "Unsaved Changes");
+			int choice =
+				new JOptionPaneBuilder()
+					.message("Do you want to save changes?")
+					.yesNoCancel()
+					.warning()
+					.showDialog(mainPanel, "Unsaved Changes");
 			switch (choice) {
 			case JOptionPane.YES_OPTION:
 				logger.info("user chose to save changes");
@@ -1150,10 +1208,12 @@ public class BreakoutMainView {
 					boolean terminated = ioTaskService.awaitTermination(seconds, TimeUnit.SECONDS);
 					if (!terminated) {
 						logger.severe(() -> "ioTaskService didn't terminate within " + seconds + " seconds!");
-					} else {
+					}
+					else {
 						logger.info(() -> "ioTaskService terminated successfully!");
 					}
-				} catch (InterruptedException e) {
+				}
+				catch (InterruptedException e) {
 					logger.log(Level.SEVERE, "interrupted while waiting for ioTaskService to terminate", e);
 					logger.info("exiting with code 1");
 					System.exit(1);
@@ -1219,17 +1279,12 @@ public class BreakoutMainView {
 
 	final Binder<QObject<ProjectModel>> projectModelBinder = new DefaultBinder<>();
 
-	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(
-			ProjectModel.colorParam,
-			projectModelBinder);
+	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder);
 
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>> paramRangesBinder = QObjectAttributeBinder.bind(
-			ProjectModel.paramRanges,
-			projectModelBinder);
+	Binder<QMap<ColorParam, LinearAxisConversion, ?>> paramRangesBinder =
+		QObjectAttributeBinder.bind(ProjectModel.paramRanges, projectModelBinder);
 
-	Binder<LinearAxisConversion> paramRangeBinder = QMapKeyedBinder.bindKeyed(
-			colorParamBinder,
-			paramRangesBinder);
+	Binder<LinearAxisConversion> paramRangeBinder = QMapKeyedBinder.bindKeyed(colorParamBinder, paramRangesBinder);
 
 	final AnimationQueue cameraAnimationQueue = new AnimationQueue();
 
@@ -1251,10 +1306,11 @@ public class BreakoutMainView {
 
 	ImportCompassAction importCompassAction = new ImportCompassAction(this);
 	ImportWallsAction importWallsAction = new ImportWallsAction(this);
+	ImportLeadsAction importLeadsAction = new ImportLeadsAction(this);
 
 	ExportImageAction exportImageAction = new ExportImageAction(this);
 	LinkSurveyNotesAction linkSurveyNotesAction = new LinkSurveyNotesAction(this);
-	
+
 	SetCaveOnRowsAction setCaveOnRowsAction = new SetCaveOnRowsAction(this);
 
 	final WeakHashMap<Animation, Object> protectedAnimations = new WeakHashMap<>();
@@ -1269,7 +1325,8 @@ public class BreakoutMainView {
 	ParsedProject parsedProject = new ParsedProject();
 	CalcProject calcProject = new CalcProject();
 
-	private static final FileRecoveryConfig fileRecoveryConfig = new FileRecoveryConfig() {};
+	private static final FileRecoveryConfig fileRecoveryConfig = new FileRecoveryConfig() {
+	};
 
 	private <S extends QSpec<S>> void saveModel(QObject<S> m, Path path, Bimapper<QObject<S>, Object> mapper) {
 		saveModel(m, path == null ? null : path.toFile(), mapper);
@@ -1287,18 +1344,17 @@ public class BreakoutMainView {
 				setStatus("Saving settings...");
 				setIndeterminate(true);
 
-				try (Writer w = new OutputStreamWriter(new RecoverableFileOutputStream(file, fileRecoveryConfig),
-						"UTF-8")) {
+				try (Writer w =
+					new OutputStreamWriter(new RecoverableFileOutputStream(file, fileRecoveryConfig), "UTF-8")) {
 					if (!file.getParentFile().exists()) {
 						file.getParentFile().mkdirs();
 					}
-					Gson gson = new GsonBuilder()
-							.setPrettyPrinting()
-							.create();
+					Gson gson = new GsonBuilder().setPrettyPrinting().create();
 					w.write(gson.toJson(mapper.map(model), Object.class));
 					w.write(System.lineSeparator());
 					w.flush();
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					logger.log(Level.SEVERE, "Failed to save settings", ex);
 				}
 				return null;
@@ -1306,20 +1362,27 @@ public class BreakoutMainView {
 		});
 	}
 
-	final DebouncedRunnable saveRootModel = Lodash.debounce(
-			() -> saveModel(getRootModel(), BreakoutMain.getRootSettingsFile(), RootModel.defaultMapper),
-			1000, new DebounceOptions<Void>().executor(ioService));
+	final DebouncedRunnable saveRootModel =
+		Lodash
+			.debounce(
+				() -> saveModel(getRootModel(), BreakoutMain.getRootSettingsFile(), RootModel.defaultMapper),
+				1000,
+				new DebounceOptions<Void>().executor(ioService));
 
-	final DebouncedRunnable saveSwap = Lodash.debounce(
-			() -> saveModel(getProjectModel(), getCurrentSwapFile(), ProjectModel.defaultMapper),
-			1000, new DebounceOptions<Void>().executor(ioService));
+	final DebouncedRunnable saveSwap =
+		Lodash
+			.debounce(
+				() -> saveModel(getProjectModel(), getCurrentSwapFile(), ProjectModel.swapMapper),
+				1000,
+				new DebounceOptions<Void>().executor(ioService));
 
 	final DebouncedRunnable rebuild3dModel = Lodash.debounce(() -> {
 		rebuildTaskService.submit(new RebuildTask());
 	}, 1000, new DebounceOptions<Void>().executor(rebuildScheduler));
-	
+
 	public void rebuild3dModelIfNotEditing() {
-		if (editingSurvey) return;
+		if (editingSurvey)
+			return;
 		rebuild3dModel.run();
 	}
 
@@ -1336,7 +1399,7 @@ public class BreakoutMainView {
 		scene = new JoglScene();
 		bgColor = new JoglBackgroundColor();
 		scene.add(bgColor);
-		
+
 		renderer = new DefaultJoglRenderer(scene, new GL3Framebuffer(), 1);
 		renderer.setDesiredUseStencilBuffer(true);
 
@@ -1349,22 +1412,23 @@ public class BreakoutMainView {
 		orbiter = new JoglOrbiter(autoDrawable, renderer.getViewSettings());
 		orthoNavigator = new JoglOrthoNavigator(autoDrawable, renderer.getViewState(), renderer.getViewSettings());
 		orthoNavigator.setSensitivity(0.01f);
-		
+
 		clipMouseHandler = new ClipMouseHandler(new ClipMouseHandler.Context() {
 			@Override
 			public void setClip(Clip3f clip) {
 				getProjectModel().set(ProjectModel.clip, clip);
 			}
-			
+
 			@Override
 			public Clip3f getClip() {
 				return getProjectModel().get(ProjectModel.clip);
 			}
-			
+
+			@Override
 			public float[] getSceneMbr() {
 				return BreakoutMainView.this.getSceneMbr();
 			}
-			
+
 			@Override
 			public GLAutoDrawable getDrawable() {
 				return autoDrawable;
@@ -1400,10 +1464,14 @@ public class BreakoutMainView {
 				return createRowFilter(text, searchMode);
 			};
 
-			AnnotatingJTables.connectSearchFieldAndRadioButtons(
-					surveyDrawer.table(), surveyDrawer.searchField().textComponent,
-					rowFilterFactory, surveyDrawer.highlightButton(),
-					surveyDrawer.filterButton(), Color.YELLOW);
+			AnnotatingJTables
+				.connectSearchFieldAndRadioButtons(
+					surveyDrawer.table(),
+					surveyDrawer.searchField().textComponent,
+					rowFilterFactory,
+					surveyDrawer.highlightButton(),
+					surveyDrawer.filterButton(),
+					Color.YELLOW);
 		});
 
 		pickHandler = new MousePickHandler();
@@ -1457,7 +1525,8 @@ public class BreakoutMainView {
 						Integer row = shotKeyToModelIndex.get(shot3d.key());
 						if (toggle && selModel.isSelectedIndex(row)) {
 							selModel.removeSelectionInterval(row, row);
-						} else {
+						}
+						else {
 							selModel.addSelectionInterval(row, row);
 						}
 					}
@@ -1526,11 +1595,13 @@ public class BreakoutMainView {
 
 			miniSurveyDrawer.table().setModel(surveyDrawer.table().getModel());
 			miniSurveyDrawer.table().setModelSelectionModel(surveyDrawer.table().getModelSelectionModel());
-		
-			AnnotatingJTables.connectSearchFieldAndRadioButtons(
+
+			AnnotatingJTables
+				.connectSearchFieldAndRadioButtons(
 					miniSurveyDrawer.table(),
 					miniSurveyDrawer.searchField().textComponent,
-					rowFilterFactory, miniSurveyDrawer.highlightButton(),
+					rowFilterFactory,
+					miniSurveyDrawer.highlightButton(),
 					miniSurveyDrawer.filterButton(),
 					Color.YELLOW);
 
@@ -1538,30 +1609,22 @@ public class BreakoutMainView {
 			miniSurveyDrawer.mainResizeHandle();
 			miniSurveyDrawer.addTo(mainPanel);
 
-			miniSurveyDrawer.delegate()
-					.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+			miniSurveyDrawer.delegate().putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 		});
 
 		settingsDrawer.delegate().putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
-		taskListDrawer.delegate().putExtraConstraint(Side.LEFT,
-				new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
-		taskListDrawer.delegate().putExtraConstraint(Side.RIGHT,
-				new SideConstraint(settingsDrawer, Side.LEFT, 0));
+		taskListDrawer.delegate().putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
+		taskListDrawer.delegate().putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
 
 		SideConstraintLayoutDelegate spinnerDelegate = new SideConstraintLayoutDelegate();
-		spinnerDelegate.putExtraConstraint(
-				Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
-		spinnerDelegate.putExtraConstraint(
-				Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+		spinnerDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
+		spinnerDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
 		SideConstraintLayoutDelegate hintLabelDelegate = new SideConstraintLayoutDelegate();
-		hintLabelDelegate.putExtraConstraint(
-				Side.LEFT, new SideConstraint(taskListDrawer.pinButton(), Side.RIGHT, 0));
-		hintLabelDelegate.putExtraConstraint(
-				Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
-		hintLabelDelegate.putExtraConstraint(
-				Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+		hintLabelDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(taskListDrawer.pinButton(), Side.RIGHT, 0));
+		hintLabelDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
+		hintLabelDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
 		mainPanel.add(taskListDrawer.pinButton(), spinnerDelegate);
 		mainPanel.add(hintLabel, hintLabelDelegate);
@@ -1579,8 +1642,8 @@ public class BreakoutMainView {
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
 				@SuppressWarnings("unchecked")
-				AnnotatingRowSorter<TableModel, Integer> sorter = (AnnotatingRowSorter<TableModel, Integer>) miniSurveyDrawer
-						.table().getRowSorter();
+				AnnotatingRowSorter<TableModel, Integer> sorter =
+					(AnnotatingRowSorter<TableModel, Integer>) miniSurveyDrawer.table().getRowSorter();
 
 				SurveyTableModel newModel = (SurveyTableModel) evt.getNewValue();
 
@@ -1607,8 +1670,8 @@ public class BreakoutMainView {
 			@Override
 			protected void onValueChanged(Color bgColor) {
 				if (bgColor != null) {
-					BreakoutMainView.this.bgColor.set(bgColor.getRed() / 255f, bgColor.getGreen() / 255f,
-							bgColor.getBlue() / 255f, 1f);
+					BreakoutMainView.this.bgColor
+						.set(bgColor.getRed() / 255f, bgColor.getGreen() / 255f, bgColor.getBlue() / 255f, 1f);
 					if (model3d != null) {
 						model3d.setBackgroundColor(bgColor);
 					}
@@ -1626,7 +1689,7 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelDensity, projectModelBinder));
-		
+
 		new BinderWrapper<Float>() {
 			@Override
 			protected void onValueChanged(Float stationLabelFontSize) {
@@ -1646,19 +1709,21 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.showLeadLabels, projectModelBinder));
-		
+
 		new BinderWrapper<Boolean>() {
 			@Override
 			protected void onValueChanged(Boolean showTerrain) {
-				if (showTerrain == null) showTerrain = false;
-				if (showTerrain) { 
+				if (showTerrain == null)
+					showTerrain = false;
+				if (showTerrain) {
 					Localizer localizer = i18n.forClass(BreakoutMainView.class);
 					rebuildTaskService.submit(task -> OnEDT.onEDT(() -> {
 						if (!calcProject.shots.isEmpty() && calcProject.coordinateReferenceSystem == null) {
 							new JOptionPaneBuilder()
-								.message(new MultilineLabelHolder(
-									localizer.getString("showTerrain.noGeoReferenceDialog.message"))
-									.preferredWidth(400))
+								.message(
+									new MultilineLabelHolder(
+										localizer.getString("showTerrain.noGeoReferenceDialog.message"))
+											.preferredWidth(400))
 								.showDialog(mainPanel, localizer.getString("showTerrain.noGeoReferenceDialog.title"));
 							return;
 						}
@@ -1667,29 +1732,32 @@ public class BreakoutMainView {
 						JXHyperlink mapboxLink = new JXHyperlink();
 						try {
 							mapboxLink.setURI(new URI("https://account.mapbox.com/"));
-						} catch (URISyntaxException e) {
+						}
+						catch (URISyntaxException e) {
 							e.printStackTrace();
 						}
-						Object accessToken = new JOptionPaneBuilder()
-							.okCancel()
-							.message(
-								new MultilineLabelHolder(
-									localizer.getString("showTerrain.mapboxAccessTokenDialog.message"))
-									.preferredWidth(400),
-								mapboxLink,
-								new MultilineLabelHolder(
-									localizer.getString("showTerrain.mapboxAccessTokenDialog.inputLabel"))
-									.preferredWidth(400)
-							)
-							.showInputDialog(mainPanel, localizer.getString("showTerrain.mapboxAccessTokenDialog.title"));
-						
+						Object accessToken =
+							new JOptionPaneBuilder()
+								.okCancel()
+								.message(
+									new MultilineLabelHolder(
+										localizer.getString("showTerrain.mapboxAccessTokenDialog.message"))
+											.preferredWidth(400),
+									mapboxLink,
+									new MultilineLabelHolder(
+										localizer.getString("showTerrain.mapboxAccessTokenDialog.inputLabel"))
+											.preferredWidth(400))
+								.showInputDialog(
+									mainPanel,
+									localizer.getString("showTerrain.mapboxAccessTokenDialog.title"));
+
 						if (accessToken == null) {
 							return;
 						}
 						getRootModel().set(RootModel.mapboxAccessToken, accessToken.toString().trim());
 					}
 				}
-					
+
 				if (terrain != null) {
 					terrain.setVisible(showTerrain);
 					autoDrawable.display();
@@ -1726,7 +1794,7 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineColor, projectModelBinder));
-		
+
 		new BinderWrapper<String>() {
 			@Override
 			protected void onValueChanged(String accessToken) {
@@ -1786,8 +1854,7 @@ public class BreakoutMainView {
 			protected void onValueChanged(LinearAxisConversion range) {
 				if (model3d != null && range != null) {
 					final float nearDist = (float) range.invert(0.0);
-					final float farDist = (float) range
-							.invert(settingsDrawer.getDistColorationAxis().getViewSpan());
+					final float farDist = (float) range.invert(settingsDrawer.getDistColorationAxis().getViewSpan());
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setNearDist(nearDist);
 					model3d.setFarDist(farDist);
@@ -1801,8 +1868,7 @@ public class BreakoutMainView {
 			protected void onValueChanged(LinearAxisConversion range) {
 				if (model3d != null && range != null) {
 					final float loParam = (float) range.invert(0.0);
-					final float hiParam = (float) range.invert(settingsDrawer.getParamColorationAxis()
-							.getViewSpan());
+					final float hiParam = (float) range.invert(settingsDrawer.getParamColorationAxis().getViewSpan());
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setLoParam(loParam);
 					model3d.setHiParam(hiParam);
@@ -1842,9 +1908,11 @@ public class BreakoutMainView {
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder));
 
-		miniSurveyDrawer.statsPanel().lengthUnitBinder().bind(
-				QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
-		
+		miniSurveyDrawer
+			.statsPanel()
+			.lengthUnitBinder()
+			.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
+
 		new BinderWrapper<Unit<Length>>() {
 			@Override
 			protected void onValueChanged(final Unit<Length> displayLengthUnit) {
@@ -1855,7 +1923,7 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
-		
+
 		new BinderWrapper<Clip3f>() {
 			@Override
 			protected void onValueChanged(final Clip3f clip) {
@@ -1886,6 +1954,7 @@ public class BreakoutMainView {
 		JMenu importMenu = new JMenu();
 		importMenu.add(new JMenuItem(importCompassAction));
 		importMenu.add(new JMenuItem(importWallsAction));
+		importMenu.add(new JMenuItem(importLeadsAction));
 		fileMenu.add(importMenu);
 		JMenu exportMenu = new JMenu();
 		exportMenu.add(new JMenuItem(exportImageAction));
@@ -1894,7 +1963,7 @@ public class BreakoutMainView {
 		fileMenu.add(exportMenu);
 		fileMenu.add(new JSeparator());
 		fileMenu.add(new JMenuItem(linkSurveyNotesAction));
-		
+
 		JMenu editMenu = new JMenu();
 		menuBar.add(editMenu);
 		editMenu.add(new JMenuItem(findAction));
@@ -1904,9 +1973,8 @@ public class BreakoutMainView {
 		JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
 		debugMenu.add(openLogDirectoryMenuItem);
 		JCheckBoxMenuItem showSpatialIndexItem = new JCheckBoxMenuItem();
-		new ButtonSelectedBinder(showSpatialIndexItem).bind(
-				new QObjectAttributeBinder<>(RootModel.showSpatialIndex)
-						.bind(rootModelBinder));
+		new ButtonSelectedBinder(showSpatialIndexItem)
+			.bind(new QObjectAttributeBinder<>(RootModel.showSpatialIndex).bind(rootModelBinder));
 		debugMenu.add(showSpatialIndexItem);
 
 		JMenuItem noRecentFilesMenuItem = new JMenuItem();
@@ -1918,29 +1986,30 @@ public class BreakoutMainView {
 				openRecentMenu.removeAll();
 				if (newValue == null || newValue.isEmpty()) {
 					openRecentMenu.add(noRecentFilesMenuItem);
-				} else {
+				}
+				else {
 					for (Path file : newValue) {
-						openRecentMenu.add(new JMenuItem(
-								new OpenRecentProjectAction(BreakoutMainView.this, file)));
+						openRecentMenu.add(new JMenuItem(new OpenRecentProjectAction(BreakoutMainView.this, file)));
 					}
 				}
 			}
 
-		}.bind(new HierarchicalChangeBinder<QArrayList<Path>>()
-				.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder)));
-		
+		}
+			.bind(
+				new HierarchicalChangeBinder<QArrayList<Path>>()
+					.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder)));
+
 		new BinderWrapper<SearchMode>() {
 			@Override
 			protected void onValueChanged(SearchMode mode) {
 				surveyDrawer.searchOptionsButton().setSearchMode(mode);
-				surveyDrawer.searchField().textComponent.setText(
-					surveyDrawer.searchField().textComponent.getText());
+				surveyDrawer.searchField().textComponent.setText(surveyDrawer.searchField().textComponent.getText());
 				miniSurveyDrawer.searchOptionsButton().setSearchMode(mode);
-				miniSurveyDrawer.searchField().textComponent.setText(
-					miniSurveyDrawer.searchField().textComponent.getText());
+				miniSurveyDrawer.searchField().textComponent
+					.setText(miniSurveyDrawer.searchField().textComponent.getText());
 			}
 		}.bind(new QObjectAttributeBinder<>(RootModel.searchMode).bind(rootModelBinder));
-		
+
 		surveyDrawer.searchOptionsButton().menu().addChangeListener(l -> {
 			getRootModel().set(RootModel.searchMode, surveyDrawer.searchOptionsButton().getSearchMode());
 		});
@@ -1980,12 +2049,18 @@ public class BreakoutMainView {
 
 				rebuildTaskService.submit(task -> {
 					task.setTotal(1);
-					float[] range = task.callSubtask(1,
-							calcSubtask -> model3d.calcAutofitParamRange(getDefaultShotsForOperations(2), calcSubtask));
+					float[] range =
+						task
+							.callSubtask(
+								1,
+								calcSubtask -> model3d
+									.calcAutofitParamRange(getDefaultShotsForOperations(2), calcSubtask));
 
-					if (range == null ||
-							!Float.isFinite(range[0]) || !Float.isFinite(range[1]) ||
-							range[0] == -Float.MAX_VALUE || range[1] == -Float.MIN_VALUE) {
+					if (range == null
+						|| !Float.isFinite(range[0])
+						|| !Float.isFinite(range[1])
+						|| range[0] == -Float.MAX_VALUE
+						|| range[1] == -Float.MIN_VALUE) {
 						return;
 					}
 
@@ -1995,7 +2070,11 @@ public class BreakoutMainView {
 						range[0] = range[1];
 						range[1] = swap;
 					}
-					LinearAxisConversion conversion = new LinearAxisConversion(range[0], 0.0, range[1],
+					LinearAxisConversion conversion =
+						new LinearAxisConversion(
+							range[0],
+							0.0,
+							range[1],
 							settingsDrawer.getParamColorationAxis().getViewSpan());
 
 					paramRangeBinder.set(conversion);
@@ -2029,13 +2108,11 @@ public class BreakoutMainView {
 					getSelectedShotsFromTable().forEach(selectedShots::add);
 					Set<ShotKey> shotsFromView = getShotsInView();
 					Set<ShotKey> startShots = selectedShots.isEmpty() ? shotsFromView : selectedShots;
-					task.runSubtask(3,
-							recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
+					task.runSubtask(3, recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
 
-					Set<ShotKey> rangeShots = startShots == shotsFromView
-							? calcProject.getPlottedShotKeys() : shotsFromView;
-					task.runSubtask(1,
-							rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
+					Set<ShotKey> rangeShots =
+						startShots == shotsFromView ? calcProject.getPlottedShotKeys() : shotsFromView;
+					task.runSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
 					autoDrawable.display();
 				});
 			}
@@ -2113,10 +2190,10 @@ public class BreakoutMainView {
 			}
 		});
 
-		((JTextField) surveyDrawer.searchField().textComponent).addActionListener(new FitToFilteredHandler(
-				surveyDrawer.table()));
+		((JTextField) surveyDrawer.searchField().textComponent)
+			.addActionListener(new FitToFilteredHandler(surveyDrawer.table()));
 		((JTextField) miniSurveyDrawer.searchField().textComponent)
-				.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
+			.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
 
 		new BinderWrapper<Integer>() {
 			@Override
@@ -2153,37 +2230,45 @@ public class BreakoutMainView {
 			updateProps.load(updateIn);
 			updateIn.close();
 
-			UpdateStatusPanelController updateStatusPanelController = new UpdateStatusPanelController(
+			UpdateStatusPanelController updateStatusPanelController =
+				new UpdateStatusPanelController(
 					settingsDrawer.getUpdateStatusPanel(),
 					settingsDrawer.getLoadedVersion(),
 					new URL(updateProps.get("latestVersionInfoUrl").toString()),
 					new File(updateProps.get("updateDir").toString()));
 
 			updateStatusPanelController.checkForUpdate();
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to get autoupdate properties", e);
 		}
 	}
 
 	private static RowFilter<TableModel, Integer> createRowFilter(String text, SearchMode searchMode) {
 		switch (searchMode) {
-		case STATION_REGEX: return new SurveyRegexFilter(text);
-		case SURVEY_DESIGNATION: return new SurveyDesignationFilter(text);
-		case SURVEY_TEAM: return new SurveyorFilter(text);
-		case TRIP_DESCRIPTION: return new DescriptionFilter(text);
-		default: return new SmartComboTableRowFilter(Arrays.asList(
-			new SurveyDesignationFilter(text),
-			new SurveyorFilter(text),
-			new DescriptionFilter(text)));
+		case STATION_REGEX:
+			return new SurveyRegexFilter(text);
+		case SURVEY_DESIGNATION:
+			return new SurveyDesignationFilter(text);
+		case SURVEY_TEAM:
+			return new SurveyorFilter(text);
+		case TRIP_DESCRIPTION:
+			return new DescriptionFilter(text);
+		default:
+			return new SmartComboTableRowFilter(
+				Arrays
+					.asList(new SurveyDesignationFilter(text), new SurveyorFilter(text), new DescriptionFilter(text)));
 		}
 	}
-	
+
 	float[] sceneMbr = Rectmath.voidRectf(3);
 
 	protected float[] getSceneMbr() {
 		Rectmath.makeVoid(sceneMbr);
-		if (model3d != null) Rectmath.union3(sceneMbr, model3d.getMbr(), sceneMbr);
-		if (terrain != null) Rectmath.union3(sceneMbr, terrain.getFullMbr(), sceneMbr);
+		if (model3d != null)
+			Rectmath.union3(sceneMbr, model3d.getMbr(), sceneMbr);
+		if (terrain != null)
+			Rectmath.union3(sceneMbr, terrain.getFullMbr(), sceneMbr);
 		return sceneMbr;
 	}
 
@@ -2193,17 +2278,26 @@ public class BreakoutMainView {
 			if (recentProjectFiles != null && !recentProjectFiles.isEmpty()) {
 				File mostRecentFile = recentProjectFiles.get(0).toFile();
 				File mostRecentBackup = fileRecoveryConfig.getBackupFile(mostRecentFile);
-				String message = "<html>It appears that Breakout shutdown unexpectedly while you were working on "
-						+ mostRecentFile + ",<br>but it is backed up in " +
-						mostRecentBackup + ".  What do you want to do?</html>";
+				String message =
+					"<html>It appears that Breakout shutdown unexpectedly while you were working on "
+						+ mostRecentFile
+						+ ",<br>but it is backed up in "
+						+ mostRecentBackup
+						+ ".  What do you want to do?</html>";
 
 				if (!mostRecentFile.exists() && mostRecentBackup.exists()) {
 					Object[] options = { "Recover It", "Delete It", "Leave It" };
-					int option = JOptionPane.showOptionDialog(
-							SwingUtilities.getWindowAncestor(mainPanel),
-							message, "File Recovery",
-							JOptionPane.WARNING_MESSAGE, 0, null,
-							options, options[0]);
+					int option =
+						JOptionPane
+							.showOptionDialog(
+								SwingUtilities.getWindowAncestor(mainPanel),
+								message,
+								"File Recovery",
+								JOptionPane.WARNING_MESSAGE,
+								0,
+								null,
+								options,
+								options[0]);
 					switch (option) {
 					case 0:
 						openProject(mostRecentFile.toPath());
@@ -2215,9 +2309,11 @@ public class BreakoutMainView {
 					}
 				}
 			}
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to recover backup file", ex);
-			JOptionPane.showMessageDialog(
+			JOptionPane
+				.showMessageDialog(
 					SwingUtilities.getWindowAncestor(mainPanel),
 					ex.getLocalizedMessage(),
 					"Error",
@@ -2225,7 +2321,7 @@ public class BreakoutMainView {
 		}
 		return false;
 	}
-	
+
 	private void changeView(float[] forward, float[] right, boolean ortho, Set<ShotKey> shotsToFit) {
 		if (Vecmath.hasNaNsOrInfinites(forward) || Vecmath.hasNaNsOrInfinites(right)) {
 			throw new IllegalArgumentException("forward and right must not contain NaN or infinite values");
@@ -2273,7 +2369,7 @@ public class BreakoutMainView {
 			if (forward[0] == 0 && forward[1] == -1 && forward[2] == 0) {
 				newClip = new Clip3f(forward, -Float.MAX_VALUE, Float.MAX_VALUE);
 			}
-			
+
 			final Projection finalNewProjection = newProjCalculator;
 			final Clip3f finalClip = newClip;
 
@@ -2286,7 +2382,8 @@ public class BreakoutMainView {
 					if (finalClip != null && model3d != null) {
 						getProjectModel().set(ProjectModel.clip, finalClip);
 					}
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					logger.log(Level.SEVERE, "Failed to change view xform", ex);
 				}
 
@@ -2295,7 +2392,8 @@ public class BreakoutMainView {
 				autoDrawable.display();
 				return 0;
 			};
-		} else {
+		}
+		else {
 			newProjCalculator = perspCalculator;
 
 			if (model3d != null) {
@@ -2326,7 +2424,8 @@ public class BreakoutMainView {
 					renderer.getViewSettings().setViewXform(newViewXform);
 					renderer.getViewSettings().setProjection(perspCalculator);
 					saveViewXform();
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					logger.log(Level.SEVERE, "Failed to change view xform", ex);
 				}
 				saveProjection();
@@ -2338,15 +2437,15 @@ public class BreakoutMainView {
 			};
 		}
 
-		GeneralViewXformOrbitAnimation viewAnimation = new GeneralViewXformOrbitAnimation(autoDrawable,
-				renderer.getViewSettings(), 1750, 30);
+		GeneralViewXformOrbitAnimation viewAnimation =
+			new GeneralViewXformOrbitAnimation(autoDrawable, renderer.getViewSettings(), 1750, 30);
 		float[] viewXform = newMat4f();
 		viewAnimation.setUpWithEndLocation(renderer.getViewState().viewMatrix(), endLocation, forward, right);
 
 		Projection currentProjCalculator = renderer.getViewSettings().getProjection();
 
-		InterpolationProjection calc = new InterpolationProjection(renderer.getViewSettings().getProjection(),
-				newProjCalculator, 0f);
+		InterpolationProjection calc =
+			new InterpolationProjection(renderer.getViewSettings().getProjection(), newProjCalculator, 0f);
 
 		FloatUnaryOperator viewReparam = f -> 1 - (1 - f) * (1 - f);
 		FloatUnaryOperator projReparam;
@@ -2354,7 +2453,8 @@ public class BreakoutMainView {
 			OrthoProjection currentOrthoCalc = (OrthoProjection) currentProjCalculator;
 			if (ortho) {
 				projReparam = viewReparam;
-			} else {
+			}
+			else {
 				float b = 10f;
 				float a = 1 / b;
 				float ra = 1 / a / a;
@@ -2365,7 +2465,8 @@ public class BreakoutMainView {
 					return viewReparam.applyAsFloat((rf - rb) / (ra - rb));
 				};
 			}
-		} else {
+		}
+		else {
 			if (ortho) {
 				float b = 10f;
 				float a = 1 / b;
@@ -2376,7 +2477,8 @@ public class BreakoutMainView {
 					float rf = 1 / ff / ff;
 					return (rf - ra) / (rb - ra);
 				};
-			} else {
+			}
+			else {
 				projReparam = viewReparam;
 			}
 		}
@@ -2385,19 +2487,21 @@ public class BreakoutMainView {
 
 		try {
 			removeUnprotectedCameraAnimations();
-			getProjectModel().set(ProjectModel.clip,
-				new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
-			cameraAnimationQueue.add(new ProjXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, false,
-					f -> {
-						calc.f = projReparam.applyAsFloat(f);
-						return calc;
-					}).also(new ViewXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, true, f -> {
-						viewAnimation.calcViewXform(viewReparam.applyAsFloat(f), viewXform);
-						return viewXform;
-					})));
+			getProjectModel()
+				.set(ProjectModel.clip, new Clip3f(new float[]
+				{ 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
+			cameraAnimationQueue
+				.add(new ProjXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, false, f -> {
+					calc.f = projReparam.applyAsFloat(f);
+					return calc;
+				}).also(new ViewXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, true, f -> {
+					viewAnimation.calcViewXform(viewReparam.applyAsFloat(f), viewXform);
+					return viewXform;
+				})));
 			finisher = finisher.also(new AnimationViewSaver());
 			protectedAnimations.put(finisher, null);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to animate view xform", ex);
 		}
 		cameraAnimationQueue.add(finisher);
@@ -2412,8 +2516,11 @@ public class BreakoutMainView {
 		Vecmath.negate3(vi, 8, forward, 0);
 		Vecmath.getColumn3(vi, 0, right);
 
-		changeView(forward, right, getProjectModel().get(ProjectModel.cameraView) != CameraView.PERSPECTIVE,
-				shotsToFit);
+		changeView(
+			forward,
+			right,
+			getProjectModel().get(ProjectModel.cameraView) != CameraView.PERSPECTIVE,
+			shotsToFit);
 	}
 
 	protected void fitViewToEverything() {
@@ -2444,11 +2551,12 @@ public class BreakoutMainView {
 			public long animate(long animTime) {
 				table.getModelSelectionModel().clearSelection();
 				@SuppressWarnings("unchecked")
-				AnnotatingRowSorter<TableModel, Integer> rowSorter = (AnnotatingRowSorter<TableModel, Integer>) table
-						.getAnnotatingRowSorter();
+				AnnotatingRowSorter<TableModel, Integer> rowSorter =
+					(AnnotatingRowSorter<TableModel, Integer>) table.getAnnotatingRowSorter();
 				if (rowSorter.getRowFilter() != null) {
 					table.selectAll();
-				} else {
+				}
+				else {
 					ListSelectionModel selectionModel = table.getSelectionModel();
 					selectionModel.setValueIsAdjusting(true);
 					try {
@@ -2458,7 +2566,8 @@ public class BreakoutMainView {
 								if (intervalStart < 0) {
 									intervalStart = row;
 								}
-							} else if (intervalStart >= 0) {
+							}
+							else if (intervalStart >= 0) {
 								selectionModel.addSelectionInterval(intervalStart, row - 1);
 								intervalStart = -1;
 							}
@@ -2530,17 +2639,16 @@ public class BreakoutMainView {
 	protected Stream<ShotKey> getSelectedShotsFromTable() {
 		SurveyTableModel model = surveyDrawer.table().getModel();
 		ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
-		return IntStream.range(0, model.getRowCount())
-				.filter(selModel::isSelectedIndex)
-				.mapToObj(modelIndexToShotKey::get)
-				.filter(o -> o != null);
+		return IntStream
+			.range(0, model.getRowCount())
+			.filter(selModel::isSelectedIndex)
+			.mapToObj(modelIndexToShotKey::get)
+			.filter(o -> o != null);
 	}
 
 	protected Stream<ShotKey> getShotsFromTable() {
 		SurveyTableModel model = surveyDrawer.table().getModel();
-		return IntStream.range(0, model.getRowCount())
-				.mapToObj(modelIndexToShotKey::get)
-				.filter(o -> o != null);
+		return IntStream.range(0, model.getRowCount()).mapToObj(modelIndexToShotKey::get).filter(o -> o != null);
 	}
 
 	protected Set<ShotKey> getShotsInView() {
@@ -2613,9 +2721,8 @@ public class BreakoutMainView {
 	/**
 	 * Opens the given project file.
 	 *
-	 * @param newProjectFile
-	 *            the path to the project file to open; must be absolute or
-	 *            relative to the working directory.
+	 * @param newProjectFile the path to the project file to open; must be absolute
+	 *                       or relative to the working directory.
 	 */
 	public void openProject(Path newProjectFile) {
 		ioTaskService.submit(new OpenProjectTask(newProjectFile));
@@ -2633,8 +2740,7 @@ public class BreakoutMainView {
 			JPanel message = new JPanel(new FlowLayout());
 			message.add(new JLabel("Couldn't find the file '" + file + "' in any of your "));
 			message.add(searchDirsLink);
-			message.add(new JLabel("(note: Breakout only searches " + SCANNED_NOTES_SEARCH_DEPTH +
-					" levels deep)."));
+			message.add(new JLabel("(note: Breakout only searches " + SCANNED_NOTES_SEARCH_DEPTH + " levels deep)."));
 
 			JOptionPane.showMessageDialog(mainPanel, message, "Can't find file", JOptionPane.ERROR_MESSAGE);
 
@@ -2642,10 +2748,15 @@ public class BreakoutMainView {
 		}
 		try {
 			Desktop.getDesktop().open(file);
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			logger.log(Level.SEVERE, "Failed to open survey notes", e);
-			JOptionPane.showMessageDialog(mainPanel, "Failed to open file '" + file + "': " + e,
-					"Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane
+				.showMessageDialog(
+					mainPanel,
+					"Failed to open file '" + file + "': " + e,
+					"Error",
+					JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -2655,11 +2766,17 @@ public class BreakoutMainView {
 			uri = new URL(link).toURI();
 			Desktop.getDesktop().browse(uri);
 			return;
-		} catch (MalformedURLException e) {
-		} catch (Exception e) {
+		}
+		catch (MalformedURLException e) {
+		}
+		catch (Exception e) {
 			logger.log(Level.SEVERE, "Failed to open survey notes", e);
-			JOptionPane.showMessageDialog(mainPanel, "Failed to open URL " + uri + ": " + e,
-					"Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane
+				.showMessageDialog(
+					mainPanel,
+					"Failed to open URL " + uri + ": " + e,
+					"Error",
+					JOptionPane.ERROR_MESSAGE);
 		}
 
 		try {
@@ -2667,14 +2784,19 @@ public class BreakoutMainView {
 			if (!file.isAbsolute()) {
 				QArrayList<File> dirs = getProjectModel().get(ProjectModel.surveyScanPaths);
 				if (dirs == null || dirs.isEmpty()) {
-					int option = JOptionPane.showConfirmDialog(mainPanel,
-							"There are no directories configured to search for the file: " + link
+					int option =
+						JOptionPane
+							.showConfirmDialog(
+								mainPanel,
+								"There are no directories configured to search for the file: "
+									+ link
 									+ ".  Would you like to configure them now?",
-							"Can't find file",
-							JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+								"Can't find file",
+								JOptionPane.YES_NO_OPTION,
+								JOptionPane.WARNING_MESSAGE);
 					if (option == JOptionPane.YES_OPTION) {
-						editSurveyScanPathsAction.actionPerformed(
-								new ActionEvent(this, ActionEvent.ACTION_PERFORMED, ""));
+						editSurveyScanPathsAction
+							.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, ""));
 						dirs = getProjectModel().get(ProjectModel.surveyScanPaths);
 					}
 				}
@@ -2689,16 +2811,20 @@ public class BreakoutMainView {
 							showDialogLater();
 
 							for (File dir : finalDirs) {
-								Optional<Path> foundFile = Files
-										.find(dir.toPath(), SCANNED_NOTES_SEARCH_DEPTH,
-												(Path path, BasicFileAttributes attrs) -> {
-													String pathStr = path.toString();
-													int beforeIndex = pathStr.length() - link.length() - 1;
-													return pathStr.endsWith(link) &&
-														(beforeIndex < 0 ||
-														pathStr.charAt(beforeIndex) == '/' ||
-														pathStr.charAt(beforeIndex) == '\\');
-												}, FileVisitOption.FOLLOW_LINKS)
+								Optional<Path> foundFile =
+									Files
+										.find(
+											dir.toPath(),
+											SCANNED_NOTES_SEARCH_DEPTH,
+											(Path path, BasicFileAttributes attrs) -> {
+												String pathStr = path.toString();
+												int beforeIndex = pathStr.length() - link.length() - 1;
+												return pathStr.endsWith(link)
+													&& (beforeIndex < 0
+														|| pathStr.charAt(beforeIndex) == '/'
+														|| pathStr.charAt(beforeIndex) == '\\');
+											},
+											FileVisitOption.FOLLOW_LINKS)
 										.findFirst();
 								if (foundFile.isPresent() && !isCanceled() && !isCanceled()) {
 									SwingUtilities.invokeLater(() -> openSurveyNotes(foundFile.get().toFile()));
@@ -2715,7 +2841,8 @@ public class BreakoutMainView {
 				}
 				openSurveyNotes(file);
 			}
-		} catch (Exception e1) {
+		}
+		catch (Exception e1) {
 			logger.log(Level.SEVERE, "Failed to open survey notes", e1);
 		}
 	}
@@ -2735,22 +2862,27 @@ public class BreakoutMainView {
 		float[] origin = new float[3];
 		float[] direction = new float[3];
 		renderer
-				.getViewState()
-				.pickXform()
-				.xform(e.getX(), e.getComponent().getHeight() - e.getY(), e.getComponent().getWidth(),
-						e.getComponent().getHeight(), origin, direction);
+			.getViewState()
+			.pickXform()
+			.xform(
+				e.getX(),
+				e.getComponent().getHeight() - e.getY(),
+				e.getComponent().getWidth(),
+				e.getComponent().getHeight(),
+				origin,
+				direction);
 		renderer.getViewState().pickXform().exportViewVolume(hull, e, 10);
 
 		if (model3d != null) {
 			List<PickResult<Shot3d>> pickResults = new ArrayList<>();
 			model3d.pickShots(hull, spc, pickResults);
-			
+
 			PickResult<Shot3d> best = null;
 
 			for (PickResult<Shot3d> result : pickResults) {
-				if (best == null || result.lateralDistance * best.distance < best.lateralDistance * result.distance
-						|| result.lateralDistance == 0 && best.lateralDistance == 0
-								&& result.distance < best.distance) {
+				if (best == null
+					|| result.lateralDistance * best.distance < best.lateralDistance * result.distance
+					|| result.lateralDistance == 0 && best.lateralDistance == 0 && result.distance < best.distance) {
 					best = result;
 				}
 			}
@@ -2869,19 +3001,23 @@ public class BreakoutMainView {
 		return loadModel(file, ProjectModel.defaultMapper, false);
 	}
 
-	private <S extends QSpec<S>> QObject<S> loadModel(File file, Bimapper<QObject<S>, Object> mapper,
-			boolean showError) {
+	private <S extends QSpec<S>> QObject<S>
+		loadModel(File file, Bimapper<QObject<S>, Object> mapper, boolean showError) {
 		try (Reader reader = new FileReader(file)) {
 			return mapper.unmap(new Gson().fromJson(reader, Object.class));
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to load model", ex);
 			if (showError) {
 				OnEDT.onEDT(new ExceptionRunnable() {
 					@Override
 					public void run() throws Exception {
-						JOptionPane.showMessageDialog(mainPanel,
+						JOptionPane
+							.showMessageDialog(
+								mainPanel,
 								"Failed to load settings: " + ex.getLocalizedMessage(),
-								"Error", JOptionPane.ERROR_MESSAGE);
+								"Error",
+								JOptionPane.ERROR_MESSAGE);
 					}
 				});
 			}
@@ -2924,14 +3060,10 @@ public class BreakoutMainView {
 		for (ShotKey key : shots) {
 			CalcShot shot = calcProject.shots.get(key);
 			if (shot != null) {
-				forFitting.add(new float[] {
-						(float) shot.fromStation.position[0],
-						(float) shot.fromStation.position[2]
-				});
-				forFitting.add(new float[] {
-						(float) shot.toStation.position[0],
-						(float) shot.toStation.position[2]
-				});
+				forFitting
+					.add(new float[]
+					{ (float) shot.fromStation.position[0], (float) shot.fromStation.position[2] });
+				forFitting.add(new float[] { (float) shot.toStation.position[0], (float) shot.toStation.position[2] });
 			}
 		}
 
@@ -2944,8 +3076,9 @@ public class BreakoutMainView {
 		double azimuth = Math.atan2(1, -fit[0]);
 
 		float[] right = new float[] { (float) Math.sin(azimuth), 0, (float) -Math.cos(azimuth) };
-		float[] forward = new float[] { (float) Math.sin(azimuth - Math.PI * 0.5), 0,
-				(float) -Math.cos(azimuth - Math.PI * 0.5) };
+		float[] forward =
+			new float[]
+			{ (float) Math.sin(azimuth - Math.PI * 0.5), 0, (float) -Math.cos(azimuth - Math.PI * 0.5) };
 
 		if (Vecmath.dot3(renderer.getViewState().inverseViewMatrix(), 8, forward, 0) > 0) {
 			Vecmath.negate3(right);
@@ -2974,8 +3107,8 @@ public class BreakoutMainView {
 	public void saveProject() {
 		Path file = getCurrentProjectFile();
 		if (file == null) {
-			saveProjectAsAction.actionPerformed(
-					new ActionEvent(saveProjectAsAction, ActionEvent.ACTION_PERFORMED, "saveProjectAs"));
+			saveProjectAsAction
+				.actionPerformed(new ActionEvent(saveProjectAsAction, ActionEvent.ACTION_PERFORMED, "saveProjectAs"));
 			return;
 		}
 		saveProjectToFile(getCurrentProjectFile());
@@ -2994,8 +3127,8 @@ public class BreakoutMainView {
 				return;
 			}
 
-			try (Writer out = new OutputStreamWriter(
-					new RecoverableFileOutputStream(projectFile.toFile(), fileRecoveryConfig))) {
+			try (Writer out =
+				new OutputStreamWriter(new RecoverableFileOutputStream(projectFile.toFile(), fileRecoveryConfig))) {
 				if (!Files.exists(projectFile.getParent())) {
 					projectFile.getParent().toFile().mkdirs();
 				}
@@ -3003,11 +3136,11 @@ public class BreakoutMainView {
 				exporter.export(surveyModel);
 				JsonObject json = exporter.getRoot();
 				Gson gson = new Gson();
-				json.add("breakout", gson.toJsonTree(
-						ProjectModel.defaultMapper.map(projectModel), Object.class));
+				json.add("breakout", gson.toJsonTree(ProjectModel.defaultMapper.map(projectModel), Object.class));
 				gson.toJson(json, out);
 				getProjectModel().set(ProjectModel.hasUnsavedChanges, false);
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				logger.log(Level.SEVERE, "Failed to save project", ex);
 			}
 		});
@@ -3067,9 +3200,9 @@ public class BreakoutMainView {
 				settingsDrawer.getFitParamColorationAxisButton().doClick();
 
 				float[] viewXform = Vecmath.newMat4f();
-				float[] right = {1, 0, 0};
-				float[] up = {0, 0, -1};
-				float[] endLocation = {0, 0, 0};
+				float[] right = { 1, 0, 0 };
+				float[] up = { 0, 0, -1 };
+				float[] endLocation = { 0, 0, 0 };
 
 				if (model3d != null) {
 					Vecmath.viewFrom(right, up, endLocation, viewXform);
@@ -3100,5 +3233,18 @@ public class BreakoutMainView {
 				autoDrawable.display();
 			});
 		});
+	}
+
+	public File getFileChooserDirectory(QSpec.Attribute<File> projectAttribute) {
+		File dir = getProjectModel().get(projectAttribute);
+		if (dir != null)
+			return dir;
+		dir = getRootModel().get(RootModel.currentProjectFileChooserDirectory);
+		if (dir != null)
+			return dir;
+		Path file = getRootModel().get(RootModel.currentProjectFile);
+		if (file != null)
+			return file.getParent().toFile();
+		return new File(System.getProperty("user.home"));
 	}
 }

@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.io.File;
 
 import org.andork.awt.layout.DrawerModel;
-import org.andork.func.Bimapper;
 import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
@@ -49,103 +48,63 @@ import org.breakout.CameraView;
 import com.andork.plot.LinearAxisConversion;
 
 public final class ProjectModel extends QSpec<ProjectModel> {
-	public static final Attribute<CameraView> cameraView = newAttribute(
-			CameraView.class,
-			"cameraView");
-	public static final Attribute<Projection> projCalculator = newAttribute(
-			Projection.class,
-			"projCalculator");
-	public static final Attribute<float[]> viewXform = newAttribute(
-			float[].class,
-			"viewXform");
-	public static final Attribute<LinearAxisConversion> distRange = newAttribute(
-			LinearAxisConversion.class,
-			"distRange");
-	public static final Attribute<ColorParam> colorParam = newAttribute(
-			ColorParam.class,
-			"colorParam");
-	public static final Attribute<QMap<ColorParam, LinearAxisConversion, ?>> paramRanges = newAttribute(
-			QMap.class,
-			"savedParamRanges");
-	public static final Attribute<LinearAxisConversion> highlightRange = newAttribute(
-			LinearAxisConversion.class,
-			"highlightRange");
-	public static final Attribute<HighlightMode> highlightMode = newAttribute(
-			HighlightMode.class,
-			"highlightMode");
-	public static final Attribute<QObject<DrawerModel>> settingsDrawer = newAttribute(
-			DrawerModel.instance,
-			"settingsDrawer");
-	public static final Attribute<QObject<DrawerModel>> surveyDrawer = newAttribute(
-			DrawerModel.instance,
-			"surveyDrawer");
-	public static final Attribute<QObject<DrawerModel>> miniSurveyDrawer = newAttribute(
-			DrawerModel.instance,
-			"miniSurveyDrawer");
-	public static final Attribute<QObject<DrawerModel>> taskListDrawer = newAttribute(
-			DrawerModel.instance,
-			"taskListDrawer");
-	public static final Attribute<QObject<JoglExportImageDialogModel>> exportImageDialogModel = newAttribute(
-			JoglExportImageDialogModel.instance,
-			"exportImageDialogModel");
-	public static final Attribute<Float> stationLabelDensity = newAttribute(
-			Float.class,
-			"stationLabelDensity");
-	public static final Attribute<Float> stationLabelFontSize = newAttribute(
-			Float.class,
-			"stationLabelFontSize");
-	public static final Attribute<Color> stationLabelColor = newAttribute(
-			Color.class,
-			"stationLabelColor");
-	public static final Attribute<Color> backgroundColor = newAttribute(
-			Color.class,
-			"backgroundColor");
-	public static final Attribute<Float> centerlineDistance = newAttribute(
-			Float.class,
-			"centerlineDistance");
-	public static final Attribute<Color> centerlineColor = newAttribute(
-			Color.class,
-			"centerlineColor");
-	public static final Attribute<Float> ambientLight = newAttribute(
-			Float.class,
-			"ambientLight");
-	public static final Attribute<float[]> depthAxis = newAttribute(
-			float[].class,
-			"depthAxis");
-	public static final Attribute<QArrayList<File>> surveyScanPaths = newAttribute(
-			QArrayList.class,
-			"surveyScanPaths");
-	public static final Attribute<Boolean> hasUnsavedChanges = newAttribute(
-			Boolean.class,
-			"hasUnsavedChanges");
-	public static final Attribute<Unit<Length>> displayLengthUnit = newAttribute(
-			Unit.class,
-			"displayLengthUnit");
-	public static final Attribute<Unit<Angle>> displayAngleUnit = newAttribute(
-			Unit.class,
-			"displayAngleUnit");
-	public static final Attribute<Boolean> showLeadLabels = newAttribute(
-			Boolean.class,
-			"showLeadLabels");
-	public static final Attribute<Boolean> showTerrain = newAttribute(
-			Boolean.class,
-			"showTerrain");
-	public static final Attribute<Clip3f> clip = newAttribute(
-			Clip3f.class,
-			"clip");
+	public static final Attribute<CameraView> cameraView = newAttribute(CameraView.class, "cameraView");
+	public static final Attribute<Projection> projCalculator = newAttribute(Projection.class, "projCalculator");
+	public static final Attribute<float[]> viewXform = newAttribute(float[].class, "viewXform");
+	public static final Attribute<LinearAxisConversion> distRange =
+		newAttribute(LinearAxisConversion.class, "distRange");
+	public static final Attribute<ColorParam> colorParam = newAttribute(ColorParam.class, "colorParam");
+	public static final Attribute<QMap<ColorParam, LinearAxisConversion, ?>> paramRanges =
+		newAttribute(QMap.class, "savedParamRanges");
+	public static final Attribute<LinearAxisConversion> highlightRange =
+		newAttribute(LinearAxisConversion.class, "highlightRange");
+	public static final Attribute<HighlightMode> highlightMode = newAttribute(HighlightMode.class, "highlightMode");
+	public static final Attribute<QObject<DrawerModel>> settingsDrawer =
+		newAttribute(DrawerModel.instance, "settingsDrawer");
+	public static final Attribute<QObject<DrawerModel>> surveyDrawer =
+		newAttribute(DrawerModel.instance, "surveyDrawer");
+	public static final Attribute<QObject<DrawerModel>> miniSurveyDrawer =
+		newAttribute(DrawerModel.instance, "miniSurveyDrawer");
+	public static final Attribute<QObject<DrawerModel>> taskListDrawer =
+		newAttribute(DrawerModel.instance, "taskListDrawer");
+	public static final Attribute<QObject<JoglExportImageDialogModel>> exportImageDialogModel =
+		newAttribute(JoglExportImageDialogModel.instance, "exportImageDialogModel");
+	public static final Attribute<Float> stationLabelDensity = newAttribute(Float.class, "stationLabelDensity");
+	public static final Attribute<Float> stationLabelFontSize = newAttribute(Float.class, "stationLabelFontSize");
+	public static final Attribute<Color> stationLabelColor = newAttribute(Color.class, "stationLabelColor");
+	public static final Attribute<Color> backgroundColor = newAttribute(Color.class, "backgroundColor");
+	public static final Attribute<Float> centerlineDistance = newAttribute(Float.class, "centerlineDistance");
+	public static final Attribute<Color> centerlineColor = newAttribute(Color.class, "centerlineColor");
+	public static final Attribute<Float> ambientLight = newAttribute(Float.class, "ambientLight");
+	public static final Attribute<float[]> depthAxis = newAttribute(float[].class, "depthAxis");
+	public static final Attribute<QArrayList<File>> surveyScanPaths = newAttribute(QArrayList.class, "surveyScanPaths");
+	public static final Attribute<Boolean> hasUnsavedChanges = newAttribute(Boolean.class, "hasUnsavedChanges");
+	public static final Attribute<Unit<Length>> displayLengthUnit = newAttribute(Unit.class, "displayLengthUnit");
+	public static final Attribute<Unit<Angle>> displayAngleUnit = newAttribute(Unit.class, "displayAngleUnit");
+	public static final Attribute<Boolean> showLeadLabels = newAttribute(Boolean.class, "showLeadLabels");
+	public static final Attribute<Boolean> showTerrain = newAttribute(Boolean.class, "showTerrain");
+	public static final Attribute<Clip3f> clip = newAttribute(Clip3f.class, "clip");
+	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
+	public static final Attribute<File> wallsImportDirectory = newAttribute(File.class, "wallsImportDirectory");
+	public static final Attribute<File> linkSurveyNotesDirectory = newAttribute(File.class, "linkSurveyNotesDirectory");
+	public static final Attribute<File> importLeadsDirectory = newAttribute(File.class, "importLeadsDirectory");
 
 	public static final ProjectModel instance = new ProjectModel();
 
-	public static final Bimapper<QObject<ProjectModel>, Object> defaultMapper;
+	public static final QObjectMapBimapper<ProjectModel> defaultMapper;
+	public static final QObjectMapBimapper<ProjectModel> swapMapper;
 
 	static {
-		defaultMapper = new QObjectMapBimapper<>(instance)
+		swapMapper =
+			new QObjectMapBimapper<>(instance)
 				.map(projCalculator, ProjectionCalculatorBimapper.instance)
 				.map(distRange, LinearAxisConversionMapBimapper.instance)
 				.map(
-						paramRanges,
-						QMapBimapper.newInstance(EnumBimapper.newInstance(ColorParam.class),
-								LinearAxisConversionMapBimapper.instance))
+					paramRanges,
+					QMapBimapper
+						.newInstance(
+							EnumBimapper.newInstance(ColorParam.class),
+							LinearAxisConversionMapBimapper.instance))
 				.map(highlightRange, LinearAxisConversionMapBimapper.instance)
 				.map(highlightMode, EnumBimapper.newInstance(HighlightMode.class))
 				.map(settingsDrawer, DrawerModel.defaultMapper)
@@ -156,11 +115,25 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(backgroundColor, Color2HexStringBimapper.instance)
 				.map(stationLabelColor, Color2HexStringBimapper.instance)
 				.map(centerlineColor, Color2HexStringBimapper.instance)
-				.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance))
 				.map(displayLengthUnit, Unit2StringBimapper.length)
 				.map(displayAngleUnit, Unit2StringBimapper.angle)
 				.map(clip, Clip3fBimapper.instance)
 				.exclude(hasUnsavedChanges);
+
+		defaultMapper =
+			new QObjectMapBimapper<>(swapMapper)
+				.exclude(surveyScanPaths)
+				.exclude(compassImportDirectory)
+				.exclude(wallsImportDirectory)
+				.exclude(linkSurveyNotesDirectory)
+				.exclude(importLeadsDirectory);
+
+		swapMapper
+			.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance))
+			.map(compassImportDirectory, FileStringBimapper.instance)
+			.map(wallsImportDirectory, FileStringBimapper.instance)
+			.map(linkSurveyNotesDirectory, FileStringBimapper.instance)
+			.map(importLeadsDirectory, FileStringBimapper.instance);
 	}
 
 	private ProjectModel() {
@@ -205,8 +178,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 			projectModel.set(ProjectModel.colorParam, ColorParam.DEPTH);
 		}
 		if (projectModel.get(ProjectModel.paramRanges) == null) {
-			projectModel
-					.set(ProjectModel.paramRanges, QLinkedHashMap.<ColorParam, LinearAxisConversion> newInstance());
+			projectModel.set(ProjectModel.paramRanges, QLinkedHashMap.<ColorParam, LinearAxisConversion>newInstance());
 		}
 		QMap<ColorParam, LinearAxisConversion, ?> paramRanges = projectModel.get(ProjectModel.paramRanges);
 		for (ColorParam colorParam : ColorParam.values()) {
@@ -245,7 +217,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 			projectModel.set(ProjectModel.showTerrain, false);
 		}
 		if (projectModel.get(ProjectModel.clip) == null) {
-			projectModel.set(ProjectModel.clip, new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
+			projectModel
+				.set(ProjectModel.clip, new Clip3f(new float[]
+				{ 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
 		}
 	}
 }
