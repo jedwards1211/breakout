@@ -38,8 +38,6 @@ public class ImportCompassAction extends AbstractAction {
 
 	BreakoutMainView mainView;
 
-	JFileChooser fileChooser;
-
 	public ImportCompassAction(final BreakoutMainView mainView) {
 		super();
 		this.mainView = mainView;
@@ -50,20 +48,19 @@ public class ImportCompassAction extends AbstractAction {
 				Localizer localizer = mainView.getI18n().forClass(ImportCompassAction.this.getClass());
 				localizer.setName(ImportCompassAction.this, "name");
 
-				fileChooser = new JFileChooser();
-				fileChooser.setMultiSelectionEnabled(true);
-				fileChooser.setAcceptAllFileFilterUsed(true);
-				FileFilter datFilter =
-					new FileNameExtensionFilter("Compass Files (*.mak, *.dat, *.plt)", "mak", "dat", "plt");
-				fileChooser.addChoosableFileFilter(datFilter);
-				fileChooser.setFileFilter(datFilter);
 			}
 		};
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		fileChooser.setCurrentDirectory(mainView.getFileChooserDirectory(ProjectModel.compassImportDirectory));
+
+		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.compassImportDirectory);
+		fileChooser.setMultiSelectionEnabled(true);
+		fileChooser.setAcceptAllFileFilterUsed(true);
+		FileFilter datFilter = new FileNameExtensionFilter("Compass Files (*.mak, *.dat, *.plt)", "mak", "dat", "plt");
+		fileChooser.addChoosableFileFilter(datFilter);
+		fileChooser.setFileFilter(datFilter);
 
 		int choice = fileChooser.showOpenDialog(mainView.getMainPanel());
 

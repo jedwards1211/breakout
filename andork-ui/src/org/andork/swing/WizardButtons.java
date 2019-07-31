@@ -17,9 +17,9 @@ public class WizardButtons extends JComponent {
 
 	public WizardButtons(I18n i18n) {
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-		
+
 		Localizer localizer = i18n.forClass(WizardButtons.class);
-		
+
 		backButton = new JButton();
 		localizer.setText(backButton, "backButton.text");
 		nextButton = new JButton();
@@ -28,15 +28,15 @@ public class WizardButtons extends JComponent {
 		localizer.setText(okButton, "okButton.text");
 		cancelButton = new JButton();
 		localizer.setText(cancelButton, "cancelButton.text");
-		
+
 		add(backButton);
 		add(Box.createHorizontalStrut(5));
 		add(Box.createHorizontalGlue());
 		add(nextButton);
 		add(Box.createHorizontalStrut(5));
-		add(okButton);
-		add(Box.createHorizontalStrut(5));
 		add(cancelButton);
+		add(Box.createHorizontalStrut(5));
+		add(okButton);
 	}
 
 }

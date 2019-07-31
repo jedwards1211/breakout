@@ -52,20 +52,18 @@ public class ImportWallsAction extends AbstractAction {
 				Localizer localizer = mainView.getI18n().forClass(ImportWallsAction.this.getClass());
 				localizer.setName(ImportWallsAction.this, "name");
 
-				fileChooser = new JFileChooser();
-				fileChooser.setMultiSelectionEnabled(true);
-				fileChooser.setAcceptAllFileFilterUsed(true);
-				FileFilter datFilter =
-					new FileNameExtensionFilter("Walls Files (*.srv, *.wpj, *.lst)", "srv", "wpj", "lst");
-				fileChooser.addChoosableFileFilter(datFilter);
-				fileChooser.setFileFilter(datFilter);
 			}
 		};
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		fileChooser.setCurrentDirectory(mainView.getFileChooserDirectory(ProjectModel.wallsImportDirectory));
+		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.wallsImportDirectory);
+		fileChooser.setMultiSelectionEnabled(true);
+		fileChooser.setAcceptAllFileFilterUsed(true);
+		FileFilter datFilter = new FileNameExtensionFilter("Walls Files (*.srv, *.wpj, *.lst)", "srv", "wpj", "lst");
+		fileChooser.addChoosableFileFilter(datFilter);
+		fileChooser.setFileFilter(datFilter);
 
 		int choice = fileChooser.showOpenDialog(mainView.getMainPanel());
 

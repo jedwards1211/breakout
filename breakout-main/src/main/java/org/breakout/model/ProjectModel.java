@@ -88,14 +88,14 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<File> wallsImportDirectory = newAttribute(File.class, "wallsImportDirectory");
 	public static final Attribute<File> linkSurveyNotesDirectory = newAttribute(File.class, "linkSurveyNotesDirectory");
 	public static final Attribute<File> importLeadsDirectory = newAttribute(File.class, "importLeadsDirectory");
+	public static final Attribute<File> exportSTLDirectory = newAttribute(File.class, "exportSTLDirectory");
 
 	public static final ProjectModel instance = new ProjectModel();
 
 	public static final QObjectMapBimapper<ProjectModel> defaultMapper;
-	public static final QObjectMapBimapper<ProjectModel> swapMapper;
 
 	static {
-		swapMapper =
+		defaultMapper =
 			new QObjectMapBimapper<>(instance)
 				.map(projCalculator, ProjectionCalculatorBimapper.instance)
 				.map(distRange, LinearAxisConversionMapBimapper.instance)
@@ -118,22 +118,13 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(displayLengthUnit, Unit2StringBimapper.length)
 				.map(displayAngleUnit, Unit2StringBimapper.angle)
 				.map(clip, Clip3fBimapper.instance)
+				.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance))
+				.map(compassImportDirectory, FileStringBimapper.instance)
+				.map(wallsImportDirectory, FileStringBimapper.instance)
+				.map(linkSurveyNotesDirectory, FileStringBimapper.instance)
+				.map(importLeadsDirectory, FileStringBimapper.instance)
+				.map(exportSTLDirectory, FileStringBimapper.instance)
 				.exclude(hasUnsavedChanges);
-
-		defaultMapper =
-			new QObjectMapBimapper<>(swapMapper)
-				.exclude(surveyScanPaths)
-				.exclude(compassImportDirectory)
-				.exclude(wallsImportDirectory)
-				.exclude(linkSurveyNotesDirectory)
-				.exclude(importLeadsDirectory);
-
-		swapMapper
-			.map(surveyScanPaths, QArrayListBimapper.newInstance(FileStringBimapper.instance))
-			.map(compassImportDirectory, FileStringBimapper.instance)
-			.map(wallsImportDirectory, FileStringBimapper.instance)
-			.map(linkSurveyNotesDirectory, FileStringBimapper.instance)
-			.map(importLeadsDirectory, FileStringBimapper.instance);
 	}
 
 	private ProjectModel() {

@@ -5,7 +5,6 @@ import static org.andork.util.StringUtils.isNullOrEmpty;
 
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -21,7 +20,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.DefaultListCellRenderer;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -43,7 +41,6 @@ import org.andork.swing.FromEDT;
 import org.andork.swing.JOptionPaneBuilder;
 import org.andork.swing.OnEDT;
 import org.andork.swing.WizardPanel;
-import org.andork.swing.WizardPanel.Customization;
 import org.andork.swing.table.BetterJTable;
 import org.andork.swing.table.ListTableColumn;
 import org.andork.swing.table.ListTableModel;
@@ -223,8 +220,7 @@ public class ImportLeadsTask extends Task<Void> {
 			cave = "";
 		}
 
-		JFileChooser fileChooser =
-			new JFileChooser(mainView.getFileChooserDirectory(ProjectModel.importLeadsDirectory));
+		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.importLeadsDirectory);
 		fileChooser.setControlButtonsAreShown(false);
 		fileChooser.setMultiSelectionEnabled(true);
 		FileFilter csvFilter = new FileNameExtensionFilter("Comma-separated values (*.csv)", "csv");
@@ -235,25 +231,14 @@ public class ImportLeadsTask extends Task<Void> {
 
 		int choice =
 			wizardPanel
-				.showDialog(mainView.getMainPanel(), localizer.getString("optionsDialog.title"), new Customization() {
-
-					@Override
-					public void customize(JDialog dialog, ActionListener okListener, ActionListener cancelListener) {
-						fileChooser.addActionListener(e -> {
-							if (JFileChooser.APPROVE_SELECTION.equals(e.getActionCommand())) {
-								okListener.actionPerformed(e);
-							}
-							else if (JFileChooser.CANCEL_SELECTION.equals(e.getActionCommand())) {
-								cancelListener.actionPerformed(e);
-							}
-						});
-					}
-
-				});
+				.showDialog(
+					mainView.getMainPanel(),
+					localizer.getString("optionsDialog.title"),
+					WizardPanel.linkFileChooser(fileChooser));
 		if (choice != JOptionPane.OK_OPTION)
 			return;
 
-		mainView.getProjectModel().set(ProjectModel.importLeadsDirectory, fileChooser.getCurrentDirectory());
+		mainView.saveFileChooserDirectory(fileChooser, ProjectModel.importLeadsDirectory);
 
 		csvFiles = fileChooser.getSelectedFiles();
 	}

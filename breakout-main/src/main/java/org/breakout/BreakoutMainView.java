@@ -85,6 +85,7 @@ import java.util.stream.Stream;
 import javax.swing.CellEditor;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -807,7 +808,7 @@ public class BreakoutMainView {
 
 			Path swapFile = getSwapFile(newProjectFile);
 			if (Files.exists(swapFile)) {
-				projectModel = loadModel(swapFile.toFile(), ProjectModel.swapMapper, false);
+				projectModel = loadProjectModel(swapFile.toFile());
 			}
 
 			if (projectModel == null) {
@@ -1372,7 +1373,7 @@ public class BreakoutMainView {
 	final DebouncedRunnable saveSwap =
 		Lodash
 			.debounce(
-				() -> saveModel(getProjectModel(), getCurrentSwapFile(), ProjectModel.swapMapper),
+				() -> saveModel(getProjectModel(), getCurrentSwapFile(), ProjectModel.defaultMapper),
 				1000,
 				new DebounceOptions<Void>().executor(ioService));
 
@@ -3235,16 +3236,45 @@ public class BreakoutMainView {
 		});
 	}
 
-	public File getFileChooserDirectory(QSpec.Attribute<File> projectAttribute) {
+	public JFileChooser fileChooser(QSpec.Attribute<File> projectAttribute) {
+		final JFileChooser fileChooser = new JFileChooser(getFileChooserDirectory(projectAttribute));
+		fileChooser.addActionListener(e -> {
+			if (JFileChooser.APPROVE_SELECTION.equals(e.getActionCommand())) {
+				saveFileChooserDirectory(fileChooser, projectAttribute);
+			}
+		});
+		return fileChooser;
+	}
+
+	public void saveFileChooserDirectory(JFileChooser fileChooser, QSpec.Attribute<File> projectAttribute) {
+		Path projectFile = getRootModel().get(RootModel.currentProjectFile);
+		File result = fileChooser.getCurrentDirectory();
+		if (projectFile != null) {
+			result = projectFile.getParent().relativize(result.toPath()).toFile();
+			if (!result.toString().startsWith("."))
+				result = new File("./" + result);
+		}
+		getProjectModel().set(projectAttribute, result);
+	}
+
+	private Path getProjectDirectory() {
+		Path projectFile = getRootModel().get(RootModel.currentProjectFile);
+		File projectFileChooserDir = getRootModel().get(RootModel.currentProjectFileChooserDirectory);
+		if (projectFile != null)
+			return projectFile.getParent();
+		if (projectFileChooserDir != null)
+			return projectFileChooserDir.toPath();
+		return Paths.get(System.getProperty("user.home"));
+	}
+
+	private File getFileChooserDirectory(QSpec.Attribute<File> projectAttribute) {
+		Path projectDir = getProjectDirectory();
 		File dir = getProjectModel().get(projectAttribute);
-		if (dir != null)
-			return dir;
-		dir = getRootModel().get(RootModel.currentProjectFileChooserDirectory);
-		if (dir != null)
-			return dir;
-		Path file = getRootModel().get(RootModel.currentProjectFile);
-		if (file != null)
-			return file.getParent().toFile();
-		return new File(System.getProperty("user.home"));
+		if (dir != null) {
+			Path result = projectDir.resolve(dir.toPath());
+			if (Files.isDirectory(result))
+				return result.toFile();
+		}
+		return projectDir.toFile();
 	}
 }

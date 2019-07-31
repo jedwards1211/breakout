@@ -44,7 +44,7 @@ import org.andork.swing.async.SelfReportingTask;
 import org.andork.task.Task;
 import org.breakout.io.stl.AsciiStlExporter;
 import org.breakout.io.stl.BinaryStlExporter;
-import org.breakout.model.RootModel;
+import org.breakout.model.ProjectModel;
 import org.breakout.model.calc.CalcProject;
 
 public class ExportStlAction extends AbstractAction {
@@ -58,21 +58,20 @@ public class ExportStlAction extends AbstractAction {
 	BreakoutMainView mainView;
 	Mode mode;
 
-	JFileChooser outputFileChooser;
-	
 	public static enum Mode {
 		Binary {
 			@Override
 			public void write(CalcProject project, OutputStream out, Task<?> task) throws IOException {
 				BinaryStlExporter.write(project, out, task);
 			}
-		}, ASCII {
+		},
+		ASCII {
 			@Override
 			public void write(CalcProject project, OutputStream out, Task<?> task) throws IOException {
 				AsciiStlExporter.write(project, out, task);
 			}
 		};
-		
+
 		public abstract void write(CalcProject project, OutputStream out, Task<?> task) throws IOException;
 	}
 
@@ -85,15 +84,11 @@ public class ExportStlAction extends AbstractAction {
 			@Override
 			public void run() throws Throwable {
 				Localizer localizer = mainView.getI18n().forClass(ExportStlAction.this.getClass());
-				localizer.register(ExportStlAction.this, (Localizer l, Action action) -> 
-					action.putValue(Action.NAME, 
-						l.getFormattedString("name", mode.name())));
-
-				outputFileChooser = new JFileChooser();
-				outputFileChooser.setAcceptAllFileFilterUsed(false);
-				outputFileChooser.addChoosableFileFilter(new FileNameExtensionFilter(
-						"Stereolithograhy (*.stl)", "stl"));
-				outputFileChooser.setDialogTitle(localizer.getFormattedString("outputFileChooser.dialogTitle", mode.name()));
+				localizer
+					.register(
+						ExportStlAction.this,
+						(Localizer l, Action action) -> action
+							.putValue(Action.NAME, l.getFormattedString("name", mode.name())));
 			}
 		};
 	}
@@ -103,8 +98,10 @@ public class ExportStlAction extends AbstractAction {
 		I18n i18n = mainView.getI18n();
 		Localizer localizer = i18n.forClass(getClass());
 
-		File directory = RootModel.getCurrentProjectFileChooserDirectory(mainView.getRootModel());
-		outputFileChooser.setCurrentDirectory(directory);
+		JFileChooser outputFileChooser = mainView.fileChooser(ProjectModel.exportSTLDirectory);
+		outputFileChooser.setAcceptAllFileFilterUsed(false);
+		outputFileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Stereolithograhy (*.stl)", "stl"));
+		outputFileChooser.setDialogTitle(localizer.getFormattedString("outputFileChooser.dialogTitle", mode.name()));
 
 		File outputFile = null;
 
@@ -117,11 +114,16 @@ public class ExportStlAction extends AbstractAction {
 			}
 
 			if (outputFile.exists()) {
-				choice = JOptionPane.showConfirmDialog(mainView.getMainPanel(),
-						new MultilineLabelHolder(localizer.getFormattedString("outputFileAlreadyExistsDialog.message",
-								outputFile.getName())).preferredWidth(400),
-						localizer.getFormattedString("outputFileAlreadyExistsDialog.title", mode.name()),
-						JOptionPane.YES_NO_CANCEL_OPTION);
+				choice =
+					JOptionPane
+						.showConfirmDialog(
+							mainView.getMainPanel(),
+							new MultilineLabelHolder(
+								localizer
+									.getFormattedString("outputFileAlreadyExistsDialog.message", outputFile.getName()))
+										.preferredWidth(400),
+							localizer.getFormattedString("outputFileAlreadyExistsDialog.title", mode.name()),
+							JOptionPane.YES_NO_CANCEL_OPTION);
 				switch (choice) {
 				case JOptionPane.NO_OPTION:
 					outputFile = null;
@@ -131,7 +133,7 @@ public class ExportStlAction extends AbstractAction {
 				}
 			}
 		}
-		
+
 		final File finalOutputFile = outputFile;
 		mainView.ioTaskService.submit(new SelfReportingTask<Void>(mainView.mainPanel) {
 			@Override
@@ -139,18 +141,19 @@ public class ExportStlAction extends AbstractAction {
 			protected Void workDuringDialog() throws Exception {
 				setStatus(localizer.getFormattedString("exportingToStatus", finalOutputFile));
 				try (OutputStream out = new FileOutputStream(finalOutputFile)) {
-					mode.write(
-						mainView.calcProject,
-						out,
-						this);
-				} catch (IOException ex) {
+					mode.write(mainView.calcProject, out, this);
+				}
+				catch (IOException ex) {
 					String message = localizer.getFormattedString("exportFailedMessage", finalOutputFile.toString());
 					logger.log(Level.SEVERE, message, ex);
 
 					OnEDT.onEDT(() -> {
-						JOptionPane.showMessageDialog(mainView.getMainPanel(),
+						JOptionPane
+							.showMessageDialog(
+								mainView.getMainPanel(),
 								message + ": " + ex.getLocalizedMessage(),
-								"Error", JOptionPane.ERROR_MESSAGE);
+								"Error",
+								JOptionPane.ERROR_MESSAGE);
 					});
 				}
 				return null;

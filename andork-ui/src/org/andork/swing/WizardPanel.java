@@ -11,6 +11,7 @@ import java.awt.event.WindowEvent;
 
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
@@ -67,8 +68,10 @@ public class WizardPanel extends JComponent {
 		update();
 	}
 
+	@FunctionalInterface
 	public static interface Customization {
-		public void customize(JDialog dialog, ActionListener okListener, ActionListener cancelListener);
+		public void
+			customize(WizardPanel panel, JDialog dialog, ActionListener okListener, ActionListener cancelListener);
 	}
 
 	/**
@@ -79,7 +82,7 @@ public class WizardPanel extends JComponent {
 	 * @return JOptionPane.OK_OPTION if the user clicked okay, otherwise
 	 *         JOptionPane.CANCEL_OPTION.
 	 */
-	public int showDialog(Component parentComponent, String title, Customization customization) {
+	public int showDialog(Component parentComponent, String title, Customization... customizations) {
 		final JDialog dialog;
 
 		Window window = SwingUtilities.getWindowAncestor(parentComponent);
@@ -120,8 +123,8 @@ public class WizardPanel extends JComponent {
 				buttons.cancelButton.removeActionListener(cancelListener);
 			}
 		});
-		if (customization != null) {
-			customization.customize(dialog, okListener, cancelListener);
+		for (Customization customization : customizations) {
+			customization.customize(this, dialog, okListener, cancelListener);
 		}
 
 		dialog.setVisible(true);
@@ -129,7 +132,21 @@ public class WizardPanel extends JComponent {
 		return option.value;
 	}
 
-	public int showDialog(Component parentComponent, String title) {
-		return showDialog(parentComponent, title, null);
+	public static Customization linkFileChooser(JFileChooser fileChooser) {
+		return (panel, dialog, okListener, cancelListener) -> {
+			fileChooser.addActionListener(e -> {
+				if (JFileChooser.APPROVE_SELECTION.equals(e.getActionCommand())) {
+					if (panel.cardPanel.getCurrentCardIndex() < panel.cardPanel.getComponentCount() - 1) {
+						panel.next();
+					}
+					else {
+						okListener.actionPerformed(e);
+					}
+				}
+				else if (JFileChooser.CANCEL_SELECTION.equals(e.getActionCommand())) {
+					cancelListener.actionPerformed(e);
+				}
+			});
+		};
 	}
 }

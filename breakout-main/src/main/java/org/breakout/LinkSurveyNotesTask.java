@@ -347,8 +347,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		JLabel fileChooserLabel = new JLabel();
 		localizer.setText(fileChooserLabel, "optionsDialog.fileChooserLabel.text");
 
-		JFileChooser fileChooser =
-			new JFileChooser(mainView.getFileChooserDirectory(ProjectModel.linkSurveyNotesDirectory));
+		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.linkSurveyNotesDirectory);
 		fileChooser.setControlButtonsAreShown(false);
 		fileChooser.setMultiSelectionEnabled(false);
 		DirectoryFileFilter.install(fileChooser);
@@ -359,13 +358,17 @@ public class LinkSurveyNotesTask extends Task<Void> {
 
 		wizardPanel.addCard(w.getTarget());
 
-		int choice = wizardPanel.showDialog(mainView.getMainPanel(), localizer.getString("optionsDialog.title"));
+		int choice =
+			wizardPanel
+				.showDialog(
+					mainView.getMainPanel(),
+					localizer.getString("optionsDialog.title"),
+					WizardPanel.linkFileChooser(fileChooser));
 		if (choice != JOptionPane.OK_OPTION)
 			return;
 
 		searchDirectory = DirectoryFileFilter.getSelectedDirectory(fileChooser);
-
-		mainView.getProjectModel().set(ProjectModel.linkSurveyNotesDirectory, searchDirectory);
+		mainView.saveFileChooserDirectory(fileChooser, ProjectModel.linkSurveyNotesDirectory);
 	}
 
 	private List<SurveyRow> findSurveyNotes(Path directory, String caveName, Info info) throws Exception {
