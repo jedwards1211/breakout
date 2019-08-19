@@ -79,6 +79,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -1940,6 +1941,7 @@ public class BreakoutMainView {
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.clip, projectModelBinder));
 
 		menuBar = new JMenuBar();
+
 		JMenu fileMenu = new JMenu();
 		menuBar.add(fileMenu);
 
@@ -1980,6 +1982,13 @@ public class BreakoutMainView {
 
 		JMenuItem noRecentFilesMenuItem = new JMenuItem();
 		noRecentFilesMenuItem.setEnabled(false);
+
+		if (Pattern
+			.compile("microsoft|windows", Pattern.CASE_INSENSITIVE)
+			.matcher(System.getProperty("os.name"))
+			.matches()) {
+			hideCanvasWhileMenuOpen();
+		}
 
 		new BinderWrapper<QArrayList<Path>>() {
 			@Override
@@ -2242,6 +2251,21 @@ public class BreakoutMainView {
 		}
 		catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to get autoupdate properties", e);
+		}
+	}
+
+	void hideCanvasWhileMenuOpen() {
+		for (int i = 0; i < menuBar.getMenuCount(); i++) {
+			JMenu menu = menuBar.getMenu(i);
+			menu.getModel().addItemListener(e -> {
+				for (int j = 0; j < menuBar.getMenuCount(); j++) {
+					if (menuBar.getMenu(j).isSelected()) {
+						canvas.setVisible(false);
+						return;
+					}
+					canvas.setVisible(true);
+				}
+			});
 		}
 	}
 
