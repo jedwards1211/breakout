@@ -220,7 +220,7 @@ public class ImportLeadsTask extends Task<Void> {
 			cave = "";
 		}
 
-		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.importLeadsDirectory);
+		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.importLeadsDirectory, null);
 		fileChooser.setControlButtonsAreShown(false);
 		fileChooser.setMultiSelectionEnabled(true);
 		FileFilter csvFilter = new FileNameExtensionFilter("Comma-separated values (*.csv)", "csv");
@@ -238,7 +238,7 @@ public class ImportLeadsTask extends Task<Void> {
 		if (choice != JOptionPane.OK_OPTION)
 			return;
 
-		mainView.saveFileChooserDirectory(fileChooser, ProjectModel.importLeadsDirectory);
+		mainView.saveFileChooserDirectory(fileChooser, ProjectModel.importLeadsDirectory, null);
 
 		csvFiles = fileChooser.getSelectedFiles();
 	}

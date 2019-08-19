@@ -22,9 +22,11 @@ import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 
 import org.andork.compass.CompassParseError;
+import org.andork.compass.LrudAssociation;
 import org.andork.compass.plot.CompassPlotCommand;
 import org.andork.compass.plot.CompassPlotParser;
 import org.andork.compass.plot.DatumCommand;
+import org.andork.compass.plot.DrawOperation;
 import org.andork.compass.plot.DrawSurveyCommand;
 import org.andork.compass.plot.UtmZoneCommand;
 import org.andork.compass.project.CommentDirective;
@@ -47,10 +49,12 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
+import org.andork.util.StringUtils;
 import org.breakout.compass.CompassConverter;
 import org.breakout.importui.ImportError;
 import org.breakout.importui.ImportError.Severity;
 import org.breakout.importui.ImportResultsDialog;
+import org.breakout.model.ShotKey;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.raw.MutableSurveyRow;
 import org.breakout.model.raw.MutableSurveyTrip;
@@ -73,9 +77,11 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 			String s = p.toString().toLowerCase();
 			if (s.endsWith(".dat")) {
 				surveyFiles.add(p);
-			} else if (s.endsWith(".plt")) {
+			}
+			else if (s.endsWith(".plt")) {
 				plotFiles.add(p);
-			} else if (s.endsWith(".mak")) {
+			}
+			else if (s.endsWith(".mak")) {
 				projFiles.add(p);
 			}
 		}
@@ -98,11 +104,9 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 		double rawValue = Double.valueOf(feetMeasurement);
 		if (!Double.isFinite(rawValue))
 			return "";
-		return String.valueOf(
-				new UnitizedDouble<>(rawValue, Length.feet)
-						.doubleValue(row.getTrip().getDistanceUnit()));
+		return String.valueOf(new UnitizedDouble<>(rawValue, Length.feet).doubleValue(row.getTrip().getDistanceUnit()));
 	}
-	
+
 	class SurveyLocation {
 		final String datum;
 		final LocationDirective location;
@@ -112,21 +116,23 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 			this.datum = datum;
 			this.location = location;
 		}
-		
+
 		public SurveyLocation setDatum(String datum) {
-			if (Objects.equals(datum, this.datum)) return this;
+			if (Objects.equals(datum, this.datum))
+				return this;
 			return new SurveyLocation(datum, location);
 		}
-		
+
 		public SurveyLocation setLocation(LocationDirective location) {
-			if (Objects.equals(location, this.location)) return this;
+			if (Objects.equals(location, this.location))
+				return this;
 			return new SurveyLocation(datum, location);
 		}
 	}
-	
+
 	private static Map<String, String> datumMap = new HashMap<>();
 	private static Map<String, String> ellipsoidMap = new HashMap<>();
-	
+
 	static {
 		datumMap.put("North American 1983", "NAD83");
 		datumMap.put("North American 1927", "NAD27");
@@ -135,7 +141,7 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 		ellipsoidMap.put("North American 1927", "NAD27");
 		ellipsoidMap.put("WGS 1984", "WGS84");
 	}
-	
+
 	@Override
 	protected Void workDuringDialog() throws Exception {
 		List<SurveyRow> rows = new ArrayList<>();
@@ -145,6 +151,8 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 		final Map<Path, SurveyLocation> surveyLocations = new HashMap<>();
 		final Map<Path, SurveyTrip> surveyLocationTrips = new HashMap<>();
 		final Map<String, Path> stationToSurvey = new HashMap<>();
+		final Set<String> importedLrudStations = new HashSet<>();
+		final Set<ShotKey> importedShots = new HashSet<>();
 
 		logger.info("importing compass data...");
 
@@ -160,43 +168,44 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 					@Override
 					public void utmZone(UTMZoneDirective utmZone) {
 					}
-					
+
 					@Override
 					public void utmConvergence(UTMConvergenceDirective utmConvergence) {
 					}
-					
+
 					@Override
 					public void location(LocationDirective location) {
 						currentLocation = currentLocation.setLocation(location);
 					}
-					
+
 					@Override
 					public void flags(FlagsDirective flags) {
 						// TODO handle this
 					}
-					
+
 					@Override
 					public void file(Segment name, FileDirective surveyFile) {
 						Path surveyPath = file.getParent().resolve(Paths.get(surveyFile.file));
 						if (Files.notExists(surveyPath)) {
-							errors.add(new ImportError(
-									Severity.ERROR,
-									"Survey file doesn't exist: " + surveyFile.file,
-									name));
+							errors
+								.add(
+									new ImportError(
+										Severity.ERROR,
+										"Survey file doesn't exist: " + surveyFile.file,
+										name));
 							return;
 						}
 						surveyFiles.add(surveyPath);
 						surveyLocations.put(surveyPath, currentLocation);
-						SurveyTrip locationTrip = new MutableSurveyTrip()
-								.setDatum(currentLocation.datum != null
-									? datumMap.get(currentLocation.datum)
-									: null)
-								.setEllipsoid(currentLocation.datum != null
-									? ellipsoidMap.get(currentLocation.datum)
-									: null)
-								.setUtmZone(currentLocation.location != null
-									? String.valueOf(currentLocation.location.utmZone)
-									: null)
+						SurveyTrip locationTrip =
+							new MutableSurveyTrip()
+								.setDatum(currentLocation.datum != null ? datumMap.get(currentLocation.datum) : null)
+								.setEllipsoid(
+									currentLocation.datum != null ? ellipsoidMap.get(currentLocation.datum) : null)
+								.setUtmZone(
+									currentLocation.location != null
+										? String.valueOf(currentLocation.location.utmZone)
+										: null)
 								.setName(null)
 								.setDistanceUnit(Length.feet)
 								.setAngleUnit(Angle.degrees)
@@ -210,7 +219,8 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 						surveyLocationTrips.put(surveyPath, locationTrip);
 						if (surveyFile.linkStations != null) {
 							for (LinkStation station : surveyFile.linkStations) {
-								if (station.location == null) continue;
+								if (station.location == null)
+									continue;
 								MutableSurveyRow stationPositionRow = new MutableSurveyRow();
 								stationPositionRow.setTrip(locationTrip);
 								stationPositionRow.setFromStation(station.name);
@@ -220,17 +230,16 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 							}
 						}
 					}
-					
+
 					@Override
 					public void datum(DatumDirective datum) {
 						currentLocation = currentLocation.setDatum(datum.datum);
-						if (datum.datum != null && (
-								!datumMap.containsKey(datum.datum) ||
-								!ellipsoidMap.containsKey(datum.datum))) {
+						if (datum.datum != null
+							&& (!datumMap.containsKey(datum.datum) || !ellipsoidMap.containsKey(datum.datum))) {
 							errors.add(new ImportError(Severity.ERROR, "datum not supported: " + datum.datum, null));
 						}
 					}
-					
+
 					@Override
 					public void comment(CommentDirective comment) {
 					}
@@ -257,18 +266,20 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 					fileSubtask.setTotal(2);
 					List<CompassTrip> trips = parser.parseCompassSurveyData(file);
 					for (CompassTrip trip : trips) {
+						boolean lrudAtFrom = trip.getHeader().getLrudAssociation() == LrudAssociation.FROM;
 						for (CompassShot shot : trip.getShots()) {
+							importedShots
+								.add(new ShotKey(null, shot.getFromStationName(), null, shot.getToStationName()));
+							importedLrudStations.add(lrudAtFrom ? shot.getFromStationName() : shot.getToStationName());
 							stationToSurvey.put(shot.getFromStationName(), file);
 							stationToSurvey.put(shot.getToStationName(), file);
 						}
 					}
 					fileSubtask.increment();
-					fileSubtask.runSubtask(1,
-							subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
+					fileSubtask
+						.runSubtask(1, subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
 				});
 			}
-			newModel = new SurveyTableModel(rows);
-			newModel.setEditable(false);
 
 			for (Path file : finalPlotFiles) {
 				logger.info(() -> "importing compass data from " + file + "...");
@@ -277,74 +288,142 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 					fileSubtask.setTotal(2);
 					List<CompassPlotCommand> commands = plotParser.parsePlot(file);
 					fileSubtask.increment();
-					
+
 					fileSubtask.runSubtask(1, convertSubtask -> {
 						convertSubtask.setTotal(commands.size());
 
 						String datum = null;
 						Integer utmZone = null;
 						SurveyTrip locationTrip = null;
-						
+
+						DrawSurveyCommand prevDrawCommand = null;
+
 						for (CompassPlotCommand command : commands) {
 							if (command instanceof DatumCommand) {
 								datum = ((DatumCommand) command).getDatum();
 								locationTrip = null;
-							} else if (command instanceof UtmZoneCommand) {
+							}
+							else if (command instanceof UtmZoneCommand) {
 								utmZone = Integer.valueOf(((UtmZoneCommand) command).getUtmZone());
 								locationTrip = null;
-							} else if (command instanceof DrawSurveyCommand) {
+							}
+							else if (command instanceof DrawSurveyCommand) {
 								DrawSurveyCommand c = (DrawSurveyCommand) command;
 								if (falsy(c.getStationName())) {
 									continue;
 								}
-								if (locationTrip == null) {
-									if (datum != null && utmZone != null) {
-										locationTrip = new MutableSurveyTrip()
-											.setDatum(datum != null
-												? datumMap.get(datum)
-												: null)
-											.setEllipsoid(datum != null
-												? ellipsoidMap.get(datum)
-												: null)
-											.setUtmZone(String.valueOf(utmZone))
-											.setName(null)
-											.setDistanceUnit(Length.feet)
-											.setAngleUnit(Angle.degrees)
-											.setOverrideFrontAzimuthUnit(Angle.degrees)
-											.setOverrideBackAzimuthUnit(Angle.degrees)
-											.setOverrideFrontInclinationUnit(Angle.degrees)
-											.setOverrideBackInclinationUnit(Angle.degrees)
-											.setBackAzimuthsCorrected(true)
-											.setBackInclinationsCorrected(true)
-											.toImmutable();
-									}
-								}
 								SurveyTrip trip = null;
 								SurveyLocation location = null;
-								if (locationTrip != null) {
-									trip = locationTrip;
-								} else {
-									Path surveyFile = stationToSurvey.get(c.getStationName());
-									if (surveyFile != null) {
-										trip = surveyLocationTrips.get(surveyFile);
-										location = surveyLocations.get(surveyFile);
-									}
+								Path surveyFile = stationToSurvey.get(c.getStationName());
+								if (surveyFile != null) {
+									trip = surveyLocationTrips.get(surveyFile);
+									location = surveyLocations.get(surveyFile);
 								}
 								if (trip == null) {
-									convertSubtask.increment();
-									continue;
+									if (locationTrip == null) {
+										locationTrip =
+											new MutableSurveyTrip()
+												.setDatum(datum != null ? datumMap.get(datum) : null)
+												.setEllipsoid(datum != null ? ellipsoidMap.get(datum) : null)
+												.setUtmZone(utmZone != null ? String.valueOf(utmZone) : null)
+												.setName(null)
+												.setDistanceUnit(Length.feet)
+												.setAngleUnit(Angle.degrees)
+												.setOverrideFrontAzimuthUnit(Angle.degrees)
+												.setOverrideBackAzimuthUnit(Angle.degrees)
+												.setOverrideFrontInclinationUnit(Angle.degrees)
+												.setOverrideBackInclinationUnit(Angle.degrees)
+												.setBackAzimuthsCorrected(true)
+												.setBackInclinationsCorrected(true)
+												.toImmutable();
+									}
+									trip = locationTrip;
 								}
-								
+
+								if (prevDrawCommand != null) {
+									if (c.getOperation() == DrawOperation.MOVE_TO) {
+										if (importedLrudStations.add(prevDrawCommand.getStationName())) {
+											rows
+												.add(
+													new MutableSurveyRow()
+														.setTrip(trip)
+														.setFromStation(prevDrawCommand.getStationName())
+														.setLeft(StringUtils.valueOfOrNull(prevDrawCommand.getLeft()))
+														.setRight(StringUtils.valueOfOrNull(prevDrawCommand.getRight()))
+														.setUp(StringUtils.valueOfOrNull(prevDrawCommand.getUp()))
+														.setDown(StringUtils.valueOfOrNull(prevDrawCommand.getDown()))
+														.toImmutable());
+										}
+									}
+									else if (importedShots
+										.add(
+											new ShotKey(
+												null,
+												prevDrawCommand.getStationName(),
+												null,
+												c.getStationName()))) {
+
+										double dn =
+											c
+												.getLocation()
+												.getNorthing()
+												.subtract(prevDrawCommand.getLocation().getNorthing())
+												.doubleValue();
+										double de =
+											c
+												.getLocation()
+												.getEasting()
+												.subtract(prevDrawCommand.getLocation().getEasting())
+												.doubleValue();
+										double dv =
+											c
+												.getLocation()
+												.getVertical()
+												.subtract(prevDrawCommand.getLocation().getVertical())
+												.doubleValue();
+
+										double distance = Math.sqrt(dn * dn + de * de + dv * dv);
+										double dne = Math.sqrt(dn * dn + de * de);
+										double azimuth = Math.toDegrees(Math.atan2(de, dn));
+										if (azimuth < 0)
+											azimuth += 360;
+										double inclination = Math.toDegrees(Math.atan2(dv, dne));
+
+										importedLrudStations.add(prevDrawCommand.getStationName());
+										rows
+											.add(
+												new MutableSurveyRow()
+													.setTrip(trip)
+													.setFromStation(prevDrawCommand.getStationName())
+													.setToStation(c.getStationName())
+													.setDistance(String.valueOf(distance))
+													.setFrontAzimuth(String.valueOf(azimuth))
+													.setFrontInclination(String.valueOf(inclination))
+													.setLeft(StringUtils.valueOfOrNull(prevDrawCommand.getLeft()))
+													.setRight(StringUtils.valueOfOrNull(prevDrawCommand.getRight()))
+													.setUp(StringUtils.valueOfOrNull(prevDrawCommand.getUp()))
+													.setDown(StringUtils.valueOfOrNull(prevDrawCommand.getDown()))
+													.toImmutable());
+									}
+								}
+
+								prevDrawCommand = c;
+
 								BigDecimal northing = c.getLocation().getNorthing();
 								BigDecimal easting = c.getLocation().getEasting();
 								BigDecimal elevation = c.getLocation().getVertical();
 								if (location != null) {
 									Unit<Length> distUnit = trip.getDistanceUnit();
-									northing = northing.add(new BigDecimal(location.location.northing.doubleValue(distUnit)));
-									easting = easting.add(new BigDecimal(location.location.easting.doubleValue(distUnit)));
-									elevation = elevation.add(new BigDecimal(location.location.elevation.doubleValue(distUnit)));
+									northing =
+										northing.add(new BigDecimal(location.location.northing.doubleValue(distUnit)));
+									easting =
+										easting.add(new BigDecimal(location.location.easting.doubleValue(distUnit)));
+									elevation =
+										elevation
+											.add(new BigDecimal(location.location.elevation.doubleValue(distUnit)));
 								}
-								SurveyRow row = new MutableSurveyRow()
+								SurveyRow row =
+									new MutableSurveyRow()
 										.setTrip(trip)
 										.setFromStation(c.getStationName())
 										.setNorthing(toString(northing))
@@ -352,16 +431,19 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 										.setElevation(toString(elevation))
 										.toImmutable();
 								rows.add(row);
+
 							}
 							convertSubtask.increment();
 						}
 					});
 				});
 			}
+			newModel = new SurveyTableModel(rows);
+			newModel.setEditable(false);
 
 			OnEDT.onEDT(() -> {
-				ImportResultsDialog dialog = new ImportResultsDialog(ImportCompassTask.this.mainView.i18n,
-						"title.compass");
+				ImportResultsDialog dialog =
+					new ImportResultsDialog(ImportCompassTask.this.mainView.i18n, "title.compass");
 				for (CompassParseError error : parser.getErrors()) {
 					errors.add(new ImportError(error));
 				}
@@ -387,16 +469,21 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 				if (doImport) {
 					mainView.addSurveyRowsFrom(newModel);
 					logger.info(() -> "imported " + newModel.getRowCount() + " shots from compass data");
-				} else {
+				}
+				else {
 					logger.info("user canceled compass import");
 				}
 			});
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to import compass data", ex);
 			OnEDT.onEDT(() -> {
-				JOptionPane.showMessageDialog(ImportCompassTask.this.mainView.getMainPanel(),
+				JOptionPane
+					.showMessageDialog(
+						ImportCompassTask.this.mainView.getMainPanel(),
 						ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
-						"Failed to import compass data", JOptionPane.ERROR_MESSAGE);
+						"Failed to import compass data",
+						JOptionPane.ERROR_MESSAGE);
 			});
 		}
 

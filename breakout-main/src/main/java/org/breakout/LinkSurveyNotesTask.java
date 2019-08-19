@@ -347,7 +347,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 		JLabel fileChooserLabel = new JLabel();
 		localizer.setText(fileChooserLabel, "optionsDialog.fileChooserLabel.text");
 
-		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.linkSurveyNotesDirectory);
+		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.linkSurveyNotesDirectory, null);
 		fileChooser.setControlButtonsAreShown(false);
 		fileChooser.setMultiSelectionEnabled(false);
 		DirectoryFileFilter.install(fileChooser);
@@ -368,7 +368,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			return;
 
 		searchDirectory = DirectoryFileFilter.getSelectedDirectory(fileChooser);
-		mainView.saveFileChooserDirectory(fileChooser, ProjectModel.linkSurveyNotesDirectory);
+		mainView.saveFileChooserDirectory(fileChooser, ProjectModel.linkSurveyNotesDirectory, null);
 	}
 
 	private List<SurveyRow> findSurveyNotes(Path directory, String caveName, Info info) throws Exception {

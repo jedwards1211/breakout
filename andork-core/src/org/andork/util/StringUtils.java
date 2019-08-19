@@ -31,7 +31,7 @@ import org.andork.func.CharPredicate;
 
 public class StringUtils {
 	public static final Pattern newlinePattern = Pattern.compile("\r\n?|\n");
-	
+
 	public static int lineCount(String s) {
 		int count = 1;
 		Matcher m = newlinePattern.matcher(s);
@@ -50,15 +50,16 @@ public class StringUtils {
 			if (inEscape || ic != escape) {
 				sb.append(ic);
 				inEscape = false;
-			} else {
+			}
+			else {
 				inEscape = true;
 			}
 		}
 		return sb.toString();
 	}
 
-	private static String formatThrowableForHTML(String prefix, Throwable t, Set<Throwable> visited,
-			int maxStackTraceLines) {
+	private static String
+		formatThrowableForHTML(String prefix, Throwable t, Set<Throwable> visited, int maxStackTraceLines) {
 		if (!visited.add(t)) {
 			return "";
 		}
@@ -93,30 +94,25 @@ public class StringUtils {
 	}
 
 	/**
-	 * Searches a string for a character matching a predicate and returns its
-	 * index, or {@code -1} if no such character was found.
+	 * Searches a string for a character matching a predicate and returns its index,
+	 * or {@code -1} if no such character was found.
 	 *
-	 * @param s
-	 *            a string to search.
-	 * @param predicate
-	 *            the search predicate.
-	 * @return the first index for which {@code predicate.test(s.charAt(index))}
-	 *         , or {@code -1}.
+	 * @param s         a string to search.
+	 * @param predicate the search predicate.
+	 * @return the first index for which {@code predicate.test(s.charAt(index))} ,
+	 *         or {@code -1}.
 	 */
 	public static int indexOf(String s, CharPredicate predicate) {
 		return indexOf(s, 0, predicate);
 	}
 
 	/**
-	 * Searches a string for a character matching a predicate and returns its
-	 * index, or {@code -1} if no such character was found.
+	 * Searches a string for a character matching a predicate and returns its index,
+	 * or {@code -1} if no such character was found.
 	 *
-	 * @param s
-	 *            a string to search.
-	 * @param index
-	 *            the search start index.
-	 * @param predicate
-	 *            the search predicate.
+	 * @param s         a string to search.
+	 * @param index     the search start index.
+	 * @param predicate the search predicate.
 	 * @return the first index >= {@code index} for which
 	 *         {@code predicate.test(s.charAt(index))}, or {@code -1}.
 	 */
@@ -202,10 +198,12 @@ public class StringUtils {
 			char ic = s.charAt(i);
 			if (inEscape) {
 				inEscape = false;
-			} else {
+			}
+			else {
 				if (ic == escape) {
 					inEscape = true;
-				} else if (ic == c) {
+				}
+				else if (ic == c) {
 					return i;
 				}
 			}
@@ -214,9 +212,10 @@ public class StringUtils {
 	}
 
 	public static final Pattern wrapLocationPattern = Pattern.compile("(\r\n?|\n)|\\s+|$");
-	
+
 	public static String wrap(String s, int columns) {
-		if (columns < 10) throw new IllegalArgumentException("columns must be >= 10");
+		if (columns < 10)
+			throw new IllegalArgumentException("columns must be >= 10");
 
 		StringBuilder result = new StringBuilder();
 		int i = 0;
@@ -243,6 +242,10 @@ public class StringUtils {
 			lineStart = i = next;
 		}
 		return result.toString();
+	}
+
+	public static String valueOfOrNull(Object o) {
+		return o != null ? String.valueOf(o) : null;
 	}
 
 	private StringUtils() {

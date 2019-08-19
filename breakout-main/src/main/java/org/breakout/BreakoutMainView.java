@@ -3236,25 +3236,33 @@ public class BreakoutMainView {
 		});
 	}
 
-	public JFileChooser fileChooser(QSpec.Attribute<File> projectAttribute) {
-		final JFileChooser fileChooser = new JFileChooser(getFileChooserDirectory(projectAttribute));
+	public JFileChooser fileChooser(QSpec.Attribute<File> projectAttribute, QSpec.Attribute<File> rootAttribute) {
+		final JFileChooser fileChooser = new JFileChooser(getFileChooserDirectory(projectAttribute, rootAttribute));
 		fileChooser.addActionListener(e -> {
 			if (JFileChooser.APPROVE_SELECTION.equals(e.getActionCommand())) {
-				saveFileChooserDirectory(fileChooser, projectAttribute);
+				saveFileChooserDirectory(fileChooser, projectAttribute, rootAttribute);
 			}
 		});
 		return fileChooser;
 	}
 
-	public void saveFileChooserDirectory(JFileChooser fileChooser, QSpec.Attribute<File> projectAttribute) {
-		Path projectFile = getRootModel().get(RootModel.currentProjectFile);
-		File result = fileChooser.getCurrentDirectory();
-		if (projectFile != null) {
-			result = projectFile.getParent().relativize(result.toPath()).toFile();
-			if (!result.toString().startsWith("."))
-				result = new File("./" + result);
+	public void saveFileChooserDirectory(
+		JFileChooser fileChooser,
+		QSpec.Attribute<File> projectAttribute,
+		QSpec.Attribute<File> rootAttribute) {
+		if (projectAttribute != null) {
+			Path projectFile = getRootModel().get(RootModel.currentProjectFile);
+			File result = fileChooser.getCurrentDirectory();
+			if (projectFile != null) {
+				result = projectFile.getParent().relativize(result.toPath()).toFile();
+				if (!result.toString().startsWith("."))
+					result = new File("./" + result);
+			}
+			getProjectModel().set(projectAttribute, result);
 		}
-		getProjectModel().set(projectAttribute, result);
+		if (rootAttribute != null) {
+			getRootModel().set(rootAttribute, fileChooser.getCurrentDirectory());
+		}
 	}
 
 	private Path getProjectDirectory() {
@@ -3267,9 +3275,15 @@ public class BreakoutMainView {
 		return Paths.get(System.getProperty("user.home"));
 	}
 
-	private File getFileChooserDirectory(QSpec.Attribute<File> projectAttribute) {
+	private File getFileChooserDirectory(QSpec.Attribute<File> projectAttribute, QSpec.Attribute<File> rootAttribute) {
 		Path projectDir = getProjectDirectory();
-		File dir = getProjectModel().get(projectAttribute);
+		File dir = null;
+		if (projectAttribute != null) {
+			dir = getProjectModel().get(projectAttribute);
+		}
+		if (dir == null && rootAttribute != null) {
+			dir = getRootModel().get(rootAttribute);
+		}
 		if (dir != null) {
 			Path result = projectDir.resolve(dir.toPath());
 			if (Files.isDirectory(result))

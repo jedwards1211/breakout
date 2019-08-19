@@ -62,6 +62,8 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<Boolean> showSpatialIndex = newAttribute(Boolean.class, "showSpatialIndex");
 	public static final Attribute<String> mapboxAccessToken = newAttribute(String.class, "mapboxAccessToken");
 	public static final Attribute<SearchMode> searchMode = newAttribute(SearchMode.class, "searchMode");
+	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
+	public static final Attribute<File> wallsImportDirectory = newAttribute(File.class, "wallsImportDirectory");
 
 	public static final RootModel instance = new RootModel();
 
@@ -74,6 +76,8 @@ public final class RootModel extends QSpec<RootModel> {
 				.map(currentProjectFile, PathStringBimapper.instance)
 				.map(recentProjectFiles, QArrayListBimapper.newInstance(PathStringBimapper.instance))
 				.map(currentProjectFileChooserDirectory, FileStringBimapper.instance)
+				.map(compassImportDirectory, FileStringBimapper.instance)
+				.map(wallsImportDirectory, FileStringBimapper.instance)
 				.exclude(currentProjectFile);
 	}
 

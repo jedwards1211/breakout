@@ -32,6 +32,7 @@ import org.andork.awt.I18n.Localizer;
 import org.andork.collect.ArrayLists;
 import org.andork.swing.OnEDT;
 import org.breakout.model.ProjectModel;
+import org.breakout.model.RootModel;
 
 public class ImportCompassAction extends AbstractAction {
 	private static final long serialVersionUID = 8950696926766549483L;
@@ -55,7 +56,8 @@ public class ImportCompassAction extends AbstractAction {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 
-		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.compassImportDirectory);
+		JFileChooser fileChooser =
+			mainView.fileChooser(ProjectModel.compassImportDirectory, RootModel.compassImportDirectory);
 		fileChooser.setMultiSelectionEnabled(true);
 		fileChooser.setAcceptAllFileFilterUsed(true);
 		FileFilter datFilter = new FileNameExtensionFilter("Compass Files (*.mak, *.dat, *.plt)", "mak", "dat", "plt");
@@ -67,8 +69,6 @@ public class ImportCompassAction extends AbstractAction {
 		if (choice != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
-
-		mainView.getProjectModel().set(ProjectModel.compassImportDirectory, fileChooser.getCurrentDirectory());
 
 		mainView
 			.ioTaskService()

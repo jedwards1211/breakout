@@ -98,7 +98,7 @@ public class ExportStlAction extends AbstractAction {
 		I18n i18n = mainView.getI18n();
 		Localizer localizer = i18n.forClass(getClass());
 
-		JFileChooser outputFileChooser = mainView.fileChooser(ProjectModel.exportSTLDirectory);
+		JFileChooser outputFileChooser = mainView.fileChooser(ProjectModel.exportSTLDirectory, null);
 		outputFileChooser.setAcceptAllFileFilterUsed(false);
 		outputFileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Stereolithograhy (*.stl)", "stl"));
 		outputFileChooser.setDialogTitle(localizer.getFormattedString("outputFileChooser.dialogTitle", mode.name()));

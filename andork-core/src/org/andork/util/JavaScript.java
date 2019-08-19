@@ -11,13 +11,6 @@ public class JavaScript {
 		return s == null || s.isEmpty();
 	}
 
-	/**
-	 * @return true iff d is not NaN or infinite.
-	 */
-	public static boolean isFinite(float d) {
-		return !Float.isNaN(d) && !Float.isInfinite(d);
-	}
-
 	@SafeVarargs
 	public static <T> T or(T... objects) {
 		int i;

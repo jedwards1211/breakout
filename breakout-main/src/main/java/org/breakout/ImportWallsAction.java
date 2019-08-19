@@ -34,6 +34,7 @@ import org.andork.awt.I18n.Localizer;
 import org.andork.collect.Iterables;
 import org.andork.swing.OnEDT;
 import org.breakout.model.ProjectModel;
+import org.breakout.model.RootModel;
 
 public class ImportWallsAction extends AbstractAction {
 	private static final long serialVersionUID = 8950696926766549483L;
@@ -58,7 +59,8 @@ public class ImportWallsAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		JFileChooser fileChooser = mainView.fileChooser(ProjectModel.wallsImportDirectory);
+		JFileChooser fileChooser =
+			mainView.fileChooser(ProjectModel.wallsImportDirectory, RootModel.wallsImportDirectory);
 		fileChooser.setMultiSelectionEnabled(true);
 		fileChooser.setAcceptAllFileFilterUsed(true);
 		FileFilter datFilter = new FileNameExtensionFilter("Walls Files (*.srv, *.wpj, *.lst)", "srv", "wpj", "lst");
@@ -70,8 +72,6 @@ public class ImportWallsAction extends AbstractAction {
 		if (choice != JFileChooser.APPROVE_OPTION) {
 			return;
 		}
-
-		mainView.getProjectModel().set(ProjectModel.wallsImportDirectory, fileChooser.getCurrentDirectory());
 
 		mainView
 			.ioTaskService()
