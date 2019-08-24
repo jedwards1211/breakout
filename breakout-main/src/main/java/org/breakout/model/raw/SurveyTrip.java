@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 7/28/2019, 3:35:00 PM.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 8/24/2019, 5:32:59 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
@@ -10,6 +10,7 @@ import org.andork.unit.Unit;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import static org.andork.util.JavaScript.or;
+import org.andork.immutable.ImmutableList;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.Objects;
@@ -39,9 +40,9 @@ public final class SurveyTrip {
 	public static final String date = "date";
 	
 	/**
-	 * Key for survey notes file path.
+	 * Key for attached file names.
 	 */
-	public static final String surveyNotes = "surveyNotes";
+	public static final String attachedFiles = "attachedFiles";
 	
 	/**
 	 * Key for surveyor names.
@@ -188,12 +189,12 @@ public final class SurveyTrip {
 		
 
 		/**
-		 * survey notes file path
+		 * attached file names
 		 */
-		public static final DefaultProperty<SurveyTrip, String> surveyNotes = create(
-			"surveyNotes", String.class,
-			r -> r.get(SurveyTrip.surveyNotes),
-			(m, v) -> m.set(SurveyTrip.surveyNotes, v)
+		public static final DefaultProperty<SurveyTrip, ImmutableList<String>> attachedFiles = create(
+			"attachedFiles", ImmutableList.class,
+			r -> r.get(SurveyTrip.attachedFiles),
+			(m, v) -> m.set(SurveyTrip.attachedFiles, v)
 		);
 		
 
@@ -464,10 +465,10 @@ public final class SurveyTrip {
 	}
 	
 	/**
-	 * @return survey notes file path.
+	 * @return attached file names.
 	 */
-	public String getSurveyNotes() {
-		return get(surveyNotes);
+	public ImmutableList<String> getAttachedFiles() {
+		return get(attachedFiles);
 	}
 	
 	/**
@@ -631,14 +632,14 @@ public final class SurveyTrip {
 	}
 	
 	/**
-	 * Sets survey notes file path.
+	 * Sets attached file names.
 	 *
-	 * @param surveyNotes - the new value for survey notes file path
+	 * @param attachedFiles - the new value for attached file names
 	 *
-	 * @return this {@code SurveyTrip} if {@code surveyNotes} is unchanged, or a copy with the new {@code surveyNotes}.
+	 * @return this {@code SurveyTrip} if {@code attachedFiles} is unchanged, or a copy with the new {@code attachedFiles}.
 	 */
-	public SurveyTrip setSurveyNotes(String surveyNotes) {
-		return set(SurveyTrip.surveyNotes, surveyNotes);
+	public SurveyTrip setAttachedFiles(ImmutableList<String> attachedFiles) {
+		return set(SurveyTrip.attachedFiles, attachedFiles);
 	}
 	
 	/**
@@ -874,14 +875,14 @@ public final class SurveyTrip {
 	}
 	
 	/**
-	 * Updates survey notes file path.
+	 * Updates attached file names.
 	 *
-	 * @param updater - {@code Function} that takes the current value of {@code surveyNotes} and returns the new value for {@code surveyNotes}.
+	 * @param updater - {@code Function} that takes the current value of {@code attachedFiles} and returns the new value for {@code attachedFiles}.
 	 *
-	 * @return this {@code SurveyTrip} if {@code surveyNotes} is unchanged, or a copy with the updated {@code surveyNotes}.
+	 * @return this {@code SurveyTrip} if {@code attachedFiles} is unchanged, or a copy with the updated {@code attachedFiles}.
 	 */
-	public SurveyTrip updateSurveyNotes(Function<String, String> updater) {
-		return update(surveyNotes, updater);
+	public SurveyTrip updateAttachedFiles(Function<ImmutableList<String>, ImmutableList<String>> updater) {
+		return update(attachedFiles, updater);
 	}
 	
 	/**

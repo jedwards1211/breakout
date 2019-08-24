@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.andork.immutable.ImmutableList;
 import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.ListTableModel;
@@ -65,10 +66,12 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 		public static final Column<SurveyRow, String> elevation = column(SurveyRow.Properties.elevation);
 		public static final Column<SurveyRow, String> comment = column(SurveyRow.Properties.comment);
 		public static final Column<SurveyRow, String> tripName = column(SurveyRow.Properties.tripName);
-		public static final Column<SurveyRow, String> surveyors = new ColumnBuilder<SurveyRow, String>()
+		public static final Column<SurveyRow, String> surveyors =
+			new ColumnBuilder<SurveyRow, String>()
 				.columnName("Surveyors")
 				.columnClass(String.class)
-				.getter(r -> r.getTrip() == null || r.getTrip().getSurveyors() == null
+				.getter(
+					r -> r.getTrip() == null || r.getTrip().getSurveyors() == null
 						? null
 						: StringUtils.join("; ", r.getTrip().getSurveyors()))
 				.setter((row, surveyors) -> {
@@ -79,48 +82,47 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 				})
 				.create();
 		public static final Column<SurveyRow, String> date = column(SurveyRow.Properties.date);
-		public static final Column<SurveyRow, String> surveyNotes = column(SurveyRow.Properties.surveyNotes);
-		public static final Column<SurveyRow, String> units = new ColumnBuilder<SurveyRow, String>()
-				.columnClass(String.class)
-				.columnName("Units")
-				.getter(r -> {
-					SurveyTrip trip = r.getTrip();
-					if (trip == null) {
-						return null;
-					}
-					String dist = trip.getDistanceUnit().toString();
-					String azm = trip.getFrontAzimuthUnit().toString() + "/" + trip.getBackAzimuthUnit();
-					String azmCorrected = trip.areBackAzimuthsCorrected() ? "C" : "U";
-					String inc = trip.getFrontInclinationUnit().toString() + "/" + trip.getBackInclinationUnit();
-					String incCorrected = trip.areBackInclinationsCorrected() ? "C" : "U";
-					return String.format("dist=%1s azm=%2s %3s inc=%4s %5s", dist, azm, azmCorrected, inc,
-							incCorrected);
-				})
-				.create();
+		public static final Column<SurveyRow, ImmutableList<String>> attachedFiles =
+			column(SurveyRow.Properties.attachedFiles);
+		public static final Column<SurveyRow, String> units =
+			new ColumnBuilder<SurveyRow, String>().columnClass(String.class).columnName("Units").getter(r -> {
+				SurveyTrip trip = r.getTrip();
+				if (trip == null) {
+					return null;
+				}
+				String dist = trip.getDistanceUnit().toString();
+				String azm = trip.getFrontAzimuthUnit().toString() + "/" + trip.getBackAzimuthUnit();
+				String azmCorrected = trip.areBackAzimuthsCorrected() ? "C" : "U";
+				String inc = trip.getFrontInclinationUnit().toString() + "/" + trip.getBackInclinationUnit();
+				String incCorrected = trip.areBackInclinationsCorrected() ? "C" : "U";
+				return String.format("dist=%1s azm=%2s %3s inc=%4s %5s", dist, azm, azmCorrected, inc, incCorrected);
+			}).create();
 
-		public static final List<Column<SurveyRow, ?>> list = Arrays.asList(
-				fromCave,
-				fromStation,
-				toCave,
-				toStation,
-				distance,
-				frontAzimuth,
-				frontInclination,
-				backAzimuth,
-				backInclination,
-				left,
-				right,
-				up,
-				down,
-				northing,
-				easting,
-				elevation,
-				comment,
-				tripName,
-				surveyors,
-				date,
-				surveyNotes,
-				units);
+		public static final List<Column<SurveyRow, ?>> list =
+			Arrays
+				.asList(
+					fromCave,
+					fromStation,
+					toCave,
+					toStation,
+					distance,
+					frontAzimuth,
+					frontInclination,
+					backAzimuth,
+					backInclination,
+					left,
+					right,
+					up,
+					down,
+					northing,
+					easting,
+					elevation,
+					comment,
+					tripName,
+					surveyors,
+					date,
+					attachedFiles,
+					units);
 	}
 
 	/**
@@ -206,7 +208,8 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	public void setRow(int index, SurveyRow row) {
 		if (index == rows.size()) {
 			rows.add(row);
-		} else {
+		}
+		else {
 			rows.set(index, row);
 		}
 		if (index == rows.size() - 1) {

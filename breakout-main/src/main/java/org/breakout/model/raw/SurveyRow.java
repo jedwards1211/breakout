@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 7/28/2019, 3:35:00 PM.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 8/24/2019, 5:36:49 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
@@ -8,6 +8,7 @@ package org.breakout.model.raw;
 import java.util.List;
 import static org.andork.util.JavaScript.or;
 import org.andork.model.Property;
+import org.andork.immutable.ImmutableList;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.Objects;
@@ -116,9 +117,9 @@ public final class SurveyRow {
 	public static final String comment = "comment";
 	
 	/**
-	 * Key for survey notes file (if one file can't be associated with the entire trip).
+	 * Key for attached files (if one they can't be associated with the entire trip).
 	 */
-	public static final String overrideSurveyNotes = "overrideSurveyNotes";
+	public static final String overrideAttachedFiles = "overrideAttachedFiles";
 	
 	/**
 	 * Key for trip this row belongs to.
@@ -343,12 +344,12 @@ public final class SurveyRow {
 		
 
 		/**
-		 * survey notes file (if one file can't be associated with the entire trip)
+		 * attached files (if one they can't be associated with the entire trip)
 		 */
-		public static final DefaultProperty<SurveyRow, String> overrideSurveyNotes = create(
-			"overrideSurveyNotes", String.class,
-			r -> r.get(SurveyRow.overrideSurveyNotes),
-			(m, v) -> m.set(SurveyRow.overrideSurveyNotes, v)
+		public static final DefaultProperty<SurveyRow, ImmutableList<String>> overrideAttachedFiles = create(
+			"overrideAttachedFiles", ImmutableList.class,
+			r -> r.get(SurveyRow.overrideAttachedFiles),
+			(m, v) -> m.set(SurveyRow.overrideAttachedFiles, v)
 		);
 		
 
@@ -411,10 +412,10 @@ public final class SurveyRow {
 			"date", String.class, SurveyTrip.Properties.date);
 		public static DefaultProperty<SurveyRow, List<String>> surveyors = createTripProperty(
 			"surveyors", List.class, SurveyTrip.Properties.surveyors);
-		public static DefaultProperty<SurveyRow, String> surveyNotes = create(
-			"surveyNotes", String.class,
-			r -> r.getSurveyNotes(),
-			(r, surveyNotes) -> r.setOverrideSurveyNotes(surveyNotes)
+		public static DefaultProperty<SurveyRow, ImmutableList<String>> attachedFiles = create(
+			"attachedFiles", ImmutableList.class,
+			r -> r.getAttachedFiles(),
+			(r, attachedFiles) -> r.setOverrideAttachedFiles(attachedFiles)
 		);
 	
 	}
@@ -617,10 +618,10 @@ public final class SurveyRow {
 	}
 	
 	/**
-	 * @return survey notes file (if one file can't be associated with the entire trip).
+	 * @return attached files (if one they can't be associated with the entire trip).
 	 */
-	public String getOverrideSurveyNotes() {
-		return get(overrideSurveyNotes);
+	public ImmutableList<String> getOverrideAttachedFiles() {
+		return get(overrideAttachedFiles);
 	}
 	
 	/**
@@ -855,14 +856,14 @@ public final class SurveyRow {
 	}
 	
 	/**
-	 * Sets survey notes file (if one file can't be associated with the entire trip).
+	 * Sets attached files (if one they can't be associated with the entire trip).
 	 *
-	 * @param overrideSurveyNotes - the new value for survey notes file (if one file can't be associated with the entire trip)
+	 * @param overrideAttachedFiles - the new value for attached files (if one they can't be associated with the entire trip)
 	 *
-	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the new {@code overrideSurveyNotes}.
+	 * @return this {@code SurveyRow} if {@code overrideAttachedFiles} is unchanged, or a copy with the new {@code overrideAttachedFiles}.
 	 */
-	public SurveyRow setOverrideSurveyNotes(String overrideSurveyNotes) {
-		return set(SurveyRow.overrideSurveyNotes, overrideSurveyNotes);
+	public SurveyRow setOverrideAttachedFiles(ImmutableList<String> overrideAttachedFiles) {
+		return set(SurveyRow.overrideAttachedFiles, overrideAttachedFiles);
 	}
 	
 	/**
@@ -1109,14 +1110,14 @@ public final class SurveyRow {
 	}
 	
 	/**
-	 * Updates survey notes file (if one file can't be associated with the entire trip).
+	 * Updates attached files (if one they can't be associated with the entire trip).
 	 *
-	 * @param updater - {@code Function} that takes the current value of {@code overrideSurveyNotes} and returns the new value for {@code overrideSurveyNotes}.
+	 * @param updater - {@code Function} that takes the current value of {@code overrideAttachedFiles} and returns the new value for {@code overrideAttachedFiles}.
 	 *
-	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the updated {@code overrideSurveyNotes}.
+	 * @return this {@code SurveyRow} if {@code overrideAttachedFiles} is unchanged, or a copy with the updated {@code overrideAttachedFiles}.
 	 */
-	public SurveyRow updateOverrideSurveyNotes(Function<String, String> updater) {
-		return update(overrideSurveyNotes, updater);
+	public SurveyRow updateOverrideAttachedFiles(Function<ImmutableList<String>, ImmutableList<String>> updater) {
+		return update(overrideAttachedFiles, updater);
 	}
 	
 	/**
@@ -1161,8 +1162,8 @@ public final class SurveyRow {
 		return or(getOverrideToCave(), getTrip() == null ? null : getTrip().getCave());
 	}
 	
-	public String getSurveyNotes() {
-		return or(getOverrideSurveyNotes(), getTrip() == null ? null : getTrip().getSurveyNotes());
+	public ImmutableList<String> getAttachedFiles() {
+		return or(getOverrideAttachedFiles(), getTrip() == null ? null : getTrip().getAttachedFiles());
 	}
 	
 }

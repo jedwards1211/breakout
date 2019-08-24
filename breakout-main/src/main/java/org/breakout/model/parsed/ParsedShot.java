@@ -8,7 +8,7 @@ public class ParsedShot {
 	private int flags = 0;
 	private static final int EXCLUDE_DISTANCE = 0;
 	private static final int EXCLUDE_FROM_PLOTTING = 1;
-	private static final int HAS_SURVEY_NOTES = 2;
+	private static final int HAS_ATTACHED_FILES = 2;
 
 	private void setFlag(int flag, boolean value) {
 		if (value) flags |= flag;
@@ -28,7 +28,7 @@ public class ParsedShot {
 	}
 	
 	public boolean hasSurveyNotes() {
-		return getFlag(HAS_SURVEY_NOTES);
+		return getFlag(HAS_ATTACHED_FILES);
 	}
 
 	public void setExcludeDistance(boolean value) {
@@ -39,8 +39,8 @@ public class ParsedShot {
 		setFlag(EXCLUDE_FROM_PLOTTING, value);
 	}
 
-	public void setHasSurveyNotes(boolean value) {
-		setFlag(HAS_SURVEY_NOTES, value);
+	public void setHasAttachedFiles(boolean value) {
+		setFlag(HAS_ATTACHED_FILES, value);
 	}
 
 	public ParsedShot overrides;

@@ -8,6 +8,10 @@ module.exports = {
 	],
 	extraImports: [
 	  'static org.andork.util.JavaScript.or',
+	  'org.andork.immutable.ImmutableList',
+	],
+	extraMutableImports: [
+	  'org.andork.immutable.ImmutableList',
 	],
 	generateProperties: true,
 	generateSetters: true,
@@ -16,7 +20,7 @@ module.exports = {
 		cave: {type: 'String', description: 'cave name'},
 		name: {type: 'String', description: 'trip name'},
 		date: {type: 'String', description: 'trip date'},
-		surveyNotes: {type: 'String', description: 'survey notes file path'},
+		attachedFiles: {type: 'ImmutableList<String>', description: 'attached file names'},
 		surveyors: {type: 'List<String>', description: 'surveyor names'},
 		distanceUnit: {type: 'Unit<Length>', description: 'default length unit', initValue: 'Length.meters'},
 		angleUnit: {type: 'Unit<Angle>', description: 'default angle unit', initValue: 'Angle.degrees'},

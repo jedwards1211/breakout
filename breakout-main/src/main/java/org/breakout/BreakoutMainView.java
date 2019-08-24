@@ -139,6 +139,7 @@ import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
 import org.andork.func.Lodash.DebounceOptions;
 import org.andork.func.Lodash.DebouncedRunnable;
+import org.andork.immutable.ImmutableList;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.DevicePixelRatio;
 import org.andork.jogl.GL3Framebuffer;
@@ -472,9 +473,9 @@ public class BreakoutMainView {
 			else if (e.getClickCount() == 2) {
 				SurveyRow row = sourceRows.get(picked.picked.key());
 				if (row != null) {
-					String link = row.getSurveyNotes();
-					if (link != null) {
-						openSurveyNotes(link);
+					ImmutableList<String> files = row.getAttachedFiles();
+					if (files != null && !files.isEmpty()) {
+						openAttachedFile(files.get(0));
 					}
 				}
 			}
@@ -1720,7 +1721,7 @@ public class BreakoutMainView {
 
 			@Override
 			public void surveyNotesClicked(String link, int viewRow) {
-				openSurveyNotes(link);
+				openAttachedFile(link);
 			}
 		});
 
@@ -2842,7 +2843,7 @@ public class BreakoutMainView {
 		}
 	}
 
-	private void openSurveyNotes(String link) {
+	private void openAttachedFile(String link) {
 		URI uri = null;
 		try {
 			uri = new URL(link).toURI();

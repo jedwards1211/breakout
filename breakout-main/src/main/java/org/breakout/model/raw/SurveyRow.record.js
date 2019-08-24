@@ -80,9 +80,9 @@ module.exports = {
       type: 'String',
       description: 'any user comment',
     },
-    overrideSurveyNotes: {
-      type: 'String',
-      description: "survey notes file (if one file can't be associated with the entire trip)",
+    overrideAttachedFiles: {
+      type: 'ImmutableList<String>',
+      description: "attached files (if one they can't be associated with the entire trip)",
     },
     trip: {
       type: 'SurveyTrip',
@@ -103,6 +103,10 @@ module.exports = {
     'java.util.List',
     'static org.andork.util.JavaScript.or',
     'org.andork.model.Property',
+    'org.andork.immutable.ImmutableList',
+  ],
+  extraMutableImports: [
+    'org.andork.immutable.ImmutableList',
   ],
   extraCode: `
   public String getFromCave() {
@@ -113,8 +117,8 @@ module.exports = {
     return or(getOverrideToCave(), getTrip() == null ? null : getTrip().getCave());
   }
   
-  public String getSurveyNotes() {
-  	return or(getOverrideSurveyNotes(), getTrip() == null ? null : getTrip().getSurveyNotes());
+  public ImmutableList<String> getAttachedFiles() {
+  	return or(getOverrideAttachedFiles(), getTrip() == null ? null : getTrip().getAttachedFiles());
   }
   `,
   extraProperties: `
@@ -147,10 +151,10 @@ module.exports = {
       "date", String.class, SurveyTrip.Properties.date);
     public static DefaultProperty<SurveyRow, List<String>> surveyors = createTripProperty(
       "surveyors", List.class, SurveyTrip.Properties.surveyors);
-    public static DefaultProperty<SurveyRow, String> surveyNotes = create(
-			"surveyNotes", String.class,
-			r -> r.getSurveyNotes(),
-			(r, surveyNotes) -> r.setOverrideSurveyNotes(surveyNotes)
+    public static DefaultProperty<SurveyRow, ImmutableList<String>> attachedFiles = create(
+			"attachedFiles", ImmutableList.class,
+			r -> r.getAttachedFiles(),
+			(r, attachedFiles) -> r.setOverrideAttachedFiles(attachedFiles)
 		);
   `,
   extraMutableCode: `

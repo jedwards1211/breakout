@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 7/28/2019, 3:35:00 PM.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 8/24/2019, 5:32:59 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
@@ -9,6 +9,7 @@ import java.util.List;
 import org.andork.unit.Unit;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
+import org.andork.immutable.ImmutableList;
 import com.github.krukow.clj_ds.TransientMap;
 import com.github.krukow.clj_lang.PersistentHashMap;
 import java.util.Objects;
@@ -118,10 +119,10 @@ public final class MutableSurveyTrip {
 	}
 	
 	/**
-	 * @return survey notes file path.
+	 * @return attached file names.
 	 */
-	public String getSurveyNotes() {
-		return get(SurveyTrip.surveyNotes);
+	public ImmutableList<String> getAttachedFiles() {
+		return get(SurveyTrip.attachedFiles);
 	}
 	
 	/**
@@ -285,14 +286,14 @@ public final class MutableSurveyTrip {
 	}
 	
 	/**
-	 * Sets survey notes file path.
+	 * Sets attached file names.
 	 *
-	 * @param surveyNotes - the new value for survey notes file path
+	 * @param attachedFiles - the new value for attached file names
 	 *
-	 * @return this {@code SurveyTrip} if {@code surveyNotes} is unchanged, or a copy with the new {@code surveyNotes}.
+	 * @return this {@code SurveyTrip} if {@code attachedFiles} is unchanged, or a copy with the new {@code attachedFiles}.
 	 */
-	public MutableSurveyTrip setSurveyNotes(String surveyNotes) {
-		return set(SurveyTrip.surveyNotes, surveyNotes);
+	public MutableSurveyTrip setAttachedFiles(ImmutableList<String> attachedFiles) {
+		return set(SurveyTrip.attachedFiles, attachedFiles);
 	}
 	
 	/**
@@ -528,14 +529,14 @@ public final class MutableSurveyTrip {
 	}
 	
 	/**
-	 * Updates survey notes file path.
+	 * Updates attached file names.
 	 *
-	 * @param updater - {@code Function} that takes the current value of {@code surveyNotes} and returns the new value for {@code surveyNotes}.
+	 * @param updater - {@code Function} that takes the current value of {@code attachedFiles} and returns the new value for {@code attachedFiles}.
 	 *
-	 * @return this {@code MutableSurveyTrip} if {@code surveyNotes} is unchanged, or a copy with the updated {@code surveyNotes}.
+	 * @return this {@code MutableSurveyTrip} if {@code attachedFiles} is unchanged, or a copy with the updated {@code attachedFiles}.
 	 */
-	public MutableSurveyTrip updateSurveyNotes(Function<String, String> updater) {
-		return update(SurveyTrip.surveyNotes, updater);
+	public MutableSurveyTrip updateAttachedFiles(Function<ImmutableList<String>, ImmutableList<String>> updater) {
+		return update(SurveyTrip.attachedFiles, updater);
 	}
 	
 	/**

@@ -55,6 +55,7 @@ import org.andork.awt.I18n.I18nUpdater;
 import org.andork.awt.I18n.Localizer;
 import org.andork.collect.HashSetMultiMap;
 import org.andork.collect.MultiMap;
+import org.andork.immutable.MutableArrayList;
 import org.andork.q.QArrayList;
 import org.andork.swing.FromEDT;
 import org.andork.swing.JOptionPaneBuilder;
@@ -194,7 +195,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 							SurveyRow row = model.getRow(info.i++);
 							if (isShot(row))
 								info.allShots.add(row);
-							if (isNullOrEmpty(row.getSurveyNotes())) {
+							if (row.getAttachedFiles() == null || row.getAttachedFiles().isEmpty()) {
 								info.addCave(row.getFromCave());
 								info.addCave(row.getToCave());
 							}
@@ -485,7 +486,14 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			info.potentialTripLinks.forEach((trip, paths) -> {
 				Path notesFile = getHighestCountKey(paths, p -> !paths.containsKey(p.getParent()));
 				if (notesFile != null) {
-					newTrips.put(trip, trip.setSurveyNotes(notesFile.getFileName().toString()));
+					newTrips
+						.put(
+							trip,
+							trip
+								.setAttachedFiles(
+									new MutableArrayList<String>()
+										.add(notesFile.getFileName().toString())
+										.toImmutable()));
 					info.linkedFiles.add(notesFile);
 					info.unlinkedFilesSet.remove(notesFile);
 				}
@@ -629,7 +637,10 @@ public class LinkSurveyNotesTask extends Task<Void> {
 						Integer index = mainView.shotKeyToModelIndex.get(new ShotKey(row));
 						if (index == null)
 							return;
-						model.setRow(index, model.getRow(index).setOverrideSurveyNotes(row.getSurveyNotes()));
+						model
+							.setRow(
+								index,
+								model.getRow(index).setOverrideAttachedFiles(row.getOverrideAttachedFiles()));
 					}
 
 				});

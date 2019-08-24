@@ -1,7 +1,5 @@
 package org.breakout.model.raw;
 
-import static org.andork.util.StringUtils.isNullOrEmpty;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import org.andork.immutable.MutableArrayList;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
@@ -49,13 +48,13 @@ public class MetacaveImporter {
 		}
 		return metacaveAngleUnits.get(obj.get(property).getAsString());
 	}
-	
+
 	private static boolean getAsBoolean(JsonObject obj, String property, boolean defaultValue) {
 		if (!obj.has(property)) {
 			return defaultValue;
 		}
 		JsonElement elem = obj.get(property);
-		return elem.isJsonNull() ? defaultValue : obj.get(property).getAsBoolean();		
+		return elem.isJsonNull() ? defaultValue : obj.get(property).getAsBoolean();
 	}
 
 	private static Integer getAsInteger(JsonObject obj, String property) {
@@ -72,7 +71,7 @@ public class MetacaveImporter {
 		JsonElement elem = obj.get(property);
 		return elem.isJsonNull() ? null : elem.getAsString();
 	}
-	
+
 	private static String intern(String s) {
 		return s != null ? s.intern() : s;
 	}
@@ -92,7 +91,8 @@ public class MetacaveImporter {
 		if ("bs".equals(getAsString(obj, "dir"))) {
 			row.setBackAzimuth(getAsString(obj, "azm"));
 			row.setBackInclination(getAsString(obj, "inc"));
-		} else {
+		}
+		else {
 			row.setFrontAzimuth(getAsString(obj, "azm"));
 			row.setFrontInclination(getAsString(obj, "inc"));
 		}
@@ -211,7 +211,9 @@ public class MetacaveImporter {
 				t.setSurveyors(surveyors);
 			}
 			if (obj.has("surveyNotesFile")) {
-				t.setSurveyNotes(obj.get("surveyNotesFile").getAsString());
+				t
+					.setAttachedFiles(
+						new MutableArrayList<String>().add(obj.get("surveyNotesFile").getAsString()).toImmutable());
 			}
 			if (obj.has("distUnit")) {
 				t.setDistanceUnit(metacaveLengthUnits.get(obj.get("distUnit").getAsString()));
@@ -267,7 +269,11 @@ public class MetacaveImporter {
 						row.setOverrideToCave(intern(getAsString(toStation, "cave")));
 						row.setToStation(intern(getAsString(toStation, "station")));
 						if (shot.has("surveyNotesFile")) {
-							row.setOverrideSurveyNotes(intern(getAsString(shot, "surveyNotesFile")));
+							row
+								.setOverrideAttachedFiles(
+									new MutableArrayList<String>()
+										.add(intern(getAsString(shot, "surveyNotesFile")))
+										.toImmutable());
 						}
 					}
 					rows.set(rowIndex, row);
@@ -285,8 +291,12 @@ public class MetacaveImporter {
 				}
 			}
 
-			if (fromStation != null && fromStation.has("station") && shot != null && shot.size() > 0
-					&& toStation != null && toStation.has("station")) {
+			if (fromStation != null
+				&& fromStation.has("station")
+				&& shot != null
+				&& shot.size() > 0
+				&& toStation != null
+				&& toStation.has("station")) {
 
 				JsonArray measurements = shot.getAsJsonArray("measurements");
 				if (measurements != null && measurements.size() > 0) {
@@ -297,7 +307,8 @@ public class MetacaveImporter {
 						JsonObject measurement = measurements.get(k).getAsJsonObject();
 						if ("bs".equals(getAsString(measurement, "dir"))) {
 							frontsights.add(measurement);
-						} else {
+						}
+						else {
 							backsights.add(measurement);
 						}
 					}
@@ -315,17 +326,20 @@ public class MetacaveImporter {
 							getMeasurements(backsight, row);
 						}
 					}
-				} else if (getAsString(shot, "dist") == "auto") {
+				}
+				else if (getAsString(shot, "dist") == "auto") {
 					getRow.apply(shot); // adds row as side effect
 				}
 
 				boolean excludeDistance = getAsBoolean(shot, "excludeDist", false);
-				if (excludeDistance) getRow.apply(shot).setExcludeDistance(true);
+				if (excludeDistance)
+					getRow.apply(shot).setExcludeDistance(true);
 
 				boolean excludeFromPlot = getAsBoolean(shot, "excludeFromPlot", false);
-				if (excludeFromPlot) getRow.apply(shot).setExcludeFromPlotting(true);
+				if (excludeFromPlot)
+					getRow.apply(shot).setExcludeFromPlotting(true);
 			}
-		
+
 			if (fromStation.has("lrud")) {
 				MutableSurveyRow lrudRow = getRow.apply(fromStation);
 				JsonArray lrud = fromStation.getAsJsonArray("lrud");
@@ -350,7 +364,7 @@ public class MetacaveImporter {
 			// TODO: depth
 		}
 	}
-	
+
 	public SurveyLead importLead(JsonObject obj, String caveName) {
 		MutableSurveyLead lead = new MutableSurveyLead();
 		lead.setCave(caveName);
@@ -362,7 +376,7 @@ public class MetacaveImporter {
 		leads.add(result);
 		return result;
 	}
-	
+
 	public SurveyTrip importFixedStationGroup(JsonObject obj, String caveName) {
 		SurveyTrip trip = importFixedStationGroupHeader(obj, caveName);
 		importFixedStations(trip, obj.getAsJsonObject("stations"));

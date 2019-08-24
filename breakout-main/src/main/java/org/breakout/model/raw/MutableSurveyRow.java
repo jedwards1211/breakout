@@ -1,10 +1,11 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 7/28/2019, 3:35:00 PM.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 8/24/2019, 5:36:49 PM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
 package org.breakout.model.raw;
 
+import org.andork.immutable.ImmutableList;
 import com.github.krukow.clj_ds.TransientMap;
 import com.github.krukow.clj_lang.PersistentHashMap;
 import java.util.Objects;
@@ -226,10 +227,10 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
-	 * @return survey notes file (if one file can't be associated with the entire trip).
+	 * @return attached files (if one they can't be associated with the entire trip).
 	 */
-	public String getOverrideSurveyNotes() {
-		return get(SurveyRow.overrideSurveyNotes);
+	public ImmutableList<String> getOverrideAttachedFiles() {
+		return get(SurveyRow.overrideAttachedFiles);
 	}
 	
 	/**
@@ -464,14 +465,14 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
-	 * Sets survey notes file (if one file can't be associated with the entire trip).
+	 * Sets attached files (if one they can't be associated with the entire trip).
 	 *
-	 * @param overrideSurveyNotes - the new value for survey notes file (if one file can't be associated with the entire trip)
+	 * @param overrideAttachedFiles - the new value for attached files (if one they can't be associated with the entire trip)
 	 *
-	 * @return this {@code SurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the new {@code overrideSurveyNotes}.
+	 * @return this {@code SurveyRow} if {@code overrideAttachedFiles} is unchanged, or a copy with the new {@code overrideAttachedFiles}.
 	 */
-	public MutableSurveyRow setOverrideSurveyNotes(String overrideSurveyNotes) {
-		return set(SurveyRow.overrideSurveyNotes, overrideSurveyNotes);
+	public MutableSurveyRow setOverrideAttachedFiles(ImmutableList<String> overrideAttachedFiles) {
+		return set(SurveyRow.overrideAttachedFiles, overrideAttachedFiles);
 	}
 	
 	/**
@@ -718,14 +719,14 @@ public final class MutableSurveyRow {
 	}
 	
 	/**
-	 * Updates survey notes file (if one file can't be associated with the entire trip).
+	 * Updates attached files (if one they can't be associated with the entire trip).
 	 *
-	 * @param updater - {@code Function} that takes the current value of {@code overrideSurveyNotes} and returns the new value for {@code overrideSurveyNotes}.
+	 * @param updater - {@code Function} that takes the current value of {@code overrideAttachedFiles} and returns the new value for {@code overrideAttachedFiles}.
 	 *
-	 * @return this {@code MutableSurveyRow} if {@code overrideSurveyNotes} is unchanged, or a copy with the updated {@code overrideSurveyNotes}.
+	 * @return this {@code MutableSurveyRow} if {@code overrideAttachedFiles} is unchanged, or a copy with the updated {@code overrideAttachedFiles}.
 	 */
-	public MutableSurveyRow updateOverrideSurveyNotes(Function<String, String> updater) {
-		return update(SurveyRow.overrideSurveyNotes, updater);
+	public MutableSurveyRow updateOverrideAttachedFiles(Function<ImmutableList<String>, ImmutableList<String>> updater) {
+		return update(SurveyRow.overrideAttachedFiles, updater);
 	}
 	
 	/**

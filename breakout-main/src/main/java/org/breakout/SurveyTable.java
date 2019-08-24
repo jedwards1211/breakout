@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.breakout;
 
+import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.text.NumberFormat;
@@ -28,9 +29,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.DefaultCellEditor;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
+import org.andork.immutable.ImmutableList;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.ListTableColumn;
 import org.andork.swing.table.ListTableModel;
@@ -43,68 +47,78 @@ public class SurveyTable extends AnnotatingJTable {
 			return new ListTableColumn<>(modelColumn);
 		}
 
-		public final ListTableColumn<SurveyRow, String> fromCave = column(SurveyTableModel.Columns.fromCave)
-				.headerValue("From Cave");
-		public final ListTableColumn<SurveyRow, String> fromStation = column(
-				SurveyTableModel.Columns.fromStation)
-						.headerValue("From Station");
-		public final ListTableColumn<SurveyRow, String> toCave = column(SurveyTableModel.Columns.toCave)
-				.headerValue("To Cave");
-		public final ListTableColumn<SurveyRow, String> toStation = column(SurveyTableModel.Columns.toStation)
-				.headerValue("To Station");
-		public final ListTableColumn<SurveyRow, String> distance = column(SurveyTableModel.Columns.distance)
-				.headerValue("Distance")
+		public final ListTableColumn<SurveyRow, String> fromCave =
+			column(SurveyTableModel.Columns.fromCave).headerValue("From Cave");
+		public final ListTableColumn<SurveyRow, String> fromStation =
+			column(SurveyTableModel.Columns.fromStation).headerValue("From Station");
+		public final ListTableColumn<SurveyRow, String> toCave =
+			column(SurveyTableModel.Columns.toCave).headerValue("To Cave");
+		public final ListTableColumn<SurveyRow, String> toStation =
+			column(SurveyTableModel.Columns.toStation).headerValue("To Station");
+		public final ListTableColumn<SurveyRow, String> distance =
+			column(SurveyTableModel.Columns.distance).headerValue("Distance").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> frontAzimuth =
+			column(SurveyTableModel.Columns.frontAzimuth).headerValue("FS Azimuth").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> frontInclination =
+			column(SurveyTableModel.Columns.frontInclination)
+				.headerValue("FS Inclination")
 				.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> frontAzimuth = column(
-				SurveyTableModel.Columns.frontAzimuth)
-						.headerValue("FS Azimuth")
-						.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> frontInclination = column(
-				SurveyTableModel.Columns.frontInclination)
-						.headerValue("FS Inclination")
-						.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> backAzimuth = column(
-				SurveyTableModel.Columns.backAzimuth)
-						.headerValue("BS Azimuth")
-						.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> backInclination = column(
-				SurveyTableModel.Columns.backInclination)
-						.headerValue("BS Inclination")
-						.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> left = column(SurveyTableModel.Columns.left)
-				.headerValue("Left")
-				.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> right = column(SurveyTableModel.Columns.right)
-				.headerValue("Right")
-				.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> up = column(SurveyTableModel.Columns.up)
-				.headerValue("Up")
-				.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> down = column(SurveyTableModel.Columns.down)
-				.headerValue("Down")
-				.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> northing = column(SurveyTableModel.Columns.northing)
-				.headerValue("Northing")
-				.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> easting = column(SurveyTableModel.Columns.easting)
-				.headerValue("Easting")
-				.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> elevation = column(SurveyTableModel.Columns.elevation)
-				.headerValue("Elevation")
-				.renderer(numberCellRenderer);
-		public final ListTableColumn<SurveyRow, String> comment = column(SurveyTableModel.Columns.comment)
-				.headerValue("Comment");
-		public final ListTableColumn<SurveyRow, String> tripName = column(SurveyTableModel.Columns.tripName)
-				.headerValue("SurveyTrip Name");
-		public final ListTableColumn<SurveyRow, String> surveyors = column(SurveyTableModel.Columns.surveyors)
-				.headerValue("Surveyors");
-		public final ListTableColumn<SurveyRow, String> date = column(SurveyTableModel.Columns.date)
-				.headerValue("Date");
-		public final ListTableColumn<SurveyRow, String> surveyNotes = column(
-				SurveyTableModel.Columns.surveyNotes)
-						.headerValue("Survey Notes");
-		public final ListTableColumn<SurveyRow, String> units = column(SurveyTableModel.Columns.units)
-				.headerValue("Units");
+		public final ListTableColumn<SurveyRow, String> backAzimuth =
+			column(SurveyTableModel.Columns.backAzimuth).headerValue("BS Azimuth").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> backInclination =
+			column(SurveyTableModel.Columns.backInclination).headerValue("BS Inclination").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> left =
+			column(SurveyTableModel.Columns.left).headerValue("Left").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> right =
+			column(SurveyTableModel.Columns.right).headerValue("Right").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> up =
+			column(SurveyTableModel.Columns.up).headerValue("Up").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> down =
+			column(SurveyTableModel.Columns.down).headerValue("Down").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> northing =
+			column(SurveyTableModel.Columns.northing).headerValue("Northing").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> easting =
+			column(SurveyTableModel.Columns.easting).headerValue("Easting").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> elevation =
+			column(SurveyTableModel.Columns.elevation).headerValue("Elevation").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> comment =
+			column(SurveyTableModel.Columns.comment).headerValue("Comment");
+		public final ListTableColumn<SurveyRow, String> tripName =
+			column(SurveyTableModel.Columns.tripName).headerValue("SurveyTrip Name");
+		public final ListTableColumn<SurveyRow, String> surveyors =
+			column(SurveyTableModel.Columns.surveyors).headerValue("Surveyors");
+		public final ListTableColumn<SurveyRow, String> date =
+			column(SurveyTableModel.Columns.date).headerValue("Date");
+		public final ListTableColumn<SurveyRow, ImmutableList<String>> attachedFiles =
+			column(SurveyTableModel.Columns.attachedFiles)
+				.headerValue("Attached Files")
+				.renderer(new DefaultTableCellRenderer() {
+					@Override
+					public Component getTableCellRendererComponent(
+						JTable table,
+						Object value,
+						boolean isSelected,
+						boolean hasFocus,
+						int row,
+						int column) {
+						if (value instanceof ImmutableList) {
+							StringBuilder b = new StringBuilder();
+							for (Object file : (ImmutableList<?>) value) {
+								if (b.length() > 0) {
+									b.append("; ");
+								}
+								b.append(file);
+							}
+							value = b.toString();
+						}
+						else {
+							value = "";
+						}
+						return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+					}
+				});
+		public final ListTableColumn<SurveyRow, String> units =
+			column(SurveyTableModel.Columns.units).headerValue("Units");
 	}
 
 	private static final long serialVersionUID = -3257512752381778654L;
@@ -124,7 +138,10 @@ public class SurveyTable extends AnnotatingJTable {
 	private Aspect aspect = Aspect.SHOTS;
 
 	public enum Aspect {
-		SHOTS, NEV, TRIP, LINK_SURVEY_NOTES;
+		SHOTS,
+		NEV,
+		TRIP,
+		LINK_SURVEY_NOTES;
 	}
 
 	public SurveyTable() {
@@ -147,10 +164,10 @@ public class SurveyTable extends AnnotatingJTable {
 				int Surveyrow = rowAtPoint(e.getPoint());
 
 				@SuppressWarnings("unchecked")
-				ListTableColumn<SurveyRow, ?> column = (ListTableColumn<SurveyRow, ?>) getColumnModel()
-						.getColumn(columnIndex);
+				ListTableColumn<SurveyRow, ?> column =
+					(ListTableColumn<SurveyRow, ?>) getColumnModel().getColumn(columnIndex);
 
-				if (column == columns.surveyNotes) {
+				if (column == columns.attachedFiles) {
 					Object o = getValueAt(Surveyrow, columnIndex);
 					if (o != null) {
 						listeners.forEach(listener -> listener.surveyNotesClicked(o.toString(), Surveyrow));
@@ -210,7 +227,7 @@ public class SurveyTable extends AnnotatingJTable {
 			case LINK_SURVEY_NOTES:
 				addColumn(columns.toStation);
 				addColumn(columns.tripName);
-				addColumn(columns.surveyNotes);
+				addColumn(columns.attachedFiles);
 				break;
 			case NEV:
 				addColumn(columns.northing);
@@ -223,7 +240,7 @@ public class SurveyTable extends AnnotatingJTable {
 				addColumn(columns.tripName);
 				addColumn(columns.surveyors);
 				addColumn(columns.date);
-				addColumn(columns.surveyNotes);
+				addColumn(columns.attachedFiles);
 				break;
 			}
 
