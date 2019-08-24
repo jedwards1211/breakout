@@ -98,6 +98,10 @@ public class DefaultNavigator extends MouseAdapter {
 		return active;
 	}
 
+	public boolean isNavigating() {
+		return active && pressEvent != null;
+	}
+
 	public boolean isCallDisplay() {
 		return callDisplay;
 	}
@@ -113,7 +117,8 @@ public class DefaultNavigator extends MouseAdapter {
 		if (e.isAltDown()) {
 			if (button == MouseEvent.BUTTON1) {
 				button = MouseEvent.BUTTON3;
-			} else if (button == MouseEvent.BUTTON3) {
+			}
+			else if (button == MouseEvent.BUTTON3) {
 				button = MouseEvent.BUTTON1;
 			}
 		}
@@ -157,7 +162,8 @@ public class DefaultNavigator extends MouseAdapter {
 				Vecmath.invAffine(cam);
 				viewSettings.setViewXform(cam);
 			}
-		} else if (button == MouseEvent.BUTTON2) {
+		}
+		else if (button == MouseEvent.BUTTON2) {
 			if (e.isShiftDown() && !Vecmath.hasNaNsOrInfinites(center)) {
 				Vecmath.sub3(center, 0, cam, 12, v, 0);
 				float dist = Vecmath.length3(v);
@@ -166,14 +172,16 @@ public class DefaultNavigator extends MouseAdapter {
 				cam[12] += v[0] * motion;
 				cam[13] += v[1] * motion;
 				cam[14] += v[2] * motion;
-			} else {
+			}
+			else {
 				cam[12] += cam[8] * dy * scaledMoveFactor;
 				cam[13] += cam[9] * dy * scaledMoveFactor;
 				cam[14] += cam[10] * dy * scaledMoveFactor;
 			}
 			Vecmath.invAffine(cam);
 			viewSettings.setViewXform(cam);
-		} else if (button == MouseEvent.BUTTON3) {
+		}
+		else if (button == MouseEvent.BUTTON3) {
 			if (e.isShiftDown()) {
 				float dpan = dx * panFactor * sensitivity / canvas.getWidth();
 
@@ -185,7 +193,8 @@ public class DefaultNavigator extends MouseAdapter {
 
 				Vecmath.invAffine(cam);
 				viewSettings.setViewXform(cam);
-			} else {
+			}
+			else {
 				cam[12] += cam[0] * -dx * scaledMoveFactor + cam[4] * dy * scaledMoveFactor;
 				cam[13] += cam[1] * -dx * scaledMoveFactor + cam[5] * dy * scaledMoveFactor;
 				cam[14] += cam[2] * -dx * scaledMoveFactor + cam[6] * dy * scaledMoveFactor;
@@ -211,6 +220,10 @@ public class DefaultNavigator extends MouseAdapter {
 	public void mouseReleased(MouseEvent e) {
 		if (pressEvent != null && e.getButton() == pressEvent.getButton()) {
 			pressEvent = null;
+
+			if (callDisplay) {
+				drawable.display();
+			}
 		}
 	}
 
@@ -242,7 +255,8 @@ public class DefaultNavigator extends MouseAdapter {
 					float dist = Vecmath.length3(v);
 					Vecmath.scale3(v, 1f / dist);
 					distance = Math.min(Math.max(0, dist - 1), distance);
-				} else {
+				}
+				else {
 					renderer.getViewState().pickXform().xform(e, o, v);
 				}
 				cam[12] += v[0] * distance;

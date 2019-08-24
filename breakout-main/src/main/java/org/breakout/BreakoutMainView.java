@@ -242,6 +242,8 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
+import com.jogamp.opengl.math.geom.AABBox;
+import com.jogamp.opengl.math.geom.Frustum;
 
 public class BreakoutMainView {
 	private static final Logger logger = Logger.getLogger(BreakoutMainView.class.getName());
@@ -1397,21 +1399,50 @@ public class BreakoutMainView {
 
 		float[] center = new float[3];
 		float[] cameraLoc = new float[3];
-		float[] vi = new float[16];
+		float[] forward = new float[3];
+		AABBox box = new AABBox();
 
 		@Override
 		public void display(GLAutoDrawable drawable) {
-			if (model3d != null) {
-				Rectmath.center(model3d.getMbr(), center);
-				getViewSettings().getInvViewXform(vi);
-				Vecmath.getColumn3(vi, 3, cameraLoc);
-				float maxDist = Rectmath.diagonalLength(model3d.getMbr());
-				float dist = Vecmath.distance3(center, cameraLoc);
-				if (dist > maxDist) {
-					Vecmath.interp3(center, cameraLoc, maxDist / dist, cameraLoc);
-					Vecmath.setColumn3(vi, 3, cameraLoc);
-					Vecmath.invAffine(vi);
-					getViewSettings().setViewXform(vi);
+			JoglViewSettings settings = getViewSettings();
+			Projection projection = settings.getProjection();
+
+			if (model3d == null || !(projection instanceof PerspectiveProjection)) {
+				super.display(drawable);
+				return;
+			}
+
+			JoglViewState viewState = getViewState();
+			float[] vi = viewState.inverseViewMatrix();
+			float[] mbr = model3d.getMbr();
+
+			float maxDist = Rectmath.diagonalLength(model3d.getMbr());
+			if (maxDist == 0) {
+				super.display(drawable);
+				return;
+			}
+
+			Rectmath.center(mbr, center);
+			settings.getInvViewXform(vi);
+			Vecmath.getColumn3(vi, 3, cameraLoc);
+			float dist = Vecmath.distance3(center, cameraLoc);
+			if (dist > maxDist) {
+				Vecmath.interp3(center, cameraLoc, maxDist / dist, cameraLoc);
+				Vecmath.setColumn3(vi, 3, cameraLoc);
+				settings.setInvViewXform(vi);
+			}
+			else if (cameraAnimationQueue.isEmpty() && !navigator.isNavigating()) {
+				float[] v = viewState.viewMatrix();
+				float[] p = viewState.projectionMatrix();
+				settings.getViewXform(v);
+				settings.getProjection().calculate(p, viewState, width, height);
+				float[] pv = viewState.pv();
+				Vecmath.mmul(p, v, pv);
+				Frustum frustum = viewState.frustum();
+				frustum.updateByPMV(pv, 0);
+				box.setSize(mbr[0], mbr[1], mbr[2], mbr[3], mbr[4], mbr[5]);
+				if (frustum.isAABBoxOutside(box)) {
+					fitViewToEverything();
 				}
 			}
 

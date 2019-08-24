@@ -48,12 +48,14 @@ public class AnimationQueue {
 					if (result <= 0) {
 						queue.poll();
 						lastAnimTime = 0;
-					} else {
+					}
+					else {
 						timer.setInitialDelay(result);
 						timer.start();
 						break;
 					}
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					ex.printStackTrace();
 					queue.poll();
 					lastAnimTime = 0;
@@ -83,13 +85,18 @@ public class AnimationQueue {
 		CheckEDT.checkEDT();
 		if (animating) {
 			pendingAdd.add(animation);
-		} else {
+		}
+		else {
 			if (queue.isEmpty()) {
 				timer.setInitialDelay(0);
 				timer.start();
 			}
 			queue.add(animation);
 		}
+	}
+
+	public boolean isEmpty() {
+		return queue.isEmpty();
 	}
 
 	public void clear() {

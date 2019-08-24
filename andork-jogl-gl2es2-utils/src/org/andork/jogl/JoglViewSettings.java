@@ -44,4 +44,13 @@ public class JoglViewSettings {
 		invAffine(v, vi);
 		System.arraycopy(v, 0, this.v, 0, 16);
 	}
+
+	public void setInvViewXform(float[] vi) {
+		if (Vecmath.hasNaNsOrInfinites(vi)) {
+			throw new IllegalArgumentException("vi must not have NaN or infinite values");
+		}
+	
+		invAffine(vi, v);
+		System.arraycopy(vi, 0, this.vi, 0, 16);
+	}
 }
