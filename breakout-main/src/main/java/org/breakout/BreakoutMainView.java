@@ -2043,10 +2043,7 @@ public class BreakoutMainView {
 		JMenuItem noRecentFilesMenuItem = new JMenuItem();
 		noRecentFilesMenuItem.setEnabled(false);
 
-		if (Pattern
-			.compile("microsoft|windows", Pattern.CASE_INSENSITIVE)
-			.matcher(System.getProperty("os.name"))
-			.matches()) {
+		if (!Pattern.compile("mac os x", Pattern.CASE_INSENSITIVE).matcher(System.getProperty("os.name")).matches()) {
 			hideCanvasWhileMenuOpen();
 		}
 
