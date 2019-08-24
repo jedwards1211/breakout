@@ -31,22 +31,28 @@ public class Rectmath {
 			out[i] = (r[i] + r[i + out.length]) * 0.5f;
 		}
 	}
-	
+
 	public static boolean contains2(float[] r, float... p) {
-		return p[0] >= r[0] && p[0] <= r[2] &&
-				p[1] >= r[1] && p[1] <= r[3];
+		return p[0] >= r[0] && p[0] <= r[2] && p[1] >= r[1] && p[1] <= r[3];
 	}
 
 	public static boolean contains3(double[] r, double[] p) {
-		return p[0] >= r[0] && p[0] <= r[3] &&
-				p[1] >= r[1] && p[1] <= r[4] &&
-				p[2] >= r[2] && p[2] <= r[5];
+		return p[0] >= r[0] && p[0] <= r[3] && p[1] >= r[1] && p[1] <= r[4] && p[2] >= r[2] && p[2] <= r[5];
 	}
 
 	public static boolean contains3(float[] r, float[] p) {
-		return p[0] >= r[0] && p[0] <= r[3] &&
-				p[1] >= r[1] && p[1] <= r[4] &&
-				p[2] >= r[2] && p[2] <= r[5];
+		return p[0] >= r[0] && p[0] <= r[3] && p[1] >= r[1] && p[1] <= r[4] && p[2] >= r[2] && p[2] <= r[5];
+	}
+
+	public static float diagonalLength(float[] r) {
+		return (float) Math.sqrt(diagonalLengthSq(r));
+	}
+
+	public static float diagonalLengthSq(float[] r) {
+		float dx = r[0] - r[3];
+		float dy = r[1] - r[4];
+		float dz = r[2] - r[5];
+		return dx * dx + dy * dy + dz * dz;
 	}
 
 	public static double enlargement(double[] r, double[] radded) {
@@ -168,31 +174,17 @@ public class Rectmath {
 	}
 
 	public static boolean intersects3(double[] r1, double[] r2) {
-		return r1[0] <= r2[3] && r1[1] <= r2[4] && r1[2] <= r2[5] &&
-				r1[3] >= r2[0] && r1[4] >= r2[1] && r1[5] >= r2[2];
+		return r1[0] <= r2[3] && r1[1] <= r2[4] && r1[2] <= r2[5] && r1[3] >= r2[0] && r1[4] >= r2[1] && r1[5] >= r2[2];
 	}
 
 	public static boolean intersects3(float[] r1, float[] r2) {
-		return r1[0] <= r2[3] && r1[1] <= r2[4] && r1[2] <= r2[5] &&
-				r1[3] >= r2[0] && r1[4] >= r2[1] && r1[5] >= r2[2];
+		return r1[0] <= r2[3] && r1[1] <= r2[4] && r1[2] <= r2[5] && r1[3] >= r2[0] && r1[4] >= r2[1] && r1[5] >= r2[2];
 	}
 
 	public static double minDistanceSquared3(double[] r, double[] p) {
-		double dx = p[0] < r[0]
-				? r[0] - p[0]
-				: p[0] <= r[3]
-						? 0
-						: p[0] - r[3];
-		double dy = p[1] < r[1]
-				? r[1] - p[1]
-				: p[1] <= r[4]
-						? 1
-						: p[1] - r[4];
-		double dz = p[2] < r[2]
-				? r[2] - p[2]
-				: p[2] <= r[5]
-						? 0
-						: p[2] - r[5];
+		double dx = p[0] < r[0] ? r[0] - p[0] : p[0] <= r[3] ? 0 : p[0] - r[3];
+		double dy = p[1] < r[1] ? r[1] - p[1] : p[1] <= r[4] ? 1 : p[1] - r[4];
+		double dz = p[2] < r[2] ? r[2] - p[2] : p[2] <= r[5] ? 0 : p[2] - r[5];
 		return dx * dx + dy * dy + dz * dz;
 	}
 
@@ -201,21 +193,9 @@ public class Rectmath {
 	}
 
 	public static float minDistanceSquared3(float[] r, float[] p) {
-		float dx = p[0] < r[0]
-				? r[0] - p[0]
-				: p[0] <= r[3]
-						? 0
-						: p[0] - r[3];
-		float dy = p[1] < r[1]
-				? r[1] - p[1]
-				: p[1] <= r[4]
-						? 1
-						: p[1] - r[4];
-		float dz = p[2] < r[2]
-				? r[2] - p[2]
-				: p[2] <= r[5]
-						? 0
-						: p[2] - r[5];
+		float dx = p[0] < r[0] ? r[0] - p[0] : p[0] <= r[3] ? 0 : p[0] - r[3];
+		float dy = p[1] < r[1] ? r[1] - p[1] : p[1] <= r[4] ? 1 : p[1] - r[4];
+		float dz = p[2] < r[2] ? r[2] - p[2] : p[2] <= r[5] ? 0 : p[2] - r[5];
 		return dx * dx + dy * dy + dz * dz;
 	}
 
@@ -226,18 +206,20 @@ public class Rectmath {
 	/**
 	 * @param r a 2-dimensional bounding rectangle
 	 * @param p a 2-dimensional point
-	 * @return the distance squared between {@code p} and the closest corner of {@code r}
+	 * @return the distance squared between {@code p} and the closest corner of
+	 *         {@code r}
 	 */
 	public static float distanceToClosestCornerSquared2(float[] r, float[] p) {
 		float dx = Math.min(Math.abs(p[0] - r[0]), Math.abs(p[0] - r[2]));
 		float dy = Math.min(Math.abs(p[1] - r[1]), Math.abs(p[1] - r[3]));
 		return dx * dx + dy * dy;
-	}	
+	}
 
 	/**
 	 * @param r a 3-dimensional bounding rectangle
 	 * @param p a 3-dimensional point
-	 * @return the distance squared between {@code p} and the closest corner of {@code r}
+	 * @return the distance squared between {@code p} and the closest corner of
+	 *         {@code r}
 	 */
 	public static float distanceToClosestCornerSquared3(float[] r, float[] p) {
 		float dx = Math.min(Math.abs(p[0] - r[0]), Math.abs(p[0] - r[3]));
@@ -245,11 +227,12 @@ public class Rectmath {
 		float dz = Math.min(Math.abs(p[2] - r[2]), Math.abs(p[2] - r[5]));
 		return dx * dx + dy * dy + dz * dz;
 	}
-	
+
 	/**
 	 * @param r a 2-dimensional bounding rectangle
 	 * @param p a 2-dimensional point
-	 * @return the distance squared between {@code p} and the farthest corner of {@code r}
+	 * @return the distance squared between {@code p} and the farthest corner of
+	 *         {@code r}
 	 */
 	public static float distanceToFarthestCornerSquared2(float[] r, float[] p) {
 		float dx = Math.max(Math.abs(p[0] - r[0]), Math.abs(p[0] - r[2]));
@@ -260,7 +243,8 @@ public class Rectmath {
 	/**
 	 * @param r a 3-dimensional bounding rectangle
 	 * @param p a 3-dimensional point
-	 * @return the distance squared between {@code p} and the farthest corner of {@code r}
+	 * @return the distance squared between {@code p} and the farthest corner of
+	 *         {@code r}
 	 */
 	public static float distanceToFarthestCornerSquared3(float[] r, float[] p) {
 		float dx = Math.max(Math.abs(p[0] - r[0]), Math.abs(p[0] - r[3]));
@@ -324,13 +308,11 @@ public class Rectmath {
 	}
 
 	public static boolean overlaps3(double[] r1, double[] r2) {
-		return r1[0] < r2[3] && r1[1] < r2[4] && r1[2] < r2[5] &&
-				r1[3] > r2[0] && r1[4] > r2[1] && r1[5] > r2[2];
+		return r1[0] < r2[3] && r1[1] < r2[4] && r1[2] < r2[5] && r1[3] > r2[0] && r1[4] > r2[1] && r1[5] > r2[2];
 	}
 
 	public static boolean overlaps3(float[] r1, float[] r2) {
-		return r1[0] < r2[3] && r1[1] < r2[4] && r1[2] < r2[5] &&
-				r1[3] > r2[0] && r1[4] > r2[1] && r1[5] > r2[2];
+		return r1[0] < r2[3] && r1[1] < r2[4] && r1[2] < r2[5] && r1[3] > r2[0] && r1[4] > r2[1] && r1[5] > r2[2];
 	}
 
 	public static double[] ppunion(double[] p1, double[] p2) {
@@ -381,11 +363,17 @@ public class Rectmath {
 		int d = r.length / 2;
 		StringBuffer sb = new StringBuffer("[ ");
 		for (int i = 0; i < d - 1; i++) {
-			sb.append(String.format(elemFormat, r[i])).append(" - ")
-					.append(String.format(elemFormat, r[i + d])).append(" , ");
+			sb
+				.append(String.format(elemFormat, r[i]))
+				.append(" - ")
+				.append(String.format(elemFormat, r[i + d]))
+				.append(" , ");
 		}
-		sb.append(String.format(elemFormat, r[d - 1])).append(" - ")
-				.append(String.format(elemFormat, r[d * 2 - 1])).append(" ]");
+		sb
+			.append(String.format(elemFormat, r[d - 1]))
+			.append(" - ")
+			.append(String.format(elemFormat, r[d * 2 - 1]))
+			.append(" ]");
 		return sb.toString();
 	}
 
@@ -396,11 +384,17 @@ public class Rectmath {
 		int d = r.length / 2;
 		StringBuffer sb = new StringBuffer("[ ");
 		for (int i = 0; i < d - 1; i++) {
-			sb.append(String.format(elemFormat, r[i])).append(" - ")
-					.append(String.format(elemFormat, r[i + d])).append(" , ");
+			sb
+				.append(String.format(elemFormat, r[i]))
+				.append(" - ")
+				.append(String.format(elemFormat, r[i + d]))
+				.append(" , ");
 		}
-		sb.append(String.format(elemFormat, r[d - 1])).append(" - ")
-				.append(String.format(elemFormat, r[d * 2 - 1])).append(" ]");
+		sb
+			.append(String.format(elemFormat, r[d - 1]))
+			.append(" - ")
+			.append(String.format(elemFormat, r[d * 2 - 1]))
+			.append(" ]");
 		return sb.toString();
 	}
 
@@ -432,8 +426,7 @@ public class Rectmath {
 
 	public static boolean rayIntersects(double[] rayOrigin, double[] rayDirection, double[] rect) {
 		for (int d = 0; d < 3; d++) {
-			if (rayOrigin[d] <= rect[d] && rayDirection[d] < 0
-					|| rayOrigin[d] >= rect[d + 3] && rayDirection[d] > 0) {
+			if (rayOrigin[d] <= rect[d] && rayDirection[d] < 0 || rayOrigin[d] >= rect[d + 3] && rayDirection[d] > 0) {
 				return false;
 			}
 		}
@@ -450,17 +443,19 @@ public class Rectmath {
 
 			if (rayOrigin[d0] <= rect[d0]) {
 				l0 = rect[d0] - rayOrigin[d0];
-			} else if (rayOrigin[d0] >= rect[d0 + 3]) {
+			}
+			else if (rayOrigin[d0] >= rect[d0 + 3]) {
 				l0 = rect[d0 + 3] - rayOrigin[d0];
-			} else {
+			}
+			else {
 				continue;
 			}
 
 			for (int i = 1; i < 3; i++) {
 				int d1 = (d0 + i) % 3;
 				double l1 = rayDirection[d1] * l0 / rayDirection[d0];
-				if (rayOrigin[d1] <= rect[d1 + 3] && rayOrigin[d1] + l1 > rect[d1 + 3] ||
-						rayOrigin[d1] >= rect[d1] && rayOrigin[d1] + l1 < rect[d1]) {
+				if (rayOrigin[d1] <= rect[d1 + 3] && rayOrigin[d1] + l1 > rect[d1 + 3]
+					|| rayOrigin[d1] >= rect[d1] && rayOrigin[d1] + l1 < rect[d1]) {
 					return false;
 				}
 			}
@@ -471,8 +466,7 @@ public class Rectmath {
 
 	public static boolean rayIntersects(float[] rayOrigin, float[] rayDirection, float[] rect) {
 		for (int d = 0; d < 3; d++) {
-			if (rayOrigin[d] <= rect[d] && rayDirection[d] < 0
-					|| rayOrigin[d] >= rect[d + 3] && rayDirection[d] > 0) {
+			if (rayOrigin[d] <= rect[d] && rayDirection[d] < 0 || rayOrigin[d] >= rect[d + 3] && rayDirection[d] > 0) {
 				return false;
 			}
 		}
@@ -489,17 +483,19 @@ public class Rectmath {
 
 			if (rayOrigin[d0] <= rect[d0]) {
 				l0 = rect[d0] - rayOrigin[d0];
-			} else if (rayOrigin[d0] >= rect[d0 + 3]) {
+			}
+			else if (rayOrigin[d0] >= rect[d0 + 3]) {
 				l0 = rect[d0 + 3] - rayOrigin[d0];
-			} else {
+			}
+			else {
 				continue;
 			}
 
 			for (int i = 1; i < 3; i++) {
 				int d1 = (d0 + i) % 3;
 				float l1 = rayDirection[d1] * l0 / rayDirection[d0];
-				if (rayOrigin[d1] <= rect[d1 + 3] && rayOrigin[d1] + l1 > rect[d1 + 3] ||
-						rayOrigin[d1] >= rect[d1] && rayOrigin[d1] + l1 < rect[d1]) {
+				if (rayOrigin[d1] <= rect[d1 + 3] && rayOrigin[d1] + l1 > rect[d1 + 3]
+					|| rayOrigin[d1] >= rect[d1] && rayOrigin[d1] + l1 < rect[d1]) {
 					return false;
 				}
 			}
@@ -556,11 +552,11 @@ public class Rectmath {
 		rout[4] = nmax(r1[4], r2[4]);
 		rout[5] = nmax(r1[5], r2[5]);
 	}
-	
+
 	public static boolean isVoid(float[] r) {
 		return Float.isNaN(r[0]);
 	}
-	
+
 	public static void makeVoid(float[] r) {
 		Arrays.fill(r, Float.NaN);
 	}
@@ -608,11 +604,12 @@ public class Rectmath {
 		float z = r[5] - r[2];
 		return x * y * z;
 	}
-	
+
 	/**
 	 * Unions a bounding sphere into a bounding rectangle
-	 * @param r the bounding rectangle
-	 * @param s the bounding sphere [x, y, z, r]
+	 * 
+	 * @param r   the bounding rectangle
+	 * @param s   the bounding sphere [x, y, z, r]
 	 * @param out the output bounding rectangle
 	 * @return out
 	 */

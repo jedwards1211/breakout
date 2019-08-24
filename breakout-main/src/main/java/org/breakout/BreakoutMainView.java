@@ -1390,6 +1390,35 @@ public class BreakoutMainView {
 
 	final Throttler<Void> updateHover = new Throttler<>(0);
 
+	class Renderer extends DefaultJoglRenderer {
+		public Renderer(JoglScene scene, GL3Framebuffer framebuffer, int desiredNumSamples) {
+			super(scene, framebuffer, desiredNumSamples);
+		}
+
+		float[] center = new float[3];
+		float[] cameraLoc = new float[3];
+		float[] vi = new float[16];
+
+		@Override
+		public void display(GLAutoDrawable drawable) {
+			if (model3d != null) {
+				Rectmath.center(model3d.getMbr(), center);
+				getViewSettings().getInvViewXform(vi);
+				Vecmath.getColumn3(vi, 3, cameraLoc);
+				float maxDist = Rectmath.diagonalLength(model3d.getMbr());
+				float dist = Vecmath.distance3(center, cameraLoc);
+				if (dist > maxDist) {
+					Vecmath.interp3(center, cameraLoc, maxDist / dist, cameraLoc);
+					Vecmath.setColumn3(vi, 3, cameraLoc);
+					Vecmath.invAffine(vi);
+					getViewSettings().setViewXform(vi);
+				}
+			}
+
+			super.display(drawable);
+		}
+	}
+
 	public BreakoutMainView() {
 		mapbox = new MapboxClient(null);
 
@@ -1402,7 +1431,7 @@ public class BreakoutMainView {
 		bgColor = new JoglBackgroundColor();
 		scene.add(bgColor);
 
-		renderer = new DefaultJoglRenderer(scene, new GL3Framebuffer(), 1);
+		renderer = new Renderer(scene, new GL3Framebuffer(), 1);
 		renderer.setDesiredUseStencilBuffer(true);
 
 		autoDrawable.addGLEventListener(renderer);

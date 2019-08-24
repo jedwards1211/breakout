@@ -1,6 +1,5 @@
 package org.andork.jogl;
 
-import static com.jogamp.opengl.GL.GL_BACK;
 import static com.jogamp.opengl.GL.GL_DRAW_FRAMEBUFFER;
 import static com.jogamp.opengl.GL.GL_NEAREST;
 import static com.jogamp.opengl.GL.GL_READ_FRAMEBUFFER;
@@ -57,8 +56,14 @@ public class DefaultJoglRenderer implements GLEventListener {
 
 		if (framebuffer != null) {
 			GL3 gl3 = (GL3) gl;
-			renderingFbo = framebuffer.renderingFbo(gl3, drawable.getSurfaceWidth(), drawable.getSurfaceHeight(),
-					desiredNumSamples, desiredUseStencilBuffer);
+			renderingFbo =
+				framebuffer
+					.renderingFbo(
+						gl3,
+						drawable.getSurfaceWidth(),
+						drawable.getSurfaceHeight(),
+						desiredNumSamples,
+						desiredUseStencilBuffer);
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
 		}
 
@@ -71,8 +76,18 @@ public class DefaultJoglRenderer implements GLEventListener {
 
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, renderingFbo);
-			gl3.glBlitFramebuffer(0, 0, drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), 0, 0,
-					drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), GL.GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			gl3
+				.glBlitFramebuffer(
+					0,
+					0,
+					drawable.getSurfaceWidth(),
+					drawable.getSurfaceHeight(),
+					0,
+					0,
+					drawable.getSurfaceWidth(),
+					drawable.getSurfaceHeight(),
+					GL.GL_COLOR_BUFFER_BIT,
+					GL_NEAREST);
 		}
 	}
 
@@ -124,7 +139,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 		this.y = y;
 		this.width = width;
 		this.height = height;
-		this.devicePixelRatio = DevicePixelRatio.getDevicePixelRatio( drawable );
+		this.devicePixelRatio = DevicePixelRatio.getDevicePixelRatio(drawable);
 
 		gl.glViewport(x, y, width, height);
 	}
