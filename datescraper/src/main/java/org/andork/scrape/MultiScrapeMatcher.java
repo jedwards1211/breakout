@@ -1,21 +1,18 @@
 package org.andork.scrape;
 
-import java.util.Date;
 import java.util.PriorityQueue;
 
-import org.andork.datescraper.GeneralDatePattern;
-
 public class MultiScrapeMatcher<T> implements ScrapeMatcher<T> {
-	final MultiScrapePattern<T> pattern;
-	final ScrapeMatcher<? extends T>[] matchers;
+	protected final MultiScrapePattern<T> pattern;
+	protected final ScrapeMatcher<? extends T>[] matchers;
 
-	boolean initialized = false;
-	final PriorityQueue<PriorityEntry> queue = new PriorityQueue<>();
+	protected boolean initialized = false;
+	protected final PriorityQueue<PriorityEntry> queue = new PriorityQueue<>();
 
-	MultiScrapeMatchResult<T> match = null;
+	protected MultiScrapeMatchResult<T> match = null;
 
 	@SuppressWarnings("unchecked")
-	MultiScrapeMatcher(MultiScrapePattern<T> pattern, CharSequence input) {
+	protected MultiScrapeMatcher(MultiScrapePattern<T> pattern, CharSequence input) {
 		this.pattern = pattern;
 		matchers = new ScrapeMatcher[pattern.patterns.length];
 		for (int i = 0; i < pattern.patterns.length; i++) {

@@ -3,14 +3,11 @@ package org.andork.datescraper;
 import static org.andork.datescraper.DateField.DAY;
 import static org.andork.datescraper.DateField.FULL_YEAR;
 import static org.andork.datescraper.DateField.MONTH;
-import static org.andork.datescraper.DateField.TWO_DIGIT_YEAR;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.andork.scrape.ScrapeMatcher;
 
 public class GeneralDatePattern implements DatePattern {
 	private static final DateField[] DEFAULT_ORDER = { FULL_YEAR, MONTH, DAY };
@@ -38,17 +35,6 @@ public class GeneralDatePattern implements DatePattern {
 	private int currentYear = Calendar.getInstance().get(Calendar.YEAR);
 
 	private Pattern pattern = null;
-
-	public static final DatePattern[] EN_US_PATTERNS =
-		{
-			new GeneralDatePattern().order(MONTH, DAY, FULL_YEAR),
-			new GeneralDatePattern().order(MONTH, DAY, TWO_DIGIT_YEAR),
-			new GeneralDatePattern().order(FULL_YEAR, MONTH, DAY),
-			new GeneralDatePattern().order(MONTH, FULL_YEAR),
-			new GeneralDatePattern().order(FULL_YEAR, MONTH),
-			new GeneralDatePattern().order(DAY, MONTH, FULL_YEAR),
-			new GeneralDatePattern().order(TWO_DIGIT_YEAR, MONTH, DAY),
-			new ISO8601DatePattern() };
 
 	public DateField[] Order() {
 		return order;

@@ -2,14 +2,14 @@ package org.breakout.model.parsed;
 
 import static org.andork.util.StringUtils.isNullOrEmpty;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
+import org.andork.datescraper.DateMatcher;
+import org.andork.datescraper.DatePatterns;
 import org.andork.model.Property;
 import org.andork.unit.Angle;
 import org.andork.unit.Unit;
@@ -41,23 +41,11 @@ public class ProjectParser {
 	}
 
 	private final IdentityHashMap<SurveyTrip, ParsedTrip> trips = new IdentityHashMap<>();
-	private static final DateFormat[] dateFormats =
-		{
-			new SimpleDateFormat("yyyy/MM/dd"),
-			new SimpleDateFormat("yyyy-MM-dd"),
-			new SimpleDateFormat("MM/dd/yyyy"),
-			new SimpleDateFormat("MM-dd-yyyy") };
+
+	private static final DateMatcher dateMatcher = DatePatterns.en_US.matcher("");
 
 	public static Date parseDate(String s) {
-		for (DateFormat format : dateFormats) {
-			try {
-				return format.parse(s);
-			}
-			catch (Exception e) {
-				// ignore
-			}
-		}
-		return null;
+		return dateMatcher.reset(s).find() ? dateMatcher.match() : null;
 	}
 
 	private static <T, U extends UnitType<U>> ParsedField<UnitizedDouble<U>> parse(
