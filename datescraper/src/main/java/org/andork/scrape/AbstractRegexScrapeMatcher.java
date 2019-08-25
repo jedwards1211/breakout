@@ -53,7 +53,6 @@ public abstract class AbstractRegexScrapeMatcher<T> implements ScrapeMatcher<T> 
 	@Override
 	public boolean find() {
 		while (matcher.find()) {
-			System.out.println(matcher.group());
 			if (parse()) {
 				return true;
 			}

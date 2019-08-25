@@ -9,7 +9,7 @@ import org.andork.scrape.ScrapePattern;
 
 public class ISO8601DatePattern implements DatePattern {
 	private static final Pattern pattern =
-		Pattern.compile("\b(\\d{4})(0\\d|1[012])([012]\\d|3[01])T([0-5]\\d):([0-5]\\d)(:([0-5]\\d))?\b");
+		Pattern.compile("\\b(\\d{4})(0\\d|1[012])([012]\\d|3[01])T([0-5]\\d):([0-5]\\d)(:([0-5]\\d))?\\b");
 
 	public static void main(String[] args) {
 		ScrapePattern<Date> p = new ISO8601DatePattern();

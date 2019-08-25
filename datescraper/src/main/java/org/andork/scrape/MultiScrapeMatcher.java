@@ -106,6 +106,9 @@ public class MultiScrapeMatcher<T> implements ScrapeMatcher<T> {
 		ScrapeMatcher<? extends T> m = e.matcher();
 		if (match != null) {
 			while (m.start() < match.end()) {
+				if (m.find()) {
+					queue.add(e);
+				}
 				if (queue.isEmpty()) {
 					match = null;
 					return false;
@@ -174,22 +177,6 @@ public class MultiScrapeMatcher<T> implements ScrapeMatcher<T> {
 			return index - o.index;
 		}
 
-	}
-
-	public static void main(String[] args) {
-		String input =
-			"04-02-18   04-02-29th,Aug 03, 2012 2 Sep 1964 2  blah 1394/02/3   2019.jul.31 0 2k389 182  23 1 29  38482 29 3 28 3-4-2019 jan12,2013\t2019jul.20 2016aug03 5 mar. 14 2018 20190822T03:45";
-		MultiScrapeMatcher<Date> m = new MultiScrapePattern<>(GeneralDatePattern.EN_US_PATTERNS).matcher(input);
-		while (m.find()) {
-			System.out.println(m.matchText());
-			System.out.println(m.match());
-		}
-		input = "5 mar. 14 2018 20190822T03:45";
-		m = new MultiScrapePattern<>(GeneralDatePattern.EN_US_PATTERNS).matcher(input);
-		while (m.find()) {
-			System.out.println(m.matchText());
-			System.out.println(m.match());
-		}
 	}
 }
 

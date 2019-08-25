@@ -104,26 +104,6 @@ public class GeneralDatePattern implements DatePattern {
 		return (year % 4) == 0 && ((year % 100) != 0 || (year % 400) == 0);
 	}
 
-	public static void main(String[] args) {
-		GeneralDatePattern pattern = new GeneralDatePattern();
-		System.out.println(pattern.pattern());
-		ScrapeMatcher<Date> m = pattern.matcher("2304-02-29th");
-		m.find();
-		System.out.println(m.match());
-
-		pattern.order(new DateField[] { MONTH, DAY, FULL_YEAR });
-		System.out.println(pattern.pattern());
-		ScrapeMatcher<Date> m2 = pattern.matcher("Feb 29th 2304");
-		m2.find();
-		System.out.println(m2.match());
-
-		pattern.order(new DateField[] { DAY, MONTH, TWO_DIGIT_YEAR });
-		System.out.println(pattern.pattern());
-		ScrapeMatcher<Date> m3 = pattern.matcher("5 mar. 14 2018");
-		m3.find();
-		System.out.println(m3.match());
-	}
-
 	private Pattern pattern() {
 		if (pattern != null)
 			return pattern;
