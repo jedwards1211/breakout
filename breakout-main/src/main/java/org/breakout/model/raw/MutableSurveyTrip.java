@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 8/24/2019, 5:32:59 PM.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 8/25/2019, 1:37:57 AM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
@@ -9,7 +9,7 @@ import java.util.List;
 import org.andork.unit.Unit;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
-import org.andork.immutable.ImmutableList;
+import com.github.krukow.clj_ds.PersistentVector;
 import com.github.krukow.clj_ds.TransientMap;
 import com.github.krukow.clj_lang.PersistentHashMap;
 import java.util.Objects;
@@ -121,7 +121,7 @@ public final class MutableSurveyTrip {
 	/**
 	 * @return attached file names.
 	 */
-	public ImmutableList<String> getAttachedFiles() {
+	public PersistentVector<String> getAttachedFiles() {
 		return get(SurveyTrip.attachedFiles);
 	}
 	
@@ -292,7 +292,7 @@ public final class MutableSurveyTrip {
 	 *
 	 * @return this {@code SurveyTrip} if {@code attachedFiles} is unchanged, or a copy with the new {@code attachedFiles}.
 	 */
-	public MutableSurveyTrip setAttachedFiles(ImmutableList<String> attachedFiles) {
+	public MutableSurveyTrip setAttachedFiles(PersistentVector<String> attachedFiles) {
 		return set(SurveyTrip.attachedFiles, attachedFiles);
 	}
 	
@@ -535,7 +535,7 @@ public final class MutableSurveyTrip {
 	 *
 	 * @return this {@code MutableSurveyTrip} if {@code attachedFiles} is unchanged, or a copy with the updated {@code attachedFiles}.
 	 */
-	public MutableSurveyTrip updateAttachedFiles(Function<ImmutableList<String>, ImmutableList<String>> updater) {
+	public MutableSurveyTrip updateAttachedFiles(Function<PersistentVector<String>, PersistentVector<String>> updater) {
 		return update(SurveyTrip.attachedFiles, updater);
 	}
 	

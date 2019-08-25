@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 8/24/2019, 5:36:49 PM.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 8/25/2019, 1:37:49 AM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
@@ -8,7 +8,7 @@ package org.breakout.model.raw;
 import java.util.List;
 import static org.andork.util.JavaScript.or;
 import org.andork.model.Property;
-import org.andork.immutable.ImmutableList;
+import com.github.krukow.clj_ds.PersistentVector;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.Objects;
@@ -346,8 +346,8 @@ public final class SurveyRow {
 		/**
 		 * attached files (if one they can't be associated with the entire trip)
 		 */
-		public static final DefaultProperty<SurveyRow, ImmutableList<String>> overrideAttachedFiles = create(
-			"overrideAttachedFiles", ImmutableList.class,
+		public static final DefaultProperty<SurveyRow, PersistentVector<String>> overrideAttachedFiles = create(
+			"overrideAttachedFiles", PersistentVector.class,
 			r -> r.get(SurveyRow.overrideAttachedFiles),
 			(m, v) -> m.set(SurveyRow.overrideAttachedFiles, v)
 		);
@@ -412,8 +412,8 @@ public final class SurveyRow {
 			"date", String.class, SurveyTrip.Properties.date);
 		public static DefaultProperty<SurveyRow, List<String>> surveyors = createTripProperty(
 			"surveyors", List.class, SurveyTrip.Properties.surveyors);
-		public static DefaultProperty<SurveyRow, ImmutableList<String>> attachedFiles = create(
-			"attachedFiles", ImmutableList.class,
+		public static DefaultProperty<SurveyRow, PersistentVector<String>> attachedFiles = create(
+			"attachedFiles", PersistentVector.class,
 			r -> r.getAttachedFiles(),
 			(r, attachedFiles) -> r.setOverrideAttachedFiles(attachedFiles)
 		);
@@ -620,7 +620,7 @@ public final class SurveyRow {
 	/**
 	 * @return attached files (if one they can't be associated with the entire trip).
 	 */
-	public ImmutableList<String> getOverrideAttachedFiles() {
+	public PersistentVector<String> getOverrideAttachedFiles() {
 		return get(overrideAttachedFiles);
 	}
 	
@@ -862,7 +862,7 @@ public final class SurveyRow {
 	 *
 	 * @return this {@code SurveyRow} if {@code overrideAttachedFiles} is unchanged, or a copy with the new {@code overrideAttachedFiles}.
 	 */
-	public SurveyRow setOverrideAttachedFiles(ImmutableList<String> overrideAttachedFiles) {
+	public SurveyRow setOverrideAttachedFiles(PersistentVector<String> overrideAttachedFiles) {
 		return set(SurveyRow.overrideAttachedFiles, overrideAttachedFiles);
 	}
 	
@@ -1116,7 +1116,7 @@ public final class SurveyRow {
 	 *
 	 * @return this {@code SurveyRow} if {@code overrideAttachedFiles} is unchanged, or a copy with the updated {@code overrideAttachedFiles}.
 	 */
-	public SurveyRow updateOverrideAttachedFiles(Function<ImmutableList<String>, ImmutableList<String>> updater) {
+	public SurveyRow updateOverrideAttachedFiles(Function<PersistentVector<String>, PersistentVector<String>> updater) {
 		return update(overrideAttachedFiles, updater);
 	}
 	
@@ -1162,7 +1162,7 @@ public final class SurveyRow {
 		return or(getOverrideToCave(), getTrip() == null ? null : getTrip().getCave());
 	}
 	
-	public ImmutableList<String> getAttachedFiles() {
+	public PersistentVector<String> getAttachedFiles() {
 		return or(getOverrideAttachedFiles(), getTrip() == null ? null : getTrip().getAttachedFiles());
 	}
 	

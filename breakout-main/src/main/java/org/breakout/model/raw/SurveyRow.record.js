@@ -81,7 +81,7 @@ module.exports = {
       description: 'any user comment',
     },
     overrideAttachedFiles: {
-      type: 'ImmutableList<String>',
+      type: 'PersistentVector<String>',
       description: "attached files (if one they can't be associated with the entire trip)",
     },
     trip: {
@@ -103,10 +103,10 @@ module.exports = {
     'java.util.List',
     'static org.andork.util.JavaScript.or',
     'org.andork.model.Property',
-    'org.andork.immutable.ImmutableList',
+  	'com.github.krukow.clj_ds.PersistentVector',
   ],
   extraMutableImports: [
-    'org.andork.immutable.ImmutableList',
+  	'com.github.krukow.clj_ds.PersistentVector',
   ],
   extraCode: `
   public String getFromCave() {
@@ -117,7 +117,7 @@ module.exports = {
     return or(getOverrideToCave(), getTrip() == null ? null : getTrip().getCave());
   }
   
-  public ImmutableList<String> getAttachedFiles() {
+  public PersistentVector<String> getAttachedFiles() {
   	return or(getOverrideAttachedFiles(), getTrip() == null ? null : getTrip().getAttachedFiles());
   }
   `,
@@ -151,8 +151,8 @@ module.exports = {
       "date", String.class, SurveyTrip.Properties.date);
     public static DefaultProperty<SurveyRow, List<String>> surveyors = createTripProperty(
       "surveyors", List.class, SurveyTrip.Properties.surveyors);
-    public static DefaultProperty<SurveyRow, ImmutableList<String>> attachedFiles = create(
-			"attachedFiles", ImmutableList.class,
+    public static DefaultProperty<SurveyRow, PersistentVector<String>> attachedFiles = create(
+			"attachedFiles", PersistentVector.class,
 			r -> r.getAttachedFiles(),
 			(r, attachedFiles) -> r.setOverrideAttachedFiles(attachedFiles)
 		);

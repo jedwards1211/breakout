@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.andork.immutable.ImmutableList;
 import org.andork.swing.list.RealListModel;
 import org.andork.swing.table.AnnotatingTableRowSorter.AbstractTableModelCopier;
 import org.andork.swing.table.ListTableModel;
@@ -33,6 +32,8 @@ import org.andork.util.StringUtils;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
+
+import com.github.krukow.clj_ds.PersistentVector;
 
 public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	public static class SurveyTableModelCopier extends AbstractTableModelCopier<SurveyTableModel> {
@@ -82,7 +83,7 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 				})
 				.create();
 		public static final Column<SurveyRow, String> date = column(SurveyRow.Properties.date);
-		public static final Column<SurveyRow, ImmutableList<String>> attachedFiles =
+		public static final Column<SurveyRow, PersistentVector<String>> attachedFiles =
 			column(SurveyRow.Properties.attachedFiles);
 		public static final Column<SurveyRow, String> units =
 			new ColumnBuilder<SurveyRow, String>().columnClass(String.class).columnName("Units").getter(r -> {

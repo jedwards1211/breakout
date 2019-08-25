@@ -55,7 +55,6 @@ import org.andork.awt.I18n.I18nUpdater;
 import org.andork.awt.I18n.Localizer;
 import org.andork.collect.HashSetMultiMap;
 import org.andork.collect.MultiMap;
-import org.andork.immutable.MutableArrayList;
 import org.andork.q.QArrayList;
 import org.andork.swing.FromEDT;
 import org.andork.swing.JOptionPaneBuilder;
@@ -76,6 +75,8 @@ import org.breakout.model.parsed.ProjectParser;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
+
+import com.github.krukow.clj_lang.PersistentVector;
 
 public class LinkSurveyNotesTask extends Task<Void> {
 	private static final Logger logger = Logger.getLogger(ImportCompassTask.class.getSimpleName());
@@ -487,13 +488,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 				Path notesFile = getHighestCountKey(paths, p -> !paths.containsKey(p.getParent()));
 				if (notesFile != null) {
 					newTrips
-						.put(
-							trip,
-							trip
-								.setAttachedFiles(
-									new MutableArrayList<String>()
-										.add(notesFile.getFileName().toString())
-										.toImmutable()));
+						.put(trip, trip.setAttachedFiles(PersistentVector.create(notesFile.getFileName().toString())));
 					info.linkedFiles.add(notesFile);
 					info.unlinkedFilesSet.remove(notesFile);
 				}

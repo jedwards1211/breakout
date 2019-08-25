@@ -1,5 +1,5 @@
 /**
- * Generated from {@code SurveyTrip.record.js} by java-record-generator on 8/24/2019, 5:32:59 PM.
+ * Generated from {@code SurveyTrip.record.js} by java-record-generator on 8/25/2019, 1:37:57 AM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
@@ -10,7 +10,7 @@ import org.andork.unit.Unit;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import static org.andork.util.JavaScript.or;
-import org.andork.immutable.ImmutableList;
+import com.github.krukow.clj_ds.PersistentVector;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.Objects;
@@ -191,8 +191,8 @@ public final class SurveyTrip {
 		/**
 		 * attached file names
 		 */
-		public static final DefaultProperty<SurveyTrip, ImmutableList<String>> attachedFiles = create(
-			"attachedFiles", ImmutableList.class,
+		public static final DefaultProperty<SurveyTrip, PersistentVector<String>> attachedFiles = create(
+			"attachedFiles", PersistentVector.class,
 			r -> r.get(SurveyTrip.attachedFiles),
 			(m, v) -> m.set(SurveyTrip.attachedFiles, v)
 		);
@@ -467,7 +467,7 @@ public final class SurveyTrip {
 	/**
 	 * @return attached file names.
 	 */
-	public ImmutableList<String> getAttachedFiles() {
+	public PersistentVector<String> getAttachedFiles() {
 		return get(attachedFiles);
 	}
 	
@@ -638,7 +638,7 @@ public final class SurveyTrip {
 	 *
 	 * @return this {@code SurveyTrip} if {@code attachedFiles} is unchanged, or a copy with the new {@code attachedFiles}.
 	 */
-	public SurveyTrip setAttachedFiles(ImmutableList<String> attachedFiles) {
+	public SurveyTrip setAttachedFiles(PersistentVector<String> attachedFiles) {
 		return set(SurveyTrip.attachedFiles, attachedFiles);
 	}
 	
@@ -881,7 +881,7 @@ public final class SurveyTrip {
 	 *
 	 * @return this {@code SurveyTrip} if {@code attachedFiles} is unchanged, or a copy with the updated {@code attachedFiles}.
 	 */
-	public SurveyTrip updateAttachedFiles(Function<ImmutableList<String>, ImmutableList<String>> updater) {
+	public SurveyTrip updateAttachedFiles(Function<PersistentVector<String>, PersistentVector<String>> updater) {
 		return update(attachedFiles, updater);
 	}
 	

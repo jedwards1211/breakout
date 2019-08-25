@@ -14,11 +14,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.andork.immutable.MutableArrayList;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 
+import com.github.krukow.clj_lang.PersistentVector;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -211,9 +211,7 @@ public class MetacaveImporter {
 				t.setSurveyors(surveyors);
 			}
 			if (obj.has("surveyNotesFile")) {
-				t
-					.setAttachedFiles(
-						new MutableArrayList<String>().add(obj.get("surveyNotesFile").getAsString()).toImmutable());
+				t.setAttachedFiles(PersistentVector.create(obj.get("surveyNotesFile").getAsString()));
 			}
 			if (obj.has("distUnit")) {
 				t.setDistanceUnit(metacaveLengthUnits.get(obj.get("distUnit").getAsString()));
@@ -271,9 +269,7 @@ public class MetacaveImporter {
 						if (shot.has("surveyNotesFile")) {
 							row
 								.setOverrideAttachedFiles(
-									new MutableArrayList<String>()
-										.add(intern(getAsString(shot, "surveyNotesFile")))
-										.toImmutable());
+									PersistentVector.create(intern(getAsString(shot, "surveyNotesFile"))));
 						}
 					}
 					rows.set(rowIndex, row);

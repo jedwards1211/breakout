@@ -139,7 +139,6 @@ import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
 import org.andork.func.Lodash.DebounceOptions;
 import org.andork.func.Lodash.DebouncedRunnable;
-import org.andork.immutable.ImmutableList;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.DevicePixelRatio;
 import org.andork.jogl.GL3Framebuffer;
@@ -473,7 +472,7 @@ public class BreakoutMainView {
 			else if (e.getClickCount() == 2) {
 				SurveyRow row = sourceRows.get(picked.picked.key());
 				if (row != null) {
-					ImmutableList<String> files = row.getAttachedFiles();
+					List<String> files = row.getAttachedFiles();
 					if (files != null && !files.isEmpty()) {
 						openAttachedFile(files.get(0));
 					}

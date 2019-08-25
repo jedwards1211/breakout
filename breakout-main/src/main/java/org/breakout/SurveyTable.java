@@ -34,12 +34,13 @@ import javax.swing.JTextField;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-import org.andork.immutable.ImmutableList;
 import org.andork.swing.table.AnnotatingJTable;
 import org.andork.swing.table.ListTableColumn;
 import org.andork.swing.table.ListTableModel;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.raw.SurveyRow;
+
+import com.github.krukow.clj_ds.PersistentVector;
 
 public class SurveyTable extends AnnotatingJTable {
 	public static class Columns {
@@ -89,7 +90,7 @@ public class SurveyTable extends AnnotatingJTable {
 			column(SurveyTableModel.Columns.surveyors).headerValue("Surveyors");
 		public final ListTableColumn<SurveyRow, String> date =
 			column(SurveyTableModel.Columns.date).headerValue("Date");
-		public final ListTableColumn<SurveyRow, ImmutableList<String>> attachedFiles =
+		public final ListTableColumn<SurveyRow, PersistentVector<String>> attachedFiles =
 			column(SurveyTableModel.Columns.attachedFiles)
 				.headerValue("Attached Files")
 				.renderer(new DefaultTableCellRenderer() {
@@ -101,9 +102,9 @@ public class SurveyTable extends AnnotatingJTable {
 						boolean hasFocus,
 						int row,
 						int column) {
-						if (value instanceof ImmutableList) {
+						if (value instanceof List) {
 							StringBuilder b = new StringBuilder();
-							for (Object file : (ImmutableList<?>) value) {
+							for (Object file : (List<?>) value) {
 								if (b.length() > 0) {
 									b.append("; ");
 								}

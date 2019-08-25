@@ -1,11 +1,11 @@
 /**
- * Generated from {@code SurveyRow.record.js} by java-record-generator on 8/24/2019, 5:36:49 PM.
+ * Generated from {@code SurveyRow.record.js} by java-record-generator on 8/25/2019, 1:37:49 AM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
 package org.breakout.model.raw;
 
-import org.andork.immutable.ImmutableList;
+import com.github.krukow.clj_ds.PersistentVector;
 import com.github.krukow.clj_ds.TransientMap;
 import com.github.krukow.clj_lang.PersistentHashMap;
 import java.util.Objects;
@@ -229,7 +229,7 @@ public final class MutableSurveyRow {
 	/**
 	 * @return attached files (if one they can't be associated with the entire trip).
 	 */
-	public ImmutableList<String> getOverrideAttachedFiles() {
+	public PersistentVector<String> getOverrideAttachedFiles() {
 		return get(SurveyRow.overrideAttachedFiles);
 	}
 	
@@ -471,7 +471,7 @@ public final class MutableSurveyRow {
 	 *
 	 * @return this {@code SurveyRow} if {@code overrideAttachedFiles} is unchanged, or a copy with the new {@code overrideAttachedFiles}.
 	 */
-	public MutableSurveyRow setOverrideAttachedFiles(ImmutableList<String> overrideAttachedFiles) {
+	public MutableSurveyRow setOverrideAttachedFiles(PersistentVector<String> overrideAttachedFiles) {
 		return set(SurveyRow.overrideAttachedFiles, overrideAttachedFiles);
 	}
 	
@@ -725,7 +725,7 @@ public final class MutableSurveyRow {
 	 *
 	 * @return this {@code MutableSurveyRow} if {@code overrideAttachedFiles} is unchanged, or a copy with the updated {@code overrideAttachedFiles}.
 	 */
-	public MutableSurveyRow updateOverrideAttachedFiles(Function<ImmutableList<String>, ImmutableList<String>> updater) {
+	public MutableSurveyRow updateOverrideAttachedFiles(Function<PersistentVector<String>, PersistentVector<String>> updater) {
 		return update(SurveyRow.overrideAttachedFiles, updater);
 	}
 	
