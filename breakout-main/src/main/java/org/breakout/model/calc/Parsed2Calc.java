@@ -16,7 +16,6 @@ import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
-import org.breakout.model.parsed.Lead;
 import org.breakout.model.parsed.ParsedCave;
 import org.breakout.model.parsed.ParsedCrossSection;
 import org.breakout.model.parsed.ParsedField;
@@ -28,6 +27,7 @@ import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
 import org.breakout.model.parsed.ParsedStation;
 import org.breakout.model.parsed.ParsedTrip;
+import org.breakout.model.raw.SurveyLead;
 import org.breakout.proj4.ToGeocentricCoordinateTransform;
 import org.osgeo.proj4j.BasicCoordinateTransform;
 import org.osgeo.proj4j.CRSFactory;
@@ -145,14 +145,14 @@ public class Parsed2Calc {
 			}
 		}, leadTask -> {
 			leadTask.setTotal(cave.leads.size());
-			for (Map.Entry<String, List<Lead>> e : cave.leads.entrySet()) {
+			for (Map.Entry<String, List<SurveyLead>> e : cave.leads.entrySet()) {
 				convert(new StationKey(caveName, e.getKey()), e.getValue());
 				leadTask.increment();
 			}
 		});
 	}
 
-	void convert(StationKey stationKey, List<Lead> leads) {
+	void convert(StationKey stationKey, List<SurveyLead> leads) {
 		CalcStation station = project.stations.get(stationKey);
 		if (station != null)
 			station.leads = leads;

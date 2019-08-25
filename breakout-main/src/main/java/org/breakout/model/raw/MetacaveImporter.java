@@ -17,6 +17,9 @@ import java.util.function.Function;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
+import org.andork.unit.UnitType;
+import org.andork.unit.UnitizedDouble;
+import org.andork.unit.UnitizedNumber;
 
 import com.github.krukow.clj_lang.PersistentVector;
 import com.google.gson.JsonArray;
@@ -96,6 +99,27 @@ public class MetacaveImporter {
 			row.setFrontAzimuth(getAsString(obj, "azm"));
 			row.setFrontInclination(getAsString(obj, "inc"));
 		}
+	}
+
+	private <T extends UnitType<T>> UnitizedNumber<T> parseMeasurement(JsonArray a, Map<String, Unit<T>> units) {
+		if (a == null || (a.size() % 2) != 0) {
+			return null;
+		}
+		UnitizedDouble<T> result = null;
+		for (int i = 0; i < a.size(); i += 2) {
+			double value = Double.parseDouble(a.get(i).getAsString());
+			Unit<T> unit = units.get(a.get(i + 1).getAsString());
+			if (unit == null) {
+				return null;
+			}
+			UnitizedDouble<T> addend = new UnitizedDouble<>(value, unit);
+			result = result == null ? addend : result.add(addend);
+		}
+		return result;
+	}
+
+	private UnitizedNumber<Length> parseLength(JsonArray a) {
+		return parseMeasurement(a, metacaveLengthUnits);
 	}
 
 	private static Integer getRowIndex(JsonObject obj) {
@@ -366,8 +390,14 @@ public class MetacaveImporter {
 		lead.setCave(caveName);
 		lead.setStation(getAsString(obj, "station"));
 		lead.setDescription(getAsString(obj, "description"));
-		lead.setWidth(getMeasurement(obj.get("width")));
-		lead.setHeight(getMeasurement(obj.get("height")));
+		if (obj.has("width")) {
+			lead.setRawWidth(obj.get("width").getAsJsonArray());
+			lead.setWidth(parseLength(obj.get("width").getAsJsonArray()));
+		}
+		if (obj.has("height")) {
+			lead.setRawHeight(obj.get("height").getAsJsonArray());
+			lead.setHeight(parseLength(obj.get("height").getAsJsonArray()));
+		}
 		SurveyLead result = lead.toImmutable();
 		leads.add(result);
 		return result;

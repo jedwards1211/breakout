@@ -1,10 +1,15 @@
 /**
- * Generated from {@code SurveyLead.record.js} by java-record-generator on 8/24/2019, 5:32:59 PM.
+ * Generated from {@code SurveyLead.record.js} by java-record-generator on 8/25/2019, 1:57:31 AM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
 package org.breakout.model.raw;
 
+import com.google.gson.JsonArray;
+import java.text.DecimalFormat;
+import org.andork.unit.Unit;
+import org.andork.unit.UnitizedNumber;
+import org.andork.unit.Length;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.Objects;
@@ -31,6 +36,16 @@ public final class SurveyLead {
 	 * Key for the description of the lead.
 	 */
 	public static final String description = "description";
+	
+	/**
+	 * Key for the width of the lead from metacave.
+	 */
+	public static final String rawWidth = "rawWidth";
+	
+	/**
+	 * Key for the height of the lead from metacave.
+	 */
+	public static final String rawHeight = "rawHeight";
 	
 	/**
 	 * Key for the width of the lead.
@@ -95,10 +110,30 @@ public final class SurveyLead {
 		
 
 		/**
+		 * the width of the lead from metacave
+		 */
+		public static final DefaultProperty<SurveyLead, JsonArray> rawWidth = create(
+			"rawWidth", JsonArray.class,
+			r -> r.get(SurveyLead.rawWidth),
+			(m, v) -> m.set(SurveyLead.rawWidth, v)
+		);
+		
+
+		/**
+		 * the height of the lead from metacave
+		 */
+		public static final DefaultProperty<SurveyLead, JsonArray> rawHeight = create(
+			"rawHeight", JsonArray.class,
+			r -> r.get(SurveyLead.rawHeight),
+			(m, v) -> m.set(SurveyLead.rawHeight, v)
+		);
+		
+
+		/**
 		 * the width of the lead
 		 */
-		public static final DefaultProperty<SurveyLead, String> width = create(
-			"width", String.class,
+		public static final DefaultProperty<SurveyLead, UnitizedNumber<Length>> width = create(
+			"width", UnitizedNumber.class,
 			r -> r.get(SurveyLead.width),
 			(m, v) -> m.set(SurveyLead.width, v)
 		);
@@ -107,8 +142,8 @@ public final class SurveyLead {
 		/**
 		 * the height of the lead
 		 */
-		public static final DefaultProperty<SurveyLead, String> height = create(
-			"height", String.class,
+		public static final DefaultProperty<SurveyLead, UnitizedNumber<Length>> height = create(
+			"height", UnitizedNumber.class,
 			r -> r.get(SurveyLead.height),
 			(m, v) -> m.set(SurveyLead.height, v)
 		);
@@ -211,16 +246,30 @@ public final class SurveyLead {
 	}
 	
 	/**
+	 * @return the width of the lead from metacave.
+	 */
+	public JsonArray getRawWidth() {
+		return get(rawWidth);
+	}
+	
+	/**
+	 * @return the height of the lead from metacave.
+	 */
+	public JsonArray getRawHeight() {
+		return get(rawHeight);
+	}
+	
+	/**
 	 * @return the width of the lead.
 	 */
-	public String getWidth() {
+	public UnitizedNumber<Length> getWidth() {
 		return get(width);
 	}
 	
 	/**
 	 * @return the height of the lead.
 	 */
-	public String getHeight() {
+	public UnitizedNumber<Length> getHeight() {
 		return get(height);
 	}
 	
@@ -266,13 +315,35 @@ public final class SurveyLead {
 	}
 	
 	/**
+	 * Sets the width of the lead from metacave.
+	 *
+	 * @param rawWidth - the new value for the width of the lead from metacave
+	 *
+	 * @return this {@code SurveyLead} if {@code rawWidth} is unchanged, or a copy with the new {@code rawWidth}.
+	 */
+	public SurveyLead setRawWidth(JsonArray rawWidth) {
+		return set(SurveyLead.rawWidth, rawWidth);
+	}
+	
+	/**
+	 * Sets the height of the lead from metacave.
+	 *
+	 * @param rawHeight - the new value for the height of the lead from metacave
+	 *
+	 * @return this {@code SurveyLead} if {@code rawHeight} is unchanged, or a copy with the new {@code rawHeight}.
+	 */
+	public SurveyLead setRawHeight(JsonArray rawHeight) {
+		return set(SurveyLead.rawHeight, rawHeight);
+	}
+	
+	/**
 	 * Sets the width of the lead.
 	 *
 	 * @param width - the new value for the width of the lead
 	 *
 	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the new {@code width}.
 	 */
-	public SurveyLead setWidth(String width) {
+	public SurveyLead setWidth(UnitizedNumber<Length> width) {
 		return set(SurveyLead.width, width);
 	}
 	
@@ -283,7 +354,7 @@ public final class SurveyLead {
 	 *
 	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the new {@code height}.
 	 */
-	public SurveyLead setHeight(String height) {
+	public SurveyLead setHeight(UnitizedNumber<Length> height) {
 		return set(SurveyLead.height, height);
 	}
 	
@@ -333,13 +404,35 @@ public final class SurveyLead {
 	}
 	
 	/**
+	 * Updates the width of the lead from metacave.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code rawWidth} and returns the new value for {@code rawWidth}.
+	 *
+	 * @return this {@code SurveyLead} if {@code rawWidth} is unchanged, or a copy with the updated {@code rawWidth}.
+	 */
+	public SurveyLead updateRawWidth(Function<JsonArray, JsonArray> updater) {
+		return update(rawWidth, updater);
+	}
+	
+	/**
+	 * Updates the height of the lead from metacave.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code rawHeight} and returns the new value for {@code rawHeight}.
+	 *
+	 * @return this {@code SurveyLead} if {@code rawHeight} is unchanged, or a copy with the updated {@code rawHeight}.
+	 */
+	public SurveyLead updateRawHeight(Function<JsonArray, JsonArray> updater) {
+		return update(rawHeight, updater);
+	}
+	
+	/**
 	 * Updates the width of the lead.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code width} and returns the new value for {@code width}.
 	 *
 	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the updated {@code width}.
 	 */
-	public SurveyLead updateWidth(Function<String, String> updater) {
+	public SurveyLead updateWidth(Function<UnitizedNumber<Length>, UnitizedNumber<Length>> updater) {
 		return update(width, updater);
 	}
 	
@@ -350,7 +443,7 @@ public final class SurveyLead {
 	 *
 	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the updated {@code height}.
 	 */
-	public SurveyLead updateHeight(Function<String, String> updater) {
+	public SurveyLead updateHeight(Function<UnitizedNumber<Length>, UnitizedNumber<Length>> updater) {
 		return update(height, updater);
 	}
 	
@@ -366,4 +459,22 @@ public final class SurveyLead {
 	}
 	
 	
+		private final DecimalFormat sizeFormat = new DecimalFormat("0.#");
+	
+	public String describeSize(Unit<Length> unit) {
+		UnitizedNumber<Length> width = getWidth();
+		UnitizedNumber<Length> height = getHeight();
+		StringBuilder builder = new StringBuilder();
+		if (width != null) {
+			builder.append(sizeFormat.format(width.doubleValue(unit)))
+				.append('w');
+		}
+		if (height != null) {
+			if (builder.length() > 0) builder.append(' ');
+			builder.append(sizeFormat.format(height.doubleValue(unit)))
+				.append('h');
+		}
+		return builder.length() > 0 ? builder.toString() : null;
+	}
+
 }

@@ -6,6 +6,7 @@ import java.util.BitSet;
 import java.util.List;
 
 import org.breakout.model.StationKey;
+import org.breakout.model.raw.SurveyLead;
 
 public class ParsedStation {
 	public List<ParseMessage> messages;
@@ -14,7 +15,7 @@ public class ParsedStation {
 
 	public ParsedCrossSection crossSection;
 	public List<ParsedSplayShot> splays;
-	public List<Lead> leads;
+	public List<SurveyLead> leads;
 
 	private BitSet flags;
 	private static final int IS_ENTRANCE = 0;
@@ -26,7 +27,8 @@ public class ParsedStation {
 				flags = new BitSet();
 			}
 			flags.set(flag);
-		} else if (flags != null) {
+		}
+		else if (flags != null) {
 			flags.clear(flag);
 		}
 	}
@@ -56,9 +58,7 @@ public class ParsedStation {
 
 	public StationKey key() {
 		String name = ParsedField.getValue(this.name);
-		return falsy(name)
-				? null
-				: new StationKey(ParsedField.getValue(cave), name);
+		return falsy(name) ? null : new StationKey(ParsedField.getValue(cave), name);
 	}
 
 	@Override

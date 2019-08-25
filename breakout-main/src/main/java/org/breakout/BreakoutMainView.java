@@ -214,7 +214,6 @@ import org.breakout.model.calc.CalcShot;
 import org.breakout.model.calc.CalculateGeometry;
 import org.breakout.model.calc.Parsed2Calc;
 import org.breakout.model.compass.Compass;
-import org.breakout.model.parsed.Lead;
 import org.breakout.model.parsed.ParsedProject;
 import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
@@ -346,7 +345,7 @@ public class BreakoutMainView {
 							backInclination == null ? "--" : backInclination.in(angleUnit).toString(format);
 
 						CalcShot calcShot = calcProject.shots.get(picked.picked.key());
-						List<Lead> leads = null;
+						List<SurveyLead> leads = null;
 						String pickedStationName = "";
 						if (calcShot != null) {
 							pickedStationName =

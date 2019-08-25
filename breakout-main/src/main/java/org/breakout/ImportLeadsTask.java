@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,6 +46,8 @@ import org.andork.swing.table.BetterJTable;
 import org.andork.swing.table.ListTableColumn;
 import org.andork.swing.table.ListTableModel;
 import org.andork.task.Task;
+import org.andork.unit.Length;
+import org.andork.unit.Unit;
 import org.andork.util.StringUtils;
 import org.breakout.leadimport.LeadListParser;
 import org.breakout.leadimport.LeadListParser.Context;
@@ -283,6 +286,11 @@ public class ImportLeadsTask extends Task<Void> {
 			@Override
 			public boolean widthComesFirst() {
 				return false;
+			}
+
+			@Override
+			public Unit<Length> defaultLengthUnit() {
+				return Objects.requireNonNull(mainView.getProjectModel().get(ProjectModel.displayLengthUnit));
 			}
 		};
 

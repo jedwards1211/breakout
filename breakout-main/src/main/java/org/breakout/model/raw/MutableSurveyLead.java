@@ -1,10 +1,13 @@
 /**
- * Generated from {@code SurveyLead.record.js} by java-record-generator on 8/24/2019, 5:32:59 PM.
+ * Generated from {@code SurveyLead.record.js} by java-record-generator on 8/25/2019, 1:57:31 AM.
  * {@link https://github.com/jedwards1211/java-record-generator#readme}
  */
 
 package org.breakout.model.raw;
 
+import com.google.gson.JsonArray;
+import org.andork.unit.UnitizedNumber;
+import org.andork.unit.Length;
 import com.github.krukow.clj_ds.TransientMap;
 import com.github.krukow.clj_lang.PersistentHashMap;
 import java.util.Objects;
@@ -114,16 +117,30 @@ public final class MutableSurveyLead {
 	}
 	
 	/**
+	 * @return the width of the lead from metacave.
+	 */
+	public JsonArray getRawWidth() {
+		return get(SurveyLead.rawWidth);
+	}
+	
+	/**
+	 * @return the height of the lead from metacave.
+	 */
+	public JsonArray getRawHeight() {
+		return get(SurveyLead.rawHeight);
+	}
+	
+	/**
 	 * @return the width of the lead.
 	 */
-	public String getWidth() {
+	public UnitizedNumber<Length> getWidth() {
 		return get(SurveyLead.width);
 	}
 	
 	/**
 	 * @return the height of the lead.
 	 */
-	public String getHeight() {
+	public UnitizedNumber<Length> getHeight() {
 		return get(SurveyLead.height);
 	}
 	
@@ -169,13 +186,35 @@ public final class MutableSurveyLead {
 	}
 	
 	/**
+	 * Sets the width of the lead from metacave.
+	 *
+	 * @param rawWidth - the new value for the width of the lead from metacave
+	 *
+	 * @return this {@code SurveyLead} if {@code rawWidth} is unchanged, or a copy with the new {@code rawWidth}.
+	 */
+	public MutableSurveyLead setRawWidth(JsonArray rawWidth) {
+		return set(SurveyLead.rawWidth, rawWidth);
+	}
+	
+	/**
+	 * Sets the height of the lead from metacave.
+	 *
+	 * @param rawHeight - the new value for the height of the lead from metacave
+	 *
+	 * @return this {@code SurveyLead} if {@code rawHeight} is unchanged, or a copy with the new {@code rawHeight}.
+	 */
+	public MutableSurveyLead setRawHeight(JsonArray rawHeight) {
+		return set(SurveyLead.rawHeight, rawHeight);
+	}
+	
+	/**
 	 * Sets the width of the lead.
 	 *
 	 * @param width - the new value for the width of the lead
 	 *
 	 * @return this {@code SurveyLead} if {@code width} is unchanged, or a copy with the new {@code width}.
 	 */
-	public MutableSurveyLead setWidth(String width) {
+	public MutableSurveyLead setWidth(UnitizedNumber<Length> width) {
 		return set(SurveyLead.width, width);
 	}
 	
@@ -186,7 +225,7 @@ public final class MutableSurveyLead {
 	 *
 	 * @return this {@code SurveyLead} if {@code height} is unchanged, or a copy with the new {@code height}.
 	 */
-	public MutableSurveyLead setHeight(String height) {
+	public MutableSurveyLead setHeight(UnitizedNumber<Length> height) {
 		return set(SurveyLead.height, height);
 	}
 	
@@ -236,13 +275,35 @@ public final class MutableSurveyLead {
 	}
 	
 	/**
+	 * Updates the width of the lead from metacave.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code rawWidth} and returns the new value for {@code rawWidth}.
+	 *
+	 * @return this {@code MutableSurveyLead} if {@code rawWidth} is unchanged, or a copy with the updated {@code rawWidth}.
+	 */
+	public MutableSurveyLead updateRawWidth(Function<JsonArray, JsonArray> updater) {
+		return update(SurveyLead.rawWidth, updater);
+	}
+	
+	/**
+	 * Updates the height of the lead from metacave.
+	 *
+	 * @param updater - {@code Function} that takes the current value of {@code rawHeight} and returns the new value for {@code rawHeight}.
+	 *
+	 * @return this {@code MutableSurveyLead} if {@code rawHeight} is unchanged, or a copy with the updated {@code rawHeight}.
+	 */
+	public MutableSurveyLead updateRawHeight(Function<JsonArray, JsonArray> updater) {
+		return update(SurveyLead.rawHeight, updater);
+	}
+	
+	/**
 	 * Updates the width of the lead.
 	 *
 	 * @param updater - {@code Function} that takes the current value of {@code width} and returns the new value for {@code width}.
 	 *
 	 * @return this {@code MutableSurveyLead} if {@code width} is unchanged, or a copy with the updated {@code width}.
 	 */
-	public MutableSurveyLead updateWidth(Function<String, String> updater) {
+	public MutableSurveyLead updateWidth(Function<UnitizedNumber<Length>, UnitizedNumber<Length>> updater) {
 		return update(SurveyLead.width, updater);
 	}
 	
@@ -253,7 +314,7 @@ public final class MutableSurveyLead {
 	 *
 	 * @return this {@code MutableSurveyLead} if {@code height} is unchanged, or a copy with the updated {@code height}.
 	 */
-	public MutableSurveyLead updateHeight(Function<String, String> updater) {
+	public MutableSurveyLead updateHeight(Function<UnitizedNumber<Length>, UnitizedNumber<Length>> updater) {
 		return update(SurveyLead.height, updater);
 	}
 	

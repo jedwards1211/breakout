@@ -373,10 +373,10 @@ public class MetacaveExporter {
 		converted.addProperty("station", lead.getStation());
 		converted.addProperty("description", lead.getDescription());
 		if (lead.getWidth() != null) {
-			converted.add("width", convertMeasurementString(lead.getWidth()));
+			converted.add("width", lead.getRawWidth());
 		}
 		if (lead.getHeight() != null) {
-			converted.add("height", convertMeasurementString(lead.getHeight()));
+			converted.add("height", lead.getRawHeight());
 		}
 		if (lead.getCave() == null)
 			return converted;
