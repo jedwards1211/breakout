@@ -5,14 +5,25 @@ import static org.andork.datescraper.DateField.FULL_YEAR;
 import static org.andork.datescraper.DateField.MONTH;
 import static org.andork.datescraper.DateField.TWO_DIGIT_YEAR;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GeneralDateFormat implements DateFormat {
 	private static final DateField[] DEFAULT_ORDER = { FULL_YEAR, MONTH, DAY };
-	private static final String[] EN_US_MONTH_PATTERNS = { "jan\\.?|january", "feb\\.?|february", "mar\\.?|march",
-			"apr\\.?|april", "may", "jun[.e]?", "jul[.y]?", "aug\\.?|august", "sept?\\.?|september", "nov\\.?|november",
+	private static final String[] EN_US_MONTH_PATTERNS =
+		{
+			"jan\\.?|january",
+			"febr?\\.?|february",
+			"mar\\.?|march",
+			"apr\\.?|april",
+			"may",
+			"jun[.e]?",
+			"jul[.y]?",
+			"aug\\.?|august",
+			"sept?\\.?|september",
+			"nov\\.?|november",
 			"dec\\.?|december" };
 	private static final String EN_US_DAY_PATTERN = "([12][0-9]|3[01]|0?[0-9])(st|nd|rd|th)?";
 
@@ -22,16 +33,18 @@ public class GeneralDateFormat implements DateFormat {
 	private String separatorPattern = "|[-/\t.]| +";
 	private int minYearDigits = 2;
 	private int maxYearDigits = 4;
-	
-	public static final DateFormat[] EN_US_FORMATS = {
-		new GeneralDateFormat().order(MONTH, DAY, FULL_YEAR),
-		new GeneralDateFormat().order(MONTH, DAY, TWO_DIGIT_YEAR),
-		new GeneralDateFormat().order(FULL_YEAR, MONTH, DAY),
-		new GeneralDateFormat().order(MONTH, FULL_YEAR),
-		new GeneralDateFormat().order(FULL_YEAR, MONTH),
-		new GeneralDateFormat().order(DAY, MONTH, FULL_YEAR),
-		new ISO8601DateFormat(),
-	};
+	private int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+
+	public static final DateFormat[] EN_US_FORMATS =
+		{
+			new GeneralDateFormat().order(MONTH, DAY, FULL_YEAR),
+			new GeneralDateFormat().order(MONTH, DAY, TWO_DIGIT_YEAR),
+			new GeneralDateFormat().order(FULL_YEAR, MONTH, DAY),
+			new GeneralDateFormat().order(MONTH, FULL_YEAR),
+			new GeneralDateFormat().order(FULL_YEAR, MONTH),
+			new GeneralDateFormat().order(DAY, MONTH, FULL_YEAR),
+			new GeneralDateFormat().order(TWO_DIGIT_YEAR, MONTH, DAY),
+			new ISO8601DateFormat(), };
 
 	public DateField[] Order() {
 		return order;
@@ -86,10 +99,10 @@ public class GeneralDateFormat implements DateFormat {
 				builder.append("(").append(separatorPattern).append(")");
 			switch (field) {
 			case FULL_YEAR:
-				builder.append("(?<!\\d)(\\d{4})(?!\\d)");
+				builder.append("(?<!\\d)(\\d{4})(?!\\d|st|nd|rd|th)");
 				break;
 			case TWO_DIGIT_YEAR:
-				builder.append("(?<!\\d)(\\d{2})(?!\\d)");
+				builder.append("(?<!\\d)(\\d{2})(?!\\d|st|nd|rd|th)");
 				break;
 			case MONTH:
 				builder.append("(");
@@ -103,7 +116,7 @@ public class GeneralDateFormat implements DateFormat {
 					builder.append(monthPatterns[i]);
 					builder.append(")");
 				}
-				builder.append(")");
+				builder.append("(?!\\d|st|nd|rd|th))");
 				break;
 			case DAY:
 				builder.append("(?<!\\d)(").append(dayPattern).append(")(?!\\d)");
@@ -136,7 +149,11 @@ public class GeneralDateFormat implements DateFormat {
 				year = Integer.parseInt(groups.group(offset++));
 				break;
 			case TWO_DIGIT_YEAR:
-				year = Integer.parseInt(groups.group(offset++)) + 1900;
+				int part = Integer.parseInt(groups.group(offset++));
+				year = currentYear - (currentYear % 100) + part;
+				if (year > currentYear) {
+					year -= 100;
+				}
 				break;
 			case MONTH:
 				monthString = groups.group(offset);
@@ -155,12 +172,13 @@ public class GeneralDateFormat implements DateFormat {
 			}
 			if (firstSep == null) {
 				firstSep = groups.group(offset);
-			} else if (secondSep == null) {
+			}
+			else if (secondSep == null) {
 				secondSep = groups.group(offset);
 			}
 			offset++;
 		}
-		if (!firstSep.equals(secondSep) && (!firstSep.matches("\\s+") || !secondSep.matches("\\s+"))) {
+		if (!firstSep.equals(secondSep)) {
 			if (!monthString.endsWith(".") || !firstSep.matches("\\s*|\\.") || !secondSep.matches("\\s*|\\.")) {
 				return null;
 			}
@@ -207,6 +225,6 @@ public class GeneralDateFormat implements DateFormat {
 			System.out.println(m2.group(i));
 		}
 		System.out.println(fmt.parse(group -> m2.group(group)));
-		
+
 	}
 }

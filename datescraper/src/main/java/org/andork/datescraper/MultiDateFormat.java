@@ -9,9 +9,9 @@ import java.util.regex.Pattern;
 public class MultiDateFormat implements DateFormat {
 	private DateFormat[] formats;
 	private int[] groupOffsets;
-	
+
 	private Pattern pattern;
-	
+
 	public MultiDateFormat(DateFormat... formats) {
 		super();
 		this.formats = formats;
@@ -28,7 +28,8 @@ public class MultiDateFormat implements DateFormat {
 	public String pattern() {
 		StringBuilder builder = new StringBuilder();
 		for (DateFormat format : formats) {
-			if (builder.length() > 0) builder.append("|");
+			if (builder.length() > 0)
+				builder.append("|");
 			builder.append("(").append(format.pattern()).append(")");
 		}
 		return builder.toString();
@@ -44,20 +45,23 @@ public class MultiDateFormat implements DateFormat {
 		}
 		return null;
 	}
-	
+
 	public Iterator<Date> iterator(String s) {
-		if (pattern == null) pattern = Pattern.compile(pattern(), Pattern.CASE_INSENSITIVE);
+		if (pattern == null)
+			pattern = Pattern.compile(pattern(), Pattern.CASE_INSENSITIVE);
 		Matcher m = pattern.matcher(s);
 		return new Iterator<Date>() {
 			boolean done = false;
 			Date next = null;
-			
+
 			private boolean findNext() {
-				if (done) return false;
+				if (done)
+					return false;
 				while (m.find()) {
 					System.out.println(m.group());
 					next = parse(group -> m.group(group));
-					if (next != null) return true;
+					if (next != null)
+						return true;
 				}
 				done = true;
 				return false;
@@ -65,20 +69,22 @@ public class MultiDateFormat implements DateFormat {
 
 			@Override
 			public boolean hasNext() {
-				if (next == null) return findNext();
+				if (next == null)
+					return findNext();
 				return false;
 			}
 
 			@Override
 			public Date next() {
-				if (next == null) findNext();
+				if (next == null)
+					findNext();
 				Date result = next;
 				next = null;
 				return result;
 			}
 		};
 	}
-	
+
 	public Iterable<Date> iterable(String s) {
 		return new Iterable<Date>() {
 			@Override
@@ -87,11 +93,13 @@ public class MultiDateFormat implements DateFormat {
 			}
 		};
 	}
-	
+
 	public static void main(String[] args) {
 		System.out.println(new MultiDateFormat(GeneralDateFormat.EN_US_FORMATS).pattern());
 		System.out.println(Arrays.toString(new MultiDateFormat(GeneralDateFormat.EN_US_FORMATS).groupOffsets));
-		for (Date date : new MultiDateFormat(GeneralDateFormat.EN_US_FORMATS).iterable("04-02-29th,Aug 03, 2012 2 Sep 1964 2  blah 1394/02/3   2019.jul.31 0 2k389 182  23 1 29  38482 29 3 28 3-4-2019 jan12,2013\t2019jul.20 2016aug03 5 mar. 14 2018 20190822T03:45")) {
+		for (Date date : new MultiDateFormat(GeneralDateFormat.EN_US_FORMATS)
+			.iterable(
+				"04-02-18   04-02-29th,Aug 03, 2012 2 Sep 1964 2  blah 1394/02/3   2019.jul.31 0 2k389 182  23 1 29  38482 29 3 28 3-4-2019 jan12,2013\t2019jul.20 2016aug03 5 mar. 14 2018 20190822T03:45")) {
 			System.out.println(date);
 		}
 	}
