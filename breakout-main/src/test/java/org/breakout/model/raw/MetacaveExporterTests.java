@@ -6,9 +6,6 @@ import java.util.List;
 
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
-import org.breakout.model.raw.MetacaveExporter;
-import org.breakout.model.raw.SurveyRow;
-import org.breakout.model.raw.SurveyTrip;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,73 +38,81 @@ public class MetacaveExporterTests {
 	public void testMetacave1() {
 		List<SurveyRow> rows = new ArrayList<SurveyRow>();
 
-		SurveyTrip _trip = new SurveyTrip();
-		_trip.setCave("Fisher Ridge");
-		_trip.setName("SurveyTrip 1");
-		_trip.setDate("2016-01-01");
-		_trip.setSurveyors(Arrays.asList("Andy Edwards", "Sean Lewis"));
-		_trip.setDistanceUnit(Length.feet);
-		_trip.setAngleUnit(Angle.degrees);
-		_trip.setBackAzimuthsCorrected(false);
-		_trip.setBackInclinationsCorrected(true);
-		_trip.setDeclination("1.0");
-		_trip.setOverrideFrontAzimuthUnit(Angle.gradians);
-		_trip.setOverrideBackAzimuthUnit(Angle.milsNATO);
-		_trip.setOverrideFrontInclinationUnit(Angle.degrees);
-		_trip.setOverrideBackInclinationUnit(Angle.percentGrade);
-		_trip.setDistanceCorrection("2.0");
-		_trip.setFrontAzimuthCorrection("3.0");
-		_trip.setBackAzimuthCorrection("4.0");
-		_trip.setFrontInclinationCorrection("5.0");
-		_trip.setBackInclinationCorrection("6.0");
+		SurveyTrip _trip =
+			new MutableSurveyTrip()
+				.setCave("Fisher Ridge")
+				.setName("SurveyTrip 1")
+				.setDate("2016-01-01")
+				.setSurveyors(Arrays.asList("Andy Edwards", "Sean Lewis"))
+				.setDistanceUnit(Length.feet)
+				.setAngleUnit(Angle.degrees)
+				.setBackAzimuthsCorrected(false)
+				.setBackInclinationsCorrected(true)
+				.setDeclination("1.0")
+				.setOverrideFrontAzimuthUnit(Angle.gradians)
+				.setOverrideBackAzimuthUnit(Angle.milsNATO)
+				.setOverrideFrontInclinationUnit(Angle.degrees)
+				.setOverrideBackInclinationUnit(Angle.percentGrade)
+				.setDistanceCorrection("2.0")
+				.setFrontAzimuthCorrection("3.0")
+				.setBackAzimuthCorrection("4.0")
+				.setFrontInclinationCorrection("5.0")
+				.setBackInclinationCorrection("6.0")
+				.toImmutable();
 
-		SurveyRow _r0 = new SurveyRow();
-		_r0.setTrip(_trip);
-		_r0.setOverrideFromCave(null);
-		_r0.setFromStation("A1");
-		_r0.setOverrideToCave("Mammoth");
-		_r0.setToStation("A2");
-		_r0.setLeft("1.0");
-		_r0.setRight("2.0");
-		_r0.setUp("3.0");
-		_r0.setDown("4.0");
-		_r0.setDistance("1.0");
-		_r0.setFrontAzimuth("180");
-		_r0.setFrontInclination("-5");
-		_r0.setBackAzimuth("0");
-		_r0.setBackInclination("5");
+		SurveyRow _r0 =
+			new MutableSurveyRow()
+				.setTrip(_trip)
+				.setOverrideFromCave(null)
+				.setFromStation("A1")
+				.setOverrideToCave("Mammoth")
+				.setToStation("A2")
+				.setLeft("1.0")
+				.setRight("2.0")
+				.setUp("3.0")
+				.setDown("4.0")
+				.setDistance("1.0")
+				.setFrontAzimuth("180")
+				.setFrontInclination("-5")
+				.setBackAzimuth("0")
+				.setBackInclination("5")
+				.toImmutable();
 
-		SurveyRow _r3 = new SurveyRow();
-		_r3.setTrip(_trip);
-		_r3.setOverrideFromCave(null);
-		_r3.setFromStation("A1");
-		_r3.setOverrideToCave("Mammoth");
-		_r3.setToStation("A2");
-		_r3.setLeft(null);
-		_r3.setRight(null);
-		_r3.setUp(null);
-		_r3.setDown(null);
-		_r3.setDistance("3.0");
-		_r3.setFrontAzimuth("90");
-		_r3.setFrontInclination("-10");
-		_r3.setBackAzimuth(null);
-		_r3.setBackInclination(null);
+		SurveyRow _r3 =
+			new MutableSurveyRow()
+				.setTrip(_trip)
+				.setOverrideFromCave(null)
+				.setFromStation("A1")
+				.setOverrideToCave("Mammoth")
+				.setToStation("A2")
+				.setLeft(null)
+				.setRight(null)
+				.setUp(null)
+				.setDown(null)
+				.setDistance("3.0")
+				.setFrontAzimuth("90")
+				.setFrontInclination("-10")
+				.setBackAzimuth(null)
+				.setBackInclination(null)
+				.toImmutable();
 
-		SurveyRow _r2 = new SurveyRow();
-		_r2.setTrip(_trip);
-		_r2.setOverrideFromCave("Mammoth");
-		_r2.setFromStation("A2");
-		_r2.setOverrideToCave(null);
-		_r2.setToStation(null);
-		_r2.setLeft("1.0");
-		_r2.setRight("2.0");
-		_r2.setUp("3.0");
-		_r2.setDown("4.0");
-		_r2.setDistance("5.0");
-		_r2.setFrontAzimuth("23.5");
-		_r2.setFrontInclination("48.2");
-		_r2.setBackAzimuth(null);
-		_r2.setBackInclination(null);
+		SurveyRow _r2 =
+			new MutableSurveyRow()
+				.setTrip(_trip)
+				.setOverrideFromCave("Mammoth")
+				.setFromStation("A2")
+				.setOverrideToCave(null)
+				.setToStation(null)
+				.setLeft("1.0")
+				.setRight("2.0")
+				.setUp("3.0")
+				.setDown("4.0")
+				.setDistance("5.0")
+				.setFrontAzimuth("23.5")
+				.setFrontInclination("48.2")
+				.setBackAzimuth(null)
+				.setBackInclination(null)
+				.toImmutable();
 
 		rows.add(_r0);
 		rows.add(null);
@@ -117,14 +122,16 @@ public class MetacaveExporterTests {
 		MetacaveExporter exporter = new MetacaveExporter();
 		exporter.export(rows);
 
-		System.out.println(new GsonBuilder().setPrettyPrinting().create()
-				.toJson(exporter.getRoot()));
+		System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(exporter.getRoot()));
 
-		JsonObject trip = exporter.getRoot()
+		JsonObject trip =
+			exporter
+				.getRoot()
 				.getAsJsonObject("caves")
 				.getAsJsonObject("Fisher Ridge")
 				.getAsJsonArray("trips")
-				.get(0).getAsJsonObject();
+				.get(0)
+				.getAsJsonObject();
 
 		assertEquals(trip, "name", "SurveyTrip 1");
 		assertEquals(trip, "date", "2016-01-01");

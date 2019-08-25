@@ -124,6 +124,15 @@ public class MetacaveExporter {
 			&& !isNullOrEmpty(row.getDistance());
 	}
 
+	private boolean hasLruds(SurveyRow row) {
+		// TODO: splays && LRUD-only rows
+		return !isNullOrEmpty(row.getFromStation())
+			&& (!isNullOrEmpty(row.getLeft())
+				|| !isNullOrEmpty(row.getRight())
+				|| !isNullOrEmpty(row.getUp())
+				|| !isNullOrEmpty(row.getDown()));
+	}
+
 	private boolean hasFixedStation(SurveyRow row) {
 		return !isNullOrEmpty(row.getFromStation())
 			&& (!isNullOrEmpty(row.getLatitude())
@@ -138,12 +147,13 @@ public class MetacaveExporter {
 			return;
 		}
 		boolean hasShot = hasShot(row);
+		boolean hasLruds = hasLruds(row);
 		boolean hasFixedStation = hasFixedStation(row);
-		if (!hasShot && !hasFixedStation) {
+		if (!hasShot && !hasLruds && !hasFixedStation) {
 			return;
 		}
 
-		if (hasShot) {
+		if (hasShot || hasLruds) {
 			JsonObject trip = export(row.getTrip());
 			JsonArray survey = trip.getAsJsonArray("survey");
 
@@ -154,7 +164,10 @@ public class MetacaveExporter {
 
 			JsonArray measurements = null;
 
-			if (Objects.equals(row.getOverrideFromCave(), getAsString(lastFromStation, "cave"))
+			JsonObject fromStation = null;
+
+			if (hasShot
+				&& Objects.equals(row.getOverrideFromCave(), getAsString(lastFromStation, "cave"))
 				&& Objects.equals(row.getFromStation(), getAsString(lastFromStation, "station"))
 				&& Objects.equals(row.getOverrideToCave(), getAsString(lastToStation, "cave"))
 				&& Objects.equals(row.getToStation(), getAsString(lastToStation, "station"))) {
@@ -165,7 +178,6 @@ public class MetacaveExporter {
 			else {
 				// if the last station doesn't match the from station of this shot,
 				// insert an empty (non) shot and a new from station
-				JsonObject fromStation = null;
 				if (Objects.equals(row.getOverrideFromCave(), getAsString(lastToStation, "cave"))
 					&& Objects.equals(row.getFromStation(), getAsString(lastToStation, "station"))) {
 					fromStation = lastToStation;
@@ -179,16 +191,6 @@ public class MetacaveExporter {
 					addProperty(fromStation, "cave", row.getOverrideFromCave());
 					addProperty(fromStation, "station", row.getFromStation());
 					survey.add(fromStation);
-				}
-				// add lruds to from station
-				if (!fromStation.has("lrud")) {
-					JsonArray lrud = new JsonArray();
-					lrud.add(row.getLeft());
-					lrud.add(row.getRight());
-					lrud.add(row.getUp());
-					lrud.add(row.getDown());
-					fromStation.add("lrud", lrud);
-					fromStation.addProperty("breakoutRow", rowIndex);
 				}
 
 				if (truthy(row.getToStation())) {
@@ -224,7 +226,6 @@ public class MetacaveExporter {
 					fromStation.add("splays", measurements);
 				}
 			}
-
 			// add frontsight measurements
 			if (measurements != null) {
 				JsonObject fs = new JsonObject();
@@ -245,7 +246,20 @@ public class MetacaveExporter {
 					measurements.add(bs);
 				}
 			}
+			if (fromStation != null) {
+				// add lruds to from station
+				if (hasLruds(row)) {
+					JsonArray lrud = new JsonArray();
+					lrud.add(row.getLeft());
+					lrud.add(row.getRight());
+					lrud.add(row.getUp());
+					lrud.add(row.getDown());
+					fromStation.add("lrud", lrud);
+				}
+				fromStation.addProperty("breakoutRow", rowIndex);
+			}
 		}
+
 		if (hasFixedStation) {
 			JsonObject fixedStationGroup = exportFixedStationGroup(row.getTrip());
 			JsonObject stations = fixedStationGroup.getAsJsonObject("stations");
