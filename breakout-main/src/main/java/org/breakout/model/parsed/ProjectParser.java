@@ -45,7 +45,7 @@ public class ProjectParser {
 	private static final DateMatcher dateMatcher = DatePatterns.en_US.matcher("");
 
 	public static Date parseDate(String s) {
-		return dateMatcher.reset(s).find() ? dateMatcher.match() : null;
+		return s != null && dateMatcher.reset(s).find() ? dateMatcher.match() : null;
 	}
 
 	private static <T, U extends UnitType<U>> ParsedField<UnitizedDouble<U>> parse(
