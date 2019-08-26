@@ -100,6 +100,7 @@ import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.TwoPlaneIntersection3f;
 import org.andork.math3d.TwoPlaneIntersection3f.ResultType;
 import org.andork.math3d.Vecmath;
+import org.andork.ref.Ref;
 import org.andork.spatial.BoundingSpheres;
 import org.andork.spatial.RTraversal;
 import org.andork.spatial.Rectmath;
@@ -2291,6 +2292,20 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			result.add(leaf.object().key);
 			return true;
 		});
+	}
+
+	public boolean hasShotsIn(PlanarHull3f hull) {
+		Ref<Boolean> found = new Ref<>(false);
+		RTraversal.traverse(getTree().getRoot(), node -> found.value ? false : hull.intersectsBox(node.mbr()), leaf -> {
+			if (found.value)
+				return false;
+			if (hull.intersectsBox(leaf.mbr())) {
+				found.value = true;
+				return false;
+			}
+			return true;
+		});
+		return found.value;
 	}
 
 	public RfStarTree<Shot3d> getTree() {

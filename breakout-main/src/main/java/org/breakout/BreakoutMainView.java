@@ -242,7 +242,6 @@ import com.jogamp.opengl.GLCapabilities;
 import com.jogamp.opengl.GLProfile;
 import com.jogamp.opengl.awt.GLCanvas;
 import com.jogamp.opengl.math.geom.AABBox;
-import com.jogamp.opengl.math.geom.Frustum;
 
 public class BreakoutMainView {
 	private static final Logger logger = Logger.getLogger(BreakoutMainView.class.getName());
@@ -1257,6 +1256,7 @@ public class BreakoutMainView {
 	WindowSelectionMouseHandler windowSelectionMouseHandler;
 	ClipMouseHandler clipMouseHandler;
 	TableSelectionHandler selectionHandler;
+	MouseAdapter releaseMouseHandler;
 
 	RowFilterFactory<String, TableModel, Integer> rowFilterFactory;
 	SurveyDrawer surveyDrawer;
@@ -1430,22 +1430,14 @@ public class BreakoutMainView {
 				Vecmath.setColumn3(vi, 3, cameraLoc);
 				settings.setInvViewXform(vi);
 			}
-			else if (cameraAnimationQueue.isEmpty() && !navigator.isNavigating()) {
-				float[] v = viewState.viewMatrix();
-				float[] p = viewState.projectionMatrix();
-				settings.getViewXform(v);
-				settings.getProjection().calculate(p, viewState, width, height);
-				float[] pv = viewState.pv();
-				Vecmath.mmul(p, v, pv);
-				Frustum frustum = viewState.frustum();
-				frustum.updateByPMV(pv, 0);
-				box.setSize(mbr[0], mbr[1], mbr[2], mbr[3], mbr[4], mbr[5]);
-				if (frustum.isAABBoxOutside(box)) {
-					fitViewToEverything();
-				}
-			}
 
 			super.display(drawable);
+
+			if (dist < maxDist && cameraAnimationQueue.isEmpty() && !navigator.isNavigating() && !hasShotsInView()) {
+				SwingUtilities.invokeLater(() -> {
+					fitViewToEverything();
+				});
+			}
 		}
 	}
 
@@ -1501,6 +1493,17 @@ public class BreakoutMainView {
 			}
 		});
 		clipMouseHandler.setSensitivity(0.01f);
+
+		releaseMouseHandler = new MouseAdapter() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (!navigator.isNavigating() && cameraAnimationQueue.isEmpty() && !hasShotsInView()) {
+					SwingUtilities.invokeLater(() -> {
+						fitViewToEverything();
+					});
+				}
+			}
+		};
 
 		hintLabel = new JLabel("A");
 		hintLabel.setForeground(Color.WHITE);
@@ -2732,15 +2735,21 @@ public class BreakoutMainView {
 		return IntStream.range(0, model.getRowCount()).mapToObj(modelIndexToShotKey::get).filter(o -> o != null);
 	}
 
+	PlanarHull3f shotsInViewHull = new PlanarHull3f();
+
 	protected Set<ShotKey> getShotsInView() {
 		Set<ShotKey> result = new HashSet<>();
-		PlanarHull3f hull = new PlanarHull3f();
-		renderer.getViewState().pickXform().exportViewVolume(hull, canvas.getWidth(), canvas.getHeight());
-		model3d.getShotsIn(hull, result);
+		renderer.getViewState().pickXform().exportViewVolume(shotsInViewHull, canvas.getWidth(), canvas.getHeight());
+		model3d.getShotsIn(shotsInViewHull, result);
 		if (result.isEmpty()) {
 			calcProject.getPlottedShotKeys(result);
 		}
 		return result;
+	}
+
+	protected boolean hasShotsInView() {
+		renderer.getViewState().pickXform().exportViewVolume(shotsInViewHull, canvas.getWidth(), canvas.getHeight());
+		return model3d.hasShotsIn(shotsInViewHull);
 	}
 
 	protected Set<ShotKey> getDefaultShotsForOperations(int minimumNumShots) {
@@ -2782,6 +2791,7 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
+		mouseAdapterChain.addMouseAdapter(releaseMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
 	}
 
@@ -2796,6 +2806,7 @@ public class BreakoutMainView {
 		mouseAdapterChain.addMouseAdapter(autoshowController);
 		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
+		mouseAdapterChain.addMouseAdapter(releaseMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
 	}
 

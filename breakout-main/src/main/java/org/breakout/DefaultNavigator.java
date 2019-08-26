@@ -132,8 +132,7 @@ public class DefaultNavigator extends MouseAdapter {
 		lastEvent = e;
 
 		JoglViewSettings viewSettings = renderer.getViewSettings();
-		viewSettings.getViewXform(cam);
-		Vecmath.invAffine(cam);
+		viewSettings.getInvViewXform(cam);
 
 		Vecmath.mvmulAffine(cam, 0, 0, 1, v);
 
@@ -159,8 +158,7 @@ public class DefaultNavigator extends MouseAdapter {
 				Vecmath.setRotation(temp, v, dtilt);
 				Vecmath.mmulRotational(temp, cam, cam);
 
-				Vecmath.invAffine(cam);
-				viewSettings.setViewXform(cam);
+				viewSettings.setInvViewXform(cam);
 			}
 		}
 		else if (button == MouseEvent.BUTTON2) {
@@ -178,8 +176,7 @@ public class DefaultNavigator extends MouseAdapter {
 				cam[13] += cam[9] * dy * scaledMoveFactor;
 				cam[14] += cam[10] * dy * scaledMoveFactor;
 			}
-			Vecmath.invAffine(cam);
-			viewSettings.setViewXform(cam);
+			viewSettings.setInvViewXform(cam);
 		}
 		else if (button == MouseEvent.BUTTON3) {
 			if (e.isShiftDown()) {
@@ -191,15 +188,13 @@ public class DefaultNavigator extends MouseAdapter {
 				cam[12] -= cam[8] / xz * dy * scaledMoveFactor;
 				cam[14] -= cam[10] / xz * dy * scaledMoveFactor;
 
-				Vecmath.invAffine(cam);
-				viewSettings.setViewXform(cam);
+				viewSettings.setInvViewXform(cam);
 			}
 			else {
 				cam[12] += cam[0] * -dx * scaledMoveFactor + cam[4] * dy * scaledMoveFactor;
 				cam[13] += cam[1] * -dx * scaledMoveFactor + cam[5] * dy * scaledMoveFactor;
 				cam[14] += cam[2] * -dx * scaledMoveFactor + cam[6] * dy * scaledMoveFactor;
-				Vecmath.invAffine(cam);
-				viewSettings.setViewXform(cam);
+				viewSettings.setInvViewXform(cam);
 			}
 		}
 
@@ -220,10 +215,6 @@ public class DefaultNavigator extends MouseAdapter {
 	public void mouseReleased(MouseEvent e) {
 		if (pressEvent != null && e.getButton() == pressEvent.getButton()) {
 			pressEvent = null;
-
-			if (callDisplay) {
-				drawable.display();
-			}
 		}
 	}
 
@@ -243,8 +234,7 @@ public class DefaultNavigator extends MouseAdapter {
 				zoomQueued = false;
 
 				JoglViewSettings viewSettings = renderer.getViewSettings();
-				viewSettings.getViewXform(cam);
-				Vecmath.invAffine(cam);
+				viewSettings.getInvViewXform(cam);
 
 				if (e.isControlDown()) {
 					distance /= 10f;
@@ -263,8 +253,7 @@ public class DefaultNavigator extends MouseAdapter {
 				cam[13] += v[1] * distance;
 				cam[14] += v[2] * distance;
 
-				Vecmath.invAffine(cam);
-				viewSettings.setViewXform(cam);
+				viewSettings.setInvViewXform(cam);
 
 				if (callDisplay) {
 					drawable.display();

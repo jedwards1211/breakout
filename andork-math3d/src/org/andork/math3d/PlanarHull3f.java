@@ -88,9 +88,6 @@ public class PlanarHull3f {
 	public final float[][] origins;
 	public final float[][] normals;
 	public final float[] planeDists;
-	public final int[][] triangleIndices;
-
-	public final int[] triangleSides;
 
 	public PlanarHull3f() {
 		this(6, 8, 12);
@@ -101,8 +98,6 @@ public class PlanarHull3f {
 		origins = new float[numSides][3];
 		normals = new float[numSides][3];
 		planeDists = new float[numSides];
-		triangleIndices = new int[numTriangles][3];
-		triangleSides = new int[numTriangles];
 	}
 
 	private boolean allPointsOutside(int side, float[] box) {
@@ -188,24 +183,5 @@ public class PlanarHull3f {
 		}
 
 		return true;
-	}
-
-	public void setCanonicalTriangleIndicesAndPlanes() {
-		set(triangleIndices[0], 0, 6, 4);
-		set(triangleIndices[1], 6, 0, 2);
-		set(triangleIndices[2], 7, 1, 5);
-		set(triangleIndices[3], 1, 7, 3);
-		set(triangleIndices[4], 0, 5, 1);
-		set(triangleIndices[5], 5, 0, 4);
-		set(triangleIndices[6], 7, 2, 3);
-		set(triangleIndices[7], 2, 7, 6);
-		set(triangleIndices[8], 0, 3, 2);
-		set(triangleIndices[9], 3, 0, 1);
-		set(triangleIndices[10], 7, 4, 6);
-		set(triangleIndices[11], 4, 7, 5);
-
-		for (int i = 0; i < 12; i++) {
-			triangleSides[i] = i / 2;
-		}
 	}
 }
