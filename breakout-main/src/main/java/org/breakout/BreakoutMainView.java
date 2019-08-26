@@ -878,6 +878,7 @@ public class BreakoutMainView {
 	}
 
 	class StopAnimationMouseHandler extends MouseAdapter {
+		long lastWheelTime = 0;
 		double lastWheelRotation = Double.NaN;
 
 		@Override
@@ -887,16 +888,25 @@ public class BreakoutMainView {
 
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
+			long time = System.currentTimeMillis();
 			double nextWheelRotation = e.getPreciseWheelRotation();
 			if (!cameraAnimationQueue.isEmpty()) {
+				// Mac OS generates decelerating scroll events after a flick,
+				// so we have to consider the following cases "real"
+				// user-initiated scroll events:
+				// * scroll reverses direction
+				// * scroll rotation increases
+				// * a short time has elapsed since previous scroll event
 				if (Math.signum(lastWheelRotation) != Math.signum(nextWheelRotation)
-					|| Math.abs(nextWheelRotation) > Math.abs(lastWheelRotation)) {
+					|| Math.abs(nextWheelRotation) > Math.abs(lastWheelRotation)
+					|| time - lastWheelTime > 250) {
 					removeUnprotectedCameraAnimations();
 				}
 				else {
 					e.consume();
 				}
 			}
+			lastWheelTime = time;
 			lastWheelRotation = nextWheelRotation;
 		}
 	}
