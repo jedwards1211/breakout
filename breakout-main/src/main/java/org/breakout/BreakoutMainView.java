@@ -854,20 +854,50 @@ public class BreakoutMainView {
 		}
 	}
 
-	class OtherMouseHandler extends MouseAdapter {
-		@Override
-		public void mousePressed(MouseEvent e) {
-			cameraAnimationQueue.clear();
-		}
-
+	class ReleaseMouseHandler extends MouseAdapter {
 		@Override
 		public void mouseReleased(MouseEvent e) {
-			saveViewXform();
+			if (!navigator.isNavigating() && cameraAnimationQueue.isEmpty()) {
+				if (!hasShotsInView()) {
+					SwingUtilities.invokeLater(() -> {
+						fitViewToEverything();
+					});
+				}
+				else {
+					saveViewXform();
+				}
+			}
 		}
 
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
-			saveViewXform();
+			if (!e.isConsumed() && cameraAnimationQueue.isEmpty()) {
+				saveViewXform();
+			}
+		}
+	}
+
+	class StopAnimationMouseHandler extends MouseAdapter {
+		double lastWheelRotation = Double.NaN;
+
+		@Override
+		public void mousePressed(MouseEvent e) {
+			removeUnprotectedCameraAnimations();
+		}
+
+		@Override
+		public void mouseWheelMoved(MouseWheelEvent e) {
+			double nextWheelRotation = e.getPreciseWheelRotation();
+			if (!cameraAnimationQueue.isEmpty()) {
+				if (Math.signum(lastWheelRotation) != Math.signum(nextWheelRotation)
+					|| Math.abs(nextWheelRotation) > Math.abs(lastWheelRotation)) {
+					removeUnprotectedCameraAnimations();
+				}
+				else {
+					e.consume();
+				}
+			}
+			lastWheelRotation = nextWheelRotation;
 		}
 	}
 
@@ -1252,11 +1282,11 @@ public class BreakoutMainView {
 	MousePickHandler pickHandler;
 
 	DrawerAutoshowController autoshowController;
-	OtherMouseHandler otherMouseHandler;
 	WindowSelectionMouseHandler windowSelectionMouseHandler;
 	ClipMouseHandler clipMouseHandler;
 	TableSelectionHandler selectionHandler;
-	MouseAdapter releaseMouseHandler;
+	StopAnimationMouseHandler stopAnimationMouseHandler = new StopAnimationMouseHandler();
+	ReleaseMouseHandler releaseMouseHandler = new ReleaseMouseHandler();
 
 	RowFilterFactory<String, TableModel, Integer> rowFilterFactory;
 	SurveyDrawer surveyDrawer;
@@ -1494,17 +1524,6 @@ public class BreakoutMainView {
 		});
 		clipMouseHandler.setSensitivity(0.01f);
 
-		releaseMouseHandler = new MouseAdapter() {
-			@Override
-			public void mouseReleased(MouseEvent e) {
-				if (!navigator.isNavigating() && cameraAnimationQueue.isEmpty() && !hasShotsInView()) {
-					SwingUtilities.invokeLater(() -> {
-						fitViewToEverything();
-					});
-				}
-			}
-		};
-
 		hintLabel = new JLabel("A");
 		hintLabel.setForeground(Color.WHITE);
 		hintLabel.setBackground(Color.BLACK);
@@ -1602,12 +1621,9 @@ public class BreakoutMainView {
 
 		autoshowController = new DrawerAutoshowController();
 
-		otherMouseHandler = new OtherMouseHandler();
-
 		mouseAdapterChain = new MouseAdapterChain();
 		mouseAdapterChain.addMouseAdapter(pickHandler);
 		mouseAdapterChain.addMouseAdapter(autoshowController);
-		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
 
 		mainPanel = new JPanel();
@@ -2423,6 +2439,8 @@ public class BreakoutMainView {
 
 		Animation finisher;
 
+		final boolean projectionChanged =
+			ortho != renderer.getViewSettings().getProjection() instanceof OrthoProjection;
 		if (ortho) {
 			if (model3d != null) {
 				float[] orthoBounds = model3d.getOrthoBounds(shotsToFit, right, up, forward);
@@ -2471,7 +2489,9 @@ public class BreakoutMainView {
 					logger.log(Level.SEVERE, "Failed to change view xform", ex);
 				}
 
-				installOrthoMouseAdapters();
+				if (projectionChanged) {
+					installOrthoMouseAdapters();
+				}
 
 				autoDrawable.display();
 				return 0;
@@ -2503,18 +2523,16 @@ public class BreakoutMainView {
 
 			finisher = l -> {
 				try {
-					float[] newViewXform = Vecmath.newMat4f();
-					Vecmath.viewFrom(right, up, endLocation, newViewXform);
-					renderer.getViewSettings().setViewXform(newViewXform);
 					renderer.getViewSettings().setProjection(perspCalculator);
-					saveViewXform();
 				}
 				catch (Exception ex) {
 					logger.log(Level.SEVERE, "Failed to change view xform", ex);
 				}
 				saveProjection();
 
-				installPerspectiveMouseAdapters();
+				if (projectionChanged) {
+					installPerspectiveMouseAdapters();
+				}
 
 				autoDrawable.display();
 				return 0;
@@ -2567,7 +2585,9 @@ public class BreakoutMainView {
 			}
 		}
 
-		mouseLooper.removeMouseAdapter(mouseAdapterChain);
+		if (projectionChanged) {
+			mouseLooper.removeMouseAdapter(mouseAdapterChain);
+		}
 
 		try {
 			removeUnprotectedCameraAnimations();
@@ -2786,10 +2806,10 @@ public class BreakoutMainView {
 			mouseLooper.removeMouseAdapter(mouseAdapterChain);
 		}
 		mouseAdapterChain = new MouseAdapterChain();
+		mouseAdapterChain.addMouseAdapter(stopAnimationMouseHandler);
 		mouseAdapterChain.addMouseAdapter(orthoNavigator);
 		mouseAdapterChain.addMouseAdapter(pickHandler);
 		mouseAdapterChain.addMouseAdapter(autoshowController);
-		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
 		mouseAdapterChain.addMouseAdapter(releaseMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
@@ -2800,11 +2820,11 @@ public class BreakoutMainView {
 			mouseLooper.removeMouseAdapter(mouseAdapterChain);
 		}
 		mouseAdapterChain = new MouseAdapterChain();
+		mouseAdapterChain.addMouseAdapter(stopAnimationMouseHandler);
 		mouseAdapterChain.addMouseAdapter(pickHandler);
 		mouseAdapterChain.addMouseAdapter(navigator);
 		mouseAdapterChain.addMouseAdapter(orbiter);
 		mouseAdapterChain.addMouseAdapter(autoshowController);
-		mouseAdapterChain.addMouseAdapter(otherMouseHandler);
 		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
 		mouseAdapterChain.addMouseAdapter(releaseMouseHandler);
 		mouseLooper.addMouseAdapter(mouseAdapterChain);
