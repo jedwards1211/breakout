@@ -9,13 +9,16 @@ import org.andork.scrape.ScrapePattern;
 
 public class ISO8601DatePattern implements DatePattern {
 	private static final Pattern pattern =
-		Pattern.compile("\\b(\\d{4})(0\\d|1[012])([012]\\d|3[01])T([0-5]\\d):([0-5]\\d)(:([0-5]\\d))?\\b");
+		Pattern
+			.compile(
+				"\\b(\\d{4})(-?)(\\d{2})(\\2([012]\\d|3[01]))?T([0-5]\\d)((:?)([0-5]\\d)(\\8([0-5]\\d)(\\.(\\d{3}))?)?)?\\b");
 
 	public static void main(String[] args) {
 		ScrapePattern<Date> p = new ISO8601DatePattern();
-		ScrapeMatcher<Date> m = p.matcher("20160830T05:23");
-		m.find();
-		System.out.println(m.match());
+		ScrapeMatcher<Date> m = p.matcher("2016-08-30T05:23 20180423T092632 190223T0524");
+		while (m.find()) {
+			System.out.println(m.match());
+		}
 	}
 
 	@Override
@@ -26,13 +29,25 @@ public class ISO8601DatePattern implements DatePattern {
 			@Override
 			protected Date parseDate() {
 				int year = Integer.parseInt(matcher.group(1));
-				int month = Integer.parseInt(matcher.group(2));
-				int day = Integer.parseInt(matcher.group(3));
-				int hour = Integer.parseInt(matcher.group(4));
-				int minute = Integer.parseInt(matcher.group(5));
-				int second = matcher.group(7) != null ? Integer.parseInt(matcher.group(7)) : 0;
+				int month = Integer.parseInt(matcher.group(3));
+				int day = matcher.group(5) != null ? Integer.parseInt(matcher.group(5)) : 0;
+				if (matcher.group(5) == null && "".equals(matcher.group(2))) {
+					day = month;
+					month = year % 100;
+					int year2 = year / 100;
+					year = (year2 >= 69 ? 1900 : 2000) + year2;
+				}
+				if (month < 1 || month > 12) {
+					return null;
+				}
+				int hour = Integer.parseInt(matcher.group(6));
+				int minute = matcher.group(9) != null ? Integer.parseInt(matcher.group(9)) : 0;
+				int second = matcher.group(11) != null ? Integer.parseInt(matcher.group(11)) : 0;
+				int millisecond = matcher.group(13) != null ? Integer.parseInt(matcher.group(13)) : 0;
 
-				return new Date(year - 1900, month - 1, day, hour, minute, second);
+				Date date = new Date(year - 1900, month - 1, day, hour, minute, second);
+				date.setTime(date.getTime() + millisecond);
+				return date;
 			}
 		};
 	}

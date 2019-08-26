@@ -12,12 +12,12 @@ public class DatePatterns {
 
 	public static final DatePattern en_US =
 		new MultiDatePattern(
+			new ISO8601DatePattern(),
 			new GeneralDatePattern().order(MONTH, DAY, FULL_YEAR),
 			new GeneralDatePattern().order(MONTH, DAY, TWO_DIGIT_YEAR),
 			new GeneralDatePattern().order(FULL_YEAR, MONTH, DAY),
 			new GeneralDatePattern().order(MONTH, FULL_YEAR),
 			new GeneralDatePattern().order(FULL_YEAR, MONTH),
 			new GeneralDatePattern().order(DAY, MONTH, FULL_YEAR),
-			new GeneralDatePattern().order(TWO_DIGIT_YEAR, MONTH, DAY),
-			new ISO8601DatePattern());
+			new GeneralDatePattern().order(TWO_DIGIT_YEAR, MONTH, DAY));
 }
