@@ -117,6 +117,9 @@ public class Parsed2Calc {
 			this.project.coordinateReferenceSystem = toCrs;
 
 			for (Map.Entry<String, List<ParsedFixedStation>> entry : fixedStationsByCrs.entrySet()) {
+				if (entry.getKey().isEmpty()) {
+					continue;
+				}
 				CoordinateReferenceSystem fromCrs = crsFactory.createFromParameters(null, entry.getKey());
 				CoordinateTransform xform = new BasicCoordinateTransform(fromCrs, toCrs);
 				CoordinateTransform geoXform = new BasicCoordinateTransform(fromCrs.createGeographic(), toCrs);
@@ -202,6 +205,9 @@ public class Parsed2Calc {
 		ProjCoordinate projCoord = new ProjCoordinate();
 
 		for (Map.Entry<String, List<ParsedFixedStation>> entry : stations.entrySet()) {
+			if (entry.getKey().isEmpty()) {
+				continue;
+			}
 			CoordinateReferenceSystem sourceCrs = crsFactory.createFromParameters(null, entry.getKey());
 			ToGeocentricCoordinateTransform sourceToGeocentric = new ToGeocentricCoordinateTransform(sourceCrs);
 			CoordinateReferenceSystem sourceGeodeticCrs = sourceCrs.createGeographic();
