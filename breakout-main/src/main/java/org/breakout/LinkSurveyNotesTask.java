@@ -632,10 +632,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 						Integer index = mainView.shotKeyToModelIndex.get(new ShotKey(row));
 						if (index == null)
 							return;
-						model
-							.setRow(
-								index,
-								model.getRow(index).setOverrideAttachedFiles(row.getOverrideAttachedFiles()));
+						model.setRow(index, model.getRow(index).setOverrideAttachedFiles(row.getAttachedFiles()));
 					}
 
 				});
@@ -651,6 +648,7 @@ public class LinkSurveyNotesTask extends Task<Void> {
 			QArrayList<File> surveyScanPaths = mainView.getProjectModel().get(ProjectModel.surveyScanPaths);
 			if (surveyScanPaths == null) {
 				surveyScanPaths = new QArrayList<File>();
+				mainView.getProjectModel().set(ProjectModel.surveyScanPaths, surveyScanPaths);
 			}
 			if (!surveyScanPaths.contains(directory)) {
 				surveyScanPaths.add(directory);
