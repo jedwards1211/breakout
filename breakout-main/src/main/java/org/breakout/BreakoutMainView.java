@@ -1127,8 +1127,6 @@ public class BreakoutMainView {
 					calcProject = p2c.project;
 					model3d = model;
 
-					model.setParamPaint(settingsDrawer.getParamColorationAxisPaint());
-
 					projectModelBinder.update(true);
 					rootModelBinder.update(true);
 
@@ -1451,6 +1449,7 @@ public class BreakoutMainView {
 				return;
 			}
 			model3d.setLeads(getProjectModel().get(ProjectModel.leadIndex));
+			model3d.setParamGradient(getProjectModel().get(ProjectModel.paramGradient));
 
 			JoglViewState viewState = getViewState();
 			float[] vi = viewState.inverseViewMatrix();

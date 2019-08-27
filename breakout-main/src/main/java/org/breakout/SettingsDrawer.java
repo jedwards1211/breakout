@@ -96,6 +96,7 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 import org.breakout.model.ColorParam;
+import org.breakout.model.GradientModel;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
@@ -219,6 +220,7 @@ public class SettingsDrawer extends Drawer {
 	Binder<Boolean> showTerrainBinder = QObjectAttributeBinder.bind(ProjectModel.showTerrain, projectBinder);
 	Binder<Color> backgroundColorBinder = QObjectAttributeBinder.bind(ProjectModel.backgroundColor, projectBinder);
 	Binder<LinearAxisConversion> distRangeBinder = QObjectAttributeBinder.bind(ProjectModel.distRange, projectBinder);
+	Binder<GradientModel> paramGradientBinder = QObjectAttributeBinder.bind(ProjectModel.paramGradient, projectBinder);
 	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(ProjectModel.colorParam, projectBinder);
 	Binder<QMap<ColorParam, LinearAxisConversion, ?>> paramRangesBinder =
 		QObjectAttributeBinder.bind(ProjectModel.paramRanges, projectBinder);
@@ -377,6 +379,14 @@ public class SettingsDrawer extends Drawer {
 		JSliderValueBinder.bind(mouseSensitivitySlider, mouseSensitivityBinder);
 		JSliderValueBinder.bind(mouseWheelSensitivitySlider, mouseWheelSensitivityBinder);
 		PlotAxisConversionBinder.bind(distColorationAxis, displayDistRangeBinder);
+		BinderWrapper.create((GradientModel gradient) -> {
+			paramColorationAxisPanel
+				.setUnderpaintBorder(
+					MultipleGradientFillBorder
+						.from(Side.LEFT)
+						.to(Side.RIGHT)
+						.linear(gradient.fractions, gradient.colors));
+		}).bind(paramGradientBinder);
 		ISelectorSelectionBinder.bind(colorParamSelector, colorParamBinder);
 		BetterCardLayoutBinder.bind(colorParamDetailsPanel, colorParamDetailsLayout, colorParamBinder);
 		BetterCardLayoutBinder.bind(colorParamButtonsPanel, colorParamButtonsLayout, colorParamBinder);

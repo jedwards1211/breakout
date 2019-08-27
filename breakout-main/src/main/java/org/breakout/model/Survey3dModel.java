@@ -49,7 +49,6 @@ import static org.breakout.util.StationNames.getSurveyDesignation;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.LinearGradientPaint;
 import java.awt.Point;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
@@ -1819,13 +1818,17 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Set<Section> sectionsWithGlow = new HashSet<>();
 
-	LinearGradientPaint paramPaint;
+	GradientModel paramGradient =
+		new GradientModel(new float[]
+		{ 0f, 0.24f, 0.64f, 1f },
+			new Color[]
+			{ new Color(255, 249, 204), new Color(255, 195, 0), new Color(214, 6, 127), new Color(34, 19, 150) });
 
 	int paramTexture;
 
 	BufferedImageInt paramTextureImage;
 
-	boolean paramTextureNeedsUpdate;
+	boolean paramTextureNeedsUpdate = true;
 
 	Uniform4fv highlightColors;
 
@@ -2442,9 +2445,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.nearDist.value(nearDist);
 	}
 
-	public void setParamPaint(LinearGradientPaint paint) {
-		if (paramPaint != paint) {
-			paramPaint = paint;
+	public void setParamGradient(GradientModel paint) {
+		if (!Objects.equals(paramGradient, paint)) {
+			paramGradient = paint;
 			paramTextureNeedsUpdate = true;
 		}
 	}
@@ -2792,7 +2795,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		g2.clearRect(0, 0, paramTextureImage.getWidth(), paramTextureImage.getHeight());
 
-		if (paramPaint != null) {
+		if (paramGradient != null) {
 			g2
 				.setPaint(new ParamGradientMapPaint(new float[]
 				{ 0, 0 },
@@ -2802,8 +2805,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					{ paramTextureImage.getWidth(), 0 },
 					0,
 					1,
-					paramPaint.getFractions(),
-					paramPaint.getColors()));
+					paramGradient.fractions,
+					paramGradient.colors));
 			g2.fillRect(0, 0, paramTextureImage.getWidth(), paramTextureImage.getHeight());
 		}
 

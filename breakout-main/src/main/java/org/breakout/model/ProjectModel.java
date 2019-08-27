@@ -57,6 +57,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<float[]> viewXform = newAttribute(float[].class, "viewXform");
 	public static final Attribute<LinearAxisConversion> distRange =
 		newAttribute(LinearAxisConversion.class, "distRange");
+	public static final Attribute<GradientModel> paramGradient = newAttribute(GradientModel.class, "gradientModel");
 	public static final Attribute<ColorParam> colorParam = newAttribute(ColorParam.class, "colorParam");
 	public static final Attribute<QMap<ColorParam, LinearAxisConversion, ?>> paramRanges =
 		newAttribute(QMap.class, "savedParamRanges");
@@ -108,6 +109,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 			new QObjectMapBimapper<>(instance)
 				.map(projCalculator, ProjectionCalculatorBimapper.instance)
 				.map(distRange, LinearAxisConversionMapBimapper.instance)
+				.map(paramGradient, GradientModel.bimapper)
 				.map(
 					paramRanges,
 					QMapBimapper
@@ -178,6 +180,17 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.colorParam) == null) {
 			projectModel.set(ProjectModel.colorParam, ColorParam.DEPTH);
+		}
+		if (projectModel.get(ProjectModel.paramGradient) == null) {
+			projectModel
+				.set(ProjectModel.paramGradient, new GradientModel(new float[]
+				{ 0f, 0.24f, 0.64f, 1f },
+					new Color[]
+					{
+						new Color(255, 249, 204),
+						new Color(255, 195, 0),
+						new Color(214, 6, 127),
+						new Color(34, 19, 150) }));
 		}
 		if (projectModel.get(ProjectModel.paramRanges) == null) {
 			projectModel.set(ProjectModel.paramRanges, QLinkedHashMap.<ColorParam, LinearAxisConversion>newInstance());
