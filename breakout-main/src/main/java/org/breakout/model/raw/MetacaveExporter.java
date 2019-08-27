@@ -107,7 +107,6 @@ public class MetacaveExporter {
 
 	public void export(SurveyTableModel model) {
 		export(model.getRows());
-		exportLeads(model.getLeads());
 	}
 
 	public void export(List<SurveyRow> rows) {

@@ -229,6 +229,7 @@ import org.jdesktop.swingx.JXHyperlink;
 import com.andork.plot.LinearAxisConversion;
 import com.andork.plot.MouseLooper;
 import com.andork.plot.PlotAxis;
+import com.github.krukow.clj_lang.PersistentVector;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -720,6 +721,7 @@ public class BreakoutMainView {
 	private class OpenProjectTask extends DrawerPinningTask<Void> {
 		Path newProjectFile;
 		QObject<ProjectModel> projectModel;
+		MetacaveImporter importer = new MetacaveImporter();
 
 		private OpenProjectTask(Path newProjectFile) {
 			super(getMainPanel(), taskListDrawer.holder());
@@ -737,10 +739,8 @@ public class BreakoutMainView {
 					projectModel =
 						ProjectModel.defaultMapper.unmap(new Gson().fromJson(json.get("breakout"), Object.class));
 				}
-				MetacaveImporter importer = new MetacaveImporter();
 				importer.importMetacave(json);
 				SurveyTableModel model = new SurveyTableModel(importer.getRows());
-				model.setLeads(importer.getLeads());
 				return model;
 			}
 			catch (Exception ex) {
@@ -816,11 +816,11 @@ public class BreakoutMainView {
 				projectModel = ProjectModel.instance.newObject();
 			}
 			ProjectModel.setDefaults(projectModel);
+			projectModel.set(ProjectModel.leads, PersistentVector.create(importer.getLeads()));
 
 			OnEDT.onEDT(() -> {
 				if (surveyModel != null && surveyModel.getRowCount() > 0) {
 					surveyDrawer.table().getModel().copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
-					surveyDrawer.table().getModel().setLeads(surveyModel.getLeads());
 					rebuild3dModel.run();
 				}
 
@@ -1062,7 +1062,7 @@ public class BreakoutMainView {
 
 				SurveyTableModel copy = FromEDT.fromEDT(() -> surveyDrawer.table().getModel().clone());
 				List<SurveyRow> rows = copy.getRows();
-				List<SurveyLead> leads = copy.getLeads();
+				List<SurveyLead> leads = getProjectModel().get(ProjectModel.leads);
 				if (leads == null)
 					leads = Collections.emptyList();
 
@@ -3256,6 +3256,10 @@ public class BreakoutMainView {
 				}
 				MetacaveExporter exporter = new MetacaveExporter();
 				exporter.export(surveyModel);
+				List<SurveyLead> leads = projectModel.get(ProjectModel.leads);
+				if (leads != null) {
+					exporter.exportLeads(leads);
+				}
 				JsonObject json = exporter.getRoot();
 				Gson gson = new Gson();
 				json.add("breakout", gson.toJsonTree(ProjectModel.defaultMapper.map(projectModel), Object.class));

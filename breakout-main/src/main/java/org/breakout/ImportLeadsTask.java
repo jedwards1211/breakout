@@ -59,6 +59,8 @@ import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 
+import com.github.krukow.clj_lang.PersistentVector;
+
 public class ImportLeadsTask extends Task<Void> {
 	private static final Logger logger = Logger.getLogger(ImportCompassTask.class.getSimpleName());
 	private BreakoutMainView mainView;
@@ -372,7 +374,7 @@ public class ImportLeadsTask extends Task<Void> {
 
 	private void mergeIntoProject(List<SurveyLead> leads) throws Exception {
 		OnEDT.onEDT(() -> {
-			mainView.getSurveyTable().getModel().setLeads(leads);
+			mainView.getProjectModel().set(ProjectModel.leads, PersistentVector.create(leads));
 		});
 		mainView.rebuild3dModel.run();
 	}

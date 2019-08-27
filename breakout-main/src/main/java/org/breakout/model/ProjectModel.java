@@ -44,8 +44,10 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.breakout.CameraView;
+import org.breakout.model.raw.SurveyLead;
 
 import com.andork.plot.LinearAxisConversion;
+import com.github.krukow.clj_lang.PersistentVector;
 
 public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<CameraView> cameraView = newAttribute(CameraView.class, "cameraView");
@@ -89,6 +91,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<File> linkSurveyNotesDirectory = newAttribute(File.class, "linkSurveyNotesDirectory");
 	public static final Attribute<File> importLeadsDirectory = newAttribute(File.class, "importLeadsDirectory");
 	public static final Attribute<File> exportSTLDirectory = newAttribute(File.class, "exportSTLDirectory");
+	public static final Attribute<com.github.krukow.clj_ds.PersistentVector<SurveyLead>> leads =
+		newAttribute(com.github.krukow.clj_ds.PersistentVector.class, "leads");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -124,7 +128,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(linkSurveyNotesDirectory, FileStringBimapper.instance)
 				.map(importLeadsDirectory, FileStringBimapper.instance)
 				.map(exportSTLDirectory, FileStringBimapper.instance)
-				.exclude(hasUnsavedChanges);
+				.exclude(hasUnsavedChanges)
+				.exclude(leads);
 	}
 
 	private ProjectModel() {
@@ -211,6 +216,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 			projectModel
 				.set(ProjectModel.clip, new Clip3f(new float[]
 				{ 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
+		}
+		if (projectModel.get(ProjectModel.leads) == null) {
+			projectModel.set(ProjectModel.leads, PersistentVector.emptyVector());
 		}
 	}
 }

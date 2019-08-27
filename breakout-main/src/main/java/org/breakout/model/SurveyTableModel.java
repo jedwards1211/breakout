@@ -153,7 +153,6 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 	@Override
 	public SurveyTableModel clone() {
 		SurveyTableModel result = new SurveyTableModel(new ArrayList<>(rows));
-		result.setLeads(leads != null ? new ArrayList<>(leads) : null);
 		return result;
 	}
 
@@ -225,13 +224,5 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 		if (prevValue == null || "".equals(prevValue) != (aValue == null || "".equals(aValue))) {
 			fixEndRows();
 		}
-	}
-
-	public List<SurveyLead> getLeads() {
-		return leads;
-	}
-
-	public void setLeads(List<SurveyLead> leads) {
-		this.leads = leads;
 	}
 }
