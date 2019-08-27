@@ -28,6 +28,8 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.BiPredicate;
 
 import org.andork.collect.ArrayLists;
 import org.andork.reflect.ReflectionUtils;
@@ -42,11 +44,17 @@ public abstract class QSpec<S extends QSpec<S>> {
 		int index = -1;
 
 		final String name;
+		public final BiPredicate<T, T> equals;
 
 		public Attribute(Class<? super T> valueClass, String name) {
+			this(valueClass, name, Objects::equals);
+		}
+
+		public Attribute(Class<? super T> valueClass, String name, BiPredicate<T, T> equals) {
 			super();
 			this.valueClass = valueClass;
 			this.name = name;
+			this.equals = equals;
 		}
 
 		public int getIndex() {
@@ -71,6 +79,10 @@ public abstract class QSpec<S extends QSpec<S>> {
 		return new Attribute<T>(valueClass, name);
 	}
 
+	public static <T> Attribute<T> newAttribute(Class<? super T> valueClass, String name, BiPredicate<T, T> equals) {
+		return new Attribute<T>(valueClass, name, equals);
+	}
+
 	public static <S extends QSpec<S>> Attribute<QObject<S>> newAttribute(S spec, String name) {
 		return new Attribute<QObject<S>>(QObject.class, name);
 	}
@@ -88,7 +100,8 @@ public abstract class QSpec<S extends QSpec<S>> {
 					field.setAccessible(true);
 					Attribute<?> attr = (Attribute<?>) field.get(null);
 					attributesByName.put(attr.getName(), attr);
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					// Shouldn't happen...
 				}
 			}
@@ -98,7 +111,8 @@ public abstract class QSpec<S extends QSpec<S>> {
 		for (int i = 0; i < attributes.length; i++) {
 			if (attributes[i].index < 0) {
 				attributes[i].index = i;
-			} else if (attributes[i].index != i) {
+			}
+			else if (attributes[i].index != i) {
 				throw new IllegalStateException("attribute order conflicts with another spec");
 			}
 		}
@@ -121,7 +135,8 @@ public abstract class QSpec<S extends QSpec<S>> {
 		for (int i = 0; i < attributeList.size(); i++) {
 			if (attributes[i].index < 0) {
 				attributes[i].index = i;
-			} else if (attributes[i].index != i) {
+			}
+			else if (attributes[i].index != i) {
 				throw new IllegalArgumentException("attributes[" + i + "].index == " + attributes[i].index);
 			}
 		}

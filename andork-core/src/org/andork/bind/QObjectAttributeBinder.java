@@ -24,7 +24,6 @@ package org.andork.bind;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.q.QObject;
 import org.andork.q.QSpec.Attribute;
-import org.andork.util.Java7;
 
 public class QObjectAttributeBinder<T> extends Binder<T> implements BasicPropertyChangeListener {
 	public static <T> QObjectAttributeBinder<T> bind(Attribute<T> attribute, Binder<? extends QObject<?>> upstream) {
@@ -92,7 +91,7 @@ public class QObjectAttributeBinder<T> extends Binder<T> implements BasicPropert
 			}
 		}
 		T newValue = object == null ? null : object.get(attribute);
-		if (force || !Java7.Objects.equals(value, newValue)) {
+		if (force || !attribute.equals.test(value, newValue)) {
 			value = newValue;
 			updateDownstream(force);
 		}

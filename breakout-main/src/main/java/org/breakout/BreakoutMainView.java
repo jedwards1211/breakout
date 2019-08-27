@@ -1757,25 +1757,12 @@ public class BreakoutMainView {
 		settingsDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.settingsDrawer, projectModelBinder));
 		taskListDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.taskListDrawer, projectModelBinder));
 
-		new BinderWrapper<com.github.krukow.clj_ds.PersistentVector<SurveyLead>>() {
-			@Override
-			protected void onValueChanged(com.github.krukow.clj_ds.PersistentVector<SurveyLead> leads) {
-				getProjectModel().set(ProjectModel.leadIndex, MultiMaps.emptyMultiMap());
-				rebuildTaskService.submit(task -> {
-					task.setStatus("Updating lead index...");
-					MultiMap<StationKey, SurveyLead> index = new LinkedListMultiMap<>();
-					task.forEach(leads, lead -> {
-						if (lead.getStation() != null) {
-							index.put(new StationKey(lead.getCave(), lead.getStation()), lead);
-						}
-					});
-					if (task.isCanceled()) {
-						return;
-					}
-					OnEDT.onEDT(() -> getProjectModel().set(ProjectModel.leadIndex, index));
-				});
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.leads, projectModelBinder));
+		BinderWrapper
+			.create((com.github.krukow.clj_ds.PersistentVector<SurveyLead> leads) -> rebuildLeadIndex())
+			.bind(QObjectAttributeBinder.bind(ProjectModel.leads, projectModelBinder));
+		BinderWrapper
+			.create((Boolean showCheckedLeads) -> rebuildLeadIndex())
+			.bind(QObjectAttributeBinder.bind(ProjectModel.showCheckedLeads, projectModelBinder));
 
 		new BinderWrapper<Color>() {
 			@Override
@@ -3436,5 +3423,31 @@ public class BreakoutMainView {
 				return result.toFile();
 		}
 		return projectDir.toFile();
+	}
+
+	private void rebuildLeadIndex() {
+		getProjectModel().set(ProjectModel.leadIndex, MultiMaps.emptyMultiMap());
+		rebuildTaskService.submit(new RebuildLeadIndexTask());
+	}
+
+	class RebuildLeadIndexTask extends Task<Void> {
+		@Override
+		protected Void work() throws Exception {
+			Collection<SurveyLead> leads = getProjectModel().get(ProjectModel.leads);
+			boolean showCheckedLeads = getProjectModel().get(ProjectModel.showCheckedLeads);
+			setStatus("Updating lead index...");
+			MultiMap<StationKey, SurveyLead> index = new LinkedListMultiMap<>();
+			forEach(leads, lead -> {
+				if (lead.getStation() != null && (showCheckedLeads || !lead.isDone())) {
+					index.put(new StationKey(lead.getCave(), lead.getStation()), lead);
+				}
+			});
+			if (isCanceled()) {
+				return null;
+			}
+			OnEDT.onEDT(() -> getProjectModel().set(ProjectModel.leadIndex, index));
+			autoDrawable.display();
+			return null;
+		}
 	}
 }

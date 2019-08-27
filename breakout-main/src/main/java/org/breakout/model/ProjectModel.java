@@ -86,6 +86,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Unit<Length>> displayLengthUnit = newAttribute(Unit.class, "displayLengthUnit");
 	public static final Attribute<Unit<Angle>> displayAngleUnit = newAttribute(Unit.class, "displayAngleUnit");
 	public static final Attribute<Boolean> showLeadLabels = newAttribute(Boolean.class, "showLeadLabels");
+	public static final Attribute<Boolean> showCheckedLeads = newAttribute(Boolean.class, "showCheckedLeads");
 	public static final Attribute<Boolean> showTerrain = newAttribute(Boolean.class, "showTerrain");
 	public static final Attribute<Clip3f> clip = newAttribute(Clip3f.class, "clip");
 	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
@@ -94,9 +95,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<File> importLeadsDirectory = newAttribute(File.class, "importLeadsDirectory");
 	public static final Attribute<File> exportSTLDirectory = newAttribute(File.class, "exportSTLDirectory");
 	public static final Attribute<com.github.krukow.clj_ds.PersistentVector<SurveyLead>> leads =
-		newAttribute(com.github.krukow.clj_ds.PersistentVector.class, "leads");
+		newAttribute(com.github.krukow.clj_ds.PersistentVector.class, "leads", (a, b) -> a == b);
 	public static final Attribute<MultiMap<StationKey, SurveyLead>> leadIndex =
-		newAttribute(MultiMap.class, "leadIndex");
+		newAttribute(MultiMap.class, "leadIndex", (a, b) -> a == b);
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -213,6 +214,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.showLeadLabels) == null) {
 			projectModel.set(ProjectModel.showLeadLabels, true);
+		}
+		if (projectModel.get(ProjectModel.showCheckedLeads) == null) {
+			projectModel.set(ProjectModel.showCheckedLeads, false);
 		}
 		if (projectModel.get(ProjectModel.showTerrain) == null) {
 			projectModel.set(ProjectModel.showTerrain, false);

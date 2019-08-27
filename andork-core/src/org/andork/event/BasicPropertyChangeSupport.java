@@ -40,40 +40,35 @@ import java.util.List;
 public class BasicPropertyChangeSupport implements Serializable {
 
 	/**
-	 * Contains delegates for the only methods of
-	 * {@link BasicPropertyChangeSupport} that users of a class that
-	 * incorporates a {@code BasicPropertyChangeSupport} should use.
+	 * Contains delegates for the only methods of {@link BasicPropertyChangeSupport}
+	 * that users of a class that incorporates a {@code BasicPropertyChangeSupport}
+	 * should use.
 	 *
 	 * @author Andy
 	 */
 	public class External {
 		/**
-		 * Add a BasicPropertyChangeListener to the listener list. The listener
-		 * is registered for all properties. The same listener object may be
-		 * added more than once, and will be called as many times as it is
-		 * added. If <code>listener</code> is null, no exception is thrown and
-		 * no action is taken.
+		 * Add a BasicPropertyChangeListener to the listener list. The listener is
+		 * registered for all properties. The same listener object may be added more
+		 * than once, and will be called as many times as it is added. If
+		 * <code>listener</code> is null, no exception is thrown and no action is taken.
 		 *
-		 * @param listener
-		 *            The BasicPropertyChangeListener to be added
+		 * @param listener The BasicPropertyChangeListener to be added
 		 */
 		public synchronized void addPropertyChangeListener(BasicPropertyChangeListener listener) {
 			BasicPropertyChangeSupport.this.addPropertyChangeListener(listener);
 		}
 
 		/**
-		 * Add a BasicPropertyChangeListener for a specific property. The
-		 * listener will be invoked only when a call on firePropertyChange names
-		 * that specific property. The same listener object may be added more
-		 * than once. For each property, the listener will be invoked the number
-		 * of times it was added for that property. If <code>propertyName</code>
-		 * or <code>listener</code> is null, no exception is thrown and no
-		 * action is taken.
+		 * Add a BasicPropertyChangeListener for a specific property. The listener will
+		 * be invoked only when a call on firePropertyChange names that specific
+		 * property. The same listener object may be added more than once. For each
+		 * property, the listener will be invoked the number of times it was added for
+		 * that property. If <code>propertyName</code> or <code>listener</code> is null,
+		 * no exception is thrown and no action is taken.
 		 *
-		 * @param propertyName
-		 *            The name of the property to listen on.
-		 * @param listener
-		 *            The BasicPropertyChangeListener to be added
+		 * @param propertyName The name of the property to listen on.
+		 * @param listener     The BasicPropertyChangeListener to be added
 		 */
 
 		public synchronized void addPropertyChangeListener(Object propertyName, BasicPropertyChangeListener listener) {
@@ -84,13 +79,12 @@ public class BasicPropertyChangeSupport implements Serializable {
 		 * Returns an array of all the listeners that were added to the
 		 * BasicPropertyChangeSupport object with addPropertyChangeListener().
 		 * <p>
-		 * If some listeners have been added with a named property, then the
-		 * returned array will be a mixture of PropertyChangeListeners and
-		 * <code>BasicPropertyChangeListenerProxy</code>s. If the calling method
-		 * is interested in distinguishing the listeners then it must test each
-		 * element to see if it's a
-		 * <code>BasicPropertyChangeListenerProxy</code>, perform the cast, and
-		 * examine the parameter.
+		 * If some listeners have been added with a named property, then the returned
+		 * array will be a mixture of PropertyChangeListeners and
+		 * <code>BasicPropertyChangeListenerProxy</code>s. If the calling method is
+		 * interested in distinguishing the listeners then it must test each element to
+		 * see if it's a <code>BasicPropertyChangeListenerProxy</code>, perform the
+		 * cast, and examine the parameter.
 		 *
 		 * <pre>
 		 * BasicPropertyChangeListener[] listeners = bean.getPropertyChangeListeners();
@@ -107,8 +101,8 @@ public class BasicPropertyChangeSupport implements Serializable {
 		 * </pre>
 		 *
 		 * @see BasicPropertyChangeListenerProxy
-		 * @return all of the <code>PropertyChangeListeners</code> added or an
-		 *         empty array if no listeners have been added
+		 * @return all of the <code>PropertyChangeListeners</code> added or an empty
+		 *         array if no listeners have been added
 		 * @since 1.4
 		 */
 		public synchronized BasicPropertyChangeListener[] getPropertyChangeListeners() {
@@ -116,44 +110,38 @@ public class BasicPropertyChangeSupport implements Serializable {
 		}
 
 		/**
-		 * Returns an array of all the listeners which have been associated with
-		 * the named property.
+		 * Returns an array of all the listeners which have been associated with the
+		 * named property.
 		 *
-		 * @param propertyName
-		 *            The name of the property being listened to
-		 * @return all of the <code>PropertyChangeListeners</code> associated
-		 *         with the named property. If no such listeners have been
-		 *         added, or if <code>propertyName</code> is null, an empty
-		 *         array is returned.
+		 * @param propertyName The name of the property being listened to
+		 * @return all of the <code>PropertyChangeListeners</code> associated with the
+		 *         named property. If no such listeners have been added, or if
+		 *         <code>propertyName</code> is null, an empty array is returned.
 		 */
 		public synchronized BasicPropertyChangeListener[] getPropertyChangeListeners(Object propertyName) {
 			return BasicPropertyChangeSupport.this.getPropertyChangeListeners(propertyName);
 		}
 
 		/**
-		 * Check if there are any listeners for a specific property, including
-		 * those registered on all properties. If <code>propertyName</code> is
-		 * null, only check for listeners registered on all properties.
+		 * Check if there are any listeners for a specific property, including those
+		 * registered on all properties. If <code>propertyName</code> is null, only
+		 * check for listeners registered on all properties.
 		 *
-		 * @param propertyName
-		 *            the property name.
-		 * @return true if there are one or more listeners for the given
-		 *         property
+		 * @param propertyName the property name.
+		 * @return true if there are one or more listeners for the given property
 		 */
 		public synchronized boolean hasListeners(Object propertyName) {
 			return BasicPropertyChangeSupport.this.hasListeners(propertyName);
 		}
 
 		/**
-		 * Remove a BasicPropertyChangeListener from the listener list. This
-		 * removes a BasicPropertyChangeListener that was registered for all
-		 * properties. If <code>listener</code> was added more than once to the
-		 * same event source, it will be notified one less time after being
-		 * removed. If <code>listener</code> is null, or was never added, no
-		 * exception is thrown and no action is taken.
+		 * Remove a BasicPropertyChangeListener from the listener list. This removes a
+		 * BasicPropertyChangeListener that was registered for all properties. If
+		 * <code>listener</code> was added more than once to the same event source, it
+		 * will be notified one less time after being removed. If <code>listener</code>
+		 * is null, or was never added, no exception is thrown and no action is taken.
 		 *
-		 * @param listener
-		 *            The BasicPropertyChangeListener to be removed
+		 * @param listener The BasicPropertyChangeListener to be removed
 		 */
 		public synchronized void removePropertyChangeListener(BasicPropertyChangeListener listener) {
 			BasicPropertyChangeSupport.this.removePropertyChangeListener(listener);
@@ -161,21 +149,18 @@ public class BasicPropertyChangeSupport implements Serializable {
 
 		/**
 		 * Remove a BasicPropertyChangeListener for a specific property. If
-		 * <code>listener</code> was added more than once to the same event
-		 * source for the specified property, it will be notified one less time
-		 * after being removed. If <code>propertyName</code> is null, no
-		 * exception is thrown and no action is taken. If <code>listener</code>
-		 * is null, or was never added for the specified property, no exception
-		 * is thrown and no action is taken.
+		 * <code>listener</code> was added more than once to the same event source for
+		 * the specified property, it will be notified one less time after being
+		 * removed. If <code>propertyName</code> is null, no exception is thrown and no
+		 * action is taken. If <code>listener</code> is null, or was never added for the
+		 * specified property, no exception is thrown and no action is taken.
 		 *
-		 * @param propertyName
-		 *            The name of the property that was listened on.
-		 * @param listener
-		 *            The BasicPropertyChangeListener to be removed
+		 * @param propertyName The name of the property that was listened on.
+		 * @param listener     The BasicPropertyChangeListener to be removed
 		 */
 
-		public synchronized void removePropertyChangeListener(Object propertyName,
-				BasicPropertyChangeListener listener) {
+		public synchronized void
+			removePropertyChangeListener(Object propertyName, BasicPropertyChangeListener listener) {
 			BasicPropertyChangeSupport.this.removePropertyChangeListener(propertyName, listener);
 		}
 	}
@@ -183,18 +168,17 @@ public class BasicPropertyChangeSupport implements Serializable {
 	private static final long serialVersionUID = -486778571303724183L;
 
 	/**
-	 * The listener list. A copy-on-write array is used instead of an List
-	 * because the latter would run the risk of
-	 * {@link ConcurrentModificationException}s (if a listener removed itself or
-	 * another listener during an event notification).
+	 * The listener list. A copy-on-write array is used instead of an List because
+	 * the latter would run the risk of {@link ConcurrentModificationException}s (if
+	 * a listener removed itself or another listener during an event notification).
 	 */
 	protected transient BasicPropertyChangeListener[] listeners;
 
 	private External external;
 
 	/**
-	 * Hashtable for managing listeners for specific properties. Maps property
-	 * names to BasicPropertyChangeSupport objects.
+	 * Hashtable for managing listeners for specific properties. Maps property names
+	 * to BasicPropertyChangeSupport objects.
 	 *
 	 * @serial
 	 * @since 1.2
@@ -212,8 +196,7 @@ public class BasicPropertyChangeSupport implements Serializable {
 	/**
 	 * Constructs a <code>BasicPropertyChangeSupport</code> object.
 	 *
-	 * @param sourceBean
-	 *            The bean to be given as the source for any events.
+	 * @param sourceBean The bean to be given as the source for any events.
 	 */
 
 	public BasicPropertyChangeSupport() {
@@ -223,11 +206,9 @@ public class BasicPropertyChangeSupport implements Serializable {
 	 * Add a BasicPropertyChangeListener to the listener list. The listener is
 	 * registered for all properties. The same listener object may be added more
 	 * than once, and will be called as many times as it is added. If
-	 * <code>listener</code> is null, no exception is thrown and no action is
-	 * taken.
+	 * <code>listener</code> is null, no exception is thrown and no action is taken.
 	 *
-	 * @param listener
-	 *            The BasicPropertyChangeListener to be added
+	 * @param listener The BasicPropertyChangeListener to be added
 	 */
 	public synchronized void addPropertyChangeListener(BasicPropertyChangeListener listener) {
 		if (listener == null) {
@@ -238,11 +219,13 @@ public class BasicPropertyChangeSupport implements Serializable {
 			BasicPropertyChangeListenerProxy proxy = (BasicPropertyChangeListenerProxy) listener;
 			// Call two argument add method.
 			addPropertyChangeListener(proxy.getPropertyName(), (BasicPropertyChangeListener) proxy.getListener());
-		} else {
+		}
+		else {
 			BasicPropertyChangeListener[] newListeners;
 			if (listeners != null) {
 				newListeners = Arrays.copyOf(listeners, listeners.length + 1);
-			} else {
+			}
+			else {
 				newListeners = new BasicPropertyChangeListener[1];
 			}
 			newListeners[newListeners.length - 1] = listener;
@@ -251,18 +234,15 @@ public class BasicPropertyChangeSupport implements Serializable {
 	}
 
 	/**
-	 * Add a BasicPropertyChangeListener for a specific property. The listener
-	 * will be invoked only when a call on firePropertyChange names that
-	 * specific property. The same listener object may be added more than once.
-	 * For each property, the listener will be invoked the number of times it
-	 * was added for that property. If <code>propertyName</code> or
-	 * <code>listener</code> is null, no exception is thrown and no action is
-	 * taken.
+	 * Add a BasicPropertyChangeListener for a specific property. The listener will
+	 * be invoked only when a call on firePropertyChange names that specific
+	 * property. The same listener object may be added more than once. For each
+	 * property, the listener will be invoked the number of times it was added for
+	 * that property. If <code>propertyName</code> or <code>listener</code> is null,
+	 * no exception is thrown and no action is taken.
 	 *
-	 * @param propertyName
-	 *            The name of the property to listen on.
-	 * @param listener
-	 *            The BasicPropertyChangeListener to be added
+	 * @param propertyName The name of the property to listen on.
+	 * @param listener     The BasicPropertyChangeListener to be added
 	 */
 
 	public synchronized void addPropertyChangeListener(Object propertyName, BasicPropertyChangeListener listener) {
@@ -291,26 +271,22 @@ public class BasicPropertyChangeSupport implements Serializable {
 	}
 
 	/**
-	 * Report a <code>boolean</code> bound indexed property update to any
-	 * registered listeners.
+	 * Report a <code>boolean</code> bound indexed property update to any registered
+	 * listeners.
 	 * <p>
 	 * No event is fired if old and new values are equal and non-null.
 	 * <p>
 	 * This is merely a convenience wrapper around the more general
 	 * fireIndexedPropertyChange method which takes Object values.
 	 *
-	 * @param propertyName
-	 *            The programmatic name of the property that was changed.
-	 * @param index
-	 *            index of the property element that was changed.
-	 * @param oldValue
-	 *            The old value of the property.
-	 * @param newValue
-	 *            The new value of the property.
+	 * @param propertyName The programmatic name of the property that was changed.
+	 * @param index        index of the property element that was changed.
+	 * @param oldValue     The old value of the property.
+	 * @param newValue     The new value of the property.
 	 * @since 1.5
 	 */
-	public void fireIndexedPropertyChange(Object source, Object propertyName, int index, boolean oldValue,
-			boolean newValue) {
+	public void
+		fireIndexedPropertyChange(Object source, Object propertyName, int index, boolean oldValue, boolean newValue) {
 		if (oldValue == newValue) {
 			return;
 		}
@@ -318,22 +294,18 @@ public class BasicPropertyChangeSupport implements Serializable {
 	}
 
 	/**
-	 * Report an <code>int</code> bound indexed property update to any
-	 * registered listeners.
+	 * Report an <code>int</code> bound indexed property update to any registered
+	 * listeners.
 	 * <p>
 	 * No event is fired if old and new values are equal and non-null.
 	 * <p>
 	 * This is merely a convenience wrapper around the more general
 	 * fireIndexedPropertyChange method which takes Object values.
 	 *
-	 * @param propertyName
-	 *            The programmatic name of the property that was changed.
-	 * @param index
-	 *            index of the property element that was changed.
-	 * @param oldValue
-	 *            The old value of the property.
-	 * @param newValue
-	 *            The new value of the property.
+	 * @param propertyName The programmatic name of the property that was changed.
+	 * @param index        index of the property element that was changed.
+	 * @param oldValue     The old value of the property.
+	 * @param newValue     The new value of the property.
 	 * @since 1.5
 	 */
 	public void fireIndexedPropertyChange(Object source, Object propertyName, int index, int oldValue, int newValue) {
@@ -348,52 +320,42 @@ public class BasicPropertyChangeSupport implements Serializable {
 	 * <p>
 	 * No event is fired if old and new values are equal and non-null.
 	 *
-	 * @param propertyName
-	 *            The programmatic name of the property that was changed.
-	 * @param index
-	 *            index of the property element that was changed.
-	 * @param oldValue
-	 *            The old value of the property.
-	 * @param newValue
-	 *            The new value of the property.
+	 * @param propertyName The programmatic name of the property that was changed.
+	 * @param index        index of the property element that was changed.
+	 * @param oldValue     The old value of the property.
+	 * @param newValue     The new value of the property.
 	 * @since 1.5
 	 */
-	public void fireIndexedPropertyChange(Object source, Object propertyName, int index, Object oldValue,
-			Object newValue) {
+	public void
+		fireIndexedPropertyChange(Object source, Object propertyName, int index, Object oldValue, Object newValue) {
 		firePropertyChange(source, propertyName, oldValue, newValue, index);
 	}
 
 	/**
-	 * Report a boolean bound property update to any registered listeners. No
-	 * event is fired if old and new are equal and non-null.
+	 * Report a boolean bound property update to any registered listeners. No event
+	 * is fired if old and new are equal and non-null.
 	 * <p>
 	 * This is merely a convenience wrapper around the more general
 	 * firePropertyChange method that takes Object values.
 	 *
-	 * @param propertyName
-	 *            The programmatic name of the property that was changed.
-	 * @param oldValue
-	 *            The old value of the property.
-	 * @param newValue
-	 *            The new value of the property.
+	 * @param propertyName The programmatic name of the property that was changed.
+	 * @param oldValue     The old value of the property.
+	 * @param newValue     The new value of the property.
 	 */
 	public void firePropertyChange(Object source, Object propertyName, boolean oldValue, boolean newValue) {
 		firePropertyChange(source, propertyName, Boolean.valueOf(oldValue), Boolean.valueOf(newValue));
 	}
 
 	/**
-	 * Report an int bound property update to any registered listeners. No event
-	 * is fired if old and new are equal and non-null.
+	 * Report an int bound property update to any registered listeners. No event is
+	 * fired if old and new are equal and non-null.
 	 * <p>
 	 * This is merely a convenience wrapper around the more general
 	 * firePropertyChange method that takes Object values.
 	 *
-	 * @param propertyName
-	 *            The programmatic name of the property that was changed.
-	 * @param oldValue
-	 *            The old value of the property.
-	 * @param newValue
-	 *            The new value of the property.
+	 * @param propertyName The programmatic name of the property that was changed.
+	 * @param oldValue     The old value of the property.
+	 * @param newValue     The new value of the property.
 	 */
 	public void firePropertyChange(Object source, Object propertyName, int oldValue, int newValue) {
 		if (oldValue == newValue) {
@@ -403,30 +365,26 @@ public class BasicPropertyChangeSupport implements Serializable {
 	}
 
 	/**
-	 * Fire an existing PropertyChangeEvent to any registered listeners. No
-	 * event is fired if the given event's old and new values are equal and
-	 * non-null.
+	 * Fire an existing PropertyChangeEvent to any registered listeners. No event is
+	 * fired if the given event's old and new values are equal and non-null.
 	 *
-	 * @param evt
-	 *            The PropertyChangeEvent object.
+	 * @param evt The PropertyChangeEvent object.
 	 */
 	public void firePropertyChange(Object source, Object propertyName, Object oldValue, Object newValue) {
-		if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
+		if (oldValue != null && newValue != null && oldValue == newValue) {
 			return;
 		}
 		firePropertyChange(source, propertyName, oldValue, newValue, -1);
 	}
 
 	/**
-	 * Fire an existing PropertyChangeEvent to any registered listeners. No
-	 * event is fired if the given event's old and new values are equal and
-	 * non-null.
+	 * Fire an existing PropertyChangeEvent to any registered listeners. No event is
+	 * fired if the given event's old and new values are equal and non-null.
 	 *
-	 * @param evt
-	 *            The PropertyChangeEvent object.
+	 * @param evt The PropertyChangeEvent object.
 	 */
 	public void firePropertyChange(Object source, Object propertyName, Object oldValue, Object newValue, int index) {
-		if (oldValue != null && newValue != null && oldValue.equals(newValue)) {
+		if (oldValue != null && newValue != null && oldValue == newValue) {
 			return;
 		}
 
@@ -449,12 +407,12 @@ public class BasicPropertyChangeSupport implements Serializable {
 	 * Returns an array of all the listeners that were added to the
 	 * BasicPropertyChangeSupport object with addPropertyChangeListener().
 	 * <p>
-	 * If some listeners have been added with a named property, then the
-	 * returned array will be a mixture of PropertyChangeListeners and
+	 * If some listeners have been added with a named property, then the returned
+	 * array will be a mixture of PropertyChangeListeners and
 	 * <code>BasicPropertyChangeListenerProxy</code>s. If the calling method is
-	 * interested in distinguishing the listeners then it must test each element
-	 * to see if it's a <code>BasicPropertyChangeListenerProxy</code>, perform
-	 * the cast, and examine the parameter.
+	 * interested in distinguishing the listeners then it must test each element to
+	 * see if it's a <code>BasicPropertyChangeListenerProxy</code>, perform the
+	 * cast, and examine the parameter.
 	 *
 	 * <pre>
 	 * BasicPropertyChangeListener[] listeners = bean.getPropertyChangeListeners();
@@ -502,10 +460,9 @@ public class BasicPropertyChangeSupport implements Serializable {
 	 * Returns an array of all the listeners which have been associated with the
 	 * named property.
 	 *
-	 * @param propertyName
-	 *            The name of the property being listened to
-	 * @return all of the <code>PropertyChangeListeners</code> associated with
-	 *         the named property. If no such listeners have been added, or if
+	 * @param propertyName The name of the property being listened to
+	 * @return all of the <code>PropertyChangeListeners</code> associated with the
+	 *         named property. If no such listeners have been added, or if
 	 *         <code>propertyName</code> is null, an empty array is returned.
 	 */
 	public synchronized BasicPropertyChangeListener[] getPropertyChangeListeners(Object propertyName) {
@@ -525,8 +482,7 @@ public class BasicPropertyChangeSupport implements Serializable {
 	 * registered on all properties. If <code>propertyName</code> is null, only
 	 * check for listeners registered on all properties.
 	 *
-	 * @param propertyName
-	 *            the property name.
+	 * @param propertyName the property name.
 	 * @return true if there are one or more listeners for the given property
 	 */
 	public synchronized boolean hasListeners(Object propertyName) {
@@ -553,15 +509,13 @@ public class BasicPropertyChangeSupport implements Serializable {
 	}
 
 	/**
-	 * Remove a BasicPropertyChangeListener from the listener list. This removes
-	 * a BasicPropertyChangeListener that was registered for all properties. If
-	 * <code>listener</code> was added more than once to the same event source,
-	 * it will be notified one less time after being removed. If
-	 * <code>listener</code> is null, or was never added, no exception is thrown
-	 * and no action is taken.
+	 * Remove a BasicPropertyChangeListener from the listener list. This removes a
+	 * BasicPropertyChangeListener that was registered for all properties. If
+	 * <code>listener</code> was added more than once to the same event source, it
+	 * will be notified one less time after being removed. If <code>listener</code>
+	 * is null, or was never added, no exception is thrown and no action is taken.
 	 *
-	 * @param listener
-	 *            The BasicPropertyChangeListener to be removed
+	 * @param listener The BasicPropertyChangeListener to be removed
 	 */
 	public synchronized void removePropertyChangeListener(BasicPropertyChangeListener listener) {
 		if (listener == null) {
@@ -572,7 +526,8 @@ public class BasicPropertyChangeSupport implements Serializable {
 			BasicPropertyChangeListenerProxy proxy = (BasicPropertyChangeListenerProxy) listener;
 			// Call two argument remove method.
 			removePropertyChangeListener(proxy.getPropertyName(), (BasicPropertyChangeListener) proxy.getListener());
-		} else {
+		}
+		else {
 			if (listeners != null) {
 				int i;
 				for (i = 0; i < listeners.length; i++) {
@@ -583,9 +538,10 @@ public class BasicPropertyChangeSupport implements Serializable {
 				if (i < listeners.length) {
 					if (listeners.length == 1) {
 						listeners = null;
-					} else {
-						BasicPropertyChangeListener[] newListeners = new BasicPropertyChangeListener[listeners.length
-								- 1];
+					}
+					else {
+						BasicPropertyChangeListener[] newListeners =
+							new BasicPropertyChangeListener[listeners.length - 1];
 
 						System.arraycopy(listeners, 0, newListeners, 0, i);
 						System.arraycopy(listeners, i + 1, newListeners, i, listeners.length - i - 1);
@@ -598,17 +554,14 @@ public class BasicPropertyChangeSupport implements Serializable {
 
 	/**
 	 * Remove a BasicPropertyChangeListener for a specific property. If
-	 * <code>listener</code> was added more than once to the same event source
-	 * for the specified property, it will be notified one less time after being
-	 * removed. If <code>propertyName</code> is null, no exception is thrown and
-	 * no action is taken. If <code>listener</code> is null, or was never added
-	 * for the specified property, no exception is thrown and no action is
-	 * taken.
+	 * <code>listener</code> was added more than once to the same event source for
+	 * the specified property, it will be notified one less time after being
+	 * removed. If <code>propertyName</code> is null, no exception is thrown and no
+	 * action is taken. If <code>listener</code> is null, or was never added for the
+	 * specified property, no exception is thrown and no action is taken.
 	 *
-	 * @param propertyName
-	 *            The name of the property that was listened on.
-	 * @param listener
-	 *            The BasicPropertyChangeListener to be removed
+	 * @param propertyName The name of the property that was listened on.
+	 * @param listener     The BasicPropertyChangeListener to be removed
 	 */
 
 	public synchronized void removePropertyChangeListener(Object propertyName, BasicPropertyChangeListener listener) {
@@ -628,8 +581,8 @@ public class BasicPropertyChangeSupport implements Serializable {
 	/**
 	 * @serialData Null terminated list of <code>PropertyChangeListeners</code>.
 	 *             <p>
-	 *             At serialization time we skip non-serializable listeners and
-	 *             only serialize the serializable listeners.
+	 *             At serialization time we skip non-serializable listeners and only
+	 *             serialize the serializable listeners.
 	 *
 	 */
 	private void writeObject(ObjectOutputStream s) throws IOException {

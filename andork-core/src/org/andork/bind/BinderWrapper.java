@@ -21,11 +21,20 @@
  *******************************************************************************/
 package org.andork.bind;
 
-import org.andork.util.Java7;
+import java.util.function.Consumer;
 
 public class BinderWrapper<T> extends Binder<T> {
 	private Binder<T> wrapped;
 	private T value;
+
+	public static <T> BinderWrapper<T> create(Consumer<T> onValueChanged) {
+		return new BinderWrapper<T>() {
+			@Override
+			protected void onValueChanged(T newValue) {
+				onValueChanged.accept(newValue);
+			}
+		};
+	}
 
 	public BinderWrapper() {
 
@@ -72,7 +81,7 @@ public class BinderWrapper<T> extends Binder<T> {
 	@Override
 	public void update(boolean force) {
 		T newValue = wrapped == null ? null : wrapped.get();
-		if (force || !Java7.Objects.equals(value, newValue)) {
+		if (force || value != newValue) {
 			value = newValue;
 			onValueChanged(newValue);
 			updateDownstream(force);

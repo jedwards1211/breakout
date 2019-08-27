@@ -26,7 +26,6 @@ import java.util.Arrays;
 import org.andork.func.Mapper;
 import org.andork.model.Model;
 import org.andork.q.QSpec.Attribute;
-import org.andork.util.Java7;
 
 public final class QObject<S extends QSpec<S>> extends QElement implements Model {
 	private static final Object NOT_PRESENT = new Object();
@@ -42,8 +41,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	/**
 	 * Creates a {@code QObject} with the given spec.
 	 *
-	 * @param spec
-	 *            the {@link QSpec} for this QObject.
+	 * @param spec the {@link QSpec} for this QObject.
 	 */
 	private QObject(S spec) {
 		this.spec = spec;
@@ -90,8 +88,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	 * To see the list of attributes this QObject has, use
 	 * {@link QSpec#getAttributes() getSpec().getAttributes()}.
 	 *
-	 * @param attribute
-	 *            the attribute to get the value of.
+	 * @param attribute the attribute to get the value of.
 	 * @return the value of the attribute (may be {@code null}).
 	 */
 	public <T> T get(Attribute<T> attribute) {
@@ -143,7 +140,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 		if (newValue instanceof QElement) {
 			((QElement) newValue).changeSupport().addPropertyChangeListener(propagator);
 		}
-		if (!Java7.Objects.equals(oldValue, newValue)) {
+		if (!attribute.equals.test(oldValue, newValue)) {
 			changeSupport.firePropertyChange(this, attribute, oldValue, newValue);
 		}
 		return oldValue;
@@ -152,10 +149,6 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	@Override
 	public void set(Object key, Object newValue) {
 		set((Attribute) key, newValue);
-	}
-
-	public void setValueAt(int index, Object value) {
-		attributes[index] = value;
 	}
 
 	@Override
