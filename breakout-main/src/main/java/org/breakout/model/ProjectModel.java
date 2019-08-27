@@ -182,15 +182,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 			projectModel.set(ProjectModel.colorParam, ColorParam.DEPTH);
 		}
 		if (projectModel.get(ProjectModel.paramGradient) == null) {
-			projectModel
-				.set(ProjectModel.paramGradient, new GradientModel(new float[]
-				{ 0f, 0.24f, 0.64f, 1f },
-					new Color[]
-					{
-						new Color(255, 249, 204),
-						new Color(255, 195, 0),
-						new Color(214, 6, 127),
-						new Color(34, 19, 150) }));
+			projectModel.set(ProjectModel.paramGradient, Gradients.DEFAULT);
 		}
 		if (projectModel.get(ProjectModel.paramRanges) == null) {
 			projectModel.set(ProjectModel.paramRanges, QLinkedHashMap.<ColorParam, LinearAxisConversion>newInstance());

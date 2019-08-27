@@ -201,6 +201,7 @@ import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.mabox.MapboxClient;
 import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
+import org.breakout.model.GradientModel;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
@@ -1763,6 +1764,10 @@ public class BreakoutMainView {
 			.create((Boolean showCheckedLeads) -> rebuildLeadIndex())
 			.bind(QObjectAttributeBinder.bind(ProjectModel.showCheckedLeads, projectModelBinder));
 
+		BinderWrapper.create((GradientModel gradient) -> {
+			autoDrawable.display();
+		}).bind(QObjectAttributeBinder.bind(ProjectModel.paramGradient, projectModelBinder));
+
 		new BinderWrapper<Color>() {
 			@Override
 			protected void onValueChanged(Color bgColor) {
@@ -3130,8 +3135,10 @@ public class BreakoutMainView {
 		return loadModel(file, ProjectModel.defaultMapper, false);
 	}
 
-	private <S extends QSpec<S>> QObject<S>
-		loadModel(File file, Bimapper<QObject<S>, Object> mapper, boolean showError) {
+	private <S extends QSpec<S>> QObject<S> loadModel(
+		File file,
+		Bimapper<QObject<S>, Object> mapper,
+		boolean showError) {
 		try (Reader reader = new FileReader(file)) {
 			return mapper.unmap(new Gson().fromJson(reader, Object.class));
 		}

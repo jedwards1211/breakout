@@ -64,13 +64,15 @@ public class ArrayUtils {
 				s += minBlockSize + srcPad;
 				d += minBlockSize;
 			}
-		} else if (destPad > 0) {
+		}
+		else if (destPad > 0) {
 			while (s < src.length) {
 				System.arraycopy(src, s, dest, d, minBlockSize);
 				s += minBlockSize;
 				d += minBlockSize + destPad;
 			}
-		} else {
+		}
+		else {
 			System.arraycopy(src, 0, dest, 0, src.length);
 		}
 
@@ -97,13 +99,15 @@ public class ArrayUtils {
 				s += minBlockSize + srcPad;
 				d += minBlockSize;
 			}
-		} else if (destPad > 0) {
+		}
+		else if (destPad > 0) {
 			while (s < src.length) {
 				System.arraycopy(src, s, dest, d, minBlockSize);
 				s += minBlockSize;
 				d += minBlockSize + destPad;
 			}
-		} else {
+		}
+		else {
 			System.arraycopy(src, 0, dest, 0, src.length);
 		}
 
@@ -130,13 +134,15 @@ public class ArrayUtils {
 				s += minBlockSize + srcPad;
 				d += minBlockSize;
 			}
-		} else if (destPad > 0) {
+		}
+		else if (destPad > 0) {
 			while (s < src.length) {
 				System.arraycopy(src, s, dest, d, minBlockSize);
 				s += minBlockSize;
 				d += minBlockSize + destPad;
 			}
-		} else {
+		}
+		else {
 			System.arraycopy(src, 0, dest, 0, src.length);
 		}
 
@@ -147,6 +153,10 @@ public class ArrayUtils {
 		return indexOf(values, target) >= 0;
 	}
 
+	public static float[] copyOf(float[] original) {
+		return Arrays.copyOf(original, original.length);
+	}
+
 	public static <T> T[] copyOf(T[] original) {
 		return Arrays.copyOf(original, original.length);
 	}
@@ -154,11 +164,9 @@ public class ArrayUtils {
 	/**
 	 * Finds the index of a double in an arbitrary-order double array.
 	 *
-	 * @param values
-	 *            an array of doubles with arbitrary order.
-	 * @param a
-	 *            the value to search for. This method always returns {@code -1}
-	 *            if {@code NaN} is given.
+	 * @param values an array of doubles with arbitrary order.
+	 * @param a      the value to search for. This method always returns {@code -1}
+	 *               if {@code NaN} is given.
 	 * @return the lowest index of any non-{@code NaN} element in {@code values}
 	 *         that {@code == a}, or {@code -1} otherwise.
 	 */
@@ -174,12 +182,10 @@ public class ArrayUtils {
 	/**
 	 * Finds the index of a int in an arbitrary-order int array.
 	 *
-	 * @param values
-	 *            an array of ints with arbitrary order.
-	 * @param a
-	 *            the value to search for.
-	 * @return the lowest index of any element in {@code values} that
-	 *         {@code == a}, or {@code -1} otherwise.
+	 * @param values an array of ints with arbitrary order.
+	 * @param a      the value to search for.
+	 * @return the lowest index of any element in {@code values} that {@code == a},
+	 *         or {@code -1} otherwise.
 	 */
 	public static int indexOf(int[] values, int a) {
 		for (int i = 0; i < values.length; i++) {
@@ -194,11 +200,9 @@ public class ArrayUtils {
 	 * Finds the index of an equivalent {@link Object} in an arbitrary-order
 	 * {@code Object} array.
 	 *
-	 * @param values
-	 *            an array of {@code Object}s with arbitrary order.
-	 * @param a
-	 *            the equivalent {@code Object} to search for. May be
-	 *            {@code null}.
+	 * @param values an array of {@code Object}s with arbitrary order.
+	 * @param a      the equivalent {@code Object} to search for. May be
+	 *               {@code null}.
 	 * @return the lowest index of any element in {@code values} such that
 	 *         {@code Java7.equals(a, values[i])}, or {@code -1} otherwise.
 	 */
@@ -247,8 +251,13 @@ public class ArrayUtils {
 
 	}
 
-	public static String prettyPrint(double[] a, int columns, int start, int end, int newlineInterval,
-			String elemFormat) {
+	public static String prettyPrint(
+		double[] a,
+		int columns,
+		int start,
+		int end,
+		int newlineInterval,
+		String elemFormat) {
 		StringBuffer sb = new StringBuffer();
 
 		int indexWidth = (int) Math.log10(a.length) + 1;
@@ -315,8 +324,13 @@ public class ArrayUtils {
 		return prettyPrint(a, columns, 0, a.length, 0, elemFormat);
 	}
 
-	public static String prettyPrint(float[] a, int columns, int start, int end, int newlineInterval,
-			String elemFormat) {
+	public static String prettyPrint(
+		float[] a,
+		int columns,
+		int start,
+		int end,
+		int newlineInterval,
+		String elemFormat) {
 		StringBuffer sb = new StringBuffer();
 
 		int indexWidth = (int) Math.log10(a.length) + 1;
@@ -389,8 +403,13 @@ public class ArrayUtils {
 		return sb.toString();
 	}
 
-	public static String prettyPrintAsNumbers(char[] a, int columns, int start, int end, int newlineInterval,
-			String elemFormat) {
+	public static String prettyPrintAsNumbers(
+		char[] a,
+		int columns,
+		int start,
+		int end,
+		int newlineInterval,
+		String elemFormat) {
 		StringBuffer sb = new StringBuffer();
 
 		int indexWidth = (int) Math.log10(a.length) + 1;
@@ -418,15 +437,13 @@ public class ArrayUtils {
 	}
 
 	/**
-	 * Finds the first index of {@link Object} in an arbitrary-order
-	 * {@code Object} array.
+	 * Finds the first index of {@link Object} in an arbitrary-order {@code Object}
+	 * array.
 	 *
-	 * @param values
-	 *            an array of {@code Object}s with arbitrary order.
-	 * @param a
-	 *            the {@code Object} to search for. May be {@code null}.
-	 * @return the lowest index of {@code a} in {@code values}, or {@code -1} if
-	 *         it is not present.
+	 * @param values an array of {@code Object}s with arbitrary order.
+	 * @param a      the {@code Object} to search for. May be {@code null}.
+	 * @return the lowest index of {@code a} in {@code values}, or {@code -1} if it
+	 *         is not present.
 	 */
 	public static int strictIndexOf(Object[] values, Object a) {
 		for (int i = 0; i < values.length; i++) {
@@ -440,12 +457,9 @@ public class ArrayUtils {
 	/**
 	 * Swaps two elements in an array.
 	 *
-	 * @param a
-	 *            the array to swap elements of.
-	 * @param i0
-	 *            the index of the first element.
-	 * @param i1
-	 *            the index of the second element.
+	 * @param a  the array to swap elements of.
+	 * @param i0 the index of the first element.
+	 * @param i1 the index of the second element.
 	 */
 	public static void swap(double[] a, int i0, int i1) {
 		double temp = a[i0];
@@ -454,15 +468,18 @@ public class ArrayUtils {
 	}
 
 	public static <O, T extends Throwable> O[] throwableMap(double[] in, O[] out, ThrowingDoubleFunction<O, T> function)
-			throws T {
+		throws T {
 		for (int i = 0; i < out.length; i++) {
 			out[i] = function.apply(in[i]);
 		}
 		return out;
 	}
 
-	public static <I, T extends Throwable> double[] throwableMap(I[] in, double[] out,
-			ThrowingToDoubleFunction<I, T> function) throws T {
+	public static <I, T extends Throwable> double[] throwableMap(
+		I[] in,
+		double[] out,
+		ThrowingToDoubleFunction<I, T> function)
+		throws T {
 		for (int i = 0; i < out.length; i++) {
 			out[i] = function.applyAsDouble(in[i]);
 		}
@@ -470,7 +487,7 @@ public class ArrayUtils {
 	}
 
 	public static <I, O, T extends Throwable> O[] throwableMap(I[] in, O[] out, ThrowingFunction<I, O, T> function)
-			throws T {
+		throws T {
 		for (int i = 0; i < out.length; i++) {
 			out[i] = function.apply(in[i]);
 		}
@@ -479,7 +496,8 @@ public class ArrayUtils {
 
 	public static <T> T[] toArray(Iterable<? extends T> iterable, Class<T> componentType) {
 		int count = 0;
-		for (@SuppressWarnings("unused") T t : iterable) {
+		for (@SuppressWarnings("unused")
+		T t : iterable) {
 			count++;
 		}
 		@SuppressWarnings("unchecked")
@@ -553,6 +571,68 @@ public class ArrayUtils {
 		int[] result = toIntArray(ints);
 		Arrays.sort(result);
 		return result;
+	}
+
+	/**
+	 * Reverses an array in place.
+	 * 
+	 * @return the array
+	 */
+	public static float[] reverse(float[] in) {
+		return reverse(in, in);
+	}
+
+	/**
+	 * Copies an array in reverse into another array.
+	 * 
+	 * @return the <code>out</code> array
+	 */
+	public static float[] reverse(float[] in, float[] out) {
+		if (out.length != in.length) {
+			throw new IllegalArgumentException("in and out must have the same length");
+		}
+		int i;
+		for (i = 0; i < in.length / 2; i++) {
+			int opposite = in.length - 1 - i;
+			out[i] = in[opposite];
+			out[opposite] = in[i];
+		}
+		if ((in.length % 2) == 1) {
+			out[i] = in[i];
+		}
+		return out;
+	}
+
+	/**
+	 * Reverses an array in place.
+	 * 
+	 * @return the array
+	 */
+	public static <T> T[] reverse(T[] in) {
+		return reverse(in, in);
+	}
+
+	/**
+	 * Copies an array in reverse into another array.
+	 * 
+	 * @return the <code>out</code> array
+	 */
+	public static <T> T[] reverse(T[] in, T[] out) {
+		if (out.length != in.length) {
+			throw new IllegalArgumentException("in and out must have the same length");
+		}
+		int i;
+		for (i = 0; i < in.length / 2; i++) {
+			int opposite = in.length - 1 - i;
+			// in case in == out...
+			T swap = in[i];
+			out[i] = in[opposite];
+			out[opposite] = swap;
+		}
+		if ((in.length % 2) == 1) {
+			out[i] = in[i];
+		}
+		return out;
 	}
 
 	private ArrayUtils() {

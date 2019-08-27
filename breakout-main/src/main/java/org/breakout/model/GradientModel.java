@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import org.andork.func.Bimapper;
 import org.andork.func.Color2HexStringBimapper;
+import org.andork.util.ArrayUtils;
 
 public class GradientModel {
 	public final float[] fractions;
@@ -25,6 +26,14 @@ public class GradientModel {
 		if (fractions.length < 2) {
 			throw new IllegalArgumentException("fractions.length must be >= 2");
 		}
+	}
+
+	public GradientModel reverse() {
+		float[] fractions = new float[this.fractions.length];
+		for (int i = 0; i < fractions.length; i++) {
+			fractions[i] = 1f - this.fractions[fractions.length - 1 - i];
+		}
+		return new GradientModel(fractions, ArrayUtils.reverse(ArrayUtils.copyOf(colors)));
 	}
 
 	public static final Bimapper<GradientModel, Object> bimapper = new Bimapper<GradientModel, Object>() {

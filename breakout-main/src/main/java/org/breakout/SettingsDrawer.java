@@ -26,10 +26,13 @@ import static org.andork.func.CompoundBimapper.compose;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.LayoutManager;
 import java.awt.LinearGradientPaint;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -44,7 +47,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -97,6 +102,7 @@ import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 import org.breakout.model.ColorParam;
 import org.breakout.model.GradientModel;
+import org.breakout.model.Gradients;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
@@ -312,6 +318,9 @@ public class SettingsDrawer extends Drawer {
 	UpdateStatusPanel updateStatusPanel;
 
 	private String loadedVersion;
+
+	private JButton pickParamGradientButton;
+	private JPopupMenu pickParamGradientMenu;
 
 	public SettingsDrawer(
 		final I18n i18n,
@@ -543,14 +552,66 @@ public class SettingsDrawer extends Drawer {
 		paramColorationAxis = new PlotAxis(Orientation.HORIZONTAL, LabelPosition.TOP);
 		paramColorationAxisPanel = PaintablePanel.wrap(paramColorationAxis);
 		paramColorationAxisPanel
-			.setUnderpaintBorder(MultipleGradientFillBorder.from(Side.LEFT).to(Side.RIGHT).linear(new float[]
-			{ 0f, 0.24f, 0.64f, 1f },
-				new Color[]
-				{ new Color(255, 249, 204), new Color(255, 195, 0), new Color(214, 6, 127), new Color(34, 19, 150) }));
+			.setUnderpaintBorder(
+				MultipleGradientFillBorder
+					.from(Side.LEFT)
+					.to(Side.RIGHT)
+					.linear(Gradients.DEFAULT.fractions, Gradients.DEFAULT.colors));
 
 		paramColorationAxis.setForeground(Color.WHITE);
 		paramColorationAxis.setMajorTickColor(Color.WHITE);
 		paramColorationAxis.setMinorTickColor(Color.WHITE);
+
+		pickParamGradientButton = new JButton();
+		pickParamGradientButton
+			.setIcon(new TriangleIcon(SwingConstants.SOUTH, 5, Color.WHITE, Color.WHITE, Color.WHITE));
+		pickParamGradientButton.setBackground(null);
+		pickParamGradientButton.setBorder(new EmptyBorder(12, 12, 12, 12));
+		pickParamGradientButton.setContentAreaFilled(false);
+		paramColorationAxisPanel.add(pickParamGradientButton, BorderLayout.EAST);
+
+		paramColorationAxisPanel.setLayout(new LayoutManager() {
+			@Override
+			public void removeLayoutComponent(Component comp) {
+			}
+
+			@Override
+			public Dimension preferredLayoutSize(Container parent) {
+				return paramColorationAxis.getPreferredSize();
+			}
+
+			@Override
+			public Dimension minimumLayoutSize(Container parent) {
+				return paramColorationAxis.getMinimumSize();
+			}
+
+			@Override
+			public void layoutContainer(Container parent) {
+				int height = parent.getHeight();
+				paramColorationAxis.setBounds(0, 0, parent.getWidth(), height);
+				pickParamGradientButton.setBounds(parent.getWidth() - height, 0, height, height);
+				parent.setComponentZOrder(pickParamGradientButton, 0);
+				parent.setComponentZOrder(paramColorationAxis, 1);
+			}
+
+			@Override
+			public void addLayoutComponent(String name, Component comp) {
+			}
+		});
+
+		pickParamGradientMenu = new JPopupMenu();
+		for (GradientModel gradient : Gradients.CHOICES) {
+			JMenuItem item = new JMenuItem();
+			item
+				.setBorder(
+					MultipleGradientFillBorder
+						.from(Side.LEFT)
+						.to(Side.RIGHT)
+						.linear(gradient.fractions, gradient.colors));
+			item.putClientProperty("gradient", gradient);
+			item.setPreferredSize(new Dimension(300, 30));
+			pickParamGradientMenu.add(item);
+		}
 
 		colorByDepthButtonsPanel = new JPanel();
 		colorByDepthButtonsPanel.setOpaque(false);
@@ -793,6 +854,23 @@ public class SettingsDrawer extends Drawer {
 			public void stateChanged(ChangeEvent e) {
 				updateNumSamplesLabel();
 			}
+		});
+
+		for (int i = 0; i < pickParamGradientMenu.getComponentCount(); i++) {
+			JMenuItem item = (JMenuItem) pickParamGradientMenu.getComponent(i);
+			GradientModel gradient = (GradientModel) item.getClientProperty("gradient");
+			item.addActionListener(e -> {
+				paramGradientBinder.set(gradient);
+			});
+		}
+
+		pickParamGradientButton.addActionListener(e -> {
+			pickParamGradientMenu
+				.setPreferredSize(
+					new Dimension(
+						paramColorationAxisPanel.getWidth(),
+						pickParamGradientMenu.getPreferredSize().height));
+			pickParamGradientMenu.show(paramColorationAxisPanel, 0, paramColorationAxisPanel.getHeight());
 		});
 	}
 
