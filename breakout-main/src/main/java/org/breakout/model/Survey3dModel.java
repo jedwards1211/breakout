@@ -69,6 +69,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,6 +80,7 @@ import org.andork.collect.Iterables;
 import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.LinkedPriorityEntry;
 import org.andork.collect.MultiMap;
+import org.andork.collect.MultiMaps;
 import org.andork.collect.PriorityEntry;
 import org.andork.jogl.BufferHelper;
 import org.andork.jogl.JoglBuffer;
@@ -720,13 +722,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		Label descriptionFeet;
 		Label descriptionMeters;
 
-		LeadLabels(CalcStation station) {
+		LeadLabels(CalcStation station, Collection<SurveyLead> leads) {
 			icon = new Label(station, "?");
-			descriptionFeet = new Label(station, leadText(station.name, station.leads, Length.feet));
-			descriptionMeters = new Label(station, leadText(station.name, station.leads, Length.meters));
+			descriptionFeet = new Label(station, leadText(station.name, leads, Length.feet));
+			descriptionMeters = new Label(station, leadText(station.name, leads, Length.meters));
 		}
 
-		static String leadText(String stationName, List<SurveyLead> leads, Unit<Length> displayLengthUnit) {
+		static String leadText(String stationName, Collection<SurveyLead> leads, Unit<Length> displayLengthUnit) {
 			if (leads == null)
 				return "";
 			StringBuilder builder = new StringBuilder();
@@ -857,12 +859,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		final float[] boundingSphere = new float[4];
 		final ArrayList<Shot3d> shot3ds;
 		final Map<StationKey, Label> stationLabels;
-		final Map<StationKey, LeadLabels> leadLabels;
 		final Map<Float, Set<StationKey>> stationsToLabel;
 		final List<Float> stationsToLabelSpacings;
-
 		final LinkedList<SectionRenderer> renderers = new LinkedList<>();
 		final float[] tempPoint = new float[3];
+		final Map<StationKey, LeadLabels> leadLabels = new HashMap<>();
 
 		int vertexCount;
 		JoglBuffer centerlineGeometry;
@@ -878,7 +879,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			this.mbr = mbr;
 			this.shot3ds = shot3ds;
 			stationLabels = new HashMap<>();
-			leadLabels = new HashMap<>();
 			for (Shot3d shot3d : shot3ds) {
 				CalcStation fromStation = shot3d.shot.fromStation;
 				CalcStation toStation = shot3d.shot.toStation;
@@ -887,14 +887,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				}
 				if (!stationLabels.containsKey(toStation.key())) {
 					stationLabels.put(toStation.key(), new Label(toStation));
-				}
-				if (fromStation.leads != null
-					&& !fromStation.leads.isEmpty()
-					&& !leadLabels.containsKey(fromStation.key())) {
-					leadLabels.put(fromStation.key(), new LeadLabels(fromStation));
-				}
-				if (toStation.leads != null && !toStation.leads.isEmpty() && !leadLabels.containsKey(toStation.key())) {
-					leadLabels.put(toStation.key(), new LeadLabels(toStation));
 				}
 			}
 			stationsToLabelSpacings = new ArrayList<>(stationsToLabel.keySet());
@@ -1053,14 +1045,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		void updateLabels(Font font, FontRenderContext frc, Task<?> task) {
-			task.setTotal(stationLabels.size() + leadLabels.size() * 3);
+			task.setTotal(stationLabels.size());
 			for (Label label : stationLabels.values()) {
 				label.updateBounds(font, frc);
 				task.increment();
-			}
-			for (LeadLabels labels : leadLabels.values()) {
-				labels.updateBounds(font, frc);
-				task.increment(3);
 			}
 		}
 
@@ -1878,6 +1866,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	Unit<Length> displayLengthUnit = Length.meters;
 
+	MultiMap<StationKey, SurveyLead> leads = MultiMaps.emptyMultiMap();
+	boolean leadsChanged = false;
+
 	Clip3f clip = new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE);
 
 	private Survey3dModel(
@@ -2113,6 +2104,28 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 
 			if (showLeadLabels) {
+				if (leadsChanged) {
+					leadsChanged = false;
+					FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
+
+					for (Section section : sectionsInView) {
+						section.leadLabels.clear();
+						for (Shot3d shot : section.shot3ds) {
+							for (StationKey stationKey : Arrays.asList(shot.key().fromKey(), shot.key().toKey())) {
+								Collection<SurveyLead> stationLeads = leads.get(stationKey);
+								if (stationLeads.isEmpty())
+									continue;
+								CalcStation station = project.stations.get(stationKey);
+								if (station == null)
+									continue;
+								LeadLabels labels = new LeadLabels(station, stationLeads);
+								labels.updateBounds(labelFont, frc);
+								section.leadLabels.put(stationKey, labels);
+							}
+						}
+					}
+				}
+
 				gl.glEnable(GL.GL_DEPTH_TEST);
 				textRenderer.beginRendering(context.width(), context.height(), false);
 
@@ -2877,5 +2890,18 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public Clip3f getClip() {
 		return clip;
+	}
+
+	public void setLeads(MultiMap<StationKey, SurveyLead> leads) {
+		if (this.leads == leads) {
+			return;
+		}
+		leadsChanged = true;
+		Objects.requireNonNull(leads);
+		this.leads = leads;
+	}
+
+	public MultiMap<StationKey, SurveyLead> getLeads() {
+		return leads;
 	}
 }

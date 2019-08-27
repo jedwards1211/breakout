@@ -376,7 +376,6 @@ public class ImportLeadsTask extends Task<Void> {
 		OnEDT.onEDT(() -> {
 			mainView.getProjectModel().set(ProjectModel.leads, PersistentVector.create(leads));
 		});
-		mainView.rebuild3dModel.run();
 	}
 
 	@Override

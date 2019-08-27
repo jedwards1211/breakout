@@ -19,7 +19,6 @@ import org.breakout.model.CrossSectionType;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 import org.breakout.model.parsed.ParseMessage.Severity;
-import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 
@@ -372,12 +371,5 @@ public class ProjectParser {
 		}
 
 		return null;
-	}
-
-	public void parse(SurveyLead lead) {
-		if (lead.getCave() == null || lead.getStation() == null)
-			return;
-		ParsedCave cave = ensureCave(lead.getCave());
-		cave.addLead(lead.getStation(), lead);
 	}
 }

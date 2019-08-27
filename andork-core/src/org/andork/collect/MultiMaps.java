@@ -33,8 +33,8 @@ public class MultiMaps {
 		return c == null ? emptyCollection : c;
 	}
 
-	public static <K, V, C extends Collection<? super V>> int put(Map<K, C> m, K key, V value,
-			Supplier<? extends C> collectionFactory) {
+	public static <K, V, C extends Collection<? super V>> int
+		put(Map<K, C> m, K key, V value, Supplier<? extends C> collectionFactory) {
 		C c = m.get(key);
 		if (c == null) {
 			c = collectionFactory.get();
@@ -126,5 +126,13 @@ public class MultiMaps {
 				return m.values();
 			}
 		};
+	}
+
+	@SuppressWarnings("rawtypes")
+	private static final MultiMap emptyMultiMap = unmodifiableMultiMap(new HashSetMultiMap<>());
+
+	@SuppressWarnings("unchecked")
+	public static <K, V> MultiMap<K, V> emptyMultiMap() {
+		return emptyMultiMap;
 	}
 }

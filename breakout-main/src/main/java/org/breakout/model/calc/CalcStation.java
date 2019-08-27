@@ -1,10 +1,8 @@
 package org.breakout.model.calc;
 
-import java.util.List;
 import java.util.Map;
 
 import org.breakout.model.StationKey;
-import org.breakout.model.raw.SurveyLead;
 
 public class CalcStation {
 	public String name;
@@ -22,7 +20,6 @@ public class CalcStation {
 
 	public Map<StationKey, CalcShot> shots;
 	public int numShots = 0;
-	public List<SurveyLead> leads;
 
 	public StationKey key() {
 		return new StationKey(cave, name);

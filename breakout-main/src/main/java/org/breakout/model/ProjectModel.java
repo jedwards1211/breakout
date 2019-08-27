@@ -25,6 +25,8 @@ import java.awt.Color;
 import java.io.File;
 
 import org.andork.awt.layout.DrawerModel;
+import org.andork.collect.MultiMap;
+import org.andork.collect.MultiMaps;
 import org.andork.func.Color2HexStringBimapper;
 import org.andork.func.EnumBimapper;
 import org.andork.func.FileStringBimapper;
@@ -93,6 +95,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<File> exportSTLDirectory = newAttribute(File.class, "exportSTLDirectory");
 	public static final Attribute<com.github.krukow.clj_ds.PersistentVector<SurveyLead>> leads =
 		newAttribute(com.github.krukow.clj_ds.PersistentVector.class, "leads");
+	public static final Attribute<MultiMap<StationKey, SurveyLead>> leadIndex =
+		newAttribute(MultiMap.class, "leadIndex");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -129,7 +133,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(importLeadsDirectory, FileStringBimapper.instance)
 				.map(exportSTLDirectory, FileStringBimapper.instance)
 				.exclude(hasUnsavedChanges)
-				.exclude(leads);
+				.exclude(leads)
+				.exclude(leadIndex);
 	}
 
 	private ProjectModel() {
@@ -219,6 +224,9 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.leads) == null) {
 			projectModel.set(ProjectModel.leads, PersistentVector.emptyVector());
+		}
+		if (projectModel.get(ProjectModel.leadIndex) == null) {
+			projectModel.set(ProjectModel.leadIndex, MultiMaps.emptyMultiMap());
 		}
 	}
 }

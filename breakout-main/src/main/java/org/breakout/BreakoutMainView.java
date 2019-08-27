@@ -62,6 +62,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -130,6 +131,9 @@ import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.ArrayLists;
 import org.andork.collect.HashSets;
+import org.andork.collect.LinkedListMultiMap;
+import org.andork.collect.MultiMap;
+import org.andork.collect.MultiMaps;
 import org.andork.concurrent.Throttler;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.SourcePath;
@@ -345,13 +349,17 @@ public class BreakoutMainView {
 							backInclination == null ? "--" : backInclination.in(angleUnit).toString(format);
 
 						CalcShot calcShot = calcProject.shots.get(picked.picked.key());
-						List<SurveyLead> leads = null;
+						Collection<SurveyLead> leads = null;
 						String pickedStationName = "";
 						if (calcShot != null) {
 							pickedStationName =
 								picked.locationAlongShot < 0.5f ? calcShot.fromStation.name : calcShot.toStation.name;
 							leads =
-								picked.locationAlongShot < 0.5f ? calcShot.fromStation.leads : calcShot.toStation.leads;
+								getProjectModel()
+									.get(ProjectModel.leadIndex)
+									.get(
+										(picked.locationAlongShot < 0.5f ? calcShot.fromStation : calcShot.toStation)
+											.key());
 						}
 						final String finalPickedStationName = pickedStationName;
 
@@ -1071,7 +1079,7 @@ public class BreakoutMainView {
 				}
 
 				parsingSubtask.setIndeterminate(false);
-				parsingSubtask.setTotal(rows.size() + leads.size());
+				parsingSubtask.setTotal(rows.size());
 				parsingSubtask.setCompleted(0);
 
 				int modelIndex = 0;
@@ -1088,14 +1096,6 @@ public class BreakoutMainView {
 					}
 					modelIndex++;
 					parsingSubtask.setCompleted(modelIndex);
-				}
-				for (SurveyLead lead : leads) {
-					if (lead == null) {
-						modelIndex++;
-						continue;
-					}
-					parser.parse(lead);
-					parsingSubtask.setCompleted(++modelIndex);
 				}
 			});
 
@@ -1450,6 +1450,7 @@ public class BreakoutMainView {
 				super.display(drawable);
 				return;
 			}
+			model3d.setLeads(getProjectModel().get(ProjectModel.leadIndex));
 
 			JoglViewState viewState = getViewState();
 			float[] vi = viewState.inverseViewMatrix();
@@ -1755,6 +1756,26 @@ public class BreakoutMainView {
 		surveyDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.surveyDrawer, projectModelBinder));
 		settingsDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.settingsDrawer, projectModelBinder));
 		taskListDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.taskListDrawer, projectModelBinder));
+
+		new BinderWrapper<com.github.krukow.clj_ds.PersistentVector<SurveyLead>>() {
+			@Override
+			protected void onValueChanged(com.github.krukow.clj_ds.PersistentVector<SurveyLead> leads) {
+				getProjectModel().set(ProjectModel.leadIndex, MultiMaps.emptyMultiMap());
+				rebuildTaskService.submit(task -> {
+					task.setStatus("Updating lead index...");
+					MultiMap<StationKey, SurveyLead> index = new LinkedListMultiMap<>();
+					task.forEach(leads, lead -> {
+						if (lead.getStation() != null) {
+							index.put(new StationKey(lead.getCave(), lead.getStation()), lead);
+						}
+					});
+					if (task.isCanceled()) {
+						return;
+					}
+					OnEDT.onEDT(() -> getProjectModel().set(ProjectModel.leadIndex, index));
+				});
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.leads, projectModelBinder));
 
 		new BinderWrapper<Color>() {
 			@Override

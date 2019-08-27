@@ -27,7 +27,6 @@ import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
 import org.breakout.model.parsed.ParsedStation;
 import org.breakout.model.parsed.ParsedTrip;
-import org.breakout.model.raw.SurveyLead;
 import org.breakout.proj4.ToGeocentricCoordinateTransform;
 import org.osgeo.proj4j.BasicCoordinateTransform;
 import org.osgeo.proj4j.CRSFactory;
@@ -140,25 +139,9 @@ public class Parsed2Calc {
 			project.caves.put(calcCave.name, calcCave);
 		}
 		final CalcCave finalCalcCave = calcCave;
-		task.runSubtasks(tripTask -> {
-			tripTask.setTotal(cave.trips.size());
-			for (ParsedTrip trip : cave.trips) {
-				convert(trip, finalCalcCave);
-				tripTask.increment();
-			}
-		}, leadTask -> {
-			leadTask.setTotal(cave.leads.size());
-			for (Map.Entry<String, List<SurveyLead>> e : cave.leads.entrySet()) {
-				convert(new StationKey(caveName, e.getKey()), e.getValue());
-				leadTask.increment();
-			}
+		task.forEach(cave.trips, trip -> {
+			convert(trip, finalCalcCave);
 		});
-	}
-
-	void convert(StationKey stationKey, List<SurveyLead> leads) {
-		CalcStation station = project.stations.get(stationKey);
-		if (station != null)
-			station.leads = leads;
 	}
 
 	double[] getAverageNEV(List<ParsedFixedStation> stations, Task<?> task) {
