@@ -42,14 +42,15 @@ import java.util.function.BiFunction;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JMenuItem;
+import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -58,6 +59,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.plaf.basic.BasicComboBoxUI;
 
 import org.andork.awt.AWTUtil;
 import org.andork.awt.ColorUtils;
@@ -80,6 +82,7 @@ import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.bind.ui.ComponentBackgroundBinder;
 import org.andork.bind.ui.ComponentEnabledBinder;
 import org.andork.bind.ui.ISelectorSelectionBinder;
+import org.andork.bind.ui.JComboBoxItemBinder;
 import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.func.LinearFloatBimapper;
 import org.andork.func.RoundingFloat2IntegerBimapper;
@@ -320,7 +323,8 @@ public class SettingsDrawer extends Drawer {
 	private String loadedVersion;
 
 	private JButton pickParamGradientButton;
-	private JPopupMenu pickParamGradientMenu;
+
+	private JComboBox<GradientModel> paramGradientComboBox;
 
 	public SettingsDrawer(
 		final I18n i18n,
@@ -435,6 +439,8 @@ public class SettingsDrawer extends Drawer {
 
 		ISelectorSelectionBinder.bind(displayLengthUnitSelector, displayLengthUnitBinder);
 		ISelectorSelectionBinder.bind(displayAngleUnitSelector, displayAngleUnitBinder);
+
+		JComboBoxItemBinder.bind(paramGradientComboBox, paramGradientBinder);
 	}
 
 	private void createComponents(I18n i18n) {
@@ -599,18 +605,32 @@ public class SettingsDrawer extends Drawer {
 			}
 		});
 
-		pickParamGradientMenu = new JPopupMenu();
+		paramGradientComboBox = new JComboBox<GradientModel>();
+		paramGradientComboBox.setPreferredSize(new Dimension(200, 1));
+		paramGradientComboBox.setUI(new BasicComboBoxUI());
+		paramGradientComboBox.setRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(
+				JList<?> list,
+				Object value,
+				int index,
+				boolean isSelected,
+				boolean cellHasFocus) {
+				GradientModel gradient = (GradientModel) value;
+				JComponent comp =
+					(JComponent) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+				comp.setPreferredSize(new Dimension(paramColorationAxisPanel.getWidth(), 25));
+				comp
+					.setBorder(
+						MultipleGradientFillBorder
+							.from(Side.LEFT)
+							.to(Side.RIGHT)
+							.linear(gradient.fractions, gradient.colors));
+				return comp;
+			}
+		});
 		for (GradientModel gradient : Gradients.CHOICES) {
-			JMenuItem item = new JMenuItem();
-			item
-				.setBorder(
-					MultipleGradientFillBorder
-						.from(Side.LEFT)
-						.to(Side.RIGHT)
-						.linear(gradient.fractions, gradient.colors));
-			item.putClientProperty("gradient", gradient);
-			item.setPreferredSize(new Dimension(300, 30));
-			pickParamGradientMenu.add(item);
+			paramGradientComboBox.addItem(gradient);
 		}
 
 		colorByDepthButtonsPanel = new JPanel();
@@ -771,7 +791,8 @@ public class SettingsDrawer extends Drawer {
 		colorParamDetailsPanel.setLayout(colorParamDetailsLayout = new BetterCardLayout());
 		colorParamDetailsLayout.setSizeHidden(false);
 		w.put(colorParamDetailsPanel).belowLast().fillx();
-		w.put(paramColorationAxisPanel).belowLast().fillx().addToInsets(0, 0, 5, 0);
+		w.put(paramColorationAxisPanel).belowLast().fillx().addToInsets(0, 0, 0, 0);
+		w.put(paramGradientComboBox).belowLast().fillx().addToInsets(-5, 0, 5, 0);
 
 		colorByDepthButtonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));
 		colorByDepthButtonsPanel.add(inferDepthAxisTiltButton);
@@ -856,21 +877,8 @@ public class SettingsDrawer extends Drawer {
 			}
 		});
 
-		for (int i = 0; i < pickParamGradientMenu.getComponentCount(); i++) {
-			JMenuItem item = (JMenuItem) pickParamGradientMenu.getComponent(i);
-			GradientModel gradient = (GradientModel) item.getClientProperty("gradient");
-			item.addActionListener(e -> {
-				paramGradientBinder.set(gradient);
-			});
-		}
-
 		pickParamGradientButton.addActionListener(e -> {
-			pickParamGradientMenu
-				.setPreferredSize(
-					new Dimension(
-						paramColorationAxisPanel.getWidth(),
-						pickParamGradientMenu.getPreferredSize().height));
-			pickParamGradientMenu.show(paramColorationAxisPanel, 0, paramColorationAxisPanel.getHeight());
+			paramGradientComboBox.showPopup();
 		});
 	}
 

@@ -26,6 +26,17 @@ public class GradientModel {
 		if (fractions.length < 2) {
 			throw new IllegalArgumentException("fractions.length must be >= 2");
 		}
+		for (int i = 0; i < fractions.length; i++) {
+			Objects.requireNonNull(colors[i]);
+			if (!Float.isFinite(fractions[i])) {
+				throw new IllegalArgumentException("fractions must be finite");
+			}
+		}
+		for (int i = 1; i < fractions.length; i++) {
+			if (fractions[i - 1] > fractions[i]) {
+				throw new IllegalArgumentException("fractions must be sorted in ascending order");
+			}
+		}
 	}
 
 	public GradientModel reverse() {
@@ -34,6 +45,33 @@ public class GradientModel {
 			fractions[i] = 1f - this.fractions[fractions.length - 1 - i];
 		}
 		return new GradientModel(fractions, ArrayUtils.reverse(ArrayUtils.copyOf(colors)));
+	}
+
+	public static Builder builder() {
+		return new Builder();
+	}
+
+	public static class Builder {
+		private final List<Float> fractions = new ArrayList<>();
+		private final List<Color> colors = new ArrayList<>();
+
+		public Builder add(float fraction, String hexColor) {
+			return add(fraction, Color2HexStringBimapper.instance.unmap(hexColor));
+		}
+
+		public Builder add(float fraction, int red, int green, int blue) {
+			return add(fraction, new Color(red, green, blue));
+		}
+
+		public Builder add(float fraction, Color color) {
+			fractions.add(fraction);
+			colors.add(color);
+			return this;
+		}
+
+		public GradientModel build() {
+			return new GradientModel(ArrayUtils.toFloatArray(fractions), ArrayUtils.toArray(colors, Color.class));
+		}
 	}
 
 	public static final Bimapper<GradientModel, Object> bimapper = new Bimapper<GradientModel, Object>() {
