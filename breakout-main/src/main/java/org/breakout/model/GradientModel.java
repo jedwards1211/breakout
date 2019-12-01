@@ -55,16 +55,16 @@ public class GradientModel {
 		private final List<Float> fractions = new ArrayList<>();
 		private final List<Color> colors = new ArrayList<>();
 
-		public Builder add(float fraction, String hexColor) {
+		public Builder add(double fraction, String hexColor) {
 			return add(fraction, Color2HexStringBimapper.instance.unmap(hexColor));
 		}
 
-		public Builder add(float fraction, int red, int green, int blue) {
+		public Builder add(double fraction, int red, int green, int blue) {
 			return add(fraction, new Color(red, green, blue));
 		}
 
-		public Builder add(float fraction, Color color) {
-			fractions.add(fraction);
+		public Builder add(double fraction, Color color) {
+			fractions.add((float) fraction);
 			colors.add(color);
 			return this;
 		}
