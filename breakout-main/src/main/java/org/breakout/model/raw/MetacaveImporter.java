@@ -390,11 +390,11 @@ public class MetacaveImporter {
 		lead.setCave(caveName);
 		lead.setStation(getAsString(obj, "station"));
 		lead.setDescription(getAsString(obj, "description"));
-		if (obj.has("width")) {
+		if (obj.has("width") && !obj.get("width").isJsonNull()) {
 			lead.setRawWidth(obj.get("width").getAsJsonArray());
 			lead.setWidth(parseLength(obj.get("width").getAsJsonArray()));
 		}
-		if (obj.has("height")) {
+		if (obj.has("height") && !obj.get("height").isJsonNull()) {
 			lead.setRawHeight(obj.get("height").getAsJsonArray());
 			lead.setHeight(parseLength(obj.get("height").getAsJsonArray()));
 		}
