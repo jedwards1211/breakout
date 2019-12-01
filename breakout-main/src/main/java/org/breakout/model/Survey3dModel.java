@@ -137,14 +137,22 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		private int u_origin_location;
 
 		@Override
-		protected void
-			afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		protected void afterDraw(
+			Collection<Section> sections,
+			JoglDrawContext context,
+			GL2ES2 gl,
+			float[] m,
+			float[] n) {
 			super.afterDraw(sections, context, gl, m, n);
 		}
 
 		@Override
-		protected void
-			beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		protected void beforeDraw(
+			Collection<Section> sections,
+			JoglDrawContext context,
+			GL2ES2 gl,
+			float[] m,
+			float[] n) {
 			super.beforeDraw(sections, context, gl, m, n);
 			depthAxis.put(gl, u_axis_location);
 			depthOrigin.put(gl, u_origin_location);
@@ -264,8 +272,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int u_clipNear_location;
 		protected int u_clipFar_location;
 
-		protected void
-			afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		protected void afterDraw(
+			Collection<Section> sections,
+			JoglDrawContext context,
+			GL2ES2 gl,
+			float[] m,
+			float[] n) {
 			gl.glDisable(GL_DEPTH_TEST);
 			gl.glDisableVertexAttribArray(a_pos_location);
 			gl.glDisableVertexAttribArray(a_norm_location);
@@ -276,8 +288,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 
-		protected void
-			beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		protected void beforeDraw(
+			Collection<Section> sections,
+			JoglDrawContext context,
+			GL2ES2 gl,
+			float[] m,
+			float[] n) {
 			gl.glUniformMatrix4fv(m_location, 1, false, m, 0);
 			gl.glUniformMatrix3fv(n_location, 1, false, n, 0);
 			gl.glUniformMatrix4fv(v_location, 1, false, context.viewMatrix(), 0);
@@ -484,8 +500,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		boolean drawLines = false;
 
 		@Override
-		protected void
-			beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		protected void beforeDraw(
+			Collection<Section> sections,
+			JoglDrawContext context,
+			GL2ES2 gl,
+			float[] m,
+			float[] n) {
 			super.beforeDraw(sections, context, gl, m, n);
 
 			gl.glActiveTexture(GL_TEXTURE0);
@@ -530,15 +550,23 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		private int a_param0_location;
 
 		@Override
-		protected void
-			afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		protected void afterDraw(
+			Collection<Section> sections,
+			JoglDrawContext context,
+			GL2ES2 gl,
+			float[] m,
+			float[] n) {
 			super.afterDraw(sections, context, gl, m, n);
 			gl.glDisableVertexAttribArray(a_param0_location);
 		}
 
 		@Override
-		protected void
-			beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+		protected void beforeDraw(
+			Collection<Section> sections,
+			JoglDrawContext context,
+			GL2ES2 gl,
+			float[] m,
+			float[] n) {
 			super.beforeDraw(sections, context, gl, m, n);
 
 			gl.glEnableVertexAttribArray(a_param0_location);
@@ -1577,9 +1605,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return shot3ds;
 	}
 
-	public static Survey3dModel
-		create(CalcProject project, int maxChildrenPerBranch, int minSplitSize, int numToReinsert, Task<?> task)
-			throws Exception {
+	public static Survey3dModel create(
+		CalcProject project,
+		int maxChildrenPerBranch,
+		int minSplitSize,
+		int numToReinsert,
+		Task<?> task)
+		throws Exception {
 		task.setStatus("creating 3D model");
 		task.setTotal(6);
 
@@ -1738,8 +1770,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return -priority;
 	}
 
-	private static Map<Float, Set<StationKey>>
-		computeStationsToLabel(Collection<CalcStation> stations, Collection<Float> spacings, Task<?> subtask) {
+	private static Map<Float, Set<StationKey>> computeStationsToLabel(
+		Collection<CalcStation> stations,
+		Collection<Float> spacings,
+		Task<?> subtask) {
 		Map<Float, Set<StationKey>> stationsToLabel = new HashMap<>();
 		Map<Float, RfStarTree<StationKey>> spatialIndexes = new HashMap<>();
 
@@ -2637,24 +2671,25 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	private double crossSectionMultiplierForDirections(CalcCrossSection x) {
-		switch (x.type) {
-		case LRUD:
-			double w = Math.max(0.1, x.measurements[0] + x.measurements[1]);
-			double h = Math.max(0.1, x.measurements[2] + x.measurements[3]);
-			if (w >= 6 || h >= 6)
-				return Math.max(1 / w, 1 / h);
-			return 1 / (w * h);
-		case NSEW:
-			double lon = x.measurements[0] + x.measurements[1];
-			double lat = x.measurements[2] + x.measurements[3];
-			if (lat >= 12 && lon >= 12)
-				return 1 / 12;
-			if (lat >= 6 || lon >= 6)
-				return Math.max(1 / lat, 1 / lon);
-			return 1 / (lat * lon);
-		default:
-			return 100;
+		if (x != null) {
+			switch (x.type) {
+			case LRUD:
+				double w = Math.max(0.1, x.measurements[0] + x.measurements[1]);
+				double h = Math.max(0.1, x.measurements[2] + x.measurements[3]);
+				if (w >= 6 || h >= 6)
+					return Math.max(1 / w, 1 / h);
+				return 1 / (w * h);
+			case NSEW:
+				double lon = x.measurements[0] + x.measurements[1];
+				double lat = x.measurements[2] + x.measurements[3];
+				if (lat >= 12 && lon >= 12)
+					return 1 / 12;
+				if (lat >= 6 || lon >= 6)
+					return Math.max(1 / lat, 1 / lon);
+				return 1 / (lat * lon);
+			}
 		}
+		return 100;
 	}
 
 	private void addGlowForNearbyStations(
