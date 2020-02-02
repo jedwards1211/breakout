@@ -516,13 +516,16 @@ public class Parsed2Calc {
 			result.measurements[i] =
 				ParsedField.hasValue(section.measurements[i])
 					? section.measurements[i].value.doubleValue(Length.meters)
-					: 0.05;
+					: 0;
 		}
 		return result;
 	}
 
-	public void
-		convertLruds(ParsedStation parsedFromStation, ParsedShot parsed, ParsedStation parsedToStation, CalcShot shot) {
+	public void convertLruds(
+		ParsedStation parsedFromStation,
+		ParsedShot parsed,
+		ParsedStation parsedToStation,
+		CalcShot shot) {
 		if (parsedFromStation.crossSection != null) {
 			shot.fromCrossSection = convert(parsedFromStation.crossSection);
 		}

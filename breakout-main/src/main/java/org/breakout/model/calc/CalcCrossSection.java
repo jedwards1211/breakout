@@ -39,11 +39,7 @@ public class CalcCrossSection implements Cloneable {
 		CalcCrossSection rotated = new CalcCrossSection();
 		rotated.type = CrossSectionType.LRUD;
 		rotated.facingAzimuth = Angles.opposite(facingAzimuth);
-		rotated.measurements = new double[] {
-				measurements[1],
-				measurements[0],
-				measurements[2],
-				measurements[3] };
+		rotated.measurements = new double[] { measurements[1], measurements[0], measurements[2], measurements[3] };
 		return rotated;
 	}
 
@@ -69,5 +65,13 @@ public class CalcCrossSection implements Cloneable {
 			return false;
 		}
 		return true;
+	}
+
+	public void clampMin(double min) {
+		for (int i = 0; i < measurements.length; i++) {
+			if (Double.isNaN(measurements[i]) || min > measurements[i]) {
+				measurements[i] = min;
+			}
+		}
 	}
 }
