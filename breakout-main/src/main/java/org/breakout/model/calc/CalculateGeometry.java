@@ -1,16 +1,23 @@
 package org.breakout.model.calc;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 import org.andork.collect.Iterables;
 import org.andork.collect.PriorityEntry;
 import org.andork.math.misc.Angles;
+import org.andork.math3d.Vecmath;
+import org.andork.quickhull3d.Edge;
+import org.andork.quickhull3d.Face;
+import org.andork.quickhull3d.Quickhull;
 import org.breakout.model.CrossSectionType;
-import org.breakout.model.ShotKey;
 
 /**
  * All of the routines to compute the passage geometry from the parsed
@@ -22,6 +29,7 @@ public class CalculateGeometry {
 		linkCrossSections(project);
 		normalizeCrossSections(project);
 		calculateStationPositions(project);
+		calculateSplayHulls(project);
 		calculateVertices(project);
 	}
 
@@ -438,108 +446,6 @@ public class CalculateGeometry {
 	}
 
 	/**
-	 * Calculates the vertices (right now just the LRUD points) for all shots from
-	 * the station positions (from {@link #calculateStationPositions(CalcProject)}
-	 * and cross sections.
-	 */
-	static void calculateVertices(CalcProject project) {
-		for (Map.Entry<ShotKey, CalcShot> entry : project.shots.entrySet()) {
-			CalcShot shot = entry.getValue();
-			calculateVertices(shot);
-		}
-	}
-
-	static void calculateVertices(CalcShot shot) {
-		if (shot.isExcludeFromPlotting())
-			return;
-
-		int fromVertexCount = getVertexCount(shot.fromCrossSection);
-		int toVertexCount = getVertexCount(shot.toCrossSection);
-		boolean flipLR =
-			shot.fromCrossSection != null
-				&& shot.toCrossSection != null
-				&& Angles.difference(shot.fromCrossSection.facingAzimuth, shot.toCrossSection.facingAzimuth) > Math.PI
-					/ 2;
-		shot.normals = new float[(fromVertexCount + toVertexCount) * 3];
-		createNormals(shot.fromCrossSection, shot.normals, 0, flipLR);
-		createNormals(shot.toCrossSection, shot.normals, fromVertexCount * 3, false);
-		shot.vertices = new float[(fromVertexCount + toVertexCount) * 3];
-		createVertices(shot.fromStation, shot.fromCrossSection, shot.vertices, 0, flipLR);
-		createVertices(shot.toStation, shot.toCrossSection, shot.vertices, fromVertexCount * 3, false);
-		shot.polarities = new float[fromVertexCount + toVertexCount];
-		for (int i = fromVertexCount; i < shot.polarities.length; i++) {
-			shot.polarities[i] = 1;
-		}
-		if (fromVertexCount == 1 && toVertexCount == 1) {
-			shot.indices = new int[0];
-		}
-		else if (toVertexCount == 1) {
-			int[] indices = shot.indices = new int[fromVertexCount * 3];
-			int k = 0;
-			for (int i = 0; i < fromVertexCount; i++) {
-				indices[k++] = i;
-				indices[k++] = (i + 1) % fromVertexCount;
-				indices[k++] = fromVertexCount;
-			}
-		}
-		else if (fromVertexCount == 1) {
-			int[] indices = shot.indices = new int[toVertexCount * 3];
-			int k = 0;
-			for (int i = 0; i < toVertexCount; i++) {
-				indices[k++] = i + 1;
-				indices[k++] = (i + 1) % toVertexCount + 1;
-				indices[k++] = 0;
-			}
-		}
-		else if (fromVertexCount == toVertexCount) {
-			int triangleCount = fromVertexCount + toVertexCount;
-			if (shot.fromStation.isDeadEnd()) {
-				triangleCount += fromVertexCount - 2;
-			}
-			if (shot.toStation.isDeadEnd()) {
-				triangleCount += toVertexCount - 2;
-			}
-			int[] indices = shot.indices = new int[triangleCount * 3];
-			int k = 0;
-			for (int i = 0; i < fromVertexCount; i++) {
-				int i1 = (i + 1) % fromVertexCount;
-				int i2 = i + fromVertexCount;
-				int i3 = fromVertexCount + (i + 1) % toVertexCount;
-				if (orientation(shot.vertices, i * 3, i1 * 3, i2 * 3, i3 * 3) > 0) {
-					indices[k++] = i;
-					indices[k++] = i1;
-					indices[k++] = i2;
-					indices[k++] = i3;
-					indices[k++] = i2;
-					indices[k++] = i1;
-				}
-				else {
-					indices[k++] = i;
-					indices[k++] = i1;
-					indices[k++] = i3;
-					indices[k++] = i3;
-					indices[k++] = i2;
-					indices[k++] = i;
-				}
-			}
-			if (shot.fromStation.isDeadEnd()) {
-				for (int i = 2; i < fromVertexCount; i++) {
-					indices[k++] = 0;
-					indices[k++] = i;
-					indices[k++] = i - 1;
-				}
-			}
-			if (shot.toStation.isDeadEnd()) {
-				for (int i = 2; i < toVertexCount; i++) {
-					indices[k++] = fromVertexCount;
-					indices[k++] = fromVertexCount + i;
-					indices[k++] = fromVertexCount + i - 1;
-				}
-			}
-		}
-	}
-
-	/**
 	 * Calculates the position of all the stations that aren't already fixed. Right
 	 * now this is a half-assed algorithm that doesn't do any loop closure at all,
 	 * it just naively computes the position of one station to the next based upon
@@ -606,6 +512,270 @@ public class CalculateGeometry {
 			shot.fromStation.position[0] = shot.toStation.position[0] - xOffs;
 			shot.fromStation.position[1] = shot.toStation.position[1] - yOffs;
 			shot.fromStation.position[2] = shot.toStation.position[2] - zOffs;
+		}
+	}
+
+	static void calculateSplayHulls(CalcProject project) {
+		for (CalcStation station : project.stations.values()) {
+			calculateSplayHull(station);
+		}
+	}
+
+	static void calculateSplayHull(CalcStation station) {
+		if (station.numShots < 3)
+			return;
+
+		int numSplays = 0;
+		for (CalcShot shot : station.shots.values()) {
+			CalcStation otherStation = shot.otherStation(station);
+			if (!otherStation.isDeadEnd())
+				continue;
+			if (!shot.getCrossSectionAt(otherStation).isPoint())
+				continue;
+			shot.setIsSplay(true);
+			numSplays++;
+		}
+
+		if (numSplays == 0)
+			return;
+
+		List<CalcShot> realShots = new ArrayList<>();
+
+		List<SplayVertex> vertices = new ArrayList<SplayVertex>();
+		SplayVertex origin = new SplayVertex();
+		origin.originalX = station.position[0];
+		origin.originalY = station.position[1];
+		origin.originalZ = station.position[2];
+		vertices.add(origin);
+
+		for (CalcShot shot : station.shots.values()) {
+			if (shot.isSplay()) {
+				CalcStation p = shot.otherStation(station);
+				SplayVertex vertex = new SplayVertex();
+				vertex.normalizedX = p.position[0] - station.position[0];
+				vertex.normalizedY = p.position[1] - station.position[1];
+				vertex.normalizedZ = p.position[2] - station.position[2];
+				double length =
+					Math
+						.sqrt(
+							vertex.normalizedX * vertex.normalizedX
+								+ vertex.normalizedY * vertex.normalizedY
+								+ vertex.normalizedZ * vertex.normalizedZ);
+				vertex.normalizedX /= length;
+				vertex.normalizedY /= length;
+				vertex.normalizedZ /= length;
+				vertex.originalX = p.position[0];
+				vertex.originalY = p.position[1];
+				vertex.originalZ = p.position[2];
+				vertices.add(vertex);
+			}
+			else {
+				realShots.add(shot);
+			}
+		}
+		Set<Face<SplayVertex>> hull;
+		try {
+			hull = Quickhull.createConvexHull(vertices);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			for (CalcShot shot : station.shots.values()) {
+				shot.setIsSplay(false);
+			}
+			return;
+		}
+
+		if (realShots.size() == 1) {
+			CalcShot shot = realShots.get(0);
+			if (shot.splayFaces != null) {
+				shot.splayFaces.addAll(hull);
+			}
+			else {
+				shot.splayFaces = new ArrayList<>(hull);
+			}
+		}
+		else {
+			for (Face<SplayVertex> face : hull) {
+				double[] centroid = new double[3];
+				for (Edge<SplayVertex> edge : face.edges) {
+					centroid[0] += edge.nextVertex.originalX;
+					centroid[1] += edge.nextVertex.originalY;
+					centroid[2] += edge.nextVertex.originalZ;
+				}
+				centroid[0] /= 3;
+				centroid[1] /= 3;
+				centroid[2] /= 3;
+				CalcShot closestShot = null;
+				double closestDistSq = Double.POSITIVE_INFINITY;
+				for (CalcShot shot : realShots) {
+					CalcStation p = shot.otherStation(station);
+					double distSq = Vecmath.distance3sq(centroid, p.position);
+					if (closestShot == null || distSq < closestDistSq) {
+						closestShot = shot;
+						closestDistSq = distSq;
+					}
+				}
+				if (closestShot.splayFaces == null) {
+					closestShot.splayFaces = new ArrayList<>();
+				}
+				closestShot.splayFaces.add(face);
+			}
+			for (CalcShot shot : realShots) {
+				if (shot.splayFaces != null) {
+					((ArrayList<Face<SplayVertex>>) shot.splayFaces).trimToSize();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Calculates the vertices (right now just the LRUD points) for all shots from
+	 * the station positions (from {@link #calculateStationPositions(CalcProject)}
+	 * and cross sections.
+	 */
+	static void calculateVertices(CalcProject project) {
+		for (CalcShot shot : project.shots.values()) {
+			calculateVertices(shot);
+		}
+	}
+
+	static void calculateVertices(CalcShot shot) {
+		if (shot.isExcludeFromPlotting() || shot.isSplay())
+			return;
+
+		int fromVertexCount = getVertexCount(shot.fromCrossSection);
+		int toVertexCount = getVertexCount(shot.toCrossSection);
+		Map<SplayVertex, Integer> splayIndices = null;
+		int splayVertexCount = 0;
+		int triangleCount = 0;
+		if (fromVertexCount == 1 && toVertexCount == 1) {
+			triangleCount = 0;
+		}
+		else if (toVertexCount == 1) {
+			triangleCount = fromVertexCount;
+		}
+		else if (fromVertexCount == 1) {
+			triangleCount = toVertexCount;
+		}
+		else if (fromVertexCount == toVertexCount) {
+			triangleCount = fromVertexCount + toVertexCount;
+			if (shot.fromStation.isDeadEnd()) {
+				triangleCount += fromVertexCount - 2;
+			}
+			if (shot.toStation.isDeadEnd()) {
+				triangleCount += toVertexCount - 2;
+			}
+		}
+		if (shot.splayFaces != null) {
+			int i = fromVertexCount + toVertexCount;
+			splayIndices = new IdentityHashMap<>();
+			for (Face<SplayVertex> face : shot.splayFaces) {
+				for (Edge<SplayVertex> edge : face.edges) {
+					if (!splayIndices.containsKey(edge.nextVertex)) {
+						splayIndices.put(edge.nextVertex, i++);
+					}
+				}
+			}
+			splayVertexCount = splayIndices.size();
+			triangleCount += shot.splayFaces.size();
+		}
+
+		int vertexCount = fromVertexCount + toVertexCount + splayVertexCount;
+		boolean flipLR =
+			shot.fromCrossSection != null
+				&& shot.toCrossSection != null
+				&& Angles.difference(shot.fromCrossSection.facingAzimuth, shot.toCrossSection.facingAzimuth) > Math.PI
+					/ 2;
+		shot.normals = new float[vertexCount * 3];
+		createNormals(shot.fromCrossSection, shot.normals, 0, flipLR);
+		createNormals(shot.toCrossSection, shot.normals, fromVertexCount * 3, false);
+		shot.vertices = new float[vertexCount * 3];
+		createVertices(shot.fromStation, shot.fromCrossSection, shot.vertices, 0, flipLR);
+		createVertices(shot.toStation, shot.toCrossSection, shot.vertices, fromVertexCount * 3, false);
+		shot.polarities = new float[vertexCount];
+
+		for (int i = fromVertexCount; i < shot.polarities.length; i++) {
+			shot.polarities[i] = 1;
+		}
+
+		if (splayIndices != null) {
+			for (Map.Entry<SplayVertex, Integer> entry : splayIndices.entrySet()) {
+				SplayVertex vertex = entry.getKey();
+				int index = entry.getValue() * 3;
+				shot.vertices[index++] = (float) vertex.originalX;
+				shot.vertices[index++] = (float) vertex.originalY;
+				shot.vertices[index++] = (float) vertex.originalZ;
+				index = entry.getValue() * 3;
+				shot.normals[index++] = (float) vertex.normalizedX;
+				shot.normals[index++] = (float) vertex.normalizedY;
+				shot.normals[index++] = (float) vertex.normalizedZ;
+			}
+		}
+
+		int[] indices = shot.indices = new int[triangleCount * 3];
+
+		int k = 0;
+		if (fromVertexCount == 1 && toVertexCount == 1) {
+			// do nothing
+		}
+		else if (toVertexCount == 1) {
+			for (int i = 0; i < fromVertexCount; i++) {
+				indices[k++] = i;
+				indices[k++] = (i + 1) % fromVertexCount;
+				indices[k++] = fromVertexCount;
+			}
+		}
+		else if (fromVertexCount == 1) {
+			for (int i = 0; i < toVertexCount; i++) {
+				indices[k++] = i + 1;
+				indices[k++] = (i + 1) % toVertexCount + 1;
+				indices[k++] = 0;
+			}
+		}
+		else if (fromVertexCount == toVertexCount) {
+			for (int i = 0; i < fromVertexCount; i++) {
+				int i1 = (i + 1) % fromVertexCount;
+				int i2 = i + fromVertexCount;
+				int i3 = fromVertexCount + (i + 1) % toVertexCount;
+				if (orientation(shot.vertices, i * 3, i1 * 3, i2 * 3, i3 * 3) > 0) {
+					indices[k++] = i;
+					indices[k++] = i1;
+					indices[k++] = i2;
+					indices[k++] = i3;
+					indices[k++] = i2;
+					indices[k++] = i1;
+				}
+				else {
+					indices[k++] = i;
+					indices[k++] = i1;
+					indices[k++] = i3;
+					indices[k++] = i3;
+					indices[k++] = i2;
+					indices[k++] = i;
+				}
+			}
+			if (shot.fromStation.isDeadEnd()) {
+				for (int i = 2; i < fromVertexCount; i++) {
+					indices[k++] = 0;
+					indices[k++] = i;
+					indices[k++] = i - 1;
+				}
+			}
+			if (shot.toStation.isDeadEnd()) {
+				for (int i = 2; i < toVertexCount; i++) {
+					indices[k++] = fromVertexCount;
+					indices[k++] = fromVertexCount + i;
+					indices[k++] = fromVertexCount + i - 1;
+				}
+			}
+		}
+
+		if (shot.splayFaces != null) {
+			for (Face<SplayVertex> face : shot.splayFaces) {
+				for (Edge<SplayVertex> edge : face.edges) {
+					indices[k++] = splayIndices.get(edge.nextVertex);
+				}
+			}
 		}
 	}
 }

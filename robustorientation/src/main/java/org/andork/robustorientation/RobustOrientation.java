@@ -20,53 +20,111 @@ public class RobustOrientation {
 
 	}
 
-	private static double orientation4Exact(double[] a, double[] b, double[] c, double[] d) {
-		double[] p = add(
+	private static double orientation4Exact(
+		double ax,
+		double ay,
+		double az,
+		double bx,
+		double by,
+		double bz,
+		double cx,
+		double cy,
+		double cz,
+		double dx,
+		double dy,
+		double dz) {
+		double[] p =
+			add(
 				add(
-						multiply(add(multiply(c[1], d[0]), multiply(-d[1], c[0])), b[2]),
-						add(
-								multiply(
-										add(multiply(b[1], d[0]), multiply(-d[1], b[0])),
-										-c[2]),
-								multiply(
-										add(multiply(b[1], c[0]), multiply(-c[1], b[0])),
-										d[2]))),
+					multiply(add(multiply(cy, dx), multiply(-dy, cx)), bz),
+					add(
+						multiply(add(multiply(by, dx), multiply(-dy, bx)), -cz),
+						multiply(add(multiply(by, cx), multiply(-cy, bx)), dz))),
 				add(
-						multiply(
-								add(multiply(b[1], d[0]), multiply(-d[1], b[0])),
-								a[2]),
-						add(
-								multiply(
-										add(multiply(a[1], d[0]), multiply(-d[1], a[0])),
-										-b[2]),
-								multiply(
-										add(multiply(a[1], b[0]), multiply(-b[1], a[0])),
-										d[2])))),
-				n = add(
-						add(
-								multiply(
-										add(multiply(c[1], d[0]), multiply(-d[1], c[0])),
-										a[2]),
+					multiply(add(multiply(by, dx), multiply(-dy, bx)), az),
+					add(
+						multiply(add(multiply(ay, dx), multiply(-dy, ax)), -bz),
+						multiply(add(multiply(ay, bx), multiply(-by, ax)), dz)))), n =
+							add(
 								add(
-										multiply(
-												add(multiply(a[1], d[0]), multiply(-d[1], a[0])),
-												-c[2]),
-										multiply(
-												add(multiply(a[1], c[0]), multiply(-c[1], a[0])),
-												d[2]))),
-						add(
-								multiply(
-										add(multiply(b[1], c[0]), multiply(-c[1], b[0])),
-										a[2]),
+									multiply(add(multiply(cy, dx), multiply(-dy, cx)), az),
+									add(
+										multiply(add(multiply(ay, dx), multiply(-dy, ax)), -cz),
+										multiply(add(multiply(ay, cx), multiply(-cy, ax)), dz))),
 								add(
-										multiply(
-												add(multiply(a[1], c[0]), multiply(-c[1], a[0])),
-												-b[2]),
-										multiply(
-												add(multiply(a[1], b[0]), multiply(-b[1], a[0])),
-												c[2])))),
-				x = subtract(p, n);
+									multiply(add(multiply(by, cx), multiply(-cy, bx)), az),
+									add(
+										multiply(add(multiply(ay, cx), multiply(-cy, ax)), -bz),
+										multiply(add(multiply(ay, bx), multiply(-by, ax)), cz)))), x = subtract(p, n);
 		return x[x.length - 1];
+	}
+
+	private static double orientation4Exact(double[] a, double[] b, double[] c, double[] d) {
+		double[] p =
+			add(
+				add(
+					multiply(add(multiply(c[1], d[0]), multiply(-d[1], c[0])), b[2]),
+					add(
+						multiply(add(multiply(b[1], d[0]), multiply(-d[1], b[0])), -c[2]),
+						multiply(add(multiply(b[1], c[0]), multiply(-c[1], b[0])), d[2]))),
+				add(
+					multiply(add(multiply(b[1], d[0]), multiply(-d[1], b[0])), a[2]),
+					add(
+						multiply(add(multiply(a[1], d[0]), multiply(-d[1], a[0])), -b[2]),
+						multiply(add(multiply(a[1], b[0]), multiply(-b[1], a[0])), d[2])))), n =
+							add(
+								add(
+									multiply(add(multiply(c[1], d[0]), multiply(-d[1], c[0])), a[2]),
+									add(
+										multiply(add(multiply(a[1], d[0]), multiply(-d[1], a[0])), -c[2]),
+										multiply(add(multiply(a[1], c[0]), multiply(-c[1], a[0])), d[2]))),
+								add(
+									multiply(add(multiply(b[1], c[0]), multiply(-c[1], b[0])), a[2]),
+									add(
+										multiply(add(multiply(a[1], c[0]), multiply(-c[1], a[0])), -b[2]),
+										multiply(add(multiply(a[1], b[0]), multiply(-b[1], a[0])), c[2])))), x =
+											subtract(p, n);
+		return x[x.length - 1];
+	}
+
+	public static double orientation4(
+		double ax,
+		double ay,
+		double az,
+		double bx,
+		double by,
+		double bz,
+		double cx,
+		double cy,
+		double cz,
+		double dx,
+		double dy,
+		double dz) {
+		double adx = ax - dx;
+		double bdx = bx - dx;
+		double cdx = cx - dx;
+		double ady = ay - dy;
+		double bdy = by - dy;
+		double cdy = cy - dy;
+		double adz = az - dz;
+		double bdz = bz - dz;
+		double cdz = cz - dz;
+		double bdxcdy = bdx * cdy;
+		double cdxbdy = cdx * bdy;
+		double cdxady = cdx * ady;
+		double adxcdy = adx * cdy;
+		double adxbdy = adx * bdy;
+		double bdxady = bdx * ady;
+		double det = adz * (bdxcdy - cdxbdy) + bdz * (cdxady - adxcdy) + cdz * (adxbdy - bdxady);
+		double permanent =
+			(Math.abs(bdxcdy) + Math.abs(cdxbdy)) * Math.abs(adz)
+				+ (Math.abs(cdxady) + Math.abs(adxcdy)) * Math.abs(bdz)
+				+ (Math.abs(adxbdy) + Math.abs(bdxady)) * Math.abs(cdz);
+		double tol = ERRBOUND4 * permanent;
+		if (det > tol || -det > tol) {
+			return det;
+		}
+		return orientation4Exact(ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz);
 	}
 
 	public static double orientation4(double[] a, double[] b, double[] c, double[] d) {
@@ -85,10 +143,9 @@ public class RobustOrientation {
 		double adxcdy = adx * cdy;
 		double adxbdy = adx * bdy;
 		double bdxady = bdx * ady;
-		double det = adz * (bdxcdy - cdxbdy)
-				+ bdz * (cdxady - adxcdy)
-				+ cdz * (adxbdy - bdxady);
-		double permanent = (Math.abs(bdxcdy) + Math.abs(cdxbdy)) * Math.abs(adz)
+		double det = adz * (bdxcdy - cdxbdy) + bdz * (cdxady - adxcdy) + cdz * (adxbdy - bdxady);
+		double permanent =
+			(Math.abs(bdxcdy) + Math.abs(cdxbdy)) * Math.abs(adz)
 				+ (Math.abs(cdxady) + Math.abs(adxcdy)) * Math.abs(bdz)
 				+ (Math.abs(adxbdy) + Math.abs(bdxady)) * Math.abs(cdz);
 		double tol = ERRBOUND4 * permanent;

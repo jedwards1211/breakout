@@ -8,33 +8,34 @@ public class FaceTests {
 		try {
 			r.run();
 			Assert.fail("expected an exception");
-		} catch (Throwable ex) {
+		}
+		catch (Throwable ex) {
 
 		}
 	}
 
 	@Test
 	public void testOrientation() {
-		double[] a = { 0, 0, 0 };
-		double[] b = { 1, 0, 1 };
-		double[] c = { 1, 1, 0 };
-		double[] d = { 0, 1, 1 };
+		Vertex a = new DefaultVertex(0, 0, 0);
+		Vertex b = new DefaultVertex(1, 0, 1);
+		Vertex c = new DefaultVertex(1, 1, 0);
+		Vertex d = new DefaultVertex(0, 1, 1);
 
-		new Face(a, b, c, d);
-		assertThrows(() -> new Face(a, c, b, d));
+		new Face<Vertex>(a, b, c, d);
+		assertThrows(() -> new Face<Vertex>(a, c, b, d));
 	}
 
 	@Test
 	public void testTetrahedron() {
-		double[] a = { 0, 0, 0 };
-		double[] b = { 1, 0, 1 };
-		double[] c = { 1, 1, 0 };
-		double[] d = { 0, 1, 1 };
+		Vertex a = new DefaultVertex(0, 0, 0);
+		Vertex b = new DefaultVertex(1, 0, 1);
+		Vertex c = new DefaultVertex(1, 1, 0);
+		Vertex d = new DefaultVertex(0, 1, 1);
 
-		Face[] faces = Face.createTetrahedron(a, b, c, d);
+		Face<Vertex>[] faces = Face.createTetrahedron(a, b, c, d);
 
 		Assert.assertEquals(4, faces.length);
-		for (Face face : faces) {
+		for (Face<Vertex> face : faces) {
 			for (int i = 0; i < 3; i++) {
 				Assert.assertNotNull(face.edges[i].oppositeEdge);
 				Assert.assertNotNull(face.edges[i].prevEdge);
@@ -75,24 +76,24 @@ public class FaceTests {
 
 	@Test
 	public void testDegeneracy() {
-		double[] a = { 0, 0, 0 };
-		double[] b = { 1, 0, 0 };
-		double[] c = { 0, 0, 1 };
-		double[] d = { 0.5, 1, 0.5 };
-		double[] e = { 0.5, 0, 0.5 };
-		double[] f = { 0.5, 1e-256, 0.5 };
-		double[] g = { 1e-256, 0, 0 };
-		double[] h = { 0.5, 0, 0 };
+		Vertex a = new DefaultVertex(0, 0, 0);
+		Vertex b = new DefaultVertex(1, 0, 0);
+		Vertex c = new DefaultVertex(0, 0, 1);
+		Vertex d = new DefaultVertex(0.5, 1, 0.5);
+		Vertex e = new DefaultVertex(0.5, 0, 0.5);
+		Vertex f = new DefaultVertex(0.5, 1e-256, 0.5);
+		Vertex g = new DefaultVertex(1e-256, 0, 0);
+		Vertex h = new DefaultVertex(0.5, 0, 0);
 
-		assertThrows(() -> new Face(a, a, c, d));
-		assertThrows(() -> new Face(a, b, c, e));
-		assertThrows(() -> new Face(a, g, c, e));
-		assertThrows(() -> new Face(a, b, g, f));
-		assertThrows(() -> new Face(a, b, h, d));
-		assertThrows(() -> new Face(a, a, a, d));
-		assertThrows(() -> new Face(a, a, a, a));
-		new Face(a, c, g, d);
-		//		new Face(a, g, c, f); // TODO -- orientation fails
-		new Face(a, c, b, f);
+		assertThrows(() -> new Face<Vertex>(a, a, c, d));
+		assertThrows(() -> new Face<Vertex>(a, b, c, e));
+		assertThrows(() -> new Face<Vertex>(a, g, c, e));
+		assertThrows(() -> new Face<Vertex>(a, b, g, f));
+		assertThrows(() -> new Face<Vertex>(a, b, h, d));
+		assertThrows(() -> new Face<Vertex>(a, a, a, d));
+		assertThrows(() -> new Face<Vertex>(a, a, a, a));
+		new Face<Vertex>(a, c, g, d);
+		// new Face<Vertex>(a, g, c, f); // TODO -- orientation fails
+		new Face<Vertex>(a, c, b, f);
 	}
 }

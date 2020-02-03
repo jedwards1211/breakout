@@ -1,7 +1,5 @@
 package org.andork.quickhull3d;
 
-import java.util.Arrays;
-
 /**
  * An edge of a {@link Face}. If two faces are neighbors, each will have its own
  * {@code Edge} with the same vertices in opposite order. (Some call this
@@ -11,18 +9,18 @@ import java.util.Arrays;
  *
  * @author andy
  */
-public class Edge {
-	public final Face face;
-	public final double[] prevVertex;
-	public final double[] nextVertex;
-	public Edge prevEdge;
-	public Edge nextEdge;
-	public Edge oppositeEdge;
+public class Edge<V extends Vertex> {
+	public final Face<V> face;
+	public final V prevVertex;
+	public final V nextVertex;
+	public Edge<V> prevEdge;
+	public Edge<V> nextEdge;
+	public Edge<V> oppositeEdge;
 
-	Edge(Face face, double[] prevVertex, double[] nextVertex) {
+	Edge(Face<V> face, V prevVertex, V nextVertex) {
 		super();
 		if (Switches.PERFORM_SANITY_CHECKS) {
-			assert !Arrays.equals(prevVertex, nextVertex);
+			assert !Vertex.equals(prevVertex, nextVertex);
 		}
 		this.face = face;
 		this.prevVertex = prevVertex;
@@ -33,7 +31,7 @@ public class Edge {
 	 * Sets {@link #oppositeEdge} to the given {@code Edge}, and the given
 	 * {@code Edge}'s {@link #oppositeEdge} to this.
 	 */
-	public void setOppositeEdge(Edge newOppositeEdge) {
+	public void setOppositeEdge(Edge<V> newOppositeEdge) {
 		if (Switches.PERFORM_SANITY_CHECKS) {
 			assert prevVertex == newOppositeEdge.nextVertex && nextVertex == newOppositeEdge.prevVertex;
 		}
@@ -45,23 +43,22 @@ public class Edge {
 	}
 
 	/**
-	 * Determines if this {@code Edge} is in the horizon for the given
-	 * viewpoint. That is, if this {@code Edge}'s {@link #face}
-	 * {@linkplain Face#isWithinHorizonForPoint(double[]) is within the horizon
-	 * for the viewpoint}, but its {@link #oppositeEdge}'s {@link #Face} is not.
+	 * Determines if this {@code Edge} is in the horizon for the given viewpoint.
+	 * That is, if this {@code Edge}'s {@link #face}
+	 * {@linkplain Face#isWithinHorizonForPoint(double[]) is within the horizon for
+	 * the viewpoint}, but its {@link #oppositeEdge}'s {@link #Face} is not.
 	 *
 	 * @param point
 	 * @return
 	 */
-	public boolean isInHorizonOfViewPoint(double[] point) {
+	public boolean isInHorizonOfViewPoint(V point) {
 		return face.isWithinHorizonForPoint(point) && !oppositeEdge.face.isWithinHorizonForPoint(point);
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("Edge[prevVertex=").append(Arrays.toString(prevVertex)).append(", nextVertex=")
-				.append(Arrays.toString(nextVertex)).append("]");
+		builder.append("Edge[prevVertex=").append(prevVertex).append(", nextVertex=").append(nextVertex).append("]");
 		return builder.toString();
 	}
 

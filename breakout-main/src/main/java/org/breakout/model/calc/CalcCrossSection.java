@@ -74,4 +74,12 @@ public class CalcCrossSection implements Cloneable {
 			}
 		}
 	}
+
+	public boolean isPoint() {
+		for (int i = 0; i < measurements.length; i++) {
+			if (measurements[i] > 0)
+				return false;
+		}
+		return true;
+	}
 }

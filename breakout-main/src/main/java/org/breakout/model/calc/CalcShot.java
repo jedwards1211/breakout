@@ -1,7 +1,9 @@
 package org.breakout.model.calc;
 
+import java.util.Collection;
 import java.util.Date;
 
+import org.andork.quickhull3d.Face;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 
@@ -21,6 +23,8 @@ public class CalcShot {
 
 	public CalcCrossSection fromCrossSection;
 	public CalcCrossSection toCrossSection;
+
+	public Collection<Face<SplayVertex>> splayFaces;
 
 	public float[] normals;
 	public float[] vertices;
@@ -43,6 +47,7 @@ public class CalcShot {
 	private static final int EXCLUDE_DISTANCE = 0;
 	private static final int EXCLUDE_FROM_PLOTTING = 1;
 	private static final int HAS_SURVEY_NOTES = 2;
+	private static final int IS_SPLAY = 4;
 
 	private void setFlag(int flag, boolean value) {
 		if (value)
@@ -67,6 +72,10 @@ public class CalcShot {
 		return getFlag(HAS_SURVEY_NOTES);
 	}
 
+	public boolean isSplay() {
+		return getFlag(IS_SPLAY);
+	}
+
 	public void setExcludeDistance(boolean value) {
 		setFlag(EXCLUDE_DISTANCE, value);
 	}
@@ -77,6 +86,10 @@ public class CalcShot {
 
 	public void setHasSurveyNotes(boolean value) {
 		setFlag(HAS_SURVEY_NOTES, value);
+	}
+
+	public void setIsSplay(boolean isSplay) {
+		setFlag(IS_SPLAY, isSplay);
 	}
 
 	public CalcShot() {

@@ -78,8 +78,8 @@ public class Vecmath {
 	}
 
 	/**
-	 * Computes out = vector[0] * basis[0] + vector[1] * basis[1] + ... out must
-	 * != vector!
+	 * Computes out = vector[0] * basis[0] + vector[1] * basis[1] + ... out must !=
+	 * vector!
 	 */
 	public static void combine(float[] out, float[] vector, float[]... basis) {
 		Arrays.fill(out, 0f);
@@ -92,10 +92,8 @@ public class Vecmath {
 	 * Computes v transpose * m * v, where m is a 3x3 matrix and v is a column
 	 * vector.
 	 *
-	 * @param m
-	 *            a 3x3 matrix as a column-major array
-	 * @param v
-	 *            a 3-coordinate vector
+	 * @param m a 3x3 matrix as a column-major array
+	 * @param v a 3-coordinate vector
 	 */
 	public static float conjugate3(float[] m, float[] v) {
 		float x = m[0] * v[0] + m[3] * v[1] + m[6] * v[2];
@@ -105,10 +103,7 @@ public class Vecmath {
 		return v[0] * x + v[1] * y + v[2] * z;
 	}
 
-	public static void cross(
-			double ax, double ay, double az,
-			double bx, double by, double bz,
-			double[] out) {
+	public static void cross(double ax, double ay, double az, double bx, double by, double bz, double[] out) {
 		double cx = ay * bz - az * by;
 		double cy = az * bx - ax * bz;
 		out[2] = ax * by - ay * bx;
@@ -121,7 +116,8 @@ public class Vecmath {
 			out[0] = y * b[2] - z * b[1];
 			out[1] = z * b[0] - x * b[2];
 			out[2] = x * b[1] - y * b[0];
-		} else {
+		}
+		else {
 			double cx = y * b[2] - z * b[1];
 			double cy = z * b[0] - x * b[2];
 			out[2] = x * b[1] - y * b[0];
@@ -135,7 +131,8 @@ public class Vecmath {
 			out[0] = a[1] * z - a[2] * y;
 			out[1] = a[2] * x - a[0] * z;
 			out[2] = a[0] * y - a[1] * x;
-		} else {
+		}
+		else {
 			double cx = a[1] * z - a[2] * y;
 			double cy = a[2] * x - a[0] * z;
 			out[2] = a[0] * y - a[1] * x;
@@ -149,7 +146,8 @@ public class Vecmath {
 			out[0] = a[1] * b[2] - a[2] * b[1];
 			out[1] = a[2] * b[0] - a[0] * b[2];
 			out[2] = a[0] * b[1] - a[1] * b[0];
-		} else {
+		}
+		else {
 			double x = a[1] * b[2] - a[2] * b[1];
 			double y = a[2] * b[0] - a[0] * b[2];
 			out[2] = a[0] * b[1] - a[1] * b[0];
@@ -163,7 +161,8 @@ public class Vecmath {
 			out[outi + 0] = a[ai + 1] * b[bi + 2] - a[ai + 2] * b[bi + 1];
 			out[outi + 1] = a[ai + 2] * b[bi + 0] - a[ai + 0] * b[bi + 2];
 			out[outi + 2] = a[ai + 0] * b[bi + 1] - a[ai + 1] * b[bi + 0];
-		} else {
+		}
+		else {
 			double x = a[ai + 1] * b[bi + 2] - a[ai + 2] * b[bi + 1];
 			double y = a[ai + 2] * b[bi + 0] - a[ai + 0] * b[bi + 2];
 			out[outi + 2] = a[ai + 0] * b[bi + 1] - a[ai + 1] * b[bi + 0];
@@ -172,10 +171,7 @@ public class Vecmath {
 		}
 	}
 
-	public static void cross(
-			float ax, float ay, float az,
-			float bx, float by, float bz,
-			float[] out) {
+	public static void cross(float ax, float ay, float az, float bx, float by, float bz, float[] out) {
 		float cx = ay * bz - az * by;
 		float cy = az * bx - ax * bz;
 		out[2] = ax * by - ay * bx;
@@ -188,7 +184,8 @@ public class Vecmath {
 			out[0] = y * b[2] - z * b[1];
 			out[1] = z * b[0] - x * b[2];
 			out[2] = x * b[1] - y * b[0];
-		} else {
+		}
+		else {
 			float cx = y * b[2] - z * b[1];
 			float cy = z * b[0] - x * b[2];
 			out[2] = x * b[1] - y * b[0];
@@ -202,7 +199,8 @@ public class Vecmath {
 			out[outi + 0] = y * b[bi + 2] - z * b[bi + 1];
 			out[outi + 1] = z * b[bi + 0] - x * b[bi + 2];
 			out[outi + 2] = x * b[bi + 1] - y * b[bi + 0];
-		} else {
+		}
+		else {
 			float cx = y * b[bi + 2] - z * b[bi + 1];
 			float cy = z * b[bi + 0] - x * b[bi + 2];
 			out[outi + 2] = x * b[bi + 1] - y * b[bi + 0];
@@ -216,7 +214,8 @@ public class Vecmath {
 			out[0] = a[1] * z - a[2] * y;
 			out[1] = a[2] * x - a[0] * z;
 			out[2] = a[0] * y - a[1] * x;
-		} else {
+		}
+		else {
 			float cx = a[1] * z - a[2] * y;
 			float cy = a[2] * x - a[0] * z;
 			out[2] = a[0] * y - a[1] * x;
@@ -236,7 +235,8 @@ public class Vecmath {
 			out[0] = a[1] * b[2] - a[2] * b[1];
 			out[1] = a[2] * b[0] - a[0] * b[2];
 			out[2] = a[0] * b[1] - a[1] * b[0];
-		} else {
+		}
+		else {
 			float x = a[1] * b[2] - a[2] * b[1];
 			float y = a[2] * b[0] - a[0] * b[2];
 			out[2] = a[0] * b[1] - a[1] * b[0];
@@ -250,7 +250,8 @@ public class Vecmath {
 			out[outi + 0] = a[ai + 1] * b[bi + 2] - a[ai + 2] * b[bi + 1];
 			out[outi + 1] = a[ai + 2] * b[bi + 0] - a[ai + 0] * b[bi + 2];
 			out[outi + 2] = a[ai + 0] * b[bi + 1] - a[ai + 1] * b[bi + 0];
-		} else {
+		}
+		else {
 			float x = a[ai + 1] * b[bi + 2] - a[ai + 2] * b[bi + 1];
 			float y = a[ai + 2] * b[bi + 0] - a[ai + 0] * b[bi + 2];
 			out[outi + 2] = a[ai + 0] * b[bi + 1] - a[ai + 1] * b[bi + 0];
@@ -260,47 +261,62 @@ public class Vecmath {
 	}
 
 	public static double detAffine(double[] m) {
-		return m[0] * (m[5] * m[10] - m[9] * m[6]) -
-				m[4] * (m[1] * m[10] - m[9] * m[2]) +
-				m[8] * (m[1] * m[6] - m[5] * m[2]);
+		return m[0] * (m[5] * m[10] - m[9] * m[6])
+			- m[4] * (m[1] * m[10] - m[9] * m[2])
+			+ m[8] * (m[1] * m[6] - m[5] * m[2]);
 	}
 
 	public static float detAffine(float[] m) {
-		return m[0] * (m[5] * m[10] - m[9] * m[6]) -
-				m[4] * (m[1] * m[10] - m[9] * m[2]) +
-				m[8] * (m[1] * m[6] - m[5] * m[2]);
+		return m[0] * (m[5] * m[10] - m[9] * m[6])
+			- m[4] * (m[1] * m[10] - m[9] * m[2])
+			+ m[8] * (m[1] * m[6] - m[5] * m[2]);
 	}
-	
+
 	/**
 	 * Computes the determinant of a 3x3 matrix
+	 * 
 	 * <pre>
 	 * | a b c |
 	 * | d e f |
 	 * | g h i |
 	 * </pre>
-
+	 * 
 	 * @return the determinant
 	 */
 	public static float det3(float a, float b, float c, float d, float e, float f, float g, float h, float i) {
 		// rule of Sarrus
 		return a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h;
 	}
+
 	/**
 	 * Computes the determinant of a 4x4 matrix
+	 * 
 	 * <pre>
 	 * | a1 a2 a3 a4 |
 	 * | b1 b2 b3 b4 |
 	 * | c1 c2 c3 c4 |
 	 * | d1 d2 d3 d4 |
 	 * </pre>
-
+	 * 
 	 * @return the determinant
-	 */	
+	 */
 	public static float det4(
-		float a1, float a2, float a3, float a4,
-		float b1, float b2, float b3, float b4,
-		float c1, float c2, float c3, float c4,
-		float d1, float d2, float d3, float d4) {
+		float a1,
+		float a2,
+		float a3,
+		float a4,
+		float b1,
+		float b2,
+		float b3,
+		float b4,
+		float c1,
+		float c2,
+		float c3,
+		float c4,
+		float d1,
+		float d2,
+		float d3,
+		float d4) {
 		return a1 * det3(b2, b3, b4, c2, c3, c4, d2, d3, d4)
 			- a2 * det3(b1, b3, b4, c1, c3, c4, d1, d3, d4)
 			+ a3 * det3(b1, b2, b4, c1, c2, c4, d1, d2, d4)
@@ -355,6 +371,14 @@ public class Vecmath {
 		return dx * dx + dy * dy + dz * dz;
 	}
 
+	public static double distance3sq(double[] a, double[] b) {
+		double dx = a[0] - b[0];
+		double dy = a[1] - b[1];
+		double dz = a[2] - b[2];
+
+		return dx * dx + dy * dy + dz * dz;
+	}
+
 	public static float distance2sq(float[] a, float[] b) {
 		float dx = a[0] - b[0];
 		float dy = a[1] - b[1];
@@ -363,14 +387,12 @@ public class Vecmath {
 	}
 
 	/**
-	 * @param p
-	 *            a 3-dimensional point.
-	 * @param origin
-	 *            the origin of a 3-dimensional ray.
-	 * @param unitDirection
-	 *            the 3-dimensional direction of the ray - must be a unit vector
-	 * @return the squared distance from {@code p} to the nearest point along
-	 *         the ray.
+	 * @param p             a 3-dimensional point.
+	 * @param origin        the origin of a 3-dimensional ray.
+	 * @param unitDirection the 3-dimensional direction of the ray - must be a unit
+	 *                      vector
+	 * @return the squared distance from {@code p} to the nearest point along the
+	 *         ray.
 	 */
 	public static float distanceFromLine3sq(float[] p, float[] origin, float[] unitDirection) {
 		float adjacent = subDot3(p, origin, unitDirection);
@@ -470,11 +492,11 @@ public class Vecmath {
 	}
 
 	/**
-	 * Performs gaussian elimination on the m by n matrix A. This method is
-	 * faster than {@link #gauss(float[], int, int)} because it doesn't actually
-	 * swap rows. Instead of exchanging rows, row_perms is used to mark the
-	 * positions of the rows in the reduced matrix. Row <code>i</code> of the
-	 * reduced matrix is row <code>row_perms[ i ]</code> of A.
+	 * Performs gaussian elimination on the m by n matrix A. This method is faster
+	 * than {@link #gauss(float[], int, int)} because it doesn't actually swap rows.
+	 * Instead of exchanging rows, row_perms is used to mark the positions of the
+	 * rows in the reduced matrix. Row <code>i</code> of the reduced matrix is row
+	 * <code>row_perms[ i ]</code> of A.
 	 */
 	public static void fullGauss(float[] A, int m, int n, int[] row_perms) {
 		int i = 0;
@@ -527,11 +549,11 @@ public class Vecmath {
 	}
 
 	/**
-	 * Performs gaussian elimination on the m by n matrix A. This method is
-	 * faster than {@link #gauss(float[], int, int)} because it doesn't actually
-	 * swap rows. Instead of exchanging rows, row_perms is used to mark the
-	 * positions of the rows in the reduced matrix. Row <code>i</code> of the
-	 * reduced matrix is row <code>row_perms[ i ]</code> of A.
+	 * Performs gaussian elimination on the m by n matrix A. This method is faster
+	 * than {@link #gauss(float[], int, int)} because it doesn't actually swap rows.
+	 * Instead of exchanging rows, row_perms is used to mark the positions of the
+	 * rows in the reduced matrix. Row <code>i</code> of the reduced matrix is row
+	 * <code>row_perms[ i ]</code> of A.
 	 */
 	public static void gauss(float[] A, int m, int n, int[] row_perms) {
 		int i = 0;
@@ -581,56 +603,55 @@ public class Vecmath {
 	}
 
 	/**
-	 * Computes the general solution of a linear system. An original algorithm
-	 * by Andy Edwards!
+	 * Computes the general solution of a linear system. An original algorithm by
+	 * Andy Edwards!
 	 *
-	 * @param A
-	 *            a matrix that has been row-reduced by
-	 *            {@link #gauss(double[], int, int, int[])}
-	 * @param m
-	 *            the number of rows in A
-	 * @param n
-	 *            the number of columns in A
-	 * @param row_perms
-	 *            the row permuations of A from
-	 *            {@link #gauss(double[], int, int, int[])}
-	 * @param aug
-	 *            <code>true</code> if A is an augmented matrix
-	 * @param soln
-	 *            output parameter: coefficients for each variable in the system
-	 *            (and constants for non-homogeneous systems). E.g. for a 3
-	 *            variable augmented matrix with x3 free, the output will be of
-	 *            the form
+	 * @param A         a matrix that has been row-reduced by
+	 *                  {@link #gauss(double[], int, int, int[])}
+	 * @param m         the number of rows in A
+	 * @param n         the number of columns in A
+	 * @param row_perms the row permuations of A from
+	 *                  {@link #gauss(double[], int, int, int[])}
+	 * @param aug       <code>true</code> if A is an augmented matrix
+	 * @param soln      output parameter: coefficients for each variable in the
+	 *                  system (and constants for non-homogeneous systems). E.g. for
+	 *                  a 3 variable augmented matrix with x3 free, the output will
+	 *                  be of the form
 	 *
-	 *            <pre>
+	 *                  <pre>
 	 * [  0,  0, a3, a0,
 	 *    0,  0, b3, b0,
 	 *    0,  0,  1,  0 ]
-	 *            </pre>
+	 *                  </pre>
 	 *
-	 *            Represents the solutions
+	 *                  Represents the solutions
 	 *
-	 *            <pre>
+	 *                  <pre>
 	 * x1 = 0 * x1 + 0 * x2 + a3 * x3 + a0
 	 * x2 = 0 * x1 + 0 * x2 + b3 * x3 + b0
 	 * x3 = 0 * x1 + 0 * x2 +  1 * x3 +  0
-	 *            </pre>
+	 *                  </pre>
 	 *
-	 *            Only the free variables will have nonzero coefficients for
-	 *            themselves. For a 3 variable homogeneous matrix, the output
-	 *            would lack the constants a0, b0, and c0.<br>
+	 *                  Only the free variables will have nonzero coefficients for
+	 *                  themselves. For a 3 variable homogeneous matrix, the output
+	 *                  would lack the constants a0, b0, and c0.<br>
 	 *
-	 *            The basis for the solution space will be the set of all
-	 *            nonzero "columns" of this output, excluding the last for
-	 *            augmented matrices which is the offset from the origin.
-	 * @param free
-	 *            Output parameter: an array of booleans identifying which
-	 *            variables are free.
+	 *                  The basis for the solution space will be the set of all
+	 *                  nonzero "columns" of this output, excluding the last for
+	 *                  augmented matrices which is the offset from the origin.
+	 * @param free      Output parameter: an array of booleans identifying which
+	 *                  variables are free.
 	 * @return <code>true</code> if the system was successfully solved,
 	 *         <code>false</code> if the system is inconsistent.
 	 */
-	public static boolean generalSolution(double[] A, int m, int n, int[] row_perms, boolean aug, double[] soln,
-			boolean[] free) {
+	public static boolean generalSolution(
+		double[] A,
+		int m,
+		int n,
+		int[] row_perms,
+		boolean aug,
+		double[] soln,
+		boolean[] free) {
 		int nvars = aug ? n - 1 : n;
 
 		Arrays.fill(soln, 0);
@@ -653,7 +674,8 @@ public class Vecmath {
 				if (aug && A[rowstart + j] != 0) {
 					return false;
 				}
-			} else {
+			}
+			else {
 				free[j] = false;
 
 				// set the coefficents for the solution equation of the current
@@ -782,7 +804,7 @@ public class Vecmath {
 		}
 		return false;
 	}
-	
+
 	public static void interp(float[] a, float[] b, float f, float[] out) {
 		for (int i = 0; i < a.length; i++) {
 			out[i] = (1 - f) * a[i] + f * b[i];
@@ -818,13 +840,10 @@ public class Vecmath {
 			throw new IllegalArgumentException("Singular matrix");
 		}
 
-		double s = (m[0] * m[0] + m[4] * m[4] +
-				m[8] * m[8] + m[12] * m[12]) *
-				(m[1] * m[1] + m[5] * m[5] +
-						m[9] * m[9] + m[13] * m[13])
-				*
-				(m[2] * m[2] + m[6] * m[6] +
-						m[10] * m[10] + m[14] * m[14]);
+		double s =
+			(m[0] * m[0] + m[4] * m[4] + m[8] * m[8] + m[12] * m[12])
+				* (m[1] * m[1] + m[5] * m[5] + m[9] * m[9] + m[13] * m[13])
+				* (m[2] * m[2] + m[6] * m[6] + m[10] * m[10] + m[14] * m[14]);
 
 		if (determinant * determinant < FEPS * s) {
 			invertGeneral(m, out);
@@ -912,13 +931,10 @@ public class Vecmath {
 			throw new IllegalArgumentException("Singular matrix");
 		}
 
-		float s = (m[0] * m[0] + m[4] * m[4] +
-				m[8] * m[8] + m[12] * m[12]) *
-				(m[1] * m[1] + m[5] * m[5] +
-						m[9] * m[9] + m[13] * m[13])
-				*
-				(m[2] * m[2] + m[6] * m[6] +
-						m[10] * m[10] + m[14] * m[14]);
+		float s =
+			(m[0] * m[0] + m[4] * m[4] + m[8] * m[8] + m[12] * m[12])
+				* (m[1] * m[1] + m[5] * m[5] + m[9] * m[9] + m[13] * m[13])
+				* (m[2] * m[2] + m[6] * m[6] + m[10] * m[10] + m[14] * m[14]);
 
 		if (determinant * determinant < FEPS * s) {
 			invertGeneral(m, out);
@@ -960,13 +976,10 @@ public class Vecmath {
 			throw new IllegalArgumentException("Singular matrix");
 		}
 
-		float s = (m[0] * m[0] + m[4] * m[4] +
-				m[8] * m[8] + m[12] * m[12]) *
-				(m[1] * m[1] + m[5] * m[5] +
-						m[9] * m[9] + m[13] * m[13])
-				*
-				(m[2] * m[2] + m[6] * m[6] +
-						m[10] * m[10] + m[14] * m[14]);
+		float s =
+			(m[0] * m[0] + m[4] * m[4] + m[8] * m[8] + m[12] * m[12])
+				* (m[1] * m[1] + m[5] * m[5] + m[9] * m[9] + m[13] * m[13])
+				* (m[2] * m[2] + m[6] * m[6] + m[10] * m[10] + m[14] * m[14]);
 
 		if (determinant * determinant < FEPS * s) {
 			invertGeneral(m, out);
@@ -999,9 +1012,8 @@ public class Vecmath {
 	}
 
 	/**
-	 * General invert routine. Inverts t1 and places the result in "this". Note
-	 * that this routine handles both the "this" version and the non-"this"
-	 * version.
+	 * General invert routine. Inverts t1 and places the result in "this". Note that
+	 * this routine handles both the "this" version and the non-"this" version.
 	 *
 	 * Also note that since this routine is slow anyway, we won't worry about
 	 * allocating a little bit of garbage.
@@ -1049,9 +1061,8 @@ public class Vecmath {
 	}
 
 	/**
-	 * General invert routine. Inverts t1 and places the result in "this". Note
-	 * that this routine handles both the "this" version and the non-"this"
-	 * version.
+	 * General invert routine. Inverts t1 and places the result in "this". Note that
+	 * this routine handles both the "this" version and the non-"this" version.
 	 *
 	 * Also note that since this routine is slow anyway, we won't worry about
 	 * allocating a little bit of garbage.
@@ -1099,9 +1110,8 @@ public class Vecmath {
 	}
 
 	/**
-	 * General invert routine. Inverts t1 and places the result in "this". Note
-	 * that this routine handles both the "this" version and the non-"this"
-	 * version.
+	 * General invert routine. Inverts t1 and places the result in "this". Note that
+	 * this routine handles both the "this" version and the non-"this" version.
 	 *
 	 * Also note that since this routine is slow anyway, we won't worry about
 	 * allocating a little bit of garbage.
@@ -1176,18 +1186,24 @@ public class Vecmath {
 
 	/**
 	 * Helping function that specifies the position and orientation of a view
-	 * matrix. The inverse of this transform can be used to control the
-	 * ViewPlatform object within the scene graph.
+	 * matrix. The inverse of this transform can be used to control the ViewPlatform
+	 * object within the scene graph.
 	 *
-	 * @param eye
-	 *            the location of the eye
-	 * @param center
-	 *            a point in the virtual world where the eye is looking
-	 * @param up
-	 *            an up vector specifying the frustum's up direction
+	 * @param eye    the location of the eye
+	 * @param center a point in the virtual world where the eye is looking
+	 * @param up     an up vector specifying the frustum's up direction
 	 */
-	public static void lookAt(double[] mat, double eyex, double eyey, double eyez, double centerx, double centery,
-			double centerz, double upx, double upy, double upz) {
+	public static void lookAt(
+		double[] mat,
+		double eyex,
+		double eyey,
+		double eyez,
+		double centerx,
+		double centery,
+		double centerz,
+		double upx,
+		double upy,
+		double upz) {
 		double forwardx, forwardy, forwardz, invMag;
 		double sidex, sidey, sidez;
 
@@ -1244,18 +1260,24 @@ public class Vecmath {
 
 	/**
 	 * Helping function that specifies the position and orientation of a view
-	 * matrix. The inverse of this transform can be used to control the
-	 * ViewPlatform object within the scene graph.
+	 * matrix. The inverse of this transform can be used to control the ViewPlatform
+	 * object within the scene graph.
 	 *
-	 * @param eye
-	 *            the location of the eye
-	 * @param center
-	 *            a point in the virtual world where the eye is looking
-	 * @param up
-	 *            an up vector specifying the frustum's up direction
+	 * @param eye    the location of the eye
+	 * @param center a point in the virtual world where the eye is looking
+	 * @param up     an up vector specifying the frustum's up direction
 	 */
-	public static void lookAt(float[] mat, float eyex, float eyey, float eyez, float centerx, float centery,
-			float centerz, float upx, float upy, float upz) {
+	public static void lookAt(
+		float[] mat,
+		float eyex,
+		float eyey,
+		float eyez,
+		float centerx,
+		float centery,
+		float centerz,
+		float upx,
+		float upy,
+		float upz) {
 		float forwardx, forwardy, forwardz, invMag;
 		float sidex, sidey, sidez;
 
@@ -1312,25 +1334,21 @@ public class Vecmath {
 
 	/**
 	 * Solves a set of linear equations. The input parameters "matrix1", and
-	 * "row_perm" come from luDecompostionD4x4 and do not change here. The
-	 * parameter "matrix2" is a set of column vectors assembled into a 4x4
-	 * matrix of doubleing-point values. The procedure takes each column of
-	 * "matrix2" in turn and treats it as the right-hand side of the matrix
-	 * equation Ax = LUx = b. The solution vector replaces the original column
-	 * of the matrix.
+	 * "row_perm" come from luDecompostionD4x4 and do not change here. The parameter
+	 * "matrix2" is a set of column vectors assembled into a 4x4 matrix of
+	 * doubleing-point values. The procedure takes each column of "matrix2" in turn
+	 * and treats it as the right-hand side of the matrix equation Ax = LUx = b. The
+	 * solution vector replaces the original column of the matrix.
 	 *
-	 * If "matrix2" is the identity matrix, the procedure replaces its contents
-	 * with the inverse of the matrix from which "matrix1" was originally
-	 * derived.
+	 * If "matrix2" is the identity matrix, the procedure replaces its contents with
+	 * the inverse of the matrix from which "matrix1" was originally derived.
 	 */
 	//
 	// Reference: Press, Flannery, Teukolsky, Vetterling,
 	// _Numerical_Recipes_in_C_, Cambridge University Press,
 	// 1988, pp 44-45.
 	//
-	static void luBacksubstitution(double[] matrix1,
-			int[] row_perm,
-			double[] matrix2) {
+	static void luBacksubstitution(double[] matrix1, int[] row_perm, double[] matrix2) {
 
 		int i, ii, ip, j, k;
 		int rp;
@@ -1358,7 +1376,8 @@ public class Vecmath {
 					for (j = ii; j <= i - 1; j++) {
 						sum -= matrix1[rv + j * 4] * matrix2[j + 4 * cv];
 					}
-				} else if (sum != 0f) {
+				}
+				else if (sum != 0f) {
 					ii = i;
 				}
 				matrix2[i + 4 * cv] = sum;
@@ -1370,43 +1389,41 @@ public class Vecmath {
 			matrix2[3 + 4 * cv] /= matrix1[rv + 3 * 4];
 
 			rv--;
-			matrix2[2 + 4 * cv] = (matrix2[2 + 4 * cv] -
-					matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 2 * 4];
+			matrix2[2 + 4 * cv] =
+				(matrix2[2 + 4 * cv] - matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 2 * 4];
 
 			rv--;
-			matrix2[1 + 4 * cv] = (matrix2[1 + 4 * cv] -
-					matrix1[rv + 2 * 4] * matrix2[2 + 4 * cv] -
-					matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 1 * 4];
+			matrix2[1 + 4 * cv] =
+				(matrix2[1 + 4 * cv]
+					- matrix1[rv + 2 * 4] * matrix2[2 + 4 * cv]
+					- matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 1 * 4];
 
 			rv--;
-			matrix2[0 + 4 * cv] = (matrix2[0 + 4 * cv] -
-					matrix1[rv + 1 * 4] * matrix2[1 + 4 * cv] -
-					matrix1[rv + 2 * 4] * matrix2[2 + 4 * cv] -
-					matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 0 * 4];
+			matrix2[0 + 4 * cv] =
+				(matrix2[0 + 4 * cv]
+					- matrix1[rv + 1 * 4] * matrix2[1 + 4 * cv]
+					- matrix1[rv + 2 * 4] * matrix2[2 + 4 * cv]
+					- matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 0 * 4];
 		}
 	}
 
 	/**
 	 * Solves a set of linear equations. The input parameters "matrix1", and
-	 * "row_perm" come from luDecompostionD4x4 and do not change here. The
-	 * parameter "matrix2" is a set of column vectors assembled into a 4x4
-	 * matrix of floating-point values. The procedure takes each column of
-	 * "matrix2" in turn and treats it as the right-hand side of the matrix
-	 * equation Ax = LUx = b. The solution vector replaces the original column
-	 * of the matrix.
+	 * "row_perm" come from luDecompostionD4x4 and do not change here. The parameter
+	 * "matrix2" is a set of column vectors assembled into a 4x4 matrix of
+	 * floating-point values. The procedure takes each column of "matrix2" in turn
+	 * and treats it as the right-hand side of the matrix equation Ax = LUx = b. The
+	 * solution vector replaces the original column of the matrix.
 	 *
-	 * If "matrix2" is the identity matrix, the procedure replaces its contents
-	 * with the inverse of the matrix from which "matrix1" was originally
-	 * derived.
+	 * If "matrix2" is the identity matrix, the procedure replaces its contents with
+	 * the inverse of the matrix from which "matrix1" was originally derived.
 	 */
 	//
 	// Reference: Press, Flannery, Teukolsky, Vetterling,
 	// _Numerical_Recipes_in_C_, Cambridge University Press,
 	// 1988, pp 44-45.
 	//
-	static void luBacksubstitution(float[] matrix1,
-			int[] row_perm,
-			float[] matrix2) {
+	static void luBacksubstitution(float[] matrix1, int[] row_perm, float[] matrix2) {
 
 		int i, ii, ip, j, k;
 		int rp;
@@ -1434,7 +1451,8 @@ public class Vecmath {
 					for (j = ii; j <= i - 1; j++) {
 						sum -= matrix1[rv + j * 4] * matrix2[j + 4 * cv];
 					}
-				} else if (sum != 0f) {
+				}
+				else if (sum != 0f) {
 					ii = i;
 				}
 				matrix2[i + 4 * cv] = sum;
@@ -1446,43 +1464,41 @@ public class Vecmath {
 			matrix2[3 + 4 * cv] /= matrix1[rv + 3 * 4];
 
 			rv--;
-			matrix2[2 + 4 * cv] = (matrix2[2 + 4 * cv] -
-					matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 2 * 4];
+			matrix2[2 + 4 * cv] =
+				(matrix2[2 + 4 * cv] - matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 2 * 4];
 
 			rv--;
-			matrix2[1 + 4 * cv] = (matrix2[1 + 4 * cv] -
-					matrix1[rv + 2 * 4] * matrix2[2 + 4 * cv] -
-					matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 1 * 4];
+			matrix2[1 + 4 * cv] =
+				(matrix2[1 + 4 * cv]
+					- matrix1[rv + 2 * 4] * matrix2[2 + 4 * cv]
+					- matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 1 * 4];
 
 			rv--;
-			matrix2[0 + 4 * cv] = (matrix2[0 + 4 * cv] -
-					matrix1[rv + 1 * 4] * matrix2[1 + 4 * cv] -
-					matrix1[rv + 2 * 4] * matrix2[2 + 4 * cv] -
-					matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 0 * 4];
+			matrix2[0 + 4 * cv] =
+				(matrix2[0 + 4 * cv]
+					- matrix1[rv + 1 * 4] * matrix2[1 + 4 * cv]
+					- matrix1[rv + 2 * 4] * matrix2[2 + 4 * cv]
+					- matrix1[rv + 3 * 4] * matrix2[3 + 4 * cv]) / matrix1[rv + 0 * 4];
 		}
 	}
 
 	/**
 	 * Solves a set of linear equations. The input parameters "matrix1", and
-	 * "row_perm" come from luDecompostionD4x4 and do not change here. The
-	 * parameter "matrix2" is a set of column vectors assembled into a 4x4
-	 * matrix of floating-point values. The procedure takes each column of
-	 * "matrix2" in turn and treats it as the right-hand side of the matrix
-	 * equation Ax = LUx = b. The solution vector replaces the original column
-	 * of the matrix.
+	 * "row_perm" come from luDecompostionD4x4 and do not change here. The parameter
+	 * "matrix2" is a set of column vectors assembled into a 4x4 matrix of
+	 * floating-point values. The procedure takes each column of "matrix2" in turn
+	 * and treats it as the right-hand side of the matrix equation Ax = LUx = b. The
+	 * solution vector replaces the original column of the matrix.
 	 *
-	 * If "matrix2" is the identity matrix, the procedure replaces its contents
-	 * with the inverse of the matrix from which "matrix1" was originally
-	 * derived.
+	 * If "matrix2" is the identity matrix, the procedure replaces its contents with
+	 * the inverse of the matrix from which "matrix1" was originally derived.
 	 */
 	//
 	// Reference: Press, Flannery, Teukolsky, Vetterling,
 	// _Numerical_Recipes_in_C_, Cambridge University Press,
 	// 1988, pp 44-45.
 	//
-	static void luBacksubstitution3x3(float[] matrix1,
-			int[] row_perm,
-			float[] matrix2) {
+	static void luBacksubstitution3x3(float[] matrix1, int[] row_perm, float[] matrix2) {
 
 		int i, ii, ip, j, k;
 		int rp;
@@ -1510,7 +1526,8 @@ public class Vecmath {
 					for (j = ii; j <= i - 1; j++) {
 						sum -= matrix1[rv + j * 3] * matrix2[j + 3 * cv];
 					}
-				} else if (sum != 0f) {
+				}
+				else if (sum != 0f) {
 					ii = i;
 				}
 				matrix2[i + 3 * cv] = sum;
@@ -1522,24 +1539,25 @@ public class Vecmath {
 			matrix2[2 + 3 * cv] /= matrix1[rv + 2 * 3];
 
 			rv--;
-			matrix2[1 + 3 * cv] = (matrix2[1 + 3 * cv] -
-					matrix1[rv + 2 * 3] * matrix2[2 + 3 * cv]) / matrix1[rv + 1 * 3];
+			matrix2[1 + 3 * cv] =
+				(matrix2[1 + 3 * cv] - matrix1[rv + 2 * 3] * matrix2[2 + 3 * cv]) / matrix1[rv + 1 * 3];
 
 			rv--;
-			matrix2[0 + 3 * cv] = (matrix2[0 + 3 * cv] -
-					matrix1[rv + 1 * 3] * matrix2[1 + 3 * cv] -
-					matrix1[rv + 2 * 3] * matrix2[2 + 3 * cv]) / matrix1[rv];
+			matrix2[0 + 3 * cv] =
+				(matrix2[0 + 3 * cv]
+					- matrix1[rv + 1 * 3] * matrix2[1 + 3 * cv]
+					- matrix1[rv + 2 * 3] * matrix2[2 + 3 * cv]) / matrix1[rv];
 		}
 	}
 
 	/**
 	 * Given a 4x4 array "matrix0", this function replaces it with the LU
-	 * decomposition of a row-wise permutation of itself. The input parameters
-	 * are "matrix0" and "dimen". The array "matrix0" is also an output
-	 * parameter. The vector "row_perm[4]" is an output parameter that contains
-	 * the row permutations resulting from partial pivoting. The output
-	 * parameter "even_row_xchg" is 1 when the number of row exchanges is even,
-	 * or -1 otherwise. Assumes data type is always double.
+	 * decomposition of a row-wise permutation of itself. The input parameters are
+	 * "matrix0" and "dimen". The array "matrix0" is also an output parameter. The
+	 * vector "row_perm[4]" is an output parameter that contains the row
+	 * permutations resulting from partial pivoting. The output parameter
+	 * "even_row_xchg" is 1 when the number of row exchanges is even, or -1
+	 * otherwise. Assumes data type is always double.
 	 *
 	 * This function is similar to luDecomposition, except that it is tuned
 	 * specifically for 4x4 matrices.
@@ -1551,8 +1569,7 @@ public class Vecmath {
 	// _Numerical_Recipes_in_C_, Cambridge University Press,
 	// 1988, pp 40-45.
 	//
-	static boolean luDecomposition(double[] matrix0,
-			int[] row_perm) {
+	static boolean luDecomposition(double[] matrix0, int[] row_perm) {
 
 		// Can't re-use this temporary since the method is static.
 		double row_scale[] = new double[4];
@@ -1678,12 +1695,12 @@ public class Vecmath {
 
 	/**
 	 * Given a 4x4 array "matrix0", this function replaces it with the LU
-	 * decomposition of a row-wise permutation of itself. The input parameters
-	 * are "matrix0" and "dimen". The array "matrix0" is also an output
-	 * parameter. The vector "row_perm[4]" is an output parameter that contains
-	 * the row permutations resulting from partial pivoting. The output
-	 * parameter "even_row_xchg" is 1 when the number of row exchanges is even,
-	 * or -1 otherwise. Assumes data type is always float.
+	 * decomposition of a row-wise permutation of itself. The input parameters are
+	 * "matrix0" and "dimen". The array "matrix0" is also an output parameter. The
+	 * vector "row_perm[4]" is an output parameter that contains the row
+	 * permutations resulting from partial pivoting. The output parameter
+	 * "even_row_xchg" is 1 when the number of row exchanges is even, or -1
+	 * otherwise. Assumes data type is always float.
 	 *
 	 * This function is similar to luDecomposition, except that it is tuned
 	 * specifically for 4x4 matrices.
@@ -1695,8 +1712,7 @@ public class Vecmath {
 	// _Numerical_Recipes_in_C_, Cambridge University Press,
 	// 1988, pp 40-45.
 	//
-	static boolean luDecomposition(float[] matrix0,
-			int[] row_perm) {
+	static boolean luDecomposition(float[] matrix0, int[] row_perm) {
 
 		// Can't re-use this temporary since the method is static.
 		float row_scale[] = new float[4];
@@ -1822,12 +1838,12 @@ public class Vecmath {
 
 	/**
 	 * Given a 4x4 array "matrix0", this function replaces it with the LU
-	 * decomposition of a row-wise permutation of itself. The input parameters
-	 * are "matrix0" and "dimen". The array "matrix0" is also an output
-	 * parameter. The vector "row_perm[4]" is an output parameter that contains
-	 * the row permutations resulting from partial pivoting. The output
-	 * parameter "even_row_xchg" is 1 when the number of row exchanges is even,
-	 * or -1 otherwise. Assumes data type is always float.
+	 * decomposition of a row-wise permutation of itself. The input parameters are
+	 * "matrix0" and "dimen". The array "matrix0" is also an output parameter. The
+	 * vector "row_perm[4]" is an output parameter that contains the row
+	 * permutations resulting from partial pivoting. The output parameter
+	 * "even_row_xchg" is 1 when the number of row exchanges is even, or -1
+	 * otherwise. Assumes data type is always float.
 	 *
 	 * This function is similar to luDecomposition, except that it is tuned
 	 * specifically for 4x4 matrices.
@@ -1839,8 +1855,7 @@ public class Vecmath {
 	// _Numerical_Recipes_in_C_, Cambridge University Press,
 	// 1988, pp 40-45.
 	//
-	static boolean luDecomposition3x3(float[] matrix0,
-			int[] row_perm) {
+	static boolean luDecomposition3x3(float[] matrix0, int[] row_perm) {
 
 		// Can't re-use this temporary since the method is static.
 		float row_scale[] = new float[3];
@@ -2050,7 +2065,8 @@ public class Vecmath {
 			out[7] = m31;
 			out[11] = m32;
 			out[15] = m33;
-		} else {
+		}
+		else {
 			out[0] = ma[0] * mb[0] + ma[4] * mb[1] + ma[8] * mb[2] + ma[12] * mb[3];
 			out[4] = ma[0] * mb[4] + ma[4] * mb[5] + ma[8] * mb[6] + ma[12] * mb[7];
 			out[8] = ma[0] * mb[8] + ma[4] * mb[9] + ma[8] * mb[10] + ma[12] * mb[11];
@@ -2111,7 +2127,8 @@ public class Vecmath {
 			out[7] = m31;
 			out[11] = m32;
 			out[15] = m33;
-		} else {
+		}
+		else {
 			out[0] = ma[0] * mb[0] + ma[4] * mb[1] + ma[8] * mb[2] + ma[12] * mb[3];
 			out[4] = ma[0] * mb[4] + ma[4] * mb[5] + ma[8] * mb[6] + ma[12] * mb[7];
 			out[8] = ma[0] * mb[8] + ma[4] * mb[9] + ma[8] * mb[10] + ma[12] * mb[11];
@@ -2157,7 +2174,8 @@ public class Vecmath {
 			out[6] = m20;
 			out[7] = m21;
 			out[8] = m22;
-		} else {
+		}
+		else {
 			out[0] = ma[0] * mb[0] + ma[1] * mb[3] + ma[2] * mb[6];
 			out[1] = ma[0] * mb[1] + ma[1] * mb[4] + ma[2] * mb[7];
 			out[2] = ma[0] * mb[2] + ma[1] * mb[5] + ma[2] * mb[8];
@@ -2200,7 +2218,8 @@ public class Vecmath {
 			out[6] = m20;
 			out[7] = m21;
 			out[8] = m22;
-		} else {
+		}
+		else {
 			out[0] = ma[0] * mb[0] + ma[1] * mb[3] + ma[2] * mb[6];
 			out[1] = ma[0] * mb[1] + ma[1] * mb[4] + ma[2] * mb[7];
 			out[2] = ma[0] * mb[2] + ma[1] * mb[5] + ma[2] * mb[8];
@@ -2244,7 +2263,8 @@ public class Vecmath {
 			out[6] = m21;
 			out[10] = m22;
 			out[14] = m23;
-		} else {
+		}
+		else {
 			out[0] = ma[0] * mb[0] + ma[4] * mb[1] + ma[8] * mb[2];
 			out[4] = ma[0] * mb[4] + ma[4] * mb[5] + ma[8] * mb[6];
 			out[8] = ma[0] * mb[8] + ma[4] * mb[9] + ma[8] * mb[10];
@@ -2291,7 +2311,8 @@ public class Vecmath {
 			out[6] = m21;
 			out[10] = m22;
 			out[14] = m23;
-		} else {
+		}
+		else {
 			out[0] = ma[0] * mb[0] + ma[4] * mb[1] + ma[8] * mb[2];
 			out[4] = ma[0] * mb[4] + ma[4] * mb[5] + ma[8] * mb[6];
 			out[8] = ma[0] * mb[8] + ma[4] * mb[9] + ma[8] * mb[10];
@@ -2332,7 +2353,8 @@ public class Vecmath {
 			out[2] = m20;
 			out[6] = m21;
 			out[10] = m22;
-		} else {
+		}
+		else {
 			out[0] = ma[0] * mb[0] + ma[4] * mb[1] + ma[8] * mb[2];
 			out[4] = ma[0] * mb[4] + ma[4] * mb[5] + ma[8] * mb[6];
 			out[8] = ma[0] * mb[8] + ma[4] * mb[9] + ma[8] * mb[10];
@@ -2370,7 +2392,8 @@ public class Vecmath {
 			out[2] = m20;
 			out[6] = m21;
 			out[10] = m22;
-		} else {
+		}
+		else {
 			out[0] = ma[0] * mb[0] + ma[4] * mb[1] + ma[8] * mb[2];
 			out[4] = ma[0] * mb[4] + ma[4] * mb[5] + ma[8] * mb[6];
 			out[8] = ma[0] * mb[8] + ma[4] * mb[9] + ma[8] * mb[10];
@@ -2400,7 +2423,8 @@ public class Vecmath {
 			out[0] = rw * (m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12]);
 			out[1] = rw * (m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13]);
 			out[2] = rw * (m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]);
-		} else {
+		}
+		else {
 			mpmul(m, p);
 		}
 	}
@@ -2420,7 +2444,8 @@ public class Vecmath {
 			out[0] = rw * (m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12]);
 			out[1] = rw * (m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13]);
 			out[2] = rw * (m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]);
-		} else {
+		}
+		else {
 			mpmul(m, p);
 		}
 	}
@@ -2444,7 +2469,8 @@ public class Vecmath {
 			out[0] = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
 			out[1] = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
 			out[2] = m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14];
-		} else {
+		}
+		else {
 			mpmulAffine(m, p);
 		}
 	}
@@ -2462,7 +2488,8 @@ public class Vecmath {
 			out[outi] = m[0] * p[vi] + m[4] * p[vi + 1] + m[8] * p[vi + 2] + m[12];
 			out[outi + 1] = m[1] * p[vi] + m[5] * p[vi + 1] + m[9] * p[vi + 2] + m[13];
 			out[outi + 2] = m[2] * p[vi] + m[6] * p[vi + 1] + m[10] * p[vi + 2] + m[14];
-		} else {
+		}
+		else {
 			mpmulAffine(m, p, vi);
 		}
 	}
@@ -2492,7 +2519,8 @@ public class Vecmath {
 			out[0] = m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12];
 			out[1] = m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13];
 			out[2] = m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14];
-		} else {
+		}
+		else {
 			mpmulAffine(m, p);
 		}
 	}
@@ -2510,7 +2538,8 @@ public class Vecmath {
 			out[outi] = m[0] * p[vi] + m[4] * p[vi + 1] + m[8] * p[vi + 2] + m[12];
 			out[outi + 1] = m[1] * p[vi] + m[5] * p[vi + 1] + m[9] * p[vi + 2] + m[13];
 			out[outi + 2] = m[2] * p[vi] + m[6] * p[vi + 1] + m[10] * p[vi + 2] + m[14];
-		} else {
+		}
+		else {
 			mpmulAffine(m, p, vi);
 		}
 	}
@@ -2518,12 +2547,9 @@ public class Vecmath {
 	/**
 	 * Multiples a 3x3 matrix by a column vector, outputting a column vector.
 	 *
-	 * @param m
-	 *            a 3x3 matrix as a column-major array
-	 * @param v
-	 *            a 3-coordinate vector
-	 * @param out
-	 *            the output, a 3-coordinate vector
+	 * @param m   a 3x3 matrix as a column-major array
+	 * @param v   a 3-coordinate vector
+	 * @param out the output, a 3-coordinate vector
 	 */
 	public static void mvmul3x3(float[] m, float[] v, float[] out) {
 		out[0] = m[0] * v[0] + m[3] * v[1] + m[6] * v[2];
@@ -2556,7 +2582,8 @@ public class Vecmath {
 			out[0] = m[0] * v[0] + m[4] * v[1] + m[8] * v[2];
 			out[1] = m[1] * v[0] + m[5] * v[1] + m[9] * v[2];
 			out[2] = m[2] * v[0] + m[6] * v[1] + m[10] * v[2];
-		} else {
+		}
+		else {
 			mvmulAffine(m, v);
 		}
 	}
@@ -2574,7 +2601,8 @@ public class Vecmath {
 			out[outi] = m[0] * v[vi] + m[4] * v[vi + 1] + m[8] * v[vi + 2];
 			out[outi + 1] = m[1] * v[vi] + m[5] * v[vi + 1] + m[9] * v[vi + 2];
 			out[outi + 2] = m[2] * v[vi] + m[6] * v[vi + 1] + m[10] * v[vi + 2];
-		} else {
+		}
+		else {
 			mvmulAffine(m, v, vi);
 		}
 	}
@@ -2610,7 +2638,8 @@ public class Vecmath {
 			out[0] = m[0] * v[0] + m[4] * v[1] + m[8] * v[2];
 			out[1] = m[1] * v[0] + m[5] * v[1] + m[9] * v[2];
 			out[2] = m[2] * v[0] + m[6] * v[1] + m[10] * v[2];
-		} else {
+		}
+		else {
 			mvmulAffine(m, v);
 		}
 	}
@@ -2628,7 +2657,8 @@ public class Vecmath {
 			out[outi] = m[0] * v[vi] + m[4] * v[vi + 1] + m[8] * v[vi + 2];
 			out[outi + 1] = m[1] * v[vi] + m[5] * v[vi + 1] + m[9] * v[vi + 2];
 			out[outi + 2] = m[2] * v[vi] + m[6] * v[vi + 1] + m[10] * v[vi + 2];
-		} else {
+		}
+		else {
 			mvmulAffine(m, v, vi);
 		}
 	}
@@ -2777,8 +2807,14 @@ public class Vecmath {
 		out[outi + 2] = (float) (v[vi + 2] * factor);
 	}
 
-	public static void ortho(double[] mat, double left, double right, double bottom, double top, double zNear,
-			double zFar) {
+	public static void ortho(
+		double[] mat,
+		double left,
+		double right,
+		double bottom,
+		double top,
+		double zNear,
+		double zFar) {
 		mat[0] = 2 / (right - left);
 		mat[12] = -(right + left) / (right - left);
 		mat[5] = 2 / (top - bottom);
@@ -2843,27 +2879,22 @@ public class Vecmath {
 	/**
 	 * Creates a perspective projection transform that mimics a standard,
 	 * camera-based, view-model. This transform maps coordinates from Eye
-	 * Coordinates (EC) to Clipping Coordinates (CC). Note that unlike the
-	 * similar function in OpenGL, the clipping coordinates generated by the
-	 * resulting transform are in a right-handed coordinate system (as are all
-	 * other coordinate systems in Java 3D). Also note that the field of view is
-	 * specified in radians.
+	 * Coordinates (EC) to Clipping Coordinates (CC). Note that unlike the similar
+	 * function in OpenGL, the clipping coordinates generated by the resulting
+	 * transform are in a right-handed coordinate system (as are all other
+	 * coordinate systems in Java 3D). Also note that the field of view is specified
+	 * in radians.
 	 *
-	 * @param fovx
-	 *            specifies the field of view in the x direction, in radians
-	 * @param aspect
-	 *            specifies the aspect ratio and thus the field of view in the x
-	 *            direction. The aspect ratio is the ratio of x to y, or width
-	 *            to height.
-	 * @param zNear
-	 *            the distance to the frustum's near clipping plane. This value
-	 *            must be positive, (the value -zNear is the location of the
-	 *            near clip plane).
-	 * @param zFar
-	 *            the distance to the frustum's far clipping plane
+	 * @param fovx   specifies the field of view in the x direction, in radians
+	 * @param aspect specifies the aspect ratio and thus the field of view in the x
+	 *               direction. The aspect ratio is the ratio of x to y, or width to
+	 *               height.
+	 * @param zNear  the distance to the frustum's near clipping plane. This value
+	 *               must be positive, (the value -zNear is the location of the near
+	 *               clip plane).
+	 * @param zFar   the distance to the frustum's far clipping plane
 	 */
-	public static void perspective(double[] mat, double fovx, double aspect,
-			double zNear, double zFar) {
+	public static void perspective(double[] mat, double fovx, double aspect, double zNear, double zFar) {
 		double sine, cotangent, deltaZ;
 		double half_fov = fovx * 0.5f;
 
@@ -2882,24 +2913,19 @@ public class Vecmath {
 	/**
 	 * Creates a perspective projection transform that mimics a standard,
 	 * camera-based, view-model. This transform maps coordinates from Eye
-	 * Coordinates (EC) to Clipping Coordinates (CC). Note that the field of
-	 * view is specified in radians.
+	 * Coordinates (EC) to Clipping Coordinates (CC). Note that the field of view is
+	 * specified in radians.
 	 *
-	 * @param fovx
-	 *            specifies the field of view in the x direction, in radians
-	 * @param aspect
-	 *            specifies the aspect ratio and thus the field of view in the x
-	 *            direction. The aspect ratio is the ratio of x to y, or width
-	 *            to height.
-	 * @param zNear
-	 *            the distance to the frustum's near clipping plane. This value
-	 *            must be positive, (the value -zNear is the location of the
-	 *            near clip plane).
-	 * @param zFar
-	 *            the distance to the frustum's far clipping plane
+	 * @param fovx   specifies the field of view in the x direction, in radians
+	 * @param aspect specifies the aspect ratio and thus the field of view in the x
+	 *               direction. The aspect ratio is the ratio of x to y, or width to
+	 *               height.
+	 * @param zNear  the distance to the frustum's near clipping plane. This value
+	 *               must be positive, (the value -zNear is the location of the near
+	 *               clip plane).
+	 * @param zFar   the distance to the frustum's far clipping plane
 	 */
-	public static void perspective(float[] mat, float fovx, float aspect,
-			float zNear, float zFar) {
+	public static void perspective(float[] mat, float fovx, float aspect, float zNear, float zFar) {
 		float sine, cotangent, deltaZ;
 		float half_fov = fovx * 0.5f;
 
@@ -2992,8 +3018,8 @@ public class Vecmath {
 	}
 
 	/**
-	 * Projects the vector from an {@code origin} to a {@code point} onto
-	 * another vector, storing the result in {@code out}.
+	 * Projects the vector from an {@code origin} to a {@code point} onto another
+	 * vector, storing the result in {@code out}.
 	 *
 	 * @param point
 	 * @param origin
@@ -3015,7 +3041,8 @@ public class Vecmath {
 		if (startAngle < endAngle) {
 			double result = endAngle - startAngle;
 			return result < Math.PI ? result : result - Math.PI * 2;
-		} else {
+		}
+		else {
 			double result = endAngle - startAngle;
 			return result > -Math.PI ? result : result + Math.PI * 2;
 		}
@@ -3025,19 +3052,19 @@ public class Vecmath {
 		if (startAngle < endAngle) {
 			float result = endAngle - startAngle;
 			return result < Math.PI ? result : (float) (result - Math.PI * 2);
-		} else {
+		}
+		else {
 			float result = endAngle - startAngle;
 			return result > -Math.PI ? result : (float) (result + Math.PI * 2);
 		}
 	}
 
 	/**
-	 * Sets the value of this transform to a counter clockwise rotation about
-	 * the x axis. All of the non-rotational components are set as if this were
-	 * an identity matrix.
+	 * Sets the value of this transform to a counter clockwise rotation about the x
+	 * axis. All of the non-rotational components are set as if this were an
+	 * identity matrix.
 	 *
-	 * @param angle
-	 *            the angle to rotate about the X axis in radians
+	 * @param angle the angle to rotate about the X axis in radians
 	 */
 	public static void rotX(double[] mat, double angle) {
 		double sinAngle = Math.sin(angle);
@@ -3065,12 +3092,11 @@ public class Vecmath {
 	}
 
 	/**
-	 * Sets the value of this transform to a counter clockwise rotation about
-	 * the x axis. All of the non-rotational components are set as if this were
-	 * an identity matrix.
+	 * Sets the value of this transform to a counter clockwise rotation about the x
+	 * axis. All of the non-rotational components are set as if this were an
+	 * identity matrix.
 	 *
-	 * @param angle
-	 *            the angle to rotate about the X axis in radians
+	 * @param angle the angle to rotate about the X axis in radians
 	 */
 	public static void rotX(float[] mat, float angle) {
 		float sinAngle = (float) Math.sin(angle);
@@ -3098,12 +3124,11 @@ public class Vecmath {
 	}
 
 	/**
-	 * Sets the value of this transform to a counter clockwise rotation about
-	 * the y axis. All of the non-rotational components are set as if this were
-	 * an identity matrix.
+	 * Sets the value of this transform to a counter clockwise rotation about the y
+	 * axis. All of the non-rotational components are set as if this were an
+	 * identity matrix.
 	 *
-	 * @param angle
-	 *            the angle to rotate about the Y axis in radians
+	 * @param angle the angle to rotate about the Y axis in radians
 	 */
 	public static void rotY(double[] mat, double angle) {
 		double sinAngle = Math.sin(angle);
@@ -3131,12 +3156,11 @@ public class Vecmath {
 	}
 
 	/**
-	 * Sets the value of this transform to a counter clockwise rotation about
-	 * the y axis. All of the non-rotational components are set as if this were
-	 * an identity matrix.
+	 * Sets the value of this transform to a counter clockwise rotation about the y
+	 * axis. All of the non-rotational components are set as if this were an
+	 * identity matrix.
 	 *
-	 * @param angle
-	 *            the angle to rotate about the Y axis in radians
+	 * @param angle the angle to rotate about the Y axis in radians
 	 */
 	public static void rotY(float[] mat, float angle) {
 		float sinAngle = (float) Math.sin(angle);
@@ -3164,12 +3188,11 @@ public class Vecmath {
 	}
 
 	/**
-	 * Sets the value of this transform to a counter clockwise rotation about
-	 * the z axis. All of the non-rotational components are set as if this were
-	 * an identity matrix.
+	 * Sets the value of this transform to a counter clockwise rotation about the z
+	 * axis. All of the non-rotational components are set as if this were an
+	 * identity matrix.
 	 *
-	 * @param angle
-	 *            the angle to rotate about the Z axis in radians
+	 * @param angle the angle to rotate about the Z axis in radians
 	 */
 	public static void rotZ(double[] mat, double angle) {
 		double sinAngle = Math.sin(angle);
@@ -3197,12 +3220,11 @@ public class Vecmath {
 	}
 
 	/**
-	 * Sets the value of this transform to a counter clockwise rotation about
-	 * the z axis. All of the non-rotational components are set as if this were
-	 * an identity matrix.
+	 * Sets the value of this transform to a counter clockwise rotation about the z
+	 * axis. All of the non-rotational components are set as if this were an
+	 * identity matrix.
 	 *
-	 * @param angle
-	 *            the angle to rotate about the Z axis in radians
+	 * @param angle the angle to rotate about the Z axis in radians
 	 */
 	public static void rotZ(float[] mat, float angle) {
 		float sinAngle = (float) Math.sin(angle);
@@ -3279,7 +3301,7 @@ public class Vecmath {
 		out[1] = a * b[1] + c[1];
 		out[2] = a * b[2] + c[2];
 	}
-	
+
 	/**
 	 * Computes out = a * b + c
 	 */
@@ -3288,7 +3310,6 @@ public class Vecmath {
 		out[1] = (float) (a * b[1] + c[1]);
 		out[2] = (float) (a * b[2] + c[2]);
 	}
-
 
 	/**
 	 * Computes out = a * b + c
@@ -3302,10 +3323,8 @@ public class Vecmath {
 	/**
 	 * Computes the outer product of a 3D vector with itself
 	 *
-	 * @param a
-	 *            a 3-coordinate vector
-	 * @param out
-	 *            a 3x3 matrix as a column-major array
+	 * @param a   a 3-coordinate vector
+	 * @param out a 3x3 matrix as a column-major array
 	 */
 	public static void selfOuterProduct3(float[] a, float[] out) {
 		out[0] = a[0] * a[0];
@@ -3550,15 +3569,15 @@ public class Vecmath {
 	 * transform are unchanged; any pre-existing scale in the transform is
 	 * preserved.
 	 *
-	 * @param a1
-	 *            the axis-angle to be converted (x, y, z, angle)
+	 * @param a1 the axis-angle to be converted (x, y, z, angle)
 	 */
 	public static void setRotation(double[] mat, double x, double y, double z, double angle) {
 		double mag = Math.sqrt(x * x + y * y + z * z);
 
 		if (almostZero(mag)) {
 			setIdentity(mat);
-		} else {
+		}
+		else {
 			mag = 1f / mag;
 			double ax = x * mag;
 			double ay = y * mag;
@@ -3604,15 +3623,15 @@ public class Vecmath {
 	 * transform are unchanged; any pre-existing scale in the transform is
 	 * preserved.
 	 *
-	 * @param a1
-	 *            the axis-angle to be converted (x, y, z, angle)
+	 * @param a1 the axis-angle to be converted (x, y, z, angle)
 	 */
 	public static void setRotation(float[] mat, float x, float y, float z, float angle) {
 		float mag = (float) Math.sqrt(x * x + y * y + z * z);
 
 		if (almostZero(mag)) {
 			setIdentity(mat);
-		} else {
+		}
+		else {
 			mag = 1f / mag;
 			float ax = x * mag;
 			float ay = y * mag;
@@ -3813,15 +3832,23 @@ public class Vecmath {
 	 * Computes (a - b) dot c.
 	 */
 	public static float subDot3(float[] a, int ai, float[] b, int bi, float[] c, int ci) {
-		return (a[ai + 0] - b[bi + 0]) * c[ci + 0] +
-				(a[ai + 1] - b[bi + 1]) * c[ci + 1] +
-				(a[ai + 2] - b[bi + 2]) * c[ci + 2];
+		return (a[ai + 0] - b[bi + 0]) * c[ci + 0]
+			+ (a[ai + 1] - b[bi + 1]) * c[ci + 1]
+			+ (a[ai + 2] - b[bi + 2]) * c[ci + 2];
 	}
 
 	/**
 	 * Computes (b - a) x (c - a).
 	 */
-	public static void threePointNormal(float[] a, int ai, float[] b, int bi, float[] c, int ci, float[] out, int outi) {
+	public static void threePointNormal(
+		float[] a,
+		int ai,
+		float[] b,
+		int bi,
+		float[] c,
+		int ci,
+		float[] out,
+		int outi) {
 		float b0 = b[bi] - a[ai];
 		float b1 = b[bi + 1] - a[ai + 1];
 		float b2 = b[bi + 2] - a[ai + 2];
@@ -3837,7 +3864,7 @@ public class Vecmath {
 		out[outi + 1] = y;
 		out[outi + 2] = z;
 	}
-	
+
 	/**
 	 * Computes (b - a) x (c - a).
 	 */
@@ -3887,7 +3914,8 @@ public class Vecmath {
 			out[13] = m[7];
 			out[14] = m[11];
 			out[15] = m[15];
-		} else {
+		}
+		else {
 			double t = m[1];
 			m[1] = m[4];
 			m[4] = t;
@@ -3935,7 +3963,8 @@ public class Vecmath {
 			out[13] = m[13];
 			out[14] = m[14];
 			out[15] = m[15];
-		} else {
+		}
+		else {
 			float t = m[4];
 			m[4] = m[1];
 			m[1] = t;
@@ -3965,10 +3994,8 @@ public class Vecmath {
 	/**
 	 * Transposes the upper left 3x3 portion of {@code mat} to {@code out}.
 	 *
-	 * @param mat
-	 *            a 16-element double array.
-	 * @param out
-	 *            a 9-element double array.
+	 * @param mat a 16-element double array.
+	 * @param out a 9-element double array.
 	 */
 	public static void transposeTo3x3(double[] mat, double[] out) {
 		out[0] = mat[0];
@@ -3985,10 +4012,8 @@ public class Vecmath {
 	/**
 	 * Transposes the upper left 3x3 portion of {@code mat} to {@code out}.
 	 *
-	 * @param mat
-	 *            a 16-element float array.
-	 * @param out
-	 *            a 9-element float array.
+	 * @param mat a 16-element float array.
+	 * @param out a 9-element float array.
 	 */
 	public static void transposeTo3x3(float[] mat, float[] out) {
 		out[0] = mat[0];
@@ -4003,8 +4028,8 @@ public class Vecmath {
 	}
 
 	/**
-	 * Projects 3-dimensional vector {@code a} onto a plane with normal
-	 * {@code n}, storing the result in {@code out}.
+	 * Projects 3-dimensional vector {@code a} onto a plane with normal {@code n},
+	 * storing the result in {@code out}.
 	 */
 	public static void vpproj3(double[] a, double[] n, double[] out) {
 		double aDotN = dot3(a, n);
@@ -4018,8 +4043,8 @@ public class Vecmath {
 	}
 
 	/**
-	 * Projects 3-dimensional vector {@code a} onto a plane with normal
-	 * {@code n}, storing the result in {@code out}.
+	 * Projects 3-dimensional vector {@code a} onto a plane with normal {@code n},
+	 * storing the result in {@code out}.
 	 */
 	public static void vpproj3(float[] a, float[] n, float[] out) {
 		float aDotN = dot3(a, n);
@@ -4033,29 +4058,29 @@ public class Vecmath {
 	}
 
 	/**
-	 * Projects 3-dimensional vector {@code a} onto vector {@code b}, storing
-	 * the result in {@code out}.
+	 * Projects 3-dimensional vector {@code a} onto vector {@code b}, storing the
+	 * result in {@code out}.
 	 */
 	public static void vvproj3(double[] a, double[] b, double[] out) {
 		scale3(b, dot3(a, b) / dot3(b, b), out);
 	}
 
 	/**
-	 * Projects 3-dimensional vector {@code a} onto vector {@code b}, storing
-	 * the result in {@code out}.
+	 * Projects 3-dimensional vector {@code a} onto vector {@code b}, storing the
+	 * result in {@code out}.
 	 */
 	public static void vvproj3(float[] a, float[] b, float[] out) {
 		scale3(b, dot3(a, b) / dot3(b, b), out);
 	}
-	
+
 	/**
-	 * Rejects 3-dimensional vector {@code a} onto vector {@code b}, storing
-	 * the result in {@code out}.
+	 * Rejects 3-dimensional vector {@code a} onto vector {@code b}, storing the
+	 * result in {@code out}.
 	 */
 	public static void vvreject3(float[] a, float[] b, float[] out) {
 		scaleAdd3(-dot3(a, b) / dot3(b, b), b, a, out);
 	}
-	
+
 	public static void viewFrom(float[] right, float[] up, float[] location, float[] out) {
 		Vecmath.normalize3(right, 0, out, 0);
 		Vecmath.normalize3(up, 0, out, 4);
@@ -4064,14 +4089,15 @@ public class Vecmath {
 		out[15] = 1;
 		invAffine(out);
 	}
-	
+
 	/**
 	 * Interpolates between one unit vector and another by rotation instead of
-	 * componentwise interpolation.  For instance if a = y axis, b = x axis,
-	 * and f = 0.5, out is a rotated halfway toward b (45 degrees about the z axis).
-	 * @param a The starting vector
-	 * @param b The ending vector
-	 * @param f the interpolation amount.  0 = a, 1 = b, 0.5 = halfway inbetween
+	 * componentwise interpolation. For instance if a = y axis, b = x axis, and f =
+	 * 0.5, out is a rotated halfway toward b (45 degrees about the z axis).
+	 * 
+	 * @param a   The starting vector
+	 * @param b   The ending vector
+	 * @param f   the interpolation amount. 0 = a, 1 = b, 0.5 = halfway inbetween
 	 * @param out the array to store the output vector in
 	 */
 	public static void interpRot3(float[] a, float[] b, float f, float[] out) {

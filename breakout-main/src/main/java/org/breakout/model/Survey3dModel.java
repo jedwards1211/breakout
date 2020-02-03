@@ -970,7 +970,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 				for (int index : shot.indices) {
 					fillIndicesHelper.put(index + shot3d.indexInVertices);
-					lineIndicesHelper.put(index + shot3d.indexInVertices);
+				}
+				for (int i = 0; i < shot.indices.length; i += 3) {
+					lineIndicesHelper.put(shot.indices[i] + shot3d.indexInVertices);
+					lineIndicesHelper.put(shot.indices[i + 1] + shot3d.indexInVertices);
+					lineIndicesHelper.put(shot.indices[i + 1] + shot3d.indexInVertices);
+					lineIndicesHelper.put(shot.indices[i + 2] + shot3d.indexInVertices);
+					lineIndicesHelper.put(shot.indices[i + 2] + shot3d.indexInVertices);
+					lineIndicesHelper.put(shot.indices[i] + shot3d.indexInVertices);
 				}
 			}
 			vertexCount = geomHelper.sizeInBytes() / GEOM_BPV;
@@ -1619,8 +1626,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		task.runSubtask(1, subtask -> {
 			subtask.setTotal(project.shots.size());
 			for (Map.Entry<ShotKey, CalcShot> entry : project.shots.entrySet()) {
-				if (!entry.getValue().isExcludeFromPlotting()) {
-					shot3ds.put(entry.getKey(), new Shot3d(entry.getKey(), entry.getValue()));
+				CalcShot shot = entry.getValue();
+				if (!shot.isExcludeFromPlotting() && !shot.isSplay()) {
+					shot3ds.put(entry.getKey(), new Shot3d(entry.getKey(), shot));
 				}
 				subtask.increment();
 			}

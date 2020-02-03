@@ -193,6 +193,11 @@
 			<artifactId>datescraper</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.andork</groupId>
+			<artifactId>quickhull3d</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 	<profiles>
 		<profile>
