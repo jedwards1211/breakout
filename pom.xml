@@ -24,6 +24,9 @@
 		<module>breakout</module>
 		<module>dewalls-java</module>
 		<module>datescraper</module>
+		<module>robustmath</module>
+		<module>robustorientation</module>
+		<module>quickhull3d</module>
 	</modules>
 
 	<build>
