@@ -13,8 +13,11 @@ import java.util.Set;
 import org.andork.collect.Iterables;
 import org.andork.collect.PriorityEntry;
 import org.andork.math.misc.Angles;
+import org.andork.math3d.NormalGenerator3f;
+import org.andork.math3d.NormalGenerator3f.MeshBuilder;
+import org.andork.math3d.NormalGenerator3f.Triangle;
+import org.andork.math3d.NormalGenerator3f.Vertex;
 import org.andork.math3d.Vecmath;
-import org.andork.quickhull3d.Edge;
 import org.andork.quickhull3d.Face;
 import org.andork.quickhull3d.Quickhull;
 import org.breakout.model.CrossSectionType;
@@ -585,22 +588,47 @@ public class CalculateGeometry {
 			return;
 		}
 
+		MeshBuilder mesh = new MeshBuilder();
+		for (Face<SplayVertex> face : hull) {
+			SplayVertex v0 = face.edges[0].nextVertex;
+			SplayVertex v1 = face.edges[1].nextVertex;
+			SplayVertex v2 = face.edges[2].nextVertex;
+
+			mesh
+				.add(
+					(float) v0.originalX,
+					(float) v0.originalY,
+					(float) v0.originalZ,
+					(float) v2.originalX,
+					(float) v2.originalY,
+					(float) v2.originalZ,
+					(float) v1.originalX,
+					(float) v1.originalY,
+					(float) v1.originalZ);
+		}
+		NormalGenerator3f normalgen = new NormalGenerator3f(mesh.getTriangles());
+		normalgen.foldAngle(Math.PI / 4);
+		normalgen.foldSharpness(0.75f);
+		normalgen.generateNormals();
+
+		Triangle[] finalTriangles = normalgen.triangles();
+
 		if (realShots.size() == 1) {
 			CalcShot shot = realShots.get(0);
-			if (shot.splayFaces != null) {
-				shot.splayFaces.addAll(hull);
+			if (shot.splayTriangles == null) {
+				shot.splayTriangles = new ArrayList<>(finalTriangles.length);
 			}
-			else {
-				shot.splayFaces = new ArrayList<>(hull);
+			for (Triangle t : finalTriangles) {
+				shot.splayTriangles.add(t);
 			}
 		}
 		else {
-			for (Face<SplayVertex> face : hull) {
+			for (Triangle triangle : finalTriangles) {
 				double[] centroid = new double[3];
-				for (Edge<SplayVertex> edge : face.edges) {
-					centroid[0] += edge.nextVertex.originalX;
-					centroid[1] += edge.nextVertex.originalY;
-					centroid[2] += edge.nextVertex.originalZ;
+				for (NormalGenerator3f.Edge edge : triangle.edges) {
+					centroid[0] += edge.vertex.x;
+					centroid[1] += edge.vertex.y;
+					centroid[2] += edge.vertex.z;
 				}
 				centroid[0] /= 3;
 				centroid[1] /= 3;
@@ -615,14 +643,14 @@ public class CalculateGeometry {
 						closestDistSq = distSq;
 					}
 				}
-				if (closestShot.splayFaces == null) {
-					closestShot.splayFaces = new ArrayList<>();
+				if (closestShot.splayTriangles == null) {
+					closestShot.splayTriangles = new ArrayList<>();
 				}
-				closestShot.splayFaces.add(face);
+				closestShot.splayTriangles.add(triangle);
 			}
 			for (CalcShot shot : realShots) {
-				if (shot.splayFaces != null) {
-					((ArrayList<Face<SplayVertex>>) shot.splayFaces).trimToSize();
+				if (shot.splayTriangles != null) {
+					((ArrayList<Triangle>) shot.splayTriangles).trimToSize();
 				}
 			}
 		}
@@ -645,7 +673,7 @@ public class CalculateGeometry {
 
 		int fromVertexCount = getVertexCount(shot.fromCrossSection);
 		int toVertexCount = getVertexCount(shot.toCrossSection);
-		Map<SplayVertex, Integer> splayIndices = null;
+		Map<Vertex, Integer> splayIndices = null;
 		int splayVertexCount = 0;
 		int triangleCount = 0;
 		if (fromVertexCount == 1 && toVertexCount == 1) {
@@ -666,18 +694,19 @@ public class CalculateGeometry {
 				triangleCount += toVertexCount - 2;
 			}
 		}
-		if (shot.splayFaces != null) {
-			int i = fromVertexCount + toVertexCount;
+		if (shot.splayTriangles != null) {
+			triangleCount += shot.splayTriangles.size();
 			splayIndices = new IdentityHashMap<>();
-			for (Face<SplayVertex> face : shot.splayFaces) {
-				for (Edge<SplayVertex> edge : face.edges) {
-					if (!splayIndices.containsKey(edge.nextVertex)) {
-						splayIndices.put(edge.nextVertex, i++);
-					}
+			int nextIndex = fromVertexCount + toVertexCount;
+			for (Triangle triangle : shot.splayTriangles) {
+				for (NormalGenerator3f.Edge edge : triangle.edges) {
+					Vertex v = edge.vertex;
+					if (splayIndices.containsKey(v))
+						continue;
+					splayIndices.put(v, nextIndex++);
 				}
 			}
 			splayVertexCount = splayIndices.size();
-			triangleCount += shot.splayFaces.size();
 		}
 
 		int vertexCount = fromVertexCount + toVertexCount + splayVertexCount;
@@ -696,20 +725,6 @@ public class CalculateGeometry {
 
 		for (int i = fromVertexCount; i < shot.polarities.length; i++) {
 			shot.polarities[i] = 1;
-		}
-
-		if (splayIndices != null) {
-			for (Map.Entry<SplayVertex, Integer> entry : splayIndices.entrySet()) {
-				SplayVertex vertex = entry.getKey();
-				int index = entry.getValue() * 3;
-				shot.vertices[index++] = (float) vertex.originalX;
-				shot.vertices[index++] = (float) vertex.originalY;
-				shot.vertices[index++] = (float) vertex.originalZ;
-				index = entry.getValue() * 3;
-				shot.normals[index++] = (float) vertex.normalizedX;
-				shot.normals[index++] = (float) vertex.normalizedY;
-				shot.normals[index++] = (float) vertex.normalizedZ;
-			}
 		}
 
 		int[] indices = shot.indices = new int[triangleCount * 3];
@@ -770,10 +785,20 @@ public class CalculateGeometry {
 			}
 		}
 
-		if (shot.splayFaces != null) {
-			for (Face<SplayVertex> face : shot.splayFaces) {
-				for (Edge<SplayVertex> edge : face.edges) {
-					indices[k++] = splayIndices.get(edge.nextVertex);
+		if (shot.splayTriangles != null) {
+			for (Map.Entry<Vertex, Integer> entry : splayIndices.entrySet()) {
+				Vertex v = entry.getKey();
+				int index = entry.getValue() * 3;
+				shot.vertices[index] = v.x;
+				shot.vertices[index + 1] = v.y;
+				shot.vertices[index + 2] = v.z;
+				shot.normals[index] = v.normalX;
+				shot.normals[index + 1] = v.normalY;
+				shot.normals[index + 2] = v.normalZ;
+			}
+			for (Triangle triangle : shot.splayTriangles) {
+				for (NormalGenerator3f.Edge edge : triangle.edges) {
+					indices[k++] = splayIndices.get(edge.vertex);
 				}
 			}
 		}

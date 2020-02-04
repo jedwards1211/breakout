@@ -3,7 +3,7 @@ package org.breakout.model.calc;
 import java.util.Collection;
 import java.util.Date;
 
-import org.andork.quickhull3d.Face;
+import org.andork.math3d.NormalGenerator3f.Triangle;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 
@@ -24,7 +24,7 @@ public class CalcShot {
 	public CalcCrossSection fromCrossSection;
 	public CalcCrossSection toCrossSection;
 
-	public Collection<Face<SplayVertex>> splayFaces;
+	public Collection<Triangle> splayTriangles;
 
 	public float[] normals;
 	public float[] vertices;

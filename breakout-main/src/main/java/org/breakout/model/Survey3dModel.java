@@ -72,11 +72,9 @@ import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.andork.awt.FontMetricsUtils;
 import org.andork.collect.Iterables;
-import org.andork.collect.LinkedHashSetMultiMap;
 import org.andork.collect.LinkedPriorityEntry;
 import org.andork.collect.MultiMap;
 import org.andork.collect.MultiMaps;
@@ -180,12 +178,12 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		@Override
 		protected void doDraw(Section section, GL2ES2 gl) {
+			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
+			gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
 			if (drawLines) {
 				gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
 				gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
 			}
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
-			gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
 		}
 
 		@Override
@@ -250,6 +248,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	private abstract class BaseSectionRenderer implements SectionRenderer {
 		protected int program = 0;
 
+		boolean flipNormals = false;
+
 		protected int m_location;
 		protected int v_location;
 		protected int p_location;
@@ -271,6 +271,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int u_clipAxis_location;
 		protected int u_clipNear_location;
 		protected int u_clipFar_location;
+		protected int u_normMultiplier;
 
 		protected void afterDraw(
 			Collection<Section> sections,
@@ -317,6 +318,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glUniform1f(u_clipNear_location, clip.near());
 			gl.glUniform1f(u_clipFar_location, clip.far());
 
+			gl.glUniform1f(u_normMultiplier, flipNormals ? -1 : 1);
+
 			gl.glEnable(GL_DEPTH_TEST);
 		}
 
@@ -359,7 +362,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				+
 
 				// lighting
-				"  temp = dot(v_norm, vec3(0.0, 0.0, 1.0));"
+				"  temp = dot(v_norm * u_normMultiplier, vec3(0.0, 0.0, 1.0));"
 				+ "  temp = u_ambient + temp * (1.0 - u_ambient);"
 				+ "  color.xyz *= temp;"
 				+
@@ -385,7 +388,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				"out vec4 color;"
 				+ "in float v_clipPosition;"
 				+ "uniform float u_clipNear;"
-				+ "uniform float u_clipFar;";
+				+ "uniform float u_clipFar;"
+				+ "uniform float u_normMultiplier;";
 
 		}
 
@@ -487,6 +491,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				u_clipAxis_location = gl.glGetUniformLocation(program, "u_clipAxis");
 				u_clipNear_location = gl.glGetUniformLocation(program, "u_clipNear");
 				u_clipFar_location = gl.glGetUniformLocation(program, "u_clipFar");
+				u_normMultiplier = gl.glGetUniformLocation(program, "u_normMultiplier");
 			}
 
 			return true;
@@ -1845,8 +1850,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	CenterlineRenderer centerlineRenderer = new CenterlineRenderer();
 
-	AtomicReference<MultiMap<SectionRenderer, Section>> renderers = new AtomicReference<>();
-
 	final Set<ShotKey> selectedShots = new HashSet<>();
 	final Set<ShotKey> unmodifiableSelectedShots = Collections.unmodifiableSet(selectedShots);
 
@@ -1955,11 +1958,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			section.renderers.add(axialSectionRenderer);
 		}
 
-		MultiMap<SectionRenderer, Section> renderers = LinkedHashSetMultiMap.newInstance();
-		renderers.putAll(axialSectionRenderer, sections);
-
-		this.renderers.set(renderers);
-
 		lineRenderer = new PipelinedRenderer(new Options(true, GL.GL_LINES, 100).addAttribute(3, GL.GL_FLOAT, false));
 		triangleRenderer =
 			new PipelinedRenderer(new Options(true, GL.GL_TRIANGLES, 100).addAttribute(3, GL.GL_FLOAT, false));
@@ -2042,12 +2040,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			section.dispose(gl);
 		}
 
-		MultiMap<SectionRenderer, Section> renderers = this.renderers.get();
-
-		for (SectionRenderer renderer : renderers.keySet()) {
-			renderer.dispose(gl);
-		}
-
 		disposeParamTexture(gl);
 
 		lineRenderer.dispose(gl);
@@ -2087,6 +2079,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glEnable(GL.GL_CULL_FACE);
 		gl.glCullFace(GL.GL_FRONT);
 
+		renderer.flipNormals = true;
 		renderer.drawLines = false;
 		renderer.draw(sectionsInView, context, gl, m, n);
 		centerlineRenderer.draw(sectionsInView, context, gl, m, n);
@@ -2097,6 +2090,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		gl.glEnable(GL.GL_CULL_FACE);
 		gl.glCullFace(GL.GL_BACK);
+		renderer.flipNormals = false;
 		renderer.drawLines = true;
 		renderer.draw(sectionsInView, context, gl, m, n);
 
@@ -2427,8 +2421,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		subtask.setTotal(sections.size());
 		final Iterator<Section> sectionIterator = sections.iterator();
 
-		MultiMap<SectionRenderer, Section> newRenderers = LinkedHashSetMultiMap.newInstance();
-
 		while (sectionIterator.hasNext()) {
 			Section section = sectionIterator.next();
 
@@ -2445,14 +2437,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				section.renderers.add(param0SectionRenderer);
 			}
 
-			for (SectionRenderer renderer : section.renderers) {
-				newRenderers.put(renderer, section);
-			}
-
 			subtask.increment();
 		}
-
-		renderers.set(newRenderers);
 
 		if (colorParam.isTraversalMetric()) {
 			calcDistFromShots(selectedShots, subtask);
