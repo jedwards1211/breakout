@@ -84,6 +84,7 @@ import org.andork.jogl.JoglBuffer;
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglResource;
+import org.andork.jogl.PerspectiveProjection;
 import org.andork.jogl.shader.FlatColorProgram;
 import org.andork.jogl.shader.FlatColorScreenProgram;
 import org.andork.jogl.uniform.Uniform1fv;
@@ -689,6 +690,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 			float labelDistanceSquared = Vecmath.dot3(result, result);
 
+			//////////////////////////////////////////////////////////////////////
+			// Push the label toward the camera
+			//
+			// If we drew the label in the exact station position, it would be
+			// obscured behind passage walls.
+			// So instead, we move it toward the camera so it will appear in front
+			// of the passage walls.
+
 			float z = Float.NaN;
 			if (labelDistanceSquared < pushForward * pushForward) {
 				z = 0.99999f;
@@ -697,8 +706,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				float labelDistance = (float) Math.sqrt(labelDistanceSquared);
 				float pushedForwardDistance = labelDistance - pushForward;
 				float pushForwardFactor = pushedForwardDistance / labelDistance;
-				result[0] *= pushForwardFactor;
-				result[1] *= pushForwardFactor;
+				// this is confusing, but in perspective mode, we need to push the
+				// label straight toward the camera, whereas in ortho, we need to push
+				// it parallel to the view direction
+				if (context.projection() instanceof PerspectiveProjection) {
+					result[0] *= pushForwardFactor;
+					result[1] *= pushForwardFactor;
+				}
 				result[2] *= pushForwardFactor;
 			}
 
