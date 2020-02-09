@@ -2987,11 +2987,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public void setMaxDate(Date maxDate) {
 		this.maxDate = maxDate;
-		this.maxDateFloat = maxDate == null ? Float.MAX_VALUE : ColorParam.calcDaysSince1800(maxDate);
+		this.maxDateFloat = maxDate == null ? Float.NaN : ColorParam.calcDaysSince1800(maxDate);
 	}
 
-	public void setMaxDate(float maxDateFloat) {
-		this.maxDate = maxDateFloat >= Float.MAX_VALUE ? null : ColorParam.calcDateFromDaysSince1800(maxDateFloat);
+	public void setMaxDate(Float maxDateFloat) {
+		if (maxDateFloat == null)
+			maxDateFloat = Float.NaN;
+		this.maxDate = Float.isNaN(maxDateFloat) ? null : ColorParam.calcDateFromDaysSince1800(maxDateFloat);
 		this.maxDateFloat = maxDateFloat;
 	}
 
@@ -3021,7 +3023,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public boolean isStationVisible(CalcStation station) {
-		return station.date <= this.maxDateFloat && clip.contains(station.position);
+		return (Float.isNaN(this.maxDateFloat) || station.date <= this.maxDateFloat) && clip.contains(station.position);
 	}
 
 	public void getVisibleShotKeys(Collection<ShotKey> result) {

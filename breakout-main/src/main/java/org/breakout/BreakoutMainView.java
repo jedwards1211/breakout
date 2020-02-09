@@ -1961,7 +1961,7 @@ public class BreakoutMainView {
 		new BinderWrapper<Float>() {
 			@Override
 			protected void onValueChanged(final Float newValue) {
-				if (model3d != null && newValue != null) {
+				if (model3d != null) {
 					model3d.setMaxDate(newValue);
 					autoDrawable.display();
 				}
