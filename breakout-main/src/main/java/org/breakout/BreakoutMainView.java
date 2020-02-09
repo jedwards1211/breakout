@@ -1187,7 +1187,7 @@ public class BreakoutMainView {
 
 	I18n i18n = new I18n();
 
-	PerspectiveProjection perspCalculator = new PerspectiveProjection((float) Math.PI / 2, 1f, 1e7f);
+	PerspectiveProjection perspCalculator = new PerspectiveProjection((float) Math.PI / 2, 0.1f, 1e6f);
 
 	final ScheduledExecutorService rebuildScheduler = Executors.newSingleThreadScheduledExecutor();
 	final TaskService rebuildTaskService = ExecutorTaskService.newSingleThreadedTaskService();
@@ -2465,14 +2465,15 @@ public class BreakoutMainView {
 			ortho != renderer.getViewSettings().getProjection() instanceof OrthoProjection;
 		if (ortho) {
 			if (model3d != null) {
-				float[] orthoBounds = model3d.getOrthoBounds(shotsToFit, right, up, forward);
-				if (Vecmath.hasNaNsOrInfinites(orthoBounds)) {
-					orthoBounds = model3d.getOrthoBounds(calcProject.getPlottedShotKeys(), right, up, forward);
+				float[] totalBounds = model3d.getOrthoBounds(right, up, forward);
+				float[] shotsToFitBounds = model3d.getOrthoBounds(shotsToFit, right, up, forward);
+				if (Vecmath.hasNaNsOrInfinites(shotsToFitBounds)) {
+					shotsToFitBounds = model3d.getOrthoBounds(calcProject.getPlottedShotKeys(), right, up, forward);
 				}
-				Rectmath.scaleFromCenter3(orthoBounds, 1 / 0.9f, 1 / 0.9f, 1f, orthoBounds);
+				Rectmath.scaleFromCenter3(shotsToFitBounds, 1 / 0.9f, 1 / 0.9f, 1f, shotsToFitBounds);
 
 				float[] endOrthoLocation = new float[3];
-				Rectmath.center(orthoBounds, endOrthoLocation);
+				Rectmath.center(shotsToFitBounds, endOrthoLocation);
 
 				Vecmath.combine(endLocation, endOrthoLocation, right, up, forward);
 
@@ -2480,14 +2481,15 @@ public class BreakoutMainView {
 				endOrthoLocation[2] -= dist;
 				Vecmath.combine(endLocation, endOrthoLocation, right, up, forward);
 
-				Rectmath.center(orthoBounds, endOrthoLocation);
-				endOrthoLocation[2] = orthoBounds[2];
-				endOrthoLocation[2] = orthoBounds[5];
+				Rectmath.center(shotsToFitBounds, endOrthoLocation);
+				endOrthoLocation[2] = shotsToFitBounds[2];
+				endOrthoLocation[2] = shotsToFitBounds[5];
 
-				float hSpan = orthoBounds[3] - orthoBounds[0];
-				float vSpan = orthoBounds[4] - orthoBounds[1];
-				newProjCalculator = new OrthoProjection(hSpan, vSpan, 1f, 1e6f);
-				newClip = new Clip3f(forward, orthoBounds[2], orthoBounds[5]);
+				float hSpan = totalBounds[3] - totalBounds[0];
+				float vSpan = totalBounds[4] - totalBounds[1];
+				float endLocationZ = Vecmath.dot3(forward, endLocation);
+				newProjCalculator = new OrthoProjection(hSpan, vSpan, 0.01f, (totalBounds[5] - endLocationZ) * 2);
+				newClip = new Clip3f(forward, shotsToFitBounds[2], shotsToFitBounds[5]);
 			}
 			// if plan view, don't clip
 			if (forward[0] == 0 && forward[1] == -1 && forward[2] == 0) {

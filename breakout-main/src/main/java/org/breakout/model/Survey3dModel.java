@@ -2271,6 +2271,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return hoveredShot == null ? Collections.<Shot3d>emptySet() : Collections.singleton(hoveredShot);
 	}
 
+	public float[] getOrthoBounds(float[] orthoRight, float[] orthoUp, float[] orthoForward) {
+		return getOrthoBounds(shot3ds.keySet(), orthoRight, orthoUp, orthoForward);
+	}
+
 	public float[] getOrthoBounds(Set<ShotKey> shotsInView, float[] orthoRight, float[] orthoUp, float[] orthoForward) {
 		float[] result =
 			{
