@@ -349,7 +349,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		protected String createFragmentShaderCode() {
 			return "  if (v_clipPosition < u_clipNear || v_clipPosition > u_clipFar) discard;"
-				+ "  float temp;"
+				+ "  float temp = dot(v_norm * u_normMultiplier, vec3(0.0, 0.0, 1.0));"
+				+ "  if (temp < 0) discard;"
 				+ "  vec4 indexedHighlight;"
 				+
 
@@ -359,10 +360,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 				// glow
 				"  color = mix(color, u_glowColor, clamp(min(v_glow.x, v_glow.y), 0.0, 1.0));"
-				+
 
 				// lighting
-				"  temp = dot(v_norm * u_normMultiplier, vec3(0.0, 0.0, 1.0));"
 				+ "  temp = u_ambient + temp * (1.0 - u_ambient);"
 				+ "  color.xyz *= temp;"
 				+
@@ -2076,8 +2075,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glClear(GL.GL_STENCIL_BUFFER_BIT);
 
 		gl.glDisable(GL.GL_STENCIL_TEST);
-		gl.glEnable(GL.GL_CULL_FACE);
-		gl.glCullFace(GL.GL_FRONT);
 
 		renderer.flipNormals = true;
 		renderer.drawLines = false;
@@ -2088,8 +2085,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glStencilFunc(GL.GL_EQUAL, 0, 1);
 		gl.glStencilOp(GL.GL_KEEP, GL.GL_KEEP, GL.GL_REPLACE);
 
-		gl.glEnable(GL.GL_CULL_FACE);
-		gl.glCullFace(GL.GL_BACK);
 		renderer.flipNormals = false;
 		renderer.drawLines = true;
 		renderer.draw(sectionsInView, context, gl, m, n);
