@@ -24,9 +24,6 @@ public class NormalGenerator3fTest {
 		generator.foldAngle(Math.PI / 2);
 		generator.foldSharpness(1);
 		int vertexCount = generator.generateNormals();
-		for (Triangle triangle : generator.triangles()) {
-			System.out.println(triangle);
-		}
 		Assert.assertEquals(9, vertexCount);
 	}
 }

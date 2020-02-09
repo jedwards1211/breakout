@@ -25,4 +25,7 @@ class SplayVertex implements Vertex {
 		return normalizedZ;
 	}
 
+	public boolean originalEquals(SplayVertex other) {
+		return originalX == other.originalX && originalY == other.originalY && originalZ == other.originalZ;
+	}
 }

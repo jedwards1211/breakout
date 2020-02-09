@@ -138,19 +138,84 @@ public class NormalGenerator3f {
 	}
 
 	public static class MeshBuilder {
-		private final Map<Integer, Vertex> vertices = new HashMap<>();
-		private final Map<Integer, Edge> edges = new HashMap<>();
+		private static class VertexKey {
+			public float x;
+			public float y;
+			public float z;
+
+			public VertexKey(float x, float y, float z) {
+				super();
+				this.x = x;
+				this.y = y;
+				this.z = z;
+			}
+
+			@Override
+			public int hashCode() {
+				return Objects.hash(x, y, z);
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (obj == null)
+					return false;
+				if (getClass() != obj.getClass())
+					return false;
+				VertexKey other = (VertexKey) obj;
+				return Float.floatToIntBits(x) == Float.floatToIntBits(other.x)
+					&& Float.floatToIntBits(y) == Float.floatToIntBits(other.y)
+					&& Float.floatToIntBits(z) == Float.floatToIntBits(other.z);
+			}
+
+			@Override
+			public String toString() {
+				return "VertexKey [x=" + x + ", y=" + y + ", z=" + z + "]";
+			}
+		}
+
+		private static class EdgeKey {
+			public Vertex prev;
+			public Vertex next;
+
+			public EdgeKey(Vertex prev, Vertex next) {
+				super();
+				this.prev = prev;
+				this.next = next;
+			}
+
+			@Override
+			public int hashCode() {
+				return Objects.hash(System.identityHashCode(next), System.identityHashCode(prev));
+			}
+
+			@Override
+			public boolean equals(Object obj) {
+				if (this == obj)
+					return true;
+				if (obj == null)
+					return false;
+				if (getClass() != obj.getClass())
+					return false;
+				EdgeKey other = (EdgeKey) obj;
+				return next == other.next && prev == other.prev;
+			}
+		}
+
+		private final Map<VertexKey, Vertex> vertices = new HashMap<>();
+		private final Map<EdgeKey, Edge> edges = new HashMap<>();
 		private final List<Triangle> triangles = new ArrayList<>();
 
 		private Vertex getVertex(float x, float y, float z) {
-			int hash = Objects.hash(x, y, z);
-			Vertex v = vertices.get(hash);
+			VertexKey key = new VertexKey(x, y, z);
+			Vertex v = vertices.get(key);
 			if (v == null) {
 				v = new Vertex();
 				v.x = x;
 				v.y = y;
 				v.z = z;
-				vertices.put(hash, v);
+				vertices.put(key, v);
 			}
 			return v;
 		}
@@ -179,9 +244,9 @@ public class NormalGenerator3f {
 			Vertex v1 = getVertex(x1, y1, z1);
 			Vertex v2 = getVertex(x2, y2, z2);
 
-			int h01 = Objects.hash(v0, v1);
-			int h12 = Objects.hash(v1, v2);
-			int h20 = Objects.hash(v2, v0);
+			EdgeKey h01 = new EdgeKey(v0, v1);
+			EdgeKey h12 = new EdgeKey(v1, v2);
+			EdgeKey h20 = new EdgeKey(v2, v0);
 			if (edges.containsKey(h01)) {
 				throw new RuntimeException(
 					"there is already an edge from " + v0.positionString() + " to " + v1.positionString());
@@ -199,9 +264,9 @@ public class NormalGenerator3f {
 			Edge e1 = new Edge();
 			Edge e2 = new Edge();
 
-			int h02 = Objects.hash(v0, v2);
-			int h21 = Objects.hash(v2, v1);
-			int h10 = Objects.hash(v1, v0);
+			EdgeKey h02 = new EdgeKey(v0, v2);
+			EdgeKey h21 = new EdgeKey(v2, v1);
+			EdgeKey h10 = new EdgeKey(v1, v0);
 			Edge eo0 = edges.get(h10);
 			Edge eo1 = edges.get(h21);
 			Edge eo2 = edges.get(h02);

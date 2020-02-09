@@ -524,6 +524,12 @@ public class CalculateGeometry {
 		}
 	}
 
+	static boolean floatPositionEquals(SplayVertex a, SplayVertex b) {
+		return (float) a.originalX == (float) b.originalX
+			&& (float) a.originalY == (float) b.originalY
+			&& (float) a.originalZ == (float) b.originalZ;
+	}
+
 	static void calculateSplayHull(CalcStation station) {
 		if (station.numShots < 3)
 			return;
@@ -593,6 +599,10 @@ public class CalculateGeometry {
 			SplayVertex v0 = face.edges[0].nextVertex;
 			SplayVertex v1 = face.edges[1].nextVertex;
 			SplayVertex v2 = face.edges[2].nextVertex;
+
+			if (floatPositionEquals(v0, v1) || floatPositionEquals(v1, v2) || floatPositionEquals(v2, v0)) {
+				continue;
+			}
 
 			mesh
 				.add(
