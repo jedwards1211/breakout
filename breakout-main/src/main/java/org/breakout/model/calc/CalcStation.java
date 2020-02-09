@@ -26,12 +26,7 @@ public class CalcStation {
 	}
 
 	public boolean hasPosition() {
-		for (int i = 0; i < 3; i++) {
-			if (!Double.isFinite(position[i])) {
-				return false;
-			}
-		}
-		return true;
+		return Double.isFinite(position[0]) && Double.isFinite(position[1]) && Double.isFinite(position[2]);
 	}
 
 	public boolean isDeadEnd() {

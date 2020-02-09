@@ -531,7 +531,7 @@ public class CalculateGeometry {
 	}
 
 	static void calculateSplayHull(CalcStation station) {
-		if (station.numShots < 3)
+		if (station.numShots < 3 || !station.hasPosition())
 			return;
 
 		int numSplays = 0;
@@ -570,6 +570,8 @@ public class CalculateGeometry {
 							vertex.normalizedX * vertex.normalizedX
 								+ vertex.normalizedY * vertex.normalizedY
 								+ vertex.normalizedZ * vertex.normalizedZ);
+				if (length == 0)
+					continue;
 				vertex.normalizedX /= length;
 				vertex.normalizedY /= length;
 				vertex.normalizedZ /= length;
