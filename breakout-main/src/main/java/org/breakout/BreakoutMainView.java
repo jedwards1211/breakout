@@ -2238,14 +2238,10 @@ public class BreakoutMainView {
 				rebuildTaskService.submit(task -> {
 					task.setTotal(4);
 					task.setStatus("Recalculating color by distance");
-					Set<ShotKey> selectedShots = new HashSet<>();
-					getSelectedShotsFromTable().forEach(selectedShots::add);
-					Set<ShotKey> shotsFromView = getShotsInView();
-					Set<ShotKey> startShots = selectedShots.isEmpty() ? shotsFromView : selectedShots;
+					Set<ShotKey> startShots = getDefaultShotsForOperations(3);
 					task.runSubtask(3, recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
 
-					Set<ShotKey> rangeShots =
-						startShots == shotsFromView ? calcProject.getPlottedShotKeys() : shotsFromView;
+					Set<ShotKey> rangeShots = getShotsInView();
 					task.runSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
 					autoDrawable.display();
 				});
@@ -2495,7 +2491,7 @@ public class BreakoutMainView {
 				float[] totalBounds = model3d.getOrthoBounds(right, up, forward);
 				float[] shotsToFitBounds = model3d.getOrthoBounds(shotsToFit, right, up, forward);
 				if (Vecmath.hasNaNsOrInfinites(shotsToFitBounds)) {
-					shotsToFitBounds = model3d.getOrthoBounds(calcProject.getPlottedShotKeys(), right, up, forward);
+					shotsToFitBounds = model3d.getOrthoBounds(model3d.getVisibleShotKeys(), right, up, forward);
 				}
 				Rectmath.scaleFromCenter3(shotsToFitBounds, 1 / 0.9f, 1 / 0.9f, 1f, shotsToFitBounds);
 
@@ -2683,7 +2679,7 @@ public class BreakoutMainView {
 			return;
 		}
 
-		changeView(HashSets.of(getShotsFromTable()));
+		changeView(HashSets.of(model3d.getVisibleShotKeys()));
 	}
 
 	protected void fitViewToSelected() {
@@ -2691,7 +2687,7 @@ public class BreakoutMainView {
 			return;
 		}
 
-		changeView(HashSets.of(getSelectedShotsFromTable()));
+		changeView(HashSets.of(getDefaultShotsForOperations(3)));
 	}
 
 	protected void flyToFiltered(final AnnotatingJTable table) {
@@ -2791,16 +2787,6 @@ public class BreakoutMainView {
 		return surveyDrawer.table();
 	}
 
-	protected Stream<ShotKey> getSelectedShotsFromTable() {
-		SurveyTableModel model = surveyDrawer.table().getModel();
-		ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
-		return IntStream
-			.range(0, model.getRowCount())
-			.filter(selModel::isSelectedIndex)
-			.mapToObj(modelIndexToShotKey::get)
-			.filter(o -> o != null);
-	}
-
 	protected Stream<ShotKey> getShotsFromTable() {
 		SurveyTableModel model = surveyDrawer.table().getModel();
 		return IntStream.range(0, model.getRowCount()).mapToObj(modelIndexToShotKey::get).filter(o -> o != null);
@@ -2813,7 +2799,7 @@ public class BreakoutMainView {
 		renderer.getViewState().pickXform().exportViewVolume(shotsInViewHull, canvas.getWidth(), canvas.getHeight());
 		model3d.getShotsIn(shotsInViewHull, result);
 		if (result.isEmpty()) {
-			calcProject.getPlottedShotKeys(result);
+			model3d.getVisibleShotKeys(result);
 		}
 		return result;
 	}
@@ -2825,15 +2811,15 @@ public class BreakoutMainView {
 
 	protected Set<ShotKey> getDefaultShotsForOperations(int minimumNumShots) {
 		Set<ShotKey> result = new HashSet<>();
-		getSelectedShotsFromTable().forEach(result::add);
+		for (ShotKey key : model3d.getSelectedShots()) {
+			if (model3d.isShotVisible(key)) {
+				result.add(key);
+			}
+		}
 		if (result.size() >= minimumNumShots) {
 			return result;
 		}
-		result = getShotsInView();
-		if (result.size() >= minimumNumShots) {
-			return result;
-		}
-		return calcProject.getPlottedShotKeys();
+		return getShotsInView();
 	}
 
 	public TaskListDrawer getTaskListDrawer() {

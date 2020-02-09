@@ -2377,17 +2377,26 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	public void getShotsIn(PlanarHull3f hull, Set<ShotKey> result) {
 		RTraversal.traverse(getTree().getRoot(), node -> {
 			if (hull.containsBox(node.mbr())) {
-				RTraversal.traverse(node, node2 -> true, leaf -> result.add(leaf.object().key));
+				RTraversal.traverse(node, node2 -> true, leaf -> {
+					Shot3d shot = leaf.object();
+					if (isShotVisible(shot)) {
+						result.add(shot.key);
+					}
+					return true;
+				});
 				return false;
 			}
 			return hull.intersectsBox(node.mbr());
 		}, leaf -> {
-			for (float[] coord : leaf.object().coordIterable()) {
-				if (!hull.containsPoint(coord)) {
-					return true;
+			Shot3d shot = leaf.object();
+			if (isShotVisible(shot)) {
+				for (float[] coord : shot.coordIterable()) {
+					if (!hull.containsPoint(coord)) {
+						return true;
+					}
 				}
+				result.add(leaf.object().key);
 			}
-			result.add(leaf.object().key);
 			return true;
 		});
 	}
@@ -2395,11 +2404,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	public boolean hasShotsIn(PlanarHull3f hull) {
 		Ref<Boolean> found = new Ref<>(false);
 		RTraversal.traverse(getTree().getRoot(), node -> found.value ? false : hull.intersectsBox(node.mbr()), leaf -> {
-			if (found.value)
-				return false;
-			if (hull.intersectsBox(leaf.mbr())) {
-				found.value = true;
-				return false;
+			Shot3d shot = leaf.object();
+			if (isShotVisible(shot)) {
+				if (found.value)
+					return false;
+				if (hull.intersectsBox(leaf.mbr())) {
+					found.value = true;
+					return false;
+				}
 			}
 			return true;
 		});
@@ -3004,7 +3016,25 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return isStationVisible(shot.shot.fromStation) || isStationVisible(shot.shot.toStation);
 	}
 
+	public boolean isShotVisible(ShotKey key) {
+		return isShotVisible(shot3ds.get(key));
+	}
+
 	public boolean isStationVisible(CalcStation station) {
 		return station.date <= this.maxDateFloat && clip.contains(station.position);
+	}
+
+	public void getVisibleShotKeys(Collection<ShotKey> result) {
+		for (Map.Entry<ShotKey, Shot3d> entry : shot3ds.entrySet()) {
+			if (isShotVisible(entry.getValue())) {
+				result.add(entry.getKey());
+			}
+		}
+	}
+
+	public Set<ShotKey> getVisibleShotKeys() {
+		Set<ShotKey> result = new HashSet<>();
+		getVisibleShotKeys(result);
+		return result;
 	}
 }
