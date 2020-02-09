@@ -9,20 +9,23 @@ public final class Clip3f implements Cloneable {
 
 	public Clip3f(float[] axis, float near, float far) {
 		for (int i = 0; i < axis.length; i++) {
-			if (!Float.isFinite(axis[i])) throw new IllegalArgumentException("axis must be finite");
+			if (!Float.isFinite(axis[i]))
+				throw new IllegalArgumentException("axis must be finite");
 		}
-		if (!Float.isFinite(near)) throw new IllegalArgumentException("near must be finite");
-		if (!Float.isFinite(far)) throw new IllegalArgumentException("far must be finite");
+		if (!Float.isFinite(near))
+			throw new IllegalArgumentException("near must be finite");
+		if (!Float.isFinite(far))
+			throw new IllegalArgumentException("far must be finite");
 		this.axis = Arrays.copyOf(axis, 3);
 		this.near = Math.min(near, far);
 		this.far = Math.max(near, far);
 	}
-	
+
 	@Override
 	public Clip3f clone() {
 		return new Clip3f(axis, near, far);
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -37,15 +40,17 @@ public final class Clip3f implements Cloneable {
 
 	/**
 	 * @param point a point to test
-	 * @return {@code true} iff {@code point} is within the clipping bounds (not clipped out)
+	 * @return {@code true} iff {@code point} is within the clipping bounds (not
+	 *         clipped out)
 	 */
 	public boolean contains(float[] point) {
 		float dot = Vecmath.dot3(axis, point);
 		return dot >= near && dot <= far;
 	}
-	
+
 	/**
 	 * Linearly interpolates between two clips
+	 * 
 	 * @param a the first clip
 	 * @param b the second clip
 	 * @param f the interpolation amount. 0 = a, 1 = b, 0.5 = halfway between
@@ -57,36 +62,37 @@ public final class Clip3f implements Cloneable {
 		float rf = 1 - f;
 		return new Clip3f(axis, a.near * rf + b.near * f, a.far * rf + b.far * f);
 	}
-	
+
 	public Clip3f flip() {
-		return new Clip3f(new float[] {-axis[0], -axis[1], -axis[2]}, -near, -far);
+		return new Clip3f(new float[] { -axis[0], -axis[1], -axis[2] }, -near, -far);
 	}
 
 	public float[] axis() {
 		return Arrays.copyOf(axis, 3);
 	}
-	
+
 	public float near() {
 		return near;
 	}
-	
+
 	public float far() {
 		return far;
 	}
-	
+
 	public Clip3f setAxis(float[] axis) {
-		if (Arrays.equals(this.axis, axis)) return this;
+		if (Arrays.equals(this.axis, axis))
+			return this;
 		return new Clip3f(axis, near, far);
 	}
 
 	public Clip3f setNear(float near) {
-		return (near == this.near) ? this : new Clip3f(axis, near, far) ;
+		return (near == this.near) ? this : new Clip3f(axis, near, far);
 	}
 
 	public Clip3f setFar(float far) {
-		return (far == this.far) ? this : new Clip3f(axis, near, far) ;
+		return (far == this.far) ? this : new Clip3f(axis, near, far);
 	}
-	
+
 	public void getNearFarOfMbr(float[] mbr, float[] out) {
 		float nearx = mbr[axis[0] < 0 ? 3 : 0];
 		float neary = mbr[axis[1] < 0 ? 4 : 1];
@@ -96,5 +102,10 @@ public final class Clip3f implements Cloneable {
 		float farz = mbr[axis[2] < 0 ? 2 : 5];
 		out[0] = axis[0] * nearx + axis[1] * neary + axis[2] * nearz;
 		out[1] = axis[0] * farx + axis[1] * fary + axis[2] * farz;
+	}
+
+	public boolean contains(double[] position) {
+		double dot = Vecmath.dot3(axis, position);
+		return dot >= near && dot <= far;
 	}
 }

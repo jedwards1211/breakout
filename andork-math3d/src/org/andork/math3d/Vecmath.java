@@ -400,6 +400,10 @@ public class Vecmath {
 		return hypoteneuseSq - adjacent * adjacent;
 	}
 
+	public static double dot3(float[] a, double[] b) {
+		return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+	}
+
 	public static double dot3(double[] a, double[] b) {
 		return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 	}

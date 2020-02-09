@@ -680,7 +680,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		 * @return true if the label is on screen, false otherwise
 		 */
 		boolean getOrigin(JoglDrawContext context, LabelDrawingContext labelContext, float scale, float[] result) {
-			if (!labelContext.clip.contains(position)) {
+			if (!labelContext.model.isStationVisible(station)) {
 				return false;
 			}
 			Vecmath.mpmulAffine(context.viewMatrix(), position, result);
@@ -896,7 +896,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		PipelinedRenderer triangleRenderer;
 		Uniform4fv leadDetailOutlineColor;
 		Uniform4fv leadDetailFillColor;
-		Clip3f clip;
+		Survey3dModel model;
 	}
 
 	private static class Section {
@@ -2137,7 +2137,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			labelContext.leadDetailFillColor =
 				new Uniform4fv()
 					.value(backgroundColor.value()[0], backgroundColor.value()[1], backgroundColor.value()[2], .7f);
-			labelContext.clip = clip;
+			labelContext.model = this;
 
 			if (!stationsToEmphasize.isEmpty()) {
 				textRenderer.beginRendering(context.width(), context.height(), false);
@@ -2412,7 +2412,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public void pickShots(PlanarHull3f pickHull, Shot3dPickContext spc, List<PickResult<Shot3d>> pickResults) {
 		RTraversal.traverse(tree.getRoot(), node -> pickHull.intersectsBox(node.mbr()), leaf -> {
-			leaf.object().pick(pickHull, spc, pickResults);
+			Shot3d shot = leaf.object();
+			if (isShotVisible(shot)) {
+				leaf.object().pick(pickHull, spc, pickResults);
+			}
 			return true;
 		});
 	}
@@ -2944,5 +2947,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public MultiMap<StationKey, SurveyLead> getLeads() {
 		return leads;
+	}
+
+	public boolean isShotVisible(Shot3d shot) {
+		return isStationVisible(shot.shot.fromStation) || isStationVisible(shot.shot.toStation);
+	}
+
+	public boolean isStationVisible(CalcStation station) {
+		return clip.contains(station.position);
 	}
 }
