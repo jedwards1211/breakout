@@ -35,7 +35,9 @@ import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.LinearGradientPaint;
 import java.nio.file.Path;
+import java.text.DateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.BiFunction;
@@ -84,6 +86,7 @@ import org.andork.bind.ui.ComponentEnabledBinder;
 import org.andork.bind.ui.ISelectorSelectionBinder;
 import org.andork.bind.ui.JComboBoxItemBinder;
 import org.andork.bind.ui.JSliderValueBinder;
+import org.andork.func.Bimapper;
 import org.andork.func.LinearFloatBimapper;
 import org.andork.func.RoundingFloat2IntegerBimapper;
 import org.andork.plot.PlotAxisConversionBinder;
@@ -143,6 +146,9 @@ public class SettingsDrawer extends Drawer {
 	JLabel displayUnitsLabel;
 	DefaultSelector<Unit<Length>> displayLengthUnitSelector;
 	DefaultSelector<Unit<Angle>> displayAngleUnitSelector;
+
+	JLabel maxDateLabel;
+	JSlider maxDateSlider;
 
 	JLabel ambientLightLabel;
 	JSlider ambientLightSlider;
@@ -237,6 +243,7 @@ public class SettingsDrawer extends Drawer {
 	Binder<LinearAxisConversion> highlightRangeBinder =
 		QObjectAttributeBinder.bind(ProjectModel.highlightRange, projectBinder);
 	Binder<HighlightMode> highlightModeBinder = QObjectAttributeBinder.bind(ProjectModel.highlightMode, projectBinder);
+	Binder<Float> maxDateBinder = QObjectAttributeBinder.bind(ProjectModel.maxDate, projectBinder);
 	Binder<Float> ambientLightBinder = QObjectAttributeBinder.bind(ProjectModel.ambientLight, projectBinder);
 	Binder<Unit<Length>> displayLengthUnitBinder =
 		QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectBinder);
@@ -326,6 +333,8 @@ public class SettingsDrawer extends Drawer {
 
 	private JComboBox<GradientModel> paramGradientComboBox;
 
+	private LinearFloatBimapper maxDateBimapper;
+
 	public SettingsDrawer(
 		final I18n i18n,
 		Binder<QObject<RootModel>> rootBinder,
@@ -406,6 +415,33 @@ public class SettingsDrawer extends Drawer {
 		PlotAxisConversionBinder.bind(paramColorationAxis, displayParamRangeBinder);
 		ISelectorSelectionBinder.bind(highlightModeSelector, highlightModeBinder);
 		PlotAxisConversionBinder.bind(glowDistAxis, displayHighlightRangeBinder);
+
+		maxDateBimapper =
+			new LinearFloatBimapper(
+				ColorParam.calcDaysSince1800(new Date(0)),
+				0f,
+				ColorParam.calcDaysSince1800(new Date()),
+				maxDateSlider.getMaximum());
+
+		BinderWrapper.create((Float daysSince1800) -> {
+			updateMaxDateLabelText(ColorParam.calcDateFromDaysSince1800(maxDateBinder.get()));
+		}).bind(maxDateBinder);
+
+		JSliderValueBinder
+			.bind(maxDateSlider, BimapperBinder.bind(compose(maxDateBimapper, new Bimapper<Float, Integer>() {
+
+				@Override
+				public Integer map(Float in) {
+					return in == null ? maxDateSlider.getMaximum() : Math.round(in);
+				}
+
+				@Override
+				public Float unmap(Integer out) {
+					return out == null || out >= maxDateSlider.getMaximum() ? null : out.floatValue();
+				}
+
+			}), maxDateBinder));
+
 		JSliderValueBinder
 			.bind(
 				ambientLightSlider,
@@ -519,6 +555,12 @@ public class SettingsDrawer extends Drawer {
 
 		displayAngleUnitSelector = new DefaultSelector<>();
 		displayAngleUnitSelector.setAvailableValues(Angle.degrees, Angle.gradians, Angle.milsNATO);
+
+		maxDateLabel = new JLabel();
+		updateMaxDateLabelText(null);
+
+		maxDateSlider = new JSlider(0, 1000, 1000);
+		maxDateSlider.setOpaque(false);
 
 		ambientLightLabel = new JLabel();
 		localizer.setText(ambientLightLabel, "ambientLightLabel.text");
@@ -813,6 +855,9 @@ public class SettingsDrawer extends Drawer {
 		w.put(distColorationLabel).belowLast().west();
 		w.put(distColorationAxisPanel).belowLast().fillx().addToInsets(0, 0, 10, 0);
 
+		w.put(maxDateLabel).belowLast().west();
+		w.put(maxDateSlider).belowLast().fillx();
+
 		w.put(ambientLightLabel).belowLast().west();
 		w.put(ambientLightSlider).belowLast().fillx();
 
@@ -994,5 +1039,20 @@ public class SettingsDrawer extends Drawer {
 		else {
 			localizer.setFormattedText(numSamplesLabel, "numSamplesLabel.text.on", numSamplesSlider.getValue());
 		}
+	}
+
+	private static final DateFormat maxDateFormat = DateFormat.getDateInstance();
+
+	private void updateMaxDateLabelText(Date date) {
+		localizer
+			.setFormattedText(maxDateLabel, "maxDateLabel.text", date == null ? "Present" : maxDateFormat.format(date));
+	}
+
+	public void setDateRange(float start, float end) {
+		maxDateBimapper.set(start, 0f, end, maxDateSlider.getMaximum());
+	}
+
+	public void setDateRange(Date start, Date end) {
+		setDateRange(ColorParam.calcDaysSince1800(start), ColorParam.calcDaysSince1800(end));
 	}
 }

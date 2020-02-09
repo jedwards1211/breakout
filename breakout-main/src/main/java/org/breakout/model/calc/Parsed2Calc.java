@@ -14,6 +14,7 @@ import org.andork.task.Task;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
+import org.breakout.model.ColorParam;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 import org.breakout.model.parsed.ParsedCave;
@@ -393,7 +394,7 @@ public class Parsed2Calc {
 
 	CalcShot convert(ParsedStation fromStation, ParsedShot shot, ParsedStation toStation, ParsedTrip trip) {
 		CalcShot result = new CalcShot();
-		result.date = ParsedField.getValue(trip.date);
+		result.date = ColorParam.calcDaysSince1800(ParsedField.getValue(trip.date));
 
 		convertDistance(shot, trip, result);
 		convertAzimuth(shot, trip, result);
@@ -479,7 +480,11 @@ public class Parsed2Calc {
 				fromStation = new CalcStation();
 				fromStation.name = fromKey.station;
 				fromStation.cave = fromKey.cave;
+				fromStation.date = shot.date;
 				project.stations.put(fromKey, fromStation);
+			}
+			else {
+				fromStation.date = Math.min(fromStation.date, shot.date);
 			}
 			shot.fromStation = fromStation;
 		}
@@ -490,7 +495,11 @@ public class Parsed2Calc {
 				toStation = new CalcStation();
 				toStation.name = toKey.station;
 				toStation.cave = toKey.cave;
+				toStation.date = shot.date;
 				project.stations.put(toKey, toStation);
+			}
+			else {
+				toStation.date = Math.min(toStation.date, shot.date);
 			}
 			shot.toStation = toStation;
 		}

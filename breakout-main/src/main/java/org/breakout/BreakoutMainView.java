@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -1120,6 +1121,18 @@ public class BreakoutMainView {
 				bounds[1] = bounds[4] + 100;
 				bounds[4] = bounds[1] + 100;
 
+				float minDaysSince1800 = Float.MAX_VALUE;
+				float maxDaysSince1800 = -Float.MAX_VALUE;
+				for (CalcShot shot : p2c.project.shots.values()) {
+					if (shot.date < minDaysSince1800)
+						minDaysSince1800 = shot.date;
+					if (shot.date > maxDaysSince1800)
+						maxDaysSince1800 = shot.date;
+				}
+				final float finalMinDaysSince1800 = minDaysSince1800;
+				final float finalMaxDaysSince1800 =
+					Math.min(ColorParam.calcDaysSince1800(new Date()), maxDaysSince1800);
+
 				SwingUtilities.invokeLater(() -> {
 					BreakoutMainView.this.shotKeyToModelIndex = shotKeyToModelIndex;
 					BreakoutMainView.this.modelIndexToShotKey = modelIndexToShotKey;
@@ -1127,6 +1140,10 @@ public class BreakoutMainView {
 					parsedProject = parser.project;
 					calcProject = p2c.project;
 					model3d = model;
+
+					if (finalMaxDaysSince1800 != Float.MAX_VALUE && finalMinDaysSince1800 < finalMaxDaysSince1800) {
+						settingsDrawer.setDateRange(finalMinDaysSince1800, finalMaxDaysSince1800);
+					}
 
 					projectModelBinder.update(true);
 					rootModelBinder.update(true);
@@ -1940,6 +1957,16 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder));
+
+		new BinderWrapper<Float>() {
+			@Override
+			protected void onValueChanged(final Float newValue) {
+				if (model3d != null && newValue != null) {
+					model3d.setMaxDate(newValue);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.maxDate, projectModelBinder));
 
 		new BinderWrapper<Float>() {
 			@Override

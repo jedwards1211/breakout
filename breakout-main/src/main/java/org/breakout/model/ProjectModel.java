@@ -80,6 +80,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Color> backgroundColor = newAttribute(Color.class, "backgroundColor");
 	public static final Attribute<Float> centerlineDistance = newAttribute(Float.class, "centerlineDistance");
 	public static final Attribute<Color> centerlineColor = newAttribute(Color.class, "centerlineColor");
+	public static final Attribute<Float> maxDate = newAttribute(Float.class, "maxDate");
 	public static final Attribute<Float> ambientLight = newAttribute(Float.class, "ambientLight");
 	public static final Attribute<float[]> depthAxis = newAttribute(float[].class, "depthAxis");
 	public static final Attribute<QArrayList<File>> surveyScanPaths = newAttribute(QArrayList.class, "surveyScanPaths");

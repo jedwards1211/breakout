@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -269,10 +270,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int a_highlightIndex_location;
 		protected int u_highlightColors_location;
 
+		protected int a_date_location;
+
 		protected int u_clipAxis_location;
 		protected int u_clipNear_location;
 		protected int u_clipFar_location;
-		protected int u_normMultiplier;
+		protected int u_normMultiplier_location;
+		protected int u_maxDate_location;
 
 		protected void afterDraw(
 			Collection<Section> sections,
@@ -285,6 +289,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glDisableVertexAttribArray(a_norm_location);
 			gl.glDisableVertexAttribArray(a_glow_location);
 			gl.glDisableVertexAttribArray(a_highlightIndex_location);
+			gl.glDisableVertexAttribArray(a_date_location);
 
 			gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -314,12 +319,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glEnableVertexAttribArray(a_norm_location);
 			gl.glEnableVertexAttribArray(a_glow_location);
 			gl.glEnableVertexAttribArray(a_highlightIndex_location);
+			gl.glEnableVertexAttribArray(a_date_location);
 
 			gl.glUniform3fv(u_clipAxis_location, 1, clip.axis(), 0);
 			gl.glUniform1f(u_clipNear_location, clip.near());
 			gl.glUniform1f(u_clipFar_location, clip.far());
 
-			gl.glUniform1f(u_normMultiplier, flipNormals ? -1 : 1);
+			gl.glUniform1f(u_normMultiplier_location, flipNormals ? -1 : 1);
+			gl.glUniform1f(u_maxDate_location, maxDateFloat);
 
 			gl.glEnable(GL_DEPTH_TEST);
 		}
@@ -338,6 +345,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glBindBuffer(GL_ARRAY_BUFFER, section.stationAttrs.id());
 			gl.glVertexAttribPointer(a_glow_location, 2, GL_FLOAT, false, STATION_ATTR_BPV, 0);
 			gl.glVertexAttribPointer(a_highlightIndex_location, 1, GL_FLOAT, false, STATION_ATTR_BPV, 8);
+			gl.glVertexAttribPointer(a_date_location, 1, GL_FLOAT, false, STATION_ATTR_BPV, 12);
 		}
 
 		protected String createFragmentShader() {
@@ -350,6 +358,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		protected String createFragmentShaderCode() {
 			return "  if (v_clipPosition < u_clipNear || v_clipPosition > u_clipFar) discard;"
+				+ "  if (v_date > u_maxDate) discard;"
 				+ "  float temp = dot(v_norm * u_normMultiplier, vec3(0.0, 0.0, 1.0));"
 				+ "  if (temp < 0) discard;"
 				+ "  vec4 indexedHighlight;"
@@ -385,11 +394,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				// highlights
 				"uniform vec4 u_highlightColors[3];" + "in float v_highlightIndex;" +
 
+				// date
+				"in float v_date;" +
+
 				"out vec4 color;"
 				+ "in float v_clipPosition;"
 				+ "uniform float u_clipNear;"
 				+ "uniform float u_clipFar;"
-				+ "uniform float u_normMultiplier;";
+				+ "uniform float u_normMultiplier;"
+				+ "uniform float u_maxDate;";
 
 		}
 
@@ -403,6 +416,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				+ "  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;"
 				+ "  v_dist = -(v * m * vec4(a_pos, 1.0)).z;"
 				+ "  v_glow = a_glow;"
+				+ "  v_date = a_date;"
 				+ "  v_highlightIndex = a_highlightIndex;";
 		}
 
@@ -420,6 +434,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 				// highlights
 				"in float a_highlightIndex;" + "out float v_highlightIndex;" +
+
+				// date
+				"in float a_date;" +
+
+				"out float v_date;" +
 
 				// clip
 				"uniform vec3 u_clipAxis;" + "out float v_clipPosition;";
@@ -478,6 +497,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 				a_glow_location = gl.glGetAttribLocation(program, "a_glow");
 				a_highlightIndex_location = gl.glGetAttribLocation(program, "a_highlightIndex");
+				a_date_location = gl.glGetAttribLocation(program, "a_date");
 
 				u_ambient_location = gl.glGetUniformLocation(program, "u_ambient");
 
@@ -491,7 +511,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				u_clipAxis_location = gl.glGetUniformLocation(program, "u_clipAxis");
 				u_clipNear_location = gl.glGetUniformLocation(program, "u_clipNear");
 				u_clipFar_location = gl.glGetUniformLocation(program, "u_clipFar");
-				u_normMultiplier = gl.glGetUniformLocation(program, "u_normMultiplier");
+				u_normMultiplier_location = gl.glGetUniformLocation(program, "u_normMultiplier");
+				u_maxDate_location = gl.glGetUniformLocation(program, "u_maxDate");
 			}
 
 			return true;
@@ -958,6 +979,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			BufferHelper fillIndicesHelper = new BufferHelper();
 			BufferHelper lineIndicesHelper = new BufferHelper();
 			BufferHelper centerlineGeomHelper = new BufferHelper();
+			BufferHelper stationAttrsHelper = new BufferHelper();
 
 			BoundingSpheres
 				.ritterBoundingSphere(
@@ -983,6 +1005,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				}
 
 				putValues(geomHelper, shot.vertices, shot.normals);
+				for (int i = 0; i < shot.vertices.length / 3; i++) {
+					stationAttrsHelper.put(0f, 0f, 0f, shot3d.shot.date);
+				}
 				centerlineGeomHelper.putAsFloats(shot.fromStation.position);
 				centerlineGeomHelper.putAsFloats(shot.toStation.position);
 
@@ -999,7 +1024,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				}
 			}
 			vertexCount = geomHelper.sizeInBytes() / GEOM_BPV;
-			stationAttrs = new JoglBuffer().buffer(createBuffer(vertexCount * STATION_ATTR_BPV));
+			stationAttrs = new JoglBuffer().buffer(stationAttrsHelper.toByteBuffer());
+			// new JoglBuffer().buffer(createBuffer(vertexCount * STATION_ATTR_BPV));
 
 			geometry = new JoglBuffer().buffer(geomHelper.toByteBuffer());
 			fillIndices = new JoglBuffer().buffer(fillIndicesHelper.toByteBuffer());
@@ -1589,9 +1615,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	 */
 	private static final int GEOM_BPV = 24;
 	/**
-	 * Station attribute bytes per vertex
+	 * Station attribute bytes per vertex. 2 floats for glow, 1 float for highlight,
+	 * 1 float for date
 	 */
-	private static final int STATION_ATTR_BPV = 12;
+	private static final int STATION_ATTR_BPV = 16;
 	/**
 	 * Bytes per index
 	 */
@@ -1927,6 +1954,16 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	boolean leadsChanged = false;
 
 	Clip3f clip = new Clip3f(new float[] { 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE);
+
+	/**
+	 * The max date to display
+	 */
+	Date maxDate;
+
+	/**
+	 * Max date as days since 1800
+	 */
+	float maxDateFloat = Float.NaN;
 
 	private Survey3dModel(
 		CalcProject project,
@@ -2936,6 +2973,20 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return clip;
 	}
 
+	public void setMaxDate(Date maxDate) {
+		this.maxDate = maxDate;
+		this.maxDateFloat = maxDate == null ? Float.MAX_VALUE : ColorParam.calcDaysSince1800(maxDate);
+	}
+
+	public void setMaxDate(float maxDateFloat) {
+		this.maxDate = maxDateFloat >= Float.MAX_VALUE ? null : ColorParam.calcDateFromDaysSince1800(maxDateFloat);
+		this.maxDateFloat = maxDateFloat;
+	}
+
+	public Date getMaxDate() {
+		return this.maxDate;
+	}
+
 	public void setLeads(MultiMap<StationKey, SurveyLead> leads) {
 		if (this.leads == leads) {
 			return;
@@ -2954,6 +3005,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public boolean isStationVisible(CalcStation station) {
-		return clip.contains(station.position);
+		return station.date <= this.maxDateFloat && clip.contains(station.position);
 	}
 }

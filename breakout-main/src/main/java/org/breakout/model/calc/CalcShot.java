@@ -1,7 +1,6 @@
 package org.breakout.model.calc;
 
 import java.util.Collection;
-import java.util.Date;
 
 import org.andork.math3d.NormalGenerator3f.Triangle;
 import org.breakout.model.ShotKey;
@@ -41,7 +40,7 @@ public class CalcShot {
 	 */
 	public int[] indices;
 
-	public Date date;
+	public float date;
 
 	private int flags = 0;
 	private static final int EXCLUDE_DISTANCE = 0;

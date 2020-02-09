@@ -47,7 +47,7 @@ public class LinearFloatBimapper implements Bimapper<Float, Float> {
 
 	public LinearFloatBimapper set(float in0, float out0, float in1, float out1) {
 		m = (out1 - out0) / (in1 - in0);
-		b = in0 - out0 / m;
+		b = out0 - m * in0;
 		return this;
 	}
 

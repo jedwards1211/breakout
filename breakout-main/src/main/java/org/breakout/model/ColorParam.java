@@ -22,6 +22,7 @@
 package org.breakout.model;
 
 import java.util.Calendar;
+import java.util.Date;
 
 import org.andork.date.DateUtils;
 import org.andork.unit.Area;
@@ -48,7 +49,7 @@ public enum ColorParam {
 		public boolean isTraversalMetric() {
 			return true;
 		}
-		
+
 		@Override
 		public UnitType<?> getUnitType() {
 			return Length.type;
@@ -64,7 +65,8 @@ public enum ColorParam {
 			double[] m = xSection.measurements;
 			if (xSection.type == CrossSectionType.NSEW) {
 				return (float) Math.max(m[0] + m[1], m[2] + m[3]);
-			} else {
+			}
+			else {
 				return (float) (m[0] + m[1]);
 			}
 		}
@@ -73,7 +75,7 @@ public enum ColorParam {
 		public boolean isStationMetric() {
 			return true;
 		}
-		
+
 		@Override
 		public UnitType<?> getUnitType() {
 			return Length.type;
@@ -88,7 +90,8 @@ public enum ColorParam {
 			}
 			if (xSection.type == CrossSectionType.NSEW) {
 				return (float) shot.distance;
-			} else {
+			}
+			else {
 				return (float) (xSection.measurements[2] + xSection.measurements[3]);
 			}
 		}
@@ -97,7 +100,7 @@ public enum ColorParam {
 		public boolean isStationMetric() {
 			return true;
 		}
-		
+
 		@Override
 		public UnitType<?> getUnitType() {
 			return Length.type;
@@ -107,15 +110,15 @@ public enum ColorParam {
 	PASSAGE_MIN("Min(Passage Width, Height)", false) {
 		@Override
 		public float calcStationParam(CalcShot shot, CalcStation station) {
-			return Math.min(PASSAGE_WIDTH.calcStationParam(shot, station),
-					PASSAGE_HEIGHT.calcStationParam(shot, station));
+			return Math
+				.min(PASSAGE_WIDTH.calcStationParam(shot, station), PASSAGE_HEIGHT.calcStationParam(shot, station));
 		}
 
 		@Override
 		public boolean isStationMetric() {
 			return true;
 		}
-		
+
 		@Override
 		public UnitType<?> getUnitType() {
 			return Length.type;
@@ -131,7 +134,7 @@ public enum ColorParam {
 		public boolean isStationMetric() {
 			return true;
 		}
-		
+
 		@Override
 		public UnitType<?> getUnitType() {
 			return Area.type;
@@ -147,22 +150,16 @@ public enum ColorParam {
 		public boolean isStationMetric() {
 			return true;
 		}
-		
+
 		@Override
 		public UnitType<?> getUnitType() {
 			return Length.type;
 		}
 	},
 	DATE("Date (days since 1800)", false) {
-		Calendar calendar = Calendar.getInstance();
-
 		@Override
 		public float calcStationParam(CalcShot shot, CalcStation station) {
-			if (shot.date == null) {
-				return Float.NaN;
-			}
-			calendar.setTime(shot.date);
-			return DateUtils.daysSinceTheJesus(calendar) - DateUtils.daysSinceTheJesus(cal1800);
+			return shot.date;
 		}
 
 		@Override
@@ -225,7 +222,7 @@ public enum ColorParam {
 	public boolean isTraversalMetric() {
 		return false;
 	}
-	
+
 	public UnitType<?> getUnitType() {
 		return null;
 	}
@@ -233,5 +230,24 @@ public enum ColorParam {
 	@Override
 	public String toString() {
 		return displayName;
+	}
+
+	static Calendar calendar = Calendar.getInstance();
+
+	public static float calcDaysSince1800(Date date) {
+		if (date == null) {
+			return Float.NaN;
+		}
+		calendar.setTime(date);
+		return DateUtils.daysSinceTheJesus(calendar) - DateUtils.daysSinceTheJesus(cal1800);
+	}
+
+	public static Date calcDateFromDaysSince1800(Float daysSince1800) {
+		if (daysSince1800 == null || Float.isNaN(daysSince1800))
+			return null;
+		calendar.set(1800, 0, 1, 0, 0, 0);
+		calendar.add(Calendar.DATE, (int) Math.floor(daysSince1800));
+		calendar.add(Calendar.SECOND, Math.round((daysSince1800 % 1) * 86400));
+		return calendar.getTime();
 	}
 }

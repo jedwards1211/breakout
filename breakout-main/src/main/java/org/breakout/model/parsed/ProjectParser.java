@@ -153,6 +153,9 @@ public class ProjectParser {
 		}
 		if (!isNullOrEmpty(raw.getDate())) {
 			Date parsedDate = parseDate(dateText);
+			if (parsedDate != null && parsedDate.getYear() > 130) {
+				Thread.dumpStack();
+			}
 			parsed.date =
 				parsedDate != null ? new ParsedField<>(parsedDate) : new ParsedField<>(Severity.ERROR, "invalid date");
 		}
