@@ -100,6 +100,22 @@ public class NormalGenerator3f {
 			return normalX * other.normalX + normalY * other.normalY + normalZ * other.normalZ;
 		}
 
+		public double[] getCentroid(double[] centroid) {
+			centroid[0] = 0;
+			centroid[1] = 0;
+			centroid[2] = 0;
+			for (NormalGenerator3f.Edge edge : edges) {
+				centroid[0] += edge.vertex.x;
+				centroid[1] += edge.vertex.y;
+				centroid[2] += edge.vertex.z;
+			}
+			centroid[0] /= 3;
+			centroid[1] /= 3;
+			centroid[2] /= 3;
+			return centroid;
+
+		}
+
 		@Override
 		public String toString() {
 			return "Triangle ["

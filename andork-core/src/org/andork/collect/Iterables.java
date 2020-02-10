@@ -40,8 +40,11 @@ public class Iterables {
 		return () -> iterator;
 	}
 
-	public static Iterable<Float> range(final float start, final float end, final boolean includeEnd,
-			final float step) {
+	public static Iterable<Float> range(
+		final float start,
+		final float end,
+		final boolean includeEnd,
+		final float step) {
 		return () -> Iterators.range(start, end, includeEnd, step);
 	}
 
@@ -114,11 +117,11 @@ public class Iterables {
 	public static Iterable<String> linesOf(InputStream in) {
 		return () -> Iterators.linesOf(new InputStreamReader(in));
 	}
-	
+
 	public static <I, O> Iterable<O> map(Iterable<? extends I> in, Function<? super I, ? extends O> iteratee) {
 		return () -> Iterators.map(in.iterator(), iteratee);
 	}
-	
+
 	public static <I, O> Iterable<O> map(I[] in, Function<? super I, ? extends O> iteratee) {
 		return () -> Iterators.map(in, iteratee);
 	}
@@ -126,8 +129,21 @@ public class Iterables {
 	public static <E> void removeAll(Iterable<? extends E> i, Predicate<? super E> p) {
 		Iterators.removeAll(i.iterator(), p);
 	}
-	
+
 	public static <T> Iterable<T> flatten(Iterable<Iterable<T>> iterable) {
 		return () -> Iterators.flatten(iterable.iterator());
+	}
+
+	public static <T> T min(Iterable<T> iterable, Function<T, Float> getScore) {
+		float bestScore = Float.NaN;
+		T best = null;
+		for (T item : iterable) {
+			float score = getScore.apply(item);
+			if (best == null || score < bestScore) {
+				bestScore = score;
+				best = item;
+			}
+		}
+		return best;
 	}
 }

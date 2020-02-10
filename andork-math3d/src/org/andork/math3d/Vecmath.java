@@ -371,6 +371,14 @@ public class Vecmath {
 		return dx * dx + dy * dy + dz * dz;
 	}
 
+	public static float distance3sq(double[] a, float[] b) {
+		double dx = a[0] - b[0];
+		double dy = a[1] - b[1];
+		double dz = a[2] - b[2];
+
+		return (float) (dx * dx + dy * dy + dz * dz);
+	}
+
 	public static double distance3sq(double[] a, double[] b) {
 		double dx = a[0] - b[0];
 		double dy = a[1] - b[1];
@@ -3346,6 +3354,12 @@ public class Vecmath {
 		System.arraycopy(values, valuesi, array, arrayi, 3);
 	}
 
+	public static void set3(float[] out, double[] in) {
+		out[0] = (float) in[0];
+		out[1] = (float) in[1];
+		out[2] = (float) in[2];
+	}
+
 	public static void setColumn3(double[] m, int colIndex, double a, double b, double c) {
 		colIndex *= 4;
 		m[colIndex] = a;
@@ -3815,6 +3829,13 @@ public class Vecmath {
 	 * Computes (a - b) dot c.
 	 */
 	public static double subDot3(double[] a, float[] b, double[] c) {
+		return (a[0] - b[0]) * c[0] + (a[1] - b[1]) * c[1] + (a[2] - b[2]) * c[2];
+	}
+
+	/**
+	 * Computes (a - b) dot c.
+	 */
+	public static double subDot3(double[] a, float[] b, float[] c) {
 		return (a[0] - b[0]) * c[0] + (a[1] - b[1]) * c[1] + (a[2] - b[2]) * c[2];
 	}
 

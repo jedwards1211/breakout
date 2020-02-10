@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
+import org.andork.collect.ArrayLists;
 import org.andork.collect.Iterables;
 import org.andork.collect.PriorityEntry;
 import org.andork.math.misc.Angles;
@@ -300,7 +301,7 @@ public class CalculateGeometry {
 		}
 	}
 
-	private static void getMinUpDown(CalcShot shot, CalcStation station, CalcCrossSection out) {
+	static void getMinUpDown(CalcShot shot, CalcStation station, CalcCrossSection out) {
 		for (CalcShot otherShot : station.shots.values()) {
 			if (otherShot == shot)
 				continue;
@@ -551,51 +552,44 @@ public class CalculateGeometry {
 		List<CalcShot> realShots = new ArrayList<>();
 
 		List<SplayVertex> vertices = new ArrayList<SplayVertex>();
-		SplayVertex origin = new SplayVertex();
-		origin.originalX = station.position[0];
-		origin.originalY = station.position[1];
-		origin.originalZ = station.position[2];
-		vertices.add(origin);
+		vertices.add(new SplayVertex(station.position));
 
 		for (CalcShot shot : station.shots.values()) {
 			if (shot.isSplay()) {
-				CalcStation p = shot.otherStation(station);
-				SplayVertex vertex = new SplayVertex();
-				vertex.normalizedX = p.position[0] - station.position[0];
-				vertex.normalizedY = p.position[1] - station.position[1];
-				vertex.normalizedZ = p.position[2] - station.position[2];
-				double length =
-					Math
-						.sqrt(
-							vertex.normalizedX * vertex.normalizedX
-								+ vertex.normalizedY * vertex.normalizedY
-								+ vertex.normalizedZ * vertex.normalizedZ);
-				if (length == 0)
-					continue;
-				vertex.normalizedX /= length;
-				vertex.normalizedY /= length;
-				vertex.normalizedZ /= length;
-				vertex.originalX = p.position[0];
-				vertex.originalY = p.position[1];
-				vertex.originalZ = p.position[2];
-				vertices.add(vertex);
+				CalcStation splayStation = shot.otherStation(station);
+				if (!Arrays.equals(station.position, splayStation.position)) {
+					vertices.add(new SplayVertex(splayStation, station));
+				}
 			}
-			else {
+			else if (shot.distance > 0) {
 				realShots.add(shot);
 			}
 		}
-		Set<Face<SplayVertex>> hull;
-		try {
-			hull = Quickhull.createConvexHull(vertices);
+
+		Set<Face<SplayVertex>> hull = null;
+		if (vertices.size() >= 4) {
+			try {
+				hull = Quickhull.createConvexHull(vertices);
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				// fall through
+			}
 		}
-		catch (Exception e) {
-			e.printStackTrace();
+
+		if (hull == null) {
 			for (CalcShot shot : station.shots.values()) {
 				shot.setIsSplay(false);
 			}
 			return;
 		}
 
+		Triangle[] finalTriangles = generateSplayHullNormals(hull);
+
+		divideSplayHull(station, realShots, finalTriangles);
+	}
+
+	static Triangle[] generateSplayHullNormals(Set<Face<SplayVertex>> hull) {
 		MeshBuilder mesh = new MeshBuilder();
 		for (Face<SplayVertex> face : hull) {
 			SplayVertex v0 = face.edges[0].nextVertex;
@@ -624,7 +618,42 @@ public class CalculateGeometry {
 		normalgen.generateNormals();
 
 		Triangle[] finalTriangles = normalgen.triangles();
+		return finalTriangles;
+	}
 
+	static final class ShotForDivideSplayHull {
+		public final CalcShot shot;
+		public final float[] l0 = new float[3];
+		public final float[] l1 = new float[3];
+		public float length;
+		public final float[] ray = new float[3];
+		public final float[] closest = new float[3];
+
+		public ShotForDivideSplayHull(CalcShot shot) {
+			this.shot = shot;
+			Vecmath.set3(l0, shot.fromStation.position);
+			Vecmath.set3(l1, shot.toStation.position);
+			Vecmath.sub3(l1, l0, ray);
+			length = Vecmath.length3(ray);
+			Vecmath.scale3(ray, 1 / length);
+		}
+
+		public float polarity(double[] p) {
+			return (float) Vecmath.subDot3(p, l0, ray) / length;
+		}
+
+		public float distanceSq(double[] p) {
+			float t = polarity(p);
+			if (t <= 0)
+				return Vecmath.distance3sq(p, l0);
+			if (t >= 1)
+				return Vecmath.distance3sq(p, l1);
+			Vecmath.interp3(l0, l1, t, closest);
+			return Vecmath.distance3sq(p, closest);
+		}
+	}
+
+	static void divideSplayHull(CalcStation station, List<CalcShot> realShots, Triangle[] finalTriangles) {
 		if (realShots.size() == 1) {
 			CalcShot shot = realShots.get(0);
 			if (shot.splayTriangles == null) {
@@ -635,26 +664,15 @@ public class CalculateGeometry {
 			}
 		}
 		else {
+			List<ShotForDivideSplayHull> divideShots =
+				ArrayLists.map(realShots, shot -> new ShotForDivideSplayHull(shot));
+
+			double[] centroid = new double[3];
 			for (Triangle triangle : finalTriangles) {
-				double[] centroid = new double[3];
-				for (NormalGenerator3f.Edge edge : triangle.edges) {
-					centroid[0] += edge.vertex.x;
-					centroid[1] += edge.vertex.y;
-					centroid[2] += edge.vertex.z;
-				}
-				centroid[0] /= 3;
-				centroid[1] /= 3;
-				centroid[2] /= 3;
-				CalcShot closestShot = null;
-				double closestDistSq = Double.POSITIVE_INFINITY;
-				for (CalcShot shot : realShots) {
-					CalcStation p = shot.otherStation(station);
-					double distSq = Vecmath.distance3sq(centroid, p.position);
-					if (closestShot == null || distSq < closestDistSq) {
-						closestShot = shot;
-						closestDistSq = distSq;
-					}
-				}
+				triangle.getCentroid(centroid);
+
+				CalcShot closestShot = Iterables.min(divideShots, shot -> shot.distanceSq(centroid)).shot;
+
 				if (closestShot.splayTriangles == null) {
 					closestShot.splayTriangles = new ArrayList<>();
 				}
@@ -735,7 +753,7 @@ public class CalculateGeometry {
 		createVertices(shot.toStation, shot.toCrossSection, shot.vertices, fromVertexCount * 3, false);
 		shot.polarities = new float[vertexCount];
 
-		for (int i = fromVertexCount; i < shot.polarities.length; i++) {
+		for (int i = fromVertexCount; i < toVertexCount; i++) {
 			shot.polarities[i] = 1;
 		}
 
@@ -798,8 +816,14 @@ public class CalculateGeometry {
 		}
 
 		if (shot.splayTriangles != null) {
+			double[] position = new double[3];
+			ShotForDivideSplayHull divideShot = new ShotForDivideSplayHull(shot);
 			for (Map.Entry<Vertex, Integer> entry : splayIndices.entrySet()) {
 				Vertex v = entry.getKey();
+				position[0] = v.x;
+				position[1] = v.y;
+				position[2] = v.z;
+				shot.polarities[entry.getValue()] = Math.max(0, Math.min(1, divideShot.polarity(position)));
 				int index = entry.getValue() * 3;
 				shot.vertices[index] = v.x;
 				shot.vertices[index + 1] = v.y;
