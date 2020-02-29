@@ -34,9 +34,12 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import java.awt.LinearGradientPaint;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
@@ -86,6 +89,7 @@ import org.andork.bind.ui.ComponentEnabledBinder;
 import org.andork.bind.ui.ISelectorSelectionBinder;
 import org.andork.bind.ui.JComboBoxItemBinder;
 import org.andork.bind.ui.JSliderValueBinder;
+import org.andork.date.DateUtils;
 import org.andork.func.Bimapper;
 import org.andork.func.LinearFloatBimapper;
 import org.andork.func.RoundingFloat2IntegerBimapper;
@@ -148,6 +152,12 @@ public class SettingsDrawer extends Drawer {
 	DefaultSelector<Unit<Angle>> displayAngleUnitSelector;
 
 	JLabel maxDateLabel;
+	JButton prevYearButton;
+	JButton prevMonthButton;
+	JButton prevDayButton;
+	JButton nextDayButton;
+	JButton nextMonthButton;
+	JButton nextYearButton;
 	JSlider maxDateSlider;
 
 	JLabel ambientLightLabel;
@@ -387,6 +397,8 @@ public class SettingsDrawer extends Drawer {
 
 		ButtonSelectedBinder.bind(viewButtonsPanel.getPlanButton(), bindEquals(CameraView.PLAN, cameraViewBinder));
 		ButtonSelectedBinder
+			.bind(viewButtonsPanel.getSidewaysPlanButton(), bindEquals(CameraView.SIDEWAYS_PLAN, cameraViewBinder));
+		ButtonSelectedBinder
 			.bind(viewButtonsPanel.getPerspectiveButton(), bindEquals(CameraView.PERSPECTIVE, cameraViewBinder));
 		ButtonSelectedBinder
 			.bind(viewButtonsPanel.getNorthButton(), bindEquals(CameraView.NORTH_FACING_PROFILE, cameraViewBinder));
@@ -441,6 +453,38 @@ public class SettingsDrawer extends Drawer {
 				}
 
 			}), maxDateBinder));
+
+		class IncMaxDate implements ActionListener {
+			private final int field;
+			private final boolean prev;
+
+			public IncMaxDate(int field, boolean prev) {
+				super();
+				this.field = field;
+				this.prev = prev;
+			}
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				Date date = ColorParam.calcDateFromDaysSince1800(maxDateBinder.get());
+				if (date == null) {
+					date =
+						ColorParam.calcDateFromDaysSince1800(maxDateBimapper.unmap((float) maxDateSlider.getMaximum()));
+					if (date == null)
+						return;
+				}
+				date = prev ? DateUtils.startOf(date, field) : DateUtils.endOf(date, field);
+				maxDateBinder.set(ColorParam.calcDaysSince1800(date));
+			}
+
+		}
+
+		prevYearButton.addActionListener(new IncMaxDate(Calendar.YEAR, true));
+		prevMonthButton.addActionListener(new IncMaxDate(Calendar.MONTH, true));
+		prevDayButton.addActionListener(new IncMaxDate(Calendar.DATE, true));
+		nextDayButton.addActionListener(new IncMaxDate(Calendar.DATE, false));
+		nextMonthButton.addActionListener(new IncMaxDate(Calendar.MONTH, false));
+		nextYearButton.addActionListener(new IncMaxDate(Calendar.YEAR, false));
 
 		JSliderValueBinder
 			.bind(
@@ -558,6 +602,22 @@ public class SettingsDrawer extends Drawer {
 
 		maxDateLabel = new JLabel();
 		updateMaxDateLabelText(null);
+		prevYearButton = new JButton(new ImageIcon(getClass().getResource("prevYear.png")));
+		prevMonthButton = new JButton(new ImageIcon(getClass().getResource("prevMonth.png")));
+		prevDayButton = new JButton(new ImageIcon(getClass().getResource("prevDay.png")));
+		nextDayButton = new JButton(new ImageIcon(getClass().getResource("nextDay.png")));
+		nextMonthButton = new JButton(new ImageIcon(getClass().getResource("nextMonth.png")));
+		nextYearButton = new JButton(new ImageIcon(getClass().getResource("nextYear.png")));
+
+		for (JButton button : new JButton[] {
+			prevYearButton,
+			prevMonthButton,
+			prevDayButton,
+			nextDayButton,
+			nextMonthButton,
+			nextYearButton }) {
+			button.setMargin(new Insets(2, 2, 2, 2));
+		}
 
 		maxDateSlider = new JSlider(0, 1000, 1000);
 		maxDateSlider.setOpaque(false);
@@ -855,7 +915,15 @@ public class SettingsDrawer extends Drawer {
 		w.put(distColorationLabel).belowLast().west();
 		w.put(distColorationAxisPanel).belowLast().fillx().addToInsets(0, 0, 10, 0);
 
-		w.put(maxDateLabel).belowLast().west();
+		GridBagWizard maxDatePanel = GridBagWizard.quickPanel();
+		maxDatePanel.put(maxDateLabel).xy(0, 0).fillx(1);
+		maxDatePanel.put(prevYearButton).rightOfLast();
+		maxDatePanel.put(prevMonthButton).rightOfLast();
+		maxDatePanel.put(prevDayButton).rightOfLast();
+		maxDatePanel.put(nextDayButton).rightOfLast();
+		maxDatePanel.put(nextMonthButton).rightOfLast();
+		maxDatePanel.put(nextYearButton).rightOfLast();
+		w.put(maxDatePanel.getTarget()).belowLast().fillx().west();
 		w.put(maxDateSlider).belowLast().fillx();
 
 		w.put(ambientLightLabel).belowLast().west();
@@ -1041,7 +1109,7 @@ public class SettingsDrawer extends Drawer {
 		}
 	}
 
-	private static final DateFormat maxDateFormat = DateFormat.getDateInstance();
+	public static final DateFormat maxDateFormat = DateFormat.getDateInstance();
 
 	private void updateMaxDateLabelText(Date date) {
 		localizer

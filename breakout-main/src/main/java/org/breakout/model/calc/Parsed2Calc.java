@@ -349,6 +349,8 @@ public class Parsed2Calc {
 		if (calcTrip == null) {
 			calcTrip = new CalcTrip();
 			calcTrip.cave = cave;
+			calcTrip.name = trip.name;
+			calcTrip.attachedFiles = trip.attachedFiles;
 			trips.put(trip, calcTrip);
 		}
 		cave.trips.add(calcTrip);

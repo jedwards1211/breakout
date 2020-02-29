@@ -10,6 +10,8 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.UnitizedDouble;
 
+import com.github.krukow.clj_ds.PersistentVector;
+
 public class ParsedTrip {
 	public List<ParseMessage> messages = new ArrayList<>(1);
 	public ParsedField<UnitizedDouble<Angle>> declination;
@@ -20,6 +22,7 @@ public class ParsedTrip {
 	public ParsedField<UnitizedDouble<Angle>> backInclinationCorrection;
 	public boolean areBackAzimuthsCorrected;
 	public boolean areBackInclinationsCorrected;
+	public String name;
 	public ParsedField<Date> date;
 	public ParsedField<String> datum;
 	public ParsedField<String> ellipsoid;
@@ -28,4 +31,5 @@ public class ParsedTrip {
 
 	public final List<ParsedStation> stations = new ArrayList<>();
 	public final List<ParsedShot> shots = new ArrayList<>();
+	public PersistentVector<String> attachedFiles;
 }

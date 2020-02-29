@@ -96,6 +96,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<File> linkSurveyNotesDirectory = newAttribute(File.class, "linkSurveyNotesDirectory");
 	public static final Attribute<File> importLeadsDirectory = newAttribute(File.class, "importLeadsDirectory");
 	public static final Attribute<File> exportSTLDirectory = newAttribute(File.class, "exportSTLDirectory");
+	public static final Attribute<File> exportSurveyNotesDirectory =
+		newAttribute(File.class, "exportSurveyNotesDirectory");
 	public static final Attribute<com.github.krukow.clj_ds.PersistentVector<SurveyLead>> leads =
 		newAttribute(com.github.krukow.clj_ds.PersistentVector.class, "leads", (a, b) -> a == b);
 	public static final Attribute<MultiMap<StationKey, SurveyLead>> leadIndex =
@@ -136,6 +138,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 				.map(linkSurveyNotesDirectory, FileStringBimapper.instance)
 				.map(importLeadsDirectory, FileStringBimapper.instance)
 				.map(exportSTLDirectory, FileStringBimapper.instance)
+				.map(exportSurveyNotesDirectory, FileStringBimapper.instance)
 				.exclude(hasUnsavedChanges)
 				.exclude(leads)
 				.exclude(leadIndex);

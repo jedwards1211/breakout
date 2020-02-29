@@ -103,6 +103,7 @@ public class ProjectParser {
 		ParsedCave cave = ensureCave(caveName);
 		cave.trips.add(parsed);
 
+		parsed.name = raw.getName();
 		parsed.distanceCorrection =
 			parse(
 				raw,
@@ -176,6 +177,8 @@ public class ProjectParser {
 				parsed.utmZone = new ParsedField<>(Severity.ERROR, "invalid UTM zone");
 			}
 		}
+
+		parsed.attachedFiles = raw.getAttachedFiles();
 
 		return parsed;
 	}

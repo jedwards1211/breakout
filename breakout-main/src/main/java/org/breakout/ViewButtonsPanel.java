@@ -50,6 +50,7 @@ public class ViewButtonsPanel extends JPanel {
 	JToggleButton eastButton;
 	JToggleButton westButton;
 	JToggleButton autoProfileButton;
+	JToggleButton sidewaysPlanButton;
 
 	Map<CameraView, JToggleButton> buttonMap;
 
@@ -100,9 +101,13 @@ public class ViewButtonsPanel extends JPanel {
 		autoProfileButton.setSelectedIcon(new ImageIcon(getClass().getResource("wand-selected.png")));
 		autoProfileButton.setName("Auto Profile");
 
+		sidewaysPlanButton = new JToggleButton("Sideways Plan");
+		sidewaysPlanButton.setName("Sideways Plan");
+
 		buttonMap = new HashMap<>();
 		buttonMap.put(CameraView.PERSPECTIVE, perspectiveButton);
 		buttonMap.put(CameraView.PLAN, planButton);
+		buttonMap.put(CameraView.SIDEWAYS_PLAN, sidewaysPlanButton);
 		buttonMap.put(CameraView.NORTH_FACING_PROFILE, northButton);
 		buttonMap.put(CameraView.SOUTH_FACING_PROFILE, southButton);
 		buttonMap.put(CameraView.EAST_FACING_PROFILE, eastButton);
@@ -111,11 +116,13 @@ public class ViewButtonsPanel extends JPanel {
 
 		ButtonGroup group = new ButtonGroup();
 		for (JToggleButton button : buttonMap.values()) {
-			button.setUI(new BasicButtonUI());
-			button.setBorderPainted(false);
-			button.setContentAreaFilled(false);
-			button.setOpaque(false);
-			button.setMargin(new Insets(0, 0, 0, 0));
+			if (button != sidewaysPlanButton) {
+				button.setUI(new BasicButtonUI());
+				button.setBorderPainted(false);
+				button.setContentAreaFilled(false);
+				button.setOpaque(false);
+				button.setMargin(new Insets(0, 0, 0, 0));
+			}
 			group.add(button);
 		}
 
@@ -127,11 +134,12 @@ public class ViewButtonsPanel extends JPanel {
 		w.put(planButton).xy(1, 1);
 		w.put(northButton).above(planButton);
 		w.put(southButton).below(planButton);
+		w.put(sidewaysPlanButton).below(southButton);
 		w.put(eastButton).rightOf(planButton);
 		w.put(westButton).leftOf(planButton);
 		w.put(perspectiveButton).rightOf(northButton);
 		w.put(autoProfileButton).rightOf(southButton);
-		w.put(hintLabel).below(westButton, southButton, eastButton).fillx(1.0);
+		w.put(hintLabel).below(westButton, southButton, eastButton, sidewaysPlanButton).fillx(1.0);
 
 		ChangeListener changeHandler = new ChangeListener() {
 			@Override
@@ -167,6 +175,10 @@ public class ViewButtonsPanel extends JPanel {
 
 	public JToggleButton getPlanButton() {
 		return planButton;
+	}
+
+	public JToggleButton getSidewaysPlanButton() {
+		return sidewaysPlanButton;
 	}
 
 	public JToggleButton getSouthButton() {

@@ -46,17 +46,19 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -67,6 +69,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -217,6 +220,7 @@ import org.breakout.model.Survey3dModel.UpdateGlowOptions;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.calc.CalcProject;
 import org.breakout.model.calc.CalcShot;
+import org.breakout.model.calc.CalcTrip;
 import org.breakout.model.calc.CalculateGeometry;
 import org.breakout.model.calc.Parsed2Calc;
 import org.breakout.model.compass.Compass;
@@ -310,105 +314,20 @@ public class BreakoutMainView {
 
 			HighlightMode highlightMode = getProjectModel().get(ProjectModel.highlightMode);
 
-			final LinearAxisConversion conversion = picked == null ? null : new FromEDT<LinearAxisConversion>() {
-				@Override
-				public LinearAxisConversion run() throws Throwable {
-					SurveyRow orig = sourceRows.get(picked.picked.key());
-					SurveyTrip trip = orig != null ? orig.getTrip() : null;
-					ShotKey key = picked.picked.key();
-					ParsedShot shot = parsedProject.shots.get(picked.picked.key());
-					if (shot == null) {
-						hintLabel.setText("");
-					}
-					else {
-						UnitizedDouble<Length> distance = ParsedShotMeasurement.getFirstDistance(shot.measurements);
-						UnitizedDouble<Angle> frontAzimuth =
-							ParsedShotMeasurement.getFirstFrontAzimuth(shot.measurements);
-						UnitizedDouble<Angle> backAzimuth =
-							ParsedShotMeasurement.getFirstBackAzimuth(shot.measurements);
-						UnitizedDouble<Angle> frontInclination =
-							ParsedShotMeasurement.getFirstFrontInclination(shot.measurements);
-						UnitizedDouble<Angle> backInclination =
-							ParsedShotMeasurement.getFirstBackInclination(shot.measurements);
+			final LinearAxisConversion conversion = FromEDT.fromEDT(() -> {
+				updateHintLabel(picked);
 
-						QObject<ProjectModel> projectModel = getProjectModel();
-						Unit<Length> lengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
-						Unit<Angle> angleUnit = projectModel.get(ProjectModel.displayAngleUnit);
-
-						NumberFormat format = DecimalFormat.getInstance();
-						format.setMaximumFractionDigits(1);
-						format.setMinimumFractionDigits(1);
-						format.setGroupingUsed(false);
-
-						String formattedDistance = distance == null ? "--" : distance.in(lengthUnit).toString(format);
-						String formattedFrontAzimuth =
-							frontAzimuth == null ? "--" : frontAzimuth.in(angleUnit).toString(format);
-						String formattedBackAzimuth =
-							backAzimuth == null ? "--" : backAzimuth.in(angleUnit).toString(format);
-						String formattedFrontInclination =
-							frontInclination == null ? "--" : frontInclination.in(angleUnit).toString(format);
-						String formattedBackInclination =
-							backInclination == null ? "--" : backInclination.in(angleUnit).toString(format);
-
-						CalcShot calcShot = calcProject.shots.get(picked.picked.key());
-						Collection<SurveyLead> leads = null;
-						String pickedStationName = "";
-						if (calcShot != null) {
-							pickedStationName =
-								picked.locationAlongShot < 0.5f ? calcShot.fromStation.name : calcShot.toStation.name;
-							leads =
-								getProjectModel()
-									.get(ProjectModel.leadIndex)
-									.get(
-										(picked.locationAlongShot < 0.5f ? calcShot.fromStation : calcShot.toStation)
-											.key());
-						}
-						final String finalPickedStationName = pickedStationName;
-
-						String formattedLeads =
-							leads != null && !leads.isEmpty()
-								? StringUtils
-									.join(
-										"",
-										ArrayLists
-											.map(
-												leads,
-												lead -> String
-													.format(
-														"<br>Lead at %s: %s",
-														finalPickedStationName,
-														lead.description)))
-								: "";
-
-						String hintText =
-							String
-								.format(
-									"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
-										+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i>%s</html>",
-									key.fromStation,
-									key.toStation,
-									formattedDistance,
-									formattedFrontAzimuth,
-									formattedBackAzimuth,
-									formattedFrontInclination,
-									formattedBackInclination,
-									trip != null ? trip.getName() : "",
-									formattedLeads);
-
-						hintLabel.setText(hintText);
-						hintLabel.invalidate();
-					}
-
-					LinearAxisConversion conversion = getProjectModel().get(ProjectModel.highlightRange);
-					LinearAxisConversion conversion2 =
-						new LinearAxisConversion(
-							conversion.invert(0.0),
-							1.0,
-							conversion.invert(settingsDrawer.getGlowDistAxis().getViewSpan()),
-							0.0);
-					return conversion2;
-				}
-			}.result();
+				if (picked == null)
+					return null;
+				LinearAxisConversion conversion1 = getProjectModel().get(ProjectModel.highlightRange);
+				LinearAxisConversion conversion2 =
+					new LinearAxisConversion(
+						conversion1.invert(0.0),
+						1.0,
+						conversion1.invert(settingsDrawer.getGlowDistAxis().getViewSpan()),
+						0.0);
+				return conversion2;
+			});
 
 			runSubtask(
 				1,
@@ -1353,6 +1272,7 @@ public class BreakoutMainView {
 	OpenLogDirectoryAction openLogDirectoryAction = new OpenLogDirectoryAction(i18n);
 	ExportStlAction exportBinaryStlAction = new ExportStlAction(this, ExportStlAction.Mode.Binary);
 	ExportStlAction exportAsciiStlAction = new ExportStlAction(this, ExportStlAction.Mode.ASCII);
+	ExportSurveyNotesAction exportSurveyNotesAction = new ExportSurveyNotesAction(this);
 
 	OrbitToPlanAction orbitToPlanAction = new OrbitToPlanAction(this);
 	FitViewToEverythingAction fitViewToEverythingAction = new FitViewToEverythingAction(this);
@@ -1462,12 +1382,12 @@ public class BreakoutMainView {
 			JoglViewSettings settings = getViewSettings();
 			Projection projection = settings.getProjection();
 
+			model3d.setLeads(getProjectModel().get(ProjectModel.leadIndex));
+			model3d.setParamGradient(getProjectModel().get(ProjectModel.paramGradient));
 			if (model3d == null || !(projection instanceof PerspectiveProjection)) {
 				super.display(drawable);
 				return;
 			}
-			model3d.setLeads(getProjectModel().get(ProjectModel.leadIndex));
-			model3d.setParamGradient(getProjectModel().get(ProjectModel.paramGradient));
 
 			JoglViewState viewState = getViewState();
 			float[] vi = viewState.inverseViewMatrix();
@@ -1961,6 +1881,7 @@ public class BreakoutMainView {
 		new BinderWrapper<Float>() {
 			@Override
 			protected void onValueChanged(final Float newValue) {
+				updateHintLabel(null);
 				if (model3d != null) {
 					model3d.setMaxDate(newValue);
 					autoDrawable.display();
@@ -2090,6 +2011,7 @@ public class BreakoutMainView {
 		exportMenu.add(new JMenuItem(exportImageAction));
 		exportMenu.add(new JMenuItem(exportBinaryStlAction));
 		exportMenu.add(new JMenuItem(exportAsciiStlAction));
+		exportMenu.add(new JMenuItem(exportSurveyNotesAction));
 		fileMenu.add(exportMenu);
 		fileMenu.add(new JSeparator());
 		fileMenu.add(new JMenuItem(linkSurveyNotesAction));
@@ -2909,90 +2831,140 @@ public class BreakoutMainView {
 		}
 	}
 
-	private void openAttachedFile(String link) {
-		URI uri = null;
-		try {
-			uri = new URL(link).toURI();
-			Desktop.getDesktop().browse(uri);
-			return;
+	public List<Object> findAttachedFiles(Set<String> attachedFiles, Task<?> task) throws IOException {
+		if (SwingUtilities.isEventDispatchThread()) {
+			throw new IllegalThreadStateException("must not be called on EDT, should be called on ioTaskService");
 		}
-		catch (MalformedURLException e) {
+		List<Object> result = new ArrayList<>();
+		Set<String> searchTargets = new HashSet<>();
+		for (String attachedFile : attachedFiles) {
+			try {
+				result.add(new URL(attachedFile).toURI());
+			}
+			catch (Exception e) {
+				// ignore
+			}
+			File file = new File(attachedFile);
+			if (file.isAbsolute())
+				result.add(file);
+			else
+				searchTargets.add(attachedFile.replace('\\', '/'));
 		}
-		catch (Exception e) {
-			logger.log(Level.SEVERE, "Failed to open survey notes", e);
-			JOptionPane
-				.showMessageDialog(
-					mainPanel,
-					"Failed to open URL " + uri + ": " + e,
-					"Error",
-					JOptionPane.ERROR_MESSAGE);
-		}
+		if (searchTargets.isEmpty())
+			return result;
 
 		try {
-			File file = new File(link);
-			if (!file.isAbsolute()) {
-				QArrayList<File> dirs = getProjectModel().get(ProjectModel.surveyScanPaths);
-				if (dirs == null || dirs.isEmpty()) {
+
+			QArrayList<File> dirs = getProjectModel().get(ProjectModel.surveyScanPaths);
+			if (dirs == null || dirs.isEmpty()) {
+				dirs = FromEDT.fromEDT(() -> {
 					int option =
 						JOptionPane
 							.showConfirmDialog(
 								mainPanel,
-								"There are no directories configured to search for the file: "
-									+ link
-									+ ".  Would you like to configure them now?",
+								"There are no directories configured to search for files.  Would you like to configure them now?",
 								"Can't find file",
 								JOptionPane.YES_NO_OPTION,
 								JOptionPane.WARNING_MESSAGE);
 					if (option == JOptionPane.YES_OPTION) {
 						editSurveyScanPathsAction
 							.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, ""));
-						dirs = getProjectModel().get(ProjectModel.surveyScanPaths);
+						return getProjectModel().get(ProjectModel.surveyScanPaths);
 					}
+					return null;
+				});
+			}
+			if (dirs != null) {
+				if (task instanceof SelfReportingTask) {
+					((SelfReportingTask<?>) task).showDialogLater();
 				}
-				if (dirs != null) {
-					final QArrayList<File> finalDirs = dirs;
-					ioTaskService.submit(new SelfReportingTask<Void>(mainPanel) {
-						@Override
-						protected Void workDuringDialog() throws Exception {
-							setStatus("Searching for file: " + link + "...");
-							setIndeterminate(true);
 
-							showDialogLater();
+				final QArrayList<File> finalDirs = dirs;
+				task
+					.setStatus(
+						searchTargets.size() > 1
+							? "Searching for files..."
+							: "Searching for file: " + searchTargets.iterator().next() + "...");
+				task.setIndeterminate(true);
 
-							for (File dir : finalDirs) {
-								Optional<Path> foundFile =
-									Files
-										.find(
-											dir.toPath(),
-											SCANNED_NOTES_SEARCH_DEPTH,
-											(Path path, BasicFileAttributes attrs) -> {
-												String pathStr = path.toString();
-												int beforeIndex = pathStr.length() - link.length() - 1;
-												return pathStr.endsWith(link)
-													&& (beforeIndex < 0
-														|| pathStr.charAt(beforeIndex) == '/'
-														|| pathStr.charAt(beforeIndex) == '\\');
-											},
-											FileVisitOption.FOLLOW_LINKS)
-										.findFirst();
-								if (foundFile.isPresent() && !isCanceled() && !isCanceled()) {
-									SwingUtilities.invokeLater(() -> openSurveyNotes(foundFile.get().toFile()));
-									return null;
+				for (File dir : finalDirs) {
+					Files
+						.walkFileTree(
+							dir.toPath(),
+							Collections.singleton(FileVisitOption.FOLLOW_LINKS),
+							SCANNED_NOTES_SEARCH_DEPTH,
+							new SimpleFileVisitor<Path>() {
+								@Override
+								public FileVisitResult visitFile(Path path, BasicFileAttributes attrs)
+									throws IOException {
+									String pathStr = path.toString().replace('\\', '/');
+									while (!pathStr.isEmpty()) {
+										if (searchTargets.remove(pathStr)) {
+											result.add(path);
+										}
+										pathStr = pathStr.replaceFirst("^[^\\/]*(\\/|$)", "");
+									}
+
+									return task.isCanceled() || searchTargets.isEmpty()
+										? FileVisitResult.TERMINATE
+										: FileVisitResult.CONTINUE;
 								}
-							}
-							if (!isCanceled() && !isCanceled()) {
-								SwingUtilities.invokeLater(() -> openSurveyNotes(file));
-							}
-							return null;
-						}
-					});
-					return;
+							});
 				}
-				openSurveyNotes(file);
 			}
 		}
+		catch (Exception ex) {
+			logger.log(Level.SEVERE, "Failed to find files", ex);
+			OnEDT.onEDT(() -> {
+				JOptionPane
+					.showConfirmDialog(mainPanel, new Object[]
+					{ "Failed to find files:", ex.getLocalizedMessage() },
+						"Error finding files",
+						JOptionPane.OK_OPTION,
+						JOptionPane.ERROR_MESSAGE);
+			});
+			throw ex;
+		}
+
+		if (!searchTargets.isEmpty()) {
+			OnEDT.onEDT(() -> {
+				JOptionPane
+					.showConfirmDialog(mainPanel, new Object[]
+					{ "Failed to find files:", searchTargets.toArray() },
+						"Can't find files",
+						JOptionPane.OK_OPTION,
+						JOptionPane.ERROR_MESSAGE);
+			});
+		}
+
+		return result;
+	}
+
+	private void openAttachedFile(String link) {
+		try {
+			Desktop.getDesktop().browse(new URL(link).toURI());
+			return;
+		}
+		catch (Exception e) {
+		}
+
+		try {
+			ioTaskService.submit(new SelfReportingTask<Void>(mainPanel) {
+				@Override
+				protected Void workDuringDialog() throws Exception {
+					List<Object> found = findAttachedFiles(Collections.singleton(link), this);
+					if (!found.isEmpty()) {
+						Object item = found.get(0);
+						if (item instanceof Path) {
+							openSurveyNotes(((Path) item).toFile());
+						}
+					}
+
+					return null;
+				}
+			});
+		}
 		catch (Exception e1) {
-			logger.log(Level.SEVERE, "Failed to open survey notes", e1);
 		}
 	}
 
@@ -3046,6 +3018,10 @@ public class BreakoutMainView {
 		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(1));
 	}
 
+	public void sidewaysPlanMode() {
+		changeView(new float[] { 0, -1, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(1));
+	}
+
 	protected void removeUnprotectedCameraAnimations() {
 		cameraAnimationQueue.removeAll(anim -> !protectedAnimations.containsKey(anim));
 	}
@@ -3069,6 +3045,9 @@ public class BreakoutMainView {
 				break;
 			case PLAN:
 				planMode();
+				break;
+			case SIDEWAYS_PLAN:
+				sidewaysPlanMode();
 				break;
 			case NORTH_FACING_PROFILE:
 				northFacingProfileMode();
@@ -3469,6 +3448,109 @@ public class BreakoutMainView {
 			OnEDT.onEDT(() -> getProjectModel().set(ProjectModel.leadIndex, index));
 			autoDrawable.display();
 			return null;
+		}
+	}
+
+	public Set<CalcTrip> getSelectedCalcTrips() {
+		Set<CalcTrip> trips = new LinkedHashSet<>();
+		if (calcProject == null)
+			return trips;
+
+		for (ShotKey key : getDefaultShotsForOperations(1)) {
+			CalcShot shot = calcProject.shots.get(key);
+			if (shot == null)
+				continue;
+			CalcTrip trip = shot.trip;
+			if (trip != null)
+				trips.add(trip);
+		}
+		return trips;
+	}
+
+	void updateHintLabel(final Shot3dPickResult picked) {
+		SurveyRow orig = picked != null ? sourceRows.get(picked.picked.key()) : null;
+		SurveyTrip trip = orig != null ? orig.getTrip() : null;
+		ShotKey key = picked != null ? picked.picked.key() : null;
+		ParsedShot shot = key != null ? parsedProject.shots.get(key) : null;
+		if (shot == null)
+
+		{
+			Float maxDate = getProjectModel().get(ProjectModel.maxDate);
+			if (maxDate == null || Float.isNaN(maxDate)) {
+				hintLabel.setText("");
+			}
+			else {
+				hintLabel
+					.setText(
+						"Date: " + SettingsDrawer.maxDateFormat.format(ColorParam.calcDateFromDaysSince1800(maxDate)));
+			}
+		}
+		else {
+			UnitizedDouble<Length> distance = ParsedShotMeasurement.getFirstDistance(shot.measurements);
+			UnitizedDouble<Angle> frontAzimuth = ParsedShotMeasurement.getFirstFrontAzimuth(shot.measurements);
+			UnitizedDouble<Angle> backAzimuth = ParsedShotMeasurement.getFirstBackAzimuth(shot.measurements);
+			UnitizedDouble<Angle> frontInclination = ParsedShotMeasurement.getFirstFrontInclination(shot.measurements);
+			UnitizedDouble<Angle> backInclination = ParsedShotMeasurement.getFirstBackInclination(shot.measurements);
+
+			QObject<ProjectModel> projectModel = getProjectModel();
+			Unit<Length> lengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
+			Unit<Angle> angleUnit = projectModel.get(ProjectModel.displayAngleUnit);
+
+			NumberFormat format = DecimalFormat.getInstance();
+			format.setMaximumFractionDigits(1);
+			format.setMinimumFractionDigits(1);
+			format.setGroupingUsed(false);
+
+			String formattedDistance = distance == null ? "--" : distance.in(lengthUnit).toString(format);
+			String formattedFrontAzimuth = frontAzimuth == null ? "--" : frontAzimuth.in(angleUnit).toString(format);
+			String formattedBackAzimuth = backAzimuth == null ? "--" : backAzimuth.in(angleUnit).toString(format);
+			String formattedFrontInclination =
+				frontInclination == null ? "--" : frontInclination.in(angleUnit).toString(format);
+			String formattedBackInclination =
+				backInclination == null ? "--" : backInclination.in(angleUnit).toString(format);
+
+			CalcShot calcShot = calcProject.shots.get(picked.picked.key());
+			Collection<SurveyLead> leads = null;
+			String pickedStationName = "";
+			if (calcShot != null) {
+				pickedStationName =
+					picked.locationAlongShot < 0.5f ? calcShot.fromStation.name : calcShot.toStation.name;
+				leads =
+					getProjectModel()
+						.get(ProjectModel.leadIndex)
+						.get((picked.locationAlongShot < 0.5f ? calcShot.fromStation : calcShot.toStation).key());
+			}
+			final String finalPickedStationName = pickedStationName;
+
+			String formattedLeads =
+				leads != null && !leads.isEmpty()
+					? StringUtils
+						.join(
+							"",
+							ArrayLists
+								.map(
+									leads,
+									lead -> String
+										.format("<br>Lead at %s: %s", finalPickedStationName, SurveyLead.description)))
+					: "";
+
+			String hintText =
+				String
+					.format(
+						"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
+							+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i>%s</html>",
+						key.fromStation,
+						key.toStation,
+						formattedDistance,
+						formattedFrontAzimuth,
+						formattedBackAzimuth,
+						formattedFrontInclination,
+						formattedBackInclination,
+						trip != null ? trip.getName() : "",
+						formattedLeads);
+
+			hintLabel.setText(hintText);
+			hintLabel.invalidate();
 		}
 	}
 }

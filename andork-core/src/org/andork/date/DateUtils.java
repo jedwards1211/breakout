@@ -22,16 +22,51 @@
 package org.andork.date;
 
 import java.util.Calendar;
+import java.util.Date;
 
 public class DateUtils {
 	public static long daysSinceTheJesus(Calendar cal) {
 		long year = cal.get(Calendar.YEAR);
 		long dayOfYear = cal.get(Calendar.DAY_OF_YEAR);
 
-		return year * 365
-				+ (year + 3) / 4
-				- (year + 99) / 100
-				+ (year + 399) / 400
-				+ dayOfYear - 1;
+		return year * 365 + (year + 3) / 4 - (year + 99) / 100 + (year + 399) / 400 + dayOfYear - 1;
+	}
+
+	public static Calendar startOf(Calendar cal, int field) {
+		cal = (Calendar) cal.clone();
+		switch (field) {
+		case Calendar.YEAR:
+			cal.set(Calendar.MONTH, 0);
+		case Calendar.MONTH:
+			cal.set(Calendar.DATE, 1);
+		case Calendar.DATE:
+			cal.set(Calendar.HOUR, 0);
+		case Calendar.HOUR:
+			cal.set(Calendar.MINUTE, 0);
+		case Calendar.MINUTE:
+			cal.set(Calendar.SECOND, 0);
+		case Calendar.SECOND:
+			cal.set(Calendar.MILLISECOND, 0);
+		}
+
+		return cal;
+	}
+
+	public static Date startOf(Date date, int field) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		return DateUtils.startOf(cal, field).getTime();
+	}
+
+	public static Calendar endOf(Calendar cal, int field) {
+		cal = startOf(cal, field);
+		cal.add(field, 1);
+		return cal;
+	}
+
+	public static Date endOf(Date date, int field) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		return DateUtils.endOf(cal, field).getTime();
 	}
 }
