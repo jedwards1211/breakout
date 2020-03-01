@@ -455,8 +455,7 @@ public class JoglExportImageDialog extends JDialog {
 
 			GL3 gl3 = (GL3) gl;
 			int renderingFbo =
-				drawFramebuffer
-					.renderingFbo(gl3, bufferWidth, bufferHeight, desiredNumSamples, desiredUseStencilBuffer);
+				framebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, desiredNumSamples, desiredUseStencilBuffer);
 			int blitFbo = blitFramebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, 1, desiredUseStencilBuffer);
 
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
