@@ -147,7 +147,8 @@ public class JoglExportImageDialog extends JDialog {
 				if (width * insetBounds.height > insetBounds.width * height) {
 					canvasBounds.width = insetBounds.width;
 					canvasBounds.height = canvasBounds.width * height / width;
-				} else {
+				}
+				else {
 					canvasBounds.height = insetBounds.height;
 					canvasBounds.width = canvasBounds.height * width / height;
 				}
@@ -155,7 +156,8 @@ public class JoglExportImageDialog extends JDialog {
 				canvasBounds.y = insetBounds.y + insetBounds.height / 2 - canvasBounds.height / 2;
 				canvas.setBounds(canvasBounds);
 				canvas.setVisible(true);
-			} else {
+			}
+			else {
 				canvas.setVisible(false);
 			}
 		}
@@ -201,21 +203,32 @@ public class JoglExportImageDialog extends JDialog {
 
 				try {
 					outputFile = createOutputFile();
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					return;
 				}
 
 				if (outputFile.exists()) {
 					if (outputFile.isDirectory()) {
-						JOptionPane.showMessageDialog(dialog, "Weird...output file " + outputFile
-								+ " is a directory", "Can't Export", JOptionPane.ERROR_MESSAGE);
+						JOptionPane
+							.showMessageDialog(
+								dialog,
+								"Weird...output file " + outputFile + " is a directory",
+								"Can't Export",
+								JOptionPane.ERROR_MESSAGE);
 
 						outputFile = null;
 						return;
-					} else {
-						int option = JOptionPane.showConfirmDialog(dialog, "Output file " + outputFile
-								+ " already exists.  Overwrite?", "Export Image", JOptionPane.OK_CANCEL_OPTION,
-								JOptionPane.WARNING_MESSAGE);
+					}
+					else {
+						int option =
+							JOptionPane
+								.showConfirmDialog(
+									dialog,
+									"Output file " + outputFile + " already exists.  Overwrite?",
+									"Export Image",
+									JOptionPane.OK_CANCEL_OPTION,
+									JOptionPane.WARNING_MESSAGE);
 
 						if (option != JOptionPane.OK_OPTION) {
 							outputFile = null;
@@ -227,22 +240,37 @@ public class JoglExportImageDialog extends JDialog {
 				File outputDir = outputFile.getParentFile();
 
 				if (!outputDir.exists()) {
-					int option = JOptionPane.showConfirmDialog(dialog, "Output directory " + outputDir
-							+ " does not exist.  Create it?", "Export Image", JOptionPane.OK_CANCEL_OPTION,
-							JOptionPane.INFORMATION_MESSAGE);
+					int option =
+						JOptionPane
+							.showConfirmDialog(
+								dialog,
+								"Output directory " + outputDir + " does not exist.  Create it?",
+								"Export Image",
+								JOptionPane.OK_CANCEL_OPTION,
+								JOptionPane.INFORMATION_MESSAGE);
 
 					if (option == JOptionPane.OK_OPTION) {
 						try {
 							outputDir.mkdirs();
-						} catch (Exception ex) {
+						}
+						catch (Exception ex) {
 							ex.printStackTrace();
-							JOptionPane.showMessageDialog(dialog, "Failed to create directory " + outputDir
-									+ "; " + ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
-									"Export Failed", JOptionPane.ERROR_MESSAGE);
+							JOptionPane
+								.showMessageDialog(
+									dialog,
+									"Failed to create directory "
+										+ outputDir
+										+ "; "
+										+ ex.getClass().getSimpleName()
+										+ ": "
+										+ ex.getLocalizedMessage(),
+									"Export Failed",
+									JOptionPane.ERROR_MESSAGE);
 							outputFile = null;
 							return;
 						}
-					} else {
+					}
+					else {
 						outputFile = null;
 						return;
 					}
@@ -287,13 +315,18 @@ public class JoglExportImageDialog extends JDialog {
 				if (isCanceled()) {
 					return null;
 				}
-			} catch (TaskCanceledException e) {
+			}
+			catch (TaskCanceledException e) {
 				return null;
-			} catch (OutOfMemoryError e) {
+			}
+			catch (OutOfMemoryError e) {
 				e.printStackTrace();
 				OnEDT.onEDT(() -> {
-					JOptionPane.showMessageDialog(dialog,
-							e.getClass().getSimpleName() + ": " + e.getLocalizedMessage(), "Export Failed",
+					JOptionPane
+						.showMessageDialog(
+							dialog,
+							e.getClass().getSimpleName() + ": " + e.getLocalizedMessage(),
+							"Export Failed",
 							JOptionPane.ERROR_MESSAGE);
 				});
 				return null;
@@ -312,16 +345,21 @@ public class JoglExportImageDialog extends JDialog {
 						Integer value = (Integer) fileNumberSpinner.getValue();
 						if (value == null) {
 							fileNumberSpinner.setValue(1);
-						} else {
+						}
+						else {
 							fileNumberSpinner.setValue(value + 1);
 						}
 						dispose();
 					});
-				} catch (final Exception ex) {
+				}
+				catch (final Exception ex) {
 					ex.printStackTrace();
 					OnEDT.onEDT(() -> {
-						JOptionPane.showMessageDialog(dialog,
-								ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(), "Export Failed",
+						JOptionPane
+							.showMessageDialog(
+								dialog,
+								ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
+								"Export Failed",
 								JOptionPane.ERROR_MESSAGE);
 					});
 				}
@@ -375,7 +413,7 @@ public class JoglExportImageDialog extends JDialog {
 		JoglScreenPolygon screenPolygon;
 
 		public Renderer() {
-			super(new GL3Framebuffer(), 1);
+			useFrameBuffer(true).desiredNumSamples(1);
 
 			screenPolygon = new JoglScreenPolygon();
 			screenPolygon.setColor(1f, 1f, 1f, 1f);
@@ -416,8 +454,9 @@ public class JoglExportImageDialog extends JDialog {
 			viewState.update(viewSettings, viewportX, viewportY, totalWidth, totalHeight);
 
 			GL3 gl3 = (GL3) gl;
-			int renderingFbo = framebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, desiredNumSamples,
-					desiredUseStencilBuffer);
+			int renderingFbo =
+				drawFramebuffer
+					.renderingFbo(gl3, bufferWidth, bufferHeight, desiredNumSamples, desiredUseStencilBuffer);
 			int blitFbo = blitFramebuffer.renderingFbo(gl3, bufferWidth, bufferHeight, 1, desiredUseStencilBuffer);
 
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
@@ -428,14 +467,30 @@ public class JoglExportImageDialog extends JDialog {
 
 			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, renderingFbo);
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, blitFbo);
-			gl3.glBlitFramebuffer(0, 0, tileWidth, tileHeight, 0, 0, tileWidth, tileHeight,
-					GL.GL_COLOR_BUFFER_BIT, GL_NEAREST);
+			gl3
+				.glBlitFramebuffer(
+					0,
+					0,
+					tileWidth,
+					tileHeight,
+					0,
+					0,
+					tileWidth,
+					tileHeight,
+					GL.GL_COLOR_BUFFER_BIT,
+					GL_NEAREST);
 
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, blitFbo);
 
-			BufferedImageInt tile = DirectDataBufferInt.createBufferedImage(tileWidth, tileHeight,
-					BufferedImage.TYPE_INT_ARGB, new Point(0, 0), new Hashtable<>());
+			BufferedImageInt tile =
+				DirectDataBufferInt
+					.createBufferedImage(
+						tileWidth,
+						tileHeight,
+						BufferedImage.TYPE_INT_ARGB,
+						new Point(0, 0),
+						new Hashtable<>());
 			DirectDataBufferInt tileBuffer = (DirectDataBufferInt) tile.getRaster().getDataBuffer();
 
 			gl.glReadPixels(0, 0, tileWidth, tileHeight, GL_BGRA, GL_UNSIGNED_BYTE, tileBuffer.getData());
@@ -496,10 +551,7 @@ public class JoglExportImageDialog extends JDialog {
 				int x2 = x1 + tileWidth * previewWidth / totalWidth;
 				int y2 = y1 + tileHeight * previewHeight / totalHeight;
 
-				screenPolygon.setPoints(2,
-						x1, y1, x1, y2,
-						x2, y2, x2, y1,
-						x1, y1);
+				screenPolygon.setPoints(2, x1, y1, x1, y2, x2, y2, x2, y1, x1, y1);
 
 				screenPolygon.draw(viewState, gl, m, n);
 			}
@@ -527,9 +579,7 @@ public class JoglExportImageDialog extends JDialog {
 	 */
 	private static final long serialVersionUID = -4636573587180684807L;
 	private static final BigDecimal IN_TO_CM = new BigDecimal("2.54");
-	private static final BigDecimal CM_TO_IN = new BigDecimal(
-			1.0 / IN_TO_CM
-					.doubleValue());
+	private static final BigDecimal CM_TO_IN = new BigDecimal(1.0 / IN_TO_CM.doubleValue());
 
 	public static void main(String[] args) {
 		new OnEDT() {
@@ -548,7 +598,9 @@ public class JoglExportImageDialog extends JDialog {
 				model.set(JoglExportImageDialogModel.pixelWidth, 600);
 				model.set(JoglExportImageDialogModel.pixelHeight, 400);
 				model.set(JoglExportImageDialogModel.resolution, new BigDecimal(300));
-				model.set(JoglExportImageDialogModel.resolutionUnit,
+				model
+					.set(
+						JoglExportImageDialogModel.resolutionUnit,
 						JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN);
 
 				dialog.setBinder(binder);
@@ -597,11 +649,7 @@ public class JoglExportImageDialog extends JDialog {
 	JSpinner fileNumberSpinner;
 	JLabel outputFormatLabel;
 	DefaultSelector<?> outputFormatSelector;
-	Icon warningIcon = IconScaler
-			.rescale(
-					UIManager
-							.getIcon("OptionPane.warningIcon"),
-					20, 20);
+	Icon warningIcon = IconScaler.rescale(UIManager.getIcon("OptionPane.warningIcon"), 20, 20);
 	JLabel outputFileOrWarningLabel;
 	JPanel outputFileOrWarningLabelHolder;
 	JLabel pixelSizeHeaderLabel;
@@ -640,45 +688,29 @@ public class JoglExportImageDialog extends JDialog {
 
 	BinderWrapper<QObject<JoglExportImageDialogModel>> binder = new BinderWrapper<>();
 
-	QObjectAttributeBinder<String> outputDirectoryBinder = QObjectAttributeBinder
-			.bind(
-					JoglExportImageDialogModel.outputDirectory,
-					binder);
+	QObjectAttributeBinder<String> outputDirectoryBinder =
+		QObjectAttributeBinder.bind(JoglExportImageDialogModel.outputDirectory, binder);
 
-	QObjectAttributeBinder<String> fileNamePrefixBinder = QObjectAttributeBinder
-			.bind(
-					JoglExportImageDialogModel.fileNamePrefix,
-					binder);
+	QObjectAttributeBinder<String> fileNamePrefixBinder =
+		QObjectAttributeBinder.bind(JoglExportImageDialogModel.fileNamePrefix, binder);
 
-	QObjectAttributeBinder<Integer> fileNumberBinder = QObjectAttributeBinder
-			.bind(
-					JoglExportImageDialogModel.fileNumber,
-					binder);
+	QObjectAttributeBinder<Integer> fileNumberBinder =
+		QObjectAttributeBinder.bind(JoglExportImageDialogModel.fileNumber, binder);
 
-	QObjectAttributeBinder<Integer> pixelWidthBinder = QObjectAttributeBinder
-			.bind(
-					JoglExportImageDialogModel.pixelWidth,
-					binder);
+	QObjectAttributeBinder<Integer> pixelWidthBinder =
+		QObjectAttributeBinder.bind(JoglExportImageDialogModel.pixelWidth, binder);
 
-	QObjectAttributeBinder<Integer> pixelHeightBinder = QObjectAttributeBinder
-			.bind(
-					JoglExportImageDialogModel.pixelHeight,
-					binder);
+	QObjectAttributeBinder<Integer> pixelHeightBinder =
+		QObjectAttributeBinder.bind(JoglExportImageDialogModel.pixelHeight, binder);
 
-	QObjectAttributeBinder<BigDecimal> resolutionBinder = QObjectAttributeBinder
-			.bind(
-					JoglExportImageDialogModel.resolution,
-					binder);
+	QObjectAttributeBinder<BigDecimal> resolutionBinder =
+		QObjectAttributeBinder.bind(JoglExportImageDialogModel.resolution, binder);
 
-	QObjectAttributeBinder<ResolutionUnit> resolutionUnitBinder = QObjectAttributeBinder
-			.bind(
-					JoglExportImageDialogModel.resolutionUnit,
-					binder);
+	QObjectAttributeBinder<ResolutionUnit> resolutionUnitBinder =
+		QObjectAttributeBinder.bind(JoglExportImageDialogModel.resolutionUnit, binder);
 
-	QObjectAttributeBinder<Integer> numSamplesBinder = QObjectAttributeBinder
-			.bind(
-					JoglExportImageDialogModel.numSamples,
-					binder);
+	QObjectAttributeBinder<Integer> numSamplesBinder =
+		QObjectAttributeBinder.bind(JoglExportImageDialogModel.numSamples, binder);
 
 	JoglScene scene;
 
@@ -711,8 +743,13 @@ public class JoglExportImageDialog extends JDialog {
 	private JSpinner createBigDecimalSpinner(int maxIntegerDigits, int fractionDigits, BigDecimal step) {
 		BigDecimal minFraction = new BigDecimal(StringUtils.multiply("0", fractionDigits - 1) + "1");
 
-		BetterSpinnerNumberModel<BigDecimal> model = BetterSpinnerNumberModel.newInstance(minFraction, minFraction,
-				new BigDecimal(10).pow(maxIntegerDigits).subtract(minFraction), step);
+		BetterSpinnerNumberModel<BigDecimal> model =
+			BetterSpinnerNumberModel
+				.newInstance(
+					minFraction,
+					minFraction,
+					new BigDecimal(10).pow(maxIntegerDigits).subtract(minFraction),
+					step);
 		JSpinner spinner = new JSpinner(model);
 		SimpleSpinnerEditor editor = new SimpleSpinnerEditor(spinner);
 		editor.getTextField().setColumns(maxIntegerDigits + fractionDigits + 1);
@@ -804,10 +841,10 @@ public class JoglExportImageDialog extends JDialog {
 				JoglExportImageDialogModel.PrintSizeUnit.INCHES.displayName = localizer.getString("inches");
 				JoglExportImageDialogModel.PrintSizeUnit.CENTIMETERS.displayName = localizer.getString("centimeters");
 
-				JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_CM.displayName = localizer
-						.getString("pixelsPerCm");
-				JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN.displayName = localizer
-						.getString("pixelsPerIn");
+				JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_CM.displayName =
+					localizer.getString("pixelsPerCm");
+				JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN.displayName =
+					localizer.getString("pixelsPerIn");
 
 				printUnitSelector.comboBox().repaint();
 				resolutionUnitSelector.comboBox().repaint();
@@ -827,8 +864,8 @@ public class JoglExportImageDialog extends JDialog {
 	}
 
 	private JSpinner createIntegerSpinner(int maxDigits, int step) {
-		BetterSpinnerNumberModel<Integer> model = BetterSpinnerNumberModel.newInstance(null, 1,
-				(int) Math.floor(Math.pow(10, maxDigits)) - 1, step);
+		BetterSpinnerNumberModel<Integer> model =
+			BetterSpinnerNumberModel.newInstance(null, 1, (int) Math.floor(Math.pow(10, maxDigits)) - 1, step);
 		JSpinner spinner = new JSpinner(model);
 		SimpleSpinnerEditor editor = new SimpleSpinnerEditor(spinner);
 		editor.getTextField().setColumns(maxDigits);
@@ -866,8 +903,10 @@ public class JoglExportImageDialog extends JDialog {
 		namePanel.put(fileNumberLabel).rightOf(fileNamePrefixLabel);
 		namePanel.put(fileNamePrefixField).below(fileNamePrefixLabel).fillboth(1.0, 0.0);
 		namePanel.put(fileNumberSpinner).below(fileNumberLabel).fillboth();
-		namePanel.put(outputFileOrWarningLabelHolder).below(fileNamePrefixField, fileNumberSpinner)
-				.addToInsets(10, 0, 0, 0);
+		namePanel
+			.put(outputFileOrWarningLabelHolder)
+			.below(fileNamePrefixField, fileNumberSpinner)
+			.addToInsets(10, 0, 0, 0);
 
 		gbw.put(namePanel.getTarget()).below(dirPanel.getTarget());
 
@@ -918,12 +957,14 @@ public class JoglExportImageDialog extends JDialog {
 		buttonPanel.defaults().defaultAutoinsets(2, 2);
 		buttonPanel.put(exportButton, cancelButton).intoRow().fillx(1.0);
 
-		gbw.put(buttonPanel.getTarget()).belowLast().south().fillx(1.0).weighty(1.0)
-				.addToInsets(10, 0, 0, 0);
+		gbw.put(buttonPanel.getTarget()).belowLast().south().fillx(1.0).weighty(1.0).addToInsets(10, 0, 0, 0);
 
 		JPanel leftPanel = (JPanel) gbw.getTarget();
-		leftPanel.setBorder(new CompoundBorder(new InnerGradientBorder(new Insets(0, 0, 0, 8), new Color(164,
-				164, 164)), new EmptyBorder(5, 5, 5, 2)));
+		leftPanel
+			.setBorder(
+				new CompoundBorder(
+					new InnerGradientBorder(new Insets(0, 0, 0, 8), new Color(164, 164, 164)),
+					new EmptyBorder(5, 5, 5, 2)));
 
 		outputFileOrWarningLabelHolder.setPreferredSize(new Dimension(leftPanel.getPreferredSize().width, 40));
 		outputFileOrWarningLabelHolder.setMinimumSize(outputFileOrWarningLabelHolder.getPreferredSize());
@@ -941,9 +982,10 @@ public class JoglExportImageDialog extends JDialog {
 	protected void createListeners() {
 		resolutionUnitSelector.addSelectorListener(new ISelectorListener<JoglExportImageDialogModel.ResolutionUnit>() {
 			@Override
-			public void selectionChanged(ISelector<JoglExportImageDialogModel.ResolutionUnit> selector,
-					JoglExportImageDialogModel.ResolutionUnit oldSelection,
-					JoglExportImageDialogModel.ResolutionUnit newSelection) {
+			public void selectionChanged(
+				ISelector<JoglExportImageDialogModel.ResolutionUnit> selector,
+				JoglExportImageDialogModel.ResolutionUnit oldSelection,
+				JoglExportImageDialogModel.ResolutionUnit newSelection) {
 				if (updating || newSelection == null) {
 					return;
 				}
@@ -973,9 +1015,10 @@ public class JoglExportImageDialog extends JDialog {
 
 		printUnitSelector.addSelectorListener(new ISelectorListener<JoglExportImageDialogModel.PrintSizeUnit>() {
 			@Override
-			public void selectionChanged(ISelector<JoglExportImageDialogModel.PrintSizeUnit> selector,
-					JoglExportImageDialogModel.PrintSizeUnit oldSelection,
-					JoglExportImageDialogModel.PrintSizeUnit newSelection) {
+			public void selectionChanged(
+				ISelector<JoglExportImageDialogModel.PrintSizeUnit> selector,
+				JoglExportImageDialogModel.PrintSizeUnit oldSelection,
+				JoglExportImageDialogModel.PrintSizeUnit newSelection) {
 				if (updating || newSelection == null) {
 					return;
 				}
@@ -1012,10 +1055,12 @@ public class JoglExportImageDialog extends JDialog {
 				}
 				updating = true;
 				try {
-					if (e.getSource() == pixelWidthSpinner || e.getSource() == pixelHeightSpinner
-							|| e.getSource() == resolutionSpinner) {
+					if (e.getSource() == pixelWidthSpinner
+						|| e.getSource() == pixelHeightSpinner
+						|| e.getSource() == resolutionSpinner) {
 						updatePrintSize();
-					} else if (e.getSource() == printWidthSpinner || e.getSource() == printHeightSpinner) {
+					}
+					else if (e.getSource() == printWidthSpinner || e.getSource() == printHeightSpinner) {
 						updatePixelSize();
 					}
 					canvasHolder.invalidate();
@@ -1074,7 +1119,7 @@ public class JoglExportImageDialog extends JDialog {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				updateNumSamplesLabel();
-				renderer.setDesiredNumSamples(numSamplesSlider.getValue());
+				renderer.desiredNumSamples(numSamplesSlider.getValue());
 				if (canvas != null) {
 					canvas.display();
 				}
@@ -1090,9 +1135,12 @@ public class JoglExportImageDialog extends JDialog {
 		File directory = null;
 		try {
 			directory = new File(outputDirectoryField.getText());
-		} catch (Exception ex) {
-			throw new LocalizedException("createOutputFile.exception.invalidDirectory",
-					outputDirectoryField.getText(), ex.getLocalizedMessage());
+		}
+		catch (Exception ex) {
+			throw new LocalizedException(
+				"createOutputFile.exception.invalidDirectory",
+				outputDirectoryField.getText(),
+				ex.getLocalizedMessage());
 		}
 
 		if (fileNamePrefixField.getText() == null || "".equals(fileNamePrefixField.getText())) {
@@ -1108,9 +1156,12 @@ public class JoglExportImageDialog extends JDialog {
 
 		try {
 			return new File(directory, fileName);
-		} catch (Exception ex) {
-			throw new LocalizedException("createOutputFile.exception.invalidFileNamePrefix",
-					fileNamePrefixField.getText(), ex.getLocalizedMessage());
+		}
+		catch (Exception ex) {
+			throw new LocalizedException(
+				"createOutputFile.exception.invalidFileNamePrefix",
+				fileNamePrefixField.getText(),
+				ex.getLocalizedMessage());
 		}
 	}
 
@@ -1121,11 +1172,13 @@ public class JoglExportImageDialog extends JDialog {
 			localizer.unregister(outputFileOrWarningLabel);
 			localizer.setFormattedText(outputFileOrWarningLabel, "fileNameExampleLabel.text", outputFile);
 			outputFileOrWarningLabel.setIcon(null);
-		} catch (LocalizedException ex) {
+		}
+		catch (LocalizedException ex) {
 			localizer.unregister(outputFileOrWarningLabel);
 			if (ex.getArgs() != null) {
 				localizer.setFormattedText(outputFileOrWarningLabel, ex.getKey(), ex.getArgs());
-			} else {
+			}
+			else {
 				localizer.setText(outputFileOrWarningLabel, ex.getKey());
 			}
 			outputFileOrWarningLabel.setIcon(warningIcon);
@@ -1173,11 +1226,11 @@ public class JoglExportImageDialog extends JDialog {
 	}
 
 	public void setScene(JoglScene scene) {
-		renderer.setScene(scene);
+		renderer.scene(scene);
 	}
 
 	public void setViewSettings(JoglViewSettings viewSettings) {
-		renderer.getViewSettings().copy(viewSettings);
+		renderer.viewSettings().copy(viewSettings);
 	}
 
 	@Override
@@ -1198,7 +1251,8 @@ public class JoglExportImageDialog extends JDialog {
 
 		try {
 			directory = new File(outputDirectoryField.getText());
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 		}
 
 		if (directory != null && directory.exists()) {
@@ -1218,7 +1272,8 @@ public class JoglExportImageDialog extends JDialog {
 		int value = numSamplesSlider.getValue();
 		if (value <= 1) {
 			localizer.setText(numSamplesLabel, "numSamplesLabel.text.off");
-		} else {
+		}
+		else {
 			localizer.setFormattedText(numSamplesLabel, "numSamplesLabel.text.on", value);
 		}
 	}
@@ -1232,14 +1287,16 @@ public class JoglExportImageDialog extends JDialog {
 		BigDecimal printWidth = (BigDecimal) printWidthSpinner.getValue();
 		if (printWidth != null && printWidth.compareTo(BigDecimal.ZERO) != 0) {
 			pixelWidthSpinner.setValue(resolution.multiply(printWidth).intValue());
-		} else {
+		}
+		else {
 			pixelWidthSpinner.setValue(null);
 		}
 
 		BigDecimal printHeight = (BigDecimal) printHeightSpinner.getValue();
 		if (printHeight != null && printHeight.compareTo(BigDecimal.ZERO) != 0) {
 			pixelHeightSpinner.setValue(resolution.multiply(printHeight).intValue());
-		} else {
+		}
+		else {
 			pixelHeightSpinner.setValue(null);
 		}
 	}
@@ -1252,17 +1309,17 @@ public class JoglExportImageDialog extends JDialog {
 
 		Integer pixelWidth = (Integer) pixelWidthSpinner.getValue();
 		if (pixelWidth != null && pixelWidth != 0) {
-			printWidthSpinner.setValue(new BigDecimal(pixelWidth).divide(resolution, 2,
-					BigDecimal.ROUND_HALF_EVEN));
-		} else {
+			printWidthSpinner.setValue(new BigDecimal(pixelWidth).divide(resolution, 2, BigDecimal.ROUND_HALF_EVEN));
+		}
+		else {
 			printWidthSpinner.setValue(null);
 		}
 
 		Integer pixelHeight = (Integer) pixelHeightSpinner.getValue();
 		if (pixelHeight != null && pixelHeight != 0) {
-			printHeightSpinner.setValue(new BigDecimal(pixelHeight).divide(resolution, 2,
-					BigDecimal.ROUND_HALF_EVEN));
-		} else {
+			printHeightSpinner.setValue(new BigDecimal(pixelHeight).divide(resolution, 2, BigDecimal.ROUND_HALF_EVEN));
+		}
+		else {
 			printWidthSpinner.setValue(null);
 		}
 	}

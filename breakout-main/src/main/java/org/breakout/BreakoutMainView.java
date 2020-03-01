@@ -88,6 +88,7 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import javax.swing.AbstractAction;
 import javax.swing.CellEditor;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
@@ -149,7 +150,6 @@ import org.andork.func.Lodash.DebounceOptions;
 import org.andork.func.Lodash.DebouncedRunnable;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.DevicePixelRatio;
-import org.andork.jogl.GL3Framebuffer;
 import org.andork.jogl.InterpolationProjection;
 import org.andork.jogl.JoglBackgroundColor;
 import org.andork.jogl.JoglScene;
@@ -483,7 +483,7 @@ public class BreakoutMainView {
 			float[] direction = new float[3];
 			float[] center = new float[3];
 			renderer
-				.getViewState()
+				.viewState()
 				.pickXform()
 				.xform(
 					e.getX(),
@@ -519,7 +519,7 @@ public class BreakoutMainView {
 			float[] origin = new float[3];
 			float[] direction = new float[3];
 			renderer
-				.getViewState()
+				.viewState()
 				.pickXform()
 				.xform(
 					e.getX(),
@@ -623,12 +623,12 @@ public class BreakoutMainView {
 
 					float[] viewXform = projectModel.get(ProjectModel.viewXform);
 					if (viewXform != null) {
-						renderer.getViewSettings().setViewXform(viewXform);
+						renderer.viewSettings().setViewXform(viewXform);
 					}
 
 					Projection projCalculator = projectModel.get(ProjectModel.projCalculator);
 					if (projCalculator != null) {
-						renderer.getViewSettings().setProjection(projCalculator);
+						renderer.viewSettings().setProjection(projCalculator);
 					}
 
 					if (projectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
@@ -758,12 +758,12 @@ public class BreakoutMainView {
 
 				float[] viewXform = projectModel.get(ProjectModel.viewXform);
 				if (viewXform != null) {
-					renderer.getViewSettings().setViewXform(viewXform);
+					renderer.viewSettings().setViewXform(viewXform);
 				}
 
 				Projection projCalculator = projectModel.get(ProjectModel.projCalculator);
 				if (projCalculator != null) {
-					renderer.getViewSettings().setProjection(projCalculator);
+					renderer.viewSettings().setProjection(projCalculator);
 				}
 
 				if (projectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
@@ -1368,10 +1368,6 @@ public class BreakoutMainView {
 	final Throttler<Void> updateHover = new Throttler<>(0);
 
 	class Renderer extends DefaultJoglRenderer {
-		public Renderer(JoglScene scene, GL3Framebuffer framebuffer, int desiredNumSamples) {
-			super(scene, framebuffer, desiredNumSamples);
-		}
-
 		float[] center = new float[3];
 		float[] cameraLoc = new float[3];
 		float[] forward = new float[3];
@@ -1379,7 +1375,7 @@ public class BreakoutMainView {
 
 		@Override
 		public void display(GLAutoDrawable drawable) {
-			JoglViewSettings settings = getViewSettings();
+			JoglViewSettings settings = viewSettings();
 			Projection projection = settings.getProjection();
 
 			model3d.setLeads(getProjectModel().get(ProjectModel.leadIndex));
@@ -1389,7 +1385,7 @@ public class BreakoutMainView {
 				return;
 			}
 
-			JoglViewState viewState = getViewState();
+			JoglViewState viewState = viewState();
 			float[] vi = viewState.inverseViewMatrix();
 			float[] mbr = model3d.getMbr();
 
@@ -1431,8 +1427,8 @@ public class BreakoutMainView {
 		bgColor = new JoglBackgroundColor();
 		scene.add(bgColor);
 
-		renderer = new Renderer(scene, new GL3Framebuffer(), 1);
-		renderer.setDesiredUseStencilBuffer(true);
+		renderer = new Renderer().scene(scene).useFrameBuffer(true).desiredNumSamples(1);
+		renderer.desiredUseStencilBuffer(true);
 
 		autoDrawable.addGLEventListener(renderer);
 
@@ -1440,8 +1436,8 @@ public class BreakoutMainView {
 		navigator.setMoveFactor(5f);
 		navigator.setWheelFactor(5f);
 
-		orbiter = new JoglOrbiter(autoDrawable, renderer.getViewSettings());
-		orthoNavigator = new JoglOrthoNavigator(autoDrawable, renderer.getViewState(), renderer.getViewSettings());
+		orbiter = new JoglOrbiter(autoDrawable, renderer.viewSettings());
+		orthoNavigator = new JoglOrthoNavigator(autoDrawable, renderer.viewState(), renderer.viewSettings());
 		orthoNavigator.setSensitivity(0.01f);
 
 		clipMouseHandler = new ClipMouseHandler(new ClipMouseHandler.Context() {
@@ -1467,7 +1463,7 @@ public class BreakoutMainView {
 
 			@Override
 			public JoglViewState getViewState() {
-				return renderer.getViewState();
+				return renderer.viewState();
 			}
 		});
 		clipMouseHandler.setSensitivity(0.01f);
@@ -1541,7 +1537,7 @@ public class BreakoutMainView {
 
 			@Override
 			public JoglViewState getViewState() {
-				return renderer.getViewState();
+				return renderer.viewState();
 			}
 
 			@Override
@@ -2171,7 +2167,7 @@ public class BreakoutMainView {
 		});
 
 		settingsDrawer.getResetViewButton().addActionListener(e -> {
-			renderer.getViewSettings().setViewXform(newMat4f());
+			renderer.viewSettings().setViewXform(newMat4f());
 			autoDrawable.display();
 		});
 
@@ -2182,6 +2178,16 @@ public class BreakoutMainView {
 		mainPanel.getActionMap().put("fitViewToEverything", fitViewToEverythingAction);
 		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0), "fitViewToSelected");
 		mainPanel.getActionMap().put("fitViewToSelected", fitViewToSelectedAction);
+		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "togglePlay");
+		mainPanel.getActionMap().put("togglePlay", new AbstractAction() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				JToggleButton playButton = settingsDrawer.getPlayButton();
+				playButton.setSelected(!playButton.isSelected());
+			}
+		});
 
 		ViewButtonsPanel viewButtonsPanel = settingsDrawer.getViewButtonsPanel();
 		for (CameraView view : CameraView.values()) {
@@ -2237,7 +2243,7 @@ public class BreakoutMainView {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				float[] axis = new float[3];
-				Vecmath.negate3(renderer.getViewState().inverseViewMatrix(), 8, axis, 0);
+				Vecmath.negate3(renderer.viewState().inverseViewMatrix(), 8, axis, 0);
 				getProjectModel().set(ProjectModel.depthAxis, axis);
 			}
 		});
@@ -2251,7 +2257,7 @@ public class BreakoutMainView {
 			@Override
 			protected void onValueChanged(Integer desiredNumSamples) {
 				if (desiredNumSamples != null) {
-					renderer.setDesiredNumSamples(desiredNumSamples);
+					renderer.desiredNumSamples(desiredNumSamples);
 					autoDrawable.display();
 				}
 			}
@@ -2401,13 +2407,12 @@ public class BreakoutMainView {
 
 		Projection newProjCalculator = null;
 		Clip3f newClip = null;
-		float[] vi = renderer.getViewState().inverseViewMatrix();
+		float[] vi = renderer.viewState().inverseViewMatrix();
 		float[] endLocation = { vi[12], vi[13], vi[14] };
 
 		Animation finisher;
 
-		final boolean projectionChanged =
-			ortho != renderer.getViewSettings().getProjection() instanceof OrthoProjection;
+		final boolean projectionChanged = ortho != renderer.viewSettings().getProjection() instanceof OrthoProjection;
 		if (ortho) {
 			if (model3d != null) {
 				float[] totalBounds = model3d.getOrthoBounds(right, up, forward);
@@ -2447,7 +2452,7 @@ public class BreakoutMainView {
 			finisher = l -> {
 				try {
 					if (finalNewProjection != null) {
-						renderer.getViewSettings().setProjection(finalNewProjection);
+						renderer.viewSettings().setProjection(finalNewProjection);
 						saveProjection();
 					}
 					if (finalClip != null && model3d != null) {
@@ -2472,9 +2477,9 @@ public class BreakoutMainView {
 			if (model3d != null) {
 				FittingFrustum frustum = new FittingFrustum();
 				float[] projXform = newMat4f();
-				perspCalculator.calculate(projXform, renderer.getViewState());
+				perspCalculator.calculate(projXform, renderer.viewState());
 				PickXform pickXform = new PickXform();
-				pickXform.calculate(projXform, renderer.getViewState().viewMatrix());
+				pickXform.calculate(projXform, renderer.viewState().viewMatrix());
 				frustum.init(pickXform, 0.9f);
 
 				for (ShotKey key : shotsToFit) {
@@ -2492,7 +2497,7 @@ public class BreakoutMainView {
 
 			finisher = l -> {
 				try {
-					renderer.getViewSettings().setProjection(perspCalculator);
+					renderer.viewSettings().setProjection(perspCalculator);
 				}
 				catch (Exception ex) {
 					logger.log(Level.SEVERE, "Failed to change view xform", ex);
@@ -2509,14 +2514,14 @@ public class BreakoutMainView {
 		}
 
 		GeneralViewXformOrbitAnimation viewAnimation =
-			new GeneralViewXformOrbitAnimation(autoDrawable, renderer.getViewSettings(), 1750, 30);
+			new GeneralViewXformOrbitAnimation(autoDrawable, renderer.viewSettings(), 1750, 30);
 		float[] viewXform = newMat4f();
-		viewAnimation.setUpWithEndLocation(renderer.getViewState().viewMatrix(), endLocation, forward, right);
+		viewAnimation.setUpWithEndLocation(renderer.viewState().viewMatrix(), endLocation, forward, right);
 
-		Projection currentProjCalculator = renderer.getViewSettings().getProjection();
+		Projection currentProjCalculator = renderer.viewSettings().getProjection();
 
 		InterpolationProjection calc =
-			new InterpolationProjection(renderer.getViewSettings().getProjection(), newProjCalculator, 0f);
+			new InterpolationProjection(renderer.viewSettings().getProjection(), newProjCalculator, 0f);
 
 		FloatUnaryOperator viewReparam = f -> 1 - (1 - f) * (1 - f);
 		FloatUnaryOperator projReparam;
@@ -2563,14 +2568,13 @@ public class BreakoutMainView {
 			getProjectModel()
 				.set(ProjectModel.clip, new Clip3f(new float[]
 				{ 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
-			cameraAnimationQueue
-				.add(new ProjXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, false, f -> {
-					calc.f = projReparam.applyAsFloat(f);
-					return calc;
-				}).also(new ViewXformAnimation(autoDrawable, renderer.getViewSettings(), 1750, true, f -> {
-					viewAnimation.calcViewXform(viewReparam.applyAsFloat(f), viewXform);
-					return viewXform;
-				})));
+			cameraAnimationQueue.add(new ProjXformAnimation(autoDrawable, renderer.viewSettings(), 1750, false, f -> {
+				calc.f = projReparam.applyAsFloat(f);
+				return calc;
+			}).also(new ViewXformAnimation(autoDrawable, renderer.viewSettings(), 1750, true, f -> {
+				viewAnimation.calcViewXform(viewReparam.applyAsFloat(f), viewXform);
+				return viewXform;
+			})));
 			finisher = finisher.also(new AnimationViewSaver());
 			protectedAnimations.put(finisher, null);
 		}
@@ -2584,7 +2588,7 @@ public class BreakoutMainView {
 		float[] forward = new float[3];
 		float[] right = new float[3];
 
-		float[] vi = renderer.getViewState().inverseViewMatrix();
+		float[] vi = renderer.viewState().inverseViewMatrix();
 
 		Vecmath.negate3(vi, 8, forward, 0);
 		Vecmath.getColumn3(vi, 0, right);
@@ -2718,7 +2722,7 @@ public class BreakoutMainView {
 
 	protected Set<ShotKey> getShotsInView() {
 		Set<ShotKey> result = new HashSet<>();
-		renderer.getViewState().pickXform().exportViewVolume(shotsInViewHull, canvas.getWidth(), canvas.getHeight());
+		renderer.viewState().pickXform().exportViewVolume(shotsInViewHull, canvas.getWidth(), canvas.getHeight());
 		model3d.getShotsIn(shotsInViewHull, result);
 		if (result.isEmpty()) {
 			model3d.getVisibleShotKeys(result);
@@ -2727,7 +2731,7 @@ public class BreakoutMainView {
 	}
 
 	protected boolean hasShotsInView() {
-		renderer.getViewState().pickXform().exportViewVolume(shotsInViewHull, canvas.getWidth(), canvas.getHeight());
+		renderer.viewState().pickXform().exportViewVolume(shotsInViewHull, canvas.getWidth(), canvas.getHeight());
 		return model3d.hasShotsIn(shotsInViewHull);
 	}
 
@@ -2749,7 +2753,7 @@ public class BreakoutMainView {
 	}
 
 	public JoglViewSettings getViewSettings() {
-		return renderer.getViewSettings();
+		return renderer.viewSettings();
 	}
 
 	public TaskService sortTaskService() {
@@ -2972,8 +2976,8 @@ public class BreakoutMainView {
 		float[] forward = new float[3];
 		float[] right = new float[3];
 
-		Vecmath.negate3(renderer.getViewState().inverseViewMatrix(), 8, forward, 0);
-		Vecmath.getColumn3(renderer.getViewState().inverseViewMatrix(), 0, right);
+		Vecmath.negate3(renderer.viewState().inverseViewMatrix(), 8, forward, 0);
+		Vecmath.getColumn3(renderer.viewState().inverseViewMatrix(), 0, right);
 
 		changeView(forward, right, false, getDefaultShotsForOperations(1));
 	}
@@ -2983,7 +2987,7 @@ public class BreakoutMainView {
 		float[] origin = new float[3];
 		float[] direction = new float[3];
 		renderer
-			.getViewState()
+			.viewState()
 			.pickXform()
 			.xform(
 				e.getX(),
@@ -2992,7 +2996,7 @@ public class BreakoutMainView {
 				e.getComponent().getHeight(),
 				origin,
 				direction);
-		renderer.getViewState().pickXform().exportViewVolume(hull, e, 10);
+		renderer.viewState().pickXform().exportViewVolume(hull, e, 10);
 
 		if (model3d != null) {
 			List<PickResult<Shot3d>> pickResults = new ArrayList<>();
@@ -3027,12 +3031,12 @@ public class BreakoutMainView {
 	}
 
 	private void saveProjection() {
-		getProjectModel().set(ProjectModel.projCalculator, renderer.getViewSettings().getProjection());
+		getProjectModel().set(ProjectModel.projCalculator, renderer.viewSettings().getProjection());
 	}
 
 	private void saveViewXform() {
 		float[] viewXform = Vecmath.newMat4f();
-		renderer.getViewSettings().getViewXform(viewXform);
+		renderer.viewSettings().getViewXform(viewXform);
 		getProjectModel().set(ProjectModel.viewXform, viewXform);
 	}
 
@@ -3210,7 +3214,7 @@ public class BreakoutMainView {
 			new float[]
 			{ (float) Math.sin(azimuth - Math.PI * 0.5), 0, (float) -Math.cos(azimuth - Math.PI * 0.5) };
 
-		if (Vecmath.dot3(renderer.getViewState().inverseViewMatrix(), 8, forward, 0) > 0) {
+		if (Vecmath.dot3(renderer.viewState().inverseViewMatrix(), 8, forward, 0) > 0) {
 			Vecmath.negate3(right);
 			Vecmath.negate3(forward);
 		}
@@ -3343,7 +3347,7 @@ public class BreakoutMainView {
 
 					FittingFrustum frustum = new FittingFrustum();
 					float[] projXform = newMat4f();
-					perspCalculator.calculate(projXform, renderer.getViewState());
+					perspCalculator.calculate(projXform, renderer.viewState());
 					PickXform pickXform = new PickXform();
 					pickXform.calculate(projXform, viewXform);
 					frustum.init(pickXform, 0.9f);
@@ -3361,8 +3365,8 @@ public class BreakoutMainView {
 				}
 
 				Vecmath.viewFrom(right, up, endLocation, viewXform);
-				renderer.getViewSettings().setViewXform(viewXform);
-				renderer.getViewSettings().setProjection(perspCalculator);
+				renderer.viewSettings().setViewXform(viewXform);
+				renderer.viewSettings().setProjection(perspCalculator);
 				installPerspectiveMouseAdapters();
 				autoDrawable.display();
 			});

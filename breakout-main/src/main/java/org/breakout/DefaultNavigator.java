@@ -131,7 +131,7 @@ public class DefaultNavigator extends MouseAdapter {
 		}
 		lastEvent = e;
 
-		JoglViewSettings viewSettings = renderer.getViewSettings();
+		JoglViewSettings viewSettings = renderer.viewSettings();
 		viewSettings.getInvViewXform(cam);
 
 		Vecmath.mvmulAffine(cam, 0, 0, 1, v);
@@ -233,7 +233,7 @@ public class DefaultNavigator extends MouseAdapter {
 				queuedWheelRotation = 0f;
 				zoomQueued = false;
 
-				JoglViewSettings viewSettings = renderer.getViewSettings();
+				JoglViewSettings viewSettings = renderer.viewSettings();
 				viewSettings.getInvViewXform(cam);
 
 				if (e.isControlDown()) {
@@ -247,7 +247,7 @@ public class DefaultNavigator extends MouseAdapter {
 					distance = Math.min(Math.max(0, dist - 1), distance);
 				}
 				else {
-					renderer.getViewState().pickXform().xform(e, o, v);
+					renderer.viewState().pickXform().xform(e, o, v);
 				}
 				cam[12] += v[0] * distance;
 				cam[13] += v[1] * distance;

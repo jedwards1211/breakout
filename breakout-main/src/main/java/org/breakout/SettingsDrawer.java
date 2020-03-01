@@ -36,6 +36,7 @@ import java.awt.LayoutManager;
 import java.awt.LinearGradientPaint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.util.Arrays;
@@ -59,8 +60,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.JToggleButton;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -155,6 +158,7 @@ public class SettingsDrawer extends Drawer {
 	JButton prevYearButton;
 	JButton prevMonthButton;
 	JButton prevDayButton;
+	JToggleButton playButton;
 	JButton nextDayButton;
 	JButton nextMonthButton;
 	JButton nextYearButton;
@@ -309,6 +313,8 @@ public class SettingsDrawer extends Drawer {
 		new BiFunctionBinder<LinearAxisConversion, Unit<Length>, LinearAxisConversion>(
 			axisConversionToDisplay,
 			axisConversionToSystem).bind(distRangeBinder, displayLengthUnitBinder);
+
+	javax.swing.Timer maxDateTimer;
 
 	private static final BiFunction<LinearAxisConversion, Unit<Length>, LinearAxisConversion> axisConversionToDisplay =
 		(distRange, displayLengthUnit) -> {
@@ -486,6 +492,19 @@ public class SettingsDrawer extends Drawer {
 		nextMonthButton.addActionListener(new IncMaxDate(Calendar.MONTH, false));
 		nextYearButton.addActionListener(new IncMaxDate(Calendar.YEAR, false));
 
+		maxDateTimer = new Timer(1000 / 12, new IncMaxDate(Calendar.MONTH, false));
+
+		playButton.addItemListener(e -> {
+			switch (e.getStateChange()) {
+			case ItemEvent.SELECTED:
+				maxDateTimer.start();
+				break;
+			case ItemEvent.DESELECTED:
+				maxDateTimer.stop();
+				break;
+			}
+		});
+
 		JSliderValueBinder
 			.bind(
 				ambientLightSlider,
@@ -605,14 +624,16 @@ public class SettingsDrawer extends Drawer {
 		prevYearButton = new JButton(new ImageIcon(getClass().getResource("prevYear.png")));
 		prevMonthButton = new JButton(new ImageIcon(getClass().getResource("prevMonth.png")));
 		prevDayButton = new JButton(new ImageIcon(getClass().getResource("prevDay.png")));
+		playButton = new JToggleButton(new ImageIcon(getClass().getResource("play.png")));
 		nextDayButton = new JButton(new ImageIcon(getClass().getResource("nextDay.png")));
 		nextMonthButton = new JButton(new ImageIcon(getClass().getResource("nextMonth.png")));
 		nextYearButton = new JButton(new ImageIcon(getClass().getResource("nextYear.png")));
 
-		for (JButton button : new JButton[] {
+		for (AbstractButton button : new AbstractButton[] {
 			prevYearButton,
 			prevMonthButton,
 			prevDayButton,
+			playButton,
 			nextDayButton,
 			nextMonthButton,
 			nextYearButton }) {
@@ -920,6 +941,7 @@ public class SettingsDrawer extends Drawer {
 		maxDatePanel.put(prevYearButton).rightOfLast();
 		maxDatePanel.put(prevMonthButton).rightOfLast();
 		maxDatePanel.put(prevDayButton).rightOfLast();
+		maxDatePanel.put(playButton).rightOfLast();
 		maxDatePanel.put(nextDayButton).rightOfLast();
 		maxDatePanel.put(nextMonthButton).rightOfLast();
 		maxDatePanel.put(nextYearButton).rightOfLast();
@@ -1122,5 +1144,9 @@ public class SettingsDrawer extends Drawer {
 
 	public void setDateRange(Date start, Date end) {
 		setDateRange(ColorParam.calcDaysSince1800(start), ColorParam.calcDaysSince1800(end));
+	}
+
+	public JToggleButton getPlayButton() {
+		return playButton;
 	}
 }

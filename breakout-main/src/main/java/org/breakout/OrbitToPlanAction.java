@@ -43,10 +43,10 @@ public class OrbitToPlanAction extends AbstractAction implements Action {
 		}
 
 		float[] v = newMat4f();
-		mainView.renderer.getViewSettings().getViewXform(v);
+		mainView.renderer.viewSettings().getViewXform(v);
 
 		mainView.removeUnprotectedCameraAnimations();
-		mainView.cameraAnimationQueue.add(new SpringViewOrbitAnimation(mainView.autoDrawable, mainView.renderer.getViewSettings(),
+		mainView.cameraAnimationQueue.add(new SpringViewOrbitAnimation(mainView.autoDrawable, mainView.renderer.viewSettings(),
 				center, 0f, (float) -Math.PI * .5f, .1f, .05f, 30));
 		mainView.cameraAnimationQueue.add(mainView.new AnimationViewSaver());
 	}

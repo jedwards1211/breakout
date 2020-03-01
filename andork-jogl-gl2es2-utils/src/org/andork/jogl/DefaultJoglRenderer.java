@@ -16,7 +16,8 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected JoglViewState viewState = new JoglViewState();
 	protected JoglViewSettings viewSettings = new JoglViewSettings();
 	protected JoglScene scene;
-	protected GL3Framebuffer framebuffer;
+	protected boolean useFrameBuffer;
+	protected GL3Framebuffer drawFramebuffer;
 
 	protected int desiredNumSamples = 1;
 	protected boolean desiredUseStencilBuffer = false;
@@ -30,34 +31,25 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected int height;
 	protected float devicePixelRatio = 1f;
 
-	public DefaultJoglRenderer(GL3Framebuffer framebuffer, int desiredNumSamples) {
-		super();
-		this.framebuffer = framebuffer;
-		this.desiredNumSamples = desiredNumSamples;
-	}
-
-	public DefaultJoglRenderer(JoglScene scene) {
-		super();
-		this.scene = scene;
-	}
-
-	public DefaultJoglRenderer(JoglScene scene, GL3Framebuffer framebuffer, int desiredNumSamples) {
-		super();
-		this.scene = scene;
-		this.framebuffer = framebuffer;
-		this.desiredNumSamples = desiredNumSamples;
-	}
-
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
 
+		if (useFrameBuffer && drawFramebuffer == null) {
+			drawFramebuffer = new GL3Framebuffer();
+			drawFramebuffer.init(gl.getGL3());
+		}
+		else if (!useFrameBuffer && drawFramebuffer != null) {
+			drawFramebuffer.dispose(gl.getGL3());
+			drawFramebuffer = null;
+		}
+
 		int renderingFbo = -1;
 
-		if (framebuffer != null) {
+		if (drawFramebuffer != null) {
 			GL3 gl3 = (GL3) gl;
 			renderingFbo =
-				framebuffer
+				drawFramebuffer
 					.renderingFbo(
 						gl3,
 						drawable.getSurfaceWidth(),
@@ -66,12 +58,15 @@ public class DefaultJoglRenderer implements GLEventListener {
 						desiredUseStencilBuffer);
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
 		}
-
+		else {
+			GL3 gl3 = (GL3) gl;
+			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		}
 		viewState.update(viewSettings, x, y, width, height, devicePixelRatio);
 
 		drawScene(drawable);
 
-		if (framebuffer != null) {
+		if (drawFramebuffer != null) {
 			GL3 gl3 = (GL3) gl;
 
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -95,8 +90,8 @@ public class DefaultJoglRenderer implements GLEventListener {
 	public void dispose(GLAutoDrawable drawable) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
 
-		if (framebuffer != null) {
-			framebuffer.dispose((GL3) gl);
+		if (drawFramebuffer != null) {
+			drawFramebuffer.dispose((GL3) gl);
 		}
 	}
 
@@ -106,28 +101,12 @@ public class DefaultJoglRenderer implements GLEventListener {
 		}
 	}
 
-	public int getDesiredNumSamples() {
-		return desiredNumSamples;
-	}
-
-	public JoglScene getScene() {
-		return scene;
-	}
-
-	public JoglViewSettings getViewSettings() {
-		return viewSettings;
-	}
-
-	public JoglViewState getViewState() {
-		return viewState;
-	}
-
 	@Override
 	public void init(GLAutoDrawable drawable) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
 
-		if (framebuffer != null) {
-			framebuffer.init((GL3) gl);
+		if (drawFramebuffer != null) {
+			drawFramebuffer.init((GL3) gl);
 		}
 	}
 
@@ -144,24 +123,52 @@ public class DefaultJoglRenderer implements GLEventListener {
 		gl.glViewport(x, y, width, height);
 	}
 
-	public void setDesiredNumSamples(int desiredNumSamples) {
+	public int desiredNumSamples() {
+		return desiredNumSamples;
+	}
+
+	public DefaultJoglRenderer desiredNumSamples(int desiredNumSamples) {
 		this.desiredNumSamples = desiredNumSamples;
+		return this;
 	}
 
-	public void setScene(JoglScene scene) {
+	public JoglScene scene() {
+		return scene;
+	}
+
+	public DefaultJoglRenderer scene(JoglScene scene) {
 		this.scene = scene;
+		return this;
 	}
 
-	public void setViewSettings(JoglViewSettings viewSettings) {
+	public JoglViewSettings viewSettings() {
+		return viewSettings;
+	}
+
+	public DefaultJoglRenderer viewSettings(JoglViewSettings viewSettings) {
 		this.viewSettings = viewSettings;
+		return this;
 	}
 
-	public boolean isDesiredUseStencilBuffer() {
+	public JoglViewState viewState() {
+		return viewState;
+	}
+
+	public boolean desiredUseStencilBuffer() {
 		return desiredUseStencilBuffer;
 	}
 
-	public void setDesiredUseStencilBuffer(boolean useStencilBuffer) {
+	public DefaultJoglRenderer desiredUseStencilBuffer(boolean useStencilBuffer) {
 		desiredUseStencilBuffer = useStencilBuffer;
+		return this;
 	}
 
+	public boolean useFrameBuffer() {
+		return useFrameBuffer;
+	}
+
+	public DefaultJoglRenderer useFrameBuffer(boolean useFrameBuffer) {
+		this.useFrameBuffer = useFrameBuffer;
+		return this;
+	}
 }
