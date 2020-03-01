@@ -17,7 +17,9 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected JoglViewSettings viewSettings = new JoglViewSettings();
 	protected JoglScene scene;
 	protected boolean useFrameBuffer;
-	protected GL3Framebuffer drawFramebuffer;
+	protected GL3Framebuffer framebuffer;
+	protected GLFramebufferTexture readFramebuffer;
+	protected GLFramebufferTexture drawFramebuffer;
 
 	protected int desiredNumSamples = 1;
 	protected boolean desiredUseStencilBuffer = false;
@@ -31,25 +33,45 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected int height;
 	protected float devicePixelRatio = 1f;
 
+	protected Filter[] filters;
+
+	public static interface Filter {
+		void apply(GL3 gl, int width, int height, int texture);
+	}
+
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
 
-		if (useFrameBuffer && drawFramebuffer == null) {
-			drawFramebuffer = new GL3Framebuffer();
-			drawFramebuffer.init(gl.getGL3());
+		if (useFrameBuffer && framebuffer == null) {
+			framebuffer = new GL3Framebuffer();
+			framebuffer.init(gl.getGL3());
 		}
-		else if (!useFrameBuffer && drawFramebuffer != null) {
-			drawFramebuffer.dispose(gl.getGL3());
+		else if (!useFrameBuffer && framebuffer != null) {
+			framebuffer.dispose(gl.getGL3());
+			framebuffer = null;
+		}
+		boolean hasFilters = filters != null && filters.length > 0;
+
+		if (hasFilters && drawFramebuffer == null) {
+			readFramebuffer = new GLFramebufferTexture();
+			readFramebuffer.init(gl);
+			drawFramebuffer = new GLFramebufferTexture();
+			drawFramebuffer.init(gl);
+		}
+		else if (hasFilters && drawFramebuffer != null) {
+			readFramebuffer.dispose(gl);
+			readFramebuffer = null;
+			drawFramebuffer.dispose(gl);
 			drawFramebuffer = null;
 		}
 
 		int renderingFbo = -1;
 
-		if (drawFramebuffer != null) {
+		if (framebuffer != null) {
 			GL3 gl3 = (GL3) gl;
 			renderingFbo =
-				drawFramebuffer
+				framebuffer
 					.renderingFbo(
 						gl3,
 						drawable.getSurfaceWidth(),
@@ -66,23 +88,61 @@ public class DefaultJoglRenderer implements GLEventListener {
 
 		drawScene(drawable);
 
-		if (drawFramebuffer != null) {
+		if (framebuffer != null) {
 			GL3 gl3 = (GL3) gl;
 
-			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, renderingFbo);
-			gl3
-				.glBlitFramebuffer(
-					0,
-					0,
-					drawable.getSurfaceWidth(),
-					drawable.getSurfaceHeight(),
-					0,
-					0,
-					drawable.getSurfaceWidth(),
-					drawable.getSurfaceHeight(),
-					GL.GL_COLOR_BUFFER_BIT,
-					GL_NEAREST);
+
+			if (hasFilters) {
+				int readFbo =
+					readFramebuffer.renderingFbo(gl3, drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
+				int drawFbo =
+					drawFramebuffer.renderingFbo(gl3, drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
+
+				gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawFbo);
+				gl3
+					.glBlitFramebuffer(
+						0,
+						0,
+						drawable.getSurfaceWidth(),
+						drawable.getSurfaceHeight(),
+						0,
+						0,
+						drawable.getSurfaceWidth(),
+						drawable.getSurfaceHeight(),
+						GL.GL_COLOR_BUFFER_BIT,
+						GL_NEAREST);
+
+				for (int i = 0; i < filters.length; i++) {
+					int swapFbo = readFbo;
+					readFbo = drawFbo;
+					drawFbo = swapFbo;
+
+					GLFramebufferTexture swapFramebuffer = readFramebuffer;
+					readFramebuffer = drawFramebuffer;
+					drawFramebuffer = swapFramebuffer;
+
+					gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, i < filters.length - 1 ? drawFbo : 0);
+					filters[i]
+						.apply(gl3, drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), readFramebuffer.texture());
+				}
+			}
+			else {
+				gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+				gl3
+					.glBlitFramebuffer(
+						0,
+						0,
+						drawable.getSurfaceWidth(),
+						drawable.getSurfaceHeight(),
+						0,
+						0,
+						drawable.getSurfaceWidth(),
+						drawable.getSurfaceHeight(),
+						GL.GL_COLOR_BUFFER_BIT,
+						GL_NEAREST);
+
+			}
 		}
 	}
 
@@ -90,8 +150,14 @@ public class DefaultJoglRenderer implements GLEventListener {
 	public void dispose(GLAutoDrawable drawable) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
 
+		if (framebuffer != null) {
+			framebuffer.dispose((GL3) gl);
+		}
 		if (drawFramebuffer != null) {
-			drawFramebuffer.dispose((GL3) gl);
+			drawFramebuffer.dispose(gl);
+		}
+		if (readFramebuffer != null) {
+			readFramebuffer.dispose(gl);
 		}
 	}
 
@@ -105,8 +171,14 @@ public class DefaultJoglRenderer implements GLEventListener {
 	public void init(GLAutoDrawable drawable) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
 
+		if (framebuffer != null) {
+			framebuffer.init((GL3) gl);
+		}
 		if (drawFramebuffer != null) {
-			drawFramebuffer.init((GL3) gl);
+			drawFramebuffer.init(gl);
+		}
+		if (readFramebuffer != null) {
+			readFramebuffer.init(gl);
 		}
 	}
 
