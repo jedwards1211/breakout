@@ -1966,7 +1966,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	 */
 	float maxDateFloat = Float.NaN;
 
-	float boldness = 1;
+	float boldness = 0;
 
 	private Survey3dModel(
 		CalcProject project,
@@ -2149,10 +2149,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		gl.glDisable(GL.GL_STENCIL_TEST);
 
 		if (boldness > 0) {
-			float floor = (float) Math.floor(boldness);
-			float ceil = (float) Math.ceil(boldness);
-			filters[0].linear(ceil * 2 + 1 + (boldness - floor), false);
-			filters[1].linear(ceil * 2 + 1 + (boldness - floor), true);
+			filters[0].linear(boldness, false);
+			filters[1].linear(boldness, true);
 			context.applyFilters(gl.getGL3(), filters);
 		}
 

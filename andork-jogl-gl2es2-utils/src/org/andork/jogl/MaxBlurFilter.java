@@ -24,32 +24,16 @@ public class MaxBlurFilter implements JoglFilter {
 		this(new float[] { 0, 0 }, new float[] { 1 });
 	}
 
-	public void linear(float size, boolean vertical) {
-		int ceil = (int) Math.ceil(size);
-		int floor = (int) Math.floor(size);
-		resize((int) Math.ceil(size));
-		for (int i = 0; i < ceil; i++) {
-			offset[i * 2 + (vertical ? 1 : 0)] = i - ceil / 2;
+	public void linear(float radius, boolean vertical) {
+		int ceil = (int) Math.ceil(radius);
+		int floor = (int) Math.floor(radius);
+		resize(ceil * 2 + 1);
+		for (int i = 0; i < coefficients.length; i++) {
+			offset[i * 2 + (vertical ? 1 : 0)] = i - ceil;
 			coefficients[i] = 1;
 		}
-		if (size > floor) {
-			coefficients[0] = coefficients[ceil - 1] = size - floor;
-		}
-	}
-
-	public void horizontal(int size) {
-		resize(size);
-		for (int x = 0; x < size; x++) {
-			offset[x * 2] = x - size / 2;
-			coefficients[x] = 1;
-		}
-	}
-
-	public void vertical(int size) {
-		resize(size);
-		for (int y = 0; y < size; y++) {
-			offset[y * 2 + 1] = y - size / 2;
-			coefficients[y] = 1;
+		if (radius > floor) {
+			coefficients[0] = coefficients[ceil - 1] = radius - floor;
 		}
 	}
 
