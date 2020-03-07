@@ -1378,8 +1378,10 @@ public class BreakoutMainView {
 			JoglViewSettings settings = viewSettings();
 			Projection projection = settings.getProjection();
 
-			model3d.setLeads(getProjectModel().get(ProjectModel.leadIndex));
-			model3d.setParamGradient(getProjectModel().get(ProjectModel.paramGradient));
+			if (model3d != null) {
+				model3d.setLeads(getProjectModel().get(ProjectModel.leadIndex));
+				model3d.setParamGradient(getProjectModel().get(ProjectModel.paramGradient));
+			}
 			if (model3d == null || !(projection instanceof PerspectiveProjection)) {
 				super.display(drawable);
 				return;
@@ -1894,6 +1896,16 @@ public class BreakoutMainView {
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.ambientLight, projectModelBinder));
+
+		new BinderWrapper<Float>() {
+			@Override
+			protected void onValueChanged(final Float newValue) {
+				if (model3d != null && newValue != null) {
+					model3d.setBoldness(newValue);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.boldness, projectModelBinder));
 
 		new BinderWrapper<LinearAxisConversion>() {
 			@Override

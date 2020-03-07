@@ -82,6 +82,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Color> centerlineColor = newAttribute(Color.class, "centerlineColor");
 	public static final Attribute<Float> maxDate = newAttribute(Float.class, "maxDate");
 	public static final Attribute<Float> ambientLight = newAttribute(Float.class, "ambientLight");
+	public static final Attribute<Float> boldness = newAttribute(Float.class, "boldness");
 	public static final Attribute<float[]> depthAxis = newAttribute(float[].class, "depthAxis");
 	public static final Attribute<QArrayList<File>> surveyScanPaths = newAttribute(QArrayList.class, "surveyScanPaths");
 	public static final Attribute<Boolean> hasUnsavedChanges = newAttribute(Boolean.class, "hasUnsavedChanges");
@@ -175,6 +176,12 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		}
 		if (projectModel.get(ProjectModel.centerlineColor) == null) {
 			projectModel.set(ProjectModel.centerlineColor, Color.white);
+		}
+		if (projectModel.get(ProjectModel.ambientLight) == null) {
+			projectModel.set(ProjectModel.ambientLight, 0.5f);
+		}
+		if (projectModel.get(ProjectModel.boldness) == null) {
+			projectModel.set(ProjectModel.boldness, 0f);
 		}
 		if (projectModel.get(ProjectModel.distRange) == null) {
 			projectModel.set(ProjectModel.distRange, new LinearAxisConversion(0, 0, 20000, 200));

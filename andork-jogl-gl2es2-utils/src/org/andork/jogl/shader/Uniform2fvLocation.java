@@ -6,8 +6,12 @@ public class Uniform2fvLocation extends UniformLocation {
 	public Uniform2fvLocation(String name) {
 		super(name);
 	}
-	
+
 	public void put(GL2ES2 gl, float... value) {
 		gl.glUniform2fv(location(), 1, value, 0);
+	}
+
+	public void put(GL2ES2 gl, int count, float... value) {
+		gl.glUniform2fv(location(), count, value, 0);
 	}
 }

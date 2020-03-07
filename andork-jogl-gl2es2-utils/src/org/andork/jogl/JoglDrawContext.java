@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.andork.jogl;
 
+import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.math.geom.Frustum;
 
 public interface JoglDrawContext {
@@ -47,7 +48,7 @@ public interface JoglDrawContext {
 	public float[] screenToView();
 
 	public int width();
-	
+
 	public Projection projection();
 
 	public default void getViewPoint(float[] out) {
@@ -63,8 +64,10 @@ public interface JoglDrawContext {
 		out[1] = vi[13];
 		out[2] = vi[14];
 	}
-	
+
 	public JoglViewSettings settings();
-	
+
 	public Frustum frustum();
+
+	public void applyFilters(GL3 gl3, JoglFilter... filters);
 }

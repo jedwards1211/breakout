@@ -166,6 +166,8 @@ public class SettingsDrawer extends Drawer {
 
 	JLabel ambientLightLabel;
 	JSlider ambientLightSlider;
+	JLabel boldnessLabel;
+	JSlider boldnessSlider;
 	JLabel distColorationLabel;
 	PlotAxis distColorationAxis;
 	PaintablePanel distColorationAxisPanel;
@@ -259,6 +261,7 @@ public class SettingsDrawer extends Drawer {
 	Binder<HighlightMode> highlightModeBinder = QObjectAttributeBinder.bind(ProjectModel.highlightMode, projectBinder);
 	Binder<Float> maxDateBinder = QObjectAttributeBinder.bind(ProjectModel.maxDate, projectBinder);
 	Binder<Float> ambientLightBinder = QObjectAttributeBinder.bind(ProjectModel.ambientLight, projectBinder);
+	Binder<Float> boldnessBinder = QObjectAttributeBinder.bind(ProjectModel.boldness, projectBinder);
 	Binder<Unit<Length>> displayLengthUnitBinder =
 		QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectBinder);
 	Binder<Unit<Angle>> displayAngleUnitBinder =
@@ -516,6 +519,15 @@ public class SettingsDrawer extends Drawer {
 						ambientLightBinder));
 		JSliderValueBinder
 			.bind(
+				boldnessSlider,
+				BimapperBinder
+					.bind(
+						compose(
+							new LinearFloatBimapper(0f, 0f, 5f, boldnessSlider.getMaximum()),
+							RoundingFloat2IntegerBimapper.instance),
+						boldnessBinder));
+		JSliderValueBinder
+			.bind(
 				centerlineDistanceSlider,
 				BimapperBinder.bind(RoundingFloat2IntegerBimapper.instance, centerlineDistanceBinder));
 		JSliderValueBinder
@@ -645,9 +657,13 @@ public class SettingsDrawer extends Drawer {
 
 		ambientLightLabel = new JLabel();
 		localizer.setText(ambientLightLabel, "ambientLightLabel.text");
-
 		ambientLightSlider = new JSlider(0, 100, 50);
 		ambientLightSlider.setOpaque(false);
+
+		boldnessLabel = new JLabel();
+		localizer.setText(boldnessLabel, "boldnessLabel.text");
+		boldnessSlider = new JSlider(0, 100, 0);
+		boldnessSlider.setOpaque(false);
 
 		distColorationLabel = new JLabel();
 		localizer.setText(distColorationLabel, "distColorationLabel.text");
@@ -950,6 +966,9 @@ public class SettingsDrawer extends Drawer {
 
 		w.put(ambientLightLabel).belowLast().west();
 		w.put(ambientLightSlider).belowLast().fillx();
+
+		w.put(boldnessLabel).belowLast().west();
+		w.put(boldnessSlider).belowLast().fillx();
 
 		w.put(stationLabelFontSizeLabel).belowLast().fillx();
 		w.put(stationLabelFontSizeSlider).belowLast().fillx();

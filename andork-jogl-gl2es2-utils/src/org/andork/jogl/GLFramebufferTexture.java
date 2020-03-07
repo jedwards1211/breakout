@@ -152,4 +152,12 @@ public class GLFramebufferTexture implements JoglResource {
 	public int texture() {
 		return texture;
 	}
+
+	public int width() {
+		return width;
+	}
+
+	public int height() {
+		return height;
+	}
 }

@@ -1,0 +1,14 @@
+# version 330
+
+in vec2 a_position;
+in vec2 a_texcoord;
+uniform int u_count;
+uniform vec2 u_offset[11];
+out vec2 v_texcoord[11];
+
+void main() {
+	gl_Position = vec4(a_position, 0, 1);
+	for (int i = 0; i < u_count; i++) {
+		v_texcoord[i] = a_texcoord + u_offset[i];
+	}
+}

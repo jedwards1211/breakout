@@ -85,6 +85,7 @@ import org.andork.jogl.JoglBuffer;
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglResource;
+import org.andork.jogl.MaxBlurFilter;
 import org.andork.jogl.PerspectiveProjection;
 import org.andork.jogl.shader.FlatColorProgram;
 import org.andork.jogl.shader.FlatColorScreenProgram;
@@ -1965,6 +1966,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	 */
 	float maxDateFloat = Float.NaN;
 
+	float boldness = 1;
+
 	private Survey3dModel(
 		CalcProject project,
 		Map<ShotKey, Shot3d> shot3ds,
@@ -2106,6 +2109,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
+	private MaxBlurFilter[] filters = { new MaxBlurFilter(), new MaxBlurFilter() };
+
 	@Override
 	public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 		if (paramTextureNeedsUpdate) {
@@ -2142,6 +2147,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		gl.glDisable(GL.GL_CULL_FACE);
 		gl.glDisable(GL.GL_STENCIL_TEST);
+
+		if (boldness > 0) {
+			float floor = (float) Math.floor(boldness);
+			float ceil = (float) Math.ceil(boldness);
+			filters[0].linear(ceil * 2 + 1 + (boldness - floor), false);
+			filters[1].linear(ceil * 2 + 1 + (boldness - floor), true);
+			context.applyFilters(gl.getGL3(), filters);
+		}
 
 		if (stationLabelDensity > 0 || showLeadLabels) {
 			RfStarTree<Void> labelTree = new RfStarTree<>(2, 10, 3, 3);
@@ -3038,5 +3051,16 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		Set<ShotKey> result = new HashSet<>();
 		getVisibleShotKeys(result);
 		return result;
+	}
+
+	public float getBoldness() {
+		return boldness;
+	}
+
+	public void setBoldness(float boldness) {
+		if (boldness > 5) {
+			throw new IllegalArgumentException("boldness must be <= 5");
+		}
+		this.boldness = boldness;
 	}
 }

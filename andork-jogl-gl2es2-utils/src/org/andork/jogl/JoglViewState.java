@@ -30,13 +30,14 @@ import static org.andork.math3d.Vecmath.setIdentity;
 
 import org.andork.math3d.PickXform;
 
+import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.math.geom.Frustum;
 
 public class JoglViewState implements JoglDrawContext {
 	private int width;
 
 	private int height;
-	
+
 	private float devicePixelRatio;
 
 	/**
@@ -58,7 +59,7 @@ public class JoglViewState implements JoglDrawContext {
 	 * The inverse of the projection matrix.
 	 */
 	private final float[] pi = newMat4f();
-	
+
 	private final float[] pv = newMat4f();
 
 	/**
@@ -95,15 +96,22 @@ public class JoglViewState implements JoglDrawContext {
 	 * Transforms from screen coordinates to a ray in virtual world coordinates.
 	 */
 	private final PickXform pickXform = new PickXform();
-	
+
 	private Projection projection;
-	
+
 	private JoglViewSettings settings;
-	
+
 	private Frustum frustum = new Frustum();
 	private boolean frustumUpToDate = false;
 
-	public JoglViewState() {
+	private Context context;
+
+	public static interface Context {
+		void applyFilters(GL3 gl, JoglFilter... filters);
+	}
+
+	public JoglViewState(Context context) {
+		this.context = context;
 		update(new JoglViewSettings(), 0, 0, 100, 100);
 	}
 
@@ -139,7 +147,7 @@ public class JoglViewState implements JoglDrawContext {
 	public float[] viewportMatrix() {
 		return viewport;
 	}
-	
+
 	@Override
 	public float[] inverseViewportMatrix() {
 		return inverseViewport;
@@ -159,9 +167,9 @@ public class JoglViewState implements JoglDrawContext {
 		this.width = width;
 		this.height = height;
 		this.devicePixelRatio = devicePixelRatio;
-		
+
 		frustumUpToDate = false;
-		
+
 		ortho(inverseViewport, x, x + width, y, y + height, -1, 1);
 		invAffine(inverseViewport, viewport);
 
@@ -172,14 +180,15 @@ public class JoglViewState implements JoglDrawContext {
 			settings.getInvViewXform(vi);
 			settings.getProjection().calculate(p, this, width, height);
 			invertGeneral(p, pi);
-		} else {
+		}
+		else {
 			projection = new PerspectiveProjection((float) Math.PI, 1e-6f, 1e4f);
 			setIdentity(v);
 			setIdentity(vi);
 			setIdentity(p);
 			setIdentity(pi);
 		}
-		
+
 		mmul(p, v, pv);
 
 		mmul(viewport, p, viewToScreen);
@@ -189,7 +198,8 @@ public class JoglViewState implements JoglDrawContext {
 
 		pickXform.calculate(p, v);
 	}
-	
+
+	@Override
 	public JoglViewSettings settings() {
 		return settings;
 	}
@@ -230,18 +240,24 @@ public class JoglViewState implements JoglDrawContext {
 	}
 
 	@Override
-	public float devicePixelRatio( )
-	{
+	public float devicePixelRatio() {
 		return devicePixelRatio;
 	}
-	
+
 	@Override
-	public Frustum frustum( )
-	{
+	public Frustum frustum() {
 		if (!frustumUpToDate) {
 			frustum.updateByPMV(pv, 0);
 			frustumUpToDate = true;
 		}
 		return frustum;
+	}
+
+	protected GLFramebufferTexture readFramebuffer;
+	protected GLFramebufferTexture drawFramebuffer;
+
+	@Override
+	public void applyFilters(GL3 gl3, JoglFilter... filters) {
+		context.applyFilters(gl3, filters);
 	}
 }

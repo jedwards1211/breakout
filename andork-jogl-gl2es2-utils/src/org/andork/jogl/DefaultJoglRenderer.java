@@ -12,12 +12,13 @@ import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLEventListener;
 
-public class DefaultJoglRenderer implements GLEventListener {
-	protected JoglViewState viewState = new JoglViewState();
+public class DefaultJoglRenderer implements GLEventListener, JoglViewState.Context {
+	protected JoglViewState viewState = new JoglViewState(this);
 	protected JoglViewSettings viewSettings = new JoglViewSettings();
 	protected JoglScene scene;
 	protected boolean useFrameBuffer;
 	protected GL3Framebuffer framebuffer;
+	protected int renderingFbo = 0;
 	protected GLFramebufferTexture readFramebuffer;
 	protected GLFramebufferTexture drawFramebuffer;
 
@@ -33,12 +34,6 @@ public class DefaultJoglRenderer implements GLEventListener {
 	protected int height;
 	protected float devicePixelRatio = 1f;
 
-	protected Filter[] filters;
-
-	public static interface Filter {
-		void apply(GL3 gl, int width, int height, int texture);
-	}
-
 	@Override
 	public void display(GLAutoDrawable drawable) {
 		GL2ES2 gl = (GL2ES2) drawable.getGL();
@@ -51,22 +46,13 @@ public class DefaultJoglRenderer implements GLEventListener {
 			framebuffer.dispose(gl.getGL3());
 			framebuffer = null;
 		}
-		boolean hasFilters = filters != null && filters.length > 0;
 
-		if (hasFilters && drawFramebuffer == null) {
+		if (drawFramebuffer == null) {
 			readFramebuffer = new GLFramebufferTexture();
 			readFramebuffer.init(gl);
 			drawFramebuffer = new GLFramebufferTexture();
 			drawFramebuffer.init(gl);
 		}
-		else if (hasFilters && drawFramebuffer != null) {
-			readFramebuffer.dispose(gl);
-			readFramebuffer = null;
-			drawFramebuffer.dispose(gl);
-			drawFramebuffer = null;
-		}
-
-		int renderingFbo = -1;
 
 		if (framebuffer != null) {
 			GL3 gl3 = (GL3) gl;
@@ -81,6 +67,7 @@ public class DefaultJoglRenderer implements GLEventListener {
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, renderingFbo);
 		}
 		else {
+			renderingFbo = 0;
 			GL3 gl3 = (GL3) gl;
 			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		}
@@ -92,57 +79,20 @@ public class DefaultJoglRenderer implements GLEventListener {
 			GL3 gl3 = (GL3) gl;
 
 			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, renderingFbo);
+			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			gl3
+				.glBlitFramebuffer(
+					0,
+					0,
+					drawable.getSurfaceWidth(),
+					drawable.getSurfaceHeight(),
+					0,
+					0,
+					drawable.getSurfaceWidth(),
+					drawable.getSurfaceHeight(),
+					GL.GL_COLOR_BUFFER_BIT,
+					GL_NEAREST);
 
-			if (hasFilters) {
-				int readFbo =
-					readFramebuffer.renderingFbo(gl3, drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
-				int drawFbo =
-					drawFramebuffer.renderingFbo(gl3, drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
-
-				gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawFbo);
-				gl3
-					.glBlitFramebuffer(
-						0,
-						0,
-						drawable.getSurfaceWidth(),
-						drawable.getSurfaceHeight(),
-						0,
-						0,
-						drawable.getSurfaceWidth(),
-						drawable.getSurfaceHeight(),
-						GL.GL_COLOR_BUFFER_BIT,
-						GL_NEAREST);
-
-				for (int i = 0; i < filters.length; i++) {
-					int swapFbo = readFbo;
-					readFbo = drawFbo;
-					drawFbo = swapFbo;
-
-					GLFramebufferTexture swapFramebuffer = readFramebuffer;
-					readFramebuffer = drawFramebuffer;
-					drawFramebuffer = swapFramebuffer;
-
-					gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, i < filters.length - 1 ? drawFbo : 0);
-					filters[i]
-						.apply(gl3, drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), readFramebuffer.texture());
-				}
-			}
-			else {
-				gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-				gl3
-					.glBlitFramebuffer(
-						0,
-						0,
-						drawable.getSurfaceWidth(),
-						drawable.getSurfaceHeight(),
-						0,
-						0,
-						drawable.getSurfaceWidth(),
-						drawable.getSurfaceHeight(),
-						GL.GL_COLOR_BUFFER_BIT,
-						GL_NEAREST);
-
-			}
 		}
 	}
 
@@ -243,4 +193,45 @@ public class DefaultJoglRenderer implements GLEventListener {
 		this.useFrameBuffer = useFrameBuffer;
 		return this;
 	}
+
+	@Override
+	public void applyFilters(GL3 gl3, JoglFilter... filters) {
+		if (drawFramebuffer == null) {
+			readFramebuffer = new GLFramebufferTexture();
+			readFramebuffer.init(gl3);
+			drawFramebuffer = new GLFramebufferTexture();
+			drawFramebuffer.init(gl3);
+		}
+
+		int readFbo = readFramebuffer.renderingFbo(gl3, width, height);
+		int drawFbo = drawFramebuffer.renderingFbo(gl3, width, height);
+
+		gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, renderingFbo);
+		gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, drawFbo);
+		gl3.glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL.GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+		for (int i = 0; i < filters.length; i++) {
+			int swapFbo = readFbo;
+			readFbo = drawFbo;
+			drawFbo = swapFbo;
+
+			GLFramebufferTexture swapFramebuffer = readFramebuffer;
+			readFramebuffer = drawFramebuffer;
+			drawFramebuffer = swapFramebuffer;
+
+			gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, readFbo);
+			gl3.glBindFramebuffer(GL_DRAW_FRAMEBUFFER, i < filters.length - 1 ? drawFbo : renderingFbo);
+			filters[i]
+				.apply(
+					gl3,
+					width,
+					height,
+					readFbo,
+					readFramebuffer.texture(),
+					(float) width / readFramebuffer.width(),
+					(float) height / readFramebuffer.height());
+		}
+		gl3.glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	}
+
 }
