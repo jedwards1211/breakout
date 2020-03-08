@@ -29,7 +29,6 @@ import static org.andork.math3d.Vecmath.ortho;
 import static org.andork.math3d.Vecmath.setIdentity;
 
 import org.andork.math3d.PickXform;
-import org.andork.math3d.Vecmath;
 
 import com.jogamp.opengl.GL3;
 import com.jogamp.opengl.math.geom.Frustum;
@@ -198,20 +197,7 @@ public class JoglViewState implements JoglDrawContext {
 		mmul(vi, screenToView, screenToWorld);
 
 		pickXform.calculate(p, v);
-
-		left[0] = x;
-		left[1] = 0;
-		left[2] = 0;
-		right[0] = x + width;
-		right[1] = 0;
-		right[2] = 0;
-		Vecmath.mpmul(screenToWorld, left);
-		Vecmath.mpmul(screenToWorld, right);
-		System.out.println("Horizontal distance: " + Vecmath.distance3(left, right));
 	}
-
-	float[] left = new float[3];
-	float[] right = new float[3];
 
 	@Override
 	public JoglViewSettings settings() {
