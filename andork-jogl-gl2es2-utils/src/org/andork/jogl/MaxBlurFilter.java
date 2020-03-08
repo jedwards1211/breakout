@@ -69,8 +69,8 @@ public class MaxBlurFilter implements JoglFilter {
 		program.use(gl);
 		program.count.put(gl, coefficients.length);
 		for (int i = 0; i < offset.length; i += 2) {
-			mappedOffset[i] = offset[i] / width;
-			mappedOffset[i + 1] = offset[i + 1] / height;
+			mappedOffset[i] = s * offset[i] / width;
+			mappedOffset[i + 1] = t * offset[i + 1] / height;
 		}
 		program.offset.put(gl, coefficients.length, mappedOffset);
 		program.coefficients.put(gl, coefficients.length, coefficients);
@@ -82,11 +82,11 @@ public class MaxBlurFilter implements JoglFilter {
 		gl.glViewport(0, 0, width, height);
 
 		triangleRenderer.put(-1f, -1f, 0f, 0f);
-		triangleRenderer.put(-1f, 1f, 0f, t);
 		triangleRenderer.put(1f, -1f, s, 0f);
+		triangleRenderer.put(-1f, 1f, 0f, t);
 		triangleRenderer.put(1f, 1f, s, t);
-		triangleRenderer.put(1f, -1f, s, 0f);
 		triangleRenderer.put(-1f, 1f, 0f, t);
+		triangleRenderer.put(1f, -1f, s, 0f);
 
 		triangleRenderer.draw();
 		program.use(gl, false);
