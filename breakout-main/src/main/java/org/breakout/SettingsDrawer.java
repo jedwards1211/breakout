@@ -632,6 +632,7 @@ public class SettingsDrawer extends Drawer {
 		displayAngleUnitSelector.setAvailableValues(Angle.degrees, Angle.gradians, Angle.milsNATO);
 
 		maxDateLabel = new JLabel();
+		maxDateLabel.setPreferredSize(new Dimension(200, 20));
 		updateMaxDateLabelText(null);
 		prevYearButton = new JButton(new ImageIcon(getClass().getResource("prevYear.png")));
 		prevMonthButton = new JButton(new ImageIcon(getClass().getResource("prevMonth.png")));

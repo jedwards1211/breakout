@@ -25,8 +25,10 @@ public interface Projection {
 	public default void calculate(float[] pOut, JoglDrawContext drawContext) {
 		calculate(pOut, drawContext, drawContext.width(), drawContext.height());
 	}
-	
+
 	public void calculate(float[] pOut, JoglDrawContext drawContext, int width, int height);
-	
+
 	public Projection resize(float hSpan, float vSpan, float zNear, float zFar);
+
+	public boolean isOrtho();
 }

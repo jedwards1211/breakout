@@ -51,9 +51,15 @@ public class InterpolationProjection implements Projection {
 
 	@Override
 	public Projection resize(float hSpan, float vSpan, float zNear, float zFar) {
-		return new InterpolationProjection(
-			a.resize(hSpan, vSpan, zNear, zFar),
-			b.resize(hSpan, vSpan, zNear, zFar),
-			f);
+		return new InterpolationProjection(a.resize(hSpan, vSpan, zNear, zFar), b.resize(hSpan, vSpan, zNear, zFar), f);
+	}
+
+	@Override
+	public boolean isOrtho() {
+		if (f == 0)
+			return a.isOrtho();
+		if (f == 1)
+			return b.isOrtho();
+		return a.isOrtho() && b.isOrtho();
 	}
 }

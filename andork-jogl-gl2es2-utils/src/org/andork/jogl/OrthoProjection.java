@@ -45,7 +45,8 @@ public class OrthoProjection implements Projection {
 			bottom = -top;
 			right = top * width / height;
 			left = -right;
-		} else {
+		}
+		else {
 			right = hSpan / 2;
 			left = -right;
 			top = right * height / width;
@@ -57,5 +58,10 @@ public class OrthoProjection implements Projection {
 	@Override
 	public Projection resize(float hSpan, float vSpan, float zNear, float zFar) {
 		return new OrthoProjection(hSpan, vSpan, zNear, zFar);
+	}
+
+	@Override
+	public boolean isOrtho() {
+		return true;
 	}
 }

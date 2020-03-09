@@ -27,10 +27,12 @@ public class PipelinedRenderer extends JoglManagedResource {
 			this.normalized = normalized;
 		}
 
+		@Override
 		public VertexAttribute clone() {
 			try {
 				return (VertexAttribute) super.clone();
-			} catch (CloneNotSupportedException e) {
+			}
+			catch (CloneNotSupportedException e) {
 				throw new RuntimeException(e);
 			}
 		}
@@ -54,11 +56,13 @@ public class PipelinedRenderer extends JoglManagedResource {
 			return this;
 		}
 
+		@Override
 		public Options clone() {
 			Options options;
 			try {
 				options = (Options) super.clone();
-			} catch (CloneNotSupportedException e) {
+			}
+			catch (CloneNotSupportedException e) {
 				throw new RuntimeException(e);
 			}
 			options.attributes = new ArrayList<>();
@@ -107,7 +111,7 @@ public class PipelinedRenderer extends JoglManagedResource {
 	public void setVertexAttribLocations(int... locations) {
 		System.arraycopy(locations, 0, vertexAttribLocations, 0, vertexAttribLocations.length);
 	}
-	
+
 	public void setVertexAttribLocations(AttribLocation... locations) {
 		for (int i = 0; i < locations.length; i++) {
 			vertexAttribLocations[i] = locations[i].location();
@@ -150,9 +154,8 @@ public class PipelinedRenderer extends JoglManagedResource {
 		}
 	}
 
-
 	@Override
-	public void doDispose(GL2ES2 gl) {
+	protected void doDispose(GL2ES2 gl) {
 		if (options.usingVBOs) {
 			int[] vbos = { vertexVbo };
 			int numBuffers = 1;
@@ -161,7 +164,7 @@ public class PipelinedRenderer extends JoglManagedResource {
 	}
 
 	@Override
-	public boolean doInit(GL2ES2 gl) {
+	protected boolean doInit(GL2ES2 gl) {
 		vertices = Buffers.newDirectByteBuffer(options.numVerticesInBuffer * bytesPerVertex);
 
 		try {
@@ -172,7 +175,8 @@ public class PipelinedRenderer extends JoglManagedResource {
 			vertexVbo = vbos[0];
 			gl.glBindBuffer(GL.GL_ARRAY_BUFFER, vertexVbo);
 			gl.glBufferData(GL.GL_ARRAY_BUFFER, vertices.capacity(), null, GL2ES2.GL_STREAM_DRAW);
-		} catch (final Exception e) {
+		}
+		catch (final Exception e) {
 			options.usingVBOs = false;
 		}
 
@@ -196,16 +200,20 @@ public class PipelinedRenderer extends JoglManagedResource {
 			gl.glEnableVertexAttribArray(vertexAttribLocations[i]);
 			VertexAttribute attribute = options.attributes.get(i);
 			if (options.usingVBOs) {
-				gl.glVertexAttribPointer(
+				gl
+					.glVertexAttribPointer(
 						vertexAttribLocations[i],
 						attribute.size,
 						attribute.type,
 						attribute.normalized,
 						bytesPerVertex,
 						vertexAttribOffsets[i]);
-			} else {
+			}
+			else {
 				vertices.position(vertexAttribOffsets[i]);
-				gl.getGL2().glVertexAttribPointer(
+				gl
+					.getGL2()
+					.glVertexAttribPointer(
 						vertexAttribLocations[i],
 						attribute.size,
 						attribute.type,

@@ -86,7 +86,6 @@ import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglResource;
 import org.andork.jogl.MaxBlurFilter;
-import org.andork.jogl.PerspectiveProjection;
 import org.andork.jogl.shader.FlatColorProgram;
 import org.andork.jogl.shader.FlatColorScreenProgram;
 import org.andork.jogl.uniform.Uniform1fv;
@@ -731,7 +730,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				// this is confusing, but in perspective mode, we need to push the
 				// label straight toward the camera, whereas in ortho, we need to push
 				// it parallel to the view direction
-				if (context.projection() instanceof PerspectiveProjection) {
+				if (!context.projection().isOrtho()) {
 					result[0] *= pushForwardFactor;
 					result[1] *= pushForwardFactor;
 				}
@@ -2165,6 +2164,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 
 			LabelDrawingContext labelContext = new LabelDrawingContext();
+			textRenderer.setColor(stationLabelColor);
 			labelContext.textRenderer = textRenderer;
 			labelContext.stationsToEmphasize = stationsToEmphasize;
 			labelContext.labelTree = labelTree;
@@ -2941,9 +2941,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	public void setStationLabelColor(Color stationLabelColor) {
 		this.stationLabelColor = stationLabelColor;
-		if (textRenderer != null) {
-			textRenderer.setColor(stationLabelColor);
-		}
 	}
 
 	public void setCenterlineColor(Color centerlineColor) {

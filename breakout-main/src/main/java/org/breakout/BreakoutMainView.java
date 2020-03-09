@@ -207,6 +207,7 @@ import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
 import org.breakout.model.GradientModel;
 import org.breakout.model.HighlightMode;
+import org.breakout.model.OrthoScaleBar;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
 import org.breakout.model.ShotKey;
@@ -1072,8 +1073,6 @@ public class BreakoutMainView {
 					orbiter.setCenter(center);
 					navigator.setCenter(center);
 
-					compass = new Compass();
-
 					if (calcProject.coordinateReferenceSystem != null) {
 						terrain =
 							new AutoTerrain(
@@ -1094,6 +1093,8 @@ public class BreakoutMainView {
 							terrain.setVisible(getProjectModel().get(ProjectModel.showTerrain));
 							scene.add(terrain);
 						}
+						scene.add(orthoScaleBar);
+						scene.initLater(orthoScaleBar);
 						scene.add(compass);
 						scene.initLater(compass);
 						return false;
@@ -1240,8 +1241,9 @@ public class BreakoutMainView {
 
 	SettingsDrawer settingsDrawer;
 	Survey3dModel model3d;
+	OrthoScaleBar orthoScaleBar = new OrthoScaleBar(new Font("Arial", Font.PLAIN, 72));
 	AutoTerrain terrain;
-	Compass compass;
+	Compass compass = new Compass();
 	float[] v = newMat4f();
 	int debugMbrCount = 0;
 
@@ -1805,10 +1807,14 @@ public class BreakoutMainView {
 		new BinderWrapper<Color>() {
 			@Override
 			protected void onValueChanged(Color stationLabelColor) {
-				if (model3d != null && stationLabelColor != null) {
+				if (stationLabelColor == null)
+					return;
+				orthoScaleBar.setColor(stationLabelColor);
+				compass.setLabelColor(stationLabelColor);
+				if (model3d != null) {
 					model3d.setStationLabelColor(stationLabelColor);
-					autoDrawable.display();
 				}
+				autoDrawable.display();
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelColor, projectModelBinder));
 
@@ -1975,6 +1981,7 @@ public class BreakoutMainView {
 			@Override
 			protected void onValueChanged(final Unit<Length> displayLengthUnit) {
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
+				orthoScaleBar.setImperial(displayLengthUnit == Length.feet);
 				if (model3d != null) {
 					model3d.setDisplayLengthUnit(displayLengthUnit);
 					autoDrawable.display();
@@ -2424,7 +2431,7 @@ public class BreakoutMainView {
 
 		Animation finisher;
 
-		final boolean projectionChanged = ortho != renderer.viewSettings().getProjection() instanceof OrthoProjection;
+		final boolean projectionChanged = ortho != renderer.viewSettings().getProjection().isOrtho();
 		if (ortho) {
 			if (model3d != null) {
 				float[] totalBounds = model3d.getOrthoBounds(right, up, forward);
@@ -2537,7 +2544,7 @@ public class BreakoutMainView {
 
 		FloatUnaryOperator viewReparam = f -> 1 - (1 - f) * (1 - f);
 		FloatUnaryOperator projReparam;
-		if (currentProjCalculator instanceof OrthoProjection) {
+		if (currentProjCalculator.isOrtho()) {
 			OrthoProjection currentOrthoCalc = (OrthoProjection) currentProjCalculator;
 			if (ortho) {
 				projReparam = viewReparam;
@@ -3325,6 +3332,8 @@ public class BreakoutMainView {
 						scene.remove(terrain);
 						scene.disposeLater(terrain);
 					}
+					scene.remove(orthoScaleBar);
+					scene.disposeLater(orthoScaleBar);
 					scene.remove(compass);
 					scene.disposeLater(compass);
 					return false;

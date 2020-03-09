@@ -44,4 +44,9 @@ public class PerspectiveProjection implements Projection {
 	public Projection resize(float hSpan, float vSpan, float zNear, float zFar) {
 		return new PerspectiveProjection(fovAngle, zNear, zFar);
 	}
+
+	@Override
+	public boolean isOrtho() {
+		return false;
+	}
 }

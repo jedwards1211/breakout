@@ -39,6 +39,7 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 	float[] labelScreenPosition = new float[3];
 	Font labelFont;
 	FontRenderContext fontRenderContext;
+	float[] labelColor = { 1, 1, 1, 1 };
 
 	static final Map<String, float[]> directions = new HashMap<>();
 	static {
@@ -107,6 +108,7 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		}
 
 		textRenderer.beginRendering(context.width(), context.height(), false);
+		textRenderer.setColor(labelColor[0], labelColor[1], labelColor[2], labelColor[3]);
 
 		for (Map.Entry<String, float[]> direction : directions.entrySet()) {
 			String text = direction.getKey();
@@ -180,6 +182,18 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		renderer = null;
 		textRenderer.dispose();
 		textRenderer = null;
+	}
+
+	public void setLabelColor(float... color) {
+		System.arraycopy(color, 0, this.labelColor, 0, 4);
+	}
+
+	public void setLabelColor(Color stationLabelColor) {
+		setLabelColor(
+			stationLabelColor.getRed() / 255f,
+			stationLabelColor.getGreen() / 255f,
+			stationLabelColor.getBlue() / 255f,
+			stationLabelColor.getAlpha() / 255f);
 	}
 
 }

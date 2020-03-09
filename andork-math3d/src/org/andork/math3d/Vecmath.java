@@ -27,10 +27,11 @@ public class Vecmath {
 	private static final double EPSILON_ABSOLUTE = 1.0e-5f;
 	private static final double FEPS = 1.110223024E-8f;
 
-	public static void add3(double[] a, double[] b, double[] out) {
+	public static double[] add3(double[] a, double[] b, double[] out) {
 		out[0] = a[0] + b[0];
 		out[1] = a[1] + b[1];
 		out[2] = a[2] + b[2];
+		return out;
 	}
 
 	public static void add3(double[] a, int ai, double[] b, int bi, double[] out, int outi) {
@@ -39,10 +40,11 @@ public class Vecmath {
 		out[outi + 2] = a[ai + 2] + b[bi + 2];
 	}
 
-	public static void add3(float[] a, float[] b, float[] out) {
+	public static float[] add3(float[] a, float[] b, float[] out) {
 		out[0] = a[0] + b[0];
 		out[1] = a[1] + b[1];
 		out[2] = a[2] + b[2];
+		return out;
 	}
 
 	public static void add3(float[] a, int ai, float[] b, int bi, float[] out, int outi) {
@@ -817,16 +819,18 @@ public class Vecmath {
 		return false;
 	}
 
-	public static void interp(float[] a, float[] b, float f, float[] out) {
+	public static float[] interp(float[] a, float[] b, float f, float[] out) {
 		for (int i = 0; i < a.length; i++) {
 			out[i] = (1 - f) * a[i] + f * b[i];
 		}
+		return out;
 	}
 
-	public static void interp3(double[] a, double[] b, double f, double[] out) {
+	public static double[] interp3(double[] a, double[] b, double f, double[] out) {
 		out[0] = (1 - f) * a[0] + f * b[0];
 		out[1] = (1 - f) * a[1] + f * b[1];
 		out[2] = (1 - f) * a[2] + f * b[2];
+		return out;
 	}
 
 	public static void interp3(double[] a, double[] b, double f, float[] out, int outi) {
@@ -835,10 +839,11 @@ public class Vecmath {
 		out[outi + 2] = (float) ((1 - f) * a[2] + f * b[2]);
 	}
 
-	public static void interp3(float[] a, float[] b, float f, float[] out) {
+	public static float[] interp3(float[] a, float[] b, float f, float[] out) {
 		out[0] = (1 - f) * a[0] + f * b[0];
 		out[1] = (1 - f) * a[1] + f * b[1];
 		out[2] = (1 - f) * a[2] + f * b[2];
+		return out;
 	}
 
 	public static void invAffine(double[] m) {
@@ -2459,6 +2464,27 @@ public class Vecmath {
 		}
 		else {
 			mpmul(m, p);
+		}
+	}
+
+	public static void mvmul(float[] m, float[] p) {
+		float rw = 1 / (m[3] * p[0] + m[7] * p[1] + m[11] * p[2] + m[15]);
+		float x = rw * (m[0] * p[0] + m[4] * p[1] + m[8] * p[2]);
+		float y = rw * (m[1] * p[0] + m[5] * p[1] + m[9] * p[2]);
+		p[2] = rw * (m[2] * p[0] + m[6] * p[1] + m[10] * p[2]);
+		p[1] = y;
+		p[0] = x;
+	}
+
+	public static void mvmul(float[] m, float[] p, float[] out) {
+		if (p != out) {
+			float rw = 1 / (m[3] * p[0] + m[7] * p[1] + m[11] * p[2]);
+			out[0] = rw * (m[0] * p[0] + m[4] * p[1] + m[8] * p[2]);
+			out[1] = rw * (m[1] * p[0] + m[5] * p[1] + m[9] * p[2]);
+			out[2] = rw * (m[2] * p[0] + m[6] * p[1] + m[10] * p[2]);
+		}
+		else {
+			mvmul(m, p);
 		}
 	}
 
