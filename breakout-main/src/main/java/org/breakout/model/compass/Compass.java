@@ -18,6 +18,7 @@ import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.JoglViewState;
 import org.andork.jogl.util.StaticRenderer;
 import org.andork.math3d.Vecmath;
+import org.breakout.model.TextRenderers;
 
 import com.jogamp.common.nio.Buffers;
 import com.jogamp.opengl.GL;
@@ -29,7 +30,6 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 	CompassProgram program;
 	ByteBuffer vertices;
 	StaticRenderer renderer;
-	TextRenderer textRenderer;
 	float[] projectionMatrix = Vecmath.newMat4f();
 	float[] viewMatrix = Vecmath.newMat4f();
 	float[] modelMatrix = Vecmath.newMat4f();
@@ -37,9 +37,7 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 	float[] pvmMatrix = Vecmath.newMat4f();
 	float[] normalMatrix = Vecmath.newMat3f();
 	float[] labelScreenPosition = new float[3];
-	Font labelFont;
-	FontRenderContext fontRenderContext;
-	float[] labelColor = { 1, 1, 1, 1 };
+	static final FontRenderContext fontRenderContext = new FontRenderContext(new AffineTransform(), true, true);
 
 	static final Map<String, float[]> directions = new HashMap<>();
 	static {
@@ -49,7 +47,16 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		directions.put("W", new float[] { -1, 0, 0 });
 	}
 
-	public Compass() {
+	public static interface Context {
+		public Font labelFont();
+
+		public Color labelColor();
+	}
+
+	final Context context;
+
+	public Compass(Context context) {
+		this.context = context;
 		viewMatrix[12] = 0;
 		viewMatrix[13] = 0;
 		viewMatrix[14] = -2.5f;
@@ -60,9 +67,6 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		labelModelMatrix[5] = modelMatrix[5] * labelFactor;
 		labelModelMatrix[10] = modelMatrix[10] * labelFactor;
 		Vecmath.invAffineToTranspose3x3(modelMatrix, normalMatrix);
-
-		labelFont = new Font("Arial", Font.BOLD, 24);
-		fontRenderContext = new FontRenderContext(new AffineTransform(), true, true);
 	}
 
 	@Override
@@ -107,8 +111,11 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 			gl.glEnable(GL.GL_BLEND);
 		}
 
+		Font labelFont = this.context.labelFont();
+
+		TextRenderer textRenderer = TextRenderers.textRenderer(labelFont);
 		textRenderer.beginRendering(context.width(), context.height(), false);
-		textRenderer.setColor(labelColor[0], labelColor[1], labelColor[2], labelColor[3]);
+		textRenderer.setColor(this.context.labelColor());
 
 		for (Map.Entry<String, float[]> direction : directions.entrySet()) {
 			String text = direction.getKey();
@@ -165,11 +172,6 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		renderer = new StaticRenderer(vertices, options);
 		renderer.init(gl);
 
-		textRenderer = new TextRenderer(labelFont, true, true, null, false);
-		textRenderer.init();
-		textRenderer.setUseVertexArrays(true);
-		textRenderer.setColor(Color.WHITE);
-
 		return true;
 	}
 
@@ -180,20 +182,5 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		vertices = null;
 		renderer.dispose(gl);
 		renderer = null;
-		textRenderer.dispose();
-		textRenderer = null;
 	}
-
-	public void setLabelColor(float... color) {
-		System.arraycopy(color, 0, this.labelColor, 0, 4);
-	}
-
-	public void setLabelColor(Color stationLabelColor) {
-		setLabelColor(
-			stationLabelColor.getRed() / 255f,
-			stationLabelColor.getGreen() / 255f,
-			stationLabelColor.getBlue() / 255f,
-			stationLabelColor.getAlpha() / 255f);
-	}
-
 }

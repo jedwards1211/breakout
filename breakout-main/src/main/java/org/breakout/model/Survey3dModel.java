@@ -1880,8 +1880,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	final Font labelFont;
 
-	TextRenderer textRenderer;
-
 	ColorParam colorParam = ColorParam.DEPTH;
 
 	AxialSectionRenderer axialSectionRenderer = new AxialSectionRenderer();
@@ -1979,8 +1977,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		this.tree = tree;
 		this.sections = sections;
 		this.labelFont = labelFont;
-
-		textRenderer = new TextRenderer(labelFont, true, true, null, false);
 
 		highlightColors = new Uniform4fv().value(0f, 0f, 0f, 0f, 0f, 1f, 1f, 0.5f, 0f, 1f, 1f, 0.5f).count(3);
 
@@ -2164,6 +2160,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			}
 
 			LabelDrawingContext labelContext = new LabelDrawingContext();
+			TextRenderer textRenderer = TextRenderers.textRenderer(labelFont);
 			textRenderer.setColor(stationLabelColor);
 			labelContext.textRenderer = textRenderer;
 			labelContext.stationsToEmphasize = stationsToEmphasize;
@@ -2435,10 +2432,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	@Override
 	public boolean init(GL2ES2 gl) {
-		textRenderer.init();
-		textRenderer.setUseVertexArrays(true);
-		textRenderer.setColor(stationLabelColor);
-
 		lineRenderer.init(gl);
 		triangleRenderer.init(gl);
 		FlatColorProgram.INSTANCE.init(gl);

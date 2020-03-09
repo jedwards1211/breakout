@@ -219,6 +219,7 @@ import org.breakout.model.Survey3dModel.Shot3dPickContext;
 import org.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.breakout.model.Survey3dModel.UpdateGlowOptions;
 import org.breakout.model.SurveyTableModel;
+import org.breakout.model.TitleText;
 import org.breakout.model.calc.CalcProject;
 import org.breakout.model.calc.CalcShot;
 import org.breakout.model.calc.CalcTrip;
@@ -1097,6 +1098,7 @@ public class BreakoutMainView {
 						scene.initLater(orthoScaleBar);
 						scene.add(compass);
 						scene.initLater(compass);
+						scene.add(titleText);
 						return false;
 					});
 				});
@@ -1241,9 +1243,65 @@ public class BreakoutMainView {
 
 	SettingsDrawer settingsDrawer;
 	Survey3dModel model3d;
-	OrthoScaleBar orthoScaleBar = new OrthoScaleBar(new Font("Arial", Font.PLAIN, 72));
+
+	OrthoScaleBar orthoScaleBar = new OrthoScaleBar(new OrthoScaleBar.Context() {
+		Font labelFont = new Font("Arial", Font.PLAIN, 72);
+
+		@Override
+		public float labelSize() {
+			return 12f;
+		}
+
+		@Override
+		public Font labelFont() {
+			return labelFont;
+		}
+
+		@Override
+		public boolean imperial() {
+			return getProjectModel().get(ProjectModel.displayLengthUnit) == Length.feet;
+		}
+
+		@Override
+		public Color color() {
+			return getProjectModel().get(ProjectModel.stationLabelColor);
+		}
+	});
 	AutoTerrain terrain;
-	Compass compass = new Compass();
+	Compass compass = new Compass(new Compass.Context() {
+		Font labelFont = new Font("Arial", Font.BOLD, 24);
+
+		@Override
+		public Font labelFont() {
+			return labelFont;
+		}
+
+		@Override
+		public Color labelColor() {
+			return getProjectModel().get(ProjectModel.stationLabelColor);
+		}
+	});
+	TitleText titleText = new TitleText(new TitleText.Context() {
+		@Override
+		public String text() {
+			Date date = ColorParam.calcDateFromDaysSince1800(getProjectModel().get(ProjectModel.maxDate));
+			if (date == null)
+				return null;
+			return String.valueOf(date.getYear() + 1900);
+		}
+
+		Font font = new Font("Arial", Font.PLAIN, 72);
+
+		@Override
+		public Font font() {
+			return font;
+		}
+
+		@Override
+		public Color color() {
+			return getProjectModel().get(ProjectModel.stationLabelColor);
+		}
+	});
 	float[] v = newMat4f();
 	int debugMbrCount = 0;
 
@@ -1809,8 +1867,6 @@ public class BreakoutMainView {
 			protected void onValueChanged(Color stationLabelColor) {
 				if (stationLabelColor == null)
 					return;
-				orthoScaleBar.setColor(stationLabelColor);
-				compass.setLabelColor(stationLabelColor);
 				if (model3d != null) {
 					model3d.setStationLabelColor(stationLabelColor);
 				}
@@ -1981,7 +2037,6 @@ public class BreakoutMainView {
 			@Override
 			protected void onValueChanged(final Unit<Length> displayLengthUnit) {
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
-				orthoScaleBar.setImperial(displayLengthUnit == Length.feet);
 				if (model3d != null) {
 					model3d.setDisplayLengthUnit(displayLengthUnit);
 					autoDrawable.display();
@@ -3336,6 +3391,7 @@ public class BreakoutMainView {
 					scene.disposeLater(orthoScaleBar);
 					scene.remove(compass);
 					scene.disposeLater(compass);
+					scene.remove(titleText);
 					return false;
 				});
 			}

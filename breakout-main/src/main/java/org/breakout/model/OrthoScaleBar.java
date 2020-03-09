@@ -26,13 +26,8 @@ import com.jogamp.opengl.GL2ES2;
 import com.jogamp.opengl.util.awt.TextRenderer;
 
 public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
-	float[] color = { 1, 1, 1, 1 };
 	PipelinedRenderer lineRenderer =
 		new PipelinedRenderer(new PipelinedRenderer.Options(true, GL_LINES, 100).addAttribute(3, GL_FLOAT, false));
-	TextRenderer textRenderer;
-	Font labelFont;
-
-	float labelSize = 12;
 
 	float[] left = new float[3];
 	float[] right = new float[3];
@@ -40,32 +35,26 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 	float[] up = new float[3];
 	float[] p = new float[3];
 
-	boolean imperial;
 	boolean miles;
 	String unit;
 
-	NumberFormat numberFormat = NumberFormat.getInstance();
+	final NumberFormat numberFormat = NumberFormat.getInstance();
+	private static final FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
 
-	FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
+	public static interface Context {
+		Color color();
 
-	public void setColor(float... color) {
-		System.arraycopy(color, 0, this.color, 0, 4);
+		float labelSize();
+
+		Font labelFont();
+
+		boolean imperial();
 	}
 
-	public void setColor(Color stationLabelColor) {
-		setColor(
-			stationLabelColor.getRed() / 255f,
-			stationLabelColor.getGreen() / 255f,
-			stationLabelColor.getBlue() / 255f,
-			stationLabelColor.getAlpha() / 255f);
-	}
+	final Context context;
 
-	public void setImperial(boolean imperial) {
-		this.imperial = imperial;
-	}
-
-	public OrthoScaleBar(Font labelFont) {
-		this.labelFont = labelFont;
+	public OrthoScaleBar(Context context) {
+		this.context = context;
 	}
 
 	@Override
@@ -73,10 +62,13 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 		if (!context.projection().isOrtho())
 			return;
 
+		Font labelFont = this.context.labelFont();
+		float labelSize = this.context.labelSize() * context.devicePixelRatio();
+
 		FlatColorProgram program = FlatColorProgram.INSTANCE;
 		program.use(gl);
 		program.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
-		program.color.put(gl, color);
+		program.color.putColor(gl, this.context.color());
 		lineRenderer.setVertexAttribLocations(program.position);
 
 		float y = labelSize * 2;
@@ -87,7 +79,7 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 		mpmul(context.screenToWorld(), right);
 		mvmul(context.screenToWorld(), up);
 		distance = distance3(left, right);
-		if (imperial) {
+		if (this.context.imperial()) {
 			distance *= 3.28084;
 			unit = "ft";
 			if (distance >= 5280) {
@@ -124,22 +116,24 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 
 		program.done(gl);
 
+		TextRenderer textRenderer = TextRenderers.textRenderer(labelFont);
+		textRenderer.setColor(this.context.color());
 		textRenderer.beginRendering(context.width(), context.height(), false);
-
-		textRenderer.setColor(color[0], color[1], color[2], color[3]);
 		mpmul(context.worldToScreen(), left, p);
 		p[1] -= labelSize * 1.5;
-		drawValue(context, 0);
-		drawValue(context, small);
-		drawValue(context, medium);
-		drawValue(context, large);
+		drawValue(context, textRenderer, 0);
+		drawValue(context, textRenderer, small);
+		drawValue(context, textRenderer, medium);
+		drawValue(context, textRenderer, large);
 
 		textRenderer.end3DRendering();
 	}
 
-	void drawValue(JoglDrawContext context, float position) {
+	void drawValue(JoglDrawContext context, TextRenderer textRenderer, float position) {
 		interp3(right, left, position / distance, p);
 		mpmul(context.worldToScreen(), p);
+		Font labelFont = this.context.labelFont();
+		float labelSize = this.context.labelSize() * context.devicePixelRatio();
 		p[1] -= labelSize * 1.5;
 		String text = numberFormat.format(position) + " " + unit;
 		double width = labelFont.getStringBounds(text, frc).getWidth();
@@ -153,8 +147,6 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 		FlatColorProgram program = FlatColorProgram.INSTANCE;
 		program.init(gl);
 		lineRenderer.init(gl);
-		textRenderer = new TextRenderer(labelFont, true, true, null, false);
-		textRenderer.init();
 		return true;
 	}
 
@@ -163,7 +155,5 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 		FlatColorProgram program = FlatColorProgram.INSTANCE;
 		program.dispose(gl);
 		lineRenderer.dispose(gl);
-		textRenderer.dispose();
-		textRenderer = null;
 	}
 }
