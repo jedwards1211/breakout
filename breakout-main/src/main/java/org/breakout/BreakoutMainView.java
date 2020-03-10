@@ -100,6 +100,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
@@ -134,6 +135,7 @@ import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
+import org.andork.bind.ui.ButtonsSelectedBinder;
 import org.andork.collect.ArrayLists;
 import org.andork.collect.HashSets;
 import org.andork.collect.LinkedListMultiMap;
@@ -205,6 +207,7 @@ import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.mabox.MapboxClient;
 import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
+import org.breakout.model.CustomModes;
 import org.breakout.model.GradientModel;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.OrthoScaleBar;
@@ -1249,6 +1252,9 @@ public class BreakoutMainView {
 
 		@Override
 		public float labelSize() {
+			if (CustomModes.BILL_STONE.equals(getProjectModel().get(ProjectModel.customMode))) {
+				return 24f;
+			}
 			return 12f;
 		}
 
@@ -1291,9 +1297,13 @@ public class BreakoutMainView {
 		}
 
 		Font font = new Font("Arial", Font.PLAIN, 72);
+		Font largeFont = new Font("Arial", Font.PLAIN, 144);
 
 		@Override
 		public Font font() {
+			if (CustomModes.BILL_STONE.equals(getProjectModel().get(ProjectModel.customMode))) {
+				return largeFont;
+			}
 			return font;
 		}
 
@@ -1763,6 +1773,13 @@ public class BreakoutMainView {
 			autoDrawable.display();
 		}).bind(QObjectAttributeBinder.bind(ProjectModel.paramGradient, projectModelBinder));
 
+		new BinderWrapper<String>() {
+			@Override
+			protected void onValueChanged(String customMode) {
+				autoDrawable.display();
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.customMode, projectModelBinder));
+
 		new BinderWrapper<Color>() {
 			@Override
 			protected void onValueChanged(Color bgColor) {
@@ -2090,6 +2107,20 @@ public class BreakoutMainView {
 		menuBar.add(editMenu);
 		editMenu.add(new JMenuItem(findAction));
 
+		JMenu customModesMenu = new JMenu();
+		menuBar.add(customModesMenu);
+		ButtonsSelectedBinder<String> customModesBinder =
+			new ButtonsSelectedBinder<String>()
+				.bind(new QObjectAttributeBinder<String>(ProjectModel.customMode).bind(projectModelBinder));
+		JRadioButtonMenuItem noCustomModeItem = new JRadioButtonMenuItem("None");
+		customModesBinder.put(noCustomModeItem, null);
+		customModesMenu.add(noCustomModeItem);
+		for (String value : CustomModes.values) {
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem(value);
+			customModesBinder.put(item, value);
+			customModesMenu.add(item);
+		}
+
 		JMenu debugMenu = new JMenu();
 		menuBar.add(debugMenu);
 		JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
@@ -2150,6 +2181,7 @@ public class BreakoutMainView {
 				public void updateI18n(Localizer localizer, JMenuBar localizedObject) {
 					localizer.setText(fileMenu, "fileMenu.text");
 					localizer.setText(editMenu, "editMenu.text");
+					localizer.setText(customModesMenu, "customModesMenu.text");
 					localizer.setText(importMenu, "importMenu.text");
 					localizer.setText(exportMenu, "exportMenu.text");
 					localizer.setText(openRecentMenu, "openRecentMenu.text");

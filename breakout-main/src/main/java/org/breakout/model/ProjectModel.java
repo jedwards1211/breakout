@@ -92,6 +92,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Boolean> showCheckedLeads = newAttribute(Boolean.class, "showCheckedLeads");
 	public static final Attribute<Boolean> showTerrain = newAttribute(Boolean.class, "showTerrain");
 	public static final Attribute<Clip3f> clip = newAttribute(Clip3f.class, "clip");
+	public static final Attribute<String> customMode = newAttribute(String.class, "customMode");
 	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
 	public static final Attribute<File> wallsImportDirectory = newAttribute(File.class, "wallsImportDirectory");
 	public static final Attribute<File> linkSurveyNotesDirectory = newAttribute(File.class, "linkSurveyNotesDirectory");
