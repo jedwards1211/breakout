@@ -49,6 +49,12 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 		Font labelFont();
 
 		boolean imperial();
+
+		float left();
+
+		float right();
+
+		boolean tickAtLeft();
 	}
 
 	final Context context;
@@ -72,8 +78,8 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 		lineRenderer.setVertexAttribLocations(program.position);
 
 		float y = labelSize * 2;
-		setf(right, context.width() * 0.96f, y, 0);
-		setf(left, context.width() * 0.6f, y, 0);
+		setf(right, context.width() * this.context.right(), y, 0);
+		setf(left, context.width() * this.context.left(), y, 0);
 		setf(up, 0, 10, 0);
 		mpmul(context.screenToWorld(), left);
 		mpmul(context.screenToWorld(), right);
@@ -94,7 +100,8 @@ public class OrthoScaleBar extends JoglManagedResource implements JoglDrawable {
 				distance /= 1000;
 			}
 		}
-		float large = (float) GridMath.niceFloor(distance, GridMath.HALF | GridMath.FIFTH);
+		float large =
+			this.context.tickAtLeft() ? distance : (float) GridMath.niceFloor(distance, GridMath.HALF | GridMath.FIFTH);
 		float medium = (float) GridMath.niceFloor(large * 0.9, GridMath.HALF | GridMath.FIFTH);
 		float small = (float) GridMath.niceFloor(medium * 0.9, GridMath.HALF | GridMath.FIFTH);
 

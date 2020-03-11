@@ -201,6 +201,7 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 import org.andork.util.FileRecoveryConfig;
+import org.andork.util.Java7;
 import org.andork.util.RecoverableFileOutputStream;
 import org.andork.util.StringUtils;
 import org.breakout.StatsModel.MinAvgMax;
@@ -1247,12 +1248,16 @@ public class BreakoutMainView {
 	SettingsDrawer settingsDrawer;
 	Survey3dModel model3d;
 
+	public boolean isCustomMode(String customMode) {
+		return Java7.Objects.equals(customMode, getProjectModel().get(ProjectModel.customMode));
+	}
+
 	OrthoScaleBar orthoScaleBar = new OrthoScaleBar(new OrthoScaleBar.Context() {
 		Font labelFont = new Font("Arial", Font.PLAIN, 72);
 
 		@Override
 		public float labelSize() {
-			if (CustomModes.BILL_STONE.equals(getProjectModel().get(ProjectModel.customMode))) {
+			if (isCustomMode(CustomModes.BILL_STONE)) {
 				return 24f;
 			}
 			return 12f;
@@ -1271,6 +1276,24 @@ public class BreakoutMainView {
 		@Override
 		public Color color() {
 			return getProjectModel().get(ProjectModel.stationLabelColor);
+		}
+
+		@Override
+		public float left() {
+			if (isCustomMode(CustomModes.BILL_STONE)) {
+				return 1f - right();
+			}
+			return 0.6f;
+		}
+
+		@Override
+		public float right() {
+			return 0.96f;
+		}
+
+		@Override
+		public boolean tickAtLeft() {
+			return isCustomMode(CustomModes.BILL_STONE);
 		}
 	});
 	AutoTerrain terrain;
@@ -1301,7 +1324,7 @@ public class BreakoutMainView {
 
 		@Override
 		public Font font() {
-			if (CustomModes.BILL_STONE.equals(getProjectModel().get(ProjectModel.customMode))) {
+			if (isCustomMode(CustomModes.BILL_STONE)) {
 				return largeFont;
 			}
 			return font;
@@ -1310,6 +1333,11 @@ public class BreakoutMainView {
 		@Override
 		public Color color() {
 			return getProjectModel().get(ProjectModel.stationLabelColor);
+		}
+
+		@Override
+		public float yOffsetRatio() {
+			return isCustomMode(CustomModes.BILL_STONE) ? 0.45f : 0;
 		}
 	});
 	float[] v = newMat4f();
@@ -2129,6 +2157,9 @@ public class BreakoutMainView {
 		new ButtonSelectedBinder(showSpatialIndexItem)
 			.bind(new QObjectAttributeBinder<>(RootModel.showSpatialIndex).bind(rootModelBinder));
 		debugMenu.add(showSpatialIndexItem);
+		debugMenu.add(new JMenuItem(new EditSettingsFileAction(this)));
+		debugMenu.add(new JMenuItem(new EditSwapFileAction(this)));
+		debugMenu.add(new JMenuItem(new SetEditorCommandAction(this)));
 
 		JMenuItem noRecentFilesMenuItem = new JMenuItem();
 		noRecentFilesMenuItem.setEnabled(false);
@@ -3665,5 +3696,34 @@ public class BreakoutMainView {
 			hintLabel.setText(hintText);
 			hintLabel.invalidate();
 		}
+	}
+
+	public void openEditor(Path path) {
+		if (path == null) {
+			throw new IllegalArgumentException("path must be non-null");
+		}
+		OnEDT.onEDT(() -> {
+			Localizer localizer = i18n.forClass(BreakoutMainView.class);
+			QObject<RootModel> rootModel = getRootModel();
+			String command = rootModel.get(RootModel.editorCommand);
+			String prompt = localizer.getString("enterEditorCommandDialog.message");
+			while (true) {
+				if (command == null) {
+					command = JOptionPane.showInputDialog(prompt);
+					if (command == null)
+						return;
+					rootModel.set(RootModel.editorCommand, command);
+				}
+				try {
+					Runtime.getRuntime().exec(command + " " + path.toAbsolutePath().toString());
+				}
+				catch (IOException ex) {
+					prompt =
+						localizer.getFormattedString("failedToLaunchEditorDialog.message", ex.getLocalizedMessage());
+					continue;
+				}
+				break;
+			}
+		});
 	}
 }

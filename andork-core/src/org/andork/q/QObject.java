@@ -146,6 +146,14 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 		return oldValue;
 	}
 
+	public <T> T setIfNull(Attribute<T> attribute, T defaultValue) {
+		T value = get(attribute);
+		if (value != null)
+			return value;
+		set(attribute, defaultValue);
+		return defaultValue;
+	}
+
 	@Override
 	public void set(Object key, Object newValue) {
 		set((Attribute) key, newValue);

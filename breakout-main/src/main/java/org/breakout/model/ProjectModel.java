@@ -157,97 +157,42 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	}
 
 	public static void setDefaults(QObject<ProjectModel> projectModel) {
-		if (projectModel.get(ProjectModel.cameraView) == null) {
-			projectModel.set(ProjectModel.cameraView, CameraView.PERSPECTIVE);
-		}
-		if (projectModel.get(ProjectModel.backgroundColor) == null) {
-			projectModel.set(ProjectModel.backgroundColor, Color.black);
-		}
-		if (projectModel.get(ProjectModel.stationLabelFontSize) == null) {
-			projectModel.set(ProjectModel.stationLabelFontSize, 12f);
-		}
-		if (projectModel.get(ProjectModel.stationLabelDensity) == null) {
-			projectModel.set(ProjectModel.stationLabelDensity, 40f);
-		}
-		if (projectModel.get(ProjectModel.stationLabelColor) == null) {
-			projectModel.set(ProjectModel.stationLabelColor, Color.white);
-		}
-		if (projectModel.get(ProjectModel.centerlineDistance) == null) {
-			projectModel.set(ProjectModel.centerlineDistance, 1000.0f);
-		}
-		if (projectModel.get(ProjectModel.centerlineColor) == null) {
-			projectModel.set(ProjectModel.centerlineColor, Color.white);
-		}
-		if (projectModel.get(ProjectModel.ambientLight) == null) {
-			projectModel.set(ProjectModel.ambientLight, 0.5f);
-		}
-		if (projectModel.get(ProjectModel.boldness) == null) {
-			projectModel.set(ProjectModel.boldness, 0f);
-		}
-		if (projectModel.get(ProjectModel.distRange) == null) {
-			projectModel.set(ProjectModel.distRange, new LinearAxisConversion(0, 0, 20000, 200));
-		}
-		if (projectModel.get(ProjectModel.viewXform) == null) {
-			projectModel.set(ProjectModel.viewXform, Vecmath.newMat4f());
-		}
-		if (projectModel.get(ProjectModel.colorParam) == null) {
-			projectModel.set(ProjectModel.colorParam, ColorParam.DEPTH);
-		}
-		if (projectModel.get(ProjectModel.paramGradient) == null) {
-			projectModel.set(ProjectModel.paramGradient, Gradients.DEFAULT);
-		}
-		if (projectModel.get(ProjectModel.paramRanges) == null) {
-			projectModel.set(ProjectModel.paramRanges, QLinkedHashMap.<ColorParam, LinearAxisConversion>newInstance());
-		}
+		projectModel.setIfNull(ProjectModel.cameraView, CameraView.PERSPECTIVE);
+		projectModel.setIfNull(ProjectModel.backgroundColor, Color.black);
+		projectModel.setIfNull(ProjectModel.stationLabelFontSize, 12f);
+		projectModel.setIfNull(ProjectModel.stationLabelDensity, 40f);
+		projectModel.setIfNull(ProjectModel.stationLabelColor, Color.white);
+		projectModel.setIfNull(ProjectModel.centerlineDistance, 1000.0f);
+		projectModel.setIfNull(ProjectModel.centerlineColor, Color.white);
+		projectModel.setIfNull(ProjectModel.ambientLight, 0.5f);
+		projectModel.setIfNull(ProjectModel.boldness, 0f);
+		projectModel.setIfNull(ProjectModel.distRange, new LinearAxisConversion(0, 0, 20000, 200));
+		projectModel.setIfNull(ProjectModel.viewXform, Vecmath.newMat4f());
+		projectModel.setIfNull(ProjectModel.colorParam, ColorParam.DEPTH);
+		projectModel.setIfNull(ProjectModel.paramGradient, Gradients.DEFAULT);
+		projectModel
+			.setIfNull(ProjectModel.paramRanges, QLinkedHashMap.<ColorParam, LinearAxisConversion>newInstance());
 		QMap<ColorParam, LinearAxisConversion, ?> paramRanges = projectModel.get(ProjectModel.paramRanges);
 		for (ColorParam colorParam : ColorParam.values()) {
 			if (!paramRanges.containsKey(colorParam)) {
 				paramRanges.put(colorParam, new LinearAxisConversion());
 			}
 		}
-		if (projectModel.get(ProjectModel.highlightRange) == null) {
-			projectModel.set(ProjectModel.highlightRange, new LinearAxisConversion(0, 0, 1000, 200));
-		}
-		if (projectModel.get(ProjectModel.highlightMode) == null) {
-			projectModel.set(ProjectModel.highlightMode, HighlightMode.NEARBY);
-		}
-		if (projectModel.get(ProjectModel.surveyDrawer) == null) {
-			projectModel.set(ProjectModel.surveyDrawer, DrawerModel.instance.newObject());
-		}
-		if (projectModel.get(ProjectModel.settingsDrawer) == null) {
-			projectModel.set(ProjectModel.settingsDrawer, DrawerModel.instance.newObject());
-		}
-		if (projectModel.get(ProjectModel.miniSurveyDrawer) == null) {
-			projectModel.set(ProjectModel.miniSurveyDrawer, DrawerModel.instance.newObject());
-		}
-		if (projectModel.get(ProjectModel.taskListDrawer) == null) {
-			projectModel.set(ProjectModel.taskListDrawer, DrawerModel.instance.newObject());
-		}
-		if (projectModel.get(ProjectModel.displayLengthUnit) == null) {
-			projectModel.set(ProjectModel.displayLengthUnit, Length.meters);
-		}
-		if (projectModel.get(ProjectModel.displayAngleUnit) == null) {
-			projectModel.set(ProjectModel.displayAngleUnit, Angle.degrees);
-		}
-		if (projectModel.get(ProjectModel.showLeadLabels) == null) {
-			projectModel.set(ProjectModel.showLeadLabels, true);
-		}
-		if (projectModel.get(ProjectModel.showCheckedLeads) == null) {
-			projectModel.set(ProjectModel.showCheckedLeads, false);
-		}
-		if (projectModel.get(ProjectModel.showTerrain) == null) {
-			projectModel.set(ProjectModel.showTerrain, false);
-		}
-		if (projectModel.get(ProjectModel.clip) == null) {
-			projectModel
-				.set(ProjectModel.clip, new Clip3f(new float[]
-				{ 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
-		}
-		if (projectModel.get(ProjectModel.leads) == null) {
-			projectModel.set(ProjectModel.leads, PersistentVector.emptyVector());
-		}
-		if (projectModel.get(ProjectModel.leadIndex) == null) {
-			projectModel.set(ProjectModel.leadIndex, MultiMaps.emptyMultiMap());
-		}
+		projectModel.setIfNull(ProjectModel.highlightRange, new LinearAxisConversion(0, 0, 1000, 200));
+		projectModel.setIfNull(ProjectModel.highlightMode, HighlightMode.NEARBY);
+		projectModel.setIfNull(ProjectModel.surveyDrawer, DrawerModel.instance.newObject());
+		projectModel.setIfNull(ProjectModel.settingsDrawer, DrawerModel.instance.newObject());
+		projectModel.setIfNull(ProjectModel.miniSurveyDrawer, DrawerModel.instance.newObject());
+		projectModel.setIfNull(ProjectModel.taskListDrawer, DrawerModel.instance.newObject());
+		projectModel.setIfNull(ProjectModel.displayLengthUnit, Length.meters);
+		projectModel.setIfNull(ProjectModel.displayAngleUnit, Angle.degrees);
+		projectModel.setIfNull(ProjectModel.showLeadLabels, true);
+		projectModel.setIfNull(ProjectModel.showCheckedLeads, false);
+		projectModel.setIfNull(ProjectModel.showTerrain, false);
+		projectModel
+			.setIfNull(ProjectModel.clip, new Clip3f(new float[]
+			{ 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
+		projectModel.setIfNull(ProjectModel.leads, PersistentVector.emptyVector());
+		projectModel.setIfNull(ProjectModel.leadIndex, MultiMaps.emptyMultiMap());
 	}
 }

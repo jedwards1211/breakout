@@ -19,6 +19,8 @@ public class TitleText implements JoglDrawable {
 		public Font font();
 
 		public Color color();
+
+		public float yOffsetRatio();
 	}
 
 	final Context context;
@@ -44,6 +46,7 @@ public class TitleText implements JoglDrawable {
 
 		float x = context.width() / 2;
 		float y = context.height() - font.getSize() * scale * 1.5f;
+		y -= this.context.yOffsetRatio() * context.height();
 
 		x -= font.getStringBounds(text, frc).getWidth() * scale / 2;
 

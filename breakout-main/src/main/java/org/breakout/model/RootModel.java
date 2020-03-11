@@ -64,6 +64,7 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<SearchMode> searchMode = newAttribute(SearchMode.class, "searchMode");
 	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
 	public static final Attribute<File> wallsImportDirectory = newAttribute(File.class, "wallsImportDirectory");
+	public static final Attribute<String> editorCommand = newAttribute(String.class, "editorCommand");
 
 	public static final RootModel instance = new RootModel();
 
@@ -100,23 +101,11 @@ public final class RootModel extends QSpec<RootModel> {
 	}
 
 	public static void setDefaults(QObject<RootModel> rootModel) {
-		if (rootModel.get(RootModel.desiredNumSamples) == null) {
-			rootModel.set(RootModel.desiredNumSamples, 2);
-		}
-		if (rootModel.get(RootModel.mouseSensitivity) == null) {
-			rootModel.set(RootModel.mouseSensitivity, 15);
-		}
-		if (rootModel.get(RootModel.mouseWheelSensitivity) == null) {
-			rootModel.set(RootModel.mouseWheelSensitivity, 100);
-		}
-		if (rootModel.get(RootModel.showStationLabels) == null) {
-			rootModel.set(RootModel.showStationLabels, true);
-		}
-		if (rootModel.get(RootModel.showSpatialIndex) == null) {
-			rootModel.set(RootModel.showSpatialIndex, false);
-		}
-		if (rootModel.get(RootModel.searchMode) == null) {
-			rootModel.set(RootModel.searchMode, SearchMode.AUTO);
-		}
+		rootModel.setIfNull(RootModel.desiredNumSamples, 2);
+		rootModel.setIfNull(RootModel.mouseSensitivity, 15);
+		rootModel.setIfNull(RootModel.mouseWheelSensitivity, 100);
+		rootModel.setIfNull(RootModel.showStationLabels, true);
+		rootModel.setIfNull(RootModel.showSpatialIndex, false);
+		rootModel.setIfNull(RootModel.searchMode, SearchMode.AUTO);
 	}
 }
