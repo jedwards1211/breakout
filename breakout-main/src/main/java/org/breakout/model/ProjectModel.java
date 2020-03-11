@@ -92,7 +92,6 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Boolean> showCheckedLeads = newAttribute(Boolean.class, "showCheckedLeads");
 	public static final Attribute<Boolean> showTerrain = newAttribute(Boolean.class, "showTerrain");
 	public static final Attribute<Clip3f> clip = newAttribute(Clip3f.class, "clip");
-	public static final Attribute<String> customMode = newAttribute(String.class, "customMode");
 	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
 	public static final Attribute<File> wallsImportDirectory = newAttribute(File.class, "wallsImportDirectory");
 	public static final Attribute<File> linkSurveyNotesDirectory = newAttribute(File.class, "linkSurveyNotesDirectory");
@@ -104,6 +103,14 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		newAttribute(com.github.krukow.clj_ds.PersistentVector.class, "leads", (a, b) -> a == b);
 	public static final Attribute<MultiMap<StationKey, SurveyLead>> leadIndex =
 		newAttribute(MultiMap.class, "leadIndex", (a, b) -> a == b);
+	public static final Attribute<Float> maxDateTitleRelativeX = newAttribute(Float.class, "maxDateTitleRelativeX");
+	public static final Attribute<Float> maxDateTitleRelativeY = newAttribute(Float.class, "maxDateTitleRelativeY");
+	public static final Attribute<Float> maxDateFontSize = newAttribute(Float.class, "maxDateFontSize");
+	public static final Attribute<Float> orthoScaleBarLeft = newAttribute(Float.class, "orthoScaleBarLeft");
+	public static final Attribute<Float> orthoScaleBarRight = newAttribute(Float.class, "orthoScaleBarRight");
+	public static final Attribute<Boolean> orthoScaleBarTickAtLeft =
+		newAttribute(Boolean.class, "orthoScaleBarTickAtLeft");
+	public static final Attribute<Float> orthoScaleBarFontSize = newAttribute(Float.class, "orthoScaleBarFontSize");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -194,5 +201,12 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 			{ 0, -1, 0 }, -Float.MAX_VALUE, Float.MAX_VALUE));
 		projectModel.setIfNull(ProjectModel.leads, PersistentVector.emptyVector());
 		projectModel.setIfNull(ProjectModel.leadIndex, MultiMaps.emptyMultiMap());
+		projectModel.setIfNull(ProjectModel.maxDateTitleRelativeX, 0.5f);
+		projectModel.setIfNull(ProjectModel.maxDateTitleRelativeY, 0.9f);
+		projectModel.setIfNull(ProjectModel.maxDateFontSize, 36f);
+		projectModel.setIfNull(ProjectModel.orthoScaleBarLeft, 0.6f);
+		projectModel.setIfNull(ProjectModel.orthoScaleBarRight, 0.96f);
+		projectModel.setIfNull(ProjectModel.orthoScaleBarTickAtLeft, false);
+		projectModel.setIfNull(ProjectModel.orthoScaleBarFontSize, 10f);
 	}
 }

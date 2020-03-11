@@ -59,14 +59,62 @@ public class Lodash {
 			this.setTimeout = (r, wait) -> (Future<O>) executor.schedule(r, wait, TimeUnit.MILLISECONDS);
 			return this;
 		}
-		
+
+		@Override
 		@SuppressWarnings("unchecked")
 		public DebounceOptions<O> clone() {
 			try {
 				return (DebounceOptions<O>) super.clone();
-			} catch (CloneNotSupportedException e) {
+			}
+			catch (CloneNotSupportedException e) {
 				throw new RuntimeException(e);
 			}
+		}
+	}
+
+	public static class ThrottleOptions<O> implements Cloneable {
+		private boolean leading = true;
+		private boolean trailing = true;
+		private BiFunction<Runnable, Long, Future<O>> setTimeout;
+
+		public ThrottleOptions<O> leading(boolean leading) {
+			this.leading = leading;
+			return this;
+		}
+
+		public ThrottleOptions<O> trailing(boolean trailing) {
+			this.trailing = trailing;
+			return this;
+		}
+
+		public ThrottleOptions<O> setTimeout(BiFunction<Runnable, Long, Future<O>> setTimeout) {
+			this.setTimeout = setTimeout;
+			return this;
+		}
+
+		public BiFunction<Runnable, Long, Future<O>> setTimeout() {
+			return setTimeout;
+		}
+
+		@SuppressWarnings("unchecked")
+		public ThrottleOptions<O> executor(ScheduledExecutorService executor) {
+			this.setTimeout = (r, wait) -> (Future<O>) executor.schedule(r, wait, TimeUnit.MILLISECONDS);
+			return this;
+		}
+
+		@Override
+		@SuppressWarnings("unchecked")
+		public ThrottleOptions<O> clone() {
+			try {
+				return (ThrottleOptions<O>) super.clone();
+			}
+			catch (CloneNotSupportedException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		DebounceOptions<O> debounceOptions(long wait) {
+			return new DebounceOptions<O>().leading(leading).trailing(trailing).setTimeout(setTimeout).maxWait(wait);
 		}
 	}
 
@@ -76,7 +124,7 @@ public class Lodash {
 		public void cancel(boolean mayInterruptIfRunning);
 
 		public O flush();
-		
+
 		public static <O> Debounced<O> noop() {
 			return noop(null);
 		}
@@ -170,8 +218,11 @@ public class Lodash {
 		return new Result();
 	}
 
-	public static <I, O> DebouncedFunction<I, O> debounce(Function<I, O> fn, long wait,
-			DebounceOptions<O> options) {
+	public static DebouncedRunnable throttle(Runnable fn, long wait, ThrottleOptions<Void> options) {
+		return debounce(fn, wait, options.debounceOptions(wait));
+	}
+
+	public static <I, O> DebouncedFunction<I, O> debounce(Function<I, O> fn, long wait, DebounceOptions<O> options) {
 		DebouncedBiFunction<I, Void, O> debounced = debounce((a, b) -> fn.apply(a), wait, options);
 
 		class Result extends DebouncedWrapper<O> implements DebouncedFunction<I, O> {
@@ -187,8 +238,14 @@ public class Lodash {
 		return new Result();
 	}
 
-	public static <A, B, O> DebouncedBiFunction<A, B, O> debounce(BiFunction<A, B, O> fn, long wait,
-			DebounceOptions<O> options) {
+	public static <I, O> DebouncedFunction<I, O> throttle(Function<I, O> fn, long wait, ThrottleOptions<O> options) {
+		return debounce(fn, wait, options.debounceOptions(wait));
+	}
+
+	public static <A, B, O> DebouncedBiFunction<A, B, O> debounce(
+		BiFunction<A, B, O> fn,
+		long wait,
+		DebounceOptions<O> options) {
 		class Result implements DebouncedBiFunction<A, B, O> {
 			A lastA;
 			B lastB;
@@ -254,8 +311,10 @@ public class Lodash {
 				// trailing edge, the system time has gone backwards and we're
 				// treating
 				// it as the trailing edge, or we've hit the `maxWait` limit.
-				return lastCallTime < 0 || timeSinceLastCall >= wait ||
-						timeSinceLastCall < 0 || maxing && timeSinceLastInvoke >= options.maxWait;
+				return lastCallTime < 0
+					|| timeSinceLastCall >= wait
+					|| timeSinceLastCall < 0
+					|| maxing && timeSinceLastInvoke >= options.maxWait;
 			}
 
 			long remainingWait(long time) {
@@ -315,15 +374,22 @@ public class Lodash {
 		return new Result();
 	}
 
-	public static <K, V> void forEach(Map<? extends K, ? extends V> c,
-			BiConsumer<? super V, ? super K> iteratee) {
+	public static <A, B, O> DebouncedBiFunction<A, B, O> throttle(
+		BiFunction<A, B, O> fn,
+		long wait,
+		ThrottleOptions<O> options) {
+		return debounce(fn, wait, options.debounceOptions(wait));
+	}
+
+	public static <K, V> void forEach(Map<? extends K, ? extends V> c, BiConsumer<? super V, ? super K> iteratee) {
 		for (Entry<? extends K, ? extends V> e : c.entrySet()) {
 			iteratee.accept(e.getValue(), e.getKey());
 		}
 	}
 
-	public static <K, V> int forEach(Map<? extends K, ? extends V> c,
-			BiFunction<? super V, ? super K, Boolean> iteratee) {
+	public static <K, V> int forEach(
+		Map<? extends K, ? extends V> c,
+		BiFunction<? super V, ? super K, Boolean> iteratee) {
 		int count = 0;
 		for (Entry<? extends K, ? extends V> e : c.entrySet()) {
 			count++;
@@ -373,7 +439,8 @@ public class Lodash {
 		List<O> out;
 		if (in instanceof LinkedList) {
 			out = new LinkedList<>();
-		} else {
+		}
+		else {
 			out = new ArrayList<>(in.size());
 		}
 		for (I i : in) {
@@ -400,18 +467,19 @@ public class Lodash {
 		return result;
 	}
 
-	public static <K, V> MultiMap<K, V> groupBy(V[] array,
-			Function<? super V, ? extends K> keyAssigner) {
+	public static <K, V> MultiMap<K, V> groupBy(V[] array, Function<? super V, ? extends K> keyAssigner) {
 		return groupBy(Stream.of(array), keyAssigner);
 	}
 
-	public static <K, V> MultiMap<K, V> groupBy(Collection<? extends V> collection,
-			Function<? super V, ? extends K> keyAssigner) {
+	public static <K, V> MultiMap<K, V> groupBy(
+		Collection<? extends V> collection,
+		Function<? super V, ? extends K> keyAssigner) {
 		return groupBy(collection.stream(), keyAssigner);
 	}
 
-	public static <K, V> MultiMap<K, V> groupBy(Stream<? extends V> stream,
-			Function<? super V, ? extends K> keyAssigner) {
+	public static <K, V> MultiMap<K, V> groupBy(
+		Stream<? extends V> stream,
+		Function<? super V, ? extends K> keyAssigner) {
 		MultiMap<K, V> result = new LinkedHashSetMultiMap<>();
 		stream.forEach(v -> result.put(keyAssigner.apply(v), v));
 		return result;

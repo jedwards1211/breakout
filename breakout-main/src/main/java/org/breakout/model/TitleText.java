@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
 
 import org.andork.jogl.JoglDrawContext;
 import org.andork.jogl.JoglDrawable;
@@ -20,7 +21,9 @@ public class TitleText implements JoglDrawable {
 
 		public Color color();
 
-		public float yOffsetRatio();
+		public float relativeX();
+
+		public float relativeY();
 	}
 
 	final Context context;
@@ -44,11 +47,13 @@ public class TitleText implements JoglDrawable {
 
 		gl.glDisable(GL.GL_DEPTH_TEST);
 
-		float x = context.width() / 2;
-		float y = context.height() - font.getSize() * scale * 1.5f;
-		y -= this.context.yOffsetRatio() * context.height();
+		float x = context.width() * this.context.relativeX();
+		float y = context.height() * this.context.relativeY();
 
-		x -= font.getStringBounds(text, frc).getWidth() * scale / 2;
+		Rectangle2D bounds = font.getStringBounds(text, frc);
+
+		x -= bounds.getWidth() * scale / 2;
+		y -= bounds.getHeight() * scale / 2;
 
 		textRenderer.beginRendering(context.width(), context.height(), false);
 		textRenderer.draw3D(text, x, y, 0, scale);

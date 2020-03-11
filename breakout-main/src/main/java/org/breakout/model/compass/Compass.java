@@ -51,6 +51,8 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 		public Font labelFont();
 
 		public Color labelColor();
+
+		public float yOffset();
 	}
 
 	final Context context;
@@ -88,7 +90,7 @@ public class Compass extends JoglManagedResource implements JoglDrawable {
 
 		int size = Math.max(context.width(), context.height()) / 7;
 		int x = context.width() - size;
-		int y = 0;
+		int y = (int) this.context.yOffset();
 		gl.glViewport(x, y, size, size);
 		JoglViewSettings settings = new JoglViewSettings();
 		settings.copy(context.settings());

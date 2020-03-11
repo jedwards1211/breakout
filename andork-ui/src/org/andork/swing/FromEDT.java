@@ -26,6 +26,7 @@ import java.util.concurrent.Callable;
 
 import javax.swing.SwingUtilities;
 
+import org.andork.func.RuntimeInvocationTargetException;
 import org.andork.ref.Ref;
 
 /**

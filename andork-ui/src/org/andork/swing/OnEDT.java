@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import javax.swing.SwingUtilities;
 
 import org.andork.func.ExceptionRunnable;
+import org.andork.func.RuntimeInvocationTargetException;
 
 /**
  * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)}
