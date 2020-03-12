@@ -399,6 +399,43 @@ public class SettingsDrawer extends Drawer {
 		};
 	}
 
+	class IncMaxDate implements ActionListener {
+		private final int field;
+		private final boolean prev;
+		private int amount = 1;
+
+		public IncMaxDate(int field, boolean prev) {
+			super();
+			this.field = field;
+			this.prev = prev;
+		}
+
+		public void setAmount(int amount) {
+			this.amount = amount;
+		}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			Date date = ColorParam.calcDateFromDaysSince1800(maxDateBinder.get());
+			if (date == null) {
+				date = ColorParam.calcDateFromDaysSince1800(maxDateBimapper.unmap((float) maxDateSlider.getMaximum()));
+				if (date == null)
+					return;
+			}
+			date = prev ? DateUtils.startOf(date, field) : DateUtils.endOf(date, field);
+			if (Math.abs(amount) != 1) {
+				date = DateUtils.add(date, field, amount - (int) Math.signum(amount));
+			}
+			Date now = new Date();
+			if (date.compareTo(now) >= 0) {
+				date = now;
+			}
+			maxDateBinder.set(ColorParam.calcDaysSince1800(date));
+		}
+	}
+
+	IncMaxDate maxDateAnimation = new IncMaxDate(Calendar.MONTH, false);
+
 	private void createBindings() {
 		ComponentBackgroundBinder.bind(backgroundColorButton, backgroundColorBinder);
 		ComponentBackgroundBinder.bind(stationLabelColorButton, stationLabelColorBinder);
@@ -463,31 +500,6 @@ public class SettingsDrawer extends Drawer {
 
 			}), maxDateBinder));
 
-		class IncMaxDate implements ActionListener {
-			private final int field;
-			private final boolean prev;
-
-			public IncMaxDate(int field, boolean prev) {
-				super();
-				this.field = field;
-				this.prev = prev;
-			}
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				Date date = ColorParam.calcDateFromDaysSince1800(maxDateBinder.get());
-				if (date == null) {
-					date =
-						ColorParam.calcDateFromDaysSince1800(maxDateBimapper.unmap((float) maxDateSlider.getMaximum()));
-					if (date == null)
-						return;
-				}
-				date = prev ? DateUtils.startOf(date, field) : DateUtils.endOf(date, field);
-				maxDateBinder.set(ColorParam.calcDaysSince1800(date));
-			}
-
-		}
-
 		prevYearButton.addActionListener(new IncMaxDate(Calendar.YEAR, true));
 		prevMonthButton.addActionListener(new IncMaxDate(Calendar.MONTH, true));
 		prevDayButton.addActionListener(new IncMaxDate(Calendar.DATE, true));
@@ -495,7 +507,21 @@ public class SettingsDrawer extends Drawer {
 		nextMonthButton.addActionListener(new IncMaxDate(Calendar.MONTH, false));
 		nextYearButton.addActionListener(new IncMaxDate(Calendar.YEAR, false));
 
-		maxDateTimer = new Timer(1000 / 12, new IncMaxDate(Calendar.MONTH, false));
+		maxDateTimer = new Timer(1000 / 12, maxDateAnimation);
+
+		new BinderWrapper<Integer>() {
+			@Override
+			protected void onValueChanged(Integer newValue) {
+				maxDateTimer.setDelay(Math.round(1000 / newValue));
+			}
+		}.bind(new QObjectAttributeBinder<Integer>(ProjectModel.maxDateAnimationFramerate).bind(projectBinder));
+
+		new BinderWrapper<Integer>() {
+			@Override
+			protected void onValueChanged(Integer newValue) {
+				maxDateAnimation.setAmount(newValue);
+			}
+		}.bind(new QObjectAttributeBinder<Integer>(ProjectModel.maxDateAnimationMonthsPerFrame).bind(projectBinder));
 
 		playButton.addItemListener(e -> {
 			switch (e.getStateChange()) {

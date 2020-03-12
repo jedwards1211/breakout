@@ -106,11 +106,16 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Float> maxDateTitleRelativeX = newAttribute(Float.class, "maxDateTitleRelativeX");
 	public static final Attribute<Float> maxDateTitleRelativeY = newAttribute(Float.class, "maxDateTitleRelativeY");
 	public static final Attribute<Float> maxDateFontSize = newAttribute(Float.class, "maxDateFontSize");
+	public static final Attribute<Integer> maxDateAnimationFramerate =
+		newAttribute(Integer.class, "maxDateAnimationFramerate");
+	public static final Attribute<Integer> maxDateAnimationMonthsPerFrame =
+		newAttribute(Integer.class, "maxDateAnimationMonthsPerFrame");
 	public static final Attribute<Float> orthoScaleBarLeft = newAttribute(Float.class, "orthoScaleBarLeft");
 	public static final Attribute<Float> orthoScaleBarRight = newAttribute(Float.class, "orthoScaleBarRight");
 	public static final Attribute<Boolean> orthoScaleBarTickAtLeft =
 		newAttribute(Boolean.class, "orthoScaleBarTickAtLeft");
 	public static final Attribute<Float> orthoScaleBarFontSize = newAttribute(Float.class, "orthoScaleBarFontSize");
+	public static final Attribute<Boolean> showTotalLength = newAttribute(Boolean.class, "showTotalLength");
 
 	public static final ProjectModel instance = new ProjectModel();
 
@@ -204,9 +209,12 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		projectModel.setIfNull(ProjectModel.maxDateTitleRelativeX, 0.5f);
 		projectModel.setIfNull(ProjectModel.maxDateTitleRelativeY, 0.9f);
 		projectModel.setIfNull(ProjectModel.maxDateFontSize, 36f);
+		projectModel.setIfNull(ProjectModel.maxDateAnimationFramerate, 12);
+		projectModel.setIfNull(ProjectModel.maxDateAnimationMonthsPerFrame, 1);
 		projectModel.setIfNull(ProjectModel.orthoScaleBarLeft, 0.6f);
 		projectModel.setIfNull(ProjectModel.orthoScaleBarRight, 0.96f);
 		projectModel.setIfNull(ProjectModel.orthoScaleBarTickAtLeft, false);
 		projectModel.setIfNull(ProjectModel.orthoScaleBarFontSize, 10f);
+		projectModel.setIfNull(ProjectModel.showTotalLength, false);
 	}
 }

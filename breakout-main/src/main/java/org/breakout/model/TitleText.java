@@ -21,9 +21,29 @@ public class TitleText implements JoglDrawable {
 
 		public Color color();
 
+		/**
+		 * @return x position - 0 is left, 1 is right
+		 */
 		public float relativeX();
 
+		/**
+		 * @return y position - 0 is bottom, 1 is top
+		 */
 		public float relativeY();
+
+		/**
+		 * @return additional x offset, in logical pixels.
+		 */
+		public default float xOffset() {
+			return 0;
+		}
+
+		/**
+		 * @return additional y offset, in logical pixels.
+		 */
+		public default float yOffset() {
+			return 0;
+		}
 	}
 
 	final Context context;
@@ -36,7 +56,7 @@ public class TitleText implements JoglDrawable {
 	@Override
 	public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 		String text = this.context.text();
-		if (text == null)
+		if (text == null || text.isEmpty())
 			return;
 		Font font = this.context.font();
 
@@ -49,6 +69,8 @@ public class TitleText implements JoglDrawable {
 
 		float x = context.width() * this.context.relativeX();
 		float y = context.height() * this.context.relativeY();
+		x += this.context.xOffset() * context.devicePixelRatio();
+		y += this.context.yOffset() * context.devicePixelRatio();
 
 		Rectangle2D bounds = font.getStringBounds(text, frc);
 

@@ -23,6 +23,7 @@ package org.andork.date;
 
 import java.util.Calendar;
 import java.util.Date;
+import java.util.function.Consumer;
 
 public class DateUtils {
 	public static long daysSinceTheJesus(Calendar cal) {
@@ -52,6 +53,13 @@ public class DateUtils {
 		return cal;
 	}
 
+	public static Date calendarOp(Date date, Consumer<Calendar> op) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		op.accept(cal);
+		return cal.getTime();
+	}
+
 	public static Date startOf(Date date, int field) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
@@ -68,5 +76,13 @@ public class DateUtils {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
 		return DateUtils.endOf(cal, field).getTime();
+	}
+
+	public static Date add(Date date, int field, int amount) {
+		return DateUtils.calendarOp(date, cal -> cal.add(field, amount));
+	}
+
+	public static Date sub(Date date, int field, int amount) {
+		return add(date, field, -amount);
 	}
 }

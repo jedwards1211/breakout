@@ -71,6 +71,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -82,6 +83,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -148,6 +150,7 @@ import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
 import org.andork.func.Lodash.DebounceOptions;
 import org.andork.func.Lodash.DebouncedRunnable;
+import org.andork.func.MemoOne;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.DevicePixelRatio;
 import org.andork.jogl.InterpolationProjection;
@@ -1099,6 +1102,7 @@ public class BreakoutMainView {
 						scene.add(compass);
 						scene.initLater(compass);
 						scene.add(titleText);
+						scene.add(totalLengthText);
 						return false;
 					});
 				});
@@ -1335,6 +1339,79 @@ public class BreakoutMainView {
 			return getProjectModel().get(ProjectModel.maxDateTitleRelativeY);
 		}
 	});
+	TitleText totalLengthText = new TitleText(new TitleText.Context() {
+		Function<Float, UnitizedDouble<Length>> getTotal = MemoOne.memoOne((Float maxDate) -> {
+			if (maxDate == null)
+				maxDate = Float.POSITIVE_INFINITY;
+			double total = 0;
+			if (calcProject != null) {
+				for (CalcShot shot : calcProject.shots.values()) {
+					if (!shot.excludeDistance && shot.date <= maxDate) {
+						total += shot.distance;
+					}
+				}
+			}
+			return Length.meters(total);
+		});
+
+		NumberFormat numberFormat = NumberFormat.getInstance();
+		LocalizedUnitizedNumberFormat unitizedNumberFormat =
+			new LocalizedUnitizedNumberFormat(Locale.getDefault(), numberFormat);
+
+		@Override
+		public String text() {
+			if (getProjectModel().get(ProjectModel.showTotalLength) != true) {
+				return null;
+			}
+			unitizedNumberFormat.setLocale(getI18n().getLocale());
+			numberFormat.setMinimumFractionDigits(0);
+			numberFormat.setMaximumFractionDigits(0);
+			Unit<Length> unit = getProjectModel().get(ProjectModel.displayLengthUnit);
+			UnitizedDouble<Length> total = getTotal.apply(getProjectModel().get(ProjectModel.maxDate));
+			if (unit == Length.meters && total.get(Length.kilometers) > 1) {
+				unit = Length.kilometers;
+			}
+			else if (unit == Length.feet && total.get(Length.miles) > 1) {
+				unit = Length.miles;
+			}
+
+			return unitizedNumberFormat.format(total.in(unit)) + " explored";
+		}
+
+		@Override
+		public Font font() {
+			return new Font(
+				"Arial",
+				Font.PLAIN,
+				Math
+					.round(
+						getProjectModel().get(ProjectModel.maxDateFontSize)
+							* 2
+							/ 3
+							* renderer.viewState().devicePixelRatio()));
+		}
+
+		@Override
+		public Color color() {
+			return getProjectModel().get(ProjectModel.stationLabelColor);
+		}
+
+		@Override
+		public float relativeX() {
+			return getProjectModel().get(ProjectModel.maxDateTitleRelativeX);
+		}
+
+		@Override
+		public float relativeY() {
+			return getProjectModel().get(ProjectModel.maxDateTitleRelativeY);
+		}
+
+		@Override
+		public float yOffset() {
+			return -getProjectModel().get(ProjectModel.maxDateFontSize);
+		}
+	});
+
 	float[] v = newMat4f();
 	int debugMbrCount = 0;
 
@@ -3428,6 +3505,7 @@ public class BreakoutMainView {
 					scene.remove(compass);
 					scene.disposeLater(compass);
 					scene.remove(titleText);
+					scene.remove(totalLengthText);
 					return false;
 				});
 			}
