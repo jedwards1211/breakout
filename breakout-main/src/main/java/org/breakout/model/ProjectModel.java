@@ -208,7 +208,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		projectModel.setIfNull(ProjectModel.leadIndex, MultiMaps.emptyMultiMap());
 		projectModel.setIfNull(ProjectModel.maxDateTitleRelativeX, 0.5f);
 		projectModel.setIfNull(ProjectModel.maxDateTitleRelativeY, 0.9f);
-		projectModel.setIfNull(ProjectModel.maxDateFontSize, 36f);
+		projectModel.setIfNull(ProjectModel.maxDateFontSize, 72f);
 		projectModel.setIfNull(ProjectModel.maxDateAnimationFramerate, 12);
 		projectModel.setIfNull(ProjectModel.maxDateAnimationMonthsPerFrame, 1);
 		projectModel.setIfNull(ProjectModel.orthoScaleBarLeft, 0.6f);
