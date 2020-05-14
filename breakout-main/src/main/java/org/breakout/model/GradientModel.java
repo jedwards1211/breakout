@@ -39,6 +39,27 @@ public class GradientModel {
 		}
 	}
 
+	public GradientModel(String... hexColors) {
+		this(
+			evenlySpaced(hexColors.length),
+			ArrayUtils.map(hexColors, new Color[hexColors.length], GradientModel::convertHex));
+	}
+
+	private static float[] evenlySpaced(int n) {
+		float[] result = new float[n];
+		for (int i = 0; i < n; i++) {
+			result[i] = (float) i / (n - 1);
+		}
+		return result;
+	}
+
+	private static Color convertHex(String hex) {
+		hex = hex.replaceFirst("^#", "");
+		if (hex.length() == 3)
+			hex = hex + hex;
+		return new Color(Integer.parseInt(hex, 16));
+	}
+
 	public GradientModel reverse() {
 		float[] fractions = new float[this.fractions.length];
 		for (int i = 0; i < fractions.length; i++) {
