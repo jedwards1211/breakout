@@ -155,6 +155,8 @@ import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.DevicePixelRatio;
 import org.andork.jogl.InterpolationProjection;
 import org.andork.jogl.JoglBackgroundColor;
+import org.andork.jogl.JoglDrawContext;
+import org.andork.jogl.JoglDrawable;
 import org.andork.jogl.JoglScene;
 import org.andork.jogl.JoglViewSettings;
 import org.andork.jogl.JoglViewState;
@@ -208,6 +210,7 @@ import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.mabox.MapboxClient;
 import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
+import org.breakout.model.DebugDraw;
 import org.breakout.model.GradientModel;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.OrthoScaleBar;
@@ -497,23 +500,49 @@ public class BreakoutMainView {
 					e.getComponent().getHeight(),
 					origin,
 					direction);
+			Vecmath.normalize3(direction);
 
-			RNode<float[], Shot3d> bestNode = RTraversal.traverse(model3d.getTree().getRoot(), node -> {
-				if (!Rectmath.rayIntersects(origin, direction, node.mbr())) {
-					return Float.POSITIVE_INFINITY;
-				}
-				Rectmath.center(node.mbr(), center);
-				return Vecmath.distanceFromLine3sq(center, origin, direction);
-			});
-			if (bestNode == null) {
-				bestNode = model3d.getTree().getRoot();
+			class Context {
+				RNode<float[], Shot3d> bestNode = null;
+				float bestScore = Float.POSITIVE_INFINITY;
+				float[] center = new float[3];
 			}
 
-			Rectmath.center(bestNode.mbr(), center);
-			Vecmath.projPointOntoVector3(center, origin, direction, center);
-			Vecmath.add3(center, origin, center);
+			Context ctx = new Context();
+			RTraversal.traverse(model3d.getTree().getRoot(), node -> {
+				float[] mbr = node.mbr();
+				if (!Rectmath.rayIntersects(origin, direction, mbr)) {
+					return false;
+				}
+				float size = mbr[3] - mbr[0] + mbr[4] - mbr[1] + mbr[5] + mbr[2];
+				Rectmath.center(mbr, ctx.center);
+				float distSq = Vecmath.distanceFromLine3sq(ctx.center, origin, direction);
 
-			orbiter.setCenter(center);
+				float score = size + distSq;
+
+				if (score < ctx.bestScore) {
+					ctx.bestNode = node;
+					ctx.bestScore = score;
+				}
+				return true;
+			});
+			// RTraversal.traverseBest(model3d.getTree().getRoot(), node -> {
+			// if (!Rectmath.rayIntersects(origin, direction, node.mbr())) {
+			// return Float.POSITIVE_INFINITY;
+			// }
+			// Rectmath.center(node.mbr(), center);
+			// return Vecmath.distanceFromLine3sq(center, origin, direction);
+			// });
+			if (ctx.bestNode == null) {
+				ctx.bestNode = model3d.getTree().getRoot();
+			}
+
+			pickCenterOfOrbitNode = ctx.bestNode;
+
+			if (Rectmath.middlePlaneIntersection(origin, direction, ctx.bestNode.mbr(), center)
+				|| Rectmath.farFaceIntersection(origin, direction, ctx.bestNode.mbr(), center)) {
+				orbiter.setCenter(center);
+			}
 		}
 
 		float getDistanceToClosestNode(MouseEvent e) {
@@ -1587,6 +1616,26 @@ public class BreakoutMainView {
 		}
 	}
 
+	RNode<float[], Shot3d> pickCenterOfOrbitNode;
+
+	JoglDrawable miscDraw = new JoglDrawable() {
+		float[] center = new float[3];
+
+		@Override
+		public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
+			if (getRootModel().get(RootModel.showCenterOfOrbit)) {
+				orbiter.getCenter(center);
+				gl.glEnable(GL.GL_DEPTH_TEST);
+				DebugDraw.beginLines(context, gl, 1, 1, 1, 1);
+				DebugDraw.drawPoint(center[0], center[1], center[2], 20);
+				if (pickCenterOfOrbitNode != null) {
+					DebugDraw.drawBoundingBox(pickCenterOfOrbitNode.mbr());
+				}
+				DebugDraw.endLines(gl);
+			}
+		}
+	};
+
 	public BreakoutMainView() {
 		mapbox = new MapboxClient(null);
 
@@ -1598,6 +1647,7 @@ public class BreakoutMainView {
 		scene = new JoglScene();
 		bgColor = new JoglBackgroundColor();
 		scene.add(bgColor);
+		scene.add(miscDraw);
 
 		renderer = new Renderer().scene(scene).useFrameBuffer(true).desiredNumSamples(1);
 		renderer.desiredUseStencilBuffer(true);
@@ -2204,10 +2254,11 @@ public class BreakoutMainView {
 		menuBar.add(debugMenu);
 		JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
 		debugMenu.add(openLogDirectoryMenuItem);
-		JCheckBoxMenuItem showSpatialIndexItem = new JCheckBoxMenuItem();
-		new ButtonSelectedBinder(showSpatialIndexItem)
-			.bind(new QObjectAttributeBinder<>(RootModel.showSpatialIndex).bind(rootModelBinder));
-		debugMenu.add(showSpatialIndexItem);
+		JCheckBoxMenuItem showSpatialIndexMenuItem = boundCheckBoxMenuItem(rootModelBinder, RootModel.showSpatialIndex);
+		debugMenu.add(showSpatialIndexMenuItem);
+		JCheckBoxMenuItem showCenterOfOrbitMenuItem =
+			boundCheckBoxMenuItem(rootModelBinder, RootModel.showCenterOfOrbit);
+		debugMenu.add(showCenterOfOrbitMenuItem);
 		debugMenu.add(new JMenuItem(new EditSettingsFileAction(this)));
 		debugMenu.add(new JMenuItem(new EditSwapFileAction(this)));
 		debugMenu.add(new JMenuItem(new SetEditorCommandAction(this)));
@@ -2269,7 +2320,8 @@ public class BreakoutMainView {
 					localizer.setText(noRecentFilesMenuItem, "noRecentFilesMenuItem.text");
 
 					localizer.setText(debugMenu, "debugMenu.text");
-					localizer.setText(showSpatialIndexItem, "showSpatialIndexMenuItem.text");
+					localizer.setText(showSpatialIndexMenuItem, "showSpatialIndexMenuItem.text");
+					localizer.setText(showCenterOfOrbitMenuItem, "showCenterOfOrbitMenuItem.text");
 				}
 			});
 		});
@@ -2487,6 +2539,14 @@ public class BreakoutMainView {
 		catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to get autoupdate properties", e);
 		}
+	}
+
+	private static <S extends QSpec<S>> JCheckBoxMenuItem boundCheckBoxMenuItem(
+		Binder<QObject<S>> binder,
+		QSpec.Attribute<Boolean> attribute) {
+		JCheckBoxMenuItem showSpatialIndexItem = new JCheckBoxMenuItem();
+		new ButtonSelectedBinder(showSpatialIndexItem).bind(new QObjectAttributeBinder<>(attribute).bind(binder));
+		return showSpatialIndexItem;
 	}
 
 	void hideCanvasWhileMenuOpen() {

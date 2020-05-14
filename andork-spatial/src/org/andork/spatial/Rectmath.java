@@ -504,6 +504,94 @@ public class Rectmath {
 		return true;
 	}
 
+	/**
+	 * Finds the nearest intersection of the given ray with the planes in the middle
+	 * of the given bounding box.
+	 * 
+	 * @param rayOrigin    the origin of the ray
+	 * @param rayDirection the direction of the ray
+	 * @param rect         the bounding box
+	 * @param out          the intersection point will be written to this if found.
+	 * @return {@code true} iff an intersection was found inside the bounding box.
+	 */
+	public static boolean middlePlaneIntersection(float[] rayOrigin, float[] rayDirection, float[] rect, float[] out) {
+		for (int d = 0; d < 3; d++) {
+			if (rayOrigin[d] <= rect[d] && rayDirection[d] < 0 || rayOrigin[d] >= rect[d + 3] && rayDirection[d] > 0) {
+				return false;
+			}
+		}
+
+		float nearestDistSq = Float.POSITIVE_INFINITY;
+		for (int d0 = 0; d0 < 3; d0++) {
+			if (rayDirection[d0] == 0)
+				continue;
+
+			float x0 = (rect[d0] + rect[d0 + 3]) * 0.5f;
+			float l0 = x0 - rayOrigin[d0];
+
+			int d1 = (d0 + 1) % 3;
+			int d2 = (d0 + 2) % 3;
+			float l1 = rayDirection[d1] * l0 / rayDirection[d0];
+			float l2 = rayDirection[d2] * l0 / rayDirection[d0];
+			float x1 = rayOrigin[d1] + l1;
+			float x2 = rayOrigin[d2] + l2;
+
+			float distSq = l0 * l0 + l1 * l1 + l2 * l2;
+
+			if (distSq >= nearestDistSq || x1 < rect[d1] || x1 > rect[d1 + 3] || x2 < rect[d2] || x2 > rect[d2 + 3])
+				continue;
+
+			nearestDistSq = distSq;
+			out[d0] = x0;
+			out[d1] = x1;
+			out[d2] = x2;
+		}
+
+		return !Float.isInfinite(nearestDistSq);
+	}
+
+	/**
+	 * Finds the intersection of the given ray with one of the far faces of the
+	 * given bounding box (far from the perspective of rayOrigin)
+	 * 
+	 * @param rayOrigin    the origin of the ray
+	 * @param rayDirection the direction of the ray
+	 * @param rect         the bounding box
+	 * @param out          the intersection point will be written to this if found.
+	 * @return {@code true} iff an intersection was found inside the bounding box.
+	 */
+	public static boolean farFaceIntersection(float[] rayOrigin, float[] rayDirection, float[] rect, float[] out) {
+		for (int d = 0; d < 3; d++) {
+			if (rayOrigin[d] <= rect[d] && rayDirection[d] < 0 || rayOrigin[d] >= rect[d + 3] && rayDirection[d] > 0) {
+				return false;
+			}
+		}
+
+		for (int d0 = 0; d0 < 3; d0++) {
+			if (rayDirection[d0] == 0)
+				continue;
+
+			float x0 = rayDirection[d0] > 0 ? rect[d0 + 3] : rect[d0];
+			float l0 = x0 - rayOrigin[d0];
+
+			int d1 = (d0 + 1) % 3;
+			int d2 = (d0 + 2) % 3;
+			float l1 = rayDirection[d1] * l0 / rayDirection[d0];
+			float l2 = rayDirection[d2] * l0 / rayDirection[d0];
+			float x1 = rayOrigin[d1] + l1;
+			float x2 = rayOrigin[d2] + l2;
+
+			if (x1 >= rect[d1] && x1 <= rect[d1 + 3] && x2 >= rect[d2] && x2 <= rect[d2 + 3]) {
+				out[d0] = x0;
+				out[d1] = x1;
+				out[d2] = x2;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public static void scaleFromCenter3(float[] mbr, float xScale, float yScale, float zScale, float[] out) {
 		float dx = mbr[3] - mbr[0];
 		float dy = mbr[4] - mbr[1];
