@@ -45,6 +45,30 @@ public class GradientModel {
 			ArrayUtils.map(hexColors, new Color[hexColors.length], GradientModel::convertHex));
 	}
 
+	public static GradientModel palette(String... hexColors) {
+		float[] fractions = new float[hexColors.length * 2];
+		Color[] colors = new Color[hexColors.length * 2];
+
+		float fracStep = 1f / hexColors.length;
+
+		float frac = 0;
+		int k = 0;
+		for (int i = 0; i < hexColors.length; i++) {
+			Color color = convertHex(hexColors[i]);
+			fractions[k] = frac + Math.ulp(frac);
+			colors[k] = color;
+			frac += fracStep;
+			k++;
+			fractions[k] = frac;
+			colors[k] = color;
+			k++;
+		}
+		fractions[0] = 0;
+		fractions[fractions.length - 1] = 1;
+
+		return new GradientModel(fractions, colors);
+	}
+
 	private static float[] evenlySpaced(int n) {
 		float[] result = new float[n];
 		for (int i = 0; i < n; i++) {
