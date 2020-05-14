@@ -2859,8 +2859,7 @@ public class BreakoutMainView {
 		if (model3d == null) {
 			return;
 		}
-
-		changeView(HashSets.of(getDefaultShotsForOperations(3)));
+		changeView(getDefaultShotsForOperations(1));
 	}
 
 	protected void flyToFiltered(final AnnotatingJTable table) {
@@ -2982,9 +2981,25 @@ public class BreakoutMainView {
 		return model3d.hasShotsIn(shotsInViewHull);
 	}
 
+	protected Set<ShotKey> getSelectedShots() {
+		Set<ShotKey> result = new HashSet<>();
+		if (model3d == null)
+			return result;
+
+		ListSelectionModel selModel = getSurveyTable().getModelSelectionModel();
+
+		for (int i = selModel.getMinSelectionIndex(); i <= selModel.getMaxSelectionIndex(); i++) {
+			ShotKey shotKey = modelIndexToShotKey.get(i);
+			if (shotKey != null && selModel.isSelectedIndex(i)) {
+				result.add(shotKey);
+			}
+		}
+		return result;
+	}
+
 	protected Set<ShotKey> getDefaultShotsForOperations(int minimumNumShots) {
 		Set<ShotKey> result = new HashSet<>();
-		for (ShotKey key : model3d.getSelectedShots()) {
+		for (ShotKey key : getSelectedShots()) {
 			if (model3d.isShotVisible(key)) {
 				result.add(key);
 			}

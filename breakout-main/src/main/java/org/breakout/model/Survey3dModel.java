@@ -3016,7 +3016,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public boolean isShotVisible(Shot3d shot) {
-		return isStationVisible(shot.shot.fromStation) || isStationVisible(shot.shot.toStation);
+		return shot != null && (isStationVisible(shot.shot.fromStation) || isStationVisible(shot.shot.toStation));
 	}
 
 	public boolean isShotVisible(ShotKey key) {
