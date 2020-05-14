@@ -3753,28 +3753,51 @@ public class BreakoutMainView {
 		if (path == null) {
 			throw new IllegalArgumentException("path must be non-null");
 		}
-		OnEDT.onEDT(() -> {
-			Localizer localizer = i18n.forClass(BreakoutMainView.class);
-			QObject<RootModel> rootModel = getRootModel();
-			String command = rootModel.get(RootModel.editorCommand);
-			String prompt = localizer.getString("enterEditorCommandDialog.message");
-			while (true) {
-				if (command == null) {
-					command = JOptionPane.showInputDialog(prompt);
-					if (command == null)
-						return;
-					rootModel.set(RootModel.editorCommand, command);
-				}
-				try {
-					Runtime.getRuntime().exec(command + " " + path.toAbsolutePath().toString());
-				}
-				catch (IOException ex) {
-					prompt =
-						localizer.getFormattedString("failedToLaunchEditorDialog.message", ex.getLocalizedMessage());
-					continue;
-				}
-				break;
+		class EditorOpener extends Task<Void> {
+			String command;
+			String prompt;
+			Localizer localizer;
+
+			EditorOpener() {
+				setStatus("Opening " + path + "...");
+				setIndeterminate(true);
 			}
-		});
+
+			@Override
+			protected Void work() throws Exception {
+				OnEDT.onEDT(() -> {
+					localizer = i18n.forClass(BreakoutMainView.class);
+					command = getRootModel().get(RootModel.editorCommand);
+					prompt = localizer.getString("enterEditorCommandDialog.message");
+				});
+
+				while (true) {
+					if (command == null) {
+						command = FromEDT.fromEDT(() -> JOptionPane.showInputDialog(prompt));
+						if (command == null)
+							return null;
+						OnEDT.onEDT(() -> {
+							getRootModel().set(RootModel.editorCommand, command);
+						});
+					}
+					try {
+						Runtime.getRuntime().exec(command + " " + path.toAbsolutePath().toString());
+					}
+					catch (IOException ex) {
+						prompt =
+							FromEDT
+								.fromEDT(
+									() -> localizer
+										.getFormattedString(
+											"failedToLaunchEditorDialog.message",
+											ex.getLocalizedMessage()));
+						continue;
+					}
+					break;
+				}
+				return null;
+			}
+		}
+		ioTaskService.submit(new EditorOpener());
 	}
 }
