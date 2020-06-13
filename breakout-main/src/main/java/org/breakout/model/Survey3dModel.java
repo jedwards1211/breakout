@@ -180,11 +180,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		@Override
 		protected void doDraw(Section section, GL2ES2 gl) {
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
-			gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
-			if (drawLines) {
+			switch (drawMode) {
+			case LINES:
 				gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
 				gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+				break;
+			case TRIANGLES:
+				gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
+				gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+				break;
 			}
 		}
 
@@ -244,6 +248,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int program = 0;
 
 		boolean flipNormals = false;
+		boolean discardBack = false;
 		float depthOffset = 0;
 
 		protected int m_location;
@@ -272,6 +277,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int u_normMultiplier_location;
 		protected int u_maxDate_location;
 		protected int u_depthOffset_location;
+		protected int u_discardBack_location;
 
 		protected void afterDraw(
 			Collection<Section> sections,
@@ -322,6 +328,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glUniform1f(u_normMultiplier_location, flipNormals ? -1 : 1);
 			gl.glUniform1f(u_maxDate_location, maxDateFloat);
 			gl.glUniform1f(u_depthOffset_location, depthOffset);
+			gl.glUniform1i(u_discardBack_location, discardBack ? 1 : 0);
 		}
 
 		protected void beforeDraw(Section section, GL2ES2 gl, float[] m, float[] n) {
@@ -353,7 +360,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			return "  if (v_clipPosition < u_clipNear || v_clipPosition > u_clipFar) discard;"
 				+ "  if (v_date > u_maxDate) discard;"
 				+ "  float temp = dot(v_norm * u_normMultiplier, vec3(0.0, 0.0, 1.0));"
-				// + " if (temp < 0) discard;"
+				+ " if (u_discardBack && temp < 0) discard;"
 				+ "  vec4 indexedHighlight;"
 				+
 
@@ -395,7 +402,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				+ "uniform float u_clipNear;"
 				+ "uniform float u_clipFar;"
 				+ "uniform float u_normMultiplier;"
-				+ "uniform float u_maxDate;";
+				+ "uniform float u_maxDate;"
+				+ "uniform bool u_discardBack;";
 
 		}
 
@@ -508,17 +516,24 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				u_normMultiplier_location = gl.glGetUniformLocation(program, "u_normMultiplier");
 				u_maxDate_location = gl.glGetUniformLocation(program, "u_maxDate");
 				u_depthOffset_location = gl.glGetUniformLocation(program, "u_depthOffset");
+				u_discardBack_location = gl.glGetUniformLocation(program, "u_discardBack");
 			}
 
 			return true;
 		}
 	}
 
+	static enum DrawMode {
+		TRIANGLES,
+		LINES;
+	}
+
 	private abstract class OneParamSectionRenderer extends BaseSectionRenderer {
 		private int u_loParam_location;
 		private int u_hiParam_location;
 		private int u_paramSampler_location;
-		boolean drawLines = false;
+
+		DrawMode drawMode = DrawMode.TRIANGLES;
 
 		@Override
 		protected void beforeDraw(
@@ -625,12 +640,16 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			if (section.param0 == null) {
 				return;
 			}
-			if (drawLines) {
+			switch (drawMode) {
+			case TRIANGLES:
+				gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
+				gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+				break;
+			case LINES:
 				gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.lineIndices.id());
 				gl.glDrawElements(GL_LINES, section.lineIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
+				break;
 			}
-			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, section.fillIndices.id());
-			gl.glDrawElements(GL_TRIANGLES, section.fillIndices.buffer().capacity() / BPI, GL_UNSIGNED_INT, 0);
 		}
 
 		@Override
@@ -2127,7 +2146,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		renderer.depthOffset = 1e-4f;
 		renderer.flipNormals = true;
-		renderer.drawLines = false;
+		renderer.discardBack = false;
+		renderer.drawMode = DrawMode.TRIANGLES;
 		renderer.draw(sectionsInView, context, gl, m, n);
 
 		gl.glEnable(GL.GL_STENCIL_TEST);
@@ -2143,7 +2163,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		renderer.depthOffset = 0;
 		renderer.flipNormals = false;
-		renderer.drawLines = true;
+		renderer.draw(sectionsInView, context, gl, m, n);
+
+		renderer.drawMode = DrawMode.LINES;
+		renderer.discardBack = true;
 		renderer.draw(sectionsInView, context, gl, m, n);
 
 		gl.glDisable(GL.GL_CULL_FACE);
