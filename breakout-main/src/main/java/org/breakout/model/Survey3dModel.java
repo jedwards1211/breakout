@@ -224,11 +224,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			program.position.enableArray(gl);
 			program.clipLocations.put(gl, clip);
 
-			gl.glEnable(GL_DEPTH_TEST);
-			gl.glEnable(GL.GL_STENCIL_TEST);
-			gl.glStencilFunc(GL.GL_ALWAYS, 1, 1);
-			gl.glStencilOp(GL.GL_KEEP, GL.GL_KEEP, GL.GL_REPLACE);
-
 			for (Section section : sections) {
 				section.centerlineGeometry.init(gl);
 
@@ -238,8 +233,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				gl.glDrawArrays(GL_LINES, 0, section.shot3ds.size() * 2);
 			}
 
-			gl.glDisable(GL_DEPTH_TEST);
-			gl.glDisable(GL.GL_STENCIL_TEST);
 			program.position.disableArray(gl);
 
 			gl.glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -251,6 +244,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int program = 0;
 
 		boolean flipNormals = false;
+		float depthOffset = 0;
 
 		protected int m_location;
 		protected int v_location;
@@ -277,6 +271,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int u_clipFar_location;
 		protected int u_normMultiplier_location;
 		protected int u_maxDate_location;
+		protected int u_depthOffset_location;
 
 		protected void afterDraw(
 			Collection<Section> sections,
@@ -284,7 +279,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			GL2ES2 gl,
 			float[] m,
 			float[] n) {
-			gl.glDisable(GL_DEPTH_TEST);
 			gl.glDisableVertexAttribArray(a_pos_location);
 			gl.glDisableVertexAttribArray(a_norm_location);
 			gl.glDisableVertexAttribArray(a_glow_location);
@@ -327,8 +321,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 			gl.glUniform1f(u_normMultiplier_location, flipNormals ? -1 : 1);
 			gl.glUniform1f(u_maxDate_location, maxDateFloat);
-
-			gl.glEnable(GL_DEPTH_TEST);
+			gl.glUniform1f(u_depthOffset_location, depthOffset);
 		}
 
 		protected void beforeDraw(Section section, GL2ES2 gl, float[] m, float[] n) {
@@ -360,7 +353,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			return "  if (v_clipPosition < u_clipNear || v_clipPosition > u_clipFar) discard;"
 				+ "  if (v_date > u_maxDate) discard;"
 				+ "  float temp = dot(v_norm * u_normMultiplier, vec3(0.0, 0.0, 1.0));"
-				+ "  if (temp < 0) discard;"
+				// + " if (temp < 0) discard;"
 				+ "  vec4 indexedHighlight;"
 				+
 
@@ -412,6 +405,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		protected String createVertexShaderCode() {
 			return "  gl_Position = p * v * m * vec4(a_pos, 1.0);"
+				+ "  gl_Position.z += u_depthOffset;"
 				+ " v_clipPosition = dot(u_clipAxis, a_pos);"
 				+ "  v_norm = (v * vec4(normalize(n * a_norm), 0.0)).xyz;"
 				+ "  v_dist = -(v * m * vec4(a_pos, 1.0)).z;"
@@ -441,7 +435,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				"out float v_date;" +
 
 				// clip
-				"uniform vec3 u_clipAxis;" + "out float v_clipPosition;";
+				"uniform vec3 u_clipAxis;" + "out float v_clipPosition;" + "uniform float u_depthOffset;";
 		}
 
 		@Override
@@ -513,6 +507,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				u_clipFar_location = gl.glGetUniformLocation(program, "u_clipFar");
 				u_normMultiplier_location = gl.glGetUniformLocation(program, "u_normMultiplier");
 				u_maxDate_location = gl.glGetUniformLocation(program, "u_maxDate");
+				u_depthOffset_location = gl.glGetUniformLocation(program, "u_depthOffset");
 			}
 
 			return true;
@@ -2125,17 +2120,28 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		gl.glClear(GL.GL_STENCIL_BUFFER_BIT);
 
+		gl.glEnable(GL_DEPTH_TEST);
 		gl.glDisable(GL.GL_STENCIL_TEST);
+		gl.glEnable(GL.GL_CULL_FACE);
+		gl.glCullFace(GL.GL_FRONT);
 
+		renderer.depthOffset = 1e-4f;
 		renderer.flipNormals = true;
 		renderer.drawLines = false;
 		renderer.draw(sectionsInView, context, gl, m, n);
+
+		gl.glEnable(GL.GL_STENCIL_TEST);
+		gl.glStencilFunc(GL.GL_ALWAYS, 1, 1);
+		gl.glStencilOp(GL.GL_KEEP, GL.GL_KEEP, GL.GL_REPLACE);
+
 		centerlineRenderer.draw(sectionsInView, context, gl, m, n);
 
+		gl.glCullFace(GL.GL_BACK);
 		gl.glEnable(GL.GL_STENCIL_TEST);
 		gl.glStencilFunc(GL.GL_EQUAL, 0, 1);
 		gl.glStencilOp(GL.GL_KEEP, GL.GL_KEEP, GL.GL_REPLACE);
 
+		renderer.depthOffset = 0;
 		renderer.flipNormals = false;
 		renderer.drawLines = true;
 		renderer.draw(sectionsInView, context, gl, m, n);
