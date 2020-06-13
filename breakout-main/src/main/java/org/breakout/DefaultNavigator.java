@@ -229,7 +229,7 @@ public class DefaultNavigator extends MouseAdapter {
 		if (!zoomQueued) {
 			zoomQueued = true;
 			SwingUtilities.invokeLater(() -> {
-				float distance = -queuedWheelRotation * wheelFactor * sensitivity;
+				float distance = -queuedWheelRotation * wheelFactor;
 				queuedWheelRotation = 0f;
 				zoomQueued = false;
 

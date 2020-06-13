@@ -132,13 +132,15 @@ public class JoglNavigator extends MouseAdapter {
 				Vecmath.invAffine(cam);
 				viewSettings.setViewXform(cam);
 			}
-		} else if (pressEvent.getButton() == MouseEvent.BUTTON2) {
+		}
+		else if (pressEvent.getButton() == MouseEvent.BUTTON2) {
 			cam[12] += cam[8] * dy * scaledMoveFactor;
 			cam[13] += cam[9] * dy * scaledMoveFactor;
 			cam[14] += cam[10] * dy * scaledMoveFactor;
 			Vecmath.invAffine(cam);
 			viewSettings.setViewXform(cam);
-		} else if (pressEvent.getButton() == MouseEvent.BUTTON3) {
+		}
+		else if (pressEvent.getButton() == MouseEvent.BUTTON3) {
 			cam[12] += cam[0] * -dx * scaledMoveFactor + cam[4] * dy * scaledMoveFactor;
 			cam[13] += cam[1] * -dx * scaledMoveFactor + cam[5] * dy * scaledMoveFactor;
 			cam[14] += cam[2] * -dx * scaledMoveFactor + cam[6] * dy * scaledMoveFactor;
@@ -175,7 +177,7 @@ public class JoglNavigator extends MouseAdapter {
 		viewSettings.getViewXform(cam);
 		Vecmath.invAffine(cam);
 
-		float distance = e.getWheelRotation() * wheelFactor * sensitivity;
+		float distance = e.getWheelRotation() * wheelFactor;
 
 		cam[12] += cam[8] * distance;
 		cam[13] += cam[9] * distance;

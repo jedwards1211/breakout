@@ -184,10 +184,12 @@ public class JoglOrthoNavigator extends MouseAdapter {
 				vi[14] += vi[10] * dy;
 				Vecmath.invAffine(vi, v);
 				viewSettings.setViewXform(v);
-			} else {
+			}
+			else {
 				calcZoom(e, (float) Math.pow(1.1f, dy));
 			}
-		} else {
+		}
+		else {
 			vi[12] += vi[0] * -dx - vi[4] * dy;
 			vi[13] += vi[1] * -dx - vi[5] * dy;
 			vi[14] += vi[2] * -dx - vi[6] * dy;
@@ -221,15 +223,16 @@ public class JoglOrthoNavigator extends MouseAdapter {
 			return;
 		}
 		queuedWheelRotation += e.getPreciseWheelRotation();
-		
-		if (zoomQueued) return;
+
+		if (zoomQueued)
+			return;
 		if (!zoomQueued) {
 			zoomQueued = true;
 			SwingUtilities.invokeLater(() -> {
-				float distance = queuedWheelRotation * wheelFactor * sensitivity;
+				float distance = queuedWheelRotation * wheelFactor;
 				queuedWheelRotation = 0f;
 				zoomQueued = false;
-			
+
 				viewSettings.getViewXform(v);
 				Vecmath.invAffine(v, vi);
 
@@ -243,13 +246,14 @@ public class JoglOrthoNavigator extends MouseAdapter {
 					vi[14] += vi[10] * distance;
 					Vecmath.invAffine(vi, v);
 					viewSettings.setViewXform(v);
-				} else {
+				}
+				else {
 					calcZoom(e, (float) Math.pow(1.1f, distance));
 				}
 
 				if (callDisplay) {
 					drawable.display();
-				}	
+				}
 			});
 		}
 

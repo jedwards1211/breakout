@@ -129,6 +129,7 @@ import org.andork.awt.layout.MultilineLabelHolder;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.SideConstraint;
 import org.andork.awt.layout.SideConstraintLayoutDelegate;
+import org.andork.bind.BiFunctionBinder;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
@@ -393,6 +394,8 @@ public class BreakoutMainView {
 		}
 	}
 
+	private Binder<Float> distanceToClosestNodeBinder = new DefaultBinder<Float>(1000f);
+
 	private class MousePickHandler extends MouseAdapter {
 		@Override
 		public void mouseClicked(MouseEvent e) {
@@ -434,7 +437,7 @@ public class BreakoutMainView {
 			}
 			else {
 				if (e.getButton() == MouseEvent.BUTTON3) {
-					pickMoveFactor(e);
+					recalcDistanceToClosestNode(e);
 				}
 				return;
 			}
@@ -580,19 +583,9 @@ public class BreakoutMainView {
 			return (float) Math.max(10.0, Math.sqrt(distanceSquared.value));
 		}
 
-		void pickMoveFactor(MouseEvent e) {
-			float distance = getDistanceToClosestNode(e);
-			if (Float.isNaN(distance)) {
-				return;
-			}
-			float mouseSensitivity = getRootModel().get(RootModel.mouseSensitivity);
-			float multiplier = Math.min(1, distance / 10000);
-			navigator.setMoveFactor(mouseSensitivity * multiplier);
-		}
-
 		long lastPickWheelFactor = 0;
 
-		void pickWheelFactor(MouseEvent e) {
+		void recalcDistanceToClosestNode(MouseEvent e) {
 			long time = System.currentTimeMillis();
 			if (time - lastPickWheelFactor < 50) {
 				return;
@@ -601,13 +594,12 @@ public class BreakoutMainView {
 			if (Float.isNaN(distance)) {
 				return;
 			}
-			float wheelSensitivity = getRootModel().get(RootModel.mouseWheelSensitivity);
-			navigator.setWheelFactor(wheelSensitivity * distance / 10000);
+			distanceToClosestNodeBinder.set(distance);
 		}
 
 		@Override
 		public void mouseWheelMoved(MouseWheelEvent e) {
-			pickWheelFactor(e);
+			recalcDistanceToClosestNode(e);
 		}
 	}
 
@@ -2075,25 +2067,58 @@ public class BreakoutMainView {
 			}
 		}.bind(QObjectAttributeBinder.bind(RootModel.showSpatialIndex, rootModelBinder));
 
+		new BinderWrapper<Float>() {
+			@Override
+			protected void onValueChanged(Float sensitivity) {
+				if (sensitivity != null) {
+					navigator.setSensitivity(sensitivity);
+					clipMouseHandler.setSensitivity(sensitivity);
+				}
+			}
+		}
+			.bind(
+				new BiFunctionBinder<Integer, Float, Float>(
+					(sliderValue, distance) -> sliderValue != null && distance != null
+						? sliderValue * distance / 50000
+						: null,
+					(sensitivity, distance) -> 0)
+						.bind(
+							QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder),
+							distanceToClosestNodeBinder));
+
 		new BinderWrapper<Integer>() {
 			@Override
-			protected void onValueChanged(Integer newValue) {
-				if (newValue != null) {
-					float sensitivity = newValue / 20f;
-					orbiter.setSensitivity(sensitivity);
-					navigator.setSensitivity(sensitivity);
+			protected void onValueChanged(Integer sliderValue) {
+				if (sliderValue != null) {
+					orthoNavigator.setSensitivity(sliderValue / 2000f);
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder));
 
+		new BinderWrapper<Float>() {
+			@Override
+			protected void onValueChanged(Float wheelFactor) {
+				if (wheelFactor != null) {
+					navigator.setWheelFactor(wheelFactor);
+					clipMouseHandler.setWheelFactor(wheelFactor);
+				}
+			}
+		}
+			.bind(
+				new BiFunctionBinder<Integer, Float, Float>(
+					(sliderValue, distance) -> sliderValue != null && distance != null
+						? sliderValue * distance / 5000
+						: null,
+					(wheelFactor, distance) -> 0)
+						.bind(
+							QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder),
+							distanceToClosestNodeBinder));
+
 		new BinderWrapper<Integer>() {
 			@Override
-			protected void onValueChanged(Integer newValue) {
-				if (newValue != null) {
-					float sensitivity = newValue / 5f;
-					navigator.setWheelFactor(sensitivity);
-					orthoNavigator.setWheelFactor(sensitivity);
-					clipMouseHandler.setWheelFactor(sensitivity);
+			protected void onValueChanged(Integer sliderValue) {
+				if (sliderValue != null) {
+					orthoNavigator.setWheelFactor(sliderValue / 2000f);
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder));
@@ -2682,8 +2707,8 @@ public class BreakoutMainView {
 				endOrthoLocation[2] = shotsToFitBounds[2];
 				endOrthoLocation[2] = shotsToFitBounds[5];
 
-				float hSpan = totalBounds[3] - totalBounds[0];
-				float vSpan = totalBounds[4] - totalBounds[1];
+				float hSpan = shotsToFitBounds[3] - shotsToFitBounds[0];
+				float vSpan = shotsToFitBounds[4] - shotsToFitBounds[1];
 				float endLocationZ = Vecmath.dot3(forward, endLocation);
 				newProjCalculator = new OrthoProjection(hSpan, vSpan, 0.01f, (totalBounds[5] - endLocationZ) * 2);
 				newClip = new Clip3f(forward, shotsToFitBounds[2], shotsToFitBounds[5]);
@@ -2773,7 +2798,6 @@ public class BreakoutMainView {
 		FloatUnaryOperator viewReparam = f -> 1 - (1 - f) * (1 - f);
 		FloatUnaryOperator projReparam;
 		if (currentProjCalculator.isOrtho()) {
-			OrthoProjection currentOrthoCalc = (OrthoProjection) currentProjCalculator;
 			if (ortho) {
 				projReparam = viewReparam;
 			}
