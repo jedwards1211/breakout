@@ -1151,7 +1151,7 @@ public class BreakoutMainView {
 
 	I18n i18n = new I18n();
 
-	PerspectiveProjection perspCalculator = new PerspectiveProjection((float) Math.PI / 2, 0.1f, 1e6f);
+	PerspectiveProjection perspCalculator = new PerspectiveProjection((float) Math.PI / 2, 1f, 1e6f);
 
 	final ScheduledExecutorService rebuildScheduler = Executors.newSingleThreadScheduledExecutor();
 	final TaskService rebuildTaskService = ExecutorTaskService.newSingleThreadedTaskService();
@@ -1680,7 +1680,6 @@ public class BreakoutMainView {
 				return renderer.viewState();
 			}
 		});
-		clipMouseHandler.setSensitivity(0.01f);
 
 		hintLabel = new JLabel("A");
 		hintLabel.setForeground(Color.WHITE);
@@ -2072,7 +2071,6 @@ public class BreakoutMainView {
 			protected void onValueChanged(Float sensitivity) {
 				if (sensitivity != null) {
 					navigator.setSensitivity(sensitivity);
-					clipMouseHandler.setSensitivity(sensitivity);
 				}
 			}
 		}
@@ -2107,7 +2105,7 @@ public class BreakoutMainView {
 			.bind(
 				new BiFunctionBinder<Integer, Float, Float>(
 					(sliderValue, distance) -> sliderValue != null && distance != null
-						? sliderValue * distance / 5000
+						? sliderValue * distance / 20000
 						: null,
 					(wheelFactor, distance) -> 0)
 						.bind(
