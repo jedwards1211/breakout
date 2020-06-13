@@ -802,15 +802,15 @@ public class CalculateGeometry {
 			if (shot.fromStation.isDeadEnd()) {
 				for (int i = 2; i < fromVertexCount; i++) {
 					indices[k++] = 0;
-					indices[k++] = i;
 					indices[k++] = i - 1;
+					indices[k++] = i;
 				}
 			}
 			if (shot.toStation.isDeadEnd()) {
 				for (int i = 2; i < toVertexCount; i++) {
 					indices[k++] = fromVertexCount;
-					indices[k++] = fromVertexCount + i;
 					indices[k++] = fromVertexCount + i - 1;
+					indices[k++] = fromVertexCount + i;
 				}
 			}
 		}
