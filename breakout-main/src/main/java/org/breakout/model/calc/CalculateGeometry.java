@@ -140,7 +140,9 @@ public class CalculateGeometry {
 				section2.facingAzimuth =
 					shotsFaceOppositeDirections ? Angles.opposite(section1.facingAzimuth) : section1.facingAzimuth;
 			}
-			return;
+			else {
+				return;
+			}
 		}
 
 		if (section1 == null && section2 == null) {
@@ -302,13 +304,15 @@ public class CalculateGeometry {
 	}
 
 	static void getMinUpDown(CalcShot shot, CalcStation station, CalcCrossSection out) {
-		for (CalcShot otherShot : station.shots.values()) {
-			if (otherShot == shot)
+		for (int i = 2; i < 4; i++) {
+			if (!Double.isNaN(out.measurements[i]))
 				continue;
-			CalcCrossSection otherCrossSection = otherShot.getCrossSectionAt(station);
-			if (otherCrossSection == null || otherCrossSection.type != out.type)
-				continue;
-			for (int i = 2; i < 4; i++) {
+			for (CalcShot otherShot : station.shots.values()) {
+				if (otherShot == shot)
+					continue;
+				CalcCrossSection otherCrossSection = otherShot.getCrossSectionAt(station);
+				if (otherCrossSection == null || otherCrossSection.type != out.type)
+					continue;
 				if (Double.isNaN(out.measurements[i]) || otherCrossSection.measurements[i] < out.measurements[i]) {
 					out.measurements[i] = otherCrossSection.measurements[i];
 				}
@@ -369,6 +373,7 @@ public class CalculateGeometry {
 		float[] vertices,
 		int startIndex,
 		boolean flipLR) {
+
 		double x = station.position[0];
 		double y = station.position[1];
 		double z = station.position[2];
