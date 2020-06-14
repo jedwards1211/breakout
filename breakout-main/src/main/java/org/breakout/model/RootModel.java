@@ -61,6 +61,7 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<Boolean> showStationLabels = newAttribute(Boolean.class, "showStationLabels");
 	public static final Attribute<Boolean> showSpatialIndex = newAttribute(Boolean.class, "showSpatialIndex");
 	public static final Attribute<Boolean> showCenterOfOrbit = newAttribute(Boolean.class, "showCenterOfOrbit");
+	public static final Attribute<Boolean> wireframe = newAttribute(Boolean.class, "wireframe");
 	public static final Attribute<String> mapboxAccessToken = newAttribute(String.class, "mapboxAccessToken");
 	public static final Attribute<SearchMode> searchMode = newAttribute(SearchMode.class, "searchMode");
 	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
@@ -108,6 +109,7 @@ public final class RootModel extends QSpec<RootModel> {
 		rootModel.setIfNull(RootModel.showStationLabels, true);
 		rootModel.setIfNull(RootModel.showSpatialIndex, false);
 		rootModel.setIfNull(RootModel.showCenterOfOrbit, false);
+		rootModel.setIfNull(RootModel.wireframe, false);
 		rootModel.setIfNull(RootModel.searchMode, SearchMode.AUTO);
 	}
 }

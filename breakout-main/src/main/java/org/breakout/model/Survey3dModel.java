@@ -1979,6 +1979,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 	float boldness = 0;
 
+	boolean wireframe = false;
+
 	private Survey3dModel(
 		CalcProject project,
 		Map<ShotKey, Shot3d> shot3ds,
@@ -2148,7 +2150,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		renderer.flipNormals = true;
 		renderer.discardBack = false;
 		renderer.drawMode = DrawMode.TRIANGLES;
-		renderer.draw(sectionsInView, context, gl, m, n);
+		if (!wireframe)
+			renderer.draw(sectionsInView, context, gl, m, n);
 
 		gl.glEnable(GL.GL_STENCIL_TEST);
 		gl.glStencilFunc(GL.GL_ALWAYS, 1, 1);
@@ -2163,10 +2166,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		renderer.depthOffset = 0;
 		renderer.flipNormals = false;
-		renderer.draw(sectionsInView, context, gl, m, n);
+		if (!wireframe)
+			renderer.draw(sectionsInView, context, gl, m, n);
 
 		renderer.drawMode = DrawMode.LINES;
-		renderer.discardBack = true;
+		renderer.discardBack = !wireframe;
 		renderer.draw(sectionsInView, context, gl, m, n);
 
 		gl.glDisable(GL.GL_CULL_FACE);
@@ -3079,5 +3083,13 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			throw new IllegalArgumentException("boldness must be <= 5");
 		}
 		this.boldness = boldness;
+	}
+
+	public boolean isWireframe() {
+		return wireframe;
+	}
+
+	public void setWireframe(boolean wireframe) {
+		this.wireframe = wireframe;
 	}
 }

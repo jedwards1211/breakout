@@ -2058,6 +2058,16 @@ public class BreakoutMainView {
 
 		new BinderWrapper<Boolean>() {
 			@Override
+			protected void onValueChanged(Boolean wireframe) {
+				if (model3d != null && wireframe != null) {
+					model3d.setWireframe(wireframe);
+					autoDrawable.display();
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(RootModel.wireframe, rootModelBinder));
+
+		new BinderWrapper<Boolean>() {
+			@Override
 			protected void onValueChanged(Boolean showSpatialIndex) {
 				if (model3d != null && showSpatialIndex != null) {
 					model3d.setShowSpatialIndex(showSpatialIndex);
@@ -2277,6 +2287,8 @@ public class BreakoutMainView {
 		menuBar.add(debugMenu);
 		JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
 		debugMenu.add(openLogDirectoryMenuItem);
+		JCheckBoxMenuItem wireframeMenuItem = boundCheckBoxMenuItem(rootModelBinder, RootModel.wireframe);
+		debugMenu.add(wireframeMenuItem);
 		JCheckBoxMenuItem showSpatialIndexMenuItem = boundCheckBoxMenuItem(rootModelBinder, RootModel.showSpatialIndex);
 		debugMenu.add(showSpatialIndexMenuItem);
 		JCheckBoxMenuItem showCenterOfOrbitMenuItem =
@@ -2344,6 +2356,7 @@ public class BreakoutMainView {
 
 					localizer.setText(debugMenu, "debugMenu.text");
 					localizer.setText(showSpatialIndexMenuItem, "showSpatialIndexMenuItem.text");
+					localizer.setText(wireframeMenuItem, "wireframeMenuItem.text");
 					localizer.setText(showCenterOfOrbitMenuItem, "showCenterOfOrbitMenuItem.text");
 				}
 			});
@@ -2567,9 +2580,9 @@ public class BreakoutMainView {
 	private static <S extends QSpec<S>> JCheckBoxMenuItem boundCheckBoxMenuItem(
 		Binder<QObject<S>> binder,
 		QSpec.Attribute<Boolean> attribute) {
-		JCheckBoxMenuItem showSpatialIndexItem = new JCheckBoxMenuItem();
-		new ButtonSelectedBinder(showSpatialIndexItem).bind(new QObjectAttributeBinder<>(attribute).bind(binder));
-		return showSpatialIndexItem;
+		JCheckBoxMenuItem item = new JCheckBoxMenuItem();
+		new ButtonSelectedBinder(item).bind(new QObjectAttributeBinder<>(attribute).bind(binder));
+		return item;
 	}
 
 	void hideCanvasWhileMenuOpen() {
