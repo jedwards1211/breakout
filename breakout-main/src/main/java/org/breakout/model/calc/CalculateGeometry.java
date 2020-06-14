@@ -40,7 +40,7 @@ public class CalculateGeometry {
 	public static double ALMOST_VERTICAL = Math.toRadians(89);
 
 	static boolean isVertical(CalcShot shot) {
-		return !Double.isFinite(shot.azimuth) && Math.abs(shot.inclination) > ALMOST_VERTICAL;
+		return Math.abs(shot.inclination) > ALMOST_VERTICAL;
 	}
 
 	/**
@@ -53,7 +53,7 @@ public class CalculateGeometry {
 	 */
 	static void interpolateAzimuthsOfVerticalShots(CalcProject project) {
 		for (CalcShot shot : project.shots.values()) {
-			if (isVertical(shot)) {
+			if (Double.isNaN(shot.azimuth) && isVertical(shot)) {
 				// TODO actually interpolate
 				shot.azimuth = 0;
 			}
@@ -65,6 +65,14 @@ public class CalculateGeometry {
 	}
 
 	static double averageAzimuth(CalcShot shot1, CalcShot shot2) {
+		if (isVertical(shot1)) {
+			if (!isVertical(shot2)) {
+				return shot2.azimuth;
+			}
+		}
+		else if (isVertical(shot2)) {
+			return shot1.azimuth;
+		}
 		return Angles
 			.average(
 				shot1.azimuth,
