@@ -2241,7 +2241,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					leadsChanged = false;
 					FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
 
-					for (Section section : sectionsInView) {
+					for (Section section : sections) {
 						section.leadLabels.clear();
 						for (Shot3d shot : section.shot3ds) {
 							for (StationKey stationKey : Arrays.asList(shot.key().fromKey(), shot.key().toKey())) {
