@@ -5,6 +5,10 @@ uniform mat4 v;
 uniform mat4 p;
 in vec3 a_pos;
 
+// time travel
+in float a_date;
+out float v_date;
+
 // distance coloration
 out float v_dist;
 
@@ -15,4 +19,5 @@ void main() {
   v_clipPosition = dot(a_pos, u_clipAxis);
   gl_Position = p * v * m * vec4(a_pos, 1.0);
   v_dist = -(v * m * vec4(a_pos, 1.0)).z;
+  v_date = a_date;
 }

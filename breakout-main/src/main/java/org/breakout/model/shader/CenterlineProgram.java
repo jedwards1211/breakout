@@ -16,32 +16,35 @@ public class CenterlineProgram extends ManagedShaderProgram {
 	public final UniformMatrix4fvLocation viewMatrix = new UniformMatrix4fvLocation("v");
 	public final UniformMatrix4fvLocation projectionMatrix = new UniformMatrix4fvLocation("p");
 	public final AttribLocation position = new AttribLocation("a_pos");
+	public final AttribLocation date = new AttribLocation("a_date");
 	public final Uniform4fvLocation color = new Uniform4fvLocation("u_color");
 	public final Uniform1fvLocation maxCenterlineDistance = new Uniform1fvLocation("u_maxCenterlineDistance");
+	public final Uniform1fvLocation maxDate = new Uniform1fvLocation("u_maxDate");
 	public final ClipLocations clipLocations = new ClipLocations();
 
 	public static final CenterlineProgram INSTANCE = new CenterlineProgram();
-	
+
 	private CenterlineProgram() {
 		setLocations(
 			modelMatrix,
 			viewMatrix,
 			projectionMatrix,
 			position,
+			date,
 			color,
 			maxCenterlineDistance,
 			clipLocations.clipAxis,
 			clipLocations.clipNear,
-			clipLocations.clipFar
-		);
+			clipLocations.clipFar,
+			maxDate);
 	}
 
 	@Override
 	protected Iterable<ShaderCode> initShaders(GL2ES2 gl) {
-		ShaderCode vertexShader = ShaderCode.create(gl, GL2ES2.GL_VERTEX_SHADER, this.getClass(),
-				".", null, "centerline", false);
-		ShaderCode fragmentShader = ShaderCode.create(gl, GL2ES2.GL_FRAGMENT_SHADER, this.getClass(),
-				".", null, "centerline", false);
+		ShaderCode vertexShader =
+			ShaderCode.create(gl, GL2ES2.GL_VERTEX_SHADER, this.getClass(), ".", null, "centerline", false);
+		ShaderCode fragmentShader =
+			ShaderCode.create(gl, GL2ES2.GL_FRAGMENT_SHADER, this.getClass(), ".", null, "centerline", false);
 		return Arrays.asList(vertexShader, fragmentShader);
 	}
 

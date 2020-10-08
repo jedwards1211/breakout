@@ -221,18 +221,24 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			program.use(gl);
 
 			program.putMatrices(gl, context.projectionMatrix(), context.viewMatrix(), m);
+			program.maxDate.put(gl, maxDateFloat);
 
 			centerlineColor.put(gl, program.color);
 			maxCenterlineDistance.put(gl, program.maxCenterlineDistance);
 
 			program.position.enableArray(gl);
+			program.date.enableArray(gl);
 			program.clipLocations.put(gl, clip);
 
 			for (Section section : sections) {
 				section.centerlineGeometry.init(gl);
+				section.centerlineAttrs.init(gl);
 
 				gl.glBindBuffer(GL_ARRAY_BUFFER, section.centerlineGeometry.id());
 				gl.glVertexAttribPointer(program.position.location(), 3, GL_FLOAT, false, 12, 0);
+
+				gl.glBindBuffer(GL_ARRAY_BUFFER, section.centerlineAttrs.id());
+				gl.glVertexAttribPointer(program.date.location(), 1, GL_FLOAT, false, 4, 0);
 
 				gl.glDrawArrays(GL_LINES, 0, section.shot3ds.size() * 2);
 			}
@@ -947,6 +953,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 
 		int vertexCount;
 		JoglBuffer centerlineGeometry;
+		JoglBuffer centerlineAttrs;
 		JoglBuffer geometry;
 		JoglBuffer stationAttrs;
 		final AtomicBoolean stationAttrsNeedRebuffering = new AtomicBoolean();
@@ -992,8 +999,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			BufferHelper geomHelper = new BufferHelper();
 			BufferHelper fillIndicesHelper = new BufferHelper();
 			BufferHelper lineIndicesHelper = new BufferHelper();
-			BufferHelper centerlineGeomHelper = new BufferHelper();
 			BufferHelper stationAttrsHelper = new BufferHelper();
+			BufferHelper centerlineGeomHelper = new BufferHelper();
+			BufferHelper centerlineAttrsHelper = new BufferHelper();
 
 			BoundingSpheres
 				.ritterBoundingSphere(
@@ -1024,6 +1032,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				}
 				centerlineGeomHelper.putAsFloats(shot.fromStation.position);
 				centerlineGeomHelper.putAsFloats(shot.toStation.position);
+				centerlineAttrsHelper.put(shot.date, shot.date);
 
 				for (int index : shot.indices) {
 					fillIndicesHelper.put(index + shot3d.indexInVertices);
@@ -1045,12 +1054,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			fillIndices = new JoglBuffer().buffer(fillIndicesHelper.toByteBuffer());
 			lineIndices = new JoglBuffer().buffer(lineIndicesHelper.toByteBuffer());
 			centerlineGeometry = new JoglBuffer().buffer(centerlineGeomHelper.toByteBuffer());
+			centerlineAttrs = new JoglBuffer().buffer(centerlineAttrsHelper.toByteBuffer());
 
 			geometry.buffer().position(0);
 			stationAttrs.buffer().position(0);
 			fillIndices.buffer().position(0);
 			lineIndices.buffer().position(0);
 			centerlineGeometry.buffer().position(0);
+			centerlineAttrs.buffer().position(0);
 		}
 
 		void calcParam0(Survey3dModel model, ColorParam param) {
