@@ -1872,6 +1872,20 @@ public class BreakoutMainView {
 		hintLabelBox.add(hintLabel);
 		hintLabelBox.add(hintLabel2);
 
+		hintLabelBox.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				surveyDrawer.holder().hold(hintLabelBox);
+			}
+		});
+
+		canvas.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				surveyDrawer.holder().release(hintLabelBox);
+			}
+		});
+
 		SideConstraintLayoutDelegate hintLabelDelegate = new SideConstraintLayoutDelegate();
 		hintLabelDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(taskListDrawer.pinButton(), Side.RIGHT, 0));
 		hintLabelDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
