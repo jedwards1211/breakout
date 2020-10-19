@@ -5,3 +5,4 @@ hs_err*
 node_modules
 .breakout
 target
+packages
