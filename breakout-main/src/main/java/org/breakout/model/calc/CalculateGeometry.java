@@ -766,8 +766,8 @@ public class CalculateGeometry {
 		createVertices(shot.toStation, shot.toCrossSection, shot.vertices, fromVertexCount * 3, false);
 		shot.polarities = new float[vertexCount];
 
-		for (int i = fromVertexCount; i < toVertexCount; i++) {
-			shot.polarities[i] = 1;
+		for (int i = 0; i < toVertexCount; i++) {
+			shot.polarities[fromVertexCount + i] = 1;
 		}
 
 		int[] indices = shot.indices = new int[triangleCount * 3];
