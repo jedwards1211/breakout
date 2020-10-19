@@ -91,6 +91,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
+import javax.swing.Box;
 import javax.swing.CellEditor;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
@@ -233,9 +234,11 @@ import org.breakout.model.calc.CalcTrip;
 import org.breakout.model.calc.CalculateGeometry;
 import org.breakout.model.calc.Parsed2Calc;
 import org.breakout.model.compass.Compass;
+import org.breakout.model.parsed.ParsedField;
 import org.breakout.model.parsed.ParsedProject;
 import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
+import org.breakout.model.parsed.ParsedTrip;
 import org.breakout.model.parsed.ProjectParser;
 import org.breakout.model.raw.MetacaveExporter;
 import org.breakout.model.raw.MetacaveImporter;
@@ -1485,7 +1488,9 @@ public class BreakoutMainView {
 
 	final WeakHashMap<Animation, Object> protectedAnimations = new WeakHashMap<>();
 
+	Box hintLabelBox;
 	JLabel hintLabel;
+	JLabel hintLabel2;
 
 	CameraView currentView;
 
@@ -1683,13 +1688,18 @@ public class BreakoutMainView {
 
 		hintLabel = new JLabel("A");
 		hintLabel.setForeground(Color.WHITE);
-		hintLabel.setBackground(Color.BLACK);
-		hintLabel.setOpaque(true);
 		Font hintFont = hintLabel.getFont();
-		hintLabel.setFont(hintFont.deriveFont(Font.PLAIN).deriveFont(hintFont.getSize2D() + 3f));
+		hintLabel.setFont(hintFont.deriveFont(Font.PLAIN));
 		hintLabel.setPreferredSize(new Dimension(200, hintLabel.getPreferredSize().height));
 		hintLabel.setText(" ");
 		hintLabel.setVerticalAlignment(SwingConstants.TOP);
+
+		hintLabel2 = new JLabel("A");
+		hintLabel2.setForeground(hintLabel.getForeground());
+		hintLabel2.setFont(hintLabel.getFont());
+		hintLabel2.setPreferredSize(hintLabel.getPreferredSize());
+		hintLabel2.setText(" ");
+		hintLabel2.setVerticalAlignment(hintLabel.getVerticalAlignment());
 
 		final Consumer<Runnable> sortRunner = r -> sortTaskService.submit(task -> {
 			task.setStatus("Sorting survey table...");
@@ -1858,19 +1868,23 @@ public class BreakoutMainView {
 		spinnerDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
 		spinnerDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
+		hintLabelBox = Box.createVerticalBox();
+		hintLabelBox.add(hintLabel);
+		hintLabelBox.add(hintLabel2);
+
 		SideConstraintLayoutDelegate hintLabelDelegate = new SideConstraintLayoutDelegate();
 		hintLabelDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(taskListDrawer.pinButton(), Side.RIGHT, 0));
 		hintLabelDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
 		hintLabelDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
 		mainPanel.add(taskListDrawer.pinButton(), spinnerDelegate);
-		mainPanel.add(hintLabel, hintLabelDelegate);
+		mainPanel.add(hintLabelBox, hintLabelDelegate);
 
 		SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
 		canvasDelegate.putExtraConstraint(Side.TOP, new SideConstraint(taskListDrawer, Side.BOTTOM, 0));
 		canvasDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
 		canvasDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
-		canvasDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(hintLabel, Side.TOP, 0));
+		canvasDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(hintLabelBox, Side.TOP, 0));
 		mainPanel.add(canvas, canvasDelegate);
 
 		surveyDrawer.table().setTransferHandler(new SurveyTableTransferHandler());
@@ -1918,6 +1932,7 @@ public class BreakoutMainView {
 			@Override
 			protected void onValueChanged(Color bgColor) {
 				if (bgColor != null) {
+					mainPanel.setBackground(bgColor);
 					BreakoutMainView.this.bgColor
 						.set(bgColor.getRed() / 255f, bgColor.getGreen() / 255f, bgColor.getBlue() / 255f, 1f);
 					if (model3d != null) {
@@ -2018,6 +2033,8 @@ public class BreakoutMainView {
 			protected void onValueChanged(Color stationLabelColor) {
 				if (stationLabelColor == null)
 					return;
+				hintLabel.setForeground(stationLabelColor);
+				hintLabel2.setForeground(stationLabelColor);
 				if (model3d != null) {
 					model3d.setStationLabelColor(stationLabelColor);
 				}
@@ -3777,15 +3794,16 @@ public class BreakoutMainView {
 		SurveyTrip trip = orig != null ? orig.getTrip() : null;
 		ShotKey key = picked != null ? picked.picked.key() : null;
 		ParsedShot shot = key != null ? parsedProject.shots.get(key) : null;
-		if (shot == null)
-
-		{
+		ParsedTrip parsedTrip = shot != null ? shot.trip : null;
+		if (shot == null) {
 			Float maxDate = getProjectModel().get(ProjectModel.maxDate);
 			if (maxDate == null || Float.isNaN(maxDate)) {
 				hintLabel.setText("");
+				hintLabel2.setText("");
 			}
 			else {
-				hintLabel
+				hintLabel.setText("");
+				hintLabel2
 					.setText(
 						"Date: " + SettingsDrawer.maxDateFormat.format(ColorParam.calcDateFromDaysSince1800(maxDate)));
 			}
@@ -3843,7 +3861,7 @@ public class BreakoutMainView {
 				String
 					.format(
 						"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
-							+ "&emsp;Inc: <b>%s/%s</b>&emsp;<i>%s</i>%s</html>",
+							+ "&emsp;Inc: <b>%s/%s</b>&emsp;%s</html>",
 						key.fromStation,
 						key.toStation,
 						formattedDistance,
@@ -3851,11 +3869,24 @@ public class BreakoutMainView {
 						formattedBackAzimuth,
 						formattedFrontInclination,
 						formattedBackInclination,
-						trip != null ? trip.getName() : "",
 						formattedLeads);
 
 			hintLabel.setText(hintText);
 			hintLabel.invalidate();
+
+			Date parsedDate = ParsedField.getValue(parsedTrip != null ? parsedTrip.date : null);
+
+			String hintText2 =
+				trip != null
+					? String
+						.format(
+							"<html>Trip: <b>%s</b>&emsp;Date: <b>%s</b>&emsp;Surveyors: <b>%s</b></html>",
+							trip.getName(),
+							parsedDate != null ? SettingsDrawer.maxDateFormat.format(parsedDate) : trip.getDate(),
+							StringUtils.join(", ", trip.getSurveyors()))
+					: "";
+			hintLabel2.setText(hintText2);
+			hintLabel2.setText(hintText2);
 		}
 	}
 

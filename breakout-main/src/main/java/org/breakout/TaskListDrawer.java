@@ -22,7 +22,6 @@
 package org.breakout;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.util.HashSet;
 import java.util.Set;
@@ -69,7 +68,7 @@ public class TaskListDrawer extends Drawer {
 		delegate().dockingSide(Side.TOP);
 		mainResizeHandle();
 		pinButton().setUI(new SpinnerButtonUI());
-		pinButton().setBackground(Color.BLACK);
+		pinButton().setOpaque(false);
 	}
 
 	public void addTaskService(TaskService taskService) {

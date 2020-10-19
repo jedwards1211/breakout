@@ -352,6 +352,7 @@ public class ProjectParser {
 		}
 		else if (fromStation != null && toStation != null) {
 			ParsedShot shot = new ParsedShot();
+			shot.trip = parsedTrip;
 			shot.setHasAttachedFiles(raw.getAttachedFiles() != null && !raw.getAttachedFiles().isEmpty());
 			shot.measurements = new ArrayList<>(2);
 			if (frontsights != null) {

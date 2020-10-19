@@ -1,6 +1,5 @@
 package org.breakout.model.parsed;
 
-import java.util.BitSet;
 import java.util.List;
 
 public class ParsedShot {
@@ -11,8 +10,10 @@ public class ParsedShot {
 	private static final int HAS_ATTACHED_FILES = 2;
 
 	private void setFlag(int flag, boolean value) {
-		if (value) flags |= flag;
-		else flags &= ~flag;
+		if (value)
+			flags |= flag;
+		else
+			flags &= ~flag;
 	}
 
 	private boolean getFlag(int flag) {
@@ -26,7 +27,7 @@ public class ParsedShot {
 	public boolean isExcludeFromPlotting() {
 		return getFlag(EXCLUDE_FROM_PLOTTING);
 	}
-	
+
 	public boolean hasSurveyNotes() {
 		return getFlag(HAS_ATTACHED_FILES);
 	}
@@ -45,4 +46,5 @@ public class ParsedShot {
 
 	public ParsedShot overrides;
 	public ParsedShot overriddenBy;
+	public ParsedTrip trip;
 }
