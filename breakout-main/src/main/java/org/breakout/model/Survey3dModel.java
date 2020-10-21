@@ -2723,6 +2723,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			double distanceToStation = entry.getKey();
 
 			for (CalcShot nextShot : station.shots.values()) {
+				if (Float.isFinite(maxDateFloat) && nextShot.date > maxDateFloat)
+					continue;
+
 				ShotKey shotKey = nextShot.key();
 				if (selectedShots.contains(shotKey)) {
 					LinkedPriorityEntry<Double, CalcStation> to = entry;
