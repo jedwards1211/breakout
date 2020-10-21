@@ -422,7 +422,7 @@ public class SettingsDrawer extends Drawer {
 				if (date == null)
 					return;
 			}
-			date = prev ? DateUtils.startOf(date, field) : DateUtils.endOf(date, field);
+			date = prev ? DateUtils.lowerOf(date, field) : DateUtils.higherOf(date, field);
 			if (Math.abs(amount) != 1) {
 				date = DateUtils.add(date, field, amount - (int) Math.signum(amount));
 			}

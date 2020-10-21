@@ -63,19 +63,47 @@ public class DateUtils {
 	public static Date startOf(Date date, int field) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
-		return DateUtils.startOf(cal, field).getTime();
+		return startOf(cal, field).getTime();
 	}
 
 	public static Calendar endOf(Calendar cal, int field) {
-		cal = startOf(cal, field);
-		cal.add(field, 1);
-		return cal;
+		Calendar result = (Calendar) cal.clone();
+		result = startOf(result, field);
+		if (!result.equals(cal))
+			result.add(field, 1);
+		return result;
 	}
 
 	public static Date endOf(Date date, int field) {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(date);
 		return DateUtils.endOf(cal, field).getTime();
+	}
+
+	public static Calendar lowerOf(Calendar cal, int field) {
+		Calendar result = startOf(cal, field);
+		if (result.equals(cal))
+			result.add(field, -1);
+		return result;
+	}
+
+	public static Date lowerOf(Date date, int field) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		return DateUtils.lowerOf(cal, field).getTime();
+	}
+
+	public static Calendar higherOf(Calendar cal, int field) {
+		Calendar result = endOf(cal, field);
+		if (result.equals(cal))
+			result.add(field, 1);
+		return result;
+	}
+
+	public static Date higherOf(Date date, int field) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(date);
+		return DateUtils.higherOf(cal, field).getTime();
 	}
 
 	public static Date add(Date date, int field, int amount) {
