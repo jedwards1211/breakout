@@ -23,6 +23,7 @@ public class ParsedTrip {
 	public boolean areBackAzimuthsCorrected;
 	public boolean areBackInclinationsCorrected;
 	public String name;
+	public List<String> surveyors;
 	public ParsedField<Date> date;
 	public ParsedField<String> datum;
 	public ParsedField<String> ellipsoid;

@@ -352,6 +352,8 @@ public class ProjectParser {
 		}
 		else if (fromStation != null && toStation != null) {
 			ParsedShot shot = new ParsedShot();
+			shot.fromStation = fromStation;
+			shot.toStation = toStation;
 			shot.trip = parsedTrip;
 			shot.setHasAttachedFiles(raw.getAttachedFiles() != null && !raw.getAttachedFiles().isEmpty());
 			shot.measurements = new ArrayList<>(2);
@@ -363,6 +365,7 @@ public class ProjectParser {
 			}
 			parsedTrip.shots.add(shot);
 			parsedTrip.stations.add(toStation);
+			parsedTrip.surveyors = trip.getSurveyors();
 
 			StationKey fromKey = fromStation.key();
 			StationKey toKey = toStation.key();

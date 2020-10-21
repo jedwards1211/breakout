@@ -47,4 +47,6 @@ public class ParsedShot {
 	public ParsedShot overrides;
 	public ParsedShot overriddenBy;
 	public ParsedTrip trip;
+	public ParsedStation fromStation;
+	public ParsedStation toStation;
 }

@@ -28,7 +28,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Desktop;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Rectangle;
@@ -60,7 +59,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,7 +89,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import javax.swing.AbstractAction;
-import javax.swing.Box;
 import javax.swing.CellEditor;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
@@ -110,7 +107,6 @@ import javax.swing.JToggleButton;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -138,7 +134,6 @@ import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
-import org.andork.collect.ArrayLists;
 import org.andork.collect.HashSets;
 import org.andork.collect.LinkedListMultiMap;
 import org.andork.collect.MultiMap;
@@ -207,7 +202,7 @@ import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 import org.andork.util.FileRecoveryConfig;
 import org.andork.util.RecoverableFileOutputStream;
-import org.andork.util.StringUtils;
+import org.breakout.HintLabels.UpdateOptions;
 import org.breakout.StatsModel.MinAvgMax;
 import org.breakout.mabox.MapboxClient;
 import org.breakout.model.AutoTerrain;
@@ -234,17 +229,13 @@ import org.breakout.model.calc.CalcTrip;
 import org.breakout.model.calc.CalculateGeometry;
 import org.breakout.model.calc.Parsed2Calc;
 import org.breakout.model.compass.Compass;
-import org.breakout.model.parsed.ParsedField;
 import org.breakout.model.parsed.ParsedProject;
 import org.breakout.model.parsed.ParsedShot;
-import org.breakout.model.parsed.ParsedShotMeasurement;
-import org.breakout.model.parsed.ParsedTrip;
 import org.breakout.model.parsed.ProjectParser;
 import org.breakout.model.raw.MetacaveExporter;
 import org.breakout.model.raw.MetacaveImporter;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
-import org.breakout.model.raw.SurveyTrip;
 import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
 
@@ -327,7 +318,7 @@ public class BreakoutMainView {
 			HighlightMode highlightMode = getProjectModel().get(ProjectModel.highlightMode);
 
 			final LinearAxisConversion conversion = FromEDT.fromEDT(() -> {
-				updateHintLabel(picked);
+				updateHintLabels(picked);
 
 				if (picked == null)
 					return null;
@@ -1488,9 +1479,7 @@ public class BreakoutMainView {
 
 	final WeakHashMap<Animation, Object> protectedAnimations = new WeakHashMap<>();
 
-	Box hintLabelBox;
-	JLabel hintLabel;
-	JLabel hintLabel2;
+	HintLabels hintLabels;
 
 	CameraView currentView;
 
@@ -1686,21 +1675,6 @@ public class BreakoutMainView {
 			}
 		});
 
-		hintLabel = new JLabel("A");
-		hintLabel.setForeground(Color.WHITE);
-		Font hintFont = hintLabel.getFont();
-		hintLabel.setFont(hintFont.deriveFont(Font.PLAIN));
-		hintLabel.setPreferredSize(new Dimension(200, hintLabel.getPreferredSize().height));
-		hintLabel.setText(" ");
-		hintLabel.setVerticalAlignment(SwingConstants.TOP);
-
-		hintLabel2 = new JLabel("A");
-		hintLabel2.setForeground(hintLabel.getForeground());
-		hintLabel2.setFont(hintLabel.getFont());
-		hintLabel2.setPreferredSize(hintLabel.getPreferredSize());
-		hintLabel2.setText(" ");
-		hintLabel2.setVerticalAlignment(hintLabel.getVerticalAlignment());
-
 		final Consumer<Runnable> sortRunner = r -> sortTaskService.submit(task -> {
 			task.setStatus("Sorting survey table...");
 			r.run();
@@ -1868,21 +1842,19 @@ public class BreakoutMainView {
 		spinnerDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
 		spinnerDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
-		hintLabelBox = Box.createVerticalBox();
-		hintLabelBox.add(hintLabel);
-		hintLabelBox.add(hintLabel2);
+		hintLabels = new HintLabels();
 
-		hintLabelBox.addMouseListener(new MouseAdapter() {
+		hintLabels.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				surveyDrawer.holder().hold(hintLabelBox);
+				surveyDrawer.holder().hold(hintLabels);
 			}
 		});
 
 		canvas.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseEntered(MouseEvent e) {
-				surveyDrawer.holder().release(hintLabelBox);
+				surveyDrawer.holder().release(hintLabels);
 			}
 		});
 
@@ -1892,13 +1864,13 @@ public class BreakoutMainView {
 		hintLabelDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
 
 		mainPanel.add(taskListDrawer.pinButton(), spinnerDelegate);
-		mainPanel.add(hintLabelBox, hintLabelDelegate);
+		mainPanel.add(hintLabels, hintLabelDelegate);
 
 		SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
 		canvasDelegate.putExtraConstraint(Side.TOP, new SideConstraint(taskListDrawer, Side.BOTTOM, 0));
 		canvasDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
 		canvasDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
-		canvasDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(hintLabelBox, Side.TOP, 0));
+		canvasDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(hintLabels, Side.TOP, 0));
 		mainPanel.add(canvas, canvasDelegate);
 
 		surveyDrawer.table().setTransferHandler(new SurveyTableTransferHandler());
@@ -2047,8 +2019,7 @@ public class BreakoutMainView {
 			protected void onValueChanged(Color stationLabelColor) {
 				if (stationLabelColor == null)
 					return;
-				hintLabel.setForeground(stationLabelColor);
-				hintLabel2.setForeground(stationLabelColor);
+				hintLabels.setForeground(stationLabelColor);
 				if (model3d != null) {
 					model3d.setStationLabelColor(stationLabelColor);
 				}
@@ -2165,7 +2136,7 @@ public class BreakoutMainView {
 		new BinderWrapper<Float>() {
 			@Override
 			protected void onValueChanged(final Float newValue) {
-				updateHintLabel(null);
+				updateHintLabels(null);
 				if (model3d != null) {
 					model3d.setMaxDate(newValue);
 					autoDrawable.display();
@@ -3803,105 +3774,25 @@ public class BreakoutMainView {
 		return trips;
 	}
 
-	void updateHintLabel(final Shot3dPickResult picked) {
-		SurveyRow orig = picked != null ? sourceRows.get(picked.picked.key()) : null;
-		SurveyTrip trip = orig != null ? orig.getTrip() : null;
+	void updateHintLabels(final Shot3dPickResult picked) {
 		ShotKey key = picked != null ? picked.picked.key() : null;
 		ParsedShot shot = key != null ? parsedProject.shots.get(key) : null;
-		ParsedTrip parsedTrip = shot != null ? shot.trip : null;
-		if (shot == null) {
-			Float maxDate = getProjectModel().get(ProjectModel.maxDate);
-			if (maxDate == null || Float.isNaN(maxDate)) {
-				hintLabel.setText("");
-				hintLabel2.setText("");
+		hintLabels.update(new UpdateOptions() {
+			@Override
+			public ParsedShot shot() {
+				return shot;
 			}
-			else {
-				hintLabel.setText("");
-				hintLabel2
-					.setText(
-						"Date: " + SettingsDrawer.maxDateFormat.format(ColorParam.calcDateFromDaysSince1800(maxDate)));
+
+			@Override
+			public Unit<Length> lengthUnit() {
+				return getProjectModel().get(ProjectModel.displayLengthUnit);
 			}
-		}
-		else {
-			UnitizedDouble<Length> distance = ParsedShotMeasurement.getFirstDistance(shot.measurements);
-			UnitizedDouble<Angle> frontAzimuth = ParsedShotMeasurement.getFirstFrontAzimuth(shot.measurements);
-			UnitizedDouble<Angle> backAzimuth = ParsedShotMeasurement.getFirstBackAzimuth(shot.measurements);
-			UnitizedDouble<Angle> frontInclination = ParsedShotMeasurement.getFirstFrontInclination(shot.measurements);
-			UnitizedDouble<Angle> backInclination = ParsedShotMeasurement.getFirstBackInclination(shot.measurements);
 
-			QObject<ProjectModel> projectModel = getProjectModel();
-			Unit<Length> lengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
-			Unit<Angle> angleUnit = projectModel.get(ProjectModel.displayAngleUnit);
-
-			NumberFormat format = DecimalFormat.getInstance();
-			format.setMaximumFractionDigits(1);
-			format.setMinimumFractionDigits(1);
-			format.setGroupingUsed(false);
-
-			String formattedDistance = distance == null ? "--" : distance.in(lengthUnit).toString(format);
-			String formattedFrontAzimuth = frontAzimuth == null ? "--" : frontAzimuth.in(angleUnit).toString(format);
-			String formattedBackAzimuth = backAzimuth == null ? "--" : backAzimuth.in(angleUnit).toString(format);
-			String formattedFrontInclination =
-				frontInclination == null ? "--" : frontInclination.in(angleUnit).toString(format);
-			String formattedBackInclination =
-				backInclination == null ? "--" : backInclination.in(angleUnit).toString(format);
-
-			CalcShot calcShot = calcProject.shots.get(picked.picked.key());
-			Collection<SurveyLead> leads = null;
-			String pickedStationName = "";
-			if (calcShot != null) {
-				pickedStationName =
-					picked.locationAlongShot < 0.5f ? calcShot.fromStation.name : calcShot.toStation.name;
-				leads =
-					getProjectModel()
-						.get(ProjectModel.leadIndex)
-						.get((picked.locationAlongShot < 0.5f ? calcShot.fromStation : calcShot.toStation).key());
+			@Override
+			public Unit<Angle> angleUnit() {
+				return getProjectModel().get(ProjectModel.displayAngleUnit);
 			}
-			final String finalPickedStationName = pickedStationName;
-
-			String formattedLeads =
-				leads != null && !leads.isEmpty()
-					? StringUtils
-						.join(
-							"",
-							ArrayLists
-								.map(
-									leads,
-									lead -> String
-										.format("<br>Lead at %s: %s", finalPickedStationName, SurveyLead.description)))
-					: "";
-
-			String hintText =
-				String
-					.format(
-						"<html>Stations: <b>%s - %s</b>&emsp;Dist: <b>%s</b>&emsp;Azm: <b>%s/%s</b>"
-							+ "&emsp;Inc: <b>%s/%s</b>&emsp;%s</html>",
-						key.fromStation,
-						key.toStation,
-						formattedDistance,
-						formattedFrontAzimuth,
-						formattedBackAzimuth,
-						formattedFrontInclination,
-						formattedBackInclination,
-						formattedLeads);
-
-			hintLabel.setText(hintText);
-			hintLabel.invalidate();
-
-			Date parsedDate = ParsedField.getValue(parsedTrip != null ? parsedTrip.date : null);
-
-			String hintText2 =
-				trip != null
-					? String
-						.format(
-							"<html>Trip: <b>%s</b>&emsp;Date: <b>%s</b>&emsp;Surveyors: <b>%s</b></html>",
-							trip.getName(),
-							parsedDate != null ? SettingsDrawer.maxDateFormat.format(parsedDate) : trip.getDate(),
-							StringUtils.join(", ", trip.getSurveyors()))
-					: "";
-			hintLabel2.setText(hintText2);
-			hintLabel2.setText(hintText2);
-		}
+		});
 	}
 
 	public void openEditor(Path path) {
