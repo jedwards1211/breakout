@@ -2098,9 +2098,18 @@ public class BreakoutMainView {
 
 		new BinderWrapper<Integer>() {
 			@Override
+			protected void onValueChanged(Integer sensitivity) {
+				if (sensitivity != null) {
+				}
+			}
+		}.bind(QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder));
+
+		new BinderWrapper<Integer>() {
+			@Override
 			protected void onValueChanged(Integer sliderValue) {
 				if (sliderValue != null) {
-					orthoNavigator.setSensitivity(sliderValue / 2000f);
+					orthoNavigator.setSensitivity(sliderValue * 0.002f);
+					orbiter.setSensitivity(sliderValue * 0.02f);
 				}
 			}
 		}.bind(QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder));

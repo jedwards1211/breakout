@@ -28,19 +28,48 @@ import java.util.List;
 
 public class Fitting {
 	/**
+	 * Finds the exponential curve through three points where x1, x2, and x3 are
+	 * equally spaced.
+	 * 
+	 * https://math.stackexchange.com/questions/3311614/find-the-exponential-curve-through-three-data-points
+	 * 
+	 * @param x1 The x coordinate of the first point
+	 * @param y1 The y coordinate of the first point
+	 * @param x3 The x coordinate of the third point
+	 * @param y3 The y coordinate of the third point
+	 * @param y2 The y coordinate of the second point (note that there is no x2
+	 *           argument. x2 is assumed to be (x1 + x3) / 2.
+	 * @return [a, b, c] such that y_i = a * e ^ (b * x_i) + c.
+	 */
+	public static double[] threePointExponential(double x1, double y1, double x3, double y3, double y2) {
+		if (x3 <= x1)
+			throw new IllegalArgumentException("x3 must be > x1");
+		if (y3 <= y1)
+			throw new IllegalArgumentException("y3 must be > y1");
+		if (y3 <= y2)
+			throw new IllegalArgumentException("y3 must be > y2");
+		if (y2 <= y1)
+			throw new IllegalArgumentException("y2 must be > y1");
+		double d = (x3 - x1) / 2;
+		double r = (y3 - y2) / (y2 - y1);
+		double b = Math.log(r) / d;
+		double a = (y3 - y1) / (Math.pow(r, x3 / d) - Math.pow(r, x1 / d));
+		double c = y1 - a * Math.exp(b * x1);
+		return new double[] { a, b, c };
+	}
+
+	/**
 	 * Performs a linear least-squares fit.
 	 *
-	 * @param points
-	 *            a list of 2-dimensional points (x, y)
+	 * @param points a list of 2-dimensional points (x, y)
 	 * @return [m, b] such that the least-fit line is y = m*x + b
 	 */
-	public static float[] linearLeastSquares2f(List<float[]> points) {
+	public static float[] linearLeastSquares2f(Iterable<float[]> points) {
 		float A0 = 0, A1 = 0, A2 = 0, A3 = 0;
 		float B0 = 0, B1 = 0;
 
 		for (float[] point : points) {
-			if (Float.isNaN(point[0]) || Float.isNaN(point[1]) ||
-					Float.isInfinite(point[0]) || Float.isNaN(point[1])) {
+			if (Float.isNaN(point[0]) || Float.isNaN(point[1]) || Float.isInfinite(point[0]) || Float.isNaN(point[1])) {
 				continue;
 			}
 
@@ -67,8 +96,7 @@ public class Fitting {
 	}
 
 	/**
-	 * @param points
-	 *            a list of 2-element points
+	 * @param points a list of 2-element points
 	 * @return a 2-element [slope, intercept] array
 	 */
 	public static float[] theilSen(List<float[]> points) {

@@ -94,8 +94,10 @@ import org.andork.bind.ui.JComboBoxItemBinder;
 import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.date.DateUtils;
 import org.andork.func.Bimapper;
+import org.andork.func.ExponentialIntBimapper;
 import org.andork.func.LinearFloatBimapper;
 import org.andork.func.RoundingFloat2IntegerBimapper;
+import org.andork.math.misc.Fitting;
 import org.andork.plot.PlotAxisConversionBinder;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
@@ -232,9 +234,19 @@ public class SettingsDrawer extends Drawer {
 	BinderWrapper<QObject<RootModel>> rootBinder = new BinderWrapper<>();
 	Binder<Path> currentProjectFileBinder = QObjectAttributeBinder.bind(RootModel.currentProjectFile, rootBinder);
 	Binder<Integer> desiredNumSamplesBinder = QObjectAttributeBinder.bind(RootModel.desiredNumSamples, rootBinder);
-	Binder<Integer> mouseSensitivityBinder = QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootBinder);
+	// This is a bit confusing... used to map the linear sliders to an exponential
+	// curve.
+	// The numbers are: rawMin, sliderMin, rawMax, sliderMax, rawAtSliderMid
+	// In other words, when the slider is at sliderMin, the value in the model will
+	// be rawMin.
+	private static final double[] mouseSensitivityCurve = Fitting.threePointExponential(1, 0, 1000, 100, 70);
+	private static final double[] wheelSensitivityCurve = Fitting.threePointExponential(1, 0, 5000, 100, 70);
+	Binder<Integer> mouseSensitivityBinder =
+		new BimapperBinder<>(new ExponentialIntBimapper(mouseSensitivityCurve))
+			.bind(QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootBinder));
 	Binder<Integer> mouseWheelSensitivityBinder =
-		QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootBinder);
+		new BimapperBinder<>(new ExponentialIntBimapper(wheelSensitivityCurve))
+			.bind(QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootBinder));
 
 	BinderWrapper<QObject<ProjectModel>> projectBinder = new BinderWrapper<>();
 	Binder<CameraView> cameraViewBinder = QObjectAttributeBinder.bind(ProjectModel.cameraView, projectBinder);
@@ -846,14 +858,14 @@ public class SettingsDrawer extends Drawer {
 		mouseSensitivityLabel = new JLabel();
 		localizer.setText(mouseSensitivityLabel, "mouseSensitivityLabel.text");
 
-		mouseSensitivitySlider = new JSlider();
+		mouseSensitivitySlider = new JSlider(0, 100, 20);
 		mouseSensitivitySlider.setValue(20);
 		mouseSensitivitySlider.setOpaque(false);
 
 		mouseWheelSensitivityLabel = new JLabel();
 		localizer.setText(mouseWheelSensitivityLabel, "mouseWheelSensitivityLabel.text");
 
-		mouseWheelSensitivitySlider = new JSlider(1, 2000, 200);
+		mouseWheelSensitivitySlider = new JSlider(0, 100, 20);
 		mouseWheelSensitivitySlider.setOpaque(false);
 
 		resetViewButton = new JButton("Reset View");
