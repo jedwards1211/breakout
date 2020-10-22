@@ -3786,10 +3786,16 @@ public class BreakoutMainView {
 	void updateHintLabels(final Shot3dPickResult picked) {
 		ShotKey key = picked != null ? picked.picked.key() : null;
 		ParsedShot shot = key != null ? parsedProject.shots.get(key) : null;
+		CalcShot calcShot = key != null ? calcProject.shots.get(key) : null;
 		hintLabels.update(new UpdateOptions() {
 			@Override
 			public ParsedShot shot() {
 				return shot;
+			}
+
+			@Override
+			public CalcShot calcShot() {
+				return calcShot;
 			}
 
 			@Override

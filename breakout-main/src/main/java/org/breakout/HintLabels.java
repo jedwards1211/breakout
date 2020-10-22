@@ -16,6 +16,7 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
 import org.andork.util.StringUtils;
+import org.breakout.model.calc.CalcShot;
 import org.breakout.model.parsed.ParsedField;
 import org.breakout.model.parsed.ParsedShot;
 import org.breakout.model.parsed.ParsedShotMeasurement;
@@ -24,10 +25,14 @@ import org.breakout.model.parsed.ParsedTrip;
 public class HintLabels extends JPanel {
 	private static final long serialVersionUID = 8575752635019574014L;
 
-	private JLabel stationsLabel = new JLabel("Stations: ");
-	private JLabel stationsValue = new JLabel();
+	private JLabel fromLabel = new JLabel("From: ");
+	private JLabel fromValue = new JLabel();
+	private JLabel toLabel = new JLabel("To: ");
+	private JLabel toValue = new JLabel();
 	private JLabel distanceLabel = new JLabel("Dist: ");
 	private JLabel distanceValue = new JLabel();
+	private JLabel elevationLabel = new JLabel("Elev: ");
+	private JLabel elevationValue = new JLabel();
 	private JLabel azimuthLabel = new JLabel("Azm: ");
 	private JLabel azimuthValue = new JLabel();
 	private JLabel inclinationLabel = new JLabel("Inc: ");
@@ -45,8 +50,10 @@ public class HintLabels extends JPanel {
 
 		for (JLabel label : Arrays
 			.asList(
-				stationsLabel,
+				fromLabel,
+				toLabel,
 				distanceLabel,
+				elevationLabel,
 				azimuthLabel,
 				inclinationLabel,
 				tripNameLabel,
@@ -61,8 +68,10 @@ public class HintLabels extends JPanel {
 
 		for (JLabel value : Arrays
 			.asList(
-				stationsValue,
+				fromValue,
+				toValue,
 				distanceValue,
+				elevationValue,
 				azimuthValue,
 				inclinationValue,
 				tripNameValue,
@@ -75,26 +84,34 @@ public class HintLabels extends JPanel {
 			add(value);
 		}
 
-		setPrefSize(stationsValue, "AAAAAAA - AAAAAAA");
+		setPrefSize(fromValue, "AAAAAA");
+		setPrefSize(toValue, "AAAAAA");
 		setPrefSize(distanceValue, "10000.0 ft");
-		setPrefSize(azimuthValue, "360.0 deg/360.0 deg");
-		setPrefSize(inclinationValue, "-90.0 deg/-90.0 deg");
+		setPrefSize(elevationValue, "1000.0/1000.0 ft");
+		setPrefSize(azimuthValue, "360.0/360.0 deg");
+		setPrefSize(inclinationValue, "-90.0/-90.0 deg");
 
 		GridBagWizard w = GridBagWizard.create(this);
 		w.defaults().west();
-		w.put(stationsLabel).xy(0, 0);
-		w.put(stationsLabel, distanceLabel).intoColumn();
-		w.put(stationsValue).rightOf(stationsLabel);
-		w.put(stationsValue, distanceValue).intoColumn();
+		int col = 0;
+		w.put(fromLabel).xy(col++, 0);
+		w.put(fromLabel, toLabel).intoColumn();
+		w.put(fromValue).xy(col++, 0);
+		w.put(fromValue, toValue).intoColumn();
 
-		w.put(azimuthLabel).rightOf(stationsValue);
+		w.put(distanceLabel).xy(col++, 0);
+		w.put(distanceLabel, elevationLabel).intoColumn();
+		w.put(distanceValue).xy(col++, 0);
+		w.put(distanceValue, elevationValue).intoColumn();
+
+		w.put(azimuthLabel).xy(col++, 0);
 		w.put(azimuthLabel, inclinationLabel).intoColumn().addToInsets(0, 10, 0, 0);
-		w.put(azimuthValue).rightOf(azimuthLabel);
+		w.put(azimuthValue).xy(col++, 0);
 		w.put(azimuthValue, inclinationValue).intoColumn();
 
-		w.put(tripNameLabel).rightOf(azimuthValue);
+		w.put(tripNameLabel).xy(col++, 0);
 		w.put(tripNameLabel, surveyorsLabel).intoColumn().addToInsets(0, 10, 0, 0);
-		w.put(tripNameValue).rightOf(tripNameLabel);
+		w.put(tripNameValue).xy(col++, 0);
 		w.put(tripNameValue, surveyorsValue).intoColumn().fillx(1);
 		w.put(dateLabel).rightOf(tripNameValue).addToInsets(0, 10, 0, 0);
 		w.put(dateValue).rightOf(dateLabel);
@@ -113,6 +130,8 @@ public class HintLabels extends JPanel {
 	interface UpdateOptions {
 		ParsedShot shot();
 
+		CalcShot calcShot();
+
 		Unit<Length> lengthUnit();
 
 		Unit<Angle> angleUnit();
@@ -120,12 +139,17 @@ public class HintLabels extends JPanel {
 
 	public void update(UpdateOptions options) {
 		ParsedShot shot = options.shot();
+		CalcShot calcShot = options.calcShot();
 		ParsedTrip trip = shot != null ? shot.trip : null;
 
-		stationsLabel.setVisible(shot != null);
-		stationsValue.setVisible(shot != null);
+		fromLabel.setVisible(shot != null);
+		fromValue.setVisible(shot != null);
+		toLabel.setVisible(shot != null);
+		toValue.setVisible(shot != null);
 		distanceLabel.setVisible(shot != null);
 		distanceValue.setVisible(shot != null);
+		elevationLabel.setVisible(shot != null);
+		elevationValue.setVisible(shot != null);
 		azimuthLabel.setVisible(shot != null);
 		azimuthValue.setVisible(shot != null);
 		inclinationLabel.setVisible(shot != null);
@@ -164,14 +188,15 @@ public class HintLabels extends JPanel {
 		String formattedBackInclination =
 			backInclination == null ? "--" : format.format(backInclination.get(angleUnit));
 
-		stationsValue
-			.setText(
-				String
-					.format(
-						"%s - %s",
-						ParsedField.getValue(shot.fromStation.name),
-						ParsedField.getValue(shot.toStation.name)));
+		String formattedFromElevation =
+			calcShot == null ? "--" : format.format(Length.meters(calcShot.fromStation.position[1]).get(lengthUnit));
+		String formattedToElevation =
+			calcShot == null ? "--" : format.format(Length.meters(calcShot.toStation.position[1]).get(lengthUnit));
+
+		fromValue.setText(ParsedField.getValue(shot.fromStation.name));
+		toValue.setText(ParsedField.getValue(shot.toStation.name));
 		distanceValue.setText(formattedDistance);
+		elevationValue.setText(String.format("%s/%s %s", formattedFromElevation, formattedToElevation, lengthUnit));
 		azimuthValue.setText(String.format("%s/%s %s", formattedFrontAzimuth, formattedBackAzimuth, angleUnit));
 		inclinationValue
 			.setText(String.format("%s/%s %s", formattedFrontInclination, formattedBackInclination, angleUnit));
