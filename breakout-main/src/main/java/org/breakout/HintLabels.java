@@ -38,55 +38,6 @@ public class HintLabels extends JPanel {
 	private JLabel dateValue = new JLabel();
 	private JLabel surveyorsLabel = new JLabel("Surveyors: ");
 	private JLabel surveyorsValue = new JLabel();;
-	//
-	// static class LabelGroup {
-	// JLabel label;
-	// JLabel value;
-	// float weight;
-	// int minWidth;
-	// String minWidthText;
-	//
-	// public LabelGroup(JLabel label, JLabel value, float weight) {
-	// super();
-	// this.label = label;
-	// this.value = value;
-	// this.weight = weight;
-	// }
-	//
-	// LabelGroup minWidth(int minWidth) {
-	// this.minWidth = minWidth;
-	// return this;
-	// }
-	//
-	// LabelGroup minWidthText(String minWidthText) {
-	// this.minWidthText = minWidthText;
-	// return this;
-	// }
-	//
-	// void setBounds(int x, int y, float width, int height) {
-	// int minWidth = this.minWidth;
-	// if (minWidthText != null) {
-	// minWidth = value.getFontMetrics(value.getFont()).stringWidth(minWidthText);
-	// }
-	// label.setBounds(x, y, label.getPreferredSize().width, height);
-	// value
-	// .setBounds(
-	// label.getX() + label.getWidth(),
-	// y,
-	// (int) Math.max(minWidth, width - label.getWidth()),
-	// height);
-	// }
-	//
-	// public void setVisible(boolean visible) {
-	// label.setVisible(visible);
-	// value.setVisible(visible);
-	// }
-	//
-	// }
-	//
-	// static LabelGroup labelGroup(JLabel label, JLabel value, double weight) {
-	// return new LabelGroup(label, value, (float) weight);
-	// }
 
 	public HintLabels() {
 		setBackground(null);
@@ -130,20 +81,21 @@ public class HintLabels extends JPanel {
 		setPrefSize(inclinationValue, "-90.0 deg/-90.0 deg");
 
 		GridBagWizard w = GridBagWizard.create(this);
+		w.defaults().west();
 		w.put(stationsLabel).xy(0, 0);
-		w.put(stationsLabel, distanceLabel).intoColumn().west();
+		w.put(stationsLabel, distanceLabel).intoColumn();
 		w.put(stationsValue).rightOf(stationsLabel);
-		w.put(stationsValue, distanceValue).intoColumn().east();
+		w.put(stationsValue, distanceValue).intoColumn();
 
 		w.put(azimuthLabel).rightOf(stationsValue);
-		w.put(azimuthLabel, inclinationLabel).intoColumn().west().addToInsets(0, 10, 0, 0);
+		w.put(azimuthLabel, inclinationLabel).intoColumn().addToInsets(0, 10, 0, 0);
 		w.put(azimuthValue).rightOf(azimuthLabel);
-		w.put(azimuthValue, inclinationValue).intoColumn().east();
+		w.put(azimuthValue, inclinationValue).intoColumn();
 
 		w.put(tripNameLabel).rightOf(azimuthValue);
-		w.put(tripNameLabel, surveyorsLabel).intoColumn().west().addToInsets(0, 10, 0, 0);
+		w.put(tripNameLabel, surveyorsLabel).intoColumn().addToInsets(0, 10, 0, 0);
 		w.put(tripNameValue).rightOf(tripNameLabel);
-		w.put(tripNameValue, surveyorsValue).intoColumn().east().fillx(1);
+		w.put(tripNameValue, surveyorsValue).intoColumn().fillx(1);
 		w.put(dateLabel).rightOf(tripNameValue).addToInsets(0, 10, 0, 0);
 		w.put(dateValue).rightOf(dateLabel);
 		w.put(surveyorsValue).width(3);
