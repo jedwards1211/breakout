@@ -43,15 +43,17 @@ public abstract class FromEDT<R> {
 		if (SwingUtilities.isEventDispatchThread()) {
 			try {
 				return c.call();
-			} catch (Exception ex) {
-				throw new RuntimeInvocationTargetException(ex);
+			}
+			catch (Throwable t) {
+				throw new RuntimeInvocationTargetException(t);
 			}
 		}
 
 		Ref<R> result = new Ref<>();
 		try {
 			OnEDT.onEDT(() -> result.value = c.call());
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 
 		}
 		return result.value;
@@ -60,19 +62,21 @@ public abstract class FromEDT<R> {
 	private R result;
 
 	/**
-	 * This constructor calls {@link #run()} on the EDT immediately so that you
-	 * can save a few keystrokes.
+	 * This constructor calls {@link #run()} on the EDT immediately so that you can
+	 * save a few keystrokes.
 	 *
-	 * @throws RuntimeInvocationTargetException
-	 *             wrapping the exception thrown by {@link #run()}, if any
-	 * @throws RuntimeInterruptedException
-	 *             if the calling thread was interrupted while waiting for
-	 *             {@link SwingUtilities#invokeAndWait(Runnable)} to return.
+	 * @throws RuntimeInvocationTargetException wrapping the exception thrown by
+	 *                                          {@link #run()}, if any
+	 * @throws RuntimeInterruptedException      if the calling thread was
+	 *                                          interrupted while waiting for
+	 *                                          {@link SwingUtilities#invokeAndWait(Runnable)}
+	 *                                          to return.
 	 */
 	public FromEDT() {
 		if (SwingUtilities.isEventDispatchThread()) {
 			callRun();
-		} else {
+		}
+		else {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					@Override
@@ -80,14 +84,16 @@ public abstract class FromEDT<R> {
 						callRun();
 					}
 				});
-			} catch (InvocationTargetException e) {
+			}
+			catch (InvocationTargetException e) {
 				// first cause is the RuntimeInvocationTargetException thrown
 				// from run(); second cause is whatever doRun() threw. We want
 				// to rewrap the second cause in a
 				// RuntimeInvocationTargetException with a stack trace from this
 				// method.
 				throw new RuntimeInvocationTargetException(e.getCause().getCause());
-			} catch (InterruptedException e) {
+			}
+			catch (InterruptedException e) {
 				throw new RuntimeInterruptedException(e);
 			}
 		}
@@ -96,7 +102,8 @@ public abstract class FromEDT<R> {
 	private void callRun() {
 		try {
 			result = run();
-		} catch (Throwable t) {
+		}
+		catch (Throwable t) {
 			throw new RuntimeInvocationTargetException(t);
 		}
 	}

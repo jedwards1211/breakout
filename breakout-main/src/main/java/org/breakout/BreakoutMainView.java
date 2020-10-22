@@ -692,34 +692,37 @@ public class BreakoutMainView {
 				SurveyTableModel model = new SurveyTableModel(importer.getRows());
 				return model;
 			}
-			catch (Exception ex) {
-				logger.log(Level.SEVERE, "Failed to load survey", ex);
-				if (!file.equals(backupFile) && backupFile != null && backupFile.exists()) {
-					int option =
-						FromEDT
-							.fromEDT(
-								() -> JOptionPane
-									.showConfirmDialog(
-										mainPanel,
-										"<html>Failed to load survey "
-											+ ex.getLocalizedMessage()
-											+ "<br>A backup exists at "
-											+ backupFile
-											+ "; do you want to try to recover it?</html>",
-										"Error",
-										JOptionPane.YES_NO_OPTION,
-										JOptionPane.ERROR_MESSAGE));
-					if (option == JOptionPane.NO_OPTION) {
-						return null;
+			catch (Throwable ex) {
+				Throwable t = BreakoutMain.checkForOutOfMemory(ex);
+				if (t == ex) {
+					logger.log(Level.SEVERE, "Failed to load survey", ex);
+					if (!file.equals(backupFile) && backupFile != null && backupFile.exists()) {
+						int option =
+							FromEDT
+								.fromEDT(
+									() -> JOptionPane
+										.showConfirmDialog(
+											dialog,
+											"<html>Failed to load survey "
+												+ ex.getLocalizedMessage()
+												+ "<br>A backup exists at "
+												+ backupFile
+												+ "; do you want to try to recover it?</html>",
+											"Error",
+											JOptionPane.YES_NO_OPTION,
+											JOptionPane.ERROR_MESSAGE));
+						if (option == JOptionPane.NO_OPTION) {
+							return null;
+						}
+						return loadSurvey(backupFile, backupFile);
 					}
-					return loadSurvey(backupFile, backupFile);
 				}
 
 				OnEDT.onEDT(() -> {
 					JOptionPane
 						.showMessageDialog(
-							mainPanel,
-							"Failed to load survey: " + ex.getLocalizedMessage(),
+							dialog,
+							"Failed to load survey: " + t.getLocalizedMessage(),
 							"Error",
 							JOptionPane.ERROR_MESSAGE);
 				});
@@ -729,76 +732,88 @@ public class BreakoutMainView {
 
 		@Override
 		protected Void workDuringDialog() throws Exception {
-			logger.info(() -> "Opening file: " + newProjectFile + "...");
+			try {
+				logger.info(() -> "Opening file: " + newProjectFile + "...");
 
-			OnEDT.onEDT(() -> {
-				QObject<RootModel> rootModel = getRootModel();
-				rootModel.set(RootModel.currentProjectFile, newProjectFile);
-				rootModel.set(RootModel.currentProjectFileChooserDirectory, newProjectFile.getParent().toFile());
-				markProjectRecentlyVisited(newProjectFile);
+				OnEDT.onEDT(() -> {
+					QObject<RootModel> rootModel = getRootModel();
+					rootModel.set(RootModel.currentProjectFile, newProjectFile);
+					rootModel.set(RootModel.currentProjectFileChooserDirectory, newProjectFile.getParent().toFile());
+					markProjectRecentlyVisited(newProjectFile);
 
-				if (getProjectModel() != null) {
-					getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
+					if (getProjectModel() != null) {
+						getProjectModel().changeSupport().removePropertyChangeListener(projectModelChangeHandler);
+					}
+
+					surveyDrawer.table().getModel().clear();
+					destroyCalculatedModel();
+				});
+
+				File fileToLoad = newProjectFile.toFile();
+				File backupFile = fileRecoveryConfig.getBackupFile(fileToLoad);
+				if (!fileToLoad.exists() && backupFile.exists()) {
+					fileToLoad = backupFile;
+				}
+				SurveyTableModel surveyModel = loadSurvey(fileToLoad, backupFile);
+				if (surveyModel == null) {
+					logger.info("no survey found");
+					return null;
 				}
 
-				surveyDrawer.table().getModel().clear();
-				destroyCalculatedModel();
-			});
+				Path swapFile = getSwapFile(newProjectFile);
+				if (Files.exists(swapFile)) {
+					projectModel = loadProjectModel(swapFile.toFile());
+				}
 
-			File fileToLoad = newProjectFile.toFile();
-			File backupFile = fileRecoveryConfig.getBackupFile(fileToLoad);
-			if (!fileToLoad.exists() && backupFile.exists()) {
-				fileToLoad = backupFile;
+				if (projectModel == null) {
+					projectModel = ProjectModel.instance.newObject();
+				}
+				ProjectModel.setDefaults(projectModel);
+				projectModel.set(ProjectModel.leads, PersistentVector.create(importer.getLeads()));
+
+				OnEDT.onEDT(() -> {
+					if (surveyModel != null && surveyModel.getRowCount() > 0) {
+						surveyDrawer.table().getModel().copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
+						rebuild3dModel.run();
+					}
+
+					projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
+					projectModelBinder.set(projectModel);
+
+					float[] viewXform = projectModel.get(ProjectModel.viewXform);
+					if (viewXform != null) {
+						renderer.viewSettings().setViewXform(viewXform);
+					}
+
+					Projection projCalculator = projectModel.get(ProjectModel.projCalculator);
+					if (projCalculator != null) {
+						renderer.viewSettings().setProjection(projCalculator);
+					}
+
+					if (projectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
+						installPerspectiveMouseAdapters();
+					}
+					else {
+						installOrthoMouseAdapters();
+					}
+
+					if (!Files.exists(newProjectFile)) {
+						saveProject();
+					}
+				});
+
+				logger.info(() -> "done opening file: " + newProjectFile);
 			}
-			SurveyTableModel surveyModel = loadSurvey(fileToLoad, backupFile);
-			if (surveyModel == null) {
-				logger.info("no survey found");
-				return null;
+			catch (Throwable _t) {
+				Throwable t = BreakoutMain.checkForOutOfMemory(_t);
+				logger.log(Level.SEVERE, "failed to open file: " + newProjectFile, t);
+				OnEDT.onEDT(() -> {
+					new JOptionPaneBuilder()
+						.error()
+						.message(t.getClass().getSimpleName() + ": " + t.getLocalizedMessage())
+						.showDialog(dialog, "Failed to open file");
+				});
 			}
-
-			Path swapFile = getSwapFile(newProjectFile);
-			if (Files.exists(swapFile)) {
-				projectModel = loadProjectModel(swapFile.toFile());
-			}
-
-			if (projectModel == null) {
-				projectModel = ProjectModel.instance.newObject();
-			}
-			ProjectModel.setDefaults(projectModel);
-			projectModel.set(ProjectModel.leads, PersistentVector.create(importer.getLeads()));
-
-			OnEDT.onEDT(() -> {
-				if (surveyModel != null && surveyModel.getRowCount() > 0) {
-					surveyDrawer.table().getModel().copyRowsFrom(surveyModel, 0, surveyModel.getRowCount() - 1, 0);
-					rebuild3dModel.run();
-				}
-
-				projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
-				projectModelBinder.set(projectModel);
-
-				float[] viewXform = projectModel.get(ProjectModel.viewXform);
-				if (viewXform != null) {
-					renderer.viewSettings().setViewXform(viewXform);
-				}
-
-				Projection projCalculator = projectModel.get(ProjectModel.projCalculator);
-				if (projCalculator != null) {
-					renderer.viewSettings().setProjection(projCalculator);
-				}
-
-				if (projectModel.get(ProjectModel.cameraView) == CameraView.PERSPECTIVE) {
-					installPerspectiveMouseAdapters();
-				}
-				else {
-					installOrthoMouseAdapters();
-				}
-
-				if (!Files.exists(newProjectFile)) {
-					saveProject();
-				}
-			});
-
-			logger.info(() -> "done opening file: " + newProjectFile);
 			return null;
 		}
 	}
@@ -989,15 +1004,15 @@ public class BreakoutMainView {
 				updateView();
 				logger.info("done rebuilding 3D model");
 			}
-			catch (Exception ex) {
-				logger.log(Level.SEVERE, "failed to rebuild 3D model", ex);
+			catch (Throwable _t) {
+				Throwable t = BreakoutMain.checkForOutOfMemory(_t);
+				logger.log(Level.SEVERE, "failed to rebuild 3D model", t);
 				OnEDT.onEDT(() -> {
 					new JOptionPaneBuilder()
 						.error()
-						.message(ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage())
+						.message(t.getClass().getSimpleName() + ": " + t.getLocalizedMessage())
 						.showDialog(mainPanel, "Failed to rebuild 3D model");
 				});
-				throw ex;
 			} finally {
 				OnEDT.onEDT(() -> taskListDrawer.holder().release(this));
 			}

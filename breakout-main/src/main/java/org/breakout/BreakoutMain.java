@@ -30,6 +30,8 @@ import java.io.PipedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.CharacterIterator;
+import java.text.StringCharacterIterator;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -60,11 +62,13 @@ public class BreakoutMain {
 	static {
 		if (System.getProperty("rootDirectory") != null) {
 			rootDirectory = Paths.get(System.getProperty("rootDirectory"));
-		} else {
+		}
+		else {
 			Path homePath;
 			try {
 				homePath = Paths.get(System.getProperty("user.home"));
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				logger.log(Level.SEVERE, "Failed to get user home directory!", ex);
 				homePath = Paths.get(System.getProperty("user.dir"));
 			}
@@ -78,6 +82,49 @@ public class BreakoutMain {
 
 	}
 
+	static String formatSize(long bytes) {
+		if (-1000 < bytes && bytes < 1000) {
+			return bytes + " B";
+		}
+		CharacterIterator ci = new StringCharacterIterator("kMGTPE");
+		while (bytes <= -999950 || bytes >= 999950) {
+			bytes /= 1000;
+			ci.next();
+		}
+		return String.format("%.1f %cB", bytes / 1000.0, ci.current());
+	}
+
+	public static void logMemoryInfo() {
+		Runtime rt = Runtime.getRuntime();
+		logger.info(() -> "Max memory:       " + formatSize(rt.maxMemory()));
+		logger.info(() -> "Free memory:      " + formatSize(rt.freeMemory()));
+		logger.info(() -> "Total memory:     " + formatSize(rt.totalMemory()));
+	}
+
+	/**
+	 * Looks for an {@code OutOfMemoryError} in the cause chain of the given
+	 * {@code Throwable}. If one is found, logs an error message and memory info and
+	 * returns a wrapping error with a human-readable message. Otherwise, returns
+	 * the given {@code Throwable}.
+	 * 
+	 * @param t a {@code Throwable} that was caught.
+	 * @return an {@code OutOfMemoryError} in the cause chain of {@code t}, or
+	 *         otherwise {@code t} itself.
+	 */
+	public static Throwable checkForOutOfMemory(Throwable t) {
+		Throwable cause = t;
+		while (cause != null && !(cause instanceof OutOfMemoryError)) {
+			cause = cause.getCause();
+		}
+		if (cause instanceof OutOfMemoryError) {
+			logger.log(Level.SEVERE, "Out of memory!", t);
+			logMemoryInfo();
+			Runtime rt = Runtime.getRuntime();
+			return new Error("Out of memory! Maximum available is " + formatSize(rt.maxMemory()) + ".", cause);
+		}
+		return t;
+	}
+
 	public static void main(String[] args) {
 		createRootDirectory();
 		configureLogging();
@@ -89,6 +136,7 @@ public class BreakoutMain {
 		logger.info(() -> "logDirectory:     " + logDirectory);
 
 		logger.info("Launching...");
+		logMemoryInfo();
 
 		System.setProperty("apple.eawt.quitStrategy", "CLOSE_ALL_WINDOWS");
 		System.setProperty("apple.laf.useScreenMenuBar", "true");
@@ -96,14 +144,16 @@ public class BreakoutMain {
 
 		try {
 			splashImage = ImageIO.read(BreakoutMain.class.getResource("splash.png"));
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			logger.log(Level.WARNING, "Failed to load splash image", e);
 		}
 
 		OnEDT.onEDT(() -> {
 			try {
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			} catch (Exception e) {
+			}
+			catch (Exception e) {
 				logger.log(Level.WARNING, "Failed to set system look and feel", e);
 			}
 
@@ -129,11 +179,15 @@ public class BreakoutMain {
 		BreakoutMainView view;
 		try {
 			view = loader.submit(() -> new BreakoutMainView()).get();
-		} catch (InterruptedException | ExecutionException e) {
+		}
+		catch (InterruptedException | ExecutionException e) {
 			logger.log(Level.SEVERE, "Failed to create main view", e);
-			JOptionPane.showMessageDialog(
-					null, "Failed to create main view: " + e.getLocalizedMessage(),
-					"Fatal Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane
+				.showMessageDialog(
+					null,
+					"Failed to create main view: " + e.getLocalizedMessage(),
+					"Fatal Error",
+					JOptionPane.ERROR_MESSAGE);
 			logger.info("exiting with code 1");
 			System.exit(1);
 			return;
@@ -154,11 +208,13 @@ public class BreakoutMain {
 				frame.setExtendedState(Frame.MAXIMIZED_BOTH);
 				splash.setVisible(false);
 			});
-			// unfortunately, making the frame visible on the EDT causes buggy behavior with the drawers due to some
+			// unfortunately, making the frame visible on the EDT causes buggy behavior with
+			// the drawers due to some
 			// obscure bug in JOGL (or jogl-awt)
 			frame.setVisible(true);
 			logger.info("opened main window");
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to create or open main window", ex);
 		}
 	}
@@ -182,7 +238,8 @@ public class BreakoutMain {
 	private static void createRootDirectory() {
 		try {
 			Files.createDirectories(rootDirectory);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			ex.printStackTrace();
 		}
 	}
@@ -190,7 +247,8 @@ public class BreakoutMain {
 	private static void createBackupDirectory() {
 		try {
 			Files.createDirectories(backupDirectory);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			logger.log(Level.SEVERE, "failed to create backup directory", ex);
 		}
 	}
@@ -200,20 +258,21 @@ public class BreakoutMain {
 			Properties props = new Properties();
 			if (System.getProperty("java.util.logging.config.file") != null) {
 				props.load(new FileInputStream(System.getProperty("java.util.logging.config.file")));
-			} else {
+			}
+			else {
 				props.load(BreakoutMain.class.getResourceAsStream("logging.properties"));
 			}
 
 			String logfile = props.getProperty("java.util.logging.FileHandler.pattern");
 			if (logfile != null && Paths.get(logfile).isAbsolute()) {
 				logDirectory = Paths.get(logfile).getParent();
-			} else {
+			}
+			else {
 				logDirectory = rootDirectory.resolve("log");
 				Files.createDirectories(logDirectory);
 				if (logfile != null) {
-					props.setProperty(
-							"java.util.logging.FileHandler.pattern",
-							logDirectory.resolve(logfile).toString());
+					props
+						.setProperty("java.util.logging.FileHandler.pattern", logDirectory.resolve(logfile).toString());
 				}
 			}
 
@@ -222,7 +281,8 @@ public class BreakoutMain {
 			props.store(out, null);
 			out.close();
 			LogManager.getLogManager().readConfiguration(configStream);
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			ex.printStackTrace();
 		}
 
@@ -232,7 +292,8 @@ public class BreakoutMain {
 			try {
 				System.setOut(new LoggerPrintStream(Logger.getLogger("System.out"), Level.INFO, true));
 				System.setErr(new LoggerPrintStream(Logger.getLogger("System.err"), Level.WARNING, true));
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				ex.printStackTrace();
 			}
 		}

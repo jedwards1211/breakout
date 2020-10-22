@@ -42,8 +42,9 @@ public abstract class OnEDT {
 		if (SwingUtilities.isEventDispatchThread()) {
 			try {
 				r.run();
-			} catch (Exception ex) {
-				throw new RuntimeInvocationTargetException(ex);
+			}
+			catch (Throwable t) {
+				throw new RuntimeInvocationTargetException(t);
 			}
 			return;
 		}
@@ -51,35 +52,41 @@ public abstract class OnEDT {
 			SwingUtilities.invokeAndWait(() -> {
 				try {
 					r.run();
-				} catch (Exception ex) {
-					throw new RuntimeInvocationTargetException(ex);
+				}
+				catch (Throwable t) {
+					throw new RuntimeInvocationTargetException(t);
 				}
 			});
-		} catch (InvocationTargetException e) {
+		}
+		catch (InvocationTargetException e) {
 			if (e.getCause() instanceof RuntimeInvocationTargetException) {
 				throw (RuntimeInvocationTargetException) e.getCause();
-			} else {
+			}
+			else {
 				throw new RuntimeInvocationTargetException(e.getCause());
 			}
-		} catch (InterruptedException e) {
+		}
+		catch (InterruptedException e) {
 			throw new RuntimeInterruptedException(e);
 		}
 	}
 
 	/**
-	 * This constructor calls {@link #doRun()} on the EDT immediately so that
-	 * you can save a few keystrokes.
+	 * This constructor calls {@link #doRun()} on the EDT immediately so that you
+	 * can save a few keystrokes.
 	 *
-	 * @throws RuntimeInvocationTargetException
-	 *             wrapping the exception thrown by {@link #doRun()}, if any
-	 * @throws RuntimeInterruptedException
-	 *             if the calling thread was interrupted while waiting for
-	 *             {@link SwingUtilities#invokeAndWait(Runnable)} to return.
+	 * @throws RuntimeInvocationTargetException wrapping the exception thrown by
+	 *                                          {@link #doRun()}, if any
+	 * @throws RuntimeInterruptedException      if the calling thread was
+	 *                                          interrupted while waiting for
+	 *                                          {@link SwingUtilities#invokeAndWait(Runnable)}
+	 *                                          to return.
 	 */
 	public OnEDT() {
 		if (SwingUtilities.isEventDispatchThread()) {
 			callRun();
-		} else {
+		}
+		else {
 			try {
 				SwingUtilities.invokeAndWait(new Runnable() {
 					@Override
@@ -87,14 +94,16 @@ public abstract class OnEDT {
 						callRun();
 					}
 				});
-			} catch (InvocationTargetException e) {
+			}
+			catch (InvocationTargetException e) {
 				// first cause is the RuntimeInvocationTargetException thrown
 				// from run(); second cause is whatever doRun() threw. We want
 				// to rewrap the second cause in a
 				// RuntimeInvocationTargetException with a stack trace from this
 				// method.
 				throw new RuntimeInvocationTargetException(e.getCause().getCause());
-			} catch (InterruptedException e) {
+			}
+			catch (InterruptedException e) {
 				throw new RuntimeInterruptedException(e);
 			}
 		}
@@ -103,7 +112,8 @@ public abstract class OnEDT {
 	private void callRun() {
 		try {
 			run();
-		} catch (Throwable t) {
+		}
+		catch (Throwable t) {
 			throw new RuntimeInvocationTargetException(t);
 		}
 	}
