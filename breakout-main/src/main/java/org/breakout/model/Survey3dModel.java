@@ -1732,6 +1732,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		Font labelFont = new Font("Arial", Font.BOLD, 72);
 		FontRenderContext frc = new FontRenderContext(new AffineTransform(), true, true);
 		task.runSubtask(1, subtask -> {
+			subtask.setStatus("Laying out station labels");
 			subtask.setTotal(sections.size());
 			for (Section section : sections) {
 				subtask.runSubtask(1, labelSubtask -> section.updateLabels(labelFont, frc, labelSubtask));
@@ -1852,6 +1853,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		Collection<CalcStation> stations,
 		Collection<Float> spacings,
 		Task<?> subtask) {
+		subtask.setStatus("Building station labels");
+
 		Map<Float, Set<StationKey>> stationsToLabel = new HashMap<>();
 		Map<Float, RfStarTree<StationKey>> spatialIndexes = new HashMap<>();
 
