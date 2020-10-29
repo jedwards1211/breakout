@@ -1,5 +1,10 @@
 version: 2.1
 
+parameters:
+  node-version:
+    type: string
+    default: '12.16.0'
+
 commands:
   install_deps:
     description: Install dependencies
@@ -15,13 +20,10 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Temp
-          command: echo test
-      - run:
           name: Install Node.js
           command: |
-            curl https://nodejs.org/dist/v12.16.0/node-v12.16.0.pkg > "$HOME/Downloads/node-v12.16.0.pkg"
-            sudo installer -store -pkg "$HOME/Downloads/node-v12.16.0.pkg" -target /
+            curl https://nodejs.org/dist/v<< pipeline.parameters.node-version >>/node-v<< pipeline.parameters.node-version >>.pkg > "$HOME/Downloads/node-v<< pipeline.parameters.node-version >>.pkg"
+            sudo installer -store -pkg "$HOME/Downloads/node-v<< pipeline.parameters.node-version >>.pkg" -target /
       - run:
           name: Install Yarn
           command: curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.10
@@ -39,10 +41,10 @@ jobs:
             sudo installer -pkg /Volumes/JDK\ 8\ Update\ 181/JDK\ 8\ Update\ 181.pkg -target /
             diskutil umount /Volumes/JDK\ 8\ Update\ 181
       - run:
-        name: Setup Environment Variables
-        command: |
-          echo "export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home" >> $BASH_ENV
-          echo "export PATH=$JAVA_HOME/bin:$PATH" >> $BASH_ENV
+          name: Setup Environment Variables
+          command: |
+            echo "export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home" >> $BASH_ENV
+            echo "export PATH=$JAVA_HOME/bin:$PATH" >> $BASH_ENV
       - run:
           name: Install Maven
           command: |
@@ -77,11 +79,10 @@ jobs:
           paths:
             - dist/macos/breakout.jar
             - dist/macos/Breakout.dmg
-      - store_artifacts:
-          path: dist/macos/breakout.jar
-          path: dist/macos/Breakout.dmg
 
   release:
+    docker:
+      - image: circleci/node:<< pipeline.parameters.node-version >>
     steps:
       - attach_workspace:
           at: .
