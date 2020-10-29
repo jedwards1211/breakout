@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>ref</artifactId>
-	<version>1.0.0</version>
+	<version>0.0.0-SNAPSHOT</version>
 	<name>Ref</name>
 	<description>a generic ObjectHolder-like class.  Useful for multiple return values</description>
 	<build>

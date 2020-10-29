@@ -3,10 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>breakout-main</artifactId>
-	<version>1.0.0</version>
+	<version>0.0.0-SNAPSHOT</version>
 	<properties>
 		<maven.build.timestamp.format>yyyy-MM-dd HH:mm z</maven.build.timestamp.format>
 		<build.date>${maven.build.timestamp}</build.date>
+		<breakout.version>0.0.0-development</breakout.version>
 	</properties>
 	<build>
 		<resources>
@@ -53,42 +54,42 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-core</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-math</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-math3d</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-plot</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-spatial</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-ui</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-jogl-gl2es2-utils</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-jogl-gl2es2-swing</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.swinglabs.swingx</groupId>
@@ -160,7 +161,7 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>andork-ui-test</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -181,7 +182,7 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>ref</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>
@@ -191,7 +192,7 @@
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>datescraper</artifactId>
-			<version>1.0.0</version>
+			<version>0.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.andork</groupId>

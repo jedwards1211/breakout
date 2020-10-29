@@ -32,37 +32,43 @@ import org.breakout.model.Survey3dModel.Shot3d;
 import org.omg.CORBA.FloatHolder;
 
 public class FluidPerspectiveToOrtho {
-	private static float getFarthestExtent(Survey3dModel model, Set<Shot3d> shotsInView, float[] shotsInViewMbr,
-			float[] direction, FloatBinaryOperator extentFunction) {
+	private static float getFarthestExtent(
+		Survey3dModel model,
+		Set<Shot3d> shotsInView,
+		float[] shotsInViewMbr,
+		float[] direction,
+		FloatBinaryOperator extentFunction) {
 		FloatHolder farthest = new FloatHolder(Float.NaN);
 
-		float[] testPoint = new float[3];
+		float[] temp = new float[3];
 
-		RTraversal.traverse(model.getTree().getRoot(),
-				node -> {
-					if (!Rectmath.intersects3(shotsInViewMbr, node.mbr())) {
-						return false;
-					}
-					return Rectmath.findCorner3(node.mbr(), testPoint, corner -> {
-						float dist = Vecmath.dot3(corner, direction);
-						return farthest.value != extentFunction.applyAsFloat(farthest.value, dist) ? true : null;
-					}) ? true : false; // make sure we don't return null!
-				} ,
-				leaf -> {
-					if (shotsInView.contains(leaf.object())) {
-						for (float[] coord : leaf.object().coordIterable()) {
-							float dist = Vecmath.dot3(coord, direction);
-							farthest.value = extentFunction.applyAsFloat(farthest.value, dist);
-						}
-					}
-					return true;
-				});
+		RTraversal.traverse(model.getTree().getRoot(), node -> {
+			if (!Rectmath.intersects3(shotsInViewMbr, node.mbr())) {
+				return false;
+			}
+			return Rectmath.findCorner3(node.mbr(), temp, corner -> {
+				float dist = Vecmath.dot3(corner, direction);
+				return farthest.value != extentFunction.applyAsFloat(farthest.value, dist) ? true : null;
+			}) ? true : false; // make sure we don't return null!
+		}, leaf -> {
+			if (shotsInView.contains(leaf.object())) {
+				for (float[] coord : leaf.object().vertices(temp)) {
+					float dist = Vecmath.dot3(coord, direction);
+					farthest.value = extentFunction.applyAsFloat(farthest.value, dist);
+				}
+			}
+			return true;
+		});
 
 		return farthest.value;
 	}
 
-	public static float[] getOrthoBounds(Survey3dModel model, Set<Shot3d> shotsInView, float[] orthoRight,
-			float[] orthoUp, float[] orthoForward) {
+	public static float[] getOrthoBounds(
+		Survey3dModel model,
+		Set<Shot3d> shotsInView,
+		float[] orthoRight,
+		float[] orthoUp,
+		float[] orthoForward) {
 		float[] result = new float[4];
 
 		float[] shotsInViewMbr = Rectmath.voidRectf(3);

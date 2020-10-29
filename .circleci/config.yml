@@ -1,0 +1,100 @@
+version: 2.1
+
+commands:
+  install_deps:
+    description: Install dependencies
+    steps:
+      - run:
+          name: yarn
+          command: yarn --frozen-lockfile
+
+jobs:
+  build-macos:
+    macos:
+      xcode: 11.5.0
+    steps:
+      - checkout
+      - run:
+          name: Install Node.js
+          command: |
+            curl https://nodejs.org/dist/v12.16.0/node-v12.16.0.pkg > "$HOME/Downloads/node-v12.16.0.pkg"
+            sudo installer -store -pkg "$HOME/Downloads/node-v12.16.0.pkg" -target /
+      - run:
+          name: Install Yarn
+          command: curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.10
+      - run:
+          name: Check Node.js/Yarn installs
+          command: |
+            node -v
+            yarn -v
+      - install_deps
+      - run:
+          name: Install Java
+          command: |
+            curl -v -j -k -L -H "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/otn/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8u181-macosx-x64.dmg > "$HOME/Downloads/jdk-8u181-macosx-x64.dmg"
+            hdiutil attach "$HOME/Downloads/jdk-8u181-macosx-x64.dmg"
+            sudo installer -pkg /Volumes/JDK\ 8\ Update\ 181/JDK\ 8\ Update\ 181.pkg -target /
+            diskutil umount /Volumes/JDK\ 8\ Update\ 181
+      - run:
+        name: Setup Environment Variables
+        command: |
+          echo "export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home" >> $BASH_ENV
+          echo "export PATH=$JAVA_HOME/bin:$PATH" >> $BASH_ENV
+      - run:
+          name: Install Maven
+          command: |
+            curl https://mirror.olnevhost.net/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz > "$HOME/Downloads/apache-maven-3.6.3-bin.tar.gz"
+            tar xzvf "$HOME/Downloads/apache-maven-3.6.3-bin.tar.gz"
+            echo "export PATH=apache-maven-3.6.3/bin:$PATH" >> $BASH_ENV
+      - run:
+          name: Check Java/Maven installs
+          command: |
+            java -version
+            javapackager -version
+            mvn -v
+      - run:
+          name: Get release version
+          command: yarn semantic-release --dry-run
+      - run:
+          name: Build
+          command: |
+            mkdir dist
+            mvn clean install
+            cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/macos/breakout.jar
+      - run:
+          name: Package
+          command: |
+            javapackager -deploy -native -outdir packages -outfile Breakout \
+              -srcdir dist/macos -srcfiles breakout.jar \
+              -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
+              -BappVersion=$(< version)
+            cp packages/bundles/Breakout-0.0.0-SNAPSHOT.dmg dist/macos/Breakout.dmg
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/macos/breakout.jar
+            - dist/macos/Breakout.dmg
+      - store_artifacts:
+          path: dist/macos/breakout.jar
+          path: dist/macos/Breakout.dmg
+
+  release:
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Release
+          command: semantic-release
+
+workflows:
+  version: 2
+  build-release:
+    jobs:
+      - build-macos
+      - release:
+          requires:
+            - build-macos
+          context: github
+          filters:
+            branches:
+              only: master, next

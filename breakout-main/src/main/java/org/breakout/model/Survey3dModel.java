@@ -1293,7 +1293,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			float[] axis = model.depthAxis.value();
 
 			if (param == ColorParam.DEPTH) {
-				for (float[] coord : coordIterable()) {
+				for (float[] coord : shot.vertices()) {
 					float f =
 						(coord[0] - origin[0]) * axis[0]
 							+ (coord[1] - origin[1]) * axis[1]
@@ -1336,45 +1336,6 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					i++;
 				}
 			}
-		}
-
-		public Iterable<float[]> coordIterable() {
-			return coordIterable(new float[3]);
-		}
-
-		public Iterable<float[]> coordIterable(float[] coord) {
-			return new Iterable<float[]>() {
-				@Override
-				public Iterator<float[]> iterator() {
-					return new Iterator<float[]>() {
-						int index = 0;
-
-						@Override
-						public boolean hasNext() {
-							return index < vertexCount;
-						}
-
-						@Override
-						public float[] next() {
-							getCoordinate(index, coord);
-							index++;
-							return coord;
-						}
-					};
-				}
-			};
-		}
-
-		public void getCoordinate(int i, float[] result) {
-			if (i < 0 || i >= vertexCount) {
-				throw new IllegalArgumentException("i must be between 0 and " + vertexCount);
-			}
-			ByteBuffer vertBuffer = section.geometry.buffer();
-			int baseIndex = (indexInVertices + i) * GEOM_BPV;
-			result[0] = vertBuffer.getFloat(baseIndex);
-			result[1] = vertBuffer.getFloat(baseIndex + 4);
-			result[2] = vertBuffer.getFloat(baseIndex + 8);
-			vertBuffer.position(0);
 		}
 
 		public void pick(
@@ -1615,6 +1576,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 					buffer.putFloat(index, 2f);
 				}
 			}
+		}
+
+		public Iterable<float[]> vertices() {
+			return shot.vertices();
+		}
+
+		public Iterable<float[]> vertices(float[] out) {
+			return shot.vertices(out);
 		}
 	}
 
@@ -2395,7 +2364,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			Shot3d shot = shot3ds.get(key);
 			if (shot == null)
 				continue;
-			for (float[] coord : shot.coordIterable()) {
+			for (float[] coord : shot.vertices()) {
 				float right = Vecmath.dot3(coord, orthoRight);
 				float up = Vecmath.dot3(coord, orthoUp);
 				float forward = Vecmath.dot3(coord, orthoForward);
@@ -2430,6 +2399,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	}
 
 	public void getShotsIn(PlanarHull3f hull, Set<ShotKey> result) {
+		float[] temp = new float[3];
 		RTraversal.traverse(getTree().getRoot(), node -> {
 			if (hull.containsBox(node.mbr())) {
 				RTraversal.traverse(node, node2 -> true, leaf -> {
@@ -2445,7 +2415,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}, leaf -> {
 			Shot3d shot = leaf.object();
 			if (isShotVisible(shot)) {
-				for (float[] coord : shot.coordIterable()) {
+				for (float[] coord : shot.vertices(temp)) {
 					if (!hull.containsPoint(coord)) {
 						return true;
 					}

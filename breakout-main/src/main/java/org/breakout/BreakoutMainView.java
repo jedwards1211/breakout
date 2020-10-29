@@ -2796,7 +2796,7 @@ public class BreakoutMainView {
 					if (shot == null) {
 						continue;
 					}
-					for (float[] coord : shot.coordIterable(endLocation)) {
+					for (float[] coord : shot.vertices(endLocation)) {
 						frustum.addPoint(coord);
 					}
 				}
@@ -3682,7 +3682,7 @@ public class BreakoutMainView {
 					getShotsFromTable().forEach(key -> {
 						Shot3d shot = model3d.getShot(key);
 						if (shot != null) {
-							for (float[] coord : shot.coordIterable(endLocation)) {
+							for (float[] coord : shot.vertices(endLocation)) {
 								frustum.addPoint(coord);
 							}
 						}

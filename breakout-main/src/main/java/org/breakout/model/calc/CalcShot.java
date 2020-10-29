@@ -1,6 +1,7 @@
 package org.breakout.model.calc;
 
 import java.util.Collection;
+import java.util.Iterator;
 
 import org.andork.math3d.NormalGenerator3f.Triangle;
 import org.breakout.model.ShotKey;
@@ -24,6 +25,34 @@ public class CalcShot {
 	public CalcCrossSection toCrossSection;
 
 	public Collection<Triangle> splayTriangles;
+
+	public Iterable<float[]> vertices() {
+		return vertices(new float[3]);
+	}
+
+	public Iterable<float[]> vertices(float[] out) {
+		return new Iterable<float[]>() {
+			@Override
+			public Iterator<float[]> iterator() {
+				return new Iterator<float[]>() {
+					int index = 0;
+
+					@Override
+					public boolean hasNext() {
+						return index < vertices.length;
+					}
+
+					@Override
+					public float[] next() {
+						out[0] = vertices[index++];
+						out[1] = vertices[index++];
+						out[2] = vertices[index++];
+						return out;
+					}
+				};
+			}
+		};
+	}
 
 	public float[] normals;
 	public float[] vertices;

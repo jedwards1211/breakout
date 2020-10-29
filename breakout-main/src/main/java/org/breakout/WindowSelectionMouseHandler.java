@@ -96,7 +96,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 	@Override
 	public void mouseMoved(MouseEvent e) {
 		if (!points.isEmpty()) {
-			float dpr = DevicePixelRatio.getDevicePixelRatio( context.getDrawable( ) );
+			float dpr = DevicePixelRatio.getDevicePixelRatio(context.getDrawable());
 			float[] last = points.get(points.size() - 1);
 			last[0] = e.getX() * dpr;
 			last[1] = context.getDrawable().getSurfaceHeight() - e.getY() * dpr;
@@ -110,19 +110,17 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 	@Override
 	public void mousePressed(MouseEvent e) {
 		if (e.getButton() == MouseEvent.BUTTON3) {
-			selectLoopedShots((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0,
-					(e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0);
+			selectLoopedShots(
+				(e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0,
+				(e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0);
 			end();
 			return;
 		}
 		if (e.getButton() != MouseEvent.BUTTON1) {
 			return;
 		}
-		float dpr = DevicePixelRatio.getDevicePixelRatio( context.getDrawable( ) );
-		points.add(new float[] {
-			e.getX() * dpr,
-			context.getDrawable().getSurfaceHeight() - e.getY() * dpr
-		});
+		float dpr = DevicePixelRatio.getDevicePixelRatio(context.getDrawable());
+		points.add(new float[] { e.getX() * dpr, context.getDrawable().getSurfaceHeight() - e.getY() * dpr });
 		context.getDrawable().invoke(false, drawable -> {
 			selectionPolygon.setPoints(points);
 			return false;
@@ -162,54 +160,6 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 
 			pickXform.exportViewVolume(hull, mbr, cw, ch);
 
-			// BasicJOGLObject bounds = new BasicJOGLObject( );
-			// BufferHelper bufferHelper = new BufferHelper( );
-			// for( float[ ] vertex : hull.vertices )
-			// {
-			// bufferHelper.put( vertex );
-			// }
-			// bounds.addVertexBuffer( bufferHelper.toByteBuffer( ) );
-			// BufferHelper indexBufferHelper = new BufferHelper( );
-			// indexBufferHelper.put( 0 , 1 , 0 , 2 , 1 , 3 , 2 , 3 , 4 , 5 , 4
-			// , 6 , 5 , 7 , 6 , 7 , 0 , 4 , 1 , 5 , 2 , 6 , 3 , 7 );
-			// bounds.indexBuffer( indexBufferHelper.toByteBuffer( ) );
-			// bounds.vertexCount( 8 );
-			// bounds.indexCount( 24 );
-			// bounds.indexType( GL.GL_UNSIGNED_INT );
-			// bounds.drawMode( GL.GL_LINES );
-			// bounds.vertexShaderCode( new BasicVertexShader( ).toString( )
-			// ).add( bounds.new Attribute3fv( ).name( "a_pos" ) );
-			// bounds.fragmentShaderCode( new FlatFragmentShader( ).color( 0 , 1
-			// , 0 , 1 ).toString( ) );
-			//
-			// BasicJOGLObject normals = new BasicJOGLObject( );
-			// bufferHelper = new BufferHelper( );
-			// for( int side = 0 ; side < hull.origins.length ; side++ )
-			// {
-			// bufferHelper.put( hull.origins[ side ] );
-			// bufferHelper.put( hull.origins[ side ][ 0 ] + hull.normals[ side
-			// ][ 0 ] * 50 );
-			// bufferHelper.put( hull.origins[ side ][ 1 ] + hull.normals[ side
-			// ][ 1 ] * 50 );
-			// bufferHelper.put( hull.origins[ side ][ 2 ] + hull.normals[ side
-			// ][ 2 ] * 50 );
-			// }
-			// normals.addVertexBuffer( bufferHelper.toByteBuffer( ) );
-			// normals.vertexCount( 12 );
-			// normals.drawMode( GL.GL_LINES );
-			// normals.vertexShaderCode( new BasicVertexShader( ).toString( )
-			// ).add( normals.new Attribute3fv( ).name( "a_pos" ) );
-			// normals.fragmentShaderCode( new FlatFragmentShader( ).color( 1 ,
-			// 1 , 0 , 1 ).toString( ) );
-			//
-			// context.getCanvas( ).invoke( false , drawable -> {
-			// bounds.init( ( GL2ES2 ) drawable.getGL( ) );
-			// context.getScene( ).add( bounds );
-			// normals.init( ( GL2ES2 ) drawable.getGL( ) );
-			// context.getScene( ).add( normals );
-			// return false;
-			// } );
-
 			JoglViewState viewState = context.getViewState();
 
 			float[] pv = Vecmath.newMat4f();
@@ -217,8 +167,10 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 
 			Set<Shot3d> newSelected = new HashSet<>();
 
+			float[] temp = new float[3];
+
 			RTraversal.traverse(root, node -> hull.intersectsBox(node.mbr()), leaf -> {
-				for (float[] point : leaf.object().coordIterable()) {
+				for (float[] point : leaf.object().vertices(temp)) {
 					Vecmath.mpmul(pv, point, pointOnScreen);
 					pointOnScreen[0] = Reparam.linear(pointOnScreen[0], -1, 1, 0, cw);
 					pointOnScreen[1] = Reparam.linear(pointOnScreen[1], -1, 1, 0, ch);
@@ -237,7 +189,7 @@ public class WindowSelectionMouseHandler extends MouseAdapter {
 	}
 
 	public void start(MouseEvent e) {
-		float dpr = DevicePixelRatio.getDevicePixelRatio( context.getDrawable( ) );
+		float dpr = DevicePixelRatio.getDevicePixelRatio(context.getDrawable());
 		points.add(new float[] { e.getX() * dpr, context.getDrawable().getSurfaceHeight() - e.getY() * dpr });
 		points.add(new float[] { e.getX() * dpr, context.getDrawable().getSurfaceHeight() - e.getY() * dpr });
 		context.getDrawable().invoke(false, drawable -> {

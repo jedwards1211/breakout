@@ -1,22 +1,45 @@
 {
   "name": "breakout",
-  "version": "1.0.0",
-  "description": "breakout ========",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "engines": {
+    "node": ">=12"
   },
+  "version": "0.0.0-development",
+  "description": "3D cave survey and terrain viewer and trip planner",
+  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jedwards1211/breakout.git"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "And Edwards",
+  "license": "GPL-2.0-only",
   "bugs": {
     "url": "https://github.com/jedwards1211/breakout/issues"
   },
   "homepage": "https://github.com/jedwards1211/breakout#readme",
-  "dependencies": {
-    "babel-preset-es2015-node": "^6.1.1"
+  "scripts": {
+    "semantic-release": "semantic-release"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@semantic-release/exec": "^5.0.0",
+    "prettier": "^2.1.2",
+    "semantic-release": "^17.2.1"
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "release": {
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/exec",
+        {
+          "prepareCmd": "echo ${nextRelease.version} > releaseVersion"
+        }
+      ]
+    ]
   }
 }
