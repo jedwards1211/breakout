@@ -15,6 +15,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Temp
+          command: echo test
+      - run:
           name: Install Node.js
           command: |
             curl https://nodejs.org/dist/v12.16.0/node-v12.16.0.pkg > "$HOME/Downloads/node-v12.16.0.pkg"
