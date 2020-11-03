@@ -7,7 +7,6 @@
 	<properties>
 		<maven.build.timestamp.format>yyyy-MM-dd HH:mm z</maven.build.timestamp.format>
 		<build.date>${maven.build.timestamp}</build.date>
-		<breakout.version>0.0.0-development</breakout.version>
 	</properties>
 	<build>
 		<resources>
