@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import repo from '../src/repo'
+import Collapse from '@material-ui/core/Collapse'
 import ListItem from '@material-ui/core/ListItem'
 import ListItemText from '@material-ui/core/ListItemText'
 import CloudDownload from '@material-ui/icons/CloudDownload'
@@ -26,6 +27,7 @@ const styles = theme => ({
 })
 
 class Download extends React.Component {
+  state = { platform: null }
   static async getInitialProps() {
     const octokit = require('@octokit/rest')()
     const { data: releases } = await octokit.repos.listReleases({
@@ -34,60 +36,123 @@ class Download extends React.Component {
     })
     return { releases }
   }
+  setPlatform = platform => this.setState({ platform })
   render() {
+    const { platform } = this.state
     const { classes, releases } = this.props
     const latest = releases[0]
     const releasedAt = new Date(latest.published_at).toLocaleDateString()
+    const dmg = latest.assets.find(a => /\.dmg$/.test(a.name))
+    const x64msi = latest.assets.find(a => /x64\.msi$/.test(a.name))
+    const jar = latest.assets.find(a => /\.jar$/.test(a.name))
     return (
       <div>
         <h1>Download</h1>
-        <ListItem
-          className={classes.downloadButton}
-          button
-          component="a"
-          href={latest.assets[0].browser_download_url}
-        >
-          <ListItemIcon>
-            <CloudDownload />
-          </ListItemIcon>
-          <ListItemText
-            primary={
-              <span>
-                <strong>Breakout</strong> (all Desktop Operating Systems)
-              </span>
-            }
-            secondary={
-              <span>
-                <strong>{latest.name}</strong> (released {releasedAt})
-              </span>
-            }
-          />
-        </ListItem>
-
-        <h2>Installation</h2>
-
-        <p>
-          Breakout requires <strong>Java 8+</strong>
-          <a href="http://www.java.com">
-            <img _fcksavedurl="http://www.java.com" />
-            <img
-              className={classes.downloadJavaButton}
-              src="http://download.oracle.com/technetwork/java/get-java/getjavasoftware-88x31.png"
-              alt="Get Java Software"
-              border="0"
-              width="88"
-              height="31"
+        {dmg && (
+          <ListItem
+            className={classes.downloadButton}
+            button
+            component="a"
+            href={dmg.browser_download_url}
+            selected={platform === 'macos'}
+            onClick={() => this.setPlatform('macos')}
+          >
+            <ListItemIcon>
+              <CloudDownload />
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                <span>
+                  <strong>MacOS</strong>
+                </span>
+              }
+              secondary={
+                <span>
+                  <strong>{dmg.name}</strong> (released {releasedAt})
+                </span>
+              }
             />
-          </a>
-        </p>
-        <p>
-          After you've installed Java, just open the downloaded file ({' '}
-          <code>{latest.assets[0].name}</code>) to launch Breakout.
-        </p>
-        <p>
-          You may want to copy the program to your system applications folder,
-          but that's up to you.
-        </p>
+          </ListItem>
+        )}
+        {x64msi && (
+          <ListItem
+            className={classes.downloadButton}
+            button
+            component="a"
+            href={x64msi.browser_download_url}
+            selected={platform === 'windows-x64'}
+            onClick={() => this.setPlatform('windows-x64')}
+          >
+            <ListItemIcon>
+              <CloudDownload />
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                <span>
+                  <strong>Windows 64-bit</strong>
+                </span>
+              }
+              secondary={
+                <span>
+                  <strong>{x64msi.name}</strong> (released {releasedAt})
+                </span>
+              }
+            />
+          </ListItem>
+        )}
+        {jar && (
+          <ListItem
+            className={classes.downloadButton}
+            button
+            component="a"
+            href={x64msi.browser_download_url}
+            selected={platform === 'other'}
+            onClick={() => this.setPlatform('other')}
+          >
+            <ListItemIcon>
+              <CloudDownload />
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                <span>
+                  <strong>Other Desktop Operating Systems</strong>
+                </span>
+              }
+              secondary={
+                <span>
+                  <strong>{jar.name}</strong> (released {releasedAt})
+                </span>
+              }
+            />
+          </ListItem>
+        )}
+
+        <Collapse in={platform === 'other'}>
+          <h2>Installation</h2>
+
+          <p>
+            Breakout requires <strong>Java 8</strong>
+            <a href="https://www.oracle.com/java/technologies/javase-jre8-downloads.html">
+              <img _fcksavedurl="https://www.oracle.com/java/technologies/javase-jre8-downloads.html" />
+              <img
+                className={classes.downloadJavaButton}
+                src="http://download.oracle.com/technetwork/java/get-java/getjavasoftware-88x31.png"
+                alt="Get Java Software"
+                border="0"
+                width="88"
+                height="31"
+              />
+            </a>
+          </p>
+          <p>
+            After you've installed Java, just open the downloaded file ({' '}
+            <code>{latest.assets[0].name}</code>) to launch Breakout.
+          </p>
+          <p>
+            You may want to copy the program to your system applications folder,
+            but that's up to you.
+          </p>
+        </Collapse>
 
         <a href="https://github.com/jedwards1211/breakout/releases">
           <h2>
