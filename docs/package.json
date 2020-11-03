@@ -7,9 +7,6 @@
   "author": "Andy Edwards",
   "license": "MIT",
   "private": true,
-  "engines": {
-    "node": "^8"
-  },
   "scripts": {
     "lint": "eslint src pages --cache",
     "lint:fix": "eslint --fix src pages --cache",
@@ -50,7 +47,7 @@
     "jss": "^9.8.7",
     "jss-global": "^3.0.0",
     "lodash": "^4.17.11",
-    "next": "^8.0.0-canary.21",
+    "next": "^8.0.0",
     "nprogress": "^0.2.0",
     "react": "^16.8.1",
     "react-dom": "^16.8.1",
