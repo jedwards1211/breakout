@@ -132,7 +132,7 @@ class Download extends React.Component {
             className={classes.downloadButton}
             button
             component="a"
-            href={x64msi.browser_download_url}
+            href={jar.browser_download_url}
             selected={platform === 'other'}
             onClick={() => this.setPlatform('other')}
           >
