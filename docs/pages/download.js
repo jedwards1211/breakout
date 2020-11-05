@@ -44,6 +44,7 @@ class Download extends React.Component {
     const releasedAt = new Date(latest.published_at).toLocaleDateString()
     const dmg = latest.assets.find(a => /\.dmg$/.test(a.name))
     const x64msi = latest.assets.find(a => /x64\.msi$/.test(a.name))
+    const x86msi = latest.assets.find(a => /x86\.msi$/.test(a.name))
     const jar = latest.assets.find(a => /\.jar$/.test(a.name))
     return (
       <div>
@@ -69,6 +70,32 @@ class Download extends React.Component {
               secondary={
                 <span>
                   <strong>{dmg.name}</strong> (released {releasedAt})
+                </span>
+              }
+            />
+          </ListItem>
+        )}
+        {x86msi && (
+          <ListItem
+            className={classes.downloadButton}
+            button
+            component="a"
+            href={x86msi.browser_download_url}
+            selected={platform === 'windows-x86'}
+            onClick={() => this.setPlatform('windows-x86')}
+          >
+            <ListItemIcon>
+              <CloudDownload />
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                <span>
+                  <strong>Windows 32-bit</strong>
+                </span>
+              }
+              secondary={
+                <span>
+                  <strong>{x86msi.name}</strong> (released {releasedAt})
                 </span>
               }
             />
