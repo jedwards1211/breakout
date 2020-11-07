@@ -10,7 +10,7 @@ import TableRow from '@material-ui/core/TableRow'
 
 import { withRouter } from 'next/router'
 
-import LinkButton from '../src/LInkButton'
+import LinkButton from '../src/LinkButton'
 import TableHead from '@material-ui/core/TableHead'
 
 const styles = (theme) => ({
