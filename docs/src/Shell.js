@@ -27,7 +27,7 @@ import NProgress from './NProgress'
 const drawerWidth = 250
 const appBarGradient = 'linear-gradient(#ba2b50, #700344)'
 
-const styles = theme => ({
+const styles = (theme) => ({
   root: {
     position: 'absolute',
     top: 0,
@@ -83,10 +83,10 @@ const styles = theme => ({
   },
   content: {
     flexGrow: 1,
-    padding: theme.spacing.unit,
+    padding: theme.spacing(1),
     paddingTop: 0,
     [theme.breakpoints.up('sm')]: {
-      padding: theme.spacing.unit * 3,
+      padding: theme.spacing(3),
       paddingTop: 0,
     },
     overflow: 'auto',

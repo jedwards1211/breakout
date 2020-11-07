@@ -1,24 +1,14 @@
 /* eslint-env browser */
 
 import React from 'react'
-import App, { Container } from 'next/app'
+import App from 'next/app'
 import Head from 'next/head'
-import { MuiThemeProvider } from '@material-ui/core/styles'
+import { ThemeProvider } from '@material-ui/core/styles'
 import CssBaseline from '@material-ui/core/CssBaseline'
-import JssProvider from 'react-jss/lib/JssProvider'
-import getPageContext from '../src/getPageContext'
 import Shell from '../src/Shell'
-import { create } from 'jss'
-import preset from 'jss-preset-default'
-
-const jss = create(preset())
+import theme from '../src/theme'
 
 class BreakoutDocsApp extends App {
-  constructor() {
-    super()
-    this.pageContext = getPageContext()
-  }
-
   componentDidMount() {
     // Remove the server-side injected CSS.
     const jssStyles = document.querySelector('#jss-server-side')
@@ -30,32 +20,24 @@ class BreakoutDocsApp extends App {
   render() {
     const { Component, pageProps } = this.props
     return (
-      <Container>
+      <React.Fragment>
         <Head>
           <title>Breakout Cave Survey Visualizer</title>
+          <meta
+            name="viewport"
+            content="minimum-scale=1, initial-scale=1, width=device-width"
+          />
         </Head>
-        {/* Wrap every page in Jss and Theme providers */}
-        <JssProvider
-          jss={jss}
-          registry={this.pageContext.sheetsRegistry}
-          generateClassName={this.pageContext.generateClassName}
-        >
-          {/* MuiThemeProvider makes the theme available down the React
-              tree thanks to React context. */}
-          <MuiThemeProvider
-            theme={this.pageContext.theme}
-            sheetsManager={this.pageContext.sheetsManager}
-          >
-            {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-            <CssBaseline />
-            <Shell>
-              {/* Pass pageContext to the _document though the renderPage enhancer
-                  to render collected styles on server-side. */}
-              <Component pageContext={this.pageContext} {...pageProps} />
-            </Shell>
-          </MuiThemeProvider>
-        </JssProvider>
-      </Container>
+        {/* MuiThemeProvider makes the theme available down the React
+            tree thanks to React context. */}
+        <ThemeProvider theme={theme}>
+          {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+          <CssBaseline />
+          <Shell>
+            <Component {...pageProps} />
+          </Shell>
+        </ThemeProvider>
+      </React.Fragment>
     )
   }
 }

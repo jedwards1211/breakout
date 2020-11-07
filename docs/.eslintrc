@@ -1,5 +1,5 @@
 {
-  "extends": ["@jedwards1211/eslint-config-react", "eslint-config-prettier"],
+  "extends": ["@jedwards1211/eslint-config-react", "prettier", "prettier/react"],
   "parser": "babel-eslint",
   "parserOptions": {
     "ecmaVersion": 6,

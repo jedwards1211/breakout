@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import withStyles from '@material-ui/core/styles/withStyles'
 
-const styles = theme => ({
+const styles = (theme) => ({
   img: {
     maxWidth: '100%',
   },
@@ -24,7 +24,7 @@ const ChangingViews = ({ classes }) => (
 
     <h2>Ortho and Perspective Views</h2>
     <p>
-      The <strong>Plan and Profile Views</strong> are <emph>Orthographic</emph>{' '}
+      The <strong>Plan and Profile Views</strong> are <em>Orthographic</em>{' '}
       views, meaning everything appears the same size regardless of how far away
       it is. In perspective view, passages that are far away appear smaller,
       just like eyesight.

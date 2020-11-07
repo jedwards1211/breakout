@@ -6,10 +6,10 @@ import withStyles from '@material-ui/core/styles/withStyles'
 
 import KeyboardKey from '../src/KeyboardKey'
 
-const styles = theme => ({
+const styles = (theme) => ({
   img: {
     display: 'block',
-    margin: theme.spacing.unit * 4,
+    margin: theme.spacing(4),
     zoom: '50%',
     maxWidth: '90%',
   },

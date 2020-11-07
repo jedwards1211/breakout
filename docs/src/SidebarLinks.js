@@ -6,9 +6,7 @@ import withStyles from '@material-ui/core/styles/withStyles'
 
 const styles = ({ palette }) => ({
   activeLink: {
-    background: `linear-gradient(${palette.secondary.light}, ${
-      palette.secondary.main
-    })`,
+    background: `linear-gradient(${palette.secondary.light}, ${palette.secondary.main})`,
   },
 })
 

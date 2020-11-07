@@ -10,12 +10,14 @@ import ListItemIcon from '@material-ui/core/ListItemIcon'
 import withStyles from '@material-ui/core/styles/withStyles'
 
 import ExitToApp from '@material-ui/icons/ExitToApp'
+import AppleIcon from '../src/icons/Apple'
+import WindowsIcon from '../src/icons/Windows'
 
-const styles = theme => ({
+const styles = (theme) => ({
   downloadButton: {
     width: 450,
     border: `1px solid ${theme.palette.grey[300]}`,
-    borderRadius: theme.spacing.unit / 2,
+    borderRadius: theme.spacing(0.5),
   },
   downloadJavaButton: {
     marginLeft: '1em',
@@ -26,29 +28,50 @@ const styles = theme => ({
   },
 })
 
+function formatSize(bytes) {
+  var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  if (bytes == 0) return '0 Bytes'
+  var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+  return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i]
+}
+
 class Download extends React.Component {
   state = { platform: null }
   static async getInitialProps() {
-    const octokit = require('@octokit/rest')()
-    const { data: releases } = await octokit.repos.listReleases({
-      ...repo,
-      per_page: 1,
-    })
-    return { releases }
+    const { Octokit } = await import('@octokit/rest')
+    const octokit = new Octokit()
+    const {
+      data: { tag_name, published_at, assets },
+    } = await octokit.repos.getLatestRelease(repo)
+    return {
+      latest: {
+        tag_name,
+        published_at,
+        assets: assets.map((asset) => {
+          const { name, size, browser_download_url } = asset
+          return { name, size, browser_download_url }
+        }),
+      },
+    }
   }
-  setPlatform = platform => this.setState({ platform })
+  setPlatform = (platform) => this.setState({ platform })
   render() {
     const { platform } = this.state
-    const { classes, releases } = this.props
-    const latest = releases[0]
-    const releasedAt = new Date(latest.published_at).toLocaleDateString()
-    const dmg = latest.assets.find(a => /\.dmg$/.test(a.name))
-    const x64msi = latest.assets.find(a => /x64\.msi$/.test(a.name))
-    const x86msi = latest.assets.find(a => /x86\.msi$/.test(a.name))
-    const jar = latest.assets.find(a => /\.jar$/.test(a.name))
+    const {
+      classes,
+      latest: { tag_name, published_at, assets },
+    } = this.props
+    const dmg = assets.find((a) => /\.dmg$/.test(a.name))
+    const x64msi = assets.find((a) => /x64\.msi$/.test(a.name))
+    const x86msi = assets.find((a) => /x86\.msi$/.test(a.name))
+    const jar = assets.find((a) => /\.jar$/.test(a.name))
     return (
       <div>
         <h1>Download</h1>
+        <h2>
+          Breakout {tag_name} (Released{' '}
+          {new Date(published_at).toLocaleDateString()})
+        </h2>
         {dmg && (
           <ListItem
             className={classes.downloadButton}
@@ -59,7 +82,7 @@ class Download extends React.Component {
             onClick={() => this.setPlatform('macos')}
           >
             <ListItemIcon>
-              <CloudDownload />
+              <AppleIcon fontSize="large" />
             </ListItemIcon>
             <ListItemText
               primary={
@@ -69,7 +92,7 @@ class Download extends React.Component {
               }
               secondary={
                 <span>
-                  <strong>{dmg.name}</strong> (released {releasedAt})
+                  <strong>{dmg.name}</strong> ({formatSize(dmg.size)})
                 </span>
               }
             />
@@ -85,7 +108,7 @@ class Download extends React.Component {
             onClick={() => this.setPlatform('windows-x86')}
           >
             <ListItemIcon>
-              <CloudDownload />
+              <WindowsIcon fontSize="large" />
             </ListItemIcon>
             <ListItemText
               primary={
@@ -95,7 +118,7 @@ class Download extends React.Component {
               }
               secondary={
                 <span>
-                  <strong>{x86msi.name}</strong> (released {releasedAt})
+                  <strong>{x86msi.name}</strong> ({formatSize(x86msi.size)})
                 </span>
               }
             />
@@ -111,7 +134,7 @@ class Download extends React.Component {
             onClick={() => this.setPlatform('windows-x64')}
           >
             <ListItemIcon>
-              <CloudDownload />
+              <WindowsIcon fontSize="large" />
             </ListItemIcon>
             <ListItemText
               primary={
@@ -121,7 +144,7 @@ class Download extends React.Component {
               }
               secondary={
                 <span>
-                  <strong>{x64msi.name}</strong> (released {releasedAt})
+                  <strong>{x64msi.name}</strong> ({formatSize(x64msi.size)})
                 </span>
               }
             />
@@ -137,7 +160,7 @@ class Download extends React.Component {
             onClick={() => this.setPlatform('other')}
           >
             <ListItemIcon>
-              <CloudDownload />
+              <CloudDownload fontSize="large" />
             </ListItemIcon>
             <ListItemText
               primary={
@@ -147,7 +170,7 @@ class Download extends React.Component {
               }
               secondary={
                 <span>
-                  <strong>{jar.name}</strong> (released {releasedAt})
+                  <strong>{jar.name}</strong> ({formatSize(jar.size)})
                 </span>
               }
             />
@@ -173,7 +196,7 @@ class Download extends React.Component {
           </p>
           <p>
             After you've installed Java, just open the downloaded file ({' '}
-            <code>{latest.assets[0].name}</code>) to launch Breakout.
+            <code>{assets[0].name}</code>) to launch Breakout.
           </p>
           <p>
             You may want to copy the program to your system applications folder,

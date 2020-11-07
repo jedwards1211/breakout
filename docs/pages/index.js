@@ -6,9 +6,9 @@ import Link from '../src/Link'
 
 import CloudDownload from '@material-ui/icons/CloudDownload'
 
-const homeStyles = theme => ({
+const homeStyles = (theme) => ({
   logo: {
-    marginTop: theme.spacing.unit * 3,
+    marginTop: theme.spacing(3),
     width: 600,
     maxWidth: '100%',
   },
@@ -26,7 +26,10 @@ const Home = ({ classes }) => (
     <p>Things Breakout can do:</p>
     <ul>
       <li>colorize maps by many different parameters</li>
-      <li>show terrain and satellite imagery from <a href="https://www.mapbox.com">Mapbox</a></li>
+      <li>
+        show terrain and satellite imagery from{' '}
+        <a href="https://www.mapbox.com">Mapbox</a>
+      </li>
       <li>
         search for and fly to stations by name, trip description, or surveyor
         names

@@ -10,11 +10,10 @@ import TableRow from '@material-ui/core/TableRow'
 
 import { withRouter } from 'next/router'
 
-import Button from '@material-ui/core/Button'
-import Link from '../src/Link'
+import LinkButton from '../src/LInkButton'
 import TableHead from '@material-ui/core/TableHead'
 
-const styles = theme => ({
+const styles = (theme) => ({
   img: {
     maxWidth: '100%',
   },
@@ -188,24 +187,20 @@ const Navigation = ({
   return (
     <div>
       <h1>Navigation</h1>
-      <Button
-        component={props => (
-          <Link {...props} href={{ query: { mode: 'perspective' } }} />
-        )}
+      <LinkButton
+        href={{ query: { mode: 'perspective' } }}
         variant={mode === 'perspective' ? 'contained' : 'text'}
         color={mode === 'perspective' ? 'primary' : 'default'}
       >
         Perspective View
-      </Button>
-      <Button
-        component={props => (
-          <Link {...props} href={{ query: { mode: 'ortho' } }} />
-        )}
+      </LinkButton>
+      <LinkButton
+        href={{ query: { mode: 'ortho' } }}
         variant={mode === 'ortho' ? 'contained' : 'text'}
         color={mode === 'ortho' ? 'primary' : 'default'}
       >
         Plan and Profile Views
-      </Button>
+      </LinkButton>
 
       <Table>
         <NavigationTable

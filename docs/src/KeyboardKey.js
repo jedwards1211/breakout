@@ -1,14 +1,14 @@
 import * as React from 'react'
 import withStyles from '@material-ui/core/styles/withStyles'
 
-const styles = theme => ({
+const styles = (theme) => ({
   root: {
     display: 'inline-block',
-    padding: theme.spacing.unit / 2,
-    borderRadius: theme.spacing.unit / 2,
+    padding: theme.spacing(0.5),
+    borderRadius: theme.spacing(0.5),
     border: '1px solid currentColor',
     textAlign: 'center',
-    minWidth: theme.spacing.unit * 4,
+    minWidth: theme.spacing(4),
     backgroundColor: theme.palette.grey[200],
   },
 })

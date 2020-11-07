@@ -1,7 +1,7 @@
 import React from 'react'
 import NProgress from 'nprogress'
 import Router from 'next/router'
-import injectSheet from 'react-jss'
+import { withStyles } from '@material-ui/core/styles'
 
 const styles = {
   '@global': {
@@ -9,7 +9,7 @@ const styles = {
       pointerEvents: 'none',
     },
     '#nprogress .bar': {
-      background: props => props.color,
+      background: (props) => props.color,
 
       position: 'fixed',
       zIndex: 100000,
@@ -44,8 +44,8 @@ const styles = {
       height: 18,
       boxSizing: 'border-box',
       border: 'solid 2 transparent',
-      borderTopColor: props => props.color,
-      borderLeftColor: props => props.color,
+      borderTopColor: (props) => props.color,
+      borderLeftColor: (props) => props.color,
       borderRadius: '50%',
       animation: 'nprogress-spinner 400ms linear infinite',
     },
@@ -114,4 +114,4 @@ class NProgressContainer extends React.Component {
   }
 }
 
-export default injectSheet(styles)(NProgressContainer)
+export default withStyles(styles)(NProgressContainer)
