@@ -2592,7 +2592,7 @@ public class BreakoutMainView {
 			UpdateStatusPanelController updateStatusPanelController =
 				new UpdateStatusPanelController(
 					settingsDrawer.getUpdateStatusPanel(),
-					settingsDrawer.getLoadedVersion(),
+					BreakoutMain.getVersion(),
 					new URL(updateProps.get("latestVersionInfoUrl").toString()),
 					new File(updateProps.get("updateDir").toString()));
 

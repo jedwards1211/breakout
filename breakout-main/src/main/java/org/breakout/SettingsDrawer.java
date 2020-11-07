@@ -358,8 +358,6 @@ public class SettingsDrawer extends Drawer {
 
 	UpdateStatusPanel updateStatusPanel;
 
-	private String loadedVersion;
-
 	private JButton pickParamGradientButton;
 
 	private JComboBox<GradientModel> paramGradientComboBox;
@@ -902,11 +900,12 @@ public class SettingsDrawer extends Drawer {
 
 		versionLabel = new JLabel();
 		versionLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		Properties versionProperties = loadVersionProperties();
-		loadedVersion = versionProperties.getProperty("version", "unknown");
-		String buildDate = versionProperties.getProperty("build.date", "unknown");
-
-		localizer.setFormattedText(versionLabel, "versionLabel.text", loadedVersion, buildDate);
+		localizer
+			.setFormattedText(
+				versionLabel,
+				"versionLabel.text",
+				BreakoutMain.getVersion(),
+				BreakoutMain.getBuildDate());
 
 		updateStatusPanel = new UpdateStatusPanel(i18n);
 
@@ -1105,10 +1104,6 @@ public class SettingsDrawer extends Drawer {
 
 	public JButton getInferDepthAxisTiltButton() {
 		return inferDepthAxisTiltButton;
-	}
-
-	public String getLoadedVersion() {
-		return loadedVersion;
 	}
 
 	public JButton getOrbitToPlanButton() {

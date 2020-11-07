@@ -56,10 +56,13 @@ public class BreakoutMain {
 	private static SplashFrame splash;
 	private static Image splashImage;
 	private static BreakoutMainFrame frame;
+	private static String version;
+	private static String buildDate;
 
 	private static final Logger logger = Logger.getLogger(BreakoutMain.class.getName());
 
 	static {
+
 		if (System.getProperty("rootDirectory") != null) {
 			rootDirectory = Paths.get(System.getProperty("rootDirectory"));
 		}
@@ -80,6 +83,14 @@ public class BreakoutMain {
 
 	private BreakoutMain() {
 
+	}
+
+	public static String getVersion() {
+		return version;
+	}
+
+	public static String getBuildDate() {
+		return buildDate;
 	}
 
 	static String formatSize(long bytes) {
@@ -170,6 +181,8 @@ public class BreakoutMain {
 			splash.setVisible(true);
 		});
 
+		loadVersionProperties();
+
 		ExecutorService loader = Executors.newSingleThreadExecutor(r -> {
 			Thread thread = new Thread(r);
 			thread.setName("BreakoutMainView loader");
@@ -216,6 +229,18 @@ public class BreakoutMain {
 		}
 		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to create or open main window", ex);
+		}
+	}
+
+	private static void loadVersionProperties() {
+		try {
+			Properties props = new Properties();
+			props.load(BreakoutMain.class.getClassLoader().getResourceAsStream("version.properties"));
+			version = props.getProperty("version");
+			buildDate = props.getProperty("build.date");
+		}
+		catch (Exception ex) {
+			logger.log(Level.WARNING, "Failed to load version.properties", ex);
 		}
 	}
 
