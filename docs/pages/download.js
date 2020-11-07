@@ -38,8 +38,7 @@ function formatSize(bytes) {
 class Download extends React.Component {
   state = { platform: null }
   static async getInitialProps() {
-    const { Octokit } = await import('@octokit/rest')
-    const octokit = new Octokit()
+    const { default: octokit } = await import('../src/octokit')
     const {
       data: { tag_name, published_at, assets },
     } = await octokit.repos.getLatestRelease(repo)

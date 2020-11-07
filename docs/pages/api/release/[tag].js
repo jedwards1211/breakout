@@ -1,7 +1,5 @@
-import { Octokit } from '@octokit/rest'
+import octokit from '../../../src/octokit'
 import repo from '../../../src/repo'
-
-const octokit = new Octokit()
 
 export default async function handler(req, res) {
   const {
