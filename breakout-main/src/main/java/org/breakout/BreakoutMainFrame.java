@@ -48,8 +48,7 @@ public class BreakoutMainFrame extends JFrame {
 			protected void onValueChanged(Path newValue) {
 				updateTitle();
 			}
-		}.bind(new QObjectAttributeBinder<>(RootModel.currentProjectFile)
-				.bind(breakoutMainView.getRootModelBinder()));
+		}.bind(new QObjectAttributeBinder<>(RootModel.currentProjectFile).bind(breakoutMainView.getRootModelBinder()));
 
 		getContentPane().add(breakoutMainView.getMainPanel(), BorderLayout.CENTER);
 		setJMenuBar(breakoutMainView.getMenuBar());
@@ -67,8 +66,6 @@ public class BreakoutMainFrame extends JFrame {
 
 	private void updateTitle() {
 		Path currentProjectFile = mainView.getCurrentProjectFile();
-		setTitle(currentProjectFile != null
-				? "Breakout - " + currentProjectFile.normalize().toString()
-				: "Breakout");
+		setTitle(currentProjectFile != null ? "Breakout - " + currentProjectFile.normalize().toString() : "Breakout");
 	}
 }

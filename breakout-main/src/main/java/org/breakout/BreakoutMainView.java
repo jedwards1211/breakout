@@ -1174,29 +1174,39 @@ public class BreakoutMainView {
 		}
 	});
 
+	public void askToSaveChangesBeforeShutdown() {
+
+	}
+
 	public void shutdown() {
+		shutdown(true, null);
+	}
+
+	public void shutdown(boolean exit, Runnable afterShutdown) {
 		logger.info("Shutting down...");
-		if (hasUnsavedChanges()) {
-			logger.info("there are unsaved changes");
-			int choice =
-				new JOptionPaneBuilder()
-					.message("Do you want to save changes?")
-					.yesNoCancel()
-					.warning()
-					.showDialog(mainPanel, "Unsaved Changes");
-			switch (choice) {
-			case JOptionPane.YES_OPTION:
-				logger.info("user chose to save changes");
-				saveProject();
-				break;
-			case JOptionPane.NO_OPTION:
-				logger.info("user chose to discard unsaved changes");
-				break;
-			default:
-				logger.info("user chose to cancel shutdown");
-				return;
+		OnEDT.onEDT(() -> {
+			if (hasUnsavedChanges()) {
+				logger.info("there are unsaved changes");
+				int choice =
+					new JOptionPaneBuilder()
+						.message("Do you want to save changes?")
+						.yesNoCancel()
+						.warning()
+						.showDialog(mainPanel, "Unsaved Changes");
+				switch (choice) {
+				case JOptionPane.YES_OPTION:
+					logger.info("user chose to save changes");
+					saveProject();
+					break;
+				case JOptionPane.NO_OPTION:
+					logger.info("user chose to discard unsaved changes");
+					break;
+				default:
+					logger.info("user chose to cancel shutdown");
+					return;
+				}
 			}
-		}
+		});
 		rebuildTaskService.shutdownNow();
 		sortTaskService.shutdownNow();
 		ioTaskService.shutdown();
@@ -1213,6 +1223,7 @@ public class BreakoutMainView {
 		Thread shutdownThread = new Thread("Shutdown") {
 			@Override
 			public void run() {
+				boolean gotError = false;
 				try {
 					logger.info("waiting for ioTaskService to terminate");
 					final int seconds = 60;
@@ -1226,11 +1237,18 @@ public class BreakoutMainView {
 				}
 				catch (InterruptedException e) {
 					logger.log(Level.SEVERE, "interrupted while waiting for ioTaskService to terminate", e);
-					logger.info("exiting with code 1");
-					System.exit(1);
+					gotError = true;
 				}
-				logger.info("exiting with code 0");
-				System.exit(0);
+				if (exit) {
+					int code = gotError ? 1 : 0;
+					logger.info("exiting with code " + code);
+					System.exit(code);
+				}
+				OnEDT.onEDT(() -> {
+					finalTaskDialog.setVisible(false);
+					finalTaskDialog.dispose();
+				});
+				afterShutdown.run();
 			}
 		};
 		shutdownThread.start();

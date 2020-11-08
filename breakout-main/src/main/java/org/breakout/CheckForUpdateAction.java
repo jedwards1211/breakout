@@ -1,6 +1,7 @@
 package org.breakout;
 
 import java.awt.BorderLayout;
+import java.awt.Desktop;
 import java.awt.Dialog.ModalityType;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -123,7 +124,7 @@ public class CheckForUpdateAction extends AbstractAction {
 
 			if (available != null) {
 				File downloadDir = new File(System.getProperty("user.home"), "Downloads");
-				SelfReportingTask<Void> downloadTask = new SelfReportingTask<Void>(mainView.getMainPanel()) {
+				SelfReportingTask<File> downloadTask = new SelfReportingTask<File>(mainView.getMainPanel()) {
 					@Override
 					protected JDialog createDialog(Window owner) {
 						JDialog dialog = super.createDialog(owner);
@@ -132,7 +133,7 @@ public class CheckForUpdateAction extends AbstractAction {
 					}
 
 					@Override
-					protected Void workDuringDialog() throws Exception {
+					protected File workDuringDialog() throws Exception {
 						setStatus("Downloading " + available.asset.getName());
 
 						File destFile = new File(downloadDir, available.asset.getName());
@@ -155,12 +156,13 @@ public class CheckForUpdateAction extends AbstractAction {
 
 						logger.info(() -> "Downloaded " + available.asset.getBrowserDownloadUrl() + " to " + destFile);
 
-						return null;
+						return destFile;
 					}
 				};
 
+				File installer;
 				try {
-					downloadTask.call();
+					installer = downloadTask.call();
 				}
 				catch (Exception ex) {
 					logger.log(Level.SEVERE, "Failed to download update", ex);
@@ -173,6 +175,35 @@ public class CheckForUpdateAction extends AbstractAction {
 					});
 					return;
 				}
+				if (installer == null)
+					return;
+
+				logger.info("Shutting down before installing update");
+				mainView.shutdown(false, () -> {
+					int choice =
+						FromEDT
+							.fromEDT(
+								() -> new JOptionPaneBuilder()
+									.message(
+										"Breakout will now open the update installer after you click OK.",
+										"Please reopen Breakout after the installation is complete",
+										"(I haven't figured out a way to do that automatically yet :)")
+									.okCancel()
+									.showDialog(mainView.getMainPanel(), "Software Update"));
+					if (choice != JOptionPane.OK_OPTION) {
+						logger.info("User canceled update");
+						System.exit(0);
+					}
+					logger.info("Opening installer");
+					try {
+						Desktop.getDesktop().open(installer);
+					}
+					catch (Exception e) {
+						logger.log(Level.SEVERE, "Failed to open installer", e);
+						System.exit(1);
+					}
+					System.exit(0);
+				});
 			}
 		});
 
