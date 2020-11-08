@@ -1,40 +1,65 @@
-var fs = require('fs');
-var Promise = require('bluebird');
-var path = require('path');
-var request = require('superagent-bluebird-promise');
-var apiSettings = require('./github-api.json');
-var {execSync} = require('child_process');
+var fs = require('fs')
+var Promise = require('bluebird')
+var path = require('path')
+var request = require('superagent-bluebird-promise')
+var apiSettings = require('./github-api.json')
+var { execSync } = require('child_process')
 
-var username = apiSettings.username;
-var token = apiSettings.token;
+var username = apiSettings.username
+var token = apiSettings.token
 
-process.chdir(path.resolve(__dirname, '..'));
-var version = execSync("mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version " + 
-  "| grep -Ev '(^\\[|Download\\w+:)'").toString('utf8').trim();
-var jarName = 'breakout-' + version + '.jar';
-var jarFile = path.join(__dirname, '../Breakout/target', jarName);
-version = 'v' + version;
-
-console.log('deploying Breakout ' + version);
-
-function streamToPromise(stream) {
-    return new Promise(function(resolve, reject) {
-        stream.on("end", resolve);
-        stream.on("error", reject);
-    });
+process.chdir(path.resolve(__dirname, '..'))
+var version = process.env.BREAKOUT_VERSION
+if (!version) {
+  console.error(`missing process.env.BREAKOUT_VERSION`)
+  process.exit(1)
 }
 
-request.post('https://' + username + ':' + token + '@api.github.com/repos/' + username + '/breakout/releases')
-  .send(JSON.stringify({
-    tag_name: version,
-    name: version,
-    draft: true,
-  }))
-  .then(function(res) {
-    res = res.body;
+const assets = [
+  path.resolve(
+    __dirname,
+    `../breakout/target/breakout-${version}-all-platforms.jar`
+  ),
+  path.resolve(__dirname, `../packages/bundles/Breakout-${version}.dmg`),
+  path.resolve(__dirname, `../packages/bundles/Breakout-${version}-x64.msi`),
+  path.resolve(__dirname, `../packages/bundles/Breakout-${version}-x86.msi`),
+]
 
+for (const asset of assets) {
+  if (!fs.existsSync(asset)) {
+    console.error(`asset not found: ${path.relative(process.cwd(), asset)}`)
+    process.exit(1)
+  }
+}
+
+version = 'v' + version
+
+console.log('deploying Breakout ' + version)
+
+async function go() {
+  const {
+    body: { upload_url },
+  } = await request
+    .post(
+      'https://' +
+        username +
+        ':' +
+        token +
+        '@api.github.com/repos/' +
+        username +
+        '/breakout/releases'
+    )
+    .send(
+      JSON.stringify({
+        tag_name: version,
+        name: version,
+        draft: true,
+      })
+    )
+
+  for (const asset of assets) {
     var options = {
-      url: res.upload_url.replace('{?name,label}', ''),
+      url: upload_url.replace('{?name,label}', ''),
       port: 443,
       auth: {
         pass: token,
@@ -42,25 +67,32 @@ request.post('https://' + username + ':' + token + '@api.github.com/repos/' + us
       },
       headers: {
         'User-Agent': 'Release-Agent',
-        'Content-Type': 'application/java-archive',
-        'Content-Length': fs.statSync(jarFile).size,
+        'Content-Type': asset.endsWith('.jar')
+          ? 'application/java-archive'
+          : 'application/octet-stream',
+        'Content-Length': fs.statSync(asset).size,
       },
       qs: {
-        name: jarName
-      }
-    };
+        name: path.basename(asset),
+      },
+    }
 
-    // Better as a stream
-    return new Promise(function(resolve, reject) {
-      fs.createReadStream(jarFile).pipe(require('request').post(options, function(err, res){
-        if (err) return reject(err);
-        resolve(res);
-      }));
-    });
-  })
-  .then(function(res) {
-    console.log(res);
-  })
-  .catch(function(err) {
-    console.error(err.stack);
-  });
+    console.log(`Uploading ${path.basename(asset)}...`)
+    await new Promise(function (resolve, reject) {
+      fs.createReadStream(asset).pipe(
+        require('request').post(options, function (err, res) {
+          if (err) return reject(err)
+          console.log(res)
+          resolve(res)
+        })
+      )
+    })
+  }
+}
+go().then(
+  () => process.exit(0),
+  (err) => {
+    console.error(err.stack)
+    process.exit(1)
+  }
+)
