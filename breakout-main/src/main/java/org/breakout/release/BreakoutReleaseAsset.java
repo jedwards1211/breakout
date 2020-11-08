@@ -1,4 +1,4 @@
-package org.breakout.update;
+package org.breakout.release;
 
 import java.net.URL;
 import java.util.Objects;

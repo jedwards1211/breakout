@@ -1,4 +1,4 @@
-package org.breakout.update;
+package org.breakout.release;
 
 import java.util.Date;
 import java.util.List;

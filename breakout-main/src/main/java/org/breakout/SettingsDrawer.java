@@ -69,7 +69,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 
-import org.andork.awt.AWTUtil;
 import org.andork.awt.ColorUtils;
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
@@ -121,7 +120,6 @@ import org.breakout.model.Gradients;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
-import org.breakout.update.UpdateStatusPanel;
 import org.jdesktop.swingx.JXColorSelectionButton;
 
 import com.andork.plot.LinearAxisConversion;
@@ -355,8 +353,6 @@ public class SettingsDrawer extends Drawer {
 				new UnitizedDouble<>(displayDistRange.invert(1), displayLengthUnit).get(Length.meters),
 				1);
 		};
-
-	UpdateStatusPanel updateStatusPanel;
 
 	private JButton pickParamGradientButton;
 
@@ -906,15 +902,6 @@ public class SettingsDrawer extends Drawer {
 				"versionLabel.text",
 				BreakoutMain.getVersion(),
 				BreakoutMain.getBuildDate());
-
-		updateStatusPanel = new UpdateStatusPanel(i18n);
-
-		AWTUtil.traverse(updateStatusPanel, comp -> {
-			comp.setBackground(null);
-			if (comp instanceof JComponent) {
-				((JComponent) comp).setOpaque(false);
-			}
-		});
 	}
 
 	private void createLayout() {
@@ -1047,8 +1034,6 @@ public class SettingsDrawer extends Drawer {
 
 		w.put(versionLabel).belowLast().south().weighty(1.0).fillx();
 
-		w.put(updateStatusPanel).belowLast().south().fillx();
-
 		w.put(debugButton).belowLast().southwest();
 
 		debugButton.setVisible(false);
@@ -1139,10 +1124,6 @@ public class SettingsDrawer extends Drawer {
 
 	public JButton getResetViewButton() {
 		return resetViewButton;
-	}
-
-	public UpdateStatusPanel getUpdateStatusPanel() {
-		return updateStatusPanel;
 	}
 
 	public ViewButtonsPanel getViewButtonsPanel() {

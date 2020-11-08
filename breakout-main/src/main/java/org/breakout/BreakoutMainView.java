@@ -43,7 +43,6 @@ import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -72,7 +71,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
@@ -236,7 +234,6 @@ import org.breakout.model.raw.MetacaveExporter;
 import org.breakout.model.raw.MetacaveImporter;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
-import org.breakout.update.UpdateStatusPanelController;
 import org.jdesktop.swingx.JXHyperlink;
 
 import com.andork.plot.LinearAxisConversion;
@@ -2582,24 +2579,6 @@ public class BreakoutMainView {
 
 		if (!recoverBackupIfNecessary(rootModel)) {
 			newProject();
-		}
-
-		try (FileInputStream updateIn = new FileInputStream("update.properties")) {
-			Properties updateProps = new Properties();
-			updateProps.load(updateIn);
-			updateIn.close();
-
-			UpdateStatusPanelController updateStatusPanelController =
-				new UpdateStatusPanelController(
-					settingsDrawer.getUpdateStatusPanel(),
-					BreakoutMain.getVersion(),
-					new URL(updateProps.get("latestVersionInfoUrl").toString()),
-					new File(updateProps.get("updateDir").toString()));
-
-			updateStatusPanelController.checkForUpdate();
-		}
-		catch (Exception e) {
-			logger.log(Level.WARNING, "Failed to get autoupdate properties", e);
 		}
 	}
 

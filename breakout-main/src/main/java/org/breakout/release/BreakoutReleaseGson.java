@@ -1,4 +1,4 @@
-package org.breakout.update;
+package org.breakout.release;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

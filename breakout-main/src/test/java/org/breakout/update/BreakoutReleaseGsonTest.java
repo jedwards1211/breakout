@@ -2,6 +2,9 @@ package org.breakout.update;
 
 import static org.junit.Assert.assertEquals;
 
+import org.breakout.release.BreakoutRelease;
+import org.breakout.release.BreakoutReleaseAsset;
+import org.breakout.release.BreakoutReleaseGson;
 import org.junit.Test;
 
 public class BreakoutReleaseGsonTest {

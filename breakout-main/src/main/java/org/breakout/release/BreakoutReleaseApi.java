@@ -1,4 +1,4 @@
-package org.breakout.update;
+package org.breakout.release;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

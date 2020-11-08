@@ -31,7 +31,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.CharacterIterator;
+import java.text.SimpleDateFormat;
 import java.text.StringCharacterIterator;
+import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -56,8 +58,8 @@ public class BreakoutMain {
 	private static SplashFrame splash;
 	private static Image splashImage;
 	private static BreakoutMainFrame frame;
-	private static String version;
-	private static String buildDate;
+	private static String version = System.getProperty("MOCK_VERSION");
+	private static Date buildDate;
 
 	private static final Logger logger = Logger.getLogger(BreakoutMain.class.getName());
 
@@ -86,10 +88,14 @@ public class BreakoutMain {
 	}
 
 	public static String getVersion() {
+		if (version == null)
+			throw new IllegalStateException("Not initialized");
 		return version;
 	}
 
-	public static String getBuildDate() {
+	public static Date getBuildDate() {
+		if (version == null)
+			throw new IllegalStateException("Not initialized");
 		return buildDate;
 	}
 
@@ -141,6 +147,8 @@ public class BreakoutMain {
 		configureLogging();
 		createBackupDirectory();
 
+		logger.info(() -> "os.name           " + System.getProperty("os.name"));
+		logger.info(() -> "os.arch           " + System.getProperty("os.arch"));
 		logger.info(() -> "rootDirectory:    " + rootDirectory);
 		logger.info(() -> "rootSettingsFile: " + rootSettingsFile);
 		logger.info(() -> "backupDirectory:  " + backupDirectory);
@@ -236,8 +244,9 @@ public class BreakoutMain {
 		try {
 			Properties props = new Properties();
 			props.load(BreakoutMain.class.getClassLoader().getResourceAsStream("version.properties"));
-			version = props.getProperty("version");
-			buildDate = props.getProperty("build.date");
+			if (System.getProperty("MOCK_VERSION") == null)
+				version = props.getProperty("version");
+			buildDate = new SimpleDateFormat("yyyy-MM-dd HH:ss 'UTC'").parse(props.getProperty("build.date"));
 		}
 		catch (Exception ex) {
 			logger.log(Level.WARNING, "Failed to load version.properties", ex);
