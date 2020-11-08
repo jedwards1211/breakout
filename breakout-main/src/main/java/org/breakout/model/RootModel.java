@@ -67,6 +67,8 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
 	public static final Attribute<File> wallsImportDirectory = newAttribute(File.class, "wallsImportDirectory");
 	public static final Attribute<String> editorCommand = newAttribute(String.class, "editorCommand");
+	public static final Attribute<Boolean> checkForUpdatesOnStartup =
+		newAttribute(Boolean.class, "checkForUpdatesOnStartup");
 
 	public static final RootModel instance = new RootModel();
 
@@ -111,5 +113,6 @@ public final class RootModel extends QSpec<RootModel> {
 		rootModel.setIfNull(RootModel.showCenterOfOrbit, false);
 		rootModel.setIfNull(RootModel.wireframe, false);
 		rootModel.setIfNull(RootModel.searchMode, SearchMode.AUTO);
+		rootModel.setIfNull(RootModel.checkForUpdatesOnStartup, true);
 	}
 }

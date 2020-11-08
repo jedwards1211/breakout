@@ -30,13 +30,16 @@ import java.net.URL;
 
 public class DownloaderTest {
 	public static void main(String[] args) throws MalformedURLException, IOException {
-		final Downloader downloader = new Downloader().url(new URL("http://andork.com/index.html"))
-				.destFile(new File("trace.txt")).blockSize(10);
+		final Downloader downloader =
+			new Downloader()
+				.url(new URL("https://breakoutcavesurvey.com"))
+				.destFile(new File("trace.txt"))
+				.blockSize(10);
 		downloader.addPropertyChangeListener(new PropertyChangeListener() {
 			@Override
 			public void propertyChange(PropertyChangeEvent evt) {
 				System.out
-						.println("Transferred " + downloader.getNumBytesDownloaded() + "/" + downloader.getTotalSize());
+					.println("Transferred " + downloader.getNumBytesDownloaded() + "/" + downloader.getTotalSize());
 			}
 		});
 		downloader.download();

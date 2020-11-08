@@ -1470,6 +1470,7 @@ public class BreakoutMainView {
 	ExportStlAction exportBinaryStlAction = new ExportStlAction(this, ExportStlAction.Mode.Binary);
 	ExportStlAction exportAsciiStlAction = new ExportStlAction(this, ExportStlAction.Mode.ASCII);
 	ExportSurveyNotesAction exportSurveyNotesAction = new ExportSurveyNotesAction(this);
+	CheckForUpdateAction checkForUpdateAction = new CheckForUpdateAction(this);
 
 	OrbitToPlanAction orbitToPlanAction = new OrbitToPlanAction(this);
 	FitViewToEverythingAction fitViewToEverythingAction = new FitViewToEverythingAction(this);
@@ -2321,6 +2322,14 @@ public class BreakoutMainView {
 		debugMenu.add(new JMenuItem(new EditSwapFileAction(this)));
 		debugMenu.add(new JMenuItem(new SetEditorCommandAction(this)));
 
+		JMenu helpMenu = new JMenu();
+		menuBar.add(helpMenu);
+		JMenuItem checkForUpdateItem = new JMenuItem(checkForUpdateAction);
+		helpMenu.add(checkForUpdateItem);
+		JMenuItem checkForUpdatesOnStartupItem =
+			boundCheckBoxMenuItem(rootModelBinder, RootModel.checkForUpdatesOnStartup);
+		helpMenu.add(checkForUpdatesOnStartupItem);
+
 		JMenuItem noRecentFilesMenuItem = new JMenuItem();
 		noRecentFilesMenuItem.setEnabled(false);
 
@@ -2378,9 +2387,11 @@ public class BreakoutMainView {
 					localizer.setText(noRecentFilesMenuItem, "noRecentFilesMenuItem.text");
 
 					localizer.setText(debugMenu, "debugMenu.text");
+					localizer.setText(helpMenu, "helpMenu.text");
 					localizer.setText(showSpatialIndexMenuItem, "showSpatialIndexMenuItem.text");
 					localizer.setText(wireframeMenuItem, "wireframeMenuItem.text");
 					localizer.setText(showCenterOfOrbitMenuItem, "showCenterOfOrbitMenuItem.text");
+					localizer.setText(checkForUpdatesOnStartupItem, "checkForUpdatesOnStartupItem.text");
 				}
 			});
 		});
@@ -2579,6 +2590,10 @@ public class BreakoutMainView {
 
 		if (!recoverBackupIfNecessary(rootModel)) {
 			newProject();
+		}
+
+		if (rootModel.get(RootModel.checkForUpdatesOnStartup)) {
+			checkForUpdateAction.checkForUpdate(false);
 		}
 	}
 

@@ -30,9 +30,7 @@ import java.io.PipedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.CharacterIterator;
 import java.text.SimpleDateFormat;
-import java.text.StringCharacterIterator;
 import java.util.Date;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -49,6 +47,7 @@ import javax.swing.UIManager;
 import org.andork.logging.LoggerPrintStream;
 import org.andork.swing.OnEDT;
 import org.andork.swing.SplashFrame;
+import org.andork.util.SizeFormat;
 
 public class BreakoutMain {
 	private static final Path rootDirectory;
@@ -100,15 +99,7 @@ public class BreakoutMain {
 	}
 
 	static String formatSize(long bytes) {
-		if (-1000 < bytes && bytes < 1000) {
-			return bytes + " B";
-		}
-		CharacterIterator ci = new StringCharacterIterator("kMGTPE");
-		while (bytes <= -999950 || bytes >= 999950) {
-			bytes /= 1000;
-			ci.next();
-		}
-		return String.format("%.1f %cB", bytes / 1000.0, ci.current());
+		return SizeFormat.DEFAULT.format(bytes);
 	}
 
 	public static void logMemoryInfo() {

@@ -1,6 +1,9 @@
 package org.breakout.update;
 
 import java.util.NoSuchElementException;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.andork.semver.SemVer;
 import org.breakout.BreakoutMain;
@@ -9,8 +12,9 @@ import org.breakout.release.BreakoutReleaseApi;
 import org.breakout.release.BreakoutReleaseAsset;
 
 public class UpdateCheck {
+	private static final Logger logger = Logger.getLogger(UpdateCheck.class.getName());
+
 	public static interface Result {
-		public boolean isUpToDate();
 	}
 
 	public static Result UpToDateResult = new Result() {
@@ -18,23 +22,27 @@ public class UpdateCheck {
 		public String toString() {
 			return "UpdateCheck.UpToDateResult";
 		}
-
-		@Override
-		public boolean isUpToDate() {
-			return true;
-		}
 	};
 
-	public static class UpdateAvailableResult implements Result {
-		@Override
-		public boolean isUpToDate() {
-			return false;
+	public static class FailedResult implements Result {
+		public final Exception cause;
+
+		public FailedResult(Exception cause) {
+			super();
+			this.cause = cause;
 		}
 
+		@Override
+		public String toString() {
+			return "UpdateCheckFailedResult [cause=" + cause + "]";
+		}
+	}
+
+	public static class AvailableResult implements Result {
 		public final BreakoutRelease release;
 		public final BreakoutReleaseAsset asset;
 
-		public UpdateAvailableResult(BreakoutRelease release, BreakoutReleaseAsset asset) {
+		public AvailableResult(BreakoutRelease release, BreakoutReleaseAsset asset) {
 			this.release = release;
 			this.asset = asset;
 		}
@@ -42,13 +50,6 @@ public class UpdateCheck {
 		@Override
 		public String toString() {
 			return "UpdateAvailableResult [release=" + release + ", asset=" + asset + "]";
-		}
-	}
-
-	@SuppressWarnings("serial")
-	public static class UpdateCheckFailedException extends Exception {
-		public UpdateCheckFailedException(Throwable cause) {
-			super("Update check failed", cause);
 		}
 	}
 
@@ -77,18 +78,30 @@ public class UpdateCheck {
 		throw new NoSuchElementException("No installer found for " + os + " " + arch);
 	}
 
-	public static Result checkForUpdate() throws UpdateCheckFailedException {
+	public static Result checkForUpdate() {
 		try {
+			logger.info("Checking for update...");
 			BreakoutRelease latest = BreakoutReleaseApi.getLatest();
 
 			if (new SemVer(latest.getTagName()).compareTo(new SemVer(BreakoutMain.getVersion())) > 0) {
 				BreakoutReleaseAsset asset = getAssetForThisSystem(latest);
-				return new UpdateAvailableResult(latest, asset);
+				logger.info("Found newer version: " + asset.getBrowserDownloadUrl());
+				return new AvailableResult(latest, asset);
 			}
+			logger.info("Breakout is up to date");
 			return UpToDateResult;
 		}
 		catch (Exception e) {
-			throw new UpdateCheckFailedException(e);
+			logger.log(Level.SEVERE, "Update check failed", e);
+			return new FailedResult(e);
 		}
+	}
+
+	public static void checkForUpdateInBackground(Consumer<Result> handleResult) {
+		Thread thread = new Thread(() -> {
+			handleResult.accept(checkForUpdate());
+		}, "Update Checker");
+		thread.setDaemon(true);
+		thread.start();
 	}
 }
