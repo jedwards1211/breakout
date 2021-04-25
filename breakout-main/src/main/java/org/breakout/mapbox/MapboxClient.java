@@ -1,4 +1,4 @@
-package org.breakout.mabox;
+package org.breakout.mapbox;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;

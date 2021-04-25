@@ -202,7 +202,7 @@ import org.andork.util.FileRecoveryConfig;
 import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.HintLabels.UpdateOptions;
 import org.breakout.StatsModel.MinAvgMax;
-import org.breakout.mabox.MapboxClient;
+import org.breakout.mapbox.MapboxClient;
 import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
 import org.breakout.model.DebugDraw;

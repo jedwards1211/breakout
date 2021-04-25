@@ -1,4 +1,4 @@
-package org.breakout.mabox;
+package org.breakout.mapbox;
 
 public class Tilebelt {
 
