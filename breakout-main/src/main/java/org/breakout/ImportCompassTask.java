@@ -5,7 +5,6 @@ import static org.andork.util.JavaScript.falsy;
 import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,8 +47,9 @@ import org.andork.swing.async.SelfReportingTask;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
+import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedDouble;
-import org.andork.util.StringUtils;
+import org.andork.unit.UnitizedNumber;
 import org.breakout.compass.CompassConverter;
 import org.breakout.importui.ImportError;
 import org.breakout.importui.ImportError.Severity;
@@ -91,11 +91,15 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 		showDialogLater();
 	}
 
-	private String toString(Object o) {
+	private static String stringify(Object o) {
 		if (o == null) {
 			return null;
 		}
 		return o.toString();
+	}
+
+	private static <T extends UnitType<T>> String stringify(UnitizedNumber<T> value, Unit<T> unit) {
+		return value == null ? null : String.valueOf(value.get(unit));
 	}
 
 	static String feetToTripDistanceUnit(String feetMeasurement, SurveyRow row) {
@@ -185,7 +189,7 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 
 					@Override
 					public void file(Segment name, FileDirective surveyFile) {
-						Path surveyPath = file.getParent().resolve(Paths.get(surveyFile.file));
+						Path surveyPath = file.getParent().resolve(Paths.get(surveyFile.file)).normalize();
 						if (Files.notExists(surveyPath)) {
 							errors
 								.add(
@@ -197,6 +201,7 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 						}
 						surveyFiles.add(surveyPath);
 						surveyLocations.put(surveyPath, currentLocation);
+						Unit<Length> distUnit = Length.feet;
 						SurveyTrip locationTrip =
 							new MutableSurveyTrip()
 								.setDatum(currentLocation.datum != null ? datumMap.get(currentLocation.datum) : null)
@@ -207,7 +212,7 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 										? String.valueOf(currentLocation.location.utmZone)
 										: null)
 								.setName(null)
-								.setDistanceUnit(Length.feet)
+								.setDistanceUnit(distUnit)
 								.setAngleUnit(Angle.degrees)
 								.setOverrideFrontAzimuthUnit(Angle.degrees)
 								.setOverrideBackAzimuthUnit(Angle.degrees)
@@ -219,14 +224,29 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 						surveyLocationTrips.put(surveyPath, locationTrip);
 						if (surveyFile.linkStations != null) {
 							for (LinkStation station : surveyFile.linkStations) {
-								if (station.location == null)
+								if (station.location == null || currentLocation.location == null)
 									continue;
-								MutableSurveyRow stationPositionRow = new MutableSurveyRow();
-								stationPositionRow.setTrip(locationTrip);
-								stationPositionRow.setFromStation(station.name);
-								stationPositionRow.setEasting(station.location.easting.toString());
-								stationPositionRow.setNorthing(station.location.northing.toString());
-								stationPositionRow.setElevation(station.location.elevation.toString());
+								SurveyRow stationPositionRow =
+									new MutableSurveyRow()
+										.setTrip(locationTrip)
+										.setFromStation(station.name)
+										.setEasting(
+											stringify(
+												station.location.easting
+													.add(currentLocation.location.easting)
+													.get(distUnit)))
+										.setNorthing(
+											stringify(
+												station.location.northing
+													.add(currentLocation.location.northing)
+													.get(distUnit)))
+										.setElevation(
+											stringify(
+												station.location.elevation
+													.add(currentLocation.location.elevation)
+													.get(distUnit)))
+										.toImmutable();
+								rows.add(stationPositionRow);
 							}
 						}
 					}
@@ -313,11 +333,9 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 									continue;
 								}
 								SurveyTrip trip = null;
-								SurveyLocation location = null;
 								Path surveyFile = stationToSurvey.get(c.getStationName());
 								if (surveyFile != null) {
 									trip = surveyLocationTrips.get(surveyFile);
-									location = surveyLocations.get(surveyFile);
 								}
 								if (trip == null) {
 									if (locationTrip == null) {
@@ -339,6 +357,7 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 									}
 									trip = locationTrip;
 								}
+								Unit<Length> distUnit = trip.getDistanceUnit();
 
 								if (prevDrawCommand != null) {
 									if (c.getOperation() == DrawOperation.MOVE_TO) {
@@ -348,10 +367,10 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 													new MutableSurveyRow()
 														.setTrip(trip)
 														.setFromStation(prevDrawCommand.getStationName())
-														.setLeft(StringUtils.valueOfOrNull(prevDrawCommand.getLeft()))
-														.setRight(StringUtils.valueOfOrNull(prevDrawCommand.getRight()))
-														.setUp(StringUtils.valueOfOrNull(prevDrawCommand.getUp()))
-														.setDown(StringUtils.valueOfOrNull(prevDrawCommand.getDown()))
+														.setLeft(stringify(prevDrawCommand.getLeft(), distUnit))
+														.setRight(stringify(prevDrawCommand.getRight(), distUnit))
+														.setUp(stringify(prevDrawCommand.getUp(), distUnit))
+														.setDown(stringify(prevDrawCommand.getDown(), distUnit))
 														.toImmutable());
 										}
 									}
@@ -367,20 +386,20 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 											c
 												.getLocation()
 												.getNorthing()
-												.subtract(prevDrawCommand.getLocation().getNorthing())
-												.doubleValue();
+												.sub(prevDrawCommand.getLocation().getNorthing())
+												.doubleValue(distUnit);
 										double de =
 											c
 												.getLocation()
 												.getEasting()
-												.subtract(prevDrawCommand.getLocation().getEasting())
-												.doubleValue();
+												.sub(prevDrawCommand.getLocation().getEasting())
+												.doubleValue(distUnit);
 										double dv =
 											c
 												.getLocation()
 												.getVertical()
-												.subtract(prevDrawCommand.getLocation().getVertical())
-												.doubleValue();
+												.sub(prevDrawCommand.getLocation().getVertical())
+												.doubleValue(distUnit);
 
 										double distance = Math.sqrt(dn * dn + de * de + dv * dv);
 										double dne = Math.sqrt(dn * dn + de * de);
@@ -399,36 +418,26 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 													.setDistance(String.valueOf(distance))
 													.setFrontAzimuth(String.valueOf(azimuth))
 													.setFrontInclination(String.valueOf(inclination))
-													.setLeft(StringUtils.valueOfOrNull(prevDrawCommand.getLeft()))
-													.setRight(StringUtils.valueOfOrNull(prevDrawCommand.getRight()))
-													.setUp(StringUtils.valueOfOrNull(prevDrawCommand.getUp()))
-													.setDown(StringUtils.valueOfOrNull(prevDrawCommand.getDown()))
+													.setLeft(stringify(prevDrawCommand.getLeft(), distUnit))
+													.setRight(stringify(prevDrawCommand.getRight(), distUnit))
+													.setUp(stringify(prevDrawCommand.getUp(), distUnit))
+													.setDown(stringify(prevDrawCommand.getDown(), distUnit))
 													.toImmutable());
 									}
 								}
 
 								prevDrawCommand = c;
 
-								BigDecimal northing = c.getLocation().getNorthing();
-								BigDecimal easting = c.getLocation().getEasting();
-								BigDecimal elevation = c.getLocation().getVertical();
-								if (location != null) {
-									Unit<Length> distUnit = trip.getDistanceUnit();
-									northing =
-										northing.add(new BigDecimal(location.location.northing.doubleValue(distUnit)));
-									easting =
-										easting.add(new BigDecimal(location.location.easting.doubleValue(distUnit)));
-									elevation =
-										elevation
-											.add(new BigDecimal(location.location.elevation.doubleValue(distUnit)));
-								}
+								UnitizedDouble<Length> northing = c.getLocation().getNorthing();
+								UnitizedDouble<Length> easting = c.getLocation().getEasting();
+								UnitizedDouble<Length> elevation = c.getLocation().getVertical();
 								SurveyRow row =
 									new MutableSurveyRow()
 										.setTrip(trip)
 										.setFromStation(c.getStationName())
-										.setNorthing(toString(northing))
-										.setEasting(toString(easting))
-										.setElevation(toString(elevation))
+										.setNorthing(stringify(northing, distUnit))
+										.setEasting(stringify(easting, distUnit))
+										.setElevation(stringify(elevation, distUnit))
 										.toImmutable();
 								rows.add(row);
 
@@ -475,7 +484,9 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 				}
 			});
 		}
-		catch (Exception ex) {
+		catch (
+
+		Exception ex) {
 			logger.log(Level.SEVERE, "Failed to import compass data", ex);
 			OnEDT.onEDT(() -> {
 				JOptionPane

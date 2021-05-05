@@ -1,6 +1,5 @@
 package org.breakout.compass;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -10,6 +9,8 @@ import org.andork.compass.LrudAssociation;
 import org.andork.compass.survey.CompassShot;
 import org.andork.compass.survey.CompassTrip;
 import org.andork.compass.survey.CompassTripHeader;
+import org.andork.unit.Angle;
+import org.andork.unit.Length;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 import org.junit.Assert;
@@ -23,8 +24,8 @@ public class CompassConverterTest {
 		CompassTrip trip = new CompassTrip();
 		trip.setHeader(header);
 		CompassShot shot = new CompassShot();
-		shot.setLength(new BigDecimal(1.0));
-		shot.setLeft(new BigDecimal(2.0));
+		shot.setLength(Length.feet(1.0));
+		shot.setLeft(Length.feet(2.0));
 		trip.setShots(Arrays.asList(shot));
 
 		List<SurveyRow> rows = CompassConverter.convertShots(trip);
@@ -37,10 +38,11 @@ public class CompassConverterTest {
 	@Test
 	public void testConvertTeam() {
 		Assert.assertEquals(null, CompassConverter.convertTeam(null));
-		Assert.assertEquals(Arrays.asList("Edwards, Andy", "Lewis, Sean"),
+		Assert
+			.assertEquals(
+				Arrays.asList("Edwards, Andy", "Lewis, Sean"),
 				CompassConverter.convertTeam("  \tEdwards, Andy; Lewis, Sean  "));
-		Assert.assertEquals(Arrays.asList("Andy", "Sean"),
-				CompassConverter.convertTeam("  Andy    , Sean   "));
+		Assert.assertEquals(Arrays.asList("Andy", "Sean"), CompassConverter.convertTeam("  Andy    , Sean   "));
 	}
 
 	@Test
@@ -98,7 +100,7 @@ public class CompassConverterTest {
 		CompassTrip trip = new CompassTrip();
 		trip.setHeader(header);
 		CompassShot shot = new CompassShot();
-		shot.setLeft(new BigDecimal(3.5));
+		shot.setLeft(Length.feet(3.5));
 		trip.setShots(Arrays.asList(shot));
 
 		List<SurveyRow> rows = CompassConverter.convertShots(trip);
@@ -115,15 +117,15 @@ public class CompassConverterTest {
 		CompassShot shot = new CompassShot();
 		shot.setFromStationName("A");
 		shot.setToStationName("B");
-		shot.setLength(new BigDecimal(1.5));
-		shot.setFrontsightAzimuth(new BigDecimal(2.5));
-		shot.setFrontsightInclination(new BigDecimal(3.5));
-		shot.setBacksightAzimuth(new BigDecimal(4.5));
-		shot.setBacksightInclination(new BigDecimal(5.5));
-		shot.setLeft(new BigDecimal(6.5));
-		shot.setRight(new BigDecimal(7.5));
-		shot.setUp(new BigDecimal(8.5));
-		shot.setDown(new BigDecimal(9.5));
+		shot.setLength(Length.feet(1.5));
+		shot.setFrontsightAzimuth(Angle.degrees(2.5));
+		shot.setFrontsightInclination(Angle.degrees(3.5));
+		shot.setBacksightAzimuth(Angle.degrees(4.5));
+		shot.setBacksightInclination(Angle.degrees(5.5));
+		shot.setLeft(Length.feet(6.5));
+		shot.setRight(Length.feet(7.5));
+		shot.setUp(Length.feet(8.5));
+		shot.setDown(Length.feet(9.5));
 		trip.setShots(Arrays.asList(shot));
 
 		List<SurveyRow> rows = CompassConverter.convertShots(trip);
@@ -159,8 +161,7 @@ public class CompassConverterTest {
 		SurveyTrip trip = CompassConverter.convertTripHeader(header);
 		Assert.assertEquals("MAM (The secret connection)", trip.getName());
 		Assert.assertEquals("2016/12/11", trip.getDate());
-		Assert.assertEquals(Arrays.asList("Sean Lewis", "Andy Edwards", "Ronnie Harrison"),
-				trip.getSurveyors());
+		Assert.assertEquals(Arrays.asList("Sean Lewis", "Andy Edwards", "Ronnie Harrison"), trip.getSurveyors());
 	}
 
 	@Test
@@ -172,7 +173,7 @@ public class CompassConverterTest {
 		CompassShot shot = new CompassShot();
 		shot.setFromStationName("A1");
 		shot.setToStationName("A2");
-		shot.setLeft(new BigDecimal(3.5));
+		shot.setLeft(Length.feet(3.5));
 		trip.setShots(Arrays.asList(shot));
 
 		List<SurveyRow> rows = CompassConverter.convertShots(trip);
