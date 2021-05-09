@@ -46,7 +46,7 @@
     "@octokit/rest": "^18.0.9",
     "jss": "^10.4.0",
     "jss-plugin-global": "^10.4.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "next": "^9.0.0",
     "nprogress": "^0.2.0",
     "react": "^16.9.0",
