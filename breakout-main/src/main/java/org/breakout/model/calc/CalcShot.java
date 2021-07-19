@@ -24,6 +24,8 @@ public class CalcShot {
 	public CalcCrossSection fromCrossSection;
 	public CalcCrossSection toCrossSection;
 
+	public String comment;
+
 	public Collection<Triangle> splayTriangles;
 
 	public Iterable<float[]> vertices() {

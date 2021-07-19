@@ -3780,11 +3780,13 @@ public class BreakoutMainView {
 			boolean showCheckedLeads = getProjectModel().get(ProjectModel.showCheckedLeads);
 			setStatus("Updating lead index...");
 			MultiMap<StationKey, SurveyLead> index = new LinkedListMultiMap<>();
-			forEach(leads, lead -> {
+			Task.Iteratee<SurveyLead> leadHandler = lead -> {
 				if (lead.getStation() != null && (showCheckedLeads || !lead.isDone())) {
 					index.put(new StationKey(lead.getCave(), lead.getStation()), lead);
 				}
-			});
+			};
+			forEach(leads, leadHandler);
+			forEach(parsedProject.leads, leadHandler);
 			if (isCanceled()) {
 				return null;
 			}

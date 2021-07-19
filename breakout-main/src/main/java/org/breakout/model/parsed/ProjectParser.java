@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.regex.Pattern;
 
 import org.andork.datescraper.DateMatcher;
 import org.andork.datescraper.DatePatterns;
@@ -19,6 +20,8 @@ import org.breakout.model.CrossSectionType;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 import org.breakout.model.parsed.ParseMessage.Severity;
+import org.breakout.model.raw.MutableSurveyLead;
+import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 
@@ -294,10 +297,14 @@ public class ProjectParser {
 		return field != null && !isNullOrEmpty(field.value) ? field.value : null;
 	}
 
+	private static Pattern leadPattern =
+		Pattern.compile("\\b(leads?|go(es|ing)?|continues?|dig)\\b", Pattern.CASE_INSENSITIVE);
+
 	public ShotKey parse(SurveyRow raw) {
 		SurveyTrip trip = raw.getTrip();
 		ParsedTrip parsedTrip = parse(trip);
 		ParsedCave cave = ensureCave(trip.getCave());
+		String comment = raw.getComment();
 
 		ParsedStation fromStation =
 			parsedTrip.stations.isEmpty() ? null : parsedTrip.stations.get(parsedTrip.stations.size() - 1);
@@ -328,6 +335,23 @@ public class ProjectParser {
 			if (fromStation.crossSection == null) {
 				fromStation.crossSection = parseCrossSection(raw, trip);
 			}
+
+			if (toStation == null) {
+				fromStation.comment = comment;
+			}
+		}
+
+		if (comment != null && leadPattern.matcher(comment).find()) {
+			ParsedStation leadStation = fromStation != null ? fromStation : toStation;
+			if (leadStation != null) {
+				SurveyLead lead =
+					new MutableSurveyLead()
+						.setCave(leadStation.key().cave)
+						.setStation(leadStation.key().station)
+						.setDescription(comment)
+						.toImmutable();
+				project.leads.add(lead);
+			}
 		}
 
 		ParsedShotMeasurement frontsights = parseFrontsights(raw, trip);
@@ -351,6 +375,7 @@ public class ProjectParser {
 			fromStation.splays.add(splay);
 		}
 		else if (fromStation != null && toStation != null) {
+			toStation.comment = comment;
 			ParsedShot shot = new ParsedShot();
 			shot.fromStation = fromStation;
 			shot.toStation = toStation;

@@ -191,6 +191,7 @@ public class MetacaveExporter {
 					addProperty(fromStation, "station", row.getFromStation());
 					survey.add(fromStation);
 				}
+				String comment = row.getComment();
 
 				if (truthy(row.getToStation())) {
 					// insert shot
@@ -206,6 +207,9 @@ public class MetacaveExporter {
 					if (row.isExcludeFromPlotting()) {
 						shot.addProperty("excludeFromPlot", true);
 					}
+					if (comment != null) {
+						shot.addProperty("comment", comment);
+					}
 					survey.add(shot);
 
 					// insert to station
@@ -214,15 +218,20 @@ public class MetacaveExporter {
 					addProperty(toStation, "station", row.getToStation());
 					survey.add(toStation);
 				}
-				else if (truthy(
-					or(
-						row.getDistance(),
-						row.getFrontAzimuth(),
-						row.getFrontInclination(),
-						row.getBackAzimuth(),
-						row.getBackInclination()))) {
-					measurements = new JsonArray();
-					fromStation.add("splays", measurements);
+				else {
+					if (comment != null) {
+						addProperty(fromStation, "comment", comment);
+					}
+					if (truthy(
+						or(
+							row.getDistance(),
+							row.getFrontAzimuth(),
+							row.getFrontInclination(),
+							row.getBackAzimuth(),
+							row.getBackInclination()))) {
+						measurements = new JsonArray();
+						fromStation.add("splays", measurements);
+					}
 				}
 			}
 			// add frontsight measurements
@@ -371,14 +380,6 @@ public class MetacaveExporter {
 				export(lead);
 			}
 		}
-	}
-
-	private static JsonArray convertMeasurementString(String str) {
-		JsonArray result = new JsonArray();
-		for (String s : str.split("\\s+")) {
-			result.add(s);
-		}
-		return result;
 	}
 
 	public JsonObject export(SurveyLead lead) {

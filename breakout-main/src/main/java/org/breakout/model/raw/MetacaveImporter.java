@@ -290,11 +290,15 @@ public class MetacaveImporter {
 					if (shot != null && shot.size() > 0 && toStation != null) {
 						row.setOverrideToCave(intern(getAsString(toStation, "cave")));
 						row.setToStation(intern(getAsString(toStation, "station")));
+						row.setComment(getAsString(shot, "comment"));
 						if (shot.has("surveyNotesFile")) {
 							row
 								.setOverrideAttachedFiles(
 									PersistentVector.create(intern(getAsString(shot, "surveyNotesFile"))));
 						}
+					}
+					else {
+						row.setComment(getAsString(fromStation, "comment"));
 					}
 					rows.set(rowIndex, row);
 				}
@@ -311,8 +315,7 @@ public class MetacaveImporter {
 				}
 			}
 
-			if (fromStation != null
-				&& fromStation.has("station")
+			if (fromStation.has("station")
 				&& shot != null
 				&& shot.size() > 0
 				&& toStation != null

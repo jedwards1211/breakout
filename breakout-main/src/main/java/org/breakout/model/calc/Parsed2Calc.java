@@ -483,6 +483,7 @@ public class Parsed2Calc {
 				fromStation.name = fromKey.station;
 				fromStation.cave = fromKey.cave;
 				fromStation.date = shot.date;
+				fromStation.comment = parsedFromStation.comment;
 				project.stations.put(fromKey, fromStation);
 			}
 			else {
@@ -498,6 +499,7 @@ public class Parsed2Calc {
 				toStation.name = toKey.station;
 				toStation.cave = toKey.cave;
 				toStation.date = shot.date;
+				toStation.comment = parsedToStation.comment;
 				project.stations.put(toKey, toStation);
 			}
 			else {

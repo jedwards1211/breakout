@@ -25,7 +25,6 @@ import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
 import org.andork.unit.Angle;
 import org.andork.unit.Length;
-import org.andork.unit.UnitizedNumber;
 import org.andork.util.StringUtils;
 import org.andork.walls.WallsMessage;
 import org.andork.walls.lst.StationPosition;
@@ -69,8 +68,8 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 	private String currentTripName;
 	private MutableSurveyTrip currentTrip;
 	private final List<MutableSurveyRow> rowsInCurrentTrip = new ArrayList<>();
-	private final Map<String, MutableSurveyRow> rowsByFromStationName = new HashMap<>();
 	private final List<FixedStation> fixedStations = new ArrayList<>();
+
 	private void endCurrentTrip() {
 		if (!rowsInCurrentTrip.isEmpty()) {
 			ensureCurrentTrip();
@@ -90,7 +89,8 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			if (currentUnits == null) {
 				throw new IllegalStateException("missing currentUnits");
 			}
-			currentTrip = new MutableSurveyTrip()
+			currentTrip =
+				new MutableSurveyTrip()
 					.setName(currentTripName)
 					.setDistanceUnit(currentUnits.getDUnit())
 					.setAngleUnit(currentUnits.getAUnit())
@@ -111,21 +111,30 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 		return currentTrip;
 	}
 
-	private static final List<Function<WallsUnits, ?>> tripDependentFields = Arrays.asList(
-			WallsUnits::getDUnit,
-			WallsUnits::getDecl, WallsUnits::getGrid,
-			WallsUnits::getIncd,
-			WallsUnits::getInca, WallsUnits::getIncab,
-			WallsUnits::getIncv, WallsUnits::getIncvb,
-			WallsUnits::getAUnit, WallsUnits::getAbUnit,
-			WallsUnits::getVUnit, WallsUnits::getVbUnit,
-			WallsUnits::isTypeabCorrected, WallsUnits::isTypevbCorrected);
+	private static final List<Function<WallsUnits, ?>> tripDependentFields =
+		Arrays
+			.asList(
+				WallsUnits::getDUnit,
+				WallsUnits::getDecl,
+				WallsUnits::getGrid,
+				WallsUnits::getIncd,
+				WallsUnits::getInca,
+				WallsUnits::getIncab,
+				WallsUnits::getIncv,
+				WallsUnits::getIncvb,
+				WallsUnits::getAUnit,
+				WallsUnits::getAbUnit,
+				WallsUnits::getVUnit,
+				WallsUnits::getVbUnit,
+				WallsUnits::isTypeabCorrected,
+				WallsUnits::isTypevbCorrected);
 
 	private void setCurrentUnits(WallsUnits units) {
 		if (currentUnits != units) {
 			if (units == null || currentUnits == null) {
 				endCurrentTrip();
-			} else {
+			}
+			else {
 				for (Function<WallsUnits, ?> field : tripDependentFields) {
 					if (!Objects.equals(field.apply(units), field.apply(currentUnits))) {
 						endCurrentTrip();
@@ -181,16 +190,19 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			try {
 				if (vector.units.getVectorType() == VectorType.RECTANGULAR) {
 					vector.deriveCtFromRect();
-				} else {
+				}
+				else {
 					vector.applyHeightCorrections(this);
 				}
-			} catch (SegmentParseException e) {
+			}
+			catch (SegmentParseException e) {
 				errors.add(new ImportError(e));
 				throw new RuntimeException(e);
 			}
 
 			String fromStationName = vector.units.processStationName(vector.from);
-			MutableSurveyRow row = new MutableSurveyRow()
+			MutableSurveyRow row =
+				new MutableSurveyRow()
 					.setFromStation(fromStationName)
 					.setToStation(vector.units.processStationName(vector.to))
 					.setDistance(Objects.toString(vector.distance, null))
@@ -205,7 +217,6 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 					.setComment(vector.comment);
 			rowsInCurrentTrip.add(row);
 			rows.add(row);
-			rowsByFromStationName.put(fromStationName, row);
 		}
 
 		@Override
@@ -216,6 +227,9 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 
 		@Override
 		public void parsedNote(String station, String parsedNote) {
+			MutableSurveyRow row = new MutableSurveyRow().setFromStation(station).setComment(parsedNote);
+			rowsInCurrentTrip.add(row);
+			rows.add(row);
 			awaitingTripNameComment = false;
 		}
 
@@ -242,9 +256,11 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			String s = p.toString().toLowerCase();
 			if (s.endsWith(".srv")) {
 				surveyFiles.put(p, null);
-			} else if (s.endsWith(".lst")) {
+			}
+			else if (s.endsWith(".lst")) {
 				stationReportFiles.add(p);
-			} else if (s.endsWith(".wpj")) {
+			}
+			else if (s.endsWith(".wpj")) {
 				projFiles.add(p);
 			}
 		}
@@ -256,15 +272,18 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 
 	private void putSurveyFiles(WallsProjectEntry entry) {
 		if (entry.isDetatched()) {
-			wallsVisitor.message(new WallsMessage(
-				"warning",
-				"Entry is detached and won't be imported: " + StringUtils.join(" -> ", entry.titlePath()),
-				entry.statusSegment()));
+			wallsVisitor
+				.message(
+					new WallsMessage(
+						"warning",
+						"Entry is detached and won't be imported: " + StringUtils.join(" -> ", entry.titlePath()),
+						entry.statusSegment()));
 			return;
 		}
 		if (entry.isSurvey()) {
 			surveyFiles.put(entry.absolutePath(), entry);
-		} else if (entry instanceof WallsProjectBook) {
+		}
+		else if (entry instanceof WallsProjectBook) {
 			((WallsProjectBook) entry).children().stream().forEach(this::putSurveyFiles);
 		}
 	}
@@ -279,26 +298,35 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			parseSurveyFiles();
 			parseStationReportFiles();
 
-//			applyFixedStationPositions();
+			// applyFixedStationPositions();
 
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			if (ex instanceof SegmentParseException) {
 				errors.add(new ImportError((SegmentParseException) ex));
-			} else {
-				errors.add(new ImportError(
-						Severity.ERROR, "Unexpected error: " + ex.getLocalizedMessage(),
-						new Segment("", currentFile, 0, 0)));
+			}
+			else {
+				errors
+					.add(
+						new ImportError(
+							Severity.ERROR,
+							"Unexpected error: " + ex.getLocalizedMessage(),
+							new Segment("", currentFile, 0, 0)));
 			}
 			logger.log(Level.SEVERE, "Failed to import walls data", ex);
 		}
 
 		try {
 			newModel = new SurveyTableModel(ArrayLists.map(rows, row -> row.toImmutable()));
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			newModel = new SurveyTableModel();
-			errors.add(new ImportError(
-					Severity.ERROR, "Unexpected error: " + ex.getLocalizedMessage(),
-					new Segment("", currentFile, 0, 0)));
+			errors
+				.add(
+					new ImportError(
+						Severity.ERROR,
+						"Unexpected error: " + ex.getLocalizedMessage(),
+						new Segment("", currentFile, 0, 0)));
 			logger.log(Level.SEVERE, "Failed to import walls data", ex);
 		}
 		OnEDT.onEDT(() -> {
@@ -322,7 +350,8 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			if (doImport) {
 				mainView.addSurveyRowsFrom(newModel);
 				logger.info(() -> "imported " + newModel.getRowCount() + " shots from walls data");
-			} else {
+			}
+			else {
 				logger.info("user canceled walls import");
 			}
 		});
@@ -367,7 +396,8 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 				if (surveyEntry != null) {
 					setCurrentTripName(surveyEntry.absolutePath().getFileName().toString());
 					parser.parseSurveyEntry(surveyEntry);
-				} else {
+				}
+				else {
 					setCurrentTripName(file.getFileName().toString());
 					parser.parseFile(file.toFile());
 				}
@@ -391,48 +421,32 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 		}
 
 		WallsStationReport report = parser.getReport();
-		SurveyTrip trip = new MutableSurveyTrip()
-			.setDatum(report.datum)
-			.setUtmZone(String.valueOf(report.utmZone))
-			.setName(null)
-			.setDistanceUnit(Length.meters)
-			.setAngleUnit(Angle.degrees)
-			.setOverrideFrontAzimuthUnit(Angle.degrees)
-			.setOverrideBackAzimuthUnit(Angle.degrees)
-			.setOverrideFrontInclinationUnit(Angle.degrees)
-			.setOverrideBackInclinationUnit(Angle.degrees)
-			.setBackAzimuthsCorrected(true)
-			.setBackInclinationsCorrected(true)
-			.toImmutable();
-		
+		SurveyTrip trip =
+			new MutableSurveyTrip()
+				.setDatum(report.datum)
+				.setUtmZone(String.valueOf(report.utmZone))
+				.setName(null)
+				.setDistanceUnit(Length.meters)
+				.setAngleUnit(Angle.degrees)
+				.setOverrideFrontAzimuthUnit(Angle.degrees)
+				.setOverrideBackAzimuthUnit(Angle.degrees)
+				.setOverrideFrontInclinationUnit(Angle.degrees)
+				.setOverrideBackInclinationUnit(Angle.degrees)
+				.setBackAzimuthsCorrected(true)
+				.setBackInclinationsCorrected(true)
+				.toImmutable();
+
 		for (StationPosition station : report.stationPositions) {
 			MutableSurveyRow row = new MutableSurveyRow();
 			row.setTrip(trip);
 			row.setFromStation(station.getNameWithPrefix());
-			if (Double.isFinite(station.north)) row.setNorthing((report.utmSouth
-					? 1000000 - station.north
-					: station.north) + " m");
-			if (Double.isFinite(station.east)) row.setEasting(station.east + " m");
-			if (Double.isFinite(station.up)) row.setElevation(station.up + " m");
+			if (Double.isFinite(station.north))
+				row.setNorthing((report.utmSouth ? 1000000 - station.north : station.north) + " m");
+			if (Double.isFinite(station.east))
+				row.setEasting(station.east + " m");
+			if (Double.isFinite(station.up))
+				row.setElevation(station.up + " m");
 			rows.add(row);
-		}
-	}
-
-	private void applyFixedStationPositions() {
-		for (FixedStation station : fixedStations) {
-			if (!UnitizedNumber.isFinite(station.north) &&
-					!UnitizedNumber.isFinite(station.east) &&
-					!UnitizedNumber.isFinite(station.elevation)) {
-				continue;
-			}
-			String stationName = station.units.processStationName(station.name);
-			MutableSurveyRow row = rowsByFromStationName.get(stationName);
-			if (row == null) {
-				continue;
-			}
-			if (station.north != null) row.setNorthing(station.north.toString());
-			if (station.east != null) row.setEasting(station.east.toString());
-			if (station.elevation != null) row.setElevation(station.elevation.toString());
 		}
 	}
 }

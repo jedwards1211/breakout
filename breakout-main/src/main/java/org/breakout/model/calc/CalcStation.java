@@ -8,6 +8,7 @@ import org.breakout.model.StationKey;
 public class CalcStation {
 	public String name;
 	public String cave;
+	public String comment;
 	public float date;
 	private CalcShot originatingShot;
 

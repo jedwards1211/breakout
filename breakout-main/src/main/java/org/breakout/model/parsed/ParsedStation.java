@@ -16,6 +16,7 @@ public class ParsedStation {
 	public ParsedCrossSection crossSection;
 	public List<ParsedSplayShot> splays;
 	public List<SurveyLead> leads;
+	public String comment;
 
 	private BitSet flags;
 	private static final int IS_ENTRANCE = 0;
