@@ -79,19 +79,6 @@ public class CalculateGeometry {
 				shotsFaceOppositeDirections(shot1, shot2) ? Angles.opposite(shot2.azimuth) : shot2.azimuth);
 	}
 
-	static double hemisphereAzimuth(double azimuth) {
-		azimuth = Angles.positive(azimuth);
-		return azimuth > Math.PI ? azimuth - Math.PI : azimuth;
-	}
-
-	static double hemisphereAzimuth(CalcShot shot) {
-		return hemisphereAzimuth(shot.azimuth);
-	}
-
-	static double hemisphereAzimuth(CalcCrossSection section) {
-		return hemisphereAzimuth(section.facingAzimuth);
-	}
-
 	static double MAX_CROSS_SECTION_ALIGNMENT_DIFFERENCE = Math.PI / 4;
 
 	static CalcCrossSection findAlignedCrossSection(CalcShot shot, CalcStation station) {
@@ -105,13 +92,13 @@ public class CalculateGeometry {
 			double difference =
 				Math
 					.min(
-						Angles.difference(shot.azimuth, otherCrossSection.facingAzimuth),
-						Angles.difference(Angles.opposite(shot.azimuth), otherCrossSection.facingAzimuth));
+						Angles.absDifference(shot.azimuth, otherCrossSection.facingAzimuth),
+						Angles.absDifference(Angles.opposite(shot.azimuth), otherCrossSection.facingAzimuth));
 			if (difference <= bestDifference) {
 				bestDifference = difference;
 				alignedCrossSection =
 					Angles
-						.difference(
+						.absDifference(
 							shot.azimuth,
 							otherCrossSection.facingAzimuth) > MAX_CROSS_SECTION_ALIGNMENT_DIFFERENCE
 								? otherCrossSection.rotateLRUDs180Degrees()
@@ -130,46 +117,65 @@ public class CalculateGeometry {
 	static void linkCrossSections(CalcShot shot1, CalcStation station, CalcShot shot2) {
 		boolean shotsFaceOppositeDirections = shotsFaceOppositeDirections(shot1, shot2);
 
+		double bisector =
+			Angles
+				.bisector(shot1.azimuth, shotsFaceOppositeDirections ? shot2.azimuth : Angles.opposite(shot2.azimuth));
+		double side1 = (bisector + Math.PI / 2) % (Math.PI * 2);
+		double side2 = side1 < Math.PI ? side1 + Math.PI : side1 - Math.PI;
+		double facingAzimuth1 = Angles.absDifference(shot1.azimuth, side1) < Math.PI / 2 ? side1 : side2;
+		double facingAzimuth2 = Angles.absDifference(shot2.azimuth, side1) < Math.PI / 2 ? side1 : side2;
+
 		CalcCrossSection section1 = shot1.getCrossSectionAt(station);
 		CalcCrossSection section2 = shot2.getCrossSectionAt(station);
+		if (section1 != null && Angles.absDifference(shot1.azimuth, section1.facingAzimuth) > Math.PI / 2) {
+			section1 = section1.rotateLRUDs180Degrees();
+		}
+		if (section2 != null && Angles.absDifference(shot2.azimuth, section2.facingAzimuth) > Math.PI / 2) {
+			section2 = section2.rotateLRUDs180Degrees();
+		}
 		if (section1 != null && section2 != null) {
-			if (Double.isNaN(section1.facingAzimuth)) {
-				if (Double.isNaN(section2.facingAzimuth)) {
-					section1.facingAzimuth = averageAzimuth(shot1, shot2);
-					section2.facingAzimuth =
-						shotsFaceOppositeDirections ? Angles.opposite(section1.facingAzimuth) : section1.facingAzimuth;
-				}
-				else {
-					section1.facingAzimuth =
-						shotsFaceOppositeDirections ? Angles.opposite(section2.facingAzimuth) : section2.facingAzimuth;
-				}
+			if (Double.isNaN(section1.facingAzimuth) && Double.isNaN(section2.facingAzimuth)) {
+				section1.facingAzimuth = facingAzimuth1;
+				if (section2 == section1)
+					section2 = section2.clone();
+				section2.facingAzimuth = facingAzimuth2;
+			}
+			else if (Double.isNaN(section1.facingAzimuth)) {
+				section1.facingAzimuth =
+					Angles.absDifference(shot1.azimuth, section2.facingAzimuth) < Math.PI
+						? section2.facingAzimuth
+						: Angles.opposite(section2.facingAzimuth);
 			}
 			else if (Double.isNaN(section2.facingAzimuth)) {
 				section2.facingAzimuth =
-					shotsFaceOppositeDirections ? Angles.opposite(section1.facingAzimuth) : section1.facingAzimuth;
+					Angles.absDifference(shot2.azimuth, section1.facingAzimuth) < Math.PI
+						? section1.facingAzimuth
+						: Angles.opposite(section1.facingAzimuth);
 			}
-			else {
-				return;
-			}
+			return;
 		}
 
 		if (section1 == null && section2 == null) {
 			section1 = shot1.getCrossSectionAt(shot1.otherStation(station));
+			if (section1 != null && Angles.absDifference(section1.facingAzimuth, facingAzimuth1) > Math.PI / 2) {
+				section1 = section1.rotateLRUDs180Degrees();
+			}
 			section2 = shot2.getCrossSectionAt(shot2.otherStation(station));
+			if (section2 != null && Angles.absDifference(section2.facingAzimuth, facingAzimuth2) > Math.PI / 2) {
+				section2 = section1.rotateLRUDs180Degrees();
+			}
+
 			if (section1 != null && section2 != null && section1.type == section2.type) {
 				CalcCrossSection average = new CalcCrossSection();
 				average.type = section1.type;
 				switch (section1.type) {
 				case LRUD:
+					if (Angles.absDifference(section2.facingAzimuth, facingAzimuth1) > Math.PI / 2) {
+						section2 = section2.rotateLRUDs180Degrees();
+					}
 					average.measurements = new double[4];
-					if (shotsFaceOppositeDirections) {
-						average.measurements[0] = (section1.measurements[0] + section2.measurements[1]) * 0.5;
-						average.measurements[1] = (section1.measurements[1] + section2.measurements[0]) * 0.5;
-					}
-					else {
-						average.measurements[0] = (section1.measurements[0] + section2.measurements[0]) * 0.5;
-						average.measurements[1] = (section1.measurements[1] + section2.measurements[1]) * 0.5;
-					}
+					average.measurements[0] = (section1.measurements[0] + section2.measurements[0]) * 0.5;
+					average.measurements[1] = (section1.measurements[1] + section2.measurements[1]) * 0.5;
 					average.measurements[2] = (section1.measurements[2] + section2.measurements[2]) * 0.5;
 					average.measurements[3] = (section1.measurements[3] + section2.measurements[3]) * 0.5;
 					break;
@@ -180,34 +186,28 @@ public class CalculateGeometry {
 					}
 					break;
 				}
+				average.facingAzimuth = facingAzimuth1;
 				section1 = average;
 				section2 = null;
 			}
-			else if (section1 == null && section2 == null) {
-				section1 = new CalcCrossSection(CrossSectionType.LRUD, new double[] { 0.05, 0.05, 0.05, 0.05 });
+			else if (section1 != null) {
+				section1 = section1.clone();
+				section1.facingAzimuth = facingAzimuth1;
+			}
+			else if (section2 != null) {
+				section2 = section2.clone();
+				section2.facingAzimuth = facingAzimuth2;
 			}
 			else {
-				if (section1 != null) {
-					section1 = section1.clone();
-					section1.facingAzimuth = Double.NaN;
-				}
-				if (section2 != null) {
-					section2 = section2.clone();
-					section2.facingAzimuth = Double.NaN;
-				}
+				section1 = new CalcCrossSection(CrossSectionType.LRUD, new double[] { 0.05, 0.05, 0.05, 0.05 });
+				section1.facingAzimuth = facingAzimuth1;
 			}
 		}
-		if (section1 != null && section2 == null) {
-			if (Double.isNaN(section1.facingAzimuth)) {
-				section1.facingAzimuth = averageAzimuth(shot1, shot2);
-			}
-			section2 = shotsFaceOppositeDirections ? section1.rotateLRUDs180Degrees() : section1.clone();
+		if (section2 == null) {
+			section2 = section1;
 		}
-		else {
-			if (Double.isNaN(section2.facingAzimuth)) {
-				section2.facingAzimuth = averageAzimuth(shot2, shot1);
-			}
-			section1 = shotsFaceOppositeDirections ? section2.rotateLRUDs180Degrees() : section2.clone();
+		if (section1 == null) {
+			section1 = section2;
 		}
 		shot1.setCrossSectionAt(station, section1);
 		shot2.setCrossSectionAt(station, section2);
@@ -250,15 +250,11 @@ public class CalculateGeometry {
 	 */
 	static void linkCrossSections(CalcProject project) {
 		/*
-		 * TODO fix problem junctions in Fisher Ridge: NK5 NK6 TB165 KP84 NT46 nR1 NT81
-		 * GA19 QAA$1 Q5 QD$4 QD$12
-		 *
-		 * nR1 is a particularly tricky junction to solve
+		 * TODO fix problem junctions in Fisher Ridge: KP84 GA19
 		 *
 		 * GA19's really weird, makes no sense
-		 *
-		 * EY38 presents an interesting challenge, LRUD is linked to OB1 but passage
-		 * continues to EY39. Should probably prioritize same survey designation somehow
+		 * 
+		 * DONE: NK5 NK6 TB165 NT46 nR1 NT81 QAA$1 Q5 QD$4 QD$12 EY38
 		 */
 		CalcShot prevShot = null;
 		for (CalcShot shot : project.shots.values()) {
@@ -341,7 +337,7 @@ public class CalculateGeometry {
 		return 1;
 	}
 
-	static void createNormals(CalcCrossSection crossSection, float[] normals, int startIndex, boolean flipLR) {
+	static void createNormals(CalcCrossSection crossSection, float[] normals, int startIndex) {
 		if (crossSection == null) {
 			return;
 		}
@@ -351,20 +347,18 @@ public class CalculateGeometry {
 		// y axis (for coordinates at indices [1, 4, 7, 10]) points up
 		// z axis (for coordinates at indices [2, 5, 8, 11]) points **south**
 
-		int negateIfFlipped = flipLR ? -1 : 1;
-
 		switch (crossSection.type) {
 		case LRUD:
 			// Up
 			normals[startIndex + 1] = 1;
 			// Right
-			normals[startIndex + 3] = (float) Math.cos(crossSection.facingAzimuth) * negateIfFlipped;
-			normals[startIndex + 5] = (float) Math.sin(crossSection.facingAzimuth) * negateIfFlipped;
+			normals[startIndex + 3] = (float) Math.cos(crossSection.facingAzimuth);
+			normals[startIndex + 5] = (float) Math.sin(crossSection.facingAzimuth);
 			// Down
 			normals[startIndex + 7] = -1;
 			// Left
-			normals[startIndex + 9] = (float) -Math.cos(crossSection.facingAzimuth) * negateIfFlipped;
-			normals[startIndex + 11] = (float) -Math.sin(crossSection.facingAzimuth) * negateIfFlipped;
+			normals[startIndex + 9] = (float) -Math.cos(crossSection.facingAzimuth);
+			normals[startIndex + 11] = (float) -Math.sin(crossSection.facingAzimuth);
 			break;
 		case NSEW:
 			normals[startIndex + 2] = (float) -crossSection.measurements[0]; // North
@@ -375,12 +369,7 @@ public class CalculateGeometry {
 		}
 	}
 
-	static void createVertices(
-		CalcStation station,
-		CalcCrossSection crossSection,
-		float[] vertices,
-		int startIndex,
-		boolean flipLR) {
+	static void createVertices(CalcStation station, CalcCrossSection crossSection, float[] vertices, int startIndex) {
 
 		double x = station.position[0];
 		double y = station.position[1];
@@ -410,17 +399,17 @@ public class CalculateGeometry {
 			vertices[startIndex++] = (float) (y + crossSection.measurements[2]); // Up
 			vertices[startIndex++] = (float) z;
 			// Right
-			vertices[startIndex++] = flipLR ? leftX : rightX;
+			vertices[startIndex++] = rightX;
 			vertices[startIndex++] = (float) y;
-			vertices[startIndex++] = flipLR ? leftZ : rightZ;
+			vertices[startIndex++] = rightZ;
 			// Down
 			vertices[startIndex++] = (float) x;
 			vertices[startIndex++] = (float) (y - crossSection.measurements[3]); // Down
 			vertices[startIndex++] = (float) z;
 			// Left
-			vertices[startIndex++] = flipLR ? rightX : leftX;
+			vertices[startIndex++] = leftX;
 			vertices[startIndex++] = (float) y;
-			vertices[startIndex++] = flipLR ? rightZ : leftZ;
+			vertices[startIndex++] = leftZ;
 			break;
 		case NSEW:
 			// North
@@ -753,17 +742,12 @@ public class CalculateGeometry {
 		}
 
 		int vertexCount = fromVertexCount + toVertexCount + splayVertexCount;
-		boolean flipLR =
-			shot.fromCrossSection != null
-				&& shot.toCrossSection != null
-				&& Angles.difference(shot.fromCrossSection.facingAzimuth, shot.toCrossSection.facingAzimuth) > Math.PI
-					/ 2;
 		shot.normals = new float[vertexCount * 3];
-		createNormals(shot.fromCrossSection, shot.normals, 0, flipLR);
-		createNormals(shot.toCrossSection, shot.normals, fromVertexCount * 3, false);
+		createNormals(shot.fromCrossSection, shot.normals, 0);
+		createNormals(shot.toCrossSection, shot.normals, fromVertexCount * 3);
 		shot.vertices = new float[vertexCount * 3];
-		createVertices(shot.fromStation, shot.fromCrossSection, shot.vertices, 0, flipLR);
-		createVertices(shot.toStation, shot.toCrossSection, shot.vertices, fromVertexCount * 3, false);
+		createVertices(shot.fromStation, shot.fromCrossSection, shot.vertices, 0);
+		createVertices(shot.toStation, shot.toCrossSection, shot.vertices, fromVertexCount * 3);
 		shot.polarities = new float[vertexCount];
 
 		for (int i = 0; i < toVertexCount; i++) {

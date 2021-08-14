@@ -22,12 +22,17 @@
 package org.andork.math.misc;
 
 public class Angles {
-	public static double difference(double angle0, double angle1) {
-		double difference = Math.abs(positive(angle0) - positive(angle1));
-		return difference < Math.PI ? difference : Math.PI * 2 - difference;
+	public static double rotationTo(double from, double to) {
+		double difference = normalize(to - from);
+		return difference <= Math.PI ? difference : difference - Math.PI * 2;
 	}
 
-	public static double positive(double angle) {
+	public static double absDifference(double angle0, double angle1) {
+		double difference = normalize(angle0 - angle1);
+		return difference <= Math.PI ? difference : Math.PI * 2 - difference;
+	}
+
+	public static double normalize(double angle) {
 		angle %= Math.PI * 2;
 		return angle >= 0 ? angle : angle + Math.PI * 2;
 	}
@@ -36,13 +41,26 @@ public class Angles {
 		return (radians + Math.PI) % (Math.PI * 2);
 	}
 
+	public static double bisector(double angle0, double angle1) {
+		return angle0 + rotationTo(angle0, angle1) / 2;
+	}
+
 	public static double average(double... anglesInRadians) {
-		double x = 0;
-		double y = 0;
-		for (double angle : anglesInRadians) {
-			x += Math.cos(angle);
-			y += Math.sin(angle);
+		switch (anglesInRadians.length) {
+		case 0:
+			return Double.NaN;
+		case 1:
+			return anglesInRadians[0];
+		case 2:
+			return normalize(anglesInRadians[0] + rotationTo(anglesInRadians[0], anglesInRadians[1]) / 2);
+		default:
+			double x = 0;
+			double y = 0;
+			for (double angle : anglesInRadians) {
+				x += Math.cos(angle);
+				y += Math.sin(angle);
+			}
+			return Math.atan2(y, x);
 		}
-		return Math.atan2(y, x);
 	}
 }
