@@ -1184,29 +1184,31 @@ public class BreakoutMainView {
 
 	public void shutdown(boolean exit, Runnable afterShutdown) {
 		logger.info("Shutting down...");
+		Ref<Integer> choice = new Ref<>();
 		OnEDT.onEDT(() -> {
 			if (hasUnsavedChanges()) {
 				logger.info("there are unsaved changes");
-				int choice =
+				choice.value =
 					new JOptionPaneBuilder()
 						.message("Do you want to save changes?")
 						.yesNoCancel()
 						.warning()
 						.showDialog(mainPanel, "Unsaved Changes");
-				switch (choice) {
-				case JOptionPane.YES_OPTION:
-					logger.info("user chose to save changes");
-					saveProject();
-					break;
-				case JOptionPane.NO_OPTION:
-					logger.info("user chose to discard unsaved changes");
-					break;
-				default:
-					logger.info("user chose to cancel shutdown");
-					return;
-				}
+
 			}
 		});
+		switch (choice.value) {
+		case JOptionPane.YES_OPTION:
+			logger.info("user chose to save changes");
+			saveProject();
+			break;
+		case JOptionPane.NO_OPTION:
+			logger.info("user chose to discard unsaved changes");
+			break;
+		default:
+			logger.info("user chose to cancel shutdown");
+			return;
+		}
 		rebuildTaskService.shutdownNow();
 		sortTaskService.shutdownNow();
 		ioTaskService.shutdown();
@@ -3187,7 +3189,7 @@ public class BreakoutMainView {
 			if (file.isAbsolute())
 				result.add(file);
 			else
-				searchTargets.add(attachedFile.replace('\\', '/'));
+				searchTargets.add(attachedFile.replace('\\', '/').toLowerCase());
 		}
 		if (searchTargets.isEmpty())
 			return result;
@@ -3236,7 +3238,7 @@ public class BreakoutMainView {
 								@Override
 								public FileVisitResult visitFile(Path path, BasicFileAttributes attrs)
 									throws IOException {
-									String pathStr = path.toString().replace('\\', '/');
+									String pathStr = path.toString().replace('\\', '/').toLowerCase();
 									while (!pathStr.isEmpty()) {
 										if (searchTargets.remove(pathStr)) {
 											result.add(path);
