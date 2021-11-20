@@ -401,6 +401,7 @@ public class MetacaveImporter {
 			lead.setRawHeight(obj.get("height").getAsJsonArray());
 			lead.setHeight(parseLength(obj.get("height").getAsJsonArray()));
 		}
+		lead.setDone(obj.has("done") && obj.get("done").getAsBoolean());
 		SurveyLead result = lead.toImmutable();
 		leads.add(result);
 		return result;

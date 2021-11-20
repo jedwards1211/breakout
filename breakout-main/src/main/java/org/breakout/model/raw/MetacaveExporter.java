@@ -392,6 +392,7 @@ public class MetacaveExporter {
 		if (lead.getHeight() != null) {
 			converted.add("height", lead.getRawHeight());
 		}
+		converted.addProperty("done", lead.isDone() == true);
 		if (lead.getCave() == null)
 			return converted;
 		JsonObject cave = ensureCave(lead.getCave());
