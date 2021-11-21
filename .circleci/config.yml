@@ -10,20 +10,49 @@ commands:
     description: Install dependencies
     steps:
       - run:
-          name: pnpm
+          name: pnpm install
           command: pnpm i --frozen-lockfile
-
-jobs:
-  build-macos:
-    macos:
-      xcode: 11.5.0
+  checkout_submodules:
+    description: Checkout git submodules
     steps:
-      - checkout
       - run:
           name: checkout submodules
           command: |
             git submodule init
             git submodule update
+orbs:
+  win: circleci/windows@2.2.0 # The Windows orb give you everything you need to start using the Windows executor.
+
+jobs:
+  build-windows:
+    executor: win/default
+    steps:
+      - checkout
+      - checkout_submodules
+      - run:
+          name: Install chocolatey
+          command: Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+      - run:
+          name: Install Node.js
+          command: |
+            choco install nvs
+            nvs add << pipeline.parameters.node-version >>
+      - run:
+          name: Install pnpm
+          command: npm install --global pnpm
+      - run:
+          name: Check Node.js/pnpm installs
+          command: |
+            node -v
+            pnpm -v
+      - install_deps
+
+  build-macos:
+    macos:
+      xcode: 11.5.0
+    steps:
+      - checkout
+      - checkout_submodules
       - run:
           name: Install Node.js
           command: |
@@ -68,7 +97,7 @@ jobs:
       - run:
           name: Build
           command: |
-            mvn clean install
+            mvn clean install -Dbreakout.version="$(< version)"
             mkdir -p dist/macos
             cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/macos/breakout.jar
       - run:
@@ -77,7 +106,7 @@ jobs:
             javapackager -deploy -native image -outdir packages -outfile Breakout \
               -srcdir dist/macos -srcfiles breakout.jar \
               -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
-              -BappVersion=$(< version)
+              -BappVersion=$(< version) -Bicon=breakout.icns
             hdiutil create temp.dmg -ov -volname "Breakout" -fs HFS+ -srcfolder packages/bundles
             hdiutil convert temp.dmg -format UDZO -o dist/macos/Breakout.dmg
       - store_artifacts:
