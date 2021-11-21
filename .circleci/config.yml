@@ -56,13 +56,12 @@ jobs:
           name: Install Maven
           command: |
             Invoke-WebRequest https://mirror.olnevhost.net/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -OutFile C:\apache-maven-3.6.3-bin.tar.gz
-            cd C:\
             tar -xzvf C:\apache-maven-3.6.3-bin.tar.gz
       - run:
           name: Check Java/Maven installs
           command: |
             $env:JAVA_HOME = "C:\jdk-8u181-x64"
-            $env:MVN_HOME = "C:\apache-maven-3.6.3"
+            $env:MVN_HOME = "$HOME:\project\apache-maven-3.6.3"
             $env:PATH = "$env:JAVA_HOME\bin;$env:MVN_HOME\bin;C:\Program Files (x86)\WiX Toolset v3.11\bin;$env:PATH"
             java -version
             javapackager -version
@@ -74,7 +73,7 @@ jobs:
           name: Build
           command: |
             export JAVA_HOME="/c/jdk-8u181-x64"
-            export MVN_HOME="/c/apache-maven-3.6.3"
+            export MVN_HOME="$HOME/project/apache-maven-3.6.3"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             mvn clean install -Dbreakout.version="$(< version)"
             mkdir -p dist/windows
@@ -84,7 +83,7 @@ jobs:
           name: Package
           command: |
             export JAVA_HOME="/c/jdk-8u181-x64"
-            export MVN_HOME="/c/apache-maven-3.6.3"
+            export MVN_HOME="$HOME/project/apache-maven-3.6.3"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             javapackager -deploy -native msi -outdir packages -outfile Breakout \
               -srcdir dist/windows -srcfiles breakout.jar \
