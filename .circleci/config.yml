@@ -131,9 +131,11 @@ workflows:
   version: 2
   build-release:
     jobs:
+      - build-windows
       - build-macos
       - release:
           requires:
+            - build-windows
             - build-macos
           context: github
           filters:
