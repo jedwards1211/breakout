@@ -31,7 +31,9 @@ jobs:
       - checkout_submodules
       - run:
           name: Install Node.js
-          command: nvm install << pipeline.parameters.node-version >>
+          command: |
+            nvm install << pipeline.parameters.node-version >>
+            nvm use << pipeline.parameters.node-version >>
       - run:
           name: Install pnpm
           command: npm install --global pnpm
@@ -46,7 +48,6 @@ jobs:
           command: |
             Invoke-WebRequest https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u181-windows-x64.zip -OutFile C:\jdk-8u181-windows-x64.zip
             Expand-Archive C:\jdk-8u181-windows-x64.zip -DestinationPath C:\Java
-          shell: bash.exe
       - run:
           name: Install Maven
           command: |
