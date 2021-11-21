@@ -30,13 +30,11 @@ jobs:
       - checkout
       - checkout_submodules
       - run:
-          name: Install chocolatey
-          command: Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          name: Instsall nvs
+          command: choco install nvs
       - run:
           name: Install Node.js
-          command: |
-            choco install nvs
-            nvs add << pipeline.parameters.node-version >>
+          command: nvs add << pipeline.parameters.node-version >>
       - run:
           name: Install pnpm
           command: npm install --global pnpm
