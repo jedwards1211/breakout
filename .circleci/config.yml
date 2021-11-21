@@ -26,15 +26,13 @@ orbs:
 jobs:
   build-windows:
     executor: win/default
+    shell: bash.exe
     steps:
       - checkout
       - checkout_submodules
       - run:
-          name: Instsall nvs
-          command: choco install nvs
-      - run:
           name: Install Node.js
-          command: nvs add << pipeline.parameters.node-version >>
+          command: nvm install << pipeline.parameters.node-version >>
       - run:
           name: Install pnpm
           command: npm install --global pnpm
@@ -44,6 +42,53 @@ jobs:
             node -v
             pnpm -v
       - install_deps
+      - run:
+          name: Install Java
+          command: |
+            curl s3://public.breakout.jedwards1211/jdk-8u181-windows-x64.exe > "$HOME/Downloads/jdk-8u181-windows-x64.exe"
+            "$HOME/Downloads/jdk-8u181-windows-x64.exe" exe /s ADDLOCAL="ToolsFeature,PublicjreFeature" INSTALLDIR="$HOME/Java"
+      - run:
+          name: Setup Environment Variables
+          command: |
+            echo "export JAVA_HOME="'"'"$HOME/JAVA"'"' >> $BASH_ENV
+            echo "export PATH=$JAVA_HOME/bin:$PATH" >> $BASH_ENV
+      - run:
+          name: Install Maven
+          command: |
+            curl https://mirror.olnevhost.net/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz > "$HOME/Downloads/apache-maven-3.6.3-bin.tar.gz"
+            tar xzvf "$HOME/Downloads/apache-maven-3.6.3-bin.tar.gz"
+            echo "export PATH=apache-maven-3.6.3/bin:$PATH" >> $BASH_ENV
+      - run:
+          name: Check Java/Maven installs
+          command: |
+            java -version
+            javapackager -version
+            mvn -v
+      - run:
+          name: Get release version
+          command: pnpm semantic-release --dry-run
+      - run:
+          name: Build
+          command: |
+            mvn clean install -Dbreakout.version="$(< version)"
+            mkdir -p dist/macos
+            cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/macos/breakout.jar
+      - run:
+          name: Package
+          command: |
+            javapackager -deploy -native image -outdir packages -outfile Breakout \
+              -srcdir dist/macos -srcfiles breakout.jar \
+              -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
+              -BappVersion=$(< version) -Bicon=breakout.icns
+            hdiutil create temp.dmg -ov -volname "Breakout" -fs HFS+ -srcfolder packages/bundles
+            hdiutil convert temp.dmg -format UDZO -o dist/macos/Breakout.dmg
+      - store_artifacts:
+          path: dist/macos/Breakout.dmg
+      - persist_to_workspace:
+          root: .
+          paths:
+            - dist/macos/breakout.jar
+            - dist/macos/Breakout.dmg
 
   build-macos:
     macos:
