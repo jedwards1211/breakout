@@ -32,59 +32,48 @@ jobs:
       - run:
           name: Install Node.js
           command: nvm install << pipeline.parameters.node-version >>
-          shell: bash.exe
       - run:
           name: Install pnpm
           command: npm install --global pnpm
-          shell: bash.exe
       - run:
           name: Check Node.js/pnpm installs
           command: |
             node -v
             pnpm -v
-          shell: bash.exe
       - install_deps
       - run:
           name: Install Java
           command: |
-            curl s3://public.breakout.jedwards1211/jdk-8u181-windows-x64.exe > "$HOME/Downloads/jdk-8u181-windows-x64.exe"
-            "$HOME/Downloads/jdk-8u181-windows-x64.exe" exe /s ADDLOCAL="ToolsFeature,PublicjreFeature" INSTALLDIR="$HOME/Java"
-          shell: bash.exe
-      - run:
-          name: Setup Environment Variables
-          command: |
-            echo "export JAVA_HOME="'"'"$HOME/JAVA"'"' >> $BASH_ENV
-            echo "export PATH=$JAVA_HOME/bin:$PATH" >> $BASH_ENV
+            Invoke-WebRequest https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u181-windows-x64.zip -OutFile C:\jdk-8u181-windows-x64.zip
+            Expand-Archive C:\jdk-8u181-windows-x64.zip -DestinationPath C:\Java
           shell: bash.exe
       - run:
           name: Install Maven
           command: |
-            curl https://mirror.olnevhost.net/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz > "$HOME/Downloads/apache-maven-3.6.3-bin.tar.gz"
-            tar xzvf "$HOME/Downloads/apache-maven-3.6.3-bin.tar.gz"
-            echo "export PATH=apache-maven-3.6.3/bin:$PATH" >> $BASH_ENV
-          shell: bash.exe
+            Invoke-WebRequest https://mirror.olnevhost.net/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -OutFile C:\apache-maven-3.6.3-bin.tar.gz
+            C:
+            tar -xzvf C:\apache-maven-3.6.3-bin.tar.gz
       - run:
           name: Check Java/Maven installs
           command: |
-            java -version
-            javapackager -version
-            mvn -v
+            C:\Java\bin\java -version
+            C:\Java\bin\javapackager -version
+            C:\apache-maven-3.6.3-bin\bin\mvn -v
           shell: bash.exe
       - run:
           name: Get release version
           command: pnpm semantic-release --dry-run
-          shell: bash.exe
       - run:
           name: Build
           command: |
-            mvn clean install -Dbreakout.version="$(< version)"
+            /c/apache-maven-3.6.3-bin/bin/mvn clean install -Dbreakout.version="$(< version)"
             mkdir -p dist/windows
             cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/windows/breakout.jar
           shell: bash.exe
       - run:
           name: Package
           command: |
-            javapackager -deploy -native msi -outdir packages -outfile Breakout \
+            /c/Java/bin/javapackager -deploy -native msi -outdir packages -outfile Breakout \
               -srcdir dist/windows -srcfiles breakout.jar \
               -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
               -BappVersion=$(< version) -Bicon=breakout.ico
