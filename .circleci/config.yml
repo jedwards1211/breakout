@@ -30,6 +30,9 @@ jobs:
       - checkout
       - checkout_submodules
       - run:
+          name: Install WiX
+          command: choco install wixtoolset --version 3.11
+      - run:
           name: Install Node.js
           command: |
             nvm install << pipeline.parameters.node-version >>
@@ -48,36 +51,46 @@ jobs:
           command: |
             $ProgressPreference = 'Continue'
             Invoke-WebRequest https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u181-windows-x64.zip -OutFile C:\jdk-8u181-windows-x64.zip
-            Expand-Archive C:\jdk-8u181-windows-x64.zip -DestinationPath C:\Java\x64
+            Expand-Archive C:\jdk-8u181-windows-x64.zip -DestinationPath C:\
       - run:
           name: Install Maven
           command: |
             Invoke-WebRequest https://mirror.olnevhost.net/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -OutFile C:\apache-maven-3.6.3-bin.tar.gz
-            C:
+            cd C:\
             tar -xzvf C:\apache-maven-3.6.3-bin.tar.gz
       - run:
           name: Check Java/Maven installs
           command: |
-            C:\Java\x64\bin\java -version
-            C:\Java\x64\bin\javapackager -version
-            C:\apache-maven-3.6.3-bin\bin\mvn -v
+            $env:JAVA_HOME = "C:\jdk-8u181-x64"
+            $env:MVN_HOME = "C:\apache-maven-3.6.3"
+            $env:PATH = "$env:JAVA_HOME\bin;$env:MVN_HOME\bin;C:\Program Files (x86)\WiX Toolset v3.11\bin;$env:PATH"
+            java -version
+            javapackager -version
+            mvn -v
       - run:
           name: Get release version
           command: pnpm semantic-release --dry-run
       - run:
           name: Build
           command: |
-            /c/apache-maven-3.6.3-bin/bin/mvn clean install -Dbreakout.version="$(< version)"
+            export JAVA_HOME="/c/jdk-8u181-x64"
+            export MVN_HOME="/c/apache-maven-3.6.3"
+            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
+            mvn clean install -Dbreakout.version="$(< version)"
             mkdir -p dist/windows
             cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/windows/breakout.jar
           shell: bash.exe
       - run:
           name: Package
           command: |
-            /c/Java/x64/bin/javapackager -deploy -native msi -outdir packages -outfile Breakout \
+            export JAVA_HOME="/c/jdk-8u181-x64"
+            export MVN_HOME="/c/apache-maven-3.6.3"
+            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
+            javapackager -deploy -native msi -outdir packages -outfile Breakout \
               -srcdir dist/windows -srcfiles breakout.jar \
               -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
               -BappVersion=$(< version) -Bicon=breakout.ico
+            cp packages/bundles/Breakout-$(< version).msi dist/windows/Breakout.msi
           shell: bash.exe
       - store_artifacts:
           path: dist/windows/Breakout.msi
