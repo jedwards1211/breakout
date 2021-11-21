@@ -20,6 +20,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: checkout submodules
+          command: |
+            git submodule init
+            git submodule update
+      - run:
           name: Install Node.js
           command: |
             curl https://nodejs.org/dist/v<< pipeline.parameters.node-version >>/node-v<< pipeline.parameters.node-version >>.pkg > "$HOME/Downloads/node-v<< pipeline.parameters.node-version >>.pkg"
