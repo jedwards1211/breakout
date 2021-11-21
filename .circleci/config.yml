@@ -78,14 +78,15 @@ jobs:
               -srcdir dist/macos -srcfiles breakout.jar \
               -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
               -BappVersion=$(< version)
-            hdiutil create packages/bundles/Breakout-temp.dmg -ov -volname "Breakout" -fs HFS+ -srcfolder packages/bundles
-            hdiutil convert packages/bundles/Breakout-temp.dmg -format UDZO -o packages/bundles/Breakout.dmg
+            hdiutil create temp.dmg -ov -volname "Breakout" -fs HFS+ -srcfolder packages/bundles
+            hdiutil convert temp.dmg -format UDZO -o dist/macos/Breakout.dmg
+      - store_artifacts:
+          path: dist/macos/Breakout.dmg
       - persist_to_workspace:
           root: .
           paths:
             - dist/macos/breakout.jar
             - dist/macos/Breakout.dmg
-            - packages/bundles/Breakout.app
 
   release:
     docker:
