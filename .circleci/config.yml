@@ -10,8 +10,8 @@ commands:
     description: Install dependencies
     steps:
       - run:
-          name: yarn
-          command: yarn --frozen-lockfile
+          name: pnpm
+          command: pnpm i --frozen-lockfile
 
 jobs:
   build-macos:
@@ -25,18 +25,18 @@ jobs:
             curl https://nodejs.org/dist/v<< pipeline.parameters.node-version >>/node-v<< pipeline.parameters.node-version >>.pkg > "$HOME/Downloads/node-v<< pipeline.parameters.node-version >>.pkg"
             sudo installer -store -pkg "$HOME/Downloads/node-v<< pipeline.parameters.node-version >>.pkg" -target /
       - run:
-          name: Install Yarn
-          command: curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.10
+          name: Install pnpm
+          command: npm install --global pnpm
       - run:
-          name: Check Node.js/Yarn installs
+          name: Check Node.js/pnpm installs
           command: |
             node -v
-            yarn -v
+            pnpm -v
       - install_deps
       - run:
           name: Install Java
           command: |
-            curl -v -j -k -L -H "Cookie: oraclelicense=accept-securebackup-cookie" https://download.oracle.com/otn/java/jdk/8u181-b13/96a7b8442fe848ef90c96a2fad6ed6d1/jdk-8u181-macosx-x64.dmg > "$HOME/Downloads/jdk-8u181-macosx-x64.dmg"
+            curl https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u181-macosx-x64.dmg > "$HOME/Downloads/jdk-8u181-macosx-x64.dmg"
             hdiutil attach "$HOME/Downloads/jdk-8u181-macosx-x64.dmg"
             sudo installer -pkg /Volumes/JDK\ 8\ Update\ 181/JDK\ 8\ Update\ 181.pkg -target /
             diskutil umount /Volumes/JDK\ 8\ Update\ 181
@@ -59,26 +59,28 @@ jobs:
             mvn -v
       - run:
           name: Get release version
-          command: yarn semantic-release --dry-run
+          command: pnpm semantic-release --dry-run
       - run:
           name: Build
           command: |
-            mkdir dist
             mvn clean install
+            mkdir -p dist/macos
             cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/macos/breakout.jar
       - run:
           name: Package
           command: |
-            javapackager -deploy -native -outdir packages -outfile Breakout \
+            javapackager -deploy -native image -outdir packages -outfile Breakout \
               -srcdir dist/macos -srcfiles breakout.jar \
               -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
               -BappVersion=$(< version)
-            cp packages/bundles/Breakout-0.0.0-SNAPSHOT.dmg dist/macos/Breakout.dmg
+            hdiutil create packages/bundles/Breakout-temp.dmg -ov -volname "Breakout" -fs HFS+ -srcfolder packages/bundles
+            hdiutil convert packages/bundles/Breakout-temp.dmg -format UDZO -o packages/bundles/Breakout.dmg
       - persist_to_workspace:
           root: .
           paths:
             - dist/macos/breakout.jar
             - dist/macos/Breakout.dmg
+            - packages/bundles/Breakout.app
 
   release:
     docker:
