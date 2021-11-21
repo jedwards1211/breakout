@@ -31,7 +31,7 @@ jobs:
       - checkout_submodules
       - run:
           name: Install WiX
-          command: choco install wixtoolset --version 3.11
+          command: choco install wixtoolset --version 3.11.2
       - run:
           name: Install Node.js
           command: |
