@@ -46,8 +46,9 @@ jobs:
       - run:
           name: Install Java
           command: |
+            $ProgressPreference = 'Continue'
             Invoke-WebRequest https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u181-windows-x64.zip -OutFile C:\jdk-8u181-windows-x64.zip
-            Expand-Archive C:\jdk-8u181-windows-x64.zip -DestinationPath C:\Java
+            Expand-Archive C:\jdk-8u181-windows-x64.zip -DestinationPath C:\Java\x64
       - run:
           name: Install Maven
           command: |
@@ -57,10 +58,9 @@ jobs:
       - run:
           name: Check Java/Maven installs
           command: |
-            C:\Java\bin\java -version
-            C:\Java\bin\javapackager -version
+            C:\Java\x64\bin\java -version
+            C:\Java\x64\bin\javapackager -version
             C:\apache-maven-3.6.3-bin\bin\mvn -v
-          shell: bash.exe
       - run:
           name: Get release version
           command: pnpm semantic-release --dry-run
@@ -74,7 +74,7 @@ jobs:
       - run:
           name: Package
           command: |
-            /c/Java/bin/javapackager -deploy -native msi -outdir packages -outfile Breakout \
+            /c/Java/x64/bin/javapackager -deploy -native msi -outdir packages -outfile Breakout \
               -srcdir dist/windows -srcfiles breakout.jar \
               -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
               -BappVersion=$(< version) -Bicon=breakout.ico
