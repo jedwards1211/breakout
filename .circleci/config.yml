@@ -212,4 +212,6 @@ workflows:
             - build-macos
           filters:
             branches:
-              only: master, next
+              only:
+                - master
+                - next
