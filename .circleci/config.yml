@@ -49,55 +49,72 @@ jobs:
       - run:
           name: Install Java
           command: |
-            $ProgressPreference = 'Continue'
-            Invoke-WebRequest https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u181-windows-x64.zip -OutFile C:\jdk-8u181-windows-x64.zip
-            Expand-Archive C:\jdk-8u181-windows-x64.zip -DestinationPath C:\
+            curl https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u181-windows-x64.zip > jdk-x64.zip
+            curl https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u181-windows-x86.zip > jdk-x86.zip
+            mkdir jdk-x64
+            mkdir jdk-x86
+            (cd jdk-x64; unzip ../jdk-x64.zip)
+            (cd jdk-x86; unzip ../jdk-x86.zip)
+          shell: bash.exe
       - run:
           name: Install Maven
           command: |
-            Invoke-WebRequest https://mirror.olnevhost.net/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz -OutFile C:\apache-maven-3.6.3-bin.tar.gz
-            tar -xzvf C:\apache-maven-3.6.3-bin.tar.gz
+            curl https://mirror.olnevhost.net/pub/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz > maven.tar.gz
+            tar -xzvf maven.tar.gz
+          shell: bash.exe
       - run:
           name: Check Java/Maven installs
           command: |
-            $env:JAVA_HOME = "C:\jdk-8u181-x64"
-            $env:MVN_HOME = "$HOME:\project\apache-maven-3.6.3"
-            $env:PATH = "$env:JAVA_HOME\bin;$env:MVN_HOME\bin;C:\Program Files (x86)\WiX Toolset v3.11\bin;$env:PATH"
+            export JAVA_HOME="$HOME/jdk-x64"
+            export MVN_HOME="$HOME/apache-maven-3.6.3/bin"
+            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             java -version
             javapackager -version
             mvn -v
+          shell: bash.exe
       - run:
           name: Get release version
           command: pnpm semantic-release --dry-run
       - run:
           name: Build
           command: |
-            export JAVA_HOME="/c/jdk-8u181-x64"
-            export MVN_HOME="$HOME/project/apache-maven-3.6.3"
+            export JAVA_HOME="$HOME/jdk-x64"
+            export MVN_HOME="$HOME/apache-maven-3.6.3/bin"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             mvn clean install -Dbreakout.version="$(< version)"
             mkdir -p dist/windows
             cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/windows/breakout.jar
           shell: bash.exe
       - run:
-          name: Package
+          name: Package x64
           command: |
-            export JAVA_HOME="/c/jdk-8u181-x64"
-            export MVN_HOME="$HOME/project/apache-maven-3.6.3"
+            export JAVA_HOME="$HOME/jdk-x64"
+            export MVN_HOME="$HOME/apache-maven-3.6.3/bin"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             javapackager -deploy -native msi -outdir packages -outfile Breakout \
               -srcdir dist/windows -srcfiles breakout.jar \
               -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
               -BappVersion=$(< version) -Bicon=breakout.ico
-            cp packages/bundles/Breakout-$(< version).msi dist/windows/Breakout.msi
+            cp packages/bundles/Breakout-$(< version).msi dist/windows/Breakout-x64.msi
+          shell: bash.exe
+      - run:
+          name: Package x86
+          command: |
+            export JAVA_HOME="$HOME/jdk-x86"
+            export MVN_HOME="$HOME/apache-maven-3.6.3/bin"
+            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
+            javapackager -deploy -native msi -outdir packages -outfile Breakout \
+              -srcdir dist/windows -srcfiles breakout.jar \
+              -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
+              -BappVersion=$(< version) -Bicon=breakout.ico
+            cp packages/bundles/Breakout-$(< version).msi dist/windows/Breakout-x86.msi
           shell: bash.exe
       - store_artifacts:
-          path: dist/windows/Breakout.msi
+          path: dist/windows
       - persist_to_workspace:
           root: .
           paths:
-            - dist/windows/breakout.jar
-            - dist/windows/Breakout.msi
+            - dist/windows
 
   build-macos:
     macos:
