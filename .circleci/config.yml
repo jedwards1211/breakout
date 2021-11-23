@@ -179,22 +179,21 @@ jobs:
             hdiutil create temp.dmg -ov -volname "Breakout" -fs HFS+ -srcfolder packages/bundles
             hdiutil convert temp.dmg -format UDZO -o dist/macos/Breakout.dmg
       - store_artifacts:
-          path: dist/macos/Breakout.dmg
+          path: dist/macos
       - persist_to_workspace:
           root: .
           paths:
-            - dist/macos/breakout.jar
-            - dist/macos/Breakout.dmg
+            - dist/macos
 
-  release:
-    docker:
-      - image: circleci/node:<< pipeline.parameters.node-version >>
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          name: Release
-          command: semantic-release
+  # release:
+  #   docker:
+  #     - image: circleci/node:<< pipeline.parameters.node-version >>
+  #   steps:
+  #     - attach_workspace:
+  #         at: .
+  #     - run:
+  #         name: Release
+  #         command: semantic-release
 
 workflows:
   version: 2
@@ -202,11 +201,11 @@ workflows:
     jobs:
       - build-windows
       - build-macos
-      - release:
-          requires:
-            - build-windows
-            - build-macos
-          context: github
-          filters:
-            branches:
-              only: master, next
+      # - release:
+      #     requires:
+      #       - build-windows
+      #       - build-macos
+      #     context: github
+      #     filters:
+      #       branches:
+      #         only: master, next
