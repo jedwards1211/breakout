@@ -170,6 +170,8 @@ jobs:
             mvn clean install -Dbreakout.version="$(< version)"
             mkdir -p dist/macos
             cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/macos/breakout.jar
+            mvn clean install -Dbreakout.version="$(< version)" -P osx,windows,windows-i586,windows-amd64,linux,linux-i586,linux-amd64
+            cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/macos/breakout-all-platforms.jar
       - run:
           name: Package
           command: |
@@ -186,15 +188,15 @@ jobs:
           paths:
             - dist/macos
 
-  # release:
-  #   docker:
-  #     - image: circleci/node:<< pipeline.parameters.node-version >>
-  #   steps:
-  #     - attach_workspace:
-  #         at: .
-  #     - run:
-  #         name: Release
-  #         command: semantic-release
+  release:
+    docker:
+      - image: circleci/node:<< pipeline.parameters.node-version >>
+    steps:
+      - attach_workspace:
+          at: .
+      - run:
+          name: Release
+          command: semantic-release
 
 workflows:
   version: 2
@@ -202,11 +204,11 @@ workflows:
     jobs:
       - build-windows
       - build-macos
-      # - release:
-      #     requires:
-      #       - build-windows
-      #       - build-macos
-      #     context: github
-      #     filters:
-      #       branches:
-      #         only: master, next
+      - release:
+          requires:
+            - build-windows
+            - build-macos
+          context: github
+          filters:
+            branches:
+              only: master, next

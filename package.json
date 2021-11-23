@@ -19,9 +19,9 @@
   "scripts": {
     "semantic-release": "semantic-release"
   },
-  "dependencies": {},
   "devDependencies": {
     "@semantic-release/exec": "^5.0.0",
+    "@semantic-release/github": "^8.0.2",
     "prettier": "^2.1.2",
     "semantic-release": "^17.2.1"
   },
@@ -38,6 +38,29 @@
         "@semantic-release/exec",
         {
           "verifyReleaseCmd": "echo ${nextRelease.version} > version"
+        }
+      ],
+      [
+        "@semantic-release/github",
+        {
+          "assets": [
+            {
+              "path": "dist/macos/breakout-all-platforms.jar",
+              "name": "breakout-${nextRelease.version}-all-platforms.jar"
+            },
+            {
+              "path": "dist/windows/Breakout-x64.msi",
+              "name": "Breakout-${nextRelease.version}-x64.msi"
+            },
+            {
+              "path": "dist/windows/Breakout-x86.msi",
+              "name": "Breakout-${nextRelease.version}-x86.msi"
+            },
+            {
+              "path": "dist/macos/Breakout.dmg",
+              "name": "Breakout-${nextRelease.version}.dmg"
+            }
+          ]
         }
       ]
     ]
