@@ -66,7 +66,7 @@ jobs:
           name: Check Java/Maven installs
           command: |
             export JAVA_HOME="$PWD/jdk-x64"
-            export MVN_HOME="$PWD/apache-maven-3.6.3/bin"
+            export MVN_HOME="$PWD/apache-maven-3.6.3"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             java -version
             javapackager -version
@@ -79,7 +79,7 @@ jobs:
           name: Build
           command: |
             export JAVA_HOME="$PWD/jdk-x64"
-            export MVN_HOME="$PWD/apache-maven-3.6.3/bin"
+            export MVN_HOME="$PWD/apache-maven-3.6.3"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             mvn clean install -Dbreakout.version="$(< version)"
             mkdir -p dist/windows
@@ -89,7 +89,7 @@ jobs:
           name: Package x64
           command: |
             export JAVA_HOME="$PWD/jdk-x64"
-            export MVN_HOME="$PWD/apache-maven-3.6.3/bin"
+            export MVN_HOME="$PWD/apache-maven-3.6.3"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             javapackager -deploy -native msi -outdir packages -outfile Breakout \
               -srcdir dist/windows -srcfiles breakout.jar \
@@ -101,7 +101,7 @@ jobs:
           name: Package x86
           command: |
             export JAVA_HOME="$PWD/jdk-x86"
-            export MVN_HOME="$PWD/apache-maven-3.6.3/bin"
+            export MVN_HOME="$PWD/apache-maven-3.6.3"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
             javapackager -deploy -native msi -outdir packages -outfile Breakout \
               -srcdir dist/windows -srcfiles breakout.jar \
