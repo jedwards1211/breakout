@@ -192,6 +192,8 @@ jobs:
     docker:
       - image: circleci/node:<< pipeline.parameters.node-version >>
     steps:
+      - checkout
+      - install_deps
       - attach_workspace:
           at: .
       - run:
@@ -208,7 +210,6 @@ workflows:
           requires:
             - build-windows
             - build-macos
-          context: github
           filters:
             branches:
               only: master, next
