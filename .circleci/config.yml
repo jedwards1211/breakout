@@ -195,13 +195,13 @@ jobs:
       - checkout
       - run:
           name: Install pnpm
-          command: npm install --global pnpm
+          command: sudo npm install --global pnpm
       - install_deps
       - attach_workspace:
           at: .
       - run:
           name: Release
-          command: semantic-release
+          command: pnpm semantic-release
 
 workflows:
   version: 2
