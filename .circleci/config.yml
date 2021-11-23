@@ -193,6 +193,9 @@ jobs:
       - image: circleci/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
+      - run:
+          name: Install pnpm
+          command: npm install --global pnpm
       - install_deps
       - attach_workspace:
           at: .
