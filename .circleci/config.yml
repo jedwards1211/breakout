@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: '16.13.0'
+    default: '20.10.0'
 
 commands:
   install_deps:
@@ -39,7 +39,7 @@ jobs:
             nvm use << pipeline.parameters.node-version >>
       - run:
           name: Install pnpm
-          command: npm install --global pnpm
+          command: corepack enable
       - run:
           name: Check Node.js/pnpm installs
           command: |
@@ -130,7 +130,7 @@ jobs:
             sudo installer -store -pkg "$HOME/Downloads/node-v<< pipeline.parameters.node-version >>.pkg" -target /
       - run:
           name: Install pnpm
-          command: npm install --global pnpm
+          command: corepack enable
       - run:
           name: Check Node.js/pnpm installs
           command: |
