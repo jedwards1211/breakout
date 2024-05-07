@@ -119,7 +119,7 @@ jobs:
 
   build-macos:
     macos:
-      xcode: 11.5.0
+      xcode: 15.3.0
     steps:
       - checkout
       - checkout_submodules
