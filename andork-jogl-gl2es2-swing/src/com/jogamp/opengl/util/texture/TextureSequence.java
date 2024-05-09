@@ -32,8 +32,6 @@ import com.jogamp.opengl.GLAutoDrawable;
 import com.jogamp.opengl.GLRunnable;
 import com.jogamp.opengl.GLEventListener;
 
-import com.jogamp.opengl.util.TimeFrameI;
-
 /**
  * Protocol for texture sequences, like animations, movies, etc.
  * <p>

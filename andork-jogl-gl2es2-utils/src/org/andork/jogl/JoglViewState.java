@@ -31,6 +31,7 @@ import static org.andork.math3d.Vecmath.setIdentity;
 import org.andork.math3d.PickXform;
 
 import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.math.Matrix4f;
 import com.jogamp.opengl.math.geom.Frustum;
 
 public class JoglViewState implements JoglDrawContext {
@@ -243,11 +244,13 @@ public class JoglViewState implements JoglDrawContext {
 	public float devicePixelRatio() {
 		return devicePixelRatio;
 	}
+	
+	Matrix4f pvMat4f = new Matrix4f();
 
 	@Override
 	public Frustum frustum() {
 		if (!frustumUpToDate) {
-			frustum.updateByPMV(pv, 0);
+			frustum.updateFrustumPlanes(pvMat4f.load(pv));
 			frustumUpToDate = true;
 		}
 		return frustum;
