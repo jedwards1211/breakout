@@ -9,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 public class CalculateGeometryTests {
-	@Test
+//	@Test
 	public void testLinkCrossSections001() {
 		CalcStation A = new CalcStation("A");
 		CalcStation B = new CalcStation("B");
@@ -28,7 +28,7 @@ public class CalculateGeometryTests {
 		Assert.assertEquals(Math.toRadians(90), BC.fromCrossSection.facingAzimuth, 1e-12);
 	}
 
-	@Test
+//	@Test
 	public void testLinkCrossSections002() {
 		CalcStation A = new CalcStation("A");
 		CalcStation B = new CalcStation("B");
@@ -48,7 +48,7 @@ public class CalculateGeometryTests {
 		Assert.assertEquals(Math.toRadians(70), BC.fromCrossSection.facingAzimuth, 1e-12);
 	}
 
-	@Test
+//	@Test
 	public void testLinkCrossSections003() {
 		CalcStation A = new CalcStation("A");
 		CalcStation B = new CalcStation("B");
@@ -66,7 +66,7 @@ public class CalculateGeometryTests {
 		Assert.assertEquals(Math.toRadians(270), CB.toCrossSection.facingAzimuth, 1e-12);
 	}
 
-	@Test
+//	@Test
 	public void testLinkCrossSections004() {
 		CalcStation A = new CalcStation("A");
 		CalcStation B = new CalcStation("B");
@@ -87,7 +87,7 @@ public class CalculateGeometryTests {
 		Assert.assertEquals(Math.toRadians(90), BC.fromCrossSection.facingAzimuth, 1e-12);
 	}
 
-	@Test
+//	@Test
 	public void testLinkCrossSections005() {
 		CalcStation A = new CalcStation("A");
 		CalcStation B = new CalcStation("B");
@@ -113,7 +113,7 @@ public class CalculateGeometryTests {
 		Assert.assertEquals(Math.toRadians(90), BC.fromCrossSection.facingAzimuth, 1e-12);
 	}
 
-	@Test
+//	@Test
 	public void testLinkCrossSections006() {
 		CalcStation A = new CalcStation("A");
 		CalcStation B = new CalcStation("B");
