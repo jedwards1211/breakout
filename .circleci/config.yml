@@ -40,7 +40,7 @@ jobs:
           command: |
             curl -sSLo wix.exe https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314.exe
             .\wix.exe /install /quiet /norestart
-          shell powershell.exe
+          shell: powershell.exe
       - run:
           name: Install Node.js
           command: |
