@@ -149,7 +149,7 @@ jobs:
       - run:
           name: Install Java
           command: |
-            JDK8_UPDATE=<< pipeline.parameters.jdk8-version >>
+            JDK8_UPDATE=<< pipeline.parameters.jdk8-update >>
             curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg" > "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg"
             hdiutil attach "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg"
             sudo installer -pkg "/Volumes/JDK 8 Update ${JDK8_UPDATE}/JDK 8 Update ${JDK8_UPDATE}.pkg" -target /
@@ -157,7 +157,7 @@ jobs:
       - run:
           name: Setup Environment Variables
           command: |
-            JDK8_UPDATE=<< pipeline.parameters.jdk8-version >>
+            JDK8_UPDATE=<< pipeline.parameters.jdk8-update >>
             echo "export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_${JDK8_UPDATE}.jdk/Contents/Home" >> $BASH_ENV
             echo "export PATH=$JAVA_HOME/bin:$PATH" >> $BASH_ENV
       - run:
