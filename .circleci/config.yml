@@ -84,7 +84,7 @@ jobs:
           shell: bash.exe
       - run:
           name: Get release version
-          command: pnpm semantic-release -- --dry-run
+          command: pnpm semantic-release --dry-run
           shell: bash.exe
       - run:
           name: Build
