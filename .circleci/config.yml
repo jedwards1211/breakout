@@ -194,7 +194,7 @@ jobs:
 
   release:
     docker:
-      - image: circleci/node:<< pipeline.parameters.node-version >>
+      - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
       - run:
