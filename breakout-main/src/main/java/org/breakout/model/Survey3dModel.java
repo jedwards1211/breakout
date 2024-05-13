@@ -129,6 +129,7 @@ import com.jogamp.nativewindow.awt.DirectDataBufferInt;
 import com.jogamp.nativewindow.awt.DirectDataBufferInt.BufferedImageInt;
 import com.jogamp.opengl.GL;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.math.Vec3f;
 import com.jogamp.opengl.util.awt.TextRenderer;
 
 public class Survey3dModel implements JoglDrawable, JoglResource {
@@ -1154,9 +1155,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				task.increment();
 			}
 		}
+		
+		Vec3f boundingSphereVec3f = new Vec3f();
 
 		boolean isOutsideFrustum(JoglDrawContext context) {
-			return context.frustum().isSphereOutside(boundingSphere, boundingSphere[3]);
+			return context.frustum().isSphereOutside(boundingSphereVec3f.set(boundingSphere), boundingSphere[3]);
 		}
 
 		void drawLeadLabels(

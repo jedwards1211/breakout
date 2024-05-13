@@ -29,6 +29,7 @@ import org.andork.spatial.Rectmath;
 import com.jogamp.nativewindow.util.Dimension;
 import com.jogamp.nativewindow.util.PixelRectangle;
 import com.jogamp.opengl.GL2ES2;
+import com.jogamp.opengl.math.Vec3f;
 
 public class TerrainTile implements JoglDrawable, JoglResource {
 	private static class VertexIterator implements Iterator<float[]> {
@@ -349,12 +350,14 @@ public class TerrainTile implements JoglDrawable, JoglResource {
 		return true;
 	}
 	
+	Vec3f boundingSphereVec3f = new Vec3f();
+	
 	@Override
 	public void draw(JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 		if (!initialized) {
 			return;
 		}
-		if (context.frustum().isSphereOutside(boundingSphere, boundingSphere[3])) {
+		if (context.frustum().isSphereOutside(boundingSphereVec3f.set(boundingSphere), boundingSphere[3])) {
 			return;
 		}
 
