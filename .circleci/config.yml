@@ -28,6 +28,7 @@ commands:
             git submodule update
 orbs:
   win: circleci/windows@5.0
+  wixtoolset: sensu/wixtoolset@1.0.0
 
 jobs:
   build-windows:
@@ -35,9 +36,7 @@ jobs:
     steps:
       - checkout
       - checkout_submodules
-      - run:
-          name: Install WiX
-          command: choco install wixtoolset --version 3.11.2 -y
+      - wixtoolset/download-and-install
       - run:
           name: Install Node.js
           command: |
@@ -74,7 +73,7 @@ jobs:
           command: |
             export JAVA_HOME="$PWD/jdk-x64"
             export MVN_HOME="$PWD/apache-maven-<< pipeline.parameters.maven-version >>"
-            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
+            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.14/bin:$PATH"
             java -version
             javapackager -version
             mvn -v
@@ -88,7 +87,7 @@ jobs:
           command: |
             export JAVA_HOME="$PWD/jdk-x64"
             export MVN_HOME="$PWD/apache-maven-<< pipeline.parameters.maven-version >>"
-            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
+            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.14/bin:$PATH"
             mvn clean install -U -Dbreakout.version="$(< version)" -P windows,windows-amd64
             mkdir -p dist/windows
             cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/windows/breakout.jar
@@ -98,7 +97,7 @@ jobs:
           command: |
             export JAVA_HOME="$PWD/jdk-x64"
             export MVN_HOME="$PWD/apache-maven-<< pipeline.parameters.maven-version >>"
-            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.11/bin:$PATH"
+            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.14/bin:$PATH"
             javapackager -deploy -native msi -outdir packages -outfile Breakout \
               -srcdir dist/windows -srcfiles breakout.jar \
               -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
