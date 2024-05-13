@@ -8,8 +8,8 @@ parameters:
     type: string
     default: '401'
   maven-version:
-  	type: string
-  	default: '3.9.6'
+    type: string
+    default: '3.9.6'
 
 commands:
   install_deps:
@@ -55,7 +55,7 @@ jobs:
       - run:
           name: Install Java
           command: |
-          	JDK8_UPDATE=<< pipeline.parameters.jdk8-update >>
+            JDK8_UPDATE=<< pipeline.parameters.jdk8-update >>
             curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u${JDK8_UPDATE}-windows-x64.zip" > jdk-x64.zip
             curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u${JDK8_UPDATE}-windows-x86.zip" > jdk-x86.zip
             mkdir jdk-x64
@@ -66,7 +66,7 @@ jobs:
       - run:
           name: Install Maven
           command: |
-          	MAVEN_VERSION=<< pipeline.parameters.maven-version >>
+            MAVEN_VERSION=<< pipeline.parameters.maven-version >>
             curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/apache-maven-${MAVEN_VERSION}-bin.tar.gz" > maven.tar.gz
             tar -xzvf maven.tar.gz
           shell: bash.exe
@@ -134,7 +134,7 @@ jobs:
       - run:
           name: Install Node.js
           command: |
-          	NODE_VERSION=<< pipeline.parameters.node-version >>
+            NODE_VERSION=<< pipeline.parameters.node-version >>
             curl "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.pkg" > "$HOME/Downloads/node-v${NODE_VERSION}.pkg"
             sudo installer -store -pkg "$HOME/Downloads/node-v${NODE_VERSION}.pkg" -target /
       - run:
@@ -149,7 +149,7 @@ jobs:
       - run:
           name: Install Java
           command: |
-          	JDK8_UPDATE=<< pipeline.parameters.jdk8-version >>
+            JDK8_UPDATE=<< pipeline.parameters.jdk8-version >>
             curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg" > "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg"
             hdiutil attach "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg"
             sudo installer -pkg "/Volumes/JDK 8 Update ${JDK8_UPDATE}/JDK 8 Update ${JDK8_UPDATE}.pkg" -target /
@@ -157,13 +157,13 @@ jobs:
       - run:
           name: Setup Environment Variables
           command: |
-          	JDK8_UPDATE=<< pipeline.parameters.jdk8-version >>
+            JDK8_UPDATE=<< pipeline.parameters.jdk8-version >>
             echo "export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_${JDK8_UPDATE}.jdk/Contents/Home" >> $BASH_ENV
             echo "export PATH=$JAVA_HOME/bin:$PATH" >> $BASH_ENV
       - run:
           name: Install Maven
           command: |
-          	MAVEN_VERSION=<< pipeline.parameters.maven-version >>
+            MAVEN_VERSION=<< pipeline.parameters.maven-version >>
             curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/apache-maven-${MAVEN_VERSION}-bin.tar.gz" > "$HOME/Downloads/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
             tar xzvf "$HOME/Downloads/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
             echo "export PATH=apache-maven-${MAVEN_VERSION}/bin:$PATH" >> $BASH_ENV
