@@ -153,7 +153,7 @@ jobs:
             MAVEN_VERSION=<< pipeline.parameters.maven-version >>
             curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/apache-maven-${MAVEN_VERSION}-bin.tar.gz" > "$HOME/Downloads/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
             tar xzvf "$HOME/Downloads/apache-maven-${MAVEN_VERSION}-bin.tar.gz"
-            echo "export PATH=\$HOME/Downloads/apache-maven-${MAVEN_VERSION}/bin:\$PATH" >> $BASH_ENV
+            echo "export PATH=$HOME/Downloads/apache-maven-${MAVEN_VERSION}/bin:\$PATH" >> $BASH_ENV
             mkdir ~/.m2
             cp mvn-settings.xml ~/.m2/settings.xml
       - run:
