@@ -28,7 +28,6 @@ commands:
             git submodule update
 orbs:
   win: circleci/windows@5.0
-  wixtoolset: sensu/wixtoolset@1.0.0
 
 jobs:
   build-windows:
@@ -36,7 +35,12 @@ jobs:
     steps:
       - checkout
       - checkout_submodules
-      - wixtoolset/download-and-install
+      - run:
+          name: Install WiX
+          command: |
+            curl -sSLo wix.exe https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314.exe
+            .\wix.exe /install /quiet /norestart
+          shell powershell.exe
       - run:
           name: Install Node.js
           command: |
