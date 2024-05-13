@@ -38,7 +38,7 @@ jobs:
       - run:
           name: Install WiX
           command: |
-            curl -sSLo wix.exe https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314.exe
+            curl.exe -sSLo wix.exe https://github.com/wixtoolset/wix3/releases/download/wix3141rtm/wix314.exe
             .\wix.exe /install /quiet /norestart
           shell: powershell.exe
       - run:
