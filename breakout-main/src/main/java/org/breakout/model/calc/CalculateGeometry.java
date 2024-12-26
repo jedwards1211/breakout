@@ -119,7 +119,7 @@ public class CalculateGeometry {
 
 		double bisector =
 			Angles
-				.bisector(shot1.azimuth, shotsFaceOppositeDirections ? Angles.opposite(shot2.azimuth) : shot2.azimuth);
+				.bisector(shot1.azimuth, shotsFaceOppositeDirections ? shot2.azimuth : Angles.opposite(shot2.azimuth));
 		double side1 = (bisector + Math.PI / 2) % (Math.PI * 2);
 		double side2 = side1 < Math.PI ? side1 + Math.PI : side1 - Math.PI;
 		double facingAzimuth1 = Angles.absDifference(shot1.azimuth, side1) < Math.PI / 2 ? side1 : side2;
