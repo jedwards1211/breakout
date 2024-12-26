@@ -23,6 +23,7 @@ package org.breakout;
 
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -99,11 +100,11 @@ public class ExportSurveyNotesAction extends AbstractAction {
 						String summary = SummarizeTripStations.summarizeTripStations(trip);
 
 						Set<String> attachedFiles = new HashSet<>(trip.attachedFiles);
-						List<Object> found = mainView.findAttachedFiles(attachedFiles, this);
+						List<URI> found = AttachedFileFinder.findAttachedFiles(mainView, attachedFiles, this);
 
 						forEach(found, item -> {
-							if (item instanceof Path) {
-								Path path = (Path) item;
+							if (item.getScheme().equals("file")) {
+								Path path = Paths.get(item);
 								setStatus("Copying " + path.getFileName() + "...");
 								String fileName = summary + " " + tripName;
 								if (found.size() > 1) {

@@ -50,14 +50,9 @@ import java.io.Reader;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.FileVisitOption;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2700,7 +2695,7 @@ public class BreakoutMainView {
 						return true;
 					case 1:
 						mostRecentBackup.delete();
-						recentProjectFiles.remove(mostRecentFile);
+						recentProjectFiles.remove(mostRecentFile.toPath());
 						break;
 					}
 				}
@@ -3172,132 +3167,18 @@ public class BreakoutMainView {
 		}
 	}
 
-	public List<Object> findAttachedFiles(Set<String> attachedFiles, Task<?> task) throws IOException {
-		if (SwingUtilities.isEventDispatchThread()) {
-			throw new IllegalThreadStateException("must not be called on EDT, should be called on ioTaskService");
-		}
-		List<Object> result = new ArrayList<>();
-		Set<String> searchTargets = new HashSet<>();
-		for (String attachedFile : attachedFiles) {
-			try {
-				result.add(new URL(attachedFile).toURI());
-			}
-			catch (Exception e) {
-				// ignore
-			}
-			File file = new File(attachedFile);
-			if (file.isAbsolute())
-				result.add(file);
-			else
-				searchTargets.add(attachedFile.replace('\\', '/').toLowerCase());
-		}
-		if (searchTargets.isEmpty())
-			return result;
-
-		try {
-
-			QArrayList<File> dirs = getProjectModel().get(ProjectModel.surveyScanPaths);
-			if (dirs == null || dirs.isEmpty()) {
-				dirs = FromEDT.fromEDT(() -> {
-					int option =
-						JOptionPane
-							.showConfirmDialog(
-								mainPanel,
-								"There are no directories configured to search for files.  Would you like to configure them now?",
-								"Can't find file",
-								JOptionPane.YES_NO_OPTION,
-								JOptionPane.WARNING_MESSAGE);
-					if (option == JOptionPane.YES_OPTION) {
-						editSurveyScanPathsAction
-							.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, ""));
-						return getProjectModel().get(ProjectModel.surveyScanPaths);
-					}
-					return null;
-				});
-			}
-			if (dirs != null) {
-				if (task instanceof SelfReportingTask) {
-					((SelfReportingTask<?>) task).showDialogLater();
-				}
-
-				final QArrayList<File> finalDirs = dirs;
-				task
-					.setStatus(
-						searchTargets.size() > 1
-							? "Searching for files..."
-							: "Searching for file: " + searchTargets.iterator().next() + "...");
-				task.setIndeterminate(true);
-
-				for (File dir : finalDirs) {
-					Files
-						.walkFileTree(
-							dir.toPath(),
-							Collections.singleton(FileVisitOption.FOLLOW_LINKS),
-							SCANNED_NOTES_SEARCH_DEPTH,
-							new SimpleFileVisitor<Path>() {
-								@Override
-								public FileVisitResult visitFile(Path path, BasicFileAttributes attrs)
-									throws IOException {
-									String pathStr = path.toString().replace('\\', '/').toLowerCase();
-									while (!pathStr.isEmpty()) {
-										if (searchTargets.remove(pathStr)) {
-											result.add(path);
-										}
-										pathStr = pathStr.replaceFirst("^[^\\/]*(\\/|$)", "");
-									}
-
-									return task.isCanceled() || searchTargets.isEmpty()
-										? FileVisitResult.TERMINATE
-										: FileVisitResult.CONTINUE;
-								}
-							});
-				}
-			}
-		}
-		catch (Exception ex) {
-			logger.log(Level.SEVERE, "Failed to find files", ex);
-			OnEDT.onEDT(() -> {
-				JOptionPane
-					.showConfirmDialog(mainPanel, new Object[]
-					{ "Failed to find files:", ex.getLocalizedMessage() },
-						"Error finding files",
-						JOptionPane.OK_OPTION,
-						JOptionPane.ERROR_MESSAGE);
-			});
-			throw ex;
-		}
-
-		if (!searchTargets.isEmpty()) {
-			OnEDT.onEDT(() -> {
-				JOptionPane
-					.showConfirmDialog(mainPanel, new Object[]
-					{ "Failed to find files:", searchTargets.toArray() },
-						"Can't find files",
-						JOptionPane.OK_OPTION,
-						JOptionPane.ERROR_MESSAGE);
-			});
-		}
-
-		return result;
-	}
-
 	private void openAttachedFile(String link) {
-		try {
-			Desktop.getDesktop().browse(new URL(link).toURI());
-			return;
-		}
-		catch (Exception e) {
-		}
-
 		try {
 			ioTaskService.submit(new SelfReportingTask<Void>(mainPanel) {
 				@Override
 				protected Void workDuringDialog() throws Exception {
-					List<Object> found = findAttachedFiles(Collections.singleton(link), this);
+					List<URI> found = AttachedFileFinder.findAttachedFiles(BreakoutMainView.this, Collections.singleton(link), this);
 					if (!found.isEmpty()) {
-						Object item = found.get(0);
-						if (item instanceof Path) {
-							openSurveyNotes(((Path) item).toFile());
+						URI item = found.get(0);
+						if (item.getScheme().equals("file")) {
+							openSurveyNotes(new File(item));
+						} else if (item instanceof URI) {
+							Desktop.getDesktop().browse(item);
 						}
 					}
 

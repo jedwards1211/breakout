@@ -21,8 +21,8 @@
  *******************************************************************************/
 package org.andork.util;
 
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -129,13 +129,13 @@ public class StringUtils {
 		return aValue == null || "".equals(aValue.toString());
 	}
 
-	public static String join(String separator, List<?> strings) {
+	public static String join(String separator, Collection<?> strings) {
 		StringBuilder sb = new StringBuilder();
-		if (strings.size() > 0) {
-			sb.append(strings.get(0));
-		}
-		for (int i = 1; i < strings.size(); i++) {
-			sb.append(separator).append(strings.get(i));
+		for (Object elem : strings) {
+			if (sb.length() > 0) {
+				sb.append(separator);
+			}
+			sb.append(elem);
 		}
 		return sb.toString();
 	}
