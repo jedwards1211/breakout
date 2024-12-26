@@ -118,7 +118,7 @@ public class AttachedFileFinder {
 			}
 			logger.log(Level.SEVERE, "Failed to find files", ex);
 			OnEDT.onEDT(() -> {
-				JOptionPane.showMessageDialog(mainView.getMainPanel(), 
+				JOptionPane.showMessageDialog(SelfReportingTask.getDialogParent(task), 
 					"Failed to find files: " + ex.getLocalizedMessage(), "Error finding files", JOptionPane.ERROR_MESSAGE);
 			});
 			throw ex;			
@@ -134,7 +134,7 @@ public class AttachedFileFinder {
 				result.add(exactMatch);
 				continue;
 			}
-			URI selected = FromEDT.fromEDT(() -> selectMatch(mainView, entry.getKey(), entry.getValue()));
+			URI selected = FromEDT.fromEDT(() -> selectMatch(mainView, entry.getKey(), entry.getValue(), task));
 			if (selected == null) continue;
 			result.add(selected);
 		}
@@ -144,7 +144,7 @@ public class AttachedFileFinder {
 		if (!notFound.isEmpty()) {
 			final String title = "Failed to find file" + (notFound.size() == 1 ? "" : "s");
 			OnEDT.onEDT(() -> {
-				JOptionPane.showMessageDialog(mainView.getMainPanel(), 
+				JOptionPane.showMessageDialog(SelfReportingTask.getDialogParent(task), 
 					title + ": " + StringUtils.join(", ", notFound), title, JOptionPane.ERROR_MESSAGE);
 			});
 		}
@@ -152,12 +152,13 @@ public class AttachedFileFinder {
 		return result;
 	}
 	
-	private static URI selectMatch(BreakoutMainView mainView, String inputFile, MatchSet matchset) {
+	private static URI selectMatch(BreakoutMainView mainView, String inputFile, MatchSet matchset, Task<?> task) {
 		DefaultListModel<URI> model = new DefaultListModel<>();
 		for (URI match : matchset.bestMatches(0.7f, 5)) {
 			model.addElement(match);
 		}
 		JList<URI> list = new JList<>(model);
+		list.setSelectedIndex(0);
 		ListCellRenderer<Object> defaultRenderer = new DefaultListCellRenderer();
 		list.setCellRenderer((l, value, index, isSelected, cellHasFocus) -> {
 			return defaultRenderer.getListCellRendererComponent(
@@ -167,10 +168,10 @@ public class AttachedFileFinder {
 			);
 		});
 		
-		int option = JOptionPane.showConfirmDialog(mainView.getMainPanel(), new Object[] {
+		int option = JOptionPane.showConfirmDialog(SelfReportingTask.getDialogParent(task), new Object[] {
 			new JLabel("No file named " + inputFile + " exists, do you want to choose one of the following?"),
 			list
-		}, "Select file", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
-		return option == JOptionPane.OK_OPTION ? list.getSelectedValue() : null;
+		}, "Select file", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+		return option == JOptionPane.YES_OPTION ? list.getSelectedValue() : null;
 	}
 }

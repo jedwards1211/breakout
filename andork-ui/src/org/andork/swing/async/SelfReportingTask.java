@@ -33,6 +33,7 @@ import javax.swing.WindowConstants;
 import org.andork.task.Task;
 import org.andork.task.TaskCallable;
 import org.andork.task.TaskRunnable;
+import org.andork.util.JavaScript;
 
 public abstract class SelfReportingTask<R> extends Task<R> {
 	protected Component dialogParent;
@@ -115,5 +116,12 @@ public abstract class SelfReportingTask<R> extends Task<R> {
 				}
 			}
 		});
+	}
+	
+	public static Component getDialogParent(Task<?> task) {
+		if (task instanceof SelfReportingTask) {
+			return JavaScript.or(((SelfReportingTask<?>) task).dialog, ((SelfReportingTask<?>) task).dialogParent);
+		}
+		return null;
 	}
 }
