@@ -140,8 +140,8 @@ jobs:
           name: Install Java
           command: |
             JDK8_UPDATE=<< pipeline.parameters.jdk8-update >>
-            curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg" > "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg"
-            hdiutil attach "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-x64.dmg"
+            curl "https://s3.us-west-2.amazonaws.com/public.breakout.jedwards1211/jdk-8u${JDK8_UPDATE}-macosx-aarch64.dmg" > "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-aarch64.dmg"
+            hdiutil attach "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-aarch64.dmg"
             sudo installer -pkg "/Volumes/JDK 8 Update ${JDK8_UPDATE}/JDK 8 Update ${JDK8_UPDATE}.pkg" -target /
             diskutil umount "/Volumes/JDK 8 Update ${JDK8_UPDATE}"
       - run:
