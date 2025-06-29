@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
@@ -8,6 +9,13 @@
 		<maven.build.timestamp.format>yyyy-MM-dd HH:mm z</maven.build.timestamp.format>
 		<build.date>${maven.build.timestamp}</build.date>
 	</properties>
+	<repositories>
+		<repository>
+			<id>jogamp</id>
+			<name>Jogamp</name>
+			<url>https://jogamp.org/deployment/maven/</url>
+		</repository>
+	</repositories>
 	<build>
 		<resources>
 			<resource>
@@ -139,12 +147,18 @@
 			<version>2.5.0</version>
 			<classifier>awt</classifier>
 		</dependency>
-		<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
-			<version>2.5.0</version> </dependency> <dependency> <groupId>org.jogamp.jogl</groupId> 
-			<artifactId>newt</artifactId> <version>2.5.0</version> <classifier>event</classifier> 
-			</dependency> <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
-			<version>2.5.0</version> <classifier>ogl</classifier> </dependency> <dependency> 
-			<groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> <version>2.5.0</version> 
+		<!-- <dependency> <groupId>org.jogamp.jogl</groupId>
+		<artifactId>newt</artifactId> 
+			<version>2.5.0</version> </dependency> <dependency>
+		<groupId>org.jogamp.jogl</groupId> 
+			<artifactId>newt</artifactId> <version>2.5.0</version>
+		<classifier>event</classifier> 
+			</dependency> <dependency> <groupId>org.jogamp.jogl</groupId>
+		<artifactId>newt</artifactId> 
+			<version>2.5.0</version> <classifier>ogl</classifier> </dependency>
+		<dependency> 
+			<groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId>
+		<version>2.5.0</version> 
 			<classifier>awt</classifier> </dependency> -->
 		<dependency>
 			<groupId>org.jogamp.gluegen</groupId>
@@ -220,7 +234,8 @@
 					<version>2.5.0</version>
 					<classifier>os-win</classifier>
 				</dependency>
-				<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
+				<!-- <dependency> <groupId>org.jogamp.jogl</groupId>
+				<artifactId>newt</artifactId> 
 					<version>2.5.0</version> <classifier>driver-win</classifier> </dependency> -->
 			</dependencies>
 		</profile>
@@ -251,8 +266,10 @@
 					<version>2.5.0</version>
 					<classifier>natives-windows-i586</classifier>
 				</dependency>
-				<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
-					<version>2.5.0</version> <classifier>natives-windows-i586</classifier> </dependency> -->
+				<!-- <dependency> <groupId>org.jogamp.jogl</groupId>
+				<artifactId>newt</artifactId> 
+					<version>2.5.0</version> <classifier>natives-windows-i586</classifier>
+				</dependency> -->
 			</dependencies>
 		</profile>
 		<profile>
@@ -282,8 +299,10 @@
 					<version>2.5.0</version>
 					<classifier>natives-windows-amd64</classifier>
 				</dependency>
-				<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
-					<version>2.5.0</version> <classifier>natives-windows-amd64</classifier> </dependency> -->
+				<!-- <dependency> <groupId>org.jogamp.jogl</groupId>
+				<artifactId>newt</artifactId> 
+					<version>2.5.0</version> <classifier>natives-windows-amd64</classifier>
+				</dependency> -->
 			</dependencies>
 		</profile>
 		<profile>
@@ -306,7 +325,8 @@
 					<version>2.5.0</version>
 					<classifier>os-x11</classifier>
 				</dependency>
-				<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
+				<!-- <dependency> <groupId>org.jogamp.jogl</groupId>
+				<artifactId>newt</artifactId> 
 					<version>2.5.0</version> <classifier>driver-x11</classifier> </dependency> -->
 			</dependencies>
 		</profile>
@@ -337,8 +357,10 @@
 					<version>2.5.0</version>
 					<classifier>natives-linux-i586</classifier>
 				</dependency>
-				<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
-					<version>2.5.0</version> <classifier>natives-linux-i586</classifier> </dependency> -->
+				<!-- <dependency> <groupId>org.jogamp.jogl</groupId>
+				<artifactId>newt</artifactId> 
+					<version>2.5.0</version> <classifier>natives-linux-i586</classifier>
+				</dependency> -->
 			</dependencies>
 		</profile>
 		<profile>
@@ -368,8 +390,10 @@
 					<version>2.5.0</version>
 					<classifier>natives-linux-amd64</classifier>
 				</dependency>
-				<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
-					<version>2.5.0</version> <classifier>natives-linux-amd64</classifier> </dependency> -->
+				<!-- <dependency> <groupId>org.jogamp.jogl</groupId>
+				<artifactId>newt</artifactId> 
+					<version>2.5.0</version> <classifier>natives-linux-amd64</classifier>
+				</dependency> -->
 			</dependencies>
 		</profile>
 		<profile>
@@ -410,7 +434,8 @@
 					<version>2.5.0</version>
 					<classifier>natives-macosx-universal</classifier>
 				</dependency>
-				<!-- <dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
+				<!-- <dependency> <groupId>org.jogamp.jogl</groupId>
+				<artifactId>newt</artifactId> 
 					<version>2.5.0</version> <classifier>driver-osx</classifier> </dependency> 
 					<dependency> <groupId>org.jogamp.jogl</groupId> <artifactId>newt</artifactId> 
 					<version>2.5.0</version> <classifier>natives-macosx-universal</classifier> 
