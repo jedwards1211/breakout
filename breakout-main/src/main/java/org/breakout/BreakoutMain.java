@@ -236,8 +236,8 @@ public class BreakoutMain {
 			Properties props = new Properties();
 			props.load(BreakoutMain.class.getClassLoader().getResourceAsStream("version.properties"));
 			if (System.getProperty("MOCK_VERSION") == null)
-				version = props.getProperty("version");
-			buildDate = new SimpleDateFormat("yyyy-MM-dd HH:ss 'UTC'").parse(props.getProperty("build.date"));
+				version = props.getProperty("version").trim();
+			buildDate = new SimpleDateFormat("yyyy-MM-dd HH:ss 'UTC'").parse(props.getProperty("build.date").trim());
 		}
 		catch (Exception ex) {
 			logger.log(Level.WARNING, "Failed to load version.properties", ex);
