@@ -401,7 +401,6 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 				}
 				dialog.setErrors(errors);
 				dialog.setSurveyTableModel(newModel);
-				dialog.setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
 				doImport = false;
 				dialog.onImport(e -> {
 					doImport = true;

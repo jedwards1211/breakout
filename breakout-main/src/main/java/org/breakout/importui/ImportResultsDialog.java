@@ -1,5 +1,6 @@
 package org.breakout.importui;
 
+import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionListener;
@@ -115,6 +116,7 @@ public class ImportResultsDialog extends JDialog {
 		cancelButton.addActionListener(e -> dispose());
 
 		pack();
+		setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
 		setLocationRelativeTo(null);
 	}
 
