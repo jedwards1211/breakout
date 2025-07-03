@@ -116,7 +116,8 @@ public class ImportResultsDialog extends JDialog {
 		cancelButton.addActionListener(e -> dispose());
 
 		pack();
-		setSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
+		Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize();
+		setSize(new Dimension(screensize.width * 4 / 5, screensize.height * 4 / 5));
 		setLocationRelativeTo(null);
 	}
 
