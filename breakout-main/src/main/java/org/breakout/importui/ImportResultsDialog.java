@@ -1,6 +1,7 @@
 package org.breakout.importui;
 
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -30,7 +31,7 @@ public class ImportResultsDialog extends JDialog {
 
 	public static void main(String[] args) {
 		OnEDT.onEDT(() -> {
-			ImportResultsDialog dialog = new ImportResultsDialog(new I18n(), "title.compass");
+			ImportResultsDialog dialog = new ImportResultsDialog(null, new I18n(), "title.compass");
 			dialog.setSize(Toolkit.getDefaultToolkit().getScreenSize());
 			dialog.setVisible(true);
 		});
@@ -58,7 +59,8 @@ public class ImportResultsDialog extends JDialog {
 		}
 	};
 
-	public ImportResultsDialog(I18n i18n, String titleKey) {
+	public ImportResultsDialog(Window owner, I18n i18n, String titleKey) {
+		super(owner);
 		Localizer localizer = i18n.forClass(ImportResultsDialog.class);
 		this.titleKey = titleKey;
 
