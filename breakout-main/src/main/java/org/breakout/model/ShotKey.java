@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import org.breakout.model.raw.SurveyRow;
 
-public class ShotKey {
+public class ShotKey implements HasShotKey {
 	public final String fromCave;
 	public final String fromStation;
 	public final String toCave;
@@ -45,6 +45,10 @@ public class ShotKey {
 		this(fromKey.cave, fromKey.station, toKey.cave, toKey.station);
 	}
 
+	public ShotKey shotKey() {
+		return this;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
@@ -77,16 +81,25 @@ public class ShotKey {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("ShotKey [fromCave=").append(fromCave).append(", fromStation=").append(fromStation)
-				.append(", toCave=").append(toCave).append(", toStation=").append(toStation).append(", hashCode=")
-				.append(hashCode).append("]");
+		builder
+			.append("ShotKey [fromCave=")
+			.append(fromCave)
+			.append(", fromStation=")
+			.append(fromStation)
+			.append(", toCave=")
+			.append(toCave)
+			.append(", toStation=")
+			.append(toStation)
+			.append(", hashCode=")
+			.append(hashCode)
+			.append("]");
 		return builder.toString();
 	}
-	
+
 	public StationKey fromKey() {
 		return new StationKey(fromCave, fromStation);
 	}
-	
+
 	public StationKey toKey() {
 		return new StationKey(toCave, toStation);
 	}

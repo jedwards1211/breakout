@@ -202,6 +202,7 @@ import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
 import org.breakout.model.DebugDraw;
 import org.breakout.model.GradientModel;
+import org.breakout.model.HasShotKey;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.OrthoScaleBar;
 import org.breakout.model.ProjectModel;
@@ -1491,6 +1492,12 @@ public class BreakoutMainView {
 	FitViewToEverythingAction fitViewToEverythingAction = new FitViewToEverythingAction(this);
 	FitViewToSelectedAction fitViewToSelectedAction = new FitViewToSelectedAction(this);
 	FindAction findAction = new FindAction(this);
+	SelectGlowingShotsAction selectGlowingShotsAction =
+		new SelectGlowingShotsAction(this, SelectGlowingShotsAction.Variant.SET_SELECTION);
+	SelectGlowingShotsAction addGlowingShotsToSelectionAction =
+		new SelectGlowingShotsAction(this, SelectGlowingShotsAction.Variant.ADD_TO_SELECTION);
+	SelectGlowingShotsAction toggleGlowingShotsSelectedAction =
+		new SelectGlowingShotsAction(this, SelectGlowingShotsAction.Variant.TOGGLE_SELECTION);
 
 	EditSurveyScanPathsAction editSurveyScanPathsAction = new EditSurveyScanPathsAction(this);
 
@@ -1767,23 +1774,7 @@ public class BreakoutMainView {
 
 			@Override
 			public void selectShots(Set<Shot3d> newSelected, boolean add, boolean toggle) {
-				OnEDT.onEDT(() -> {
-					ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
-					selModel.setValueIsAdjusting(true);
-					if (!add && !toggle) {
-						selModel.clearSelection();
-					}
-					for (Shot3d shot3d : newSelected) {
-						Integer row = shotKeyToModelIndex.get(shot3d.key());
-						if (toggle && selModel.isSelectedIndex(row)) {
-							selModel.removeSelectionInterval(row, row);
-						}
-						else {
-							selModel.addSelectionInterval(row, row);
-						}
-					}
-					selModel.setValueIsAdjusting(false);
-				});
+				selectShots(newSelected, add, toggle);
 			}
 		});
 		canvasMouseAdapterWrapper.setWrapped(mouseLooper);
@@ -2321,6 +2312,9 @@ public class BreakoutMainView {
 		JMenu editMenu = new JMenu();
 		menuBar.add(editMenu);
 		editMenu.add(new JMenuItem(findAction));
+		editMenu.add(new JMenuItem(selectGlowingShotsAction));
+		editMenu.add(new JMenuItem(addGlowingShotsToSelectionAction));
+		editMenu.add(new JMenuItem(toggleGlowingShotsSelectedAction));
 
 		JMenu debugMenu = new JMenu();
 		menuBar.add(debugMenu);
@@ -2612,9 +2606,8 @@ public class BreakoutMainView {
 		}
 	}
 
-	private static <S extends QSpec<S>> JCheckBoxMenuItem boundCheckBoxMenuItem(
-		Binder<QObject<S>> binder,
-		QSpec.Attribute<Boolean> attribute) {
+	private static <S extends QSpec<S>> JCheckBoxMenuItem
+		boundCheckBoxMenuItem(Binder<QObject<S>> binder, QSpec.Attribute<Boolean> attribute) {
 		JCheckBoxMenuItem item = new JCheckBoxMenuItem();
 		new ButtonSelectedBinder(item).bind(new QObjectAttributeBinder<>(attribute).bind(binder));
 		return item;
@@ -3172,12 +3165,14 @@ public class BreakoutMainView {
 			ioTaskService.submit(new SelfReportingTask<Void>(mainPanel) {
 				@Override
 				protected Void workDuringDialog() throws Exception {
-					List<URI> found = AttachedFileFinder.findAttachedFiles(BreakoutMainView.this, Collections.singleton(link), this);
+					List<URI> found =
+						AttachedFileFinder.findAttachedFiles(BreakoutMainView.this, Collections.singleton(link), this);
 					if (!found.isEmpty()) {
 						URI item = found.get(0);
 						if (item.getScheme().equals("file")) {
 							openSurveyNotes(new File(item));
-						} else if (item instanceof URI) {
+						}
+						else if (item instanceof URI) {
 							Desktop.getDesktop().browse(item);
 						}
 					}
@@ -3351,10 +3346,8 @@ public class BreakoutMainView {
 		return loadModel(file, ProjectModel.defaultMapper, false);
 	}
 
-	private <S extends QSpec<S>> QObject<S> loadModel(
-		File file,
-		Bimapper<QObject<S>, Object> mapper,
-		boolean showError) {
+	private <S extends QSpec<S>> QObject<S>
+		loadModel(File file, Bimapper<QObject<S>, Object> mapper, boolean showError) {
 		try (Reader reader = new FileReader(file)) {
 			return mapper.unmap(new Gson().fromJson(reader, Object.class));
 		}
@@ -3772,5 +3765,25 @@ public class BreakoutMainView {
 			}
 		}
 		ioTaskService.submit(new EditorOpener());
+	}
+
+	public void selectShots(Set<? extends HasShotKey> newSelected, boolean add, boolean toggle) {
+		OnEDT.onEDT(() -> {
+			ListSelectionModel selModel = surveyDrawer.table().getModelSelectionModel();
+			selModel.setValueIsAdjusting(true);
+			if (!add && !toggle) {
+				selModel.clearSelection();
+			}
+			for (HasShotKey shot : newSelected) {
+				Integer row = shotKeyToModelIndex.get(shot.shotKey());
+				if (toggle && selModel.isSelectedIndex(row)) {
+					selModel.removeSelectionInterval(row, row);
+				}
+				else {
+					selModel.addSelectionInterval(row, row);
+				}
+			}
+			selModel.setValueIsAdjusting(false);
+		});
 	}
 }

@@ -138,22 +138,14 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		private int u_origin_location;
 
 		@Override
-		protected void afterDraw(
-			Collection<Section> sections,
-			JoglDrawContext context,
-			GL2ES2 gl,
-			float[] m,
-			float[] n) {
+		protected void
+			afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 			super.afterDraw(sections, context, gl, m, n);
 		}
 
 		@Override
-		protected void beforeDraw(
-			Collection<Section> sections,
-			JoglDrawContext context,
-			GL2ES2 gl,
-			float[] m,
-			float[] n) {
+		protected void
+			beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 			super.beforeDraw(sections, context, gl, m, n);
 			depthAxis.put(gl, u_axis_location);
 			depthOrigin.put(gl, u_origin_location);
@@ -286,12 +278,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		protected int u_depthOffset_location;
 		protected int u_discardBack_location;
 
-		protected void afterDraw(
-			Collection<Section> sections,
-			JoglDrawContext context,
-			GL2ES2 gl,
-			float[] m,
-			float[] n) {
+		protected void
+			afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 			gl.glDisableVertexAttribArray(a_pos_location);
 			gl.glDisableVertexAttribArray(a_norm_location);
 			gl.glDisableVertexAttribArray(a_glow_location);
@@ -302,12 +290,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			gl.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		}
 
-		protected void beforeDraw(
-			Collection<Section> sections,
-			JoglDrawContext context,
-			GL2ES2 gl,
-			float[] m,
-			float[] n) {
+		protected void
+			beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 			gl.glUniformMatrix4fv(m_location, 1, false, m, 0);
 			gl.glUniformMatrix3fv(n_location, 1, false, n, 0);
 			gl.glUniformMatrix4fv(v_location, 1, false, context.viewMatrix(), 0);
@@ -543,12 +527,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		DrawMode drawMode = DrawMode.TRIANGLES;
 
 		@Override
-		protected void beforeDraw(
-			Collection<Section> sections,
-			JoglDrawContext context,
-			GL2ES2 gl,
-			float[] m,
-			float[] n) {
+		protected void
+			beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 			super.beforeDraw(sections, context, gl, m, n);
 
 			gl.glActiveTexture(GL_TEXTURE0);
@@ -593,23 +573,15 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		private int a_param0_location;
 
 		@Override
-		protected void afterDraw(
-			Collection<Section> sections,
-			JoglDrawContext context,
-			GL2ES2 gl,
-			float[] m,
-			float[] n) {
+		protected void
+			afterDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 			super.afterDraw(sections, context, gl, m, n);
 			gl.glDisableVertexAttribArray(a_param0_location);
 		}
 
 		@Override
-		protected void beforeDraw(
-			Collection<Section> sections,
-			JoglDrawContext context,
-			GL2ES2 gl,
-			float[] m,
-			float[] n) {
+		protected void
+			beforeDraw(Collection<Section> sections, JoglDrawContext context, GL2ES2 gl, float[] m, float[] n) {
 			super.beforeDraw(sections, context, gl, m, n);
 
 			gl.glEnableVertexAttribArray(a_param0_location);
@@ -1155,7 +1127,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 				task.increment();
 			}
 		}
-		
+
 		Vec3f boundingSphereVec3f = new Vec3f();
 
 		boolean isOutsideFrustum(JoglDrawContext context) {
@@ -1272,7 +1244,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 	}
 
-	public static class Shot3d {
+	public static class Shot3d implements HasShotKey {
 		ShotKey key;
 		CalcShot shot;
 
@@ -1289,6 +1261,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 			this.key = key;
 			this.shot = shot;
 			vertexCount = shot.vertices.length / 3;
+		}
+
+		public ShotKey shotKey() {
+			return this.key;
 		}
 
 		public void calcParamRange(Survey3dModel model, ColorParam param, float[] rangeInOut) {
@@ -1654,13 +1630,9 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return shot3ds;
 	}
 
-	public static Survey3dModel create(
-		CalcProject project,
-		int maxChildrenPerBranch,
-		int minSplitSize,
-		int numToReinsert,
-		Task<?> task)
-		throws Exception {
+	public static Survey3dModel
+		create(CalcProject project, int maxChildrenPerBranch, int minSplitSize, int numToReinsert, Task<?> task)
+			throws Exception {
 		task.setStatus("creating 3D model");
 		task.setTotal(6);
 
@@ -1821,10 +1793,8 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return -priority;
 	}
 
-	private static Map<Float, Set<StationKey>> computeStationsToLabel(
-		Collection<CalcStation> stations,
-		Collection<Float> spacings,
-		Task<?> subtask) {
+	private static Map<Float, Set<StationKey>>
+		computeStationsToLabel(Collection<CalcStation> stations, Collection<Float> spacings, Task<?> subtask) {
 		subtask.setStatus("Building station labels");
 
 		Map<Float, Set<StationKey>> stationsToLabel = new HashMap<>();
@@ -1900,6 +1870,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 	LinearAxisConversion glowExtentConversion;
 
 	Set<Section> sectionsWithGlow = new HashSet<>();
+	Set<ShotKey> shotsWithGlow = new HashSet<>();
 
 	GradientModel paramGradient = Gradients.DEFAULT;
 
@@ -2349,6 +2320,10 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		return hoveredShot == null ? Collections.<Shot3d>emptySet() : Collections.singleton(hoveredShot);
 	}
 
+	public Set<ShotKey> getShotsWithGlow() {
+		return Collections.unmodifiableSet(this.shotsWithGlow);
+	}
+
 	public float[] getOrthoBounds(float[] orthoRight, float[] orthoUp, float[] orthoForward) {
 		return getOrthoBounds(shot3ds.keySet(), orthoRight, orthoUp, orthoForward);
 	}
@@ -2619,9 +2594,11 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		Set<Section> newSectionsWithGlow = new HashSet<>();
+		Set<ShotKey> newShotsWithGlow = new HashSet<>();
 
 		for (Shot3d shot3d : affectedShot3ds) {
 			newSectionsWithGlow.add(shot3d.section);
+			newShotsWithGlow.add(shot3d.shot.key());
 		}
 
 		if (task.isCanceled()) {
@@ -2638,6 +2615,7 @@ public class Survey3dModel implements JoglDrawable, JoglResource {
 		}
 
 		sectionsWithGlow = newSectionsWithGlow;
+		shotsWithGlow = newShotsWithGlow;
 
 		if (task.isCanceled()) {
 			return;
