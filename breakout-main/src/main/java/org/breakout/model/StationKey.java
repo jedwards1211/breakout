@@ -4,7 +4,7 @@ import static org.andork.util.JavaScript.or;
 
 import java.util.Objects;
 
-public class StationKey {
+public class StationKey implements HasStationKey {
 	public final String cave;
 	public final String station;
 
@@ -42,5 +42,9 @@ public class StationKey {
 		StringBuilder builder = new StringBuilder();
 		builder.append("StationKey [cave=").append(cave).append(", station=").append(station).append("]");
 		return builder.toString();
+	}
+
+	public StationKey stationKey() {
+		return this;
 	}
 }

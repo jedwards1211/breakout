@@ -196,7 +196,7 @@ import org.andork.unit.UnitizedDouble;
 import org.andork.util.FileRecoveryConfig;
 import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.HintLabels.UpdateOptions;
-import org.breakout.StatsModel.MinAvgMax;
+import org.breakout.StatsPanel.StatsModel;
 import org.breakout.mapbox.MapboxClient;
 import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
@@ -217,14 +217,17 @@ import org.breakout.model.Survey3dModel.Shot3dPickResult;
 import org.breakout.model.Survey3dModel.UpdateGlowOptions;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.TitleText;
+import org.breakout.model.calc.CalcCave;
 import org.breakout.model.calc.CalcProject;
 import org.breakout.model.calc.CalcShot;
+import org.breakout.model.calc.CalcStation;
 import org.breakout.model.calc.CalcTrip;
 import org.breakout.model.calc.CalculateGeometry;
 import org.breakout.model.calc.Parsed2Calc;
 import org.breakout.model.compass.Compass;
 import org.breakout.model.parsed.ParsedProject;
 import org.breakout.model.parsed.ParsedShot;
+import org.breakout.model.parsed.ParsedTrip;
 import org.breakout.model.parsed.ProjectParser;
 import org.breakout.model.raw.MetacaveExporter;
 import org.breakout.model.raw.MetacaveImporter;
@@ -372,11 +375,11 @@ public class BreakoutMainView {
 			return total / count;
 		}
 
-		public QObject<MinAvgMax> toModel(Unit<Length> unit) {
-			QObject<MinAvgMax> result = MinAvgMax.spec.newObject();
-			result.set(MinAvgMax.min, new UnitizedDouble<>(min, unit));
-			result.set(MinAvgMax.avg, new UnitizedDouble<>(getAvg(), unit));
-			result.set(MinAvgMax.max, new UnitizedDouble<>(max, unit));
+		public StatsModel.MinAvgMax toModel(Unit<Length> unit) {
+			StatsModel.MinAvgMax result = new StatsModel.MinAvgMax();
+			result.min = new UnitizedDouble<>(min, unit);
+			result.avg = new UnitizedDouble<>(getAvg(), unit);
+			result.max = new UnitizedDouble<>(max, unit);
 			return result;
 		}
 	}
@@ -886,13 +889,17 @@ public class BreakoutMainView {
 					editor.deselect(key);
 				}
 
-				miniSurveyDrawer.statsPanel().getModelBinder().set(StatsModel.spec.newObject());
+				miniSurveyDrawer.statsPanel().setModel(null);
 			}
 			else {
 				MinAvgMaxCalc distCalc = new MinAvgMaxCalc();
 				MinAvgMaxCalc northCalc = new MinAvgMaxCalc();
 				MinAvgMaxCalc eastCalc = new MinAvgMaxCalc();
 				MinAvgMaxCalc depthCalc = new MinAvgMaxCalc();
+				Set<CalcCave> caves = new HashSet<>();
+				Set<ParsedTrip> trips = new HashSet<>();
+				Set<String> surveyors = new HashSet<>();
+				Set<CalcStation> stations = new HashSet<>();
 
 				Consumer<float[]> addPoints = points -> {
 					if (points == null) {
@@ -918,12 +925,32 @@ public class BreakoutMainView {
 
 					if (selModel.isSelectedIndex(i)) {
 						editor.select(shotKey);
+						ParsedShot parsedShot = parsedProject.shots.get(shotKey);
+						if (parsedShot != null) {
+							ParsedTrip trip = parsedShot.trip;
+							if (trip != null) {
+								trips.add(trip);
+								if (trip.surveyors != null) {
+									surveyors.addAll(trip.surveyors);
+								}
+							}
+						}
 						CalcShot shot = calcProject.shots.get(shotKey);
 						if (shot != null) {
+							if (shot.trip.cave != null) {
+								caves.add(shot.trip.cave);
+							}
 							if (!Double.isNaN(shot.distance) && !shot.isExcludeDistance()) {
 								distCalc.add(shot.distance);
 							}
 							addPoints.accept(shot.vertices);
+
+							if (shot.fromStation != null) {
+								stations.add(shot.fromStation);
+							}
+							if (shot.toStation != null) {
+								stations.add(shot.toStation);
+							}
 						}
 					}
 					else {
@@ -931,20 +958,24 @@ public class BreakoutMainView {
 					}
 				}
 
-				QObject<StatsModel> statsModel = StatsModel.spec.newObject();
-				if (distCalc.count > 0) {
-					statsModel.set(StatsModel.numSelected, distCalc.count);
-					statsModel.set(StatsModel.totalDistance, Length.meters(distCalc.total));
-					statsModel.set(StatsModel.distStats, distCalc.toModel(Length.meters));
-					statsModel.set(StatsModel.northStats, northCalc.toModel(Length.meters));
-					statsModel.set(StatsModel.eastStats, eastCalc.toModel(Length.meters));
-					statsModel.set(StatsModel.depthStats, depthCalc.toModel(Length.meters));
-				}
+				StatsModel statsModel = new StatsModel();
+				statsModel.lengthUnit = getProjectModel().get(ProjectModel.displayLengthUnit);
+				statsModel.numCaves = caves.size();
+				statsModel.numTrips = trips.size();
+				statsModel.numSurveyors = surveyors.size();
+				statsModel.numSelected = distCalc.count;
+				statsModel.totalDistance = Length.meters(distCalc.total);
+				statsModel.distStats = distCalc.toModel(Length.meters);
+				statsModel.northStats = northCalc.toModel(Length.meters);
+				statsModel.eastStats = eastCalc.toModel(Length.meters);
+				statsModel.depthStats = depthCalc.toModel(Length.meters);
 
-				miniSurveyDrawer.statsPanel().getModelBinder().set(statsModel);
+				miniSurveyDrawer.statsPanel().setModel(statsModel.numSelected > 0 ? statsModel : null);
 			}
 
-			rebuildTaskService.submit(task -> {
+			rebuildTaskService.submit(task ->
+
+			{
 				editor.commit();
 
 				float[] bounds = Rectmath.voidRectf(3);
@@ -2251,11 +2282,6 @@ public class BreakoutMainView {
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder));
 
-		miniSurveyDrawer
-			.statsPanel()
-			.lengthUnitBinder()
-			.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
-
 		new BinderWrapper<Unit<Length>>() {
 			@Override
 			protected void onValueChanged(final Unit<Length> displayLengthUnit) {
@@ -2264,6 +2290,8 @@ public class BreakoutMainView {
 					model3d.setDisplayLengthUnit(displayLengthUnit);
 					autoDrawable.display();
 				}
+
+				miniSurveyDrawer.statsPanel().setLengthUnit(displayLengthUnit);
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
 

@@ -3,9 +3,10 @@ package org.breakout.model.calc;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.breakout.model.HasStationKey;
 import org.breakout.model.StationKey;
 
-public class CalcStation {
+public class CalcStation implements HasStationKey {
 	public String name;
 	public String cave;
 	public String comment;
@@ -27,6 +28,10 @@ public class CalcStation {
 
 	public StationKey key() {
 		return new StationKey(cave, name);
+	}
+
+	public StationKey stationKey() {
+		return this.key();
 	}
 
 	public boolean hasPosition() {
