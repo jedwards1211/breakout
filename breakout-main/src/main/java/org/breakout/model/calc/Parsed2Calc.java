@@ -29,13 +29,13 @@ import org.breakout.model.parsed.ParsedShotMeasurement;
 import org.breakout.model.parsed.ParsedStation;
 import org.breakout.model.parsed.ParsedTrip;
 import org.breakout.proj4.ToGeocentricCoordinateTransform;
-import org.osgeo.proj4j.BasicCoordinateTransform;
-import org.osgeo.proj4j.CRSFactory;
-import org.osgeo.proj4j.CoordinateReferenceSystem;
-import org.osgeo.proj4j.CoordinateTransform;
-import org.osgeo.proj4j.ProjCoordinate;
-import org.osgeo.proj4j.datum.Ellipsoid;
-import org.osgeo.proj4j.datum.GeocentricConverter;
+import org.locationtech.proj4j.BasicCoordinateTransform;
+import org.locationtech.proj4j.CRSFactory;
+import org.locationtech.proj4j.CoordinateReferenceSystem;
+import org.locationtech.proj4j.CoordinateTransform;
+import org.locationtech.proj4j.ProjCoordinate;
+import org.locationtech.proj4j.datum.Ellipsoid;
+import org.locationtech.proj4j.datum.GeocentricConverter;
 
 /**
  * Parses ParsedRows and SurveyTrips into graph of CalcStations, CalcShots, and
@@ -381,6 +381,7 @@ public class Parsed2Calc {
 			ParsedField.hasValue(trip.datum)
 				? (ParsedField.hasValue(trip.utmZone) ? "+proj=utm +zone=" + trip.utmZone.value : "")
 					+ " +datum="
+					+ (trip.utmSouth.value ? " +south" : "")
 					+ trip.datum.value
 					+ (ParsedField.hasValue(trip.ellipsoid) ? " +ellps=" + trip.ellipsoid.value : "")
 				: "";
@@ -534,11 +535,8 @@ public class Parsed2Calc {
 		return result;
 	}
 
-	public void convertLruds(
-		ParsedStation parsedFromStation,
-		ParsedShot parsed,
-		ParsedStation parsedToStation,
-		CalcShot shot) {
+	public void
+		convertLruds(ParsedStation parsedFromStation, ParsedShot parsed, ParsedStation parsedToStation, CalcShot shot) {
 		if (parsedFromStation.crossSection != null) {
 			shot.fromCrossSection = convert(parsedFromStation.crossSection);
 		}

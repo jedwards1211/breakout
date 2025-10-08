@@ -203,6 +203,7 @@ import org.breakout.model.ColorParam;
 import org.breakout.model.DebugDraw;
 import org.breakout.model.GradientModel;
 import org.breakout.model.HasShotKey;
+import org.breakout.model.HasStationKey;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.OrthoScaleBar;
 import org.breakout.model.ProjectModel;
@@ -233,6 +234,7 @@ import org.breakout.model.raw.MetacaveExporter;
 import org.breakout.model.raw.MetacaveImporter;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
+import org.breakout.proj4.CoordinateReferenceSystemPreset;
 import org.jdesktop.swingx.JXHyperlink;
 
 import com.andork.plot.LinearAxisConversion;
@@ -969,6 +971,21 @@ public class BreakoutMainView {
 				statsModel.northStats = northCalc.toModel(Length.meters);
 				statsModel.eastStats = eastCalc.toModel(Length.meters);
 				statsModel.depthStats = depthCalc.toModel(Length.meters);
+				statsModel.coordinateReferenceSystem = calcProject.coordinateReferenceSystem;
+				statsModel.displayCoordinateReferenceSystem =
+					getProjectModel().get(ProjectModel.displayCoordinateReferenceSystem).crs();
+
+				statsModel.stationPositions = new ArrayList<>();
+				for (CalcStation station : stations) {
+					StatsModel.StationPosition pos = new StatsModel.StationPosition();
+					pos.cave = station.cave;
+					pos.name = station.name;
+					pos.northing = Length.meters(-station.getNorthing());
+					pos.easting = Length.meters(station.getEasting());
+					pos.elevation = Length.meters(station.getElevation());
+					statsModel.stationPositions.add(pos);
+				}
+				Collections.sort(statsModel.stationPositions, HasStationKey.comparator);
 
 				miniSurveyDrawer.statsPanel().setModel(statsModel.numSelected > 0 ? statsModel : null);
 			}
@@ -2294,6 +2311,13 @@ public class BreakoutMainView {
 				miniSurveyDrawer.statsPanel().setLengthUnit(displayLengthUnit);
 			}
 		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
+
+		new BinderWrapper<CoordinateReferenceSystemPreset>() {
+			@Override
+			protected void onValueChanged(final CoordinateReferenceSystemPreset value) {
+				miniSurveyDrawer.statsPanel().setDisplayCoordinateReferenceSystem(value.crs());
+			}
+		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayCoordinateReferenceSystem, projectModelBinder));
 
 		new BinderWrapper<Clip3f>() {
 			@Override

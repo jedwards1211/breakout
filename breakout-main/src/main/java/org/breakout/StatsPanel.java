@@ -21,21 +21,37 @@
  *******************************************************************************/
 package org.breakout;
 
+import java.awt.Dimension;
 import java.awt.Font;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableColumnModel;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
+import org.andork.unit.UnitizedDouble;
 import org.andork.unit.UnitizedNumber;
-import org.osgeo.proj4j.CoordinateReferenceSystem;
+import org.breakout.StatsPanel.StatsModel.StationPosition;
+import org.breakout.model.HasStationKey;
+import org.breakout.model.StationKey;
+import org.locationtech.proj4j.BasicCoordinateTransform;
+import org.locationtech.proj4j.CoordinateReferenceSystem;
+import org.locationtech.proj4j.CoordinateTransform;
+import org.locationtech.proj4j.ProjCoordinate;
 
 public class StatsPanel extends JPanel {
 	public static class StatsModel implements Cloneable {
@@ -43,6 +59,19 @@ public class StatsPanel extends JPanel {
 			public UnitizedNumber<Length> min;
 			public UnitizedNumber<Length> avg;
 			public UnitizedNumber<Length> max;
+		}
+
+		public static class StationPosition implements HasStationKey {
+			public String cave;
+			public String name;
+			public UnitizedDouble<Length> easting;
+			public UnitizedDouble<Length> northing;
+			public UnitizedDouble<Length> elevation;
+
+			@Override
+			public StationKey stationKey() {
+				return new StationKey(cave, name);
+			}
 		}
 
 		public int numSelected;
@@ -55,6 +84,9 @@ public class StatsPanel extends JPanel {
 		public MinAvgMax northStats;
 		public MinAvgMax eastStats;
 		public MinAvgMax depthStats;
+		public List<StationPosition> stationPositions;
+		public CoordinateReferenceSystem coordinateReferenceSystem;
+		public CoordinateReferenceSystem displayCoordinateReferenceSystem;
 
 		public StatsModel clone() {
 			try {
@@ -66,9 +98,9 @@ public class StatsPanel extends JPanel {
 
 		}
 
-		public StatsModel withLengthUnit(Unit<Length> lengthUnit) {
+		public StatsModel clone(Consumer<StatsModel> mutator) {
 			StatsModel clone = this.clone();
-			clone.lengthUnit = lengthUnit;
+			mutator.accept(clone);
 			return clone;
 		}
 	}
@@ -88,16 +120,28 @@ public class StatsPanel extends JPanel {
 		}
 
 		public void modelToView(StatsModel model, StatsModel.MinAvgMax stat) {
-			if (stat == null || model == null || model.lengthUnit == null) {
+			if (stat == null || model == null) {
 				this.min.setText("");
 				this.avg.setText("");
 				this.max.setText("");
 				return;
 			}
 			Unit<Length> lengthUnit = model.lengthUnit;
-			this.min.setText(stat.min == null ? "" : stat.min.in(lengthUnit).toString(decimalFormat));
-			this.avg.setText(stat.avg == null ? "" : stat.avg.in(lengthUnit).toString(decimalFormat));
-			this.max.setText(stat.max == null ? "" : stat.max.in(lengthUnit).toString(decimalFormat));
+			this.min
+				.setText(
+					stat.min == null
+						? ""
+						: (lengthUnit == null ? stat.min : stat.min.in(lengthUnit)).toString(decimalFormat));
+			this.avg
+				.setText(
+					stat.avg == null
+						? ""
+						: (lengthUnit == null ? stat.avg : stat.avg.in(lengthUnit)).toString(decimalFormat));
+			this.max
+				.setText(
+					stat.max == null
+						? ""
+						: (lengthUnit == null ? stat.max : stat.max.in(lengthUnit)).toString(decimalFormat));
 		}
 	}
 
@@ -108,6 +152,7 @@ public class StatsPanel extends JPanel {
 
 	StatsModel model;
 	NumberFormat decimalFormat;
+	NumberFormat latLonFormat;
 	JLabel numSelectedCaptionLabel;
 	JLabel numSelectedLabel;
 	JLabel numTripsCaptionLabel;
@@ -122,18 +167,28 @@ public class StatsPanel extends JPanel {
 
 	MinAvgMaxLabels depthLabels;
 
+	JTable stationPositionsTable;
+	JScrollPane stationPositionsTableScrollPane;
+
 	public StatsPanel() {
 		NumberFormat format = DecimalFormat.getInstance();
 		format.setMinimumFractionDigits(1);
 		format.setMaximumFractionDigits(1);
 		format.setGroupingUsed(true);
 		init();
+		modelToView();
 	}
 
 	public void setLengthUnit(Unit<Length> lengthUnit) {
 		if (this.model == null)
 			return;
-		setModel(model.withLengthUnit(lengthUnit));
+		setModel(model.clone(c -> c.lengthUnit = lengthUnit));
+	}
+
+	public void setDisplayCoordinateReferenceSystem(CoordinateReferenceSystem crs) {
+		if (this.model == null)
+			return;
+		setModel(model.clone(c -> c.displayCoordinateReferenceSystem = crs));
 	}
 
 	public void setModel(StatsModel model) {
@@ -145,31 +200,90 @@ public class StatsPanel extends JPanel {
 
 	public void modelToView() {
 		if (model == null) {
-			this.numSelectedLabel.setText("");
-			this.numTripsLabel.setText("");
-			this.numSurveyorsLabel.setText("");
-			this.totalDistanceLabel.setText("");
-			this.distLabels.modelToView(null, null);
-			this.northLabels.modelToView(null, null);
-			this.eastLabels.modelToView(null, null);
-			this.depthLabels.modelToView(null, null);
+			numSelectedLabel.setText("");
+			numTripsLabel.setText("");
+			numSurveyorsLabel.setText("");
+			totalDistanceLabel.setText("");
+			distLabels.modelToView(null, null);
+			northLabels.modelToView(null, null);
+			eastLabels.modelToView(null, null);
+			depthLabels.modelToView(null, null);
+			stationPositionsTable.setModel(new DefaultTableModel());
+			stationPositionsTableScrollPane.setVisible(false);
 			return;
 		}
 
-		this.numSelectedLabel.setText("" + model.numSelected);
-		this.numTripsLabel.setText("" + model.numTrips);
-		this.numSurveyorsLabel.setText("" + model.numSurveyors);
-		this.totalDistanceLabel.setText(model.totalDistance == null ? "" : model.totalDistance.toString(decimalFormat));
-		this.distLabels.modelToView(model, model.distStats);
-		this.northLabels.modelToView(model, model.northStats);
-		this.eastLabels.modelToView(model, model.eastStats);
-		this.depthLabels.modelToView(model, model.depthStats);
+		Unit<Length> lengthUnit = model.lengthUnit;
+
+		numSelectedLabel.setText("" + model.numSelected);
+		numTripsLabel.setText("" + model.numTrips);
+		numSurveyorsLabel.setText("" + model.numSurveyors);
+		totalDistanceLabel
+			.setText(
+				model.totalDistance == null
+					? ""
+					: (lengthUnit == null ? model.totalDistance : model.totalDistance.in(lengthUnit))
+						.toString(decimalFormat));
+		distLabels.modelToView(model, model.distStats);
+		northLabels.modelToView(model, model.northStats);
+		eastLabels.modelToView(model, model.eastStats);
+		depthLabels.modelToView(model, model.depthStats);
+
+		boolean showPositionsTable = false;
+		DefaultTableModel tableModel = new DefaultTableModel();
+		TableColumnModel columnModel = new DefaultTableColumnModel();
+		if (model.coordinateReferenceSystem != null
+			&& model.displayCoordinateReferenceSystem != null
+			&& model.stationPositions != null
+			&& !model.stationPositions.isEmpty()) {
+			showPositionsTable = true;
+			CoordinateReferenceSystem toCrs = model.displayCoordinateReferenceSystem;
+			CoordinateTransform xform = new BasicCoordinateTransform(model.coordinateReferenceSystem, toCrs);
+			ProjCoordinate coord = new ProjCoordinate();
+
+			tableModel.setRowCount(model.stationPositions.size());
+			tableModel.setColumnIdentifiers(new String[] { "Cave", "Station", "Coordinates" });
+			int i = 0;
+			for (StationPosition station : model.stationPositions) {
+				tableModel.setValueAt(station.cave, i, 0);
+				tableModel.setValueAt(station.name, i, 1);
+				coord.x = station.easting.get(Length.meters);
+				coord.y = station.northing.get(Length.meters);
+				coord.z = station.elevation.get(Length.meters);
+				xform.transform(coord, coord);
+				tableModel.setValueAt(latLonFormat.format(coord.y) + "," + latLonFormat.format(coord.x), i, 2);
+				i++;
+			}
+
+			// Show the cave column if there are multiple caves, otherwise hide it
+			if (model.numCaves > 1) {
+				TableColumn caveColumn = new TableColumn(0, 75);
+				caveColumn.setHeaderValue("Cave");
+				columnModel.addColumn(caveColumn);
+			}
+			TableColumn stationColumn = new TableColumn(1, 75);
+			stationColumn.setHeaderValue("Station");
+			columnModel.addColumn(stationColumn);
+			TableColumn coordinatesColumn = new TableColumn(2, 250);
+			coordinatesColumn.setHeaderValue("Coordinates");
+			columnModel.addColumn(coordinatesColumn);
+		}
+		stationPositionsTable.setModel(tableModel);
+		stationPositionsTable.setColumnModel(columnModel);
+		// TODO: show this once transforms between various coordinate systems are
+		// working
+		showPositionsTable = false;
+		stationPositionsTableScrollPane.setVisible(showPositionsTable);
 	}
 
 	private void init() {
 		decimalFormat = NumberFormat.getInstance();
 		decimalFormat.setMinimumFractionDigits(2);
 		decimalFormat.setMaximumFractionDigits(2);
+
+		latLonFormat = NumberFormat.getInstance();
+		latLonFormat.setMinimumFractionDigits(8);
+		latLonFormat.setMaximumFractionDigits(8);
 
 		distLabels = new MinAvgMaxLabels("Distance: ");
 		northLabels = new MinAvgMaxLabels("North: ");
@@ -192,6 +306,12 @@ public class StatsPanel extends JPanel {
 		totalDistanceCaptionLabel.setFont(totalDistanceCaptionLabel.getFont().deriveFont(Font.BOLD));
 		totalDistanceLabel = new JLabel();
 		totalDistanceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+		stationPositionsTable = new JTable();
+
+		stationPositionsTableScrollPane = new JScrollPane(stationPositionsTable);
+		stationPositionsTableScrollPane.setMinimumSize(new Dimension(200, 200));
+		stationPositionsTableScrollPane.setPreferredSize(new Dimension(300, 200));
 
 		GridBagWizard gbw = GridBagWizard.create(this);
 
@@ -221,5 +341,7 @@ public class StatsPanel extends JPanel {
 			gbw.put(labels.desc, labels.min, labels.avg, labels.max).intoRow().y(y++);
 			gbw.put(labels.desc).west();
 		}
+
+		gbw.put(stationPositionsTableScrollPane).width(4).x(0).y(y++).fillboth();
 	}
 }

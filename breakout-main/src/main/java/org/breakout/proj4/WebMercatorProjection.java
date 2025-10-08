@@ -3,17 +3,16 @@ package org.breakout.proj4;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.osgeo.proj4j.ProjCoordinate;
-import org.osgeo.proj4j.datum.Ellipsoid;
-import org.osgeo.proj4j.proj.Projection;
-import org.osgeo.proj4j.util.ProjectionMath;
+import org.locationtech.proj4j.ProjCoordinate;
+import org.locationtech.proj4j.datum.Ellipsoid;
+import org.locationtech.proj4j.proj.Projection;
 
 public class WebMercatorProjection extends Projection {
 	public final Integer tileSize;
 	public final Double zoom;
-	
+
 	private final Map<Integer, Parameters> cache = new HashMap<>();
-	
+
 	private static class Parameters {
 		double[] Bc;
 		double[] Cc;
@@ -35,14 +34,13 @@ public class WebMercatorProjection extends Projection {
 			}
 		}
 	}
-	
+
 	double Bc;
 	double Cc;
 	double d;
 	double Ac;
 
-	public final static Ellipsoid ELLIPSOID = new Ellipsoid("WEB_MERCATOR", 6378137.0, 6378137.0,
-			0.0, "WebMercator");
+	public final static Ellipsoid ELLIPSOID = new Ellipsoid("WEB_MERCATOR", 6378137.0, 6378137.0, 0.0, "WebMercator");
 
 	public WebMercatorProjection(Integer tileSize, Double zoom) {
 		minLatitude = -85 * DTR;
@@ -56,7 +54,8 @@ public class WebMercatorProjection extends Projection {
 				Bc = (tileSize / (2 * Math.PI));
 				Cc = (tileSize / (2 * Math.PI));
 				Ac = tileSize;
-			} else {
+			}
+			else {
 				if (params == null) {
 					cache.put(tileSize, params = new Parameters(tileSize));
 				}
@@ -66,7 +65,8 @@ public class WebMercatorProjection extends Projection {
 				d = params.dc[izoom];
 				Ac = params.Ac[izoom];
 			}
-		} else {
+		}
+		else {
 			d = ELLIPSOID.equatorRadius / 2;
 			Ac = ELLIPSOID.equatorRadius;
 			Bc = ELLIPSOID.equatorRadius / (2 * Math.PI);
@@ -75,7 +75,7 @@ public class WebMercatorProjection extends Projection {
 		this.setEllipsoid(ELLIPSOID);
 		this.initialize();
 	}
-	
+
 	@Override
 	public void initialize() {
 		super.initialize();
@@ -84,20 +84,22 @@ public class WebMercatorProjection extends Projection {
 
 	@Override
 	protected ProjCoordinate project(double lam, double phi, ProjCoordinate dst) {
-	    double f = Math.min(Math.max(Math.sin(phi), -0.9999), 0.9999);
-	    dst.x = d + lam * Bc;
-	    dst.y = d + 0.5 * Math.log((1 + f) / (1 - f)) * -Cc;
-	    if (dst.x > Ac) dst.x = Ac;
-	    if (dst.y > Ac) dst.y = Ac;
-	    return dst;
+		double f = Math.min(Math.max(Math.sin(phi), -0.9999), 0.9999);
+		dst.x = d + lam * Bc;
+		dst.y = d + 0.5 * Math.log((1 + f) / (1 - f)) * -Cc;
+		if (dst.x > Ac)
+			dst.x = Ac;
+		if (dst.y > Ac)
+			dst.y = Ac;
+		return dst;
 	}
 
 	@Override
 	protected ProjCoordinate projectInverse(double x, double y, ProjCoordinate dst) {
-	    double g = (y - d) / -Cc;
-	    dst.x = (x - d) / Bc;
-	    dst.y = 2 * Math.atan(Math.exp(g)) - 0.5 * Math.PI;
-	    return dst;
+		double g = (y - d) / -Cc;
+		dst.x = (x - d) / Bc;
+		dst.y = 2 * Math.atan(Math.exp(g)) - 0.5 * Math.PI;
+		return dst;
 	}
 
 	@Override
@@ -109,7 +111,7 @@ public class WebMercatorProjection extends Projection {
 	public boolean isRectilinear() {
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Web Mercator";

@@ -3,8 +3,10 @@ package org.breakout.model;
 import static org.andork.util.JavaScript.or;
 
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class StationKey implements HasStationKey {
+public class StationKey implements HasStationKey, Comparable<StationKey> {
 	public final String cave;
 	public final String station;
 
@@ -46,5 +48,49 @@ public class StationKey implements HasStationKey {
 
 	public StationKey stationKey() {
 		return this;
+	}
+
+	private static Pattern trailingNumber = Pattern.compile("\\d+$");
+
+	public static int compareStations(String name0, String name1) {
+		Matcher matcher0 = trailingNumber.matcher(name0);
+		Matcher matcher1 = trailingNumber.matcher(name1);
+		if (matcher0.matches() && matcher1.matches()) {
+			String header0 = name0.substring(0, matcher0.start());
+			String header1 = name1.substring(0, matcher1.start());
+			if (!header0.equals(header1))
+				return header0.compareTo(header1);
+			return Integer.parseInt(matcher0.group()) - Integer.parseInt(matcher1.group());
+		}
+		return name0.compareTo(name1);
+	}
+
+	public static int compareStations(String cave0, String name0, String cave1, String name1) {
+		if (!Objects.equals(cave0, cave1)) {
+			if (cave0 == null && cave1 != null)
+				return -1;
+			if (cave0 != null && cave1 == null)
+				return 1;
+			return cave0.compareTo(cave1);
+		}
+		Matcher matcher0 = trailingNumber.matcher(name0);
+		Matcher matcher1 = trailingNumber.matcher(name1);
+		if (matcher0.find() && matcher1.find()) {
+			String header0 = name0.substring(0, matcher0.start());
+			String header1 = name1.substring(0, matcher1.start());
+			if (!header0.equals(header1))
+				return header0.compareTo(header1);
+			return Integer.parseInt(matcher0.group()) - Integer.parseInt(matcher1.group());
+		}
+		return name0.compareTo(name1);
+	}
+
+	public static int compare(StationKey a, StationKey b) {
+		return compareStations(a.cave, a.station, b.cave, b.station);
+	}
+
+	@Override
+	public int compareTo(StationKey o) {
+		return compareStations(cave, station, o.cave, o.station);
 	}
 }

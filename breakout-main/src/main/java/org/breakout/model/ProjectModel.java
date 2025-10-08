@@ -47,6 +47,7 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.breakout.CameraView;
 import org.breakout.model.raw.SurveyLead;
+import org.breakout.proj4.CoordinateReferenceSystemPreset;
 
 import com.andork.plot.LinearAxisConversion;
 import com.github.krukow.clj_lang.PersistentVector;
@@ -88,6 +89,8 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 	public static final Attribute<Boolean> hasUnsavedChanges = newAttribute(Boolean.class, "hasUnsavedChanges");
 	public static final Attribute<Unit<Length>> displayLengthUnit = newAttribute(Unit.class, "displayLengthUnit");
 	public static final Attribute<Unit<Angle>> displayAngleUnit = newAttribute(Unit.class, "displayAngleUnit");
+	public static final Attribute<CoordinateReferenceSystemPreset> displayCoordinateReferenceSystem =
+		newAttribute(CoordinateReferenceSystemPreset.class, "displayCoordinateReferenceSystem");
 	public static final Attribute<Boolean> showLeadLabels = newAttribute(Boolean.class, "showLeadLabels");
 	public static final Attribute<Boolean> showCheckedLeads = newAttribute(Boolean.class, "showCheckedLeads");
 	public static final Attribute<Boolean> showTerrain = newAttribute(Boolean.class, "showTerrain");
@@ -198,6 +201,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		projectModel.setIfNull(ProjectModel.taskListDrawer, DrawerModel.instance.newObject());
 		projectModel.setIfNull(ProjectModel.displayLengthUnit, Length.meters);
 		projectModel.setIfNull(ProjectModel.displayAngleUnit, Angle.degrees);
+		projectModel.setIfNull(ProjectModel.displayCoordinateReferenceSystem, CoordinateReferenceSystemPreset.WGS84);
 		projectModel.setIfNull(ProjectModel.showLeadLabels, true);
 		projectModel.setIfNull(ProjectModel.showCheckedLeads, false);
 		projectModel.setIfNull(ProjectModel.showTerrain, false);

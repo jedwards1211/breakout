@@ -49,11 +49,6 @@
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>org.osgeo</groupId>
-			<artifactId>proj4j</artifactId>
-			<version>0.1.0</version>
-		</dependency>
-		<dependency>
 			<groupId>com.github.krukow</groupId>
 			<artifactId>clj-ds</artifactId>
 			<version>0.0.4</version>
@@ -211,6 +206,16 @@
 			<groupId>org.andork</groupId>
 			<artifactId>quickhull3d</artifactId>
 			<version>0.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.locationtech.proj4j</groupId>
+			<artifactId>proj4j</artifactId>
+			<version>1.4.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.locationtech.proj4j</groupId>
+			<artifactId>proj4j-epsg</artifactId>
+			<version>1.4.1</version>
 		</dependency>
 	</dependencies>
 	<profiles>

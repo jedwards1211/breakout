@@ -1,14 +1,14 @@
 package org.breakout.proj4;
 
-import org.osgeo.proj4j.CoordinateReferenceSystem;
-import org.osgeo.proj4j.CoordinateTransform;
-import org.osgeo.proj4j.Proj4jException;
-import org.osgeo.proj4j.ProjCoordinate;
+import org.locationtech.proj4j.CoordinateReferenceSystem;
+import org.locationtech.proj4j.CoordinateTransform;
+import org.locationtech.proj4j.Proj4jException;
+import org.locationtech.proj4j.ProjCoordinate;
 
 public class IdentityCoordinateTransform implements CoordinateTransform {
 	private IdentityCoordinateTransform() {
 	}
-	
+
 	public static IdentityCoordinateTransform INSTANCE = new IdentityCoordinateTransform();
 
 	@Override

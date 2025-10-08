@@ -120,6 +120,7 @@ import org.breakout.model.Gradients;
 import org.breakout.model.HighlightMode;
 import org.breakout.model.ProjectModel;
 import org.breakout.model.RootModel;
+import org.breakout.proj4.CoordinateReferenceSystemPreset;
 import org.jdesktop.swingx.JXColorSelectionButton;
 
 import com.andork.plot.LinearAxisConversion;
@@ -150,9 +151,10 @@ public class SettingsDrawer extends Drawer {
 	JLabel centerlineColorLabel;
 	JXColorSelectionButton centerlineColorButton;
 
-	JLabel displayUnitsLabel;
 	DefaultSelector<Unit<Length>> displayLengthUnitSelector;
 	DefaultSelector<Unit<Angle>> displayAngleUnitSelector;
+	JLabel displayCoordinateReferenceSystemLabel;
+	DefaultSelector<CoordinateReferenceSystemPreset> displayCoordinateReferenceSystemSelector;
 
 	JLabel maxDateLabel;
 	JButton prevYearButton;
@@ -276,6 +278,8 @@ public class SettingsDrawer extends Drawer {
 		QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectBinder);
 	Binder<Unit<Angle>> displayAngleUnitBinder =
 		QObjectAttributeBinder.bind(ProjectModel.displayAngleUnit, projectBinder);
+	Binder<CoordinateReferenceSystemPreset> displayCoordinateReferenceSystemBinder =
+		QObjectAttributeBinder.bind(ProjectModel.displayCoordinateReferenceSystem, projectBinder);
 	Binder<LinearAxisConversion> displayParamRangeBinder =
 		new TriFunctionBinder<LinearAxisConversion, Unit<Length>, ColorParam, LinearAxisConversion>(
 			(LinearAxisConversion paramConversion, Unit<Length> lengthUnit, ColorParam colorParam) -> {
@@ -582,6 +586,7 @@ public class SettingsDrawer extends Drawer {
 
 		ISelectorSelectionBinder.bind(displayLengthUnitSelector, displayLengthUnitBinder);
 		ISelectorSelectionBinder.bind(displayAngleUnitSelector, displayAngleUnitBinder);
+		ISelectorSelectionBinder.bind(displayCoordinateReferenceSystemSelector, displayCoordinateReferenceSystemBinder);
 
 		JComboBoxItemBinder.bind(paramGradientComboBox, paramGradientBinder);
 	}
@@ -654,14 +659,17 @@ public class SettingsDrawer extends Drawer {
 		localizer.setText(backgroundColorLabel, "backgroundColorLabel.text");
 		backgroundColorButton = new JXColorSelectionButton();
 
-		displayUnitsLabel = new JLabel();
-		localizer.setText(displayUnitsLabel, "displayUnitsLabel.text");
-
 		displayLengthUnitSelector = new DefaultSelector<>();
 		displayLengthUnitSelector.setAvailableValues(Length.meters, Length.feet);
 
 		displayAngleUnitSelector = new DefaultSelector<>();
 		displayAngleUnitSelector.setAvailableValues(Angle.degrees, Angle.gradians, Angle.milsNATO);
+
+		displayCoordinateReferenceSystemLabel = new JLabel();
+		localizer.setText(displayCoordinateReferenceSystemLabel, "displayCoordinateReferenceSystemLabel.text");
+
+		displayCoordinateReferenceSystemSelector = new DefaultSelector<>();
+		displayCoordinateReferenceSystemSelector.setAvailableValues(CoordinateReferenceSystemPreset.values());
 
 		maxDateLabel = new JLabel();
 		maxDateLabel.setPreferredSize(new Dimension(200, 20));
@@ -942,6 +950,12 @@ public class SettingsDrawer extends Drawer {
 			.intoRow()
 			.fillx(1.0);
 		w.put(unitsPanel.getTarget()).belowLast().fillx();
+
+		w.put(displayCoordinateReferenceSystemLabel).belowLast().fillx();
+		w.put(displayCoordinateReferenceSystemSelector.comboBox()).belowLast().fillx();
+		// TODO: make these visible once transforming between coordinate systems works
+		displayCoordinateReferenceSystemLabel.setVisible(false);
+		displayCoordinateReferenceSystemSelector.comboBox().setVisible(false);
 
 		w.put(colorParamLabel).belowLast().west();
 		GridBagWizard colorParamPanel = GridBagWizard.quickPanel();

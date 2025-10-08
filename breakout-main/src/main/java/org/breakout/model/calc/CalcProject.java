@@ -8,7 +8,7 @@ import java.util.Set;
 
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
-import org.osgeo.proj4j.CoordinateReferenceSystem;
+import org.locationtech.proj4j.CoordinateReferenceSystem;
 
 public class CalcProject {
 	public final Map<String, CalcCave> caves = new HashMap<>();
@@ -18,11 +18,12 @@ public class CalcProject {
 
 	public Set<ShotKey> getPlottedShotKeys(Set<ShotKey> result) {
 		shots.forEach((key, shot) -> {
-			if (!shot.isExcludeFromPlotting()) result.add(key);
+			if (!shot.isExcludeFromPlotting())
+				result.add(key);
 		});
 		return result;
 	}
-	
+
 	public Set<ShotKey> getPlottedShotKeys() {
 		return getPlottedShotKeys(new HashSet<>());
 	}

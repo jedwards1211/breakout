@@ -21,7 +21,22 @@ public class CalcStation implements HasStationKey {
 		this.name = name;
 	}
 
+	/**
+	 * Easting, Elevation, Southing (meters)
+	 */
 	public final double[] position = { Double.NaN, Double.NaN, Double.NaN };
+
+	public double getEasting() {
+		return this.position[0];
+	}
+
+	public double getNorthing() {
+		return -this.position[2];
+	}
+
+	public double getElevation() {
+		return this.position[1];
+	}
 
 	public Map<StationKey, CalcShot> shots;
 	public int numShots = 0;
