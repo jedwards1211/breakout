@@ -24,6 +24,7 @@ import org.breakout.model.raw.MutableSurveyLead;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
+import org.breakout.model.raw.SurveyTrip.LrudAssociation;
 
 /**
  * Parses SurveyRows and SurveyTrips into graph of CalcStations, CalcShots, and
@@ -168,7 +169,13 @@ public class ProjectParser {
 		}
 		if (!isNullOrEmpty(raw.getUtmZone())) {
 			try {
-				parsed.utmZone = new ParsedField<>(Integer.valueOf(raw.getUtmZone()));
+				String rawZone = raw.getUtmZone();
+				boolean south = rawZone.endsWith("s") || rawZone.endsWith("S");
+				if (south || rawZone.endsWith("n") || rawZone.endsWith("N")) {
+					rawZone = rawZone.substring(0, rawZone.length() - 1);
+				}
+				parsed.utmSouth = new ParsedField<>(Boolean.valueOf(south));
+				parsed.utmZone = new ParsedField<>(Integer.valueOf(rawZone));
 				if (parsed.utmZone.value < 1 || parsed.utmZone.value > 60) {
 					parsed.utmZone = new ParsedField<>(Severity.ERROR, "UTM zone out of range");
 				}
@@ -191,7 +198,9 @@ public class ProjectParser {
 		result.cave = new ParsedField<>(raw.getFromCave());
 		result.name = new ParsedField<>(raw.getFromStation());
 
-		result.crossSection = parseCrossSection(raw, trip);
+		if (trip.getLrudAssociation() != LrudAssociation.TO) {
+			result.crossSection = parseCrossSection(raw, trip);
+		}
 
 		return result;
 	}
@@ -203,6 +212,10 @@ public class ProjectParser {
 		ParsedStation result = new ParsedStation();
 		result.cave = new ParsedField<>(raw.getToCave());
 		result.name = new ParsedField<>(raw.getToStation());
+
+		if (trip.getLrudAssociation() == LrudAssociation.TO) {
+			result.crossSection = parseCrossSection(raw, trip);
+		}
 
 		return result;
 	}

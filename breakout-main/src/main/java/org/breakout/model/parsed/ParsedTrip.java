@@ -28,6 +28,7 @@ public class ParsedTrip {
 	public ParsedField<String> datum;
 	public ParsedField<String> ellipsoid;
 	public ParsedField<Integer> utmZone;
+	public ParsedField<Boolean> utmSouth;
 	public final Map<String, ParsedFixedStation> fixedStations = new HashMap<>();
 
 	public final List<ParsedStation> stations = new ArrayList<>();
