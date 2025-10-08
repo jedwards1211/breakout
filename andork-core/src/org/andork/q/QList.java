@@ -343,26 +343,31 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 
 	@Override
 	public E get(int index) {
+		this.depend();
 		return collection.get(index);
 	}
 
 	@Override
 	public int indexOf(Object o) {
+		this.depend();
 		return collection.indexOf(o);
 	}
 
 	@Override
 	public int lastIndexOf(Object o) {
+		this.depend();
 		return collection.lastIndexOf(o);
 	}
 
 	@Override
 	public ListIterator<E> listIterator() {
+		this.depend();
 		return new ListIter(collection);
 	}
 
 	@Override
 	public ListIterator<E> listIterator(int index) {
+		this.depend();
 		return new ListIter(collection, index);
 	}
 
@@ -395,6 +400,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 
 	@Override
 	public List<E> subList(int fromIndex, int toIndex) {
+		this.depend();
 		return new SubList(collection, fromIndex, toIndex);
 	}
 }

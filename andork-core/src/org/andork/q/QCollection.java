@@ -104,11 +104,13 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 
 	@Override
 	public boolean contains(Object o) {
+		this.depend();
 		return collection.contains(o);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
+		this.depend();
 		return collection.containsAll(c);
 	}
 
@@ -116,11 +118,13 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 
 	@Override
 	public boolean isEmpty() {
+		this.depend();
 		return collection.isEmpty();
 	}
 
 	@Override
 	public Iterator<E> iterator() {
+		this.depend();
 		return new Iter(collection);
 	}
 
@@ -175,16 +179,19 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 
 	@Override
 	public int size() {
+		this.depend();
 		return collection.size();
 	}
 
 	@Override
 	public Object[] toArray() {
+		this.depend();
 		return collection.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
+		this.depend();
 		return collection.toArray(a);
 	}
 }

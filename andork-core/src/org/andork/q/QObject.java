@@ -93,6 +93,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	 */
 	public <T> T get(Attribute<T> attribute) {
 		checkBelongs(attribute);
+		depend(attribute);
 		return attributes[attribute.index] == NOT_PRESENT ? null : (T) attributes[attribute.index];
 	}
 
@@ -110,6 +111,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 
 	public boolean has(Attribute<?> attribute) {
 		checkBelongs(attribute);
+		depend(attribute);
 		return attributes[attribute.index] != NOT_PRESENT;
 	}
 
@@ -177,6 +179,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	}
 
 	public Object valueAt(int index) {
+		this.depend(this.spec.attributeAt(index));
 		return attributes[index] == NOT_PRESENT ? null : attributes[index];
 	}
 }

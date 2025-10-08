@@ -186,11 +186,13 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 
 	@Override
 	public boolean containsKey(Object key) {
+		this.depend(key);
 		return map.containsKey(key);
 	}
 
 	@Override
 	public boolean containsValue(Object value) {
+		this.depend(value);
 		return map.containsValue(value);
 	}
 
@@ -198,22 +200,26 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
+		this.depend();
 		Set<java.util.Map.Entry<K, V>> es = entrySet;
 		return es != null ? es : (entrySet = new EntrySet());
 	}
 
 	@Override
 	public V get(Object key) {
+		this.depend(key);
 		return map.get(key);
 	}
 
 	@Override
 	public boolean isEmpty() {
+		this.depend();
 		return map.isEmpty();
 	}
 
 	@Override
 	public Set<K> keySet() {
+		this.depend();
 		Set<K> ks = keySet;
 		return ks != null ? ks : (keySet = new KeySet());
 	}
@@ -274,11 +280,13 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 
 	@Override
 	public int size() {
+		this.depend();
 		return map.size();
 	}
 
 	@Override
 	public Collection<V> values() {
+		this.depend();
 		Collection<V> vs = values;
 		return vs != null ? vs : (values = new Values());
 	}

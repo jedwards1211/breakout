@@ -25,6 +25,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import org.andork.event.BasicPropertyChangeListener;
+import org.andork.event.HierarchicalBasicPropertyChangeListener;
 import org.andork.event.HierarchicalBasicPropertyChangeListener.ChangeType;
 import org.andork.event.HierarchicalBasicPropertyChangePropagator;
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
@@ -33,9 +35,42 @@ import org.andork.model.HasChangeSupport;
 
 public abstract class QElement implements HasChangeSupport {
 	protected final HierarchicalBasicPropertyChangeSupport changeSupport = new HierarchicalBasicPropertyChangeSupport();
-	protected final HierarchicalBasicPropertyChangePropagator propagator = new HierarchicalBasicPropertyChangePropagator(
-			this, changeSupport);
+	protected final HierarchicalBasicPropertyChangePropagator propagator =
+		new HierarchicalBasicPropertyChangePropagator(this, changeSupport);
 	protected final Set<Object> children = new LinkedHashSet<Object>();
+
+	protected <T> void depend() {
+		QAutorun.depend(callback -> {
+			HierarchicalBasicPropertyChangeListener listener = new HierarchicalBasicPropertyChangeListener() {
+				@Override
+				public void
+					propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
+					callback.run();
+				}
+
+				@Override
+				public void childrenChanged(Object source, ChangeType changeType, Object... children) {
+					callback.run();
+				}
+			};
+			changeSupport().addPropertyChangeListener(listener);
+			return () -> changeSupport().removePropertyChangeListener(listener);
+		});
+	}
+
+	protected <T> void depend(Object property) {
+		QAutorun.depend(callback -> {
+			BasicPropertyChangeListener listener = new BasicPropertyChangeListener() {
+				@Override
+				public void
+					propertyChange(Object source, Object property, Object oldValue, Object newValue, int index) {
+					callback.run();
+				}
+			};
+			changeSupport().addPropertyChangeListener(property, listener);
+			return () -> changeSupport().removePropertyChangeListener(property, listener);
+		});
+	}
 
 	protected final void addChild(Object child) {
 		if (children.add(child)) {
