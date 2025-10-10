@@ -21,8 +21,14 @@
  *******************************************************************************/
 package org.breakout;
 
-import static org.andork.bind.EqualsBinder.bindEquals;
+import static org.andork.bind.ui.BindUI.bindBackground;
+import static org.andork.bind.ui.BindUI.bindEnabled;
+import static org.andork.bind.ui.BindUI.bindLayout;
+import static org.andork.bind.ui.BindUI.bindSelected;
+import static org.andork.bind.ui.BindUI.bindSelectedMap;
+import static org.andork.bind.ui.BindUI.bindValue;
 import static org.andork.func.CompoundBimapper.compose;
+import static org.andork.q.QAutorun.autorun;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -37,14 +43,12 @@ import java.awt.LinearGradientPaint;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.nio.file.Path;
 import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.function.BiFunction;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
@@ -77,29 +81,20 @@ import org.andork.awt.I18n.Localizer;
 import org.andork.awt.layout.BetterCardLayout;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
-import org.andork.bind.BiFunctionBinder;
 import org.andork.bind.BimapperBinder;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
-import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
-import org.andork.bind.TriFunctionBinder;
-import org.andork.bind.ui.BetterCardLayoutBinder;
-import org.andork.bind.ui.ButtonSelectedBinder;
-import org.andork.bind.ui.ComponentBackgroundBinder;
-import org.andork.bind.ui.ComponentEnabledBinder;
-import org.andork.bind.ui.ISelectorSelectionBinder;
-import org.andork.bind.ui.JComboBoxItemBinder;
 import org.andork.bind.ui.JSliderValueBinder;
 import org.andork.date.DateUtils;
 import org.andork.func.Bimapper;
 import org.andork.func.ExponentialIntBimapper;
 import org.andork.func.LinearFloatBimapper;
-import org.andork.func.RoundingFloat2IntegerBimapper;
 import org.andork.math.misc.Fitting;
-import org.andork.plot.PlotAxisConversionBinder;
-import org.andork.q.QMap;
+import org.andork.model.Cell;
+import org.andork.q.QHashMap;
 import org.andork.q.QObject;
+import org.andork.q.QSpec;
 import org.andork.swing.CellRenderers;
 import org.andork.swing.OnEDT;
 import org.andork.swing.PaintablePanel;
@@ -232,8 +227,6 @@ public class SettingsDrawer extends Drawer {
 	JLabel openSurveyScanCommandLabel;
 
 	BinderWrapper<QObject<RootModel>> rootBinder = new BinderWrapper<>();
-	Binder<Path> currentProjectFileBinder = QObjectAttributeBinder.bind(RootModel.currentProjectFile, rootBinder);
-	Binder<Integer> desiredNumSamplesBinder = QObjectAttributeBinder.bind(RootModel.desiredNumSamples, rootBinder);
 	// This is a bit confusing... used to map the linear sliders to an exponential
 	// curve.
 	// The numbers are: rawMin, sliderMin, rawMax, sliderMax, rawAtSliderMid
@@ -249,114 +242,9 @@ public class SettingsDrawer extends Drawer {
 			.bind(QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootBinder));
 
 	BinderWrapper<QObject<ProjectModel>> projectBinder = new BinderWrapper<>();
-	Binder<CameraView> cameraViewBinder = QObjectAttributeBinder.bind(ProjectModel.cameraView, projectBinder);
-	Binder<Float> stationLabelFontSizeBinder =
-		QObjectAttributeBinder.bind(ProjectModel.stationLabelFontSize, projectBinder);
-	Binder<Float> stationLabelDensityBinder =
-		QObjectAttributeBinder.bind(ProjectModel.stationLabelDensity, projectBinder);
-	Binder<Boolean> showLeadLabelsBinder = QObjectAttributeBinder.bind(ProjectModel.showLeadLabels, projectBinder);
-	Binder<Boolean> showCheckedLeadsBinder = QObjectAttributeBinder.bind(ProjectModel.showCheckedLeads, projectBinder);
-	Binder<Color> stationLabelColorBinder = QObjectAttributeBinder.bind(ProjectModel.stationLabelColor, projectBinder);
-	Binder<Float> centerlineDistanceBinder =
-		QObjectAttributeBinder.bind(ProjectModel.centerlineDistance, projectBinder);
-	Binder<Color> centerlineColorBinder = QObjectAttributeBinder.bind(ProjectModel.centerlineColor, projectBinder);
-	Binder<Boolean> showTerrainBinder = QObjectAttributeBinder.bind(ProjectModel.showTerrain, projectBinder);
-	Binder<Color> backgroundColorBinder = QObjectAttributeBinder.bind(ProjectModel.backgroundColor, projectBinder);
-	Binder<LinearAxisConversion> distRangeBinder = QObjectAttributeBinder.bind(ProjectModel.distRange, projectBinder);
-	Binder<GradientModel> paramGradientBinder = QObjectAttributeBinder.bind(ProjectModel.paramGradient, projectBinder);
-	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(ProjectModel.colorParam, projectBinder);
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>> paramRangesBinder =
-		QObjectAttributeBinder.bind(ProjectModel.paramRanges, projectBinder);
-	Binder<LinearAxisConversion> paramRangeBinder = QMapKeyedBinder.bindKeyed(colorParamBinder, paramRangesBinder);
-	Binder<LinearAxisConversion> highlightRangeBinder =
-		QObjectAttributeBinder.bind(ProjectModel.highlightRange, projectBinder);
-	Binder<HighlightMode> highlightModeBinder = QObjectAttributeBinder.bind(ProjectModel.highlightMode, projectBinder);
 	Binder<Float> maxDateBinder = QObjectAttributeBinder.bind(ProjectModel.maxDate, projectBinder);
-	Binder<Float> ambientLightBinder = QObjectAttributeBinder.bind(ProjectModel.ambientLight, projectBinder);
-	Binder<Float> boldnessBinder = QObjectAttributeBinder.bind(ProjectModel.boldness, projectBinder);
-	Binder<Unit<Length>> displayLengthUnitBinder =
-		QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectBinder);
-	Binder<Unit<Angle>> displayAngleUnitBinder =
-		QObjectAttributeBinder.bind(ProjectModel.displayAngleUnit, projectBinder);
-	Binder<CoordinateReferenceSystemPreset> displayCoordinateReferenceSystemBinder =
-		QObjectAttributeBinder.bind(ProjectModel.displayCoordinateReferenceSystem, projectBinder);
-	Binder<LinearAxisConversion> displayParamRangeBinder =
-		new TriFunctionBinder<LinearAxisConversion, Unit<Length>, ColorParam, LinearAxisConversion>(
-			(LinearAxisConversion paramConversion, Unit<Length> lengthUnit, ColorParam colorParam) -> {
-				if (paramConversion == null)
-					return null;
-				if (lengthUnit == null || colorParam == null || colorParam.getUnitType() == null)
-					return paramConversion;
-				Unit systemUnit = Length.meters;
-				Unit displayUnit = Length.meters;
-				if (colorParam.getUnitType() == Length.type) {
-					displayUnit = lengthUnit;
-				}
-				else if (colorParam.getUnitType() == Area.type) {
-					systemUnit = Area.square(systemUnit);
-					displayUnit = Area.square(lengthUnit);
-				}
-				return new LinearAxisConversion(
-					new UnitizedDouble<>(paramConversion.invert(0), systemUnit).get(displayUnit),
-					0,
-					new UnitizedDouble<>(paramConversion.invert(1), systemUnit).get(displayUnit),
-					1);
-			},
-			(LinearAxisConversion paramConversion, Unit<Length> lengthUnit, ColorParam colorParam) -> {
-				if (paramConversion == null)
-					return null;
-				if (lengthUnit == null || colorParam == null || colorParam.getUnitType() == null)
-					return paramConversion;
-				Unit systemUnit = Length.meters;
-				Unit displayUnit = Length.meters;
-				if (colorParam.getUnitType() == Length.type) {
-					displayUnit = lengthUnit;
-				}
-				else if (colorParam.getUnitType() == Area.type) {
-					systemUnit = Area.square(systemUnit);
-					displayUnit = Area.square(lengthUnit);
-				}
-				return new LinearAxisConversion(
-					new UnitizedDouble<>(paramConversion.invert(0), displayUnit).get(systemUnit),
-					0,
-					new UnitizedDouble<>(paramConversion.invert(1), displayUnit).get(systemUnit),
-					1);
-			}).bind(paramRangeBinder, displayLengthUnitBinder, colorParamBinder);
-	Binder<LinearAxisConversion> displayHighlightRangeBinder =
-		new BiFunctionBinder<LinearAxisConversion, Unit<Length>, LinearAxisConversion>(
-			axisConversionToDisplay,
-			axisConversionToSystem).bind(highlightRangeBinder, displayLengthUnitBinder);
-	Binder<LinearAxisConversion> displayDistRangeBinder =
-		new BiFunctionBinder<LinearAxisConversion, Unit<Length>, LinearAxisConversion>(
-			axisConversionToDisplay,
-			axisConversionToSystem).bind(distRangeBinder, displayLengthUnitBinder);
 
 	javax.swing.Timer maxDateTimer;
-
-	private static final BiFunction<LinearAxisConversion, Unit<Length>, LinearAxisConversion> axisConversionToDisplay =
-		(distRange, displayLengthUnit) -> {
-			if (distRange == null)
-				return null;
-			if (displayLengthUnit == null)
-				return distRange;
-			return new LinearAxisConversion(
-				Length.meters(distRange.invert(0)).get(displayLengthUnit),
-				0,
-				Length.meters(distRange.invert(1)).get(displayLengthUnit),
-				1);
-		};
-	private static final BiFunction<LinearAxisConversion, Unit<Length>, LinearAxisConversion> axisConversionToSystem =
-		(displayDistRange, displayLengthUnit) -> {
-			if (displayDistRange == null)
-				return null;
-			if (displayLengthUnit == null)
-				return displayDistRange;
-			return new LinearAxisConversion(
-				new UnitizedDouble<>(displayDistRange.invert(0), displayLengthUnit).get(Length.meters),
-				0,
-				new UnitizedDouble<>(displayDistRange.invert(1), displayLengthUnit).get(Length.meters),
-				1);
-		};
 
 	private JButton pickParamGradientButton;
 
@@ -446,43 +334,152 @@ public class SettingsDrawer extends Drawer {
 
 	IncMaxDate maxDateAnimation = new IncMaxDate(Calendar.MONTH, false);
 
-	private void createBindings() {
-		ComponentBackgroundBinder.bind(backgroundColorButton, backgroundColorBinder);
-		ComponentBackgroundBinder.bind(stationLabelColorButton, stationLabelColorBinder);
-		ComponentBackgroundBinder.bind(centerlineColorButton, centerlineColorBinder);
+	private <T> T getProjectAttribute(QSpec.Attribute<T> attribute) {
+		QObject<ProjectModel> project = projectBinder.get();
+		return project == null ? null : project.get(attribute);
+	}
 
-		ButtonSelectedBinder.bind(viewButtonsPanel.getPlanButton(), bindEquals(CameraView.PLAN, cameraViewBinder));
-		ButtonSelectedBinder
-			.bind(viewButtonsPanel.getSidewaysPlanButton(), bindEquals(CameraView.SIDEWAYS_PLAN, cameraViewBinder));
-		ButtonSelectedBinder
-			.bind(viewButtonsPanel.getPerspectiveButton(), bindEquals(CameraView.PERSPECTIVE, cameraViewBinder));
-		ButtonSelectedBinder
-			.bind(viewButtonsPanel.getNorthButton(), bindEquals(CameraView.NORTH_FACING_PROFILE, cameraViewBinder));
-		ButtonSelectedBinder
-			.bind(viewButtonsPanel.getSouthButton(), bindEquals(CameraView.SOUTH_FACING_PROFILE, cameraViewBinder));
-		ButtonSelectedBinder
-			.bind(viewButtonsPanel.getEastButton(), bindEquals(CameraView.EAST_FACING_PROFILE, cameraViewBinder));
-		ButtonSelectedBinder
-			.bind(viewButtonsPanel.getWestButton(), bindEquals(CameraView.WEST_FACING_PROFILE, cameraViewBinder));
-		ButtonSelectedBinder
-			.bind(viewButtonsPanel.getAutoProfileButton(), bindEquals(CameraView.AUTO_PROFILE, cameraViewBinder));
+	private <T> Cell<T> projectAttribute(QSpec.Attribute<T> attribute) {
+		return Cell.from(() -> projectBinder.ifDefined(p -> p.attribute(attribute)));
+	}
+
+	private <T> Cell<T> rootAttribute(QSpec.Attribute<T> attribute) {
+		return Cell.from(() -> rootBinder.ifDefined(p -> p.attribute(attribute)));
+	}
+
+	private void createBindings() {
+		bindBackground(backgroundColorButton, projectAttribute(ProjectModel.backgroundColor));
+		bindBackground(stationLabelColorButton, projectAttribute(ProjectModel.stationLabelColor));
+		bindBackground(centerlineColorButton, projectAttribute(ProjectModel.centerlineColor));
+
+		bindSelectedMap(projectAttribute(ProjectModel.cameraView))
+			.map(CameraView.PLAN, viewButtonsPanel.getPlanButton())
+			.map(CameraView.SIDEWAYS_PLAN, viewButtonsPanel.getSidewaysPlanButton())
+			.map(CameraView.PERSPECTIVE, viewButtonsPanel.getPerspectiveButton())
+			.map(CameraView.NORTH_FACING_PROFILE, viewButtonsPanel.getNorthButton())
+			.map(CameraView.SOUTH_FACING_PROFILE, viewButtonsPanel.getSouthButton())
+			.map(CameraView.EAST_FACING_PROFILE, viewButtonsPanel.getEastButton())
+			.map(CameraView.WEST_FACING_PROFILE, viewButtonsPanel.getWestButton())
+			.map(CameraView.AUTO_PROFILE, viewButtonsPanel.getAutoProfileButton());
+
 		JSliderValueBinder.bind(mouseSensitivitySlider, mouseSensitivityBinder);
 		JSliderValueBinder.bind(mouseWheelSensitivitySlider, mouseWheelSensitivityBinder);
-		PlotAxisConversionBinder.bind(distColorationAxis, displayDistRangeBinder);
-		BinderWrapper.create((GradientModel gradient) -> {
+		autorun(() -> {
+			GradientModel gradient = getProjectAttribute(ProjectModel.paramGradient);
+			if (gradient == null)
+				return;
 			paramColorationAxisPanel
 				.setUnderpaintBorder(
 					MultipleGradientFillBorder
 						.from(Side.LEFT)
 						.to(Side.RIGHT)
 						.linear(gradient.fractions, gradient.colors));
-		}).bind(paramGradientBinder);
-		ISelectorSelectionBinder.bind(colorParamSelector, colorParamBinder);
-		BetterCardLayoutBinder.bind(colorParamDetailsPanel, colorParamDetailsLayout, colorParamBinder);
-		BetterCardLayoutBinder.bind(colorParamButtonsPanel, colorParamButtonsLayout, colorParamBinder);
-		PlotAxisConversionBinder.bind(paramColorationAxis, displayParamRangeBinder);
-		ISelectorSelectionBinder.bind(highlightModeSelector, highlightModeBinder);
-		PlotAxisConversionBinder.bind(glowDistAxis, displayHighlightRangeBinder);
+
+		});
+		bindValue(colorParamSelector, projectAttribute(ProjectModel.colorParam));
+		bindLayout(colorParamDetailsPanel, colorParamDetailsLayout, projectAttribute(ProjectModel.colorParam));
+		bindLayout(colorParamButtonsPanel, colorParamButtonsLayout, projectAttribute(ProjectModel.colorParam));
+
+		paramColorationAxis.bind(Cell.from(() -> {
+			QObject<ProjectModel> project = projectBinder.get();
+			if (project == null)
+				return null;
+
+			ColorParam colorParam = project.get(ProjectModel.colorParam);
+			if (colorParam == null)
+				return null;
+			LinearAxisConversion paramConversion = project.get(ProjectModel.paramRanges).get(colorParam);
+			if (paramConversion == null)
+				return null;
+
+			Unit<Length> lengthUnit = project.get(ProjectModel.displayLengthUnit);
+			if (lengthUnit == null || colorParam.getUnitType() == null)
+				return paramConversion;
+
+			Unit systemUnit = Length.meters;
+			Unit displayUnit = Length.meters;
+			if (colorParam.getUnitType() == Length.type) {
+				displayUnit = lengthUnit;
+			}
+			else if (colorParam.getUnitType() == Area.type) {
+				systemUnit = Area.square(systemUnit);
+				displayUnit = Area.square(lengthUnit);
+			}
+
+			return new LinearAxisConversion(
+				new UnitizedDouble<>(paramConversion.invert(0), systemUnit).get(displayUnit),
+				0,
+				new UnitizedDouble<>(paramConversion.invert(1), systemUnit).get(displayUnit),
+				1);
+		}, (LinearAxisConversion paramConversion) -> {
+			QObject<ProjectModel> project = projectBinder.get();
+			if (project == null || paramConversion == null)
+				return;
+
+			ColorParam colorParam = project.get(ProjectModel.colorParam);
+			if (colorParam == null)
+				return;
+
+			if (project.get(ProjectModel.paramRanges) == null) {
+				project.set(ProjectModel.paramRanges, new QHashMap<>());
+			}
+			Unit<Length> lengthUnit = project.get(ProjectModel.displayLengthUnit);
+			if (lengthUnit == null || colorParam == null || colorParam.getUnitType() == null) {
+				project.get(ProjectModel.paramRanges).set(colorParam, paramConversion);
+				return;
+			}
+			Unit systemUnit = Length.meters;
+			Unit displayUnit = Length.meters;
+			if (colorParam.getUnitType() == Length.type) {
+				displayUnit = lengthUnit;
+			}
+			else if (colorParam.getUnitType() == Area.type) {
+				systemUnit = Area.square(systemUnit);
+				displayUnit = Area.square(lengthUnit);
+			}
+			project
+				.get(ProjectModel.paramRanges)
+				.set(
+					colorParam,
+					new LinearAxisConversion(
+						new UnitizedDouble<>(paramConversion.invert(0), displayUnit).get(systemUnit),
+						0,
+						new UnitizedDouble<>(paramConversion.invert(1), displayUnit).get(systemUnit),
+						1));
+		}));
+
+		Bimapper<LinearAxisConversion, LinearAxisConversion> distConversionBimapper = Bimapper.from((systemConv) -> {
+			Unit<Length> displayLengthUnit = getProjectAttribute(ProjectModel.displayLengthUnit);
+			if (systemConv == null)
+				return null;
+			if (displayLengthUnit == null)
+				displayLengthUnit = Length.meters;
+			return new LinearAxisConversion(
+				Length.meters(systemConv.invert(0)).get(displayLengthUnit),
+				0,
+				Length.meters(systemConv.invert(1)).get(displayLengthUnit),
+				1);
+		}, (displayConv) -> {
+			Unit<Length> displayLengthUnit = getProjectAttribute(ProjectModel.displayLengthUnit);
+			if (displayConv == null)
+				return null;
+			if (displayLengthUnit == null)
+				displayLengthUnit = Length.meters;
+			return new LinearAxisConversion(
+				new UnitizedDouble<>(displayConv.invert(0), displayLengthUnit).get(Length.meters),
+				0,
+				new UnitizedDouble<>(displayConv.invert(1), displayLengthUnit).get(Length.meters),
+				1);
+		});
+
+		distColorationAxis.bind(projectAttribute(ProjectModel.distRange), distConversionBimapper);
+
+		bindValue(highlightModeSelector, projectAttribute(ProjectModel.highlightMode));
+		glowDistAxis.bind(projectAttribute(ProjectModel.highlightRange), distConversionBimapper);
+
+		autorun(() -> {
+			updateMaxDateLabelText(ColorParam.calcDateFromDaysSince1800(getProjectAttribute(ProjectModel.maxDate)));
+		});
 
 		maxDateBimapper =
 			new LinearFloatBimapper(
@@ -490,10 +487,6 @@ public class SettingsDrawer extends Drawer {
 				0f,
 				ColorParam.calcDaysSince1800(new Date()),
 				maxDateSlider.getMaximum());
-
-		BinderWrapper.create((Float daysSince1800) -> {
-			updateMaxDateLabelText(ColorParam.calcDateFromDaysSince1800(maxDateBinder.get()));
-		}).bind(maxDateBinder);
 
 		JSliderValueBinder
 			.bind(maxDateSlider, BimapperBinder.bind(compose(maxDateBimapper, new Bimapper<Float, Integer>() {
@@ -544,51 +537,40 @@ public class SettingsDrawer extends Drawer {
 			}
 		});
 
-		JSliderValueBinder
-			.bind(
-				ambientLightSlider,
-				BimapperBinder
-					.bind(
-						compose(
-							new LinearFloatBimapper(0f, 0f, 1f, ambientLightSlider.getMaximum()),
-							RoundingFloat2IntegerBimapper.instance),
-						ambientLightBinder));
-		JSliderValueBinder
-			.bind(
-				boldnessSlider,
-				BimapperBinder
-					.bind(
-						compose(
-							new LinearFloatBimapper(0f, 0f, 5f, boldnessSlider.getMaximum()),
-							RoundingFloat2IntegerBimapper.instance),
-						boldnessBinder));
-		JSliderValueBinder
-			.bind(
-				centerlineDistanceSlider,
-				BimapperBinder.bind(RoundingFloat2IntegerBimapper.instance, centerlineDistanceBinder));
-		JSliderValueBinder
-			.bind(
-				stationLabelDensitySlider,
-				BimapperBinder.bind(RoundingFloat2IntegerBimapper.instance, stationLabelDensityBinder));
-		JSliderValueBinder
-			.bind(
-				stationLabelFontSizeSlider,
-				BimapperBinder
-					.bind(
-						compose(new LinearFloatBimapper(10f, 0f), RoundingFloat2IntegerBimapper.instance),
-						stationLabelFontSizeBinder));
-		ButtonSelectedBinder.bind(showLeadLabelsCheckBox, showLeadLabelsBinder);
-		ButtonSelectedBinder.bind(showCheckedLeadsCheckBox, showCheckedLeadsBinder);
-		ComponentEnabledBinder.bind(showCheckedLeadsCheckBox, showLeadLabelsBinder);
-		ButtonSelectedBinder.bind(showTerrainCheckBox, showTerrainBinder);
+		bindValue(ambientLightSlider, projectAttribute(ProjectModel.ambientLight), 0f, 1f);
+		bindValue(boldnessSlider, projectAttribute(ProjectModel.boldness), 0f, 5f);
 
-		JSliderValueBinder.bind(numSamplesSlider, desiredNumSamplesBinder);
+		bindValue(
+			centerlineDistanceSlider,
+			projectAttribute(ProjectModel.centerlineDistance),
+			0f,
+			centerlineDistanceSlider.getMaximum());
+		bindValue(
+			stationLabelDensitySlider,
+			projectAttribute(ProjectModel.stationLabelDensity),
+			0f,
+			stationLabelDensitySlider.getMaximum());
 
-		ISelectorSelectionBinder.bind(displayLengthUnitSelector, displayLengthUnitBinder);
-		ISelectorSelectionBinder.bind(displayAngleUnitSelector, displayAngleUnitBinder);
-		ISelectorSelectionBinder.bind(displayCoordinateReferenceSystemSelector, displayCoordinateReferenceSystemBinder);
+		bindValue(
+			stationLabelFontSizeSlider,
+			projectAttribute(ProjectModel.stationLabelFontSize),
+			0f,
+			stationLabelFontSizeSlider.getMaximum() / 10f);
 
-		JComboBoxItemBinder.bind(paramGradientComboBox, paramGradientBinder);
+		bindSelected(showLeadLabelsCheckBox, projectAttribute(ProjectModel.showLeadLabels));
+		bindSelected(showCheckedLeadsCheckBox, projectAttribute(ProjectModel.showCheckedLeads));
+		bindEnabled(showCheckedLeadsCheckBox, projectAttribute(ProjectModel.showLeadLabels));
+		bindSelected(showTerrainCheckBox, projectAttribute(ProjectModel.showTerrain));
+
+		bindValue(numSamplesSlider, rootAttribute(RootModel.desiredNumSamples));
+
+		bindValue(displayLengthUnitSelector, projectAttribute(ProjectModel.displayLengthUnit));
+		bindValue(displayAngleUnitSelector, projectAttribute(ProjectModel.displayAngleUnit));
+		bindValue(
+			displayCoordinateReferenceSystemSelector,
+			projectAttribute(ProjectModel.displayCoordinateReferenceSystem));
+
+		bindValue(paramGradientComboBox, projectAttribute(ProjectModel.paramGradient));
 	}
 
 	private void createComponents(I18n i18n) {

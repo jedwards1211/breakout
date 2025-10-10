@@ -60,13 +60,15 @@ public class PlotAxisController {
 				double zoom = enableZoom ? Math.pow(dragZoomSpeed, horiz ? dy : dx) : 1.0;
 				newStart = oldMouseDomain + (oldStart - newMouseDomain) * zoom;
 				newEnd = oldMouseDomain + (oldEnd - newMouseDomain) * zoom;
-			} else if (pressEvent.getButton() == MouseEvent.BUTTON3) {
+			}
+			else if (pressEvent.getButton() == MouseEvent.BUTTON3) {
 				if (horiz ? pressEvent.getX() > view.getWidth() / 2 : pressEvent.getY() > view.getHeight() / 2) {
 					if (newMouseDomain != oldStart) {
-						newEnd = newStart
-								+ (newEnd - newStart) * (oldMouseDomain - oldStart) / (newMouseDomain - oldStart);
+						newEnd =
+							newStart + (newEnd - newStart) * (oldMouseDomain - oldStart) / (newMouseDomain - oldStart);
 					}
-				} else {
+				}
+				else {
 					if (newMouseDomain != oldEnd) {
 						newStart = newEnd + (newStart - newEnd) * (oldMouseDomain - oldEnd) / (newMouseDomain - oldEnd);
 					}
@@ -128,8 +130,8 @@ public class PlotAxisController {
 		double oldStart = axisConversion.invert(0);
 		double oldEnd = axisConversion.invert(view.getViewSpan());
 
-		double mousePosition = axisConversion
-				.invert(view.getOrientation() == Orientation.HORIZONTAL ? e.getX() : e.getY());
+		double mousePosition =
+			axisConversion.invert(view.getOrientation() == Orientation.HORIZONTAL ? e.getX() : e.getY());
 
 		double zoom = enableZoom ? Math.pow(wheelZoomSpeed, e.getUnitsToScroll()) : 1.0;
 
@@ -164,10 +166,7 @@ public class PlotAxisController {
 	}
 
 	protected void setAxisRange(double start, double end) {
-		view.getAxisConversion().set(start, 0, end, view.getViewSpan());
-		// fire an event
-		view.setAxisConversion(view.getAxisConversion());
-		view.repaint();
+		view.setAxisConversion(new LinearAxisConversion(start, 0, end, view.getViewSpan()));
 		for (Component plot : view.getPlots()) {
 			plot.repaint();
 		}

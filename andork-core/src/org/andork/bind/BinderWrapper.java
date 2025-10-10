@@ -23,9 +23,12 @@ package org.andork.bind;
 
 import java.util.function.Consumer;
 
+import org.andork.q.QDependency;
+
 public class BinderWrapper<T> extends Binder<T> {
 	private Binder<T> wrapped;
 	private T value;
+	private final QDependency dependency = new QDependency();
 
 	public static <T> BinderWrapper<T> create(Consumer<T> onValueChanged) {
 		return new BinderWrapper<T>() {
@@ -61,6 +64,7 @@ public class BinderWrapper<T> extends Binder<T> {
 
 	@Override
 	public T get() {
+		dependency.depend();
 		return value;
 	}
 
@@ -85,6 +89,7 @@ public class BinderWrapper<T> extends Binder<T> {
 			value = newValue;
 			onValueChanged(newValue);
 			updateDownstream(force);
+			dependency.fireChanged();
 		}
 	}
 }

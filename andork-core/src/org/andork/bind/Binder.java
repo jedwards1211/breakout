@@ -24,8 +24,12 @@ package org.andork.bind;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
-public abstract class Binder<T> {
+import org.andork.model.Cell;
+
+public abstract class Binder<T> implements Cell<T> {
 	protected static void bind0(Binder<?> upstream, Binder<?> downstream) {
 		if (!upstream.downstream.contains(downstream)) {
 			upstream.downstream.add(downstream);
@@ -41,6 +45,11 @@ public abstract class Binder<T> {
 	private final List<Binder<?>> unmodifiableDownstream = Collections.unmodifiableList(downstream);
 
 	public abstract T get();
+
+	public final <U> U ifDefined(Function<T, U> callback) {
+		T t = get();
+		return t == null ? null : callback.apply(t);
+	}
 
 	public List<Binder<?>> getDownstream() {
 		return unmodifiableDownstream;

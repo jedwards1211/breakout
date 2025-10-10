@@ -74,10 +74,7 @@ public class PlotAxisConversionBinder extends Binder<LinearAxisConversion> imple
 
 	@Override
 	public void set(LinearAxisConversion newValue) {
-		if (axis != null && !newValue.equals(axis.getAxisConversion())) {
-			axis.setAxisConversion(new LinearAxisConversion(newValue));
-			axis.repaint();
-		}
+		axis.setAxisConversion(newValue);
 	}
 
 	@Override

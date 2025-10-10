@@ -1,20 +1,21 @@
 package org.andork.q;
 
 import org.andork.func.Mapper;
+import org.andork.model.Cell;
 
-public class QCell<T> extends QElement {
+public class QCell<T> extends QElement implements Cell<T> {
 	private T value;
 
-	QCell(T value) {
+	public QCell(T value) {
 		this.value = value;
 	}
 
-	T get() {
+	public T get() {
 		dependency.depend();
 		return value;
 	}
 
-	void set(T newValue) {
+	public void set(T newValue) {
 		if (newValue == value) {
 			return;
 		}

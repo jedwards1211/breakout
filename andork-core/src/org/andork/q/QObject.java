@@ -24,6 +24,7 @@ package org.andork.q;
 import java.util.Arrays;
 
 import org.andork.func.Mapper;
+import org.andork.model.Cell;
 import org.andork.model.Model;
 import org.andork.q.QSpec.Attribute;
 
@@ -167,7 +168,9 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 		if (!attribute.equals.test(oldValue, newValue)) {
 			changeSupport.firePropertyChange(this, attribute, oldValue, newValue);
 		}
-		if (oldValue != newValue) {
+		if (oldValue instanceof QElement || newValue instanceof QElement
+			? oldValue != newValue
+			: !attribute.equals.test(oldValue, newValue)) {
 			fireDependencyChanged(attribute);
 		}
 		return oldValue;
@@ -207,5 +210,26 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	public Object valueAt(int index) {
 		depend(this.spec.attributeAt(index));
 		return attributes[index] == NOT_PRESENT ? null : attributes[index];
+	}
+
+	public class AttributeCell<T> implements Cell<T> {
+		public final Attribute<T> attribute;
+
+		public AttributeCell(Attribute<T> attribute) {
+			super();
+			this.attribute = attribute;
+		}
+
+		public T get() {
+			return QObject.this.get(attribute);
+		}
+
+		public void set(T newValue) {
+			QObject.this.set(attribute, newValue);
+		}
+	}
+
+	public <T> AttributeCell<T> attribute(Attribute<T> attribute) {
+		return new AttributeCell<>(attribute);
 	}
 }
