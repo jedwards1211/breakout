@@ -81,7 +81,6 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import javax.swing.AbstractAction;
 import javax.swing.CellEditor;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JDialog;
@@ -2548,16 +2547,6 @@ public class BreakoutMainView {
 		mainPanel.getActionMap().put("fitViewToEverything", fitViewToEverythingAction);
 		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0), "fitViewToSelected");
 		mainPanel.getActionMap().put("fitViewToSelected", fitViewToSelectedAction);
-		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "togglePlay");
-		mainPanel.getActionMap().put("togglePlay", new AbstractAction() {
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				JToggleButton playButton = settingsDrawer.getPlayButton();
-				playButton.setSelected(!playButton.isSelected());
-			}
-		});
 
 		ViewButtonsPanel viewButtonsPanel = settingsDrawer.getViewButtonsPanel();
 		for (CameraView view : CameraView.values()) {
