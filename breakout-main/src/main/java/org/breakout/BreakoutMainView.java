@@ -2647,7 +2647,8 @@ public class BreakoutMainView {
 			rootModel = RootModel.instance.newObject();
 		}
 		RootModel.setDefaults(rootModel);
-		setRootModel(rootModel);
+		final QObject<RootModel> finalRootModel = rootModel;
+		OnEDT.onEDT(() -> setRootModel(finalRootModel));
 
 		if (!recoverBackupIfNecessary(rootModel)) {
 			newProject();

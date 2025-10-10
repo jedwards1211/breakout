@@ -44,6 +44,7 @@ public class QArrayList<E> extends QList<E, ArrayList<E>> {
 
 	@Override
 	public QArrayList<E> deepClone(Mapper<Object, Object> childMapper) {
+		dependency.depend();
 		QArrayList<E> result = newInstance();
 		for (E elem : this) {
 			result.add((E) childMapper.map(elem));

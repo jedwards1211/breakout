@@ -27,6 +27,7 @@ import javax.swing.SwingUtilities;
 
 import org.andork.func.ExceptionRunnable;
 import org.andork.func.RuntimeInvocationTargetException;
+import org.andork.q.QAutorun;
 
 /**
  * Takes the pain out of writing {@link SwingUtilities#invokeAndWait(Runnable)}
@@ -69,6 +70,10 @@ public abstract class OnEDT {
 		catch (InterruptedException e) {
 			throw new RuntimeInterruptedException(e);
 		}
+	}
+
+	public static QAutorun autorunOnEDT(Runnable r) {
+		return FromEDT.fromEDT(() -> QAutorun.autorun(r));
 	}
 
 	/**

@@ -49,35 +49,42 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 				((QElement) e).changeSupport().addPropertyChangeListener(propagator);
 			}
 			changeSupport.fireChildAdded(QList.this, e);
+			dependency.fireChanged();
 		}
 
 		@Override
 		public boolean hasNext() {
+			dependency.depend();
 			return wrapped.hasNext();
 		}
 
 		@Override
 		public boolean hasPrevious() {
+			dependency.depend();
 			return wrapped.hasPrevious();
 		}
 
 		@Override
 		public E next() {
+			dependency.depend();
 			return last = wrapped.next();
 		}
 
 		@Override
 		public int nextIndex() {
+			dependency.depend();
 			return wrapped.nextIndex();
 		}
 
 		@Override
 		public E previous() {
+			dependency.depend();
 			return last = wrapped.previous();
 		}
 
 		@Override
 		public int previousIndex() {
+			dependency.depend();
 			return wrapped.previousIndex();
 		}
 
@@ -88,6 +95,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 				((QElement) last).changeSupport().removePropertyChangeListener(propagator);
 			}
 			changeSupport.fireChildRemoved(QList.this, last);
+			dependency.fireChanged();
 		}
 
 		@Override
@@ -102,6 +110,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 					((QElement) e).changeSupport().addPropertyChangeListener(propagator);
 				}
 				changeSupport.fireChildAdded(QList.this, e);
+				dependency.fireChanged();
 				last = e;
 			}
 		}
@@ -121,6 +130,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 					((QElement) e).changeSupport().addPropertyChangeListener(propagator);
 				}
 				changeSupport.fireChildAdded(QList.this, e);
+				dependency.fireChanged();
 				return true;
 			}
 			return false;
@@ -133,6 +143,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 				((QElement) element).changeSupport().addPropertyChangeListener(propagator);
 			}
 			changeSupport.fireChildAdded(QList.this, element);
+			dependency.fireChanged();
 		}
 
 		@Override
@@ -148,6 +159,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			}
 			if (!added.isEmpty()) {
 				changeSupport.fireChildrenChanged(QList.this, ChangeType.CHILDREN_ADDED, added.toArray());
+				dependency.fireChanged();
 			}
 			return !added.isEmpty();
 		}
@@ -161,6 +173,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 				}
 			}
 			changeSupport.fireChildrenChanged(QList.this, ChangeType.CHILDREN_ADDED, c);
+			dependency.fireChanged();
 			return true;
 		}
 
@@ -175,31 +188,37 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 				}
 				wrapped.clear();
 				changeSupport.fireChildrenChanged(QList.this, ChangeType.CHILDREN_REMOVED, removed);
+				dependency.fireChanged();
 			}
 		}
 
 		@Override
 		public boolean contains(Object o) {
+			dependency.depend();
 			return wrapped.contains(o);
 		}
 
 		@Override
 		public boolean containsAll(Collection<?> c) {
+			dependency.depend();
 			return wrapped.containsAll(c);
 		}
 
 		@Override
 		public E get(int index) {
+			dependency.depend();
 			return wrapped.get(index);
 		}
 
 		@Override
 		public int indexOf(Object o) {
+			dependency.depend();
 			return wrapped.indexOf(o);
 		}
 
 		@Override
 		public boolean isEmpty() {
+			dependency.depend();
 			return wrapped.isEmpty();
 		}
 
@@ -210,6 +229,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 
 		@Override
 		public int lastIndexOf(Object o) {
+			dependency.depend();
 			return wrapped.lastIndexOf(o);
 		}
 
@@ -230,6 +250,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 				((QElement) removed).changeSupport().removePropertyChangeListener(propagator);
 			}
 			changeSupport.fireChildRemoved(QList.this, removed);
+			dependency.fireChanged();
 			return removed;
 		}
 
@@ -240,6 +261,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 					((QElement) o).changeSupport().removePropertyChangeListener(propagator);
 				}
 				changeSupport.fireChildRemoved(QList.this, o);
+				dependency.fireChanged();
 				return true;
 			}
 			return false;
@@ -258,6 +280,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			}
 			if (!removed.isEmpty()) {
 				changeSupport.fireChildrenChanged(QList.this, ChangeType.CHILDREN_REMOVED, removed.toArray());
+				dependency.fireChanged();
 			}
 			return !removed.isEmpty();
 		}
@@ -278,6 +301,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			}
 			if (!removed.isEmpty()) {
 				changeSupport.fireChildrenChanged(QList.this, ChangeType.CHILDREN_REMOVED, removed.toArray());
+				dependency.fireChanged();
 			}
 			return !removed.isEmpty();
 		}
@@ -295,12 +319,14 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 				}
 				changeSupport.fireChildRemoved(QList.this, oldValue);
 				changeSupport.fireChildAdded(QList.this, element);
+				dependency.fireChanged();
 			}
 			return oldValue;
 		}
 
 		@Override
 		public int size() {
+			dependency.depend();
 			return wrapped.size();
 		}
 
@@ -311,11 +337,13 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 
 		@Override
 		public Object[] toArray() {
+			dependency.depend();
 			return wrapped.toArray();
 		}
 
 		@Override
 		public <T> T[] toArray(T[] a) {
+			dependency.depend();
 			return wrapped.toArray(a);
 		}
 	}
@@ -327,6 +355,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			((QElement) element).changeSupport().addPropertyChangeListener(propagator);
 		}
 		changeSupport.fireChildAdded(this, element);
+		dependency.fireChanged();
 	}
 
 	@Override
@@ -338,36 +367,37 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			}
 		}
 		changeSupport.fireChildrenChanged(this, ChangeType.CHILDREN_ADDED, c);
+		dependency.fireChanged();
 		return true;
 	}
 
 	@Override
 	public E get(int index) {
-		this.depend();
+		dependency.depend();
 		return collection.get(index);
 	}
 
 	@Override
 	public int indexOf(Object o) {
-		this.depend();
+		dependency.depend();
 		return collection.indexOf(o);
 	}
 
 	@Override
 	public int lastIndexOf(Object o) {
-		this.depend();
+		dependency.depend();
 		return collection.lastIndexOf(o);
 	}
 
 	@Override
 	public ListIterator<E> listIterator() {
-		this.depend();
+		dependency.depend();
 		return new ListIter(collection);
 	}
 
 	@Override
 	public ListIterator<E> listIterator(int index) {
-		this.depend();
+		dependency.depend();
 		return new ListIter(collection, index);
 	}
 
@@ -378,6 +408,7 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			((QElement) removed).changeSupport().removePropertyChangeListener(propagator);
 		}
 		changeSupport.fireChildRemoved(this, removed);
+		dependency.fireChanged();
 		return removed;
 	}
 
@@ -394,13 +425,13 @@ public abstract class QList<E, C extends List<E>> extends QCollection<E, C> impl
 			}
 			changeSupport.fireChildRemoved(this, oldValue);
 			changeSupport.fireChildAdded(this, element);
+			dependency.fireChanged();
 		}
 		return oldValue;
 	}
 
 	@Override
 	public List<E> subList(int fromIndex, int toIndex) {
-		this.depend();
 		return new SubList(collection, fromIndex, toIndex);
 	}
 }

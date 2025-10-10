@@ -39,11 +39,13 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 
 		@Override
 		public boolean hasNext() {
+			dependency.depend();
 			return wrapped.hasNext();
 		}
 
 		@Override
 		public E next() {
+			dependency.depend();
 			return last = wrapped.next();
 		}
 
@@ -55,6 +57,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 				((QElement) last).changeSupport().removePropertyChangeListener(propagator);
 			}
 			changeSupport.fireChildRemoved(this, last);
+			dependency.fireChanged();
 		}
 	}
 
@@ -67,6 +70,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 				((QElement) element).changeSupport().addPropertyChangeListener(propagator);
 			}
 			changeSupport.fireChildAdded(this, element);
+			dependency.fireChanged();
 			return true;
 		}
 		return false;
@@ -85,6 +89,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		}
 		if (!added.isEmpty()) {
 			changeSupport.fireChildrenChanged(this, ChangeType.CHILDREN_ADDED, added.toArray());
+			dependency.fireChanged();
 		}
 		return !added.isEmpty();
 	}
@@ -99,18 +104,19 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 			}
 			collection.clear();
 			changeSupport.fireChildrenChanged(this);
+			dependency.fireChanged();
 		}
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		this.depend();
+		dependency.depend();
 		return collection.contains(o);
 	}
 
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		this.depend();
+		dependency.depend();
 		return collection.containsAll(c);
 	}
 
@@ -118,13 +124,12 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 
 	@Override
 	public boolean isEmpty() {
-		this.depend();
+		dependency.depend();
 		return collection.isEmpty();
 	}
 
 	@Override
 	public Iterator<E> iterator() {
-		this.depend();
 		return new Iter(collection);
 	}
 
@@ -135,6 +140,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 				((QElement) element).changeSupport().removePropertyChangeListener(propagator);
 			}
 			changeSupport.fireChildRemoved(this, element);
+			dependency.fireChanged();
 			return true;
 		}
 		return false;
@@ -153,6 +159,7 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		}
 		if (!removed.isEmpty()) {
 			changeSupport.fireChildrenChanged(this, ChangeType.CHILDREN_REMOVED, removed.toArray());
+			dependency.fireChanged();
 		}
 		return !removed.isEmpty();
 	}
@@ -173,25 +180,26 @@ public abstract class QCollection<E, C extends Collection<E>> extends QElement i
 		}
 		if (!removed.isEmpty()) {
 			changeSupport.fireChildrenChanged(this, ChangeType.CHILDREN_REMOVED, removed.toArray());
+			dependency.fireChanged();
 		}
 		return !removed.isEmpty();
 	}
 
 	@Override
 	public int size() {
-		this.depend();
+		dependency.depend();
 		return collection.size();
 	}
 
 	@Override
 	public Object[] toArray() {
-		this.depend();
+		dependency.depend();
 		return collection.toArray();
 	}
 
 	@Override
 	public <T> T[] toArray(T[] a) {
-		this.depend();
+		dependency.depend();
 		return collection.toArray(a);
 	}
 }

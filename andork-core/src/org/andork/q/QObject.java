@@ -37,6 +37,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	private final S spec;
 
 	private final Object[] attributes;
+	private final QDependency[] dependencies;
 
 	/**
 	 * Creates a {@code QObject} with the given spec.
@@ -46,7 +47,26 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	private QObject(S spec) {
 		this.spec = spec;
 		this.attributes = new Object[spec.getAttributeCount()];
+		this.dependencies = new QDependency[spec.getAttributeCount()];
 		Arrays.fill(this.attributes, NOT_PRESENT);
+	}
+
+	private void depend(Attribute<?> attribute) {
+		if (QAutorun.getCurrent() != null) {
+			QDependency dependency = dependencies[attribute.index];
+			if (dependency == null) {
+				dependencies[attribute.index] = dependency = new QDependency();
+			}
+			dependency.depend();
+		}
+	}
+
+	private void fireDependencyChanged(Attribute<?> attribute) {
+		QDependency dependency = dependencies[attribute.index];
+		if (dependency != null) {
+			dependency.fireChanged();
+		}
+		this.dependency.fireChanged();
 	}
 
 	private <T> void checkBelongs(Attribute<T> attribute) {
@@ -73,6 +93,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 
 	@Override
 	public QObject<S> deepClone(Mapper<Object, Object> childMapper) {
+		dependency.depend();
 		QObject<S> result = spec.newObject();
 		for (int i = 0; i < attributes.length; i++) {
 			if (attributes[i] != NOT_PRESENT) {
@@ -126,6 +147,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 		}
 		attributes[attribute.index] = NOT_PRESENT;
 		changeSupport.firePropertyChange(this, attribute, oldValue, null);
+		fireDependencyChanged(attribute);
 		return (T) oldValue;
 	}
 
@@ -145,6 +167,9 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 		if (!attribute.equals.test(oldValue, newValue)) {
 			changeSupport.firePropertyChange(this, attribute, oldValue, newValue);
 		}
+		if (oldValue != newValue) {
+			fireDependencyChanged(attribute);
+		}
 		return oldValue;
 	}
 
@@ -163,6 +188,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 
 	@Override
 	public String toString() {
+		dependency.depend();
 		StringBuilder builder = new StringBuilder();
 		builder.append('{');
 		for (int i = 0; i < attributes.length; i++) {
@@ -179,7 +205,7 @@ public final class QObject<S extends QSpec<S>> extends QElement implements Model
 	}
 
 	public Object valueAt(int index) {
-		this.depend(this.spec.attributeAt(index));
+		depend(this.spec.attributeAt(index));
 		return attributes[index] == NOT_PRESENT ? null : attributes[index];
 	}
 }

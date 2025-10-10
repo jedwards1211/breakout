@@ -37,6 +37,7 @@ public class QLinkedHashSet<E> extends QSet<E, LinkedHashSet<E>> {
 
 	@Override
 	public QLinkedHashSet<E> deepClone(Mapper<Object, Object> childMapper) {
+		dependency.depend();
 		QLinkedHashSet<E> result = newInstance();
 		for (E elem : this) {
 			result.add((E) childMapper.map(elem));

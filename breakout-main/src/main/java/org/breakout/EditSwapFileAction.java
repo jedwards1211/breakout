@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import javax.swing.AbstractAction;
 
 import org.andork.awt.I18n.Localizer;
+import org.andork.q.QAutorun;
 import org.andork.swing.OnEDT;
 
 public class EditSwapFileAction extends AbstractAction {
@@ -18,6 +19,9 @@ public class EditSwapFileAction extends AbstractAction {
 		OnEDT.onEDT(() -> {
 			Localizer localizer = mainView.getI18n().forClass(EditSwapFileAction.this.getClass());
 			localizer.setName(EditSwapFileAction.this, "name");
+			QAutorun.autorun(() -> {
+				EditSwapFileAction.this.setEnabled(mainView.getCurrentProjectFile() != null);
+			});
 		});
 	}
 

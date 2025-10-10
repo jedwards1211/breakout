@@ -32,18 +32,18 @@ public class QAutorunTest {
 
 		new QAutorun(() -> {
 			autorunValues.add(model.get(TestModel.foo) * 2);
-		}, r -> r.run());
+		});
 
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 2 });
+		Assert.assertArrayEquals(new Object[] { 2 }, autorunValues.toArray());
 
 		autorunValues.clear();
 
 		model.set(TestModel.foo, 5);
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 10 });
+		Assert.assertArrayEquals(new Object[] { 10 }, autorunValues.toArray());
 
 		autorunValues.clear();
 		model.set(TestModel.bar, 3);
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] {});
+		Assert.assertArrayEquals(new Object[] {}, autorunValues.toArray());
 	}
 
 	@Test
@@ -56,36 +56,27 @@ public class QAutorunTest {
 
 		new QAutorun(() -> {
 			autorunValues.add(model.get(TestModel.foo) + model.get(TestModel.bar));
-		}, r -> r.run());
+		});
 
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 3 });
+		Assert.assertArrayEquals(new Object[] { 3 }, autorunValues.toArray());
 
 		autorunValues.clear();
 
 		model.set(TestModel.foo, 5);
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 7 });
+		Assert.assertArrayEquals(new Object[] { 7 }, autorunValues.toArray());
 
 		autorunValues.clear();
 		model.set(TestModel.bar, 3);
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 8 });
+		Assert.assertArrayEquals(new Object[] { 8 }, autorunValues.toArray());
 
 		autorunValues.clear();
 		model.set(TestModel.baz, 8);
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] {});
+		Assert.assertArrayEquals(new Object[] {}, autorunValues.toArray());
 	}
 
 	@Test
 	public void testQObjectAndList() {
 		List<Object> autorunValues = new ArrayList<>();
-		List<Runnable> runners = new ArrayList<>();
-
-		Runnable update = () -> {
-			autorunValues.clear();
-			for (Runnable r : runners) {
-				r.run();
-			}
-			runners.clear();
-		};
 
 		QObject<TestModel> model = TestModel.newInstance();
 		model.set(TestModel.foo, 1);
@@ -94,32 +85,22 @@ public class QAutorunTest {
 
 		new QAutorun(() -> {
 			autorunValues.add(model.get(TestModel.foo) + model.get(TestModel.list).get(0));
-		}, r -> runners.add(r));
+		});
 
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 2 });
+		Assert.assertArrayEquals(new Object[] { 2 }, autorunValues.toArray());
 
+		autorunValues.clear();
 		model.set(TestModel.foo, 5);
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 6 });
+		Assert.assertArrayEquals(new Object[] { 6 }, autorunValues.toArray());
 
+		autorunValues.clear();
 		model.get(TestModel.list).set(0, 8);
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 13 });
+		Assert.assertArrayEquals(new Object[] { 13 }, autorunValues.toArray());
 	}
 
 	@Test
 	public void testQObjectAndMap() {
 		List<Object> autorunValues = new ArrayList<>();
-		List<Runnable> runners = new ArrayList<>();
-
-		Runnable update = () -> {
-			autorunValues.clear();
-			for (Runnable r : runners) {
-				r.run();
-			}
-			runners.clear();
-		};
 
 		QObject<TestModel> model = TestModel.newInstance();
 		model.set(TestModel.foo, 1);
@@ -130,31 +111,30 @@ public class QAutorunTest {
 		new QAutorun(() -> {
 			Integer mapValue = model.get(TestModel.map).get("a");
 			autorunValues.add(model.get(TestModel.foo) + (mapValue == null ? 0 : mapValue));
-		}, r -> runners.add(r));
+		});
 
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 6 });
+		Assert.assertArrayEquals(new Object[] { 6 }, autorunValues.toArray());
 
+		autorunValues.clear();
 		model.set(TestModel.foo, 5);
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 10 });
+		Assert.assertArrayEquals(new Object[] { 10 }, autorunValues.toArray());
 
+		autorunValues.clear();
 		model.get(TestModel.map).set("a", 8);
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 13 });
+		Assert.assertArrayEquals(new Object[] { 13 }, autorunValues.toArray());
 
+		autorunValues.clear();
 		model.get(TestModel.map).set("b", 4);
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] {});
+		Assert.assertArrayEquals(new Object[] { 13 }, autorunValues.toArray());
 
+		autorunValues.clear();
 		QHashMap<String, Integer> newMap = QHashMap.newInstance();
 		newMap.set("a", -6);
 		model.set(TestModel.map, newMap);
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { -1 });
+		Assert.assertArrayEquals(new Object[] { -1 }, autorunValues.toArray());
 
+		autorunValues.clear();
 		model.get(TestModel.map).clear();
-		update.run();
-		Assert.assertArrayEquals(autorunValues.toArray(), new Object[] { 5 });
+		Assert.assertArrayEquals(new Object[] { 5 }, autorunValues.toArray());
 	}
 }

@@ -37,6 +37,7 @@ public class QHashSet<E> extends QSet<E, HashSet<E>> {
 
 	@Override
 	public QHashSet<E> deepClone(Mapper<Object, Object> childMapper) {
+		dependency.depend();
 		QHashSet<E> result = newInstance();
 		for (E elem : this) {
 			result.add((E) childMapper.map(elem));

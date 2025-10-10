@@ -38,6 +38,7 @@ public class QHashMap<K, V> extends QMap<K, V, HashMap<K, V>> {
 
 	@Override
 	public QElement deepClone(Mapper<Object, Object> childMapper) {
+		dependency.depend();
 		QHashMap<K, V> result = newInstance();
 		for (Map.Entry<K, V> entry : entrySet()) {
 			result.put(entry.getKey(), (V) childMapper.map(entry.getValue()));

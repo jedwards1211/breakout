@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.andork.bind;
 
+import org.andork.q.QDependency;
 import org.andork.util.Java7;
 
 public class DefaultBinder<T> extends Binder<T> {
@@ -28,6 +29,7 @@ public class DefaultBinder<T> extends Binder<T> {
 		return new DefaultBinder<T>(value);
 	}
 
+	private final QDependency dependency = new QDependency();
 	private T value;
 
 	public DefaultBinder() {
@@ -41,6 +43,7 @@ public class DefaultBinder<T> extends Binder<T> {
 
 	@Override
 	public T get() {
+		dependency.depend();
 		return value;
 	}
 
@@ -49,6 +52,7 @@ public class DefaultBinder<T> extends Binder<T> {
 		if (!Java7.Objects.equals(value, newValue)) {
 			value = newValue;
 			updateDownstream(false);
+			dependency.fireChanged();
 		}
 	}
 
@@ -56,6 +60,7 @@ public class DefaultBinder<T> extends Binder<T> {
 	public void update(boolean force) {
 		if (force) {
 			updateDownstream(force);
+			dependency.fireChanged();
 		}
 	}
 }

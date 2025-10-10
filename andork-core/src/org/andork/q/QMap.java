@@ -86,10 +86,12 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 
 		@Override
 		public boolean hasNext() {
+			dependency.depend();
 			return entryIter.hasNext();
 		}
 
 		public Map.Entry<K, V> nextEntry() {
+			dependency.depend();
 			return last = entryIter.next();
 		}
 
@@ -174,6 +176,7 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 
 	@Override
 	public void clear() {
+		boolean changed = !map.isEmpty();
 		Map<K, V> clone = new LinkedHashMap<K, V>(map);
 		map.clear();
 		for (Map.Entry<K, V> entry : clone.entrySet()) {
@@ -182,17 +185,20 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 			}
 		}
 		clearChildren();
+		if (changed) {
+			dependency.fireChanged();
+		}
 	}
 
 	@Override
 	public boolean containsKey(Object key) {
-		this.depend(key);
+		dependency.depend();
 		return map.containsKey(key);
 	}
 
 	@Override
 	public boolean containsValue(Object value) {
-		this.depend(value);
+		dependency.depend();
 		return map.containsValue(value);
 	}
 
@@ -200,26 +206,25 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 
 	@Override
 	public Set<java.util.Map.Entry<K, V>> entrySet() {
-		this.depend();
 		Set<java.util.Map.Entry<K, V>> es = entrySet;
 		return es != null ? es : (entrySet = new EntrySet());
 	}
 
 	@Override
 	public V get(Object key) {
-		this.depend(key);
+		dependency.depend();
 		return map.get(key);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		this.depend();
+		dependency.depend();
 		return map.isEmpty();
 	}
 
 	@Override
 	public Set<K> keySet() {
-		this.depend();
+		dependency.depend();
 		Set<K> ks = keySet;
 		return ks != null ? ks : (keySet = new KeySet());
 	}
@@ -235,6 +240,7 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 				addChild(value);
 			}
 			changeSupport.firePropertyChange(this, key, prev, value);
+			dependency.fireChanged();
 		}
 		return prev;
 	}
@@ -244,6 +250,8 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 		List<Object> added = new ArrayList<Object>();
 		List<Object> removed = new ArrayList<Object>();
 
+		boolean changed = false;
+		;
 		for (Map.Entry<? extends K, ? extends V> entry : m.entrySet()) {
 			K key = entry.getKey();
 			V value = entry.getValue();
@@ -256,11 +264,15 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 			}
 			if (prev != value) {
 				changeSupport.firePropertyChange(this, key, prev, value);
+				changed = true;
 			}
 		}
 
 		removeChildren(removed);
 		addChildren(added);
+		if (changed) {
+			dependency.fireChanged();
+		}
 	}
 
 	@Override
@@ -269,6 +281,7 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 		if (prev != null) {
 			removeChild(prev);
 			changeSupport.firePropertyChange(this, key, prev, null);
+			dependency.fireChanged();
 		}
 		return prev;
 	}
@@ -280,13 +293,12 @@ public abstract class QMap<K, V, C extends Map<K, V>> extends QElement implement
 
 	@Override
 	public int size() {
-		this.depend();
+		dependency.depend();
 		return map.size();
 	}
 
 	@Override
 	public Collection<V> values() {
-		this.depend();
 		Collection<V> vs = values;
 		return vs != null ? vs : (values = new Values());
 	}

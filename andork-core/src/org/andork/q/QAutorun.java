@@ -1,62 +1,64 @@
 package org.andork.q;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Set;
 
-import javax.swing.SwingUtilities;
-
-public class QAutorun {
+public class QAutorun implements AutoCloseable {
 	private static final ThreadLocal<QAutorun> currentAutorun = new ThreadLocal<>();
-	private final List<Runnable> cleanup = new ArrayList<>();
 
-	private volatile boolean enqueued = false;
-	private final Consumer<Runnable> enqueue;
-	private final Runnable run;
+	private final WeakReference<Thread> thread;
+	private final Runnable runner;
+	private final Set<QDependency> dependencies = new HashSet<>();
 
-	QAutorun(Runnable run, Consumer<Runnable> enqueue) {
-		this.run = run;
-		this.enqueue = enqueue;
-		this.enqueueRun();
+	QAutorun(Runnable runner) {
+		this.runner = runner;
+		this.thread = new WeakReference<>(Thread.currentThread());
+		this.run();
 	}
 
-	public static QAutorun autorunOnEDT(Runnable run) {
-		return new QAutorun(run, SwingUtilities::invokeLater);
+	public static QAutorun autorun(Runnable runner) {
+		return new QAutorun(runner);
 	}
 
-	public static void depend(Function<Runnable, Runnable> subscribe) {
-		QAutorun current = currentAutorun.get();
-		if (current == null)
-			return;
-
-		Runnable unsubscribe = subscribe.apply(current::enqueueRun);
-		current.cleanup.add(() -> unsubscribe.run());
-	}
-
-	protected void enqueueRun() {
-		if (enqueued) {
-			return;
+	static QAutorun depend(QDependency dependency) {
+		QAutorun current = getCurrent();
+		if (current == null) {
+			return null;
 		}
-		enqueued = true;
-		for (Runnable r : cleanup) {
-			r.run();
+		if (current.thread.get() != Thread.currentThread()) {
+			throw new RuntimeException("depend called on a different thread from autorun!");
 		}
-		cleanup.clear();
-		enqueue.accept(this::run);
+		if (current.dependencies.add(dependency)) {
+			return current;
+		}
+		return null;
 	}
 
-	protected void run() {
+	public static QAutorun getCurrent() {
+		return currentAutorun.get();
+	}
+
+	public void run() {
 		if (currentAutorun.get() != null) {
-			throw new RuntimeException("another " + QAutorun.class.getName() + " is already running on this thread");
+			throw new RuntimeException("an " + QAutorun.class.getName() + " is already running on this thread");
 		}
-		this.enqueued = false;
-		currentAutorun.set(this);
-
+		if (thread.get() != Thread.currentThread()) {
+			throw new RuntimeException("run not called on the original thread!");
+		}
 		try {
-			run.run();
+			dependencies.clear();
+			currentAutorun.set(this);
+			runner.run();
 		} finally {
 			currentAutorun.set(null);
 		}
+	}
+
+	public void close() {
+		for (QDependency dependency : dependencies) {
+			dependency.remove(this);
+		}
+		dependencies.clear();
 	}
 }

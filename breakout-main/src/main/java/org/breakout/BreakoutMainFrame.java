@@ -30,9 +30,7 @@ import java.nio.file.Path;
 
 import javax.swing.JFrame;
 
-import org.andork.bind.BinderWrapper;
-import org.andork.bind.QObjectAttributeBinder;
-import org.breakout.model.RootModel;
+import org.andork.swing.OnEDT;
 
 public class BreakoutMainFrame extends JFrame {
 	private static final long serialVersionUID = -3629909041138921073L;
@@ -41,14 +39,8 @@ public class BreakoutMainFrame extends JFrame {
 
 	public BreakoutMainFrame(BreakoutMainView breakoutMainView) {
 		mainView = breakoutMainView;
-		updateTitle();
 
-		new BinderWrapper<Path>() {
-			@Override
-			protected void onValueChanged(Path newValue) {
-				updateTitle();
-			}
-		}.bind(new QObjectAttributeBinder<>(RootModel.currentProjectFile).bind(breakoutMainView.getRootModelBinder()));
+		OnEDT.autorunOnEDT(this::updateTitle);
 
 		getContentPane().add(breakoutMainView.getMainPanel(), BorderLayout.CENTER);
 		setJMenuBar(breakoutMainView.getMenuBar());
