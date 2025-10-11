@@ -40,8 +40,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -105,7 +103,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
 import org.andork.awt.I18n;
-import org.andork.awt.I18n.I18nUpdater;
 import org.andork.awt.I18n.Localizer;
 import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
@@ -134,7 +131,6 @@ import org.andork.concurrent.Throttler;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.SourcePath;
 import org.andork.func.Bimapper;
-import org.andork.func.ExceptionRunnable;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
 import org.andork.func.Lodash.DebounceOptions;
@@ -1941,20 +1937,17 @@ public class BreakoutMainView {
 
 		surveyDrawer.table().setTransferHandler(new SurveyTableTransferHandler());
 
-		surveyDrawer.table().addPropertyChangeListener("model", new PropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				@SuppressWarnings("unchecked")
-				AnnotatingRowSorter<TableModel, Integer> sorter =
-					(AnnotatingRowSorter<TableModel, Integer>) miniSurveyDrawer.table().getRowSorter();
+		surveyDrawer.table().addPropertyChangeListener("model", evt -> {
+			@SuppressWarnings("unchecked")
+			AnnotatingRowSorter<TableModel, Integer> sorter =
+				(AnnotatingRowSorter<TableModel, Integer>) miniSurveyDrawer.table().getRowSorter();
 
-				SurveyTableModel newModel = (SurveyTableModel) evt.getNewValue();
+			SurveyTableModel newModel = (SurveyTableModel) evt.getNewValue();
 
-				miniSurveyDrawer.table().setRowSorter(null);
-				miniSurveyDrawer.table().setModel(newModel);
-				sorter.setModel(newModel);
-				miniSurveyDrawer.table().setRowSorter(sorter);
-			}
+			miniSurveyDrawer.table().setRowSorter(null);
+			miniSurveyDrawer.table().setModel(newModel);
+			sorter.setModel(newModel);
+			miniSurveyDrawer.table().setRowSorter(sorter);
 		});
 
 		surveyDrawer.table().addSurveyTableListener(new SurveyTableListener() {
@@ -2161,14 +2154,6 @@ public class BreakoutMainView {
 						.bind(
 							QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder),
 							distanceToClosestNodeBinder));
-
-		new BinderWrapper<Integer>() {
-			@Override
-			protected void onValueChanged(Integer sensitivity) {
-				if (sensitivity != null) {
-				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder));
 
 		new BinderWrapper<Integer>() {
 			@Override
@@ -2436,103 +2421,90 @@ public class BreakoutMainView {
 
 		OnEDT.onEDT(() -> {
 			Localizer localizer = i18n.forClass(BreakoutMainView.class);
-			localizer.register(menuBar, new I18nUpdater<JMenuBar>() {
-				@Override
-				public void updateI18n(Localizer localizer, JMenuBar localizedObject) {
-					localizer.setText(fileMenu, "fileMenu.text");
-					localizer.setText(editMenu, "editMenu.text");
-					localizer.setText(importMenu, "importMenu.text");
-					localizer.setText(exportMenu, "exportMenu.text");
-					localizer.setText(openRecentMenu, "openRecentMenu.text");
-					localizer.setText(noRecentFilesMenuItem, "noRecentFilesMenuItem.text");
+			localizer.register(menuBar, (l, obj) -> {
+				localizer.setText(fileMenu, "fileMenu.text");
+				localizer.setText(editMenu, "editMenu.text");
+				localizer.setText(importMenu, "importMenu.text");
+				localizer.setText(exportMenu, "exportMenu.text");
+				localizer.setText(openRecentMenu, "openRecentMenu.text");
+				localizer.setText(noRecentFilesMenuItem, "noRecentFilesMenuItem.text");
 
-					localizer.setText(debugMenu, "debugMenu.text");
-					localizer.setText(helpMenu, "helpMenu.text");
-					localizer.setText(showSpatialIndexMenuItem, "showSpatialIndexMenuItem.text");
-					localizer.setText(wireframeMenuItem, "wireframeMenuItem.text");
-					localizer.setText(showCenterOfOrbitMenuItem, "showCenterOfOrbitMenuItem.text");
-					localizer.setText(checkForUpdatesOnStartupItem, "checkForUpdatesOnStartupItem.text");
-				}
+				localizer.setText(debugMenu, "debugMenu.text");
+				localizer.setText(helpMenu, "helpMenu.text");
+				localizer.setText(showSpatialIndexMenuItem, "showSpatialIndexMenuItem.text");
+				localizer.setText(wireframeMenuItem, "wireframeMenuItem.text");
+				localizer.setText(showCenterOfOrbitMenuItem, "showCenterOfOrbitMenuItem.text");
+				localizer.setText(checkForUpdatesOnStartupItem, "checkForUpdatesOnStartupItem.text");
 			});
 		});
 
 		settingsDrawer.getFitViewToSelectedButton().setAction(fitViewToSelectedAction);
 		settingsDrawer.getFitViewToEverythingButton().setAction(fitViewToEverythingAction);
 
-		settingsDrawer.getFitParamColorationAxisButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (model3d == null) {
+		settingsDrawer.getFitParamColorationAxisButton().addActionListener((e) -> {
+			if (model3d == null) {
+				return;
+			}
+
+			final Survey3dModel model3d = BreakoutMainView.this.model3d;
+
+			rebuildTaskService.submit(task -> {
+				task.setTotal(1);
+				float[] range =
+					task
+						.callSubtask(
+							1,
+							calcSubtask -> model3d.calcAutofitParamRange(getDefaultShotsForOperations(2), calcSubtask));
+
+				if (range == null
+					|| !Float.isFinite(range[0])
+					|| !Float.isFinite(range[1])
+					|| range[0] == -Float.MAX_VALUE
+					|| range[1] == -Float.MIN_VALUE) {
 					return;
 				}
 
-				final Survey3dModel model3d = BreakoutMainView.this.model3d;
-
-				rebuildTaskService.submit(task -> {
-					task.setTotal(1);
-					float[] range =
-						task
-							.callSubtask(
-								1,
-								calcSubtask -> model3d
-									.calcAutofitParamRange(getDefaultShotsForOperations(2), calcSubtask));
-
-					if (range == null
-						|| !Float.isFinite(range[0])
-						|| !Float.isFinite(range[1])
-						|| range[0] == -Float.MAX_VALUE
-						|| range[1] == -Float.MIN_VALUE) {
-						return;
-					}
-
-					ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
-					if (!colorParam.isLoBright()) {
-						float swap = range[0];
-						range[0] = range[1];
-						range[1] = swap;
-					}
-					LinearAxisConversion conversion =
-						new LinearAxisConversion(
-							range[0],
-							0.0,
-							range[1],
-							settingsDrawer.getParamColorationAxis().getViewSpan());
-
-					paramRangeBinder.set(conversion);
-				});
-			}
-		});
-
-		settingsDrawer.getFlipParamColorationAxisButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				PlotAxis axis = settingsDrawer.getParamColorationAxis();
-				LinearAxisConversion conversion = paramRangeBinder.get();
-				double start = conversion.invert(0.0);
-				double end = conversion.invert(axis.getViewSpan());
-				LinearAxisConversion newConversion = new LinearAxisConversion(end, 0.0, start, axis.getViewSpan());
-				paramRangeBinder.set(newConversion);
-			}
-		});
-
-		settingsDrawer.getRecalcColorByDistanceButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (model3d == null) {
-					return;
+				ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
+				if (!colorParam.isLoBright()) {
+					float swap = range[0];
+					range[0] = range[1];
+					range[1] = swap;
 				}
-				final Survey3dModel model3d = BreakoutMainView.this.model3d;
-				rebuildTaskService.submit(task -> {
-					task.setTotal(4);
-					task.setStatus("Recalculating color by distance");
-					Set<ShotKey> startShots = getDefaultShotsForOperations(3);
-					task.runSubtask(3, recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
+				LinearAxisConversion conversion =
+					new LinearAxisConversion(
+						range[0],
+						0.0,
+						range[1],
+						settingsDrawer.getParamColorationAxis().getViewSpan());
 
-					Set<ShotKey> rangeShots = getShotsInView();
-					task.runSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
-					autoDrawable.display();
-				});
+				paramRangeBinder.set(conversion);
+			});
+		});
+
+		settingsDrawer.getFlipParamColorationAxisButton().addActionListener((e) -> {
+			PlotAxis axis = settingsDrawer.getParamColorationAxis();
+			LinearAxisConversion conversion = paramRangeBinder.get();
+			double start = conversion.invert(0.0);
+			double end = conversion.invert(axis.getViewSpan());
+			LinearAxisConversion newConversion = new LinearAxisConversion(end, 0.0, start, axis.getViewSpan());
+			paramRangeBinder.set(newConversion);
+		});
+
+		settingsDrawer.getRecalcColorByDistanceButton().addActionListener((e) -> {
+			if (model3d == null) {
+				return;
 			}
+			final Survey3dModel model3d = BreakoutMainView.this.model3d;
+			rebuildTaskService.submit(task -> {
+				task.setTotal(4);
+				task.setStatus("Recalculating color by distance");
+				Set<ShotKey> startShots = getDefaultShotsForOperations(3);
+				task.runSubtask(3, recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
+
+				Set<ShotKey> rangeShots = getShotsInView();
+				task.runSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
+				autoDrawable.display();
+			});
 		});
 
 		settingsDrawer.getResetViewButton().addActionListener(e -> {
@@ -2552,59 +2524,45 @@ public class BreakoutMainView {
 		for (CameraView view : CameraView.values()) {
 			JToggleButton button = viewButtonsPanel.getButton(view);
 			if (button != null) {
-				button.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						setCameraView(view);
-					}
-				});
+				button.addActionListener((e) -> setCameraView(view));
 			}
 		}
 
-		settingsDrawer.getInferDepthAxisTiltButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if (model3d == null) {
-					return;
-				}
-				List<float[]> vectors = new ArrayList<>();
-				for (ShotKey key : getDefaultShotsForOperations(3)) {
-					CalcShot shot = calcProject.shots.get(key);
-					if (shot == null) {
-						continue;
-					}
-					float[] vector = new float[3];
-					Vecmath.sub3(shot.toStation.position, shot.fromStation.position, vector);
-
-					if (!Vecmath.hasNaNsOrInfinites(vector)) {
-						vectors.add(vector);
-					}
-				}
-				float[] normal = Fitting3d.planeNormalLeastSquares2f(vectors.stream());
-				Vecmath.normalize3(normal);
-
-				if (normal[1] > 0) {
-					Vecmath.negate3(normal);
-				}
-
-				getProjectModel().set(ProjectModel.depthAxis, normal);
+		settingsDrawer.getInferDepthAxisTiltButton().addActionListener(e -> {
+			if (model3d == null) {
+				return;
 			}
+			List<float[]> vectors = new ArrayList<>();
+			for (ShotKey key : getDefaultShotsForOperations(3)) {
+				CalcShot shot = calcProject.shots.get(key);
+				if (shot == null) {
+					continue;
+				}
+				float[] vector = new float[3];
+				Vecmath.sub3(shot.toStation.position, shot.fromStation.position, vector);
+
+				if (!Vecmath.hasNaNsOrInfinites(vector)) {
+					vectors.add(vector);
+				}
+			}
+			float[] normal = Fitting3d.planeNormalLeastSquares2f(vectors.stream());
+			Vecmath.normalize3(normal);
+
+			if (normal[1] > 0) {
+				Vecmath.negate3(normal);
+			}
+
+			getProjectModel().set(ProjectModel.depthAxis, normal);
 		});
 
-		settingsDrawer.getResetDepthAxisTiltButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				getProjectModel().set(ProjectModel.depthAxis, new float[] { 0f, -1f, 0f });
-			}
+		settingsDrawer.getResetDepthAxisTiltButton().addActionListener(e -> {
+			getProjectModel().set(ProjectModel.depthAxis, new float[] { 0f, -1f, 0f });
 		});
 
-		settingsDrawer.getCameraToDepthAxisTiltButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				float[] axis = new float[3];
-				Vecmath.negate3(renderer.viewState().inverseViewMatrix(), 8, axis, 0);
-				getProjectModel().set(ProjectModel.depthAxis, axis);
-			}
+		settingsDrawer.getCameraToDepthAxisTiltButton().addActionListener(e -> {
+			float[] axis = new float[3];
+			Vecmath.negate3(renderer.viewState().inverseViewMatrix(), 8, axis, 0);
+			getProjectModel().set(ProjectModel.depthAxis, axis);
 		});
 
 		((JTextField) surveyDrawer.searchField().textComponent)
@@ -2974,41 +2932,38 @@ public class BreakoutMainView {
 
 		removeUnprotectedCameraAnimations();
 
-		cameraAnimationQueue.add(new Animation() {
-			@Override
-			public long animate(long animTime) {
-				table.getModelSelectionModel().clearSelection();
-				@SuppressWarnings("unchecked")
-				AnnotatingRowSorter<TableModel, Integer> rowSorter =
-					(AnnotatingRowSorter<TableModel, Integer>) table.getAnnotatingRowSorter();
-				if (rowSorter.getRowFilter() != null) {
-					table.selectAll();
-				}
-				else {
-					ListSelectionModel selectionModel = table.getSelectionModel();
-					selectionModel.setValueIsAdjusting(true);
-					try {
-						int intervalStart = -1;
-						for (int row = 0; row < rowSorter.getViewRowCount(); row++) {
-							if (rowSorter.getAnnotation(row) != null) {
-								if (intervalStart < 0) {
-									intervalStart = row;
-								}
-							}
-							else if (intervalStart >= 0) {
-								selectionModel.addSelectionInterval(intervalStart, row - 1);
-								intervalStart = -1;
+		cameraAnimationQueue.add(animtime -> {
+			table.getModelSelectionModel().clearSelection();
+			@SuppressWarnings("unchecked")
+			AnnotatingRowSorter<TableModel, Integer> rowSorter =
+				(AnnotatingRowSorter<TableModel, Integer>) table.getAnnotatingRowSorter();
+			if (rowSorter.getRowFilter() != null) {
+				table.selectAll();
+			}
+			else {
+				ListSelectionModel selectionModel = table.getSelectionModel();
+				selectionModel.setValueIsAdjusting(true);
+				try {
+					int intervalStart = -1;
+					for (int row = 0; row < rowSorter.getViewRowCount(); row++) {
+						if (rowSorter.getAnnotation(row) != null) {
+							if (intervalStart < 0) {
+								intervalStart = row;
 							}
 						}
-					} finally {
-						selectionModel.setValueIsAdjusting(false);
+						else if (intervalStart >= 0) {
+							selectionModel.addSelectionInterval(intervalStart, row - 1);
+							intervalStart = -1;
+						}
 					}
+				} finally {
+					selectionModel.setValueIsAdjusting(false);
 				}
-
-				fitViewToSelected();
-
-				return 0;
 			}
+
+			fitViewToSelected();
+
+			return 0;
 		});
 	}
 
@@ -3396,16 +3351,13 @@ public class BreakoutMainView {
 		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to load model", ex);
 			if (showError) {
-				OnEDT.onEDT(new ExceptionRunnable() {
-					@Override
-					public void run() throws Exception {
-						JOptionPane
-							.showMessageDialog(
-								mainPanel,
-								"Failed to load settings: " + ex.getLocalizedMessage(),
-								"Error",
-								JOptionPane.ERROR_MESSAGE);
-					}
+				OnEDT.onEDT(() -> {
+					JOptionPane
+						.showMessageDialog(
+							mainPanel,
+							"Failed to load settings: " + ex.getLocalizedMessage(),
+							"Error",
+							JOptionPane.ERROR_MESSAGE);
 				});
 			}
 			return null;
