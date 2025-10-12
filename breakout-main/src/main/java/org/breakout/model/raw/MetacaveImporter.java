@@ -389,7 +389,7 @@ public class MetacaveImporter {
 	}
 
 	public SurveyLead importLead(JsonObject obj, String caveName) {
-		MutableSurveyLead lead = new MutableSurveyLead();
+		SurveyLead.Mutable lead = new SurveyLead.Mutable();
 		lead.setCave(caveName);
 		lead.setStation(getAsString(obj, "station"));
 		lead.setDescription(getAsString(obj, "description"));

@@ -20,7 +20,6 @@ import org.breakout.model.CrossSectionType;
 import org.breakout.model.ShotKey;
 import org.breakout.model.StationKey;
 import org.breakout.model.parsed.ParseMessage.Severity;
-import org.breakout.model.raw.MutableSurveyLead;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
@@ -358,7 +357,7 @@ public class ProjectParser {
 			ParsedStation leadStation = fromStation != null ? fromStation : toStation;
 			if (leadStation != null) {
 				SurveyLead lead =
-					new MutableSurveyLead()
+					new SurveyLead.Mutable()
 						.setCave(leadStation.key().cave)
 						.setStation(leadStation.key().station)
 						.setDescription(comment)
