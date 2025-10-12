@@ -297,7 +297,7 @@ public class ImportLeadsTask extends Task<Void> {
 		};
 
 		for (SurveyLead lead : LeadListParser.parse(table, context)) {
-			leads.add(lead.withMutations(l -> l.setCave(cave).set("file", file)));
+			leads.add(lead.setCave(cave));
 		}
 	}
 

@@ -9,7 +9,6 @@ import java.util.regex.Pattern;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
-import org.breakout.model.raw.MutableSurveyLead;
 import org.breakout.model.raw.SurveyLead;
 
 public class LeadListParser {
@@ -130,7 +129,7 @@ public class LeadListParser {
 		public Double height;
 		public Unit<Length> heightUnit;
 
-		public void applyTo(MutableSurveyLead lead) {
+		public void applyTo(SurveyLead.Mutable lead) {
 			if (width != null) {
 				lead.setWidth(new UnitizedDouble<>(width, widthUnit));
 			}
@@ -361,7 +360,7 @@ public class LeadListParser {
 					continue;
 				}
 			}
-			MutableSurveyLead lead = new MutableSurveyLead().setStation(station);
+			SurveyLead.Mutable lead = new SurveyLead.Mutable().setStation(station);
 			if (indices.description >= 0) {
 				lead.setDescription(table.getValueAt(row, indices.description));
 			}
