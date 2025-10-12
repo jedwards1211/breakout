@@ -21,7 +21,7 @@
  *******************************************************************************/
 package org.andork.func;
 
-public class ExponentialIntBimapper implements Bimapper<Integer, Integer> {
+public class ExponentialFloatBimapper implements Bimapper<Float, Float> {
 	public double a;
 	public double b;
 	public double c;
@@ -29,23 +29,23 @@ public class ExponentialIntBimapper implements Bimapper<Integer, Integer> {
 	/**
 	 * Creates a bimapper where out = a * e ^ (b * x) + c.
 	 */
-	public ExponentialIntBimapper(double a, double b, double c) {
+	public ExponentialFloatBimapper(double a, double b, double c) {
 		this.a = a;
 		this.b = b;
 		this.c = c;
 	}
 
-	public ExponentialIntBimapper(double[] abc) {
+	public ExponentialFloatBimapper(double[] abc) {
 		this(abc[0], abc[1], abc[2]);
 	}
 
 	@Override
-	public Integer map(Integer in) {
-		return in == null ? null : (int) Math.round(a * Math.exp(b * in) + c);
+	public Float map(Float in) {
+		return in == null ? null : (float) (a * Math.exp(b * in) + c);
 	}
 
 	@Override
-	public Integer unmap(Integer out) {
-		return out == null ? null : (int) Math.round(Math.log((out - c) / a) / b);
+	public Float unmap(Float out) {
+		return out == null ? null : (float) (Math.log((out - c) / a) / b);
 	}
 }

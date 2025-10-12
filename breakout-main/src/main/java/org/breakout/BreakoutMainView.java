@@ -1203,14 +1203,11 @@ public class BreakoutMainView {
 	final TaskService sortTaskService = ExecutorTaskService.newSingleThreadedTaskService();
 	final ScheduledExecutorService ioService = Executors.newSingleThreadScheduledExecutor();
 	final TaskService ioTaskService = new ExecutorTaskService(ioService);
-	final ExecutorService fetchService = Executors.newCachedThreadPool(new ThreadFactory() {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r);
-			thread.setDaemon(true);
-			thread.setName("Fetcher");
-			return thread;
-		}
+	final ExecutorService fetchService = Executors.newCachedThreadPool(r -> {
+		Thread thread = new Thread(r);
+		thread.setDaemon(true);
+		thread.setName("Fetcher");
+		return thread;
 	});
 
 	public void askToSaveChangesBeforeShutdown() {

@@ -23,15 +23,12 @@ import org.andork.func.LinearFloatBimapper;
 import org.andork.model.Cell;
 import org.andork.q.QAutorun;
 import org.andork.ref.Ref;
+import org.andork.swing.FloatSlider;
 import org.andork.swing.selector.ISelector;
 import org.andork.swing.selector.ISelectorListener;
 import org.andork.util.Java7.Objects;
 
 public class BindUI {
-	public static AutoCloseable bindBackground(Component component, Supplier<Cell<Color>> getCell) {
-		return bindBackground(component, Cell.from(getCell));
-	}
-
 	public static AutoCloseable bindBackground(Component component, Cell<Color> cell) {
 		QAutorun autorun = autorun(() -> {
 			Color color = cell.get();
@@ -51,10 +48,6 @@ public class BindUI {
 		};
 	}
 
-	public static AutoCloseable bindSelected(JToggleButton button, Supplier<Cell<Boolean>> getCell) {
-		return bindSelected(button, Cell.from(getCell));
-	}
-
 	public static AutoCloseable bindSelected(JToggleButton button, Cell<Boolean> cell) {
 		QAutorun autorun = autorun(() -> {
 			button.setSelected(Boolean.TRUE.equals(cell.get()));
@@ -67,10 +60,6 @@ public class BindUI {
 			autorun.close();
 			button.removeItemListener(listener);
 		};
-	}
-
-	public static <T> SelectionMap<T> bindSelectedMap(Supplier<Cell<T>> getCell) {
-		return bindSelectedMap(Cell.from(getCell));
 	}
 
 	public static <T> SelectionMap<T> bindSelectedMap(Cell<T> cell) {
@@ -123,25 +112,11 @@ public class BindUI {
 		return autorun(() -> component.setEnabled(Boolean.TRUE.equals(enabled.get())));
 	}
 
-	public static AutoCloseable bindValue(JSlider slider, Supplier<Cell<Integer>> getCell) {
-		return bindValue(slider, Cell.from(getCell));
-	}
-
-	public static AutoCloseable
-		bindValue(JSlider slider, Supplier<Cell<Float>> getCell, float minDataValue, float maxDataValue) {
-		return bindValue(slider, Cell.from(getCell), minDataValue, maxDataValue);
-	}
-
 	public static AutoCloseable bindValue(JSlider slider, Cell<Float> cell, float minDataValue, float maxDataValue) {
 		return bindValue(
 			slider,
 			cell,
 			new LinearFloatBimapper(minDataValue, slider.getMinimum(), maxDataValue, slider.getMaximum()));
-	}
-
-	public static <N extends Number> AutoCloseable
-		bindValue(JSlider slider, Supplier<Cell<N>> getCell, Bimapper<N, Float> conversion) {
-		return bindValue(slider, Cell.from(getCell), conversion);
 	}
 
 	public static <N extends Number> AutoCloseable
@@ -185,8 +160,47 @@ public class BindUI {
 		};
 	}
 
-	public static <T> AutoCloseable bindValue(ISelector<T> selector, Supplier<Cell<T>> getCell) {
-		return bindValue(selector, Cell.from(getCell));
+	public static AutoCloseable
+		bindValue(FloatSlider slider, Cell<Float> cell, float minDataValue, float maxDataValue) {
+		return bindValue(
+			slider,
+			cell,
+			new LinearFloatBimapper(minDataValue, slider.getFloatMinimum(), maxDataValue, slider.getFloatMaximum()));
+	}
+
+	public static AutoCloseable bindValue(FloatSlider slider, Cell<Float> cell, Bimapper<Float, Float> conversion) {
+		return bindValue(slider, Cell.compose(cell, conversion));
+	}
+
+	public static AutoCloseable bindValue(FloatSlider slider, Cell<Float> cell) {
+		Ref<Boolean> changing = new Ref<>(false);
+		QAutorun autorun = autorun(() -> {
+			if (changing.value)
+				return;
+			try {
+				changing.value = true;
+				Float value = cell.get();
+				if (value != null)
+					slider.setFloatValue(value);
+			} finally {
+				changing.value = false;
+			}
+		});
+		PropertyChangeListener listener = (e) -> {
+			if (changing.value)
+				return;
+			try {
+				changing.value = true;
+				cell.set(slider.getFloatValue());
+			} finally {
+				changing.value = false;
+			}
+		};
+		slider.addPropertyChangeListener("floatValue", listener);
+		return () -> {
+			autorun.close();
+			slider.removePropertyChangeListener("floatValue", listener);
+		};
 	}
 
 	public static <T> AutoCloseable bindValue(ISelector<T> selector, Cell<T> cell) {
@@ -204,10 +218,6 @@ public class BindUI {
 		};
 	}
 
-	public static <T> AutoCloseable bindValue(JComboBox<T> comboBox, Supplier<Cell<T>> getCell) {
-		return bindValue(comboBox, Cell.from(getCell));
-	}
-
 	public static <T> AutoCloseable bindValue(JComboBox<T> comboBox, Cell<T> cell) {
 		QAutorun autorun = autorun(() -> {
 			T value = cell.get();
@@ -222,10 +232,6 @@ public class BindUI {
 			autorun.close();
 			comboBox.removeItemListener(listener);
 		};
-	}
-
-	public static <T> AutoCloseable bindLayout(Container parent, BetterCardLayout layout, Supplier<Cell<T>> getCell) {
-		return bindLayout(parent, layout, Cell.from(getCell));
 	}
 
 	public static AutoCloseable bindLayout(Container parent, BetterCardLayout layout, Cell<?> cell) {
