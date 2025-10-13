@@ -62,16 +62,15 @@ public class BindUI {
 		};
 	}
 
-	public static <T> SelectionMap<T> bindSelectedMap(Cell<T> cell) {
-		SelectionMap<T> selectionMap = new SelectionMap<>();
+	public static <T> AutoCloseable bindSelectedMap(Cell<T> cell, Map<? extends T, AbstractButton> map) {
 		QAutorun autorun = autorun(() -> {
 			T value = cell.get();
-			selectionMap.entrySet().stream().forEach(e -> {
+			map.entrySet().stream().forEach(e -> {
 				e.getValue().setSelected(Objects.equals(e.getKey(), value));
 			});
 		});
 		Map<T, ItemListener> listeners = new HashMap<>();
-		selectionMap.entrySet().stream().forEach(e -> {
+		map.entrySet().stream().forEach(e -> {
 			ItemListener listener = (ev) -> {
 				if (e.getValue().isSelected())
 					cell.set(e.getKey());
@@ -79,33 +78,12 @@ public class BindUI {
 			e.getValue().addItemListener(listener);
 			listeners.put(e.getKey(), listener);
 		});
-		selectionMap.close = () -> {
+		return () -> {
 			autorun.close();
 			listeners.entrySet().stream().forEach(e -> {
-				selectionMap.get(e.getKey()).removeItemListener(e.getValue());
+				map.get(e.getKey()).removeItemListener(e.getValue());
 			});
 		};
-		return selectionMap;
-	}
-
-	@SuppressWarnings("serial")
-	public static class SelectionMap<T> extends HashMap<T, AbstractButton> implements AutoCloseable {
-		AutoCloseable close;
-
-		SelectionMap() {
-			super();
-		}
-
-		public SelectionMap<T> map(T value, AbstractButton button) {
-			super.put(value, button);
-			return this;
-		}
-
-		@Override
-		public void close() throws Exception {
-			if (close != null)
-				close.close();
-		}
 	}
 
 	public static AutoCloseable bindEnabled(Component component, Supplier<Boolean> enabled) {

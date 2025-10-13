@@ -81,6 +81,7 @@ import org.andork.awt.I18n.Localizer;
 import org.andork.awt.layout.BetterCardLayout;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
+import org.andork.collect.MapLiteral;
 import org.andork.date.DateUtils;
 import org.andork.func.Bimapper;
 import org.andork.func.ExponentialFloatBimapper;
@@ -342,15 +343,17 @@ public class SettingsDrawer extends Drawer {
 		bindBackground(stationLabelColorButton, projectAttribute(ProjectModel.stationLabelColor));
 		bindBackground(centerlineColorButton, projectAttribute(ProjectModel.centerlineColor));
 
-		bindSelectedMap(projectAttribute(ProjectModel.cameraView))
-			.map(CameraView.PLAN, viewButtonsPanel.getPlanButton())
-			.map(CameraView.SIDEWAYS_PLAN, viewButtonsPanel.getSidewaysPlanButton())
-			.map(CameraView.PERSPECTIVE, viewButtonsPanel.getPerspectiveButton())
-			.map(CameraView.NORTH_FACING_PROFILE, viewButtonsPanel.getNorthButton())
-			.map(CameraView.SOUTH_FACING_PROFILE, viewButtonsPanel.getSouthButton())
-			.map(CameraView.EAST_FACING_PROFILE, viewButtonsPanel.getEastButton())
-			.map(CameraView.WEST_FACING_PROFILE, viewButtonsPanel.getWestButton())
-			.map(CameraView.AUTO_PROFILE, viewButtonsPanel.getAutoProfileButton());
+		bindSelectedMap(
+			projectAttribute(ProjectModel.cameraView),
+			new MapLiteral<CameraView, AbstractButton>()
+				.map(CameraView.PLAN, viewButtonsPanel.getPlanButton())
+				.map(CameraView.SIDEWAYS_PLAN, viewButtonsPanel.getSidewaysPlanButton())
+				.map(CameraView.PERSPECTIVE, viewButtonsPanel.getPerspectiveButton())
+				.map(CameraView.NORTH_FACING_PROFILE, viewButtonsPanel.getNorthButton())
+				.map(CameraView.SOUTH_FACING_PROFILE, viewButtonsPanel.getSouthButton())
+				.map(CameraView.EAST_FACING_PROFILE, viewButtonsPanel.getEastButton())
+				.map(CameraView.WEST_FACING_PROFILE, viewButtonsPanel.getWestButton())
+				.map(CameraView.AUTO_PROFILE, viewButtonsPanel.getAutoProfileButton()));
 
 		// This is a bit confusing... used to map the linear sliders to an exponential
 		// curve.
