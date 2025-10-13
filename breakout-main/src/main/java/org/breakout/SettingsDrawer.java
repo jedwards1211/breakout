@@ -48,6 +48,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Supplier;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
@@ -80,8 +81,6 @@ import org.andork.awt.I18n.Localizer;
 import org.andork.awt.layout.BetterCardLayout;
 import org.andork.awt.layout.Drawer;
 import org.andork.awt.layout.Side;
-import org.andork.bind.Binder;
-import org.andork.bind.BinderWrapper;
 import org.andork.date.DateUtils;
 import org.andork.func.Bimapper;
 import org.andork.func.ExponentialFloatBimapper;
@@ -222,22 +221,22 @@ public class SettingsDrawer extends Drawer {
 
 	JLabel openSurveyScanCommandLabel;
 
-	BinderWrapper<QObject<RootModel>> rootBinder = new BinderWrapper<>();
-
-	BinderWrapper<QObject<ProjectModel>> projectBinder = new BinderWrapper<>();
-
 	javax.swing.Timer maxDateTimer;
 
 	private JButton pickParamGradientButton;
 
 	private JComboBox<GradientModel> paramGradientComboBox;
 
+	Supplier<QObject<RootModel>> rootModel;
+	Supplier<QObject<ProjectModel>> projectModel;
+
 	public SettingsDrawer(
 		final I18n i18n,
-		Binder<QObject<RootModel>> rootBinder,
-		Binder<QObject<ProjectModel>> projectBinder) {
-		this.rootBinder.bind(rootBinder);
-		this.projectBinder.bind(projectBinder);
+		Supplier<QObject<RootModel>> rootModel,
+		Supplier<QObject<ProjectModel>> projectModel) {
+
+		this.rootModel = rootModel;
+		this.projectModel = projectModel;
 
 		new OnEDT() {
 			@Override
@@ -315,21 +314,27 @@ public class SettingsDrawer extends Drawer {
 	IncMaxDate maxDateAnimation = new IncMaxDate(Calendar.MONTH, false);
 
 	private <T> T getProjectAttribute(QSpec.Attribute<T> attribute) {
-		QObject<ProjectModel> project = projectBinder.get();
+		QObject<ProjectModel> project = projectModel.get();
 		return project == null ? null : project.get(attribute);
 	}
 
 	private <T> T setProjectAttribute(QSpec.Attribute<T> attribute, T value) {
-		QObject<ProjectModel> project = projectBinder.get();
+		QObject<ProjectModel> project = projectModel.get();
 		return project == null ? null : project.set(attribute, value);
 	}
 
 	private <T> Cell<T> projectAttribute(QSpec.Attribute<T> attribute) {
-		return Cell.from(() -> projectBinder.ifDefined(p -> p.attribute(attribute)));
+		return Cell.from(() -> {
+			QObject<ProjectModel> project = projectModel.get();
+			return project == null ? null : project.attribute(attribute);
+		});
 	}
 
 	private <T> Cell<T> rootAttribute(QSpec.Attribute<T> attribute) {
-		return Cell.from(() -> rootBinder.ifDefined(p -> p.attribute(attribute)));
+		return Cell.from(() -> {
+			QObject<RootModel> root = rootModel.get();
+			return root == null ? null : root.attribute(attribute);
+		});
 	}
 
 	private void createBindings() {
@@ -384,7 +389,7 @@ public class SettingsDrawer extends Drawer {
 		bindLayout(colorParamButtonsPanel, colorParamButtonsLayout, projectAttribute(ProjectModel.colorParam));
 
 		paramColorationAxis.bind(Cell.from(() -> {
-			QObject<ProjectModel> project = projectBinder.get();
+			QObject<ProjectModel> project = projectModel.get();
 			if (project == null)
 				return null;
 
@@ -417,7 +422,7 @@ public class SettingsDrawer extends Drawer {
 				new UnitizedDouble<>(paramConversion.invert(1), systemUnit).get(displayUnit),
 				1);
 		}, (LinearAxisConversion paramConversion) -> {
-			QObject<ProjectModel> project = projectBinder.get();
+			QObject<ProjectModel> project = projectModel.get();
 			if (project == null || paramConversion == null)
 				return;
 
@@ -1122,7 +1127,7 @@ public class SettingsDrawer extends Drawer {
 
 	public void setMaxNumSamples(int maxNumSamples) {
 		if (maxNumSamples != numSamplesSlider.getMaximum()) {
-			Integer value = rootBinder.get().get(RootModel.desiredNumSamples);
+			Integer value = rootModel.get().get(RootModel.desiredNumSamples);
 			if (value == null) {
 				value = numSamplesSlider.getValue();
 			}
