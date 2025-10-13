@@ -90,7 +90,7 @@ public class SurveyTable extends AnnotatingJTable {
 			column(SurveyTableModel.Columns.surveyors).headerValue("Surveyors");
 		public final ListTableColumn<SurveyRow, String> date =
 			column(SurveyTableModel.Columns.date).headerValue("Date");
-		public final ListTableColumn<SurveyRow, PersistentVector<String>> attachedFiles =
+		public final ListTableColumn<SurveyRow, List<String>> attachedFiles =
 			column(SurveyTableModel.Columns.attachedFiles)
 				.headerValue("Attached Files")
 				.renderer(new DefaultTableCellRenderer() {

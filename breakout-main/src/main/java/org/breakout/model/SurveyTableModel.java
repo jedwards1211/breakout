@@ -76,15 +76,12 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 						? null
 						: StringUtils.join("; ", r.getTrip().getSurveyors()))
 				.setter((row, surveyors) -> {
-					return row.withMutations(r -> {
-						List<String> parsed = Arrays.asList(surveyors.split("\\s*;\\s*"));
-						r.updateTrip(t -> (t == null ? new SurveyTrip() : t).setSurveyors(parsed));
-					});
+					List<String> parsed = Arrays.asList(surveyors.split("\\s*;\\s*"));
+					return SurveyRow.Properties.surveyors.set(row, parsed);
 				})
 				.create();
 		public static final Column<SurveyRow, String> date = column(SurveyRow.Properties.date);
-		public static final Column<SurveyRow, PersistentVector<String>> attachedFiles =
-			column(SurveyRow.Properties.attachedFiles);
+		public static final Column<SurveyRow, List<String>> attachedFiles = column(SurveyRow.Properties.attachedFiles);
 		public static final Column<SurveyRow, String> units =
 			new ColumnBuilder<SurveyRow, String>().columnClass(String.class).columnName("Units").getter(r -> {
 				SurveyTrip trip = r.getTrip();

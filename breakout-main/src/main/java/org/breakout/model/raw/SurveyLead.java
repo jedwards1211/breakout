@@ -40,6 +40,7 @@ public class SurveyLead implements Cloneable {
 		isDone = other.isDone;
 	}
 
+	@Override
 	public SurveyLead clone() {
 		return new SurveyLead(this);
 	}
@@ -75,6 +76,12 @@ public class SurveyLead implements Cloneable {
 
 	public Mutable toMutable() {
 		return new Mutable(this);
+	}
+
+	public SurveyLead withMutations(Consumer<Mutable> mutator) {
+		Mutable mutable = toMutable();
+		mutator.accept(mutable);
+		return mutable.toImmutable();
 	}
 
 	/**
@@ -163,12 +170,6 @@ public class SurveyLead implements Cloneable {
 
 	public SurveyLead setDone(boolean isDone) {
 		return this.toMutable().setDone(isDone).toImmutable();
-	}
-
-	public SurveyLead withMutations(Consumer<Mutable> mutator) {
-		Mutable mutable = toMutable();
-		mutator.accept(mutable);
-		return mutable.toImmutable();
 	}
 
 	private final DecimalFormat sizeFormat = new DecimalFormat("0.#");
