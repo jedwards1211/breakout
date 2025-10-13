@@ -22,8 +22,6 @@ import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitType;
 import org.andork.unit.UnitizedNumber;
-import org.breakout.model.raw.MutableSurveyRow;
-import org.breakout.model.raw.MutableSurveyTrip;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 
@@ -59,7 +57,7 @@ public class CompassConverter {
 		for (CompassShot compassShot : compassTrip.getShots()) {
 			if (compassShot.isExcludedFromAllProcessing())
 				continue;
-			MutableSurveyRow shot = new MutableSurveyRow();
+			SurveyRow.Mutable shot = new SurveyRow.Mutable();
 			shot.setTrip(trip);
 			shot.setFromStation(compassShot.getFromStationName());
 			shot.setToStation(compassShot.getToStationName());
@@ -77,7 +75,7 @@ public class CompassConverter {
 		if (compassTrip.getHeader().getLrudAssociation() == LrudAssociation.TO && !compassShots.isEmpty()) {
 			// add a row for the LRUDs at the to station of the last shot
 			SurveyRow shot =
-				new MutableSurveyRow()
+				new SurveyRow.Mutable()
 					.setTrip(trip)
 					.setFromStation(last(compassShots).getToStationName())
 					.toImmutable();
@@ -113,7 +111,7 @@ public class CompassConverter {
 	}
 
 	public static SurveyTrip convertTripHeader(CompassTripHeader compassTripHeader) {
-		MutableSurveyTrip trip = new MutableSurveyTrip();
+		SurveyTrip.Mutable trip = new SurveyTrip.Mutable();
 		// trip.setCave(compassTripHeader.getCaveName());
 
 		String tripName = compassTripHeader.getSurveyName();

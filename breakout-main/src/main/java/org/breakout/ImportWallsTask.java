@@ -43,8 +43,7 @@ import org.breakout.importui.ImportError;
 import org.breakout.importui.ImportError.Severity;
 import org.breakout.importui.ImportResultsDialog;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.raw.MutableSurveyRow;
-import org.breakout.model.raw.MutableSurveyTrip;
+import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 import org.breakout.model.raw.SurveyTrip.LrudAssociation;
 
@@ -62,12 +61,12 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 
 	private WallsUnits currentUnits;
 	private Date currentDate;
-	private final List<MutableSurveyRow> rows = new ArrayList<>();
+	private final List<SurveyRow.Mutable> rows = new ArrayList<>();
 	private boolean awaitingTripNameComment = true;
 	private Path currentFile;
 	private String currentTripName;
-	private MutableSurveyTrip currentTrip;
-	private final List<MutableSurveyRow> rowsInCurrentTrip = new ArrayList<>();
+	private SurveyTrip.Mutable currentTrip;
+	private final List<SurveyRow.Mutable> rowsInCurrentTrip = new ArrayList<>();
 	private final List<FixedStation> fixedStations = new ArrayList<>();
 
 	private void endCurrentTrip() {
@@ -76,7 +75,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 		}
 		if (currentTrip != null) {
 			SurveyTrip immutableTrip = currentTrip.toImmutable();
-			for (MutableSurveyRow row : rowsInCurrentTrip) {
+			for (SurveyRow.Mutable row : rowsInCurrentTrip) {
 				row.setTrip(immutableTrip);
 			}
 			rowsInCurrentTrip.clear();
@@ -84,13 +83,13 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 		}
 	}
 
-	private MutableSurveyTrip ensureCurrentTrip() {
+	private SurveyTrip.Mutable ensureCurrentTrip() {
 		if (currentTrip == null) {
 			if (currentUnits == null) {
 				throw new IllegalStateException("missing currentUnits");
 			}
 			currentTrip =
-				new MutableSurveyTrip()
+				new SurveyTrip.Mutable()
 					.setName(currentTripName)
 					.setDistanceUnit(currentUnits.getDUnit())
 					.setAngleUnit(currentUnits.getAUnit())
@@ -205,8 +204,8 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 			}
 
 			String fromStationName = vector.units.processStationName(vector.from);
-			MutableSurveyRow row =
-				new MutableSurveyRow()
+			SurveyRow.Mutable row =
+				new SurveyRow.Mutable()
 					.setFromStation(fromStationName)
 					.setToStation(vector.units.processStationName(vector.to))
 					.setDistance(Objects.toString(vector.distance, null))
@@ -231,7 +230,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 
 		@Override
 		public void parsedNote(String station, String parsedNote) {
-			MutableSurveyRow row = new MutableSurveyRow().setFromStation(station).setComment(parsedNote);
+			SurveyRow.Mutable row = new SurveyRow.Mutable().setFromStation(station).setComment(parsedNote);
 			rowsInCurrentTrip.add(row);
 			rows.add(row);
 			awaitingTripNameComment = false;
@@ -426,7 +425,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 
 		WallsStationReport report = parser.getReport();
 		SurveyTrip trip =
-			new MutableSurveyTrip()
+			new SurveyTrip.Mutable()
 				.setDatum(report.datum)
 				.setUtmZone(String.valueOf(report.utmZone))
 				.setName(null)
@@ -441,7 +440,7 @@ class ImportWallsTask extends SelfReportingTask<Void> {
 				.toImmutable();
 
 		for (StationPosition station : report.stationPositions) {
-			MutableSurveyRow row = new MutableSurveyRow();
+			SurveyRow.Mutable row = new SurveyRow.Mutable();
 			row.setTrip(trip);
 			row.setFromStation(station.getNameWithPrefix());
 			if (Double.isFinite(station.north))
