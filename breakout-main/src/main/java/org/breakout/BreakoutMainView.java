@@ -1516,6 +1516,11 @@ public class BreakoutMainView {
 		return project == null ? null : project.get(attribute);
 	}
 
+	private <T> T getRootAttribute(QSpec.Attribute<T> attribute) {
+		QObject<RootModel> root = rootModelBinder.get();
+		return root == null ? null : root.get(attribute);
+	}
+
 	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder);
 
 	Binder<QMap<ColorParam, LinearAxisConversion, ?>> paramRangesBinder =
@@ -1707,6 +1712,10 @@ public class BreakoutMainView {
 		return autorun(() -> runner.accept(getProjectAttribute(attribute)));
 	}
 
+	private <T> QAutorun autorunRootAttribute(Attribute<T> attribute, Consumer<T> runner) {
+		return autorun(() -> runner.accept(getRootAttribute(attribute)));
+	}
+
 	public BreakoutMainView() {
 		mapbox = new MapboxClient(null);
 
@@ -1714,6 +1723,8 @@ public class BreakoutMainView {
 		final GLCapabilities caps = new GLCapabilities(glp);
 		autoDrawable = canvas = new GLCanvas(caps);
 		autoDrawable.display();
+
+		Ref<Boolean> constructing = new Ref<>(true);
 
 		scene = new JoglScene();
 		bgColor = new JoglBackgroundColor();
@@ -1729,8 +1740,6 @@ public class BreakoutMainView {
 			task.setStatus("Sorting survey table...");
 			r.run();
 		});
-
-		Ref<Boolean> constructing = new Ref<Boolean>(true);
 
 		OnEDT.onEDT(() -> {
 			navigator = new DefaultNavigator(autoDrawable, renderer);
@@ -2015,136 +2024,115 @@ public class BreakoutMainView {
 				}
 			});
 
-			new BinderWrapper<Boolean>() {
-				@Override
-				protected void onValueChanged(Boolean showLeadLabels) {
-					if (model3d != null && showLeadLabels != null) {
-						model3d.setShowLeadLabels(showLeadLabels);
+			autorunProjectAttribute(ProjectModel.showLeadLabels, showLeadLabels -> {
+				if (model3d != null && showLeadLabels != null) {
+					model3d.setShowLeadLabels(showLeadLabels);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.showLeadLabels, projectModelBinder));
-
-			new BinderWrapper<Boolean>() {
-				@Override
-				protected void onValueChanged(Boolean showTerrain) {
-					if (showTerrain == null)
-						showTerrain = false;
-					if (showTerrain) {
-						Localizer localizer = i18n.forClass(BreakoutMainView.class);
-						rebuildTaskService.submit(task -> OnEDT.onEDT(() -> {
-							if (!calcProject.shots.isEmpty() && calcProject.coordinateReferenceSystem == null) {
-								new JOptionPaneBuilder()
-									.message(
-										new MultilineLabelHolder(
-											localizer.getString("showTerrain.noGeoReferenceDialog.message"))
-												.preferredWidth(400))
-									.showDialog(
-										mainPanel,
-										localizer.getString("showTerrain.noGeoReferenceDialog.title"));
-								return;
-							}
-						}));
-						if (getRootModel().get(RootModel.mapboxAccessToken) == null) {
-							JXHyperlink mapboxLink = new JXHyperlink();
-							try {
-								mapboxLink.setURI(new URI("https://account.mapbox.com/"));
-							}
-							catch (URISyntaxException e) {
-								e.printStackTrace();
-							}
-							Object accessToken =
-								new JOptionPaneBuilder()
-									.okCancel()
-									.message(
-										new MultilineLabelHolder(
-											localizer.getString("showTerrain.mapboxAccessTokenDialog.message"))
-												.preferredWidth(400),
-										mapboxLink,
-										new MultilineLabelHolder(
-											localizer.getString("showTerrain.mapboxAccessTokenDialog.inputLabel"))
-												.preferredWidth(400))
-									.showInputDialog(
-										mainPanel,
-										localizer.getString("showTerrain.mapboxAccessTokenDialog.title"));
-
-							if (accessToken == null) {
-								return;
-							}
-							getRootModel().set(RootModel.mapboxAccessToken, accessToken.toString().trim());
+			});
+			autorunProjectAttribute(ProjectModel.showTerrain, showTerrain -> {
+				if (showTerrain != null && showTerrain) {
+					Localizer localizer = i18n.forClass(BreakoutMainView.class);
+					rebuildTaskService.submit(task -> OnEDT.onEDT(() -> {
+						if (!calcProject.shots.isEmpty() && calcProject.coordinateReferenceSystem == null) {
+							new JOptionPaneBuilder()
+								.message(
+									new MultilineLabelHolder(
+										localizer.getString("showTerrain.noGeoReferenceDialog.message"))
+											.preferredWidth(400))
+								.showDialog(mainPanel, localizer.getString("showTerrain.noGeoReferenceDialog.title"));
+							return;
 						}
-					}
+					}));
+					if (getRootModel().get(RootModel.mapboxAccessToken) == null) {
+						JXHyperlink mapboxLink = new JXHyperlink();
+						try {
+							mapboxLink.setURI(new URI("https://account.mapbox.com/"));
+						}
+						catch (URISyntaxException e) {
+							e.printStackTrace();
+						}
+						Object accessToken =
+							new JOptionPaneBuilder()
+								.okCancel()
+								.message(
+									new MultilineLabelHolder(
+										localizer.getString("showTerrain.mapboxAccessTokenDialog.message"))
+											.preferredWidth(400),
+									mapboxLink,
+									new MultilineLabelHolder(
+										localizer.getString("showTerrain.mapboxAccessTokenDialog.inputLabel"))
+											.preferredWidth(400))
+								.showInputDialog(
+									mainPanel,
+									localizer.getString("showTerrain.mapboxAccessTokenDialog.title"));
 
-					if (terrain != null) {
-						terrain.setVisible(showTerrain);
-						autoDrawable.display();
+						if (accessToken == null) {
+							return;
+						}
+						getRootModel().set(RootModel.mapboxAccessToken, accessToken.toString().trim());
 					}
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.showTerrain, projectModelBinder));
 
-			new BinderWrapper<Color>() {
-				@Override
-				protected void onValueChanged(Color stationLabelColor) {
-					if (stationLabelColor == null)
-						return;
-					hintLabels.setForeground(stationLabelColor);
-					if (model3d != null) {
-						model3d.setStationLabelColor(stationLabelColor);
-					}
+				if (terrain != null) {
+					terrain.setVisible(showTerrain);
+					if (!constructing.value)
+						autoDrawable.display();
+				}
+			});
+
+			autorunProjectAttribute(ProjectModel.stationLabelColor, stationLabelColor -> {
+				if (stationLabelColor == null)
+					return;
+				hintLabels.setForeground(stationLabelColor);
+				if (model3d != null) {
+					model3d.setStationLabelColor(stationLabelColor);
+				}
+				if (!constructing.value)
 					autoDrawable.display();
-				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelColor, projectModelBinder));
+			});
 
-			new BinderWrapper<Float>() {
-				@Override
-				protected void onValueChanged(Float maxCenterlineDistance) {
-					if (model3d != null && maxCenterlineDistance != null) {
-						model3d.setMaxCenterlineDistance(maxCenterlineDistance);
+			autorunProjectAttribute(ProjectModel.centerlineDistance, maxCenterlineDistance -> {
+				if (model3d != null && maxCenterlineDistance != null) {
+					model3d.setMaxCenterlineDistance(maxCenterlineDistance);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineDistance, projectModelBinder));
+			});
 
-			new BinderWrapper<Color>() {
-				@Override
-				protected void onValueChanged(Color centerlineColor) {
-					if (model3d != null && centerlineColor != null) {
-						model3d.setCenterlineColor(centerlineColor);
+			autorunProjectAttribute(ProjectModel.centerlineColor, centerlineColor -> {
+				if (model3d != null && centerlineColor != null) {
+					model3d.setCenterlineColor(centerlineColor);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineColor, projectModelBinder));
+			});
 
-			new BinderWrapper<String>() {
-				@Override
-				protected void onValueChanged(String accessToken) {
-					mapbox.setAccessToken(accessToken);
-					if (terrain != null) {
-						terrain.reload();
+			autorunRootAttribute(RootModel.mapboxAccessToken, accessToken -> {
+				mapbox.setAccessToken(accessToken);
+				if (terrain != null) {
+					terrain.reload();
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(RootModel.mapboxAccessToken, rootModelBinder));
+			});
 
-			new BinderWrapper<Boolean>() {
-				@Override
-				protected void onValueChanged(Boolean wireframe) {
-					if (model3d != null && wireframe != null) {
-						model3d.setWireframe(wireframe);
+			autorunRootAttribute(RootModel.wireframe, wireframe -> {
+				if (model3d != null && wireframe != null) {
+					model3d.setWireframe(wireframe);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(RootModel.wireframe, rootModelBinder));
+			});
 
-			new BinderWrapper<Boolean>() {
-				@Override
-				protected void onValueChanged(Boolean showSpatialIndex) {
-					if (model3d != null && showSpatialIndex != null) {
-						model3d.setShowSpatialIndex(showSpatialIndex);
+			autorunRootAttribute(RootModel.showSpatialIndex, showSpatialIndex -> {
+				if (model3d != null && showSpatialIndex != null) {
+					model3d.setShowSpatialIndex(showSpatialIndex);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(RootModel.showSpatialIndex, rootModelBinder));
+			});
 
 			new BinderWrapper<Float>() {
 				@Override
@@ -2164,15 +2152,12 @@ public class BreakoutMainView {
 								QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder),
 								distanceToClosestNodeBinder));
 
-			new BinderWrapper<Integer>() {
-				@Override
-				protected void onValueChanged(Integer sliderValue) {
-					if (sliderValue != null) {
-						orthoNavigator.setSensitivity(sliderValue * 0.002f);
-						orbiter.setSensitivity(sliderValue * 0.02f);
-					}
+			autorunRootAttribute(RootModel.mouseSensitivity, sliderValue -> {
+				if (sliderValue != null) {
+					orthoNavigator.setSensitivity(sliderValue * 0.002f);
+					orbiter.setSensitivity(sliderValue * 0.02f);
 				}
-			}.bind(QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder));
+			});
 
 			new BinderWrapper<Float>() {
 				@Override
@@ -2193,140 +2178,120 @@ public class BreakoutMainView {
 								QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder),
 								distanceToClosestNodeBinder));
 
-			new BinderWrapper<Integer>() {
-				@Override
-				protected void onValueChanged(Integer sliderValue) {
-					if (sliderValue != null) {
-						orthoNavigator.setWheelFactor(sliderValue / 2000f);
-					}
+			autorunRootAttribute(RootModel.mouseWheelSensitivity, sliderValue -> {
+				if (sliderValue != null) {
+					orthoNavigator.setWheelFactor(sliderValue / 2000f);
 				}
-			}.bind(QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder));
+			});
 
-			new BinderWrapper<Float>() {
-				@Override
-				protected void onValueChanged(final Float newValue) {
-					updateHintLabels(null);
-					if (model3d != null) {
-						model3d.setMaxDate(newValue);
+			autorunProjectAttribute(ProjectModel.maxDate, newValue -> {
+				updateHintLabels(null);
+				if (model3d != null) {
+					model3d.setMaxDate(newValue);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.maxDate, projectModelBinder));
+			});
 
-			new BinderWrapper<Float>() {
-				@Override
-				protected void onValueChanged(final Float newValue) {
-					if (model3d != null && newValue != null) {
-						model3d.setAmbientLight(newValue);
+			autorunProjectAttribute(ProjectModel.ambientLight, newValue -> {
+				if (model3d != null && newValue != null) {
+					model3d.setAmbientLight(newValue);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.ambientLight, projectModelBinder));
+			});
 
-			new BinderWrapper<Float>() {
-				@Override
-				protected void onValueChanged(final Float newValue) {
-					if (model3d != null && newValue != null) {
-						model3d.setBoldness(newValue);
+			autorunProjectAttribute(ProjectModel.boldness, newValue -> {
+				if (model3d != null && newValue != null) {
+					model3d.setBoldness(newValue);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.boldness, projectModelBinder));
+			});
 
-			new BinderWrapper<LinearAxisConversion>() {
-				@Override
-				protected void onValueChanged(LinearAxisConversion range) {
-					if (model3d != null && range != null) {
-						final float nearDist = (float) range.invert(0.0);
-						final float farDist =
-							(float) range.invert(settingsDrawer.getDistColorationAxis().getViewSpan());
-						final Survey3dModel model3d = BreakoutMainView.this.model3d;
-						model3d.setNearDist(nearDist);
-						model3d.setFarDist(farDist);
-						autoDrawable.display();
-					}
-				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.distRange, projectModelBinder));
-
-			new BinderWrapper<LinearAxisConversion>() {
-				@Override
-				protected void onValueChanged(LinearAxisConversion range) {
-					if (model3d != null && range != null) {
-						final float loParam = (float) range.invert(0.0);
-						final float hiParam =
-							(float) range.invert(settingsDrawer.getParamColorationAxis().getViewSpan());
-						final Survey3dModel model3d = BreakoutMainView.this.model3d;
-						model3d.setLoParam(loParam);
-						model3d.setHiParam(hiParam);
-						autoDrawable.display();
-					}
-				}
-			}.bind(paramRangeBinder);
-
-			new BinderWrapper<float[]>() {
-				@Override
-				protected void onValueChanged(float[] depthAxis) {
-					if (depthAxis == null) {
-						return;
-					}
-					final float[] finalDepthAxis = Arrays.copyOf(depthAxis, depthAxis.length);
-					if (model3d != null && depthAxis != null && depthAxis.length == 3) {
-						final Survey3dModel model3d = BreakoutMainView.this.model3d;
-						model3d.setDepthAxis(finalDepthAxis);
-						autoDrawable.display();
-					}
-				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.depthAxis, projectModelBinder));
-
-			new BinderWrapper<ColorParam>() {
-				@Override
-				protected void onValueChanged(final ColorParam colorParam) {
-					if (colorParam != null && model3d != null) {
-						final Survey3dModel model3d = BreakoutMainView.this.model3d;
-
-						rebuildTaskService.submit(task -> {
-							task.setTotal(1);
-							task.setStatus("Recoloring");
-							model3d.setColorParam(colorParam, task);
-							autoDrawable.display();
-						});
-					}
-				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder));
-
-			new BinderWrapper<Unit<Length>>() {
-				@Override
-				protected void onValueChanged(final Unit<Length> displayLengthUnit) {
+			autorunProjectAttribute(ProjectModel.distRange, range -> {
+				if (model3d != null && range != null) {
+					final float nearDist = (float) range.invert(0.0);
+					final float farDist = (float) range.invert(settingsDrawer.getDistColorationAxis().getViewSpan());
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
-					if (model3d != null) {
-						model3d.setDisplayLengthUnit(displayLengthUnit);
+					model3d.setNearDist(nearDist);
+					model3d.setFarDist(farDist);
+					if (!constructing.value)
 						autoDrawable.display();
-					}
-
-					miniSurveyDrawer.statsPanel().setLengthUnit(displayLengthUnit);
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
+			});
 
-			new BinderWrapper<CoordinateReferenceSystemPreset>() {
-				@Override
-				protected void onValueChanged(final CoordinateReferenceSystemPreset value) {
+			autorun(() -> {
+				QMap<ColorParam, LinearAxisConversion, ?> paramRanges = getProjectAttribute(ProjectModel.paramRanges);
+				ColorParam colorParam = getProjectAttribute(ProjectModel.colorParam);
+				LinearAxisConversion range =
+					paramRanges == null || colorParam == null ? null : paramRanges.get(colorParam);
+				if (model3d != null && range != null) {
+					final float loParam = (float) range.invert(0.0);
+					final float hiParam = (float) range.invert(settingsDrawer.getParamColorationAxis().getViewSpan());
+					final Survey3dModel model3d = BreakoutMainView.this.model3d;
+					model3d.setLoParam(loParam);
+					model3d.setHiParam(hiParam);
+					if (!constructing.value)
+						autoDrawable.display();
+				}
+			});
+
+			autorunProjectAttribute(ProjectModel.depthAxis, depthAxis -> {
+				if (depthAxis == null) {
+					return;
+				}
+				final float[] finalDepthAxis = Arrays.copyOf(depthAxis, depthAxis.length);
+				if (model3d != null && depthAxis != null && depthAxis.length == 3) {
+					final Survey3dModel model3d = BreakoutMainView.this.model3d;
+					model3d.setDepthAxis(finalDepthAxis);
+					if (!constructing.value)
+						autoDrawable.display();
+				}
+			});
+
+			autorunProjectAttribute(ProjectModel.colorParam, colorParam -> {
+				if (colorParam != null && model3d != null && !constructing.value) {
+					final Survey3dModel model3d = BreakoutMainView.this.model3d;
+
+					rebuildTaskService.submit(task -> {
+						task.setTotal(1);
+						task.setStatus("Recoloring");
+						model3d.setColorParam(colorParam, task);
+						if (!constructing.value)
+							autoDrawable.display();
+					});
+				}
+			});
+
+			autorunProjectAttribute(ProjectModel.displayLengthUnit, displayLengthUnit -> {
+				final Survey3dModel model3d = BreakoutMainView.this.model3d;
+				if (model3d != null) {
+					model3d.setDisplayLengthUnit(displayLengthUnit);
+					if (!constructing.value)
+						autoDrawable.display();
+				}
+
+				miniSurveyDrawer.statsPanel().setLengthUnit(displayLengthUnit);
+			});
+
+			autorunProjectAttribute(ProjectModel.displayCoordinateReferenceSystem, value -> {
+				if (value != null) {
 					miniSurveyDrawer.statsPanel().setDisplayCoordinateReferenceSystem(value.crs());
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.displayCoordinateReferenceSystem, projectModelBinder));
+			});
 
-			new BinderWrapper<Clip3f>() {
-				@Override
-				protected void onValueChanged(final Clip3f clip) {
-					final Survey3dModel model3d = BreakoutMainView.this.model3d;
-					if (model3d != null) {
-						model3d.setClip(clip);
-					}
-					if (terrain != null) {
-						terrain.setClip(clip);
-					}
-					autoDrawable.display();
+			autorunProjectAttribute(ProjectModel.clip, clip -> {
+				final Survey3dModel model3d = BreakoutMainView.this.model3d;
+				if (model3d != null) {
+					model3d.setClip(clip);
 				}
-			}.bind(QObjectAttributeBinder.bind(ProjectModel.clip, projectModelBinder));
+				if (terrain != null) {
+					terrain.setClip(clip);
+				}
+				if (!constructing.value)
+					autoDrawable.display();
+			});
 
 			menuBar = new JMenuBar();
 
@@ -2397,36 +2362,25 @@ public class BreakoutMainView {
 				hideCanvasWhileMenuOpen();
 			}
 
-			new BinderWrapper<QArrayList<Path>>() {
-				@Override
-				protected void onValueChanged(QArrayList<Path> newValue) {
-					openRecentMenu.removeAll();
-					if (newValue == null || newValue.isEmpty()) {
-						openRecentMenu.add(noRecentFilesMenuItem);
-					}
-					else {
-						for (Path file : newValue) {
-							openRecentMenu.add(new JMenuItem(new OpenRecentProjectAction(BreakoutMainView.this, file)));
-						}
+			autorunRootAttribute(RootModel.recentProjectFiles, newValue -> {
+				openRecentMenu.removeAll();
+				if (newValue == null || newValue.isEmpty()) {
+					openRecentMenu.add(noRecentFilesMenuItem);
+				}
+				else {
+					for (Path file : newValue) {
+						openRecentMenu.add(new JMenuItem(new OpenRecentProjectAction(BreakoutMainView.this, file)));
 					}
 				}
+			});
 
-			}
-				.bind(
-					new HierarchicalChangeBinder<QArrayList<Path>>()
-						.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder)));
-
-			new BinderWrapper<SearchMode>() {
-				@Override
-				protected void onValueChanged(SearchMode mode) {
-					surveyDrawer.searchOptionsButton().setSearchMode(mode);
-					surveyDrawer.searchField().textComponent
-						.setText(surveyDrawer.searchField().textComponent.getText());
-					miniSurveyDrawer.searchOptionsButton().setSearchMode(mode);
-					miniSurveyDrawer.searchField().textComponent
-						.setText(miniSurveyDrawer.searchField().textComponent.getText());
-				}
-			}.bind(new QObjectAttributeBinder<>(RootModel.searchMode).bind(rootModelBinder));
+			autorunRootAttribute(RootModel.searchMode, mode -> {
+				surveyDrawer.searchOptionsButton().setSearchMode(mode);
+				surveyDrawer.searchField().textComponent.setText(surveyDrawer.searchField().textComponent.getText());
+				miniSurveyDrawer.searchOptionsButton().setSearchMode(mode);
+				miniSurveyDrawer.searchField().textComponent
+					.setText(miniSurveyDrawer.searchField().textComponent.getText());
+			});
 
 			surveyDrawer.searchOptionsButton().menu().addChangeListener(l -> {
 				getRootModel().set(RootModel.searchMode, surveyDrawer.searchOptionsButton().getSearchMode());
@@ -2520,13 +2474,15 @@ public class BreakoutMainView {
 
 					Set<ShotKey> rangeShots = getShotsInView();
 					task.runSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				});
 			});
 
 			settingsDrawer.getResetViewButton().addActionListener(e -> {
 				renderer.viewSettings().setViewXform(newMat4f());
-				autoDrawable.display();
+				if (!constructing.value)
+					autoDrawable.display();
 			});
 
 			settingsDrawer.getOrbitToPlanButton().setAction(orbitToPlanAction);
@@ -2592,7 +2548,8 @@ public class BreakoutMainView {
 				protected void onValueChanged(Integer desiredNumSamples) {
 					if (desiredNumSamples != null) {
 						renderer.desiredNumSamples(desiredNumSamples);
-						autoDrawable.display();
+						if (!constructing.value)
+							autoDrawable.display();
 					}
 				}
 			}.bind(QObjectAttributeBinder.bind(RootModel.desiredNumSamples, rootModelBinder));
