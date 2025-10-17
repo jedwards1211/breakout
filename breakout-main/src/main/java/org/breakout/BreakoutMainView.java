@@ -2134,23 +2134,27 @@ public class BreakoutMainView {
 				}
 			});
 
-			new BinderWrapper<Float>() {
-				@Override
-				protected void onValueChanged(Float sensitivity) {
-					if (sensitivity != null) {
-						navigator.setSensitivity(sensitivity);
-					}
-				}
-			}
-				.bind(
-					new BiFunctionBinder<Integer, Float, Float>(
-						(sliderValue, distance) -> sliderValue != null && distance != null
-							? sliderValue * distance / 50000
-							: null,
-						(sensitivity, distance) -> 0)
-							.bind(
-								QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder),
-								distanceToClosestNodeBinder));
+			autorun(() -> {
+				Integer sliderValue = getRootAttribute(RootModel.mouseSensitivity);
+				if (sliderValue == null)
+					return;
+				Float distance = distanceToClosestNodeBinder.get();
+				if (distance == null)
+					return;
+				navigator.setSensitivity(sliderValue * distance / 50000);
+			});
+
+			autorun(() -> {
+				Integer sliderValue = getRootAttribute(RootModel.mouseWheelSensitivity);
+				if (sliderValue == null)
+					return;
+				Float distance = distanceToClosestNodeBinder.get();
+				if (distance == null)
+					return;
+				float wheelFactor = sliderValue * distance / 20000;
+				navigator.setWheelFactor(wheelFactor);
+				clipMouseHandler.setWheelFactor(wheelFactor);
+			});
 
 			autorunRootAttribute(RootModel.mouseSensitivity, sliderValue -> {
 				if (sliderValue != null) {
@@ -2158,25 +2162,6 @@ public class BreakoutMainView {
 					orbiter.setSensitivity(sliderValue * 0.02f);
 				}
 			});
-
-			new BinderWrapper<Float>() {
-				@Override
-				protected void onValueChanged(Float wheelFactor) {
-					if (wheelFactor != null) {
-						navigator.setWheelFactor(wheelFactor);
-						clipMouseHandler.setWheelFactor(wheelFactor);
-					}
-				}
-			}
-				.bind(
-					new BiFunctionBinder<Integer, Float, Float>(
-						(sliderValue, distance) -> sliderValue != null && distance != null
-							? sliderValue * distance / 20000
-							: null,
-						(wheelFactor, distance) -> 0)
-							.bind(
-								QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder),
-								distanceToClosestNodeBinder));
 
 			autorunRootAttribute(RootModel.mouseWheelSensitivity, sliderValue -> {
 				if (sliderValue != null) {
@@ -2563,16 +2548,14 @@ public class BreakoutMainView {
 			((JTextField) miniSurveyDrawer.searchField().textComponent)
 				.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
 
-			new BinderWrapper<Integer>() {
-				@Override
-				protected void onValueChanged(Integer desiredNumSamples) {
-					if (desiredNumSamples != null) {
-						renderer.desiredNumSamples(desiredNumSamples);
-						if (!constructing.value)
-							autoDrawable.display();
-					}
-				}
-			}.bind(QObjectAttributeBinder.bind(RootModel.desiredNumSamples, rootModelBinder));
+			autorun(() -> {
+				Integer desiredNumSamples = getRootAttribute(RootModel.desiredNumSamples);
+				if (desiredNumSamples == null)
+					return;
+				renderer.desiredNumSamples(desiredNumSamples);
+				if (!constructing.value)
+					autoDrawable.display();
+			});
 		});
 
 		autoDrawable.invoke(false, drawable -> {
