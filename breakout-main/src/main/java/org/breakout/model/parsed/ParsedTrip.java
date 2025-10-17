@@ -33,5 +33,5 @@ public class ParsedTrip {
 
 	public final List<ParsedStation> stations = new ArrayList<>();
 	public final List<ParsedShot> shots = new ArrayList<>();
-	public PersistentVector<String> attachedFiles;
+	public List<String> attachedFiles;
 }

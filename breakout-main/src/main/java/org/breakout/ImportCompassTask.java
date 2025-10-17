@@ -3,8 +3,6 @@ package org.breakout;
 import static org.andork.util.JavaScript.falsy;
 
 import java.awt.Dialog.ModalityType;
-import java.awt.Dimension;
-import java.awt.Toolkit;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,8 +54,6 @@ import org.breakout.importui.ImportError.Severity;
 import org.breakout.importui.ImportResultsDialog;
 import org.breakout.model.ShotKey;
 import org.breakout.model.SurveyTableModel;
-import org.breakout.model.raw.MutableSurveyRow;
-import org.breakout.model.raw.MutableSurveyTrip;
 import org.breakout.model.raw.SurveyRow;
 import org.breakout.model.raw.SurveyTrip;
 
@@ -77,9 +73,11 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 			String s = p.toString().toLowerCase();
 			if (s.endsWith(".dat")) {
 				surveyFiles.add(p);
-			} else if (s.endsWith(".plt")) {
+			}
+			else if (s.endsWith(".plt")) {
 				plotFiles.add(p);
-			} else if (s.endsWith(".mak")) {
+			}
+			else if (s.endsWith(".mak")) {
 				projFiles.add(p);
 			}
 		}
@@ -189,38 +187,60 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 					public void file(Segment name, FileDirective surveyFile) {
 						Path surveyPath = file.getParent().resolve(Paths.get(surveyFile.file)).normalize();
 						if (Files.notExists(surveyPath)) {
-							errors.add(new ImportError(Severity.ERROR, "Survey file doesn't exist: " + surveyFile.file,
-									name));
+							errors
+								.add(
+									new ImportError(
+										Severity.ERROR,
+										"Survey file doesn't exist: " + surveyFile.file,
+										name));
 							return;
 						}
 						surveyFiles.add(surveyPath);
 						surveyLocations.put(surveyPath, currentLocation);
 						Unit<Length> distUnit = Length.feet;
-						SurveyTrip locationTrip = new MutableSurveyTrip()
+						SurveyTrip locationTrip =
+							new SurveyTrip.Mutable()
 								.setDatum(currentLocation.datum != null ? datumMap.get(currentLocation.datum) : null)
 								.setEllipsoid(
-										currentLocation.datum != null ? ellipsoidMap.get(currentLocation.datum) : null)
-								.setUtmZone(currentLocation.location != null
+									currentLocation.datum != null ? ellipsoidMap.get(currentLocation.datum) : null)
+								.setUtmZone(
+									currentLocation.location != null
 										? String.valueOf(currentLocation.location.utmZone)
 										: null)
-								.setName(null).setDistanceUnit(distUnit).setAngleUnit(Angle.degrees)
-								.setOverrideFrontAzimuthUnit(Angle.degrees).setOverrideBackAzimuthUnit(Angle.degrees)
+								.setName(null)
+								.setDistanceUnit(distUnit)
+								.setAngleUnit(Angle.degrees)
+								.setOverrideFrontAzimuthUnit(Angle.degrees)
+								.setOverrideBackAzimuthUnit(Angle.degrees)
 								.setOverrideFrontInclinationUnit(Angle.degrees)
-								.setOverrideBackInclinationUnit(Angle.degrees).setBackAzimuthsCorrected(true)
-								.setBackInclinationsCorrected(true).toImmutable();
+								.setOverrideBackInclinationUnit(Angle.degrees)
+								.setBackAzimuthsCorrected(true)
+								.setBackInclinationsCorrected(true)
+								.toImmutable();
 						surveyLocationTrips.put(surveyPath, locationTrip);
 						if (surveyFile.linkStations != null) {
 							for (LinkStation station : surveyFile.linkStations) {
 								if (station.location == null || currentLocation.location == null)
 									continue;
-								SurveyRow stationPositionRow = new MutableSurveyRow().setTrip(locationTrip)
+								SurveyRow stationPositionRow =
+									new SurveyRow.Mutable()
+										.setTrip(locationTrip)
 										.setFromStation(station.name)
-										.setEasting(stringify(station.location.easting
-												.add(currentLocation.location.easting).get(distUnit)))
-										.setNorthing(stringify(station.location.northing
-												.add(currentLocation.location.northing).get(distUnit)))
-										.setElevation(stringify(station.location.elevation
-												.add(currentLocation.location.elevation).get(distUnit)))
+										.setEasting(
+											stringify(
+												station.location.easting
+													.add(currentLocation.location.easting)
+													.get(distUnit)))
+										.setNorthing(
+											stringify(
+												station.location.northing
+													.add(currentLocation.location.northing)
+													.get(distUnit)))
+										.setElevation(
+											stringify(
+												station.location.elevation
+													.add(currentLocation.location.elevation)
+													.get(distUnit)))
 										.toImmutable();
 								rows.add(stationPositionRow);
 							}
@@ -231,7 +251,7 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 					public void datum(DatumDirective datum) {
 						currentLocation = currentLocation.setDatum(datum.datum);
 						if (datum.datum != null
-								&& (!datumMap.containsKey(datum.datum) || !ellipsoidMap.containsKey(datum.datum))) {
+							&& (!datumMap.containsKey(datum.datum) || !ellipsoidMap.containsKey(datum.datum))) {
 							errors.add(new ImportError(Severity.ERROR, "datum not supported: " + datum.datum, null));
 						}
 					}
@@ -265,15 +285,15 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 						boolean lrudAtFrom = trip.getHeader().getLrudAssociation() == LrudAssociation.FROM;
 						for (CompassShot shot : trip.getShots()) {
 							importedShots
-									.add(new ShotKey(null, shot.getFromStationName(), null, shot.getToStationName()));
+								.add(new ShotKey(null, shot.getFromStationName(), null, shot.getToStationName()));
 							importedLrudStations.add(lrudAtFrom ? shot.getFromStationName() : shot.getToStationName());
 							stationToSurvey.put(shot.getFromStationName(), file);
 							stationToSurvey.put(shot.getToStationName(), file);
 						}
 					}
 					fileSubtask.increment();
-					fileSubtask.runSubtask(1,
-							subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
+					fileSubtask
+						.runSubtask(1, subtask -> rows.addAll(CompassConverter.convertFromCompass(trips, subtask)));
 				});
 			}
 
@@ -298,10 +318,12 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 							if (command instanceof DatumCommand) {
 								datum = ((DatumCommand) command).getDatum();
 								locationTrip = null;
-							} else if (command instanceof UtmZoneCommand) {
+							}
+							else if (command instanceof UtmZoneCommand) {
 								utmZone = Integer.valueOf(((UtmZoneCommand) command).getUtmZone());
 								locationTrip = null;
-							} else if (command instanceof DrawSurveyCommand) {
+							}
+							else if (command instanceof DrawSurveyCommand) {
 								DrawSurveyCommand c = (DrawSurveyCommand) command;
 								if (falsy(c.getStationName())) {
 									continue;
@@ -313,16 +335,20 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 								}
 								if (trip == null) {
 									if (locationTrip == null) {
-										locationTrip = new MutableSurveyTrip()
+										locationTrip =
+											new SurveyTrip.Mutable()
 												.setDatum(datum != null ? datumMap.get(datum) : null)
 												.setEllipsoid(datum != null ? ellipsoidMap.get(datum) : null)
 												.setUtmZone(utmZone != null ? String.valueOf(utmZone) : null)
-												.setName(null).setDistanceUnit(Length.feet).setAngleUnit(Angle.degrees)
+												.setName(null)
+												.setDistanceUnit(Length.feet)
+												.setAngleUnit(Angle.degrees)
 												.setOverrideFrontAzimuthUnit(Angle.degrees)
 												.setOverrideBackAzimuthUnit(Angle.degrees)
 												.setOverrideFrontInclinationUnit(Angle.degrees)
 												.setOverrideBackInclinationUnit(Angle.degrees)
-												.setBackAzimuthsCorrected(true).setBackInclinationsCorrected(true)
+												.setBackAzimuthsCorrected(true)
+												.setBackInclinationsCorrected(true)
 												.toImmutable();
 									}
 									trip = locationTrip;
@@ -332,23 +358,44 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 								if (prevDrawCommand != null) {
 									if (c.getOperation() == DrawOperation.MOVE_TO) {
 										if (importedLrudStations.add(prevDrawCommand.getStationName())) {
-											rows.add(new MutableSurveyRow().setTrip(trip)
-													.setFromStation(prevDrawCommand.getStationName())
-													.setLeft(stringify(prevDrawCommand.getLeft(), distUnit))
-													.setRight(stringify(prevDrawCommand.getRight(), distUnit))
-													.setUp(stringify(prevDrawCommand.getUp(), distUnit))
-													.setDown(stringify(prevDrawCommand.getDown(), distUnit))
-													.toImmutable());
+											rows
+												.add(
+													new SurveyRow.Mutable()
+														.setTrip(trip)
+														.setFromStation(prevDrawCommand.getStationName())
+														.setLeft(stringify(prevDrawCommand.getLeft(), distUnit))
+														.setRight(stringify(prevDrawCommand.getRight(), distUnit))
+														.setUp(stringify(prevDrawCommand.getUp(), distUnit))
+														.setDown(stringify(prevDrawCommand.getDown(), distUnit))
+														.toImmutable());
 										}
-									} else if (importedShots.add(new ShotKey(null, prevDrawCommand.getStationName(),
-											null, c.getStationName()))) {
+									}
+									else if (importedShots
+										.add(
+											new ShotKey(
+												null,
+												prevDrawCommand.getStationName(),
+												null,
+												c.getStationName()))) {
 
-										double dn = c.getLocation().getNorthing()
-												.sub(prevDrawCommand.getLocation().getNorthing()).doubleValue(distUnit);
-										double de = c.getLocation().getEasting()
-												.sub(prevDrawCommand.getLocation().getEasting()).doubleValue(distUnit);
-										double dv = c.getLocation().getVertical()
-												.sub(prevDrawCommand.getLocation().getVertical()).doubleValue(distUnit);
+										double dn =
+											c
+												.getLocation()
+												.getNorthing()
+												.sub(prevDrawCommand.getLocation().getNorthing())
+												.doubleValue(distUnit);
+										double de =
+											c
+												.getLocation()
+												.getEasting()
+												.sub(prevDrawCommand.getLocation().getEasting())
+												.doubleValue(distUnit);
+										double dv =
+											c
+												.getLocation()
+												.getVertical()
+												.sub(prevDrawCommand.getLocation().getVertical())
+												.doubleValue(distUnit);
 
 										double distance = Math.sqrt(dn * dn + de * de + dv * dv);
 										double dne = Math.sqrt(dn * dn + de * de);
@@ -358,15 +405,20 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 										double inclination = Math.toDegrees(Math.atan2(dv, dne));
 
 										importedLrudStations.add(prevDrawCommand.getStationName());
-										rows.add(new MutableSurveyRow().setTrip(trip)
-												.setFromStation(prevDrawCommand.getStationName())
-												.setToStation(c.getStationName()).setDistance(String.valueOf(distance))
-												.setFrontAzimuth(String.valueOf(azimuth))
-												.setFrontInclination(String.valueOf(inclination))
-												.setLeft(stringify(prevDrawCommand.getLeft(), distUnit))
-												.setRight(stringify(prevDrawCommand.getRight(), distUnit))
-												.setUp(stringify(prevDrawCommand.getUp(), distUnit))
-												.setDown(stringify(prevDrawCommand.getDown(), distUnit)).toImmutable());
+										rows
+											.add(
+												new SurveyRow.Mutable()
+													.setTrip(trip)
+													.setFromStation(prevDrawCommand.getStationName())
+													.setToStation(c.getStationName())
+													.setDistance(String.valueOf(distance))
+													.setFrontAzimuth(String.valueOf(azimuth))
+													.setFrontInclination(String.valueOf(inclination))
+													.setLeft(stringify(prevDrawCommand.getLeft(), distUnit))
+													.setRight(stringify(prevDrawCommand.getRight(), distUnit))
+													.setUp(stringify(prevDrawCommand.getUp(), distUnit))
+													.setDown(stringify(prevDrawCommand.getDown(), distUnit))
+													.toImmutable());
 									}
 								}
 
@@ -375,10 +427,14 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 								UnitizedDouble<Length> northing = c.getLocation().getNorthing();
 								UnitizedDouble<Length> easting = c.getLocation().getEasting();
 								UnitizedDouble<Length> elevation = c.getLocation().getVertical();
-								SurveyRow row = new MutableSurveyRow().setTrip(trip).setFromStation(c.getStationName())
+								SurveyRow row =
+									new SurveyRow.Mutable()
+										.setTrip(trip)
+										.setFromStation(c.getStationName())
 										.setNorthing(stringify(northing, distUnit))
 										.setEasting(stringify(easting, distUnit))
-										.setElevation(stringify(elevation, distUnit)).toImmutable();
+										.setElevation(stringify(elevation, distUnit))
+										.toImmutable();
 								rows.add(row);
 
 							}
@@ -391,8 +447,8 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 			newModel.setEditable(false);
 
 			OnEDT.onEDT(() -> {
-				ImportResultsDialog dialog = new ImportResultsDialog(this.dialog, ImportCompassTask.this.mainView.i18n,
-						"title.compass");
+				ImportResultsDialog dialog =
+					new ImportResultsDialog(this.dialog, ImportCompassTask.this.mainView.i18n, "title.compass");
 				for (CompassParseError error : parser.getErrors()) {
 					errors.add(new ImportError(error));
 				}
@@ -417,18 +473,23 @@ class ImportCompassTask extends SelfReportingTask<Void> {
 				if (doImport) {
 					mainView.addSurveyRowsFrom(newModel);
 					logger.info(() -> "imported " + newModel.getRowCount() + " shots from compass data");
-				} else {
+				}
+				else {
 					logger.info("user canceled compass import");
 				}
 			});
-		} catch (
+		}
+		catch (
 
 		Exception ex) {
 			logger.log(Level.SEVERE, "Failed to import compass data", ex);
 			OnEDT.onEDT(() -> {
-				JOptionPane.showMessageDialog(ImportCompassTask.this.mainView.getMainPanel(),
+				JOptionPane
+					.showMessageDialog(
+						ImportCompassTask.this.mainView.getMainPanel(),
 						ex.getClass().getSimpleName() + ": " + ex.getLocalizedMessage(),
-						"Failed to import compass data", JOptionPane.ERROR_MESSAGE);
+						"Failed to import compass data",
+						JOptionPane.ERROR_MESSAGE);
 			});
 		}
 

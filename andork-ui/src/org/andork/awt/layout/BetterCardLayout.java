@@ -79,8 +79,8 @@ public class BetterCardLayout implements LayoutManager2 {
 
 	/*
 	 * A cards horizontal Layout gap (inset). It specifies the space between the
-	 * left and right edges of a container and the current component. This
-	 * should be a non negative Integer.
+	 * left and right edges of a container and the current component. This should be
+	 * a non negative Integer.
 	 *
 	 * @see getHgap()
 	 *
@@ -89,9 +89,9 @@ public class BetterCardLayout implements LayoutManager2 {
 	int hgap;
 
 	/*
-	 * A cards vertical Layout gap (inset). It specifies the space between the
-	 * top and bottom edges of a container and the current component. This
-	 * should be a non negative Integer.
+	 * A cards vertical Layout gap (inset). It specifies the space between the top
+	 * and bottom edges of a container and the current component. This should be a
+	 * non negative Integer.
 	 *
 	 * @see getVgap()
 	 *
@@ -112,14 +112,12 @@ public class BetterCardLayout implements LayoutManager2 {
 	}
 
 	/**
-	 * Creates a new card layout with the specified horizontal and vertical
-	 * gaps. The horizontal gaps are placed at the left and right edges. The
-	 * vertical gaps are placed at the top and bottom edges.
+	 * Creates a new card layout with the specified horizontal and vertical gaps.
+	 * The horizontal gaps are placed at the left and right edges. The vertical gaps
+	 * are placed at the top and bottom edges.
 	 *
-	 * @param hgap
-	 *            the horizontal gap.
-	 * @param vgap
-	 *            the vertical gap.
+	 * @param hgap the horizontal gap.
+	 * @param vgap the vertical gap.
 	 */
 	public BetterCardLayout(int hgap, int vgap) {
 		this.hgap = hgap;
@@ -127,23 +125,21 @@ public class BetterCardLayout implements LayoutManager2 {
 	}
 
 	/**
-	 * Adds the specified component to this card layout's internal table of
-	 * names. The object specified by <code>constraints</code> must be a string.
-	 * The card layout stores this string as a key-value pair that can be used
-	 * for random access to a particular card. By calling the <code>show</code>
-	 * method, an application can display the component with the specified name.
+	 * Adds the specified component to this card layout's internal table of names.
+	 * The object specified by <code>constraints</code> must be a string. The card
+	 * layout stores this string as a key-value pair that can be used for random
+	 * access to a particular card. By calling the <code>show</code> method, an
+	 * application can display the component with the specified name.
 	 *
-	 * @param comp
-	 *            the component to be added.
-	 * @param constraints
-	 *            a tag that identifies a particular card in the layout.
+	 * @param comp        the component to be added.
+	 * @param constraints a tag that identifies a particular card in the layout.
 	 * @see java.awt.BetterCardLayout#show(java.awt.Container, java.lang.String)
-	 * @exception IllegalArgumentException
-	 *                if the constraint is not a string.
+	 * @exception IllegalArgumentException if the constraint is not a string.
 	 */
 	@Override
 	public void addLayoutComponent(Component comp, Object key) {
-		if (key == null) key = vector.size();
+		if (key == null)
+			key = vector.size();
 		synchronized (comp.getTreeLock()) {
 			if (!vector.isEmpty()) {
 				comp.setVisible(false);
@@ -159,8 +155,7 @@ public class BetterCardLayout implements LayoutManager2 {
 	}
 
 	/**
-	 * @deprecated replaced by
-	 *             <code>addLayoutComponent(Component, Object)</code>.
+	 * @deprecated replaced by <code>addLayoutComponent(Component, Object)</code>.
 	 */
 	@Override
 	@Deprecated
@@ -181,8 +176,7 @@ public class BetterCardLayout implements LayoutManager2 {
 	/**
 	 * Flips to the first card of the container.
 	 *
-	 * @param parent
-	 *            the parent container in which to do the layout
+	 * @param parent the parent container in which to do the layout
 	 * @see java.awt.BetterCardLayout#last
 	 */
 	public void first(Container parent) {
@@ -203,7 +197,7 @@ public class BetterCardLayout implements LayoutManager2 {
 			}
 		}
 	}
-	
+
 	public int getCurrentCardIndex() {
 		return currentCard;
 	}
@@ -226,10 +220,9 @@ public class BetterCardLayout implements LayoutManager2 {
 
 	/**
 	 * Returns the alignment along the x axis. This specifies how the component
-	 * would like to be aligned relative to other components. The value should
-	 * be a number between 0 and 1 where 0 represents alignment along the
-	 * origin, 1 is aligned the furthest away from the origin, 0.5 is centered,
-	 * etc.
+	 * would like to be aligned relative to other components. The value should be a
+	 * number between 0 and 1 where 0 represents alignment along the origin, 1 is
+	 * aligned the furthest away from the origin, 0.5 is centered, etc.
 	 */
 	@Override
 	public float getLayoutAlignmentX(Container parent) {
@@ -238,10 +231,9 @@ public class BetterCardLayout implements LayoutManager2 {
 
 	/**
 	 * Returns the alignment along the y axis. This specifies how the component
-	 * would like to be aligned relative to other components. The value should
-	 * be a number between 0 and 1 where 0 represents alignment along the
-	 * origin, 1 is aligned the furthest away from the origin, 0.5 is centered,
-	 * etc.
+	 * would like to be aligned relative to other components. The value should be a
+	 * number between 0 and 1 where 0 represents alignment along the origin, 1 is
+	 * aligned the furthest away from the origin, 0.5 is centered, etc.
 	 */
 	@Override
 	public float getLayoutAlignmentY(Container parent) {
@@ -274,8 +266,7 @@ public class BetterCardLayout implements LayoutManager2 {
 	/**
 	 * Flips to the last card of the container.
 	 *
-	 * @param parent
-	 *            the parent container in which to do the layout
+	 * @param parent the parent container in which to do the layout
 	 * @see java.awt.BetterCardLayout#first
 	 */
 	public void last(Container parent) {
@@ -301,11 +292,10 @@ public class BetterCardLayout implements LayoutManager2 {
 	 * Lays out the specified container using this card layout.
 	 * <p>
 	 * Each component in the <code>parent</code> container is reshaped to be the
-	 * size of the container, minus space for surrounding insets, horizontal
-	 * gaps, and vertical gaps.
+	 * size of the container, minus space for surrounding insets, horizontal gaps,
+	 * and vertical gaps.
 	 *
-	 * @param parent
-	 *            the parent container in which to do the layout
+	 * @param parent the parent container in which to do the layout
 	 * @see java.awt.Container#doLayout
 	 */
 	@Override
@@ -317,7 +307,10 @@ public class BetterCardLayout implements LayoutManager2 {
 
 			for (int i = 0; i < ncomponents; i++) {
 				comp = parent.getComponent(i);
-				comp.setBounds(hgap + insets.left, vgap + insets.top,
+				comp
+					.setBounds(
+						hgap + insets.left,
+						vgap + insets.top,
 						parent.getWidth() - (hgap * 2 + insets.left + insets.right),
 						parent.getHeight() - (vgap * 2 + insets.top + insets.bottom));
 			}
@@ -325,11 +318,10 @@ public class BetterCardLayout implements LayoutManager2 {
 	}
 
 	/**
-	 * Returns the maximum dimensions for this layout given the components in
-	 * the specified target container.
+	 * Returns the maximum dimensions for this layout given the components in the
+	 * specified target container.
 	 *
-	 * @param target
-	 *            the component which needs to be laid out
+	 * @param target the component which needs to be laid out
 	 * @see Container
 	 * @see #minimumLayoutSize
 	 * @see #preferredLayoutSize
@@ -342,10 +334,9 @@ public class BetterCardLayout implements LayoutManager2 {
 	/**
 	 * Calculates the minimum size for the specified panel.
 	 *
-	 * @param parent
-	 *            the parent container in which to do the layout
-	 * @return the minimum dimensions required to lay out the subcomponents of
-	 *         the specified container
+	 * @param parent the parent container in which to do the layout
+	 * @return the minimum dimensions required to lay out the subcomponents of the
+	 *         specified container
 	 * @see java.awt.Container#doLayout
 	 * @see java.awt.BetterCardLayout#preferredLayoutSize
 	 */
@@ -375,18 +366,15 @@ public class BetterCardLayout implements LayoutManager2 {
 			if (!anyVisible) {
 				return new Dimension(0, 0);
 			}
-			return new Dimension(insets.left + insets.right + w + hgap * 2,
-					insets.top + insets.bottom + h + vgap * 2);
+			return new Dimension(insets.left + insets.right + w + hgap * 2, insets.top + insets.bottom + h + vgap * 2);
 		}
 	}
 
 	/**
-	 * Flips to the next card of the specified container. If the currently
-	 * visible card is the last one, this method flips to the first card in the
-	 * layout.
+	 * Flips to the next card of the specified container. If the currently visible
+	 * card is the last one, this method flips to the first card in the layout.
 	 *
-	 * @param parent
-	 *            the parent container in which to do the layout
+	 * @param parent the parent container in which to do the layout
 	 * @see java.awt.BetterCardLayout#previous
 	 */
 	public void next(Container parent) {
@@ -412,8 +400,7 @@ public class BetterCardLayout implements LayoutManager2 {
 	 * Determines the preferred size of the container argument using this card
 	 * layout.
 	 *
-	 * @param parent
-	 *            the parent container in which to do the layout
+	 * @param parent the parent container in which to do the layout
 	 * @return the preferred dimensions to lay out the subcomponents of the
 	 *         specified container
 	 * @see java.awt.Container#getPreferredSize
@@ -445,8 +432,7 @@ public class BetterCardLayout implements LayoutManager2 {
 			if (!anyVisible) {
 				return new Dimension(0, 0);
 			}
-			return new Dimension(insets.left + insets.right + w + hgap * 2,
-					insets.top + insets.bottom + h + vgap * 2);
+			return new Dimension(insets.left + insets.right + w + hgap * 2, insets.top + insets.bottom + h + vgap * 2);
 		}
 	}
 
@@ -455,8 +441,7 @@ public class BetterCardLayout implements LayoutManager2 {
 	 * visible card is the first one, this method flips to the last card in the
 	 * layout.
 	 *
-	 * @param parent
-	 *            the parent container in which to do the layout
+	 * @param parent the parent container in which to do the layout
 	 * @see java.awt.BetterCardLayout#next
 	 */
 	public void previous(Container parent) {
@@ -479,11 +464,10 @@ public class BetterCardLayout implements LayoutManager2 {
 	}
 
 	/**
-	 * Removes the specified component from the layout. If the card was visible
-	 * on top, the next card underneath it is shown.
+	 * Removes the specified component from the layout. If the card was visible on
+	 * top, the next card underneath it is shown.
 	 *
-	 * @param comp
-	 *            the component to be removed.
+	 * @param comp the component to be removed.
 	 * @see java.awt.Container#remove(java.awt.Component)
 	 * @see java.awt.Container#removeAll()
 	 */
@@ -512,8 +496,7 @@ public class BetterCardLayout implements LayoutManager2 {
 	/**
 	 * Sets the horizontal gap between components.
 	 *
-	 * @param hgap
-	 *            the horizontal gap between components.
+	 * @param hgap the horizontal gap between components.
 	 * @see java.awt.BetterCardLayout#getHgap()
 	 * @see java.awt.BetterCardLayout#setVgap(int)
 	 * @since JDK1.1
@@ -529,8 +512,7 @@ public class BetterCardLayout implements LayoutManager2 {
 	/**
 	 * Sets the vertical gap between components.
 	 *
-	 * @param vgap
-	 *            the vertical gap between components.
+	 * @param vgap the vertical gap between components.
 	 * @see java.awt.BetterCardLayout#getVgap()
 	 * @see java.awt.BetterCardLayout#setHgap(int)
 	 * @since JDK1.1
@@ -544,10 +526,8 @@ public class BetterCardLayout implements LayoutManager2 {
 	 * <code>name</code>, using <code>addLayoutComponent</code>. If no such
 	 * component exists, then nothing happens.
 	 *
-	 * @param parent
-	 *            the parent container in which to do the layout
-	 * @param key
-	 *            the component name
+	 * @param parent the parent container in which to do the layout
+	 * @param key    the component name
 	 * @see java.awt.BetterCardLayout#addLayoutComponent(java.awt.Component,
 	 *      java.lang.Object)
 	 */
@@ -555,6 +535,7 @@ public class BetterCardLayout implements LayoutManager2 {
 		synchronized (parent.getTreeLock()) {
 			checkLayout(parent);
 			Component next = null;
+			currentCard = -1;
 			int ncomponents = vector.size();
 			for (int i = 0; i < ncomponents; i++) {
 				Card card = vector.get(i);

@@ -2435,20 +2435,22 @@ public class BreakoutMainView {
 						return;
 					}
 
-					ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
-					if (!colorParam.isLoBright()) {
-						float swap = range[0];
-						range[0] = range[1];
-						range[1] = swap;
-					}
-					LinearAxisConversion conversion =
-						new LinearAxisConversion(
-							range[0],
-							0.0,
-							range[1],
-							settingsDrawer.getParamColorationAxis().getViewSpan());
+					OnEDT.onEDT(() -> {
+						ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
+						if (!colorParam.isLoBright()) {
+							float swap = range[0];
+							range[0] = range[1];
+							range[1] = swap;
+						}
+						LinearAxisConversion conversion =
+							new LinearAxisConversion(
+								range[0],
+								0.0,
+								range[1],
+								settingsDrawer.getParamColorationAxis().getViewSpan());
 
-					paramRangeBinder.set(conversion);
+						paramRangeBinder.set(conversion);
+					});
 				});
 			});
 
@@ -2469,11 +2471,29 @@ public class BreakoutMainView {
 				rebuildTaskService.submit(task -> {
 					task.setTotal(4);
 					task.setStatus("Recalculating color by distance");
-					Set<ShotKey> startShots = getDefaultShotsForOperations(3);
+					Set<ShotKey> startShots = getDefaultShotsForOperations(1);
 					task.runSubtask(3, recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
 
 					Set<ShotKey> rangeShots = getShotsInView();
-					task.runSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
+					float[] range =
+						task.callSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
+
+					OnEDT.onEDT(() -> {
+						ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
+						if (!colorParam.isLoBright()) {
+							float swap = range[0];
+							range[0] = range[1];
+							range[1] = swap;
+						}
+						LinearAxisConversion conversion =
+							new LinearAxisConversion(
+								range[0],
+								0.0,
+								range[1],
+								settingsDrawer.getParamColorationAxis().getViewSpan());
+
+						paramRangeBinder.set(conversion);
+					});
 					if (!constructing.value)
 						autoDrawable.display();
 				});
@@ -3166,7 +3186,7 @@ public class BreakoutMainView {
 		Vecmath.negate3(renderer.viewState().inverseViewMatrix(), 8, forward, 0);
 		Vecmath.getColumn3(renderer.viewState().inverseViewMatrix(), 0, right);
 
-		changeView(forward, right, false, getDefaultShotsForOperations(1));
+		changeView(forward, right, false, getDefaultShotsForOperations(3));
 	}
 
 	private Shot3dPickResult pick(Survey3dModel model3d, MouseEvent e, Shot3dPickContext spc) {
@@ -3206,11 +3226,11 @@ public class BreakoutMainView {
 	}
 
 	public void planMode() {
-		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void sidewaysPlanMode() {
-		changeView(new float[] { 0, -1, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 0, -1, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(3));
 	}
 
 	protected void removeUnprotectedCameraAnimations() {
@@ -3355,19 +3375,19 @@ public class BreakoutMainView {
 	}
 
 	public void northFacingProfileMode() {
-		changeView(new float[] { 0, 0, -1 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 0, 0, -1 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void southFacingProfileMode() {
-		changeView(new float[] { 0, 0, 1 }, new float[] { -1, 0, 0 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 0, 0, 1 }, new float[] { -1, 0, 0 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void westFacingProfileMode() {
-		changeView(new float[] { -1, 0, 0 }, new float[] { 0, 0, -1 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { -1, 0, 0 }, new float[] { 0, 0, -1 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void eastFacingProfileMode() {
-		changeView(new float[] { 1, 0, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 1, 0, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void autoProfileMode() {

@@ -89,7 +89,7 @@ public class MetacaveImporter {
 		return elem.getAsString();
 	}
 
-	private static void getMeasurements(JsonObject obj, MutableSurveyRow row) {
+	private static void getMeasurements(JsonObject obj, SurveyRow.Mutable row) {
 		row.setDistance(getAsString(obj, "dist"));
 		if ("bs".equals(getAsString(obj, "dir"))) {
 			row.setBackAzimuth(getAsString(obj, "azm"));
@@ -138,17 +138,17 @@ public class MetacaveImporter {
 		return builder.toString();
 	}
 
-	private final List<MutableSurveyRow> rows = new ArrayList<>();
+	private final List<SurveyRow.Mutable> rows = new ArrayList<>();
 	private final List<SurveyLead> leads = new ArrayList<>();
 	private final IdentityHashMap<JsonObject, SurveyTrip> trips = new IdentityHashMap<>();
 
 	public List<SurveyRow> getRows() {
 		List<SurveyRow> result = new ArrayList<SurveyRow>();
-		MutableSurveyRow lastRow = null;
-		for (MutableSurveyRow row : rows) {
+		SurveyRow.Mutable lastRow = null;
+		for (SurveyRow.Mutable row : rows) {
 			if (row == null) {
-				final MutableSurveyRow finalLastRow = lastRow;
-				row = new MutableSurveyRow().setTrip(finalLastRow == null ? null : finalLastRow.getTrip());
+				final SurveyRow.Mutable finalLastRow = lastRow;
+				row = new SurveyRow.Mutable().setTrip(finalLastRow == null ? null : finalLastRow.getTrip());
 			}
 			result.add(row.toImmutable());
 			lastRow = row;
@@ -221,7 +221,7 @@ public class MetacaveImporter {
 	public SurveyTrip importTripHeader(JsonObject obj, String caveName) {
 		SurveyTrip trip = trips.get(obj);
 		if (trip == null) {
-			MutableSurveyTrip t = new MutableSurveyTrip();
+			SurveyTrip.Mutable t = new SurveyTrip.Mutable();
 			t.setCave(caveName);
 			if (obj.has("name")) {
 				t.setName(obj.get("name").getAsString());
@@ -273,7 +273,7 @@ public class MetacaveImporter {
 
 			final int defaultRow = rows.size();
 
-			Function<JsonObject, MutableSurveyRow> getRow = obj -> {
+			Function<JsonObject, SurveyRow.Mutable> getRow = obj -> {
 				Integer rowIndex = getRowIndex(obj);
 				if (rowIndex == null) {
 					rowIndex = defaultRow;
@@ -281,9 +281,9 @@ public class MetacaveImporter {
 				while (rows.size() <= rowIndex) {
 					rows.add(null);
 				}
-				MutableSurveyRow row = rows.get(rowIndex);
+				SurveyRow.Mutable row = rows.get(rowIndex);
 				if (row == null) {
-					row = new MutableSurveyRow();
+					row = new SurveyRow.Mutable();
 					row.setTrip(trip);
 					row.setOverrideFromCave(intern(getAsString(fromStation, "cave")));
 					row.setFromStation(intern(getAsString(fromStation, "station")));
@@ -309,7 +309,7 @@ public class MetacaveImporter {
 				JsonArray splays = fromStation.getAsJsonArray("splays");
 				for (int k = 0; k < splays.size(); k++) {
 					JsonObject splay = splays.get(k).getAsJsonObject();
-					MutableSurveyRow row = getRow.apply(splay);
+					SurveyRow.Mutable row = getRow.apply(splay);
 					getMeasurements(splay, row);
 					// TODO: splayDepth
 				}
@@ -341,11 +341,11 @@ public class MetacaveImporter {
 						JsonObject backsight = k < backsights.size() ? backsights.get(k) : null;
 
 						if (frontsight != null) {
-							MutableSurveyRow row = getRow.apply(frontsight);
+							SurveyRow.Mutable row = getRow.apply(frontsight);
 							getMeasurements(frontsight, row);
 						}
 						if (backsight != null) {
-							MutableSurveyRow row = getRow.apply(backsight);
+							SurveyRow.Mutable row = getRow.apply(backsight);
 							getMeasurements(backsight, row);
 						}
 					}
@@ -364,7 +364,7 @@ public class MetacaveImporter {
 			}
 
 			if (fromStation.has("lrud")) {
-				MutableSurveyRow lrudRow = getRow.apply(fromStation);
+				SurveyRow.Mutable lrudRow = getRow.apply(fromStation);
 				JsonArray lrud = fromStation.getAsJsonArray("lrud");
 				lrudRow.setLeft(getMeasurement(lrud.get(0)));
 				lrudRow.setRight(getMeasurement(lrud.get(1)));
@@ -372,7 +372,7 @@ public class MetacaveImporter {
 				lrudRow.setDown(getMeasurement(lrud.get(3)));
 			}
 			if (fromStation.has("nev")) {
-				MutableSurveyRow row = getRow.apply(fromStation);
+				SurveyRow.Mutable row = getRow.apply(fromStation);
 				JsonArray nev = fromStation.getAsJsonArray("nev");
 				row.setNorthing(getMeasurement(nev.get(0)));
 				row.setEasting(getMeasurement(nev.get(1)));
@@ -389,7 +389,7 @@ public class MetacaveImporter {
 	}
 
 	public SurveyLead importLead(JsonObject obj, String caveName) {
-		MutableSurveyLead lead = new MutableSurveyLead();
+		SurveyLead.Mutable lead = new SurveyLead.Mutable();
 		lead.setCave(caveName);
 		lead.setStation(getAsString(obj, "station"));
 		lead.setDescription(getAsString(obj, "description"));
@@ -416,7 +416,7 @@ public class MetacaveImporter {
 	public SurveyTrip importFixedStationGroupHeader(JsonObject obj, String caveName) {
 		SurveyTrip trip = trips.get(obj);
 		if (trip == null) {
-			MutableSurveyTrip t = new MutableSurveyTrip();
+			SurveyTrip.Mutable t = new SurveyTrip.Mutable();
 			t.setCave(caveName);
 			if (obj.has("distUnit")) {
 				t.setDistanceUnit(metacaveLengthUnits.get(obj.get("distUnit").getAsString()));
@@ -434,7 +434,7 @@ public class MetacaveImporter {
 
 	public void importFixedStations(SurveyTrip trip, JsonObject stations) {
 		for (Map.Entry<String, JsonElement> station : stations.entrySet()) {
-			MutableSurveyRow row = new MutableSurveyRow();
+			SurveyRow.Mutable row = new SurveyRow.Mutable();
 			row.setTrip(trip);
 			row.setFromStation(station.getKey());
 			JsonObject props = station.getValue().getAsJsonObject();

@@ -55,16 +55,22 @@ public class SetCaveOnRowsAction extends AbstractAction {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		final String caveName = JOptionPane.showInputDialog(mainView.getMainPanel(), "Enter new cave name:", "Set Cave",
-				JOptionPane.QUESTION_MESSAGE);
+		final String caveName =
+			JOptionPane
+				.showInputDialog(
+					mainView.getMainPanel(),
+					"Enter new cave name:",
+					"Set Cave",
+					JOptionPane.QUESTION_MESSAGE);
 		final SurveyTableModel model = mainView.getSurveyTable().getModel();
 		final ListSelectionModel selModel = mainView.getSurveyTable().getModelSelectionModel();
-		
+
 		final IdentityHashMap<SurveyTrip, SurveyTrip> newTrips = new IdentityHashMap<>();
 		final IdentityHashMap<SurveyTrip, Boolean> isWholeTripSelected = new IdentityHashMap<>();
-		
+
 		final Function<SurveyTrip, SurveyTrip> updateTrip = trip -> {
-			if (caveName.equals(trip.getCave())) return trip;
+			if (caveName.equals(trip.getCave()))
+				return trip;
 			SurveyTrip updated = newTrips.get(trip);
 			if (updated == null) {
 				updated = trip.setCave(caveName);
@@ -72,7 +78,7 @@ public class SetCaveOnRowsAction extends AbstractAction {
 			}
 			return updated;
 		};
-		
+
 		for (int i = 0; i < model.getRowCount(); i++) {
 			SurveyTrip trip = model.getRow(i).getTrip();
 			if (!selModel.isSelectionEmpty() && !selModel.isSelectedIndex(i)) {
@@ -82,22 +88,23 @@ public class SetCaveOnRowsAction extends AbstractAction {
 				isWholeTripSelected.put(trip, true);
 			}
 		}
-		
+
 		for (int i = 0; i < model.getRowCount(); i++) {
 			if (selModel.isSelectionEmpty() || selModel.isSelectedIndex(i)) {
 				model.setRow(i, model.getRow(i).withMutations(mrow -> {
 					if (Boolean.TRUE.equals(isWholeTripSelected.get(mrow.getTrip()))) {
-						mrow.updateTrip(updateTrip);
+						mrow.setTrip(updateTrip.apply(mrow.getTrip()));
 						mrow.setOverrideFromCave(null);
 						mrow.setOverrideToCave(null);
-					} else {
+					}
+					else {
 						mrow.setOverrideFromCave(caveName);
 						mrow.setOverrideToCave(caveName);
 					}
 				}));
 			}
 		}
-		
+
 		model.updateRows(row -> {
 			SurveyTrip newTrip = newTrips.get(row.getTrip());
 			return newTrip != null ? row.setTrip(newTrip) : row;
