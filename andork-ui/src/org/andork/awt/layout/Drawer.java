@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.andork.awt.layout;
 
+import static org.andork.bind.ui.BindUI.*;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -28,6 +29,9 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -35,10 +39,8 @@ import javax.swing.JLayeredPane;
 import javax.swing.JToggleButton;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import org.andork.bind.Binder;
-import org.andork.bind.BinderWrapper;
-import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
+import org.andork.model.Cell;
 import org.andork.q.QObject;
 import org.andork.swing.PaintablePanel;
 
@@ -56,9 +58,8 @@ public class Drawer extends PaintablePanel {
 	Component mainResizeHandle;
 	ResizeKnobHandler mainResizeHandler;
 
-	BinderWrapper<QObject<DrawerModel>> binder = new BinderWrapper<QObject<DrawerModel>>();
-	QObjectAttributeBinder<Boolean> pinnedBinder = QObjectAttributeBinder.bind(DrawerModel.pinned, binder);
-	QObjectAttributeBinder<Boolean> maximizedBinder = QObjectAttributeBinder.bind(DrawerModel.maximized, binder);
+	Supplier<QObject<DrawerModel>> getModel;
+	List<AutoCloseable> autoruns = new ArrayList<>();
 	ButtonSelectedBinder pinButtonBinder;
 	ButtonSelectedBinder maxButtonBinder;
 
@@ -143,7 +144,6 @@ public class Drawer extends PaintablePanel {
 					delegate.setMaximized(maxButton.isSelected());
 				}
 			});
-			maxButtonBinder = ButtonSelectedBinder.bind(maxButton, maximizedBinder);
 		}
 		return maxButton;
 	}
@@ -159,28 +159,67 @@ public class Drawer extends PaintablePanel {
 				public void itemStateChanged(ItemEvent e) {
 					if (pinButton.isSelected()) {
 						holder.hold(pinButton);
-					} else {
+					}
+					else {
 						holder.releaseAll();
 					}
 				}
 			});
-
-			pinButtonBinder = ButtonSelectedBinder.bind(pinButton, pinnedBinder);
 		}
 		return pinButton;
 	}
 
 	public TabLayoutDelegate pinButtonDelegate() {
 		if (pinButtonDelegate == null) {
-			pinButtonDelegate = new TabLayoutDelegate(this,
-					Corner.fromSides(delegate.dockingSide().opposite(),
+			pinButtonDelegate =
+				new TabLayoutDelegate(
+					this,
+					Corner
+						.fromSides(
+							delegate.dockingSide().opposite(),
 							delegate.dockingSide().axis().opposite().lowerSide()),
 					delegate.dockingSide().opposite());
 		}
 		return pinButtonDelegate;
 	}
 
-	public void setBinder(Binder<QObject<DrawerModel>> modelBinder) {
-		binder.bind(modelBinder);
+	public void setModel(Supplier<QObject<DrawerModel>> getModel) {
+		if (this.getModel == getModel)
+			return;
+		this.getModel = getModel;
+		List<AutoCloseable> autoruns = new ArrayList<>(this.autoruns);
+		this.autoruns.clear();
+		for (AutoCloseable autorun : autoruns) {
+			try {
+				autorun.close();
+			}
+			catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		if (getModel != null) {
+			this.autoruns.add(bindSelected(maxButton(), Cell.from(() -> {
+				QObject<DrawerModel> model = getModel.get();
+				if (model == null)
+					return null;
+				return model.get(DrawerModel.maximized);
+			}, (newValue) -> {
+				QObject<DrawerModel> model = getModel.get();
+				if (model == null)
+					return;
+				model.set(DrawerModel.maximized, newValue);
+			})));
+			this.autoruns.add(bindSelected(pinButton(), Cell.from(() -> {
+				QObject<DrawerModel> model = getModel.get();
+				if (model == null)
+					return null;
+				return model.get(DrawerModel.pinned);
+			}, (newValue) -> {
+				QObject<DrawerModel> model = getModel.get();
+				if (model == null)
+					return;
+				model.set(DrawerModel.pinned, newValue);
+			})));
+		}
 	}
 }

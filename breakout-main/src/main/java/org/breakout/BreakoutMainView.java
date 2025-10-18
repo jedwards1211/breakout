@@ -115,11 +115,9 @@ import org.andork.awt.layout.MultilineLabelHolder;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.SideConstraint;
 import org.andork.awt.layout.SideConstraintLayoutDelegate;
-import org.andork.bind.BiFunctionBinder;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
-import org.andork.bind.HierarchicalChangeBinder;
 import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
@@ -1979,9 +1977,10 @@ public class BreakoutMainView {
 				}
 			});
 
-			surveyDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.surveyDrawer, projectModelBinder));
-			settingsDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.settingsDrawer, projectModelBinder));
-			taskListDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.taskListDrawer, projectModelBinder));
+			surveyDrawer.setModel(() -> getProjectAttribute(ProjectModel.surveyDrawer));
+			miniSurveyDrawer.setModel(() -> getProjectAttribute(ProjectModel.miniSurveyDrawer));
+			settingsDrawer.setModel(() -> getProjectAttribute(ProjectModel.settingsDrawer));
+			taskListDrawer.setModel(() -> getProjectAttribute(ProjectModel.taskListDrawer));
 
 			BinderWrapper
 				.create((com.github.krukow.clj_ds.PersistentVector<SurveyLead> leads) -> rebuildLeadIndex())
