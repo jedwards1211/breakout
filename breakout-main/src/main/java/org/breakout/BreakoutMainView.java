@@ -118,7 +118,6 @@ import org.andork.awt.layout.SideConstraintLayoutDelegate;
 import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
-import org.andork.bind.QMapKeyedBinder;
 import org.andork.bind.QObjectAttributeBinder;
 import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.HashSets;
@@ -228,7 +227,6 @@ import org.breakout.model.raw.MetacaveExporter;
 import org.breakout.model.raw.MetacaveImporter;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
-import org.breakout.proj4.CoordinateReferenceSystemPreset;
 import org.jdesktop.swingx.JXHyperlink;
 
 import com.andork.plot.LinearAxisConversion;
@@ -1519,13 +1517,6 @@ public class BreakoutMainView {
 		return root == null ? null : root.get(attribute);
 	}
 
-	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder);
-
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>> paramRangesBinder =
-		QObjectAttributeBinder.bind(ProjectModel.paramRanges, projectModelBinder);
-
-	Binder<LinearAxisConversion> paramRangeBinder = QMapKeyedBinder.bindKeyed(colorParamBinder, paramRangesBinder);
-
 	final AnimationQueue cameraAnimationQueue = new AnimationQueue();
 
 	NewProjectAction newProjectAction = new NewProjectAction(this);
@@ -2433,18 +2424,20 @@ public class BreakoutMainView {
 								range[1],
 								settingsDrawer.getParamColorationAxis().getViewSpan());
 
-						paramRangeBinder.set(conversion);
+						ProjectModel.setParamRange(getProjectModel(), conversion);
 					});
 				});
 			});
 
 			settingsDrawer.getFlipParamColorationAxisButton().addActionListener((e) -> {
 				PlotAxis axis = settingsDrawer.getParamColorationAxis();
-				LinearAxisConversion conversion = paramRangeBinder.get();
+				LinearAxisConversion conversion = ProjectModel.getParamRange(getProjectModel());
+				if (conversion == null)
+					return;
 				double start = conversion.invert(0.0);
 				double end = conversion.invert(axis.getViewSpan());
 				LinearAxisConversion newConversion = new LinearAxisConversion(end, 0.0, start, axis.getViewSpan());
-				paramRangeBinder.set(newConversion);
+				ProjectModel.setParamRange(getProjectModel(), newConversion);
 			});
 
 			settingsDrawer.getRecalcColorByDistanceButton().addActionListener((e) -> {
@@ -2476,7 +2469,7 @@ public class BreakoutMainView {
 								range[1],
 								settingsDrawer.getParamColorationAxis().getViewSpan());
 
-						paramRangeBinder.set(conversion);
+						ProjectModel.setParamRange(getProjectModel(), conversion);
 					});
 					if (!constructing.value)
 						autoDrawable.display();

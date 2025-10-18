@@ -221,4 +221,26 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		projectModel.setIfNull(ProjectModel.orthoScaleBarFontSize, 10f);
 		projectModel.setIfNull(ProjectModel.showTotalLength, false);
 	}
+
+	public static LinearAxisConversion getParamRange(QObject<ProjectModel> model) {
+		if (model == null)
+			return null;
+
+		ColorParam colorParam = model.get(ProjectModel.colorParam);
+		if (colorParam == null || model.get(ProjectModel.paramRanges) == null)
+			return null;
+		return model.get(ProjectModel.paramRanges).get(colorParam);
+	}
+
+	public static void setParamRange(QObject<ProjectModel> model, LinearAxisConversion range) {
+		if (model == null)
+			return;
+		ColorParam colorParam = model.get(ProjectModel.colorParam);
+		if (colorParam == null)
+			return;
+		if (model.get(paramRanges) == null) {
+			model.set(paramRanges, new QLinkedHashMap<>());
+		}
+		model.get(paramRanges).set(colorParam, range);
+	}
 }
