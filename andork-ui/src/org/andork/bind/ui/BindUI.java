@@ -14,7 +14,6 @@ import java.util.function.Supplier;
 import javax.swing.AbstractButton;
 import javax.swing.JComboBox;
 import javax.swing.JSlider;
-import javax.swing.JToggleButton;
 import javax.swing.event.ChangeListener;
 
 import org.andork.awt.layout.BetterCardLayout;
@@ -48,7 +47,7 @@ public class BindUI {
 		};
 	}
 
-	public static AutoCloseable bindSelected(JToggleButton button, Cell<Boolean> cell) {
+	public static AutoCloseable bindSelected(AbstractButton button, Cell<Boolean> cell) {
 		QAutorun autorun = autorun(() -> {
 			button.setSelected(Boolean.TRUE.equals(cell.get()));
 		});

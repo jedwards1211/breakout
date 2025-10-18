@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.breakout;
 
+import static org.andork.bind.ui.BindUI.bindSelected;
 import static org.andork.math3d.Vecmath.newMat4f;
 import static org.andork.q.QAutorun.autorun;
 
@@ -119,7 +120,6 @@ import org.andork.bind.Binder;
 import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
 import org.andork.bind.QObjectAttributeBinder;
-import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.HashSets;
 import org.andork.collect.LinkedListMultiMap;
 import org.andork.collect.MultiMap;
@@ -158,6 +158,7 @@ import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PickXform;
 import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.Vecmath;
+import org.andork.model.Cell;
 import org.andork.q.QArrayList;
 import org.andork.q.QAutorun;
 import org.andork.q.QLinkedHashMap;
@@ -1512,6 +1513,13 @@ public class BreakoutMainView {
 		return project == null ? null : project.get(attribute);
 	}
 
+	private <T> Cell<T> rootAttribute(QSpec.Attribute<T> attribute) {
+		return Cell.from(() -> {
+			QObject<RootModel> root = rootModelBinder.get();
+			return root == null ? null : root.attribute(attribute);
+		});
+	}
+
 	private <T> T getRootAttribute(QSpec.Attribute<T> attribute) {
 		QObject<RootModel> root = rootModelBinder.get();
 		return root == null ? null : root.get(attribute);
@@ -2307,13 +2315,13 @@ public class BreakoutMainView {
 			menuBar.add(debugMenu);
 			JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
 			debugMenu.add(openLogDirectoryMenuItem);
-			JCheckBoxMenuItem wireframeMenuItem = boundCheckBoxMenuItem(rootModelBinder, RootModel.wireframe);
+			JCheckBoxMenuItem wireframeMenuItem = boundCheckBoxMenuItem(rootAttribute(RootModel.wireframe));
 			debugMenu.add(wireframeMenuItem);
 			JCheckBoxMenuItem showSpatialIndexMenuItem =
-				boundCheckBoxMenuItem(rootModelBinder, RootModel.showSpatialIndex);
+				boundCheckBoxMenuItem(rootAttribute(RootModel.showSpatialIndex));
 			debugMenu.add(showSpatialIndexMenuItem);
 			JCheckBoxMenuItem showCenterOfOrbitMenuItem =
-				boundCheckBoxMenuItem(rootModelBinder, RootModel.showCenterOfOrbit);
+				boundCheckBoxMenuItem(rootAttribute(RootModel.showCenterOfOrbit));
 			debugMenu.add(showCenterOfOrbitMenuItem);
 			debugMenu.add(new JMenuItem(new EditSettingsFileAction(this)));
 			debugMenu.add(new JMenuItem(new EditSwapFileAction(this)));
@@ -2324,7 +2332,7 @@ public class BreakoutMainView {
 			JMenuItem checkForUpdateItem = new JMenuItem(checkForUpdateAction);
 			helpMenu.add(checkForUpdateItem);
 			JMenuItem checkForUpdatesOnStartupItem =
-				boundCheckBoxMenuItem(rootModelBinder, RootModel.checkForUpdatesOnStartup);
+				boundCheckBoxMenuItem(rootAttribute(RootModel.checkForUpdatesOnStartup));
 			helpMenu.add(checkForUpdatesOnStartupItem);
 
 			JMenuItem noRecentFilesMenuItem = new JMenuItem();
@@ -2578,10 +2586,9 @@ public class BreakoutMainView {
 		constructing.value = false;
 	}
 
-	private static <S extends QSpec<S>> JCheckBoxMenuItem
-		boundCheckBoxMenuItem(Binder<QObject<S>> binder, QSpec.Attribute<Boolean> attribute) {
+	private static JCheckBoxMenuItem boundCheckBoxMenuItem(Cell<Boolean> cell) {
 		JCheckBoxMenuItem item = new JCheckBoxMenuItem();
-		new ButtonSelectedBinder(item).bind(new QObjectAttributeBinder<>(attribute).bind(binder));
+		bindSelected(item, cell);
 		return item;
 	}
 
