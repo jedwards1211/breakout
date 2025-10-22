@@ -1798,6 +1798,10 @@ public class BreakoutMainView {
 			canvas.addMouseWheelListener(canvasMouseAdapterWrapper);
 
 			mouseLooper = new MouseLooper();
+			autorun(
+				() -> mouseLooper
+					.setLoopingEnabled(Boolean.TRUE.equals(getRootAttribute(RootModel.enableMouseLooper))));
+
 			windowSelectionMouseHandler = new WindowSelectionMouseHandler(new WindowSelectionMouseHandler.Context() {
 				@Override
 				public void endSelection() {
@@ -2311,6 +2315,11 @@ public class BreakoutMainView {
 			editMenu.add(new JMenuItem(addGlowingShotsToSelectionAction));
 			editMenu.add(new JMenuItem(toggleGlowingShotsSelectedAction));
 
+			JMenu settingsMenu = new JMenu();
+			menuBar.add(settingsMenu);
+			JMenuItem enableMouseLooperMenuItem = boundCheckBoxMenuItem(rootAttribute(RootModel.enableMouseLooper));
+			settingsMenu.add(enableMouseLooperMenuItem);
+
 			JMenu debugMenu = new JMenu();
 			menuBar.add(debugMenu);
 			JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
@@ -2383,11 +2392,13 @@ public class BreakoutMainView {
 					localizer.setText(noRecentFilesMenuItem, "noRecentFilesMenuItem.text");
 
 					localizer.setText(debugMenu, "debugMenu.text");
+					localizer.setText(settingsMenu, "settingsMenu.text");
 					localizer.setText(helpMenu, "helpMenu.text");
 					localizer.setText(showSpatialIndexMenuItem, "showSpatialIndexMenuItem.text");
 					localizer.setText(wireframeMenuItem, "wireframeMenuItem.text");
 					localizer.setText(showCenterOfOrbitMenuItem, "showCenterOfOrbitMenuItem.text");
 					localizer.setText(checkForUpdatesOnStartupItem, "checkForUpdatesOnStartupItem.text");
+					localizer.setText(enableMouseLooperMenuItem, "enableMouseLooperMenuItem.text");
 				});
 			});
 

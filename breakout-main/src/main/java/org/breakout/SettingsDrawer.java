@@ -331,6 +331,11 @@ public class SettingsDrawer extends Drawer {
 		});
 	}
 
+	private <T> T getRootAttribute(QSpec.Attribute<T> attribute) {
+		QObject<RootModel> root = rootModel.get();
+		return root == null ? null : root.get(attribute);
+	}
+
 	private <T> Cell<T> rootAttribute(QSpec.Attribute<T> attribute) {
 		return Cell.from(() -> {
 			QObject<RootModel> root = rootModel.get();
@@ -1030,9 +1035,14 @@ public class SettingsDrawer extends Drawer {
 	}
 
 	private void createListeners() {
-		new PlotAxisController(distColorationAxis).removeMouseWheelListener();
-		new PlotAxisController(paramColorationAxis).removeMouseWheelListener();
-		new PlotAxisController(glowDistAxis).removeMouseWheelListener();
+		for (PlotAxis axis : new PlotAxis[] { distColorationAxis, paramColorationAxis, glowDistAxis }) {
+			PlotAxisController controller = new PlotAxisController(axis);
+			controller.removeMouseWheelListener();
+			autorun(
+				() -> controller
+					.getMouseLooper()
+					.setLoopingEnabled(Boolean.TRUE.equals(getRootAttribute(RootModel.enableMouseLooper))));
+		}
 
 		numSamplesSlider.addChangeListener(new ChangeListener() {
 			@Override

@@ -149,6 +149,10 @@ public class PlotAxisController {
 		return mouseHandler;
 	}
 
+	public MouseLooper getMouseLooper() {
+		return mouseLooper;
+	}
+
 	public PlotAxis getView() {
 		return view;
 	}
