@@ -1,5 +1,7 @@
 package org.breakout;
 
+import static org.andork.bind.ui.BindUI.bindSelected;
+
 import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.Dialog.ModalityType;
@@ -17,8 +19,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import org.andork.awt.I18n.Localizer;
-import org.andork.bind.QObjectAttributeBinder;
-import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.io.Downloader;
 import org.andork.swing.FromEDT;
 import org.andork.swing.JOptionPaneBuilder;
@@ -97,10 +97,9 @@ public class CheckForUpdateAction extends AbstractAction {
 				}
 				if (result instanceof UpdateCheck.AvailableResult) {
 					JCheckBox checkForUpdatesOnStartupCheckbox = new JCheckBox("Check for Updates on Startup");
-					new ButtonSelectedBinder(checkForUpdatesOnStartupCheckbox)
-						.bind(
-							new QObjectAttributeBinder<>(RootModel.checkForUpdatesOnStartup)
-								.bind(mainView.rootModelBinder));
+					bindSelected(
+						checkForUpdatesOnStartupCheckbox,
+						mainView.getRootModelCell().attribute(RootModel.checkForUpdatesOnStartup));
 
 					int choice =
 						new JOptionPaneBuilder()

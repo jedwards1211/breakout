@@ -115,8 +115,6 @@ import org.andork.awt.layout.MultilineLabelHolder;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.SideConstraint;
 import org.andork.awt.layout.SideConstraintLayoutDelegate;
-import org.andork.bind.Binder;
-import org.andork.bind.DefaultBinder;
 import org.andork.collect.HashSets;
 import org.andork.collect.LinkedListMultiMap;
 import org.andork.collect.MultiMap;
@@ -162,6 +160,7 @@ import org.andork.q.QCell;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
+import org.andork.q.QObjectCell;
 import org.andork.q.QSpec;
 import org.andork.q.QSpec.Attribute;
 import org.andork.ref.Ref;
@@ -626,7 +625,7 @@ public class BreakoutMainView {
 					final QObject<ProjectModel> projectModel = ProjectModel.newInstance();
 
 					projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
-					projectModelBinder.set(projectModel);
+					projectModelCell.set(projectModel);
 
 					surveyDrawer.table().getModel().clear();
 
@@ -767,7 +766,7 @@ public class BreakoutMainView {
 					}
 
 					projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
-					projectModelBinder.set(projectModel);
+					projectModelCell.set(projectModel);
 
 					float[] viewXform = projectModel.get(ProjectModel.viewXform);
 					if (viewXform != null) {
@@ -1131,8 +1130,8 @@ public class BreakoutMainView {
 						settingsDrawer.setDateRange(finalMinDaysSince1800, finalMaxDaysSince1800);
 					}
 
-					projectModelBinder.update(true);
-					rootModelBinder.update(true);
+					projectModelCell.fireChanged();
+					rootModelCell.fireChanged();
 
 					float[] center = new float[3];
 					Rectmath.center(model.getTree().getRoot().mbr(), center);
@@ -1502,26 +1501,9 @@ public class BreakoutMainView {
 	final float[] p1 = new float[3];
 	final float[] p2 = new float[3];
 
-	final Binder<QObject<RootModel>> rootModelBinder = new DefaultBinder<>();
+	final QObjectCell<RootModel> rootModelCell = new QObjectCell<>((QObject<RootModel>) null);
 
-	final Binder<QObject<ProjectModel>> projectModelBinder = new DefaultBinder<>();
-
-	private <T> T getProjectAttribute(QSpec.Attribute<T> attribute) {
-		QObject<ProjectModel> project = projectModelBinder.get();
-		return project == null ? null : project.get(attribute);
-	}
-
-	private <T> Cell<T> rootAttribute(QSpec.Attribute<T> attribute) {
-		return Cell.from(() -> {
-			QObject<RootModel> root = rootModelBinder.get();
-			return root == null ? null : root.attribute(attribute);
-		});
-	}
-
-	private <T> T getRootAttribute(QSpec.Attribute<T> attribute) {
-		QObject<RootModel> root = rootModelBinder.get();
-		return root == null ? null : root.get(attribute);
-	}
+	final QObjectCell<ProjectModel> projectModelCell = new QObjectCell<>((QObject<ProjectModel>) null);
 
 	final AnimationQueue cameraAnimationQueue = new AnimationQueue();
 
@@ -1704,11 +1686,11 @@ public class BreakoutMainView {
 	};
 
 	private <T> QAutorun autorunProjectAttribute(Attribute<T> attribute, Consumer<T> runner) {
-		return autorun(() -> runner.accept(getProjectAttribute(attribute)));
+		return autorun(() -> runner.accept(projectModelCell.get(attribute)));
 	}
 
 	private <T> QAutorun autorunRootAttribute(Attribute<T> attribute, Consumer<T> runner) {
-		return autorun(() -> runner.accept(getRootAttribute(attribute)));
+		return autorun(() -> runner.accept(rootModelCell.get(attribute)));
 	}
 
 	public BreakoutMainView() {
@@ -1798,7 +1780,7 @@ public class BreakoutMainView {
 			mouseLooper = new MouseLooper();
 			autorun(
 				() -> mouseLooper
-					.setLoopingEnabled(Boolean.TRUE.equals(getRootAttribute(RootModel.enableMouseLooper))));
+					.setLoopingEnabled(Boolean.TRUE.equals(rootModelCell.get(RootModel.enableMouseLooper))));
 
 			windowSelectionMouseHandler = new WindowSelectionMouseHandler(new WindowSelectionMouseHandler.Context() {
 				@Override
@@ -1865,7 +1847,7 @@ public class BreakoutMainView {
 			taskListDrawer.addTaskService(ioTaskService);
 			taskListDrawer.addTo(mainPanel);
 
-			settingsDrawer = new SettingsDrawer(i18n, rootModelBinder, projectModelBinder);
+			settingsDrawer = new SettingsDrawer(i18n, rootModelCell, projectModelCell);
 			settingsDrawer.addTo(mainPanel);
 
 			surveyDrawer.table().getModel().setEditable(false);
@@ -1978,14 +1960,14 @@ public class BreakoutMainView {
 				}
 			});
 
-			surveyDrawer.setModel(() -> getProjectAttribute(ProjectModel.surveyDrawer));
-			miniSurveyDrawer.setModel(() -> getProjectAttribute(ProjectModel.miniSurveyDrawer));
-			settingsDrawer.setModel(() -> getProjectAttribute(ProjectModel.settingsDrawer));
-			taskListDrawer.setModel(() -> getProjectAttribute(ProjectModel.taskListDrawer));
+			surveyDrawer.setModel(() -> projectModelCell.get(ProjectModel.surveyDrawer));
+			miniSurveyDrawer.setModel(() -> projectModelCell.get(ProjectModel.miniSurveyDrawer));
+			settingsDrawer.setModel(() -> projectModelCell.get(ProjectModel.settingsDrawer));
+			taskListDrawer.setModel(() -> projectModelCell.get(ProjectModel.taskListDrawer));
 
 			autorun(() -> {
-				getProjectAttribute(ProjectModel.leads);
-				getProjectAttribute(ProjectModel.showCheckedLeads);
+				projectModelCell.get(ProjectModel.leads);
+				projectModelCell.get(ProjectModel.showCheckedLeads);
 				if (!constructing.value)
 					rebuildLeadIndex();
 			});
@@ -2135,7 +2117,7 @@ public class BreakoutMainView {
 			});
 
 			autorun(() -> {
-				Integer sliderValue = getRootAttribute(RootModel.mouseSensitivity);
+				Integer sliderValue = rootModelCell.get(RootModel.mouseSensitivity);
 				if (sliderValue == null)
 					return;
 				Float distance = distanceToClosestNode.get();
@@ -2145,7 +2127,7 @@ public class BreakoutMainView {
 			});
 
 			autorun(() -> {
-				Integer sliderValue = getRootAttribute(RootModel.mouseWheelSensitivity);
+				Integer sliderValue = rootModelCell.get(RootModel.mouseWheelSensitivity);
 				if (sliderValue == null)
 					return;
 				Float distance = distanceToClosestNode.get();
@@ -2207,8 +2189,8 @@ public class BreakoutMainView {
 			});
 
 			autorun(() -> {
-				QMap<ColorParam, LinearAxisConversion, ?> paramRanges = getProjectAttribute(ProjectModel.paramRanges);
-				ColorParam colorParam = getProjectAttribute(ProjectModel.colorParam);
+				QMap<ColorParam, LinearAxisConversion, ?> paramRanges = projectModelCell.get(ProjectModel.paramRanges);
+				ColorParam colorParam = projectModelCell.get(ProjectModel.colorParam);
 				LinearAxisConversion range =
 					paramRanges == null || colorParam == null ? null : paramRanges.get(colorParam);
 				if (model3d != null && range != null) {
@@ -2315,23 +2297,24 @@ public class BreakoutMainView {
 
 			JMenu settingsMenu = new JMenu();
 			menuBar.add(settingsMenu);
-			JMenuItem enableMouseLooperMenuItem = boundCheckBoxMenuItem(rootAttribute(RootModel.enableMouseLooper));
+			JMenuItem enableMouseLooperMenuItem =
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.enableMouseLooper));
 			settingsMenu.add(enableMouseLooperMenuItem);
 			JMenuItem hideCanvasWhileMenuOpenMenuItem =
-				boundCheckBoxMenuItem(rootAttribute(RootModel.hideCanvasWhileMenuOpen));
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.hideCanvasWhileMenuOpen));
 			settingsMenu.add(hideCanvasWhileMenuOpenMenuItem);
 
 			JMenu debugMenu = new JMenu();
 			menuBar.add(debugMenu);
 			JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
 			debugMenu.add(openLogDirectoryMenuItem);
-			JCheckBoxMenuItem wireframeMenuItem = boundCheckBoxMenuItem(rootAttribute(RootModel.wireframe));
+			JCheckBoxMenuItem wireframeMenuItem = boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.wireframe));
 			debugMenu.add(wireframeMenuItem);
 			JCheckBoxMenuItem showSpatialIndexMenuItem =
-				boundCheckBoxMenuItem(rootAttribute(RootModel.showSpatialIndex));
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.showSpatialIndex));
 			debugMenu.add(showSpatialIndexMenuItem);
 			JCheckBoxMenuItem showCenterOfOrbitMenuItem =
-				boundCheckBoxMenuItem(rootAttribute(RootModel.showCenterOfOrbit));
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.showCenterOfOrbit));
 			debugMenu.add(showCenterOfOrbitMenuItem);
 			debugMenu.add(new JMenuItem(new EditSettingsFileAction(this)));
 			debugMenu.add(new JMenuItem(new EditSwapFileAction(this)));
@@ -2342,7 +2325,7 @@ public class BreakoutMainView {
 			JMenuItem checkForUpdateItem = new JMenuItem(checkForUpdateAction);
 			helpMenu.add(checkForUpdateItem);
 			JMenuItem checkForUpdatesOnStartupItem =
-				boundCheckBoxMenuItem(rootAttribute(RootModel.checkForUpdatesOnStartup));
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.checkForUpdatesOnStartup));
 			helpMenu.add(checkForUpdatesOnStartupItem);
 
 			JMenuItem noRecentFilesMenuItem = new JMenuItem();
@@ -2557,7 +2540,7 @@ public class BreakoutMainView {
 				.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
 
 			autorun(() -> {
-				Integer desiredNumSamples = getRootAttribute(RootModel.desiredNumSamples);
+				Integer desiredNumSamples = rootModelCell.get(RootModel.desiredNumSamples);
 				if (desiredNumSamples == null)
 					return;
 				renderer.desiredNumSamples(desiredNumSamples);
@@ -2604,7 +2587,7 @@ public class BreakoutMainView {
 		for (int i = 0; i < menuBar.getMenuCount(); i++) {
 			JMenu menu = menuBar.getMenu(i);
 			menu.getModel().addItemListener(e -> {
-				if (!Boolean.TRUE.equals(getRootAttribute(RootModel.hideCanvasWhileMenuOpen))) {
+				if (!Boolean.TRUE.equals(rootModelCell.get(RootModel.hideCanvasWhileMenuOpen))) {
 					return;
 				}
 				for (int j = 0; j < menuBar.getMenuCount(); j++) {
@@ -2986,19 +2969,19 @@ public class BreakoutMainView {
 	}
 
 	public QObject<ProjectModel> getProjectModel() {
-		return projectModelBinder.get();
+		return projectModelCell.get();
 	}
 
-	public Binder<QObject<ProjectModel>> getProjectModelBinder() {
-		return projectModelBinder;
+	public QObjectCell<ProjectModel> getProjectModelCell() {
+		return projectModelCell;
 	}
 
 	public QObject<RootModel> getRootModel() {
-		return rootModelBinder.get();
+		return rootModelCell.get();
 	}
 
-	public Binder<QObject<RootModel>> getRootModelBinder() {
-		return rootModelBinder;
+	public QObjectCell<RootModel> getRootModelCell() {
+		return rootModelCell;
 	}
 
 	public JoglScene getScene() {
@@ -3360,7 +3343,7 @@ public class BreakoutMainView {
 			if (currentModel != null) {
 				currentModel.changeSupport().removePropertyChangeListener(rootModelChangeHandler);
 			}
-			rootModelBinder.set(rootModel);
+			rootModelCell.set(rootModel);
 			if (rootModel != null) {
 				rootModel.changeSupport().addPropertyChangeListener(rootModelChangeHandler);
 			}

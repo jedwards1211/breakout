@@ -13,8 +13,11 @@ import java.util.function.Supplier;
 
 import javax.swing.AbstractButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JSlider;
+import javax.swing.JSpinner;
 import javax.swing.event.ChangeListener;
+import javax.swing.text.JTextComponent;
 
 import org.andork.awt.layout.BetterCardLayout;
 import org.andork.func.Bimapper;
@@ -211,9 +214,66 @@ public class BindUI {
 		};
 	}
 
+	public static <N extends Number> AutoCloseable bindValue(JSpinner spinner, Class<N> valueClass, Cell<N> cell) {
+		Ref<Boolean> changing = new Ref<>(false);
+		QAutorun autorun = autorun(() -> {
+			if (changing.value)
+				return;
+			try {
+				changing.value = true;
+				N value = valueClass.cast(cell.get());
+				if (value != null && spinner.getValue() != value)
+					spinner.setValue(value);
+			} finally {
+				changing.value = false;
+			}
+		});
+		ChangeListener listener = (e) -> {
+			if (changing.value)
+				return;
+			try {
+				changing.value = true;
+				cell.set(valueClass.cast(spinner.getValue()));
+			} finally {
+				changing.value = false;
+			}
+		};
+		spinner.addChangeListener(listener);
+		return () -> {
+			autorun.close();
+			spinner.removeChangeListener(listener);
+		};
+	}
+
 	public static AutoCloseable bindLayout(Container parent, BetterCardLayout layout, Cell<?> cell) {
 		return autorun(() -> {
 			layout.show(parent, cell.get());
 		});
+	}
+
+	public static AutoCloseable bindText(JLabel label, Cell<String> cell) {
+		return autorun(() -> {
+			label.setText(cell.get());
+		});
+	}
+
+	public static AutoCloseable bindText(AbstractButton button, Cell<String> cell) {
+		return autorun(() -> {
+			button.setText(cell.get());
+		});
+	}
+
+	public static AutoCloseable bindText(JTextComponent comp, Cell<String> cell) {
+		QAutorun autorun = autorun(() -> {
+			comp.setText(cell.get());
+		});
+		PropertyChangeListener listener = e -> {
+			cell.set(comp.getText());
+		};
+		comp.addPropertyChangeListener("text", listener);
+		return () -> {
+			autorun.close();
+			comp.removePropertyChangeListener("text", listener);
+		};
 	}
 }

@@ -24,6 +24,13 @@ public class QCell<T> extends QElement implements Cell<T> {
 		dependency.fireChanged();
 	}
 
+	/**
+	 * Force a change event to be fired, even though the value remains the same.
+	 */
+	public void fireChanged() {
+		dependency.fireChanged();
+	}
+
 	@Override
 	public QElement deepClone(Mapper<Object, Object> childMapper) {
 		dependency.depend();

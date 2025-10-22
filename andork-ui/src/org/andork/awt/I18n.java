@@ -41,9 +41,6 @@ import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import org.andork.bind.Binder;
-import org.andork.util.Java7.Objects;
-
 public class I18n {
 	private static class ActionNameUpdater implements I18nUpdater<Action> {
 		String key;
@@ -134,92 +131,6 @@ public class I18n {
 		}
 	}
 
-	public static class LocalizedFormattedStringBinder extends Binder<String> implements I18nUpdater<String> {
-		Localizer localizer;
-		String key;
-		Binder<?>[] argBinders;
-		Object[] args;
-		String value;
-
-		public LocalizedFormattedStringBinder(Localizer localizer, String key, Binder<?>... argBinders) {
-			this.localizer = localizer;
-			this.key = key;
-			this.argBinders = argBinders;
-
-			localizer.register(key, this);
-		}
-
-		@Override
-		public String get() {
-			return value;
-		}
-
-		@Override
-		public void set(String newValue) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void update(boolean force) {
-			boolean updateNeeded = force;
-
-			for (int i = 0; i < argBinders.length; i++) {
-				Object paramValue = argBinders[i].get();
-				if (!Objects.equals(args[i], paramValue)) {
-					args[i] = value;
-					updateNeeded = true;
-				}
-			}
-
-			if (updateNeeded) {
-				value = localizer.getFormattedString(key, args);
-				updateDownstream(force);
-			}
-		}
-
-		@Override
-		public void updateI18n(Localizer localizer, String localizedObject) {
-			update(true);
-		}
-	}
-
-	public static class LocalizedStringBinder extends Binder<String> implements I18nUpdater<String> {
-		Localizer localizer;
-		String key;
-		String value;
-
-		public LocalizedStringBinder(Localizer localizer, String key) {
-			this.localizer = localizer;
-			this.key = key;
-
-			localizer.register(key, this);
-		}
-
-		@Override
-		public String get() {
-			return value;
-		}
-
-		@Override
-		public void set(String newValue) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void update(boolean force) {
-			String newText = localizer.getString(key);
-			if (!Objects.equals(newText, value) || force) {
-				value = newText;
-				updateDownstream(force);
-			}
-		}
-
-		@Override
-		public void updateI18n(Localizer localizer, String localizedObject) {
-			update(true);
-		}
-	}
-
 	public class Localizer {
 		public final String name;
 
@@ -235,18 +146,11 @@ public class I18n {
 			updateBundle();
 		}
 
-		public Binder<String> bindFormattedString(String key, Binder<?>... argBinders) {
-			return new LocalizedFormattedStringBinder(this, key, argBinders);
-		}
-
-		public Binder<String> bindString(String key) {
-			return new LocalizedStringBinder(this, key);
-		}
-
 		public String getFormattedString(String key, Object... args) {
 			try {
 				return MessageFormat.format(getString(key), args);
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				if (missingKeys.add(key)) {
 					logger.log(Level.WARNING, "Missing I18n key: \"" + key + '"', ex);
 				}
@@ -257,7 +161,8 @@ public class I18n {
 		public String getString(String key) {
 			try {
 				return bundle == null ? key : bundle.getString(key);
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				if (missingKeys.add(key)) {
 					logger.log(Level.WARNING, "Missing I18n key: \"" + key + '"', ex);
 				}
@@ -328,7 +233,8 @@ public class I18n {
 
 			try {
 				bundle = ResourceBundle.getBundle(name, locale);
-			} catch (Exception ex) {
+			}
+			catch (Exception ex) {
 				ex.printStackTrace();
 			}
 		}

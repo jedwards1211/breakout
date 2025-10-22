@@ -21,7 +21,8 @@
  *******************************************************************************/
 package org.andork.awt.layout;
 
-import static org.andork.bind.ui.BindUI.*;
+import static org.andork.bind.ui.BindUI.bindSelected;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -39,7 +40,6 @@ import javax.swing.JLayeredPane;
 import javax.swing.JToggleButton;
 import javax.swing.plaf.basic.BasicButtonUI;
 
-import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.model.Cell;
 import org.andork.q.QObject;
 import org.andork.swing.PaintablePanel;
@@ -60,8 +60,6 @@ public class Drawer extends PaintablePanel {
 
 	Supplier<QObject<DrawerModel>> getModel;
 	List<AutoCloseable> autoruns = new ArrayList<>();
-	ButtonSelectedBinder pinButtonBinder;
-	ButtonSelectedBinder maxButtonBinder;
 
 	public Drawer() {
 		setOpaque(true);
