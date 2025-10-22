@@ -2319,6 +2319,9 @@ public class BreakoutMainView {
 			menuBar.add(settingsMenu);
 			JMenuItem enableMouseLooperMenuItem = boundCheckBoxMenuItem(rootAttribute(RootModel.enableMouseLooper));
 			settingsMenu.add(enableMouseLooperMenuItem);
+			JMenuItem hideCanvasWhileMenuOpenMenuItem =
+				boundCheckBoxMenuItem(rootAttribute(RootModel.hideCanvasWhileMenuOpen));
+			settingsMenu.add(hideCanvasWhileMenuOpenMenuItem);
 
 			JMenu debugMenu = new JMenu();
 			menuBar.add(debugMenu);
@@ -2347,12 +2350,7 @@ public class BreakoutMainView {
 			JMenuItem noRecentFilesMenuItem = new JMenuItem();
 			noRecentFilesMenuItem.setEnabled(false);
 
-			if (!Pattern
-				.compile("mac os x", Pattern.CASE_INSENSITIVE)
-				.matcher(System.getProperty("os.name"))
-				.matches()) {
-				hideCanvasWhileMenuOpen();
-			}
+			hideCanvasWhileMenuOpen();
 
 			autorunRootAttribute(RootModel.recentProjectFiles, newValue -> {
 				openRecentMenu.removeAll();
@@ -2399,6 +2397,7 @@ public class BreakoutMainView {
 					localizer.setText(showCenterOfOrbitMenuItem, "showCenterOfOrbitMenuItem.text");
 					localizer.setText(checkForUpdatesOnStartupItem, "checkForUpdatesOnStartupItem.text");
 					localizer.setText(enableMouseLooperMenuItem, "enableMouseLooperMenuItem.text");
+					localizer.setText(hideCanvasWhileMenuOpenMenuItem, "hideCanvasWhileMenuOpenMenuItem.text");
 				});
 			});
 
@@ -2607,6 +2606,9 @@ public class BreakoutMainView {
 		for (int i = 0; i < menuBar.getMenuCount(); i++) {
 			JMenu menu = menuBar.getMenu(i);
 			menu.getModel().addItemListener(e -> {
+				if (!Boolean.TRUE.equals(getRootAttribute(RootModel.hideCanvasWhileMenuOpen))) {
+					return;
+				}
 				for (int j = 0; j < menuBar.getMenuCount(); j++) {
 					if (menuBar.getMenu(j).isSelected()) {
 						canvas.setVisible(false);

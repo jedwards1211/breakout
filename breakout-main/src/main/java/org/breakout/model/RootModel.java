@@ -62,6 +62,8 @@ public final class RootModel extends QSpec<RootModel> {
 	public static final Attribute<Boolean> showSpatialIndex = newAttribute(Boolean.class, "showSpatialIndex");
 	public static final Attribute<Boolean> showCenterOfOrbit = newAttribute(Boolean.class, "showCenterOfOrbit");
 	public static final Attribute<Boolean> enableMouseLooper = newAttribute(Boolean.class, "enableMouseLooper");
+	public static final Attribute<Boolean> hideCanvasWhileMenuOpen =
+		newAttribute(Boolean.class, "hideCanvasWhileMenuOpen");
 	public static final Attribute<Boolean> wireframe = newAttribute(Boolean.class, "wireframe");
 	public static final Attribute<String> mapboxAccessToken = newAttribute(String.class, "mapboxAccessToken");
 	public static final Attribute<SearchMode> searchMode = newAttribute(SearchMode.class, "searchMode");
@@ -113,6 +115,8 @@ public final class RootModel extends QSpec<RootModel> {
 		rootModel.setIfNull(RootModel.showSpatialIndex, false);
 		rootModel.setIfNull(RootModel.showCenterOfOrbit, false);
 		rootModel.setIfNull(RootModel.enableMouseLooper, !System.getProperty("os.name").toLowerCase().contains("mac"));
+		rootModel
+			.setIfNull(RootModel.hideCanvasWhileMenuOpen, !System.getProperty("os.name").toLowerCase().contains("mac"));
 		rootModel.setIfNull(RootModel.wireframe, false);
 		rootModel.setIfNull(RootModel.searchMode, SearchMode.AUTO);
 		rootModel.setIfNull(RootModel.checkForUpdatesOnStartup, true);
