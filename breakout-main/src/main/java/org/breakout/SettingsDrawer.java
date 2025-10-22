@@ -48,7 +48,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.function.Supplier;
 
 import javax.swing.AbstractButton;
 import javax.swing.DefaultBoundedRangeModel;
@@ -89,7 +88,7 @@ import org.andork.math.misc.Fitting;
 import org.andork.model.Cell;
 import org.andork.q.QHashMap;
 import org.andork.q.QObject;
-import org.andork.q.QSpec;
+import org.andork.q.QObjectCell;
 import org.andork.swing.CellRenderers;
 import org.andork.swing.FloatSlider;
 import org.andork.swing.OnEDT;
@@ -228,13 +227,10 @@ public class SettingsDrawer extends Drawer {
 
 	private JComboBox<GradientModel> paramGradientComboBox;
 
-	Supplier<QObject<RootModel>> rootModel;
-	Supplier<QObject<ProjectModel>> projectModel;
+	QObjectCell<RootModel> rootModel;
+	QObjectCell<ProjectModel> projectModel;
 
-	public SettingsDrawer(
-		final I18n i18n,
-		Supplier<QObject<RootModel>> rootModel,
-		Supplier<QObject<ProjectModel>> projectModel) {
+	public SettingsDrawer(final I18n i18n, QObjectCell<RootModel> rootModel, QObjectCell<ProjectModel> projectModel) {
 
 		this.rootModel = rootModel;
 		this.projectModel = projectModel;
@@ -294,7 +290,7 @@ public class SettingsDrawer extends Drawer {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			Date date = ColorParam.calcDateFromDaysSince1800(getProjectAttribute(ProjectModel.maxDate));
+			Date date = ColorParam.calcDateFromDaysSince1800(projectModel.get(ProjectModel.maxDate));
 			if (date == null) {
 				date = ColorParam.calcDateFromDaysSince1800(maxDateSlider.getFloatMaximum());
 				if (date == null)
@@ -308,48 +304,19 @@ public class SettingsDrawer extends Drawer {
 			if (date.compareTo(now) >= 0) {
 				date = now;
 			}
-			setProjectAttribute(ProjectModel.maxDate, ColorParam.calcDaysSince1800(date));
+			projectModel.set(ProjectModel.maxDate, ColorParam.calcDaysSince1800(date));
 		}
 	}
 
 	IncMaxDate maxDateAnimation = new IncMaxDate(Calendar.MONTH, false);
 
-	private <T> T getProjectAttribute(QSpec.Attribute<T> attribute) {
-		QObject<ProjectModel> project = projectModel.get();
-		return project == null ? null : project.get(attribute);
-	}
-
-	private <T> T setProjectAttribute(QSpec.Attribute<T> attribute, T value) {
-		QObject<ProjectModel> project = projectModel.get();
-		return project == null ? null : project.set(attribute, value);
-	}
-
-	private <T> Cell<T> projectAttribute(QSpec.Attribute<T> attribute) {
-		return Cell.from(() -> {
-			QObject<ProjectModel> project = projectModel.get();
-			return project == null ? null : project.attribute(attribute);
-		});
-	}
-
-	private <T> T getRootAttribute(QSpec.Attribute<T> attribute) {
-		QObject<RootModel> root = rootModel.get();
-		return root == null ? null : root.get(attribute);
-	}
-
-	private <T> Cell<T> rootAttribute(QSpec.Attribute<T> attribute) {
-		return Cell.from(() -> {
-			QObject<RootModel> root = rootModel.get();
-			return root == null ? null : root.attribute(attribute);
-		});
-	}
-
 	private void createBindings() {
-		bindBackground(backgroundColorButton, projectAttribute(ProjectModel.backgroundColor));
-		bindBackground(stationLabelColorButton, projectAttribute(ProjectModel.stationLabelColor));
-		bindBackground(centerlineColorButton, projectAttribute(ProjectModel.centerlineColor));
+		bindBackground(backgroundColorButton, projectModel.attribute(ProjectModel.backgroundColor));
+		bindBackground(stationLabelColorButton, projectModel.attribute(ProjectModel.stationLabelColor));
+		bindBackground(centerlineColorButton, projectModel.attribute(ProjectModel.centerlineColor));
 
 		bindSelectedMap(
-			projectAttribute(ProjectModel.cameraView),
+			projectModel.attribute(ProjectModel.cameraView),
 			new MapLiteral<CameraView, AbstractButton>()
 				.map(CameraView.PLAN, viewButtonsPanel.getPlanButton())
 				.map(CameraView.SIDEWAYS_PLAN, viewButtonsPanel.getSidewaysPlanButton())
@@ -373,15 +340,15 @@ public class SettingsDrawer extends Drawer {
 
 		bindValue(
 			mouseSensitivitySlider,
-			Cell.compose(rootAttribute(RootModel.mouseSensitivity), int2float),
+			Cell.compose(rootModel.attribute(RootModel.mouseSensitivity), int2float),
 			new ExponentialFloatBimapper(mouseSensitivityCurve));
 		bindValue(
 			mouseWheelSensitivitySlider,
-			Cell.compose(rootAttribute(RootModel.mouseWheelSensitivity), int2float),
+			Cell.compose(rootModel.attribute(RootModel.mouseWheelSensitivity), int2float),
 			new ExponentialFloatBimapper(wheelSensitivityCurve));
 
 		autorun(() -> {
-			GradientModel gradient = getProjectAttribute(ProjectModel.paramGradient);
+			GradientModel gradient = projectModel.get(ProjectModel.paramGradient);
 			if (gradient == null)
 				return;
 			paramColorationAxisPanel
@@ -392,9 +359,9 @@ public class SettingsDrawer extends Drawer {
 						.linear(gradient.fractions, gradient.colors));
 
 		});
-		bindValue(colorParamSelector, projectAttribute(ProjectModel.colorParam));
-		bindLayout(colorParamDetailsPanel, colorParamDetailsLayout, projectAttribute(ProjectModel.colorParam));
-		bindLayout(colorParamButtonsPanel, colorParamButtonsLayout, projectAttribute(ProjectModel.colorParam));
+		bindValue(colorParamSelector, projectModel.attribute(ProjectModel.colorParam));
+		bindLayout(colorParamDetailsPanel, colorParamDetailsLayout, projectModel.attribute(ProjectModel.colorParam));
+		bindLayout(colorParamButtonsPanel, colorParamButtonsLayout, projectModel.attribute(ProjectModel.colorParam));
 
 		paramColorationAxis.bind(Cell.from(() -> {
 			QObject<ProjectModel> project = projectModel.get();
@@ -469,7 +436,7 @@ public class SettingsDrawer extends Drawer {
 		}));
 
 		Bimapper<LinearAxisConversion, LinearAxisConversion> distConversionBimapper = Bimapper.from((systemConv) -> {
-			Unit<Length> displayLengthUnit = getProjectAttribute(ProjectModel.displayLengthUnit);
+			Unit<Length> displayLengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
 			if (systemConv == null)
 				return null;
 			if (displayLengthUnit == null)
@@ -480,7 +447,7 @@ public class SettingsDrawer extends Drawer {
 				Length.meters(systemConv.invert(1)).get(displayLengthUnit),
 				1);
 		}, (displayConv) -> {
-			Unit<Length> displayLengthUnit = getProjectAttribute(ProjectModel.displayLengthUnit);
+			Unit<Length> displayLengthUnit = projectModel.get(ProjectModel.displayLengthUnit);
 			if (displayConv == null)
 				return null;
 			if (displayLengthUnit == null)
@@ -492,18 +459,18 @@ public class SettingsDrawer extends Drawer {
 				1);
 		});
 
-		distColorationAxis.bind(projectAttribute(ProjectModel.distRange), distConversionBimapper);
+		distColorationAxis.bind(projectModel.attribute(ProjectModel.distRange), distConversionBimapper);
 
-		bindValue(highlightModeSelector, projectAttribute(ProjectModel.highlightMode));
-		glowDistAxis.bind(projectAttribute(ProjectModel.highlightRange), distConversionBimapper);
+		bindValue(highlightModeSelector, projectModel.attribute(ProjectModel.highlightMode));
+		glowDistAxis.bind(projectModel.attribute(ProjectModel.highlightRange), distConversionBimapper);
 
 		autorun(() -> {
-			updateMaxDateLabelText(ColorParam.calcDateFromDaysSince1800(getProjectAttribute(ProjectModel.maxDate)));
+			updateMaxDateLabelText(ColorParam.calcDateFromDaysSince1800(projectModel.get(ProjectModel.maxDate)));
 		});
 
 		bindValue(
 			maxDateSlider,
-			projectAttribute(ProjectModel.maxDate),
+			projectModel.attribute(ProjectModel.maxDate),
 			Bimapper
 				.from(
 					value -> value == null ? maxDateSlider.getFloatMaximum() : value,
@@ -519,12 +486,12 @@ public class SettingsDrawer extends Drawer {
 		maxDateTimer = new Timer(1000 / 12, maxDateAnimation);
 
 		autorun(() -> {
-			Integer framerate = getProjectAttribute(ProjectModel.maxDateAnimationFramerate);
+			Integer framerate = projectModel.get(ProjectModel.maxDateAnimationFramerate);
 			if (framerate != null)
 				maxDateTimer.setDelay(Math.round(1000 / framerate));
 		});
 		autorun(() -> {
-			Integer monthsPerFrame = getProjectAttribute(ProjectModel.maxDateAnimationMonthsPerFrame);
+			Integer monthsPerFrame = projectModel.get(ProjectModel.maxDateAnimationMonthsPerFrame);
 			if (monthsPerFrame != null)
 				maxDateAnimation.setAmount(monthsPerFrame);
 		});
@@ -540,28 +507,28 @@ public class SettingsDrawer extends Drawer {
 			}
 		});
 
-		bindValue(ambientLightSlider, projectAttribute(ProjectModel.ambientLight));
-		bindValue(boldnessSlider, projectAttribute(ProjectModel.boldness));
+		bindValue(ambientLightSlider, projectModel.attribute(ProjectModel.ambientLight));
+		bindValue(boldnessSlider, projectModel.attribute(ProjectModel.boldness));
 
-		bindValue(centerlineDistanceSlider, projectAttribute(ProjectModel.centerlineDistance));
-		bindValue(stationLabelDensitySlider, projectAttribute(ProjectModel.stationLabelDensity));
+		bindValue(centerlineDistanceSlider, projectModel.attribute(ProjectModel.centerlineDistance));
+		bindValue(stationLabelDensitySlider, projectModel.attribute(ProjectModel.stationLabelDensity));
 
-		bindValue(stationLabelFontSizeSlider, projectAttribute(ProjectModel.stationLabelFontSize));
+		bindValue(stationLabelFontSizeSlider, projectModel.attribute(ProjectModel.stationLabelFontSize));
 
-		bindSelected(showLeadLabelsCheckBox, projectAttribute(ProjectModel.showLeadLabels));
-		bindSelected(showCheckedLeadsCheckBox, projectAttribute(ProjectModel.showCheckedLeads));
-		bindEnabled(showCheckedLeadsCheckBox, projectAttribute(ProjectModel.showLeadLabels));
-		bindSelected(showTerrainCheckBox, projectAttribute(ProjectModel.showTerrain));
+		bindSelected(showLeadLabelsCheckBox, projectModel.attribute(ProjectModel.showLeadLabels));
+		bindSelected(showCheckedLeadsCheckBox, projectModel.attribute(ProjectModel.showCheckedLeads));
+		bindEnabled(showCheckedLeadsCheckBox, projectModel.attribute(ProjectModel.showLeadLabels));
+		bindSelected(showTerrainCheckBox, projectModel.attribute(ProjectModel.showTerrain));
 
-		bindValue(numSamplesSlider, rootAttribute(RootModel.desiredNumSamples));
+		bindValue(numSamplesSlider, rootModel.attribute(RootModel.desiredNumSamples));
 
-		bindValue(displayLengthUnitSelector, projectAttribute(ProjectModel.displayLengthUnit));
-		bindValue(displayAngleUnitSelector, projectAttribute(ProjectModel.displayAngleUnit));
+		bindValue(displayLengthUnitSelector, projectModel.attribute(ProjectModel.displayLengthUnit));
+		bindValue(displayAngleUnitSelector, projectModel.attribute(ProjectModel.displayAngleUnit));
 		bindValue(
 			displayCoordinateReferenceSystemSelector,
-			projectAttribute(ProjectModel.displayCoordinateReferenceSystem));
+			projectModel.attribute(ProjectModel.displayCoordinateReferenceSystem));
 
-		bindValue(paramGradientComboBox, projectAttribute(ProjectModel.paramGradient));
+		bindValue(paramGradientComboBox, projectModel.attribute(ProjectModel.paramGradient));
 	}
 
 	private void createComponents(I18n i18n) {
@@ -1041,7 +1008,7 @@ public class SettingsDrawer extends Drawer {
 			autorun(
 				() -> controller
 					.getMouseLooper()
-					.setLoopingEnabled(Boolean.TRUE.equals(getRootAttribute(RootModel.enableMouseLooper))));
+					.setLoopingEnabled(Boolean.TRUE.equals(rootModel.get(RootModel.enableMouseLooper))));
 		}
 
 		numSamplesSlider.addChangeListener(new ChangeListener() {
