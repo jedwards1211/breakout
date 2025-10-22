@@ -399,7 +399,7 @@ public class BreakoutMainView {
 			if (picked == null) {
 				surveyDrawer.table().clearSelection();
 			}
-			else if (e.getClickCount() == 2) {
+			else if (e.getClickCount() == 2 && !e.isControlDown() && !e.isShiftDown()) {
 				SurveyRow row = sourceRows.get(picked.picked.key());
 				if (row != null) {
 					List<String> files = row.getAttachedFiles();
