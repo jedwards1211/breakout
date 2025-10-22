@@ -916,9 +916,8 @@ public class BreakoutMainView {
 						}
 					}
 				};
-
-				for (int i = e.getFirstIndex(); i <= e.getLastIndex()
-					&& i < surveyDrawer.table().getModel().getRowCount(); i++) {
+				int rowCount = surveyDrawer.table().getModel().getRowCount();
+				for (int i = e.getFirstIndex(); i <= e.getLastIndex() && i < rowCount; i++) {
 					ShotKey shotKey = modelIndexToShotKey.get(i);
 					if (shotKey == null) {
 						continue;
@@ -926,6 +925,20 @@ public class BreakoutMainView {
 
 					if (selModel.isSelectedIndex(i)) {
 						editor.select(shotKey);
+					}
+					else {
+						editor.deselect(shotKey);
+					}
+				}
+
+				for (int i = selModel.getMinSelectionIndex(); i <= selModel.getMaxSelectionIndex()
+					&& i < rowCount; i++) {
+					ShotKey shotKey = modelIndexToShotKey.get(i);
+					if (shotKey == null) {
+						continue;
+					}
+
+					if (selModel.isSelectedIndex(i)) {
 						ParsedShot parsedShot = parsedProject.shots.get(shotKey);
 						if (parsedShot != null) {
 							ParsedTrip trip = parsedShot.trip;
@@ -953,9 +966,6 @@ public class BreakoutMainView {
 								stations.add(shot.toStation);
 							}
 						}
-					}
-					else {
-						editor.deselect(shotKey);
 					}
 				}
 
