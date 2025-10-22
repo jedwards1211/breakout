@@ -1812,7 +1812,7 @@ public class BreakoutMainView {
 
 				@Override
 				public void selectShots(Set<Shot3d> newSelected, boolean add, boolean toggle) {
-					selectShots(newSelected, add, toggle);
+					BreakoutMainView.this.selectShots(newSelected, add, toggle);
 				}
 			});
 			canvasMouseAdapterWrapper.setWrapped(mouseLooper);
