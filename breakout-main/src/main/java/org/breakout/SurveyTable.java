@@ -82,6 +82,16 @@ public class SurveyTable extends AnnotatingJTable {
 			column(SurveyTableModel.Columns.easting).headerValue("Easting").renderer(numberCellRenderer);
 		public final ListTableColumn<SurveyRow, String> elevation =
 			column(SurveyTableModel.Columns.elevation).headerValue("Elevation").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> latitude =
+			column(SurveyTableModel.Columns.latitude).headerValue("Latitude").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> longitude =
+			column(SurveyTableModel.Columns.longitude).headerValue("Longitude").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> datum =
+			column(SurveyTableModel.Columns.datum).headerValue("Datum");
+		public final ListTableColumn<SurveyRow, String> ellipsoid =
+			column(SurveyTableModel.Columns.ellipsoid).headerValue("Ellipsoid");
+		public final ListTableColumn<SurveyRow, String> utmZone =
+			column(SurveyTableModel.Columns.utmZone).headerValue("UTM Zone");
 		public final ListTableColumn<SurveyRow, String> comment =
 			column(SurveyTableModel.Columns.comment).headerValue("Comment");
 		public final ListTableColumn<SurveyRow, String> tripName =
@@ -234,6 +244,11 @@ public class SurveyTable extends AnnotatingJTable {
 				addColumn(columns.northing);
 				addColumn(columns.easting);
 				addColumn(columns.elevation);
+				addColumn(columns.latitude);
+				addColumn(columns.longitude);
+				addColumn(columns.datum);
+				addColumn(columns.ellipsoid);
+				addColumn(columns.utmZone);
 				break;
 			case TRIP:
 				addColumn(columns.toCave);

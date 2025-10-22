@@ -65,6 +65,11 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 		public static final Column<SurveyRow, String> northing = column(SurveyRow.Properties.northing);
 		public static final Column<SurveyRow, String> easting = column(SurveyRow.Properties.easting);
 		public static final Column<SurveyRow, String> elevation = column(SurveyRow.Properties.elevation);
+		public static final Column<SurveyRow, String> latitude = column(SurveyRow.Properties.latitude);
+		public static final Column<SurveyRow, String> longitude = column(SurveyRow.Properties.longitude);
+		public static final Column<SurveyRow, String> datum = column(SurveyRow.Properties.datum);
+		public static final Column<SurveyRow, String> ellipsoid = column(SurveyRow.Properties.ellipsoid);
+		public static final Column<SurveyRow, String> utmZone = column(SurveyRow.Properties.utmZone);
 		public static final Column<SurveyRow, String> comment = column(SurveyRow.Properties.comment);
 		public static final Column<SurveyRow, String> tripName = column(SurveyRow.Properties.tripName);
 		public static final Column<SurveyRow, String> surveyors =
@@ -115,6 +120,11 @@ public class SurveyTableModel extends ListTableModel<SurveyRow> {
 					northing,
 					easting,
 					elevation,
+					latitude,
+					longitude,
+					datum,
+					ellipsoid,
+					utmZone,
 					comment,
 					tripName,
 					surveyors,

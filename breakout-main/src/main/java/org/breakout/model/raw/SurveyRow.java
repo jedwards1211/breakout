@@ -680,5 +680,14 @@ public class SurveyRow {
 				List.class,
 				r -> r.getAttachedFiles(),
 				(r, attachedFiles) -> r.setOverrideAttachedFiles(attachedFiles));
+
+		public static DefaultProperty<SurveyRow, String> datum =
+			createTripProperty("datum", String.class, SurveyTrip.Properties.datum);
+
+		public static DefaultProperty<SurveyRow, String> ellipsoid =
+			createTripProperty("ellipsoid", String.class, SurveyTrip.Properties.ellipsoid);
+
+		public static DefaultProperty<SurveyRow, String> utmZone =
+			createTripProperty("utmZone", String.class, SurveyTrip.Properties.utmZone);
 	}
 }
