@@ -76,7 +76,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -117,9 +116,7 @@ import org.andork.awt.layout.Side;
 import org.andork.awt.layout.SideConstraint;
 import org.andork.awt.layout.SideConstraintLayoutDelegate;
 import org.andork.bind.Binder;
-import org.andork.bind.BinderWrapper;
 import org.andork.bind.DefaultBinder;
-import org.andork.bind.QObjectAttributeBinder;
 import org.andork.collect.HashSets;
 import org.andork.collect.LinkedListMultiMap;
 import org.andork.collect.MultiMap;
@@ -161,6 +158,7 @@ import org.andork.math3d.Vecmath;
 import org.andork.model.Cell;
 import org.andork.q.QArrayList;
 import org.andork.q.QAutorun;
+import org.andork.q.QCell;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
@@ -379,7 +377,7 @@ public class BreakoutMainView {
 		}
 	}
 
-	private Binder<Float> distanceToClosestNodeBinder = new DefaultBinder<Float>(1000f);
+	private Cell<Float> distanceToClosestNode = new QCell<>(1000f);
 
 	private class MousePickHandler extends MouseAdapter {
 		@Override
@@ -579,7 +577,7 @@ public class BreakoutMainView {
 			if (Float.isNaN(distance)) {
 				return;
 			}
-			distanceToClosestNodeBinder.set(distance);
+			distanceToClosestNode.set(distance);
 		}
 
 		@Override
@@ -1985,12 +1983,12 @@ public class BreakoutMainView {
 			settingsDrawer.setModel(() -> getProjectAttribute(ProjectModel.settingsDrawer));
 			taskListDrawer.setModel(() -> getProjectAttribute(ProjectModel.taskListDrawer));
 
-			BinderWrapper
-				.create((com.github.krukow.clj_ds.PersistentVector<SurveyLead> leads) -> rebuildLeadIndex())
-				.bind(QObjectAttributeBinder.bind(ProjectModel.leads, projectModelBinder));
-			BinderWrapper
-				.create((Boolean showCheckedLeads) -> rebuildLeadIndex())
-				.bind(QObjectAttributeBinder.bind(ProjectModel.showCheckedLeads, projectModelBinder));
+			autorun(() -> {
+				getProjectAttribute(ProjectModel.leads);
+				getProjectAttribute(ProjectModel.showCheckedLeads);
+				if (!constructing.value)
+					rebuildLeadIndex();
+			});
 
 			autorunProjectAttribute(ProjectModel.paramGradient, g -> {
 				if (!constructing.value)
@@ -2140,7 +2138,7 @@ public class BreakoutMainView {
 				Integer sliderValue = getRootAttribute(RootModel.mouseSensitivity);
 				if (sliderValue == null)
 					return;
-				Float distance = distanceToClosestNodeBinder.get();
+				Float distance = distanceToClosestNode.get();
 				if (distance == null)
 					return;
 				navigator.setSensitivity(sliderValue * distance / 50000);
@@ -2150,7 +2148,7 @@ public class BreakoutMainView {
 				Integer sliderValue = getRootAttribute(RootModel.mouseWheelSensitivity);
 				if (sliderValue == null)
 					return;
-				Float distance = distanceToClosestNodeBinder.get();
+				Float distance = distanceToClosestNode.get();
 				if (distance == null)
 					return;
 				float wheelFactor = sliderValue * distance / 20000;
