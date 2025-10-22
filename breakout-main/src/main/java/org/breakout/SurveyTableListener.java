@@ -1,5 +1,7 @@
 package org.breakout;
 
+import java.util.List;
+
 public interface SurveyTableListener {
-	public void surveyNotesClicked(String link, int viewRow);
+	public void attachedFilesClicked(List<String> links, int viewRow);
 }

@@ -155,6 +155,7 @@ public class SurveyTable extends AnnotatingJTable {
 		setDefaultEditor(String.class, new DefaultCellEditor(new JTextField()));
 
 		addMouseListener(new MouseAdapter() {
+			@SuppressWarnings("unchecked")
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (!e.isControlDown()) {
@@ -170,9 +171,8 @@ public class SurveyTable extends AnnotatingJTable {
 
 				if (column == columns.attachedFiles) {
 					Object o = getValueAt(Surveyrow, columnIndex);
-					if (o != null) {
-						listeners.forEach(listener -> listener.surveyNotesClicked(o.toString(), Surveyrow));
-
+					if (o != null && o instanceof List) {
+						listeners.forEach(listener -> listener.attachedFilesClicked((List<String>) o, Surveyrow));
 					}
 				}
 			}

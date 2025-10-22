@@ -393,10 +393,7 @@ public class BreakoutMainView {
 			else if (e.getClickCount() == 2) {
 				SurveyRow row = sourceRows.get(picked.picked.key());
 				if (row != null) {
-					List<String> files = row.getAttachedFiles();
-					if (files != null && !files.isEmpty()) {
-						openAttachedFile(files.get(0));
-					}
+					openAttachedFiles(row.getAttachedFiles());
 				}
 			}
 		}
@@ -1955,8 +1952,8 @@ public class BreakoutMainView {
 
 			surveyDrawer.table().addSurveyTableListener(new SurveyTableListener() {
 				@Override
-				public void surveyNotesClicked(String link, int viewRow) {
-					openAttachedFile(link);
+				public void attachedFilesClicked(List<String> links, int viewRow) {
+					openAttachedFiles(links);
 				}
 			});
 
@@ -3130,7 +3127,10 @@ public class BreakoutMainView {
 		}
 	}
 
-	private void openAttachedFile(String link) {
+	private void openAttachedFiles(List<String> links) {
+		String link = links == null ? null : links.get(0);
+		if (link == null)
+			return;
 		try {
 			ioTaskService.submit(new SelfReportingTask<Void>(mainPanel) {
 				@Override
