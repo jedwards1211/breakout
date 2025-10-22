@@ -44,7 +44,7 @@ public class QAutorun implements AutoCloseable {
 			throw new RuntimeException("run not called on the original thread!");
 		}
 		try {
-			dependencies.clear();
+			close();
 			currentAutorun.set(this);
 			runner.run();
 		} finally {
