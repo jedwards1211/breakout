@@ -46,12 +46,7 @@
 	</build>
 	<profiles>
 		<profile>
-			<id>windows</id>
-			<activation>
-				<os>
-					<family>windows</family>
-				</os>
-			</activation>
+			<id>windows-installer</id>
 			<build>
 				<plugins>
 					<plugin>
@@ -89,12 +84,7 @@
 			</build>
 		</profile>
 		<profile>
-			<id>osx</id>
-			<activation>
-				<os>
-					<family>mac</family>
-				</os>
-			</activation>
+			<id>osx-installer</id>
 			<build>
 				<plugins>
 					<plugin>

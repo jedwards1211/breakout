@@ -4,6 +4,7 @@ import { glob } from 'glob'
 const version = process.argv[2].replace(/-(\w+)\.(\d+)$/, '-$1$2')
 
 console.error(`setting version to ${version}...`)
+await fs.writeFile('version', version, 'utf8')
 
 for (const file of await glob(['pom.xml', '*/pom.xml'])) {
   console.error(`updating ${file}...`)

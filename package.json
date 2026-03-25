@@ -38,7 +38,7 @@
       [
         "@semantic-release/exec",
         {
-          "verifyReleaseCmd": "(echo \"${nextRelease.version}\" > version) && node setVersion.mjs \"${nextRelease.version}\""
+          "verifyReleaseCmd": "node setVersion.mjs \"${nextRelease.version}\""
         }
       ],
       [
