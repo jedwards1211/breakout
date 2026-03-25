@@ -1,7 +1,7 @@
 {
   "name": "breakout",
   "engines": {
-    "node": ">=22"
+    "node": ">=20"
   },
   "packageManager": "pnpm@10.9.0",
   "version": "0.0.0-development",
@@ -69,5 +69,8 @@
         }
       ]
     ]
+  },
+  "dependencies": {
+    "glob": "^13.0.6"
   }
 }
