@@ -172,7 +172,7 @@ jobs:
             mkdir -p dist/macos
             cp breakout/target/breakout-$(cat version | xargs).jar dist/macos/breakout-all-platforms.jar
             cp breakout/target/macosx-x64/Breakout_$(cat version | xargs).dmg dist/macos/Breakout-x64.dmg
-            cp breakout/target/macosx-aarch/Breakout_$(cat version | xargs).dmg dist/macos/Breakout-aarch64.dmg
+            cp breakout/target/macosx-aarch64/Breakout_$(cat version | xargs).dmg dist/macos/Breakout-aarch64.dmg
       - store_artifacts:
           path: dist/macos
       - persist_to_workspace:
