@@ -3,3 +3,5 @@
 .breakout*
 dependency-reduced-pom.xml
 breakout.log*
+/bin/
+package/*.jre

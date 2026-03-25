@@ -46,23 +46,70 @@
 				<version>1.7.6</version>
 				<executions>
 					<execution>
+						<id>macos-aarch64</id>
 						<phase>package</phase>
 						<goals>
 							<goal>package</goal>
 						</goals>
 						<configuration>
+							<name>Breakout</name>
+							<outputDirectory>${project.build.directory}/macosx-aarch64</outputDirectory>
 							<mainClass>org.breakout.Breakout</mainClass>
 							<bundleJre>true</bundleJre>
-							<runnableJar>${project.build.directory}/breakout-0.0.0-SNAPSHOT.jar</runnableJar>
+							<runnableJar>${project.build.directory}/breakout-${project.version}.jar</runnableJar>
+							<copyDependencies>false</copyDependencies>
+							<generateInstaller>true</generateInstaller>
+							<administratorRequired>false</administratorRequired>
+							<jrePath>${basedir}/package/macosx-aarch64.jre</jrePath>
+							<platform>mac</platform>
+							<macConfig>
+								<generateDmg>true</generateDmg>
+								<icnsFile>${basedir}/../breakout.icns</icnsFile>
+								<customLauncher>${basedir}/package/universalJavaApplicationStub.arm64</customLauncher>
+							</macConfig>
+						</configuration>
+					</execution>
+					<execution>
+						<id>macos-x64</id>
+						<phase>package</phase>
+						<goals>
+							<goal>package</goal>
+						</goals>
+						<configuration>
+							<name>Breakout</name>
+							<outputDirectory>${project.build.directory}/macosx-x64</outputDirectory>
+							<mainClass>org.breakout.Breakout</mainClass>
+							<bundleJre>true</bundleJre>
+							<runnableJar>${project.build.directory}/breakout-${project.version}.jar</runnableJar>
+							<copyDependencies>false</copyDependencies>
+							<generateInstaller>true</generateInstaller>
+							<administratorRequired>false</administratorRequired>
+							<jrePath>${basedir}/package/macosx-x64.jce</jrePath>
+							<platform>mac</platform>
+							<macConfig>
+								<generateDmg>true</generateDmg>
+								<icnsFile>${basedir}/../breakout.icns</icnsFile>
+								<customLauncher>${basedir}/package/universalJavaApplicationStub.x86_64</customLauncher>
+							</macConfig>
+						</configuration>
+					</execution>
+					<execution>
+						<id>windows</id>
+						<phase>package</phase>
+						<goals>
+							<goal>package</goal>
+						</goals>
+						<configuration>
+							<name>Breakout x64</name>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+							<mainClass>org.breakout.Breakout</mainClass>
+							<bundleJre>true</bundleJre>
+							<runnableJar>${project.build.directory}/breakout-${project.version}.jar</runnableJar>
 							<copyDependencies>false</copyDependencies>
 							<generateInstaller>true</generateInstaller>
 							<administratorRequired>false</administratorRequired>
 							<jrePath>${java.home}</jrePath>
-							<macConfig>
-								<generateDmg>true</generateDmg>
-								<icnsFile>${basedir}/../breakout.icns</icnsFile>
-								<customLauncher>${basedir}/nativeJavaApplicationStub</customLauncher>
-							</macConfig>
+							<platform>windows</platform>
 							<winConfig>
 								<icoFile>${basedir}/../breakout.ico</icoFile>
 								<generateMsi>true</generateMsi>
