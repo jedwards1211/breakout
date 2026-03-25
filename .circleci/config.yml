@@ -94,7 +94,7 @@ jobs:
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.14/bin:$PATH"
             mvn clean package -U -P windows,windows-amd64,windows-installer
             mkdir -p dist/windows
-            cp breakout/target/Breakout-$(cat version | xargs).msi dist/windows/Breakout-x64.msi
+            cp breakout/target/Breakout_$(cat version | xargs).msi dist/windows/Breakout-x64.msi
           shell: bash.exe
       - store_artifacts:
           path: dist/windows
@@ -110,9 +110,45 @@ jobs:
       - run:
           name: Fix Finder got an error - AppleEvent timed out. (-1712)
           command: |
-            epochdate=$(($(date +'%s * 1000 + %-N / 1000000')))
-            tcc_service_appleevents="replace into access (service,client,client_type,auth_value,auth_reason,auth_version,indirect_object_identifier_type,indirect_object_identifier,flags,last_modified) values (\"kTCCServiceAppleEvents\",\"/usr/sbin/sshd\",1,2,4,1,0,\"com.apple.finder\",0,$epochdate);"
-            sudo sqlite3 "/Users/distiller/Library/Application Support/com.apple.TCC/TCC.db" "$tcc_service_appleevents"
+            update_tcc_database() {
+              sudo sqlite3 "$1" <<-'EOF'
+              INSERT OR REPLACE
+              INTO access (
+                service,
+                client_type,
+                client,
+                auth_value,
+                auth_reason,
+                auth_version,
+                indirect_object_identifier_type,
+                indirect_object_identifier
+              ) VALUES
+              -- Indirect osascript invocation via SSH
+              ('kTCCServiceAccessibility', 1, '/usr/libexec/sshd-keygen-wrapper', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServiceScreenCapture', 1, '/usr/libexec/sshd-keygen-wrapper', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServicePostEvent', 1, '/usr/libexec/sshd-keygen-wrapper', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServiceAppleEvents', 1, '/usr/libexec/sshd-keygen-wrapper', 2, 0, 1, 0, 'com.apple.systemevents'),
+              ('kTCCServiceAppleEvents', 1, '/usr/libexec/sshd-keygen-wrapper', 2, 0, 1, 0, 'com.apple.finder'),
+              -- Indirect osascript invocation via SSHD
+              ('kTCCServiceAccessibility', 1, '/usr/sbin/sshd', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServiceScreenCapture', 1, '/usr/sbin/sshd', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServicePostEvent', 1, '/usr/sbin/sshd', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServiceAppleEvents', 1, '/usr/sbin/sshd', 2, 0, 1, 0, 'com.apple.systemevents'),
+              ('kTCCServiceAppleEvents', 1, '/usr/sbin/sshd', 2, 0, 1, 0, 'com.apple.finder'),
+              -- Direct osascript invocation
+              ('kTCCServiceAccessibility', 1, '/usr/bin/osascript', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServiceScreenCapture', 1, '/usr/bin/osascript', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServicePostEvent', 1, '/usr/bin/osascript', 2, 0, 1, NULL, 'UNUSED'),
+              ('kTCCServiceAppleEvents', 1, '/usr/bin/osascript', 2, 0, 1, 0, 'com.apple.systemevents'),
+              ('kTCCServiceAppleEvents', 1, '/usr/bin/osascript', 2, 0, 1, 0, 'com.apple.finter');
+              EOF
+            }
+
+            # Update TCC.db for all users
+            update_tcc_database "/Library/Application Support/com.apple.TCC/TCC.db"
+
+            # Update TCC.db for the current user
+            update_tcc_database "${HOME}/Library/Application Support/com.apple.TCC/TCC.db"
       - checkout
       - checkout_submodules
       - run:
