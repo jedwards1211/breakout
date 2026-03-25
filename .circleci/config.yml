@@ -209,4 +209,4 @@ workflows:
             branches:
               only:
                 - master
-                - next
+                - beta
