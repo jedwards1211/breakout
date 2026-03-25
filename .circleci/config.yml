@@ -185,12 +185,14 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
-      - run:
-          name: Install pnpm
-          command: corepack enable
-      - install_deps
       - attach_workspace:
           at: .
+      - run:
+          name: Install pnpm
+          command: |
+            rm /usr/local/bin/pnpm
+            corepack enable
+      - install_deps
       - run:
           name: Release
           command: pnpm semantic-release
