@@ -111,7 +111,7 @@ jobs:
           name: Fix Finder got an error - AppleEvent timed out. (-1712)
           command: |
             update_tcc_database() {
-              sudo sqlite3 "$1" <<-'EOF'
+              sudo sqlite3 "$1" \<<-'EOF'
               INSERT OR REPLACE
               INTO access (
                 service,
