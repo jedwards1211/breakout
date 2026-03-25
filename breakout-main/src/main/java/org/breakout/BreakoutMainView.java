@@ -146,6 +146,7 @@ import org.andork.jogl.awt.anim.GeneralViewXformOrbitAnimation;
 import org.andork.jogl.awt.anim.ProjXformAnimation;
 import org.andork.jogl.awt.anim.ViewXformAnimation;
 import org.andork.math.misc.Fitting;
+import org.andork.math.misc.NormalKernelDensityEstimation;
 import org.andork.math3d.Clip3f;
 import org.andork.math3d.Fitting3d;
 import org.andork.math3d.FittingFrustum;
@@ -185,6 +186,7 @@ import org.andork.unit.Angle;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
+import org.andork.util.ArrayUtils;
 import org.andork.util.FileRecoveryConfig;
 import org.andork.util.RecoverableFileOutputStream;
 import org.breakout.HintLabels.UpdateOptions;
@@ -192,6 +194,7 @@ import org.breakout.StatsPanel.StatsModel;
 import org.breakout.mapbox.MapboxClient;
 import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
+import org.breakout.model.CrossSectionType;
 import org.breakout.model.DebugDraw;
 import org.breakout.model.HasShotKey;
 import org.breakout.model.HasStationKey;
@@ -210,6 +213,7 @@ import org.breakout.model.Survey3dModel.UpdateGlowOptions;
 import org.breakout.model.SurveyTableModel;
 import org.breakout.model.TitleText;
 import org.breakout.model.calc.CalcCave;
+import org.breakout.model.calc.CalcCrossSection;
 import org.breakout.model.calc.CalcProject;
 import org.breakout.model.calc.CalcShot;
 import org.breakout.model.calc.CalcStation;
@@ -885,6 +889,9 @@ public class BreakoutMainView {
 				MinAvgMaxCalc northCalc = new MinAvgMaxCalc();
 				MinAvgMaxCalc eastCalc = new MinAvgMaxCalc();
 				MinAvgMaxCalc depthCalc = new MinAvgMaxCalc();
+				List<Double> distances = new ArrayList<>();
+				List<Double> widths = new ArrayList<>();
+				List<Double> heights = new ArrayList<>();
 				Set<CalcCave> caves = new HashSet<>();
 				Set<ParsedTrip> trips = new HashSet<>();
 				Set<String> surveyors = new HashSet<>();
@@ -902,6 +909,21 @@ public class BreakoutMainView {
 							eastCalc.add(points[i]);
 							depthCalc.add(-points[i + 1]);
 						}
+					}
+				};
+
+				Consumer<CalcCrossSection> addCrossSection = xsection -> {
+					if (xsection == null)
+						return;
+					double span = xsection.measurements[0] + xsection.measurements[1];
+					if (!Double.isNaN(span))
+						widths.add(span);
+					span = xsection.measurements[2] + xsection.measurements[3];
+					if (!Double.isNaN(span)) {
+						if (xsection.type == CrossSectionType.NSEW)
+							widths.add(span);
+						else
+							heights.add(span);
 					}
 				};
 				int rowCount = surveyDrawer.table().getModel().getRowCount();
@@ -944,7 +966,10 @@ public class BreakoutMainView {
 							}
 							if (!Double.isNaN(shot.distance) && !shot.isExcludeDistance()) {
 								distCalc.add(shot.distance);
+								distances.add(shot.distance);
 							}
+							addCrossSection.accept(shot.fromCrossSection);
+							addCrossSection.accept(shot.toCrossSection);
 							addPoints.accept(shot.vertices);
 
 							if (shot.fromStation != null) {
@@ -965,6 +990,12 @@ public class BreakoutMainView {
 				statsModel.numSelected = distCalc.count;
 				statsModel.totalDistance = Length.meters(distCalc.total);
 				statsModel.distStats = distCalc.toModel(Length.meters);
+				statsModel.distDensityFn =
+					distances.isEmpty() ? null : new NormalKernelDensityEstimation(ArrayUtils.toDoubleArray(distances));
+				statsModel.widthDensityFn =
+					widths.isEmpty() ? null : new NormalKernelDensityEstimation(ArrayUtils.toDoubleArray(widths));
+				statsModel.heightDensityFn =
+					heights.isEmpty() ? null : new NormalKernelDensityEstimation(ArrayUtils.toDoubleArray(heights));
 				statsModel.northStats = northCalc.toModel(Length.meters);
 				statsModel.eastStats = eastCalc.toModel(Length.meters);
 				statsModel.depthStats = depthCalc.toModel(Length.meters);

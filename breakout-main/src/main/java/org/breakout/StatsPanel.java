@@ -21,6 +21,7 @@
  *******************************************************************************/
 package org.breakout;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.text.DecimalFormat;
@@ -28,6 +29,7 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.DoubleFunction;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -41,6 +43,7 @@ import javax.swing.table.TableColumnModel;
 
 import org.andork.awt.GridBagWizard;
 import org.andork.awt.GridBagWizard.DefaultAutoInsets;
+import org.andork.math.misc.NormalKernelDensityEstimation;
 import org.andork.unit.Length;
 import org.andork.unit.Unit;
 import org.andork.unit.UnitizedDouble;
@@ -48,6 +51,7 @@ import org.andork.unit.UnitizedNumber;
 import org.breakout.StatsPanel.StatsModel.StationPosition;
 import org.breakout.model.HasStationKey;
 import org.breakout.model.StationKey;
+import org.breakout.stat.DensityPlot;
 import org.locationtech.proj4j.BasicCoordinateTransform;
 import org.locationtech.proj4j.CoordinateReferenceSystem;
 import org.locationtech.proj4j.CoordinateTransform;
@@ -81,6 +85,9 @@ public class StatsPanel extends JPanel {
 		public Unit<Length> lengthUnit;
 		public UnitizedNumber<Length> totalDistance;
 		public MinAvgMax distStats;
+		public DoubleFunction<Double> distDensityFn;
+		public DoubleFunction<Double> widthDensityFn;
+		public DoubleFunction<Double> heightDensityFn;
 		public MinAvgMax northStats;
 		public MinAvgMax eastStats;
 		public MinAvgMax depthStats;
@@ -162,6 +169,7 @@ public class StatsPanel extends JPanel {
 	JLabel totalDistanceCaptionLabel;
 	JLabel totalDistanceLabel;
 	MinAvgMaxLabels distLabels;
+	DensityPlot distDensityPlot;
 	MinAvgMaxLabels northLabels;
 	MinAvgMaxLabels eastLabels;
 
@@ -169,6 +177,12 @@ public class StatsPanel extends JPanel {
 
 	JTable stationPositionsTable;
 	JScrollPane stationPositionsTableScrollPane;
+
+	JLabel widthLabel;
+	DensityPlot widthDensityPlot;
+
+	JLabel heightLabel;
+	DensityPlot heightDensityPlot;
 
 	public StatsPanel() {
 		NumberFormat format = DecimalFormat.getInstance();
@@ -205,6 +219,9 @@ public class StatsPanel extends JPanel {
 			numSurveyorsLabel.setText("");
 			totalDistanceLabel.setText("");
 			distLabels.modelToView(null, null);
+			distDensityPlot.setDensityFn(null);
+			widthDensityPlot.setDensityFn(null);
+			heightDensityPlot.setDensityFn(null);
 			northLabels.modelToView(null, null);
 			eastLabels.modelToView(null, null);
 			depthLabels.modelToView(null, null);
@@ -228,6 +245,25 @@ public class StatsPanel extends JPanel {
 		northLabels.modelToView(model, model.northStats);
 		eastLabels.modelToView(model, model.eastStats);
 		depthLabels.modelToView(model, model.depthStats);
+
+		distDensityPlot.setVisible(model.distDensityFn != null);
+		distDensityPlot.setDensityFn(model.distDensityFn);
+		widthDensityPlot.setVisible(model.widthDensityFn != null);
+		widthDensityPlot.setDensityFn(model.widthDensityFn);
+		heightDensityPlot.setVisible(model.heightDensityFn != null);
+		heightDensityPlot.setDensityFn(model.heightDensityFn);
+		heightDensityPlot.setRange(0, 30);
+		widthDensityPlot.setRange(0, 30);
+		if (model.distStats != null) {
+			// double stddev = 0;
+			// if (model.distDensityFn instanceof NormalKernelDensityEstimation) {
+			// stddev = ((NormalKernelDensityEstimation)
+			// model.distDensityFn).getStandardDeviation();
+			// }
+			// distDensityPlot.setRange(0.0, model.distStats.max.doubleValue(Length.meters)
+			// + stddev * 2);
+			distDensityPlot.setRange(0, 40);
+		}
 
 		boolean showPositionsTable = false;
 		DefaultTableModel tableModel = new DefaultTableModel();
@@ -290,6 +326,9 @@ public class StatsPanel extends JPanel {
 		eastLabels = new MinAvgMaxLabels("East: ");
 		depthLabels = new MinAvgMaxLabels("Depth: ");
 
+		widthLabel = new JLabel("Width: ");
+		heightLabel = new JLabel("Height: ");
+
 		numSelectedCaptionLabel = new JLabel("# Shots Selected: ");
 		numSelectedCaptionLabel.setFont(numSelectedCaptionLabel.getFont().deriveFont(Font.BOLD));
 		numSelectedLabel = new JLabel();
@@ -306,6 +345,15 @@ public class StatsPanel extends JPanel {
 		totalDistanceCaptionLabel.setFont(totalDistanceCaptionLabel.getFont().deriveFont(Font.BOLD));
 		totalDistanceLabel = new JLabel();
 		totalDistanceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+		widthDensityPlot = new DensityPlot();
+		heightDensityPlot = new DensityPlot();
+		distDensityPlot = new DensityPlot();
+
+		for (DensityPlot plot : new DensityPlot[] { widthDensityPlot, heightDensityPlot, distDensityPlot }) {
+			plot.setMinimumSize(new Dimension(300, 80));
+			plot.setPreferredSize(new Dimension(300, 80));
+		}
 
 		stationPositionsTable = new JTable();
 
@@ -328,6 +376,11 @@ public class StatsPanel extends JPanel {
 			.west()
 			.fillx(1.0);
 
+		gbw.put(widthLabel).xy(0, y++);
+		gbw.put(widthDensityPlot).xy(0, y++).width(4).fillboth(1, 1);
+		gbw.put(heightLabel).xy(0, y++);
+		gbw.put(heightDensityPlot).xy(0, y++).width(4).fillboth(1, 1);
+
 		JLabel minLabel = new JLabel("Min");
 		minLabel.setFont(minLabel.getFont().deriveFont(Font.BOLD));
 		JLabel avgLabel = new JLabel("Avg");
@@ -338,6 +391,9 @@ public class StatsPanel extends JPanel {
 		gbw.put(minLabel, avgLabel, maxLabel).x(1).intoRow().y(y++);
 
 		for (MinAvgMaxLabels labels : Arrays.asList(distLabels, northLabels, eastLabels, depthLabels)) {
+			if (labels == distLabels) {
+				gbw.put(distDensityPlot).xy(0, y++).width(4).fillboth(1, 1);
+			}
 			gbw.put(labels.desc, labels.min, labels.avg, labels.max).intoRow().y(y++);
 			gbw.put(labels.desc).west();
 		}

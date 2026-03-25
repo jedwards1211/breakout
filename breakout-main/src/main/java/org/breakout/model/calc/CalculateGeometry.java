@@ -214,6 +214,9 @@ public class CalculateGeometry {
 	}
 
 	static void linkCrossSections(CalcStation station) {
+		if (station.name.equals("LB79")) {
+			Thread.dumpStack();
+		}
 		if (station.shots.size() == 2) {
 			Iterator<CalcShot> i = station.shots.values().iterator();
 			CalcShot shot1 = i.next();
