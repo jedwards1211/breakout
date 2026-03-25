@@ -3,4 +3,3 @@ onlyBuiltDependencies:
   - macos-alias
 packages:
   - .
-  - docs
