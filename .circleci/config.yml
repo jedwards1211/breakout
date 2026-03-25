@@ -132,8 +132,8 @@ jobs:
             hdiutil attach "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-aarch64.dmg"
             sudo installer -pkg "/Volumes/JDK 8 Update ${JDK8_UPDATE}/JDK 8 Update ${JDK8_UPDATE}.pkg" -target /
             diskutil umount "/Volumes/JDK 8 Update ${JDK8_UPDATE}"
-            (cd breakout/package && tar xzf breakout/package/macosx-aarch64.jre.tar.gz)
-            (cd breakout/package && tar xzf breakout/package/macosx-x64.jre.tar.gz)
+            (cd breakout/package && tar xzf macosx-aarch64.jre.tar.gz)
+            (cd breakout/package && tar xzf macosx-x64.jre.tar.gz)
             ls -la breakout/package
       - run:
           name: Setup Environment Variables
