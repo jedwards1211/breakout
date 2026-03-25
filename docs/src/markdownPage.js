@@ -29,7 +29,9 @@ export default function markdownPage(loadMarkdown) {
     render() {
       return (
         <div>
-          <ReactMarkdown source={this.props.content} renderers={renderers} />
+          <ReactMarkdown components={renderers}>
+            {this.props.content}
+          </ReactMarkdown>
         </div>
       )
     }

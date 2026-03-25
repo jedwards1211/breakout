@@ -60,7 +60,10 @@ class Download extends React.Component {
       classes,
       latest: { tag_name, published_at, assets },
     } = this.props
-    const dmg = assets.find((a) => /\.dmg$/.test(a.name))
+    const aarch64dmg = assets.find((a) => /aarch64\.dmg$/.test(a.name))
+    const x64dmg =
+      assets.find((a) => /x64\.dmg$/.test(a.name)) ||
+      assets.find((a) => /\.dmg$/.test(a.name) && a !== aarch64dmg)
     const x64msi = assets.find((a) => /x64\.msi$/.test(a.name))
     const x86msi = assets.find((a) => /x86\.msi$/.test(a.name))
     const jar = assets.find((a) => /\.jar$/.test(a.name))
@@ -71,14 +74,14 @@ class Download extends React.Component {
           Breakout {tag_name} (Released{' '}
           {new Date(published_at).toLocaleDateString()})
         </h2>
-        {dmg && (
+        {aarch64dmg && (
           <ListItem
             className={classes.downloadButton}
             button
             component="a"
-            href={dmg.browser_download_url}
-            selected={platform === 'macos'}
-            onClick={() => this.setPlatform('macos')}
+            href={aarch64dmg.browser_download_url}
+            selected={platform === 'macos-aarch64'}
+            onClick={() => this.setPlatform('macos-aarch64')}
           >
             <ListItemIcon>
               <AppleIcon fontSize="large" />
@@ -86,12 +89,39 @@ class Download extends React.Component {
             <ListItemText
               primary={
                 <span>
-                  <strong>MacOS</strong>
+                  <strong>MacOS (Apple Silicon)</strong>
                 </span>
               }
               secondary={
                 <span>
-                  <strong>{dmg.name}</strong> ({formatSize(dmg.size)})
+                  <strong>{aarch64dmg.name}</strong> (
+                  {formatSize(aarch64dmg.size)})
+                </span>
+              }
+            />
+          </ListItem>
+        )}
+        {x64dmg && (
+          <ListItem
+            className={classes.downloadButton}
+            button
+            component="a"
+            href={x64dmg.browser_download_url}
+            selected={platform === 'macos-x64'}
+            onClick={() => this.setPlatform('macos-x64')}
+          >
+            <ListItemIcon>
+              <AppleIcon fontSize="large" />
+            </ListItemIcon>
+            <ListItemText
+              primary={
+                <span>
+                  <strong>MacOS (Intel Chip)</strong>
+                </span>
+              }
+              secondary={
+                <span>
+                  <strong>{x64dmg.name}</strong> ({formatSize(x64dmg.size)})
                 </span>
               }
             />
@@ -208,6 +238,32 @@ class Download extends React.Component {
             Previous Versions <ExitToApp className={classes.headerIcon} />
           </h2>
         </a>
+
+        <h2>MacOS Note</h2>
+
+        <p style={{ maxWidth: 600 }}>
+          MacOS will complain about not being able to verify the app:
+        </p>
+
+        <img
+          src="/static/download/not-opened.png"
+          className={classes.img}
+          alt="Breakout Not Opened"
+        />
+
+        <p style={{ maxWidth: 600 }}>
+          I'm working on getting a developer account to sign it and fix this,
+          but until then, you'll have to go into{' '}
+          <strong>System Settings &gt; Privacy & Security</strong>, scroll down,
+          and click <strong>Open Anyway</strong> where it says it blocked the
+          app.
+        </p>
+
+        <img
+          src="/static/download/open-anyway.png"
+          className={classes.img}
+          alt="System Settings > Privacy & Security > Open Anyway"
+        />
       </div>
     )
   }
