@@ -63,7 +63,7 @@
 								<configuration>
 									<name>Breakout</name>
 									<outputDirectory>${project.build.directory}</outputDirectory>
-									<arch>amd64</arch>
+									<arch>x64</arch>
 									<mainClass>org.breakout.Breakout</mainClass>
 									<bundleJre>true</bundleJre>
 									<runnableJar>
