@@ -63,6 +63,7 @@
 								<configuration>
 									<name>Breakout</name>
 									<outputDirectory>${project.build.directory}</outputDirectory>
+									<arch>x64</arch>
 									<mainClass>org.breakout.Breakout</mainClass>
 									<bundleJre>true</bundleJre>
 									<runnableJar>
@@ -75,6 +76,7 @@
 									<winConfig>
 										<icoFile>${basedir}/../breakout.ico</icoFile>
 										<generateMsi>true</generateMsi>
+										<exeCreationTool>winrun4j</exeCreationTool>
 									</winConfig>
 								</configuration>
 							</execution>

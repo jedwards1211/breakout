@@ -92,7 +92,7 @@ jobs:
             export JAVA_HOME="$PWD/jdk-x64"
             export MVN_HOME="$PWD/apache-maven-<< pipeline.parameters.maven-version >>"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.14/bin:$PATH"
-            mvn clean package -U -P windows,windows-i586,windows-installer
+            mvn clean package -U -P windows,windows-amd64,windows-installer
             mkdir -p dist/windows
             cp breakout/target/Breakout_$(cat version | xargs).msi dist/windows/Breakout-x64.msi
           shell: bash.exe
