@@ -110,7 +110,7 @@ jobs:
     steps:
       # https://support.circleci.com/hc/en-us/articles/360057033612-Enabling-AppleScript-Support-on-macOS
       - macos/add-permission:
-          bundle-id: com.apple.Terminal
+          bundle-id: /bin/sh
           permission-type: kTCCServiceAppleEvents
       - checkout
       - checkout_submodules
