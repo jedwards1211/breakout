@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import { glob } from 'glob'
 
-const version = process.argv[2]
+const version = process.argv[2].replace(/-(\w+)\.(\d+)$/, '-$1$2')
 
 console.error(`setting version to ${version}...`)
 
