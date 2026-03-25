@@ -40,6 +40,37 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>io.github.fvarrui</groupId>
+				<artifactId>javapackager</artifactId>
+				<version>1.7.6</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>package</goal>
+						</goals>
+						<configuration>
+							<mainClass>org.breakout.Breakout</mainClass>
+							<bundleJre>true</bundleJre>
+							<runnableJar>${project.build.directory}/breakout-0.0.0-SNAPSHOT.jar</runnableJar>
+							<copyDependencies>false</copyDependencies>
+							<generateInstaller>true</generateInstaller>
+							<administratorRequired>false</administratorRequired>
+							<jrePath>${java.home}</jrePath>
+							<macConfig>
+								<generateDmg>true</generateDmg>
+								<icnsFile>${basedir}/../breakout.icns</icnsFile>
+								<customLauncher>${basedir}/nativeJavaApplicationStub</customLauncher>
+							</macConfig>
+							<winConfig>
+								<icoFile>${basedir}/../breakout.ico</icoFile>
+								<generateMsi>true</generateMsi>
+							</winConfig>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 	<dependencies>
