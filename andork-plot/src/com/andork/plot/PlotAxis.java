@@ -34,22 +34,33 @@ import java.awt.Stroke;
 import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import javax.swing.JComponent;
 
+import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.BasicPropertyChangeSupport.External;
 import org.andork.event.HierarchicalBasicPropertyChangeSupport;
+import org.andork.func.Bimapper;
+import org.andork.model.Cell;
 import org.andork.model.Model;
+import org.andork.q.QAutorun;
+import org.andork.ref.Ref;
 
 @SuppressWarnings("serial")
 public class PlotAxis extends JComponent implements Model {
 	public static enum LabelPosition {
-		TOP, BOTTOM, LEFT, RIGHT;
+		TOP,
+		BOTTOM,
+		LEFT,
+		RIGHT;
 	}
 
 	public static enum Orientation {
-		HORIZONTAL, VERTICAL;
+		HORIZONTAL,
+		VERTICAL;
 	}
 
 	public static enum Property {
@@ -61,7 +72,7 @@ public class PlotAxis extends JComponent implements Model {
 	 */
 	private static final long serialVersionUID = 2336004416638839578L;
 
-	private static final HierarchicalBasicPropertyChangeSupport changeSupport = new HierarchicalBasicPropertyChangeSupport();
+	private final HierarchicalBasicPropertyChangeSupport changeSupport = new HierarchicalBasicPropertyChangeSupport();
 
 	public static void equalizeScale(PlotAxis... axes) {
 		double scale = Double.MAX_VALUE;
@@ -73,7 +84,8 @@ public class PlotAxis extends JComponent implements Model {
 			LinearAxisConversion conv = axis.getAxisConversion();
 			if (axis.getViewSpan() == 0) {
 				conv.setScale(scale * Math.signum(conv.getScale()));
-			} else {
+			}
+			else {
 				double start = conv.invert(0);
 				double end = conv.invert(axis.getViewSpan());
 				double mid = (start + end) * 0.5;
@@ -81,7 +93,8 @@ public class PlotAxis extends JComponent implements Model {
 
 				if (start < end) {
 					conv.set(mid - newSpan / 2, 0, mid + newSpan / 2, axis.getViewSpan());
-				} else {
+				}
+				else {
 					conv.set(mid + newSpan / 2, 0, mid - newSpan / 2, axis.getViewSpan());
 				}
 			}
@@ -225,8 +238,8 @@ public class PlotAxis extends JComponent implements Model {
 		Stroke origStroke = g2.getStroke();
 		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-		double minorSpacing = GridMath
-				.niceCeiling(Math.abs(axisConversion.invert(minMinorGridLineSpacing) - axisConversion.invert(0)));
+		double minorSpacing =
+			GridMath.niceCeiling(Math.abs(axisConversion.invert(minMinorGridLineSpacing) - axisConversion.invert(0)));
 		double majorSpacing = minorSpacing * 2;
 
 		if (orientation == Orientation.VERTICAL) {
@@ -242,7 +255,8 @@ public class PlotAxis extends JComponent implements Model {
 			Rectangle majorBounds = new Rectangle(bounds);
 			majorBounds.width = majorTickSize;
 			Rectangle textBounds = new Rectangle(bounds);
-			textBounds.width = (int) Math
+			textBounds.width =
+				(int) Math
 					.ceil(PlotUtils.calcHorizontalGridLineLabelsWidth(g2, topValue, bottomValue, majorSpacing, format));
 
 			int alignment;
@@ -252,7 +266,8 @@ public class PlotAxis extends JComponent implements Model {
 				majorBounds.x = getWidth() - insets.right - majorBounds.width;
 				textBounds.x = majorBounds.x - textBounds.width - labelPadding;
 				alignment = PlotUtils.RIGHT;
-			} else {
+			}
+			else {
 				minorBounds.x = insets.left;
 				majorBounds.x = insets.left;
 				textBounds.x = majorBounds.x + majorBounds.width + labelPadding;
@@ -267,9 +282,10 @@ public class PlotAxis extends JComponent implements Model {
 
 			g2.setColor(getForeground());
 
-			PlotUtils.drawHorizontalGridLineLabels(g2, textBounds, alignment, topValue, bottomValue, majorSpacing,
-					format);
-		} else {
+			PlotUtils
+				.drawHorizontalGridLineLabels(g2, textBounds, alignment, topValue, bottomValue, majorSpacing, format);
+		}
+		else {
 			double leftDomain = axisConversion.invert(0);
 			double rightDomain = axisConversion.invert(getWidth());
 
@@ -284,7 +300,8 @@ public class PlotAxis extends JComponent implements Model {
 				minorBounds.y = getHeight() - insets.bottom - minorBounds.height;
 				majorBounds.y = getHeight() - insets.bottom - majorBounds.height;
 				textBounds.y = majorBounds.y - textBounds.height - labelPadding;
-			} else {
+			}
+			else {
 				minorBounds.y = insets.top;
 				majorBounds.y = insets.top;
 				textBounds.y = majorBounds.y + majorBounds.height + labelPadding;
@@ -328,8 +345,12 @@ public class PlotAxis extends JComponent implements Model {
 		if (axisConversion == null) {
 			throw new IllegalArgumentException("axisConversion must be non-null");
 		}
+		if (Objects.equals(this.axisConversion, axisConversion)) {
+			return;
+		}
 		this.axisConversion = axisConversion;
 		changeSupport.firePropertyChange(this, Property.AXIS_CONVERSION, null, axisConversion);
+		repaint();
 	}
 
 	public void setLabelPosition(LabelPosition labelPosition) {
@@ -387,7 +408,8 @@ public class PlotAxis extends JComponent implements Model {
 		Dimension newPrefSize;
 
 		if (orientation == Orientation.VERTICAL) {
-			double minorSpacing = GridMath
+			double minorSpacing =
+				GridMath
 					.niceCeiling(Math.abs(axisConversion.invert(minMinorGridLineSpacing) - axisConversion.invert(0)));
 			double majorSpacing = minorSpacing * 2;
 
@@ -398,14 +420,16 @@ public class PlotAxis extends JComponent implements Model {
 			format.setMinimumFractionDigits(fractionDigits);
 			format.setMaximumFractionDigits(fractionDigits);
 
-			int labelWidth = (int) Math
+			int labelWidth =
+				(int) Math
 					.ceil(PlotUtils.calcHorizontalGridLineLabelsWidth(g2, topValue, bottomValue, majorSpacing, format));
 
 			int width = labelWidth + majorTickSize + labelPadding + insets.left + insets.right;
 
 			newMinSize = new Dimension(width, 0);
 			newPrefSize = new Dimension(width, 100);
-		} else {
+		}
+		else {
 			int height = g2.getFontMetrics().getAscent() + majorTickSize + labelPadding + insets.top + insets.bottom;
 
 			newMinSize = new Dimension(0, height);
@@ -418,5 +442,53 @@ public class PlotAxis extends JComponent implements Model {
 		calcPrefSize = newPrefSize;
 
 		return changed;
+	}
+
+	public AutoCloseable bind(Supplier<Cell<LinearAxisConversion>> getCell) {
+		return bind(Cell.from(getCell));
+	}
+
+	public AutoCloseable bind(Cell<LinearAxisConversion> cell) {
+		Ref<Boolean> changing = new Ref<>(false);
+		QAutorun autorun = QAutorun.autorun(() -> {
+			if (changing.value)
+				return;
+			try {
+				changing.value = true;
+				LinearAxisConversion conv = cell.get();
+				if (conv != null) {
+					setAxisConversion(conv);
+				}
+			} finally {
+				changing.value = false;
+			}
+		});
+		BasicPropertyChangeListener listener = (source, prop, oldValue, newValue, idx) -> {
+			if (changing.value)
+				return;
+			try {
+				changing.value = true;
+				cell.set(getAxisConversion());
+			} finally {
+				changing.value = false;
+			}
+
+		};
+		changeSupport().addPropertyChangeListener(Property.AXIS_CONVERSION, listener);
+		return () -> {
+			autorun.close();
+			changeSupport().removePropertyChangeListener(Property.AXIS_CONVERSION, listener);
+		};
+	}
+
+	public AutoCloseable bind(
+		Supplier<Cell<LinearAxisConversion>> getCell,
+		Bimapper<LinearAxisConversion, LinearAxisConversion> bimapper) {
+		return bind(Cell.compose(Cell.from(getCell), bimapper));
+	}
+
+	public AutoCloseable
+		bind(Cell<LinearAxisConversion> cell, Bimapper<LinearAxisConversion, LinearAxisConversion> bimapper) {
+		return bind(Cell.compose(cell, bimapper));
 	}
 }

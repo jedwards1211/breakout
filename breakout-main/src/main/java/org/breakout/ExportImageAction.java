@@ -21,8 +21,6 @@
  *******************************************************************************/
 package org.breakout;
 
-import static org.andork.bind.QObjectAttributeBinder.bind;
-
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -33,7 +31,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import org.andork.awt.I18n.Localizer;
-import org.andork.bind.Binder;
 import org.andork.jogl.awt.JoglExportImageDialog;
 import org.andork.jogl.awt.JoglExportImageDialogModel;
 import org.andork.q.QObject;
@@ -67,11 +64,14 @@ public class ExportImageAction extends AbstractAction {
 		Component canvas = mainView.getCanvas();
 
 		if (screenCaptureDialog == null) {
-			screenCaptureDialog = new JoglExportImageDialog(mainView.getAutoDrawable(),
-					SwingUtilities.getWindowAncestor(mainPanel), mainView.getI18n());
+			screenCaptureDialog =
+				new JoglExportImageDialog(
+					mainView.getAutoDrawable(),
+					SwingUtilities.getWindowAncestor(mainPanel),
+					mainView.getI18n());
 			screenCaptureDialog.setTitle("Export Image");
-			QObject<JoglExportImageDialogModel> exportImageDialogModel = mainView.getProjectModel().get(
-					ProjectModel.exportImageDialogModel);
+			QObject<JoglExportImageDialogModel> exportImageDialogModel =
+				mainView.getProjectModel().get(ProjectModel.exportImageDialogModel);
 			if (exportImageDialogModel == null) {
 				exportImageDialogModel = JoglExportImageDialogModel.instance.newObject();
 				exportImageDialogModel.set(JoglExportImageDialogModel.outputDirectory, "screenshots");
@@ -80,14 +80,14 @@ public class ExportImageAction extends AbstractAction {
 				exportImageDialogModel.set(JoglExportImageDialogModel.pixelWidth, canvas.getWidth());
 				exportImageDialogModel.set(JoglExportImageDialogModel.pixelHeight, canvas.getHeight());
 				exportImageDialogModel.set(JoglExportImageDialogModel.resolution, new BigDecimal(300));
-				exportImageDialogModel.set(JoglExportImageDialogModel.resolutionUnit,
+				exportImageDialogModel
+					.set(
+						JoglExportImageDialogModel.resolutionUnit,
 						JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN);
 				mainView.getProjectModel().set(ProjectModel.exportImageDialogModel, exportImageDialogModel);
 			}
-
-			Binder<QObject<JoglExportImageDialogModel>> screenCaptureBinder = bind(
-					ProjectModel.exportImageDialogModel, mainView.getProjectModelBinder());
-			screenCaptureDialog.setBinder(screenCaptureBinder);
+			screenCaptureDialog
+				.setModel(mainView.getProjectModelCell().objectAttribute(ProjectModel.exportImageDialogModel));
 
 			Dimension size = mainPanel.getSize();
 			size.width = size.width * 3 / 4;

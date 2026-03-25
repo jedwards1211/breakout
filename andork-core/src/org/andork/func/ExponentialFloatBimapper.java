@@ -19,48 +19,33 @@
  * this program; if not, write to the Free Software Foundation, Inc., 51
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *******************************************************************************/
-package org.andork.bind;
+package org.andork.func;
 
-import org.andork.q.QDependency;
-import org.andork.util.Java7;
+public class ExponentialFloatBimapper implements Bimapper<Float, Float> {
+	public double a;
+	public double b;
+	public double c;
 
-public class DefaultBinder<T> extends Binder<T> {
-	public static <T> DefaultBinder<T> bind(T value) {
-		return new DefaultBinder<T>(value);
+	/**
+	 * Creates a bimapper where out = a * e ^ (b * x) + c.
+	 */
+	public ExponentialFloatBimapper(double a, double b, double c) {
+		this.a = a;
+		this.b = b;
+		this.c = c;
 	}
 
-	private final QDependency dependency = new QDependency();
-	private T value;
-
-	public DefaultBinder() {
-
-	}
-
-	public DefaultBinder(T value) {
-		super();
-		this.value = value;
-	}
-
-	@Override
-	public T get() {
-		dependency.depend();
-		return value;
+	public ExponentialFloatBimapper(double[] abc) {
+		this(abc[0], abc[1], abc[2]);
 	}
 
 	@Override
-	public void set(T newValue) {
-		if (!Java7.Objects.equals(value, newValue)) {
-			value = newValue;
-			updateDownstream(false);
-			dependency.fireChanged();
-		}
+	public Float map(Float in) {
+		return in == null ? null : (float) (a * Math.exp(b * in) + c);
 	}
 
 	@Override
-	public void update(boolean force) {
-		if (force) {
-			updateDownstream(force);
-			dependency.fireChanged();
-		}
+	public Float unmap(Float out) {
+		return out == null ? null : (float) (Math.log((out - c) / a) / b);
 	}
 }

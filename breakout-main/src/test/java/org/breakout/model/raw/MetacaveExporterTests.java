@@ -39,7 +39,7 @@ public class MetacaveExporterTests {
 		List<SurveyRow> rows = new ArrayList<SurveyRow>();
 
 		SurveyTrip _trip =
-			new MutableSurveyTrip()
+			new SurveyTrip.Mutable()
 				.setCave("Fisher Ridge")
 				.setName("SurveyTrip 1")
 				.setDate("2016-01-01")
@@ -61,7 +61,7 @@ public class MetacaveExporterTests {
 				.toImmutable();
 
 		SurveyRow _r0 =
-			new MutableSurveyRow()
+			new SurveyRow.Mutable()
 				.setTrip(_trip)
 				.setOverrideFromCave(null)
 				.setFromStation("A1")
@@ -79,7 +79,7 @@ public class MetacaveExporterTests {
 				.toImmutable();
 
 		SurveyRow _r3 =
-			new MutableSurveyRow()
+			new SurveyRow.Mutable()
 				.setTrip(_trip)
 				.setOverrideFromCave(null)
 				.setFromStation("A1")
@@ -97,7 +97,7 @@ public class MetacaveExporterTests {
 				.toImmutable();
 
 		SurveyRow _r2 =
-			new MutableSurveyRow()
+			new SurveyRow.Mutable()
 				.setTrip(_trip)
 				.setOverrideFromCave("Mammoth")
 				.setFromStation("A2")

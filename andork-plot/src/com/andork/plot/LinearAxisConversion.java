@@ -22,6 +22,7 @@
 package com.andork.plot;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * An axis conversion function that is a line with nonzero scale.
@@ -68,9 +69,9 @@ public class LinearAxisConversion implements IAxisConversion, Serializable {
 	 * {@code x1} must not equal {@code x2} and {@code cx1} must not equal
 	 * {@code cx2}.
 	 *
-	 * @throws IllegalArgumentException
-	 *             if the parameters are invalid or if it is impossible to
-	 *             calculate the conversion because of a double overflow.
+	 * @throws IllegalArgumentException if the parameters are invalid or if it is
+	 *                                  impossible to calculate the conversion
+	 *                                  because of a double overflow.
 	 */
 	public void set(double x1, double cx1, double x2, double cx2) {
 		if (Double.isNaN(x1) || Double.isInfinite(x1)) {
@@ -130,4 +131,22 @@ public class LinearAxisConversion implements IAxisConversion, Serializable {
 		}
 		this.scale = scale;
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(offset, scale);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LinearAxisConversion other = (LinearAxisConversion) obj;
+		return offset == other.offset && scale == other.scale;
+	}
+
 }

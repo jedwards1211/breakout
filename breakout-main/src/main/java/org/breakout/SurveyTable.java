@@ -82,6 +82,16 @@ public class SurveyTable extends AnnotatingJTable {
 			column(SurveyTableModel.Columns.easting).headerValue("Easting").renderer(numberCellRenderer);
 		public final ListTableColumn<SurveyRow, String> elevation =
 			column(SurveyTableModel.Columns.elevation).headerValue("Elevation").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> latitude =
+			column(SurveyTableModel.Columns.latitude).headerValue("Latitude").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> longitude =
+			column(SurveyTableModel.Columns.longitude).headerValue("Longitude").renderer(numberCellRenderer);
+		public final ListTableColumn<SurveyRow, String> datum =
+			column(SurveyTableModel.Columns.datum).headerValue("Datum");
+		public final ListTableColumn<SurveyRow, String> ellipsoid =
+			column(SurveyTableModel.Columns.ellipsoid).headerValue("Ellipsoid");
+		public final ListTableColumn<SurveyRow, String> utmZone =
+			column(SurveyTableModel.Columns.utmZone).headerValue("UTM Zone");
 		public final ListTableColumn<SurveyRow, String> comment =
 			column(SurveyTableModel.Columns.comment).headerValue("Comment");
 		public final ListTableColumn<SurveyRow, String> tripName =
@@ -90,7 +100,7 @@ public class SurveyTable extends AnnotatingJTable {
 			column(SurveyTableModel.Columns.surveyors).headerValue("Surveyors");
 		public final ListTableColumn<SurveyRow, String> date =
 			column(SurveyTableModel.Columns.date).headerValue("Date");
-		public final ListTableColumn<SurveyRow, PersistentVector<String>> attachedFiles =
+		public final ListTableColumn<SurveyRow, List<String>> attachedFiles =
 			column(SurveyTableModel.Columns.attachedFiles)
 				.headerValue("Attached Files")
 				.renderer(new DefaultTableCellRenderer() {
@@ -155,6 +165,7 @@ public class SurveyTable extends AnnotatingJTable {
 		setDefaultEditor(String.class, new DefaultCellEditor(new JTextField()));
 
 		addMouseListener(new MouseAdapter() {
+			@SuppressWarnings("unchecked")
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				if (!e.isControlDown()) {
@@ -170,9 +181,8 @@ public class SurveyTable extends AnnotatingJTable {
 
 				if (column == columns.attachedFiles) {
 					Object o = getValueAt(Surveyrow, columnIndex);
-					if (o != null) {
-						listeners.forEach(listener -> listener.surveyNotesClicked(o.toString(), Surveyrow));
-
+					if (o != null && o instanceof List) {
+						listeners.forEach(listener -> listener.attachedFilesClicked((List<String>) o, Surveyrow));
 					}
 				}
 			}
@@ -234,6 +244,11 @@ public class SurveyTable extends AnnotatingJTable {
 				addColumn(columns.northing);
 				addColumn(columns.easting);
 				addColumn(columns.elevation);
+				addColumn(columns.latitude);
+				addColumn(columns.longitude);
+				addColumn(columns.datum);
+				addColumn(columns.ellipsoid);
+				addColumn(columns.utmZone);
 				break;
 			case TRIP:
 				addColumn(columns.toCave);

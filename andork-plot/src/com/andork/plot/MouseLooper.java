@@ -43,11 +43,13 @@ public class MouseLooper extends MouseAdapter {
 	private static Robot createRobot() {
 		try {
 			return new Robot();
-		} catch (AWTException ex) {
+		}
+		catch (AWTException ex) {
 			return null;
 		}
 	}
 
+	boolean loopingEnabled = true;
 	Robot robot;
 	MouseEvent pressEvent;
 	Point lastDragPoint;
@@ -67,6 +69,14 @@ public class MouseLooper extends MouseAdapter {
 		this.robot = robot;
 	}
 
+	public boolean isLoopingEnabled() {
+		return loopingEnabled;
+	}
+
+	public void setLoopingEnabled(boolean loopingEnabled) {
+		this.loopingEnabled = loopingEnabled;
+	}
+
 	public void addMouseAdapter(MouseAdapter a) {
 		if (!adapters.contains(a)) {
 			adapters.add(a);
@@ -84,17 +94,19 @@ public class MouseLooper extends MouseAdapter {
 
 	@Override
 	public void mouseDragged(MouseEvent e) {
+		System.out.println(e);
 		if (pressEvent == null) {
 			return;
 		}
 
-		if (robot != null) {
+		if (loopingEnabled && robot != null) {
 			Component c = e.getComponent();
 
 			Rectangle bounds;
 			if (c instanceof JComponent) {
 				bounds = ((JComponent) c).getVisibleRect();
-			} else {
+			}
+			else {
 				bounds = SwingUtilities.getLocalBounds(c);
 			}
 			Point p = new Point();
@@ -135,7 +147,8 @@ public class MouseLooper extends MouseAdapter {
 				lastDragPoint = null;
 
 				robot.mouseMove(newLoc.x + newX, newLoc.y + newY);
-			} else {
+			}
+			else {
 				lastDragPoint = e.getPoint();
 			}
 
@@ -233,9 +246,18 @@ public class MouseLooper extends MouseAdapter {
 		if (fakeLocation == null) {
 			return e;
 		}
-		return new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(),
-				fakeLocation.x, fakeLocation.y, fakeLocationOnScreen.x, fakeLocationOnScreen.y,
-				e.getClickCount(), e.isPopupTrigger(), e.getButton());
+		return new MouseEvent(
+			e.getComponent(),
+			e.getID(),
+			e.getWhen(),
+			e.getModifiers(),
+			fakeLocation.x,
+			fakeLocation.y,
+			fakeLocationOnScreen.x,
+			fakeLocationOnScreen.y,
+			e.getClickCount(),
+			e.isPopupTrigger(),
+			e.getButton());
 	}
 
 	private MouseWheelEvent repositionEvent(MouseWheelEvent e) {
@@ -243,9 +265,19 @@ public class MouseLooper extends MouseAdapter {
 			return e;
 		}
 		MouseWheelEvent mwe = e;
-		return new MouseWheelEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(),
-				fakeLocation.x, fakeLocation.y, fakeLocationOnScreen.x, fakeLocationOnScreen.y,
-				e.getClickCount(), e.isPopupTrigger(),
-				mwe.getScrollType(), mwe.getScrollAmount(), mwe.getWheelRotation());
+		return new MouseWheelEvent(
+			e.getComponent(),
+			e.getID(),
+			e.getWhen(),
+			e.getModifiers(),
+			fakeLocation.x,
+			fakeLocation.y,
+			fakeLocationOnScreen.x,
+			fakeLocationOnScreen.y,
+			e.getClickCount(),
+			e.isPopupTrigger(),
+			mwe.getScrollType(),
+			mwe.getScrollAmount(),
+			mwe.getWheelRotation());
 	}
 }

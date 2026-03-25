@@ -59,19 +59,21 @@ public class AttachedFileFinder {
 			});
 		}
 		dirs = mainView.getProjectModel().get(ProjectModel.surveyScanPaths);
-		if (dirs.isEmpty()) dirs = new QArrayList<>();
+		if (dirs.isEmpty())
+			dirs = new QArrayList<>();
 		return dirs;
 	}
-	
+
 	private static final int SCANNED_NOTES_SEARCH_DEPTH = 10;
 
 	private static final Logger logger = Logger.getLogger(AttachedFileFinder.class.getName());
 
-	public static List<URI> findAttachedFiles(BreakoutMainView mainView, Set<String> attachedFiles, Task<?> task) throws IOException {
+	public static List<URI> findAttachedFiles(BreakoutMainView mainView, Set<String> attachedFiles, Task<?> task)
+		throws IOException {
 		if (SwingUtilities.isEventDispatchThread()) {
 			throw new IllegalThreadStateException("must not be called on EDT, should be called on ioTaskService");
 		}
-		
+
 		Map<String, FileFinder.MatchSet> matches;
 		try {
 			matches = FileFinder.findFiles(attachedFiles, (Function<Path, Boolean> iteratee) -> {
@@ -102,26 +104,33 @@ public class AttachedFileFinder {
 										throws IOException {
 										if (iteratee.apply(path) && !task.isCanceled()) {
 											return FileVisitResult.CONTINUE;
-										} else {
+										}
+										else {
 											done.value = true;
 											return FileVisitResult.TERMINATE;
 										}
 									}
 								});
-						if (done.value || task.isCanceled()) break;
+						if (done.value || task.isCanceled())
+							break;
 					}
 				}
 			});
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			if (task.isCanceled()) {
 				return Collections.emptyList();
 			}
 			logger.log(Level.SEVERE, "Failed to find files", ex);
 			OnEDT.onEDT(() -> {
-				JOptionPane.showMessageDialog(SelfReportingTask.getDialogParent(task), 
-					"Failed to find files: " + ex.getLocalizedMessage(), "Error finding files", JOptionPane.ERROR_MESSAGE);
+				JOptionPane
+					.showMessageDialog(
+						SelfReportingTask.getDialogParent(task),
+						"Failed to find files: " + ex.getLocalizedMessage(),
+						"Error finding files",
+						JOptionPane.ERROR_MESSAGE);
 			});
-			throw ex;			
+			throw ex;
 		}
 		if (task.isCanceled()) {
 			return Collections.emptyList();
@@ -129,29 +138,37 @@ public class AttachedFileFinder {
 
 		List<URI> result = new ArrayList<>();
 		for (Map.Entry<String, MatchSet> entry : matches.entrySet()) {
+			if (task.isCanceled()) {
+				return Collections.emptyList();
+			}
 			URI exactMatch = entry.getValue().exactMatch();
 			if (exactMatch != null) {
 				result.add(exactMatch);
 				continue;
 			}
 			URI selected = FromEDT.fromEDT(() -> selectMatch(mainView, entry.getKey(), entry.getValue(), task));
-			if (selected == null) continue;
+			if (selected == null)
+				continue;
 			result.add(selected);
 		}
-		
+
 		Set<String> notFound = new HashSet<>(attachedFiles);
 		notFound.removeAll(matches.keySet());
 		if (!notFound.isEmpty()) {
 			final String title = "Failed to find file" + (notFound.size() == 1 ? "" : "s");
 			OnEDT.onEDT(() -> {
-				JOptionPane.showMessageDialog(SelfReportingTask.getDialogParent(task), 
-					title + ": " + StringUtils.join(", ", notFound), title, JOptionPane.ERROR_MESSAGE);
+				JOptionPane
+					.showMessageDialog(
+						SelfReportingTask.getDialogParent(task),
+						title + ": " + StringUtils.join(", ", notFound),
+						title,
+						JOptionPane.ERROR_MESSAGE);
 			});
 		}
-		
+
 		return result;
 	}
-	
+
 	private static URI selectMatch(BreakoutMainView mainView, String inputFile, MatchSet matchset, Task<?> task) {
 		DefaultListModel<URI> model = new DefaultListModel<>();
 		for (URI match : matchset.bestMatches(0.7f, 5)) {
@@ -161,17 +178,21 @@ public class AttachedFileFinder {
 		list.setSelectedIndex(0);
 		ListCellRenderer<Object> defaultRenderer = new DefaultListCellRenderer();
 		list.setCellRenderer((l, value, index, isSelected, cellHasFocus) -> {
-			return defaultRenderer.getListCellRendererComponent(
-				list,
-				value.getScheme().equals("file") ? Paths.get(value).toString() : value.toString(),
-				index, isSelected, cellHasFocus
-			);
+			return defaultRenderer
+				.getListCellRendererComponent(
+					list,
+					value.getScheme().equals("file") ? Paths.get(value).toString() : value.toString(),
+					index,
+					isSelected,
+					cellHasFocus);
 		});
-		
-		int option = JOptionPane.showConfirmDialog(SelfReportingTask.getDialogParent(task), new Object[] {
-			new JLabel("No file named " + inputFile + " exists, do you want to choose one of the following?"),
-			list
-		}, "Select file", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+		int option =
+			JOptionPane.showConfirmDialog(SelfReportingTask.getDialogParent(task), new Object[]
+			{ new JLabel("No file named " + inputFile + " exists, do you want to choose one of the following?"), list },
+				"Select file",
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.QUESTION_MESSAGE);
 		return option == JOptionPane.YES_OPTION ? list.getSelectedValue() : null;
 	}
 }

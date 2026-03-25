@@ -18,9 +18,9 @@ import org.andork.awt.I18n;
 public class SearchOptionsMenu extends JPopupMenu {
 	private SearchMode searchMode;
 	private final Map<SearchMode, JRadioButtonMenuItem> items = new HashMap<>();
-	
+
 	private final EventListenerList listeners = new EventListenerList();
-	
+
 	public SearchOptionsMenu(I18n i18n) {
 		ButtonGroup group = new ButtonGroup();
 		for (SearchMode mode : SearchMode.values()) {
@@ -41,22 +41,25 @@ public class SearchOptionsMenu extends JPopupMenu {
 		}
 		setSearchMode(SearchMode.AUTO);
 	}
-	
+
 	public void addChangeListener(ChangeListener l) {
 		this.listeners.add(ChangeListener.class, l);
 	}
-	
+
 	public void removeChangeListener(ChangeListener l) {
 		this.listeners.remove(ChangeListener.class, l);
 	}
-	
+
 	public void setSearchMode(SearchMode mode) {
-		if (mode == this.searchMode) return; 
+		if (mode == this.searchMode)
+			return;
 		SearchMode prevMode = mode;
 		this.searchMode = mode;
 		if (mode == null) {
-			this.items.get(prevMode).setSelected(false);
-		} else {
+			if (prevMode != null)
+				this.items.get(prevMode).setSelected(false);
+		}
+		else {
 			this.items.get(mode).setSelected(true);
 		}
 		ChangeEvent e = new ChangeEvent(this);
@@ -64,7 +67,7 @@ public class SearchOptionsMenu extends JPopupMenu {
 			l.stateChanged(e);
 		}
 	}
-	
+
 	public SearchMode getSearchMode() {
 		return searchMode;
 	}

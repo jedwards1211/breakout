@@ -40,14 +40,11 @@ public class QAutorun implements AutoCloseable {
 	}
 
 	public void run() {
-		if (currentAutorun.get() != null) {
-			throw new RuntimeException("an " + QAutorun.class.getName() + " is already running on this thread");
-		}
 		if (thread.get() != Thread.currentThread()) {
 			throw new RuntimeException("run not called on the original thread!");
 		}
 		try {
-			dependencies.clear();
+			close();
 			currentAutorun.set(this);
 			runner.run();
 		} finally {

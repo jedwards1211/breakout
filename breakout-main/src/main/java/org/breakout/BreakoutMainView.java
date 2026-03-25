@@ -21,7 +21,9 @@
  *******************************************************************************/
 package org.breakout;
 
+import static org.andork.bind.ui.BindUI.bindSelected;
 import static org.andork.math3d.Vecmath.newMat4f;
+import static org.andork.q.QAutorun.autorun;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -40,8 +42,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -71,13 +71,11 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -105,7 +103,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableModel;
 
 import org.andork.awt.I18n;
-import org.andork.awt.I18n.I18nUpdater;
 import org.andork.awt.I18n.Localizer;
 import org.andork.awt.anim.Animation;
 import org.andork.awt.anim.AnimationQueue;
@@ -118,14 +115,6 @@ import org.andork.awt.layout.MultilineLabelHolder;
 import org.andork.awt.layout.Side;
 import org.andork.awt.layout.SideConstraint;
 import org.andork.awt.layout.SideConstraintLayoutDelegate;
-import org.andork.bind.BiFunctionBinder;
-import org.andork.bind.Binder;
-import org.andork.bind.BinderWrapper;
-import org.andork.bind.DefaultBinder;
-import org.andork.bind.HierarchicalChangeBinder;
-import org.andork.bind.QMapKeyedBinder;
-import org.andork.bind.QObjectAttributeBinder;
-import org.andork.bind.ui.ButtonSelectedBinder;
 import org.andork.collect.HashSets;
 import org.andork.collect.LinkedListMultiMap;
 import org.andork.collect.MultiMap;
@@ -134,7 +123,6 @@ import org.andork.concurrent.Throttler;
 import org.andork.event.BasicPropertyChangeListener;
 import org.andork.event.SourcePath;
 import org.andork.func.Bimapper;
-import org.andork.func.ExceptionRunnable;
 import org.andork.func.FloatUnaryOperator;
 import org.andork.func.Lodash;
 import org.andork.func.Lodash.DebounceOptions;
@@ -165,11 +153,16 @@ import org.andork.math3d.LinePlaneIntersection3f;
 import org.andork.math3d.PickXform;
 import org.andork.math3d.PlanarHull3f;
 import org.andork.math3d.Vecmath;
+import org.andork.model.Cell;
 import org.andork.q.QArrayList;
+import org.andork.q.QAutorun;
+import org.andork.q.QCell;
 import org.andork.q.QLinkedHashMap;
 import org.andork.q.QMap;
 import org.andork.q.QObject;
+import org.andork.q.QObjectCell;
 import org.andork.q.QSpec;
+import org.andork.q.QSpec.Attribute;
 import org.andork.ref.Ref;
 import org.andork.spatial.RNode;
 import org.andork.spatial.RTraversal;
@@ -200,7 +193,6 @@ import org.breakout.mapbox.MapboxClient;
 import org.breakout.model.AutoTerrain;
 import org.breakout.model.ColorParam;
 import org.breakout.model.DebugDraw;
-import org.breakout.model.GradientModel;
 import org.breakout.model.HasShotKey;
 import org.breakout.model.HasStationKey;
 import org.breakout.model.HighlightMode;
@@ -233,7 +225,6 @@ import org.breakout.model.raw.MetacaveExporter;
 import org.breakout.model.raw.MetacaveImporter;
 import org.breakout.model.raw.SurveyLead;
 import org.breakout.model.raw.SurveyRow;
-import org.breakout.proj4.CoordinateReferenceSystemPreset;
 import org.jdesktop.swingx.JXHyperlink;
 
 import com.andork.plot.LinearAxisConversion;
@@ -385,7 +376,7 @@ public class BreakoutMainView {
 		}
 	}
 
-	private Binder<Float> distanceToClosestNodeBinder = new DefaultBinder<Float>(1000f);
+	private Cell<Float> distanceToClosestNode = new QCell<>(1000f);
 
 	private class MousePickHandler extends MouseAdapter {
 		@Override
@@ -399,13 +390,10 @@ public class BreakoutMainView {
 			if (picked == null) {
 				surveyDrawer.table().clearSelection();
 			}
-			else if (e.getClickCount() == 2) {
+			else if (e.getClickCount() == 2 && !e.isControlDown() && !e.isShiftDown()) {
 				SurveyRow row = sourceRows.get(picked.picked.key());
 				if (row != null) {
-					List<String> files = row.getAttachedFiles();
-					if (files != null && !files.isEmpty()) {
-						openAttachedFile(files.get(0));
-					}
+					openAttachedFiles(row.getAttachedFiles());
 				}
 			}
 		}
@@ -585,7 +573,7 @@ public class BreakoutMainView {
 			if (Float.isNaN(distance)) {
 				return;
 			}
-			distanceToClosestNodeBinder.set(distance);
+			distanceToClosestNode.set(distance);
 		}
 
 		@Override
@@ -634,7 +622,7 @@ public class BreakoutMainView {
 					final QObject<ProjectModel> projectModel = ProjectModel.newInstance();
 
 					projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
-					projectModelBinder.set(projectModel);
+					projectModelCell.set(projectModel);
 
 					surveyDrawer.table().getModel().clear();
 
@@ -775,7 +763,7 @@ public class BreakoutMainView {
 					}
 
 					projectModel.changeSupport().addPropertyChangeListener(projectModelChangeHandler);
-					projectModelBinder.set(projectModel);
+					projectModelCell.set(projectModel);
 
 					float[] viewXform = projectModel.get(ProjectModel.viewXform);
 					if (viewXform != null) {
@@ -916,9 +904,8 @@ public class BreakoutMainView {
 						}
 					}
 				};
-
-				for (int i = e.getFirstIndex(); i <= e.getLastIndex()
-					&& i < surveyDrawer.table().getModel().getRowCount(); i++) {
+				int rowCount = surveyDrawer.table().getModel().getRowCount();
+				for (int i = e.getFirstIndex(); i <= e.getLastIndex() && i < rowCount; i++) {
 					ShotKey shotKey = modelIndexToShotKey.get(i);
 					if (shotKey == null) {
 						continue;
@@ -926,6 +913,20 @@ public class BreakoutMainView {
 
 					if (selModel.isSelectedIndex(i)) {
 						editor.select(shotKey);
+					}
+					else {
+						editor.deselect(shotKey);
+					}
+				}
+
+				for (int i = selModel.getMinSelectionIndex(); i <= selModel.getMaxSelectionIndex()
+					&& i < rowCount; i++) {
+					ShotKey shotKey = modelIndexToShotKey.get(i);
+					if (shotKey == null) {
+						continue;
+					}
+
+					if (selModel.isSelectedIndex(i)) {
 						ParsedShot parsedShot = parsedProject.shots.get(shotKey);
 						if (parsedShot != null) {
 							ParsedTrip trip = parsedShot.trip;
@@ -953,9 +954,6 @@ public class BreakoutMainView {
 								stations.add(shot.toStation);
 							}
 						}
-					}
-					else {
-						editor.deselect(shotKey);
 					}
 				}
 
@@ -1139,8 +1137,8 @@ public class BreakoutMainView {
 						settingsDrawer.setDateRange(finalMinDaysSince1800, finalMaxDaysSince1800);
 					}
 
-					projectModelBinder.update(true);
-					rootModelBinder.update(true);
+					projectModelCell.fireChanged();
+					rootModelCell.fireChanged();
 
 					float[] center = new float[3];
 					Rectmath.center(model.getTree().getRoot().mbr(), center);
@@ -1207,14 +1205,11 @@ public class BreakoutMainView {
 	final TaskService sortTaskService = ExecutorTaskService.newSingleThreadedTaskService();
 	final ScheduledExecutorService ioService = Executors.newSingleThreadScheduledExecutor();
 	final TaskService ioTaskService = new ExecutorTaskService(ioService);
-	final ExecutorService fetchService = Executors.newCachedThreadPool(new ThreadFactory() {
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r);
-			thread.setDaemon(true);
-			thread.setName("Fetcher");
-			return thread;
-		}
+	final ExecutorService fetchService = Executors.newCachedThreadPool(r -> {
+		Thread thread = new Thread(r);
+		thread.setDaemon(true);
+		thread.setName("Fetcher");
+		return thread;
 	});
 
 	public void askToSaveChangesBeforeShutdown() {
@@ -1513,16 +1508,9 @@ public class BreakoutMainView {
 	final float[] p1 = new float[3];
 	final float[] p2 = new float[3];
 
-	final Binder<QObject<RootModel>> rootModelBinder = new DefaultBinder<>();
+	final QObjectCell<RootModel> rootModelCell = new QObjectCell<>((QObject<RootModel>) null);
 
-	final Binder<QObject<ProjectModel>> projectModelBinder = new DefaultBinder<>();
-
-	Binder<ColorParam> colorParamBinder = QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder);
-
-	Binder<QMap<ColorParam, LinearAxisConversion, ?>> paramRangesBinder =
-		QObjectAttributeBinder.bind(ProjectModel.paramRanges, projectModelBinder);
-
-	Binder<LinearAxisConversion> paramRangeBinder = QMapKeyedBinder.bindKeyed(colorParamBinder, paramRangesBinder);
+	final QObjectCell<ProjectModel> projectModelCell = new QObjectCell<>((QObject<ProjectModel>) null);
 
 	final AnimationQueue cameraAnimationQueue = new AnimationQueue();
 
@@ -1704,6 +1692,14 @@ public class BreakoutMainView {
 		}
 	};
 
+	private <T> QAutorun autorunProjectAttribute(Attribute<T> attribute, Consumer<T> runner) {
+		return autorun(() -> runner.accept(projectModelCell.get(attribute)));
+	}
+
+	private <T> QAutorun autorunRootAttribute(Attribute<T> attribute, Consumer<T> runner) {
+		return autorun(() -> runner.accept(rootModelCell.get(attribute)));
+	}
+
 	public BreakoutMainView() {
 		mapbox = new MapboxClient(null);
 
@@ -1711,6 +1707,8 @@ public class BreakoutMainView {
 		final GLCapabilities caps = new GLCapabilities(glp);
 		autoDrawable = canvas = new GLCanvas(caps);
 		autoDrawable.display();
+
+		Ref<Boolean> constructing = new Ref<>(true);
 
 		scene = new JoglScene();
 		bgColor = new JoglBackgroundColor();
@@ -1722,47 +1720,47 @@ public class BreakoutMainView {
 
 		autoDrawable.addGLEventListener(renderer);
 
-		navigator = new DefaultNavigator(autoDrawable, renderer);
-		navigator.setMoveFactor(5f);
-		navigator.setWheelFactor(5f);
-
-		orbiter = new JoglOrbiter(autoDrawable, renderer.viewSettings());
-		orthoNavigator = new JoglOrthoNavigator(autoDrawable, renderer.viewState(), renderer.viewSettings());
-		orthoNavigator.setSensitivity(0.01f);
-
-		clipMouseHandler = new ClipMouseHandler(new ClipMouseHandler.Context() {
-			@Override
-			public void setClip(Clip3f clip) {
-				getProjectModel().set(ProjectModel.clip, clip);
-			}
-
-			@Override
-			public Clip3f getClip() {
-				return getProjectModel().get(ProjectModel.clip);
-			}
-
-			@Override
-			public float[] getSceneMbr() {
-				return BreakoutMainView.this.getSceneMbr();
-			}
-
-			@Override
-			public GLAutoDrawable getDrawable() {
-				return autoDrawable;
-			}
-
-			@Override
-			public JoglViewState getViewState() {
-				return renderer.viewState();
-			}
-		});
-
 		final Consumer<Runnable> sortRunner = r -> sortTaskService.submit(task -> {
 			task.setStatus("Sorting survey table...");
 			r.run();
 		});
 
 		OnEDT.onEDT(() -> {
+			navigator = new DefaultNavigator(autoDrawable, renderer);
+			navigator.setMoveFactor(5f);
+			navigator.setWheelFactor(5f);
+
+			orbiter = new JoglOrbiter(autoDrawable, renderer.viewSettings());
+			orthoNavigator = new JoglOrthoNavigator(autoDrawable, renderer.viewState(), renderer.viewSettings());
+			orthoNavigator.setSensitivity(0.01f);
+
+			clipMouseHandler = new ClipMouseHandler(new ClipMouseHandler.Context() {
+				@Override
+				public void setClip(Clip3f clip) {
+					getProjectModel().set(ProjectModel.clip, clip);
+				}
+
+				@Override
+				public Clip3f getClip() {
+					return getProjectModel().get(ProjectModel.clip);
+				}
+
+				@Override
+				public float[] getSceneMbr() {
+					return BreakoutMainView.this.getSceneMbr();
+				}
+
+				@Override
+				public GLAutoDrawable getDrawable() {
+					return autoDrawable;
+				}
+
+				@Override
+				public JoglViewState getViewState() {
+					return renderer.viewState();
+				}
+			});
+
 			surveyDrawer = new SurveyDrawer(sortRunner, i18n);
 
 			rowFilterFactory = text -> {
@@ -1778,172 +1776,178 @@ public class BreakoutMainView {
 					surveyDrawer.highlightButton(),
 					surveyDrawer.filterButton(),
 					Color.YELLOW);
-		});
 
-		pickHandler = new MousePickHandler();
+			pickHandler = new MousePickHandler();
 
-		canvasMouseAdapterWrapper = new MouseAdapterWrapper();
-		canvas.addMouseListener(canvasMouseAdapterWrapper);
-		canvas.addMouseMotionListener(canvasMouseAdapterWrapper);
-		canvas.addMouseWheelListener(canvasMouseAdapterWrapper);
+			canvasMouseAdapterWrapper = new MouseAdapterWrapper();
+			canvas.addMouseListener(canvasMouseAdapterWrapper);
+			canvas.addMouseMotionListener(canvasMouseAdapterWrapper);
+			canvas.addMouseWheelListener(canvasMouseAdapterWrapper);
 
-		mouseLooper = new MouseLooper();
-		windowSelectionMouseHandler = new WindowSelectionMouseHandler(new WindowSelectionMouseHandler.Context() {
-			@Override
-			public void endSelection() {
-				canvasMouseAdapterWrapper.setWrapped(mouseLooper);
-			}
+			mouseLooper = new MouseLooper();
+			autorun(
+				() -> mouseLooper
+					.setLoopingEnabled(Boolean.TRUE.equals(rootModelCell.get(RootModel.enableMouseLooper))));
 
-			@Override
-			public GLAutoDrawable getDrawable() {
-				return autoDrawable;
-			}
-
-			@Override
-			public TaskService getRebuildTaskService() {
-				return rebuildTaskService;
-			}
-
-			@Override
-			public JoglScene getScene() {
-				return scene;
-			}
-
-			@Override
-			public Survey3dModel getSurvey3dModel() {
-				return model3d;
-			}
-
-			@Override
-			public JoglViewState getViewState() {
-				return renderer.viewState();
-			}
-
-			@Override
-			public void selectShots(Set<Shot3d> newSelected, boolean add, boolean toggle) {
-				selectShots(newSelected, add, toggle);
-			}
-		});
-		canvasMouseAdapterWrapper.setWrapped(mouseLooper);
-
-		autoshowController = new DrawerAutoshowController();
-
-		mouseAdapterChain = new MouseAdapterChain();
-		mouseAdapterChain.addMouseAdapter(pickHandler);
-		mouseAdapterChain.addMouseAdapter(autoshowController);
-		mouseAdapterChain.addMouseAdapter(clipMouseHandler);
-
-		mainPanel = new JPanel();
-		mainPanel.setLayout(new DelegatingLayoutManager() {
-			@Override
-			public void onLayoutChanged(Container target) {
-				Window w = SwingUtilities.getWindowAncestor(target);
-				if (w != null) {
-					w.invalidate();
-					w.validate();
+			windowSelectionMouseHandler = new WindowSelectionMouseHandler(new WindowSelectionMouseHandler.Context() {
+				@Override
+				public void endSelection() {
+					canvasMouseAdapterWrapper.setWrapped(mouseLooper);
 				}
-				target.invalidate();
-				target.validate();
-			}
-		});
 
-		taskListDrawer = new TaskListDrawer();
-		taskListDrawer.addTaskService(rebuildTaskService);
-		taskListDrawer.addTaskService(sortTaskService);
-		taskListDrawer.addTaskService(ioTaskService);
-		taskListDrawer.addTo(mainPanel);
-
-		settingsDrawer = new SettingsDrawer(i18n, rootModelBinder, projectModelBinder);
-		settingsDrawer.addTo(mainPanel);
-
-		surveyDrawer.table().getModel().setEditable(false);
-		surveyDrawer.editButton().setSelected(false);
-		surveyDrawer.editButton().addItemListener(e -> {
-			editingSurvey = e.getStateChange() == ItemEvent.SELECTED;
-			linkSurveyNotesAction.setEnabled(!editingSurvey);
-			if (e.getStateChange() == ItemEvent.DESELECTED) {
-				CellEditor editor = surveyDrawer.table().getCellEditor();
-				if (editor != null) {
-					editor.stopCellEditing();
+				@Override
+				public GLAutoDrawable getDrawable() {
+					return autoDrawable;
 				}
-				getProjectModel().set(ProjectModel.hasUnsavedChanges, true);
-				rebuild3dModel.run();
-			}
-		});
-		surveyDrawer.setCaveButton().setAction(setCaveOnRowsAction);
 
-		surveyDrawer.addTo(mainPanel);
+				@Override
+				public TaskService getRebuildTaskService() {
+					return rebuildTaskService;
+				}
 
-		selectionHandler = new TableSelectionHandler();
-		surveyDrawer.table().getModelSelectionModel().addListSelectionListener(selectionHandler);
+				@Override
+				public JoglScene getScene() {
+					return scene;
+				}
 
-		OnEDT.onEDT(() -> {
-			miniSurveyDrawer = new MiniSurveyDrawer(i18n, sortRunner);
+				@Override
+				public Survey3dModel getSurvey3dModel() {
+					return model3d;
+				}
 
-			miniSurveyDrawer.table().setModel(surveyDrawer.table().getModel());
-			miniSurveyDrawer.table().setModelSelectionModel(surveyDrawer.table().getModelSelectionModel());
+				@Override
+				public JoglViewState getViewState() {
+					return renderer.viewState();
+				}
 
-			AnnotatingJTables
-				.connectSearchFieldAndRadioButtons(
-					miniSurveyDrawer.table(),
-					miniSurveyDrawer.searchField().textComponent,
-					rowFilterFactory,
-					miniSurveyDrawer.highlightButton(),
-					miniSurveyDrawer.filterButton(),
-					Color.YELLOW);
+				@Override
+				public void selectShots(Set<Shot3d> newSelected, boolean add, boolean toggle) {
+					BreakoutMainView.this.selectShots(newSelected, add, toggle);
+				}
+			});
+			canvasMouseAdapterWrapper.setWrapped(mouseLooper);
 
-			miniSurveyDrawer.delegate().dockingSide(Side.LEFT);
-			miniSurveyDrawer.mainResizeHandle();
-			miniSurveyDrawer.addTo(mainPanel);
+			autoshowController = new DrawerAutoshowController();
 
-			miniSurveyDrawer.delegate().putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
-		});
+			mouseAdapterChain = new MouseAdapterChain();
+			mouseAdapterChain.addMouseAdapter(pickHandler);
+			mouseAdapterChain.addMouseAdapter(autoshowController);
+			mouseAdapterChain.addMouseAdapter(clipMouseHandler);
 
-		settingsDrawer.delegate().putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+			mainPanel = new JPanel();
+			mainPanel.setLayout(new DelegatingLayoutManager() {
+				@Override
+				public void onLayoutChanged(Container target) {
+					Window w = SwingUtilities.getWindowAncestor(target);
+					if (w != null) {
+						w.invalidate();
+						w.validate();
+					}
+					target.invalidate();
+					target.validate();
+				}
+			});
 
-		taskListDrawer.delegate().putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
-		taskListDrawer.delegate().putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
+			taskListDrawer = new TaskListDrawer();
+			taskListDrawer.addTaskService(rebuildTaskService);
+			taskListDrawer.addTaskService(sortTaskService);
+			taskListDrawer.addTaskService(ioTaskService);
+			taskListDrawer.addTo(mainPanel);
 
-		SideConstraintLayoutDelegate spinnerDelegate = new SideConstraintLayoutDelegate();
-		spinnerDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
-		spinnerDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+			settingsDrawer = new SettingsDrawer(i18n, rootModelCell, projectModelCell);
+			settingsDrawer.addTo(mainPanel);
 
-		hintLabels = new HintLabels();
+			surveyDrawer.table().getModel().setEditable(false);
+			surveyDrawer.editButton().setSelected(false);
+			surveyDrawer.editButton().addItemListener(e -> {
+				editingSurvey = e.getStateChange() == ItemEvent.SELECTED;
+				linkSurveyNotesAction.setEnabled(!editingSurvey);
+				if (e.getStateChange() == ItemEvent.DESELECTED) {
+					CellEditor editor = surveyDrawer.table().getCellEditor();
+					if (editor != null) {
+						editor.stopCellEditing();
+					}
+					getProjectModel().set(ProjectModel.hasUnsavedChanges, true);
+					rebuild3dModel.run();
+				}
+			});
+			surveyDrawer.setCaveButton().setAction(setCaveOnRowsAction);
 
-		hintLabels.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				surveyDrawer.holder().hold(hintLabels);
-			}
-		});
+			surveyDrawer.addTo(mainPanel);
 
-		canvas.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseEntered(MouseEvent e) {
-				surveyDrawer.holder().release(hintLabels);
-			}
-		});
+			selectionHandler = new TableSelectionHandler();
+			surveyDrawer.table().getModelSelectionModel().addListSelectionListener(selectionHandler);
 
-		SideConstraintLayoutDelegate hintLabelDelegate = new SideConstraintLayoutDelegate();
-		hintLabelDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(taskListDrawer.pinButton(), Side.RIGHT, 0));
-		hintLabelDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
-		hintLabelDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+			OnEDT.onEDT(() -> {
+				miniSurveyDrawer = new MiniSurveyDrawer(i18n, sortRunner);
 
-		mainPanel.add(taskListDrawer.pinButton(), spinnerDelegate);
-		mainPanel.add(hintLabels, hintLabelDelegate);
+				miniSurveyDrawer.table().setModel(surveyDrawer.table().getModel());
+				miniSurveyDrawer.table().setModelSelectionModel(surveyDrawer.table().getModelSelectionModel());
 
-		SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
-		canvasDelegate.putExtraConstraint(Side.TOP, new SideConstraint(taskListDrawer, Side.BOTTOM, 0));
-		canvasDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
-		canvasDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
-		canvasDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(hintLabels, Side.TOP, 0));
-		mainPanel.add(canvas, canvasDelegate);
+				AnnotatingJTables
+					.connectSearchFieldAndRadioButtons(
+						miniSurveyDrawer.table(),
+						miniSurveyDrawer.searchField().textComponent,
+						rowFilterFactory,
+						miniSurveyDrawer.highlightButton(),
+						miniSurveyDrawer.filterButton(),
+						Color.YELLOW);
 
-		surveyDrawer.table().setTransferHandler(new SurveyTableTransferHandler());
+				miniSurveyDrawer.delegate().dockingSide(Side.LEFT);
+				miniSurveyDrawer.mainResizeHandle();
+				miniSurveyDrawer.addTo(mainPanel);
 
-		surveyDrawer.table().addPropertyChangeListener("model", new PropertyChangeListener() {
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
+				miniSurveyDrawer
+					.delegate()
+					.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+			});
+
+			settingsDrawer.delegate().putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+
+			taskListDrawer
+				.delegate()
+				.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
+			taskListDrawer.delegate().putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
+
+			SideConstraintLayoutDelegate spinnerDelegate = new SideConstraintLayoutDelegate();
+			spinnerDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
+			spinnerDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+
+			hintLabels = new HintLabels();
+
+			hintLabels.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseEntered(MouseEvent e) {
+					surveyDrawer.holder().hold(hintLabels);
+				}
+			});
+
+			canvas.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseEntered(MouseEvent e) {
+					surveyDrawer.holder().release(hintLabels);
+				}
+			});
+
+			SideConstraintLayoutDelegate hintLabelDelegate = new SideConstraintLayoutDelegate();
+			hintLabelDelegate
+				.putExtraConstraint(Side.LEFT, new SideConstraint(taskListDrawer.pinButton(), Side.RIGHT, 0));
+			hintLabelDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
+			hintLabelDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(surveyDrawer, Side.TOP, 0));
+
+			mainPanel.add(taskListDrawer.pinButton(), spinnerDelegate);
+			mainPanel.add(hintLabels, hintLabelDelegate);
+
+			SideConstraintLayoutDelegate canvasDelegate = new SideConstraintLayoutDelegate();
+			canvasDelegate.putExtraConstraint(Side.TOP, new SideConstraint(taskListDrawer, Side.BOTTOM, 0));
+			canvasDelegate.putExtraConstraint(Side.LEFT, new SideConstraint(miniSurveyDrawer, Side.RIGHT, 0));
+			canvasDelegate.putExtraConstraint(Side.RIGHT, new SideConstraint(settingsDrawer, Side.LEFT, 0));
+			canvasDelegate.putExtraConstraint(Side.BOTTOM, new SideConstraint(hintLabels, Side.TOP, 0));
+			mainPanel.add(canvas, canvasDelegate);
+
+			surveyDrawer.table().setTransferHandler(new SurveyTableTransferHandler());
+
+			surveyDrawer.table().addPropertyChangeListener("model", evt -> {
 				@SuppressWarnings("unchecked")
 				AnnotatingRowSorter<TableModel, Integer> sorter =
 					(AnnotatingRowSorter<TableModel, Integer>) miniSurveyDrawer.table().getRowSorter();
@@ -1954,35 +1958,33 @@ public class BreakoutMainView {
 				miniSurveyDrawer.table().setModel(newModel);
 				sorter.setModel(newModel);
 				miniSurveyDrawer.table().setRowSorter(sorter);
-			}
-		});
+			});
 
-		surveyDrawer.table().addSurveyTableListener(new SurveyTableListener() {
+			surveyDrawer.table().addSurveyTableListener(new SurveyTableListener() {
+				@Override
+				public void attachedFilesClicked(List<String> links, int viewRow) {
+					openAttachedFiles(links);
+				}
+			});
 
-			@Override
-			public void surveyNotesClicked(String link, int viewRow) {
-				openAttachedFile(link);
-			}
-		});
+			surveyDrawer.setModel(() -> projectModelCell.get(ProjectModel.surveyDrawer));
+			miniSurveyDrawer.setModel(() -> projectModelCell.get(ProjectModel.miniSurveyDrawer));
+			settingsDrawer.setModel(() -> projectModelCell.get(ProjectModel.settingsDrawer));
+			taskListDrawer.setModel(() -> projectModelCell.get(ProjectModel.taskListDrawer));
 
-		surveyDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.surveyDrawer, projectModelBinder));
-		settingsDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.settingsDrawer, projectModelBinder));
-		taskListDrawer.setBinder(QObjectAttributeBinder.bind(ProjectModel.taskListDrawer, projectModelBinder));
+			autorun(() -> {
+				projectModelCell.get(ProjectModel.leads);
+				projectModelCell.get(ProjectModel.showCheckedLeads);
+				if (!constructing.value)
+					rebuildLeadIndex();
+			});
 
-		BinderWrapper
-			.create((com.github.krukow.clj_ds.PersistentVector<SurveyLead> leads) -> rebuildLeadIndex())
-			.bind(QObjectAttributeBinder.bind(ProjectModel.leads, projectModelBinder));
-		BinderWrapper
-			.create((Boolean showCheckedLeads) -> rebuildLeadIndex())
-			.bind(QObjectAttributeBinder.bind(ProjectModel.showCheckedLeads, projectModelBinder));
+			autorunProjectAttribute(ProjectModel.paramGradient, g -> {
+				if (!constructing.value)
+					autoDrawable.display();
+			});
 
-		BinderWrapper.create((GradientModel gradient) -> {
-			autoDrawable.display();
-		}).bind(QObjectAttributeBinder.bind(ProjectModel.paramGradient, projectModelBinder));
-
-		new BinderWrapper<Color>() {
-			@Override
-			protected void onValueChanged(Color bgColor) {
+			autorunProjectAttribute(ProjectModel.backgroundColor, bgColor -> {
 				if (bgColor != null) {
 					mainPanel.setBackground(bgColor);
 					BreakoutMainView.this.bgColor
@@ -1990,47 +1992,36 @@ public class BreakoutMainView {
 					if (model3d != null) {
 						model3d.setBackgroundColor(bgColor);
 					}
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.backgroundColor, projectModelBinder));
+			});
 
-		new BinderWrapper<Float>() {
-			@Override
-			protected void onValueChanged(Float stationLabelDensity) {
+			autorunProjectAttribute(ProjectModel.stationLabelDensity, stationLabelDensity -> {
 				if (model3d != null && stationLabelDensity != null) {
 					model3d.setStationLabelDensity(stationLabelDensity);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelDensity, projectModelBinder));
+			});
 
-		new BinderWrapper<Float>() {
-			@Override
-			protected void onValueChanged(Float stationLabelFontSize) {
+			autorunProjectAttribute(ProjectModel.stationLabelFontSize, stationLabelFontSize -> {
 				if (model3d != null && stationLabelFontSize != null) {
 					model3d.setStationLabelFontSize(stationLabelFontSize);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelFontSize, projectModelBinder));
+			});
 
-		new BinderWrapper<Boolean>() {
-			@Override
-			protected void onValueChanged(Boolean showLeadLabels) {
+			autorunProjectAttribute(ProjectModel.showLeadLabels, showLeadLabels -> {
 				if (model3d != null && showLeadLabels != null) {
 					model3d.setShowLeadLabels(showLeadLabels);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.showLeadLabels, projectModelBinder));
-
-		new BinderWrapper<Boolean>() {
-			@Override
-			protected void onValueChanged(Boolean showTerrain) {
-				if (showTerrain == null)
-					showTerrain = false;
-				if (showTerrain) {
+			});
+			autorunProjectAttribute(ProjectModel.showTerrain, showTerrain -> {
+				if (showTerrain != null && showTerrain) {
 					Localizer localizer = i18n.forClass(BreakoutMainView.class);
 					rebuildTaskService.submit(task -> OnEDT.onEDT(() -> {
 						if (!calcProject.shots.isEmpty() && calcProject.coordinateReferenceSystem == null) {
@@ -2075,201 +2066,152 @@ public class BreakoutMainView {
 
 				if (terrain != null) {
 					terrain.setVisible(showTerrain);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.showTerrain, projectModelBinder));
+			});
 
-		new BinderWrapper<Color>() {
-			@Override
-			protected void onValueChanged(Color stationLabelColor) {
+			autorunProjectAttribute(ProjectModel.stationLabelColor, stationLabelColor -> {
 				if (stationLabelColor == null)
 					return;
 				hintLabels.setForeground(stationLabelColor);
 				if (model3d != null) {
 					model3d.setStationLabelColor(stationLabelColor);
 				}
-				autoDrawable.display();
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.stationLabelColor, projectModelBinder));
+				if (!constructing.value)
+					autoDrawable.display();
+			});
 
-		new BinderWrapper<Float>() {
-			@Override
-			protected void onValueChanged(Float maxCenterlineDistance) {
+			autorunProjectAttribute(ProjectModel.centerlineDistance, maxCenterlineDistance -> {
 				if (model3d != null && maxCenterlineDistance != null) {
 					model3d.setMaxCenterlineDistance(maxCenterlineDistance);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineDistance, projectModelBinder));
+			});
 
-		new BinderWrapper<Color>() {
-			@Override
-			protected void onValueChanged(Color centerlineColor) {
+			autorunProjectAttribute(ProjectModel.centerlineColor, centerlineColor -> {
 				if (model3d != null && centerlineColor != null) {
 					model3d.setCenterlineColor(centerlineColor);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.centerlineColor, projectModelBinder));
+			});
 
-		new BinderWrapper<String>() {
-			@Override
-			protected void onValueChanged(String accessToken) {
+			autorunRootAttribute(RootModel.mapboxAccessToken, accessToken -> {
 				mapbox.setAccessToken(accessToken);
 				if (terrain != null) {
 					terrain.reload();
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.mapboxAccessToken, rootModelBinder));
+			});
 
-		new BinderWrapper<Boolean>() {
-			@Override
-			protected void onValueChanged(Boolean wireframe) {
+			autorunRootAttribute(RootModel.wireframe, wireframe -> {
 				if (model3d != null && wireframe != null) {
 					model3d.setWireframe(wireframe);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.wireframe, rootModelBinder));
+			});
 
-		new BinderWrapper<Boolean>() {
-			@Override
-			protected void onValueChanged(Boolean showSpatialIndex) {
+			autorunRootAttribute(RootModel.showSpatialIndex, showSpatialIndex -> {
 				if (model3d != null && showSpatialIndex != null) {
 					model3d.setShowSpatialIndex(showSpatialIndex);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.showSpatialIndex, rootModelBinder));
+			});
 
-		new BinderWrapper<Float>() {
-			@Override
-			protected void onValueChanged(Float sensitivity) {
-				if (sensitivity != null) {
-					navigator.setSensitivity(sensitivity);
-				}
-			}
-		}
-			.bind(
-				new BiFunctionBinder<Integer, Float, Float>(
-					(sliderValue, distance) -> sliderValue != null && distance != null
-						? sliderValue * distance / 50000
-						: null,
-					(sensitivity, distance) -> 0)
-						.bind(
-							QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder),
-							distanceToClosestNodeBinder));
+			autorun(() -> {
+				Integer sliderValue = rootModelCell.get(RootModel.mouseSensitivity);
+				if (sliderValue == null)
+					return;
+				Float distance = distanceToClosestNode.get();
+				if (distance == null)
+					return;
+				navigator.setSensitivity(sliderValue * distance / 50000);
+			});
 
-		new BinderWrapper<Integer>() {
-			@Override
-			protected void onValueChanged(Integer sensitivity) {
-				if (sensitivity != null) {
-				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder));
+			autorun(() -> {
+				Integer sliderValue = rootModelCell.get(RootModel.mouseWheelSensitivity);
+				if (sliderValue == null)
+					return;
+				Float distance = distanceToClosestNode.get();
+				if (distance == null)
+					return;
+				float wheelFactor = sliderValue * distance / 20000;
+				navigator.setWheelFactor(wheelFactor);
+				clipMouseHandler.setWheelFactor(wheelFactor);
+			});
 
-		new BinderWrapper<Integer>() {
-			@Override
-			protected void onValueChanged(Integer sliderValue) {
+			autorunRootAttribute(RootModel.mouseSensitivity, sliderValue -> {
 				if (sliderValue != null) {
 					orthoNavigator.setSensitivity(sliderValue * 0.002f);
 					orbiter.setSensitivity(sliderValue * 0.02f);
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.mouseSensitivity, rootModelBinder));
+			});
 
-		new BinderWrapper<Float>() {
-			@Override
-			protected void onValueChanged(Float wheelFactor) {
-				if (wheelFactor != null) {
-					navigator.setWheelFactor(wheelFactor);
-					clipMouseHandler.setWheelFactor(wheelFactor);
-				}
-			}
-		}
-			.bind(
-				new BiFunctionBinder<Integer, Float, Float>(
-					(sliderValue, distance) -> sliderValue != null && distance != null
-						? sliderValue * distance / 20000
-						: null,
-					(wheelFactor, distance) -> 0)
-						.bind(
-							QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder),
-							distanceToClosestNodeBinder));
-
-		new BinderWrapper<Integer>() {
-			@Override
-			protected void onValueChanged(Integer sliderValue) {
+			autorunRootAttribute(RootModel.mouseWheelSensitivity, sliderValue -> {
 				if (sliderValue != null) {
 					orthoNavigator.setWheelFactor(sliderValue / 2000f);
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.mouseWheelSensitivity, rootModelBinder));
+			});
 
-		new BinderWrapper<Float>() {
-			@Override
-			protected void onValueChanged(final Float newValue) {
+			autorunProjectAttribute(ProjectModel.maxDate, newValue -> {
 				updateHintLabels(null);
 				if (model3d != null) {
 					model3d.setMaxDate(newValue);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.maxDate, projectModelBinder));
+			});
 
-		new BinderWrapper<Float>() {
-			@Override
-			protected void onValueChanged(final Float newValue) {
+			autorunProjectAttribute(ProjectModel.ambientLight, newValue -> {
 				if (model3d != null && newValue != null) {
 					model3d.setAmbientLight(newValue);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.ambientLight, projectModelBinder));
+			});
 
-		new BinderWrapper<Float>() {
-			@Override
-			protected void onValueChanged(final Float newValue) {
+			autorunProjectAttribute(ProjectModel.boldness, newValue -> {
 				if (model3d != null && newValue != null) {
 					model3d.setBoldness(newValue);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.boldness, projectModelBinder));
+			});
 
-		new BinderWrapper<LinearAxisConversion>() {
-			@Override
-			protected void onValueChanged(LinearAxisConversion range) {
+			autorunProjectAttribute(ProjectModel.distRange, range -> {
 				if (model3d != null && range != null) {
 					final float nearDist = (float) range.invert(0.0);
 					final float farDist = (float) range.invert(settingsDrawer.getDistColorationAxis().getViewSpan());
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setNearDist(nearDist);
 					model3d.setFarDist(farDist);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.distRange, projectModelBinder));
+			});
 
-		new BinderWrapper<LinearAxisConversion>() {
-			@Override
-			protected void onValueChanged(LinearAxisConversion range) {
+			autorun(() -> {
+				QMap<ColorParam, LinearAxisConversion, ?> paramRanges = projectModelCell.get(ProjectModel.paramRanges);
+				ColorParam colorParam = projectModelCell.get(ProjectModel.colorParam);
+				LinearAxisConversion range =
+					paramRanges == null || colorParam == null ? null : paramRanges.get(colorParam);
 				if (model3d != null && range != null) {
 					final float loParam = (float) range.invert(0.0);
 					final float hiParam = (float) range.invert(settingsDrawer.getParamColorationAxis().getViewSpan());
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setLoParam(loParam);
 					model3d.setHiParam(hiParam);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(paramRangeBinder);
+			});
 
-		new BinderWrapper<float[]>() {
-			@Override
-			protected void onValueChanged(float[] depthAxis) {
+			autorunProjectAttribute(ProjectModel.depthAxis, depthAxis -> {
 				if (depthAxis == null) {
 					return;
 				}
@@ -2277,50 +2219,43 @@ public class BreakoutMainView {
 				if (model3d != null && depthAxis != null && depthAxis.length == 3) {
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 					model3d.setDepthAxis(finalDepthAxis);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.depthAxis, projectModelBinder));
+			});
 
-		new BinderWrapper<ColorParam>() {
-			@Override
-			protected void onValueChanged(final ColorParam colorParam) {
-				if (colorParam != null && model3d != null) {
+			autorunProjectAttribute(ProjectModel.colorParam, colorParam -> {
+				if (colorParam != null && model3d != null && !constructing.value) {
 					final Survey3dModel model3d = BreakoutMainView.this.model3d;
 
 					rebuildTaskService.submit(task -> {
 						task.setTotal(1);
 						task.setStatus("Recoloring");
 						model3d.setColorParam(colorParam, task);
-						autoDrawable.display();
+						if (!constructing.value)
+							autoDrawable.display();
 					});
 				}
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.colorParam, projectModelBinder));
+			});
 
-		new BinderWrapper<Unit<Length>>() {
-			@Override
-			protected void onValueChanged(final Unit<Length> displayLengthUnit) {
+			autorunProjectAttribute(ProjectModel.displayLengthUnit, displayLengthUnit -> {
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
 				if (model3d != null) {
 					model3d.setDisplayLengthUnit(displayLengthUnit);
-					autoDrawable.display();
+					if (!constructing.value)
+						autoDrawable.display();
 				}
 
 				miniSurveyDrawer.statsPanel().setLengthUnit(displayLengthUnit);
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayLengthUnit, projectModelBinder));
+			});
 
-		new BinderWrapper<CoordinateReferenceSystemPreset>() {
-			@Override
-			protected void onValueChanged(final CoordinateReferenceSystemPreset value) {
-				miniSurveyDrawer.statsPanel().setDisplayCoordinateReferenceSystem(value.crs());
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.displayCoordinateReferenceSystem, projectModelBinder));
+			autorunProjectAttribute(ProjectModel.displayCoordinateReferenceSystem, value -> {
+				if (value != null) {
+					miniSurveyDrawer.statsPanel().setDisplayCoordinateReferenceSystem(value.crs());
+				}
+			});
 
-		new BinderWrapper<Clip3f>() {
-			@Override
-			protected void onValueChanged(final Clip3f clip) {
+			autorunProjectAttribute(ProjectModel.clip, clip -> {
 				final Survey3dModel model3d = BreakoutMainView.this.model3d;
 				if (model3d != null) {
 					model3d.setClip(clip);
@@ -2328,78 +2263,84 @@ public class BreakoutMainView {
 				if (terrain != null) {
 					terrain.setClip(clip);
 				}
-				autoDrawable.display();
-			}
-		}.bind(QObjectAttributeBinder.bind(ProjectModel.clip, projectModelBinder));
+				if (!constructing.value)
+					autoDrawable.display();
+			});
 
-		menuBar = new JMenuBar();
+			menuBar = new JMenuBar();
 
-		JMenu fileMenu = new JMenu();
-		menuBar.add(fileMenu);
+			JMenu fileMenu = new JMenu();
+			menuBar.add(fileMenu);
 
-		fileMenu.add(new JMenuItem(newProjectAction));
-		fileMenu.add(new JMenuItem(openProjectAction));
-		fileMenu.add(new JMenuItem(saveProjectAction));
-		fileMenu.add(new JMenuItem(saveProjectAsAction));
-		JMenu openRecentMenu = new JMenu();
-		fileMenu.add(openRecentMenu);
-		fileMenu.add(new JSeparator());
-		fileMenu.add(new JMenuItem(editSurveyScanPathsAction));
-		fileMenu.add(new JSeparator());
-		JMenu importMenu = new JMenu();
-		importMenu.add(new JMenuItem(importCompassAction));
-		importMenu.add(new JMenuItem(importWallsAction));
-		importMenu.add(new JMenuItem(importLeadsAction));
-		fileMenu.add(importMenu);
-		JMenu exportMenu = new JMenu();
-		exportMenu.add(new JMenuItem(exportImageAction));
-		exportMenu.add(new JMenuItem(exportBinaryStlAction));
-		exportMenu.add(new JMenuItem(exportAsciiStlAction));
-		exportMenu.add(new JMenuItem(exportSurveyNotesAction));
-		fileMenu.add(exportMenu);
-		fileMenu.add(new JSeparator());
-		fileMenu.add(new JMenuItem(linkSurveyNotesAction));
+			fileMenu.add(new JMenuItem(newProjectAction));
+			fileMenu.add(new JMenuItem(openProjectAction));
+			fileMenu.add(new JMenuItem(saveProjectAction));
+			fileMenu.add(new JMenuItem(saveProjectAsAction));
+			JMenu openRecentMenu = new JMenu();
+			fileMenu.add(openRecentMenu);
+			fileMenu.add(new JSeparator());
+			fileMenu.add(new JMenuItem(editSurveyScanPathsAction));
+			fileMenu.add(new JSeparator());
+			JMenu importMenu = new JMenu();
+			importMenu.add(new JMenuItem(importCompassAction));
+			importMenu.add(new JMenuItem(importWallsAction));
+			importMenu.add(new JMenuItem(importLeadsAction));
+			fileMenu.add(importMenu);
+			JMenu exportMenu = new JMenu();
+			exportMenu.add(new JMenuItem(exportImageAction));
+			exportMenu.add(new JMenuItem(exportBinaryStlAction));
+			exportMenu.add(new JMenuItem(exportAsciiStlAction));
+			exportMenu.add(new JMenuItem(exportSurveyNotesAction));
+			fileMenu.add(exportMenu);
+			fileMenu.add(new JSeparator());
+			fileMenu.add(new JMenuItem(linkSurveyNotesAction));
 
-		JMenu editMenu = new JMenu();
-		menuBar.add(editMenu);
-		editMenu.add(new JMenuItem(findAction));
-		editMenu.add(new JMenuItem(selectGlowingShotsAction));
-		editMenu.add(new JMenuItem(addGlowingShotsToSelectionAction));
-		editMenu.add(new JMenuItem(toggleGlowingShotsSelectedAction));
+			JMenu editMenu = new JMenu();
+			menuBar.add(editMenu);
+			editMenu.add(new JMenuItem(findAction));
+			editMenu.add(new JMenuItem(selectGlowingShotsAction));
+			editMenu.add(new JMenuItem(addGlowingShotsToSelectionAction));
+			editMenu.add(new JMenuItem(toggleGlowingShotsSelectedAction));
 
-		JMenu debugMenu = new JMenu();
-		menuBar.add(debugMenu);
-		JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
-		debugMenu.add(openLogDirectoryMenuItem);
-		JCheckBoxMenuItem wireframeMenuItem = boundCheckBoxMenuItem(rootModelBinder, RootModel.wireframe);
-		debugMenu.add(wireframeMenuItem);
-		JCheckBoxMenuItem showSpatialIndexMenuItem = boundCheckBoxMenuItem(rootModelBinder, RootModel.showSpatialIndex);
-		debugMenu.add(showSpatialIndexMenuItem);
-		JCheckBoxMenuItem showCenterOfOrbitMenuItem =
-			boundCheckBoxMenuItem(rootModelBinder, RootModel.showCenterOfOrbit);
-		debugMenu.add(showCenterOfOrbitMenuItem);
-		debugMenu.add(new JMenuItem(new EditSettingsFileAction(this)));
-		debugMenu.add(new JMenuItem(new EditSwapFileAction(this)));
-		debugMenu.add(new JMenuItem(new SetEditorCommandAction(this)));
+			JMenu settingsMenu = new JMenu();
+			menuBar.add(settingsMenu);
+			JMenuItem enableMouseLooperMenuItem =
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.enableMouseLooper));
+			settingsMenu.add(enableMouseLooperMenuItem);
+			JMenuItem hideCanvasWhileMenuOpenMenuItem =
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.hideCanvasWhileMenuOpen));
+			settingsMenu.add(hideCanvasWhileMenuOpenMenuItem);
 
-		JMenu helpMenu = new JMenu();
-		menuBar.add(helpMenu);
-		JMenuItem checkForUpdateItem = new JMenuItem(checkForUpdateAction);
-		helpMenu.add(checkForUpdateItem);
-		JMenuItem checkForUpdatesOnStartupItem =
-			boundCheckBoxMenuItem(rootModelBinder, RootModel.checkForUpdatesOnStartup);
-		helpMenu.add(checkForUpdatesOnStartupItem);
+			JMenu debugMenu = new JMenu();
+			menuBar.add(debugMenu);
+			JMenuItem openLogDirectoryMenuItem = new JMenuItem(openLogDirectoryAction);
+			debugMenu.add(openLogDirectoryMenuItem);
+			JCheckBoxMenuItem wireframeMenuItem = boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.wireframe));
+			debugMenu.add(wireframeMenuItem);
+			JCheckBoxMenuItem showSpatialIndexMenuItem =
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.showSpatialIndex));
+			debugMenu.add(showSpatialIndexMenuItem);
+			JCheckBoxMenuItem showCenterOfOrbitMenuItem =
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.showCenterOfOrbit));
+			debugMenu.add(showCenterOfOrbitMenuItem);
+			debugMenu.add(new JMenuItem(new EditSettingsFileAction(this)));
+			debugMenu.add(new JMenuItem(new EditSwapFileAction(this)));
+			debugMenu.add(new JMenuItem(new SetEditorCommandAction(this)));
 
-		JMenuItem noRecentFilesMenuItem = new JMenuItem();
-		noRecentFilesMenuItem.setEnabled(false);
+			JMenu helpMenu = new JMenu();
+			menuBar.add(helpMenu);
+			JMenuItem checkForUpdateItem = new JMenuItem(checkForUpdateAction);
+			helpMenu.add(checkForUpdateItem);
+			JMenuItem checkForUpdatesOnStartupItem =
+				boundCheckBoxMenuItem(rootModelCell.attribute(RootModel.checkForUpdatesOnStartup));
+			helpMenu.add(checkForUpdatesOnStartupItem);
 
-		if (!Pattern.compile("mac os x", Pattern.CASE_INSENSITIVE).matcher(System.getProperty("os.name")).matches()) {
+			JMenuItem noRecentFilesMenuItem = new JMenuItem();
+			noRecentFilesMenuItem.setEnabled(false);
+
 			hideCanvasWhileMenuOpen();
-		}
 
-		new BinderWrapper<QArrayList<Path>>() {
-			@Override
-			protected void onValueChanged(QArrayList<Path> newValue) {
+			autorunRootAttribute(RootModel.recentProjectFiles, newValue -> {
 				openRecentMenu.removeAll();
 				if (newValue == null || newValue.isEmpty()) {
 					openRecentMenu.add(noRecentFilesMenuItem);
@@ -2409,36 +2350,26 @@ public class BreakoutMainView {
 						openRecentMenu.add(new JMenuItem(new OpenRecentProjectAction(BreakoutMainView.this, file)));
 					}
 				}
-			}
+			});
 
-		}
-			.bind(
-				new HierarchicalChangeBinder<QArrayList<Path>>()
-					.bind(new QObjectAttributeBinder<>(RootModel.recentProjectFiles).bind(rootModelBinder)));
-
-		new BinderWrapper<SearchMode>() {
-			@Override
-			protected void onValueChanged(SearchMode mode) {
+			autorunRootAttribute(RootModel.searchMode, mode -> {
 				surveyDrawer.searchOptionsButton().setSearchMode(mode);
 				surveyDrawer.searchField().textComponent.setText(surveyDrawer.searchField().textComponent.getText());
 				miniSurveyDrawer.searchOptionsButton().setSearchMode(mode);
 				miniSurveyDrawer.searchField().textComponent
 					.setText(miniSurveyDrawer.searchField().textComponent.getText());
-			}
-		}.bind(new QObjectAttributeBinder<>(RootModel.searchMode).bind(rootModelBinder));
+			});
 
-		surveyDrawer.searchOptionsButton().menu().addChangeListener(l -> {
-			getRootModel().set(RootModel.searchMode, surveyDrawer.searchOptionsButton().getSearchMode());
-		});
-		miniSurveyDrawer.searchOptionsButton().menu().addChangeListener(l -> {
-			getRootModel().set(RootModel.searchMode, miniSurveyDrawer.searchOptionsButton().getSearchMode());
-		});
+			surveyDrawer.searchOptionsButton().menu().addChangeListener(l -> {
+				getRootModel().set(RootModel.searchMode, surveyDrawer.searchOptionsButton().getSearchMode());
+			});
+			miniSurveyDrawer.searchOptionsButton().menu().addChangeListener(l -> {
+				getRootModel().set(RootModel.searchMode, miniSurveyDrawer.searchOptionsButton().getSearchMode());
+			});
 
-		OnEDT.onEDT(() -> {
-			Localizer localizer = i18n.forClass(BreakoutMainView.class);
-			localizer.register(menuBar, new I18nUpdater<JMenuBar>() {
-				@Override
-				public void updateI18n(Localizer localizer, JMenuBar localizedObject) {
+			OnEDT.onEDT(() -> {
+				Localizer localizer = i18n.forClass(BreakoutMainView.class);
+				localizer.register(menuBar, (l, obj) -> {
 					localizer.setText(fileMenu, "fileMenu.text");
 					localizer.setText(editMenu, "editMenu.text");
 					localizer.setText(importMenu, "importMenu.text");
@@ -2447,21 +2378,21 @@ public class BreakoutMainView {
 					localizer.setText(noRecentFilesMenuItem, "noRecentFilesMenuItem.text");
 
 					localizer.setText(debugMenu, "debugMenu.text");
+					localizer.setText(settingsMenu, "settingsMenu.text");
 					localizer.setText(helpMenu, "helpMenu.text");
 					localizer.setText(showSpatialIndexMenuItem, "showSpatialIndexMenuItem.text");
 					localizer.setText(wireframeMenuItem, "wireframeMenuItem.text");
 					localizer.setText(showCenterOfOrbitMenuItem, "showCenterOfOrbitMenuItem.text");
 					localizer.setText(checkForUpdatesOnStartupItem, "checkForUpdatesOnStartupItem.text");
-				}
+					localizer.setText(enableMouseLooperMenuItem, "enableMouseLooperMenuItem.text");
+					localizer.setText(hideCanvasWhileMenuOpenMenuItem, "hideCanvasWhileMenuOpenMenuItem.text");
+				});
 			});
-		});
 
-		settingsDrawer.getFitViewToSelectedButton().setAction(fitViewToSelectedAction);
-		settingsDrawer.getFitViewToEverythingButton().setAction(fitViewToEverythingAction);
+			settingsDrawer.getFitViewToSelectedButton().setAction(fitViewToSelectedAction);
+			settingsDrawer.getFitViewToEverythingButton().setAction(fitViewToEverythingAction);
 
-		settingsDrawer.getFitParamColorationAxisButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			settingsDrawer.getFitParamColorationAxisButton().addActionListener((e) -> {
 				if (model3d == null) {
 					return;
 				}
@@ -2485,39 +2416,37 @@ public class BreakoutMainView {
 						return;
 					}
 
-					ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
-					if (!colorParam.isLoBright()) {
-						float swap = range[0];
-						range[0] = range[1];
-						range[1] = swap;
-					}
-					LinearAxisConversion conversion =
-						new LinearAxisConversion(
-							range[0],
-							0.0,
-							range[1],
-							settingsDrawer.getParamColorationAxis().getViewSpan());
+					OnEDT.onEDT(() -> {
+						ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
+						if (!colorParam.isLoBright()) {
+							float swap = range[0];
+							range[0] = range[1];
+							range[1] = swap;
+						}
+						LinearAxisConversion conversion =
+							new LinearAxisConversion(
+								range[0],
+								0.0,
+								range[1],
+								settingsDrawer.getParamColorationAxis().getViewSpan());
 
-					paramRangeBinder.set(conversion);
+						ProjectModel.setParamRange(getProjectModel(), conversion);
+					});
 				});
-			}
-		});
+			});
 
-		settingsDrawer.getFlipParamColorationAxisButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			settingsDrawer.getFlipParamColorationAxisButton().addActionListener((e) -> {
 				PlotAxis axis = settingsDrawer.getParamColorationAxis();
-				LinearAxisConversion conversion = paramRangeBinder.get();
+				LinearAxisConversion conversion = ProjectModel.getParamRange(getProjectModel());
+				if (conversion == null)
+					return;
 				double start = conversion.invert(0.0);
 				double end = conversion.invert(axis.getViewSpan());
 				LinearAxisConversion newConversion = new LinearAxisConversion(end, 0.0, start, axis.getViewSpan());
-				paramRangeBinder.set(newConversion);
-			}
-		});
+				ProjectModel.setParamRange(getProjectModel(), newConversion);
+			});
 
-		settingsDrawer.getRecalcColorByDistanceButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			settingsDrawer.getRecalcColorByDistanceButton().addActionListener((e) -> {
 				if (model3d == null) {
 					return;
 				}
@@ -2525,45 +2454,57 @@ public class BreakoutMainView {
 				rebuildTaskService.submit(task -> {
 					task.setTotal(4);
 					task.setStatus("Recalculating color by distance");
-					Set<ShotKey> startShots = getDefaultShotsForOperations(3);
+					Set<ShotKey> startShots = getDefaultShotsForOperations(1);
 					task.runSubtask(3, recalculateTask -> model3d.calcDistFromShots(startShots, recalculateTask));
 
 					Set<ShotKey> rangeShots = getShotsInView();
-					task.runSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
+					float[] range =
+						task.callSubtask(1, rangeTask -> model3d.calcAutofitParamRange(rangeShots, rangeTask));
+
+					OnEDT.onEDT(() -> {
+						ColorParam colorParam = getProjectModel().get(ProjectModel.colorParam);
+						if (!colorParam.isLoBright()) {
+							float swap = range[0];
+							range[0] = range[1];
+							range[1] = swap;
+						}
+						LinearAxisConversion conversion =
+							new LinearAxisConversion(
+								range[0],
+								0.0,
+								range[1],
+								settingsDrawer.getParamColorationAxis().getViewSpan());
+
+						ProjectModel.setParamRange(getProjectModel(), conversion);
+					});
+					if (!constructing.value)
+						autoDrawable.display();
+				});
+			});
+
+			settingsDrawer.getResetViewButton().addActionListener(e -> {
+				renderer.viewSettings().setViewXform(newMat4f());
+				if (!constructing.value)
 					autoDrawable.display();
-				});
+			});
+
+			settingsDrawer.getOrbitToPlanButton().setAction(orbitToPlanAction);
+			mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_O, 0), "orbitToPlan");
+			mainPanel.getActionMap().put("orbitToPlan", orbitToPlanAction);
+			mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_E, 0), "fitViewToEverything");
+			mainPanel.getActionMap().put("fitViewToEverything", fitViewToEverythingAction);
+			mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0), "fitViewToSelected");
+			mainPanel.getActionMap().put("fitViewToSelected", fitViewToSelectedAction);
+
+			ViewButtonsPanel viewButtonsPanel = settingsDrawer.getViewButtonsPanel();
+			for (CameraView view : CameraView.values()) {
+				JToggleButton button = viewButtonsPanel.getButton(view);
+				if (button != null) {
+					button.addActionListener((e) -> setCameraView(view));
+				}
 			}
-		});
 
-		settingsDrawer.getResetViewButton().addActionListener(e -> {
-			renderer.viewSettings().setViewXform(newMat4f());
-			autoDrawable.display();
-		});
-
-		settingsDrawer.getOrbitToPlanButton().setAction(orbitToPlanAction);
-		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_O, 0), "orbitToPlan");
-		mainPanel.getActionMap().put("orbitToPlan", orbitToPlanAction);
-		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_E, 0), "fitViewToEverything");
-		mainPanel.getActionMap().put("fitViewToEverything", fitViewToEverythingAction);
-		mainPanel.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_S, 0), "fitViewToSelected");
-		mainPanel.getActionMap().put("fitViewToSelected", fitViewToSelectedAction);
-
-		ViewButtonsPanel viewButtonsPanel = settingsDrawer.getViewButtonsPanel();
-		for (CameraView view : CameraView.values()) {
-			JToggleButton button = viewButtonsPanel.getButton(view);
-			if (button != null) {
-				button.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						setCameraView(view);
-					}
-				});
-			}
-		}
-
-		settingsDrawer.getInferDepthAxisTiltButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			settingsDrawer.getInferDepthAxisTiltButton().addActionListener(e -> {
 				if (model3d == null) {
 					return;
 				}
@@ -2588,39 +2529,32 @@ public class BreakoutMainView {
 				}
 
 				getProjectModel().set(ProjectModel.depthAxis, normal);
-			}
-		});
+			});
 
-		settingsDrawer.getResetDepthAxisTiltButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			settingsDrawer.getResetDepthAxisTiltButton().addActionListener(e -> {
 				getProjectModel().set(ProjectModel.depthAxis, new float[] { 0f, -1f, 0f });
-			}
-		});
+			});
 
-		settingsDrawer.getCameraToDepthAxisTiltButton().addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
+			settingsDrawer.getCameraToDepthAxisTiltButton().addActionListener(e -> {
 				float[] axis = new float[3];
 				Vecmath.negate3(renderer.viewState().inverseViewMatrix(), 8, axis, 0);
 				getProjectModel().set(ProjectModel.depthAxis, axis);
-			}
-		});
+			});
 
-		((JTextField) surveyDrawer.searchField().textComponent)
-			.addActionListener(new FitToFilteredHandler(surveyDrawer.table()));
-		((JTextField) miniSurveyDrawer.searchField().textComponent)
-			.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
+			((JTextField) surveyDrawer.searchField().textComponent)
+				.addActionListener(new FitToFilteredHandler(surveyDrawer.table()));
+			((JTextField) miniSurveyDrawer.searchField().textComponent)
+				.addActionListener(new FitToFilteredHandler(miniSurveyDrawer.table()));
 
-		new BinderWrapper<Integer>() {
-			@Override
-			protected void onValueChanged(Integer desiredNumSamples) {
-				if (desiredNumSamples != null) {
-					renderer.desiredNumSamples(desiredNumSamples);
+			autorun(() -> {
+				Integer desiredNumSamples = rootModelCell.get(RootModel.desiredNumSamples);
+				if (desiredNumSamples == null)
+					return;
+				renderer.desiredNumSamples(desiredNumSamples);
+				if (!constructing.value)
 					autoDrawable.display();
-				}
-			}
-		}.bind(QObjectAttributeBinder.bind(RootModel.desiredNumSamples, rootModelBinder));
+			});
+		});
 
 		autoDrawable.invoke(false, drawable -> {
 			GL2ES2 gl = (GL2ES2) drawable.getGL();
@@ -2646,12 +2580,13 @@ public class BreakoutMainView {
 		if (rootModel.get(RootModel.checkForUpdatesOnStartup)) {
 			checkForUpdateAction.checkForUpdate(false);
 		}
+
+		constructing.value = false;
 	}
 
-	private static <S extends QSpec<S>> JCheckBoxMenuItem
-		boundCheckBoxMenuItem(Binder<QObject<S>> binder, QSpec.Attribute<Boolean> attribute) {
+	private static JCheckBoxMenuItem boundCheckBoxMenuItem(Cell<Boolean> cell) {
 		JCheckBoxMenuItem item = new JCheckBoxMenuItem();
-		new ButtonSelectedBinder(item).bind(new QObjectAttributeBinder<>(attribute).bind(binder));
+		bindSelected(item, cell);
 		return item;
 	}
 
@@ -2659,6 +2594,9 @@ public class BreakoutMainView {
 		for (int i = 0; i < menuBar.getMenuCount(); i++) {
 			JMenu menu = menuBar.getMenu(i);
 			menu.getModel().addItemListener(e -> {
+				if (!Boolean.TRUE.equals(rootModelCell.get(RootModel.hideCanvasWhileMenuOpen))) {
+					return;
+				}
 				for (int j = 0; j < menuBar.getMenuCount(); j++) {
 					if (menuBar.getMenu(j).isSelected()) {
 						canvas.setVisible(false);
@@ -2974,41 +2912,38 @@ public class BreakoutMainView {
 
 		removeUnprotectedCameraAnimations();
 
-		cameraAnimationQueue.add(new Animation() {
-			@Override
-			public long animate(long animTime) {
-				table.getModelSelectionModel().clearSelection();
-				@SuppressWarnings("unchecked")
-				AnnotatingRowSorter<TableModel, Integer> rowSorter =
-					(AnnotatingRowSorter<TableModel, Integer>) table.getAnnotatingRowSorter();
-				if (rowSorter.getRowFilter() != null) {
-					table.selectAll();
-				}
-				else {
-					ListSelectionModel selectionModel = table.getSelectionModel();
-					selectionModel.setValueIsAdjusting(true);
-					try {
-						int intervalStart = -1;
-						for (int row = 0; row < rowSorter.getViewRowCount(); row++) {
-							if (rowSorter.getAnnotation(row) != null) {
-								if (intervalStart < 0) {
-									intervalStart = row;
-								}
-							}
-							else if (intervalStart >= 0) {
-								selectionModel.addSelectionInterval(intervalStart, row - 1);
-								intervalStart = -1;
+		cameraAnimationQueue.add(animtime -> {
+			table.getModelSelectionModel().clearSelection();
+			@SuppressWarnings("unchecked")
+			AnnotatingRowSorter<TableModel, Integer> rowSorter =
+				(AnnotatingRowSorter<TableModel, Integer>) table.getAnnotatingRowSorter();
+			if (rowSorter.getRowFilter() != null) {
+				table.selectAll();
+			}
+			else {
+				ListSelectionModel selectionModel = table.getSelectionModel();
+				selectionModel.setValueIsAdjusting(true);
+				try {
+					int intervalStart = -1;
+					for (int row = 0; row < rowSorter.getViewRowCount(); row++) {
+						if (rowSorter.getAnnotation(row) != null) {
+							if (intervalStart < 0) {
+								intervalStart = row;
 							}
 						}
-					} finally {
-						selectionModel.setValueIsAdjusting(false);
+						else if (intervalStart >= 0) {
+							selectionModel.addSelectionInterval(intervalStart, row - 1);
+							intervalStart = -1;
+						}
 					}
+				} finally {
+					selectionModel.setValueIsAdjusting(false);
 				}
-
-				fitViewToSelected();
-
-				return 0;
 			}
+
+			fitViewToSelected();
+
+			return 0;
 		});
 	}
 
@@ -3041,19 +2976,19 @@ public class BreakoutMainView {
 	}
 
 	public QObject<ProjectModel> getProjectModel() {
-		return projectModelBinder.get();
+		return projectModelCell.get();
 	}
 
-	public Binder<QObject<ProjectModel>> getProjectModelBinder() {
-		return projectModelBinder;
+	public QObjectCell<ProjectModel> getProjectModelCell() {
+		return projectModelCell;
 	}
 
 	public QObject<RootModel> getRootModel() {
-		return rootModelBinder.get();
+		return rootModelCell.get();
 	}
 
-	public Binder<QObject<RootModel>> getRootModelBinder() {
-		return rootModelBinder;
+	public QObjectCell<RootModel> getRootModelCell() {
+		return rootModelCell;
 	}
 
 	public JoglScene getScene() {
@@ -3202,7 +3137,10 @@ public class BreakoutMainView {
 		}
 	}
 
-	private void openAttachedFile(String link) {
+	private void openAttachedFiles(List<String> links) {
+		String link = links == null ? null : links.get(0);
+		if (link == null)
+			return;
 		try {
 			ioTaskService.submit(new SelfReportingTask<Void>(mainPanel) {
 				@Override
@@ -3234,7 +3172,7 @@ public class BreakoutMainView {
 		Vecmath.negate3(renderer.viewState().inverseViewMatrix(), 8, forward, 0);
 		Vecmath.getColumn3(renderer.viewState().inverseViewMatrix(), 0, right);
 
-		changeView(forward, right, false, getDefaultShotsForOperations(1));
+		changeView(forward, right, false, getDefaultShotsForOperations(3));
 	}
 
 	private Shot3dPickResult pick(Survey3dModel model3d, MouseEvent e, Shot3dPickContext spc) {
@@ -3274,11 +3212,11 @@ public class BreakoutMainView {
 	}
 
 	public void planMode() {
-		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 0, -1, 0 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void sidewaysPlanMode() {
-		changeView(new float[] { 0, -1, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 0, -1, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(3));
 	}
 
 	protected void removeUnprotectedCameraAnimations() {
@@ -3396,16 +3334,13 @@ public class BreakoutMainView {
 		catch (Exception ex) {
 			logger.log(Level.SEVERE, "Failed to load model", ex);
 			if (showError) {
-				OnEDT.onEDT(new ExceptionRunnable() {
-					@Override
-					public void run() throws Exception {
-						JOptionPane
-							.showMessageDialog(
-								mainPanel,
-								"Failed to load settings: " + ex.getLocalizedMessage(),
-								"Error",
-								JOptionPane.ERROR_MESSAGE);
-					}
+				OnEDT.onEDT(() -> {
+					JOptionPane
+						.showMessageDialog(
+							mainPanel,
+							"Failed to load settings: " + ex.getLocalizedMessage(),
+							"Error",
+							JOptionPane.ERROR_MESSAGE);
 				});
 			}
 			return null;
@@ -3418,7 +3353,7 @@ public class BreakoutMainView {
 			if (currentModel != null) {
 				currentModel.changeSupport().removePropertyChangeListener(rootModelChangeHandler);
 			}
-			rootModelBinder.set(rootModel);
+			rootModelCell.set(rootModel);
 			if (rootModel != null) {
 				rootModel.changeSupport().addPropertyChangeListener(rootModelChangeHandler);
 			}
@@ -3426,19 +3361,19 @@ public class BreakoutMainView {
 	}
 
 	public void northFacingProfileMode() {
-		changeView(new float[] { 0, 0, -1 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 0, 0, -1 }, new float[] { 1, 0, 0 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void southFacingProfileMode() {
-		changeView(new float[] { 0, 0, 1 }, new float[] { -1, 0, 0 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 0, 0, 1 }, new float[] { -1, 0, 0 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void westFacingProfileMode() {
-		changeView(new float[] { -1, 0, 0 }, new float[] { 0, 0, -1 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { -1, 0, 0 }, new float[] { 0, 0, -1 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void eastFacingProfileMode() {
-		changeView(new float[] { 1, 0, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(1));
+		changeView(new float[] { 1, 0, 0 }, new float[] { 0, 0, 1 }, true, getDefaultShotsForOperations(3));
 	}
 
 	public void autoProfileMode() {

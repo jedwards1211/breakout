@@ -26,6 +26,8 @@ import static com.jogamp.opengl.GL.GL_DRAW_FRAMEBUFFER;
 import static com.jogamp.opengl.GL.GL_NEAREST;
 import static com.jogamp.opengl.GL.GL_READ_FRAMEBUFFER;
 import static com.jogamp.opengl.GL.GL_UNSIGNED_BYTE;
+import static org.andork.bind.ui.BindUI.bindText;
+import static org.andork.bind.ui.BindUI.bindValue;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -80,22 +82,17 @@ import org.andork.awt.I18n.Localizer;
 import org.andork.awt.IconScaler;
 import org.andork.awt.LocalizedException;
 import org.andork.awt.layout.RectangleUtils;
-import org.andork.bind.Binder;
-import org.andork.bind.BinderWrapper;
-import org.andork.bind.DefaultBinder;
-import org.andork.bind.QObjectAttributeBinder;
-import org.andork.bind.ui.ComponentTextBinder;
-import org.andork.bind.ui.ISelectorSelectionBinder;
-import org.andork.bind.ui.JSliderValueBinder;
-import org.andork.bind.ui.JSpinnerValueBinder;
 import org.andork.format.Format;
 import org.andork.jogl.DefaultJoglRenderer;
 import org.andork.jogl.GL3Framebuffer;
 import org.andork.jogl.JoglScene;
 import org.andork.jogl.JoglScreenPolygon;
 import org.andork.jogl.JoglViewSettings;
-import org.andork.jogl.awt.JoglExportImageDialogModel.ResolutionUnit;
+import org.andork.model.Cell;
+import org.andork.q.QCell;
+import org.andork.q.QCellRef;
 import org.andork.q.QObject;
+import org.andork.q.QObjectCell;
 import org.andork.swing.BetterSpinnerNumberModel;
 import org.andork.swing.OnEDT;
 import org.andork.swing.async.SelfReportingTask;
@@ -588,7 +585,6 @@ public class JoglExportImageDialog extends JDialog {
 
 				JoglExportImageDialog dialog = new JoglExportImageDialog(null, new I18n());
 
-				Binder<QObject<JoglExportImageDialogModel>> binder = new DefaultBinder<>();
 				QObject<JoglExportImageDialogModel> model = JoglExportImageDialogModel.instance.newObject();
 
 				model.set(JoglExportImageDialogModel.outputDirectory, "screenshots");
@@ -602,8 +598,7 @@ public class JoglExportImageDialog extends JDialog {
 						JoglExportImageDialogModel.resolutionUnit,
 						JoglExportImageDialogModel.ResolutionUnit.PIXELS_PER_IN);
 
-				dialog.setBinder(binder);
-				binder.set(model);
+				dialog.setModel(new QCell<>(model));
 
 				dialog.setSize(800, 600);
 				dialog.setLocationRelativeTo(null);
@@ -685,31 +680,8 @@ public class JoglExportImageDialog extends JDialog {
 
 	boolean updating;
 
-	BinderWrapper<QObject<JoglExportImageDialogModel>> binder = new BinderWrapper<>();
-
-	QObjectAttributeBinder<String> outputDirectoryBinder =
-		QObjectAttributeBinder.bind(JoglExportImageDialogModel.outputDirectory, binder);
-
-	QObjectAttributeBinder<String> fileNamePrefixBinder =
-		QObjectAttributeBinder.bind(JoglExportImageDialogModel.fileNamePrefix, binder);
-
-	QObjectAttributeBinder<Integer> fileNumberBinder =
-		QObjectAttributeBinder.bind(JoglExportImageDialogModel.fileNumber, binder);
-
-	QObjectAttributeBinder<Integer> pixelWidthBinder =
-		QObjectAttributeBinder.bind(JoglExportImageDialogModel.pixelWidth, binder);
-
-	QObjectAttributeBinder<Integer> pixelHeightBinder =
-		QObjectAttributeBinder.bind(JoglExportImageDialogModel.pixelHeight, binder);
-
-	QObjectAttributeBinder<BigDecimal> resolutionBinder =
-		QObjectAttributeBinder.bind(JoglExportImageDialogModel.resolution, binder);
-
-	QObjectAttributeBinder<ResolutionUnit> resolutionUnitBinder =
-		QObjectAttributeBinder.bind(JoglExportImageDialogModel.resolutionUnit, binder);
-
-	QObjectAttributeBinder<Integer> numSamplesBinder =
-		QObjectAttributeBinder.bind(JoglExportImageDialogModel.numSamples, binder);
+	QCellRef<QObject<JoglExportImageDialogModel>> modelRef = new QCellRef<>();
+	QObjectCell<JoglExportImageDialogModel> model = new QObjectCell<>(this.modelRef);
 
 	JoglScene scene;
 
@@ -765,14 +737,14 @@ public class JoglExportImageDialog extends JDialog {
 	}
 
 	protected void createBindings() {
-		ComponentTextBinder.bind(outputDirectoryField, outputDirectoryBinder);
-		ComponentTextBinder.bind(fileNamePrefixField, fileNamePrefixBinder);
-		JSpinnerValueBinder.bind(fileNumberSpinner, Integer.class, fileNumberBinder);
-		JSpinnerValueBinder.bind(pixelWidthSpinner, Integer.class, pixelWidthBinder);
-		JSpinnerValueBinder.bind(pixelHeightSpinner, Integer.class, pixelHeightBinder);
-		JSpinnerValueBinder.bind(resolutionSpinner, BigDecimal.class, resolutionBinder);
-		ISelectorSelectionBinder.bind(resolutionUnitSelector, resolutionUnitBinder);
-		JSliderValueBinder.bind(numSamplesSlider, numSamplesBinder);
+		bindText(outputDirectoryField, model.attribute(JoglExportImageDialogModel.outputDirectory));
+		bindText(fileNamePrefixField, model.attribute(JoglExportImageDialogModel.fileNamePrefix));
+		bindValue(fileNumberSpinner, Integer.class, model.attribute(JoglExportImageDialogModel.fileNumber));
+		bindValue(pixelWidthSpinner, Integer.class, model.attribute(JoglExportImageDialogModel.pixelWidth));
+		bindValue(pixelHeightSpinner, Integer.class, model.attribute(JoglExportImageDialogModel.pixelHeight));
+		bindValue(resolutionSpinner, BigDecimal.class, model.attribute(JoglExportImageDialogModel.resolution));
+		bindValue(resolutionUnitSelector, model.attribute(JoglExportImageDialogModel.resolutionUnit));
+		bindValue(numSamplesSlider, model.attribute(JoglExportImageDialogModel.numSamples));
 	}
 
 	protected void createComponents() {
@@ -1220,8 +1192,8 @@ public class JoglExportImageDialog extends JDialog {
 		}
 	}
 
-	public void setBinder(Binder<QObject<JoglExportImageDialogModel>> binder) {
-		this.binder.bind(binder);
+	public void setModel(Cell<QObject<JoglExportImageDialogModel>> model) {
+		this.modelRef.setCell(model);
 	}
 
 	public void setScene(JoglScene scene) {
