@@ -31,6 +31,18 @@ update_tcc_database() {
 	('kTCCServicePostEvent', 1, '/usr/bin/osascript', 2, 0, 1, NULL, 'UNUSED'),
 	('kTCCServiceAppleEvents', 1, '/usr/bin/osascript', 2, 0, 1, 0, 'com.apple.systemevents'),
 	('kTCCServiceAppleEvents', 1, '/usr/bin/osascript', 2, 0, 1, 0, 'com.apple.finder');
+	-- sshd
+	('kTCCServiceAccessibility', 1, 'com.apple.sshd', 2, 0, 1, NULL, 'UNUSED'),
+	('kTCCServiceScreenCapture', 1, 'com.apple.sshd', 2, 0, 1, NULL, 'UNUSED'),
+	('kTCCServicePostEvent', 1, 'com.apple.sshd', 2, 0, 1, NULL, 'UNUSED'),
+	('kTCCServiceAppleEvents', 1, 'com.apple.sshd', 2, 0, 1, 0, 'com.apple.systemevents'),
+	('kTCCServiceAppleEvents', 1, 'com.apple.sshd', 2, 0, 1, 0, 'com.apple.finder');
+	-- terminal
+	('kTCCServiceAccessibility', 1, 'com.apple.Terminal', 2, 0, 1, NULL, 'UNUSED'),
+	('kTCCServiceScreenCapture', 1, 'com.apple.Terminal', 2, 0, 1, NULL, 'UNUSED'),
+	('kTCCServicePostEvent', 1, 'com.apple.Terminal', 2, 0, 1, NULL, 'UNUSED'),
+	('kTCCServiceAppleEvents', 1, 'com.apple.Terminal', 2, 0, 1, 0, 'com.apple.systemevents'),
+	('kTCCServiceAppleEvents', 1, 'com.apple.Terminal', 2, 0, 1, 0, 'com.apple.finder');
 	EOF
 }
 
