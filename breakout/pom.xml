@@ -113,7 +113,7 @@
 										${basedir}/package/macosx-aarch64.jre</jrePath>
 									<platform>mac</platform>
 									<macConfig>
-										<generateDmg>true</generateDmg>
+										<generateDmg>false</generateDmg>
 										<icnsFile>${basedir}/../breakout.icns</icnsFile>
 										<customLauncher>
 											${basedir}/package/universalJavaApplicationStub.arm64</customLauncher>
@@ -140,7 +140,7 @@
 									<jrePath>${basedir}/package/macosx-x64.jre</jrePath>
 									<platform>mac</platform>
 									<macConfig>
-										<generateDmg>true</generateDmg>
+										<generateDmg>false</generateDmg>
 										<icnsFile>${basedir}/../breakout.icns</icnsFile>
 										<customLauncher>
 											${basedir}/package/universalJavaApplicationStub.x86_64</customLauncher>

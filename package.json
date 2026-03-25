@@ -18,7 +18,8 @@
   },
   "homepage": "https://github.com/jedwards1211/breakout#readme",
   "scripts": {
-    "semantic-release": "semantic-release"
+    "semantic-release": "semantic-release",
+    "create-dmgs": "node create-dmgs.mjs"
   },
   "devDependencies": {
     "@semantic-release/exec": "^5.0.0",
@@ -71,6 +72,7 @@
     ]
   },
   "dependencies": {
+    "appdmg": "^0.6.6",
     "glob": "^13.0.6"
   }
 }
