@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: '20.10.0'
+    default: '22.22.2'
   jdk8-update:
     type: string
     default: '401'

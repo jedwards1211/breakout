@@ -1,9 +1,9 @@
 {
   "name": "breakout",
   "engines": {
-    "node": ">=12"
+    "node": ">=22"
   },
-  "packageManager": "pnpm@8.11.0",
+  "packageManager": "pnpm@10.9.0",
   "version": "0.0.0-development",
   "description": "3D cave survey and terrain viewer and trip planner",
   "main": "index.js",
@@ -38,7 +38,7 @@
       [
         "@semantic-release/exec",
         {
-          "verifyReleaseCmd": "(echo \"${nextRelease.version}\" > version) && ./setVersion.sh \"${nextRelease.version}\""
+          "verifyReleaseCmd": "(echo \"${nextRelease.version}\" > version) && node setVersion.mjs \"${nextRelease.version}\""
         }
       ],
       [

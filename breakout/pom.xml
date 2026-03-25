@@ -84,7 +84,7 @@
 							<copyDependencies>false</copyDependencies>
 							<generateInstaller>true</generateInstaller>
 							<administratorRequired>false</administratorRequired>
-							<jrePath>${basedir}/package/macosx-x64.jce</jrePath>
+							<jrePath>${basedir}/package/macosx-x64.jre</jrePath>
 							<platform>mac</platform>
 							<macConfig>
 								<generateDmg>true</generateDmg>
