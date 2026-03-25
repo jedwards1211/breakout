@@ -28,7 +28,6 @@ commands:
             git submodule update
 orbs:
   win: circleci/windows@5.0
-  macos: circleci/macos@2.5.4
 
 jobs:
   build-windows:
@@ -108,10 +107,6 @@ jobs:
     macos:
       xcode: 15.3.0
     steps:
-      # https://support.circleci.com/hc/en-us/articles/360057033612-Enabling-AppleScript-Support-on-macOS
-      - macos/add-permission:
-          bundle-id: com.apple.sshd
-          permission-type: kTCCServiceAppleEvents
       - checkout
       - checkout_submodules
       - run:
@@ -190,8 +185,8 @@ jobs:
       - run:
           name: Install pnpm
           command: |
-            rm /usr/local/bin/pnpm
-            corepack enable
+            sudo rm /usr/local/bin/pnpm
+            sudo corepack enable
       - install_deps
       - run:
           name: Release
