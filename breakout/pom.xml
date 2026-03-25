@@ -61,7 +61,7 @@
 									<goal>package</goal>
 								</goals>
 								<configuration>
-									<name>Breakout x64</name>
+									<name>Breakout</name>
 									<outputDirectory>${project.build.directory}</outputDirectory>
 									<mainClass>org.breakout.Breakout</mainClass>
 									<bundleJre>true</bundleJre>
