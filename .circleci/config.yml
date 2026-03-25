@@ -107,6 +107,12 @@ jobs:
     macos:
       xcode: 15.3.0
     steps:
+      - run:
+          name: Fix Finder got an error - AppleEvent timed out. (-1712)
+          command: |
+            epochdate=$(($(date +'%s * 1000 + %-N / 1000000')))
+            tcc_service_appleevents="replace into access (service,client,client_type,auth_value,auth_reason,auth_version,indirect_object_identifier_type,indirect_object_identifier,flags,last_modified) values (\"kTCCServiceAppleEvents\",\"/usr/sbin/sshd\",1,2,4,1,0,\"com.apple.finder\",0,$epochdate);"
+            sudo sqlite3 "/Users/distiller/Library/Application Support/com.apple.TCC/TCC.db" "$tcc_service_appleevents"
       - checkout
       - checkout_submodules
       - run:
