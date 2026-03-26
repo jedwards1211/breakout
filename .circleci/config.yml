@@ -3,7 +3,7 @@ version: 2.1
 parameters:
   node-version:
     type: string
-    default: '20.10.0'
+    default: '22.22.2'
   jdk8-update:
     type: string
     default: '401'
@@ -87,26 +87,14 @@ jobs:
           command: pnpm semantic-release --dry-run
           shell: bash.exe
       - run:
-          name: Build
+          name: Build and Package x64
           command: |
             export JAVA_HOME="$PWD/jdk-x64"
             export MVN_HOME="$PWD/apache-maven-<< pipeline.parameters.maven-version >>"
             export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.14/bin:$PATH"
-            mvn clean install -U -Dbreakout.version="$(< version)" -P windows,windows-amd64
+            mvn clean package -U -P windows,windows-amd64,windows-installer
             mkdir -p dist/windows
-            cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/windows/breakout.jar
-          shell: bash.exe
-      - run:
-          name: Package x64
-          command: |
-            export JAVA_HOME="$PWD/jdk-x64"
-            export MVN_HOME="$PWD/apache-maven-<< pipeline.parameters.maven-version >>"
-            export PATH="$JAVA_HOME/bin:$MVN_HOME/bin:/c/Program Files (x86)/WiX Toolset v3.14/bin:$PATH"
-            javapackager -deploy -native msi -outdir packages -outfile Breakout \
-              -srcdir dist/windows -srcfiles breakout.jar \
-              -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
-              -BappVersion=$(< version) -Bicon=breakout.ico
-            cp packages/bundles/Breakout-$(cat version | xargs).msi dist/windows/Breakout-x64.msi
+            cp breakout/target/Breakout_$(cat version | xargs).msi dist/windows/Breakout-x64.msi
           shell: bash.exe
       - store_artifacts:
           path: dist/windows
@@ -144,6 +132,9 @@ jobs:
             hdiutil attach "$HOME/Downloads/jdk-8u${JDK8_UPDATE}-macosx-aarch64.dmg"
             sudo installer -pkg "/Volumes/JDK 8 Update ${JDK8_UPDATE}/JDK 8 Update ${JDK8_UPDATE}.pkg" -target /
             diskutil umount "/Volumes/JDK 8 Update ${JDK8_UPDATE}"
+            (cd breakout/package && tar xzf macosx-aarch64.jre.tar.gz)
+            (cd breakout/package && tar xzf macosx-x64.jre.tar.gz)
+            ls -la breakout/package
       - run:
           name: Setup Environment Variables
           command: |
@@ -169,22 +160,14 @@ jobs:
           name: Get release version
           command: pnpm semantic-release --dry-run
       - run:
-          name: Build
+          name: Build and Package
           command: |
-            mvn clean install -U -Dbreakout.version="$(< version)"
+            mvn clean package -U -P osx,osx-installer,windows,windows-amd64,linux,linux-amd64
+            pnpm create-dmgs
             mkdir -p dist/macos
-            cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/macos/breakout.jar
-            mvn clean install -U -Dbreakout.version="$(< version)" -P osx,windows,windows-amd64,linux,linux-amd64
-            cp breakout/target/breakout-0.0.0-SNAPSHOT.jar dist/macos/breakout-all-platforms.jar
-      - run:
-          name: Package
-          command: |
-            javapackager -deploy -native image -outdir packages -outfile Breakout \
-              -srcdir dist/macos -srcfiles breakout.jar \
-              -appclass org.breakout.Breakout -name Breakout -title "Breakout Cave Survey" \
-              -BappVersion=$(< version) -Bicon=breakout.icns
-            hdiutil create temp.dmg -ov -volname "Breakout" -fs HFS+ -srcfolder packages/bundles
-            hdiutil convert temp.dmg -format UDZO -o dist/macos/Breakout.dmg
+            cp breakout/target/breakout-$(cat version | xargs).jar dist/macos/breakout-all-platforms.jar
+            cp breakout/target/macosx-x64/Breakout_$(cat version | xargs).dmg dist/macos/Breakout-x64.dmg
+            cp breakout/target/macosx-aarch64/Breakout_$(cat version | xargs).dmg dist/macos/Breakout-aarch64.dmg
       - store_artifacts:
           path: dist/macos
       - persist_to_workspace:
@@ -197,12 +180,14 @@ jobs:
       - image: cimg/node:<< pipeline.parameters.node-version >>
     steps:
       - checkout
-      - run:
-          name: Install pnpm
-          command: corepack enable
-      - install_deps
       - attach_workspace:
           at: .
+      - run:
+          name: Install pnpm
+          command: |
+            sudo rm /usr/local/bin/pnpm
+            sudo corepack enable
+      - install_deps
       - run:
           name: Release
           command: pnpm semantic-release
@@ -221,4 +206,4 @@ workflows:
             branches:
               only:
                 - master
-                - next
+                - beta

@@ -1,11 +1,13 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.andork</groupId>
 	<artifactId>breakout</artifactId>
 	<version>0.0.0-SNAPSHOT</version>
-	<name>Breakout launcher</name>
-	<description>displays friendly error if user is running an older version of Java, otherwise runs Breakout</description>
+	<name>Breakout</name>
+	<description>displays friendly error if user is running an older version of
+		Java, otherwise runs Breakout</description>
 	<build>
 		<plugins>
 			<plugin>
@@ -42,11 +44,122 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>windows-installer</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>io.github.fvarrui</groupId>
+						<artifactId>javapackager</artifactId>
+						<version>1.7.6</version>
+						<executions>
+							<execution>
+								<id>windows</id>
+								<phase>package</phase>
+								<goals>
+									<goal>package</goal>
+								</goals>
+								<configuration>
+									<name>Breakout</name>
+									<outputDirectory>${project.build.directory}</outputDirectory>
+									<arch>x64</arch>
+									<mainClass>org.breakout.Breakout</mainClass>
+									<bundleJre>true</bundleJre>
+									<runnableJar>
+										${project.build.directory}/breakout-${project.version}.jar</runnableJar>
+									<copyDependencies>false</copyDependencies>
+									<generateInstaller>true</generateInstaller>
+									<administratorRequired>false</administratorRequired>
+									<jrePath>${java.home}</jrePath>
+									<platform>windows</platform>
+									<winConfig>
+										<icoFile>${basedir}/../breakout.ico</icoFile>
+										<generateMsi>true</generateMsi>
+										<exeCreationTool>winrun4j</exeCreationTool>
+									</winConfig>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>osx-installer</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>io.github.fvarrui</groupId>
+						<artifactId>javapackager</artifactId>
+						<version>1.7.6</version>
+						<executions>
+							<execution>
+								<id>macos-aarch64</id>
+								<phase>package</phase>
+								<goals>
+									<goal>package</goal>
+								</goals>
+								<configuration>
+									<name>Breakout</name>
+									<outputDirectory>
+										${project.build.directory}/macosx-aarch64</outputDirectory>
+									<mainClass>org.breakout.Breakout</mainClass>
+									<bundleJre>true</bundleJre>
+									<runnableJar>
+										${project.build.directory}/breakout-${project.version}.jar</runnableJar>
+									<copyDependencies>false</copyDependencies>
+									<generateInstaller>true</generateInstaller>
+									<administratorRequired>false</administratorRequired>
+									<jrePath>
+										${basedir}/package/macosx-aarch64.jre</jrePath>
+									<platform>mac</platform>
+									<macConfig>
+										<generateDmg>false</generateDmg>
+										<icnsFile>${basedir}/../breakout.icns</icnsFile>
+										<customLauncher>
+											${basedir}/package/universalJavaApplicationStub.arm64</customLauncher>
+									</macConfig>
+								</configuration>
+							</execution>
+							<execution>
+								<id>macos-x64</id>
+								<phase>package</phase>
+								<goals>
+									<goal>package</goal>
+								</goals>
+								<configuration>
+									<name>Breakout</name>
+									<outputDirectory>
+										${project.build.directory}/macosx-x64</outputDirectory>
+									<mainClass>org.breakout.Breakout</mainClass>
+									<bundleJre>true</bundleJre>
+									<runnableJar>
+										${project.build.directory}/breakout-${project.version}.jar</runnableJar>
+									<copyDependencies>false</copyDependencies>
+									<generateInstaller>true</generateInstaller>
+									<administratorRequired>false</administratorRequired>
+									<jrePath>${basedir}/package/macosx-x64.jre</jrePath>
+									<platform>mac</platform>
+									<macConfig>
+										<generateDmg>false</generateDmg>
+										<icnsFile>${basedir}/../breakout.icns</icnsFile>
+										<customLauncher>
+											${basedir}/package/universalJavaApplicationStub.x86_64</customLauncher>
+									</macConfig>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 	<dependencies>
 		<dependency>
 			<groupId>org.andork</groupId>
 			<artifactId>breakout-main</artifactId>
 			<version>0.0.0-SNAPSHOT</version>
-  		</dependency>
+		</dependency>
 	</dependencies>
 </project>

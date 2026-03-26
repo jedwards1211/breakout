@@ -15,18 +15,20 @@ const Link = ({
   scroll,
   forwardedRef,
 }) => (
-  <_Link href={href} prefetch={prefetch} replace={replace} scroll={scroll}>
-    <a
-      style={style}
-      className={
-        router.pathname === href && activeClassName
-          ? `${className} ${activeClassName}`
-          : className
-      }
-      ref={forwardedRef}
-    >
-      {children}
-    </a>
+  <_Link
+    href={href}
+    prefetch={prefetch}
+    replace={replace}
+    scroll={scroll}
+    style={style}
+    className={
+      router.pathname === href && activeClassName
+        ? `${className} ${activeClassName}`
+        : className
+    }
+    ref={forwardedRef}
+  >
+    {children}
   </_Link>
 )
 

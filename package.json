@@ -1,9 +1,9 @@
 {
   "name": "breakout",
   "engines": {
-    "node": ">=12"
+    "node": ">=20"
   },
-  "packageManager": "pnpm@8.11.0",
+  "packageManager": "pnpm@10.9.0",
   "version": "0.0.0-development",
   "description": "3D cave survey and terrain viewer and trip planner",
   "main": "index.js",
@@ -18,7 +18,8 @@
   },
   "homepage": "https://github.com/jedwards1211/breakout#readme",
   "scripts": {
-    "semantic-release": "semantic-release"
+    "semantic-release": "semantic-release",
+    "create-dmgs": "node create-dmgs.mjs"
   },
   "devDependencies": {
     "@semantic-release/exec": "^5.0.0",
@@ -38,7 +39,7 @@
       [
         "@semantic-release/exec",
         {
-          "verifyReleaseCmd": "echo ${nextRelease.version} > version"
+          "verifyReleaseCmd": "node setVersion.mjs \"${nextRelease.version}\""
         }
       ],
       [
@@ -58,12 +59,22 @@
               "name": "Breakout-${nextRelease.version}-x86.msi"
             },
             {
-              "path": "dist/macos/Breakout.dmg",
-              "name": "Breakout-${nextRelease.version}.dmg"
+              "path": "dist/macos/Breakout-x64.dmg",
+              "name": "Breakout-${nextRelease.version}-x64.dmg"
+            },
+            {
+              "path": "dist/macos/Breakout-aarch64.dmg",
+              "name": "Breakout-${nextRelease.version}-aarch64.dmg"
             }
           ]
         }
       ]
     ]
+  },
+  "optionalDependencies": {
+    "appdmg": "^0.6.6"
+  },
+  "dependencies": {
+    "glob": "^13.0.6"
   }
 }

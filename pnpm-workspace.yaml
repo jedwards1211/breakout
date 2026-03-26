@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - fs-xattr
+  - macos-alias
+packages:
+  - .
