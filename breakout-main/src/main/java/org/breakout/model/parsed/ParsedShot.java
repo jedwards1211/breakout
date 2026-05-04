@@ -49,4 +49,5 @@ public class ParsedShot {
 	public ParsedTrip trip;
 	public ParsedStation fromStation;
 	public ParsedStation toStation;
+	public String comment;
 }

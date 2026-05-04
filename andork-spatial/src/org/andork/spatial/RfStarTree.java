@@ -28,6 +28,7 @@ import static org.andork.spatial.Rectmath.union;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Comparator;
+import java.util.function.Predicate;
 
 public class RfStarTree<T> implements SpatialIndex<float[], T> {
 	public static class Branch<T> extends Node<T> implements RBranch<float[], T> {
@@ -566,6 +567,25 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 		}
 		return false;
 	}
+	
+	
+	private static <T> boolean containsLeafIntersecting(Node<T> node, float[] mbr, Predicate<Leaf<T>> predicate) {
+		if (!Rectmath.intersects(mbr, node.mbr)) {
+			return false;
+		}
+		if (node instanceof Leaf) {
+			return predicate.test((Leaf<T>)node);
+		}
+		if (node instanceof Branch) {
+			for (Node<T> child : ((Branch<T>) node).children) {
+				if (child != null && containsLeafIntersecting(child, mbr, predicate)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 
 	/**
 	 * Determines if this R* Tree contains a leaf intersecting the given master
@@ -579,5 +599,22 @@ public class RfStarTree<T> implements SpatialIndex<float[], T> {
 			return false;
 		}
 		return containsLeafIntersecting(root, mbr);
+	}
+	
+
+	/**
+	 * Determines if this R* Tree contains a leaf intersecting the given master
+	 * bounding rectangle and matching the given predicate.
+	 *
+	 * @param mbr
+	 *            the rectangle to intersect
+	 * @param predicate
+	 * 			  a predicate function to test each leaf
+	 */
+	public boolean containsLeafIntersecting(float[] mbr, Predicate<Leaf<T>> predicate) {
+		if (root == null) {
+			return false;
+		}
+		return containsLeafIntersecting(root, mbr, predicate);
 	}
 }

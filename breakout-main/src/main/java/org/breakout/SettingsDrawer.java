@@ -173,6 +173,7 @@ public class SettingsDrawer extends Drawer {
 	FloatSlider stationLabelDensitySlider;
 	JCheckBox showLeadLabelsCheckBox;
 	JCheckBox showCheckedLeadsCheckBox;
+	JCheckBox showCommentLabelsCheckBox;
 	JLabel centerlinesOffLabel;
 	JLabel lessCenterlineDistanceLabel;
 	JLabel moreCenterlineDistanceLabel;
@@ -518,6 +519,7 @@ public class SettingsDrawer extends Drawer {
 		bindSelected(showLeadLabelsCheckBox, projectModel.attribute(ProjectModel.showLeadLabels));
 		bindSelected(showCheckedLeadsCheckBox, projectModel.attribute(ProjectModel.showCheckedLeads));
 		bindEnabled(showCheckedLeadsCheckBox, projectModel.attribute(ProjectModel.showLeadLabels));
+		bindSelected(showCommentLabelsCheckBox, projectModel.attribute(ProjectModel.showCommentLabels));
 		bindSelected(showTerrainCheckBox, projectModel.attribute(ProjectModel.showTerrain));
 
 		bindValue(numSamplesSlider, rootModel.attribute(RootModel.desiredNumSamples));
@@ -566,6 +568,9 @@ public class SettingsDrawer extends Drawer {
 		localizer.setText(showLeadLabelsCheckBox, "showLeadLabelsCheckBox.text");
 		showCheckedLeadsCheckBox = new JCheckBox();
 		localizer.setText(showCheckedLeadsCheckBox, "showCheckedLeadsCheckBox.text");
+
+		showCommentLabelsCheckBox = new JCheckBox();
+		localizer.setText(showCommentLabelsCheckBox, "showCommentLabelsCheckBox.text");
 
 		centerlinesOffLabel = new JLabel();
 		localizer.setText(centerlinesOffLabel, "offLabel.text");
@@ -972,6 +977,7 @@ public class SettingsDrawer extends Drawer {
 
 		w.put(showLeadLabelsCheckBox).belowLast().fillx();
 		w.put(showCheckedLeadsCheckBox).belowLast().fillx();
+		w.put(showCommentLabelsCheckBox).belowLast().fillx();
 
 		w.put(centerlineDistanceLabel).belowLast().fillx();
 		GridBagWizard centerlineDistancePanel = GridBagWizard.quickPanel();

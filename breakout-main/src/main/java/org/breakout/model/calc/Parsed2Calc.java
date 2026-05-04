@@ -473,6 +473,7 @@ public class Parsed2Calc {
 	public void link(ParsedStation parsedFromStation, ParsedShot parsed, ParsedStation parsedToStation, CalcShot shot) {
 		StationKey fromKey = parsedFromStation.key();
 		StationKey toKey = parsedToStation.key();
+		shot.comment = parsed.comment;
 
 		if (fromKey != null) {
 			if (fromKey.equals(toKey)) {

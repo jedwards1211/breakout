@@ -387,8 +387,8 @@ public class ProjectParser {
 			fromStation.splays.add(splay);
 		}
 		else if (fromStation != null && toStation != null) {
-			toStation.comment = comment;
 			ParsedShot shot = new ParsedShot();
+			shot.comment = comment;
 			shot.fromStation = fromStation;
 			shot.toStation = toStation;
 			shot.trip = parsedTrip;

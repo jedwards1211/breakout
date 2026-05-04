@@ -291,17 +291,17 @@ public class BreakoutMainView {
 
 		@Override
 		protected Void work() throws Exception {
-			List<PickResult<StationKey>> leadStationPickResults = new ArrayList<>();
+			List<PickResult<Survey3dModel.Annotation>> annotationPickResults = new ArrayList<>();
 			float devicePixelRatio = DevicePixelRatio.getDevicePixelRatio(autoDrawable);
 			float x = e.getX() * devicePixelRatio;
 			float y = autoDrawable.getSurfaceHeight() - e.getY() * devicePixelRatio;
-			model3d.pickLeadStations(x, y, leadStationPickResults);
+			model3d.pickAnnotations(x, y, annotationPickResults);
 
-			Optional<PickResult<StationKey>> closest =
-				leadStationPickResults.stream().min((a, b) -> Float.compare(a.lateralDistance, b.lateralDistance));
-			model3d.setHoveredStation(closest.map(c -> c.picked).orElse(null));
+			Optional<PickResult<Survey3dModel.Annotation>> closest =
+				annotationPickResults.stream().min((a, b) -> Float.compare(a.lateralDistance, b.lateralDistance));
+			model3d.setHoveredAnnotations(closest.map(c -> Collections.singleton(c.picked)).orElse(Collections.emptySet()));
 
-			final Shot3dPickResult picked = leadStationPickResults.isEmpty() ? pick(model3d, e, hoverUpdaterSpc) : null;
+			final Shot3dPickResult picked = annotationPickResults.isEmpty() ? pick(model3d, e, hoverUpdaterSpc) : null;
 
 			HighlightMode highlightMode = getProjectModel().get(ProjectModel.highlightMode);
 
@@ -2016,6 +2016,13 @@ public class BreakoutMainView {
 			autorunProjectAttribute(ProjectModel.showLeadLabels, showLeadLabels -> {
 				if (model3d != null && showLeadLabels != null) {
 					model3d.setShowLeadLabels(showLeadLabels);
+					if (!constructing.value)
+						autoDrawable.display();
+				}
+			});
+			autorunProjectAttribute(ProjectModel.showCommentLabels, showCommentLabels -> {
+				if (model3d != null && showCommentLabels != null) {
+					model3d.setShowCommentLabels(showCommentLabels);
 					if (!constructing.value)
 						autoDrawable.display();
 				}

@@ -93,6 +93,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		newAttribute(CoordinateReferenceSystemPreset.class, "displayCoordinateReferenceSystem");
 	public static final Attribute<Boolean> showLeadLabels = newAttribute(Boolean.class, "showLeadLabels");
 	public static final Attribute<Boolean> showCheckedLeads = newAttribute(Boolean.class, "showCheckedLeads");
+	public static final Attribute<Boolean> showCommentLabels = newAttribute(Boolean.class, "showCommentLabels");
 	public static final Attribute<Boolean> showTerrain = newAttribute(Boolean.class, "showTerrain");
 	public static final Attribute<Clip3f> clip = newAttribute(Clip3f.class, "clip");
 	public static final Attribute<File> compassImportDirectory = newAttribute(File.class, "compassImportDirectory");
@@ -204,6 +205,7 @@ public final class ProjectModel extends QSpec<ProjectModel> {
 		projectModel.setIfNull(ProjectModel.displayCoordinateReferenceSystem, CoordinateReferenceSystemPreset.WGS84);
 		projectModel.setIfNull(ProjectModel.showLeadLabels, true);
 		projectModel.setIfNull(ProjectModel.showCheckedLeads, false);
+		projectModel.setIfNull(ProjectModel.showCommentLabels, false);
 		projectModel.setIfNull(ProjectModel.showTerrain, false);
 		projectModel
 			.setIfNull(ProjectModel.clip, new Clip3f(new float[]
