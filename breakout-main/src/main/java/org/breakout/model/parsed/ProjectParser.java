@@ -309,8 +309,8 @@ public class ProjectParser {
 		return field != null && !isNullOrEmpty(field.value) ? field.value : null;
 	}
 
-	private static Pattern leadPattern =
-		Pattern.compile("\\b(leads?|go(es|ing)?|continues?|dig)\\b", Pattern.CASE_INSENSITIVE);
+//	private static Pattern leadPattern =
+//		Pattern.compile("\\b(leads?|go(es|ing)?|continues?|dig)\\b", Pattern.CASE_INSENSITIVE);
 
 	public ShotKey parse(SurveyRow raw) {
 		SurveyTrip trip = raw.getTrip();
@@ -353,18 +353,18 @@ public class ProjectParser {
 			}
 		}
 
-		if (comment != null && leadPattern.matcher(comment).find()) {
-			ParsedStation leadStation = fromStation != null ? fromStation : toStation;
-			if (leadStation != null) {
-				SurveyLead lead =
-					new SurveyLead.Mutable()
-						.setCave(leadStation.key().cave)
-						.setStation(leadStation.key().station)
-						.setDescription(comment)
-						.toImmutable();
-				project.leads.add(lead);
-			}
-		}
+//		if (comment != null && leadPattern.matcher(comment).find()) {
+//			ParsedStation leadStation = fromStation != null ? fromStation : toStation;
+//			if (leadStation != null) {
+//				SurveyLead lead =
+//					new SurveyLead.Mutable()
+//						.setCave(leadStation.key().cave)
+//						.setStation(leadStation.key().station)
+//						.setDescription(comment)
+//						.toImmutable();
+//				project.leads.add(lead);
+//			}
+//		}
 
 		ParsedShotMeasurement frontsights = parseFrontsights(raw, trip);
 		ParsedShotMeasurement backsights = parseBacksights(raw, trip);
