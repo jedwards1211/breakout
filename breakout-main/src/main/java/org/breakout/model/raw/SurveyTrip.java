@@ -18,130 +18,150 @@ public class SurveyTrip implements Cloneable {
 		FROM,
 		TO;
 	}
+	
+	protected static class Data implements Cloneable {
+		protected String cave; // Cave
+		protected String name; // Name
+		protected String date; // Date
+		protected List<String> attachedFiles; // AttachedFiles
+		protected List<String> surveyors; // Surveyors
+		protected Unit<Length> distanceUnit = Length.meters; // DistanceUnit
+		protected Unit<Angle> angleUnit = Angle.degrees; // AngleUnit
+		protected Unit<Angle> overrideFrontAzimuthUnit; // OverrideFrontAzimuthUnit
+		protected Unit<Angle> overrideBackAzimuthUnit; // OverrideBackAzimuthUnit
+		protected Unit<Angle> overrideFrontInclinationUnit; // OverrideFrontInclinationUnit
+		protected Unit<Angle> overrideBackInclinationUnit; // OverrideBackInclinationUnit
+		protected boolean backAzimuthsCorrected; // BackAzimuthsCorrected
+		protected boolean backInclinationsCorrected; // BackInclinationsCorrected
+		protected String declination; // Declination
+		protected String distanceCorrection; // DistanceCorrection
+		protected String frontAzimuthCorrection; // FrontAzimuthCorrection
+		protected String frontInclinationCorrection; // FrontInclinationCorrection
+		protected String backAzimuthCorrection; // BackAzimuthCorrection
+		protected String backInclinationCorrection; // BackInclinationCorrection
+		protected LrudAssociation lrudAssociation; // LrudAssociation
+		protected String datum; // Datum
+		protected String ellipsoid; // Ellipsoid
+		protected String utmZone; // UtmZone
+		
+		public void copy(Data other) {
+			cave = other.cave;
+			name = other.name;
+			date = other.date;
+			attachedFiles = other.attachedFiles;
+			surveyors = other.surveyors;
+			distanceUnit = other.distanceUnit;
+			angleUnit = other.angleUnit;
+			overrideFrontAzimuthUnit = other.overrideFrontAzimuthUnit;
+			overrideBackAzimuthUnit = other.overrideBackAzimuthUnit;
+			overrideFrontInclinationUnit = other.overrideFrontInclinationUnit;
+			overrideBackInclinationUnit = other.overrideBackInclinationUnit;
+			backAzimuthsCorrected = other.backAzimuthsCorrected;
+			backInclinationsCorrected = other.backInclinationsCorrected;
+			declination = other.declination;
+			distanceCorrection = other.distanceCorrection;
+			frontAzimuthCorrection = other.frontAzimuthCorrection;
+			frontInclinationCorrection = other.frontInclinationCorrection;
+			backAzimuthCorrection = other.backAzimuthCorrection;
+			backInclinationCorrection = other.backInclinationCorrection;
+			lrudAssociation = other.lrudAssociation;
+			datum = other.datum;
+			ellipsoid = other.ellipsoid;
+			utmZone = other.utmZone;
+		}
 
-	protected String cave; // Cave
-	protected String name; // Name
-	protected String date; // Date
-	protected List<String> attachedFiles; // AttachedFiles
-	protected List<String> surveyors; // Surveyors
-	protected Unit<Length> distanceUnit = Length.meters; // DistanceUnit
-	protected Unit<Angle> angleUnit = Angle.degrees; // AngleUnit
-	protected Unit<Angle> overrideFrontAzimuthUnit; // OverrideFrontAzimuthUnit
-	protected Unit<Angle> overrideBackAzimuthUnit; // OverrideBackAzimuthUnit
-	protected Unit<Angle> overrideFrontInclinationUnit; // OverrideFrontInclinationUnit
-	protected Unit<Angle> overrideBackInclinationUnit; // OverrideBackInclinationUnit
-	protected boolean backAzimuthsCorrected; // BackAzimuthsCorrected
-	protected boolean backInclinationsCorrected; // BackInclinationsCorrected
-	protected String declination; // Declination
-	protected String distanceCorrection; // DistanceCorrection
-	protected String frontAzimuthCorrection; // FrontAzimuthCorrection
-	protected String frontInclinationCorrection; // FrontInclinationCorrection
-	protected String backAzimuthCorrection; // BackAzimuthCorrection
-	protected String backInclinationCorrection; // BackInclinationCorrection
-	protected LrudAssociation lrudAssociation; // LrudAssociation
-	protected String datum; // Datum
-	protected String ellipsoid; // Ellipsoid
-	protected String utmZone; // UtmZone
+		@Override
+		public Data clone() {
+			Data clone = new Data();
+			clone.copy(this);
+			return clone;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects
+				.hash(
+					angleUnit,
+					attachedFiles,
+					backAzimuthCorrection,
+					backAzimuthsCorrected,
+					backInclinationCorrection,
+					backInclinationsCorrected,
+					cave,
+					date,
+					datum,
+					declination,
+					distanceCorrection,
+					distanceUnit,
+					ellipsoid,
+					frontAzimuthCorrection,
+					frontInclinationCorrection,
+					lrudAssociation,
+					name,
+					overrideBackAzimuthUnit,
+					overrideBackInclinationUnit,
+					overrideFrontAzimuthUnit,
+					overrideFrontInclinationUnit,
+					surveyors,
+					utmZone);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Data other = (Data) obj;
+			return Objects.equals(angleUnit, other.angleUnit)
+				&& Objects.equals(attachedFiles, other.attachedFiles)
+				&& Objects.equals(backAzimuthCorrection, other.backAzimuthCorrection)
+				&& backAzimuthsCorrected == other.backAzimuthsCorrected
+				&& Objects.equals(backInclinationCorrection, other.backInclinationCorrection)
+				&& backInclinationsCorrected == other.backInclinationsCorrected
+				&& Objects.equals(cave, other.cave)
+				&& Objects.equals(date, other.date)
+				&& Objects.equals(datum, other.datum)
+				&& Objects.equals(declination, other.declination)
+				&& Objects.equals(distanceCorrection, other.distanceCorrection)
+				&& Objects.equals(distanceUnit, other.distanceUnit)
+				&& Objects.equals(ellipsoid, other.ellipsoid)
+				&& Objects.equals(frontAzimuthCorrection, other.frontAzimuthCorrection)
+				&& Objects.equals(frontInclinationCorrection, other.frontInclinationCorrection)
+				&& lrudAssociation == other.lrudAssociation
+				&& Objects.equals(name, other.name)
+				&& Objects.equals(overrideBackAzimuthUnit, other.overrideBackAzimuthUnit)
+				&& Objects.equals(overrideBackInclinationUnit, other.overrideBackInclinationUnit)
+				&& Objects.equals(overrideFrontAzimuthUnit, other.overrideFrontAzimuthUnit)
+				&& Objects.equals(overrideFrontInclinationUnit, other.overrideFrontInclinationUnit)
+				&& Objects.equals(surveyors, other.surveyors)
+				&& Objects.equals(utmZone, other.utmZone);
+		}
+	}
+	
+	protected Data data;
 
 	public SurveyTrip() {
+		data = new Data();
 	}
 
 	public SurveyTrip(SurveyTrip other) {
-		copy(other);
+		data = other.data;
 	}
-
-	public void copy(SurveyTrip other) {
-		cave = other.cave;
-		name = other.name;
-		date = other.date;
-		attachedFiles = other.attachedFiles;
-		surveyors = other.surveyors;
-		distanceUnit = other.distanceUnit;
-		angleUnit = other.angleUnit;
-		overrideFrontAzimuthUnit = other.overrideFrontAzimuthUnit;
-		overrideBackAzimuthUnit = other.overrideBackAzimuthUnit;
-		overrideFrontInclinationUnit = other.overrideFrontInclinationUnit;
-		overrideBackInclinationUnit = other.overrideBackInclinationUnit;
-		backAzimuthsCorrected = other.backAzimuthsCorrected;
-		backInclinationsCorrected = other.backInclinationsCorrected;
-		declination = other.declination;
-		distanceCorrection = other.distanceCorrection;
-		frontAzimuthCorrection = other.frontAzimuthCorrection;
-		frontInclinationCorrection = other.frontInclinationCorrection;
-		backAzimuthCorrection = other.backAzimuthCorrection;
-		backInclinationCorrection = other.backInclinationCorrection;
-		lrudAssociation = other.lrudAssociation;
-		datum = other.datum;
-		ellipsoid = other.ellipsoid;
-		utmZone = other.utmZone;
-	}
-
+	
 	@Override
 	public SurveyTrip clone() {
 		return new SurveyTrip(this);
 	}
 
-	@Override
 	public int hashCode() {
-		return Objects
-			.hash(
-				angleUnit,
-				attachedFiles,
-				backAzimuthCorrection,
-				backAzimuthsCorrected,
-				backInclinationCorrection,
-				backInclinationsCorrected,
-				cave,
-				date,
-				datum,
-				declination,
-				distanceCorrection,
-				distanceUnit,
-				ellipsoid,
-				frontAzimuthCorrection,
-				frontInclinationCorrection,
-				lrudAssociation,
-				name,
-				overrideBackAzimuthUnit,
-				overrideBackInclinationUnit,
-				overrideFrontAzimuthUnit,
-				overrideFrontInclinationUnit,
-				surveyors,
-				utmZone);
+		return data.hashCode();
 	}
 
-	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SurveyTrip other = (SurveyTrip) obj;
-		return Objects.equals(angleUnit, other.angleUnit)
-			&& Objects.equals(attachedFiles, other.attachedFiles)
-			&& Objects.equals(backAzimuthCorrection, other.backAzimuthCorrection)
-			&& backAzimuthsCorrected == other.backAzimuthsCorrected
-			&& Objects.equals(backInclinationCorrection, other.backInclinationCorrection)
-			&& backInclinationsCorrected == other.backInclinationsCorrected
-			&& Objects.equals(cave, other.cave)
-			&& Objects.equals(date, other.date)
-			&& Objects.equals(datum, other.datum)
-			&& Objects.equals(declination, other.declination)
-			&& Objects.equals(distanceCorrection, other.distanceCorrection)
-			&& Objects.equals(distanceUnit, other.distanceUnit)
-			&& Objects.equals(ellipsoid, other.ellipsoid)
-			&& Objects.equals(frontAzimuthCorrection, other.frontAzimuthCorrection)
-			&& Objects.equals(frontInclinationCorrection, other.frontInclinationCorrection)
-			&& lrudAssociation == other.lrudAssociation
-			&& Objects.equals(name, other.name)
-			&& Objects.equals(overrideBackAzimuthUnit, other.overrideBackAzimuthUnit)
-			&& Objects.equals(overrideBackInclinationUnit, other.overrideBackInclinationUnit)
-			&& Objects.equals(overrideFrontAzimuthUnit, other.overrideFrontAzimuthUnit)
-			&& Objects.equals(overrideFrontInclinationUnit, other.overrideFrontInclinationUnit)
-			&& Objects.equals(surveyors, other.surveyors)
-			&& Objects.equals(utmZone, other.utmZone);
+		return data.equals(obj);
 	}
 
 	protected SurveyTrip toImmutable() {
@@ -159,95 +179,95 @@ public class SurveyTrip implements Cloneable {
 	}
 
 	public String getCave() {
-		return cave;
+		return data.cave;
 	}
 
 	public String getName() {
-		return name;
+		return data.name;
 	}
 
 	public String getDate() {
-		return date;
+		return data.date;
 	}
 
 	public List<String> getAttachedFiles() {
-		return attachedFiles;
+		return data.attachedFiles;
 	}
 
 	public List<String> getSurveyors() {
-		return surveyors;
+		return data.surveyors;
 	}
 
 	public Unit<Length> getDistanceUnit() {
-		return distanceUnit;
+		return data.distanceUnit;
 	}
 
 	public Unit<Angle> getAngleUnit() {
-		return angleUnit;
+		return data.angleUnit;
 	}
 
 	public Unit<Angle> getOverrideFrontAzimuthUnit() {
-		return overrideFrontAzimuthUnit;
+		return data.overrideFrontAzimuthUnit;
 	}
 
 	public Unit<Angle> getOverrideBackAzimuthUnit() {
-		return overrideBackAzimuthUnit;
+		return data.overrideBackAzimuthUnit;
 	}
 
 	public Unit<Angle> getOverrideFrontInclinationUnit() {
-		return overrideFrontInclinationUnit;
+		return data.overrideFrontInclinationUnit;
 	}
 
 	public Unit<Angle> getOverrideBackInclinationUnit() {
-		return overrideBackInclinationUnit;
+		return data.overrideBackInclinationUnit;
 	}
 
 	public boolean areBackAzimuthsCorrected() {
-		return backAzimuthsCorrected;
+		return data.backAzimuthsCorrected;
 	}
 
 	public boolean areBackInclinationsCorrected() {
-		return backInclinationsCorrected;
+		return data.backInclinationsCorrected;
 	}
 
 	public String getDeclination() {
-		return declination;
+		return data.declination;
 	}
 
 	public String getDistanceCorrection() {
-		return distanceCorrection;
+		return data.distanceCorrection;
 	}
 
 	public String getFrontAzimuthCorrection() {
-		return frontAzimuthCorrection;
+		return data.frontAzimuthCorrection;
 	}
 
 	public String getFrontInclinationCorrection() {
-		return frontInclinationCorrection;
+		return data.frontInclinationCorrection;
 	}
 
 	public String getBackAzimuthCorrection() {
-		return backAzimuthCorrection;
+		return data.backAzimuthCorrection;
 	}
 
 	public String getBackInclinationCorrection() {
-		return backInclinationCorrection;
+		return data.backInclinationCorrection;
 	}
 
 	public LrudAssociation getLrudAssociation() {
-		return lrudAssociation;
+		return data.lrudAssociation;
 	}
 
 	public String getDatum() {
-		return datum;
+		return data.datum;
 	}
 
 	public String getEllipsoid() {
-		return ellipsoid;
+		return data.ellipsoid;
 	}
 
 	public String getUtmZone() {
-		return utmZone;
+		return data.utmZone;
 	}
 
 	public Unit<Angle> getFrontAzimuthUnit() {
@@ -365,13 +385,13 @@ public class SurveyTrip implements Cloneable {
 		}
 
 		public Mutable(SurveyTrip original) {
-			super();
+			super(original);
 			this.original = original.toImmutable();
 		}
 
 		private void detach() {
-			copy(original);
-			this.original = null;
+			data = data.clone();
+			original = null;
 		}
 
 		public Mutable clone() {
@@ -385,188 +405,188 @@ public class SurveyTrip implements Cloneable {
 		}
 
 		public Mutable setCave(String cave) {
-			if (original != null && !Objects.equals(original.cave, cave)) {
+			if (original != null && !Objects.equals(data.cave, cave)) {
 				detach();
 			}
-			this.cave = cave;
+			data.cave = cave;
 			return this;
 		}
 
 		public Mutable setName(String name) {
-			if (original != null && !Objects.equals(original.name, name)) {
+			if (original != null && !Objects.equals(data.name, name)) {
 				detach();
 			}
-			this.name = name;
+			data.name = name;
 			return this;
 		}
 
 		public Mutable setDate(String date) {
-			if (original != null && !Objects.equals(original.date, date)) {
+			if (original != null && !Objects.equals(data.date, date)) {
 				detach();
 			}
-			this.date = date;
+			data.date = date;
 			return this;
 		}
 
 		public Mutable setAttachedFiles(List<String> attachedFiles) {
-			if (original != null && !Objects.equals(original.attachedFiles, attachedFiles)) {
+			if (original != null && !Objects.equals(data.attachedFiles, attachedFiles)) {
 				detach();
 			}
-			this.attachedFiles = attachedFiles;
+			data.attachedFiles = attachedFiles;
 			return this;
 		}
 
 		public Mutable setSurveyors(List<String> surveyors) {
-			if (original != null && !Objects.equals(original.surveyors, surveyors)) {
+			if (original != null && !Objects.equals(data.surveyors, surveyors)) {
 				detach();
 			}
-			this.surveyors = surveyors;
+			data.surveyors = surveyors;
 			return this;
 		}
 
 		public Mutable setDistanceUnit(Unit<Length> distanceUnit) {
-			if (original != null && !Objects.equals(original.distanceUnit, distanceUnit)) {
+			if (original != null && !Objects.equals(data.distanceUnit, distanceUnit)) {
 				detach();
 			}
-			this.distanceUnit = distanceUnit;
+			data.distanceUnit = distanceUnit;
 			return this;
 		}
 
 		public Mutable setAngleUnit(Unit<Angle> angleUnit) {
-			if (original != null && !Objects.equals(original.angleUnit, angleUnit)) {
+			if (original != null && !Objects.equals(data.angleUnit, angleUnit)) {
 				detach();
 			}
-			this.angleUnit = angleUnit;
+			data.angleUnit = angleUnit;
 			return this;
 		}
 
 		public Mutable setOverrideFrontAzimuthUnit(Unit<Angle> overrideFrontAzimuthUnit) {
-			if (original != null && !Objects.equals(original.overrideFrontAzimuthUnit, overrideFrontAzimuthUnit)) {
+			if (original != null && !Objects.equals(data.overrideFrontAzimuthUnit, overrideFrontAzimuthUnit)) {
 				detach();
 			}
-			this.overrideFrontAzimuthUnit = overrideFrontAzimuthUnit;
+			data.overrideFrontAzimuthUnit = overrideFrontAzimuthUnit;
 			return this;
 		}
 
 		public Mutable setOverrideBackAzimuthUnit(Unit<Angle> overrideBackAzimuthUnit) {
-			if (original != null && !Objects.equals(original.overrideBackAzimuthUnit, overrideBackAzimuthUnit)) {
+			if (original != null && !Objects.equals(data.overrideBackAzimuthUnit, overrideBackAzimuthUnit)) {
 				detach();
 			}
-			this.overrideBackAzimuthUnit = overrideBackAzimuthUnit;
+			data.overrideBackAzimuthUnit = overrideBackAzimuthUnit;
 			return this;
 		}
 
 		public Mutable setOverrideFrontInclinationUnit(Unit<Angle> overrideFrontInclinationUnit) {
 			if (original != null
-				&& !Objects.equals(original.overrideFrontInclinationUnit, overrideFrontInclinationUnit)) {
+				&& !Objects.equals(data.overrideFrontInclinationUnit, overrideFrontInclinationUnit)) {
 				detach();
 			}
-			this.overrideFrontInclinationUnit = overrideFrontInclinationUnit;
+			data.overrideFrontInclinationUnit = overrideFrontInclinationUnit;
 			return this;
 		}
 
 		public Mutable setOverrideBackInclinationUnit(Unit<Angle> overrideBackInclinationUnit) {
 			if (original != null
-				&& !Objects.equals(original.overrideBackInclinationUnit, overrideBackInclinationUnit)) {
+				&& !Objects.equals(data.overrideBackInclinationUnit, overrideBackInclinationUnit)) {
 				detach();
 			}
-			this.overrideBackInclinationUnit = overrideBackInclinationUnit;
+			data.overrideBackInclinationUnit = overrideBackInclinationUnit;
 			return this;
 		}
 
 		public Mutable setBackAzimuthsCorrected(boolean backAzimuthsCorrected) {
-			if (original != null && original.backAzimuthsCorrected != backAzimuthsCorrected) {
+			if (original != null && data.backAzimuthsCorrected != backAzimuthsCorrected) {
 				detach();
 			}
-			this.backAzimuthsCorrected = backAzimuthsCorrected;
+			data.backAzimuthsCorrected = backAzimuthsCorrected;
 			return this;
 		}
 
 		public Mutable setBackInclinationsCorrected(boolean backInclinationsCorrected) {
-			if (original != null && original.backInclinationsCorrected != backInclinationsCorrected) {
+			if (original != null && data.backInclinationsCorrected != backInclinationsCorrected) {
 				detach();
 			}
-			this.backInclinationsCorrected = backInclinationsCorrected;
+			data.backInclinationsCorrected = backInclinationsCorrected;
 			return this;
 		}
 
 		public Mutable setDeclination(String declination) {
-			if (original != null && !Objects.equals(original.declination, declination)) {
+			if (original != null && !Objects.equals(data.declination, declination)) {
 				detach();
 			}
-			this.declination = declination;
+			data.declination = declination;
 			return this;
 		}
 
 		public Mutable setDistanceCorrection(String distanceCorrection) {
-			if (original != null && !Objects.equals(original.distanceCorrection, distanceCorrection)) {
+			if (original != null && !Objects.equals(data.distanceCorrection, distanceCorrection)) {
 				detach();
 			}
-			this.distanceCorrection = distanceCorrection;
+			data.distanceCorrection = distanceCorrection;
 			return this;
 		}
 
 		public Mutable setFrontAzimuthCorrection(String frontAzimuthCorrection) {
-			if (original != null && !Objects.equals(original.frontAzimuthCorrection, frontAzimuthCorrection)) {
+			if (original != null && !Objects.equals(data.frontAzimuthCorrection, frontAzimuthCorrection)) {
 				detach();
 			}
-			this.frontAzimuthCorrection = frontAzimuthCorrection;
+			data.frontAzimuthCorrection = frontAzimuthCorrection;
 			return this;
 		}
 
 		public Mutable setFrontInclinationCorrection(String frontInclinationCorrection) {
-			if (original != null && !Objects.equals(original.frontInclinationCorrection, frontInclinationCorrection)) {
+			if (original != null && !Objects.equals(data.frontInclinationCorrection, frontInclinationCorrection)) {
 				detach();
 			}
-			this.frontInclinationCorrection = frontInclinationCorrection;
+			data.frontInclinationCorrection = frontInclinationCorrection;
 			return this;
 		}
 
 		public Mutable setBackAzimuthCorrection(String backAzimuthCorrection) {
-			if (original != null && !Objects.equals(original.backAzimuthCorrection, backAzimuthCorrection)) {
+			if (original != null && !Objects.equals(data.backAzimuthCorrection, backAzimuthCorrection)) {
 				detach();
 			}
-			this.backAzimuthCorrection = backAzimuthCorrection;
+			data.backAzimuthCorrection = backAzimuthCorrection;
 			return this;
 		}
 
 		public Mutable setBackInclinationCorrection(String backInclinationCorrection) {
-			if (original != null && !Objects.equals(original.backInclinationCorrection, backInclinationCorrection)) {
+			if (original != null && !Objects.equals(data.backInclinationCorrection, backInclinationCorrection)) {
 				detach();
 			}
-			this.backInclinationCorrection = backInclinationCorrection;
+			data.backInclinationCorrection = backInclinationCorrection;
 			return this;
 		}
 
 		public Mutable setLrudAssociation(LrudAssociation lrudAssociation) {
-			if (original != null && !Objects.equals(original.lrudAssociation, lrudAssociation)) {
+			if (original != null && !Objects.equals(data.lrudAssociation, lrudAssociation)) {
 				detach();
 			}
-			this.lrudAssociation = lrudAssociation;
+			data.lrudAssociation = lrudAssociation;
 			return this;
 		}
 
 		public Mutable setDatum(String datum) {
-			if (original != null && !Objects.equals(original.datum, datum)) {
+			if (original != null && !Objects.equals(data.datum, datum)) {
 				detach();
 			}
-			this.datum = datum;
+			data.datum = datum;
 			return this;
 		}
 
 		public Mutable setEllipsoid(String ellipsoid) {
-			if (original != null && !Objects.equals(original.ellipsoid, ellipsoid)) {
+			if (original != null && !Objects.equals(data.ellipsoid, ellipsoid)) {
 				detach();
 			}
-			this.ellipsoid = ellipsoid;
+			data.ellipsoid = ellipsoid;
 			return this;
 		}
 
 		public Mutable setUtmZone(String utmZone) {
-			if (original != null && !Objects.equals(original.utmZone, utmZone)) {
+			if (original != null && !Objects.equals(data.utmZone, utmZone)) {
 				detach();
 			}
-			this.utmZone = utmZone;
+			data.utmZone = utmZone;
 			return this;
 		}
 	}

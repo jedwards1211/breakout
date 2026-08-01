@@ -12,61 +12,137 @@ import org.andork.model.DefaultProperty;
 import org.andork.model.Property;
 
 public class SurveyRow {
-	protected String overrideFromCave; // OverrideFromCave
-	protected String fromStation; // FromStation
-	protected String overrideToCave; // OverrideToCave
-	protected String toStation; // ToStation
-	protected String distance; // Distance
-	protected String frontAzimuth; // FrontAzimuth
-	protected String backAzimuth; // BackAzimuth
-	protected String frontInclination; // FrontInclination
-	protected String backInclination; // BackInclination
-	protected String left; // Left
-	protected String right; // Right
-	protected String up; // Up
-	protected String down; // Down
-	protected String northing; // Northing
-	protected String latitude; // Latitude
-	protected String easting; // Easting
-	protected String longitude; // Longitude
-	protected String elevation; // Elevation
-	protected String comment; // Comment
-	protected List<String> overrideAttachedFiles; // OverrideAttachedFiles
-	protected SurveyTrip trip; // Trip
-	protected boolean excludeDistance; // ExcludeDistance
-	protected boolean excludeFromPlotting; // ExcludeFromPlotting
+	protected static class Data implements Cloneable {
+		protected String overrideFromCave; // OverrideFromCave
+		protected String fromStation; // FromStation
+		protected String overrideToCave; // OverrideToCave
+		protected String toStation; // ToStation
+		protected String distance; // Distance
+		protected String frontAzimuth; // FrontAzimuth
+		protected String backAzimuth; // BackAzimuth
+		protected String frontInclination; // FrontInclination
+		protected String backInclination; // BackInclination
+		protected String left; // Left
+		protected String right; // Right
+		protected String up; // Up
+		protected String down; // Down
+		protected String northing; // Northing
+		protected String latitude; // Latitude
+		protected String easting; // Easting
+		protected String longitude; // Longitude
+		protected String elevation; // Elevation
+		protected String comment; // Comment
+		protected List<String> overrideAttachedFiles; // OverrideAttachedFiles
+		protected SurveyTrip trip; // Trip
+		protected boolean excludeDistance; // ExcludeDistance
+		protected boolean excludeFromPlotting; // ExcludeFromPlotting
+	
+
+		public void copy(Data other) {
+			overrideFromCave = other.overrideFromCave;
+			fromStation = other.fromStation;
+			overrideToCave = other.overrideToCave;
+			toStation = other.toStation;
+			distance = other.distance;
+			frontAzimuth = other.frontAzimuth;
+			backAzimuth = other.backAzimuth;
+			frontInclination = other.frontInclination;
+			backInclination = other.backInclination;
+			left = other.left;
+			right = other.right;
+			up = other.up;
+			down = other.down;
+			northing = other.northing;
+			latitude = other.latitude;
+			easting = other.easting;
+			longitude = other.longitude;
+			elevation = other.elevation;
+			comment = other.comment;
+			overrideAttachedFiles = other.overrideAttachedFiles;
+			trip = other.trip;
+			excludeDistance = other.excludeDistance;
+			excludeFromPlotting = other.excludeFromPlotting;
+		}
+
+		@Override
+		public Data clone() {
+			Data clone = new Data();
+			clone.copy(this);
+			return clone;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects
+				.hash(
+					backAzimuth,
+					backInclination,
+					comment,
+					distance,
+					down,
+					easting,
+					elevation,
+					excludeDistance,
+					excludeFromPlotting,
+					fromStation,
+					frontAzimuth,
+					frontInclination,
+					latitude,
+					left,
+					longitude,
+					northing,
+					overrideAttachedFiles,
+					overrideFromCave,
+					overrideToCave,
+					right,
+					toStation,
+					trip,
+					up);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Data other = (Data) obj;
+			return Objects.equals(backAzimuth, other.backAzimuth)
+				&& Objects.equals(backInclination, other.backInclination)
+				&& Objects.equals(comment, other.comment)
+				&& Objects.equals(distance, other.distance)
+				&& Objects.equals(down, other.down)
+				&& Objects.equals(easting, other.easting)
+				&& Objects.equals(elevation, other.elevation)
+				&& excludeDistance == other.excludeDistance
+				&& excludeFromPlotting == other.excludeFromPlotting
+				&& Objects.equals(fromStation, other.fromStation)
+				&& Objects.equals(frontAzimuth, other.frontAzimuth)
+				&& Objects.equals(frontInclination, other.frontInclination)
+				&& Objects.equals(latitude, other.latitude)
+				&& Objects.equals(left, other.left)
+				&& Objects.equals(longitude, other.longitude)
+				&& Objects.equals(northing, other.northing)
+				&& Objects.equals(overrideAttachedFiles, other.overrideAttachedFiles)
+				&& Objects.equals(overrideFromCave, other.overrideFromCave)
+				&& Objects.equals(overrideToCave, other.overrideToCave)
+				&& Objects.equals(right, other.right)
+				&& Objects.equals(toStation, other.toStation)
+				&& Objects.equals(trip, other.trip)
+				&& Objects.equals(up, other.up);
+		}
+	}
+
+	protected Data data;
 
 	public SurveyRow() {
+		data = new Data();
 	}
 
 	public SurveyRow(SurveyRow other) {
-		copy(other);
-	}
-
-	public void copy(SurveyRow other) {
-		overrideFromCave = other.overrideFromCave;
-		fromStation = other.fromStation;
-		overrideToCave = other.overrideToCave;
-		toStation = other.toStation;
-		distance = other.distance;
-		frontAzimuth = other.frontAzimuth;
-		backAzimuth = other.backAzimuth;
-		frontInclination = other.frontInclination;
-		backInclination = other.backInclination;
-		left = other.left;
-		right = other.right;
-		up = other.up;
-		down = other.down;
-		northing = other.northing;
-		latitude = other.latitude;
-		easting = other.easting;
-		longitude = other.longitude;
-		elevation = other.elevation;
-		comment = other.comment;
-		overrideAttachedFiles = other.overrideAttachedFiles;
-		trip = other.trip;
-		excludeDistance = other.excludeDistance;
-		excludeFromPlotting = other.excludeFromPlotting;
+		data = other.data;
 	}
 
 	@Override
@@ -74,67 +150,12 @@ public class SurveyRow {
 		return new SurveyRow(this);
 	}
 
-	@Override
 	public int hashCode() {
-		return Objects
-			.hash(
-				backAzimuth,
-				backInclination,
-				comment,
-				distance,
-				down,
-				easting,
-				elevation,
-				excludeDistance,
-				excludeFromPlotting,
-				fromStation,
-				frontAzimuth,
-				frontInclination,
-				latitude,
-				left,
-				longitude,
-				northing,
-				overrideAttachedFiles,
-				overrideFromCave,
-				overrideToCave,
-				right,
-				toStation,
-				trip,
-				up);
+		return data.hashCode();
 	}
 
-	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SurveyRow other = (SurveyRow) obj;
-		return Objects.equals(backAzimuth, other.backAzimuth)
-			&& Objects.equals(backInclination, other.backInclination)
-			&& Objects.equals(comment, other.comment)
-			&& Objects.equals(distance, other.distance)
-			&& Objects.equals(down, other.down)
-			&& Objects.equals(easting, other.easting)
-			&& Objects.equals(elevation, other.elevation)
-			&& excludeDistance == other.excludeDistance
-			&& excludeFromPlotting == other.excludeFromPlotting
-			&& Objects.equals(fromStation, other.fromStation)
-			&& Objects.equals(frontAzimuth, other.frontAzimuth)
-			&& Objects.equals(frontInclination, other.frontInclination)
-			&& Objects.equals(latitude, other.latitude)
-			&& Objects.equals(left, other.left)
-			&& Objects.equals(longitude, other.longitude)
-			&& Objects.equals(northing, other.northing)
-			&& Objects.equals(overrideAttachedFiles, other.overrideAttachedFiles)
-			&& Objects.equals(overrideFromCave, other.overrideFromCave)
-			&& Objects.equals(overrideToCave, other.overrideToCave)
-			&& Objects.equals(right, other.right)
-			&& Objects.equals(toStation, other.toStation)
-			&& Objects.equals(trip, other.trip)
-			&& Objects.equals(up, other.up);
+		return data.equals(obj);
 	}
 
 	protected SurveyRow toImmutable() {
@@ -150,97 +171,120 @@ public class SurveyRow {
 		mutator.accept(mutable);
 		return mutable.toImmutable();
 	}
-
+	
+	
 	public String getOverrideFromCave() {
-		return overrideFromCave;
+		return data.overrideFromCave;
 	}
+
 
 	public String getFromStation() {
-		return fromStation;
+		return data.fromStation;
 	}
+
 
 	public String getOverrideToCave() {
-		return overrideToCave;
+		return data.overrideToCave;
 	}
+
 
 	public String getToStation() {
-		return toStation;
+		return data.toStation;
 	}
+
 
 	public String getDistance() {
-		return distance;
+		return data.distance;
 	}
+
 
 	public String getFrontAzimuth() {
-		return frontAzimuth;
+		return data.frontAzimuth;
 	}
+
 
 	public String getBackAzimuth() {
-		return backAzimuth;
+		return data.backAzimuth;
 	}
+
 
 	public String getFrontInclination() {
-		return frontInclination;
+		return data.frontInclination;
 	}
+
 
 	public String getBackInclination() {
-		return backInclination;
+		return data.backInclination;
 	}
+
 
 	public String getLeft() {
-		return left;
+		return data.left;
 	}
+
 
 	public String getRight() {
-		return right;
+		return data.right;
 	}
+
 
 	public String getUp() {
-		return up;
+		return data.up;
 	}
+
 
 	public String getDown() {
-		return down;
+		return data.down;
 	}
+
 
 	public String getNorthing() {
-		return northing;
+		return data.northing;
 	}
+
 
 	public String getLatitude() {
-		return latitude;
+		return data.latitude;
 	}
+
 
 	public String getEasting() {
-		return easting;
+		return data.easting;
 	}
+
 
 	public String getLongitude() {
-		return longitude;
+		return data.longitude;
 	}
+
 
 	public String getElevation() {
-		return elevation;
+		return data.elevation;
 	}
+
 
 	public String getComment() {
-		return comment;
+		return data.comment;
 	}
+
 
 	public List<String> getOverrideAttachedFiles() {
-		return overrideAttachedFiles;
+		return data.overrideAttachedFiles;
 	}
+
 
 	public SurveyTrip getTrip() {
-		return trip;
+		return data.trip;
 	}
+
 
 	public boolean isExcludeDistance() {
-		return excludeDistance;
+		return data.excludeDistance;
 	}
 
+
 	public boolean isExcludeFromPlotting() {
-		return excludeFromPlotting;
+		return data.excludeFromPlotting;
 	}
 
 	public String getFromCave() {
@@ -354,13 +398,13 @@ public class SurveyRow {
 		}
 
 		public Mutable(SurveyRow original) {
-			super();
+			super(original);
 			this.original = original.toImmutable();
 		}
 
 		private void detach() {
-			copy(original);
-			this.original = null;
+			data = data.clone();
+			original = null;
 		}
 
 		public Mutable clone() {
@@ -374,186 +418,186 @@ public class SurveyRow {
 		}
 
 		public Mutable setOverrideFromCave(String overrideFromCave) {
-			if (original != null && !Objects.equals(original.overrideFromCave, overrideFromCave)) {
+			if (original != null && !Objects.equals(data.overrideFromCave, overrideFromCave)) {
 				detach();
 			}
-			this.overrideFromCave = overrideFromCave;
+			data.overrideFromCave = overrideFromCave;
 			return this;
 		}
 
 		public Mutable setFromStation(String fromStation) {
-			if (original != null && !Objects.equals(original.fromStation, fromStation)) {
+			if (original != null && !Objects.equals(data.fromStation, fromStation)) {
 				detach();
 			}
-			this.fromStation = fromStation;
+			data.fromStation = fromStation;
 			return this;
 		}
 
 		public Mutable setOverrideToCave(String overrideToCave) {
-			if (original != null && !Objects.equals(original.overrideToCave, overrideToCave)) {
+			if (original != null && !Objects.equals(data.overrideToCave, overrideToCave)) {
 				detach();
 			}
-			this.overrideToCave = overrideToCave;
+			data.overrideToCave = overrideToCave;
 			return this;
 		}
 
 		public Mutable setToStation(String toStation) {
-			if (original != null && !Objects.equals(original.toStation, toStation)) {
+			if (original != null && !Objects.equals(data.toStation, toStation)) {
 				detach();
 			}
-			this.toStation = toStation;
+			data.toStation = toStation;
 			return this;
 		}
 
 		public Mutable setDistance(String distance) {
-			if (original != null && !Objects.equals(original.distance, distance)) {
+			if (original != null && !Objects.equals(data.distance, distance)) {
 				detach();
 			}
-			this.distance = distance;
+			data.distance = distance;
 			return this;
 		}
 
 		public Mutable setFrontAzimuth(String frontAzimuth) {
-			if (original != null && !Objects.equals(original.frontAzimuth, frontAzimuth)) {
+			if (original != null && !Objects.equals(data.frontAzimuth, frontAzimuth)) {
 				detach();
 			}
-			this.frontAzimuth = frontAzimuth;
+			data.frontAzimuth = frontAzimuth;
 			return this;
 		}
 
 		public Mutable setBackAzimuth(String backAzimuth) {
-			if (original != null && !Objects.equals(original.backAzimuth, backAzimuth)) {
+			if (original != null && !Objects.equals(data.backAzimuth, backAzimuth)) {
 				detach();
 			}
-			this.backAzimuth = backAzimuth;
+			data.backAzimuth = backAzimuth;
 			return this;
 		}
 
 		public Mutable setFrontInclination(String frontInclination) {
-			if (original != null && !Objects.equals(original.frontInclination, frontInclination)) {
+			if (original != null && !Objects.equals(data.frontInclination, frontInclination)) {
 				detach();
 			}
-			this.frontInclination = frontInclination;
+			data.frontInclination = frontInclination;
 			return this;
 		}
 
 		public Mutable setBackInclination(String backInclination) {
-			if (original != null && !Objects.equals(original.backInclination, backInclination)) {
+			if (original != null && !Objects.equals(data.backInclination, backInclination)) {
 				detach();
 			}
-			this.backInclination = backInclination;
+			data.backInclination = backInclination;
 			return this;
 		}
 
 		public Mutable setLeft(String left) {
-			if (original != null && !Objects.equals(original.left, left)) {
+			if (original != null && !Objects.equals(data.left, left)) {
 				detach();
 			}
-			this.left = left;
+			data.left = left;
 			return this;
 		}
 
 		public Mutable setRight(String right) {
-			if (original != null && !Objects.equals(original.right, right)) {
+			if (original != null && !Objects.equals(data.right, right)) {
 				detach();
 			}
-			this.right = right;
+			data.right = right;
 			return this;
 		}
 
 		public Mutable setUp(String up) {
-			if (original != null && !Objects.equals(original.up, up)) {
+			if (original != null && !Objects.equals(data.up, up)) {
 				detach();
 			}
-			this.up = up;
+			data.up = up;
 			return this;
 		}
 
 		public Mutable setDown(String down) {
-			if (original != null && !Objects.equals(original.down, down)) {
+			if (original != null && !Objects.equals(data.down, down)) {
 				detach();
 			}
-			this.down = down;
+			data.down = down;
 			return this;
 		}
 
 		public Mutable setNorthing(String northing) {
-			if (original != null && !Objects.equals(original.northing, northing)) {
+			if (original != null && !Objects.equals(data.northing, northing)) {
 				detach();
 			}
-			this.northing = northing;
+			data.northing = northing;
 			return this;
 		}
 
 		public Mutable setLatitude(String latitude) {
-			if (original != null && !Objects.equals(original.latitude, latitude)) {
+			if (original != null && !Objects.equals(data.latitude, latitude)) {
 				detach();
 			}
-			this.latitude = latitude;
+			data.latitude = latitude;
 			return this;
 		}
 
 		public Mutable setEasting(String easting) {
-			if (original != null && !Objects.equals(original.easting, easting)) {
+			if (original != null && !Objects.equals(data.easting, easting)) {
 				detach();
 			}
-			this.easting = easting;
+			data.easting = easting;
 			return this;
 		}
 
 		public Mutable setLongitude(String longitude) {
-			if (original != null && !Objects.equals(original.longitude, longitude)) {
+			if (original != null && !Objects.equals(data.longitude, longitude)) {
 				detach();
 			}
-			this.longitude = longitude;
+			data.longitude = longitude;
 			return this;
 		}
 
 		public Mutable setElevation(String elevation) {
-			if (original != null && !Objects.equals(original.elevation, elevation)) {
+			if (original != null && !Objects.equals(data.elevation, elevation)) {
 				detach();
 			}
-			this.elevation = elevation;
+			data.elevation = elevation;
 			return this;
 		}
 
 		public Mutable setComment(String comment) {
-			if (original != null && !Objects.equals(original.comment, comment)) {
+			if (original != null && !Objects.equals(data.comment, comment)) {
 				detach();
 			}
-			this.comment = comment;
+			data.comment = comment;
 			return this;
 		}
 
 		public Mutable setOverrideAttachedFiles(List<String> overrideAttachedFiles) {
-			if (original != null && !Objects.equals(original.overrideAttachedFiles, overrideAttachedFiles)) {
+			if (original != null && !Objects.equals(data.overrideAttachedFiles, overrideAttachedFiles)) {
 				detach();
 			}
-			this.overrideAttachedFiles = overrideAttachedFiles;
+			data.overrideAttachedFiles = overrideAttachedFiles;
 			return this;
 		}
 
 		public Mutable setTrip(SurveyTrip trip) {
-			if (original != null && !Objects.equals(original.trip, trip)) {
+			if (original != null && !Objects.equals(data.trip, trip)) {
 				detach();
 			}
-			this.trip = trip;
+			data.trip = trip;
 			return this;
 		}
 
 		public Mutable setExcludeDistance(boolean excludeDistance) {
-			if (original != null && original.excludeDistance != excludeDistance) {
+			if (original != null && data.excludeDistance != excludeDistance) {
 				detach();
 			}
-			this.excludeDistance = excludeDistance;
+			data.excludeDistance = excludeDistance;
 			return this;
 		}
 
 		public Mutable setExcludeFromPlotting(boolean excludeFromPlotting) {
-			if (original != null && original.excludeFromPlotting != excludeFromPlotting) {
+			if (original != null && data.excludeFromPlotting != excludeFromPlotting) {
 				detach();
 			}
-			this.excludeFromPlotting = excludeFromPlotting;
+			data.excludeFromPlotting = excludeFromPlotting;
 			return this;
 		}
 	}

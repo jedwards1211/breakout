@@ -14,60 +14,81 @@ import org.andork.unit.UnitizedNumber;
 import com.google.gson.JsonArray;
 
 public class SurveyLead implements Cloneable {
-	protected String cave;
-	protected String station;
-	protected String description;
-	protected JsonArray rawWidth;
-	protected JsonArray rawHeight;
-	protected UnitizedNumber<Length> width;
-	protected UnitizedNumber<Length> height;
-	protected boolean isDone;
+	private static final DecimalFormat sizeFormat = new DecimalFormat("0.#");
+
+	protected static class Data implements Cloneable {
+		protected String cave;
+		protected String station;
+		protected String description;
+		protected JsonArray rawWidth;
+		protected JsonArray rawHeight;
+		protected UnitizedNumber<Length> width;
+		protected UnitizedNumber<Length> height;
+		protected boolean isDone;
+
+		public void copy(Data other) {
+			cave = other.cave;
+			station = other.station;
+			description = other.description;
+			rawWidth = other.rawWidth;
+			rawHeight = other.rawHeight;
+			width = other.width;
+			isDone = other.isDone;
+		}
+
+		@Override
+		public Data clone() {
+			Data clone = new Data();
+			clone.copy(this);
+			return clone;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(cave, description, height, isDone, rawHeight, rawWidth, station, width);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (!(obj instanceof Data))
+				return false;
+			Data other = (Data) obj;
+			return Objects.equals(cave, other.cave)
+				&& Objects.equals(description, other.description)
+				&& Objects.equals(height, other.height)
+				&& isDone == other.isDone
+				&& Objects.equals(rawHeight, other.rawHeight)
+				&& Objects.equals(rawWidth, other.rawWidth)
+				&& Objects.equals(station, other.station)
+				&& Objects.equals(width, other.width);
+		}
+	}
+	
+	protected Data data;
 
 	public SurveyLead() {
+		this.data = new Data();
 	}
 
 	public SurveyLead(SurveyLead other) {
-		copy(other);
+		this.data = other.data;
 	}
-
-	public void copy(SurveyLead other) {
-		cave = other.cave;
-		station = other.station;
-		description = other.description;
-		rawWidth = other.rawWidth;
-		rawHeight = other.rawHeight;
-		width = other.width;
-		isDone = other.isDone;
-	}
-
+	
 	@Override
 	public SurveyLead clone() {
 		return new SurveyLead(this);
 	}
 
-	@Override
 	public int hashCode() {
-		return Objects.hash(cave, description, height, isDone, rawHeight, rawWidth, sizeFormat, station, width);
+		return data.hashCode();
 	}
 
-	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (!(obj instanceof SurveyLead))
-			return false;
-		SurveyLead other = (SurveyLead) obj;
-		return Objects.equals(cave, other.cave)
-			&& Objects.equals(description, other.description)
-			&& Objects.equals(height, other.height)
-			&& isDone == other.isDone
-			&& Objects.equals(rawHeight, other.rawHeight)
-			&& Objects.equals(rawWidth, other.rawWidth)
-			&& Objects.equals(sizeFormat, other.sizeFormat)
-			&& Objects.equals(station, other.station)
-			&& Objects.equals(width, other.width);
+		return data.equals(obj);
 	}
 
 	protected SurveyLead toImmutable() {
@@ -88,91 +109,90 @@ public class SurveyLead implements Cloneable {
 	 * name of cave the lead is in
 	 */
 	public String getCave() {
-		return cave;
+		return data.cave;
 	}
 
 	/**
 	 * the name of the nearest station
 	 */
 	public String getStation() {
-		return station;
+		return data.station;
 	}
 
 	/**
 	 * the description of the lead
 	 */
 	public String getDescription() {
-		return description;
+		return data.description;
 	}
 
 	/**
 	 * the width of the lead from metacave
 	 */
 	public JsonArray getRawWidth() {
-		return rawWidth;
+		return data.rawWidth;
 	}
 
 	/**
 	 * the height of the lead from metacave
 	 */
 	public JsonArray getRawHeight() {
-		return rawHeight;
+		return data.rawHeight;
 	}
 
 	/**
 	 * the width of the lead
 	 */
 	public UnitizedNumber<Length> getWidth() {
-		return width;
+		return data.width;
 	}
 
 	/**
 	 * the height of the lead
 	 */
 	public UnitizedNumber<Length> getHeight() {
-		return height;
+		return data.height;
 	}
 
 	/**
 	 * whether the lead is done or not
 	 */
 	public boolean isDone() {
-		return isDone;
+		return data.isDone;
 	}
 
 	public SurveyLead setCave(String cave) {
-		return this.toMutable().setCave(cave).toImmutable();
+		return toMutable().setCave(cave).toImmutable();
 	}
 
 	public SurveyLead setStation(String station) {
-		return this.toMutable().setStation(station).toImmutable();
+		return toMutable().setStation(station).toImmutable();
 	}
 
 	public SurveyLead setDescription(String description) {
-		return this.toMutable().setDescription(description).toImmutable();
+		return toMutable().setDescription(description).toImmutable();
 	}
 
 	public SurveyLead setRawWidth(JsonArray rawWidth) {
-		return this.toMutable().setRawWidth(rawWidth).toImmutable();
+		return toMutable().setRawWidth(rawWidth).toImmutable();
 	}
 
 	public SurveyLead setRawHeight(JsonArray rawHeight) {
-		return this.toMutable().setRawHeight(rawHeight).toImmutable();
+		return toMutable().setRawHeight(rawHeight).toImmutable();
 	}
 
 	public SurveyLead setWidth(UnitizedNumber<Length> width) {
-		return this.toMutable().setWidth(width).toImmutable();
+		return toMutable().setWidth(width).toImmutable();
 	}
 
 	public SurveyLead setHeight(UnitizedNumber<Length> height) {
-		return this.toMutable().setHeight(height).toImmutable();
+		return toMutable().setHeight(height).toImmutable();
 	}
 
 	public SurveyLead setDone(boolean isDone) {
-		return this.toMutable().setDone(isDone).toImmutable();
+		return toMutable().setDone(isDone).toImmutable();
 	}
 
-	private final DecimalFormat sizeFormat = new DecimalFormat("0.#");
 
 	public String describeSize(Unit<Length> unit) {
 		UnitizedNumber<Length> width = getWidth();
@@ -196,13 +216,13 @@ public class SurveyLead implements Cloneable {
 		}
 
 		public Mutable(SurveyLead original) {
-			super();
+			super(original);
 			this.original = original.toImmutable();
 		}
 
 		private void detach() {
-			copy(original);
-			this.original = null;
+			data = data.clone();
+			original = null;
 		}
 
 		public Mutable clone() {
@@ -216,66 +236,66 @@ public class SurveyLead implements Cloneable {
 		}
 
 		public Mutable setCave(String cave) {
-			if (original != null && !Objects.equals(original.cave, cave)) {
+			if (original != null && !Objects.equals(data.cave, cave)) {
 				detach();
 			}
-			this.cave = cave;
+			data.cave = cave;
 			return this;
 		}
 
 		public Mutable setStation(String station) {
-			if (original != null && !Objects.equals(original.station, station)) {
+			if (original != null && !Objects.equals(data.station, station)) {
 				detach();
 			}
-			this.station = station;
+			data.station = station;
 			return this;
 		}
 
 		public Mutable setDescription(String description) {
-			if (original != null && !Objects.equals(original.description, description)) {
+			if (original != null && !Objects.equals(data.description, description)) {
 				detach();
 			}
-			this.description = description;
+			data.description = description;
 			return this;
 		}
 
 		public Mutable setRawWidth(JsonArray rawWidth) {
-			if (original != null && !Objects.equals(original.rawWidth, rawWidth)) {
+			if (original != null && !Objects.equals(data.rawWidth, rawWidth)) {
 				detach();
 			}
-			this.rawWidth = rawWidth;
+			data.rawWidth = rawWidth;
 			return this;
 		}
 
 		public Mutable setRawHeight(JsonArray rawHeight) {
-			if (original != null && !Objects.equals(original.rawHeight, rawHeight)) {
+			if (original != null && !Objects.equals(data.rawHeight, rawHeight)) {
 				detach();
 			}
-			this.rawHeight = rawHeight;
+			data.rawHeight = rawHeight;
 			return this;
 		}
 
 		public Mutable setWidth(UnitizedNumber<Length> width) {
-			if (original != null && !Objects.equals(original.width, width)) {
+			if (original != null && !Objects.equals(data.width, width)) {
 				detach();
 			}
-			this.width = width;
+			data.width = width;
 			return this;
 		}
 
 		public Mutable setHeight(UnitizedNumber<Length> height) {
-			if (original != null && !Objects.equals(original.height, height)) {
+			if (original != null && !Objects.equals(data.height, height)) {
 				detach();
 			}
-			this.height = height;
+			data.height = height;
 			return this;
 		}
 
 		public Mutable setDone(boolean isDone) {
-			if (original != null && original.isDone != isDone) {
+			if (original != null && data.isDone != isDone) {
 				detach();
 			}
-			this.isDone = isDone;
+			data.isDone = isDone;
 			return this;
 		}
 	}
