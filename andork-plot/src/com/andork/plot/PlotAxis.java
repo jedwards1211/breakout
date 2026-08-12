@@ -451,11 +451,12 @@ public class PlotAxis extends JComponent implements Model {
 	public AutoCloseable bind(Cell<LinearAxisConversion> cell) {
 		Ref<Boolean> changing = new Ref<>(false);
 		QAutorun autorun = QAutorun.autorun(() -> {
+			// always get, to make sure we register a dependency
+			LinearAxisConversion conv = cell.get();
 			if (changing.value)
 				return;
 			try {
 				changing.value = true;
-				LinearAxisConversion conv = cell.get();
 				if (conv != null) {
 					setAxisConversion(conv);
 				}
