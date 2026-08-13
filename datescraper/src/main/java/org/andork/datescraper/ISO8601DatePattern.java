@@ -11,11 +11,11 @@ public class ISO8601DatePattern implements DatePattern {
 	private static final Pattern pattern =
 		Pattern
 			.compile(
-				"\\b(\\d{4})(-?)(\\d{2})(\\2([012]\\d|3[01]))?T([0-5]\\d)((:?)([0-5]\\d)(\\8([0-5]\\d)(\\.(\\d{3}))?)?)?\\b");
+				"\\b(\\d{4})(-?)(\\d{2})(\\2([012]\\d|3[01]))?(?:T([0-5]\\d)((:?)([0-5]\\d)(\\8([0-5]\\d)(\\.(\\d{3}))?)?)?)?\\b");
 
 	public static void main(String[] args) {
 		ScrapePattern<Date> p = new ISO8601DatePattern();
-		ScrapeMatcher<Date> m = p.matcher("2016-08-30T05:23 20180423T092632 190223T0524");
+		ScrapeMatcher<Date> m = p.matcher("2016-08-30T05:23 20180423T092632 190223T0524 1989-12-17 1989-11");
 		while (m.find()) {
 			System.out.println(m.match());
 		}
@@ -39,6 +39,9 @@ public class ISO8601DatePattern implements DatePattern {
 				}
 				if (month < 1 || month > 12) {
 					return null;
+				}
+				if (matcher.group(6) == null) {
+					return new Date(year - 1900, month - 1, day);
 				}
 				int hour = Integer.parseInt(matcher.group(6));
 				int minute = matcher.group(9) != null ? Integer.parseInt(matcher.group(9)) : 0;

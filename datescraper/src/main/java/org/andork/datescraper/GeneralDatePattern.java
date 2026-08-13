@@ -22,6 +22,7 @@ public class GeneralDatePattern implements DatePattern {
 			"jul[.y]?",
 			"aug\\.?|august",
 			"sept?\\.?|september",
+			"oct\\.?|october",
 			"nov\\.?|november",
 			"dec\\.?|december" };
 	private static final String EN_US_DAY_PATTERN = "([12][0-9]|3[01]|0?[0-9])(st|nd|rd|th)?";
@@ -29,7 +30,7 @@ public class GeneralDatePattern implements DatePattern {
 	private DateField[] order = DEFAULT_ORDER;
 	private String[] monthPatterns = EN_US_MONTH_PATTERNS;
 	private String dayPattern = EN_US_DAY_PATTERN;
-	private String separatorPattern = "|[-/\t.]| +";
+	private String separatorPattern = "[-/\t.]| *";
 	private int minYearDigits = 2;
 	private int maxYearDigits = 4;
 	private int currentYear = Calendar.getInstance().get(Calendar.YEAR);
@@ -164,7 +165,7 @@ public class GeneralDatePattern implements DatePattern {
 								break;
 							}
 						}
-						offset += 12;
+						offset += 13;
 						break;
 					case DAY:
 						day = Integer.parseInt(matcher.group(++offset));

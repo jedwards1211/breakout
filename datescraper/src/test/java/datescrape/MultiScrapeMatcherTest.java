@@ -64,4 +64,13 @@ public class MultiScrapeMatcherTest {
 		assertEquals("20190822T03:45", m.matchText());
 		assertEquals(new Date("aug 22 2019 03:45 am"), m.match());
 	}
+	
+	@Test
+	public void bug001() {
+		String input = "1989-12-17";
+		DateMatcher m = DatePatterns.en_US.matcher(input);
+
+		assertTrue(m.find());
+		assertEquals(new Date("Dec 17 1989"), m.match());
+	}
 }
